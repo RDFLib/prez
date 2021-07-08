@@ -26,6 +26,19 @@ def sparql_query(query: str):
         return False, r.status_code, r.text
 
 
+def sparql_construct(query: str, rdf_mediatype="text/turtle"):
+    r = httpx.post(
+        config.SPARQL_ENDPOINT,
+        data=query,
+        headers={"Content-Type": "application/sparql-query", "Accept": rdf_mediatype},
+        auth=(config.SPARQL_USERNAME, config.SPARQL_PASSWORD)
+    )
+    if 200 <= r.status_code < 300:
+        return True, r.content
+    else:
+        return False, r.status_code, r.text
+
+
 def cache_clear():
     logging.debug("cleared cache")
     if collections_pickle.is_file():

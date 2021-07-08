@@ -1,0 +1,55 @@
+    <style>
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown > a {
+            cursor: default;
+            text-decoration: none;
+        }
+        .dropdown-child {
+            display: none;
+            position: absolute;
+            left:-7px;
+            transition: all 0.5s ease;
+            background-color: rgb(19, 50, 77);
+            min-width: 220px;
+            text-align: left;
+            padding-top: 10px;
+        }
+        .dropdown-child a {
+            padding: 20px;
+            text-decoration: none;
+            display: block;
+        }
+        .dropdown-child a:hover {
+            text-decoration: underline;
+        }
+        .dropdown:hover .dropdown-child {
+            display: block;
+        }
+        .dropdown-child:hover {
+            display: block;
+        }
+        /* for the bottom main menu */
+        #footer-top > .dropdown > .dropdown-child {
+            background-color: rgb(53, 80, 119);
+            top: -248px;
+            min-width: 270px;
+        }
+    </style>
+    <a href="/">NVS Home</a> |
+    <a href="/collection/">Vocabularies</a> |
+    <a href="/scheme/">Thesauri</a> |
+    <a href="https://vocab.nerc.ac.uk/search_nvs/">Search NVS</a> |
+    <a href="/sparql">SPARQL</a> |
+    <div class="dropdown">
+      <a>Other Tools</a>
+      <div class="dropdown-child">
+        <a href="https://www.bodc.ac.uk/resources/vocabularies/vocabulary_editor/">Vocab Editor</a>
+        <a href="https://www.bodc.ac.uk/resources/vocabularies/vocabulary_builder/">Vocab Builder</a>
+        <a href="https://vocab.seadatanet.org/p01-facet-search">P01 Facet Search</a>
+        <a href="https://vocab.seadatanet.org/search">SeaDataNet Search UI</a>
+      </div>
+    </div> |
+    <a href="/about">About NVS</a>

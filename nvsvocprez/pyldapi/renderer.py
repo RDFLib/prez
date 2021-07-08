@@ -14,8 +14,11 @@ from .data import MEDIATYPE_NAMES, RDF_MEDIATYPES
 from .exceptions import ProfilesMediatypesException
 import re
 from .profile import Profile
+import connegp
+from pathlib import Path
 
-templates = Jinja2Templates(directory="templates")
+api_home_dir = Path(__file__).parent.parent
+templates = Jinja2Templates(str(api_home_dir / "view" / "templates"))
 
 
 class Renderer(object, metaclass=ABCMeta):
@@ -458,11 +461,7 @@ class Renderer(object, metaclass=ABCMeta):
         }
         if template_context is not None and isinstance(template_context, dict):
             _template_context.update(template_context)
-        import pprint
-        pprint.pprint(_template_context)
-        return templates.TemplateResponse(self.alt_template or 'alt.html',
-                                          context=_template_context,
-                                          headers=self.headers)
+        return templates.TemplateResponse("alt.html", context=_template_context, headers=self.headers)
 
     def _render_alt_profile_rdf(self):
         g = self._generate_alt_profiles_rdf()
@@ -486,8 +485,6 @@ class Renderer(object, metaclass=ABCMeta):
         :return: A Flask Response object
         :rtype: :class:`flask.Response`
         """
-        if self.mediatype == '_internal':
-            return self
         if self.mediatype == 'text/html':
             return self._render_alt_profile_html()
         elif self.mediatype in RDF_MEDIATYPES:
