@@ -1,0 +1,51 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<>
+    a void:DatasetDescription ;
+    dcterms:title "A VoID Description of the NVS Vocabularies" ;
+    dcterms:creator <http://vocab.nerc.ac.uk/collection/R04/current/BO/> ;
+    foaf:primaryTopic <http://vocab.nerc.ac.uk> ;
+.
+
+<http://vocab.nerc.ac.uk>
+    a void:Dataset ;
+    dcterms:title "NERC Vocabulary Server Vocabularies" ;
+    dcterms:description "Terms for populating fields in oceanographic and earth science metadata including descriptions of data, platforms, instruments and geographic locations presented in controlled vocabularies." ;
+    dcterms:publisher <http://vocab.nerc.ac.uk/collection/R04/current/BO/> ;
+    dcterms:subject
+        <http://dbpedia.org/resource/Earth_science>,
+        <http://dbpedia.org/resource/Environmental_science>,
+        <http://dbpedia.org/resource/Oceanography> ;
+
+    void:RootResource <http://vocab.nerc.ac.uk/collection/>,
+        <http://vocab.nerc.ac.uk/scheme/> ;
+    void:TechnicalFeature
+        <http://www.w3.org/ns/formats/RDF_XML> ,
+        <https://www.w3.org/ns/formats/data/Turtle> ,
+        <https://www.w3.org/ns/formats/data/JSON-LD> ;
+    void:classes "4" ;
+    void:distinctSubjects "2786045" ;
+    void:entities "2786045" ;
+    void:exampleResource
+        <http://vocab.nerc.ac.uk/collection/P02/>,
+        <http://vocab.nerc.ac.uk/collection/P02/current/PSAL/>,
+        <http://vocab.nerc.ac.uk/scheme/SDNDEV/> ;
+    void:sparqlEndpoint <http://vocab.nerc.ac.uk/sparql/> ;
+    void:triples "23774416" ;
+    void:uriSpace "http://vocab.nerc.ac.uk/" ;
+    void:vocabulary
+        <http://purl.org/dc/terms/>,
+        <http://www.w3.org/2002/07/owl#>,
+        <http://www.w3.org/2004/02/skos/core#> ;
+    foaf:homepage <http://vocab.nerc.ac.uk/> ;
+.
+
+<http://vocab.nerc.ac.uk/collection/R04/current/BO/>
+    a foaf:Organization ;
+    foaf:name "British Oceanographic Data Centre" ;
+    foaf:homepage "https://www.bodc.ac.uk"^^xsd:anyURI ;
+.
