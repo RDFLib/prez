@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head lang="en">
+  <meta charset="UTF-8">
+  <title>NVS</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
+  <link rel="stylesheet" href="/static/nvs_vocprez.css">
+</head>
+<body>
+  <div id="vocprez">
+    made by <a href="http://github.com/rdflib/VocPrez">VocPrez</a>&nbsp;
+    <a id="versionlink" href="https://github.com/surroundaustralia/NvsVocPrez/releases/tag/1.0.0">for NVS</a>
+  </div>
+  <div id="header" style="grid-column:2; display:grid; grid-template-rows: 100px 50px;">
+    <div id="header-logos" style="grid-row:1;">
+      <a href="https://nerc.ukri.org/"><img src="/static/ukri-grey.png" alt="UK RI logo" style="height:70%; float:left ;" /></a>
+      <a href="https://www.bodc.ac.uk/"><img src="/static/bodc-bw.png" alt="BODC logo" style="height:70%; float:right ;" /></a>
+    </div>
+    <div id="header-title" style="grid-row:2;">
+      <span>The NERC Vocabulary Server (NVS)</span>
+      <a href="https://sdc.ui.argo.grnet.gr/sdc/dashboard/Critical/VOCABULARY">Service Status</a>
+    </div>
+  </div><!-- #header -->
+  <div id="mainmenu" style="grid-column:2;">
+    {% include 'nav.html' %}
+  </div>
+  <div id="content" style="grid-column:2;">
+      {% block content %}{% endblock %}
+  </div><!-- #content -->
+  <div id="footer" style="grid-column:1/4;">
+    <div id="footer-top">
+      {% include 'nav.html' %}
+    </div>
+    <div id="footer-bottom">
+      <img src="/static/noc.svg" alt="NOC logo" style="height:80px; float:left;" />
+      <a href="https://noc.ac.uk/disclaimer">Disclaimer</a>
+      <!-- https://www.bodc.ac.uk/resources/help_and_hints/using_this_web_site/disclaimer/ -->
+      <p class="copyright">&copy; National Oceanography Centre, 2021</p>
+    </div>
+    <div id="vocprez2">
+      <span>made by</span> <a id="bottom-vocprez" href="http://github.com/rdflib/VocPrez">VocPrez</a>&nbsp;<a id="versionlink2" href="https://github.com/surroundaustralia/NvsVocPrez/releases/tag/1.0.0">for NVS</a>
+    </div>
+    <div id="footer-bottom-border"></div>
+  </div><!-- #footer -->
+</body>
+</html>

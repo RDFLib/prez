@@ -1,0 +1,45 @@
+{% extends "page.html" %}
+
+{% block content %}
+  <h1>Welcome to the NERC Vocabulary Server (NVS)</h1>
+  <p>The NVS gives access to standardised and hierarchically-organized vocabularies. It is managed by the British Oceanographic Data Centre at the National Oceanography Centre (NOC) in Liverpool and Southampton, and receives funding from the Natural Environment Research Council (NERC) in the United Kingdom. Major technical developments have also been funded by European Union's projects notably the Open Service Network for Marine Environmental Data (<a href="https://www.nersc.no/project/netmar#:~:text=NETMAR%20aims%20to%20develop%20a,from%20ocean%20and%20coastal%20areas.">NETMAR</a>) programme, and the <a href="https://www.seadatanet.org/">SeaDataNet and SeaDataCloud</a> projects.</p>
+  <p>Controlled vocabularies are used by data creators and data managers to standardise information. They are used for indexing and annotating data and associated information (metadata) in database and data files. They facilitate searching for data in web portals. They also enable records to be interpreted by computers. This opens up data sets to a whole world of possibilities for automated data workflows, computer aided manipulation, distribution, interoperability, and long-term reuse.</p>
+  <p>The current content of the NVS is predominantly targeted at the oceanographic and associated domains. It is used by the marine science community in the UK (<a href="https://www.medin.org.uk/">MEDIN</a>), Europe (<a href="https://www.seadatanet.org/">SeaDataNet</a>), and globally, by a variety of organisations and networks.</p>
+  <h2>Vocabularies and Thesauri</h2>
+  <p>NVS makes use of the World Wide Web Consortium's (W3C) <a href="https://www.w3.org/2004/02/skos/">Simple Knowledge Organization System (SKOS)</a> to represent knowledge in a format understandable by computers. SKOS organises <strong>concepts</strong> into <strong>collections</strong> and <strong>schemes</strong>.</p>
+  <p>A <strong>SKOS concept</strong> can be viewed as an idea or notion; a unit of thought. The notion of a SKOS concept is useful when describing the conceptual or intellectual structure of a knowledge organization system, and when referring to specific ideas or meanings established within that system. An example of a concept is Aanderaa 4330 F oxygen optode: <a href="https://vocab.nerc.ac.uk/collection/L22/current/TOOL1248/">https://vocab.nerc.ac.uk/collection/L22/current/TOOL1248/</a>.</p>
+  <p>A <strong>concept collection</strong> is useful where a group of concepts shares something in common, and it is convenient to group them under a common label. In the NVS, concept collections are synonymous with controlled vocabularies or code lists. An example of a collection is the SeaVoX Device Catalogue: <a href="https://vocab.nerc.ac.uk/collection/L22/current/">https://vocab.nerc.ac.uk/collection/L22/current/</a>.</p>
+  <p>A concept scheme can be viewed as an aggregation of one or more SKOS concepts. Semantic relationships (links) between those concepts may also be viewed as part of a concept scheme. A concept scheme is therefore useful for containing the concepts registered in multiple concept collections but which are related to each other as a single semantic unit, such as a thesaurus. An  example of a scheme is  the SeaDataNet Device Thesaurus: <a href="https://vocab.nerc.ac.uk/scheme/SDNDEV/current/">https://vocab.nerc.ac.uk/scheme/SDNDEV/current/</a>.</p>
+  <h2>Connectivity</h2>
+  <p>You can access NVS as Linked Data API via content negotiation (see below) or via:</p>
+  <ul>
+    <li><a href="http://vocab.nerc.ac.uk/sparql/">SPARQL</a></li>
+    <li><a href="http://vocab.nerc.ac.uk/vocab2.wsdl">SOAP</a></li>
+  </ul>
+  <h2>Content Negotiation</h2>
+  <p>You can access NVS collections, concepts and schemes as RDF in different serializations using content negotiation.</p>
+  <p>Use the appropriate header to automatically access RDF as shown below:</p>
+  <ul>
+    <li>Accept: application/rdf+xml to access NVS as RDF/XML e.g.<br /><code>curl -L -H "Accept: application/rdf+xml" "http://vocab.nerc.ac.uk/collection/L22/current"</code></li>
+    <li>Accept: text/turtle</li>
+    <li>Accept: application/ld+json</li>
+    <li>Accept: application/json</li>
+  </ul>
+  <h2>Tools</h2>
+  <p>A variety of tools complements NVS usability</p>
+  <ul>
+    <li><a href="https://www.bodc.ac.uk/resources/vocabularies/vocabulary_search/">NVS Vocab Search</a> - tool to search the entire NVS content</li>
+    <li><a href="https://vocab.seadatanet.org/search">SeaDataNet Search</a> - interface to only search on collections used by the SeaDataNet data infrastructure</li>
+    <li>
+      tools targeted at the BODC Parameter Usage Vocabulary (P01 collection) and its semantic model
+      <ul>
+        <li><a href="https://vocab.seadatanet.org/p01-facet-search">SDN Facet search</a> - tool to search P01 using a combination of selective filters and free text, and extract URIs and labels decomposed into semantic components</li>
+        <li><a href="https://www.bodc.ac.uk/resources/vocabularies/vocabulary_builder/">BODC Vocab Builder</a> - tool to search P01 codes using the semantic components and, once logged in, submit new terms</li>
+      </ul>
+    </li>
+    <li><a href="https://www.bodc.ac.uk/resources/vocabularies/vocabulary_editor/">Vocab Editor</a> - tool developed to give vocabulary editors and managers content management access on vocabularies they are authorised to edit. This includes the management of mappings between concepts from their resource to other NVS-held concepts or to concepts held in other semantic repositories</li>
+    <li><a href="http://vocab.nerc.ac.uk/nvs_atom.xml">NVS Feed</a> - NERC Vocabulary Server - Updated concept collections atom feed</li>
+    <li><a href="http://vocab.nerc.ac.uk/.well-known/void">.well-known/void</a> - A machine readable (RDF/XML) document describing the overall content of the NVS using the <a href="http://www.w3.org/TR/void/">W3C’s VoID</a> vocabulary
+  </ul>
+  {% include 'alt_link.html' %}
+{% endblock %}

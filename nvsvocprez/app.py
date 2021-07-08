@@ -51,8 +51,26 @@ def collections(request: Request):
 
 
 @api.get("/conceptschemes")
-def collections(request: Request):
-    return "Concept Schemes"
+def conceptschemes(request: Request):
+    conceptschemes = cache_return(collections_or_conceptschemes="conceptschemes")
+    import pprint
+    pprint.pprint(conceptschemes)
+
+    if request.query_params.get("filter"):
+        def concat_vocab_fields(vocab):
+            return f"{vocab['id']['value']}" \
+                   f"{vocab['prefLabel']['value']}" \
+                   f"{vocab['description']['value']}"
+        conceptschemes = [x for x in conceptschemes if request.query_params.get("filter") in concat_vocab_fields(x)]
+
+    return templates.TemplateResponse(
+        "conceptschemes.html",
+        {
+            "request": request,
+            "conceptschemes": conceptschemes,
+            "profile_token": "nvs",
+        }
+    )
 
 
 @api.get("/about")

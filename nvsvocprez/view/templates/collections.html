@@ -1,0 +1,80 @@
+{% extends "page.html" %}
+{% block content %}
+  <div style="display:grid; grid-template-columns: 80% auto;">
+    <div id="top-wrapper">
+      <div id="collection-heading" style="grid-column: 1; grid-row: 1;">
+        <h1>NVS Vocabularies</h1>
+        <dl>
+          <dt>URI</dt>
+          <dd><strong><a href="{{ uri }}">{{ uri }}</a></strong></dd>
+          <dt>Description</dt>
+          <dd>SKOS concept collections held in the NERC Vocabulary Server. A concept collection is useful where a group of concepts shares something in common, and it is convenient to group them under a common label. In the NVS, concept collections are synonymous with controlled vocabularies or code lists. Each collection is associated with its governance body. An external website link is displayed when applicable.</dd>
+        </dl>
+      </div>
+      <div id="alt-wrapper" style="grid-column: 2; grid-row: 1;">
+        {% include 'alt_link.html' %}
+        <div id="filter">
+          <h4>Filter</h4>
+          <form method="get" action=""  style="display: inline-block;">
+            <input type="text" name="filter" value="{{ filter }}" />
+            <button>Filter</button>
+          </form>
+          <form method="get" action="" style="display: inline-block;">
+            <button>Clear</button>
+          </form>
+          <span class="tooltip" style="font-weight:bold;">?<span class="tooltiptext">A simple text matching filter of the list content to the left</span></span>
+        </div>
+      </div>
+    </div>
+    <div style="grid-column: 1/3; grid-row: 2;">
+      <h3>Vocabularies</h3>
+      <p><em>Sort by click on table headings, Filter using the search to the right.</em></p>
+      <table id="vocsort" class="vocs tablesorter">
+        <thead>
+          <tr>
+            <th style="width:50px;">ID <span class="arr">&uarr;</span></th>
+            <th style="width:100px; white-space: nowrap;">Title <span class="arr">&uarr;</span></th>
+            <th style="width:60px;">Version <span class="arr">&uarr;</span></th>
+            <th style="width:100px;">Version Date <span class="arr">&uarr;</span></th>
+            <th style="width:200px;">Description <span class="arr">&uarr;</span></th>
+            <th style="width:100px;">Governance <span class="arr">&uarr;</span></th>
+            <th style="width:100px;">External Link <span class="arr">&uarr;</span></th>
+          </tr>
+        </thead>
+        <tbody>
+        {%- for collection in collections -%}
+          <tr>
+            <td><a href="{{ collection.systemUri.value }}">{{ collection.id.value }}</a></td>
+            <td>{{ collection.prefLabel.value }}</td>
+            <td>{{ collection.versionInfo.value }}</td>
+            <td>{{ collection.modified.value }}</td>
+            <td>{{ collection.description.value }}</td>
+            <td>{{ collection.creator.value }}</td>
+            <td>
+            {% if collection.seeAlso is defined %}
+            <a href="{{ collection.seeAlso.value }}">{{ collection.seeAlso.value }}</a>
+            {% endif %}
+            </td>
+          </tr>
+        {%- endfor -%}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="/static/jquery.tablesorter.min.js"></script>
+  <script>
+      $(function() {
+        $("#vocsort").tablesorter();
+      });
+
+      $("#vocsort thead tr th").click(function(event) {
+        if ($(this).find(".arr").html() == "↓") {
+          $(".arr").html("&uarr;")
+        } else {
+          $(".arr").html("&uarr;")
+          $(this).find(".arr").html("&darr;")
+        }
+      });
+    </script>
+{% endblock %}

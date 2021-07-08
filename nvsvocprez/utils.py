@@ -32,9 +32,9 @@ def cache_clear():
         collections_pickle.unlink()
 
 
-def cache_fill(collections_or_conceptschemes_or_both: Literal["collections", "conceptschemes", "both"]):
+def cache_fill(collections_or_conceptschemes_or_both: Literal["collections", "conceptschemes", "both"] = "both"):
     logging.debug(f"filled cache {collections_or_conceptschemes_or_both}")
-    if collections_or_conceptschemes_or_both in ["collections", "both"]:
+    if collections_or_conceptschemes_or_both == "collections":
         q = """
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -44,6 +44,7 @@ def cache_fill(collections_or_conceptschemes_or_both: Literal["collections", "co
             WHERE {
                 ?uri a skos:Collection .
                 BIND (STRAFTER(STRBEFORE(STR(?uri), "/current/"), "/collection/") AS ?id)
+                BIND (STRAFTER(STR(?uri), ".uk") AS ?systemUri)
                 OPTIONAL { ?uri skos:prefLabel ?prefLabel .
                     FILTER(lang(?prefLabel) = "en" || lang(?prefLabel) = "") 
                 }
@@ -79,14 +80,58 @@ def cache_fill(collections_or_conceptschemes_or_both: Literal["collections", "co
                 f"The call to fill the Collections index cache failed. Status Code: {collections_json[1]} , "
                 f"Error: {collections_json[2]}"
             )
+    elif collections_or_conceptschemes_or_both == "conceptschemes":
+        q = """
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            PREFIX dcterms: <http://purl.org/dc/terms/>
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            SELECT ?uri ?id ?systemUri ?prefLabel ?modified ?creator ?publisher ?versionInfo ?description
+            WHERE {
+                ?uri a skos:ConceptScheme .
+                BIND (STRAFTER(STRBEFORE(STR(?uri), "/current/"), "/scheme/") AS ?id)
+                BIND (STRAFTER(STR(?uri), ".uk") AS ?systemUri)
+                OPTIONAL { ?uri skos:prefLabel ?prefLabel .
+                    FILTER(lang(?prefLabel) = "en" || lang(?prefLabel) = "") 
+                }
+                OPTIONAL { 
+                    ?uri dcterms:date ?m .
+                    BIND (SUBSTR(?m, 0, 11) AS ?modified)
+                }
+                OPTIONAL { ?uri dcterms:creator ?creator }
+                OPTIONAL { ?uri dcterms:publisher ?publisher }
+                OPTIONAL { ?uri owl:versionInfo ?versionInfo }
+                OPTIONAL { ?uri dcterms:description ?description .
+                    FILTER(lang(?description) = "en" || lang(?description) = "") 
+                }
+            }
+            ORDER BY ?prefLabel
+            """
+
+        conceptschemes_json = sparql_query(q)
+        if conceptschemes_json[0]:  # i.e. we got no error
+            with open(conceptschemes_pickle, "wb") as cache_file:
+                pickle.dump(conceptschemes_json[1], cache_file)
+        else:
+            raise TriplestoreError(
+                f"The call to fill the Concept Schemes index cache failed. Status Code: {conceptschemes_json[1]} , "
+                f"Error: {conceptschemes_json[2]}"
+            )
+    else:  # both
+        pass
 
 
 def cache_return(collections_or_conceptschemes: Literal["collections", "conceptschemes"]) -> dict:
     if collections_or_conceptschemes == "collections":
-        if collections_pickle.is_file():
-            with open(collections_pickle, "rb") as cache_file:
-                return pickle.load(cache_file)
-        else:
+        if not collections_pickle.is_file():
             cache_fill(collections_or_conceptschemes_or_both="collections")
-            with open(collections_pickle, "rb") as cache_file:
-                return pickle.load(cache_file)
+
+        with open(collections_pickle, "rb") as cache_file:
+            return pickle.load(cache_file)
+
+    elif collections_or_conceptschemes == "conceptschemes":
+        if not conceptschemes_pickle.is_file():
+            cache_fill(collections_or_conceptschemes_or_both="conceptschemes")
+
+        with open(conceptschemes_pickle, "rb") as cache_file:
+            return pickle.load(cache_file)
