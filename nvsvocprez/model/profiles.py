@@ -8,8 +8,8 @@ skos = Profile(
     comment="Simple Knowledge Organization System (SKOS)is a W3C-authored, common data model for sharing "
     "and linking knowledge organization systems "
     "via the Web.",
-    mediatypes=["text/html"] + RDF_MEDIATYPES,
-    default_mediatype="text/html",
+    mediatypes=RDF_MEDIATYPES,
+    default_mediatype="text/turtle",
     languages=["en"],
     default_language="en",
 )
@@ -82,8 +82,8 @@ vocpub = Profile(
     label="VocPub",
     comment="A profile of SKOS for the publication of Vocabularies. This profile mandates the use of one Concept "
             "Scheme per vocabulary",
-    mediatypes=["text/html", "application/json"] + RDF_MEDIATYPES,
-    default_mediatype="text/html",
+    mediatypes=RDF_MEDIATYPES,
+    default_mediatype="text/turtle",
     languages=["en"],
     default_language="en",
 )

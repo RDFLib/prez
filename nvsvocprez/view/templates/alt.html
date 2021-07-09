@@ -7,7 +7,7 @@
           <dt>Instance</dt>
           <dd><a href="{{ uri }}">{{ uri }}</a></dd>
           <dt>Default Profile</dt>
-          <dd><a href="{{ uri }}?_profile={{ default_profile_token }}">{{ default_profile_token }}</a></dd>
+          <dd><a href="{{ systemUri }}?_profile={{ default_profile_token }}">{{ default_profile_token }}</a></dd>
         </dl>
         <div class="overflow" style="margin-bottom:20px;">
             <table class="layout">
@@ -17,20 +17,20 @@
                     <th style="font-weight: bold;">Formats</th>
                     <th style="font-weight: bold; padding-right: 30px;">Languages</th>
                     <th style="font-weight: bold;">Description</th>
-                    <th style="font-weight: bold;">Namespace</th>
+                    <th style="font-weight: bold;">Profile URI</th>
                 </tr>
             {% for token, profile in profiles.items() %}
                 <tr>
-                    <td style="padding-right: 30px;"><a href="{{ uri }}?_profile={{ token }}&_mediatype={{ profile['default_mediatype'] }}">{{ token }}</a></td>
+                    <td style="padding-right: 30px;"><a href="{{ systemUri }}?_profile={{ token }}&_mediatype={{ profile['default_mediatype'] }}">{{ token }}</a></td>
                     <td>{{ profile['label'] }}</td>
                     <td>
                     {% for f in profile['mediatypes']|sort() %}
-                        <a href="{{ uri }}?_profile={{ token }}&_mediatype={{ f }}">{{ mediatype_names[f] }}</a><br />
+                        <a href="{{ systemUri }}?_profile={{ token }}&_mediatype={{ f }}">{{ mediatype_names[f] }}</a><br />
                     {% endfor %}
                     </td>
                     <td style="text-align: center;">
                     {% for l in profile['languages'] %}
-                        <a href="{{ uri }}?_profile={{ token }}&_lang={{ l }}">{{ l }}</a><br />
+                        <a href="{{ systemUri }}?_profile={{ token }}&_lang={{ l }}">{{ l }}</a><br />
                     {% endfor %}
                     </td>
                     <td>{{ profile['comment'] }}</td>

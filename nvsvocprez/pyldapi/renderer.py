@@ -458,6 +458,7 @@ class Renderer(object, metaclass=ABCMeta):
             }
         _template_context = {
             'uri': self.instance_uri,
+            'systemUri': self.instance_uri.replace("http://vocab.nerc.ac.uk", ""),
             'default_profile_token': self.default_profile_token,
             'profiles': profiles,
             'mediatype_names': self.mediatype_names,
