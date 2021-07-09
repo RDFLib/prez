@@ -1,0 +1,21 @@
+{% extends "page.html" %}
+{% block content %}
+  <div style="display:grid; grid-template-columns: 80% auto;">
+      <div style="grid-column: 1; grid-row: 1;">
+          <h1>{{ label }}</h1>
+          <dl>
+            <dt>URI</dt>
+            <dd><strong><a href="{{ uri }}">{{ uri }}</a></strong></dd>
+          </dl>
+          <h3>Members</h3>
+          <ul>
+          {%  for collection in collections %}
+          <li><a href="{{ collection.systemUri }}">{{ collection.label }}</a></li>
+          {% endfor %}
+          </ul>
+      </div>
+      <div style="grid-column: 2; grid-row: 1;">
+        {% include 'alt_link.html' %}
+      </div>
+  </div>
+{% endblock %}

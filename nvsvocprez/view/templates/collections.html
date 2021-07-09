@@ -3,12 +3,12 @@
   <div style="display:grid; grid-template-columns: 80% auto;">
     <div id="top-wrapper">
       <div id="collection-heading" style="grid-column: 1; grid-row: 1;">
-        <h1>NVS Vocabularies</h1>
+        <h1>{{ label }}</h1>
         <dl>
           <dt>URI</dt>
           <dd><strong><a href="{{ uri }}">{{ uri }}</a></strong></dd>
           <dt>Description</dt>
-          <dd>SKOS concept collections held in the NERC Vocabulary Server. A concept collection is useful where a group of concepts shares something in common, and it is convenient to group them under a common label. In the NVS, concept collections are synonymous with controlled vocabularies or code lists. Each collection is associated with its governance body. An external website link is displayed when applicable.</dd>
+          <dd>{{ comment }}</dd>
         </dl>
       </div>
       <div id="alt-wrapper" style="grid-column: 2; grid-row: 1;">

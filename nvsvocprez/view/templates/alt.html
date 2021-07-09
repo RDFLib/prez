@@ -25,7 +25,7 @@
                     <td>{{ profile['label'] }}</td>
                     <td>
                     {% for f in profile['mediatypes']|sort() %}
-                        <a href="{{ uri }}?_profile={{ token }}&_mediatype={{ f }}">{{ f }}</a><br />
+                        <a href="{{ uri }}?_profile={{ token }}&_mediatype={{ f }}">{{ mediatype_names[f] }}</a><br />
                     {% endfor %}
                     </td>
                     <td style="text-align: center;">

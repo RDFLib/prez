@@ -10,8 +10,10 @@ from starlette.templating import Jinja2Templates
 from pyldapi.renderer import RDF_MEDIATYPES
 from model.profiles import void, nvs
 from utils import sparql_query, sparql_construct, cache_return, cache_clear, cache_fill, TriplestoreError
-from pyldapi.renderer import Renderer
+from pyldapi import Renderer, ContainerRenderer
 from config import SYSTEM_URI, PORT
+from rdflib import Graph, URIRef, Literal
+from rdflib.namespace import RDF, RDFS
 
 api_home_dir = Path(__file__).parent
 api = fastapi.FastAPI()
@@ -33,20 +35,23 @@ def index(request: Request):
 
 @api.get("/collection/")
 def collections(request: Request):
-    class CollectionRenderer(Renderer):
+    class CollectionRenderer(ContainerRenderer):
         def __init__(self):
+            self.instance_uri = str(request.url).split("?")[0]
+            self.label = "NVS Vocabularies"
+            self.comment = "SKOS concept collections held in the NERC Vocabulary Server. A concept collection " \
+                           "is useful where a group of concepts shares something in common, and it is convenient " \
+                           "to group them under a common label. In the NVS, concept collections are synonymous " \
+                           "with controlled vocabularies or code lists. Each collection is associated with its " \
+                           "governance body. An external website link is displayed when applicable."
             super().__init__(
                 request,
-                str(request.url).split("?")[0],
+                self.instance_uri,
                 {"nvs": nvs},
                 "nvs",
-                MEDIATYPE_NAMES=RDF_MEDIATYPES,
             )
 
         def render(self):
-            alt = super().render()
-            if alt is not None:
-                return alt
             if self.profile == "nvs":
                 if self.mediatype == "text/html":
                     collections = cache_return(collections_or_conceptschemes="collections")
@@ -64,6 +69,9 @@ def collections(request: Request):
                         "collections.html",
                         {
                             "request": request,
+                            "uri": self.instance_uri,
+                            "label": self.label,
+                            "comment": self.comment,
                             "collections": collections,
                             "profile_token": "nvs",
                         }
@@ -129,6 +137,69 @@ def collections(request: Request):
                             "There was an error obtaining the Collections RDF from the Triplestore",
                             status_code=500
                         )
+            elif self.profile == "mem":
+                collections = []
+                for c in cache_return(collections_or_conceptschemes="collections"):
+                    collections.append({
+                        "uri": c["uri"]["value"],
+                        "systemUri": c["systemUri"]["value"],
+                        "label": c["prefLabel"]["value"]}
+                    )
+
+                if self.mediatype == "text/html":
+                    return templates.TemplateResponse(
+                        "collections_mem.html",
+                        {
+                            "request": request,
+                            "uri": self.instance_uri,
+                            "label": self.label,
+                            "collections": collections,
+                            "profile_token": "nvs",
+                        }
+                    )
+                elif self.mediatype == "application/json":
+                    return [{"uri": c["uri"], "label": c["prefLabel"]} for c in collections]
+                else:  # all other available mediatypes are RDF
+                    g = Graph()
+                    container = URIRef(self.instance_uri)
+                    g.add((container, RDF.type, RDF.Bag))
+                    g.add((container, RDFS.label, Literal(self.label)))
+                    for c in collections:
+                        g.add((container, RDFS.member, URIRef(c["uri"])))
+                        g.add((URIRef(c["uri"]), RDFS.label, Literal(c["label"])))
+                    return Response(
+                        g.serialize(format=self.mediatype),
+                        media_type=self.mediatype
+                    )
+            elif self.profile == "contanno":
+                if self.mediatype == "text/html":
+                    return templates.TemplateResponse(
+                        "collections_contanno.html",
+                        {
+                            "request": request,
+                            "uri": self.instance_uri,
+                            "label": self.label,
+                            "comment": self.comment,
+                            "profile_token": "nvs",
+                        }
+                    )
+                else:  # all other available mediatypes are RDF
+                    g = Graph()
+                    container = URIRef(self.instance_uri)
+                    g.add((container, RDF.type, RDF.Bag))
+                    g.add((container, RDFS.label, Literal(self.label)))
+                    c = "This object is a container that contains a number of members. See other profiles of this " \
+                        "object to see those members."
+                    c += self.comment
+                    g.add((container, RDFS.comment, Literal(c)))
+                    return Response(
+                        g.serialize(format=self.mediatype),
+                        media_type=self.mediatype
+                    )
+
+            alt = super().render()
+            if alt is not None:
+                return alt
 
     return CollectionRenderer().render()
 
@@ -142,7 +213,6 @@ def conceptschemes(request: Request):
                 str(request.url).split("?")[0],
                 {"nvs": nvs},
                 "nvs",
-                MEDIATYPE_NAMES=RDF_MEDIATYPES,
             )
 
         def render(self):
@@ -246,7 +316,6 @@ def well_known_void(
                 "http://vocab.nerc.ac.uk/.well_known/void",
                 {"void": void},
                 "void",
-                MEDIATYPE_NAMES=RDF_MEDIATYPES,
             )
 
         def render(self):

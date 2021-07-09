@@ -8,7 +8,6 @@ from fastapi.templating import Jinja2Templates
 from rdflib import Graph, Namespace, URIRef, BNode, Literal
 from rdflib.namespace import PROF, RDF, RDFS, XSD
 from rdflib.namespace import DCTERMS
-from profile import Profile
 
 from .data import MEDIATYPE_NAMES, RDF_MEDIATYPES
 from .exceptions import ProfilesMediatypesException
@@ -23,8 +22,9 @@ templates = Jinja2Templates(str(api_home_dir / "view" / "templates"))
 
 class Renderer(object, metaclass=ABCMeta):
     """
-    Abstract class as a parent for classes that validate the profiles & mediatypes for an API-delivered resource (typically
-    either registers or objects) and also creates an 'alternates profile' for them, based on all available profiles & mediatypes.
+    Abstract class as a parent for classes that validate the profiles & mediatypes for an API-delivered resource
+    (typically either registers or objects) and also creates an 'alternates profile' for them, based on all available
+    profiles & mediatypes.
     """
     RDF_SERIALIZER_TYPES_MAP = {
         "text/turtle": "turtle",
@@ -49,6 +49,7 @@ class Renderer(object, metaclass=ABCMeta):
                  profiles,
                  default_profile_token=None,
                  alternates_template=None,
+                 extra_mediatype_names=None,
                  **kwargs
                  ):
         self.vf_error = None
@@ -71,7 +72,6 @@ class Renderer(object, metaclass=ABCMeta):
             default_mediatype="text/html",
             languages=["en"],
             default_language="en",
-
         )
         self.profile = None
 
@@ -94,6 +94,10 @@ class Renderer(object, metaclass=ABCMeta):
         self.profile = self._get_profile()
         self.mediatype = self._get_mediatype()
         self.language = self._get_language()
+
+        self.mediatype_names = MEDIATYPE_NAMES
+        if extra_mediatype_names is not None:
+            self.mediatype_names.update(extra_mediatype_names)
 
         # make headers only if there's no error
         if self.vf_error is None:
@@ -456,7 +460,7 @@ class Renderer(object, metaclass=ABCMeta):
             'uri': self.instance_uri,
             'default_profile_token': self.default_profile_token,
             'profiles': profiles,
-            'MEDIATYPE_NAMES': MEDIATYPE_NAMES,
+            'mediatype_names': self.mediatype_names,
             'request': self.request
         }
         if template_context is not None and isinstance(template_context, dict):
