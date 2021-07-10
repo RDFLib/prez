@@ -14,42 +14,42 @@
           <th>URI</th>
           <td><strong><a id="this_uri" href="{{ uri }}">{{ uri }}</a></strong></td>
         </tr>
-        {% if collection.description is not none  %}
+        {% if collection.description is defined  %}
         <tr>
           <th><a href="http://purl.org/dc/terms/description">Description</a></th><td>{{ collection.description.value }}</td>
         </tr>
         {% endif %}
-        {% if collection.creator is not none  %}
+        {% if collection.creator is defined  %}
         <tr>
           <th><a href="http://purl.org/dc/terms/creator">Creator</a></th><td>{{ collection.creator.value }}</td>
         </tr>
         {% endif %}
-        {% if collection.modified is not none  %}
+        {% if collection.modified is defined  %}
         <tr>
           <th><a href="http://purl.org/dc/terms/modified">Modified</a></th><td>{{ collection.modified.value }}</td>
         </tr>
         {% endif %}
-        {% if collection.versionInfo is not none  %}
+        {% if collection.versionInfo is defined  %}
         <tr>
           <th><a href="http://www.w3.org/2002/07/owl#versionInfo">Version Info</a></th><td>{{ collection.versionInfo.value }}</td>
         </tr>
         {% endif %}
-        {% if collection.id is not none  %}
+        {% if collection.id is defined  %}
         <tr>
           <th><a href="http://purl.org/dc/terms/identifier">Identifier</a></th><td>{{ collection.id.value }}</td>
         </tr>
         {% endif %}      
-        {% if collection.registermanager is not none  %}
+        {% if collection.registermanager is defined  %}
         <tr>
           <th>Register Manager</th><td>{{ collection.registermanager.value }}</td>
         </tr>
         {% endif %}
-        {% if collection.registerowner is not none  %}
+        {% if collection.registerowner is defined  %}
         <tr>
           <th>Register Owner</th><td>{{ collection.registerowner.value }}</td>
         </tr>
         {% endif %}
-        {% if collection.seeAlso is not none  %}
+        {% if collection.seeAlso is defined  %}
         <tr>
           <th><a href="http://www.w3.org/2000/01/rdf-schema#seeAlso">See Also</a></th><td><a href="{{ collection.seeAlso.value }}">{{ collection.seeAlso.value }}</a></td>
         </tr>

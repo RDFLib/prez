@@ -515,23 +515,16 @@ def collection(
                 q = """
                     PREFIX dcterms: <http://purl.org/dc/terms/>
                     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-                    SELECT DISTINCT ?c ?pl ?b
+                    SELECT DISTINCT ?c ?pl
                     WHERE {
                         <xxx> skos:member ?c .
                         ?c skos:prefLabel ?pl .
-      
-                        OPTIONAL {
-                            ?c skos:broader ?b .
-                        }
                     }
                     ORDER BY ?pl                
                     """.replace("xxx", self.instance_uri)
                 r = sparql_query(q)
-                print(r)
                 return JSONResponse([
-                    {"uri": x["c"]["value"], "prefLabel": x["pl"]["value"], "broader": x["b"]["value"]}
-                    if x.get("b") is not None
-                    else {"uri": x["c"]["value"], "prefLabel": x["pl"]["value"]}
+                    {"uri": x["c"]["value"], "prefLabel": x["pl"]["value"]}
                     for x in r[1]
                 ])
             elif self.profile == "skos":
@@ -988,6 +981,253 @@ def scheme(
                 return alt
 
     return SchemeRenderer().render()
+
+
+@api.get("/standard_name/")
+def standard_name(request: Request, acc_dep: Literal["accepted", "deprecated", "all", None] = None):
+    acc_dep_map = {
+        "accepted": '?x <http://www.w3.org/2002/07/owl#deprecated> "false" .',
+        "deprecated": '?x <http://www.w3.org/2002/07/owl#deprecated> "true" .',
+        "all": "",
+        None: ""
+    }
+
+    class CollectionRenderer(Renderer):
+        def __init__(self):
+            self.instance_uri = f"http://vocab.nerc.ac.uk/collection/P07/current/"
+
+            super().__init__(
+                request,
+                self.instance_uri,
+                {
+                    "nvs": nvs,
+                    "skos": skos,
+                    "vocpub": vocpub,
+                    "dd": dd
+                },
+                "nvs",
+            )
+
+        def _get_collection(self):
+            for collection in cache_return(collections_or_conceptschemes="collections"):
+                if collection["id"]["value"] == "P07":
+                    return collection
+
+        def _get_concepts(self):
+            q = """
+                PREFIX dcterms: <http://purl.org/dc/terms/>
+                PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                SELECT DISTINCT ?c ?id ?pl ?def ?date ?dep
+                WHERE {
+                        <xxx> skos:member ?x .
+                        ?x    						
+                            skos:prefLabel ?pl ;
+                            skos:definition ?def ;
+                            dcterms:date ?date ;
+                        .
+                        BIND (?pl AS ?id)
+                        BIND (IRI(CONCAT("http://vocab.nerc.ac.uk/standard_name/", ?pl, "/")) AS ?c)
+
+                        acc_dep
+                        OPTIONAL {
+                            ?x <http://www.w3.org/2002/07/owl#deprecated> ?dep .
+                        }
+
+                        FILTER(lang(?pl) = "en" || lang(?pl) = "") 
+                        FILTER(lang(?def) = "en" || lang(?def) = "")
+                }
+                ORDER BY ?pl
+                """.replace("xxx", self.instance_uri).replace("acc_dep", acc_dep_map.get(acc_dep))
+
+            sparql_result = sparql_query(q)
+            if sparql_result[0]:
+                return [
+                    {
+                        "uri": concept["c"]["value"],
+                        "id": concept["id"]["value"],
+                        "prefLabel": concept["pl"]["value"].replace("_", " "),
+                        "definition": concept["def"]["value"].replace("_", "_ "),
+                        "date": concept["date"]["value"][0:10],
+                        "deprecated": True if concept.get("dep") and concept["dep"]["value"] == "true" else False
+                    }
+                    for concept in sparql_result[1]
+                ]
+            else:
+                return False
+
+        def render(self):
+            if self.profile == "nvs":
+                if self.mediatype == "text/html":
+                    collection = self._get_collection()
+                    collection["concepts"] = self._get_concepts()
+
+                    if not collection["concepts"]:
+                        return templates.TemplateResponse(
+                            "error.html",
+                            {
+                                "request": request,
+                                "title": "DB Error",
+                                "status": "500",
+                                "message": "There was an error with accessing the Triplestore",
+                            }
+                        )
+
+                    self.instance_uri = "http://vocab.nerc.ac.uk/standard_name/"
+
+                    return templates.TemplateResponse(
+                        "collection.html",
+                        {
+                            "request": request,
+                            "uri": self.instance_uri,
+                            "collection": collection,
+                            "profile_token": "nvs",
+                        }
+                    )
+                elif self.mediatype in RDF_MEDIATYPES:
+                    q = """
+                        PREFIX dc: <http://purl.org/dc/terms/>
+                        PREFIX dce: <http://purl.org/dc/elements/1.1/>
+                        PREFIX grg: <http://www.isotc211.org/schemas/grg/>
+                        PREFIX owl: <http://www.w3.org/2002/07/owl#>
+                        PREFIX pav: <http://purl.org/pav/>
+                        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                        PREFIX void: <http://rdfs.org/ns/void#>
+
+                        CONSTRUCT {
+                          <http://vocab.nerc.ac.uk/standard_name/> ?p ?o .                           
+                          <http://vocab.nerc.ac.uk/standard_name/> skos:member ?m .                        
+                          ?m ?p2 ?o2 .              
+                        }
+                        WHERE {
+                          {
+                            <xxx> ?p ?o .                          
+                            MINUS { <xxx> skos:member ?o . }
+                          }
+
+                          {
+                            <xxx> skos:member ?mx .
+                            ?mx a skos:Concept ;
+                                skos:prefLabel ?pl ;
+                            .
+
+                            ?mx ?p2 ?o2 .
+
+                            FILTER ( ?p2 != skos:broaderTransitive )
+                            FILTER ( ?p2 != skos:narrowerTransitive )
+                          }
+                          
+                          BIND (IRI(CONCAT("http://vocab.nerc.ac.uk/standard_name/", ?pl, "/")) AS ?m)
+                        }
+                        """.replace("xxx", self.instance_uri)
+                    r = sparql_construct(q, self.mediatype)
+                    if r[0]:
+                        return Response(r[1], headers={"Content-Type": self.mediatype})
+                    else:
+                        return PlainTextResponse(
+                            "There was an error obtaining the Collections RDF from the Triplestore",
+                            status_code=500
+                        )
+            elif self.profile == "dd":
+                q = """
+                    PREFIX dcterms: <http://purl.org/dc/terms/>
+                    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                    SELECT DISTINCT ?c ?pl ?b
+                    WHERE {
+                        <xxx> skos:member ?xc .
+                        ?xc skos:prefLabel ?xpl .
+                        
+                        BIND (IRI(CONCAT("http://vocab.nerc.ac.uk/standard_name/", ?xpl, "/")) AS ?c)
+                        BIND (REPLACE(?xpl, "_", " ") AS ?pl)
+                    }
+                    ORDER BY ?pl                
+                    """.replace("xxx", self.instance_uri)
+                r = sparql_query(q)
+                return JSONResponse([
+                    {"uri": x["c"]["value"], "prefLabel": x["pl"]["value"]}
+                    for x in r[1]
+                ])
+            elif self.profile == "skos":
+                q = """
+                    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>                    
+                    CONSTRUCT {
+                        <http://vocab.nerc.ac.uk/standard_name/> 
+                            a skos:Collection ;
+                            skos:prefLabel ?prefLabel ;
+                            skos:definition ?description ;
+                            skos:member ?c .
+                        ?c skos:prefLabel ?c_pl .
+                    }
+                    WHERE {
+                        <xxx> 
+                            a skos:Collection ;
+                            skos:prefLabel ?prefLabel ;
+                            <http://purl.org/dc/terms/description> ?description ;
+                            skos:member ?xc .
+                        ?xc skos:prefLabel ?xc_pl .
+                        
+                        BIND (IRI(CONCAT("http://vocab.nerc.ac.uk/standard_name/", ?xc_pl, "/")) AS ?c)
+                        BIND (REPLACE(?xc_pl, "_", " ") AS ?c_pl)                        
+                    }
+                    ORDER BY ?prefLabel
+                    """.replace("xxx", self.instance_uri)
+                r = sparql_construct(q, self.mediatype)
+                if r[0]:
+                    return Response(r[1], headers={"Content-Type": self.mediatype})
+                else:
+                    return PlainTextResponse(
+                        "There was an error obtaining the Collections RDF from the Triplestore",
+                        status_code=500
+                    )
+            elif self.profile == "vocpub":
+                q = """
+                    PREFIX dcterms: <http://purl.org/dc/terms/>
+                    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+                    CONSTRUCT {
+                        <http://vocab.nerc.ac.uk/standard_name/> 
+                            a skos:Collection ;
+                            skos:prefLabel ?prefLabel ;
+                            skos:definition ?description ;
+                            dcterms:modified ?modified ;
+                            dcterms:creator ?creator ;
+                            dcterms:publisher ?publisher ;   
+                            dcterms:provenance "Made by NERC and maintained within the NERC Vocabulary Server" ;                            
+                            skos:member ?c .
+                        ?c skos:prefLabel ?c_pl .
+                    }
+                    WHERE {
+                        <xxx> 
+                            a skos:Collection ;
+                            skos:prefLabel ?prefLabel ;                            
+                            dcterms:description ?description ;
+                            dcterms:date ?date ;
+                            dcterms:creator ?creator ;
+                            dcterms:publisher ?publisher ;                             
+                            skos:member ?xc .
+                        ?xc skos:prefLabel ?xc_pl .
+                        
+                        BIND (IRI(CONCAT("http://vocab.nerc.ac.uk/standard_name/", ?xc_pl, "/")) AS ?c)
+                        BIND (REPLACE(?xc_pl, "_", " ") AS ?c_pl)
+                        BIND (STRDT(REPLACE(STRBEFORE(?date, "."), " ", "T"), xsd:dateTime) AS ?modified)
+                    }
+                    ORDER BY ?xc                    
+                    """.replace("xxx", self.instance_uri)
+
+                r = sparql_construct(q, self.mediatype)
+                if r[0]:
+                    return Response(r[1], headers={"Content-Type": self.mediatype})
+                else:
+                    return PlainTextResponse(
+                        "There was an error obtaining the Collections RDF from the Triplestore",
+                        status_code=500
+                    )
+
+            self.instance_uri = "http://vocab.nerc.ac.uk/standard_name/"
+            alt = super().render()
+            if alt is not None:
+                return alt
+
+    return CollectionRenderer().render()
 
 
 @api.get("/")
