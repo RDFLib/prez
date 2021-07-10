@@ -1,0 +1,23 @@
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<xxx>
+    a dcat:Dataset ;
+    dcterms:title "NERC Vocabulary Server Vocabularies"@en ;
+    dcterms:description "Terms for populating fields in oceanographic and earth science metadata including descriptions of data, platforms, instruments and geographic locations presented in controlled vocabularies."@en ;
+    dcterms:publisher <http://vocab.nerc.ac.uk/collection/R04/current/BO/> ;
+    dcterms:subject
+        <http://dbpedia.org/resource/Earth_science>,
+        <http://dbpedia.org/resource/Environmental_science>,
+        <http://dbpedia.org/resource/Oceanography> ;
+    dcterms:hasPart <xxxcollection/> , <xxxscheme/> ;
+.
+
+
+<http://vocab.nerc.ac.uk/collection/R04/current/BO/>
+    a foaf:Organization ;
+    foaf:name "British Oceanographic Data Centre" ;
+    foaf:homepage "https://www.bodc.ac.uk"^^xsd:anyURI ;
+.

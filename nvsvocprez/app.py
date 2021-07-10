@@ -9,7 +9,7 @@ from starlette.responses import RedirectResponse, Response, PlainTextResponse, J
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 from pyldapi.renderer import RDF_MEDIATYPES
-from model.profiles import void, nvs, skos, dd, ckan, vocpub
+from model.profiles import void, nvs, skos, dd, ckan, vocpub, dcat
 from utils import sparql_query, sparql_construct, cache_return, cache_clear, cache_fill, TriplestoreError
 from pyldapi import Renderer, ContainerRenderer
 from config import SYSTEM_URI, PORT
@@ -30,6 +30,57 @@ logging.basicConfig(level=logging.DEBUG)
 # def startup():
 #     cache_clear()
 #     cache_fill(collections_or_conceptschemes_or_both="both")
+
+
+@api.get("/")
+def index(request: Request):
+    dcat_file = api_home_dir / "dcat.ttl"
+
+    class DatasetRenderer(Renderer):
+        def __init__(self):
+            self.instance_uri = str(request.base_url)
+            self.label = "NERC Vocabulary Server Content"
+            self.comment = "The NVS gives access to standardised and hierarchically-organized vocabularies. It is " \
+                           "managed by the British Oceanographic Data Centre at the National Oceanography Centre " \
+                           "(NOC) in Liverpool and Southampton, and receives funding from the Natural Environment " \
+                           "Research Council (NERC) in the United Kingdom. Major technical developments have also " \
+                           "been funded by European Union's projects notably the Open Service Network for Marine " \
+                           "Environmental Data (NETMAR) programme, and the SeaDataNet and SeaDataCloud projects."
+            super().__init__(
+                request,
+                self.instance_uri,
+                {"dcat": dcat},
+                "dcat",
+            )
+
+        def render(self):
+            if self.profile == "dcat":
+                if self.mediatype == "text/html":
+                    return templates.TemplateResponse("index.html", {"request": request})
+                else:  # all other formats are RDF
+                    if self.mediatype == "text/turtle":
+                        return Response(
+                            open(dcat_file).read().replace("xxx", self.instance_uri),
+                            headers={"Content-Type": "text/turtle"}
+                        )
+                    else:
+                        from rdflib import Graph
+                        logging.debug(f"media type: {self.mediatype}")
+                        g = Graph().parse(
+                            data=open(dcat_file).read().replace("xxx", self.instance_uri),
+                            format="turtle"
+                        )
+                        logging.debug(len(g))
+                        return Response(
+                            content=g.serialize(format=self.mediatype),
+                            headers={"Content-Type": self.mediatype}
+                        )
+
+            alt = super().render()
+            if alt is not None:
+                return alt
+
+    return DatasetRenderer().render()
 
 
 @api.get("/collection/")
@@ -1228,11 +1279,6 @@ def standard_name(request: Request, acc_dep: Literal["accepted", "deprecated", "
                 return alt
 
     return CollectionRenderer().render()
-
-
-@api.get("/")
-def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
 
 
 @api.get("/about")
