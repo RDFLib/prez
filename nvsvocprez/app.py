@@ -9,7 +9,7 @@ from starlette.responses import RedirectResponse, Response, PlainTextResponse, J
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 from pyldapi.renderer import RDF_MEDIATYPES
-from model.profiles import void, nvs, skos, dd, ckan, vocpub, dcat
+from model.profiles import void, nvs, skos, dd, ckan, vocpub, dcat, sdo
 from utils import sparql_query, sparql_construct, cache_return, cache_clear, cache_fill, TriplestoreError
 from pyldapi import Renderer, ContainerRenderer
 from config import SYSTEM_URI, PORT
@@ -35,6 +35,7 @@ logging.basicConfig(level=logging.DEBUG)
 @api.get("/")
 def index(request: Request):
     dcat_file = api_home_dir / "dcat.ttl"
+    sdo_file = api_home_dir / "sdo.ttl"
 
     class DatasetRenderer(Renderer):
         def __init__(self):
@@ -49,7 +50,7 @@ def index(request: Request):
             super().__init__(
                 request,
                 self.instance_uri,
-                {"dcat": dcat},
+                {"dcat": dcat, "sdo": sdo},
                 "dcat",
             )
 
@@ -64,17 +65,29 @@ def index(request: Request):
                             headers={"Content-Type": "text/turtle"}
                         )
                     else:
-                        from rdflib import Graph
-                        logging.debug(f"media type: {self.mediatype}")
                         g = Graph().parse(
                             data=open(dcat_file).read().replace("xxx", self.instance_uri),
                             format="turtle"
                         )
-                        logging.debug(len(g))
                         return Response(
                             content=g.serialize(format=self.mediatype),
                             headers={"Content-Type": self.mediatype}
                         )
+            elif self.profile == "sdo":
+                if self.mediatype == "text/turtle":
+                    return Response(
+                        open(sdo_file).read().replace("xxx", self.instance_uri),
+                        headers={"Content-Type": "text/turtle"}
+                    )
+                else:
+                    g = Graph().parse(
+                        data=open(sdo_file).read().replace("xxx", self.instance_uri),
+                        format="turtle"
+                    )
+                    return Response(
+                        content=g.serialize(format=self.mediatype),
+                        headers={"Content-Type": self.mediatype}
+                    )
 
             alt = super().render()
             if alt is not None:
