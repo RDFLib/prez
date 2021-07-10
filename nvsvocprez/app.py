@@ -1,4 +1,5 @@
 import logging
+import pprint
 from typing import Optional, AnyStr, Literal
 from pathlib import Path
 import fastapi
@@ -15,6 +16,8 @@ from config import SYSTEM_URI, PORT
 from rdflib import Graph, URIRef
 from rdflib import Literal as RdfLiteral
 from rdflib.namespace import RDF, RDFS
+import markdown
+
 
 api_home_dir = Path(__file__).parent
 api = fastapi.FastAPI()
@@ -265,10 +268,12 @@ def conceptschemes(request: Request):
                             ?cs a skos:ConceptScheme ;
                                 dc:alternative ?alt ;
                                 dc:creator ?creator ;
-                                dc:date ?modified ;
+                                dc:date ?m ;
                                 dc:publisher ?publisher ;
                                 dc:title ?title ;
                                 owl:versionInfo ?version ;
+                            .
+                            BIND (STRDT(REPLACE(STRBEFORE(?m, "."), " ", "T"), xsd:dateTime) AS ?modified)
 
                             OPTIONAL {?cs skos:hasTopConcept ?tc .}
                             OPTIONAL { ?cs skos:altLabel ?al . }
@@ -601,6 +606,388 @@ def collection(
                 return alt
 
     return CollectionRenderer().render()
+
+
+@api.get("/scheme/{scheme_id}")
+@api.get("/scheme/{scheme_id}/")
+def scheme_no_current(request: Request, scheme_id):
+    return RedirectResponse(url=f"/scheme/{scheme_id}/current/")
+
+
+@api.get("/scheme/{scheme_id}/current/")
+@api.get("/scheme/{scheme_id}/current/{acc_dep}")
+def scheme(
+        request: Request,
+        scheme_id,
+        acc_dep: Literal["accepted", "deprecated", "all", None] = None
+):
+    acc_dep_map = {
+        "accepted": '?c <http://www.w3.org/2002/07/owl#deprecated> "false" .',
+        "deprecated": '?c <http://www.w3.org/2002/07/owl#deprecated> "true" .',
+        "all": "",
+        None: ""
+    }
+
+    class SchemeRenderer(Renderer):
+        def __init__(self):
+            self.instance_uri = f"http://vocab.nerc.ac.uk/scheme/{scheme_id}/current/"
+
+            super().__init__(
+                request,
+                self.instance_uri,
+                {
+                    "nvs": nvs,
+                    "skos": skos,
+                    "vocpub": vocpub,
+                    "dd": dd
+                },
+                "nvs",
+            )
+
+        def _get_scheme(self):
+            for scheme in cache_return(collections_or_conceptschemes="conceptschemes"):
+                if scheme["id"]["value"] == scheme_id:
+                    return scheme
+
+        def _get_concept_hierarchy(self):
+            def make_hierarchical_dicts(data):
+                children_parents = []
+                labels = {}
+
+                for d in data:
+                    child = d["concept"]["value"]
+                    parent = d["broader"]["value"] if d.get("broader") is not None else None
+                    children_parents.append((child, parent))
+                    labels[child] = d["pl"]["value"].replace("<", "&lt;")
+
+                pprint.pprint(labels)
+                children_parents.sort(key=lambda x: x[0])
+                has_parent = set()
+                all_items = {}
+                for child, parent in children_parents:
+                    if parent not in all_items:
+                        all_items[parent] = {}
+                    if child not in all_items:
+                        all_items[child] = {}
+                    all_items[parent][child] = all_items[child]
+                    has_parent.add(child)
+
+                hierarchy = {}
+                for key, value in all_items.items():
+                    if key not in has_parent:
+                        hierarchy[key] = value
+                return hierarchy, labels
+
+            def make_nested_ul(hierarchy, labels):
+                html = ""
+                for k, v in hierarchy.items():
+                    if v:
+                        html += f'<li><span class="caret"><a href="{k.replace("http://vocab.nerc.ac.uk", "")}">{labels[k]}</a></span>' if k is not None else "None"
+                        html += '<ul class="nested">'
+                        html += make_nested_ul(v, labels)
+                        html += "</ul>"
+                    else:
+                        html += f'<li><a href="{k.replace("http://vocab.nerc.ac.uk", "")}">{labels[k]}</a>' if k is not None else "None"
+                    html += "</li>"
+                return html
+
+            q = """
+                PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                SELECT DISTINCT ?concept ?pl ?broader
+                WHERE {
+                  { 
+                    ?concept skos:inScheme <xxx>  .
+                  }
+                  UNION
+                  { ?concept skos:topConceptOf <xxx>  . }
+                  UNION
+                  { <xxx>  skos:hasTopConcept ?concept . }
+                
+                  ?concept skos:prefLabel ?pl .
+                  BIND (STRAFTER(STR(?concept), ".uk") AS ?systemUri)
+                  
+                  OPTIONAL { 
+                    ?concept skos:broader ?broader .
+                    { ?broader skos:inScheme <xxx>  . }
+                    UNION
+                    { ?broader skos:topConceptOf <xxx>  . }
+                    UNION
+                    { <xxx>  skos:hasTopConcept ?broader . }
+                  }
+                  FILTER(lang(?pl) = "en" || lang(?pl) = "")
+                }
+                ORDER BY ?pl
+                """.replace("xxx", self.instance_uri)
+            try:
+                r = sparql_query(q)
+
+                if not r[0]:
+                    return None
+                else:
+                    hier = make_hierarchical_dicts(r[1])
+                    hier[1][None] = None
+                    return "<ul class=\"concept-hierarchy\">" + make_nested_ul(hier[0], hier[1])[23:-5]
+            except RecursionError as e:
+                logging.warning("Encountered a recursion limit error for {}".format(self.vocab_uri))
+                # make a flat list of concepts
+                q = """
+                    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                    SELECT DISTINCT ?c ?pl
+                    WHERE {{
+                        ?c skos:inScheme <{vocab_uri}> .              
+                        ?c skos:prefLabel ?pl .
+                        FILTER(lang(?pl) = "{language}" || lang(?pl) = "") 
+                    }}
+                    ORDER BY ?pl
+                    """.format(vocab_uri=self.instance_uri, language=self.language)
+
+                concepts = [
+                    (concept["systemUri"]["value"], concept["pl"]["value"])
+                    for concept in sparql_query(q)
+                ]
+
+                concepts_html = "<br />".join(["<a href=\"{}\">{}</a>".format(c[0], c[1]) for c in concepts])
+                return """<p><strong><em>This concept hierarchy cannot be displayed</em></strong><p>
+                            <p>The flat list of all this Scheme's Concepts is:</p>
+                            <p>{}</p>
+                        """.format(concepts_html)
+
+        def render(self):
+            if self.profile == "nvs":
+                if self.mediatype == "text/html":
+                    scheme = self._get_scheme()
+                    scheme["concept_hierarchy"] = self._get_concept_hierarchy()
+
+                    if not scheme["concept_hierarchy"]:
+                        return templates.TemplateResponse(
+                            "error.html",
+                            {
+                                "request": request,
+                                "title": "DB Error",
+                                "status": "500",
+                                "message": "There was an error with accessing the Triplestore",
+                            }
+                        )
+
+                    return templates.TemplateResponse(
+                        "scheme.html",
+                        {
+                            "request": request,
+                            "uri": self.instance_uri,
+                            "scheme": scheme,
+                            "profile_token": "nvs",
+                        }
+                    )
+                elif self.mediatype in RDF_MEDIATYPES:
+                    q = """
+                        PREFIX dc: <http://purl.org/dc/terms/>
+                        PREFIX dce: <http://purl.org/dc/elements/1.1/>
+                        PREFIX grg: <http://www.isotc211.org/schemas/grg/>
+                        PREFIX owl: <http://www.w3.org/2002/07/owl#>
+                        PREFIX pav: <http://purl.org/pav/>
+                        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                        PREFIX void: <http://rdfs.org/ns/void#>
+
+                        CONSTRUCT {
+                          <xxx> ?p ?o .                           
+                          <xxx> skos:member ?m .                        
+                          ?m ?p2 ?o2 .              
+                        }
+                        WHERE {
+                          {
+                            <xxx> ?p ?o .                          
+                            MINUS { <xxx> skos:member ?o . }
+                          }
+
+                          {
+                            <xxx> skos:member ?m .
+                            ?m a skos:Concept .
+
+                            ?m ?p2 ?o2 .
+
+                            FILTER ( ?p2 != skos:broaderTransitive )
+                            FILTER ( ?p2 != skos:narrowerTransitive )
+                          }
+                        }
+                        """.replace("xxx", self.instance_uri)
+                    r = sparql_construct(q, self.mediatype)
+                    if r[0]:
+                        return Response(r[1], headers={"Content-Type": self.mediatype})
+                    else:
+                        return PlainTextResponse(
+                            "There was an error obtaining the Collections RDF from the Triplestore",
+                            status_code=500
+                        )
+            elif self.profile == "dd":
+                q = """
+                    PREFIX dcterms: <http://purl.org/dc/terms/>
+                    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                    SELECT DISTINCT ?c ?pl ?b
+                    WHERE {
+                        ?c skos:inScheme <xxx> ;
+                           skos:prefLabel ?pl .
+
+                        OPTIONAL {
+                            ?b skos:inScheme <xxx> .
+                            ?c skos:broader ?b .
+                        }
+                        
+                        FILTER(lang(?pl) = "en" || lang(?pl) = "")
+                    }
+                    ORDER BY ?pl                
+                    """.replace("xxx", self.instance_uri)
+                r = sparql_query(q)
+                print(r)
+                return JSONResponse([
+                    {"uri": x["c"]["value"], "prefLabel": x["pl"]["value"], "broader": x["b"]["value"]}
+                    if x.get("b") is not None
+                    else {"uri": x["c"]["value"], "prefLabel": x["pl"]["value"]}
+                    for x in r[1]
+                ])
+            elif self.profile == "skos":
+                q = """
+                    PREFIX dcterms: <http://purl.org/dc/terms/>
+                    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                    CONSTRUCT {
+                        <xxx>
+                          a skos:ConceptScheme ;
+                          skos:prefLabel ?pl ;
+                          skos:defintion ?def ;  
+                          skos:hasTopConcept ?tc ;
+                        .
+                        ?c a skos:Concept ;
+                           skos:prefLabel ?c_pl ;
+                           skos:defintion ?c_def ; 
+                           skos:broader ?broader ;
+                           skos:inScheme <xxx> ;
+                        .
+                        
+                        ?tc skos:topConceptOf <xxx> .  
+                        ?broader skos:narrower ?c .                        
+                    }
+                    WHERE {
+                        <xxx>
+                          skos:prefLabel ?pl ;
+                          dcterms:description ?def ;  
+                          skos:hasTopConcept ?tc ;
+                        .
+                    
+                        { ?c skos:inScheme <xxx> }
+                        UNION
+                        { ?c skos:topConceptOf <xxx> }
+                        UNION
+                        { <xxx>  skos:hasTopConcept ?c }
+                    
+                        ?c 
+                            skos:prefLabel ?c_pl ;
+                            skos:definition ?c_def ;
+                        .
+                    
+                        BIND (STRAFTER(STR(?c), ".uk") AS ?systemUri)
+                        
+                        OPTIONAL { 
+                            ?c skos:broader ?broader .
+                            { ?broader skos:inScheme <xxx>  . }
+                            UNION
+                            { ?broader skos:topConceptOf <xxx>  . }
+                            UNION
+                            { <xxx>  skos:hasTopConcept ?broader . }
+                        }
+                        FILTER(lang(?pl) = "en" || lang(?pl) = "")
+                        FILTER(lang(?def) = "en" || lang(?def) = "")
+                        FILTER(lang(?c_pl) = "en" || lang(?c_pl) = "")
+                        FILTER(lang(?c_def) = "en" || lang(?c_def) = "")
+                    }
+                    ORDER BY ?pl
+                    """.replace("xxx", self.instance_uri)
+                r = sparql_construct(q, self.mediatype)
+                if r[0]:
+                    return Response(r[1], headers={"Content-Type": self.mediatype})
+                else:
+                    return PlainTextResponse(
+                        "There was an error obtaining the Collections RDF from the Triplestore",
+                        status_code=500
+                    )
+            elif self.profile == "vocpub":
+                q = """
+                    PREFIX dcterms: <http://purl.org/dc/terms/>
+                    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+                    CONSTRUCT {
+                        <xxx>
+                          a skos:ConceptScheme ;
+                          skos:prefLabel ?pl ;
+                          skos:defintion ?def ;  
+                          skos:hasTopConcept ?tc ;
+                          dcterms:creator ?creator ;
+                          dcterms:publisher ?publisher ;
+                          dcterms:modified ?modified ;
+                          dcterms:provenance "Made by NERC and maintained within the NERC Vocabulary Server" ; 
+                        .                        
+                        
+                        ?c a skos:Concept ;
+                           skos:prefLabel ?c_pl ;
+                           skos:defintion ?c_def ; 
+                           skos:broader ?broader ;
+                           skos:inScheme <xxx> ;
+                        .
+
+                        ?tc skos:topConceptOf <xxx> .  
+                        ?broader skos:narrower ?c .                        
+                    }
+                    WHERE {
+                        <xxx>
+                          skos:prefLabel ?pl ;
+                          dcterms:description ?def ;  
+                          skos:hasTopConcept ?tc ;
+                          dcterms:publisher ?publisher ;
+                          dcterms:date ?m ;                                                    
+                        .
+                        BIND (STRDT(REPLACE(STRBEFORE(?m, "."), " ", "T"), xsd:dateTime) AS ?modified)
+                        
+                        { ?c skos:inScheme <xxx> }
+                        UNION
+                        { ?c skos:topConceptOf <xxx> }
+                        UNION
+                        { <xxx>  skos:hasTopConcept ?c }
+
+                        ?c 
+                            skos:prefLabel ?c_pl ;
+                            skos:definition ?c_def ;
+                        .
+
+                        BIND (STRAFTER(STR(?c), ".uk") AS ?systemUri)
+
+                        OPTIONAL { 
+                            ?c skos:broader ?broader .
+                            { ?broader skos:inScheme <xxx>  . }
+                            UNION
+                            { ?broader skos:topConceptOf <xxx>  . }
+                            UNION
+                            { <xxx>  skos:hasTopConcept ?broader . }
+                        }
+                        FILTER(lang(?pl) = "en" || lang(?pl) = "")
+                        FILTER(lang(?def) = "en" || lang(?def) = "")
+                        FILTER(lang(?c_pl) = "en" || lang(?c_pl) = "")
+                        FILTER(lang(?c_def) = "en" || lang(?c_def) = "")
+                    }
+                    ORDER BY ?pl
+                    """.replace("xxx", self.instance_uri)
+
+                r = sparql_construct(q, self.mediatype)
+                if r[0]:
+                    return Response(r[1], headers={"Content-Type": self.mediatype})
+                else:
+                    return PlainTextResponse(
+                        "There was an error obtaining the Collections RDF from the Triplestore",
+                        status_code=500
+                    )
+
+            alt = super().render()
+            if alt is not None:
+                return alt
+
+    return SchemeRenderer().render()
 
 
 @api.get("/")

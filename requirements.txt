@@ -6,3 +6,4 @@ aiofiles
 git+https://github.com/RDFLib/rdflib.git@master#egg=rdflib
 git+https://github.com/RDFLib/rdflib-jsonld.git@master#egg=rdflib-jsonld
 connegp
+markdown

@@ -18,7 +18,8 @@ def sparql_query(query: str):
         config.SPARQL_ENDPOINT,
         data=query,
         headers={"Content-Type": "application/sparql-query"},
-        auth=(config.SPARQL_USERNAME, config.SPARQL_PASSWORD)
+        auth=(config.SPARQL_USERNAME, config.SPARQL_PASSWORD),
+        timeout=60.0
     )
     if 200 <= r.status_code < 300:
         return True, r.json()["results"]["bindings"]
@@ -31,7 +32,8 @@ def sparql_construct(query: str, rdf_mediatype="text/turtle"):
         config.SPARQL_ENDPOINT,
         data=query,
         headers={"Content-Type": "application/sparql-query", "Accept": rdf_mediatype},
-        auth=(config.SPARQL_USERNAME, config.SPARQL_PASSWORD)
+        auth=(config.SPARQL_USERNAME, config.SPARQL_PASSWORD),
+        timeout=60.0
     )
     if 200 <= r.status_code < 300:
         return True, r.content
@@ -148,3 +150,55 @@ def cache_return(collections_or_conceptschemes: Literal["collections", "concepts
 
         with open(conceptschemes_pickle, "rb") as cache_file:
             return pickle.load(cache_file)
+
+    def draw_concept_hierarchy(hierarchy):
+        tab = "\t"
+        previous_length = 1
+
+        text = ""
+        tracked_items = []
+        for item in hierarchy:
+            mult = None
+
+            if item[0] > previous_length + 2:  # SPARQL query error on length value
+                for tracked_item in tracked_items:
+                    if tracked_item["name"] == item[3]:
+                        mult = tracked_item["indent"] + 1
+
+            if mult is None:
+                found = False
+                for tracked_item in tracked_items:
+                    if tracked_item["name"] == item[3]:
+                        found = True
+                if not found:
+                    mult = 0
+
+            if mult is None:  # else: # everything is normal
+                mult = item[0] - 1
+
+            t = tab * mult + "* [" + item[2] + "](" + get_content_uri(item[1]) + ")\n"
+            text += t
+            previous_length = mult
+            tracked_items.append({"name": item[1], "indent": mult})
+
+        return markdown.markdown(text)
+
+
+def render_concept_tree(html_doc):
+    soup = BeautifulSoup(html_doc, "html.parser")
+
+    # concept_hierarchy = soup.find(id='concept-hierarchy')
+
+    uls = soup.find_all("ul")
+
+    for i, ul in enumerate(uls):
+        # Don't add HTML class nested to the first 'ul' found.
+        if not i == 0:
+            ul["class"] = "nested"
+            if ul.parent.name == "li":
+                temp = BeautifulSoup(str(ul.parent.a.extract()), "html.parser")
+                ul.parent.insert(
+                    0, BeautifulSoup('<span class="caret">', "html.parser")
+                )
+                ul.parent.span.insert(0, temp)
+    return soup
