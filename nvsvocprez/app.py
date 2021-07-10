@@ -470,10 +470,11 @@ def collection(
             q = """
                 PREFIX dcterms: <http://purl.org/dc/terms/>
                 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-                SELECT DISTINCT ?c ?id ?pl ?def ?date ?dep
+                SELECT DISTINCT ?c ?systemUri ?id ?pl ?def ?date ?dep
                 WHERE {{
                         <{vocab_uri}> skos:member ?c .
                         BIND (STRBEFORE(STRAFTER(STR(?c), "/current/"), "/") AS ?id)
+                        BIND (IRI(STRAFTER(STR(?c), ".uk")) AS ?systemUri)
 
                         {acc_dep}
                         OPTIONAL {{
@@ -499,6 +500,7 @@ def collection(
                     {
                         "uri": concept["c"]["value"],
                         "id": concept["id"]["value"],
+                        "systemUri": concept["systemUri"]["value"],
                         "prefLabel": concept["pl"]["value"].replace("_", " "),
                         "definition": concept["def"]["value"].replace("_", "_ "),
                         "date": concept["date"]["value"][0:10],
@@ -761,7 +763,7 @@ def scheme(
                   { <xxx>  skos:hasTopConcept ?concept . }
                 
                   ?concept skos:prefLabel ?pl .
-                  BIND (STRAFTER(STR(?concept), ".uk") AS ?systemUri)
+                  BIND (IRI(STRAFTER(STR(?concept), ".uk")) AS ?systemUri)
                   
                   OPTIONAL { 
                     ?concept skos:broader ?broader .
@@ -771,7 +773,7 @@ def scheme(
                     UNION
                     { <xxx>  skos:hasTopConcept ?broader . }
                   }
-                  FILTER(lang(?pl) = "en" || lang(?pl) = "")
+                  FILTER(lang(?pl) = "en" || lang(?pl) = "")                                    
                 }
                 ORDER BY ?pl
                 """.replace("xxx", self.instance_uri)
@@ -940,7 +942,7 @@ def scheme(
                             skos:definition ?c_def ;
                         .
                     
-                        BIND (STRAFTER(STR(?c), ".uk") AS ?systemUri)
+                        BIND (IRI(STRAFTER(STR(?c), ".uk")) AS ?systemUri)
                         
                         OPTIONAL { 
                             ?c skos:broader ?broader .
@@ -1013,7 +1015,7 @@ def scheme(
                             skos:definition ?c_def ;
                         .
 
-                        BIND (STRAFTER(STR(?c), ".uk") AS ?systemUri)
+                        BIND (IRI(STRAFTER(STR(?c), ".uk")) AS ?systemUri)
 
                         OPTIONAL { 
                             ?c skos:broader ?broader .
