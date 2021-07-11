@@ -27,6 +27,10 @@
           <th><a href="http://www.w3.org/2004/02/skos/core#definition">Definition</a></th>
           <td colspan="2">{{ definition }}</td>
         </tr>
+        <tr>
+          <th><a href="http://purl.org/dc/terms/date">Date</a></th>
+          <td colspan="2">{{ date }}</td>
+        </tr>
         {# PUV Properties #}
         {% if profile == "nvs" %}
           <tr>
@@ -35,13 +39,10 @@
           {# puv #}
           {% if puv|length > 0 %}
             {% for x in puv %}
-              <tr>
-              {% if x.predicate_html is not none %}
-                {{ x.object_html | replace("xxx", x.predicate_html) | safe }}
-              {% else %}
-                {{ x.object_html | replace("xxx", "") | safe }}
-              {% endif %}
-              </tr>
+            <tr>
+              <th>{{ x.predicate_html|safe }}</th>
+              {{ x.object_html|safe }}
+            </tr>
             {% endfor %}
           {% endif %}
           {# NVS Properties #}
@@ -53,11 +54,8 @@
         {% if related|length > 0 %}
           {% for x in related %}
             <tr>
-            {% if x.predicate_html is not none %}
-              {{ x.object_html | replace("xxx", x.predicate_html) | safe }}
-            {% else %}
-              {{ x.object_html | replace("xxx", "") | safe }}
-            {% endif %}
+              <th>{{ x.predicate_html|safe }}</th>
+              {{ x.object_html|safe }}
             </tr>
           {% endfor %}
         {% endif %}
@@ -66,7 +64,7 @@
           {% for x in agent %}
             <tr>
               <th>{{ x.predicate_html|safe }}</th>
-              <td>{{ x.object_html|safe }}</td>
+              {{ x.object_html|safe }}
             </tr>
           {% endfor %}
         {% endif %}
@@ -75,7 +73,7 @@
           {% for x in annotation %}
             <tr>
               <th>{{ x.predicate_html|safe }}</th>
-              <td>{{ x.object_html|safe }}</td>
+              {{ x.object_html|safe }}
             </tr>
           {% endfor %}
         {% endif %}
@@ -84,7 +82,7 @@
           {% for x in provenance %}
             <tr>
               <th>{{ x.predicate_html|safe }}</th>
-              <td>{{ x.object_html|safe }}</td>
+              {{ x.object_html|safe }}
             </tr>
           {% endfor %}
         {% endif %}
@@ -93,7 +91,7 @@
           {% for x in other %}
             <tr>
               <th>{{ x.predicate_html|safe }}</th>
-              <td>{{ x.object_html|safe }}</td>
+              {{ x.object_html|safe }}
             </tr>
           {% endfor %}
         {% endif %}

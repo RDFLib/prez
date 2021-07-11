@@ -15,7 +15,7 @@ from pyldapi import Renderer, ContainerRenderer, DisplayProperty
 from config import SYSTEM_URI, PORT
 from rdflib import Graph, URIRef
 from rdflib import Literal as RdfLiteral, Namespace
-from rdflib.namespace import DCTERMS, OWL, RDF, RDFS, SKOS
+from rdflib.namespace import DC, DCTERMS, OWL, RDF, RDFS, SKOS, VOID
 import markdown
 
 
@@ -1369,6 +1369,7 @@ def concept(request: Request):
                 str(SKOS.note): {"label": "Note", "group": "annotation"},
                 str(SKOS.scopeNote): {"label": "Scope Note", "group": "annotation"},
                 str(SKOS.historyNote): {"label": "History Note", "group": "annotation"},
+                str(SKOS.notation): {"label": "Identifier", "group": "annotation"},
 
                 str(OWL.sameAs): {"label": "Same As", "group": "related"},
                 str(SKOS.broader): {"label": "Broader", "group": "related"},
@@ -1385,10 +1386,14 @@ def concept(request: Request):
                 str(PAV.previousVersion): {"label": "Previous Version", "group": "provenance"},
                 str(DCTERMS.isVersionOf): {"label": "Is Version Of", "group": "provenance"},
                 str(PAV.authoredOn): {"label": "Authored On", "group": "provenance"},
-            }
 
-            unique_alt_labels = []
-            unique_versions = []
+                str(DC.identifier): {"group": "ignore"},
+                str(DCTERMS.identifier): {"group": "ignore"},
+                str(VOID.inDataset): {"group": "ignore"},
+                str(RDF.type): {"group": "ignore"},
+                str(OWL.versionInfo): {"group": "ignore"},
+                str(PAV.authoredOn): {"group": "ignore"},
+            }
 
             context = {
                 "request": request,
@@ -1398,6 +1403,7 @@ def concept(request: Request):
                 "collection_systemUri": None,
                 "collection_label": None,
                 "definition": None,
+                "date": None,
                 "altLabels": [],
                 "puv": [],
                 "annotation": [],
@@ -1410,11 +1416,11 @@ def concept(request: Request):
 
             static_puv_params = [
                 {
-                    'o': {
+                    'p': {
                         'type': 'uri',
                         'value': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
                     },
-                    'p': {
+                    'o': {
                         'type': 'uri',
                         'value': 'https://w3id.org/env/puv/Parameter'
                     },
@@ -1605,6 +1611,10 @@ def concept(request: Request):
                 }
             ]
             r[1].extend(static_puv_params)
+
+            def make_predicate_label_from_uri(uri):
+                return uri.split("#")[-1].split("/")[-1]
+
             for x in r[1]:
                 p = x["p"]["value"]
                 o = x["o"]["value"]
@@ -1621,18 +1631,20 @@ def concept(request: Request):
                     context["altLabels"].append(o)
                 elif p == str(SKOS.definition):
                     context["definition"] = o
+                elif p == str(DCTERMS.date):
+                    context["date"] = o.replace(" ", "T").rstrip(".0")
                 elif p in props.keys():
-                    context[props[p]["group"]].append(DisplayProperty(p, props[p]["label"], o, o_label, o_notation))
+                    if props[p]["group"] != "ignore":
+                        context[props[p]["group"]].append(DisplayProperty(p, props[p]["label"], o, o_label, o_notation))
                 else:
-                    # print(p)
-                    context["other"].append(DisplayProperty(p, None, o, o_label))
+                    context["other"].append(DisplayProperty(p, make_predicate_label_from_uri(p), o, o_label))
 
             def clean_prop_list_labels(prop_list):
                 last_pred_html = None
                 for x in prop_list:
                     this_predicate_html = x.predicate_html
                     if this_predicate_html == last_pred_html:
-                        x.predicate_html = None
+                        x.predicate_html = ""
                     last_pred_html = this_predicate_html
 
             context["altLabels"].sort()
