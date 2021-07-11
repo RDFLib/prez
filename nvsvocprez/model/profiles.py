@@ -39,17 +39,17 @@ void = Profile(
     default_language="en",
 )
 
-ckan = Profile(
-    uri="https://ckan.org/",
-    id="ckan",
-    label="CKAN",
-    comment="The Comprehensive Knowledge Archive Network (CKAN) is a web-based open-source management system for "
-    "the storage and distribution of open data. This profile it it's native data model",
-    mediatypes=["application/json"],
-    default_mediatype="application/json",
-    languages=["en"],
-    default_language="en",
-)
+# ckan = Profile(
+#     uri="https://ckan.org/",
+#     id="ckan",
+#     label="CKAN",
+#     comment="The Comprehensive Knowledge Archive Network (CKAN) is a web-based open-source management system for "
+#     "the storage and distribution of open data. This profile it it's native data model",
+#     mediatypes=["application/json"],
+#     default_mediatype="application/json",
+#     languages=["en"],
+#     default_language="en",
+# )
 
 dd = Profile(
     uri="https://w3id.org/profile/dd",

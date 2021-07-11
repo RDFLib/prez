@@ -1,0 +1,104 @@
+{% extends "page.html" %}
+{% block content %}
+  <div style="display:grid; grid-template-columns: 80% auto;">
+    <div style="grid-column: 1;">
+      <h1>Concept{% if deprecated %}<sup style="color:red;">DEPRECATED</sup>{% endif %}</h1>
+      <h2>{{ prefLabel }}</h2>
+      <table class="metadata concept">
+        <tr>
+          <th>URI</th>
+          <td colspan="2"><a href="{{ uri }}">{{ uri }}</a></td>
+        </tr>
+        <tr>
+          <th>Within Vocab</th>
+          <td colspan="2"><a href="{{ collection_systemUri }}">{{ collection_label }}</a></td>
+        </tr>
+        {% if altLabels|length > 0 %}
+        <tr>
+          <th><a href="http://www.w3.org/2004/02/skos/core#altLabel">Alternative Labels</a></th>
+          <td colspan="2">
+            {% for altLabel in altLabels %}
+              {{ altLabel }}{% if not loop.last %}, {% endif %}
+            {% endfor %}
+          </td>
+        </tr>
+        {% endif %}
+        <tr>
+          <th><a href="http://www.w3.org/2004/02/skos/core#definition">Definition</a></th>
+          <td colspan="2">{{ definition }}</td>
+        </tr>
+        {# PUV Properties #}
+        {% if profile == "nvs" %}
+          <tr>
+            <th colspan="3" style="padding-top:20px;"><a style="font-size: 22px;" href="https://w3id.org/env/puv">PUV Properties</a></th>
+          </tr>
+          {# puv #}
+          {% if puv|length > 0 %}
+            {% for x in puv %}
+              <tr>
+              {% if x.predicate_html is not none %}
+                {{ x.object_html | replace("xxx", x.predicate_html) | safe }}
+              {% else %}
+                {{ x.object_html | replace("xxx", "") | safe }}
+              {% endif %}
+              </tr>
+            {% endfor %}
+          {% endif %}
+          {# NVS Properties #}
+          <tr>
+            <th colspan="3" style="padding-top:20px;"><span style="font-size: 22px;">NVS Properties</span></th>
+          </tr>
+        {% endif %}
+        {# related #}
+        {% if related|length > 0 %}
+          {% for x in related %}
+            <tr>
+            {% if x.predicate_html is not none %}
+              {{ x.object_html | replace("xxx", x.predicate_html) | safe }}
+            {% else %}
+              {{ x.object_html | replace("xxx", "") | safe }}
+            {% endif %}
+            </tr>
+          {% endfor %}
+        {% endif %}
+        {# agent #}
+        {% if agent|length > 0 %}
+          {% for x in agent %}
+            <tr>
+              <th>{{ x.predicate_html|safe }}</th>
+              <td>{{ x.object_html|safe }}</td>
+            </tr>
+          {% endfor %}
+        {% endif %}
+        {# annotation #}
+        {% if annotation|length > 0 %}
+          {% for x in annotation %}
+            <tr>
+              <th>{{ x.predicate_html|safe }}</th>
+              <td>{{ x.object_html|safe }}</td>
+            </tr>
+          {% endfor %}
+        {% endif %}
+        {# provenance #}
+        {% if provenance|length > 0 %}
+          {% for x in provenance %}
+            <tr>
+              <th>{{ x.predicate_html|safe }}</th>
+              <td>{{ x.object_html|safe }}</td>
+            </tr>
+          {% endfor %}
+        {% endif %}
+        {# other #}
+        {% if other|length > 0 %}
+          {% for x in other %}
+            <tr>
+              <th>{{ x.predicate_html|safe }}</th>
+              <td>{{ x.object_html|safe }}</td>
+            </tr>
+          {% endfor %}
+        {% endif %}
+      </table>
+    </div>
+    {% include 'alt_link.html' %}
+  </div>
+{% endblock %}

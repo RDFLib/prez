@@ -9,13 +9,13 @@ from starlette.responses import RedirectResponse, Response, PlainTextResponse, J
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 from pyldapi.renderer import RDF_MEDIATYPES
-from model.profiles import void, nvs, skos, dd, ckan, vocpub, dcat, sdo
-from utils import sparql_query, sparql_construct, cache_return, cache_clear, cache_fill, TriplestoreError
-from pyldapi import Renderer, ContainerRenderer
+from model.profiles import void, nvs, skos, dd, vocpub, dcat, sdo
+from utils import sparql_query, sparql_construct, cache_return, cache_clear
+from pyldapi import Renderer, ContainerRenderer, DisplayProperty
 from config import SYSTEM_URI, PORT
 from rdflib import Graph, URIRef
-from rdflib import Literal as RdfLiteral
-from rdflib.namespace import RDF, RDFS
+from rdflib import Literal as RdfLiteral, Namespace
+from rdflib.namespace import DCTERMS, OWL, RDF, RDFS, SKOS
 import markdown
 
 
@@ -712,7 +712,6 @@ def scheme(
                     children_parents.append((child, parent))
                     labels[child] = d["pl"]["value"].replace("<", "&lt;")
 
-                pprint.pprint(labels)
                 children_parents.sort(key=lambda x: x[0])
                 has_parent = set()
                 all_items = {}
@@ -890,7 +889,6 @@ def scheme(
                     ORDER BY ?pl                
                     """.replace("xxx", self.instance_uri)
                 r = sparql_query(q)
-                print(r)
                 return JSONResponse([
                     {"uri": x["c"]["value"], "prefLabel": x["pl"]["value"], "broader": x["b"]["value"]}
                     if x.get("b") is not None
@@ -1085,7 +1083,7 @@ def standard_name(request: Request, acc_dep_or_concept: str = None):
                             dcterms:date ?date ;
                         .
                         BIND (?pl AS ?id)
-                        BIND (CONCAT("http://vocab.nerc.ac.uk/standard_name/", ?pl, "/") AS ?c)
+                        BIND (CONCAT("/standard_name/", ?pl, "/") AS ?c)
 
                         acc_dep
                         OPTIONAL {
@@ -1103,7 +1101,7 @@ def standard_name(request: Request, acc_dep_or_concept: str = None):
             if sparql_result[0]:
                 return [
                     {
-                        "uri": concept["c"]["value"],
+                        "systemUri": concept["c"]["value"],
                         "id": concept["id"]["value"],
                         "prefLabel": concept["pl"]["value"].replace("_", " "),
                         "definition": concept["def"]["value"].replace("_", "_ "),
@@ -1290,13 +1288,539 @@ def standard_name(request: Request, acc_dep_or_concept: str = None):
     return CollectionRenderer().render()
 
 
-@api.get("/standard_name/{standard_name_concept_id}")
 def standard_name_concept(standard_name_concept_id: str):
-    return f"SN Concept {standard_name_concept_id}"
+    concept_uri = "http://vocab.nerc.ac.uk/standard_name/" + standard_name_concept_id + "/"
+    return f"SN Concept {concept_uri}"
 
 
 def concept(request: Request):
-    return f"Concept {request.url}"
+    class ConceptRenderer(Renderer):
+        def __init__(self):
+            self.instance_uri = "http://vocab.nerc.ac.uk/collection/" + str(request.url).split("/collection/")[1].split("?")[0]
+            super().__init__(
+                request,
+                self.instance_uri,
+                {
+                    "nvs": nvs,
+                    "skos": skos,
+                    "vocpub": vocpub,
+                    "sdo": sdo,
+                },
+                "nvs"
+            )
+
+        def _render_nvs_html(self):
+            q = """
+                PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                SELECT DISTINCT ?p ?o ?o_label ?o_notation ?collection_systemUri ?collection_label
+                WHERE {
+                  <xxx>
+                    ?p ?o .
+                
+                  FILTER(!isLiteral(?o) || lang(?o) = "en" || lang(?o) = "")
+                  
+                  OPTIONAL {
+                    ?o skos:prefLabel ?o_label ;
+                       skos:notation ?o_notation .
+                    FILTER(!isLiteral(?o_label) || lang(?o_label) = "en" || lang(?o_label) = "")
+                  }
+                  
+                  BIND (IRI(CONCAT(STRBEFORE(STR(<xxx>), "/current/"), "/current/")) AS ?collection_uri)
+                  BIND (REPLACE(STR(<xxx>), "http://vocab.nerc.ac.uk", "") AS ?collection_systemUri)
+                  ?collection_uri skos:prefLabel ?collection_label .
+                }            
+                """.replace("xxx", self.instance_uri)
+            r = sparql_query(q)
+            if not r[0]:
+                return PlainTextResponse(
+                    "There was an error obtaining the Concept RDF from the Triplestore",
+                    status_code=500
+                )
+
+            PAV = Namespace("http://purl.org/pav/")
+            PUV = Namespace("https://w3id.org/env/puv/")
+            STATUS = Namespace("http://www.opengis.net/def/metamodel/ogc-na/")
+
+            props = {
+                str(PUV.analyticalMethod): {"label": "analytical method", "group": "puv"},
+                str(PUV.biologicalObject): {"label": "biological object of interest", "group": "puv"},
+                str(PUV.chemicalObject): {"label": "chemical object of interest", "group": "puv"},
+                str(PUV.dataProcessing): {"label": "data processing method", "group": "puv"},
+                str(PUV.isComposedOf): {"label": "is composed of", "group": "puv"},
+                str(PUV.matrix): {"label": "matrix", "group": "puv"},
+                str(PUV.matrixRelationship): {"label": "measurement-matrix relationship", "group": "puv"},
+                str(PUV.method): {"label": "method", "group": "puv"},
+                str(PUV.objectOfInterest): {"label": "object of interest", "group": "puv"},
+                str(PUV.physicalObject): {"label": "physical object of interest", "group": "puv"},
+                str(PUV.property): {"label": "property", "group": "puv"},
+                str(PUV.samplePreparation): {"label": "sample-preparation method", "group": "puv"},
+                str(PUV.statistic): {"label": "statistic", "group": "puv"},
+                str(PUV.uom): {"label": "unit-of-measurement", "group": "puv"},
+
+                str(DCTERMS.contributor): {"label": "Contributor", "group": "agent"},
+                str(DCTERMS.creator): {"label": "Creator", "group": "agent"},
+                str(DCTERMS.publisher): {"label": "Publisher", "group": "agent"},
+
+                str(SKOS.notation): {"label": "Identifier", "group": "annotation"},
+                # str(DCTERMS.identifier): {"label": "Identifier", "group": "annotation"},
+                str(STATUS.status): {"label": "Status", "group": "annotation"},
+                str(SKOS.altLabel): {"label": "Alternative Label", "group": "annotation"},
+                str(SKOS.note): {"label": "Note", "group": "annotation"},
+                str(SKOS.scopeNote): {"label": "Scope Note", "group": "annotation"},
+                str(SKOS.historyNote): {"label": "History Note", "group": "annotation"},
+
+                str(OWL.sameAs): {"label": "Same As", "group": "related"},
+                str(SKOS.broader): {"label": "Broader", "group": "related"},
+                str(SKOS.related): {"label": "Related", "group": "related"},
+                str(SKOS.narrower): {"label": "Narrower", "group": "related"},
+                str(SKOS.exactMatch): {"label": "Exact Match", "group": "related"},
+                str(SKOS.broadMatch): {"label": "Broad Match", "group": "related"},
+                str(SKOS.closeMatch): {"label": "Close Match", "group": "related"},
+                str(SKOS.narrowMatch): {"label": "Narrow Match", "group": "related"},
+
+                str(PAV.hasCurrentVersion): {"label": "Has Current Version", "group": "provenance"},
+                str(PAV.version): {"label": "Version", "group": "provenance"},
+                str(OWL.deprecated): {"label": "Deprecated", "group": "provenance"},
+                str(PAV.previousVersion): {"label": "Previous Version", "group": "provenance"},
+                str(DCTERMS.isVersionOf): {"label": "Is Version Of", "group": "provenance"},
+                str(PAV.authoredOn): {"label": "Authored On", "group": "provenance"},
+            }
+
+            unique_alt_labels = []
+            unique_versions = []
+
+            context = {
+                "request": request,
+                "deprecated": False,
+                "prefLabel": None,
+                "uri": self.instance_uri,
+                "collection_systemUri": None,
+                "collection_label": None,
+                "definition": None,
+                "altLabels": [],
+                "puv": [],
+                "annotation": [],
+                "agent": [],
+                "related": [],
+                "provenance": [],
+                "other": [],
+                "profile": self.profile,
+            }
+
+            static_puv_params = [
+                {
+                    'o': {
+                        'type': 'uri',
+                        'value': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
+                    },
+                    'p': {
+                        'type': 'uri',
+                        'value': 'https://w3id.org/env/puv/Parameter'
+                    },
+                    'o_label': {
+                        'type': 'literal',
+                        'value': 'Parameter',
+                        'xml:lang': 'en'
+                    },
+                    "collection_uri": {"type": "uri", "value": "http://vocab.nerc.ac.uk/collection/P01/current/"},
+                    "collection_systemUri": {"type": "literal", "value": "/collection/P01/current/SAGEMSFM/"},
+                    "collection_label": {"type": "literal", "value": "BODC Parameter Usage Vocabulary"},
+                },
+                {
+                    'p': {
+                        'type': 'uri',
+                        'value': 'https://w3id.org/env/puv/biologicalObject'
+                    },
+                    'o': {
+                        'type': 'uri',
+                        'value': 'http://vocab.nerc.ac.uk/collection/S25/current/BE006569/'
+                    },
+                    'o_label': {
+                        'type': 'literal',
+                        'value': 'Mytilus galloprovincialis (ITIS: 79456: WoRMS 140481) [Subcomponent: flesh]',
+                        'xml:lang': 'en'
+                    },
+                    'o_notation': {
+                        'type': 'literal',
+                        'value': 'SDN:S25:BE006569'
+                    },
+                    "collection_uri": {"type": "uri", "value": "http://vocab.nerc.ac.uk/collection/P01/current/"},
+                    "collection_systemUri": {"type": "literal", "value": "/collection/P01/current/SAGEMSFM/"},
+                    "collection_label": {"type": "literal", "value": "BODC Parameter Usage Vocabulary"},
+                },
+                {
+                    'p': {
+                        'type': 'uri',
+                        'value': 'https://w3id.org/env/puv/chemicalObject'
+                    },
+                    'o': {
+                        'type': 'uri',
+                        'value': 'http://vocab.nerc.ac.uk/collection/S27/current/CS003687/'
+                    },
+                    'o_label': {
+                        'type': 'literal',
+                        'value': '1,2,3,7,8-pentachlorodibenzofuran',
+                        'xml:lang': 'en'
+                    },
+                    'o_notation': {
+                        'type': 'literal',
+                        'value': 'SDN:S27:CS003687'
+                    },
+                    "collection_uri": {"type": "uri", "value": "http://vocab.nerc.ac.uk/collection/P01/current/"},
+                    "collection_systemUri": {"type": "literal", "value": "/collection/P01/current/SAGEMSFM/"},
+                    "collection_label": {"type": "literal", "value": "BODC Parameter Usage Vocabulary"},
+                },
+                {
+                    'p': {
+                        'type': 'uri',
+                        'value': 'https://w3id.org/env/puv/matrix'
+                    },
+                    'o': {
+                        'type': 'uri',
+                        'value': 'http://vocab.nerc.ac.uk/collection/S26/current/MAT01963/'
+                    },
+                    'o_label': {
+                        'type': 'literal',
+                        'value': 'biota',
+                        'xml:lang': 'en'
+                    },
+                    'o_notation': {
+                        'type': 'literal',
+                        'value': 'SDN:S26:MAT01963'
+                    },
+                    "collection_uri": {"type": "uri", "value": "http://vocab.nerc.ac.uk/collection/P01/current/"},
+                    "collection_systemUri": {"type": "literal", "value": "/collection/P01/current/SAGEMSFM/"},
+                    "collection_label": {"type": "literal", "value": "BODC Parameter Usage Vocabulary"},
+                },
+                {
+                    'p': {
+                        'type': 'uri',
+                        'value': 'https://w3id.org/env/puv/matrixRelationship'
+                    },
+                    'o': {
+                        'type': 'uri',
+                        'value': 'http://vocab.nerc.ac.uk/collection/S02/current/S041/'
+                    },
+                    'o_label': {
+                        'type': 'literal',
+                        'value': 'per unit dry weight of',
+                        'xml:lang': 'en'
+                    },
+                    'o_notation': {
+                        'type': 'literal',
+                        'value': 'SDN:S02:S041'
+                    },
+                    "collection_uri": {"type": "uri", "value": "http://vocab.nerc.ac.uk/collection/P01/current/"},
+                    "collection_systemUri": {"type": "literal", "value": "/collection/P01/current/SAGEMSFM/"},
+                    "collection_label": {"type": "literal", "value": "BODC Parameter Usage Vocabulary"},
+                },
+                {
+                    'p': {
+                        'type': 'uri',
+                        'value': 'https://w3id.org/env/puv/property'
+                    },
+                    'o': {
+                        'type': 'uri',
+                        'value': 'http://vocab.nerc.ac.uk/collection/S06/current/S0600045/'
+                    },
+                    'o_label': {
+                        'type': 'literal',
+                        'value': 'Concentration',
+                        'xml:lang': 'en'
+                    },
+                    'o_notation': {
+                        'type': 'literal',
+                        'value': 'SDN:S06:S0600045'
+                    },
+                    "collection_uri": {"type": "uri", "value": "http://vocab.nerc.ac.uk/collection/P01/current/"},
+                    "collection_systemUri": {"type": "literal", "value": "/collection/P01/current/SAGEMSFM/"},
+                    "collection_label": {"type": "literal", "value": "BODC Parameter Usage Vocabulary"},
+                },
+                {
+                    'p': {
+                        'type': 'uri',
+                        'value': 'https://w3id.org/env/puv/property'
+                    },
+                    'o': {
+                        'type': 'uri',
+                        'value': 'http://vocab.nerc.ac.uk/collection/S06/current/S0600082/'
+                    },
+                    'o_label': {
+                        'type': 'literal',
+                        'value': 'Temperature',
+                        'xml:lang': 'en'
+                    },
+                    'o_notation': {
+                        'type': 'literal',
+                        'value': 'SDN:S06:S0600082'
+                    },
+                    "collection_uri": {"type": "uri", "value": "http://vocab.nerc.ac.uk/collection/P01/current/"},
+                    "collection_systemUri": {"type": "literal", "value": "/collection/P01/current/SAGEMSFM/"},
+                    "collection_label": {"type": "literal", "value": "BODC Parameter Usage Vocabulary"},
+                },
+                {
+                    'p': {
+                        'type': 'uri',
+                        'value': 'https://w3id.org/env/puv/property'
+                    },
+                    'o': {
+                        'type': 'uri',
+                        'value': 'http://vocab.nerc.ac.uk/collection/S06/current/S06000160/'
+                    },
+                    'o_label': {
+                        'type': 'literal',
+                        'value': 'Temperature (IPTS-68)',
+                        'xml:lang': 'en'
+                    },
+                    'o_notation': {
+                        'type': 'literal',
+                        'value': 'SDN:S06:S06000160'
+                    },
+                    "collection_uri": {"type": "uri", "value": "http://vocab.nerc.ac.uk/collection/P01/current/"},
+                    "collection_systemUri": {"type": "literal", "value": "/collection/P01/current/SAGEMSFM/"},
+                    "collection_label": {"type": "literal", "value": "BODC Parameter Usage Vocabulary"},
+                },
+                {
+                    'p': {
+                        'type': 'uri',
+                        'value': 'https://w3id.org/env/puv/uom'
+                    },
+                    'o': {
+                        'type': 'uri',
+                        'value': 'http://vocab.nerc.ac.uk/collection/P06/current/UUKG/'
+                    },
+                    'o_label': {
+                        'type': 'literal',
+                        'value': 'Micrograms per kilogram',
+                        'xml:lang': 'en'
+                    },
+                    'o_notation': {
+                        'type': 'literal',
+                        'value': 'SDN:P06:UUKG'
+                    },
+                    "collection_uri": {"type": "uri", "value": "http://vocab.nerc.ac.uk/collection/P01/current/"},
+                    "collection_systemUri": {"type": "literal", "value": "/collection/P01/current/SAGEMSFM/"},
+                    "collection_label": {"type": "literal", "value": "BODC Parameter Usage Vocabulary"},
+                }
+            ]
+            r[1].extend(static_puv_params)
+            for x in r[1]:
+                p = x["p"]["value"]
+                o = x["o"]["value"]
+                o_label = x["o_label"]["value"] if x.get("o_label") is not None else None
+                o_notation = x["o_notation"]["value"] if x.get("o_notation") is not None else None
+                context["collection_systemUri"] = x["collection_systemUri"]["value"]
+                context["collection_label"] = x["collection_label"]["value"]
+                if p == str(OWL.deprecated):
+                    if o == "true":
+                        context["deprecated"] = True
+                elif p == str(SKOS.prefLabel):
+                    context["prefLabel"] = o
+                elif p == str(SKOS.altLabel):
+                    context["altLabels"].append(o)
+                elif p == str(SKOS.definition):
+                    context["definition"] = o
+                elif p in props.keys():
+                    context[props[p]["group"]].append(DisplayProperty(p, props[p]["label"], o, o_label, o_notation))
+                else:
+                    # print(p)
+                    context["other"].append(DisplayProperty(p, None, o, o_label))
+
+            def clean_prop_list_labels(prop_list):
+                last_pred_html = None
+                for x in prop_list:
+                    this_predicate_html = x.predicate_html
+                    if this_predicate_html == last_pred_html:
+                        x.predicate_html = None
+                    last_pred_html = this_predicate_html
+
+            context["altLabels"].sort()
+            context["puv"].sort(key=lambda x: x.predicate_html)
+            clean_prop_list_labels(context["puv"])
+            context["agent"].sort(key=lambda x: x.predicate_html)
+            clean_prop_list_labels(context["agent"])
+            context["annotation"].sort(key=lambda x: x.predicate_html)
+            clean_prop_list_labels(context["annotation"])
+            context["related"].sort(key=lambda x: x.predicate_html)
+            clean_prop_list_labels(context["related"])
+            context["provenance"].sort(key=lambda x: x.predicate_html)
+            clean_prop_list_labels(context["provenance"])
+            context["other"].sort(key=lambda x: x.predicate_html)
+            clean_prop_list_labels(context["other"])
+            return templates.TemplateResponse("concept.html", context=context)
+
+        def _render_nvs_rdf(self):
+            q = """
+                PREFIX dc: <http://purl.org/dc/terms/>
+                PREFIX dce: <http://purl.org/dc/elements/1.1/>
+                PREFIX owl: <http://www.w3.org/2002/07/owl#>
+                PREFIX pav: <http://purl.org/pav/>
+                PREFIX prov: <https://www.w3.org/ns/prov#>
+                PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+                PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                PREFIX void: <http://rdfs.org/ns/void#>
+
+                CONSTRUCT {
+                  <xxx> ?p ?o .
+
+                  # remove provenance, for now
+                  # ?s ?p2 ?o2 .              
+                  # ?s rdf:subject <xxx> ;
+                  #   prov:has_provenance ?m .              
+                }
+                WHERE {
+                    <xxx> ?p ?o .
+
+                    # remove provenance, for now
+                    # OPTIONAL {
+                    #     ?s rdf:subject <xxx> ;
+                    #        prov:has_provenance ?m .
+                    #         
+                    #     # { ?s ?p2 ?o2 }
+                    # }
+
+                    # exclude PUV properties from NVS view
+                    FILTER (!STRSTARTS(STR(?p), "https://w3id.org/env/puv#"))
+                }        
+                """.replace("xxx", self.instance_uri)
+            r = sparql_construct(q, self.mediatype)
+            if r[0]:
+                return Response(r[1], headers={"Content-Type": self.mediatype})
+            else:
+                return PlainTextResponse(
+                    "There was an error obtaining the Concept RDF from the Triplestore",
+                    status_code=500
+                )
+
+        def _render_skos_rdf(self):
+            q = """
+                PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                CONSTRUCT {
+                  <xxx> ?p ?o .   
+                  ?s ?p2 <xxx> .  
+                }
+                WHERE {
+                  <xxx> ?p ?o .
+                  ?s ?p2 <xxx> .
+                
+                  # include only SKOS properties
+                  FILTER (STRSTARTS(STR(?p), "http://www.w3.org/2004/02/skos/core#"))
+                  FILTER (STRSTARTS(STR(?p2), "http://www.w3.org/2004/02/skos/core#"))
+                }
+                """.replace("xxx", self.instance_uri)
+            r = sparql_construct(q, self.mediatype)
+            if r[0]:
+                return Response(r[1], headers={"Content-Type": self.mediatype})
+            else:
+                return PlainTextResponse(
+                    "There was an error obtaining the Concept RDF from the Triplestore",
+                    status_code=500
+                )
+
+        def _render_vocpub_rdf(self):
+            q = """
+                PREFIX dce: <http://purl.org/dc/elements/1.1/>
+                PREFIX dcterms: <http://purl.org/dc/terms/>
+                PREFIX owl: <http://www.w3.org/2002/07/owl#>
+                PREFIX pav: <http://purl.org/pav/>
+                PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                PREFIX void: <http://rdfs.org/ns/void#>
+                CONSTRUCT {
+                  <xxx> ?p ?o .   
+                  ?s ?p2 <xxx> .  
+                }
+                WHERE {
+                  <xxx> ?p ?o .
+                  ?s ?p2 <xxx> .
+                
+                  FILTER (!STRSTARTS(STR(?p2), "http://www.w3.org/1999/02/22-rdf-syntax-ns#"))
+                }
+                """.replace("xxx", self.instance_uri)
+            r = sparql_construct(q, self.mediatype)
+            if r[0]:
+                return Response(r[1], headers={"Content-Type": self.mediatype})
+            else:
+                return PlainTextResponse(
+                    "There was an error obtaining the Concept RDF from the Triplestore",
+                    status_code=500
+                )
+
+        def _render_sdo_rdf(self):
+            q = """
+                PREFIX dcterms: <http://purl.org/dc/terms/>
+                PREFIX owl: <http://www.w3.org/2002/07/owl#>
+                PREFIX sdo: <https://schema.org/>
+                PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+                CONSTRUCT {
+                  <http://vocab.nerc.ac.uk/collection/P01/current/SAGEMSFM/>
+                    a sdo:DefinedTerm ;
+                    sdo:name ?pl ;
+                    sdo:alternateName ?al ;
+                    sdo:description ?def ;
+                    sdo:identifier ?id ;
+                    sdo:dateModified ?modified ;
+                    sdo:version ?versionInfo ;
+                    sdo:inDefinedTermSet ?collection ;
+                    sdo:isPartOf ?scheme ;
+                    sdo:sameAs ?sameAs ;
+                  .
+                }
+                WHERE {
+                  <http://vocab.nerc.ac.uk/collection/P01/current/SAGEMSFM/> 
+                    skos:prefLabel ?pl ;
+                    skos:definition ?def ;
+                    dcterms:identifier ?id ;
+                    dcterms:date ?date ;
+                    owl:versionInfo ?versionInfo ;
+                  .
+                  
+                  BIND (STRDT(REPLACE(STRBEFORE(?date, "."), " ", "T"), xsd:dateTime) AS ?modified)
+                    
+                  ?collection skos:member <http://vocab.nerc.ac.uk/collection/P01/current/SAGEMSFM/>  .
+                    
+                  OPTIONAL {
+                    <http://vocab.nerc.ac.uk/collection/P01/current/SAGEMSFM/>
+                      skos:altLabel ?al ;
+                      skos:inScheme ?scheme ;
+                      owl:sameAs ?sameAs ;
+                    .
+                  }
+                }            
+                """
+            r = sparql_construct(q, self.mediatype)
+            if r[0]:
+                return Response(r[1], headers={"Content-Type": self.mediatype})
+            else:
+                return PlainTextResponse(
+                    "There was an error obtaining the Concept RDF from the Triplestore",
+                    status_code=500
+                )
+
+        def render(self):
+            if self.profile == "nvs":
+                if self.mediatype in RDF_MEDIATYPES or self.mediatype in Renderer.RDF_SERIALIZER_TYPES_MAP:
+                    return self._render_nvs_rdf()
+                else:
+                    return self._render_nvs_html()
+            elif self.profile == "skos":
+                return self._render_skos_rdf()
+            elif self.profile == "vocpub":
+                return self._render_vocpub_rdf()
+            elif self.profile == "sdo":
+                return self._render_sdo_rdf()
+            elif self.profile == "puv":
+                if self.mediatype in RDF_MEDIATYPES or self.mediatype in Renderer.RDF_SERIALIZER_TYPES_MAP:
+                    return self._render_puv_rdf()
+                else:
+                    return self._render_puv_html()
+
+            alt = super().render()
+            if alt is not None:
+                return alt
+
+    return ConceptRenderer().render()
 
 
 @api.get("/about")
