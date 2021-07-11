@@ -24,6 +24,11 @@ api = fastapi.FastAPI()
 templates = Jinja2Templates(str(api_home_dir / "view" / "templates"))
 api.mount("/static", StaticFiles(directory=str(api_home_dir / "view" / "static")), name="static")
 logging.basicConfig(level=logging.DEBUG)
+acc_dep_map = {
+    "accepted": '?c <http://www.w3.org/2002/07/owl#deprecated> "false" .',
+    "deprecated": '?c <http://www.w3.org/2002/07/owl#deprecated> "true" .',
+    None: ""
+}
 
 
 # @api.on_event("startup")
@@ -432,18 +437,16 @@ def collection_no_current(request: Request, collection_id):
 
 
 @api.get("/collection/{collection_id}/current/")
-@api.get("/collection/{collection_id}/current/{acc_dep}")
+@api.get("/collection/{collection_id}/current/{acc_dep_or_concept}")
+@api.get("/collection/{collection_id}/current/{acc_dep_or_concept}/")
 def collection(
         request: Request,
         collection_id,
-        acc_dep: Literal["accepted", "deprecated", "all", None] = None
+        acc_dep_or_concept: str = None
 ):
-    acc_dep_map = {
-        "accepted": '?c <http://www.w3.org/2002/07/owl#deprecated> "false" .',
-        "deprecated": '?c <http://www.w3.org/2002/07/owl#deprecated> "true" .',
-        "all": "",
-        None: ""
-    }
+    if acc_dep_or_concept not in ["accepted", "deprecated", None]:
+        # this is a call for a Concept
+        return concept(request)
 
     class CollectionRenderer(Renderer):
         def __init__(self):
@@ -471,28 +474,24 @@ def collection(
                 PREFIX dcterms: <http://purl.org/dc/terms/>
                 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
                 SELECT DISTINCT ?c ?systemUri ?id ?pl ?def ?date ?dep
-                WHERE {{
-                        <{vocab_uri}> skos:member ?c .
+                WHERE {
+                        <xxx> skos:member ?c .
                         BIND (STRBEFORE(STRAFTER(STR(?c), "/current/"), "/") AS ?id)
-                        BIND (IRI(STRAFTER(STR(?c), ".uk")) AS ?systemUri)
+                        BIND (STRAFTER(STR(?c), ".uk") AS ?systemUri)
 
-                        {acc_dep}
-                        OPTIONAL {{
+                        acc_dep
+                        OPTIONAL {
                             ?c <http://www.w3.org/2002/07/owl#deprecated> ?dep .
-                        }}
+                        }
                         ?c skos:prefLabel ?pl ;
                              skos:definition ?def ;
                              dcterms:date ?date .
 
-                        FILTER(lang(?pl) = "{language}" || lang(?pl) = "") 
-                        FILTER(lang(?def) = "{language}" || lang(?def) = "")
-                }}
+                        FILTER(lang(?pl) = "en" || lang(?pl) = "") 
+                        FILTER(lang(?def) = "en" || lang(?def) = "")
+                }
                 ORDER BY ?pl
-                """.format(
-                vocab_uri=self.instance_uri,
-                acc_dep=acc_dep_map.get(acc_dep),
-                language=self.language
-            )
+                """.replace("xxx", self.instance_uri).replace("acc_dep", acc_dep_map.get(acc_dep_or_concept))
 
             sparql_result = sparql_query(q)
             if sparql_result[0]:
@@ -675,18 +674,12 @@ def scheme_no_current(request: Request, scheme_id):
 
 @api.get("/scheme/{scheme_id}/current/")
 @api.get("/scheme/{scheme_id}/current/{acc_dep}")
+@api.get("/scheme/{scheme_id}/current/{acc_dep}/")
 def scheme(
         request: Request,
         scheme_id,
-        acc_dep: Literal["accepted", "deprecated", "all", None] = None
+        acc_dep: Literal["accepted", "deprecated", None] = None
 ):
-    acc_dep_map = {
-        "accepted": '?c <http://www.w3.org/2002/07/owl#deprecated> "false" .',
-        "deprecated": '?c <http://www.w3.org/2002/07/owl#deprecated> "true" .',
-        "all": "",
-        None: ""
-    }
-
     class SchemeRenderer(Renderer):
         def __init__(self):
             self.instance_uri = f"http://vocab.nerc.ac.uk/scheme/{scheme_id}/current/"
@@ -714,7 +707,7 @@ def scheme(
                 labels = {}
 
                 for d in data:
-                    child = d["concept"]["value"]
+                    child = d["c"]["value"]
                     parent = d["broader"]["value"] if d.get("broader") is not None else None
                     children_parents.append((child, parent))
                     labels[child] = d["pl"]["value"].replace("<", "&lt;")
@@ -752,21 +745,22 @@ def scheme(
 
             q = """
                 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-                SELECT DISTINCT ?concept ?pl ?broader
+                SELECT DISTINCT ?c ?pl ?broader
                 WHERE {
                   { 
-                    ?concept skos:inScheme <xxx>  .
+                    ?c skos:inScheme <xxx>  .
                   }
                   UNION
-                  { ?concept skos:topConceptOf <xxx>  . }
+                  { ?c skos:topConceptOf <xxx>  . }
                   UNION
-                  { <xxx>  skos:hasTopConcept ?concept . }
+                  { <xxx>  skos:hasTopConcept ?c . }
                 
-                  ?concept skos:prefLabel ?pl .
-                  BIND (IRI(STRAFTER(STR(?concept), ".uk")) AS ?systemUri)
+                  ?c skos:prefLabel ?pl .
+                  BIND (STRAFTER(STR(?c), ".uk") AS ?systemUri)
                   
+                  acc_dep
                   OPTIONAL { 
-                    ?concept skos:broader ?broader .
+                    ?c skos:broader ?broader .
                     { ?broader skos:inScheme <xxx>  . }
                     UNION
                     { ?broader skos:topConceptOf <xxx>  . }
@@ -776,7 +770,7 @@ def scheme(
                   FILTER(lang(?pl) = "en" || lang(?pl) = "")                                    
                 }
                 ORDER BY ?pl
-                """.replace("xxx", self.instance_uri)
+                """.replace("xxx", self.instance_uri).replace("acc_dep", acc_dep_map.get(acc_dep))
             try:
                 r = sparql_query(q)
 
@@ -942,7 +936,7 @@ def scheme(
                             skos:definition ?c_def ;
                         .
                     
-                        BIND (IRI(STRAFTER(STR(?c), ".uk")) AS ?systemUri)
+                        BIND (STRAFTER(STR(?c), ".uk") AS ?systemUri)
                         
                         OPTIONAL { 
                             ?c skos:broader ?broader .
@@ -1015,7 +1009,7 @@ def scheme(
                             skos:definition ?c_def ;
                         .
 
-                        BIND (IRI(STRAFTER(STR(?c), ".uk")) AS ?systemUri)
+                        BIND (STRAFTER(STR(?c), ".uk") AS ?systemUri)
 
                         OPTIONAL { 
                             ?c skos:broader ?broader .
@@ -1050,13 +1044,12 @@ def scheme(
 
 
 @api.get("/standard_name/")
-def standard_name(request: Request, acc_dep: Literal["accepted", "deprecated", "all", None] = None):
-    acc_dep_map = {
-        "accepted": '?x <http://www.w3.org/2002/07/owl#deprecated> "false" .',
-        "deprecated": '?x <http://www.w3.org/2002/07/owl#deprecated> "true" .',
-        "all": "",
-        None: ""
-    }
+@api.get("/standard_name/{acc_dep_or_concept}")
+@api.get("/standard_name/{acc_dep_or_concept}/")
+def standard_name(request: Request, acc_dep_or_concept: str = None):
+    if acc_dep_or_concept not in ["accepted", "deprecated", None]:
+        # this is a call for a Standard Name Concept
+        return standard_name_concept(acc_dep_or_concept)
 
     class CollectionRenderer(Renderer):
         def __init__(self):
@@ -1092,7 +1085,7 @@ def standard_name(request: Request, acc_dep: Literal["accepted", "deprecated", "
                             dcterms:date ?date ;
                         .
                         BIND (?pl AS ?id)
-                        BIND (IRI(CONCAT("http://vocab.nerc.ac.uk/standard_name/", ?pl, "/")) AS ?c)
+                        BIND (CONCAT("http://vocab.nerc.ac.uk/standard_name/", ?pl, "/") AS ?c)
 
                         acc_dep
                         OPTIONAL {
@@ -1103,7 +1096,8 @@ def standard_name(request: Request, acc_dep: Literal["accepted", "deprecated", "
                         FILTER(lang(?def) = "en" || lang(?def) = "")
                 }
                 ORDER BY ?pl
-                """.replace("xxx", self.instance_uri).replace("acc_dep", acc_dep_map.get(acc_dep))
+                """.replace("xxx", self.instance_uri)\
+                .replace("acc_dep", acc_dep_map.get(acc_dep_or_concept).replace("?c", "?x"))
 
             sparql_result = sparql_query(q)
             if sparql_result[0]:
@@ -1182,7 +1176,7 @@ def standard_name(request: Request, acc_dep: Literal["accepted", "deprecated", "
                             FILTER ( ?p2 != skos:narrowerTransitive )
                           }
                           
-                          BIND (IRI(CONCAT("http://vocab.nerc.ac.uk/standard_name/", ?pl, "/")) AS ?m)
+                          BIND (CONCAT("http://vocab.nerc.ac.uk/standard_name/", ?pl, "/") AS ?m)
                         }
                         """.replace("xxx", self.instance_uri)
                     r = sparql_construct(q, self.mediatype)
@@ -1202,7 +1196,7 @@ def standard_name(request: Request, acc_dep: Literal["accepted", "deprecated", "
                         <xxx> skos:member ?xc .
                         ?xc skos:prefLabel ?xpl .
                         
-                        BIND (IRI(CONCAT("http://vocab.nerc.ac.uk/standard_name/", ?xpl, "/")) AS ?c)
+                        BIND (CONCAT("http://vocab.nerc.ac.uk/standard_name/", ?xpl, "/") AS ?c)
                         BIND (REPLACE(?xpl, "_", " ") AS ?pl)
                     }
                     ORDER BY ?pl                
@@ -1231,7 +1225,7 @@ def standard_name(request: Request, acc_dep: Literal["accepted", "deprecated", "
                             skos:member ?xc .
                         ?xc skos:prefLabel ?xc_pl .
                         
-                        BIND (IRI(CONCAT("http://vocab.nerc.ac.uk/standard_name/", ?xc_pl, "/")) AS ?c)
+                        BIND (CONCAT("http://vocab.nerc.ac.uk/standard_name/", ?xc_pl, "/") AS ?c)
                         BIND (REPLACE(?xc_pl, "_", " ") AS ?c_pl)                        
                     }
                     ORDER BY ?prefLabel
@@ -1272,7 +1266,7 @@ def standard_name(request: Request, acc_dep: Literal["accepted", "deprecated", "
                             skos:member ?xc .
                         ?xc skos:prefLabel ?xc_pl .
                         
-                        BIND (IRI(CONCAT("http://vocab.nerc.ac.uk/standard_name/", ?xc_pl, "/")) AS ?c)
+                        BIND (CONCAT("http://vocab.nerc.ac.uk/standard_name/", ?xc_pl, "/") AS ?c)
                         BIND (REPLACE(?xc_pl, "_", " ") AS ?c_pl)
                         BIND (STRDT(REPLACE(STRBEFORE(?date, "."), " ", "T"), xsd:dateTime) AS ?modified)
                     }
@@ -1294,6 +1288,15 @@ def standard_name(request: Request, acc_dep: Literal["accepted", "deprecated", "
                 return alt
 
     return CollectionRenderer().render()
+
+
+@api.get("/standard_name/{standard_name_concept_id}")
+def standard_name_concept(standard_name_concept_id: str):
+    return f"SN Concept {standard_name_concept_id}"
+
+
+def concept(request: Request):
+    return f"Concept {request.url}"
 
 
 @api.get("/about")
@@ -1341,12 +1344,12 @@ def well_known_void(
 
 @api.get("/contact")
 @api.get("/contact-us")
-def about(request: Request):
+def contact(request: Request):
     return templates.TemplateResponse("contact_us.html", {"request": request})
 
 
 @api.get("/cache-clear")
-def about(request: Request):
+def cache_clear(request: Request):
     cache_clear()
     return PlainTextResponse("Cache cleared")
 
