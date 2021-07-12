@@ -533,7 +533,7 @@ def collection(
                             "request": request,
                             "uri": self.instance_uri,
                             "collection": collection,
-                            "profile_token": "nvs",
+                            "profile_token": self.profile,
                         }
                     )
                 elif self.mediatype in RDF_MEDIATYPES:

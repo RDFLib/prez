@@ -4,7 +4,7 @@
     <div style="grid-column: 1; grid-row: 1;">
       <h1>Vocabulary</h1>
       <h2>{{ collection.prefLabel.value }}</h2>
-        {% if is_puv_vocab %}
+        {% if collection.conforms_to is defined and collection.conforms_to.value == "https://w3id.org/env/puv" %}
         <h4>
           <em>This collection is part of the <a style="font-size:revert;" href="https://w3id.org/env/puv">Parameter Usage Vocabulary</a> set of vocabularies.</em>
         </h4>
