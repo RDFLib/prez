@@ -133,7 +133,7 @@ def collections(request: Request):
                             "label": self.label,
                             "comment": self.comment,
                             "collections": collections,
-                            "profile_token": "nvs",
+                            "profile_token": self.profile,
                         }
                     )
                 elif self.mediatype in RDF_MEDIATYPES:
@@ -1417,7 +1417,7 @@ def concept(request: Request):
                 "related": [],
                 "provenance": [],
                 "other": [],
-                "profile": self.profile,
+                "profile_token": self.profile,
             }
 
             static_puv_params = [
