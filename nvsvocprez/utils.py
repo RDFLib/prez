@@ -51,6 +51,9 @@ def cache_clear():
 
 def cache_fill(collections_or_conceptschemes_or_both: Literal["collections", "conceptschemes", "both"] = "both"):
     logging.debug(f"filled cache {collections_or_conceptschemes_or_both}")
+    if not Path(api_home_dir / "cache").is_dir():
+        Path(api_home_dir / "cache").mkdir()
+
     if collections_or_conceptschemes_or_both == "collections":
         q = """
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
