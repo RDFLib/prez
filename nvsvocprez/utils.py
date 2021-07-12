@@ -207,3 +207,7 @@ def render_concept_tree(html_doc):
                 )
                 ul.parent.span.insert(0, temp)
     return soup
+
+
+def get_accepts(accept_header: str):
+    return [accept.split(";")[0].replace("*/*", "text/html") for accept in accept_header.split(",")]
