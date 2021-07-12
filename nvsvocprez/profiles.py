@@ -1,5 +1,5 @@
-from nvsvocprez.pyldapi.profile import Profile
-from nvsvocprez.pyldapi.renderer import RDF_MEDIATYPES
+from pyldapi.profile import Profile
+from pyldapi.renderer import RDF_MEDIATYPES
 
 skos = Profile(
     uri="https://www.w3.org/TR/skos-reference/",
