@@ -8,7 +8,7 @@ from starlette.responses import RedirectResponse, Response, PlainTextResponse, J
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 from pyldapi.renderer import RDF_MEDIATYPES
-from model.profiles import void, nvs, skos, dd, vocpub, dcat, puv, sdo
+from profiles import void, nvs, skos, dd, vocpub, dcat, puv, sdo
 from utils import sparql_query, sparql_construct, cache_return, cache_clear, cache_fill
 from pyldapi import Renderer, ContainerRenderer, DisplayProperty
 from config import SYSTEM_URI, PORT
@@ -27,12 +27,6 @@ acc_dep_map = {
     "deprecated": '?c <http://www.w3.org/2002/07/owl#deprecated> "true" .',
     None: ""
 }
-
-
-@api.on_event("startup")
-def startup():
-    cache_clear()
-    cache_fill(collections_or_conceptschemes_or_both="both")
 
 
 @api.get("/")
@@ -1919,7 +1913,7 @@ def contact(request: Request):
 
 
 @api.get("/cache-clear")
-def cache_clear(request: Request):
+def cache_clr(request: Request):
     cache_clear()
     return PlainTextResponse("Cache cleared")
 

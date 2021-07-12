@@ -45,6 +45,8 @@ def cache_clear():
     logging.debug("cleared cache")
     if collections_pickle.is_file():
         collections_pickle.unlink()
+    if conceptschemes_pickle.is_file():
+        conceptschemes_pickle.unlink()
 
 
 def cache_fill(collections_or_conceptschemes_or_both: Literal["collections", "conceptschemes", "both"] = "both"):
