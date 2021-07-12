@@ -1874,28 +1874,43 @@ def mapping(request: Request):
             super().__init__(request, self.instance_uri, {"nvs": nvs}, "nvs")
 
         def render(self):
+            if "/I/" not in self.instance_uri and "/O/" not in self.instance_uri:
+                return PlainTextResponse(
+                    'All requests for Mappings must contain either "I" or "O" in the URI',
+                    status_code=400
+                )
+
+            if self.profile == "nvs":
+                g = self._get_mapping_rdf()
+                if not g:
+                    return PlainTextResponse(
+                        "There was an error obtaining the Collections RDF from the Triplestore",
+                        status_code=500
+                    )
+                if len(g) == 0:
+                    return PlainTextResponse(
+                        "The URI you supplied for the Mapping does not exist",
+                        status_code=400
+                    )
+
+                if self.mediatype in RDF_MEDIATYPES or self.mediatype in Renderer.RDF_SERIALIZER_TYPES_MAP:
+                    return self._render_nvs_rdf(g)
+                else:
+                    return self._render_nvs_html(g)
+
             # try returning alt profile
             response = super().render()
             if response is not None:
                 return response
-            elif self.profile == "nvs":
-                if self.mediatype in RDF_MEDIATYPES or self.mediatype in Renderer.RDF_SERIALIZER_TYPES_MAP:
-                    return self._render_nvs_rdf()
-                else:
-                    return self._render_nvs_html()
 
         def _get_mapping_rdf(self):
             r = sparql_construct(f"DESCRIBE <{self.instance_uri}>")
             if r[0]:
                 return Graph().parse(r[1])
             else:
-                return PlainTextResponse(
-                    "There was an error obtaining the Collections RDF from the Triplestore",
-                    status_code=500
-                )
+                return False
 
-        def _render_nvs_rdf(self):
-            g = self._get_mapping_rdf()
+        def _render_nvs_rdf(self, g):
             g.bind("dc", DC)
             REG = Namespace("http://purl.org/linked-data/registry#")
             g.bind("reg", REG)
@@ -1903,9 +1918,7 @@ def mapping(request: Request):
 
             return self._make_rdf_response(g)
 
-        def _render_nvs_html(self):
-            g = self._get_mapping_rdf()
-
+        def _render_nvs_html(self, g):
             mapping = {}
             for p, o in g.predicate_objects(subject=URIRef(self.instance_uri)):
                 if str(p) == "http://www.w3.org/1999/02/22-rdf-syntax-ns#subject":
