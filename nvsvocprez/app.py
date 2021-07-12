@@ -1,5 +1,4 @@
 import logging
-import pprint
 from typing import Optional, AnyStr, Literal
 from pathlib import Path
 import fastapi
@@ -10,13 +9,12 @@ from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 from pyldapi.renderer import RDF_MEDIATYPES
 from model.profiles import void, nvs, skos, dd, vocpub, dcat, puv, sdo
-from utils import sparql_query, sparql_construct, cache_return, cache_clear
+from utils import sparql_query, sparql_construct, cache_return, cache_clear, cache_fill
 from pyldapi import Renderer, ContainerRenderer, DisplayProperty
 from config import SYSTEM_URI, PORT
 from rdflib import Graph, URIRef
 from rdflib import Literal as RdfLiteral, Namespace
 from rdflib.namespace import DC, DCTERMS, OWL, RDF, RDFS, SKOS, VOID
-import markdown
 
 
 api_home_dir = Path(__file__).parent
@@ -31,10 +29,10 @@ acc_dep_map = {
 }
 
 
-# @api.on_event("startup")
-# def startup():
-#     cache_clear()
-#     cache_fill(collections_or_conceptschemes_or_both="both")
+@api.on_event("startup")
+def startup():
+    cache_clear()
+    cache_fill(collections_or_conceptschemes_or_both="both")
 
 
 @api.get("/")
