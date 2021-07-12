@@ -9,7 +9,7 @@ from starlette.responses import RedirectResponse, Response, PlainTextResponse, J
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 from pyldapi.renderer import RDF_MEDIATYPES
-from model.profiles import void, nvs, skos, dd, vocpub, dcat, sdo
+from model.profiles import void, nvs, skos, dd, vocpub, dcat, puv, sdo
 from utils import sparql_query, sparql_construct, cache_return, cache_clear
 from pyldapi import Renderer, ContainerRenderer, DisplayProperty
 from config import SYSTEM_URI, PORT
@@ -1297,19 +1297,33 @@ def concept(request: Request):
     class ConceptRenderer(Renderer):
         def __init__(self):
             self.instance_uri = "http://vocab.nerc.ac.uk/collection/" + str(request.url).split("/collection/")[1].split("?")[0]
+
+            concept_profiles = {
+                "nvs": nvs,
+                "skos": skos,
+                "vocpub": vocpub,
+                "sdo": sdo,
+            }
+
+            def _is_collection_puv():
+                collection_uri = self.instance_uri.split("/current/")[0] + "/current/"
+                for collection in cache_return(collections_or_conceptschemes="collections"):
+                    if collection["uri"]["value"] == collection_uri:
+                        if collection.get("conforms_to") and collection["conforms_to"]["value"] == "https://w3id.org/env/puv":
+                            return True
+                return False
+
+            if _is_collection_puv():
+                concept_profiles["puv"] = puv
+
             super().__init__(
                 request,
                 self.instance_uri,
-                {
-                    "nvs": nvs,
-                    "skos": skos,
-                    "vocpub": vocpub,
-                    "sdo": sdo,
-                },
+                concept_profiles,
                 "nvs"
             )
 
-        def _render_nvs_html(self):
+        def _render_nvs_or_puv_html(self):
             q = """
                 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
                 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
@@ -1339,7 +1353,7 @@ def concept(request: Request):
                 )
 
             PAV = Namespace("http://purl.org/pav/")
-            PUV = Namespace("https://w3id.org/env/puv/")
+            PUV = Namespace("https://w3id.org/env/puv#")
             STATUS = Namespace("http://www.opengis.net/def/metamodel/ogc-na/")
 
             props = {
@@ -1422,7 +1436,7 @@ def concept(request: Request):
                     },
                     'o': {
                         'type': 'uri',
-                        'value': 'https://w3id.org/env/puv/Parameter'
+                        'value': 'https://w3id.org/env/puv#Parameter'
                     },
                     'o_label': {
                         'type': 'literal',
@@ -1436,7 +1450,7 @@ def concept(request: Request):
                 {
                     'p': {
                         'type': 'uri',
-                        'value': 'https://w3id.org/env/puv/biologicalObject'
+                        'value': 'https://w3id.org/env/puv#biologicalObject'
                     },
                     'o': {
                         'type': 'uri',
@@ -1458,7 +1472,7 @@ def concept(request: Request):
                 {
                     'p': {
                         'type': 'uri',
-                        'value': 'https://w3id.org/env/puv/chemicalObject'
+                        'value': 'https://w3id.org/env/puv#chemicalObject'
                     },
                     'o': {
                         'type': 'uri',
@@ -1480,7 +1494,7 @@ def concept(request: Request):
                 {
                     'p': {
                         'type': 'uri',
-                        'value': 'https://w3id.org/env/puv/matrix'
+                        'value': 'https://w3id.org/env/puv#matrix'
                     },
                     'o': {
                         'type': 'uri',
@@ -1502,7 +1516,7 @@ def concept(request: Request):
                 {
                     'p': {
                         'type': 'uri',
-                        'value': 'https://w3id.org/env/puv/matrixRelationship'
+                        'value': 'https://w3id.org/env/puv#matrixRelationship'
                     },
                     'o': {
                         'type': 'uri',
@@ -1524,7 +1538,7 @@ def concept(request: Request):
                 {
                     'p': {
                         'type': 'uri',
-                        'value': 'https://w3id.org/env/puv/property'
+                        'value': 'https://w3id.org/env/puv#property'
                     },
                     'o': {
                         'type': 'uri',
@@ -1546,7 +1560,7 @@ def concept(request: Request):
                 {
                     'p': {
                         'type': 'uri',
-                        'value': 'https://w3id.org/env/puv/property'
+                        'value': 'https://w3id.org/env/puv#property'
                     },
                     'o': {
                         'type': 'uri',
@@ -1568,7 +1582,7 @@ def concept(request: Request):
                 {
                     'p': {
                         'type': 'uri',
-                        'value': 'https://w3id.org/env/puv/property'
+                        'value': 'https://w3id.org/env/puv#property'
                     },
                     'o': {
                         'type': 'uri',
@@ -1590,7 +1604,7 @@ def concept(request: Request):
                 {
                     'p': {
                         'type': 'uri',
-                        'value': 'https://w3id.org/env/puv/uom'
+                        'value': 'https://w3id.org/env/puv#uom'
                     },
                     'o': {
                         'type': 'uri',
@@ -1810,12 +1824,34 @@ def concept(request: Request):
                     status_code=500
                 )
 
+        def _render_puv_rdf(self):
+            q = """
+                PREFIX puv: <https://w3id.org/env/puv#>
+                CONSTRUCT {
+                  <xxx> ?p ?o .
+                }
+                WHERE {
+                  <xxx> ?p ?o .
+
+                  # include only PUV properties
+                  FILTER (STRSTARTS(STR(?p), "https://w3id.org/env/puv#"))
+                }
+                """.replace("xxx", self.instance_uri)
+            r = sparql_construct(q, self.mediatype)
+            if r[0]:
+                return Response(r[1], headers={"Content-Type": self.mediatype})
+            else:
+                return PlainTextResponse(
+                    "There was an error obtaining the Concept RDF from the Triplestore",
+                    status_code=500
+                )
+
         def render(self):
             if self.profile == "nvs":
                 if self.mediatype in RDF_MEDIATYPES or self.mediatype in Renderer.RDF_SERIALIZER_TYPES_MAP:
                     return self._render_nvs_rdf()
                 else:
-                    return self._render_nvs_html()
+                    return self._render_nvs_or_puv_html()
             elif self.profile == "skos":
                 return self._render_skos_rdf()
             elif self.profile == "vocpub":
@@ -1826,7 +1862,7 @@ def concept(request: Request):
                 if self.mediatype in RDF_MEDIATYPES or self.mediatype in Renderer.RDF_SERIALIZER_TYPES_MAP:
                     return self._render_puv_rdf()
                 else:
-                    return self._render_puv_html()
+                    return self._render_nvs_or_puv_html()
 
             alt = super().render()
             if alt is not None:
