@@ -15,7 +15,7 @@ from pyldapi import Renderer, ContainerRenderer, DisplayProperty
 from config import SYSTEM_URI, PORT
 from rdflib import Graph, URIRef
 from rdflib import Literal as RdfLiteral, Namespace
-from rdflib.namespace import DC, DCTERMS, OWL, RDF, RDFS, SKOS, VOID
+from rdflib.namespace import DC, DCTERMS, ORG, OWL, RDF, RDFS, SKOS, VOID
 
 
 api_home_dir = Path(__file__).parent
@@ -1862,6 +1862,92 @@ def concept(request: Request):
                 return alt
 
     return ConceptRenderer().render()
+
+
+@api.get("/mapping/{int_ext}/{mapping_id}/")
+def mapping(request: Request):
+    class MappingRenderer(Renderer):
+        def __init__(self):
+            self.instance_uri = "http://vocab.nerc.ac.uk/mapping/" + \
+                                str(request.url).split("/mapping/")[1].split("?")[0]
+
+            super().__init__(request, self.instance_uri, {"nvs": nvs}, "nvs")
+
+        def render(self):
+            # try returning alt profile
+            response = super().render()
+            if response is not None:
+                return response
+            elif self.profile == "nvs":
+                if self.mediatype in RDF_MEDIATYPES or self.mediatype in Renderer.RDF_SERIALIZER_TYPES_MAP:
+                    return self._render_nvs_rdf()
+                else:
+                    return self._render_nvs_html()
+
+        def _get_mapping_rdf(self):
+            r = sparql_construct(f"DESCRIBE <{self.instance_uri}>")
+            if r[0]:
+                return Graph().parse(r[1])
+            else:
+                return PlainTextResponse(
+                    "There was an error obtaining the Collections RDF from the Triplestore",
+                    status_code=500
+                )
+
+        def _render_nvs_rdf(self):
+            g = self._get_mapping_rdf()
+            g.bind("dc", DC)
+            REG = Namespace("http://purl.org/linked-data/registry#")
+            g.bind("reg", REG)
+            g.bind("org", ORG)
+
+            return self._make_rdf_response(g)
+
+        def _render_nvs_html(self):
+            g = self._get_mapping_rdf()
+
+            mapping = {}
+            for p, o in g.predicate_objects(subject=URIRef(self.instance_uri)):
+                if str(p) == "http://www.w3.org/1999/02/22-rdf-syntax-ns#subject":
+                    mapping["subject"] = str(o)
+                elif str(p) == "http://www.w3.org/1999/02/22-rdf-syntax-ns#predicate":
+                    mapping["predicate"] = str(o)
+                elif str(p) == "http://www.w3.org/1999/02/22-rdf-syntax-ns#object":
+                    mapping["object"] = str(o)
+                elif str(p) == "http://purl.org/dc/elements/1.1/modified":
+                    mapping["modified"] = str(o)
+                elif str(p) == "http://purl.org/linked-data/registry#status":
+                    mapping["status"] = str(o)
+                elif str(p) == "http://purl.org/linked-data/registry#submitter":
+                    for p2, o2 in g.predicate_objects(subject=o):
+                        if str(p2) == "http://purl.org/linked-data/registry#title":
+                            mapping["title"] = str(o2)
+                        elif str(p2) == "http://purl.org/linked-data/registry#name":
+                            mapping["name"] = str(o2)
+                        elif str(p2) == "http://www.w3.org/ns/org#memberOf":
+                            mapping["memberof"] = str(o2)
+
+            context = {
+                "request": request,
+                "uri": self.instance_uri,
+                "systemUri": self.instance_uri.replace("http://vocab.nerc.ac.uk", ""),
+                "subject": mapping["subject"],
+                "subjectSystemUri": mapping["subject"].replace("http://vocab.nerc.ac.uk", ""),
+                "predicate": mapping["predicate"],
+                "predicateSystemUri": mapping["predicate"].replace("http://vocab.nerc.ac.uk", ""),
+                "object": mapping["object"],
+                "objectSystemUri": mapping["object"].replace("http://vocab.nerc.ac.uk", ""),
+                "modified": mapping["modified"],
+                "status": mapping["status"],
+                "submitter_title": mapping.get("title"),
+                "submitter_name": mapping.get("name"),
+                "submitter_memberof": mapping.get("memberof"),
+                "profile_token": self.profile
+            }
+
+            return templates.TemplateResponse("mapping.html", context=context)
+
+    return MappingRenderer().render()
 
 
 @api.get("/about")
