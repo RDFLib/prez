@@ -1141,35 +1141,38 @@ def standard_name(request: Request, acc_dep_or_concept: str = None):
                         PREFIX grg: <http://www.isotc211.org/schemas/grg/>
                         PREFIX owl: <http://www.w3.org/2002/07/owl#>
                         PREFIX pav: <http://purl.org/pav/>
+                        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
                         PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
                         PREFIX void: <http://rdfs.org/ns/void#>
-
+                                                
                         CONSTRUCT {
-                          <http://vocab.nerc.ac.uk/standard_name/> ?p ?o .                           
-                          <http://vocab.nerc.ac.uk/standard_name/> skos:member ?m .                        
-                          ?m ?p2 ?o2 .              
+                            <http://vocab.nerc.ac.uk/standard_name/> ?p ?o .                           
+                            <http://vocab.nerc.ac.uk/standard_name/> skos:member ?m .                        
+                            ?m ?p2 ?o2 .   
                         }
                         WHERE {
-                          {
-                            <xxx> ?p ?o .                          
-                            MINUS { <xxx> skos:member ?o . }
-                          }
-
-                          {
-                            <xxx> skos:member ?mx .
-                            ?mx a skos:Concept ;
-                                skos:prefLabel ?pl ;
-                            .
-
-                            ?mx ?p2 ?o2 .
-
-                            FILTER ( ?p2 != skos:broaderTransitive )
-                            FILTER ( ?p2 != skos:narrowerTransitive )
-                          }
+                            {
+                                <http://vocab.nerc.ac.uk/collection/P07/current/> ?p ?o .                          
+                                MINUS { <http://vocab.nerc.ac.uk/collection/P07/current/> skos:member ?o . }
+                            }
                           
-                          BIND (CONCAT("http://vocab.nerc.ac.uk/standard_name/", ?pl, "/") AS ?m)
+                            {
+                                <http://vocab.nerc.ac.uk/collection/P07/current/> skos:member ?mx .
+                                ?mx a skos:Concept ;
+                                      skos:prefLabel ?pl ;
+                                .
+                        
+                                FILTER(!isLiteral(?pl) || lang(?pl) = "en" || lang(?pl) = "")  
+                        
+                                ?mx ?p2 ?o2 .
+                                
+                                FILTER ( ?p2 != skos:broaderTransitive )
+                                FILTER ( ?p2 != skos:narrowerTransitive )
+                            }
+                          
+                            BIND (IRI(CONCAT("http://vocab.nerc.ac.uk/standard_name/", STR(?pl), "/")) AS ?m)
                         }
-                        """.replace("xxx", self.instance_uri)
+                        """
                     r = sparql_construct(q, self.mediatype)
                     if r[0]:
                         return Response(r[1], headers={"Content-Type": self.mediatype})
