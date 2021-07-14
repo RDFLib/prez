@@ -1890,9 +1890,9 @@ def mapping(request: Request):
             super().__init__(request, self.instance_uri, {"nvs": nvs}, "nvs")
 
         def render(self):
-            if "/I/" not in self.instance_uri and "/O/" not in self.instance_uri:
+            if "/I/" not in self.instance_uri and "/E/" not in self.instance_uri:
                 return PlainTextResponse(
-                    'All requests for Mappings must contain either "I" or "O" in the URI',
+                    'All requests for Mappings must contain either "I" or "E" in the URI',
                     status_code=400
                 )
 
@@ -1931,6 +1931,12 @@ def mapping(request: Request):
             REG = Namespace("http://purl.org/linked-data/registry#")
             g.bind("reg", REG)
             g.bind("org", ORG)
+
+            # handle broken Org URI use
+            broken = URIRef("http://www.w3.org/ns/org#")
+            for s, o in g.subject_objects(predicate=broken):
+                g.remove((s, broken, o))
+                g.add((s, ORG.Organization, o))
 
             return self._make_rdf_response(g)
 
