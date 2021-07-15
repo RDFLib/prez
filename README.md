@@ -34,7 +34,11 @@ Gunicorn is run with uvicorn workers which then run the FastAPI application. Thi
 * run gunicorn with uvicorn workers
    * `gunicorn -w 4 -k uvicorn.workers.UvicornWorker app:api -b 127.0.0.1:5007 -p gunicorn.pid >> out.log 2>&1 &`
 
-The system is now up on port 5007, logging is now in `out.log` and the process PID is in file `gunicorn.pid`.
+The system is now:
+* running with 4 workers 
+* up on port 5007
+* logging, both access & error log, is now in `out.log`
+* the process PID is in file `gunicorn.pid`.
 
 To shut down: ```kill `cat gunicorn.pid` ```
 
