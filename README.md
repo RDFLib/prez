@@ -23,9 +23,20 @@ There is no test v. production difference in the running of FastAPI, as there is
 
 ### Config
 * all configuration variables are in `config.py` and have required default set
-* when run with `uvicorn`, `PORT` is usually set on the command line and `HOST` and `SYSTEM_URI` need not be changed from `config.py`
+* when run with `uvicorn`/`gunicorn`, `PORT` is usually set on the command line and `HOST` and `SYSTEM_URI` need not be changed from `config.py`
 * `SPARQL_ENDPOINT` in `config.py` is correct for NVS production deployment and is used by the <http://nvs.surroundaustralia.com> deployment and Nick's localhost testing too
 
+### Running with gunicorn
+Gunicorn is run with uvicorn workers which then run the FastAPI application. This ensures multiple workers can be created as necissary and logging, stop/start handled better.
+
+* activate the virtual environment
+   * `source venv/bin/activate`
+* run gunicorn with uvicorn workers
+   * `gunicorn -w 4 -k uvicorn.workers.UvicornWorker app:api -b 127.0.0.1:5007 -p gunicorn.pid >> out.log 2>&1 &`
+
+The system is now up on port 5007, logging is now in `out.log` and the process PID is in file `gunicorn.pid`.
+
+To shut down: ```kill `cat gunicorn.pid` ```
 
 ## Contacts
 Lead Developer:  

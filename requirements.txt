@@ -8,3 +8,4 @@ git+https://github.com/RDFLib/rdflib-jsonld.git@master#egg=rdflib-jsonld
 connegp
 markdown
 python-multipart
+gunicorn
