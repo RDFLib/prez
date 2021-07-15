@@ -38,6 +38,11 @@ The system is now up on port 5007, logging is now in `out.log` and the process P
 
 To shut down: ```kill `cat gunicorn.pid` ```
 
+
+## Test client
+See the script `api_test_client.py`. It contains basic documentation within it.
+
+
 ## Contacts
 Lead Developer:  
 
