@@ -17,12 +17,9 @@ from prettytable import PrettyTable
 import sys
 
 
-def get_endpoint(name: str, uri: str, accept: str = "text/html") -> Tuple[str, str, int, str, float]:
+def get_endpoint(name: str, uri: str) -> Tuple[str, str, int, str, float]:
     try:
-        if accept is not None:
-            r = httpx.get(uri, headers={"Accept": accept}, timeout=60)
-        else:
-            r = httpx.get(uri, timeout=60)
+        r = httpx.get(uri, timeout=60)
     except ConnectError as e:
         return name, uri, 0, "Connection Error", 0
 
@@ -40,7 +37,7 @@ def run_endpoint_tests(endpoints: List[Tuple[str, str, Optional[str]]]):
     x.field_names = ["Name", "Endpoint", "Status", "Response", "Time (s)"]
 
     for endpoint in endpoints:
-        r0 = get_endpoint(endpoint[0], endpoint[1], endpoint[2])
+        r0 = get_endpoint(endpoint[0], endpoint[1])
         x.add_row([r0[0], r0[1], r0[2], r0[3], r0[4]])
 
     x.align = "l"
@@ -77,15 +74,19 @@ def make_endpoints(system_uri: str):
     ]
 
     extended_endpoints = [
-        ("System home page", f"{system_uri}", "text/turtle"),
-        ("Vocabularies", f"{system_uri}/collection/", "text/turtle"),
-        ("Thesauri", f"{system_uri}/scheme/", "text/turtle"),
-        ("A Vocabulary, R19", f"{system_uri}/collection/R19/current/", "text/turtle"),
-        ("A Thesaurus, WCATHES", f"{system_uri}/scheme/WCATHES/current/", "text/turtle"),
-        ("A Concept, S0700046", f"{system_uri}/collection/S07/current/S0700046/", "text/turtle"),
-        ("A Mapping, 337272", f"{system_uri}/mapping/I/337272/", "text/turtle"),
+        ("System home page, NVS Turtle", f"{system_uri}?_mediatype=text/turtle"),
+        ("Vocabularies, NVS Turtle", f"{system_uri}/collection/?_mediatype=text/turtle"),
+        ("Thesauri, NVS Turtle", f"{system_uri}/scheme/?_mediatype=text/turtle"),
+        ("A Vocabulary, R19, NVS Turtle", f"{system_uri}/collection/R19/current/?_mediatype=text/turtle"),
+        ("A Thesaurus, WCATHES, NVS Turtle", f"{system_uri}/scheme/WCATHES/current/?_mediatype=text/turtle"),
+        ("A Concept, S0700046, NVS Turtle", f"{system_uri}/collection/S07/current/S0700046/?_mediatype=text/turtle"),
+        ("A Mapping, 337272, NVS Turtle", f"{system_uri}/mapping/I/337272/?_mediatype=text/turtle"),
         ("standard_name Concept, acoustic_...",
-         f"{system_uri}/standard_name/acoustic_signal_roundtrip_travel_time_in_sea_water/", "text/turtle"),
+         f"{system_uri}/standard_name/acoustic_signal_roundtrip_travel_time_in_sea_water/?_mediatype=text/turtle"),
+        ("A PUV Concept, S0700046, NVS HTML", f"{system_uri}/collection/S07/current/S0700004/"),
+        ("A PUV Concept, S0700046, PUV HTML", f"{system_uri}/collection/S07/current/S0700004/?_profile=puv&_mediatype=text/html"),
+        ("A PUV Concept, S0700046, PUV Turtle",
+         f"{system_uri}/collection/S07/current/S0700004/?_profile=puv&_mediatype=text/turtle"),
     ]
 
     slow_endpoints = [
@@ -101,11 +102,11 @@ if __name__ == "__main__":
     sys_uri = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:5000"
     fast, extended, slow = make_endpoints(sys_uri)
 
-    print("Testing fast endpoints...")
-    run_endpoint_tests(fast)
+    # print("Testing fast endpoints...")
+    # run_endpoint_tests(fast)
 
-    # print("Testing extended endpoints...")
-    # run_endpoint_tests(extended)
+    print("Testing extended endpoints...")
+    run_endpoint_tests(extended)
 
     # print("Testing slow endpoints...")
     # run_one_endpoint_test(slow[0]) - EMODNET_PEST
