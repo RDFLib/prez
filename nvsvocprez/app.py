@@ -313,6 +313,8 @@ def conceptschemes(request: Request):
                         PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
                         PREFIX dc: <http://purl.org/dc/terms/>
                         PREFIX owl: <http://www.w3.org/2002/07/owl#>
+                        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+                        
                         CONSTRUCT {
                             ?cs a skos:ConceptScheme ;
                                 dc:alternative ?alt ;
@@ -430,7 +432,6 @@ def collection_no_current(request: Request, collection_id):
 
 
 @api.get("/collection/{collection_id}/current/")
-@api.get("/collection/{collection_id}/current/{acc_dep_or_concept}")
 @api.get("/collection/{collection_id}/current/{acc_dep_or_concept}/")
 def collection(
         request: Request,
@@ -481,7 +482,7 @@ def collection(
                              dcterms:date ?date .
 
                         FILTER(lang(?pl) = "en" || lang(?pl) = "") 
-                        FILTER(lang(?def) = "en" || lang(?def) = "")
+                        FILTER(lang(?def) = "en" || lang(?def) = "")                    
                 }
                 ORDER BY ?pl
                 """.replace("xxx", self.instance_uri).replace("acc_dep", acc_dep_map.get(acc_dep_or_concept))
@@ -559,6 +560,8 @@ def collection(
                             FILTER ( ?p2 != skos:broaderTransitive )
                             FILTER ( ?p2 != skos:narrowerTransitive )
                           }
+                          
+                          FILTER (!STRSTARTS(STR(?p2), "https://w3id.org/env/puv#"))
                         }
                         """.replace("xxx", self.instance_uri)
                     r = sparql_construct(q, self.mediatype)
@@ -659,6 +662,11 @@ def collection(
     return CollectionRenderer().render()
 
 
+@api.get("/collection/{collection_id}/current/{acc_dep_or_concept}")
+def collection_concept_noslash(request: Request, collection_id, acc_dep_or_concept):
+    return RedirectResponse(url=f"/collection/{collection_id}/current/{acc_dep_or_concept}/")
+
+
 @api.get("/scheme/{scheme_id}")
 @api.get("/scheme/{scheme_id}/")
 def scheme_no_current(request: Request, scheme_id):
@@ -666,7 +674,6 @@ def scheme_no_current(request: Request, scheme_id):
 
 
 @api.get("/scheme/{scheme_id}/current/")
-@api.get("/scheme/{scheme_id}/current/{acc_dep}")
 @api.get("/scheme/{scheme_id}/current/{acc_dep}/")
 def scheme(
         request: Request,
@@ -781,10 +788,10 @@ def scheme(
                     WHERE {{
                         ?c skos:inScheme <{vocab_uri}> .              
                         ?c skos:prefLabel ?pl .
-                        FILTER(lang(?pl) = "{language}" || lang(?pl) = "") 
+                        FILTER(lang(?pl) = "en" || lang(?pl) = "") 
                     }}
                     ORDER BY ?pl
-                    """.format(vocab_uri=self.instance_uri, language=self.language)
+                    """.format(vocab_uri=self.instance_uri)
 
                 concepts = [
                     (concept["systemUri"]["value"], concept["pl"]["value"])
@@ -825,36 +832,60 @@ def scheme(
                     )
                 elif self.mediatype in RDF_MEDIATYPES:
                     q = """
-                        PREFIX dc: <http://purl.org/dc/terms/>
-                        PREFIX dce: <http://purl.org/dc/elements/1.1/>
-                        PREFIX grg: <http://www.isotc211.org/schemas/grg/>
+                        PREFIX dcterms: <http://purl.org/dc/terms/>
                         PREFIX owl: <http://www.w3.org/2002/07/owl#>
-                        PREFIX pav: <http://purl.org/pav/>
                         PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-                        PREFIX void: <http://rdfs.org/ns/void#>
-
+                        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+                        
                         CONSTRUCT {
-                          <xxx> ?p ?o .                           
-                          <xxx> skos:member ?m .                        
-                          ?m ?p2 ?o2 .              
+                            <xxx> ?p ?o .
+                            
+                            ?c skos:inScheme <xxx> .
+                            
+                            ?c a skos:Concept ;
+                                 skos:prefLabel ?pl ;
+                                 skos:definition ?def ;
+                                 dcterms:date ?date ;
+                                 skos:broader ?broader                                  
+                            .
+                            
+                            ?broader skos:narrower ?c .
                         }
                         WHERE {
-                          {
-                            <xxx> ?p ?o .                          
-                            MINUS { <xxx> skos:member ?o . }
-                          }
-
-                          {
-                            <xxx> skos:member ?m .
-                            ?m a skos:Concept .
-
-                            ?m ?p2 ?o2 .
-
-                            FILTER ( ?p2 != skos:broaderTransitive )
-                            FILTER ( ?p2 != skos:narrowerTransitive )
-                          }
+                            <xxx> ?p ?o .
+                            
+                            {
+                                ?c skos:inScheme <xxx> .
+                            }
+                            {
+                                ?c a skos:Concept ;
+                                     skos:prefLabel ?pl ;
+                                     skos:definition ?def ;
+                                     dcterms:date ?xdate ;
+                                .
+                                
+                                BIND (STRDT(REPLACE(STRBEFORE(?xdate, "."), " ", "T"), xsd:dateTime) AS ?date)
+                                
+                                FILTER(lang(?pl) = "en" || lang(?pl) = "") 
+                            }
+                                
+                            acc_dep
+                            
+                            OPTIONAL {
+                                {
+                                    ?c skos:broader ?broader .
+                                    ?broader skos:inScheme <xxx> .
+                                }
+                                UNION 
+                                {
+                                    ?broader skos:narrower ?c .
+                                    ?broader skos:inScheme <xxx> .
+                                }
+                            }                            
                         }
-                        """.replace("xxx", self.instance_uri)
+                        ORDER BY ?pl
+                        """.replace("xxx", self.instance_uri)\
+                        .replace("acc_dep", acc_dep_map.get(acc_dep))
                     r = sparql_construct(q, self.mediatype)
                     if r[0]:
                         return Response(r[1], headers={"Content-Type": self.mediatype})
@@ -957,6 +988,7 @@ def scheme(
                     PREFIX dcterms: <http://purl.org/dc/terms/>
                     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
                     PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+                    
                     CONSTRUCT {
                         <xxx>
                           a skos:ConceptScheme ;
@@ -1032,6 +1064,11 @@ def scheme(
                 return alt
 
     return SchemeRenderer().render()
+
+
+@api.get("/scheme/{scheme_id}/current/{acc_dep}")
+def scheme_concept_noslash(request: Request, scheme_id, acc_dep):
+    return RedirectResponse(url=f"/scheme/{scheme_id}/current/{acc_dep}/")
 
 
 @api.get("/standard_name/")
@@ -2259,7 +2296,6 @@ def endpoint_get(request: Request):
             """
 
             accepts = get_accepts(request.headers["Accept"])
-            print(accepts)
             if accepts[0] in ['application/sparql-results+json', 'text/html']:
                 # show the SPARQL query form
                 return RedirectResponse(url="/sparql")
