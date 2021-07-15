@@ -17,16 +17,22 @@ from prettytable import PrettyTable
 import sys
 
 
-def get_endpoint(name: str, uri: str, accept: str = "text/html") -> Tuple[str, int, str, timedelta]:
+def get_endpoint(name: str, uri: str, accept: str = "text/html") -> Tuple[str, str, int, str, float]:
     try:
         if accept is not None:
             r = httpx.get(uri, headers={"Accept": accept}, timeout=60)
         else:
             r = httpx.get(uri, timeout=60)
     except ConnectError as e:
-        return name, uri, 0, "Connection Error", ""
+        return name, uri, 0, "Connection Error", 0
 
-    return name, r.url, r.status_code, r.text if not 200 <= r.status_code < 300 else "", r.elapsed.total_seconds()
+    if 200 <= r.status_code < 300:
+        msg = ""
+    elif r.status_code == 500:
+        msg = "Internal Server Error"
+    else:
+        msg = r.text
+    return name, r.url, r.status_code, msg, r.elapsed.total_seconds()
 
 
 def run_endpoint_tests(endpoints: List[Tuple[str, str, Optional[str]]]):
@@ -59,7 +65,7 @@ def make_endpoints(system_uri: str):
         ("System home page", f"{system_uri}", None),
         ("SPARQL Page", f"{system_uri}/sparql", None),
         ("About Page", f"{system_uri}/about", None),
-        ("Contact Page", f"{system_uri}/contact", None),
+        # ("Contact Page", f"{system_uri}/contact", None),
         ("Vocabularies", f"{system_uri}/collection/", None),
         ("Thesauri", f"{system_uri}/scheme/", None),
         ("standard_name", f"{system_uri}/standard_name/", None),
