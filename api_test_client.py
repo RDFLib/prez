@@ -9,12 +9,13 @@ You will need packages listed in requirements.api_test_client.txt installed.
 Adjust the script directly to test the various endpoint collections - commented out tests
 """
 
-from datetime import timedelta
 from typing import Tuple, List, Optional
 import httpx
 from httpx import ConnectError
 from prettytable import PrettyTable
 import sys
+from rdflib import Graph
+import datetime
 
 
 def get_endpoint(name: str, uri: str) -> Tuple[str, str, int, str, float]:
@@ -29,7 +30,18 @@ def get_endpoint(name: str, uri: str) -> Tuple[str, str, int, str, float]:
         msg = "Internal Server Error"
     else:
         msg = r.text
-    return name, r.url, r.status_code, msg, r.elapsed.total_seconds()
+    return name, str(r.url), r.status_code, msg, r.elapsed.total_seconds()
+
+
+def check_rdf_from_endpoint(name: str, uri: str) -> Tuple[str, str, int, str, float]:
+    try:
+        s = datetime.datetime.now()
+        g = Graph().parse(uri)
+        e = datetime.datetime.now()
+        td = e - s
+        return name, uri, 200, f"{len(g)} triples", td.total_seconds()
+    except ConnectError as e:
+        return name, uri, 0, "Connection Error", 0
 
 
 def run_endpoint_tests(endpoints: List[Tuple[str, str, Optional[str]]]):
@@ -98,19 +110,45 @@ def make_endpoints(system_uri: str):
     return fast_endpoints, extended_endpoints, slow_endpoints
 
 
+def make_rdf_endpoints(system_uri: str):
+    return [
+        ("System Home", f"{system_uri}", None),
+        ("Collections", f"{system_uri}/collection/", None),
+        ("Collection R19", f"{system_uri}/collection/R19/current/", None),
+        ("Schemes", f"{system_uri}/scheme/", None),
+        ("Scheme EMODNET_PEST", f"{system_uri}/scheme/EMODNET_PEST/current/", None),
+        ("Mapping 340398", f"{system_uri}/mapping/I/340398/", None),
+    ]
+
+
+def run_rdf_endpoint_tests(endpoints: List[Tuple[str, str, Optional[str]]]):
+    x = PrettyTable()
+    x.field_names = ["Name", "Endpoint", "Status", "Response", "Time (s)"]
+
+    for endpoint in endpoints:
+        print(f"test {endpoint[0]}")
+        r0 = check_rdf_from_endpoint(endpoint[0], endpoint[1])
+        x.add_row([r0[0], r0[1], r0[2], r0[3], r0[4]])
+
+    x.align = "l"
+    print(x)
+
+
 if __name__ == "__main__":
     sys_uri = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:5000"
-    fast, extended, slow = make_endpoints(sys_uri)
-
+    # fast, extended, slow = make_endpoints(sys_uri)
+    #
     # print("Testing fast endpoints...")
     # run_endpoint_tests(fast)
 
-    print("Testing extended endpoints...")
-    run_endpoint_tests(extended)
+    # print("Testing extended endpoints...")
+    # run_endpoint_tests(extended)
 
     # print("Testing slow endpoints...")
-    # run_one_endpoint_test(slow[0]) - EMODNET_PEST
-    # run_one_endpoint_test(slow[1]) - P01
-    # run_one_endpoint_test(slow[2]) - standard_name
+    # run_one_endpoint_test(slow[0])  # EMODNET_PEST
+    # run_one_endpoint_test(slow[1])  # P01
+    # run_one_endpoint_test(slow[2])  # standard_name
 
     # run_endpoint_tests(slow)
+    e = make_rdf_endpoints(sys_uri)
+    run_rdf_endpoint_tests(e)
