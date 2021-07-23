@@ -16,6 +16,7 @@ from config import SYSTEM_URI, PORT
 from rdflib import Graph, URIRef
 from rdflib import Literal as RdfLiteral, Namespace
 from rdflib.namespace import DC, DCTERMS, ORG, OWL, RDF, RDFS, SKOS, VOID
+from profiles import Profile
 
 
 api_home_dir = Path(__file__).parent
@@ -446,15 +447,33 @@ def collection(
         def __init__(self):
             self.instance_uri = f"http://vocab.nerc.ac.uk/collection/{collection_id}/current/"
 
-            super().__init__(
-                request,
-                self.instance_uri,
-                {
+            profiles = {
                     "nvs": nvs,
                     "skos": skos,
                     "vocpub": vocpub,
                     "dd": dd
-                },
+                }
+            for collection in cache_return(collections_or_conceptschemes="collections"):
+                if collection["id"]["value"] == collection_id:
+                    if collection.get("conforms_to"):
+                        if collection["conforms_to"]["value"] == "https://w3id.org/env/puv":
+                            p = Profile(
+                                uri="https://w3id.org/env/puv",
+                                id="puv",
+                                label="Parameter Use Vocabulary",
+                                comment="A simple ontology which implements the Parameter Usage Vocabulary semantic model, as described at "
+                                        "https://github.com/nvs-vocabs/P01",
+                                mediatypes=RDF_MEDIATYPES,
+                                default_mediatype="text/turtle",
+                                languages=["en"],
+                                default_language="en",
+                            )
+                            profiles["puv"] = p
+
+            super().__init__(
+                request,
+                self.instance_uri,
+                profiles,
                 "nvs",
             )
 
@@ -646,6 +665,48 @@ def collection(
                     }
                     """.replace("xxx", self.instance_uri)
 
+                r = sparql_construct(q, self.mediatype)
+                if r[0]:
+                    return Response(r[1], headers={"Content-Type": self.mediatype})
+                else:
+                    return PlainTextResponse(
+                        "There was an error obtaining the Collections RDF from the Triplestore",
+                        status_code=500
+                    )
+            elif self.profile == "puv":
+                # only RDF Media Types
+                q = """
+                    PREFIX dc: <http://purl.org/dc/terms/>
+                    PREFIX dce: <http://purl.org/dc/elements/1.1/>
+                    PREFIX grg: <http://www.isotc211.org/schemas/grg/>
+                    PREFIX owl: <http://www.w3.org/2002/07/owl#>
+                    PREFIX pav: <http://purl.org/pav/>
+                    PREFIX puv: <https://w3id.org/env/puv#>
+                    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                    PREFIX void: <http://rdfs.org/ns/void#>
+
+                    CONSTRUCT {
+                      <xxx> ?p ?o .                           
+                      <xxx> skos:member ?m .                        
+                      ?m ?p2 ?o2 .              
+                    }
+                    WHERE {
+                      {
+                        <xxx> ?p ?o .                          
+                        MINUS { <xxx> skos:member ?o . }
+                      }
+
+                      {
+                        <xxx> skos:member ?m .
+                        ?m a skos:Concept .
+
+                        ?m ?p2 ?o2 .
+
+                        FILTER ( ?p2 != skos:broaderTransitive )
+                        FILTER ( ?p2 != skos:narrowerTransitive )
+                      }
+                    }
+                    """.replace("xxx", self.instance_uri)
                 r = sparql_construct(q, self.mediatype)
                 if r[0]:
                     return Response(r[1], headers={"Content-Type": self.mediatype})
