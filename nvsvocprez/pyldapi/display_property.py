@@ -24,6 +24,3 @@ class DisplayProperty:
             self.object_html = f'<td colspan="2"><a href="{object_value}">{object_value}</a></td>'
         else:  # literal
             self.object_html = f'<td colspan="2">{object_value}</td>'
-
-
-from nvsvocprez.config import DATA_URI
