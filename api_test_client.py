@@ -136,8 +136,9 @@ def run_rdf_endpoint_tests(endpoints: List[Tuple[str, str, Optional[str]]]):
 
 if __name__ == "__main__":
     sys_uri = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:5000"
-    # fast, extended, slow = make_endpoints(sys_uri)
-    #
+    fast, extended, slow = make_endpoints(sys_uri)
+    print(fast)
+
     # print("Testing fast endpoints...")
     # run_endpoint_tests(fast)
 
@@ -150,5 +151,5 @@ if __name__ == "__main__":
     # run_one_endpoint_test(slow[2])  # standard_name
 
     # run_endpoint_tests(slow)
-    e = make_rdf_endpoints(sys_uri)
-    run_rdf_endpoint_tests(e)
+    # e = make_rdf_endpoints(sys_uri)
+    # run_rdf_endpoint_tests(e)

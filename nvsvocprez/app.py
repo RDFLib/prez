@@ -12,7 +12,7 @@ from pyldapi.data import RDF_FILE_EXTS
 from profiles import void, nvs, skos, dd, vocpub, dcat, puv, sdo
 from utils import sparql_query, sparql_construct, cache_return, cache_clear, get_accepts
 from pyldapi import Renderer, ContainerRenderer, DisplayProperty
-from config import SYSTEM_URI, PORT
+from config import SYSTEM_URI, DATA_URI, PORT
 from rdflib import Graph, URIRef
 from rdflib import Literal as RdfLiteral, Namespace
 from rdflib.namespace import DC, DCTERMS, ORG, OWL, RDF, RDFS, SKOS, VOID
@@ -445,7 +445,7 @@ def collection(
 
     class CollectionRenderer(Renderer):
         def __init__(self):
-            self.instance_uri = f"http://vocab.nerc.ac.uk/collection/{collection_id}/current/"
+            self.instance_uri = f"{DATA_URI}/collection/{collection_id}/current/"
 
             profiles = {
                     "nvs": nvs,
@@ -743,7 +743,7 @@ def scheme(
 ):
     class SchemeRenderer(Renderer):
         def __init__(self):
-            self.instance_uri = f"http://vocab.nerc.ac.uk/scheme/{scheme_id}/current/"
+            self.instance_uri = f"{DATA_URI}/scheme/{scheme_id}/current/"
 
             super().__init__(
                 request,
@@ -794,12 +794,12 @@ def scheme(
                 html = ""
                 for k, v in hierarchy.items():
                     if v:
-                        html += f'<li><span class="caret"><a href="{k.replace("http://vocab.nerc.ac.uk", "")}">{labels[k]}</a></span>' if k is not None else "None"
+                        html += f'<li><span class="caret"><a href="{k.replace(DATA_URI, "")}">{labels[k]}</a></span>' if k is not None else "None"
                         html += '<ul class="nested">'
                         html += make_nested_ul(v, labels)
                         html += "</ul>"
                     else:
-                        html += f'<li><a href="{k.replace("http://vocab.nerc.ac.uk", "")}">{labels[k]}</a>' if k is not None else "None"
+                        html += f'<li><a href="{k.replace(DATA_URI, "")}">{labels[k]}</a>' if k is not None else "None"
                     html += "</li>"
                 return html
 
@@ -1142,7 +1142,7 @@ def standard_name(request: Request, acc_dep_or_concept: str = None):
 
     class CollectionRenderer(Renderer):
         def __init__(self):
-            self.instance_uri = f"http://vocab.nerc.ac.uk/collection/P07/current/"
+            self.instance_uri = f"{DATA_URI}/collection/P07/current/"
 
             super().__init__(
                 request,
@@ -1221,7 +1221,7 @@ def standard_name(request: Request, acc_dep_or_concept: str = None):
                             }
                         )
 
-                    self.instance_uri = "http://vocab.nerc.ac.uk/standard_name/"
+                    self.instance_uri = f"{DATA_URI}/standard_name/"
 
                     return templates.TemplateResponse(
                         "collection.html",
@@ -1244,18 +1244,18 @@ def standard_name(request: Request, acc_dep_or_concept: str = None):
                         PREFIX void: <http://rdfs.org/ns/void#>
                                                 
                         CONSTRUCT {
-                            <http://vocab.nerc.ac.uk/standard_name/> ?p ?o .                           
-                            <http://vocab.nerc.ac.uk/standard_name/> skos:member ?m .                        
+                            <DATA_URI/standard_name/> ?p ?o .                           
+                            <DATA_URI/standard_name/> skos:member ?m .                        
                             ?m ?p2 ?o2 .   
                         }
                         WHERE {
                             {
-                                <http://vocab.nerc.ac.uk/collection/P07/current/> ?p ?o .                          
-                                MINUS { <http://vocab.nerc.ac.uk/collection/P07/current/> skos:member ?o . }
+                                <DATA_URI/collection/P07/current/> ?p ?o .                          
+                                MINUS { <DATA_URI/collection/P07/current/> skos:member ?o . }
                             }
                           
                             {
-                                <http://vocab.nerc.ac.uk/collection/P07/current/> skos:member ?mx .
+                                <DATA_URI/collection/P07/current/> skos:member ?mx .
                                 ?mx a skos:Concept ;
                                       skos:prefLabel ?pl ;
                                 .
@@ -1268,9 +1268,9 @@ def standard_name(request: Request, acc_dep_or_concept: str = None):
                                 FILTER ( ?p2 != skos:narrowerTransitive )
                             }
                           
-                            BIND (IRI(CONCAT("http://vocab.nerc.ac.uk/standard_name/", STR(?pl), "/")) AS ?m)
+                            BIND (IRI(CONCAT("DATA_URI/standard_name/", STR(?pl), "/")) AS ?m)
                         }
-                        """
+                        """.replace("DATA_URI", DATA_URI)
                     r = sparql_construct(q, self.mediatype)
                     if r[0]:
                         return Response(r[1], headers={"Content-Type": self.mediatype})
@@ -1288,11 +1288,11 @@ def standard_name(request: Request, acc_dep_or_concept: str = None):
                         <xxx> skos:member ?xc .
                         ?xc skos:prefLabel ?xpl .
                         
-                        BIND (CONCAT("http://vocab.nerc.ac.uk/standard_name/", ?xpl, "/") AS ?c)
+                        BIND (CONCAT("DATA_URI/standard_name/", ?xpl, "/") AS ?c)
                         BIND (REPLACE(?xpl, "_", " ") AS ?pl)
                     }
                     ORDER BY ?pl                
-                    """.replace("xxx", self.instance_uri)
+                    """.replace("xxx", self.instance_uri).replace("DATA_URI", DATA_URI)
                 r = sparql_query(q)
                 return JSONResponse([
                     {"uri": x["c"]["value"], "prefLabel": x["pl"]["value"]}
@@ -1302,7 +1302,7 @@ def standard_name(request: Request, acc_dep_or_concept: str = None):
                 q = """
                     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>                    
                     CONSTRUCT {
-                        <http://vocab.nerc.ac.uk/standard_name/> 
+                        <DATA_URI/standard_name/> 
                             a skos:Collection ;
                             skos:prefLabel ?prefLabel ;
                             skos:definition ?description ;
@@ -1317,11 +1317,11 @@ def standard_name(request: Request, acc_dep_or_concept: str = None):
                             skos:member ?xc .
                         ?xc skos:prefLabel ?xc_pl .
                         
-                        BIND (CONCAT("http://vocab.nerc.ac.uk/standard_name/", ?xc_pl, "/") AS ?c)
+                        BIND (CONCAT("DATA_URI/standard_name/", ?xc_pl, "/") AS ?c)
                         BIND (REPLACE(?xc_pl, "_", " ") AS ?c_pl)                        
                     }
                     ORDER BY ?prefLabel
-                    """.replace("xxx", self.instance_uri)
+                    """.replace("xxx", self.instance_uri).replace("DATA_URI", DATA_URI)
                 r = sparql_construct(q, self.mediatype)
                 if r[0]:
                     return Response(r[1], headers={"Content-Type": self.mediatype})
@@ -1336,7 +1336,7 @@ def standard_name(request: Request, acc_dep_or_concept: str = None):
                     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
                     PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
                     CONSTRUCT {
-                        <http://vocab.nerc.ac.uk/standard_name/> 
+                        <DATA_URI/standard_name/> 
                             a skos:Collection ;
                             skos:prefLabel ?prefLabel ;
                             skos:definition ?description ;
@@ -1358,12 +1358,12 @@ def standard_name(request: Request, acc_dep_or_concept: str = None):
                             skos:member ?xc .
                         ?xc skos:prefLabel ?xc_pl .
                         
-                        BIND (CONCAT("http://vocab.nerc.ac.uk/standard_name/", ?xc_pl, "/") AS ?c)
+                        BIND (CONCAT("DATA_URI/standard_name/", ?xc_pl, "/") AS ?c)
                         BIND (REPLACE(?xc_pl, "_", " ") AS ?c_pl)
                         BIND (STRDT(REPLACE(STRBEFORE(?date, "."), " ", "T"), xsd:dateTime) AS ?modified)
                     }
                     ORDER BY ?xc                    
-                    """.replace("xxx", self.instance_uri)
+                    """.replace("xxx", self.instance_uri).replace("DATA_URI", DATA_URI)
 
                 r = sparql_construct(q, self.mediatype)
                 if r[0]:
@@ -1374,7 +1374,7 @@ def standard_name(request: Request, acc_dep_or_concept: str = None):
                         status_code=500
                     )
 
-            self.instance_uri = "http://vocab.nerc.ac.uk/standard_name/"
+            self.instance_uri = f"{DATA_URI}/standard_name/"
             alt = super().render()
             if alt is not None:
                 return alt
@@ -1391,10 +1391,10 @@ class ConceptRenderer(Renderer):
     def __init__(self, request):
         self.request = request
         if "collection" in str(request.url):
-            self.instance_uri = "http://vocab.nerc.ac.uk/collection/" + \
+            self.instance_uri = f"{DATA_URI}/collection/" + \
                                 str(request.url).split("/collection/")[1].split("?")[0]
         elif "standard_name" in str(request.url):
-            self.instance_uri = "http://vocab.nerc.ac.uk/standard_name/" + \
+            self.instance_uri = f"{DATA_URI}/standard_name/" + \
                                 str(request.url).split("/standard_name/")[1].split("?")[0]
 
         concept_profiles = {
@@ -1443,16 +1443,16 @@ class ConceptRenderer(Renderer):
               BIND(
                 IF(
                   CONTAINS(STR(?concept), "standard_name"), 
-                    <http://vocab.nerc.ac.uk/standard_name/>,
+                    <DATA_URI/standard_name/>,
                     IRI(CONCAT(STRBEFORE(STR(?concept), "/current/"), "/current/"))
                 )
                 AS ?collection_uri
               )
-              BIND (REPLACE(STR(?collection_uri), "http://vocab.nerc.ac.uk", "") AS ?collection_systemUri)
+              BIND (REPLACE(STR(?collection_uri), "DATA_URI", "") AS ?collection_systemUri)
               OPTIONAL {?collection_uri skos:prefLabel ?x }
               BIND (COALESCE(?x, "Climate and Forecast Standard Names") AS ?collection_label)
             }         
-            """.replace("xxx", self.instance_uri)
+            """.replace("xxx", self.instance_uri).replace("DATA_URI", DATA_URI)
         r = sparql_query(q)
         if not r[0]:
             return PlainTextResponse(
@@ -1551,7 +1551,7 @@ class ConceptRenderer(Renderer):
                     'value': 'Parameter',
                     'xml:lang': 'en'
                 },
-                "collection_uri": {"type": "uri", "value": "http://vocab.nerc.ac.uk/collection/P01/current/"},
+                "collection_uri": {"type": "uri", "value": "DATA_URI/collection/P01/current/".replace("DATA_URI", DATA_URI)},
                 "collection_systemUri": {"type": "literal", "value": "/collection/P01/current/SAGEMSFM/"},
                 "collection_label": {"type": "literal", "value": "BODC Parameter Usage Vocabulary"},
             },
@@ -1562,7 +1562,7 @@ class ConceptRenderer(Renderer):
                 },
                 'o': {
                     'type': 'uri',
-                    'value': 'http://vocab.nerc.ac.uk/collection/S25/current/BE006569/'
+                    'value': 'DATA_URI/collection/S25/current/BE006569/'.replace("DATA_URI", DATA_URI)
                 },
                 'o_label': {
                     'type': 'literal',
@@ -1573,7 +1573,7 @@ class ConceptRenderer(Renderer):
                     'type': 'literal',
                     'value': 'SDN:S25:BE006569'
                 },
-                "collection_uri": {"type": "uri", "value": "http://vocab.nerc.ac.uk/collection/P01/current/"},
+                "collection_uri": {"type": "uri", "value": "DATA_URI/collection/P01/current/".replace("DATA_URI", DATA_URI)},
                 "collection_systemUri": {"type": "literal", "value": "/collection/P01/current/SAGEMSFM/"},
                 "collection_label": {"type": "literal", "value": "BODC Parameter Usage Vocabulary"},
             },
@@ -1584,7 +1584,7 @@ class ConceptRenderer(Renderer):
                 },
                 'o': {
                     'type': 'uri',
-                    'value': 'http://vocab.nerc.ac.uk/collection/S27/current/CS003687/'
+                    'value': 'DATA_URI/collection/S27/current/CS003687/'.replace("DATA_URI", DATA_URI)
                 },
                 'o_label': {
                     'type': 'literal',
@@ -1595,7 +1595,7 @@ class ConceptRenderer(Renderer):
                     'type': 'literal',
                     'value': 'SDN:S27:CS003687'
                 },
-                "collection_uri": {"type": "uri", "value": "http://vocab.nerc.ac.uk/collection/P01/current/"},
+                "collection_uri": {"type": "uri", "value": "DATA_URI/collection/P01/current/".replace("DATA_URI", DATA_URI)},
                 "collection_systemUri": {"type": "literal", "value": "/collection/P01/current/SAGEMSFM/"},
                 "collection_label": {"type": "literal", "value": "BODC Parameter Usage Vocabulary"},
             },
@@ -1606,7 +1606,7 @@ class ConceptRenderer(Renderer):
                 },
                 'o': {
                     'type': 'uri',
-                    'value': 'http://vocab.nerc.ac.uk/collection/S26/current/MAT01963/'
+                    'value': 'DATA_URI/collection/S26/current/MAT01963/'.replace("DATA_URI", DATA_URI)
                 },
                 'o_label': {
                     'type': 'literal',
@@ -1617,7 +1617,7 @@ class ConceptRenderer(Renderer):
                     'type': 'literal',
                     'value': 'SDN:S26:MAT01963'
                 },
-                "collection_uri": {"type": "uri", "value": "http://vocab.nerc.ac.uk/collection/P01/current/"},
+                "collection_uri": {"type": "uri", "value": "DATA_URI/collection/P01/current/".replace("DATA_URI", DATA_URI)},
                 "collection_systemUri": {"type": "literal", "value": "/collection/P01/current/SAGEMSFM/"},
                 "collection_label": {"type": "literal", "value": "BODC Parameter Usage Vocabulary"},
             },
@@ -1628,7 +1628,7 @@ class ConceptRenderer(Renderer):
                 },
                 'o': {
                     'type': 'uri',
-                    'value': 'http://vocab.nerc.ac.uk/collection/S02/current/S041/'
+                    'value': 'DATA_URI/collection/S02/current/S041/'.replace("DATA_URI", DATA_URI)
                 },
                 'o_label': {
                     'type': 'literal',
@@ -1639,7 +1639,7 @@ class ConceptRenderer(Renderer):
                     'type': 'literal',
                     'value': 'SDN:S02:S041'
                 },
-                "collection_uri": {"type": "uri", "value": "http://vocab.nerc.ac.uk/collection/P01/current/"},
+                "collection_uri": {"type": "uri", "value": "DATA_URI/collection/P01/current/".replace("DATA_URI", DATA_URI)},
                 "collection_systemUri": {"type": "literal", "value": "/collection/P01/current/SAGEMSFM/"},
                 "collection_label": {"type": "literal", "value": "BODC Parameter Usage Vocabulary"},
             },
@@ -1650,7 +1650,7 @@ class ConceptRenderer(Renderer):
                 },
                 'o': {
                     'type': 'uri',
-                    'value': 'http://vocab.nerc.ac.uk/collection/S06/current/S0600045/'
+                    'value': 'DATA_URI/collection/S06/current/S0600045/'.replace("DATA_URI", DATA_URI)
                 },
                 'o_label': {
                     'type': 'literal',
@@ -1661,7 +1661,7 @@ class ConceptRenderer(Renderer):
                     'type': 'literal',
                     'value': 'SDN:S06:S0600045'
                 },
-                "collection_uri": {"type": "uri", "value": "http://vocab.nerc.ac.uk/collection/P01/current/"},
+                "collection_uri": {"type": "uri", "value": "DATA_URI/collection/P01/current/".replace("DATA_URI", DATA_URI)},
                 "collection_systemUri": {"type": "literal", "value": "/collection/P01/current/SAGEMSFM/"},
                 "collection_label": {"type": "literal", "value": "BODC Parameter Usage Vocabulary"},
             },
@@ -1672,7 +1672,7 @@ class ConceptRenderer(Renderer):
                 },
                 'o': {
                     'type': 'uri',
-                    'value': 'http://vocab.nerc.ac.uk/collection/S06/current/S0600082/'
+                    'value': 'DATA_URI/collection/S06/current/S0600082/'.replace("DATA_URI", DATA_URI)
                 },
                 'o_label': {
                     'type': 'literal',
@@ -1683,7 +1683,7 @@ class ConceptRenderer(Renderer):
                     'type': 'literal',
                     'value': 'SDN:S06:S0600082'
                 },
-                "collection_uri": {"type": "uri", "value": "http://vocab.nerc.ac.uk/collection/P01/current/"},
+                "collection_uri": {"type": "uri", "value": "DATA_URI/collection/P01/current/".replace("DATA_URI", DATA_URI)},
                 "collection_systemUri": {"type": "literal", "value": "/collection/P01/current/SAGEMSFM/"},
                 "collection_label": {"type": "literal", "value": "BODC Parameter Usage Vocabulary"},
             },
@@ -1694,7 +1694,7 @@ class ConceptRenderer(Renderer):
                 },
                 'o': {
                     'type': 'uri',
-                    'value': 'http://vocab.nerc.ac.uk/collection/S06/current/S06000160/'
+                    'value': 'DATA_URI/collection/S06/current/S06000160/'.replace("DATA_URI", DATA_URI)
                 },
                 'o_label': {
                     'type': 'literal',
@@ -1705,7 +1705,7 @@ class ConceptRenderer(Renderer):
                     'type': 'literal',
                     'value': 'SDN:S06:S06000160'
                 },
-                "collection_uri": {"type": "uri", "value": "http://vocab.nerc.ac.uk/collection/P01/current/"},
+                "collection_uri": {"type": "uri", "value": "DATA_URI/collection/P01/current/".replace("DATA_URI", DATA_URI)},
                 "collection_systemUri": {"type": "literal", "value": "/collection/P01/current/SAGEMSFM/"},
                 "collection_label": {"type": "literal", "value": "BODC Parameter Usage Vocabulary"},
             },
@@ -1716,7 +1716,7 @@ class ConceptRenderer(Renderer):
                 },
                 'o': {
                     'type': 'uri',
-                    'value': 'http://vocab.nerc.ac.uk/collection/P06/current/UUKG/'
+                    'value': 'DATA_URI/collection/P06/current/UUKG/'.replace("DATA_URI", DATA_URI)
                 },
                 'o_label': {
                     'type': 'literal',
@@ -1727,7 +1727,7 @@ class ConceptRenderer(Renderer):
                     'type': 'literal',
                     'value': 'SDN:P06:UUKG'
                 },
-                "collection_uri": {"type": "uri", "value": "http://vocab.nerc.ac.uk/collection/P01/current/"},
+                "collection_uri": {"type": "uri", "value": "DATA_URI/collection/P01/current/".replace("DATA_URI", DATA_URI)},
                 "collection_systemUri": {"type": "literal", "value": "/collection/P01/current/SAGEMSFM/"},
                 "collection_label": {"type": "literal", "value": "BODC Parameter Usage Vocabulary"},
             }
@@ -1888,7 +1888,7 @@ class ConceptRenderer(Renderer):
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
             CONSTRUCT {
-              <http://vocab.nerc.ac.uk/collection/P01/current/SAGEMSFM/>
+              <DATA_URI/collection/P01/current/SAGEMSFM/>
                 a sdo:DefinedTerm ;
                 sdo:name ?pl ;
                 sdo:alternateName ?al ;
@@ -1902,7 +1902,7 @@ class ConceptRenderer(Renderer):
               .
             }
             WHERE {
-              <http://vocab.nerc.ac.uk/collection/P01/current/SAGEMSFM/> 
+              <DATA_URI/collection/P01/current/SAGEMSFM/> 
                 skos:prefLabel ?pl ;
                 skos:definition ?def ;
                 dcterms:identifier ?id ;
@@ -1912,17 +1912,17 @@ class ConceptRenderer(Renderer):
 
               BIND (STRDT(REPLACE(STRBEFORE(?date, "."), " ", "T"), xsd:dateTime) AS ?modified)
 
-              ?collection skos:member <http://vocab.nerc.ac.uk/collection/P01/current/SAGEMSFM/>  .
+              ?collection skos:member <DATA_URI/collection/P01/current/SAGEMSFM/>  .
 
               OPTIONAL {
-                <http://vocab.nerc.ac.uk/collection/P01/current/SAGEMSFM/>
+                <DATA_URI/collection/P01/current/SAGEMSFM/>
                   skos:altLabel ?al ;
                   skos:inScheme ?scheme ;
                   owl:sameAs ?sameAs ;
                 .
               }
             }            
-            """
+            """.replace("DATA_URI", DATA_URI)
         r = sparql_construct(q, self.mediatype)
         if r[0]:
             return Response(r[1], headers={"Content-Type": self.mediatype})
@@ -1985,7 +1985,7 @@ def concept(request: Request):
 def mapping(request: Request):
     class MappingRenderer(Renderer):
         def __init__(self):
-            self.instance_uri = "http://vocab.nerc.ac.uk/mapping/" + \
+            self.instance_uri = f"{DATA_URI}/mapping/" + \
                                 str(request.url).split("/mapping/")[1].split("?")[0]
 
             super().__init__(request, self.instance_uri, {"nvs": nvs}, "nvs")
@@ -2066,13 +2066,13 @@ def mapping(request: Request):
             context = {
                 "request": request,
                 "uri": self.instance_uri,
-                "systemUri": self.instance_uri.replace("http://vocab.nerc.ac.uk", ""),
+                "systemUri": self.instance_uri.replace(DATA_URI, ""),
                 "subject": mapping["subject"],
-                "subjectSystemUri": mapping["subject"].replace("http://vocab.nerc.ac.uk", ""),
+                "subjectSystemUri": mapping["subject"].replace(DATA_URI, ""),
                 "predicate": mapping["predicate"],
-                "predicateSystemUri": mapping["predicate"].replace("http://vocab.nerc.ac.uk", ""),
+                "predicateSystemUri": mapping["predicate"].replace(DATA_URI, ""),
                 "object": mapping["object"],
-                "objectSystemUri": mapping["object"].replace("http://vocab.nerc.ac.uk", ""),
+                "objectSystemUri": mapping["object"].replace(DATA_URI, ""),
                 "modified": mapping["modified"],
                 "status": mapping["status"],
                 "submitter_title": mapping.get("title"),
@@ -2108,7 +2108,7 @@ def well_known_void(
         def __init__(self):
             super().__init__(
                 request,
-                "http://vocab.nerc.ac.uk/.well_known/void",
+                f"{DATA_URI}/.well_known/void",
                 {"void": void},
                 "void",
             )

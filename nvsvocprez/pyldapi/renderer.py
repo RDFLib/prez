@@ -15,6 +15,8 @@ import re
 from .profile import Profile
 import connegp
 from pathlib import Path
+from nvsvocprez.config import DATA_URI
+
 
 api_home_dir = Path(__file__).parent.parent
 templates = Jinja2Templates(str(api_home_dir / "view" / "templates"))
@@ -458,7 +460,7 @@ class Renderer(object, metaclass=ABCMeta):
             }
         _template_context = {
             'uri': self.instance_uri,
-            'systemUri': self.instance_uri.replace("http://vocab.nerc.ac.uk", ""),
+            'systemUri': self.instance_uri.replace(DATA_URI, ""),
             'default_profile_token': self.default_profile_token,
             'profiles': profiles,
             'mediatype_names': self.mediatype_names,

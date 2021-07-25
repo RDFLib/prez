@@ -10,3 +10,4 @@ SPARQL_ENDPOINT = os.getenv("SPARQL_ENDPOINT", "http://vocab.nerc.ac.uk/sparql/s
 SPARQL_USERNAME = os.getenv("SPARQL_USERNAME", "")
 SPARQL_PASSWORD = os.getenv("SPARQL_PASSWORD", "")
 SYSTEM_URI = os.getenv("SYSTEM_URI", "localhost")
+DATA_URI = os.getenv("DATA_URI", "http://vocab.nerc.ac.uk")
