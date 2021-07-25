@@ -15,7 +15,6 @@ import re
 from .profile import Profile
 import connegp
 from pathlib import Path
-from nvsvocprez.config import DATA_URI
 
 
 api_home_dir = Path(__file__).parent.parent
@@ -460,7 +459,7 @@ class Renderer(object, metaclass=ABCMeta):
             }
         _template_context = {
             'uri': self.instance_uri,
-            'systemUri': self.instance_uri.replace(DATA_URI, ""),
+            'systemUri': "/collection/" + self.instance_uri.split("/collection/")[1],
             'default_profile_token': self.default_profile_token,
             'profiles': profiles,
             'mediatype_names': self.mediatype_names,
