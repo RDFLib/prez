@@ -1408,8 +1408,8 @@ class ConceptRenderer(Renderer):
             collection_uri = self.instance_uri.split("/current/")[0] + "/current/"
             for collection in cache_return(collections_or_conceptschemes="collections"):
                 if collection["uri"]["value"] == collection_uri:
-                    if collection.get("conforms_to") and collection["conforms_to"][
-                        "value"] == "https://w3id.org/env/puv":
+                    if collection.get("conforms_to") and \
+                            collection["conforms_to"]["value"] == "https://w3id.org/env/puv":
                         return True
             return False
 
@@ -1503,7 +1503,7 @@ class ConceptRenderer(Renderer):
             str(SKOS.narrowMatch): {"label": "Narrow Match", "group": "related"},
 
             str(PAV.hasCurrentVersion): {"label": "Has Current Version", "group": "provenance"},
-            str(PAV.version): {"label": "Version", "group": "provenance"},
+            str(PAV.hasVersion): {"label": "Version", "group": "provenance"},
             str(OWL.deprecated): {"label": "Deprecated", "group": "provenance"},
             str(PAV.previousVersion): {"label": "Previous Version", "group": "provenance"},
             str(DCTERMS.isVersionOf): {"label": "Is Version Of", "group": "provenance"},
