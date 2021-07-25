@@ -16,20 +16,21 @@
       </div>
       <div style="grid-row:2; grid-column:1; padding-right:10px;">
         <h3>Example Queries</h3>
-        <h4>Concept Count</h4>
+        <h4>Collection Count</h4>
         <p>
           Here is an example query you can copy 'n paste into the Query UI text area above to test with. It counts the number of
-          vocabulary <em>Concepts</em> in the all vocabularies in this system and will return an integer:
+          <em>Collections</em> (i.e. vocabularies) in this system and will return an integer:
         </p>
         <p><pre>
 PREFIX skos: &lt;http://www.w3.org/2004/02/skos/core#&gt;
 
 SELECT (COUNT(?c) AS ?count)
 WHERE {
-    ?c a skos:Concept .
+    ?c a skos:Collection .
 }
         </pre></p>
-        <h4>Concepts</h4>
+        <p>It should return something like <code>286</code>.</p>
+        <h4>Concept Labels</h4>
         <p>
           Here is another example. It returns the URI and prefLabel(s) of 5 random Concepts on this system:
         </p>
@@ -45,14 +46,14 @@ LIMIT 5
         </pre></p>
         <h4>Concept Schemes</h4>
         <p>
-          This query returns a sorted list of NVS' Collections' URIs and their titles (prefLabels):
+          This query returns a sorted list of NVS' Concept Schemes (thesauri)' URIs and their titles (prefLabels):
         </p>
         <p><pre>
 PREFIX skos: &lt;http://www.w3.org/2004/02/skos/core#&gt;
 
 SELECT ?c ?pl
 WHERE {
-    ?c a skos:Collection ;
+    ?c a skos:ConceptScheme ;
        skos:prefLabel ?pl .
 }
 ORDER BY ?pl
@@ -79,7 +80,7 @@ http://vocab.nerc.ac.uk/sparql/sparql?query={YOUR_QUERY_URL_ENCODED}
         <p>To obtain a machine-readable response to your query, you must supply an HTTP Accept header for the type of response you would like, in accordance with the <a href="https://www.w3.org/TR/sparql11-protocol/">SPARQL Protocol standard</a>.</p>
         <p>For example, to get a SPARQL JSON format response for <code>{YOUR_QUERY_URL_ENCODED}</code>, use the <a href="https://curl.haxx.se/">curl</a> program like this:</p>
         <p><pre>
-http://vocab.nerc.ac.uk/sparql/sparql?query={YOUR_QUERY_URL_ENCODED}<br />-H 'Accept: application/sparql-results+json'
+curl 'http://vocab.nerc.ac.uk/sparql/sparql?query={YOUR_QUERY_URL_ENCODED}'<br />-H 'Accept: application/sparql-results+json'
         </pre></p>
         <p><strong>SPARQL response Accept Headers</strong></p>
         <p>The following Media Types are to be used for machine-readable responses:</p>
