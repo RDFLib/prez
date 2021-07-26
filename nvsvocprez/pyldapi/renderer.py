@@ -457,9 +457,18 @@ class Renderer(object, metaclass=ABCMeta):
                 'default_language': str(profile.default_language),
                 'uri': str(profile.uri)
             }
+        if "/collection/" in self.instance_uri:
+            system_uri = "/collection/" + self.instance_uri.split("/collection/")[1]
+        elif "/scheme/" in self.instance_uri:
+            system_uri = "/scheme/" + self.instance_uri.split("/scheme/")[1]
+        elif "/standard_name/" in self.instance_uri:
+            system_uri = "/standard_name/"
+        else:
+            system_uri = self.instance_uri
+
         _template_context = {
             'uri': self.instance_uri,
-            'systemUri': "/collection/" + self.instance_uri.split("/collection/")[1],
+            'systemUri': system_uri,
             'default_profile_token': self.default_profile_token,
             'profiles': profiles,
             'mediatype_names': self.mediatype_names,
