@@ -1,4 +1,4 @@
-# NVS VocPrez
+# VocPrez 3
 A custom implementation of [VocPrez](https://github.com/RDFLib/VocPrez/) for the [NERC Vocabulary Service (NVS)](https://vocab.nerc.ac.uk/).
 
 This version of VocPrez is a complete reimplementation of the Python API using [FastAPI](https://fastapi.tiangolo.com/) and is the lead instance of VocPrez v3.
@@ -9,14 +9,14 @@ This version of VocPrez uses [FastAPI](https://fastapi.tiangolo.com/), not Flask
 
 To install (Linux):
 
-1. clone the repo - <https://github.com/surroundaustralia/NvsVocPrez>
+1. clone the repo - <https://github.com/surroundaustralia/VocPrez3>
 2. (optional) create a Python virtual environment & activate it
     * `~$ python3 -m venv venv`
     * `~$ source venv/bin/activate`
 3. install required packages
     * `~$ pip install -r requirements.txt`
 4. run API with uvicorn package
-    * path here is for running within the `NvsVocPrez/nvsvocprez` directory
+    * path here is for running within the `VocPrez3/vocprez` directory
     * `~$ uvicorn app:api --reload --port 5007 --log-level debug` (or other port, other log level etc)
 
 There is no test v. production difference in the running of FastAPI, as there is with Flask, so the above works for any form of deployment.

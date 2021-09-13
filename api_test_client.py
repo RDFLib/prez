@@ -1,4 +1,4 @@
-"""A small utility for testing NvsVocPrez instances
+"""A small utility for testing VocPrez3 instances
 
 Run from the command line like this:
 
