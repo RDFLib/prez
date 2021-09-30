@@ -1,0 +1,35 @@
+# Prez structure
+
+- Some type of `Renderer` class from `pyldapi` which contains the render logic
+- Templates
+    - Base templates allow for 'slotting in' other template files to replace individual html components
+        - e.g. header, footer, nav, etc.
+    - CSS with variables to easily modify theme
+        - e.g. colours, spacing, fonts, etc.
+- Endpoints:
+    - home
+    - healthcheck
+    - sparql (top-level & per *Prez)
+    - about (top-level & per *Prez)
+    - conforms (SpacePrez only)
+    - search (top-level & per *Prez)
+    - "which *Prez's do I have enabled?"
+    - generic object endpoint
+    - VocPrez
+        - dataset(s)
+        - scheme(s)
+        - collection(s)
+        - concept(s)
+    - CatPrez
+        - dataset(s)
+        - catalogue(s)
+        - distribution(s)
+        - resource(s)
+    - OGC API/SpacePrez
+        - dataset(s)
+        - feature collection(s)
+        - feature(s)
+    - TimePrez
+        - dataset(s)
+        - temporal collection(s)
+        - temporal entity(s)
