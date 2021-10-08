@@ -1,0 +1,37 @@
+{% extends "_page.html" %}
+{% from "_macros.html" import render_predicate, render_predicate_o, render_object %}
+
+{% block content %}
+<h1>
+    {% if dataset.title is not none %}
+        {{ dataset.title.o1 }}
+    {% else %}
+        Dataset title
+    {% endif %}
+</h1>
+<p><small>
+    {{ render_predicate(dataset.type) }}
+    : 
+    {{ render_predicate_o(dataset.type) }}
+</small></p>
+<p>Instance URI: <a href="{{ uri }}">{{ dataset.uri }}</a><small><a href="{{ dataset.uri }}">(ext link)</a></small></p>
+{% if dataset.description is not none %}
+    <div>
+        <p>
+            {{ render_predicate(dataset.description) }}
+        </p>
+        <p>{{ dataset.description.o1 }}</p>
+    </div>
+{% endif %}
+<table>
+    <tbody>
+        {% for prop in dataset.properties %}
+            <tr>
+                <th>{{ render_predicate(prop) }}</th>
+                <td>{{ render_object(prop) }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="{{ uri }}?_profile=alt">Alternate Profiles</a>
+{% endblock %}

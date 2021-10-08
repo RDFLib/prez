@@ -1,0 +1,31 @@
+{% macro render_predicate(prop) %}
+    {% if prop.p1Label is not none %}
+        <a href="{{ prop.p1 }}">{{ prop.p1Label }}</a>
+    {% else %}
+        {% if prop.p1Prefix is not none %}
+            <a href="{{ prop.p1 }}">{{ prop.p1Prefix }}</a>
+        {% else %}
+            <a href="{{ prop.p1 }}">{{ prop.p1Label }}</a>
+        {% endif %}
+    {% endif %}
+{% endmacro %}
+
+{% macro render_predicate_o(prop) %}
+    {% if prop.o1Label is not none %}
+        <a href="{{ prop.o1 }}">{{ prop.o1Label }}</a>
+    {% else %}
+        {% if prop.o1Prefix is not none %}
+            <a href="{{ prop.o1 }}">{{ prop.o1Prefix }}</a>
+        {% else %}
+            <a href="{{ prop.o1 }}">{{ prop.o1Label }}</a>
+        {% endif %}
+    {% endif %}
+{% endmacro %}
+
+{% macro render_object(prop) %}
+    {% if prop.o1Label is not none %}
+        <a href="{{ prop.o1 }}">{{ prop.o1Label }}</a>
+    {% else %}
+        {{ prop.o1 }}
+    {% endif %}
+{% endmacro %}

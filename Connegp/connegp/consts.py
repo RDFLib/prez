@@ -20,3 +20,20 @@ RDF_FILE_EXTS = {
     "application/ld+json": "jsonld",
     "application/n-triples": "nt",
 }
+
+RDF_SERIALIZER_TYPES_MAP = {
+    "text/turtle": "turtle",
+    "text/n3": "n3",
+    "application/n-triples": "nt",
+    "application/ld+json": "json-ld",
+    "application/rdf+xml": "xml",
+    # Some common but incorrect mimetypes
+    "application/rdf": "xml",
+    "application/rdf xml": "xml",
+    "application/json": "json-ld",
+    "application/ld json": "json-ld",
+    "text/ttl": "turtle",
+    "text/ntriples": "nt",
+    "text/n-triples": "nt",
+    "text/plain": "nt",  # text/plain is the old/deprecated mimetype for n-triples
+}

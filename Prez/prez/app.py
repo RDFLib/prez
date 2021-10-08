@@ -2,8 +2,9 @@ import fastapi
 import uvicorn
 
 from config import *
+from routers import vocprez_router
 
-api = fastapi.FastAPI()
+app = fastapi.FastAPI()
 
 
 def configure():
@@ -11,11 +12,28 @@ def configure():
 
 
 def configure_routing():
-    pass
+    app.include_router(vocprez_router.router)
 
+
+@app.get("/")
+async def index():
+    return "index"
+
+
+# docs
+
+# sparql
+
+# search
+
+# about
+
+# get prezs
+
+# object?
 
 if __name__ == "__main__":
     configure()
-    uvicorn.run(api, port=8000, host="127.0.0.1")
+    uvicorn.run("app:app", port=PORT, host=SYSTEM_URI, reload=True)
 else:
     configure()

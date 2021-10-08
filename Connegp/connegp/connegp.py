@@ -148,31 +148,34 @@ class Connegp(object):
         # link_headers = self._request.get("headers").get("Link") # Dict
         link_headers = self._request.headers.get("Link")  # FastAPI & Flask
 
-        for val in re.split(", *<", link_headers):
-            try:
-                url, params = val.split(";", 1)
-            except ValueError:
-                url, params = val, ""
-
-            link = {"uri": url.strip('<> "')}
-
-            for param in params.split(";"):
+        if link_headers is not None:
+            for val in re.split(", *<", link_headers):
                 try:
-                    key, value = param.split("=")
+                    url, params = val.split(";", 1)
                 except ValueError:
-                    break
+                    url, params = val, ""
 
-                link[key.strip(replace_chars)] = value.strip(replace_chars)
+                link = {"uri": url.strip('<> "')}
 
-            links.append(link)
-        for link in links:
-            for token, profile in self._profiles.items():
-                if profile.uri == link["uri"]:
-                    profiles.append(token)
-        if len(profiles) == 0:
-            return None
+                for param in params.split(";"):
+                    try:
+                        key, value = param.split("=")
+                    except ValueError:
+                        break
+
+                    link[key.strip(replace_chars)] = value.strip(replace_chars)
+
+                links.append(link)
+            for link in links:
+                for token, profile in self._profiles.items():
+                    if profile.uri == link["uri"]:
+                        profiles.append(token)
+            if len(profiles) == 0:
+                return None
+            else:
+                return profiles
         else:
-            return profiles
+            return None
         # link_headers = links
         # for l in link_headers:
         #     if (l["uri"] == "http://www.w3.org/ns/dx/prof/Profile"):  # all Link header lines have a 'uri'
