@@ -1,31 +1,57 @@
 {% macro render_predicate(prop) %}
-    {% if prop.p1Label is not none %}
-        <a href="{{ prop.p1 }}">{{ prop.p1Label }}</a>
+    {% if prop.label is not none %}
+        <a href="{{ prop.uri }}">{{ prop.label }}</a>
     {% else %}
-        {% if prop.p1Prefix is not none %}
-            <a href="{{ prop.p1 }}">{{ prop.p1Prefix }}</a>
+        {% if prop.prefix is not none %}
+            <a href="{{ prop.uri }}">{{ prop.prefix }}</a>
         {% else %}
-            <a href="{{ prop.p1 }}">{{ prop.p1Label }}</a>
+            <a href="{{ prop.uri }}">{{ prop.label }}</a>
         {% endif %}
     {% endif %}
 {% endmacro %}
 
 {% macro render_predicate_o(prop) %}
-    {% if prop.o1Label is not none %}
-        <a href="{{ prop.o1 }}">{{ prop.o1Label }}</a>
-    {% else %}
-        {% if prop.o1Prefix is not none %}
-            <a href="{{ prop.o1 }}">{{ prop.o1Prefix }}</a>
+    {% for object in prop.objects %}
+        {% if object.label is not none %}
+            <a href="{{ object.value }}">{{ object.label }}</a>
         {% else %}
-            <a href="{{ prop.o1 }}">{{ prop.o1Label }}</a>
+            {% if object.prefix is not none %}
+                <a href="{{ object.value }}">{{ object.prefix }}</a>
+            {% else %}
+                <a href="{{ object.value }}">{{ object.value }}</a>
+            {% endif %}
         {% endif %}
-    {% endif %}
+        <br/>
+    {% endfor %}
 {% endmacro %}
 
 {% macro render_object(prop) %}
-    {% if prop.o1Label is not none %}
-        <a href="{{ prop.o1 }}">{{ prop.o1Label }}</a>
-    {% else %}
-        {{ prop.o1 }}
+    {% for object in prop.objects %}
+        {% if object.label is not none %}
+            <a href="{{ object.value }}">{{ object.label }}</a>
+        {% else %}
+            {{ object.value }}
+        {% endif %}
+        <br/>
+    {% endfor %}
+{% endmacro %}
+
+{% macro render_concept_hierarchy(scheme_id, concept_uri, concept_props) %}
+    <li>
+        <a href="{{ url_for('scheme', scheme_id=scheme_id) }}/{{ concept_props.id }}">{{ concept_props.label }}</a>
+    </li>
+    {% if concept_props.children %}
+        <li>
+            <ol style="list-style: none; padding-left: 20px;">
+                {% for child_uri, child_props in concept_props.children.items() | sort(attribute = "1.label") %}
+                    {{ render_concept_hierarchy(scheme_id, child_uri, child_props) }}
+                {% endfor %}
+            </ol>
+        </li>
     {% endif %}
+{% endmacro %}
+
+{% macro render_concept_list(concept) %}
+    <a href="{{ url_for('scheme', scheme_id=concept.scheme_id) }}/{{ concept.id }}">{{ concept.label }}</a>
+    <br/>
 {% endmacro %}

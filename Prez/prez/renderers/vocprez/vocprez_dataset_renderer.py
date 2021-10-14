@@ -6,7 +6,7 @@ from fastapi.templating import Jinja2Templates
 from config import *
 from renderers import Renderer
 from profiles import dcat, sdo
-from models import VocPrezDataset
+from models.vocprez import VocPrezDataset
 
 templates = Jinja2Templates(TEMPLATES_DIRECTORY)
 
@@ -38,7 +38,7 @@ class VocPrezDatasetRenderer(Renderer):
         if template_context is not None:
             _template_context.update(template_context)
         return templates.TemplateResponse(
-            "vocprez_dataset.html", context=_template_context, headers=self.headers
+            "vocprez/vocprez_dataset.html", context=_template_context, headers=self.headers
         )
 
     def _render_dcat_rdf(self) -> Response:

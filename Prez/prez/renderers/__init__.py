@@ -1,7 +1,9 @@
 from renderers.renderer import Renderer
-from renderers.vocprez_dataset_renderer import VocPrezDatasetRenderer
+from renderers.list_renderer import ListRenderer
+from .vocprez import *
+
 
 __all__ = [
     "Renderer",
-    "VocPrezDatasetRenderer"
+    "ListRenderer",
 ]

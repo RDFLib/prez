@@ -1,0 +1,124 @@
+from typing import Dict, Optional, Union, List
+from abc import ABCMeta, abstractmethod
+
+from fastapi.responses import Response, JSONResponse, PlainTextResponse
+from fastapi.templating import Jinja2Templates
+from rdflib import Graph, Namespace, URIRef, Literal
+from rdflib.namespace import RDF, RDFS
+from connegp import Profile, RDF_MEDIATYPES
+from rdflib.graph import Graph
+
+from renderers import Renderer
+from config import *
+from profiles import mem
+
+templates = Jinja2Templates(TEMPLATES_DIRECTORY)
+
+
+class ListRenderer(Renderer, metaclass=ABCMeta):
+    def __init__(
+        self,
+        request: object,
+        profiles: Dict[str, Profile],
+        default_profile_token: str,
+        instance_uri: str,
+        members: List[Dict],
+        label: str,
+        comment: str
+    ) -> None:
+        profiles.update({"mem": mem})
+
+        if default_profile_token is None:
+            default_profile_token = "mem"
+
+        super().__init__(request, profiles, default_profile_token, instance_uri)
+
+        if self.error is None:
+            self.members = members
+            self.label = label
+            self.comment = comment
+            self.member_count = len(members)
+
+    # pagination
+
+    def _render_mem_html(
+        self, template_context: Union[Dict, None]
+    ) -> templates.TemplateResponse:
+        """Renders the HTML representation of the members profiles using the 'mem.html' template"""
+        _template_context = {
+            "request": self.request,
+            "uri": self.instance_uri,
+            "members": self.members,
+            "label": self.label,
+            "comment": self.comment,
+        }
+        if template_context is not None:
+            _template_context.update(template_context)
+        return templates.TemplateResponse(
+            "mem.html", context=_template_context, headers=self.headers
+        )
+
+    def _render_mem_json(self) -> JSONResponse:
+        """Renders the JSON representation of the members profile"""
+        return JSONResponse(
+            content={
+                "uri": self.instance_uri,
+                "members": self.members,
+                "label": self.label,
+                "comment": self.comment,
+            },
+            media_type="application/json",
+            headers=self.headers,
+        )
+
+    def _generate_mem_rdf(self) -> Graph:
+        g = Graph()
+
+        # LDP = Namespace("http://www.w3.org/ns/ldp#")
+        # g.bind("ldp", LDP)
+
+        # XHV = Namespace("https://www.w3.org/1999/xhtml/vocab#")
+        # g.bind("xhv", XHV)
+
+        u = URIRef(self.instance_uri)
+        g.add((u, RDF.type, RDF.Bag))
+        g.add((u, RDFS.label, Literal(self.label)))
+        g.add((u, RDFS.comment, Literal(self.comment, lang="en")))
+        for member in self.members:
+            member_uri = URIRef(member["uri"])
+            g.add((u, RDFS.member, member_uri))
+            g.add((member_uri, RDFS.label, Literal(member["title"])))
+
+        return g
+
+    def _render_mem_rdf(self) -> Response:
+        """Renders the RDF representation of the members profile"""
+        g = self._generate_mem_rdf()
+        return self._make_rdf_response(g)
+
+    def _render_mem(
+        self, template_context: Union[Dict, None]
+    ) -> Union[templates.TemplateResponse, Response, JSONResponse]:
+        """Renders the members profile based on mediatype"""
+        if self.mediatype == "text/html":
+            return self._render_mem_html(template_context)
+        elif self.mediatype in RDF_MEDIATYPES:
+            return self._render_mem_rdf()
+        else:  # application/json
+            return self._render_mem_json()
+
+    @abstractmethod
+    def render(
+        self, template_context: Optional[Union[Dict, None]] = None
+    ) -> Union[
+        PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
+    ]:
+        if self.error is not None:
+            return PlainTextResponse(self.error, status_code=400)
+        elif self.profile == "mem":
+            return self._render_mem(template_context)
+        elif self.profile == "alt":
+            return self._render_alt(template_context)
+        # extra profiles go here
+        else:
+            return None

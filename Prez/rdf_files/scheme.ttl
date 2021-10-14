@@ -1,0 +1,78 @@
+@prefix collection: <http://example.com/collection/1> .
+@prefix cs: <http://example.com/scheme/1> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+collection: a skos:Collection ;
+    dcterms:created "2021-10-11"^^xsd:date ;
+    dcterms:identifier "Coll1"@en ;
+    dcterms:modified "2021-10-12"^^xsd:date ;
+    dcterms:provenance "made up by Jamie"@en ;
+    dcterms:title "Collection 1"@en ;
+    skos:definition "A collection is ..."@en ;
+    skos:member <http://example.com/concept/1>,
+        <http://example.com/concept/2>,
+        <http://example.com/concept/3> ;
+    skos:prefLabel "Collection 1"@en .
+
+<http://example.com/concept/4> a skos:Concept ;
+    dcterms:identifier "C4"@en ;
+    dcterms:provenance "made up by Jamie"@en ;
+    skos:broader <http://example.com/concept/1> ;
+    skos:definition "A concept is ..."@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Concept 4"@en .
+
+<http://example.com/concept/5> a skos:Concept ;
+    dcterms:identifier "C5"@en ;
+    dcterms:provenance "made up by Jamie"@en ;
+    skos:broader <http://example.com/concept/3> ;
+    skos:definition "A concept is ..."@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Concept 5"@en .
+
+<http://example.com/concept/6> a skos:Concept ;
+    dcterms:identifier "C6"@en ;
+    dcterms:provenance "made up by Jamie"@en ;
+    skos:definition "A concept is ..."@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Concept 6"@en .
+
+<http://example.com/concept/2> a skos:Concept ;
+    dcterms:identifier "C2"@en ;
+    dcterms:provenance "made up by Jamie"@en ;
+    skos:broader <http://example.com/concept/1> ;
+    skos:definition "A concept is ..."@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Concept 2"@en .
+
+<http://example.com/concept/3> a skos:Concept ;
+    dcterms:identifier "C3"@en ;
+    dcterms:provenance "made up by Jamie"@en ;
+    skos:broader <http://example.com/concept/1> ;
+    skos:definition "A concept is ..."@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Concept 3"@en .
+
+<http://example.com/concept/1> a skos:Concept ;
+    dcterms:identifier "C1"@en ;
+    dcterms:provenance "made up by Jamie"@en ;
+    skos:definition "A concept is ..."@en ;
+    skos:inScheme cs: ;
+    skos:narrower <http://example.com/concept/2>,
+        <http://example.com/concept/3> ;
+    skos:prefLabel "Concept 1"@en ;
+    skos:topConceptOf cs: .
+
+cs: a skos:ConceptScheme ;
+    dcterms:created "2021-10-11"^^xsd:date ;
+    dcterms:identifier "CS1"@en ;
+    dcterms:modified "2021-10-12"^^xsd:date ;
+    dcterms:provenance "made up by Jamie"@en ;
+    dcterms:title "Concept Scheme 1"@en ;
+    skos:definition "A conceptscheme is ..."@en ;
+    skos:hasTopConcept <http://example.com/concept/1>,
+        <http://example.com/concept/6> ;
+    skos:prefLabel "Concept Scheme 1"@en .
+

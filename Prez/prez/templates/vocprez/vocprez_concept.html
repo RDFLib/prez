@@ -1,0 +1,58 @@
+{% extends "_page.html" %}
+{% from "_macros.html" import render_predicate, render_predicate_o, render_object, render_concept_list with context %}
+
+{% block content %}
+<h1>
+    {% if concept.title is not none %}
+        {{ concept.title.objects[0].value }}
+    {% else %}
+        Concept title
+    {% endif %}
+</h1>
+<p><small>
+    {{ render_predicate(concept.type) }}
+    : 
+    {{ render_predicate_o(concept.type) }}
+</small></p>
+<p>Instance URI: <a href="{{ uri }}">{{ concept.uri }}</a><small><a href="{{ concept.uri }}">(ext link)</a></small></p>
+<p>Within scheme: <a href="{{ url_for('scheme', scheme_id=concept.scheme.id) }}">{{ concept.scheme.label }}</a></p>
+{% if concept.description is not none %}
+    <div>
+        <p>
+            {{ render_predicate(concept.description) }}
+        </p>
+        <p>{{ concept.description.objects[0].value }}</p>
+    </div>
+{% endif %}
+<table>
+    <tbody>
+        {% for prop in concept.properties %}
+            <tr>
+                <th>{{ render_predicate(prop) }}</th>
+                <td>{{ render_object(prop) }}</td>
+            </tr>
+        {% endfor %}
+        {% if concept.broader %}
+            <tr>
+                <th>skos:broader</th>
+                <td>
+                    {% for broader in concept.broader %}
+                        {{ render_concept_list(broader) }}
+                    {% endfor %}
+                </td>
+            </tr>
+        {% endif %}
+        {% if concept.narrower %}
+            <tr>
+                <th>skos:narrower</th>
+                <td>
+                    {% for narrower in concept.narrower %}
+                        {{ render_concept_list(narrower) }}
+                    {% endfor %}
+                </td>
+            </tr>
+        {% endif %}
+    </tbody>
+</table>
+<a href="{{ uri }}?_profile=alt">Alternate Profiles</a>
+{% endblock %}

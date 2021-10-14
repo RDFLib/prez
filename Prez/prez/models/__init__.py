@@ -1,5 +1,6 @@
-from models.vocprez_dataset import VocPrezDataset
+from .prez_model import PrezModel
+from .vocprez import *
 
 __all__ = [
-    "VocPrezDataset",
+    "PrezModel"
 ]

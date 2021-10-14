@@ -1,0 +1,12 @@
+{% extends "_page.html" %}
+
+{% block content %}
+<p>{{ label }}</p>
+<p>{{ comment }}</p>
+<p>{{ uri }}</p>
+<ul>
+    {% for member in members %}
+        <li><a href="{{ member.uri }}">{{ member.title }}</a></li>
+    {% endfor %}
+</ul>
+{% endblock %}

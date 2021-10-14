@@ -1,0 +1,16 @@
+{% extends "_page.html" %}
+
+{% block content %}
+<h1>{{ label }}</h1>
+<div>
+    <p>{{ comment }}</p>
+</div>
+<div>
+    <ul>
+        {% for member in members %}
+            <li><a href="{{ url_for('scheme', scheme_id=member.id) }}">{{ member.title }}</a></li>
+        {% endfor %}
+    </ul>
+</div>
+<a href="{{ uri }}?_profile=alt">Alternate Profiles</a>
+{% endblock %}

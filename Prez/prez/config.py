@@ -13,6 +13,9 @@ SPARQL_ENDPOINT = os.environ.get(
 SPARQL_USERNAME = os.environ.get("SPARQL_USERNAME", "user")
 SPARQL_PASSWORD = os.environ.get("SPARQL_PASSWORD", "password")
 TEMPLATES_DIRECTORY = Path(__file__).parent / "templates"
+ENABLED_PREZS = [
+    "vocprez"
+]
 
 NAMESPACE_PREFIXES = {
     str(SKOS): "skos",

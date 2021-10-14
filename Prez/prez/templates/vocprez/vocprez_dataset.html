@@ -4,7 +4,7 @@
 {% block content %}
 <h1>
     {% if dataset.title is not none %}
-        {{ dataset.title.o1 }}
+        {{ dataset.title.objects[0].value }}
     {% else %}
         Dataset title
     {% endif %}
@@ -20,7 +20,7 @@
         <p>
             {{ render_predicate(dataset.description) }}
         </p>
-        <p>{{ dataset.description.o1 }}</p>
+        <p>{{ dataset.description.objects[0].value }}</p>
     </div>
 {% endif %}
 <table>
@@ -33,5 +33,7 @@
         {% endfor %}
     </tbody>
 </table>
+<a href="{{ url_for('schemes') }}">Concept Schemes</a>
+<a href="{{ url_for('collections') }}">Collections</a>
 <a href="{{ uri }}?_profile=alt">Alternate Profiles</a>
 {% endblock %}
