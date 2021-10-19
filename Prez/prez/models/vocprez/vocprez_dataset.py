@@ -19,7 +19,6 @@ class VocPrezDataset(PrezModel):
         super().__init__(sparql_response, "dataset")
 
     def _set_props(self, props_dict: Dict[str, Dict]) -> None:
-        """Sets the transformed SPARQL results into appropriate attributes according to class-specific property groups"""
         main_properties = []
         other_properties = []
         for uri, prop in props_dict.items():

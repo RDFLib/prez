@@ -15,12 +15,11 @@ class VocPrezCollection(PrezModel):
         str(DCTERMS.modified),
     ]
 
-    def __init__(self, sparql_response: List, concept_response: List) -> None:
+    def __init__(self, sparql_response: List[Dict], concept_response: List[Dict]) -> None:
         super().__init__(sparql_response, "collection")
         self.concepts = self._set_concepts(concept_response)
 
     def _set_props(self, props_dict: Dict[str, Dict]) -> None:
-        """Sets the transformed SPARQL results into appropriate attributes according to class-specific property groups"""
         main_properties = []
         other_properties = []
         for uri, prop in props_dict.items():
@@ -59,7 +58,8 @@ class VocPrezCollection(PrezModel):
             "concepts": self.concepts
         }
     
-    def _set_concepts(self, concept_response: List):
+    def _set_concepts(self, concept_response: List[Dict]):
+        """Sets the Concept list for this Collection"""
         concepts = []
         for result in concept_response:
             concepts.append({

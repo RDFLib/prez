@@ -137,62 +137,6 @@ class Connegp(object):
 
         return None
 
-    def _parse_profiles_from_link_header(self) -> Union[List[Dict], None]:
-        """No way to have preference/quality (q)"""
-        # link_headers = []
-        profiles = []
-        # valid = False
-        links = []
-        replace_chars = ' "'
-
-        # link_headers = self._request.get("headers").get("Link") # Dict
-        link_headers = self._request.headers.get("Link")  # FastAPI & Flask
-
-        if link_headers is not None:
-            for val in re.split(", *<", link_headers):
-                try:
-                    url, params = val.split(";", 1)
-                except ValueError:
-                    url, params = val, ""
-
-                link = {"uri": url.strip('<> "')}
-
-                for param in params.split(";"):
-                    try:
-                        key, value = param.split("=")
-                    except ValueError:
-                        break
-
-                    link[key.strip(replace_chars)] = value.strip(replace_chars)
-
-                links.append(link)
-            for link in links:
-                for token, profile in self._profiles.items():
-                    if profile.uri == link["uri"]:
-                        profiles.append(token)
-            if len(profiles) == 0:
-                return None
-            else:
-                return profiles
-        else:
-            return None
-        # link_headers = links
-        # for l in link_headers:
-        #     if (l["uri"] == "http://www.w3.org/ns/dx/prof/Profile"):  # all Link header lines have a 'uri'
-        #         if l.get("anchor") and l.get("token"):
-        #             profiles[l["anchor"]] = l["token"]
-        # print(profiles)
-        # rel_self = 0
-        # for link in link_headers:
-        #     if link.get("rel") == "self":
-        #         rel_self += 1
-        # if rel_self == 1:
-        #     valid = True
-        # if valid:
-        #     return link_headers
-        # else:
-        #     return None
-
     def _get_available_profiles(self):
         uris = {}
         for token, profile in self._profiles.items():
@@ -207,10 +151,6 @@ class Connegp(object):
         # if not, try Accept-Profile header
         if profiles_requested is None:
             profiles_requested = self._parse_profiles_from_accept_profile_header()
-
-        # # if not, try Link header
-        if profiles_requested is None:
-            profiles_requested = self._parse_profiles_from_link_header()
 
         # if still no profile, return default profile token
         if profiles_requested is None:

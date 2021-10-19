@@ -15,13 +15,12 @@ class VocPrezScheme(PrezModel):
         str(DCTERMS.modified),
     ]
 
-    def __init__(self, sparql_response: List, concept_response: List) -> None:
+    def __init__(self, sparql_response: List[Dict], concept_response: List[Dict]) -> None:
         self.top_concepts = []
         super().__init__(sparql_response, "cs")
         self.concepts = self._set_concept_hierarchy(concept_response)
 
     def _set_props(self, props_dict: Dict[str, Dict]) -> None:
-        """Sets the transformed SPARQL results into appropriate attributes according to class-specific property groups"""
         main_properties = []
         other_properties = []
         for uri, prop in props_dict.items():
@@ -35,6 +34,8 @@ class VocPrezScheme(PrezModel):
                 self.id = prop
             elif uri in str(SKOS.hasTopConcept):
                 self.top_concepts = prop
+            elif uri == str(RDFS.seeAlso):
+                continue
             elif uri in VocPrezScheme.main_props:
                 main_properties.append(prop)
             else:
@@ -60,7 +61,8 @@ class VocPrezScheme(PrezModel):
             "concepts": self.concepts,
         }
 
-    def _set_concept_hierarchy(self, results):
+    def _set_concept_hierarchy(self, results: List[Dict]) -> Dict[str, Dict]:
+        """Sets the concept hierarchy as a nested dictionary"""
         hierarchy = {}
 
         # reformat results
@@ -93,7 +95,8 @@ class VocPrezScheme(PrezModel):
 
         return hierarchy
 
-    def _get_concept_children(self, children_dict: Dict, results_dict: Dict):
+    def _get_concept_children(self, children_dict: Dict[str, Dict], results_dict: Dict[str, Dict]) -> None:
+        """Recursively sets children for each child by checking narrower & broader"""
         for uri, props in children_dict.items():
             c = results_dict[uri]
             # narrower

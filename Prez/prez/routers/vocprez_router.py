@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Request
+from fastapi.templating import Jinja2Templates
 
 from renderers.vocprez import *
 from services.vocprez_service import *
@@ -6,22 +7,29 @@ from models.vocprez import *
 
 router = APIRouter(prefix="/vocprez", tags=["VocPrez"])
 
+templates = Jinja2Templates(TEMPLATES_DIRECTORY)
 
-@router.get("/", summary="VocPrez Dataset")
+
+@router.get("/", summary="VocPrez Home")
 async def dataset(request: Request):
     """Returns a VocPrez dcat:Dataset in the necessary profile & mediatype"""
-    sparql_result = await get_dataset()
-    # assume 1 dataset for now
-    dataset = VocPrezDataset(sparql_result)
-    dataset_renderer = VocPrezDatasetRenderer(
-        request,
-        str(request.url.remove_query_params(keys=request.query_params.keys())),
-        dataset,
-    )
-    return dataset_renderer.render()
+    # sparql_result = await get_dataset()
+    # # assume 1 dataset for now
+    # dataset = VocPrezDataset(sparql_result)
+    # dataset_renderer = VocPrezDatasetRenderer(
+    #     request,
+    #     str(request.url.remove_query_params(keys=request.query_params.keys())),
+    #     dataset,
+    # )
+    # return dataset_renderer.render()
+    template_context = {
+        "request": request
+    }
+    return templates.TemplateResponse("vocprez/vocprez_home.html", context=template_context)
 
 
 @router.get("/scheme", summary="List ConceptSchemes")
+@router.get("/vocab", summary="List ConceptSchemes")
 async def schemes(request: Request):
     """Returns a list of VocPrez skos:ConceptSchemes in the necessary profile & mediatype"""
     sparql_result = await list_schemes()
@@ -37,6 +45,7 @@ async def schemes(request: Request):
 
 
 @router.get("/scheme/{scheme_id}", summary="Get ConceptScheme")
+@router.get("/vocab/{scheme_id}", summary="Get ConceptScheme")
 async def scheme(request: Request, scheme_id: str):
     """Returns a VocPrez skos:ConceptScheme in the necessary profile & mediatype"""
     sparql_result = await get_scheme(scheme_id)
@@ -80,6 +89,7 @@ async def collection(request: Request, collection_id: str):
 
 
 @router.get("/scheme/{scheme_id}/{concept_id}", summary="Get Concept")
+@router.get("/vocab/{scheme_id}/{concept_id}", summary="Get Concept")
 async def concept(request: Request, scheme_id: str, concept_id: str):
     """Returns a VocPrez skos:Concept in the necessary profile & mediatype"""
     sparql_result = await get_concept(scheme_id, concept_id)

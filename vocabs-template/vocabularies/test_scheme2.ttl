@@ -1,0 +1,34 @@
+@prefix collection2: <http://example.com/collection/collection2> .
+@prefix cs2: <http://example.com/scheme/scheme2> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+collection2: a skos:Collection ;
+    dcterms:created "2021-10-18"^^xsd:date ;
+    dcterms:identifier "Coll2"@en ;
+    dcterms:modified "2021-10-18"^^xsd:date ;
+    dcterms:provenance "made up by Jamie"@en ;
+    dcterms:title "Collection 2"@en ;
+    skos:definition "A collection is ..."@en ;
+    skos:member <http://example.com/concept/concept7> ;
+    skos:prefLabel "Collection 2"@en .
+
+<http://example.com/concept/concept7> a skos:Concept ;
+    dcterms:identifier "C7"@en ;
+    dcterms:provenance "made up by Jamie"@en ;
+    skos:definition "A concept is ..."@en ;
+    skos:inScheme cs2: ;
+    skos:topConceptOf cs2: ;
+    skos:prefLabel "Concept 7"@en .
+
+cs2: a skos:ConceptScheme ;
+    dcterms:created "2021-10-18"^^xsd:date ;
+    # dcterms:identifier "CS2"@en ;
+    dcterms:modified "2021-10-18"^^xsd:date ;
+    dcterms:provenance "made up by Jamie"@en ;
+    dcterms:title "Concept Scheme 2"@en ;
+    skos:definition "A conceptscheme is ..."@en ;
+    skos:hasTopConcept <http://example.com/concept/concept7>;
+    skos:prefLabel "Concept Scheme 2"@en .
+

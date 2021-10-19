@@ -1,7 +1,9 @@
-from rdflib.namespace import RDFS, DCAT, DCTERMS
+from rdflib.namespace import RDFS, DCAT, DCTERMS, XSD
 
 from config import *
 from services.sparql_utils import *
+
+# all queries query against a union of content & system graph(s)
 
 
 # get dataset by ID
@@ -53,13 +55,15 @@ async def list_schemes():
 async def get_scheme(scheme_id: str):
     q = f"""
         PREFIX dcterms: <{DCTERMS}>
+        PREFIX rdf: <{RDF}>
         PREFIX rdfs: <{RDFS}>
         PREFIX skos: <{SKOS}>
         SELECT *
         WHERE {{
-            ?cs dcterms:identifier '{scheme_id}'@en ;
+            ?cs dcterms:identifier ?cs_id ;
                 a skos:ConceptScheme ;
                 ?p1 ?o1 .
+            FILTER (STR(?cs_id) = "{scheme_id}")
             OPTIONAL {{
                 ?p1 rdfs:label ?p1Label .
                 FILTER(lang(?p1Label) = "" || lang(?p1Label) = "en")
@@ -102,9 +106,10 @@ async def get_collection(collection_id: str):
         PREFIX skos: <{SKOS}>
         SELECT *
         WHERE {{
-            ?collection dcterms:identifier '{collection_id}'@en ;
+            ?collection dcterms:identifier ?coll_id ;
                 a skos:Collection ;
                 ?p1 ?o1 .
+            FILTER (STR(?coll_id) = "{collection_id}")
             OPTIONAL {{
                 ?p1 rdfs:label ?p1Label .
                 FILTER(lang(?p1Label) = "" || lang(?p1Label) = "en")
@@ -130,13 +135,14 @@ async def get_concept(scheme_id: str, concept_id: str):
         PREFIX skos: <{SKOS}>
         SELECT *
         WHERE {{
-            ?c dcterms:identifier '{concept_id}'@en ;
+            ?c dcterms:identifier ?c_id ;
                 a skos:Concept ;
                 skos:inScheme ?cs ;
                 ?p1 ?o1 .
-            BIND ('{scheme_id}'@en as ?cs_id)
-            ?cs dcterms:identifier '{scheme_id}'@en ;
+            FILTER (STR(?c_id) = "{concept_id}")
+            ?cs dcterms:identifier ?cs_id ;
                 skos:prefLabel ?csLabel .
+            FILTER (STR(?cs_id) = "{scheme_id}")
             OPTIONAL {{
                 ?p1 rdfs:label ?p1Label .
                 FILTER(lang(?p1Label) = "" || lang(?p1Label) = "en")
@@ -160,9 +166,10 @@ async def get_collection_concepts(collection_id: str):
         PREFIX skos: <{SKOS}>
         SELECT DISTINCT ?c ?label ?id ?cs_id
         WHERE {{
-            ?collection dcterms:identifier '{collection_id}'@en ;
+            ?collection dcterms:identifier ?coll_id ;
                 a skos:Collection ;
                 skos:member ?c .
+            FILTER (STR(?coll_id) = "{collection_id}")
             ?c a skos:Concept ;
                 skos:prefLabel ?label ;
                 dcterms:identifier ?id ;
@@ -183,9 +190,10 @@ async def get_concept_hierarchy(scheme_id: str):
         PREFIX skos: <{SKOS}>
         SELECT DISTINCT ?c ?label ?id ?narrower ?broader
         WHERE {{
-            ?cs dcterms:identifier '{scheme_id}'@en ;
+            ?cs dcterms:identifier ?cs_id ;
                 a skos:ConceptScheme .
-            
+            FILTER (STR(?cs_id) = "{scheme_id}")
+
             {{
                 ?c skos:inScheme ?cs .
             }}
@@ -224,8 +232,10 @@ async def get_broader_concepts(concept_id: str):
         PREFIX skos: <{SKOS}>
         SELECT DISTINCT ?broader ?id ?cs_id ?label
         WHERE {{
-            ?c dcterms:identifier '{concept_id}'@en ;
+            ?c dcterms:identifier ?c_id ;
                 a skos:Concept .
+            FILTER (STR(?c_id) = "{concept_id}")
+
             {{
                 ?c skos:broader ?broader .
             }}
@@ -253,8 +263,10 @@ async def get_narrower_concepts(concept_id: str):
         PREFIX skos: <{SKOS}>
         SELECT DISTINCT ?narrower ?id ?cs_id ?label
         WHERE {{
-            ?c dcterms:identifier '{concept_id}'@en ;
+            ?c dcterms:identifier ?c_id ;
                 a skos:Concept .
+            FILTER (STR(?c_id) = "{concept_id}")
+            
             {{
                 ?c skos:narrower ?narrower .
             }}

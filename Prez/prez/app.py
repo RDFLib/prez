@@ -20,7 +20,23 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(TEMPLATES_DIRECTORY)
 
 
+def build_cache():
+    # needs to depend on what *Prezs are enabled
+
+    # 1. query DB for seeAlso map
+    # get index dict of graph & admin graph URIs
+    # system_index = {
+    #     "vocab_uri": [
+    #         "background_uri",
+    #         "vocab_system_uri"
+    #     ]
+    # }
+    #
+    pass
+
+
 def configure():
+    build_cache()
     configure_routing()
 
 
@@ -76,11 +92,11 @@ async def object(request: Request, uri: str):
     params = (
         str(request.query_params)
         .replace(f"&uri={quote_plus(uri)}", "")
-        .replace(f"uri={quote_plus(uri)}", "") # if uri param at start of query string
+        .replace(f"uri={quote_plus(uri)}", "")  # if uri param at start of query string
     )
     # removes the leftover "?" if no other params than uri
     if params != "":
-        params = "?" + params[1:] # will start with & instead of ?
+        params = "?" + params[1:]  # will start with & instead of ?
     object_type = URIRef(sparql_response[0]["type"]["value"])
     object_id = sparql_response[0]["id"]["value"]
     object_cs_id = (
@@ -97,7 +113,7 @@ async def object(request: Request, uri: str):
             f"{vocprez_router.router.url_path_for('scheme', scheme_id=object_id)}{params}",
             headers=request.headers,
         )
-            
+
     return uri
 
 

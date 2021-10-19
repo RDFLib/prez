@@ -111,30 +111,6 @@ def test_get_profile_accept_header_flask():
     assert c.profile == "skos"
 
 
-def test_get_profile_link_header_fastapi():
-    """Tests that the correct profile is returned from a Link header"""
-    headers = {"Link": '<https://www.w3.org/TR/vocab-dcat/>; rel="profile"'}
-    query_params = {}
-
-    request = FastAPIRequest(headers, query_params)
-
-    c = Connegp(request, {"skos": skos, "dcat": dcat}, "dcat")
-
-    assert c.profile == "dcat"
-
-
-def test_get_profile_link_header_flask():
-    """Tests that the correct profile is returned from a Link header"""
-    headers = {"Link": '<https://www.w3.org/TR/vocab-dcat/>; rel="profile"'}
-    args = {}
-
-    request = FlaskRequest(headers, args)
-
-    c = Connegp(request, {"skos": skos, "dcat": dcat}, "dcat")
-
-    assert c.profile == "dcat"
-
-
 def test_unsupported_request_qsa_fastapi():
     """
     Tests that an invalid Request object (from an unsupported web framework)

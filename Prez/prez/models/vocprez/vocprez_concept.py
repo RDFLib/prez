@@ -22,7 +22,6 @@ class VocPrezConcept(PrezModel):
         self.narrower = self._set_narrower_concepts(narrower_response)
 
     def _set_props(self, props_dict: Dict[str, Dict]) -> None:
-        """Sets the transformed SPARQL results into appropriate attributes according to class-specific property groups"""
         main_properties = []
         other_properties = []
         for uri, prop in props_dict.items():
@@ -63,6 +62,7 @@ class VocPrezConcept(PrezModel):
         }
 
     def _set_scheme(self, sparql_response: List[Dict]) -> Dict[str, str]:
+        """Sets the concept's ConceptScheme"""
         result = sparql_response[0]
         return {
             "uri": result["cs"]["value"],
@@ -71,6 +71,7 @@ class VocPrezConcept(PrezModel):
         }
     
     def _set_broader_concepts(self, broader_response: List[Dict]) -> List[Dict]:
+        """Sets this Concept's skos:broader Concepts"""
         broader = []
         for result in broader_response:
             broader.append({
@@ -82,6 +83,7 @@ class VocPrezConcept(PrezModel):
         return broader
     
     def _set_narrower_concepts(self, narrower_response: List[Dict]) -> List[Dict]:
+        """Sets this Concept's skos:narrower Concepts"""
         narrower = []
         for result in narrower_response:
             narrower.append({
