@@ -73,7 +73,7 @@ class VocPrezCollectionListRenderer(ListRenderer):
             return self._render_dcat_json()
 
     def render(
-        self, template_context: Optional[Union[Dict, None]] = None
+        self, template_context: Optional[Dict] = None
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:

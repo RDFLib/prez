@@ -4,6 +4,7 @@ import uuid
 
 from rdflib import Dataset, Graph, URIRef
 from rdflib.namespace import RDF, RDFS, SKOS, DCTERMS
+from rdflib.compare import to_isomorphic
 
 from config import *
 from sparql_utils import *
@@ -19,7 +20,7 @@ def get_remote_vocabs() -> List[str]:
             GRAPH ?g {
                 ?s ?p ?o .
             }
-            FILTER (!STRSTARTS(STR(?g), "system"))
+            FILTER (!STRSTARTS(STR(?g), "system") && STR(?g) != "background:")
         }
     """
     )
@@ -247,34 +248,29 @@ def get_modified_vocabs(local_vocabs: Dict[str, str]) -> List[str]:
             }}
         """
         )
-        g_remote = Graph()
-        g_remote.parse(data=r)
+        g_remote = Graph().parse(data=r, format="turtle")
         if len(g_remote) == 0:  # remote vocab doesn't exist
             continue
 
-        g_local = Graph()
         with open(filename, "rb") as f:
-            g_local.parse(f.read())
+            g_local = Graph().parse(f.read(), format="turtle")
 
         # the same graph if triple count of the union is the same
-        if not len(g_local) == len(g_remote) == len(g_local + g_remote):
+        # if not len(g_local) == len(g_remote) == len(g_local + g_remote):
+        if not to_isomorphic(g_remote) == to_isomorphic(g_local):
             modified.append(uri)
     return modified
 
 
 if __name__ == "__main__":
-    # create a master system graph
-    try:
+    if DROP_ON_START:
+        sparql_update("DROP ALL")
         sparql_update("CREATE GRAPH <system:>")
-    except:
-        print("Master system graph exists")
-
-    # create a background system graph
-    try:
         sparql_update("CREATE GRAPH <background:>")
-        # add ontologies
-    except:
-        print("Background system graph exists")
+
+        for ont_file in Path(__file__).parent.parent.glob("ontologies/**/*.ttl"):
+            with open(ont_file, "rb") as f:
+                sparql_insert_graph("background:", f.read())
 
     # query DB for content graph to system graph map, store in python dict
     r = sparql_query(
@@ -309,11 +305,16 @@ if __name__ == "__main__":
 
     # gets remote & local vocabs
     remote_vocabs = get_remote_vocabs()
+    print(f"remote vocabs: {remote_vocabs}")
     local_vocabs = get_local_vocabs()  # {uri: file, ...}
     local_vocabs_list = list(local_vocabs.keys())
+    print(f"local vocabs: {local_vocabs_list}")
 
     modified_vocabs = get_modified_vocabs(local_vocabs)
+    print(f"modified vocabs: {modified_vocabs}")
     to_be_added, to_be_deleted = get_diff(local_vocabs_list, remote_vocabs)
+    print(f"added vocabs: {to_be_added}")
+    print(f"removed vocabs: {to_be_deleted}")
 
     # make changes
     delete_vocabs(to_be_deleted + modified_vocabs)

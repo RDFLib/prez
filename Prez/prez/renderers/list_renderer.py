@@ -109,7 +109,7 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
 
     @abstractmethod
     def render(
-        self, template_context: Optional[Union[Dict, None]] = None
+        self, template_context: Optional[Dict] = None
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:

@@ -15,10 +15,13 @@ class VocPrezScheme(PrezModel):
         str(DCTERMS.modified),
     ]
 
-    def __init__(self, sparql_response: List[Dict], concept_response: List[Dict]) -> None:
+    def __init__(
+        self, sparql_response: List[Dict], concept_response: List[Dict]
+    ) -> None:
         self.top_concepts = []
         super().__init__(sparql_response, "cs")
         self.concepts = self._set_concept_hierarchy(concept_response)
+        self.concept_list = self._set_concept_flat_list(concept_response)
 
     def _set_props(self, props_dict: Dict[str, Dict]) -> None:
         main_properties = []
@@ -48,7 +51,8 @@ class VocPrezScheme(PrezModel):
             )
         )
         # for other, sort by predicate alphabetically
-        self.properties.extend(sorted(other_properties, key=lambda p: p["prefix"]))
+        # self.properties.extend(sorted(other_properties, key=lambda p: p["label"]))
+        self.properties.extend(other_properties)
 
     def to_dict(self):
         return {
@@ -60,6 +64,18 @@ class VocPrezScheme(PrezModel):
             "id": self.id,
             "concepts": self.concepts,
         }
+
+    def _set_concept_flat_list(self, results: List[Dict]) -> List[Dict[str, str]]:
+        """Creates a flat list of Concepts ordered by prefLabel"""
+        # use set to guarantee uniqueness of concepts
+        # (duplicates appear as the concept query has narrower/broader info)
+        concept_set = set()
+        for result in results:
+            concept_set.add(
+                (result["c"]["value"], result["label"]["value"])
+            )
+        concept_list = [{"uri": c[0], "prefLabel": c[1]} for c in concept_set]
+        return sorted(concept_list, key=lambda c: c["prefLabel"])
 
     def _set_concept_hierarchy(self, results: List[Dict]) -> Dict[str, Dict]:
         """Sets the concept hierarchy as a nested dictionary"""
@@ -95,7 +111,9 @@ class VocPrezScheme(PrezModel):
 
         return hierarchy
 
-    def _get_concept_children(self, children_dict: Dict[str, Dict], results_dict: Dict[str, Dict]) -> None:
+    def _get_concept_children(
+        self, children_dict: Dict[str, Dict], results_dict: Dict[str, Dict]
+    ) -> None:
         """Recursively sets children for each child by checking narrower & broader"""
         for uri, props in children_dict.items():
             c = results_dict[uri]

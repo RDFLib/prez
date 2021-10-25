@@ -16,7 +16,9 @@ class VocPrezCollectionRenderer(Renderer):
     default_profile_token = "dcat"
 
     def __init__(
-        self, request: object, instance_uri: str, collection: VocPrezCollection
+        self,
+        request: object,
+        instance_uri: str,
     ) -> None:
         super().__init__(
             request,
@@ -24,6 +26,8 @@ class VocPrezCollectionRenderer(Renderer):
             VocPrezCollectionRenderer.default_profile_token,
             instance_uri,
         )
+
+    def set_collection(self, collection: VocPrezCollection) -> None:
         self.collection = collection
 
     # def _render_skos_html(
@@ -64,7 +68,9 @@ class VocPrezCollectionRenderer(Renderer):
         if template_context is not None:
             _template_context.update(template_context)
         return templates.TemplateResponse(
-            "vocprez/vocprez_collection.html", context=_template_context, headers=self.headers
+            "vocprez/vocprez_collection.html",
+            context=_template_context,
+            headers=self.headers,
         )
 
     def _render_dcat_rdf(self) -> Response:
@@ -79,7 +85,7 @@ class VocPrezCollectionRenderer(Renderer):
             return self._render_dcat_rdf()
 
     def render(
-        self, template_context: Optional[Union[Dict, None]] = None
+        self, template_context: Optional[Dict] = None
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:

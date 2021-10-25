@@ -5,7 +5,7 @@ from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from fastapi.templating import Jinja2Templates
 from rdflib import Graph, Namespace, URIRef, Literal, BNode
 from rdflib.namespace import RDF, RDFS, PROF, DCTERMS, XSD
-from connegp import Connegp, Profile, RDF_MEDIATYPES
+from connegp import Connegp, Profile, RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
 
 from config import *
 from profiles import alt
@@ -141,8 +141,7 @@ class Renderer(object, metaclass=ABCMeta):
 
     def _make_rdf_response(self, graph: Graph) -> Response:
         """Creates an RDF response from a Graph"""
-        serial_mediatype = "turtle"
-        response_mimetype = "text/turtle"
+        serial_mediatype = RDF_SERIALIZER_TYPES_MAP[self.mediatype]
 
         response_text = graph.serialize(format=serial_mediatype, encoding="utf-8")
 
@@ -152,7 +151,7 @@ class Renderer(object, metaclass=ABCMeta):
         graph.destroy({})
         del graph
 
-        return Response(response_text, media_type=response_mimetype)
+        return Response(response_text, media_type=self.mediatype)
 
     def _render_alt_html(
         self, template_context: Union[Dict, None]
@@ -200,7 +199,7 @@ class Renderer(object, metaclass=ABCMeta):
 
     @abstractmethod
     def render(
-        self, template_context: Optional[Union[Dict, None]] = None
+        self, template_context: Optional[Dict] = None
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:

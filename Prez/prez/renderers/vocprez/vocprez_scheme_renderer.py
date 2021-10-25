@@ -2,21 +2,30 @@ from typing import Dict, Optional, Union
 
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from fastapi.templating import Jinja2Templates
+from rdflib import Graph, URIRef, Literal
+from rdflib.namespace import SKOS, RDF, PROV, DCTERMS, RDFS
 
 from config import *
 from renderers import Renderer
-from profiles import skos, dcat
-from models.vocprez import VocPrezScheme
+from profiles import skos, vocpub, vocpub_supplied, dd
+from models.vocprez import VocPrezSchemeConstructed
 
 templates = Jinja2Templates(TEMPLATES_DIRECTORY)
 
 
 class VocPrezSchemeRenderer(Renderer):
-    profiles = {"dcat": dcat, "skos": skos}
-    default_profile_token = "dcat"
+    profiles = {
+        "vocpub": vocpub,
+        "skos": skos,
+        "dd": dd,
+        "vocpub_supplied": vocpub_supplied,
+    }
+    default_profile_token = "vocpub"
 
     def __init__(
-        self, request: object, instance_uri: str, scheme: VocPrezScheme
+        self,
+        request: object,
+        instance_uri: str,
     ) -> None:
         super().__init__(
             request,
@@ -24,35 +33,129 @@ class VocPrezSchemeRenderer(Renderer):
             VocPrezSchemeRenderer.default_profile_token,
             instance_uri,
         )
-        self.scheme = scheme
 
-    # def _render_skos_html(
-    #     self, template_context: Union[Dict, None]
-    # ) -> templates.TemplateResponse:
-    #     """Renders the HTML representation of the skos profile for a scheme"""
-    #     _template_context = {
-    #         "request": self.request,
-    #         "scheme": self.scheme.to_dict(),
-    #         "uri": self.instance_uri,
-    #     }
-    #     if template_context is not None:
-    #         _template_context.update(template_context)
-    #     return templates.TemplateResponse(
-    #         "vocprez_scheme.html", context=_template_context, headers=self.headers
-    #     )
+    def set_scheme(self, scheme: VocPrezSchemeConstructed) -> None:
+        self.scheme = scheme
+    
+    def _generate_skos_rdf(self) -> Graph:
+        r = self.scheme.graph.query(f"""
+            PREFIX skos: <{SKOS}>
+            CONSTRUCT {{
+                ?cs ?cs_pred ?cs_o .
+                ?c ?c_pred ?c_o .
+            }}
+            WHERE {{
+                BIND (<{self.scheme.uri}> AS ?cs)
+                ?cs ?cs_pred ?cs_o .
+                FILTER (STRSTARTS(STR(?cs_pred), STR(skos:)))
+                ?c skos:inScheme ?cs ;
+                    ?c_pred ?c_o .
+                FILTER (STRSTARTS(STR(?c_pred), STR(skos:)))
+            }}
+        """)
+
+        g = r.graph
+        g.bind("skos", SKOS)
+
+        return g
 
     def _render_skos_rdf(self) -> Response:
         """Renders the RDF representation of the skos profile for a scheme"""
-        return Response(content="test skos RDF")
+        g = self._generate_skos_rdf()
+        return self._make_rdf_response(g)
 
-    def _render_skos(self, template_context: Union[Dict, None]):
+    def _render_skos(self):
         """Renders the skos profile for a scheme"""
-        if self.mediatype == "text/html":
-            return self._render_dcat_html(template_context)
-        else:  # all other formats are RDF
-            return self._render_skos_rdf()
+        return self._render_skos_rdf()
 
-    def _render_dcat_html(
+    def _render_dd_json(self) -> JSONResponse:
+        """Renders the json representation of the dd profile for a scheme"""
+        return JSONResponse(
+            content=self.scheme.get_concept_flat_list(),
+            media_type="application/json",
+            headers=self.headers,
+        )
+
+    def _render_dd(self):
+        """Renders the dd profile for a scheme"""
+        return self._render_dd_json()
+    
+    def _generate_vocpub_rdf(self) -> Graph:
+        r = self.scheme.graph.query(f"""
+            PREFIX dcterms: <{DCTERMS}>
+            PREFIX prov: <{PROV}>
+            PREFIX skos: <{SKOS}>
+            CONSTRUCT {{
+                ?cs skos:prefLabel ?label ;
+                    a skos:ConceptScheme ;
+                    skos:definition ?def ;
+                    dcterms:created ?created ;
+                    dcterms:modified ?modified ;
+                    dcterms:creator ?creator ;
+                    dcterms:publisher ?publisher ;
+                    ?prov_pred ?prov ;
+                    skos:hasTopConcept ?tc .
+                ?c skos:inScheme ?cs ;
+                    a skos:Concept ;
+                    skos:prefLabel ?c_label ;
+                    skos:broader ?broader ;
+                    skos:narrower ?narrower .
+            }}
+            WHERE {{
+                BIND (<{self.scheme.uri}> AS ?cs)
+                ?cs skos:prefLabel ?label ;
+                    a skos:ConceptScheme ;
+                    skos:definition ?def ;
+                    dcterms:created ?created ;
+                    dcterms:modified ?modified ;
+                    dcterms:creator ?creator ;
+                    dcterms:publisher ?publisher ;
+                    ?prov_pred ?prov ;
+                    skos:hasTopConcept ?tc .
+                FILTER (?prov_pred IN (dcterms:provenance, dcterms:source, prov:wasDerivedFrom))
+                ?c skos:inScheme ?cs ;
+                    a skos:Concept ;
+                    skos:prefLabel ?c_label .
+                OPTIONAL {{
+                    ?c skos:broader ?broader .
+                }}
+                OPTIONAL {{
+                    ?c skos:narrower ?narrower .
+                }}
+            }}
+        """)
+
+        g = r.graph
+        g.bind("dcterms", DCTERMS)
+        g.bind("prov", PROV)
+        g.bind("skos", SKOS)
+
+        return g
+
+    def _render_vocpub_rdf(self) -> Response:
+        """Renders the RDF representation of the vocpub profile for a scheme"""
+        g = self._generate_vocpub_rdf()
+        return self._make_rdf_response(g)
+
+    def _render_vocpub(self, template_context: Union[Dict, None]):
+        """Renders the vocpub profile for a scheme"""
+        if self.mediatype == "text/html":
+            return self._render_vocpub_html(template_context)
+        else:  # all other formats are RDF
+            return self._render_vocpub_rdf()
+
+    def _render_vocpub_supplied_rdf(self) -> Response:
+        """Renders the RDF representation of the vocpub_supplied profile for a scheme"""
+        return self._render_vocpub_rdf()
+
+    def _render_vocpub_supplied(self, template_context: Union[Dict, None]):
+        """Renders the vocpub_supplied profile for a scheme"""
+        if self.mediatype == "text/html":
+            return self._render_vocpub_html(template_context)
+        else:  # all other formats are RDF
+            return self._render_vocpub_supplied_rdf()
+
+    def _render_vocpub_html(
         self, template_context: Union[Dict, None]
     ) -> templates.TemplateResponse:
         """Renders the HTML representation of the dcat profile for a scheme"""
@@ -64,22 +167,13 @@ class VocPrezSchemeRenderer(Renderer):
         if template_context is not None:
             _template_context.update(template_context)
         return templates.TemplateResponse(
-            "vocprez/vocprez_scheme.html", context=_template_context, headers=self.headers
+            "vocprez/vocprez_scheme_constructed.html",
+            context=_template_context,
+            headers=self.headers,
         )
 
-    def _render_dcat_rdf(self) -> Response:
-        """Renders the RDF representation of the dcat profile for a scheme"""
-        return Response(content="test dcat RDF")
-
-    def _render_dcat(self, template_context: Union[Dict, None]):
-        """Renders the dcat profile for a scheme"""
-        if self.mediatype == "text/html":
-            return self._render_dcat_html(template_context)
-        else:  # all other formats are RDF
-            return self._render_dcat_rdf()
-
     def render(
-        self, template_context: Optional[Union[Dict, None]] = None
+        self, template_context: Optional[Dict] = None
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
@@ -87,9 +181,13 @@ class VocPrezSchemeRenderer(Renderer):
             return PlainTextResponse(self.error, status_code=400)
         elif self.profile == "alt":
             return self._render_alt(template_context)
-        elif self.profile == "dcat":
-            return self._render_dcat(template_context)
         elif self.profile == "skos":
-            return self._render_skos(template_context)
+            return self._render_skos()
+        elif self.profile == "vocpub":
+            return self._render_vocpub(template_context)
+        elif self.profile == "vocpub_supplied":
+            return self._render_vocpub_supplied(template_context)
+        elif self.profile == "dd":
+            return self._render_dd()
         else:
             return None

@@ -1,10 +1,12 @@
 import os
 from pathlib import Path
 
-from rdflib.namespace import SKOS, RDF, DCTERMS, RDFS, DCAT, PROV
+from rdflib.namespace import SKOS, RDF, DCTERMS, RDFS, DCAT, PROV, OWL, SDO
 
 SYSTEM_URI = os.environ.get("SYSTEM_URI", "localhost")
 DATA_URI = os.environ.get("DATA_URI", "http://exampledata.org")
+VOCS_TITLE = os.environ.get("VOCS_TITLE", "Test Vocabs")
+VOCS_DESC = os.environ.get("VOCS_DESC", "These are test vocabs")
 DEBUG = os.environ.get("DEBUG", True)
 PORT = os.environ.get("PORT", 8000)
 SPARQL_ENDPOINT = os.environ.get(
@@ -24,4 +26,6 @@ NAMESPACE_PREFIXES = {
     str(DCAT): "dcat",
     str(DCTERMS): "dcterms",
     str(PROV): "prov",
+    str(OWL): "owl",
+    str(SDO): "sdo",
 }

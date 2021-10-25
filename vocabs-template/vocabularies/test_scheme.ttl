@@ -1,6 +1,7 @@
 @prefix collection: <http://example.com/collection/collection1> .
 @prefix cs: <http://example.com/scheme/scheme1> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix sdo: <https://schema.org/> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
@@ -47,6 +48,9 @@ collection: a skos:Collection ;
     skos:inScheme cs: ;
     skos:prefLabel "Concept 2"@en .
 
+<http://example.com/person/JamieFeiss> a sdo:Person ;
+    sdo:name "Jamie Feiss" .
+
 <http://example.com/concept/concept3> a skos:Concept ;
     dcterms:identifier "C3"@en ;
     dcterms:provenance "made up by Jamie"@en ;
@@ -67,9 +71,11 @@ collection: a skos:Collection ;
 
 cs: a skos:ConceptScheme ;
     dcterms:created "2021-10-11"^^xsd:date ;
+    dcterms:creator <http://example.com/person/JamieFeiss> ;
     dcterms:identifier "CS1"@en ;
     dcterms:modified "2021-10-12"^^xsd:date ;
     dcterms:provenance "made up by Jamie"@en ;
+    dcterms:publisher <http://example.com/person/JamieFeiss> ;
     dcterms:title "Concept Scheme 1"@en ;
     skos:definition "A conceptscheme is ..."@en ;
     skos:hasTopConcept <http://example.com/concept/concept1>,

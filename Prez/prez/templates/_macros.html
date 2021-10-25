@@ -40,10 +40,10 @@
     <li>
         <a href="{{ url_for('scheme', scheme_id=scheme_id) }}/{{ concept_props.id }}">{{ concept_props.label }}</a>
     </li>
-    {% if concept_props.children %}
+    {% if concept_props.narrower %}
         <li>
             <ol style="list-style: none; padding-left: 20px;">
-                {% for child_uri, child_props in concept_props.children.items() | sort(attribute = "1.label") %}
+                {% for child_uri, child_props in concept_props.narrower.items() | sort(attribute = "1.label") %}
                     {{ render_concept_hierarchy(scheme_id, child_uri, child_props) }}
                 {% endfor %}
             </ol>

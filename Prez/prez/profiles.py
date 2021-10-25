@@ -1,14 +1,25 @@
 from connegp import Profile, RDF_MEDIATYPES
 
-dcat = Profile(
-    uri="https://www.w3.org/TR/vocab-dcat/",
-    id="dcat",
-    label="DCAT",
-    comment="Dataset Catalogue Vocabulary (DCAT) is a W3C-authored RDF vocabulary designed to "
-    "facilitate interoperability between data catalogs "
-    "published on the Web.",
+
+vocpub = Profile(
+    uri="https://w3id.org/profile/vocpub",
+    id="vocpub",
+    label="VocPub",
+    comment="A profile of SKOS for the publication of Vocabularies. This profile mandates the use of one Concept "
+    "Scheme per vocabulary",
     mediatypes=["text/html"] + RDF_MEDIATYPES,
-    default_mediatype="text/html",
+    default_mediatype="text/turtle",
+    languages=["en"],
+    default_language="en",
+)
+
+vocpub_supplied = Profile(
+    uri="https://w3id.org/profile/vocpub",
+    id="vocpub_supplied",
+    label="VocPub Supplied",
+    comment="A profile of SKOS for the publication of Vocabularies. This profile excludes inferred data.",
+    mediatypes=RDF_MEDIATYPES,
+    default_mediatype="text/turtle",
     languages=["en"],
     default_language="en",
 )
@@ -26,12 +37,12 @@ skos = Profile(
     default_language="en",
 )
 
-void = Profile(
-    uri="https://www.w3.org/TR/vocab-dcat/",
-    id="void",
-    label="VoID",
-    comment="The Vocabulary of Interlinked Datasets (VoID) is an RDF Schema vocabulary for expressing metadata about "
-    "RDF datasets.",
+sdo = Profile(
+    uri="https://schema.org",
+    id="sdo",
+    label="schema.org",
+    comment="Schema.org is a collaborative, community activity with a mission to create, maintain, and promote schemas "
+    "for structured data on the Internet, on web pages, in email messages, and beyond.",
     mediatypes=RDF_MEDIATYPES,
     default_mediatype="text/turtle",
     languages=["en"],
@@ -51,48 +62,13 @@ dd = Profile(
     default_language="en",
 )
 
-nvs = Profile(
-    uri="https://w3id.org/profile/nvs-col",
-    id="nvs",
-    label="NVS Collections List Profile",
-    comment="The NERC Vocabulary Server's profile of SKOS that include Provenance Ontology (PROV) and Registry Ontology"
-    "relationships for term governance.",
-    mediatypes=["text/html"] + RDF_MEDIATYPES,
-    default_mediatype="text/html",
-    languages=["en"],
-    default_language="en",
-)
-
-vocpub = Profile(
-    uri="https://w3id.org/profile/vocpub",
-    id="vocpub",
-    label="VocPub",
-    comment="A profile of SKOS for the publication of Vocabularies. This profile mandates the use of one Concept "
-    "Scheme per vocabulary",
-    mediatypes=RDF_MEDIATYPES,
-    default_mediatype="text/turtle",
-    languages=["en"],
-    default_language="en",
-)
-
-sdo = Profile(
-    uri="https://schema.org",
-    id="sdo",
-    label="schema.org",
-    comment="Schema.org is a collaborative, community activity with a mission to create, maintain, and promote schemas "
-    "for structured data on the Internet, on web pages, in email messages, and beyond.",
-    mediatypes=RDF_MEDIATYPES,
-    default_mediatype="text/turtle",
-    languages=["en"],
-    default_language="en",
-)
-
-puv = Profile(
-    uri="https://w3id.org/env/puv",
-    id="puv",
-    label="Parameter Use Vocabulary",
-    comment="A simple ontology which implements the Parameter Usage Vocabulary semantic model, as described at "
-    "https://github.com/nvs-vocabs/P01",
+dcat = Profile(
+    uri="https://www.w3.org/TR/vocab-dcat/",
+    id="dcat",
+    label="DCAT",
+    comment="Dataset Catalogue Vocabulary (DCAT) is a W3C-authored RDF vocabulary designed to "
+    "facilitate interoperability between data catalogs "
+    "published on the Web.",
     mediatypes=["text/html"] + RDF_MEDIATYPES,
     default_mediatype="text/html",
     languages=["en"],

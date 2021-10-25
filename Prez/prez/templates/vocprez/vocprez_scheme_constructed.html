@@ -1,0 +1,39 @@
+{% extends "_page.html" %}
+{% from "_macros.html" import render_predicate, render_predicate_o, render_object, render_concept_hierarchy with context %}
+
+{% block content %}
+<h1>
+    {% if scheme.title is not none %}
+        {{ scheme.title }}
+    {% else %}
+        ConceptScheme title
+    {% endif %}
+</h1>
+<p>Instance URI: <a href="{{ uri }}">{{ scheme.uri }}</a><small><a href="{{ scheme.uri }}">(ext link)</a></small></p>
+{% if scheme.description is not none %}
+    <div>
+        <p>{{ scheme.description }}</p>
+    </div>
+{% endif %}
+<table>
+    <tbody>
+        {% for prop in scheme.properties %}
+            <tr>
+                <th>{{ render_predicate(prop) }}</th>
+                <td>{{ render_object(prop) }}</td>
+            </tr>
+        {% endfor %}
+        <tr>
+            <th>Concepts</th>
+            <td>
+                <ol style="list-style: none; padding-left: 0px;">
+                    {% for concept_uri, concept_props in scheme.concepts.items() | sort(attribute = "1.label") %}
+                        {{ render_concept_hierarchy(scheme.id, concept_uri, concept_props) }}
+                    {% endfor %}
+                </ol>
+            </td>
+        </tr>
+    </tbody>
+</table>
+<a href="{{ uri }}?_profile=alt">Alternate Profiles</a>
+{% endblock %}

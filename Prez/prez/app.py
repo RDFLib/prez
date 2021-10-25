@@ -113,6 +113,7 @@ async def object(request: Request, uri: str):
             f"{vocprez_router.router.url_path_for('scheme', scheme_id=object_id)}{params}",
             headers=request.headers,
         )
+        # return await vocprez_router.scheme_endpoint(request, scheme_uri=uri)
 
     return uri
 

@@ -4,6 +4,8 @@ from .vocprez_scheme import VocPrezScheme
 from .vocprez_collection_list import VocPrezCollectionList
 from .vocprez_collection import VocPrezCollection
 from .vocprez_concept import VocPrezConcept
+from .vocprez_scheme_constructed import VocPrezSchemeConstructed
+from .vocprez_concept_constructed import VocPrezConceptConstructed
 
 __all__ = [
     "VocPrezDataset",
@@ -11,5 +13,7 @@ __all__ = [
     "VocPrezScheme",
     "VocPrezCollectionList",
     "VocPrezCollection",
-    "VocPrezConcept"
+    "VocPrezConcept",
+    "VocPrezSchemeConstructed",
+    "VocPrezConceptConstructed",
 ]
