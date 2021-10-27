@@ -4,7 +4,6 @@ from connegp import Connegp, Profile, RDF_MEDIATYPES
 from .request_objects import (
     FastAPIRequest,
     FlaskRequest,
-    InvalidHeadersRequest,
     InvalidQSARequest,
 )
 

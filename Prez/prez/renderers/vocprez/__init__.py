@@ -4,6 +4,7 @@ from .vocprez_scheme_renderer import VocPrezSchemeRenderer
 from .vocprez_collection_list_renderer import VocPrezCollectionListRenderer
 from .vocprez_collection_renderer import VocPrezCollectionRenderer
 from .vocprez_concept_renderer import VocPrezConceptRenderer
+from .vocprez_profiles_renderer import VocPrezProfilesRenderer
 
 __all__ = [
     "VocPrezDatasetRenderer",
@@ -12,4 +13,5 @@ __all__ = [
     "VocPrezCollectionListRenderer",
     "VocPrezCollectionRenderer",
     "VocPrezConceptRenderer",
+    "VocPrezProfilesRenderer",
 ]

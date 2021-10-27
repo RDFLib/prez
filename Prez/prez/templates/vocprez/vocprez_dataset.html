@@ -4,23 +4,15 @@
 {% block content %}
 <h1>
     {% if dataset.title is not none %}
-        {{ dataset.title.objects[0].value }}
+        {{ dataset.title }}
     {% else %}
         Dataset title
     {% endif %}
 </h1>
-<p><small>
-    {{ render_predicate(dataset.type) }}
-    : 
-    {{ render_predicate_o(dataset.type) }}
-</small></p>
 <p>Instance URI: <a href="{{ uri }}">{{ dataset.uri }}</a><small><a href="{{ dataset.uri }}">(ext link)</a></small></p>
 {% if dataset.description is not none %}
     <div>
-        <p>
-            {{ render_predicate(dataset.description) }}
-        </p>
-        <p>{{ dataset.description.objects[0].value }}</p>
+        <p>{{ dataset.description }}</p>
     </div>
 {% endif %}
 <table>

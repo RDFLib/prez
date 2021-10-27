@@ -1,6 +1,7 @@
-from typing import List, Dict
+from typing import List, Dict, Optional
 
-from rdflib.namespace import DCTERMS, SKOS, RDF
+from rdflib import Graph, URIRef
+from rdflib.namespace import DCTERMS, SKOS
 
 from config import *
 from models import PrezModel
@@ -9,87 +10,152 @@ from models import PrezModel
 class VocPrezConcept(PrezModel):
     # class attributes for property grouping & order
     main_props = [
-        str(SKOS.definition),
-        str(DCTERMS.creator),
-        str(DCTERMS.created),
-        str(DCTERMS.modified),
+        SKOS.definition,
     ]
 
-    def __init__(self, sparql_response: List[Dict], broader_response: List[Dict], narrower_response: List[Dict]) -> None:
-        super().__init__(sparql_response, "c")
-        self.scheme = self._set_scheme(sparql_response)
-        self.broader = self._set_broader_concepts(broader_response)
-        self.narrower = self._set_narrower_concepts(narrower_response)
+    hidden_props = [
+        SKOS.semanticRelation,
+        SKOS.broaderTransitive,
+        SKOS.narrowerTransitive,
+        DCTERMS.identifier,
+        SDO.identifier,
+        SKOS.inScheme,
+        SKOS.topConceptOf,
+        SKOS.broader,
+        SKOS.narrower,
+    ]
 
-    def _set_props(self, props_dict: Dict[str, Dict]) -> None:
-        main_properties = []
-        other_properties = []
-        for uri, prop in props_dict.items():
-            if uri == str(DCTERMS.description):
-                self.description = prop
-            elif uri == str(DCTERMS.title):
-                self.title = prop
-            elif uri == str(RDF.type):
-                self.type = prop
-            elif uri == str(SKOS.inScheme) or uri == str(SKOS.topConceptOf):
-                continue
-            elif uri == str(SKOS.broader) or uri == str(SKOS.narrower):
-                continue
-            elif uri in VocPrezConcept.main_props:
-                main_properties.append(prop)
-            else:
-                other_properties.append(prop)
-        # sort & add to properties
-        self.properties.extend(
-            sorted(
-                main_properties,
-                key=lambda p: self._sort_within_list(p, VocPrezConcept.main_props),
-            )
+    def __init__(
+        self, graph: Graph, id: Optional[str] = None, uri: Optional[str] = None
+    ) -> None:
+        super().__init__(graph)
+
+        if id is None and uri is None:
+            raise ValueError("Either an ID or a URI must be provided")
+
+        query_by_id = f"""
+            ?c dcterms:identifier ?id .
+            FILTER (STR(?id) = "{id}")
+        """
+
+        query_by_uri = f"""
+            BIND (<{uri}> as ?c) 
+            ?c dcterms:identifier ?id .
+        """
+
+        r = self.graph.query(
+            f"""
+            PREFIX dcterms: <{DCTERMS}>
+            PREFIX rdfs: <{RDFS}>
+            PREFIX skos: <{SKOS}>
+            SELECT *
+            WHERE {{
+                {query_by_id if id is not None else query_by_uri}
+                ?c a skos:Concept ;
+                    rdfs:label|skos:prefLabel|dcterms:title ?title ;
+                    skos:definition|dcterms:description ?desc ;
+                    skos:inScheme ?cs .
+                ?cs dcterms:identifier ?cs_id ;
+                    skos:prefLabel ?cs_label .
+            }}
+        """
         )
-        # for other, sort by predicate alphabetically
-        self.properties.extend(sorted(other_properties, key=lambda p: p["prefix"]))
 
+        result = r.bindings[0]
+        self.uri = result["c"]
+        self.id = result["id"]
+        self.title = result["title"]
+        self.description = result["desc"]
+        self.scheme = {
+            "uri": result["cs"],
+            "id": result["cs_id"],
+            "title": result["cs_label"],
+        }
+
+    # override
     def to_dict(self) -> Dict:
         return {
+            "uri": self.uri,
+            "id": self.id,
             "title": self.title,
             "description": self.description,
-            "uri": self.uri,
-            "type": self.type,
-            "properties": self.properties,
+            "properties": self._get_properties(),
             "scheme": self.scheme,
-            "broader": self.broader,
-            "narrower": self.narrower
+            "broader": self._get_broader_concepts(),
+            "narrower": self._get_narrower_concepts(),
         }
 
-    def _set_scheme(self, sparql_response: List[Dict]) -> Dict[str, str]:
-        """Sets the concept's ConceptScheme"""
-        result = sparql_response[0]
-        return {
-            "uri": result["cs"]["value"],
-            "id": result["cs_id"]["value"],
-            "label": result["csLabel"]["value"],
-        }
+    # override
+    def _get_properties(self) -> List[Dict]:
+        props_dict = self._get_props_dict()
+
+        # group props in order, filtering out hidden props
+        properties = []
+        main_props = []
+        other_props = []
+
+        for uri, prop in props_dict.items():
+            if uri in VocPrezConcept.hidden_props:
+                continue
+            elif uri in VocPrezConcept.main_props:
+                main_props.append(prop)
+            else:
+                other_props.append(prop)
+
+        properties.extend(
+            sorted(
+                main_props,
+                key=lambda p: self._sort_within_list(
+                    p, VocPrezConcept.main_props
+                ),
+            )
+        )
+        properties.extend(other_props)
+
+        return properties
     
-    def _set_broader_concepts(self, broader_response: List[Dict]) -> List[Dict]:
-        """Sets this Concept's skos:broader Concepts"""
+    def _get_broader_concepts(self) -> List[Dict]:
         broader = []
-        for result in broader_response:
-            broader.append({
-                "uri": result["broader"]["value"],
-                "id": result["id"]["value"],
-                "scheme_id": result["cs_id"]["value"],
-                "label": result["label"]["value"],
-            })
-        return broader
-    
-    def _set_narrower_concepts(self, narrower_response: List[Dict]) -> List[Dict]:
-        """Sets this Concept's skos:narrower Concepts"""
+        r = self.graph.query(f"""
+            SELECT DISTINCT *
+            WHERE {{
+                <{self.uri}> skos:broader ?broader .
+                ?broader dcterms:identifier ?id ;
+                    rdfs:label|skos:prefLabel|dcterms:title ?label ;
+                    skos:inScheme/dcterms:identifier ?cs_id .
+            }}
+        """)
+
+        for result in r.bindings:
+            broader.append(
+                {
+                    "uri": result["broader"],
+                    "label": result["label"],
+                    "id": result["id"],
+                    "scheme_id": result["cs_id"],
+                }
+            )
+        return sorted(broader, key=lambda c: c["label"])
+
+    def _get_narrower_concepts(self) -> List[Dict]:
         narrower = []
-        for result in narrower_response:
-            narrower.append({
-                "uri": result["narrower"]["value"],
-                "id": result["id"]["value"],
-                "scheme_id": result["cs_id"]["value"],
-                "label": result["label"]["value"],
-            })
-        return narrower
+        r = self.graph.query(f"""
+            SELECT DISTINCT *
+            WHERE {{
+                <{self.uri}> skos:narrower ?narrower .
+                ?narrower dcterms:identifier ?id ;
+                    rdfs:label|skos:prefLabel|dcterms:title ?label ;
+                    skos:inScheme/dcterms:identifier ?cs_id .
+            }}
+        """)
+
+        for result in r.bindings:
+            narrower.append(
+                {
+                    "uri": result["narrower"],
+                    "label": result["label"],
+                    "id": result["id"],
+                    "scheme_id": result["cs_id"],
+                }
+            )
+        return sorted(narrower, key=lambda c: c["label"])

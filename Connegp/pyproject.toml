@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "connegp"
+version = "0.1.0"
+description = "Content negotiation by profile"
+authors = ["jamiefeiss <jamie.feiss@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pydantic = "^1.8.2"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.5"
+black = "^21.9b0"
+pre-commit = "^2.15.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 88

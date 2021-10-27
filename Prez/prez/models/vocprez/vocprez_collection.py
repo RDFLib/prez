@@ -1,6 +1,7 @@
-from typing import List, Dict
+from typing import List, Dict, Optional
 
-from rdflib.namespace import DCTERMS, SKOS, RDF
+from rdflib import Graph
+from rdflib.namespace import DCTERMS, SKOS, SDO
 
 from config import *
 from models import PrezModel
@@ -9,63 +10,118 @@ from models import PrezModel
 class VocPrezCollection(PrezModel):
     # class attributes for property grouping & order
     main_props = [
-        str(SKOS.definition),
-        str(DCTERMS.creator),
-        str(DCTERMS.created),
-        str(DCTERMS.modified),
+        SKOS.definition,
+    ]
+    hidden_props = [
+        SKOS.member,
+        DCTERMS.identifier,
+        SDO.identifier, # not being hidden
     ]
 
-    def __init__(self, sparql_response: List[Dict], concept_response: List[Dict]) -> None:
-        super().__init__(sparql_response, "collection")
-        self.concepts = self._set_concepts(concept_response)
+    def __init__(
+        self, graph: Graph, id: Optional[str] = None, uri: Optional[str] = None
+    ) -> None:
+        super().__init__(graph)
 
-    def _set_props(self, props_dict: Dict[str, Dict]) -> None:
-        main_properties = []
-        other_properties = []
-        for uri, prop in props_dict.items():
-            if uri == str(DCTERMS.description):
-                self.description = prop
-            elif uri == str(DCTERMS.title):
-                self.title = prop
-            elif uri == str(RDF.type):
-                self.type = prop
-            elif uri == str(DCTERMS.identifier):
-                self.id = prop
-            elif uri == str(SKOS.member):
-                continue
-            elif uri in VocPrezCollection.main_props:
-                main_properties.append(prop)
-            else:
-                other_properties.append(prop)
-        # sort & add to properties
-        self.properties.extend(
-            sorted(
-                main_properties,
-                key=lambda p: self._sort_within_list(p, VocPrezCollection.main_props),
-            )
+        if id is None and uri is None:
+            raise ValueError("Either an ID or a URI must be provided")
+
+        query_by_id = f"""
+            ?coll dcterms:identifier ?id .
+            FILTER (STR(?id) = "{id}")
+        """
+
+        query_by_uri = f"""
+            BIND (<{uri}> as ?coll) 
+            ?coll dcterms:identifier ?id .
+        """
+
+        r = self.graph.query(
+            f"""
+            PREFIX dcterms: <{DCTERMS}>
+            PREFIX rdfs: <{RDFS}>
+            PREFIX skos: <{SKOS}>
+            SELECT *
+            WHERE {{
+                {query_by_id if id is not None else query_by_uri}
+                ?coll a skos:Collection ;
+                    rdfs:label|skos:prefLabel|dcterms:title ?title ;
+                    skos:definition|dcterms:description ?desc .
+            }}
+        """
         )
-        # for other, sort by predicate alphabetically
-        self.properties.extend(sorted(other_properties, key=lambda p: p["prefix"]))
 
-    def to_dict(self):
+        result = r.bindings[0]
+        self.uri = result["coll"]
+        self.id = result["id"]
+        self.title = result["title"]
+        self.description = result["desc"]
+
+    # override
+    def to_dict(self) -> Dict:
         return {
+            "uri": self.uri,
+            "id": self.id,
             "title": self.title,
             "description": self.description,
-            "uri": self.uri,
-            "type": self.type,
-            "properties": self.properties,
-            "id": self.id,
-            "concepts": self.concepts
+            "properties": self._get_properties(),
+            "concepts": self._get_concept_list(),
         }
-    
-    def _set_concepts(self, concept_response: List[Dict]):
-        """Sets the Concept list for this Collection"""
-        concepts = []
-        for result in concept_response:
-            concepts.append({
-                "uri": result["c"]["value"],
-                "label": result["label"]["value"],
-                "id": result["id"]["value"],
-                "scheme_id": result["cs_id"]["value"],
-            })
-        return concepts
+
+    # override
+    def _get_properties(self) -> List[Dict]:
+        props_dict = self._get_props_dict()
+
+        # group props in order, filtering out hidden props
+        properties = []
+        main_props = []
+        other_props = []
+
+        for uri, prop in props_dict.items():
+            if uri in VocPrezCollection.hidden_props:
+                continue
+            elif uri in VocPrezCollection.main_props:
+                main_props.append(prop)
+            else:
+                other_props.append(prop)
+
+        properties.extend(
+            sorted(
+                main_props,
+                key=lambda p: self._sort_within_list(
+                    p, VocPrezCollection.main_props
+                ),
+            )
+        )
+        properties.extend(other_props)
+
+        return properties
+
+    def _get_concept_list(self) -> List[Dict[str, str]]:
+        concept_list = []
+        r = self.graph.query(
+            f"""
+            PREFIX dcterms: <{DCTERMS}>
+            PREFIX rdfs: <{RDFS}>
+            PREFIX skos: <{SKOS}>
+            SELECT DISTINCT *
+            WHERE {{
+                <{self.uri}> skos:member ?c .
+                ?c rdfs:label|skos:prefLabel|dcterms:title ?label ;
+                    skos:inScheme ?cs ;
+                    dcterms:identifier ?id .
+                ?cs dcterms:identifier ?cs_id .
+            }}
+        """
+        )
+
+        for result in r.bindings:
+            concept_list.append(
+                {
+                    "uri": result["c"],
+                    "label": result["label"],
+                    "id": result["id"],
+                    "scheme_id": result["cs_id"],
+                }
+            )
+        return sorted(concept_list, key=lambda c: c["label"])

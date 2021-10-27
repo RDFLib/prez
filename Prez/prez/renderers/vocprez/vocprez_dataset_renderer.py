@@ -50,10 +50,10 @@ class VocPrezDatasetRenderer(Renderer):
         g = Graph()
         g.bind("dcat", DCAT)
         g.bind("dcterms", DCTERMS)
-        ds = URIRef(DATA_URI)
+        ds = URIRef(self.dataset.uri)
         g.add((ds, RDF.type, DCAT.Dataset))
-        g.add((ds, DCTERMS.title, Literal(VOCS_TITLE)))
-        g.add((ds, DCTERMS.description, Literal(VOCS_DESC)))
+        g.add((ds, DCTERMS.title, Literal(self.dataset.title)))
+        g.add((ds, DCTERMS.description, Literal(self.dataset.description)))
 
         api = URIRef(self.instance_uri)
         g.add((api, DCAT.servesDataset, ds))
@@ -72,7 +72,7 @@ class VocPrezDatasetRenderer(Renderer):
         g.add((api, DCTERMS.type, URIRef("http://purl.org/dc/dcmitype/Service")))
         g.add((api, DCAT.endpointURL, api))
 
-        sparql = URIRef(self.instance_uri + "/sparql")
+        sparql = URIRef(self.instance_uri + "sparql")
         g.add((sparql, DCAT.servesDataset, ds))
         g.add((sparql, RDF.type, DCAT.DataService))
         g.add((sparql, DCTERMS.title, Literal("System SPARQL Service")))
@@ -107,10 +107,10 @@ class VocPrezDatasetRenderer(Renderer):
         """Generates a Graph of the SDO representation"""
         g = Graph()
         g.bind("sdo", SDO)
-        vs = URIRef(DATA_URI)
+        vs = URIRef(self.dataset.uri)
         g.add((vs, RDF.type, SDO.Dataset))
-        g.add((vs, SDO.name, Literal(VOCS_TITLE)))
-        g.add((vs, SDO.description, Literal(VOCS_DESC)))
+        g.add((vs, SDO.name, Literal(self.dataset.title)))
+        g.add((vs, SDO.description, Literal(self.dataset.description)))
 
         return g
 

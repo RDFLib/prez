@@ -1,0 +1,11 @@
+{% extends "_page.html" %}
+
+{% block content %}
+<h1>VocPrez Profiles</h1>
+<ul>
+    {% for profile in profiles %}
+        <li>{{ profile.label }} - {{ profile.uri }}</li>
+    {% endfor %}
+</ul>
+<a href="{{ uri }}?_profile=alt">Alternate Profiles</a>
+{% endblock %}

@@ -2,13 +2,13 @@ from typing import Dict, Optional, Union
 
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from fastapi.templating import Jinja2Templates
-from rdflib import Graph, URIRef, Literal
-from rdflib.namespace import SKOS, RDF, PROV, DCTERMS, RDFS
+from rdflib import Graph
+from rdflib.namespace import SKOS, PROV, DCTERMS
 
 from config import *
 from renderers import Renderer
 from profiles import skos, vocpub, vocpub_supplied, dd
-from models.vocprez import VocPrezSchemeConstructed
+from models.vocprez import VocPrezScheme
 
 templates = Jinja2Templates(TEMPLATES_DIRECTORY)
 
@@ -34,7 +34,7 @@ class VocPrezSchemeRenderer(Renderer):
             instance_uri,
         )
 
-    def set_scheme(self, scheme: VocPrezSchemeConstructed) -> None:
+    def set_scheme(self, scheme: VocPrezScheme) -> None:
         self.scheme = scheme
     
     def _generate_skos_rdf(self) -> Graph:
@@ -167,7 +167,7 @@ class VocPrezSchemeRenderer(Renderer):
         if template_context is not None:
             _template_context.update(template_context)
         return templates.TemplateResponse(
-            "vocprez/vocprez_scheme_constructed.html",
+            "vocprez/vocprez_scheme.html",
             context=_template_context,
             headers=self.headers,
         )

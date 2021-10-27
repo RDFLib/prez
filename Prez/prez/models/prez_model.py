@@ -1,75 +1,55 @@
 from abc import ABCMeta, abstractmethod
-from typing import Union, List, Dict
+from typing import Dict, List, Union
+import re
 
-from config import *
+from rdflib import Graph, URIRef
+from rdflib.namespace import RDFS
 
 
 class PrezModel(object, metaclass=ABCMeta):
-    def __init__(self, sparql_response: List[Dict], uri_var: str) -> None:
-        self.properties = []
-        self.title = None
-        self.description = None
-        self.uri = ""
-        self.type = None
-        self.id = ""
-        props = self._get_props(sparql_response, uri_var)
-        props_transformed = self._transform_props(props)
-        self._set_props(props_transformed)
+    def __init__(self, graph: Graph) -> None:
+        self.graph = graph
 
-    def _get_prefix(self, uri: str) -> Union[str, None]:
-        """Creates a predicate prefix"""
-        for n in NAMESPACE_PREFIXES.keys():
-            if uri.startswith(n):
-                return NAMESPACE_PREFIXES[n] + ":" + uri.split(n)[-1]
-        # else can't find match, return None
-        return None
+    @abstractmethod
+    def to_dict(self) -> Dict:
+        pass
 
-    def _get_props(self, sparql_response: List[Dict], uri_var: str) -> List[Dict]:
-        """Transforms the SPARQL response into dicts containing prefixes & labels"""
-        results = []
-        for result in sparql_response:
-            r = {
-                "p1": None,
-                "p1Label": None,
-                "p1Prefix": None,
-                "o1": None,
-                "o1Label": None,
-                "o1Prefix": None,
-            }
-            for k, v in result.items():
-                if k == uri_var:
-                    self.uri = v["value"]
-                elif k == "p1":
-                    r["p1"] = v["value"]
-                    if v["type"] == "uri":
-                        r["p1Prefix"] = self._get_prefix(v["value"])
-                elif k == "o1":
-                    r["o1"] = v["value"]
-                    if v["type"] == "uri":
-                        r["o1Prefix"] = self._get_prefix(v["value"])
-                elif k == "p1Label":
-                    r["p1Label"] = v["value"]
-                elif k == "o1Label":
-                    r["o1Label"] = v["value"]
-            results.append(r)
-        return results
+    @abstractmethod
+    def _get_properties(self) -> Dict:
+        pass
 
-    def _transform_props(self, props: List) -> Dict[str, Dict]:
-        """Groups objects with the same predicate"""
+    def _get_props_dict(self) -> Dict:
+        r = self.graph.query(
+            f"""
+            PREFIX rdfs: <{RDFS}>
+            SELECT DISTINCT *
+            WHERE {{
+                <{self.uri}> ?p ?o .
+                OPTIONAL {{
+                    ?p rdfs:label ?pLabel .
+                }}
+                OPTIONAL {{
+                    ?o rdfs:label ?oLabel .
+                }}
+            }}
+        """
+        )
+
+        # group objects with the same predicate
         props_dict = {}
-        for prop in props:
+        for result in r.bindings:
             obj = {
-                "value": prop["o1"],
-                "prefix": prop["o1Prefix"],
-                "label": prop["o1Label"],
+                "value": result["o"],
+                "prefix": self._get_prefix(result["o"]),
+                "label": result.get("oLabel"),
             }
-            if props_dict.get(prop["p1"]):
-                props_dict[prop["p1"]]["objects"].append(obj)
+            if props_dict.get(result["p"]):
+                props_dict[result["p"]]["objects"].append(obj)
             else:
-                props_dict[prop["p1"]] = {
-                    "uri": prop["p1"],
-                    "prefix": prop["p1Prefix"],
-                    "label": prop["p1Label"],
+                props_dict[result["p"]] = {
+                    "uri": result["p"],
+                    "prefix": self._get_prefix(result["p"]),
+                    "label": result.get("pLabel"),
                     "objects": [obj],
                 }
         return props_dict
@@ -81,31 +61,12 @@ class PrezModel(object, metaclass=ABCMeta):
         else:
             return len(prop_list)
 
-    @abstractmethod
-    def _set_props(self, props_dict: Dict[str, Dict]) -> None:
-        """Sets the transformed SPARQL results into appropriate attributes according to class-specific property groups"""
-        other_properties = []
-        for uri, prop in props_dict.items():
-            if uri == str(DCTERMS.description):
-                self.description = prop
-            elif uri == str(DCTERMS.title):
-                self.title = prop
-            elif uri == str(RDF.type):
-                self.type = prop
-            # custom stuff goes here
+    def _get_prefix(self, var) -> Union[str, None]:
+        if isinstance(var, URIRef):
+            prefix = var.n3(self.graph.namespace_manager)
+            if re.match("<.+>", prefix):  # IRI, not a prefix
+                return None
             else:
-                other_properties.append(prop)
-        # sort & add to properties
-        # for other, sort by predicate alphabetically
-        self.properties.extend(sorted(other_properties, key=lambda p: p["prefix"]))
-
-    @abstractmethod
-    def to_dict(self) -> Dict:
-        "Returns a dictionary representation of the object for use in a template"
-        return {
-            "title": self.title,
-            "description": self.description,
-            "uri": self.uri,
-            "type": self.type,
-            "properties": self.properties,
-        }
+                return prefix
+        else:
+            return None

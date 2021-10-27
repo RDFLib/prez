@@ -1,6 +1,6 @@
 from typing import List, Dict
 
-from rdflib.namespace import DCTERMS, SKOS, RDF
+from rdflib import Graph
 
 from config import *
 from models import PrezModel
@@ -8,45 +8,49 @@ from models import PrezModel
 
 class VocPrezDataset(PrezModel):
     # class attributes for property grouping & order
-    main_props = [
-        str(SKOS.definition),
-        str(DCTERMS.creator),
-        str(DCTERMS.created),
-        str(DCTERMS.modified),
-    ]
+    main_props = []
+    hidden_props = []
 
-    def __init__(self, sparql_response: List) -> None:
-        super().__init__(sparql_response, "dataset")
+    def __init__(self, graph: Graph) -> None:
+        super().__init__(graph)
 
-    def _set_props(self, props_dict: Dict[str, Dict]) -> None:
-        main_properties = []
-        other_properties = []
-        for uri, prop in props_dict.items():
-            if uri == str(DCTERMS.description):
-                self.description = prop
-            elif uri == str(DCTERMS.title):
-                self.title = prop
-            elif uri == str(RDF.type):
-                self.type = prop
-            elif uri in VocPrezDataset.main_props:
-                main_properties.append(prop)
-            else:
-                other_properties.append(prop)
-        # sort & add to properties
-        self.properties.extend(
-            sorted(
-                main_properties,
-                key=lambda p: self._sort_within_list(p, VocPrezDataset.main_props),
-            )
-        )
-        # for other, sort by predicate alphabetically
-        self.properties.extend(sorted(other_properties, key=lambda p: p["prefix"]))
+        self.uri = DATA_URI
+        self.title = VOCS_TITLE
+        self.description = VOCS_DESC
 
-    def to_dict(self):
+    # override
+    def to_dict(self) -> Dict:
         return {
+            "uri": self.uri,
             "title": self.title,
             "description": self.description,
-            "uri": self.uri,
-            "type": self.type,
-            "properties": self.properties,
         }
+
+    # override
+    def _get_properties(self) -> List[Dict]:
+        props_dict = self._get_props_dict()
+
+        # group props in order, filtering out hidden props
+        properties = []
+        main_props = []
+        other_props = []
+
+        for uri, prop in props_dict.items():
+            if uri in VocPrezDataset.hidden_props:
+                continue
+            elif uri in VocPrezDataset.main_props:
+                main_props.append(prop)
+            else:
+                other_props.append(prop)
+
+        properties.extend(
+            sorted(
+                main_props,
+                key=lambda p: self._sort_within_list(
+                    p, VocPrezDataset.main_props
+                ),
+            )
+        )
+        properties.extend(other_props)
+
+        return properties

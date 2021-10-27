@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List
 
 class VocPrezSchemeList(object):
     def __init__(self, sparql_response: List) -> None:

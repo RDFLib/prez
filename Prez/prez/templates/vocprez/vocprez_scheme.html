@@ -4,23 +4,15 @@
 {% block content %}
 <h1>
     {% if scheme.title is not none %}
-        {{ scheme.title.objects[0].value }}
+        {{ scheme.title }}
     {% else %}
         ConceptScheme title
     {% endif %}
 </h1>
-<p><small>
-    {{ render_predicate(scheme.type) }}
-    : 
-    {{ render_predicate_o(scheme.type) }}
-</small></p>
 <p>Instance URI: <a href="{{ uri }}">{{ scheme.uri }}</a><small><a href="{{ scheme.uri }}">(ext link)</a></small></p>
 {% if scheme.description is not none %}
     <div>
-        <p>
-            {{ render_predicate(scheme.description) }}
-        </p>
-        <p>{{ scheme.description.objects[0].value }}</p>
+        <p>{{ scheme.description }}</p>
     </div>
 {% endif %}
 <table>
@@ -36,7 +28,7 @@
             <td>
                 <ol style="list-style: none; padding-left: 0px;">
                     {% for concept_uri, concept_props in scheme.concepts.items() | sort(attribute = "1.label") %}
-                        {{ render_concept_hierarchy(scheme.id.objects[0].value, concept_uri, concept_props) }}
+                        {{ render_concept_hierarchy(scheme.id, concept_uri, concept_props) }}
                     {% endfor %}
                 </ol>
             </td>

@@ -4,23 +4,15 @@
 {% block content %}
 <h1>
     {% if collection.title is not none %}
-        {{ collection.title.objects[0].value }}
+        {{ collection.title }}
     {% else %}
         Collection title
     {% endif %}
 </h1>
-<p><small>
-    {{ render_predicate(collection.type) }}
-    : 
-    {{ render_predicate_o(collection.type) }}
-</small></p>
 <p>Instance URI: <a href="{{ uri }}">{{ collection.uri }}</a><small><a href="{{ collection.uri }}">(ext link)</a></small></p>
 {% if collection.description is not none %}
     <div>
-        <p>
-            {{ render_predicate(collection.description) }}
-        </p>
-        <p>{{ collection.description.objects[0].value }}</p>
+        <p>{{ collection.description }}</p>
     </div>
 {% endif %}
 <table>

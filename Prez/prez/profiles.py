@@ -97,3 +97,14 @@ alt = Profile(
     languages=["en"],
     default_language="en",
 )
+
+profiles = Profile(
+    uri="http://example.com/profile/profiles",
+    id="profiles",
+    label="Profiles",
+    comment="List of profiles",
+    mediatypes=["text/html", "application/json"],
+    default_mediatype="text/html",
+    languages=["en"],
+    default_language="en",
+)

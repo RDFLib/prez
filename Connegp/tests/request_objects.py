@@ -22,18 +22,6 @@ class FlaskRequest(object):
         self.headers = headers
         self.args = args
 
-
-class InvalidHeadersRequest(object):
-    """
-    A mock class to imitate a Request object, but containing
-    an unsupported header attribute name
-    """
-
-    def __init__(self, header: Dict, args: Dict) -> None:
-        self.header = header
-        self.args = args
-
-
 class InvalidQSARequest(object):
     """
     A mock class to imitate a Request object, but containing
