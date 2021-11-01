@@ -1,0 +1,13 @@
+{% extends "_page.html" %}
+
+{% set pagetitle = "VOCS_TITLE" | get_config %}
+{% set pageheader = "VOCS_TITLE" | get_config %}
+{% set main_active_page = "vocprez" %}
+
+{% block content %}
+    {% include "vocprez/vocprez_nav.html" %}
+    <div id="content-row">
+        {% block vocprez_content %}
+        {% endblock %}
+    </div>
+{% endblock %}

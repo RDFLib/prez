@@ -1,16 +1,14 @@
 from typing import Dict, Optional, Union
 
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from fastapi.templating import Jinja2Templates
-from rdflib import Graph, URIRef, Literal
-from rdflib.namespace import RDF, RDFS, SKOS, DCTERMS
+from rdflib import Graph
+from rdflib.namespace import RDFS, SKOS, DCTERMS
 
 from config import *
 from renderers import Renderer
 from profiles import vocpub, vocpub_supplied, skos
 from models.vocprez import VocPrezConcept
-
-templates = Jinja2Templates(TEMPLATES_DIRECTORY)
+from utils import templates
 
 
 class VocPrezConceptRenderer(Renderer):

@@ -1,0 +1,75 @@
+:root {
+    /* colours */
+    --primary: #9a4aff;
+    --secondary: #fd545a;
+    --tertiary: #fd545a;
+    --link: var(--primary);
+    --link-hover: #8524ff;
+    --nav-color: var(--secondary);
+    --header-bg: #231f20;
+    --footer-bg: #dfe3e5;
+    --table-row-bg: #eeeeee;
+    /* fonts */
+    --body-font: "Spartan";
+    --heading-font: "Bebas Neue";
+}
+
+header {
+    color: white;
+}
+
+#header-content {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#header-logo {
+    max-width: 200px;
+}
+
+#footer-content {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+}
+
+.footer-content-col {
+    flex-basis: 0;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+#footer-logo {
+    max-width: 200px;
+}
+
+table {
+    font-size: 14px;
+}
+
+table.alt-table tbody>tr:nth-child(2n + 1) {
+    background-color: var(--table-row-bg);
+}
+
+table.props-table tbody>tr:nth-child(2n) {
+    background-color: var(--table-row-bg);
+}
+
+.breadcrumb {
+    font-family: var(--heading-font);
+}
+
+.breadcrumb>a {
+    color: white;
+}
+
+#breadcrumbs-content>li.breadcrumb:not(:first-child)::before {
+    content: "|";
+    color: white;
+    font-family: unset;
+    font-weight: unset;
+    margin-right: 16px;
+}

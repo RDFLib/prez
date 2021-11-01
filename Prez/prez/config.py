@@ -5,8 +5,8 @@ from rdflib.namespace import SKOS, RDF, DCTERMS, RDFS, DCAT, PROV, OWL, SDO
 
 SYSTEM_URI = os.environ.get("SYSTEM_URI", "localhost")
 DATA_URI = os.environ.get("DATA_URI", "http://exampledata.org")
-VOCS_TITLE = os.environ.get("VOCS_TITLE", "Test Vocabs")
-VOCS_DESC = os.environ.get("VOCS_DESC", "These are test vocabs")
+VOCS_TITLE = os.environ.get("VOCS_TITLE", "SURROUND Vocabulary Registry")
+VOCS_DESC = os.environ.get("VOCS_DESC", "These vocabs are published by...")
 DEBUG = os.environ.get("DEBUG", True)
 PORT = os.environ.get("PORT", 8000)
 SPARQL_ENDPOINT = os.environ.get(
@@ -15,9 +15,8 @@ SPARQL_ENDPOINT = os.environ.get(
 SPARQL_USERNAME = os.environ.get("SPARQL_USERNAME", "user")
 SPARQL_PASSWORD = os.environ.get("SPARQL_PASSWORD", "password")
 TEMPLATES_DIRECTORY = Path(__file__).parent / "templates"
-ENABLED_PREZS = [
-    "vocprez"
-]
+ENABLED_PREZS = ["VocPrez"]  # must use proper capitalisation
+TEMPLATE_PLUGIN_DIRS = ["surround-theme"]
 
 NAMESPACE_PREFIXES = {
     str(SKOS): "skos",

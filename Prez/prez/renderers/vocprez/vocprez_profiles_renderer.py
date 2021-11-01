@@ -1,13 +1,11 @@
 from typing import Dict, Optional, Union, List
 
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from fastapi.templating import Jinja2Templates
 
 from config import *
 from renderers import Renderer
 from profiles import profiles
-
-templates = Jinja2Templates(TEMPLATES_DIRECTORY)
+from utils import templates
 
 
 class VocPrezProfilesRenderer(Renderer):

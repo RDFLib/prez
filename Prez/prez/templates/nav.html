@@ -1,0 +1,14 @@
+{% set prezs = "ENABLED_PREZS" | get_config %}
+
+<div id="main-nav">
+    <nav id="main-nav-content">
+        <a href="/" class="main-nav-item{% if main_active_page == 'home' %} active{% endif %}">Prez Home</a>
+        {% for prez in prezs %}
+            <a href="/{{ prez | lower }}" class="main-nav-item{% if main_active_page == 'vocprez' %} active{% endif %}">{{ prez }}</a>
+        {% endfor %}
+        <a href="/search" class="main-nav-item{% if main_active_page == 'search' %} active{% endif %}">Search</a>
+        <a href="/sparql" class="main-nav-item{% if main_active_page == 'sparql' %} active{% endif %}">SPARQL</a>
+        <a href="/about" class="main-nav-item{% if main_active_page == 'about' %} active{% endif %}">About</a>
+        <a href="/docs" class="main-nav-item{% if main_active_page == 'docs' %} active{% endif %}">Docs</a>
+    </nav>
+</div>

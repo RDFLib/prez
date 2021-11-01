@@ -1,8 +1,21 @@
-{% extends "_page.html" %}
+{% extends "vocprez/_vocprez_page.html" %}
 
-{% block content %}
-<h1>VocPrez</h1>
-<a href="{{ uri }}?_profile=alt">Alternate Profiles</a>
-<a href="{{ url_for('schemes') }}">Concept Schemes</a>
-<a href="{{ url_for('collections') }}">Collections</a>
+{% set breadcrumbs = [
+    {"label": "VocPrez", "url": url_for("dataset")}
+] %}
+{% set vocprez_active_page = "home" %}
+
+{% block vocprez_content %}
+<div id="content-col-main">
+    <h1>Welcome to VocPrez</h1>
+    <h2>This is a h2</h2>
+    <h3>This is a h3</h3>
+    <h4>This is a h4</h4>
+    <h5>This is a h5</h5>
+    <h6>This is a h6</h6>
+    <p>This is some body text</p>
+</div>
+<div id="content-col-sidebar">
+    {% include "alt_link.html" %}
+</div>
 {% endblock %}

@@ -1,5 +1,10 @@
 {% extends "_page.html" %}
 
+{% set breadcrumbs = [
+    {"label": "SPARQL", "url": url_for("sparql")}
+] %}
+{% set main_active_page = "sparql" %}
+
 {% block content %}
 <h1>Global SPARQL Endpoint</h1>
 <p>This is the HTML template for the top-level Prez SPARQL endpoint.</p>

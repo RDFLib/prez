@@ -2,17 +2,14 @@ from typing import Dict, Optional, Union, List
 from abc import ABCMeta, abstractmethod
 
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from fastapi.templating import Jinja2Templates
-from rdflib import Graph, Namespace, URIRef, Literal
+from rdflib import Graph, URIRef, Literal
 from rdflib.namespace import RDF, RDFS
 from connegp import Profile, RDF_MEDIATYPES
-from rdflib.graph import Graph
 
 from renderers import Renderer
 from config import *
 from profiles import mem
-
-templates = Jinja2Templates(TEMPLATES_DIRECTORY)
+from utils import templates
 
 
 class ListRenderer(Renderer, metaclass=ABCMeta):

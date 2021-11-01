@@ -1,9 +1,9 @@
 {% extends "_page.html" %}
 
 {% block content %}
-<p>{{ label }}</p>
+<h1>{{ label }}</h1>
 <p>{{ comment }}</p>
-<p>{{ uri }}</p>
+<p>Instance URI: <a href="{{ uri }}">{{ uri }}</a></p>
 <ul>
     {% for member in members %}
         <li><a href="{{ member.uri }}">{{ member.title }}</a></li>

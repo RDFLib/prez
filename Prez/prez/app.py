@@ -1,9 +1,9 @@
+from typing import Optional
 from urllib.parse import quote_plus
 
 import fastapi
 from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 from rdflib.namespace import SKOS
@@ -12,12 +12,11 @@ from rdflib import URIRef
 from config import *
 from routers import vocprez_router
 from services.app_service import *
+from utils import templates
 
 app = fastapi.FastAPI()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
-templates = Jinja2Templates(TEMPLATES_DIRECTORY)
 
 
 def build_cache():
@@ -41,7 +40,7 @@ def configure():
 
 
 def configure_routing():
-    if "vocprez" in ENABLED_PREZS:
+    if "VocPrez" in ENABLED_PREZS:
         app.include_router(vocprez_router.router)
 
 
@@ -78,14 +77,14 @@ async def prezs(request: Request):
     """Returns a list of the enabled *Prez 'modules'"""
     uri = str(request.base_url)
     return JSONResponse(
-        content={"uri": uri, "prezs": [f"{uri}{prez}" for prez in ENABLED_PREZS]},
+        content={"uri": uri, "prezs": [f"{uri}{prez.lower()}" for prez in ENABLED_PREZS]},
         media_type="application/json",
         headers=request.headers,
     )
 
 
-@app.get("/object", summary="Get object")
-async def object(request: Request, uri: str):
+@app.get("/object", summary="Get object", response_class=RedirectResponse)
+async def object(request: Request, uri: str, _profile: Optional[str] = None, _mediatype: Optional[str] = None):
     """Generic endpoint to get any object. Redirects to the appropriate endpoint based on type"""
     # query to get basic info for object
     sparql_response = await get_object(uri)
@@ -107,15 +106,15 @@ async def object(request: Request, uri: str):
 
     # redirect according to type (IF appropriate prez module is enabled)
     if object_type == SKOS.ConceptScheme:
-        if "vocprez" not in ENABLED_PREZS:
+        if "VocPrez" not in ENABLED_PREZS:
             raise HTTPException(status_code=404, detail="This resource does not exist")
         return RedirectResponse(
             f"{vocprez_router.router.url_path_for('scheme', scheme_id=object_id)}{params}",
             headers=request.headers,
         )
         # return await vocprez_router.scheme_endpoint(request, scheme_uri=uri)
-
-    return uri
+    else:
+        raise HTTPException(status_code=404, detail="This resource does not exist")
 
 
 if __name__ == "__main__":

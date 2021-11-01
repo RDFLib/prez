@@ -1,7 +1,6 @@
 from typing import Dict, Optional, Union
 
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from fastapi.templating import Jinja2Templates
 from rdflib import Graph, URIRef, Literal
 from rdflib.namespace import DCAT, DCTERMS, RDF, RDFS
 
@@ -9,8 +8,7 @@ from renderers import ListRenderer
 from config import *
 from profiles import dcat
 from models.vocprez import VocPrezSchemeList
-
-templates = Jinja2Templates(TEMPLATES_DIRECTORY)
+from utils import templates
 
 
 class VocPrezSchemeListRenderer(ListRenderer):

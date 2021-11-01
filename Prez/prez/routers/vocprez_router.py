@@ -1,15 +1,11 @@
 from fastapi import APIRouter, Request
-from fastapi.templating import Jinja2Templates
 from connegp import Profile
-from starlette.responses import JSONResponse
 
 from renderers.vocprez import *
 from services.vocprez_service import *
 from models.vocprez import *
 
 router = APIRouter(prefix="/vocprez", tags=["VocPrez"])
-
-templates = Jinja2Templates(TEMPLATES_DIRECTORY)
 
 
 @router.get("/", summary="VocPrez Home")
@@ -22,10 +18,6 @@ async def dataset(request: Request):
     dataset = VocPrezDataset(sparql_result)
     dataset_renderer.set_dataset(dataset)
     return dataset_renderer.render()
-    # template_context = {
-    #     "request": request
-    # }
-    # return templates.TemplateResponse("vocprez/vocprez_home.html", context=template_context)
 
 
 @router.get("/scheme", summary="List ConceptSchemes")

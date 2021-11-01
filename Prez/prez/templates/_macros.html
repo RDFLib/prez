@@ -1,6 +1,6 @@
 {% macro render_predicate(prop) %}
     {% if prop.label is not none %}
-        <a href="{{ prop.uri }}">{{ prop.label }}</a>
+        <a href="{{ prop.uri }}">{{ prop.label | title }}</a>
     {% else %}
         {% if prop.prefix is not none %}
             <a href="{{ prop.uri }}">{{ prop.prefix }}</a>

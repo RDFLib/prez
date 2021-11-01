@@ -1,7 +1,7 @@
-{% extends "_page.html" %}
+{% extends "vocprez/_vocprez_page.html" %}
 {% from "_macros.html" import render_predicate, render_predicate_o, render_object %}
 
-{% block content %}
+{% block vocprez_content %}
 <h1>
     {% if dataset.title is not none %}
         {{ dataset.title }}
@@ -27,5 +27,5 @@
 </table>
 <a href="{{ url_for('schemes') }}">Concept Schemes</a>
 <a href="{{ url_for('collections') }}">Collections</a>
-<a href="{{ uri }}?_profile=alt">Alternate Profiles</a>
+{% include "alt_link.html" %}
 {% endblock %}

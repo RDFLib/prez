@@ -1,5 +1,10 @@
 {% extends "_page.html" %}
 
+{% set breadcrumbs = [
+    {"label": "About", "url": url_for("about")}
+] %}
+{% set main_active_page = "about" %}
+
 {% block content %}
 <h1>About Prez</h1>
 <p>This is the new version of VocPrez (VocPrez 3), combined with CatPrez, OGC APIs, and the upcoming TimePrez.</p>

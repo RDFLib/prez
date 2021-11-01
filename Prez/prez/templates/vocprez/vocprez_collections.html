@@ -1,16 +1,24 @@
-{% extends "_page.html" %}
+{% extends "vocprez/_vocprez_page.html" %}
 
-{% block content %}
-<h1>{{ label }}</h1>
-<div>
+{% set breadcrumbs = [
+    {"label": "VocPrez", "url": url_for("dataset")},
+    {"label": "Collections", "url": url_for("collections")}
+] %}
+{% set vocprez_active_page = "collections" %}
+
+{% block vocprez_content %}
+<div id="content-col-main">
+    <h1>{{ label }}</h1>
     <p>{{ comment }}</p>
+    <div>
+        <ul>
+            {% for member in members %}
+                <li><a href="{{ url_for('collection', collection_id=member.id) }}">{{ member.title }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
 </div>
-<div>
-    <ul>
-        {% for member in members %}
-            <li><a href="{{ url_for('collection', collection_id=member.id) }}">{{ member.title }}</a></li>
-        {% endfor %}
-    </ul>
+<div id="content-col-sidebar">
+    {% include "alt_link.html" %}
 </div>
-<a href="{{ uri }}?_profile=alt">Alternate Profiles</a>
 {% endblock %}

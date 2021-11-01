@@ -5,6 +5,7 @@ def find_substring(s: str, marker_1: str, marker_2: str) -> str:
     end = s_temp.find(marker_2)
     return s_temp[:end]
 
+
 def get_current_profile_from_link_header(response):
     """Gets the currently selected profile from the Link header"""
     link_header = response.headers.get("link")
@@ -17,13 +18,14 @@ def get_current_profile_from_link_header(response):
                 current_profile = link
             elif 'rel="type"' in link:
                 types.append(link)
-            else: # alternates
+            else:  # alternates
                 alternates.append(link)
         current_profile_uri = find_substring(current_profile, "<", ">")
         for profile in types:
             if current_profile_uri in profile:
                 return find_substring(profile, 'token="', '"')
     return None
+
 
 def current_profile_is_alt_from_link_header(response):
     profile = get_current_profile_from_link_header(response)

@@ -4,3 +4,4 @@ jinja2
 aiofiles
 httpx
 rdflib>=6.0.0
+git+https://github.com/accent-starlette/starlette-core.git@master#egg=starlette-core

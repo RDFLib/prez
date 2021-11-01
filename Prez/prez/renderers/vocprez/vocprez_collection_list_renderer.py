@@ -1,15 +1,13 @@
-from typing import Dict, List, Optional, Union
+from typing import Dict, Optional, Union
 
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from fastapi.templating import Jinja2Templates
 from connegp import RDF_MEDIATYPES
 
 from renderers import ListRenderer
 from config import *
 from profiles import dcat
 from models.vocprez import VocPrezCollectionList
-
-templates = Jinja2Templates(f"{TEMPLATES_DIRECTORY}")
+from utils import templates
 
 
 class VocPrezCollectionListRenderer(ListRenderer):

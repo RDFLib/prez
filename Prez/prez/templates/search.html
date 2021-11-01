@@ -1,5 +1,10 @@
 {% extends "_page.html" %}
 
+{% set breadcrumbs = [
+    {"label": "Search", "url": url_for("search")}
+] %}
+{% set main_active_page = "search" %}
+
 {% block content %}
 <h1>Global Prez Search</h1>
 <p>This is the HTML template for the top-level Prez search page.</p>

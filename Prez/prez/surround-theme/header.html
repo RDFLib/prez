@@ -1,0 +1,7 @@
+<header>
+    <div id="header-content">
+        <img id="header-logo" src="{{ url_for('static', path='img/logo-white.svg') }}" alt="SURROUND logo">
+        <h1>{% if pageheader %}{{ pageheader }}{% else %}Prez{% endif %}</h1>
+        <div></div>
+    </div>
+</header>
