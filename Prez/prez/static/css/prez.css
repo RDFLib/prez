@@ -5,6 +5,8 @@
     --tertiary: #CD4631;
     --link: var(--secondary);
     --link-hover: #e4553f;
+    --btn: var(--secondary);
+    --btn-hover: #e4553f;
     --nav-color: var(--primary);
     --header-bg: #364958;
     --footer-bg: #E6E8E6;
@@ -75,11 +77,41 @@ p {
     margin: 8px 0;
 }
 
+button, .btn {
+    cursor: pointer;
+    border-radius: 0;
+    padding: 6px 10px;
+    background-color: var(--btn);
+    color: white;
+    font-family: unset;
+    font-size: unset;
+    display: inline-block;
+    border: 1px solid transparent;
+    transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+}
+
+button:hover, .btn:hover {
+    background-color: var(--btn-hover);
+    color: white;
+}
+
+button.outline, .btn.outline {
+    background-color: white;
+    color: var(--btn);
+    border: 1px solid var(--btn);
+}
+
+button.outline:hover, .btn.outline:hover {
+    background-color: var(--btn);
+    color: white;
+}
+
 /* header */
 
 header {
     display: flex;
     background-color: var(--header-bg);
+    color: white;
 }
 
 #header-content {
@@ -91,7 +123,7 @@ header {
     padding: 12px;
 }
 
-#header-content > h1{
+#header-content>h1 {
     text-align: center;
 }
 
@@ -116,6 +148,7 @@ header {
     flex-basis: 0;
     text-align: center;
     font-size: 14px;
+    font-weight: bold;
     color: var(--nav-color);
     text-decoration: none;
     border: 1px solid transparent;
@@ -148,10 +181,15 @@ header {
     list-style: none;
     padding: 0;
     gap: 6px;
+    color: white;
 }
 
 #breadcrumbs-content>li {
     padding: 6px;
+}
+
+#breadcrumbs-content>li>a {
+    color: white;
 }
 
 #breadcrumbs-content>li:not(:first-child)::before {
@@ -173,11 +211,6 @@ main {
     max-width: var(--page-max-width);
     width: 100%;
     margin: 0 auto 20px auto;
-    display: flex;
-    flex-direction: column;
-}
-
-#content-row {
     display: flex;
     flex-direction: row;
     flex-grow: 1;
@@ -246,6 +279,7 @@ table.props-table th {
     flex-basis: 0;
     text-align: center;
     font-size: 14px;
+    font-weight: bold;
     color: white;
     text-decoration: none;
     border: 1px solid transparent;
@@ -276,4 +310,10 @@ footer {
     display: flex;
     flex-direction: column;
     padding: 12px;
+}
+
+/* yasgui */
+
+.yasgui .autocompleteWrapper {
+    display: none !important;
 }

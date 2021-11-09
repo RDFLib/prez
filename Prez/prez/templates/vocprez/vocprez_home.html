@@ -1,19 +1,28 @@
-{% extends "vocprez/_vocprez_page.html" %}
+{% extends "_page.html" %}
+{% set prezs = "ENABLED_PREZS" | get_config %}
 
-{% set breadcrumbs = [
-    {"label": "VocPrez", "url": url_for("dataset")}
-] %}
+{% if prezs | length == 1 %}
+    {% set main_active_page = "home" %}
+{% else %}
+    {% set breadcrumbs = [
+        {"label": "VocPrez", "url": url_for("dataset")}
+    ] %}
+{% endif %}
+
+{% set active_prez = "VocPrez" %}
 {% set vocprez_active_page = "home" %}
 
-{% block vocprez_content %}
+{% block content %}
 <div id="content-col-main">
     <h1>Welcome to VocPrez</h1>
-    <h2>This is a h2</h2>
-    <h3>This is a h3</h3>
-    <h4>This is a h4</h4>
-    <h5>This is a h5</h5>
-    <h6>This is a h6</h6>
-    <p>This is some body text</p>
+    <div>
+        <a href="/object?uri=http://example.com/scheme/scheme1" class="btn">CS1</a>
+        <a href="/object?uri=http://example.com/scheme/scheme1&_profile=alt" class="btn">CS1 alt</a>
+    </div>
+    <div>
+        <a href="/object?uri=http://example.com/scheme/scheme1" class="btn">CS obj link</a>
+        <a href="/object?uri=http://example.com/scheme/scheme1&_profile=alt" class="btn">CS obj alt link</a>
+    </div>
 </div>
 <div id="content-col-sidebar">
     {% include "alt_link.html" %}

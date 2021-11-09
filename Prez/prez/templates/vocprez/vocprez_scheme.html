@@ -1,14 +1,25 @@
-{% extends "vocprez/_vocprez_page.html" %}
+{% extends "_page.html" %}
 {% from "_macros.html" import render_predicate, render_predicate_o, render_object, render_concept_hierarchy with context %}
+{% set prezs = "ENABLED_PREZS" | get_config %}
 
-{% set breadcrumbs = [
-    {"label": "VocPrez", "url": url_for("dataset")},
-    {"label": "Vocabs", "url": url_for("schemes")},
-    {"label": scheme.title, "url": url_for("scheme", scheme_id=scheme.id)}
-] %}
+{% if prezs | length == 1 %}
+    {% set breadcrumbs = [
+        {"label": "Vocabs", "url": url_for("schemes")},
+        {"label": scheme.title, "url": url_for("scheme", scheme_id=scheme.id)}
+    ] %}
+    {% set main_active_page = "vocabs" %}
+{% else %}
+    {% set breadcrumbs = [
+        {"label": "VocPrez", "url": url_for("dataset")},
+        {"label": "Vocabs", "url": url_for("schemes")},
+        {"label": scheme.title, "url": url_for("scheme", scheme_id=scheme.id)}
+    ] %}
+{% endif %}
+
+{% set active_prez = "VocPrez" %}
 {% set vocprez_active_page = "vocabs" %}
 
-{% block vocprez_content %}
+{% block content %}
 <div id="content-col-main">
     <h1>
         {% if scheme.title is not none %}
@@ -17,7 +28,7 @@
             ConceptScheme title
         {% endif %}
     </h1>
-    <p>Instance URI: <a href="{{ uri }}">{{ scheme.uri }}</a><small><a href="{{ scheme.uri }}">(ext link)</a></small></p>
+    <p>Instance URI: <a href="{{ uri }}">{{ scheme.uri }}</a> <small><a href="{{ scheme.uri }}"><i class="far fa-external-link"></i></a></small></p>
     {% if scheme.description is not none %}
         <div>
             <p>{{ scheme.description }}</p>

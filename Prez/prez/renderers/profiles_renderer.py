@@ -8,15 +8,15 @@ from profiles import profiles
 from utils import templates
 
 
-class VocPrezProfilesRenderer(Renderer):
+class ProfilesRenderer(Renderer):
     profiles = {"profiles": profiles}
     default_profile_token = "profiles"
 
     def __init__(self, request: object, instance_uri: str) -> None:
         super().__init__(
             request,
-            VocPrezProfilesRenderer.profiles,
-            VocPrezProfilesRenderer.default_profile_token,
+            ProfilesRenderer.profiles,
+            ProfilesRenderer.default_profile_token,
             instance_uri,
         )
 
@@ -35,7 +35,7 @@ class VocPrezProfilesRenderer(Renderer):
         if template_context is not None:
             _template_context.update(template_context)
         return templates.TemplateResponse(
-            "vocprez/vocprez_profiles.html",
+            "profiles.html",
             context=_template_context,
             headers=self.headers,
         )

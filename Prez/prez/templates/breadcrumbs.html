@@ -1,6 +1,6 @@
 <div id="breadcrumbs">
     <ol id="breadcrumbs-content">
-        <li class="breadcrumb"><a href="/">Prez Home</a></li>
+        <li class="breadcrumb"><a href="{{ url_for('index') }}">Home</a></li>
         {% for breadcrumb in breadcrumbs %}
             <li class="breadcrumb"><a href="{{ breadcrumb.url }}">{{ breadcrumb.label }}</a></li>
         {% endfor %}

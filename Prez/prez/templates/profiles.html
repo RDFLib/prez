@@ -1,14 +1,13 @@
-{% extends "vocprez/_vocprez_page.html" %}
+{% extends "_page.html" %}
 
 {% set breadcrumbs = [
-    {"label": "VocPrez", "url": url_for("dataset")},
     {"label": "Profiles", "url": url_for("profiles")}
 ] %}
-{% set vocprez_active_page = "profiles" %}
+{% set main_active_page = "profiles" %}
 
-{% block vocprez_content %}
+{% block content %}
 <div id="content-col-main">
-    <h1>VocPrez Profiles</h1>
+    <h1>Profiles</h1>
     <ul>
         {% for profile in profiles %}
             <li>{{ profile.label }} - {{ profile.uri }}</li>

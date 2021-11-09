@@ -3,7 +3,7 @@ from urllib.parse import quote_plus
 
 import fastapi
 from fastapi import Request, HTTPException
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 from rdflib.namespace import SKOS
@@ -12,7 +12,9 @@ from rdflib import URIRef
 from config import *
 from routers import vocprez_router
 from services.app_service import *
+from services.sparql_utils import sparql_query
 from utils import templates
+from view_funcs import profiles_func
 
 app = fastapi.FastAPI()
 
@@ -47,15 +49,62 @@ def configure_routing():
 @app.get("/", summary="Home page")
 async def index(request: Request):
     """Displays the home page of Prez"""
-    template_context = {"request": request, "enabled_prezs": ENABLED_PREZS}
-    return templates.TemplateResponse("index.html", context=template_context)
+    if len(ENABLED_PREZS) == 1:
+        if ENABLED_PREZS[0] == "VocPrez":
+            return await vocprez_router.home(request)
+    else:
+        template_context = {"request": request, "enabled_prezs": ENABLED_PREZS}
+        return templates.TemplateResponse("index.html", context=template_context)
 
 
-@app.get("/sparql", summary="SPARQL page")
-async def sparql(request: Request):
-    """Displays the sparql page of Prez"""
-    template_context = {"request": request}
-    return templates.TemplateResponse("sparql.html", context=template_context)
+# @app.get("/sparql", summary="SPARQL page", include_in_schema=False)
+# async def sparql(request: Request):
+#     """Displays the sparql page of Prez"""
+#     template_context = {"request": request}
+#     return templates.TemplateResponse("sparql.html", context=template_context)
+
+@app.get("/sparql", summary="SPARQL Endpoint")
+async def sparql_get(request: Request, query: Optional[str] = None):
+    accepts = request.headers.get("accept")
+    if accepts is not None:
+        top_accept = accepts.split(",")[0].split(";")[0]
+        if top_accept == "text/html":
+            return templates.TemplateResponse(
+                "sparql.html", {"request": request}
+            )
+        else:
+            query = request.query_params.get("query")
+            if query is not None:
+                if "CONSTRUCT" in query or "DESCRIBE" in query:
+                    sparql_result = await sparql_query(query, accept=top_accept)
+                    return Response(content=sparql_result[1], media_type=top_accept)
+                else:
+                    sparql_result = await sparql_query(query)
+                    return JSONResponse(content=sparql_result[1], media_type="application/json")
+            else:
+                return Response(content="SPARQL service description")
+
+
+@app.post("/sparql", summary="SPARQL Endpoint")
+async def sparql_post(request: Request):
+    content_type = request.headers.get("content-type")
+    accepts = request.headers.get("accept")
+    top_accept = accepts.split(",")[0].split(";")[0]
+    if content_type == "application/x-www-form-urlencoded":
+        formdata = await request.form()
+        query = formdata.get("query")
+    else:
+        query_bytes = await request.body()
+        query = query_bytes.decode()
+    if query is not None:
+        if "CONSTRUCT" in query or "DESCRIBE" in query:
+            sparql_result = await sparql_query(query, accept=top_accept)
+            return Response(content=sparql_result[1], media_type=top_accept)
+        else:
+            sparql_result = await sparql_query(query)
+            return JSONResponse(content=sparql_result[1], media_type="application/json")
+    else:
+        return Response(content="SPARQL service description")
 
 
 @app.get("/search", summary="Search page")
@@ -68,8 +117,12 @@ async def search(request: Request):
 @app.get("/about", summary="About page")
 async def about(request: Request):
     """Displays the about page of Prez"""
-    template_context = {"request": request}
-    return templates.TemplateResponse("about.html", context=template_context)
+    if len(ENABLED_PREZS) == 1:
+        if ENABLED_PREZS[0] == "VocPrez":
+            return await vocprez_router.about(request)
+    else:
+        template_context = {"request": request}
+        return templates.TemplateResponse("about.html", context=template_context)
 
 
 @app.get("/prezs", summary="Enabled Prezs")
@@ -81,6 +134,15 @@ async def prezs(request: Request):
         media_type="application/json",
         headers=request.headers,
     )
+
+@app.get("/profiles", summary="Profiles")
+async def profiles(request: Request):
+    """Returns a list of profiles recognised by Prez"""
+    if len(ENABLED_PREZS) == 1:
+        if ENABLED_PREZS[0] == "VocPrez":
+            return await profiles_func(request, "VocPrez")
+    else:
+        return await profiles_func(request)
 
 
 @app.get("/object", summary="Get object", response_class=RedirectResponse)
@@ -108,11 +170,11 @@ async def object(request: Request, uri: str, _profile: Optional[str] = None, _me
     if object_type == SKOS.ConceptScheme:
         if "VocPrez" not in ENABLED_PREZS:
             raise HTTPException(status_code=404, detail="This resource does not exist")
-        return RedirectResponse(
-            f"{vocprez_router.router.url_path_for('scheme', scheme_id=object_id)}{params}",
-            headers=request.headers,
-        )
-        # return await vocprez_router.scheme_endpoint(request, scheme_uri=uri)
+        # return RedirectResponse(
+        #     f"{vocprez_router.router.url_path_for('scheme', scheme_id=object_id)}{params}",
+        #     headers=request.headers,
+        # )
+        return await vocprez_router.scheme_endpoint(request, scheme_uri=uri)
     else:
         raise HTTPException(status_code=404, detail="This resource does not exist")
 

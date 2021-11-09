@@ -3,6 +3,7 @@
         <a href="{{ url_for('dataset') }}" class="vocprez-nav-item{% if vocprez_active_page == 'home' %} active{% endif %}">VocPrez Home</a>
         <a href="{{ url_for('schemes') }}" class="vocprez-nav-item{% if vocprez_active_page == 'vocabs' %} active{% endif %}">Vocabs</a>
         <a href="{{ url_for('collections') }}" class="vocprez-nav-item{% if vocprez_active_page == 'collections' %} active{% endif %}">Collections</a>
-        <a href="{{ url_for('profiles') }}" class="vocprez-nav-item{% if vocprez_active_page == 'profiles' %} active{% endif %}">Profiles</a>
+        <a href="{{ url_for('vocprez_profiles') }}" class="vocprez-nav-item{% if vocprez_active_page == 'profiles' %} active{% endif %}">Profiles</a>
+        <a href="{{ url_for('vocprez_about') }}" class="vocprez-nav-item{% if vocprez_active_page == 'about' %} active{% endif %}">About</a>
     </nav>
 </div>

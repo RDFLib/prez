@@ -4,13 +4,14 @@ from connegp import Profile
 from renderers.vocprez import *
 from services.vocprez_service import *
 from models.vocprez import *
+from utils import templates
+from view_funcs import profiles_func
+from config import *
 
-router = APIRouter(prefix="/vocprez", tags=["VocPrez"])
+router = APIRouter(tags=["VocPrez"] if len(ENABLED_PREZS) > 1 else [])
 
 
-@router.get("/", summary="VocPrez Home")
-async def dataset(request: Request):
-    """Returns a VocPrez dcat:Dataset in the necessary profile & mediatype"""
+async def home(request: Request):
     dataset_renderer = VocPrezDatasetRenderer(
         request, str(request.url.remove_query_params(keys=request.query_params.keys()))
     )
@@ -18,6 +19,21 @@ async def dataset(request: Request):
     dataset = VocPrezDataset(sparql_result)
     dataset_renderer.set_dataset(dataset)
     return dataset_renderer.render()
+
+
+@router.get("/vocprez", summary="VocPrez Home", include_in_schema=len(ENABLED_PREZS) > 1)
+async def dataset(request: Request):
+    """Returns a VocPrez dcat:Dataset in the necessary profile & mediatype"""
+    return await home(request)
+
+async def about(request: Request):
+    return templates.TemplateResponse("vocprez/vocprez_about.html", {"request": request})
+
+
+@router.get("/vocprez-about", summary="VocPrez Home", include_in_schema=len(ENABLED_PREZS) > 1)
+async def vocprez_about(request: Request):
+    """Returns the VocPrez About page"""
+    return await about(request)
 
 
 @router.get("/scheme", summary="List ConceptSchemes")
@@ -40,31 +56,38 @@ async def schemes(request: Request):
 @router.get("/vocab/{scheme_id}", summary="Get ConceptScheme")
 async def scheme(request: Request, scheme_id: str):
     """Returns a VocPrez skos:ConceptScheme in the necessary profile & mediatype"""
-    # return await scheme_endpoint(request, scheme_id=scheme_id)
+    return await scheme_endpoint(request, scheme_id=scheme_id)
+    # scheme_renderer = VocPrezSchemeRenderer(
+    #     request, str(request.url.remove_query_params(keys=request.query_params.keys()))
+    # )
+    # include_inferencing = True
+    # if scheme_renderer.profile == "vocpub_supplied":
+    #     include_inferencing = False
+    # sparql_result = await get_scheme_construct(
+    #     scheme_id=scheme_id, include_inferencing=include_inferencing
+    # )
+    # scheme = VocPrezScheme(sparql_result, id=scheme_id)
+    # scheme_renderer.set_scheme(scheme)
+    # return scheme_renderer.render()
+
+
+async def scheme_endpoint(request: Request, scheme_id: Optional[str] = None, scheme_uri: Optional[str] = None):
     scheme_renderer = VocPrezSchemeRenderer(
-        request, str(request.url.remove_query_params(keys=request.query_params.keys()))
+        request,
+        # str(request.url.remove_query_params(keys=request.query_params.keys()))
+        str(request.url.remove_query_params(keys=[key for key in request.query_params.keys() if key != "uri"]))
     )
     include_inferencing = True
     if scheme_renderer.profile == "vocpub_supplied":
         include_inferencing = False
     sparql_result = await get_scheme_construct(
-        scheme_id=scheme_id, include_inferencing=include_inferencing
+        scheme_id=scheme_id,
+        scheme_uri=scheme_uri,
+        include_inferencing=include_inferencing
     )
-    scheme = VocPrezScheme(sparql_result, id=scheme_id)
+    scheme = VocPrezScheme(sparql_result, id=scheme_id, uri=scheme_uri)
     scheme_renderer.set_scheme(scheme)
     return scheme_renderer.render()
-
-
-# async def scheme_endpoint(request: Request, scheme_id: Optional[str] = None, scheme_uri: Optional[str] = None):
-#     scheme_renderer = VocPrezSchemeRenderer(
-#         request,
-#         # str(request.url.remove_query_params(keys=request.query_params.keys()))
-#         str(request.url)
-#     )
-#     sparql_result = await get_scheme_construct(scheme_id=scheme_id, scheme_uri=scheme_uri)
-#     scheme = VocPrezScheme(sparql_result, id=scheme_id, uri=scheme_uri)
-#     scheme_renderer.set_scheme(scheme)
-#     return scheme_renderer.render()
 
 
 @router.get("/collection", summary="List Collections")
@@ -114,22 +137,7 @@ async def concept(request: Request, scheme_id: str, concept_id: str):
     return concept_renderer.render()
 
 
-@router.get("/profiles", summary="VocPrez Profiles")
-async def profiles(request: Request):
+@router.get("/vocprez-profiles", summary="VocPrez Profiles", include_in_schema=len(ENABLED_PREZS) > 1)
+async def vocprez_profiles(request: Request):
     """Returns a JSON list of the profiles accepted by VocPrez"""
-    import profiles
-
-    profiles_renderer = VocPrezProfilesRenderer(
-        request, str(request.url.remove_query_params(keys=request.query_params.keys()))
-    )
-
-    # get list of profiles from profiles.py
-    profile_list = []
-    for item in dir(profiles):
-        if not item.startswith("__") and not item == "profiles":
-            profile = getattr(profiles, item)
-            if isinstance(profile, Profile):
-                profile_list.append(dict(profile))
-    profile_list.sort(key=lambda p: p["id"])
-    profiles_renderer.set_profiles(profile_list)
-    return profiles_renderer.render()
+    return await profiles_func(request, "VocPrez")

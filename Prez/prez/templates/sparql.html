@@ -1,11 +1,22 @@
 {% extends "_page.html" %}
 
 {% set breadcrumbs = [
-    {"label": "SPARQL", "url": url_for("sparql")}
+    {"label": "SPARQL", "url": url_for("sparql_get")}
 ] %}
 {% set main_active_page = "sparql" %}
 
 {% block content %}
-<h1>Global SPARQL Endpoint</h1>
-<p>This is the HTML template for the top-level Prez SPARQL endpoint.</p>
+<div id="content-col-main">
+    <h1>SPARQL Endpoint</h1>
+    <p>Some text</p>
+    <div id="yasgui"></div>
+    <link href="https://unpkg.com/@triply/yasgui/build/yasgui.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://unpkg.com/@triply/yasgui/build/yasgui.min.js"></script>
+    <script type="text/javascript">
+        const yasgui = new Yasgui(document.getElementById("yasgui"), {
+            requestConfig: { endpoint: "{{ url_for('sparql_post') }}" },
+            copyEndpointOnNewTab: false,
+        });
+    </script>    
+</div>
 {% endblock %}

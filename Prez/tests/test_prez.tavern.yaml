@@ -8,7 +8,7 @@ stages:
     response:
       status_code: 307
       headers:
-        location: /vocprez/vocab/CS1
+        location: /vocab/CS1
 
 ---
 

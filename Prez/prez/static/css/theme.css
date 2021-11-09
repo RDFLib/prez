@@ -5,7 +5,7 @@
     --tertiary: #fd545a;
     --link: var(--primary);
     --link-hover: #8524ff;
-    --nav-color: var(--secondary);
+    --nav-color: var(--primary);
     --header-bg: #231f20;
     --footer-bg: #dfe3e5;
     --table-row-bg: #eeeeee;
@@ -27,6 +27,11 @@ header {
 
 #header-logo {
     max-width: 200px;
+}
+
+.main-nav-item, .vocprez-nav-item {
+    font-family: var(--heading-font);
+    font-size: 16px !important;
 }
 
 #footer-content {
@@ -54,7 +59,7 @@ table.alt-table tbody>tr:nth-child(2n + 1) {
     background-color: var(--table-row-bg);
 }
 
-table.props-table tbody>tr:nth-child(2n) {
+table.props-table tbody>tr:nth-child(2n + 1) {
     background-color: var(--table-row-bg);
 }
 

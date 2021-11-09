@@ -1,5 +1,5 @@
 <div id="alt">
     <h3>Alternate Profiles</h3>
     <p>View alternate views & formats:</p>
-    <a href="{{ uri }}?_profile=alt">Alternate Profiles</a>
+    <a href="{{ uri | append_qsa({'_profile': 'alt'}) }}">Alternate Profiles</a>
 </div>

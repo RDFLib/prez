@@ -1,0 +1,24 @@
+{% extends "_page.html" %}
+{% set prezs = "ENABLED_PREZS" | get_config %}
+
+{% if prezs | length == 1 %}
+    {% set breadcrumbs = [
+        {"label": "About", "url": url_for("about")}
+    ] %}
+    {% set main_active_page = "about" %}
+{% else %}
+    {% set breadcrumbs = [
+        {"label": "VocPrez", "url": url_for("dataset")},
+        {"label": "About", "url": url_for("about")}
+    ] %}
+{% endif %}
+
+{% set active_prez = "VocPrez" %}
+{% set vocprez_active_page = "about" %}
+
+{% block content %}
+<div id="content-col-main">
+    <h1>About VocPrez</h1>
+    <p>Text 1</p>
+</div>
+{% endblock %}

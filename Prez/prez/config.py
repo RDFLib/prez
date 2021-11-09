@@ -16,7 +16,7 @@ SPARQL_USERNAME = os.environ.get("SPARQL_USERNAME", "user")
 SPARQL_PASSWORD = os.environ.get("SPARQL_PASSWORD", "password")
 TEMPLATES_DIRECTORY = Path(__file__).parent / "templates"
 ENABLED_PREZS = ["VocPrez"]  # must use proper capitalisation
-TEMPLATE_PLUGIN_DIRS = ["surround-theme"]
+TEMPLATE_PLUGIN_DIRS = []
 
 NAMESPACE_PREFIXES = {
     str(SKOS): "skos",

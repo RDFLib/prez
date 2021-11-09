@@ -1,41 +1,43 @@
 {% extends "_page.html" %}
 
 {% block content %}
-<h1>Alternate Profiles</h1>
-<p>Instance URI: <a href="{{ uri }}">{{ uri }}</a></p>
-<p>Default profile: <a href="{{ uri }}?_profile={{ default_profile.id }}">{{ default_profile.id }}</a></p>
-<table class="alt-table">
-    <thead>
-        <tr>
-            <th>Token</th>
-            <th>Name</th>
-            <th>Formats</th>
-            <th>Languages</th>
-            <th>Description</th>
-            <th>Namespace</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for profile in profiles.values() %}
+<div id="content-col-main">
+    <h1>Alternate Profiles</h1>
+    <p>Instance URI: <a href="{{ uri }}">{{ uri }}</a></p>
+    <p>Default profile: <a href="{{ uri }}?_profile={{ default_profile.id }}">{{ default_profile.id }}</a></p>
+    <table class="alt-table">
+        <thead>
             <tr>
-                <td><a href="{{ uri }}?_profile={{ profile.id }}">{{ profile.id }}</a></td>
-                <td>{{ profile.label }}</td>
-                <td>
-                    {% for mediatype in profile.mediatypes %}
-                        <a href="{{ uri }}?_profile={{ profile.id }}&_mediatype={{ mediatype }}">{{ mediatype }}</a>
-                        <br/>
-                    {% endfor %}
-                </td>
-                <td>
-                    {% for language in profile.languages %}
-                        <span>{{ language }}</span>
-                        <br/>
-                    {% endfor %}
-                </td>
-                <td>{{ profile.comment }}</td>
-                <td><a href="{{ profile.uri }}">{{ profile.uri }}</a></td>
+                <th>Token</th>
+                <th>Name</th>
+                <th>Formats</th>
+                <th>Languages</th>
+                <th>Description</th>
+                <th>Namespace</th>
             </tr>
-        {% endfor %}
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            {% for profile in profiles.values() %}
+                <tr>
+                    <td><a href="{{ uri | append_qsa({'_profile': profile.id}) }}">{{ profile.id }}</a></td>
+                    <td>{{ profile.label }}</td>
+                    <td>
+                        {% for mediatype in profile.mediatypes %}
+                            <a href="{{ uri | append_qsa({'_profile': profile.id, '_mediatype': mediatype}) }}">{{ mediatype }}</a>
+                            <br/>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% for language in profile.languages %}
+                            <span>{{ language }}</span>
+                            <br/>
+                        {% endfor %}
+                    </td>
+                    <td>{{ profile.comment }}</td>
+                    <td><a href="{{ profile.uri }}">{{ profile.uri }}</a></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}
