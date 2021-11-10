@@ -17,6 +17,14 @@ SPARQL_PASSWORD = os.environ.get("SPARQL_PASSWORD", "password")
 TEMPLATES_DIRECTORY = Path(__file__).parent / "templates"
 ENABLED_PREZS = ["VocPrez"]  # must use proper capitalisation
 TEMPLATE_PLUGIN_DIRS = []
+SEARCH_ENDPOINTS = [
+    ("self", "Self"),
+    ("http://ga.surroundaustralia.com/sparql/", "GA VocPrez"),
+    ("http://ggic.surroundaustralia.com/sparql/", "GGIC VocPrez"),
+    ("http://dawe.surroundaustralia.com/sparql/", "DAWE VocPrez"),
+    ("http://icsm.surroundaustralia.com/sparql/", "ICSM VocPrez"),
+    ("http://csiro.surroundaustralia.com/sparql/", "CSIRO VocPrez"),
+]
 
 NAMESPACE_PREFIXES = {
     str(SKOS): "skos",

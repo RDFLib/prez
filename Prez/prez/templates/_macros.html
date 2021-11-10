@@ -55,3 +55,28 @@
     <a href="{{ url_for('scheme', scheme_id=concept.scheme_id) }}/{{ concept.id }}">{{ concept.label }}</a>
     <br/>
 {% endmacro %}
+
+{% macro render_search_result(result) %}
+    {% set base_url = result.sys.value.split('/sparql')[0] %}
+    {% set is_self = base_url in request.url | string %}
+    <div class="search-result">
+        <div class="search-result-header">
+            <a class="search-result-title" href="{{ base_url }}/object?uri={{ result.uri.value }}"{% if not is_self %} target="_blank"{% endif %}>{{ result.pl.value }}</a>
+            {% if is_self %}
+                <a class="search-result-instance" href="{{ base_url }}">Self</a>
+            {% else %}
+                {% for endpoint in endpoint_options %}
+                    {% if base_url in endpoint[0] %}
+                        <a class="search-result-instance" href="{{ base_url }}" target="_blank">{{ endpoint[1] }}</a>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </div>
+        <div class="search-result-body">
+            <div>
+                <a class="search-result-vocab" href="{{ base_url }}/object?uri={{ result.g.value }}"{% if not is_self %} target="_blank"{% endif %}>Vocab</a>
+            </div>
+            <div class="search-result-desc">desc</div>    
+        </div>
+    </div>
+{% endmacro %}

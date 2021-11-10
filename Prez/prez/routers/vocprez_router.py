@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Request
-from connegp import Profile
 
 from renderers.vocprez import *
 from services.vocprez_service import *
@@ -21,16 +20,23 @@ async def home(request: Request):
     return dataset_renderer.render()
 
 
-@router.get("/vocprez", summary="VocPrez Home", include_in_schema=len(ENABLED_PREZS) > 1)
+@router.get(
+    "/vocprez", summary="VocPrez Home", include_in_schema=len(ENABLED_PREZS) > 1
+)
 async def dataset(request: Request):
     """Returns a VocPrez dcat:Dataset in the necessary profile & mediatype"""
     return await home(request)
 
+
 async def about(request: Request):
-    return templates.TemplateResponse("vocprez/vocprez_about.html", {"request": request})
+    return templates.TemplateResponse(
+        "vocprez/vocprez_about.html", {"request": request}
+    )
 
 
-@router.get("/vocprez-about", summary="VocPrez Home", include_in_schema=len(ENABLED_PREZS) > 1)
+@router.get(
+    "/vocprez-about", summary="VocPrez Home", include_in_schema=len(ENABLED_PREZS) > 1
+)
 async def vocprez_about(request: Request):
     """Returns the VocPrez About page"""
     return await about(request)
@@ -71,11 +77,17 @@ async def scheme(request: Request, scheme_id: str):
     # return scheme_renderer.render()
 
 
-async def scheme_endpoint(request: Request, scheme_id: Optional[str] = None, scheme_uri: Optional[str] = None):
+async def scheme_endpoint(
+    request: Request, scheme_id: Optional[str] = None, scheme_uri: Optional[str] = None
+):
     scheme_renderer = VocPrezSchemeRenderer(
         request,
         # str(request.url.remove_query_params(keys=request.query_params.keys()))
-        str(request.url.remove_query_params(keys=[key for key in request.query_params.keys() if key != "uri"]))
+        str(
+            request.url.remove_query_params(
+                keys=[key for key in request.query_params.keys() if key != "uri"]
+            )
+        ),
     )
     include_inferencing = True
     if scheme_renderer.profile == "vocpub_supplied":
@@ -83,7 +95,7 @@ async def scheme_endpoint(request: Request, scheme_id: Optional[str] = None, sch
     sparql_result = await get_scheme_construct(
         scheme_id=scheme_id,
         scheme_uri=scheme_uri,
-        include_inferencing=include_inferencing
+        include_inferencing=include_inferencing,
     )
     scheme = VocPrezScheme(sparql_result, id=scheme_id, uri=scheme_uri)
     scheme_renderer.set_scheme(scheme)
@@ -105,24 +117,61 @@ async def collections(request: Request):
     return collection_list_renderer.render()
 
 
-@router.get("/collection/{collection_id}", summary="Get Collection")
-async def collection(request: Request, collection_id: str):
-    """Returns a VocPrez skos:Collection in the necessary profile & mediatype"""
+async def collection_endpoint(
+    request: Request,
+    collection_id: Optional[str] = None,
+    collection_uri: Optional[str] = None,
+):
     collection_renderer = VocPrezCollectionRenderer(
-        request, str(request.url.remove_query_params(keys=request.query_params.keys()))
+        request,
+        str(
+            request.url.remove_query_params(
+                keys=[key for key in request.query_params.keys() if key != "uri"]
+            )
+        ),
     )
-    sparql_result = await get_collection_construct(collection_id=collection_id)
-    collection = VocPrezCollection(sparql_result, id=collection_id)
+    include_inferencing = True
+    if collection_renderer.profile == "vocpub_supplied":
+        include_inferencing = False
+    sparql_result = await get_collection_construct(
+        collection_id=collection_id,
+        collection_uri=collection_uri,
+        include_inferencing=include_inferencing,
+    )
+    collection = VocPrezCollection(sparql_result, id=collection_id, uri=collection_uri)
     collection_renderer.set_collection(collection)
     return collection_renderer.render()
 
 
-@router.get("/scheme/{scheme_id}/{concept_id}", summary="Get Concept")
-@router.get("/vocab/{scheme_id}/{concept_id}", summary="Get Concept")
-async def concept(request: Request, scheme_id: str, concept_id: str):
-    """Returns a VocPrez skos:Concept in the necessary profile & mediatype"""
+@router.get("/collection/{collection_id}", summary="Get Collection")
+async def collection(request: Request, collection_id: str):
+    """Returns a VocPrez skos:Collection in the necessary profile & mediatype"""
+    return await collection_endpoint(request, collection_id=collection_id)
+    # collection_renderer = VocPrezCollectionRenderer(
+    #     request, str(request.url.remove_query_params(keys=request.query_params.keys()))
+    # )
+    # include_inferencing = True
+    # if collection_renderer.profile == "vocpub_supplied":
+    #     include_inferencing = False
+    # sparql_result = await get_collection_construct(collection_id=collection_id, include_inferencing=include_inferencing)
+    # collection = VocPrezCollection(sparql_result, id=collection_id)
+    # collection_renderer.set_collection(collection)
+    # return collection_renderer.render()
+
+
+async def concept_endpoint(
+    request: Request,
+    scheme_id: Optional[str] = None,
+    concept_id: Optional[str] = None,
+    concept_uri: Optional[str] = None,
+):
     concept_renderer = VocPrezConceptRenderer(
-        request, str(request.url.remove_query_params(keys=request.query_params.keys()))
+        request,
+        str(
+            request.url.remove_query_params(
+                keys=[key for key in request.query_params.keys() if key != "uri"]
+            )
+        ),
     )
     include_inferencing = True
     if concept_renderer.profile == "vocpub_supplied":
@@ -130,14 +179,40 @@ async def concept(request: Request, scheme_id: str, concept_id: str):
     sparql_result = await get_concept_construct(
         concept_id=concept_id,
         scheme_id=scheme_id,
+        concept_uri=concept_uri,
         include_inferencing=include_inferencing,
     )
-    concept = VocPrezConcept(sparql_result, id=concept_id)
+    concept = VocPrezConcept(sparql_result, id=concept_id, uri=concept_uri)
     concept_renderer.set_concept(concept)
     return concept_renderer.render()
 
 
-@router.get("/vocprez-profiles", summary="VocPrez Profiles", include_in_schema=len(ENABLED_PREZS) > 1)
+@router.get("/scheme/{scheme_id}/{concept_id}", summary="Get Concept")
+@router.get("/vocab/{scheme_id}/{concept_id}", summary="Get Concept")
+async def concept(request: Request, scheme_id: str, concept_id: str):
+    """Returns a VocPrez skos:Concept in the necessary profile & mediatype"""
+    return await concept_endpoint(request, scheme_id=scheme_id, concept_id=concept_id)
+    # concept_renderer = VocPrezConceptRenderer(
+    #     request, str(request.url.remove_query_params(keys=request.query_params.keys()))
+    # )
+    # include_inferencing = True
+    # if concept_renderer.profile == "vocpub_supplied":
+    #     include_inferencing = False
+    # sparql_result = await get_concept_construct(
+    #     concept_id=concept_id,
+    #     scheme_id=scheme_id,
+    #     include_inferencing=include_inferencing,
+    # )
+    # concept = VocPrezConcept(sparql_result, id=concept_id)
+    # concept_renderer.set_concept(concept)
+    # return concept_renderer.render()
+
+
+@router.get(
+    "/vocprez-profiles",
+    summary="VocPrez Profiles",
+    include_in_schema=len(ENABLED_PREZS) > 1,
+)
 async def vocprez_profiles(request: Request):
     """Returns a JSON list of the profiles accepted by VocPrez"""
     return await profiles_func(request, "VocPrez")

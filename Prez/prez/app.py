@@ -1,22 +1,22 @@
-from typing import Optional
+from typing import Optional, List
 from urllib.parse import quote_plus
 
-import fastapi
-from fastapi import Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Query
 from fastapi.responses import JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 from rdflib.namespace import SKOS
 from rdflib import URIRef
+from fedsearch import SkosSearch, EndpointDetails
 
 from config import *
 from routers import vocprez_router
 from services.app_service import *
-from services.sparql_utils import sparql_query
+from services.sparql_utils import sparql_endpoint_query
 from utils import templates
 from view_funcs import profiles_func
 
-app = fastapi.FastAPI()
+app = FastAPI()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -63,24 +63,28 @@ async def index(request: Request):
 #     template_context = {"request": request}
 #     return templates.TemplateResponse("sparql.html", context=template_context)
 
+
 @app.get("/sparql", summary="SPARQL Endpoint")
 async def sparql_get(request: Request, query: Optional[str] = None):
     accepts = request.headers.get("accept")
     if accepts is not None:
         top_accept = accepts.split(",")[0].split(";")[0]
         if top_accept == "text/html":
-            return templates.TemplateResponse(
-                "sparql.html", {"request": request}
-            )
+            return templates.TemplateResponse("sparql.html", {"request": request})
         else:
             query = request.query_params.get("query")
             if query is not None:
                 if "CONSTRUCT" in query or "DESCRIBE" in query:
-                    sparql_result = await sparql_query(query, accept=top_accept)
+                    sparql_result = await sparql_endpoint_query(
+                        query, accept=top_accept
+                    )
                     return Response(content=sparql_result[1], media_type=top_accept)
                 else:
-                    sparql_result = await sparql_query(query)
-                    return JSONResponse(content=sparql_result[1], media_type="application/json")
+                    sparql_result = await sparql_endpoint_query(query)
+                    return JSONResponse(
+                        content=sparql_result[1],
+                        media_type="application/sparql-results+json",
+                    )
             else:
                 return Response(content="SPARQL service description")
 
@@ -98,19 +102,48 @@ async def sparql_post(request: Request):
         query = query_bytes.decode()
     if query is not None:
         if "CONSTRUCT" in query or "DESCRIBE" in query:
-            sparql_result = await sparql_query(query, accept=top_accept)
+            sparql_result = await sparql_endpoint_query(query, accept=top_accept)
             return Response(content=sparql_result[1], media_type=top_accept)
         else:
-            sparql_result = await sparql_query(query)
-            return JSONResponse(content=sparql_result[1], media_type="application/json")
+            sparql_result = await sparql_endpoint_query(query)
+            return JSONResponse(
+                content=sparql_result[1], media_type="application/sparql-results+json"
+            )
     else:
         return Response(content="SPARQL service description")
 
 
 @app.get("/search", summary="Search page")
-async def search(request: Request):
+async def search(
+    request: Request,
+    search: Optional[str] = None,
+    endpoints: List[str] = Query(["self"]),
+):
     """Displays the search page of Prez"""
-    template_context = {"request": request}
+    if search is not None and search != "":
+        self_sparql_endpoint = str(request.base_url)[:-1] + app.router.url_path_for(
+            "sparql_get"
+        )
+        endpoint_details = []
+        for endpoint in endpoints:
+            if endpoint in [e[0] for e in SEARCH_ENDPOINTS]: # only use valid endpoints
+                if endpoint == "self":
+                    endpoint_details.append(
+                        EndpointDetails(self_sparql_endpoint, None, None)
+                    )
+                else:
+                    endpoint_details.append(EndpointDetails(endpoint, None, None))
+        s = await SkosSearch.federated_search(search, "preflabel", endpoint_details)
+        results = SkosSearch.combine_search_results(s, "preflabel")
+    else:
+        results = []
+    template_context = {
+        "request": request,
+        "endpoint_options": SEARCH_ENDPOINTS,
+        "results": results,
+        "last_search_term": search,
+        "last_endpoints": endpoints,
+    }
     return templates.TemplateResponse("search.html", context=template_context)
 
 
@@ -130,10 +163,14 @@ async def prezs(request: Request):
     """Returns a list of the enabled *Prez 'modules'"""
     uri = str(request.base_url)
     return JSONResponse(
-        content={"uri": uri, "prezs": [f"{uri}{prez.lower()}" for prez in ENABLED_PREZS]},
+        content={
+            "uri": uri,
+            "prezs": [f"{uri}{prez.lower()}" for prez in ENABLED_PREZS],
+        },
         media_type="application/json",
         headers=request.headers,
     )
+
 
 @app.get("/profiles", summary="Profiles")
 async def profiles(request: Request):
@@ -146,8 +183,13 @@ async def profiles(request: Request):
 
 
 @app.get("/object", summary="Get object", response_class=RedirectResponse)
-async def object(request: Request, uri: str, _profile: Optional[str] = None, _mediatype: Optional[str] = None):
-    """Generic endpoint to get any object. Redirects to the appropriate endpoint based on type"""
+async def object(
+    request: Request,
+    uri: str,
+    _profile: Optional[str] = None,
+    _mediatype: Optional[str] = None,
+):
+    """Generic endpoint to get any object. Returns the appropriate endpoint based on type"""
     # query to get basic info for object
     sparql_response = await get_object(uri)
     params = (
@@ -159,12 +201,12 @@ async def object(request: Request, uri: str, _profile: Optional[str] = None, _me
     if params != "":
         params = "?" + params[1:]  # will start with & instead of ?
     object_type = URIRef(sparql_response[0]["type"]["value"])
-    object_id = sparql_response[0]["id"]["value"]
-    object_cs_id = (
-        sparql_response[0]["cs_id"]["value"]
-        if sparql_response[0].get("cs_id") is not None
-        else None
-    )
+    # object_id = sparql_response[0]["id"]["value"]
+    # object_cs_id = (
+    #     sparql_response[0]["cs_id"]["value"]
+    #     if sparql_response[0].get("cs_id") is not None
+    #     else None
+    # )
 
     # redirect according to type (IF appropriate prez module is enabled)
     if object_type == SKOS.ConceptScheme:
@@ -175,6 +217,14 @@ async def object(request: Request, uri: str, _profile: Optional[str] = None, _me
         #     headers=request.headers,
         # )
         return await vocprez_router.scheme_endpoint(request, scheme_uri=uri)
+    elif object_type == SKOS.Collection:
+        if "VocPrez" not in ENABLED_PREZS:
+            raise HTTPException(status_code=404, detail="This resource does not exist")
+        return await vocprez_router.collection_endpoint(request, collection_uri=uri)
+    elif object_type == SKOS.Concept:
+        if "VocPrez" not in ENABLED_PREZS:
+            raise HTTPException(status_code=404, detail="This resource does not exist")
+        return await vocprez_router.concept_endpoint(request, concept_uri=uri)
     else:
         raise HTTPException(status_code=404, detail="This resource does not exist")
 

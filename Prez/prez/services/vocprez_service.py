@@ -1,6 +1,6 @@
 from typing import Optional
 
-from rdflib.namespace import RDFS, DCAT, DCTERMS, XSD
+from rdflib.namespace import RDFS, DCAT, DCTERMS
 
 from config import *
 from services.sparql_utils import *
@@ -265,7 +265,7 @@ async def get_collection_construct(
     """
     # when querying by URI via /object?uri=...
     query_by_uri = f"""
-        BIND (<{collection_uri}> as ?cs)
+        BIND (<{collection_uri}> as ?coll)
         ?coll a skos:Collection .
     """
     # data which may contain inferencing

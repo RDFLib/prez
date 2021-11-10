@@ -255,6 +255,92 @@ table.props-table th {
     text-align: left;
 }
 
+input:not([type="submit"]), select, textarea {
+    padding: 8px;
+    border: 1px solid var(--footer-bg);
+    outline: none;
+    transition: border-color 0.2s ease-in-out;
+}
+
+input:not([type="submit"]):focus-visible, select:focus-visible, textarea:focus-visible {
+    border: 1px solid var(--primary);
+    outline: none;
+}
+
+option {
+    padding: 6px;
+}
+
+select#endpoints {
+    padding: 0;
+}
+
+#search-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 350px;
+    width: 100%;
+}
+
+#search-results {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
+}
+
+.search-result {
+    background-color: #ececec;
+    border: 1px solid #d4d4d4;
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+}
+
+.search-result-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+}
+
+.search-result-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.search-result-title {
+    font-weight: bold;
+}
+
+.search-result-vocab {
+    font-size: small;
+}
+
+.search-result-instance {
+    font-size: 12px;
+    color: white;
+    background-color: var(--primary);
+    padding: 2px 4px;
+    border-radius: 0.25rem;
+}
+
+.search-result-instance:hover {
+    color: white;
+}
+
+.search-result-desc {
+    font-size: small;
+    color: grey;
+    font-style: italic;
+}
+
+.form-text {
+    color: grey;
+    font-size: 12px;
+}
+
 /* vocprez nav */
 
 #vocprez-nav {
@@ -314,6 +400,17 @@ footer {
 
 /* yasgui */
 
+/* disables endpoint text field */
 .yasgui .autocompleteWrapper {
     display: none !important;
+}
+
+/* prevents overflowing width */
+#yasgui .grip-container {
+    width: unset !important;
+}
+
+/* allows for responsive width */
+#yasgui #DataTables_Table_1 {
+    width: unset !important;
 }

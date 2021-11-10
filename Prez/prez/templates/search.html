@@ -1,4 +1,5 @@
 {% extends "_page.html" %}
+{% from "_macros.html" import render_search_result with context %}
 
 {% set breadcrumbs = [
     {"label": "Search", "url": url_for("search")}
@@ -7,7 +8,30 @@
 
 {% block content %}
 <div id="content-col-main">
-    <h1>Global Prez Search</h1>
-    <p>This is the HTML template for the top-level Prez search page.</p>    
+    <h1>Global Search</h1>
+    <p>This search can query across multiple VocPrez instances.</p>
+    <p>How weighted search works...</p>
+    <form action="{{ url_for('search') }}" method="get">
+        <div id="search-form">
+            <input type="text" name="search" id="search" placeholder="Search..."{% if last_search_term %}value="{{last_search_term}}"{% endif %}>
+            <select multiple name="endpoints" id="endpoints">
+                {% for endpoint_option in endpoint_options %}
+                    <option value="{{ endpoint_option[0] }}"{% if endpoint_option[0] in last_endpoints %} selected{% endif %}>{{ endpoint_option[1] }}</option>
+                {% endfor %}
+            </select>
+            <div class="form-text">Multiple endpoints can be selected. "Self" represents this Prez instance.</div>
+            <div>
+                <button type="submit">Search</button>
+            </div>
+        </div>
+    </form>
+    {% if results | length > 0 %}
+        <h2>Search Results</h2>
+        <div id="search-results">
+            {% for result in results %}
+                {{ render_search_result(result) }}
+            {% endfor %}
+        </div>
+    {% endif %}
 </div>
 {% endblock %}
