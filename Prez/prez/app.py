@@ -3,10 +3,13 @@ from urllib.parse import quote_plus
 
 from fastapi import FastAPI, Request, HTTPException, Query
 from fastapi.responses import JSONResponse, RedirectResponse, Response
+from fastapi.exceptions import RequestValidationError
 from fastapi.staticfiles import StaticFiles
+from pydantic import AnyUrl
 import uvicorn
-from rdflib.namespace import SKOS
 from rdflib import URIRef
+from rdflib.namespace import SKOS
+from connegp import parse_mediatypes_from_accept_header
 from fedsearch import SkosSearch, EndpointDetails
 
 from config import *
@@ -16,34 +19,75 @@ from services.sparql_utils import sparql_endpoint_query
 from utils import templates
 from view_funcs import profiles_func
 
-app = FastAPI()
+
+async def catch_400(request: Request, exc):
+    accepts = parse_mediatypes_from_accept_header(request.headers.get("Accept"))
+    if "text/html" in accepts:
+        template_context = {"request": request, "message": str(exc)}
+        return templates.TemplateResponse(
+            "400.html", context=template_context, status_code=400
+        )
+    else:
+        return JSONResponse(content={"detail": exc}, status_code=400)
+
+
+async def catch_404(request: Request, exc):
+    accepts = parse_mediatypes_from_accept_header(request.headers.get("Accept"))
+    if "text/html" in accepts:
+        template_context = {"request": request}
+        return templates.TemplateResponse(
+            "404.html", context=template_context, status_code=404
+        )
+    else:
+        return JSONResponse(content={"detail": str(exc.detail)}, status_code=404)
+
+
+async def catch_500(request: Request, exc):
+    accepts = parse_mediatypes_from_accept_header(request.headers.get("Accept"))
+    if "text/html" in accepts:
+        template_context = {"request": request}
+        return templates.TemplateResponse(
+            "500.html", context=template_context, status_code=500
+        )
+    else:
+        return JSONResponse(
+            content={"detail": "Internal Server Error"}, status_code=500
+        )
+
+
+app = FastAPI(
+    exception_handlers={
+        400: catch_400,
+        404: catch_404,
+        500: catch_500,
+    }
+)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
-def build_cache():
-    # needs to depend on what *Prezs are enabled
-
-    # 1. query DB for seeAlso map
-    # get index dict of graph & admin graph URIs
-    # system_index = {
-    #     "vocab_uri": [
-    #         "background_uri",
-    #         "vocab_system_uri"
-    #     ]
-    # }
-    #
-    pass
-
-
 def configure():
-    build_cache()
     configure_routing()
 
 
 def configure_routing():
     if "VocPrez" in ENABLED_PREZS:
         app.include_router(vocprez_router.router)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc):
+    if str(request.url).endswith("object"):
+        return await object_page(request)
+    else:
+        return await catch_400(request, exc)
+
+
+async def object_page(request: Request):
+    template_context = {"request": request}
+    return templates.TemplateResponse(
+        "object.html", context=template_context, status_code=400
+    )
 
 
 @app.get("/", summary="Home page")
@@ -55,13 +99,6 @@ async def index(request: Request):
     else:
         template_context = {"request": request, "enabled_prezs": ENABLED_PREZS}
         return templates.TemplateResponse("index.html", context=template_context)
-
-
-# @app.get("/sparql", summary="SPARQL page", include_in_schema=False)
-# async def sparql(request: Request):
-#     """Displays the sparql page of Prez"""
-#     template_context = {"request": request}
-#     return templates.TemplateResponse("sparql.html", context=template_context)
 
 
 @app.get("/sparql", summary="SPARQL Endpoint")
@@ -126,7 +163,7 @@ async def search(
         )
         endpoint_details = []
         for endpoint in endpoints:
-            if endpoint in [e[0] for e in SEARCH_ENDPOINTS]: # only use valid endpoints
+            if endpoint in [e[0] for e in SEARCH_ENDPOINTS]:  # only use valid endpoints
                 if endpoint == "self":
                     endpoint_details.append(
                         EndpointDetails(self_sparql_endpoint, None, None)
@@ -185,13 +222,15 @@ async def profiles(request: Request):
 @app.get("/object", summary="Get object", response_class=RedirectResponse)
 async def object(
     request: Request,
-    uri: str,
+    uri: AnyUrl,
     _profile: Optional[str] = None,
     _mediatype: Optional[str] = None,
 ):
     """Generic endpoint to get any object. Returns the appropriate endpoint based on type"""
     # query to get basic info for object
     sparql_response = await get_object(uri)
+    if len(sparql_response) == 0:
+        raise HTTPException(status_code=404, detail="Not Found")
     params = (
         str(request.query_params)
         .replace(f"&uri={quote_plus(uri)}", "")
@@ -201,32 +240,22 @@ async def object(
     if params != "":
         params = "?" + params[1:]  # will start with & instead of ?
     object_type = URIRef(sparql_response[0]["type"]["value"])
-    # object_id = sparql_response[0]["id"]["value"]
-    # object_cs_id = (
-    #     sparql_response[0]["cs_id"]["value"]
-    #     if sparql_response[0].get("cs_id") is not None
-    #     else None
-    # )
 
-    # redirect according to type (IF appropriate prez module is enabled)
+    # return according to type (IF appropriate prez module is enabled)
     if object_type == SKOS.ConceptScheme:
         if "VocPrez" not in ENABLED_PREZS:
-            raise HTTPException(status_code=404, detail="This resource does not exist")
-        # return RedirectResponse(
-        #     f"{vocprez_router.router.url_path_for('scheme', scheme_id=object_id)}{params}",
-        #     headers=request.headers,
-        # )
+            raise HTTPException(status_code=404, detail="Not Found")
         return await vocprez_router.scheme_endpoint(request, scheme_uri=uri)
     elif object_type == SKOS.Collection:
         if "VocPrez" not in ENABLED_PREZS:
-            raise HTTPException(status_code=404, detail="This resource does not exist")
+            raise HTTPException(status_code=404, detail="Not Found")
         return await vocprez_router.collection_endpoint(request, collection_uri=uri)
     elif object_type == SKOS.Concept:
         if "VocPrez" not in ENABLED_PREZS:
-            raise HTTPException(status_code=404, detail="This resource does not exist")
+            raise HTTPException(status_code=404, detail="Not Found")
         return await vocprez_router.concept_endpoint(request, concept_uri=uri)
     else:
-        raise HTTPException(status_code=404, detail="This resource does not exist")
+        raise HTTPException(status_code=404, detail="Not Found")
 
 
 if __name__ == "__main__":

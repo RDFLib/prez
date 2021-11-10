@@ -125,3 +125,27 @@ class VocPrezCollection(PrezModel):
                 }
             )
         return sorted(concept_list, key=lambda c: c["label"])
+    
+    def get_concept_flat_list(self) -> List[Dict[str, str]]:
+        concept_list = []
+        r = self.graph.query(
+            f"""
+            PREFIX dcterms: <{DCTERMS}>
+            PREFIX rdfs: <{RDFS}>
+            PREFIX skos: <{SKOS}>
+            SELECT DISTINCT ?c ?label
+            WHERE {{
+                <{self.uri}> skos:member ?c .
+                ?c rdfs:label|skos:prefLabel|dcterms:title ?label .
+            }}
+        """
+        )
+
+        for result in r.bindings:
+            concept_list.append(
+                {
+                    "uri": result["c"],
+                    "prefLabel": result["label"],
+                }
+            )
+        return sorted(concept_list, key=lambda c: c["prefLabel"])

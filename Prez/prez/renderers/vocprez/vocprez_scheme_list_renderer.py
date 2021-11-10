@@ -6,13 +6,13 @@ from rdflib.namespace import DCAT, DCTERMS, RDF, RDFS
 
 from renderers import ListRenderer
 from config import *
-from profiles import dcat
+from profiles import dcat, dd
 from models.vocprez import VocPrezSchemeList
 from utils import templates
 
 
 class VocPrezSchemeListRenderer(ListRenderer):
-    profiles = {"dcat": dcat}
+    profiles = {"dcat": dcat, "dd": dd}
     default_profile_token = "dcat"
 
     def __init__(
@@ -32,6 +32,7 @@ class VocPrezSchemeListRenderer(ListRenderer):
             label,
             comment,
         )
+        self.scheme_list = scheme_list
 
     def _render_dcat_html(self, template_context: Union[Dict, None]):
         """Renders the HTML representation of the DCAT profile for a dataset"""
@@ -123,6 +124,18 @@ class VocPrezSchemeListRenderer(ListRenderer):
             return self._render_dcat_html(template_context)
         else: # all other formats are RDF
             return self._render_dcat_rdf()
+    
+    def _render_dd_json(self) -> JSONResponse:
+        """Renders the json representation of the dd profile for a list of concept schemes"""
+        return JSONResponse(
+            content=self.scheme_list.get_scheme_flat_list(),
+            media_type="application/json",
+            headers=self.headers,
+        )
+
+    def _render_dd(self):
+        """Renders the dd profile for a list of concept schemes"""
+        return self._render_dd_json()
 
     def render(
         self, template_context: Optional[Dict] = None
@@ -137,5 +150,7 @@ class VocPrezSchemeListRenderer(ListRenderer):
             return self._render_alt(template_context)
         elif self.profile == "dcat":
             return self._render_dcat(template_context)
+        elif self.profile == "dd":
+            return self._render_dd()
         else:
             return None

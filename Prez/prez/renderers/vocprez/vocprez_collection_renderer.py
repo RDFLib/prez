@@ -6,13 +6,18 @@ from rdflib.namespace import SKOS, PROV, DCTERMS
 
 from config import *
 from renderers import Renderer
-from profiles import skos, vocpub, vocpub_supplied
+from profiles import skos, vocpub, vocpub_supplied, dd
 from models.vocprez import VocPrezCollection
 from utils import templates
 
 
 class VocPrezCollectionRenderer(Renderer):
-    profiles = {"vocpub": vocpub, "skos": skos, "vocpub_supplied": vocpub_supplied}
+    profiles = {
+        "vocpub": vocpub,
+        "skos": skos,
+        "dd": dd,
+        "vocpub_supplied": vocpub_supplied,
+    }
     default_profile_token = "vocpub"
 
     def __init__(
@@ -29,9 +34,10 @@ class VocPrezCollectionRenderer(Renderer):
 
     def set_collection(self, collection: VocPrezCollection) -> None:
         self.collection = collection
-    
+
     def _generate_skos_rdf(self) -> Graph:
-        r = self.collection.graph.query(f"""
+        r = self.collection.graph.query(
+            f"""
             PREFIX skos: <{SKOS}>
             CONSTRUCT {{
                 ?coll ?coll_pred ?coll_o .
@@ -44,7 +50,8 @@ class VocPrezCollectionRenderer(Renderer):
                 FILTER (STRSTARTS(STR(?coll_pred), STR(skos:)))
                 ?c skos:prefLabel ?c_label .
             }}
-        """)
+        """
+        )
 
         g = r.graph
         g.bind("skos", SKOS)
@@ -76,9 +83,10 @@ class VocPrezCollectionRenderer(Renderer):
             context=_template_context,
             headers=self.headers,
         )
-    
+
     def _generate_vocpub_rdf(self) -> Graph:
-        r = self.collection.graph.query(f"""
+        r = self.collection.graph.query(
+            f"""
             PREFIX dcterms: <{DCTERMS}>
             PREFIX prov: <{PROV}>
             PREFIX skos: <{SKOS}>
@@ -102,7 +110,8 @@ class VocPrezCollectionRenderer(Renderer):
                 ?c a skos:Concept ;
                     skos:prefLabel ?c_label .
             }}
-        """)
+        """
+        )
 
         g = r.graph
         g.bind("dcterms", DCTERMS)
@@ -126,6 +135,18 @@ class VocPrezCollectionRenderer(Renderer):
     def _render_vocpub_supplied(self):
         """Renders the vocpub_supplied profile for a collection"""
         return self._render_vocpub_rdf()
+    
+    def _render_dd_json(self) -> JSONResponse:
+        """Renders the json representation of the dd profile for a collection"""
+        return JSONResponse(
+            content=self.collection.get_concept_flat_list(),
+            media_type="application/json",
+            headers=self.headers,
+        )
+
+    def _render_dd(self):
+        """Renders the dd profile for a collection"""
+        return self._render_dd_json()
 
     def render(
         self, template_context: Optional[Dict] = None
@@ -142,5 +163,7 @@ class VocPrezCollectionRenderer(Renderer):
             return self._render_vocpub_supplied()
         elif self.profile == "skos":
             return self._render_skos()
+        elif self.profile == "dd":
+            return self._render_dd()
         else:
             return None

@@ -5,13 +5,13 @@ from connegp import RDF_MEDIATYPES
 
 from renderers import ListRenderer
 from config import *
-from profiles import dcat
+from profiles import dcat, dd
 from models.vocprez import VocPrezCollectionList
 from utils import templates
 
 
 class VocPrezCollectionListRenderer(ListRenderer):
-    profiles = {"dcat": dcat}
+    profiles = {"dcat": dcat, "dd": dd}
     default_profile_token = "dcat"
 
     def __init__(
@@ -31,6 +31,7 @@ class VocPrezCollectionListRenderer(ListRenderer):
             label,
             comment,
         )
+        self.collection_list = collection_list
 
     def _render_dcat_html(self, template_context: Union[Dict, None]):
         """Renders the HTML representation of the DCAT profile for a dataset"""
@@ -69,6 +70,18 @@ class VocPrezCollectionListRenderer(ListRenderer):
             return self._render_dcat_rdf()
         else:  # application/json
             return self._render_dcat_json()
+    
+    def _render_dd_json(self) -> JSONResponse:
+        """Renders the json representation of the dd profile for a list of collections"""
+        return JSONResponse(
+            content=self.collection_list.get_collection_flat_list(),
+            media_type="application/json",
+            headers=self.headers,
+        )
+
+    def _render_dd(self):
+        """Renders the dd profile for a list of collections"""
+        return self._render_dd_json()
 
     def render(
         self, template_context: Optional[Dict] = None
@@ -83,5 +96,7 @@ class VocPrezCollectionListRenderer(ListRenderer):
             return self._render_alt(template_context)
         elif self.profile == "dcat":
             return self._render_dcat(template_context)
+        elif self.profile == "dd":
+            return self._render_dd()
         else:
             return None

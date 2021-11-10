@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, HTTPException
 
 from renderers.vocprez import *
 from services.vocprez_service import *
@@ -97,6 +97,8 @@ async def scheme_endpoint(
         scheme_uri=scheme_uri,
         include_inferencing=include_inferencing,
     )
+    if len(sparql_result) == 0:
+        raise HTTPException(status_code=404, detail="Not Found")
     scheme = VocPrezScheme(sparql_result, id=scheme_id, uri=scheme_uri)
     scheme_renderer.set_scheme(scheme)
     return scheme_renderer.render()
@@ -138,6 +140,8 @@ async def collection_endpoint(
         collection_uri=collection_uri,
         include_inferencing=include_inferencing,
     )
+    if len(sparql_result) == 0:
+        raise HTTPException(status_code=404, detail="Not Found")
     collection = VocPrezCollection(sparql_result, id=collection_id, uri=collection_uri)
     collection_renderer.set_collection(collection)
     return collection_renderer.render()
@@ -182,6 +186,8 @@ async def concept_endpoint(
         concept_uri=concept_uri,
         include_inferencing=include_inferencing,
     )
+    if len(sparql_result) == 0:
+        raise HTTPException(status_code=404, detail="Not Found")
     concept = VocPrezConcept(sparql_result, id=concept_id, uri=concept_uri)
     concept_renderer.set_concept(concept)
     return concept_renderer.render()

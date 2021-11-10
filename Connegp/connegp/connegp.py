@@ -5,6 +5,33 @@ from connegp.exceptions import *
 from connegp.consts import *
 from connegp.profile import Profile
 
+def parse_mediatypes_from_accept_header(accept: str) -> List[str]:
+    """Parses the Accept header mediatypes into an ordered list"""
+    # Chrome breaking Accept header variable by adding v=b3
+    # Issue https://github.com/RDFLib/pyLDAPI/issues/21
+    mediatypes_string = re.sub("v=(.*);", "", accept)
+
+    # split the header into individual URIs, with weights still attached
+    mediatypes = mediatypes_string.split(",")
+
+    # remove \s
+    mediatypes = [x.strip() for x in mediatypes]
+
+    # split off any weights and sort by them with default weight = 1
+    mediatypes = [
+        (
+            float(x.split(";")[1].replace("q=", "")) if ";q=" in x else 1,
+            x.split(";")[0],
+        )
+        for x in mediatypes
+    ]
+
+    # sort profiles by weight, heaviest first
+    mediatypes.sort(reverse=True)
+
+    # return only the orderd list of mediatypes, not weights
+    return [x[1] for x in mediatypes]
+
 
 class Connegp(object):
     def __init__(
@@ -172,30 +199,7 @@ class Connegp(object):
         mediatypes_accept = self._request.headers.get("Accept")  # FastAPI & Flask
         if mediatypes_accept is not None:
             try:
-                # Chrome breaking Accept header variable by adding v=b3
-                # Issue https://github.com/RDFLib/pyLDAPI/issues/21
-                mediatypes_string = re.sub("v=(.*);", "", mediatypes_accept)
-
-                # split the header into individual URIs, with weights still attached
-                mediatypes = mediatypes_string.split(",")
-
-                # remove \s
-                mediatypes = [x.strip() for x in mediatypes]
-
-                # split off any weights and sort by them with default weight = 1
-                mediatypes = [
-                    (
-                        float(x.split(";")[1].replace("q=", "")) if ";q=" in x else 1,
-                        x.split(";")[0],
-                    )
-                    for x in mediatypes
-                ]
-
-                # sort profiles by weight, heaviest first
-                mediatypes.sort(reverse=True)
-
-                # return only the orderd list of mediatypes, not weights
-                return [x[1] for x in mediatypes]
+                parse_mediatypes_from_accept_header(mediatypes_accept)
             except Exception:
                 raise ProfilesMediatypesException(
                     "You have requested a Media Type using an Accept header that is incorrectly formatted."

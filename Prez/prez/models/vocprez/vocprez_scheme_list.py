@@ -10,3 +10,14 @@ class VocPrezSchemeList(object):
                 "id": result["id"]["value"]
             })
         self.members.sort(key=lambda m: m["title"])
+    
+    def get_scheme_flat_list(self):
+        scheme_list = []
+        for mem in self.members:
+            scheme_list.append(
+                {
+                    "uri": mem["uri"],
+                    "prefLabel": mem["title"],
+                }
+            )
+        return sorted(scheme_list, key=lambda c: c["prefLabel"])
