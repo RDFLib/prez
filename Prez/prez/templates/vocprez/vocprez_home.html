@@ -15,17 +15,35 @@
 
 {% block content %}
 <div id="content-col-main">
-    <h1>Welcome to VocPrez</h1>
-    <div>
-        <a href="/object?uri=http://example.com/scheme/scheme1" class="btn">CS obj link</a>
-        <a href="/object?uri=http://example.com/scheme/scheme1&_profile=alt" class="btn">CS obj alt link</a>
-    </div>
-    <div>
-        <a href="/object?uri=http://example.com/collection/collection1" class="btn">Collection obj link</a>
-    </div>
-    <div>
-        <a href="/object?uri=http://example.com/concept/concept1" class="btn">Concept obj link</a>
-    </div>
+    <h1>System Home</h1>
+    <p>
+        Welcome to an instance of <a href="https://github.com/surroundaustralia/VocPrez3" target="_blank" rel="noopener noreferrer">VocPrez 3</a>, the next version of <a href="https://github.com/RDFLib/VocPrez" target="_blank" rel="noopener noreferrer">VocPrez</a>, a read-only web delivery system for Simple Knowledge Organization System (SKOS)-formulated RDF vocabularies. 
+    </p>
+    <p>
+        VocPrez presents different views of vocabularies from a list of RDF sources. This system currently implements sources from local files, Research Vocabularies Australia and VocBench. 
+    </p>
+    <p>
+        See the <a href="{{ url_for('vocprez_about') }}">About</a> page for more information about VocPrez itself.
+    </p>
+    <h2>Vocabularies</h2>
+    <p>
+        See the <a href="{{ url_for('schemes') }}">Vocabularies Register</a> for a list of vocabularies this instance of VocPrez knows about.
+    </p>
+    <h2>Collections</h2>
+    <p>
+        Usually for the vocabularies VocPrez displays, <code>skos:Collection</code> instances are contained within a <code>skos:ConceptScheme</code> so, to find a <code>skos:Collection</code>, visit the relevant <code>skos:ConceptScheme</code> instance's page and you will see it listed.
+    </p>
+    <p>
+        See the <a href="{{ url_for('collections') }}">Collections page</a> for a list of collections this instance of VocPrez knows about.
+    </p>
+    <h2>Concepts</h2>
+    <p>
+        SKOS concepts are listed within a vocabulary's home page. Each vocabulary presents both a concept heirarchy (tree) view and a link to a flat list of its concepts.
+    </p>
+    <h2>Search & Querying</h2>
+    <p>
+        You can search for Concepts within one vocab or across all vocabs using the <a href="{{ url_for('search') }}">Search page</a> or perform SPARQL queries using the <a href="{{ url_for('sparql_get') }}">SPARQL page</a>.
+    </p>
 </div>
 <div id="content-col-sidebar">
     {% include "alt_link.html" %}

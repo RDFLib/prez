@@ -10,7 +10,9 @@
 <div id="content-col-main">
     <h1>Global Search</h1>
     <p>This search can query across multiple VocPrez instances.</p>
-    <p>How weighted search works...</p>
+    <p>
+        The search function here looks for matches within SKOS Concepts' various labels - preferred, alternate, hidden - and their definitions. It weights results based on the field it is found in, as per the order just given. 
+    </p>
     <form action="{{ url_for('search') }}" method="get">
         <div id="search-form">
             <input type="text" name="search" id="search" placeholder="Search..."{% if last_search_term %}value="{{last_search_term}}"{% endif %}>

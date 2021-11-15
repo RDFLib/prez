@@ -241,13 +241,19 @@ footer {
 }
 .alt-quick-link > a {
   font-size: 12px;
-  padding: 2px 4px;
+  padding: 5px 7px;
   border-radius: 0.25rem;
   color: white;
   background-color: var(--primary);
 }
 .alt-quick-link > a:hover {
   color: white;
+}
+
+pre {
+  background-color: var(--table-row-bg);
+  padding: 6px;
+  white-space: pre-wrap;
 }
 
 @media screen and (max-width: 375px) {
