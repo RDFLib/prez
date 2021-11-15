@@ -12,8 +12,10 @@ def get_config(var):
 
     return getattr(config, var)
 
+
 def append_qsa(uri: str, qsas: Dict[str, str]) -> str:
     """Appends QSAs to a URL & sorts according to an order"""
+
     def qsa_sort(key: str) -> int:
         if key == "uri":
             return 0
@@ -23,6 +25,7 @@ def append_qsa(uri: str, qsas: Dict[str, str]) -> str:
             return 2
         else:
             return 3
+
     qsa_dict = {}
     if "?" in uri:
         path, qsa_str = uri.split("?")
@@ -41,10 +44,12 @@ def append_qsa(uri: str, qsas: Dict[str, str]) -> str:
     return path
 
 
+template_list = ["templates"]
+if TEMPLATE_VOLUME is not None:
+    template_list.insert(0, f"{TEMPLATE_VOLUME}/templates")
+
 templates = Jinja2Templates(
-    loader=jinja2.ChoiceLoader(
-        [jinja2.FileSystemLoader(TEMPLATE_PLUGIN_DIRS + ["templates"])]
-    )
+    loader=jinja2.ChoiceLoader([jinja2.FileSystemLoader(template_list)])
 )
 templates.env.filters["get_config"] = get_config
 templates.env.filters["append_qsa"] = append_qsa

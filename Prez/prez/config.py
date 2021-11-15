@@ -16,7 +16,8 @@ SPARQL_USERNAME = os.environ.get("SPARQL_USERNAME", "user")
 SPARQL_PASSWORD = os.environ.get("SPARQL_PASSWORD", "password")
 TEMPLATES_DIRECTORY = Path(__file__).parent / "templates"
 ENABLED_PREZS = ["VocPrez"]  # must use proper capitalisation
-TEMPLATE_PLUGIN_DIRS = []
+TEMPLATE_VOLUME = None
+SIDENAV = True
 SEARCH_ENDPOINTS = [
     ("self", "Self"),
     ("http://ga.surroundaustralia.com/sparql/", "GA VocPrez"),
@@ -25,7 +26,6 @@ SEARCH_ENDPOINTS = [
     ("http://icsm.surroundaustralia.com/sparql/", "ICSM VocPrez"),
     ("http://csiro.surroundaustralia.com/sparql/", "CSIRO VocPrez"),
 ]
-
 NAMESPACE_PREFIXES = {
     str(SKOS): "skos",
     str(RDF): "rdf",

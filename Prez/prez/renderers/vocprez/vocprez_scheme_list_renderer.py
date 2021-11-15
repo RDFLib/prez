@@ -3,6 +3,7 @@ from typing import Dict, Optional, Union
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from rdflib import Graph, URIRef, Literal
 from rdflib.namespace import DCAT, DCTERMS, RDF, RDFS
+from connegp import MEDIATYPE_NAMES
 
 from renderers import ListRenderer
 from config import *
@@ -42,6 +43,9 @@ class VocPrezSchemeListRenderer(ListRenderer):
             "uri": self.instance_uri,
             "label": self.label,
             "comment": self.comment,
+            "profiles": self.profiles,
+            "default_profile": self.default_profile_token,
+            "mediatype_names": MEDIATYPE_NAMES
         }
         if template_context is not None:
             _template_context.update(template_context)

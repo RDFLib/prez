@@ -78,3 +78,9 @@ table.props-table tbody>tr:nth-child(2n + 1) {
     font-weight: unset;
     margin-right: 16px;
 }
+
+@media screen and (max-width: 375px) {
+    img#header-logo, img#footer-logo {
+        max-width: 100px;
+    }
+}

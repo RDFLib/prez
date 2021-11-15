@@ -1,0 +1,10 @@
+a {
+    color: var(--link);
+    text-decoration: none;
+    transition: color 0.2s ease-in-out;
+
+    &:hover {
+        color: var(--link-hover);
+        text-decoration: none;
+    }
+}

@@ -1,8 +1,11 @@
 <div id="breadcrumbs">
-    <ol id="breadcrumbs-content">
-        <li class="breadcrumb"><a href="{{ url_for('index') }}">Home</a></li>
-        {% for breadcrumb in breadcrumbs %}
-            <li class="breadcrumb"><a href="{{ breadcrumb.url }}">{{ breadcrumb.label }}</a></li>
-        {% endfor %}
-    </ol>
+    <div id="breadcrumbs-container">
+        <button class="nav-toggle"><i class="far fa-bars"></i></button>
+        <ol id="breadcrumbs-content">
+            <li class="breadcrumb"><a href="{{ url_for('index') }}">Home</a></li>
+            {% for breadcrumb in breadcrumbs %}
+                <li class="breadcrumb"><a href="{{ breadcrumb.url }}">{{ breadcrumb.label }}</a></li>
+            {% endfor %}
+        </ol>
+    </div>
 </div>

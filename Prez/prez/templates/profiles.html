@@ -1,4 +1,5 @@
 {% extends "_page.html" %}
+{% set has_alt = true %}
 
 {% set breadcrumbs = [
     {"label": "Profiles", "url": url_for("profiles")}
@@ -9,7 +10,7 @@
 <div id="content-col-main">
     <h1>Profiles</h1>
     <ul>
-        {% for profile in profiles %}
+        {% for profile in profile_list %}
             <li>{{ profile.label }} - {{ profile.uri }}</li>
         {% endfor %}
     </ul>

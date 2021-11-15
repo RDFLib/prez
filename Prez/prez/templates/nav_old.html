@@ -1,0 +1,20 @@
+<div id="main-nav">
+    <nav id="main-nav-content">
+        <a href="{{ url_for('index') }}" class="main-nav-item{% if main_active_page == 'home' %} active{% endif %}">Home</a>
+        {% if prezs | length == 1 %}
+            {% if prezs[0] == "VocPrez" %}
+                <a href="{{ url_for('schemes') }}" class="main-nav-item{% if vocprez_active_page == 'vocabs' %} active{% endif %}">Vocabs</a>
+                <a href="{{ url_for('collections') }}" class="main-nav-item{% if vocprez_active_page == 'collections' %} active{% endif %}">Collections</a>
+            {% endif %}
+        {% else %}
+            {% for prez in prezs %}
+                <a href="/{{ prez | lower }}" class="main-nav-item{% if main_active_page == 'vocprez' %} active{% endif %}">{{ prez }}</a>
+            {% endfor %}
+        {% endif %}
+        <a href="{{ url_for('search') }}" class="main-nav-item{% if main_active_page == 'search' %} active{% endif %}">Search</a>
+        <a href="{{ url_for('sparql_get') }}" class="main-nav-item{% if main_active_page == 'sparql' %} active{% endif %}">SPARQL</a>
+        <a href="{{ url_for('profiles') }}" class="main-nav-item{% if main_active_page == 'profiles' %} active{% endif %}">Profiles</a>
+        <a href="{{ url_for('about') }}" class="main-nav-item{% if main_active_page == 'about' %} active{% endif %}">About</a>
+        <a href="/docs" class="main-nav-item{% if main_active_page == 'docs' %} active{% endif %}">API Docs</a>
+    </nav>
+</div>

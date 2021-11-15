@@ -3,6 +3,7 @@ from typing import Dict, Optional, Union
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from rdflib import Graph
 from rdflib.namespace import SKOS, PROV, DCTERMS
+from connegp import MEDIATYPE_NAMES
 
 from config import *
 from renderers import Renderer
@@ -75,6 +76,9 @@ class VocPrezCollectionRenderer(Renderer):
             "request": self.request,
             "collection": self.collection.to_dict(),
             "uri": self.instance_uri,
+            "profiles": self.profiles,
+            "default_profile": self.default_profile_token,
+            "mediatype_names": MEDIATYPE_NAMES
         }
         if template_context is not None:
             _template_context.update(template_context)

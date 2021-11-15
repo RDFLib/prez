@@ -1,6 +1,7 @@
 from typing import Dict, Optional, Union, List
 
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
+from connegp import MEDIATYPE_NAMES
 
 from config import *
 from renderers import Renderer
@@ -30,7 +31,10 @@ class ProfilesRenderer(Renderer):
         _template_context = {
             "request": self.request,
             "uri": self.instance_uri,
-            "profiles": self.profile_list,
+            "profile_list": self.profile_list,
+            "profiles": self.profiles,
+            "default_profile": self.default_profile_token,
+            "mediatype_names": MEDIATYPE_NAMES
         }
         if template_context is not None:
             _template_context.update(template_context)

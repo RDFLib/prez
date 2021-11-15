@@ -1,7 +1,7 @@
 from typing import Dict, Optional, Union
 
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from connegp import RDF_MEDIATYPES
+from connegp import RDF_MEDIATYPES, MEDIATYPE_NAMES
 
 from renderers import ListRenderer
 from config import *
@@ -40,7 +40,10 @@ class VocPrezCollectionListRenderer(ListRenderer):
             "members": self.members,
             "uri": self.instance_uri,
             "label": self.label,
-            "comment": self.comment
+            "comment": self.comment,
+            "profiles": self.profiles,
+            "default_profile": self.default_profile_token,
+            "mediatype_names": MEDIATYPE_NAMES
         }
         if template_context is not None:
             _template_context.update(template_context)

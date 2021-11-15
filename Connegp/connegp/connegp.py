@@ -199,7 +199,7 @@ class Connegp(object):
         mediatypes_accept = self._request.headers.get("Accept")  # FastAPI & Flask
         if mediatypes_accept is not None:
             try:
-                parse_mediatypes_from_accept_header(mediatypes_accept)
+                return parse_mediatypes_from_accept_header(mediatypes_accept)
             except Exception:
                 raise ProfilesMediatypesException(
                     "You have requested a Media Type using an Accept header that is incorrectly formatted."

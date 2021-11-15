@@ -33,3 +33,10 @@
         - dataset(s)
         - temporal collection(s)
         - temporal entity(s)
+
+## Dev Dependencies
+
+- SASS
+    - Run the SASS watcher from the `sass/` folder like so:
+        - dart-sass: `sass --no-source-map --watch main.scss ../css/index.css`
+        - node-sass: `sass --source-map=none --watch main.scss ../css/index.css`

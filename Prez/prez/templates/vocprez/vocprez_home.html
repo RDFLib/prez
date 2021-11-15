@@ -1,5 +1,6 @@
 {% extends "_page.html" %}
 {% set prezs = "ENABLED_PREZS" | get_config %}
+{% set has_alt = true %}
 
 {% if prezs | length == 1 %}
     {% set main_active_page = "home" %}

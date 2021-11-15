@@ -1,0 +1,39 @@
+.table-wrapper {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+
+    &.alt-table {
+        margin-top: 12px;
+        font-size: 14px;
+
+        th,
+        td {
+            padding: 6px;
+        }
+
+        tbody tr:nth-child(2n + 1) {
+            background-color: var(--table-row-bg);
+        }
+    }
+
+    &.props-table {
+        margin-top: 12px;
+
+        th,
+        td {
+            padding: 6px;
+        }
+
+        th {
+            text-align: left;
+        }
+
+        tbody tr:nth-child(2n + 1) {
+            background-color: var(--table-row-bg);
+        }
+    }
+}

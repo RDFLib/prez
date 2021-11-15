@@ -1,6 +1,7 @@
 {% extends "_page.html" %}
 {% from "_macros.html" import render_predicate, render_predicate_o, render_object, render_concept_list with context %}
 {% set prezs = "ENABLED_PREZS" | get_config %}
+{% set has_alt = true %}
 
 {% if prezs | length == 1 %}
     {% set breadcrumbs = [
@@ -37,36 +38,38 @@
             <p>{{ concept.description }}</p>
         </div>
     {% endif %}
-    <table class="props-table">
-        <tbody>
-            {% for prop in concept.properties %}
-                <tr>
-                    <th>{{ render_predicate(prop) }}</th>
-                    <td>{{ render_object(prop) }}</td>
-                </tr>
-            {% endfor %}
-            {% if concept.broader %}
-                <tr>
-                    <th>Broader</th>
-                    <td>
-                        {% for broader in concept.broader %}
-                            {{ render_concept_list(broader) }}
-                        {% endfor %}
-                    </td>
-                </tr>
-            {% endif %}
-            {% if concept.narrower %}
-                <tr>
-                    <th>Narrower</th>
-                    <td>
-                        {% for narrower in concept.narrower %}
-                            {{ render_concept_list(narrower) }}
-                        {% endfor %}
-                    </td>
-                </tr>
-            {% endif %}
-        </tbody>
-    </table>
+    <div class="table-wrapper">
+        <table class="props-table">
+            <tbody>
+                {% for prop in concept.properties %}
+                    <tr>
+                        <th>{{ render_predicate(prop) }}</th>
+                        <td>{{ render_object(prop) }}</td>
+                    </tr>
+                {% endfor %}
+                {% if concept.broader %}
+                    <tr>
+                        <th>Broader</th>
+                        <td>
+                            {% for broader in concept.broader %}
+                                {{ render_concept_list(broader) }}
+                            {% endfor %}
+                        </td>
+                    </tr>
+                {% endif %}
+                {% if concept.narrower %}
+                    <tr>
+                        <th>Narrower</th>
+                        <td>
+                            {% for narrower in concept.narrower %}
+                                {{ render_concept_list(narrower) }}
+                            {% endfor %}
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
 </div>
 <div id="content-col-sidebar">
     {% include "alt_link.html" %}

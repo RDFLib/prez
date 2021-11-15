@@ -1,7 +1,8 @@
 {% set prezs = "ENABLED_PREZS" | get_config %}
-
 {% set pagetitle = "VOCS_TITLE" | get_config %}
 {% set pageheader = "VOCS_TITLE" | get_config %}
+{% set is_sidenav = "SIDENAV" | get_config %}
+{% set template_volume = "TEMPLATE_VOLUME" | get_config %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -9,30 +10,42 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- <link rel="shortcut icon" href="{{ url_for('static', path='img/favicon.ico') }}" type="image/x-icon">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Spartan&display=swap" rel="stylesheet">  -->
-    <link rel="stylesheet" href="{{ url_for('static', path='css/prez.css') }}">
-    <!-- <link rel="stylesheet" href="{{ url_for('static', path='css/theme.css') }}"> -->
+    <link rel="stylesheet" href="{{ url_for('static', path='css/index.css') }}">
+    {% if template_volume is not none %}
+        <link rel="shortcut icon" href="{{ url_for(template_volume, path='img/favicon.ico') }}" type="image/x-icon">
+        <link rel="stylesheet" href="{{ url_for(template_volume, path='css/theme.css') }}">
+        {% include "fonts.html" ignore missing %}
+    {% endif %}
     <script src="https://kit.fontawesome.com/c112c4b9c0.js" crossorigin="anonymous"></script>
     <title>{% if pagetitle %}{{ pagetitle }}{% else %}Prez{% endif %}</title>
 </head>
 <body>
     {% include "header.html" %}
     {% include "breadcrumbs.html" %}
-    {% include "nav.html" %}
+    <!-- {% include "nav.html" %}
     {% if prezs | length > 1 %}
         {% if active_prez == "VocPrez" %}
             {% include "vocprez/vocprez_nav.html" %}
         {% endif %}
-    {% endif %}
+    {% endif %} -->
+    <div id="mobile-header">
+        <button class="nav-toggle"><i class="far fa-bars"></i></button>
+        <div id="mobile-title">{{ pagetitle }}</div>
+        {% if has_alt %}<button class="alt-toggle">Alt</button>{% endif %}
+    </div>
     <main>
-        <div id="content">
-            {% block content %}
-            {% endblock %}
+        <div id="container" class="{% if is_sidenav %}has-colnav{% else %}has-rownav{% endif %}">
+            {% include "nav.html" %}
+            <div id="content">
+                {% block content %}
+                {% endblock %}
+            </div>
         </div>
     </main>
     {% include "footer.html" %}
+    <script src="{{ url_for('static', path='js/script.js') }}"></script>
+    {% if template_volume is not none %}
+        <script src="{{ url_for(template_volume, path='js/script.js') }}"></script>
+    {% endif %}
 </body>
 </html>

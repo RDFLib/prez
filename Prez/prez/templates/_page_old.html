@@ -1,0 +1,38 @@
+{% set prezs = "ENABLED_PREZS" | get_config %}
+
+{% set pagetitle = "VOCS_TITLE" | get_config %}
+{% set pageheader = "VOCS_TITLE" | get_config %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <link rel="shortcut icon" href="{{ url_for('static', path='img/favicon.ico') }}" type="image/x-icon">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Spartan&display=swap" rel="stylesheet">  -->
+    <link rel="stylesheet" href="{{ url_for('static', path='css/prez.css') }}">
+    <!-- <link rel="stylesheet" href="{{ url_for('static', path='css/theme.css') }}"> -->
+    <script src="https://kit.fontawesome.com/c112c4b9c0.js" crossorigin="anonymous"></script>
+    <title>{% if pagetitle %}{{ pagetitle }}{% else %}Prez{% endif %}</title>
+</head>
+<body>
+    {% include "header.html" %}
+    {% include "breadcrumbs.html" %}
+    {% include "nav.html" %}
+    {% if prezs | length > 1 %}
+        {% if active_prez == "VocPrez" %}
+            {% include "vocprez/vocprez_nav.html" %}
+        {% endif %}
+    {% endif %}
+    <main>
+        <div id="content">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </main>
+    {% include "footer.html" %}
+</body>
+</html>

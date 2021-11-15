@@ -1,6 +1,7 @@
 {% extends "_page.html" %}
 {% from "_macros.html" import render_predicate, render_predicate_o, render_object, render_concept_list with context %}
 {% set prezs = "ENABLED_PREZS" | get_config %}
+{% set has_alt = true %}
 
 {% if prezs | length == 1 %}
     {% set breadcrumbs = [
@@ -34,24 +35,26 @@
             <p>{{ collection.description }}</p>
         </div>
     {% endif %}
-    <table class="props-table">
-        <tbody>
-            {% for prop in collection.properties %}
+    <div class="table-wrapper">
+        <table class="props-table">
+            <tbody>
+                {% for prop in collection.properties %}
+                    <tr>
+                        <th>{{ render_predicate(prop) }}</th>
+                        <td>{{ render_object(prop) }}</td>
+                    </tr>
+                {% endfor %}
                 <tr>
-                    <th>{{ render_predicate(prop) }}</th>
-                    <td>{{ render_object(prop) }}</td>
+                    <th>Concepts</th>
+                    <td>
+                        {% for concept in collection.concepts | sort(attribute = "label") %}
+                            {{ render_concept_list(concept) }}
+                        {% endfor %}
+                    </td>
                 </tr>
-            {% endfor %}
-            <tr>
-                <th>Concepts</th>
-                <td>
-                    {% for concept in collection.concepts | sort(attribute = "label") %}
-                        {{ render_concept_list(concept) }}
-                    {% endfor %}
-                </td>
-            </tr>
-        </tbody>
-    </table>
+            </tbody>
+        </table>
+    </div>
 </div>
 <div id="content-col-sidebar">
     {% include "alt_link.html" %}

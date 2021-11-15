@@ -12,10 +12,10 @@ Jinja2 = "^3.0.2"
 aiofiles = "^0.7.0"
 httpx = "^0.20.0"
 rdflib = "^6.0.2"
-connegp = { path = "../Connegp/" }
 starlette-core = { git = "https://github.com/accent-starlette/starlette-core.git" }
 python-multipart = "^0.0.5"
 fedsearch = { path = "../../vocprez-fedsearch" }
+connegp = {path = "../Connegp"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"

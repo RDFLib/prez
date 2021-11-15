@@ -64,6 +64,12 @@ app = FastAPI(
 )
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
+if TEMPLATE_VOLUME is not None:
+    app.mount(
+        f"/{TEMPLATE_VOLUME}",
+        StaticFiles(directory=f"{TEMPLATE_VOLUME}/static"),
+        name=TEMPLATE_VOLUME,
+    )
 
 
 def configure():
@@ -170,7 +176,19 @@ async def search(
                     )
                 else:
                     endpoint_details.append(EndpointDetails(endpoint, None, None))
-        s = await SkosSearch.federated_search(search, "preflabel", endpoint_details)
+        s = []
+        retries = 0
+        while retries < 3:
+            try:
+                s = await SkosSearch.federated_search(
+                    search, "preflabel", endpoint_details
+                )
+                break
+            except Exception:
+                retries += 1
+                continue
+        if retries == 3:
+            raise Exception("Max retries reached")
         results = SkosSearch.combine_search_results(s, "preflabel")
     else:
         results = []
