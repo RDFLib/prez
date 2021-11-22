@@ -64,11 +64,11 @@ app = FastAPI(
 )
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
-if TEMPLATE_VOLUME is not None:
+if THEME_VOLUME is not None:
     app.mount(
-        f"/{TEMPLATE_VOLUME}",
-        StaticFiles(directory=f"{TEMPLATE_VOLUME}/static"),
-        name=TEMPLATE_VOLUME,
+        f"/{THEME_VOLUME}",
+        StaticFiles(directory=f"{THEME_VOLUME}/static"),
+        name=THEME_VOLUME,
     )
 
 
@@ -169,7 +169,7 @@ async def search(
         )
         endpoint_details = []
         for endpoint in endpoints:
-            if endpoint in [e[0] for e in SEARCH_ENDPOINTS]:  # only use valid endpoints
+            if endpoint in [e['url'] for e in SEARCH_ENDPOINTS]:  # only use valid endpoints
                 if endpoint == "self":
                     endpoint_details.append(
                         EndpointDetails(self_sparql_endpoint, None, None)
@@ -278,6 +278,6 @@ async def object(
 
 if __name__ == "__main__":
     configure()
-    uvicorn.run("app:app", port=PORT, host=SYSTEM_URI, reload=True)
+    uvicorn.run("app:app", port=8000, host=SYSTEM_URI, reload=True)
 else:
     configure()

@@ -1,0 +1,116 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: #{APP_NAME}#-prez-pv
+  labels:
+    type: #{APP_NAME}#-prez-pv
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: #{STORAGE_CLASS}#
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: #{APP_NAME}#-prez-pvc
+spec:
+  resources:
+    requests:
+      storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  selector:
+    matchLabels:
+      type: #{APP_NAME}#-prez-pv
+  storageClassName: #{STORAGE_CLASS}#
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: #{APP_NAME}#-prez-config
+data:
+  SYSTEM_URI: #{SYSTEM_URI}#
+  DATA_URI: #{DATA_URI}#
+  DEBUG: #{DEBUG}#
+  DEMO: #{DEMO}#
+  SPARQL_ENDPOINT: #{SPARQL_ENDPOINT}#
+  SPARQL_USERNAME: #{SPARQL_USERNAME}#
+  SPARQL_PASSWORD: #{SPARQL_PASSWORD}#
+  ENABLED_PREZS: #{ENABLED_PREZS}#
+  THEME_VOLUME: #{THEME_VOLUME}#
+  SIDENAV: #{SIDENAV}#
+  SEARCH_ENDPOINTS: #{SEARCH_ENDPOINTS}#
+  SYSTEM_INFO: #{SYSTEM_INFO}#
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: #{APP_NAME}#-prez-deployment
+  labels:
+    app: #{APP_NAME}#
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: #{APP_NAME}#
+  template:
+    metadata:
+      labels:
+        app: #{APP_NAME}#
+    spec:
+      containers:
+        - name: #{APP_NAME}#-prez
+          image: prez:#{VERSION}#
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "250m"
+          ports:
+            - containerPort: #{PORT}#
+          envFrom:
+            - configMapRef:
+                name: #{APP_NAME}#-prez-config
+          volumeMounts:
+            - mountPath: /app/Prez/prez/#{THEME_VOLUME}#
+              name: #{THEME_VOLUME}#
+      volumes:
+        - name: #{THEME_VOLUME}#
+          persistentVolumeClaim:
+            claimName: #{APP_NAME}#-prez-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: #{APP_NAME}#-prez-service
+spec:
+  selector:
+    app: #{APP_NAME}#
+  type: ClusterIP
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: #{PORT}#
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: #{APP_NAME}#-prez-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-buffer-size: 8k
+spec:
+  rules:
+    - host: #{SYSTEM_URI}#
+      http:
+        paths:
+          - backend:
+              serviceName: #{APP_NAME}#-prez-service
+              servicePort: 80

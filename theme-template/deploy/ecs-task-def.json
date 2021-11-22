@@ -1,0 +1,67 @@
+{
+    "name": "#{APP_NAME}#",
+    "image": "prez:#{VERSION}#",
+    "essential": true,
+    "portMappings": [
+        {
+            "containerPort": 8000,
+            "hostPort": 80,
+            "protocol": "tcp"
+        }
+    ],
+    "cpu": 512,
+    "environment": [
+        {
+            "name": "SPARQL_ENDPOINT",
+            "value": "#{SPARQL_ENDPOINT}#"
+        },
+        {
+            "name": "SYSTEM_URI",
+            "value": "#{SYSTEM_URI}#"
+        },
+        {
+            "name": "DATA_URI",
+            "value": "#{DATA_URI}#"
+        },
+        {
+            "name": "DEBUG",
+            "value": "#{DEBUG}#"
+        },
+        {
+            "name": "DEMO",
+            "value": "#{DEMO}#"
+        },
+        {
+            "name": "SPARQL_USERNAME",
+            "value": "#{SPARQL_USERNAME}#"
+        },
+        {
+            "name": "SPARQL_PASSWORD",
+            "value": "#{SPARQL_PASSWORD}#"
+        },
+        {
+            "name": "ENABLED_PREZS",
+            "value": "#{ENABLED_PREZS}#"
+        },
+        {
+            "name": "SIDENAV",
+            "value": "#{SIDENAV}#"
+        },
+        {
+            "name": "SEARCH_ENDPOINTS",
+            "value": "#{SEARCH_ENDPOINTS}#"
+        },
+        {
+            "name": "THEME_VOLUME",
+            "value": "#{THEME_VOLUME}#"
+        },
+        {
+            "name": "SYSTEM_INFO",
+            "value": "#{SYSTEM_INFO}#"
+        }
+    ],
+    "ulimits": [],
+    "mountPoints": [],
+    "memory": 2048,
+    "volumesFrom": []
+}

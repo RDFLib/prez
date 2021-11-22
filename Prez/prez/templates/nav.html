@@ -7,7 +7,11 @@
         {% endif %}
     {% else %}
         {% for prez in prezs %}
-            <a href="/{{ prez | lower }}" class="main-nav-item{% if main_active_page == 'vocprez' %} active{% endif %}">{{ prez }}</a>
+            {% set prez_lower = prez | lower %}
+            <a href="/{{ prez_lower }}" class="main-nav-item{% if main_active_page == prez %} active{% elif active_prez == prez %} active-prez{% endif %}">{{ prez }}</a>
+            {% if active_prez == prez %}
+                {% include prez_lower + "/" + prez_lower + "_nav.html" %}
+            {% endif %}
         {% endfor %}
     {% endif %}
     <a href="{{ url_for('search') }}" class="main-nav-item{% if main_active_page == 'search' %} active{% endif %}">Search</a>

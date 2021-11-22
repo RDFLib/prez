@@ -18,7 +18,7 @@
             <input type="text" name="search" id="search" placeholder="Search..."{% if last_search_term %}value="{{last_search_term}}"{% endif %}>
             <select multiple name="endpoints" id="endpoints">
                 {% for endpoint_option in endpoint_options %}
-                    <option value="{{ endpoint_option[0] }}"{% if endpoint_option[0] in last_endpoints %} selected{% endif %}>{{ endpoint_option[1] }}</option>
+                    <option value="{{ endpoint_option['url'] }}"{% if endpoint_option["url"] in last_endpoints %} selected{% endif %}>{{ endpoint_option["name"] }}</option>
                 {% endfor %}
             </select>
             <div class="form-text">Multiple endpoints can be selected. "Self" represents this Prez instance.</div>

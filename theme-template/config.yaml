@@ -1,0 +1,43 @@
+themeVolume: theme # no trailing slash
+sidenav: true
+enabledPrezs:
+  - VocPrez
+sparqlEndpoint: #{SPARQL_ENDPOINT}#
+sparqlUsername: #{SPARQL_USERNAME}#
+sparqlPassword: #{SPARQL_PASSWORD}#
+port: 8000
+demo: true
+debug: true
+searchEndpoints:
+  - name: GA VocPrez
+    url: http://ga.surroundaustralia.com/sparql/
+  - name: GGIC VocPrez
+    url: http://ggic.surroundaustralia.com/sparql/
+  - name: DAWE VocPrez
+    url: http://dawe.surroundaustralia.com/sparql/
+  - name: ICSM VocPrez
+    url: http://icsm.surroundaustralia.com/sparql/
+  - name: CSIRO VocPrez
+    url: http://csiro.surroundaustralia.com/sparql/
+systemUri: http://prez.surroundaustralia.com
+dataUri: http://example.com
+systemInfo:
+  Prez:
+    title: null
+    desc: null
+  VocPrez:
+    title: SURROUND Vocabulary Registry
+    desc: These vocabs are published by...
+  CatPrez:
+    title: null
+    desc: null
+  TimePrez:
+    title: null
+    desc: null
+  SpacePrez:
+    title: null
+    desc: null
+appName: surround
+deploymentMethod: docker # docker, kubernetes or ecs
+storageClass: ebs-sc # for kubernetes deployment
+version: latest

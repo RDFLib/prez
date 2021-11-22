@@ -5,6 +5,7 @@
 {% if prezs | length == 1 %}
     {% set main_active_page = "home" %}
 {% else %}
+{% set main_active_page = "VocPrez" %}
     {% set breadcrumbs = [
         {"label": "VocPrez", "url": url_for("dataset")}
     ] %}
@@ -17,7 +18,7 @@
 <div id="content-col-main">
     <h1>System Home</h1>
     <p>
-        Welcome to an instance of <a href="https://github.com/surroundaustralia/VocPrez3" target="_blank" rel="noopener noreferrer">VocPrez 3</a>, the next version of <a href="https://github.com/RDFLib/VocPrez" target="_blank" rel="noopener noreferrer">VocPrez</a>, a read-only web delivery system for Simple Knowledge Organization System (SKOS)-formulated RDF vocabularies. 
+        Welcome to <a href="https://github.com/surroundaustralia/VocPrez3" target="_blank" rel="noopener noreferrer">VocPrez 3</a>, the next version of <a href="https://github.com/RDFLib/VocPrez" target="_blank" rel="noopener noreferrer">VocPrez</a> - a read-only web delivery system for Simple Knowledge Organization System (SKOS)-formulated RDF vocabularies. 
     </p>
     <p>
         VocPrez presents different views of vocabularies from a list of RDF sources. This system currently implements sources from local files, Research Vocabularies Australia and VocBench. 

@@ -56,7 +56,6 @@ class VocPrezConceptRenderer(Renderer):
         )
 
     def _generate_vocpub_rdf(self) -> Graph:
-        print(self.concept.graph.serialize(format="turtle"))
         r = self.concept.graph.query(
             f"""
             PREFIX dcterms: <{DCTERMS}>

@@ -38,15 +38,24 @@ toggleBtn.forEach(btn => {
     btn.onclick = () => {
         const isMobile = localStorage.getItem("isMobile") === "true";
         const navOpen = localStorage.getItem("navOpen") === "true";
+        const altOpen = localStorage.getItem("altOpen") === "true";
         const hasSideNav = localStorage.getItem("hasSideNav") === "true";
 
         const nav = document.querySelector("#main-nav-side");
+        const lightbox = document.querySelector("#lightbox");
+        const alt = document.querySelector("#content-col-sidebar");
 
         if (isMobile) {
             if (navOpen) {
                 nav.style.width = "0px";
+                lightbox.classList.remove("open");
             } else {
+                if (altOpen) {
+                    alt.style.width = "0px";
+                    localStorage.setItem("altOpen", !altOpen);
+                }
                 nav.style.width = sidenavWidthMobile;
+                lightbox.classList.add("open");
             }
         } else {
             if (hasSideNav) {
@@ -70,14 +79,23 @@ altToggle.forEach(btn => {
     btn.onclick = () => {
         const isMobile = localStorage.getItem("isMobile") === "true";
         const altOpen = localStorage.getItem("altOpen") === "true";
+        const navOpen = localStorage.getItem("navOpen") === "true";
 
         const alt = document.querySelector("#content-col-sidebar");
+        const nav = document.querySelector("#main-nav-side");
+        const lightbox = document.querySelector("#lightbox");
 
         if (isMobile) {
             if (altOpen) {
                 alt.style.width = "0px";
+                lightbox.classList.remove("open");
             } else {
+                if (navOpen) {
+                    nav.style.width = "0px";
+                    localStorage.setItem("navOpen", !navOpen);
+                }
                 alt.style.width = altWidthMobile;
+                lightbox.classList.add("open");
             }
             localStorage.setItem("altOpen", !altOpen);
         }
@@ -89,6 +107,7 @@ window.onresize = () => {
     const hasSideNav = localStorage.getItem("hasSideNav") === "true";
 
     const nav = document.querySelector("#main-nav-side");
+    const lightbox = document.querySelector("#lightbox");
     const alt = document.querySelector("#content-col-sidebar");
 
     if (window.innerWidth <= smBreakpoint) {
@@ -106,6 +125,7 @@ window.onresize = () => {
     } else {
         localStorage.setItem("isMobile", false);
         localStorage.setItem("altOpen", true);
+        lightbox.classList.remove("open");
 
         if (alt) {
             alt.style.width = "unset";
@@ -127,6 +147,7 @@ document.onscroll = () => {
     const mobileHeader = document.querySelector("#mobile-header");
     const mobileTitle = document.querySelector("#mobile-title");
     const nav = document.querySelector("#main-nav-side");
+    const lightbox = document.querySelector("#lightbox");
     const alt = document.querySelector("#content-col-sidebar");
     const isMobile = localStorage.getItem("isMobile") === "true";
 
@@ -135,6 +156,8 @@ document.onscroll = () => {
             console.log("top");
             nav.style.top = `${mobileHeader.offsetTop + 35}px`;
             nav.style.height = `calc(100vh - 35px)`;
+            lightbox.style.top = `${mobileHeader.offsetTop + 35}px`;
+            lightbox.style.height = `calc(100vh - 35px)`;
             if (alt) {
                 alt.style.top = `${mobileHeader.offsetTop + 35}px`;
                 alt.style.height = `calc(100vh - 35px)`;
@@ -144,6 +167,8 @@ document.onscroll = () => {
         } else {
             nav.style.top = "unset";
             nav.style.height = `calc(100vh + ${window.scrollY}px - ${mobileHeader.offsetTop}px - 35px)`;
+            lightbox.style.top = "unset";
+            lightbox.style.height = `calc(100vh + ${window.scrollY}px - ${mobileHeader.offsetTop}px - 35px)`;
             if (alt) {
                 alt.style.top = "unset";
                 alt.style.height = `calc(100vh + ${window.scrollY}px - ${mobileHeader.offsetTop}px - 35px)`;

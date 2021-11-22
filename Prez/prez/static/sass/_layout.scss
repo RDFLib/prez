@@ -67,6 +67,7 @@ main {
 #content-col-sidebar {
     display: flex;
     flex-direction: column;
+    min-width: 250px;
     max-width: 250px;
     width: 100%;
     padding: 0px;
@@ -190,10 +191,11 @@ pre {
 
 @media screen and (max-width: $sm-breakpoint) {
     #content-col-sidebar {
-        z-index: 12;
+        z-index: 95;
         position: absolute;
         right: 0;
         width: 0;
+        min-width: 0px;
         background-color: white;
         white-space: nowrap;
         overflow-y: auto !important;

@@ -14,8 +14,8 @@ httpx = "^0.20.0"
 rdflib = "^6.0.2"
 starlette-core = { git = "https://github.com/accent-starlette/starlette-core.git" }
 python-multipart = "^0.0.5"
-fedsearch = { path = "../../vocprez-fedsearch" }
 connegp = {path = "../Connegp"}
+fedsearch = {path = "../vocprez-fedsearch"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"

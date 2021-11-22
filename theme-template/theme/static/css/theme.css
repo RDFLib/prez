@@ -14,6 +14,10 @@
     --heading-font: "Bebas Neue";
 }
 
+h1, h2, h3, h4, h5, h6 , a.main-nav-item{
+    letter-spacing: 0.04rem;
+}
+
 header {
     color: white;
 }

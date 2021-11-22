@@ -1,0 +1,21 @@
+services:
+  prez:
+    container_name: #{APP_NAME}#-prez
+    image: prez:#{VERSION}#
+    ports:
+      - "8000:8000"
+    environment:
+      SYSTEM_URI: #{SYSTEM_URI}#
+      DATA_URI: #{DATA_URI}#
+      DEBUG: #{DEBUG}#
+      DEMO: #{DEMO}#
+      SPARQL_ENDPOINT: #{SPARQL_ENDPOINT}#
+      SPARQL_USERNAME: #{SPARQL_USERNAME}#
+      SPARQL_PASSWORD: #{SPARQL_PASSWORD}#
+      ENABLED_PREZS: #{ENABLED_PREZS}#
+      THEME_VOLUME: #{THEME_VOLUME}#
+      SIDENAV: #{SIDENAV}#
+      SEARCH_ENDPOINTS: #{SEARCH_ENDPOINTS}#
+      SYSTEM_INFO: #{SYSTEM_INFO}#
+    volumes:
+      - ../#{THEME_VOLUME}#:/app/Prez/prez/#{THEME_VOLUME}#

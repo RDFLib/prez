@@ -206,7 +206,7 @@ prettytable = "^2.2.1"
 
 [package.source]
 type = "directory"
-url = "../../vocprez-fedsearch"
+url = "../vocprez-fedsearch"
 
 [[package]]
 name = "filelock"
@@ -908,7 +908,7 @@ locale = ["Babel (>=1.3)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "1a3e4ef75ea736c25a1600a7cbf8f00ef2f99db4cf192a3a83cf05d859607f80"
+content-hash = "f4239b118768bd96d1cd00832b97cca8e5d047713b3aba27ef7b3edceb958768"
 
 [metadata.files]
 aiofiles = [

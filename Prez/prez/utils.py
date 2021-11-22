@@ -45,8 +45,8 @@ def append_qsa(uri: str, qsas: Dict[str, str]) -> str:
 
 
 template_list = ["templates"]
-if TEMPLATE_VOLUME is not None:
-    template_list.insert(0, f"{TEMPLATE_VOLUME}/templates")
+if THEME_VOLUME is not None:
+    template_list.insert(0, f"{THEME_VOLUME}/templates")
 
 templates = Jinja2Templates(
     loader=jinja2.ChoiceLoader([jinja2.FileSystemLoader(template_list)])

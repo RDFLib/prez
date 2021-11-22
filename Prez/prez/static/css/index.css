@@ -138,6 +138,7 @@ main {
 #content-col-sidebar {
   display: flex;
   flex-direction: column;
+  min-width: 250px;
   max-width: 250px;
   width: 100%;
   padding: 0px;
@@ -258,10 +259,11 @@ pre {
 
 @media screen and (max-width: 375px) {
   #content-col-sidebar {
-    z-index: 12;
+    z-index: 95;
     position: absolute;
     right: 0;
     width: 0;
+    min-width: 0px;
     background-color: white;
     white-space: nowrap;
     overflow-y: auto !important;
@@ -297,6 +299,12 @@ pre {
   text-decoration: none;
   border: 1px solid transparent;
   transition: border-color 0.2s ease-in-out;
+}
+.main-nav-item.active-prez {
+  background-color: unset;
+  color: var(--nav-color);
+  border-color: var(--nav-color);
+  border-bottom-color: transparent;
 }
 .main-nav-item.active {
   background-color: var(--nav-color);
@@ -359,10 +367,26 @@ nav#main-nav-side.colnav {
 }
 nav#main-nav-side.rownav {
   flex-direction: row;
+  flex-wrap: wrap;
 }
 nav#main-nav-side.rownav .main-nav-item {
   flex-grow: 1;
   flex-basis: 0;
+}
+
+#lightbox {
+  z-index: 90;
+  width: 100%;
+  position: absolute;
+  background-color: black;
+  display: none;
+  height: 100vh;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+#lightbox.open {
+  display: block;
+  opacity: 0.5;
 }
 
 #mobile-header {
@@ -383,13 +407,59 @@ nav#main-nav-side.rownav .main-nav-item {
   width: 100%;
 }
 
+#vocprez-nav {
+  display: flex;
+}
+.colnav #vocprez-nav {
+  border: 1px solid var(--nav-color);
+}
+.rownav #vocprez-nav {
+  order: 1;
+  width: 100%;
+  border-top: 1px solid var(--nav-color);
+}
+
+#vocprez-nav-content {
+  display: flex;
+  max-width: var(--page-max-width);
+  width: 100%;
+  margin: 0 auto;
+  justify-content: space-between;
+}
+#vocprez-nav-content > .vocprez-nav-item {
+  padding: 6px;
+  flex-grow: 1;
+  flex-basis: 0;
+  text-align: center;
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--nav-color);
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: border-color 0.2s ease-in-out;
+}
+#vocprez-nav-content > .vocprez-nav-item.active {
+  background-color: var(--nav-color);
+  color: white;
+}
+#vocprez-nav-content > .vocprez-nav-item:not(.active):hover {
+  border-color: var(--nav-color);
+}
+.rownav #vocprez-nav-content {
+  flex-direction: row;
+}
+.colnav #vocprez-nav-content {
+  flex-direction: column;
+  margin-left: 20px;
+}
+
 @media screen and (max-width: 375px) {
   nav#main-nav-side.rownav,
 nav#main-nav-side.colnav {
     flex-direction: column !important;
     height: 100vh;
     width: 0;
-    z-index: 10;
+    z-index: 99;
     position: absolute;
     left: 0;
     min-width: 0px;
@@ -410,42 +480,20 @@ nav#main-nav-side.colnav .main-nav-item {
   #breadcrumbs {
     display: none;
   }
-}
-#vocprez-nav {
-  display: flex;
-  background-color: var(--nav-color);
-  color: white;
-  padding: 4px;
-}
 
-#vocprez-nav-content {
-  display: flex;
-  flex-direction: row;
-  max-width: var(--page-max-width);
-  width: 100%;
-  margin: 0 auto;
-  justify-content: space-between;
-}
-#vocprez-nav-content > .vocprez-nav-item {
-  padding: 6px;
-  flex-grow: 1;
-  flex-basis: 0;
-  text-align: center;
-  font-size: 14px;
-  font-weight: bold;
-  color: white;
-  text-decoration: none;
-  border: 1px solid transparent;
-  transition: border-color 0.2s ease-in-out;
-}
-#vocprez-nav-content > .vocprez-nav-item.active {
-  background-color: white;
-  color: var(--nav-color);
-}
-#vocprez-nav-content > .vocprez-nav-item:not(.active):hover {
-  border-color: white;
-}
+  #vocprez-nav {
+    border: 1px solid var(--nav-color);
+  }
+  .rownav #vocprez-nav {
+    width: unset;
+    order: unset;
+  }
 
+  #vocprez-nav-content {
+    flex-direction: column !important;
+    margin-left: 20px;
+  }
+}
 a {
   color: var(--link);
   text-decoration: none;
