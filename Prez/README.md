@@ -1,42 +1,27 @@
-# Prez structure
+# Prez
+Prez is a Linked Data API presentation tool using FastAPI. It is a combination of VocPrez, CatPrez, TimePrez & SpacePrez (previously OGC LD API).
 
-- Some type of `Renderer` class from `pyldapi` which contains the render logic
-- Templates
-    - Base templates allow for 'slotting in' other template files to replace individual html components
-        - e.g. header, footer, nav, etc.
-    - CSS with variables to easily modify theme
-        - e.g. colours, spacing, fonts, etc.
-- Endpoints:
-    - home
-    - healthcheck
-    - sparql (top-level & per *Prez)
-    - about (top-level & per *Prez)
-    - conforms (SpacePrez only)
-    - search (top-level & per *Prez)
-    - "which *Prez's do I have enabled?"
-    - generic object endpoint
-    - VocPrez
-        - dataset(s)
-        - scheme(s)
-        - collection(s)
-        - concept(s)
-    - CatPrez
-        - dataset(s)
-        - catalogue(s)
-        - distribution(s)
-        - resource(s)
-    - OGC API/SpacePrez
-        - dataset(s)
-        - feature collection(s)
-        - feature(s)
-    - TimePrez
-        - dataset(s)
-        - temporal collection(s)
-        - temporal entity(s)
+## Features
+
+- Cross-system search
+- Configure which *Prezs to activate
+- Acts as the *Prez at the top-level if only 1 is active
+- SPARQL endpoint
+- Modular templating
+- Mobile view
+
+## Running Prez
+Install using Poetry, which you can install [here](https://python-poetry.org/docs/#installation).
+
+Then run `poetry install` in the root directory, `Prez/`.
+
+To simply run locally without configuration outside of Docker, run `python3 app.py` in the `Prez/prez/` directory.
+
+Prez is designed to run in a containerised environment. Configuring & theming Prez is done in [theme-template](../theme-template). Updating triplestore data (e.g. vocabs) is done in [vocabs-template](../vocabs-template). To deploy your own instance of Prez, fork both of the above repos & configure.
 
 ## Dev Dependencies
 
 - SASS
     - Run the SASS watcher from the `sass/` folder like so:
-        - dart-sass: `sass --no-source-map --watch main.scss ../css/index.css`
-        - node-sass: `sass --source-map=none --watch main.scss ../css/index.css`
+        - If using dart-sass: `sass --no-source-map --watch main.scss ../css/index.css`
+        - If using node-sass: `sass --source-map=none --watch main.scss ../css/index.css`

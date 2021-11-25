@@ -82,6 +82,7 @@ def sparql_insert_graph(graph_uri: str, graph_content: bytes) -> bool:
         },
         content=graph_content,
         auth=(DB_USERNAME, DB_PASSWORD),
+        timeout=20.0,
     )
     if 200 <= response.status_code < 300:
         return True

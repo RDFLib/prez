@@ -1,0 +1,147 @@
+@prefix cs: <https://data.surroundaustralia.com/def/prof-roles> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sdo: <https://schema.org/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix reg:  <http://purl.org/linked-data/registry#> .
+@prefix dcterms:  <http://purl.org/dc/terms/> .
+@prefix vann: <http://purl.org/vocab/vann/> .
+@prefix : <https://data.surroundaustralia.com/def/prof-roles/> .
+
+
+<https://data.surroundaustralia.com/def/prof-roles> 
+    a owl:Ontology , skos:ConceptScheme;
+    skos:prefLabel "PROF Roles Vocabulary"@en ;
+    skos:definition """This vocabulary is a flat - no hierarchy - listing of the roles for people and organisations defined within the ISO standard 19135 "Geographic information — Procedures for item registration ISO/DIS 19135-1" https://www.iso.org/standard/54721.html."""@en ;
+    owl:versionIRI <https://data.surroundaustralia.com/def/prof-roles/1.0> ;
+    owl:versionInfo "1.0"@en ;
+    dcterms:contributor <https://orcid.org/0000-0002-8742-7730>;
+    vann:preferredNamespaceUri "https://data.surroundaustralia.com/def/prof-roles/"^^xsd:string ;
+    dcterms:creator <http://orcid.org/0000-0002-8742-7730> ;
+    vann:preferredNamespacePrefix "prof-roles"@en ;
+    dcterms:publisher <https://linked.data.gov.au/org/surround> ;
+    rdfs:seeAlso <https://github.com/surroundaustralia/prof-roles> ;
+    dcterms:issued "2021-11-13"^^xsd:date ;
+    dcterms:modified "2021-11-13"^^xsd:date ;
+    dcterms:rights "(c) SURROUND Australia Pty Ltd, 2021"@en ;
+    dcterms:created "2021-11-13"^^xsd:date ;
+    dcterms:source "https://www.w3.org/TR/dx-prof/"^^xsd:anyURI ;
+    skos:hasTopConcept 
+        <http://www.w3.org/ns/dx/prof/role/constraints> ,
+        <http://www.w3.org/ns/dx/prof/role/example> ,
+        <http://www.w3.org/ns/dx/prof/role/guidance> ,
+        <http://www.w3.org/ns/dx/prof/role/mapping> ,
+        :repository ,
+        <http://www.w3.org/ns/dx/prof/role/schema> ,
+        <http://www.w3.org/ns/dx/prof/role/specification> ,
+        <http://www.w3.org/ns/dx/prof/role/validation> ,
+        <http://www.w3.org/ns/dx/prof/role/vocabulary> ;
+.
+
+<https://linked.data.gov.au/def/surround>
+    a sdo:Organization ;
+    sdo:name "SURROUND Australia Pty Ltd" ;
+    sdo:url "https://surroundaustralia.com"^^xsd:anyURI ;
+.
+
+<https://orcid.org/0000-0002-8742-7730>
+    a sdo:Person ;
+    sdo:honorificPrefix "Dr" ;
+    sdo:name "Nicholas J. Car" ;
+    sdo:email "nicholas.car@surroundaustralia.com"^^xsd:anyURI ;
+    sdo:affiliation <https://linked.data.gov.au/org/surround> ;
+.
+
+<http://www.w3.org/ns/dx/prof/role/constraints>
+    a skos:Concept ;
+    rdfs:isDefinedBy <http://www.w3.org/ns/dx/prof/role> ;
+    skos:prefLabel "Constraints"@en ;
+    skos:definition "Descriptions of obligations, limitations or extensions that the profile defines"@en ;
+    skos:inScheme cs: ;
+    skos:scopeNote "Use this Role when you want to indicate the constraints that the associated Profile imposes on top of base specifications"@en ;
+    skos:topConceptOf cs: ;
+.
+
+<http://www.w3.org/ns/dx/prof/role/example>
+    a skos:Concept ;
+    rdfs:isDefinedBy <http://www.w3.org/ns/dx/prof/role> ;
+    skos:prefLabel "Example"@en ;
+    skos:definition "Sample instance data conforming to the profile"@en ;
+    skos:inScheme cs: ;
+    skos:scopeNote "Use this Role when you want to provide instances of data conforming to the profile to inform users"@en ;
+    skos:topConceptOf cs: ;
+.
+
+<http://www.w3.org/ns/dx/prof/role/guidance>
+    a skos:Concept ;
+    rdfs:isDefinedBy <http://www.w3.org/ns/dx/prof/role> ;
+    skos:prefLabel "Guidance"@en ;
+    skos:definition "Documents, in human-readable form, how to use the profile"@en ;
+    skos:inScheme cs: ;
+    skos:scopeNote "	Many existing profiles treat their human-readable forms (PDF documents etc.) as authoritative. This role is suggestive of non-authoritativeness. For a role for a human-readable resource that is authoritative, see Specification"@en ;
+    skos:topConceptOf cs: ;
+.
+
+<http://www.w3.org/ns/dx/prof/role/mapping>
+    a skos:Concept ;
+    rdfs:isDefinedBy <http://www.w3.org/ns/dx/prof/role> ;
+    skos:prefLabel "Mapping"@en ;
+    skos:definition "Describes conversions between two Standards"@en ;
+    skos:inScheme cs: ;
+    skos:editorialNote "Changed word Specifications to Standards in definition compared with PROF"@en ;
+    skos:topConceptOf cs: ;
+.
+
+:repository
+    a skos:Concept ;
+    rdfs:isDefinedBy <https://data.surroundaustralia.com/def/prof-roles> ;
+    skos:prefLabel "Repository"@en ;
+    skos:definition "A system used to store all, or many, of the Profile's parts"@en ;
+    skos:inScheme cs: ;
+    skos:scopeNote "Commonly used to indicate an online version control repository."@en ;
+    skos:topConceptOf cs: ;
+.
+
+<http://www.w3.org/ns/dx/prof/role/schema>
+    a skos:Concept ;
+    rdfs:isDefinedBy <http://www.w3.org/ns/dx/prof/role> ;
+    skos:prefLabel "Schema"@en ;
+    skos:altLabel 
+        "Shape"@en , 
+        "Structure"@en ; 
+    skos:definition "Machine-readable structural descriptions of data defined by the profile"@en ;
+    skos:inScheme cs: ;
+    skos:scopeNote ""@en ;
+    skos:topConceptOf cs: ;
+.
+
+<http://www.w3.org/ns/dx/prof/role/specification>
+    a skos:Concept ;
+    rdfs:isDefinedBy <http://www.w3.org/ns/dx/prof/role> ;
+    skos:prefLabel "Specification"@en ;
+    skos:definition "Defining the profile in human-readable form"@en ;
+    skos:inScheme cs: ;
+    skos:scopeNote "This role indicates authoritativeness. For a role for a human-readable resource that is not authoritative, see Guidance"@en ;
+    skos:topConceptOf cs: ;
+.
+
+<http://www.w3.org/ns/dx/prof/role/validation>
+    a skos:Concept ;
+    rdfs:isDefinedBy <http://www.w3.org/ns/dx/prof/role> ;
+    skos:prefLabel "Validation"@en ;
+    skos:definition "Supplies instructions about how to verify conformance of data to the profile"@en ;
+    skos:inScheme cs: ;
+    skos:scopeNote "This role implies inclusion or import of inherited constraints"@en ;
+    skos:topConceptOf cs: ;
+.
+
+<http://www.w3.org/ns/dx/prof/role/vocabulary>
+    a skos:Concept ;
+    rdfs:isDefinedBy <http://www.w3.org/ns/dx/prof/role> ;
+    skos:prefLabel "Vocabulary"@en ;
+    skos:definition "Defines terms used in the profile specification"@en ;
+    skos:inScheme cs: ;
+    skos:topConceptOf cs: ;
+.

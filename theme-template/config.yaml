@@ -23,8 +23,8 @@ systemUri: http://prez.surroundaustralia.com
 dataUri: http://example.com
 systemInfo:
   Prez:
-    title: null
-    desc: null
+    title: SURROUND Vocabulary Registry
+    desc: These vocabs are published by...
   VocPrez:
     title: SURROUND Vocabulary Registry
     desc: These vocabs are published by...
@@ -38,6 +38,6 @@ systemInfo:
     title: null
     desc: null
 appName: surround
-deploymentMethod: docker # docker, kubernetes or ecs
+deploymentMethod: kubernetes # docker, kubernetes or ecs
 storageClass: ebs-sc # for kubernetes deployment
 version: latest

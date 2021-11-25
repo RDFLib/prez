@@ -8,14 +8,8 @@ from config import *
 
 def main():
     # get the validator
-    redirects = 0
-    r = httpx.get("https://w3id.org/profile/vocpub/validator")
-    while r.status_code == 302 and redirects < MAX_REDIRECTS:
-        redirects += 1
-        location_header = r.headers.get("Location")
-        if not location_header:
-            raise Exception("Cannot follow redirect URL")
-        r = httpx.get(location_header)
+    r = httpx.get("https://w3id.org/profile/vocpub/validator", follow_redirects=True)
+
     assert r.status_code == 200
 
     # for all vocabs...

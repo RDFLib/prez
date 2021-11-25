@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Request, HTTPException
+import asyncio
 
 from renderers.vocprez import *
 from services.vocprez_service import *
@@ -63,18 +64,6 @@ async def schemes(request: Request):
 async def scheme(request: Request, scheme_id: str):
     """Returns a VocPrez skos:ConceptScheme in the necessary profile & mediatype"""
     return await scheme_endpoint(request, scheme_id=scheme_id)
-    # scheme_renderer = VocPrezSchemeRenderer(
-    #     request, str(request.url.remove_query_params(keys=request.query_params.keys()))
-    # )
-    # include_inferencing = True
-    # if scheme_renderer.profile == "vocpub_supplied":
-    #     include_inferencing = False
-    # sparql_result = await get_scheme_construct(
-    #     scheme_id=scheme_id, include_inferencing=include_inferencing
-    # )
-    # scheme = VocPrezScheme(sparql_result, id=scheme_id)
-    # scheme_renderer.set_scheme(scheme)
-    # return scheme_renderer.render()
 
 
 async def scheme_endpoint(
@@ -82,7 +71,6 @@ async def scheme_endpoint(
 ):
     scheme_renderer = VocPrezSchemeRenderer(
         request,
-        # str(request.url.remove_query_params(keys=request.query_params.keys()))
         str(
             request.url.remove_query_params(
                 keys=[key for key in request.query_params.keys() if key != "uri"]
@@ -92,11 +80,24 @@ async def scheme_endpoint(
     include_inferencing = True
     if scheme_renderer.profile == "vocpub_supplied":
         include_inferencing = False
-    sparql_result = await get_scheme_construct(
-        scheme_id=scheme_id,
-        scheme_uri=scheme_uri,
-        include_inferencing=include_inferencing,
+
+    results = await asyncio.gather(
+        get_scheme_construct1(
+            scheme_id=scheme_id,
+            scheme_uri=scheme_uri,
+            include_inferencing=include_inferencing,
+        ),
+        get_scheme_construct2(
+            scheme_id=scheme_id,
+            scheme_uri=scheme_uri,
+            include_inferencing=include_inferencing,
+        ),
     )
+
+    sparql_result = Graph()
+    for g in results:
+        sparql_result.parse(data=g.serialize(format="turtle"))
+
     if len(sparql_result) == 0:
         raise HTTPException(status_code=404, detail="Not Found")
     scheme = VocPrezScheme(sparql_result, id=scheme_id, uri=scheme_uri)
@@ -135,11 +136,23 @@ async def collection_endpoint(
     include_inferencing = True
     if collection_renderer.profile == "vocpub_supplied":
         include_inferencing = False
-    sparql_result = await get_collection_construct(
-        collection_id=collection_id,
-        collection_uri=collection_uri,
-        include_inferencing=include_inferencing,
+    results = await asyncio.gather(
+        get_collection_construct1(
+            collection_id=collection_id,
+            collection_uri=collection_uri,
+            include_inferencing=include_inferencing,
+        ),
+        get_collection_construct2(
+            collection_id=collection_id,
+            collection_uri=collection_uri,
+            include_inferencing=include_inferencing,
+        ),
     )
+
+    sparql_result = Graph()
+    for g in results:
+        sparql_result.parse(data=g.serialize(format="turtle"))
+
     if len(sparql_result) == 0:
         raise HTTPException(status_code=404, detail="Not Found")
     collection = VocPrezCollection(sparql_result, id=collection_id, uri=collection_uri)
@@ -151,16 +164,6 @@ async def collection_endpoint(
 async def collection(request: Request, collection_id: str):
     """Returns a VocPrez skos:Collection in the necessary profile & mediatype"""
     return await collection_endpoint(request, collection_id=collection_id)
-    # collection_renderer = VocPrezCollectionRenderer(
-    #     request, str(request.url.remove_query_params(keys=request.query_params.keys()))
-    # )
-    # include_inferencing = True
-    # if collection_renderer.profile == "vocpub_supplied":
-    #     include_inferencing = False
-    # sparql_result = await get_collection_construct(collection_id=collection_id, include_inferencing=include_inferencing)
-    # collection = VocPrezCollection(sparql_result, id=collection_id)
-    # collection_renderer.set_collection(collection)
-    # return collection_renderer.render()
 
 
 async def concept_endpoint(
@@ -198,20 +201,6 @@ async def concept_endpoint(
 async def concept(request: Request, scheme_id: str, concept_id: str):
     """Returns a VocPrez skos:Concept in the necessary profile & mediatype"""
     return await concept_endpoint(request, scheme_id=scheme_id, concept_id=concept_id)
-    # concept_renderer = VocPrezConceptRenderer(
-    #     request, str(request.url.remove_query_params(keys=request.query_params.keys()))
-    # )
-    # include_inferencing = True
-    # if concept_renderer.profile == "vocpub_supplied":
-    #     include_inferencing = False
-    # sparql_result = await get_concept_construct(
-    #     concept_id=concept_id,
-    #     scheme_id=scheme_id,
-    #     include_inferencing=include_inferencing,
-    # )
-    # concept = VocPrezConcept(sparql_result, id=concept_id)
-    # concept_renderer.set_concept(concept)
-    # return concept_renderer.render()
 
 
 @router.get(

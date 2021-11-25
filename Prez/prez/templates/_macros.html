@@ -66,8 +66,8 @@
                 <a class="search-result-instance" href="{{ base_url }}">Self</a>
             {% else %}
                 {% for endpoint in endpoint_options %}
-                    {% if base_url in endpoint[0] %}
-                        <a class="search-result-instance" href="{{ base_url }}" target="_blank">{{ endpoint[1] }}</a>
+                    {% if base_url in endpoint["url"] %}
+                        <a class="search-result-instance" href="{{ base_url }}" target="_blank">{{ endpoint["name"] }}</a>
                     {% endif %}
                 {% endfor %}
             {% endif %}

@@ -157,7 +157,8 @@ class VocPrezScheme(PrezModel):
         concepts_dict = {}
         for result in r.bindings:
             if concepts_dict.get(result["c"]):
-                concepts_dict[result["c"]]["narrower"].append(result["narrower"])
+                if result.get("narrower"):
+                    concepts_dict[result["c"]]["narrower"].append(result["narrower"])
             else:
                 concepts_dict[result["c"]] = {
                     "uri": result["c"],

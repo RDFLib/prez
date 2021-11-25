@@ -29,7 +29,7 @@
             ConceptScheme title
         {% endif %}
     </h1>
-    <p>Instance URI: <a href="{{ uri }}">{{ scheme.uri }}</a> <small><a href="{{ scheme.uri }}"><i class="far fa-external-link"></i></a></small></p>
+    <p>Instance URI: <a href="{{ uri }}">{{ scheme.uri }}</a> <small><a href="{{ scheme.uri }}" target="_blank"><i class="far fa-external-link"></i></a></small></p>
     {% if scheme.description is not none %}
         <div>
             <p>{{ scheme.description }}</p>

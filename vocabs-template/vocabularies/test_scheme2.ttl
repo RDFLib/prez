@@ -24,7 +24,8 @@ collection2: a skos:Collection ;
     skos:topConceptOf cs2: .
 
 <http://example.com/person/JamieFeiss> a sdo:Person ;
-    sdo:name "Jamie Feiss" .
+    sdo:name "Jamie Feiss" ;
+    sdo:email "jamie.feiss@surroundaustralia.com"^^xsd:anyURI .
 
 cs2: a skos:ConceptScheme ;
     dcterms:created "2021-10-18"^^xsd:date ;

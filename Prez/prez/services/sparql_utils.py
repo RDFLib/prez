@@ -15,6 +15,7 @@ async def sparql_query(query: str):
                 "Content-Type": "application/sparql-query",
             },
             auth=(SPARQL_USERNAME, SPARQL_PASSWORD),
+            timeout=15.0,
         )
     if 200 <= response.status_code < 300:
         return True, response.json()["results"]["bindings"]
@@ -33,6 +34,7 @@ async def sparql_construct(query: str):
                 "Content-Type": "application/sparql-query",
             },
             auth=(SPARQL_USERNAME, SPARQL_PASSWORD),
+            timeout=15.0,
         )
     if 200 <= response.status_code < 300:
         return True, Graph().parse(data=response.text, format="turtle")
@@ -52,6 +54,7 @@ async def sparql_endpoint_query(
                 "Content-Type": "application/sparql-query",
             },
             auth=(SPARQL_USERNAME, SPARQL_PASSWORD),
+            timeout=15.0,
         )
     if 200 <= response.status_code < 300:
         if accept in ["application/sparql-results+json", "application/json"]:

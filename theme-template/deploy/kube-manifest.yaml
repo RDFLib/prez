@@ -1,18 +1,4 @@
 apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: #{APP_NAME}#-prez-pv
-  labels:
-    type: #{APP_NAME}#-prez-pv
-spec:
-  capacity:
-    storage: 1Gi
-  volumeMode: Filesystem
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: #{STORAGE_CLASS}#
----
-apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: #{APP_NAME}#-prez-pvc
@@ -23,9 +9,6 @@ spec:
   accessModes:
     - ReadWriteOnce
   volumeMode: Filesystem
-  selector:
-    matchLabels:
-      type: #{APP_NAME}#-prez-pv
   storageClassName: #{STORAGE_CLASS}#
 ---
 apiVersion: v1
@@ -111,6 +94,10 @@ spec:
     - host: #{SYSTEM_URI}#
       http:
         paths:
-          - backend:
-              serviceName: #{APP_NAME}#-prez-service
-              servicePort: 80
+          - pathType: Prefix
+            path: /
+            backend:
+              service:
+                name: #{APP_NAME}#-prez-service
+                port:
+                  number: 80

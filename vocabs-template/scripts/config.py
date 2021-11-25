@@ -8,5 +8,4 @@ DB_USERNAME = os.environ.get("DB_USERNAME", "user")
 DB_PASSWORD = os.environ.get("DB_PASSWORD", "password")
 SHOW_WARNINGS = True
 WARNINGS_INVALID = False  # Allows warnings to flag as invalid when true
-MAX_REDIRECTS = 5
-DROP_ON_START = False
+DROP_ON_START = False  # Drops all graphs when updating vocabs

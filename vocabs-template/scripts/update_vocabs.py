@@ -4,7 +4,7 @@ import uuid
 
 from rdflib import Dataset, Graph, URIRef
 from rdflib.namespace import RDF, RDFS, SKOS, DCTERMS
-from rdflib.compare import to_isomorphic
+from rdflib.compare import isomorphic, to_isomorphic
 
 from config import *
 from sparql_utils import *
@@ -24,7 +24,7 @@ def get_remote_vocabs() -> List[str]:
         }
     """
     )
-    
+
     for result in results:
         vocabs.append(result["g"]["value"])
     return vocabs
@@ -88,7 +88,7 @@ def add_graph(graph_uri: str, graph_file: Path) -> None:
     content_graph = d.graph(identifier=graph_uri)
     content_graph.parse(graph_file)
 
-    # check for ID, error if not unique
+    # check for ID, error if has id but not unique
     r = content_graph.query(
         f"""
         PREFIX dcterms: <{DCTERMS}>
@@ -133,12 +133,9 @@ def add_graph(graph_uri: str, graph_file: Path) -> None:
     mapping_dict[graph_uri] = str(system_graph.identifier)
 
 
-def create_system_graph(
-    graph_uri: str, content_graph: Graph, dataset: Dataset
-) -> Graph:
-    """Creates a system graph for a content graph and populates it with inferred data"""
-    system_graph = dataset.graph(identifier=f"system{uuid.uuid4()}:")
-    # create ID
+def create_id(content_graph: Graph, system_graph: Graph, uri: str) -> str:
+    """Creates an ID if doesn't exist & checks for uniqueness"""
+    # either get ID or generate one if none exists
     r = content_graph.query(
         f"""
         PREFIX dcterms: <{DCTERMS}>
@@ -146,7 +143,7 @@ def create_system_graph(
             ?c dcterms:identifier ?id .
         }}
         WHERE {{
-            BIND (<{graph_uri}> as ?c)
+            BIND (<{uri}> as ?c)
             OPTIONAL {{
                 ?c dcterms:identifier ?given_id .
             }}
@@ -156,9 +153,8 @@ def create_system_graph(
     """
     )
 
-    # check generated ID is unique, else add a 1 to the end (attempt once)
-    system_graph.parse(r.serialize(format="turtle"))
-    r = system_graph.query(
+    # get generated id as variable
+    r2 = r.graph.query(
         f"""
         PREFIX dcterms: <{DCTERMS}>
         SELECT ?id
@@ -167,14 +163,48 @@ def create_system_graph(
         }}
     """
     )
-    id = str(r.bindings[0]["id"])
-    if id in id_dict.values():
-        id += "1"
-    if id in id_dict.values():
-        raise Exception("Can't generate unique ID")
-    
+    id = r2.bindings[0]["id"]
+
+    # check for uniqueness, retry once by adding a "1" to the id
+    retries = 0
+    while retries < 2:
+        # check that ID is unique
+        if id not in id_dict.values():
+            break
+
+        retries += 1
+        if retries == 2:
+            raise Exception(f"Unable to generate unique ID for {uri}")
+        id += 1
+
+    # add ID to system graph
+    system_graph.add((URIRef(uri), DCTERMS.identifier, id))
+
     # update ID dict
-    id_dict[graph_uri] = id
+    id_dict[uri] = id
+
+    return id
+
+
+def create_system_graph(
+    graph_uri: str, content_graph: Graph, dataset: Dataset
+) -> Graph:
+    """Creates a system graph for a content graph and populates it with inferred data"""
+    system_graph = dataset.graph(identifier=f"system:{uuid.uuid4()}")
+
+    # generate IDs for vocabs, concepts & collections
+    r = content_graph.query(
+        f"""
+        PREFIX skos: <{SKOS}>
+        SELECT ?s
+        WHERE {{
+            ?s a ?o .
+            FILTER (?o IN (skos:ConceptScheme, skos:Concept, skos:Collection)) .
+        }}
+    """
+    )
+    for binding in r.bindings:
+        s_id = create_id(content_graph, system_graph, binding["s"])
 
     # broader/narrower & hastopconcept/topconceptof/inscheme
     dataset.update(
@@ -252,12 +282,23 @@ def get_modified_vocabs(local_vocabs: Dict[str, str]) -> List[str]:
         if len(g_remote) == 0:  # remote vocab doesn't exist
             continue
 
+        # accounts for bnodes
+        g_remote_str = to_isomorphic(g_remote).serialize(format="turtle")
+        # re-parsed as namespace order is not guaranteed
+        remote = Graph().parse(data=g_remote_str, format="turtle")
+
         with open(filename, "rb") as f:
             g_local = Graph().parse(f.read(), format="turtle")
+        # accounts for bnodes
+        g_local_str = to_isomorphic(g_local).serialize(format="turtle")
+        # tags that get omitted in remote version
+        g_local_str = g_local_str.replace("@en", "")
+        g_local_str = g_local_str.replace("^^xsd:string", "")
+        # re-parsed as namespace order is not guaranteed
+        local = Graph().parse(data=g_local_str, format="turtle")
 
-        # the same graph if triple count of the union is the same
-        # if not len(g_local) == len(g_remote) == len(g_local + g_remote):
-        if not to_isomorphic(g_remote) == to_isomorphic(g_local):
+        # compare graphs are equal
+        if not isomorphic(remote, local):
             modified.append(uri)
     return modified
 
@@ -268,6 +309,7 @@ if __name__ == "__main__":
         sparql_update("CREATE GRAPH <system:>")
         sparql_update("CREATE GRAPH <background:>")
 
+        # add ontology files to <background:> graph
         for ont_file in Path(__file__).parent.parent.glob("ontologies/**/*.ttl"):
             with open(ont_file, "rb") as f:
                 sparql_insert_graph("background:", f.read())
@@ -288,7 +330,7 @@ if __name__ == "__main__":
         result["content"]["value"]: result["system"]["value"] for result in r
     }
 
-    # query DB for all IDs, store in python dict
+    # query DB for all IDs, store in dict for uniqueness checking
     r = sparql_query(
         f"""
         PREFIX dcterms: <{DCTERMS}>
@@ -301,7 +343,7 @@ if __name__ == "__main__":
     id_dict = {result["content"]["value"]: result["id"]["value"] for result in r}
 
     # check if id dict has distinct values
-    assert len(set(id_dict.values())) == len(id_dict.values()), "ID dict has duplicates"
+    assert len(set(id_dict.values())) == len(id_dict.values()), "Found duplicate IDs"
 
     # gets remote & local vocabs
     remote_vocabs = get_remote_vocabs()

@@ -54,7 +54,7 @@ def query_by_graph(query: str, graph: str, include_inferencing: bool):
         """
 
 
-async def get_scheme_construct(
+async def get_scheme_construct1(
     scheme_id: Optional[str] = None,
     scheme_uri: Optional[str] = None,
     include_inferencing: bool = True,
@@ -76,9 +76,12 @@ async def get_scheme_construct(
     # data which may contain inferencing
     query_in_graph = f"""
         ?cs ?p1 ?o1 .
-        ?c skos:inScheme ?cs ;
-            a skos:Concept ;
-            ?p2 ?o2 .
+        OPTIONAL {{
+            ?c skos:broader ?broader .
+        }}
+        OPTIONAL {{
+            ?c skos:narrower ?narrower .
+        }}
     """
 
     q = f"""
@@ -89,10 +92,6 @@ async def get_scheme_construct(
             ?cs ?p1 ?o1 .
             ?p1 rdfs:label ?p1Label .
             ?o1 rdfs:label ?o1Label .
-
-            ?c ?p2 ?o2 .
-            ?p2 rdfs:label ?p2Label .
-            ?o2 rdfs:label ?o2Label .
         }}
         WHERE {{
             {query_by_id if scheme_id is not None else query_by_uri}
@@ -105,14 +104,64 @@ async def get_scheme_construct(
                 ?o1 rdfs:label ?o1Label .
                 FILTER(lang(?o1Label) = "" || lang(?o1Label) = "en")
             }}
-            OPTIONAL {{
-                ?p2 rdfs:label ?p2Label .
-                FILTER(lang(?p2Label) = "" || lang(?p2Label) = "en")
-            }}
-            OPTIONAL {{
-                ?o2 rdfs:label ?o2Label .
-                FILTER(lang(?o2Label) = "" || lang(?o2Label) = "en")
-            }}
+        }}
+    """
+    r = await sparql_construct(q)
+    if r[0]:
+        return r[1]
+    else:
+        raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
+
+
+async def get_scheme_construct2(
+    scheme_id: Optional[str] = None,
+    scheme_uri: Optional[str] = None,
+    include_inferencing: bool = True,
+):
+    if scheme_id is None and scheme_uri is None:
+        raise ValueError("Either an ID or a URI must be provided for a SPARQL query")
+
+    # when querying by ID via regular URL path
+    query_by_id = f"""
+        ?cs dcterms:identifier ?cs_id ;
+            a skos:ConceptScheme .
+        FILTER (STR(?cs_id) = "{scheme_id}")
+    """
+    # when querying by URI via /object?uri=...
+    query_by_uri = f"""
+        BIND (<{scheme_uri}> as ?cs)
+        ?cs a skos:ConceptScheme .
+    """
+    # data which may contain inferencing
+    query_in_graph = f"""
+        ?c skos:inScheme ?cs ;
+            a skos:Concept ;
+            dcterms:identifier ?c_id ;
+            ?label_pred ?c_label .
+        FILTER (?label_pred IN (skos:prefLabel, dcterms:title, rdfs:label))
+        OPTIONAL {{
+            ?c skos:broader ?broader .
+        }}
+        OPTIONAL {{
+            ?c skos:narrower ?narrower .
+        }}
+    """
+
+    q = f"""
+        PREFIX dcterms: <{DCTERMS}>
+        PREFIX rdfs: <{RDFS}>
+        PREFIX skos: <{SKOS}>
+        CONSTRUCT {{
+            ?c skos:inScheme ?cs ;
+                a skos:Concept ;
+                dcterms:identifier ?c_id ;
+                ?label_pred ?c_label ;
+                skos:broader ?broader ;
+                skos:narrower ?narrower .
+        }}
+        WHERE {{
+            {query_by_id if scheme_id is not None else query_by_uri}
+            {query_by_graph(query_in_graph, "?cs", include_inferencing)}
         }}
     """
     r = await sparql_construct(q)
@@ -249,7 +298,7 @@ async def get_dataset_construct():
         raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
 
 
-async def get_collection_construct(
+async def get_collection_construct1(
     collection_id: Optional[str] = None,
     collection_uri: Optional[str] = None,
     include_inferencing: bool = True,
@@ -270,12 +319,7 @@ async def get_collection_construct(
     """
     # data which may contain inferencing
     query_in_graph = f"""
-        ?coll skos:member ?c ;
-            ?p1 ?o1 .
-        ?c skos:inScheme ?cs ;
-            a skos:Concept ;
-            ?p2 ?o2 .
-        ?cs ?p3 ?o3 .
+        ?coll ?p1 ?o1 .
     """
 
     q = f"""
@@ -286,14 +330,6 @@ async def get_collection_construct(
             ?coll ?p1 ?o1 .
             ?p1 rdfs:label ?p1Label .
             ?o1 rdfs:label ?o1Label .
-
-            ?c ?p2 ?o2 .
-            ?p2 rdfs:label ?p2Label .
-            ?o2 rdfs:label ?o2Label .
-
-            ?cs ?p3 ?o3 .
-            ?p3 rdfs:label ?p3Label .
-            ?o3 rdfs:label ?o3Label .
         }}
         WHERE {{
             {query_by_id if collection_id is not None else query_by_uri}
@@ -306,22 +342,62 @@ async def get_collection_construct(
                 ?o1 rdfs:label ?o1Label .
                 FILTER(lang(?o1Label) = "" || lang(?o1Label) = "en")
             }}
-            OPTIONAL {{
-                ?p2 rdfs:label ?p2Label .
-                FILTER(lang(?p2Label) = "" || lang(?p2Label) = "en")
-            }}
-            OPTIONAL {{
-                ?o2 rdfs:label ?o2Label .
-                FILTER(lang(?o2Label) = "" || lang(?o2Label) = "en")
-            }}
-            OPTIONAL {{
-                ?p3 rdfs:label ?p3Label .
-                FILTER(lang(?p3Label) = "" || lang(?p3Label) = "en")
-            }}
-            OPTIONAL {{
-                ?o3 rdfs:label ?o3Label .
-                FILTER(lang(?o3Label) = "" || lang(?o3Label) = "en")
-            }}
+        }}
+    """
+    r = await sparql_construct(q)
+    if r[0]:
+        return r[1]
+    else:
+        raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
+
+
+async def get_collection_construct2(
+    collection_id: Optional[str] = None,
+    collection_uri: Optional[str] = None,
+    include_inferencing: bool = True,
+):
+    if collection_id is None and collection_uri is None:
+        raise ValueError("Either an ID or a URI must be provided for a SPARQL query")
+
+    # when querying by ID via regular URL path
+    query_by_id = f"""
+        ?coll dcterms:identifier ?coll_id ;
+            a skos:Collection .
+        FILTER (STR(?coll_id) = "{collection_id}")
+    """
+    # when querying by URI via /object?uri=...
+    query_by_uri = f"""
+        BIND (<{collection_uri}> as ?coll)
+        ?coll a skos:Collection .
+    """
+    # data which may contain inferencing
+    query_in_graph = f"""
+        ?coll skos:member ?c .
+        ?c skos:inScheme ?cs ;
+            a skos:Concept ;
+            dcterms:identifier ?c_id ;
+            ?label_pred ?c_label .
+        FILTER (?label_pred IN (skos:prefLabel, dcterms:title, rdfs:label))
+        ?cs a skos:ConceptScheme ;
+            dcterms:identifier ?cs_id .
+    """
+
+    q = f"""
+        PREFIX dcterms: <{DCTERMS}>
+        PREFIX rdfs: <{RDFS}>
+        PREFIX skos: <{SKOS}>
+        CONSTRUCT {{
+            ?c skos:inScheme ?cs ;
+                a skos:Concept ;
+                dcterms:identifier ?c_id ;
+                ?label_pred ?c_label .
+
+            ?cs a skos:ConceptScheme ;
+                dcterms:identifier ?cs_id .
+        }}
+        WHERE {{
+            {query_by_id if collection_id is not None else query_by_uri}
+            {query_in_graph}
         }}
     """
     r = await sparql_construct(q)

@@ -108,9 +108,11 @@ class VocPrezCollectionRenderer(Renderer):
                 ?coll a skos:Collection ;
                     skos:prefLabel ?label ;
                     skos:definition ?def ;
-                    ?prov_pred ?prov ;
                     skos:member ?c .
-                FILTER (?prov_pred IN (dcterms:provenance, dcterms:source, prov:wasDerivedFrom))
+                OPTIONAL {{
+                    ?coll ?prov_pred ?prov .
+                    FILTER (?prov_pred IN (dcterms:provenance, dcterms:source, prov:wasDerivedFrom))
+                }}
                 ?c a skos:Concept ;
                     skos:prefLabel ?c_label .
             }}
