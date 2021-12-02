@@ -5,7 +5,7 @@
 
 {% if active_prez == "VocPrez" %}
     {% set pagetitle = system_info.VocPrez.title %}
-{% else %} <!-- Prez --> 
+{% else %} {# Prez #} 
     {% if system_info.Prez.title is not none %}
         {% set pagetitle = system_info.Prez.title %}
     {% else %}

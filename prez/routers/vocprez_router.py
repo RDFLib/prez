@@ -1,4 +1,6 @@
 from fastapi import APIRouter, Request, HTTPException
+from rdflib import Graph
+from rdflib.namespace import RDF
 import asyncio
 
 from renderers.vocprez import *
@@ -96,7 +98,7 @@ async def scheme_endpoint(
 
     sparql_result = Graph()
     for g in results:
-        sparql_result.parse(data=g.serialize(format="turtle"))
+        sparql_result.parse(data=g.serialize(format="turtle"), format="turtle")
 
     if len(sparql_result) == 0:
         raise HTTPException(status_code=404, detail="Not Found")
@@ -151,7 +153,7 @@ async def collection_endpoint(
 
     sparql_result = Graph()
     for g in results:
-        sparql_result.parse(data=g.serialize(format="turtle"))
+        sparql_result.parse(data=g.serialize(format="turtle"), format="turtle")
 
     if len(sparql_result) == 0:
         raise HTTPException(status_code=404, detail="Not Found")
