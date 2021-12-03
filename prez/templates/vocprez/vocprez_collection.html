@@ -1,0 +1,62 @@
+{% extends "_page.html" %}
+{% from "_macros.html" import render_predicate, render_predicate_o, render_object, render_concept_list with context %}
+{% set prezs = "ENABLED_PREZS" | get_config %}
+{% set has_alt = true %}
+
+{% if prezs | length == 1 %}
+    {% set breadcrumbs = [
+        {"label": "Collections", "url": url_for("collections")},
+        {"label": collection.title, "url": url_for("collection", collection_id=collection.id)}
+    ] %}
+    {% set main_active_page = "collections" %}
+{% else %}
+    {% set breadcrumbs = [
+        {"label": "VocPrez", "url": url_for("dataset")},
+        {"label": "Collections", "url": url_for("collections")},
+        {"label": collection.title, "url": url_for("collection", collection_id=collection.id)}
+    ] %}
+{% endif %}
+
+{% set active_prez = "VocPrez" %}
+{% set vocprez_active_page = "collections" %}
+
+{% block content %}
+<div id="content-col-main">
+    <h1>
+        {% if collection.title is not none %}
+            {{ collection.title }}
+        {% else %}
+            Collection title
+        {% endif %}
+    </h1>
+    <p>Instance URI: <a href="{{ uri }}">{{ collection.uri }}</a> <small><a href="{{ collection.uri }}" target="_blank"><i class="far fa-external-link"></i></a></small></p>
+    {% if collection.description is not none %}
+        <div>
+            <p>{{ collection.description }}</p>
+        </div>
+    {% endif %}
+    <div class="table-wrapper">
+        <table class="props-table">
+            <tbody>
+                {% for prop in collection.properties %}
+                    <tr>
+                        <th>{{ render_predicate(prop) }}</th>
+                        <td>{{ render_object(prop) }}</td>
+                    </tr>
+                {% endfor %}
+                <tr>
+                    <th>Concepts</th>
+                    <td>
+                        {% for concept in collection.concepts | sort(attribute = "label") %}
+                            {{ render_concept_list(concept) }}
+                        {% endfor %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<div id="content-col-sidebar">
+    {% include "alt_link.html" %}
+</div>
+{% endblock %}

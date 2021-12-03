@@ -1,0 +1,113 @@
+{% extends "_page.html" %}
+
+{% set breadcrumbs = [
+    {"label": "SPARQL", "url": url_for("sparql_get")}
+] %}
+{% set main_active_page = "sparql" %}
+
+{% block content %}
+<div id="content-col-main">
+    <h1>SPARQL Endpoint</h1>
+    <p>
+        This page allows you to lodge SPARQL queries against the triplestore (graph database) that stores all of this systems' vocabularies'. 
+    </p>
+    <h2>Interactive UI</h2>
+    <p>
+        Enter SPARQL queries in the text box below to lodge them interactively:
+    </p>
+    <div id="yasgui"></div>
+    <h2>Example Queries</h2>
+    <h3>Concept Count</h3>
+    <p>
+        Here is an example query you can copy 'n paste into the Query UI text area above to test with. It counts the number of vocabulary Concepts in the all vocabularies in this system and will return an integer: 
+    </p>
+    <pre>
+PREFIX skos: &lt;http://www.w3.org/2004/02/skos/core#&gt;
+
+SELECT (COUNT(?c) AS ?count)
+WHERE {
+    ?c a skos:Concept .
+}
+    </pre>
+    <h3>Concepts</h3>
+    <p>
+        Here is another example. It returns the URI and prefLabel(s) of 5 random Concepts on this system: 
+    </p>
+    <pre>
+PREFIX skos: &lt;http://www.w3.org/2004/02/skos/core#&gt;
+
+SELECT ?c ?pl
+WHERE {
+?c a skos:Concept ;
+    skos:prefLabel ?pl .
+}
+LIMIT 5
+    </pre>
+    <h3>Direct Querying</h3>
+    <p>
+        This query returns a sorted list of ConceptSchemes' (vocabularies) URIs and their titles (prefLabels): 
+    </p>
+    <pre>
+PREFIX skos: &lt;http://www.w3.org/2004/02/skos/core#&gt;
+
+SELECT ?c ?pl
+WHERE {
+?c a skos:ConceptScheme ;
+    skos:prefLabel ?pl .
+}
+ORDER BY ?pl
+    </pre>
+    <h2>Direct Queries</h2>
+    <p>
+        If you would like to lodge queries directly against this SPARQL endpoint without using the Query UI above, first create the query, URL-encode it, and lodge it like this: 
+    </p>
+    <pre>{{ url_for('sparql_get') }}?query={YOUR_QUERY_URL_ENCODED}</pre>
+    <h3>Machine-readable responses</h3>
+    <p>
+        If you lodge your query as above with a web browser, the system will place it in the interactive UI text area (above) and you will see the result below that.
+    </p>
+    <p>
+        To obtain a machine-readable response to your query, you must supply an HTTP Accept header for the type of response you would like, in accordance with the <a href="https://www.w3.org/TR/sparql11-protocol/" target="_blank" rel="noopener noreferrer">SPARQL Protocol standard</a>.
+    </p>
+    <p>
+        For example, to get a SPARQL JSON format response for <code>{YOUR_QUERY_URL_ENCODED}</code>, use the <a href="https://curl.haxx.se/" target="_blank" rel="noopener noreferrer">curl</a> program like this:
+    </p>
+    <pre>curl {{ url_for('sparql_get') }}?query={YOUR_QUERY_URL_ENCODED} -H 'Accept: application/sparql-results+json'</pre>
+    <h4>SPARQL response Accept Headers</h4>
+    <p>The following Media Types are to be used for machine-readable responses:</p>
+    <ul>
+        <li>SPARQL response formats:</li>
+        <ul>
+            <li><code>application/sparql-results+json</code></li>
+            <li><code>text/csv</code></li>
+            <li><code>text/tab-separated-values</code></li>
+        </ul>
+        <li>RDF response formats: </li>
+        <ul>
+            <li><code>text/turtle</code></li>
+            <li><code>application/rdf+xml</code></li>
+            <li><code>application/ld+json</code></li>
+            <li><code>text/n3</code></li>
+            <li><code>application/n-triples</code></li>
+        </ul>
+    </ul>
+    <p>
+        If you omit one of the above headers, your query will be placed into this page and the result displayed interactively.
+    </p>
+    <p>
+        If the header you've included doesn't match the format of the SPARQL response type, you will receive that response type's default format, e.g. <code>text/turtle</code> for <code>CONSTRUCT</code> queries, <code>application/sparql-results+json</code> for SELECT queries.
+    </p>
+    <h4>GET & POST queries</h4>
+    <p>
+        You can lodge both <code>GET</code> and <code>POST</code> queries against this system, as per the <a href="https://www.w3.org/TR/sparql11-protocol/" target="_blank" rel="noopener noreferrer">SPARQL Protocol standard</a>.
+    </p>
+    <link href="https://unpkg.com/@triply/yasgui/build/yasgui.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://unpkg.com/@triply/yasgui/build/yasgui.min.js"></script>
+    <script type="text/javascript">
+        const yasgui = new Yasgui(document.getElementById("yasgui"), {
+            requestConfig: { endpoint: "{{ url_for('sparql_post') }}" },
+            copyEndpointOnNewTab: false,
+        });
+    </script>    
+</div>
+{% endblock %}

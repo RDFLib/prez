@@ -1,0 +1,33 @@
+// root variables for overriding
+:root {
+    // colours
+    --primary: #55828B;
+    --secondary: #CD4631;
+    --tertiary: #CD4631;
+    --link: var(--secondary);
+    --link-hover: #e4553f;
+    --btn: var(--secondary);
+    --btn-hover: #e4553f;
+    --nav-color: var(--primary);
+    --header-bg: #364958;
+    --footer-bg: #E6E8E6;
+    --container-direction: column;
+    --main-nav-direction: row;
+    --table-row-bg: #eeeeee;
+
+    // sizing
+    --page-max-width: 1000px;
+
+    // fonts
+    --body-font: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    --heading-font: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+// breakpoints
+$sm-breakpoint: 375px;
+$m-breakpoint: 550px;
+$lg-breakpoint: 900px;
+$xl-breakpoint: 1300px;
+
+// sizing
+$sidenav-width: 200px;

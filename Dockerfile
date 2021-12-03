@@ -1,13 +1,15 @@
-FROM python:3.9.6-slim-buster
+FROM python:3.8.10-slim-buster
+RUN apt -y update && apt -y install git
 
-WORKDIR /usr/app
+WORKDIR /app
+COPY ./Prez/ ./Prez/
+COPY ./Connegp/ ./Connegp/
+COPY ./vocprez-fedsearch/ ./vocprez-fedsearch/
 
-EXPOSE 5000
+WORKDIR /app/Prez
+RUN pip3 install poetry --no-cache
+RUN poetry config virtualenvs.create false && poetry install --no-dev
 
-COPY requirements.txt .
-
-RUN pip install -U pip
-RUN pip install -r requirements.txt
-
-COPY ./vocprez ./vocprez
-
+WORKDIR /app/Prez/prez
+EXPOSE 8000
+CMD ["uvicorn", "app:app", "--host=0.0.0.0", "--port=8000"]

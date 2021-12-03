@@ -1,0 +1,18 @@
+<div id="alt">
+    <h3>Alternate Profiles</h3>
+    <p>View alternate views & formats:</p>
+    <a href="{{ uri | append_qsa({'_profile': 'alt'}) }}">Alternate Profiles</a>
+    <div id="alt-quick-container">
+        <h4>Quick Links for Alt Profiles:</h4>
+        {% for profile in profiles.values() %}
+            <div class="alt-quick">
+                <div class="alt-quick-title"><a href="{{ uri | append_qsa({'_profile': profile.id}) }}">{{ profile.label }}</a></div>
+                <div class="alt-quick-link">
+                    {% for mediatype in profile.mediatypes %}
+                        <a href="{{ uri | append_qsa({'_profile': profile.id, '_mediatype': mediatype}) }}">{{ mediatype_names[mediatype] }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>

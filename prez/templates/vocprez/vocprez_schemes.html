@@ -1,0 +1,35 @@
+{% extends "_page.html" %}
+{% set prezs = "ENABLED_PREZS" | get_config %}
+{% set has_alt = true %}
+
+{% if prezs | length == 1 %}
+    {% set breadcrumbs = [
+        {"label": "Vocabs", "url": url_for("schemes")}
+    ] %}
+    {% set main_active_page = "vocabs" %}
+{% else %}
+    {% set breadcrumbs = [
+        {"label": "VocPrez", "url": url_for("dataset")},
+        {"label": "Vocabs", "url": url_for("schemes")}
+    ] %}
+{% endif %}
+
+{% set active_prez = "VocPrez" %}
+{% set vocprez_active_page = "vocabs" %}
+
+{% block content %}
+<div id="content-col-main">
+    <h1>{{ label }}</h1>
+    <p>{{ comment }}</p>
+    <div>
+        <ul>
+            {% for member in members %}
+                <li><a href="{{ url_for('scheme', scheme_id=member.id) }}">{{ member.title }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+<div id="content-col-sidebar">
+    {% include "alt_link.html" %}
+</div>
+{% endblock %}

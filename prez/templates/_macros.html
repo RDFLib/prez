@@ -1,0 +1,82 @@
+{% macro render_predicate(prop) %}
+    {% if prop.label is not none %}
+        <a href="{{ prop.uri }}">{{ prop.label | title }}</a>
+    {% else %}
+        {% if prop.prefix is not none %}
+            <a href="{{ prop.uri }}">{{ prop.prefix }}</a>
+        {% else %}
+            <a href="{{ prop.uri }}">{{ prop.label }}</a>
+        {% endif %}
+    {% endif %}
+{% endmacro %}
+
+{% macro render_predicate_o(prop) %}
+    {% for object in prop.objects %}
+        {% if object.label is not none %}
+            <a href="{{ object.value }}">{{ object.label }}</a>
+        {% else %}
+            {% if object.prefix is not none %}
+                <a href="{{ object.value }}">{{ object.prefix }}</a>
+            {% else %}
+                <a href="{{ object.value }}">{{ object.value }}</a>
+            {% endif %}
+        {% endif %}
+        <br/>
+    {% endfor %}
+{% endmacro %}
+
+{% macro render_object(prop) %}
+    {% for object in prop.objects %}
+        {% if object.label is not none %}
+            <a href="{{ object.value }}">{{ object.label }}</a>
+        {% else %}
+            {{ object.value }}
+        {% endif %}
+        <br/>
+    {% endfor %}
+{% endmacro %}
+
+{% macro render_concept_hierarchy(scheme_id, concept_uri, concept_props) %}
+    <li>
+        <a href="{{ url_for('scheme', scheme_id=scheme_id) }}/{{ concept_props.id }}">{{ concept_props.label }}</a>
+    </li>
+    {% if concept_props.narrower %}
+        <li>
+            <ol style="list-style: none; padding-left: 20px;">
+                {% for child_uri, child_props in concept_props.narrower.items() | sort(attribute = "1.label") %}
+                    {{ render_concept_hierarchy(scheme_id, child_uri, child_props) }}
+                {% endfor %}
+            </ol>
+        </li>
+    {% endif %}
+{% endmacro %}
+
+{% macro render_concept_list(concept) %}
+    <a href="{{ url_for('scheme', scheme_id=concept.scheme_id) }}/{{ concept.id }}">{{ concept.label }}</a>
+    <br/>
+{% endmacro %}
+
+{% macro render_search_result(result) %}
+    {% set base_url = result.sys.value.split('/sparql')[0] %}
+    {% set is_self = base_url in request.url | string %}
+    <div class="search-result">
+        <div class="search-result-header">
+            <a class="search-result-title" href="{{ base_url }}/object?uri={{ result.uri.value }}"{% if not is_self %} target="_blank"{% endif %}>{{ result.pl.value }}</a>
+            {% if is_self %}
+                <a class="search-result-instance" href="{{ base_url }}">Self</a>
+            {% else %}
+                {% for endpoint in endpoint_options %}
+                    {% if base_url in endpoint["url"] %}
+                        <a class="search-result-instance" href="{{ base_url }}" target="_blank">{{ endpoint["name"] }}</a>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </div>
+        <div class="search-result-body">
+            <div>
+                <a class="search-result-vocab" href="{{ base_url }}/object?uri={{ result.g.value }}"{% if not is_self %} target="_blank"{% endif %}>Vocab</a>
+            </div>
+            <div class="search-result-desc">desc</div>    
+        </div>
+    </div>
+{% endmacro %}

@@ -1,0 +1,31 @@
+{% extends "vocprez/_vocprez_page.html" %}
+{% from "_macros.html" import render_predicate, render_predicate_o, render_object %}
+
+{% block vocprez_content %}
+<h1>
+    {% if dataset.title is not none %}
+        {{ dataset.title }}
+    {% else %}
+        Dataset title
+    {% endif %}
+</h1>
+<p>Instance URI: <a href="{{ uri }}">{{ dataset.uri }}</a><small><a href="{{ dataset.uri }}">(ext link)</a></small></p>
+{% if dataset.description is not none %}
+    <div>
+        <p>{{ dataset.description }}</p>
+    </div>
+{% endif %}
+<table>
+    <tbody>
+        {% for prop in dataset.properties %}
+            <tr>
+                <th>{{ render_predicate(prop) }}</th>
+                <td>{{ render_object(prop) }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="{{ url_for('schemes') }}">Concept Schemes</a>
+<a href="{{ url_for('collections') }}">Collections</a>
+{% include "alt_link.html" %}
+{% endblock %}

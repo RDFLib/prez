@@ -1,0 +1,64 @@
+{% extends "_page.html" %}
+{% from "_macros.html" import render_predicate, render_predicate_o, render_object, render_concept_hierarchy with context %}
+{% set prezs = "ENABLED_PREZS" | get_config %}
+{% set has_alt = true %}
+
+{% if prezs | length == 1 %}
+    {% set breadcrumbs = [
+        {"label": "Vocabs", "url": url_for("schemes")},
+        {"label": scheme.title, "url": url_for("scheme", scheme_id=scheme.id)}
+    ] %}
+    {% set main_active_page = "vocabs" %}
+{% else %}
+    {% set breadcrumbs = [
+        {"label": "VocPrez", "url": url_for("dataset")},
+        {"label": "Vocabs", "url": url_for("schemes")},
+        {"label": scheme.title, "url": url_for("scheme", scheme_id=scheme.id)}
+    ] %}
+{% endif %}
+
+{% set active_prez = "VocPrez" %}
+{% set vocprez_active_page = "vocabs" %}
+
+{% block content %}
+<div id="content-col-main">
+    <h1>
+        {% if scheme.title is not none %}
+            {{ scheme.title }}
+        {% else %}
+            ConceptScheme title
+        {% endif %}
+    </h1>
+    <p>Instance URI: <a href="{{ uri }}">{{ scheme.uri }}</a> <small><a href="{{ scheme.uri }}" target="_blank"><i class="far fa-external-link"></i></a></small></p>
+    {% if scheme.description is not none %}
+        <div>
+            <p>{{ scheme.description }}</p>
+        </div>
+    {% endif %}
+    <div class="table-wrapper">
+        <table class="props-table">
+            <tbody>
+                {% for prop in scheme.properties %}
+                    <tr>
+                        <th>{{ render_predicate(prop) }}</th>
+                        <td>{{ render_object(prop) }}</td>
+                    </tr>
+                {% endfor %}
+                <tr>
+                    <th>Concepts</th>
+                    <td>
+                        <ol style="list-style: none; padding-left: 0px;">
+                            {% for concept_uri, concept_props in scheme.concepts.items() | sort(attribute = "1.label") %}
+                                {{ render_concept_hierarchy(scheme.id, concept_uri, concept_props) }}
+                            {% endfor %}
+                        </ol>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<div id="content-col-sidebar">
+    {% include "alt_link.html" %}
+</div>
+{% endblock %}

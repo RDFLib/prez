@@ -1,0 +1,56 @@
+{% set prezs = "ENABLED_PREZS" | get_config %}
+{% set system_info = "SYSTEM_INFO" | get_config %}
+{% set is_sidenav = "SIDENAV" | get_config %}
+{% set theme_volume = "THEME_VOLUME" | get_config %}
+
+{% if active_prez == "VocPrez" %}
+    {% set pagetitle = system_info.VocPrez.title %}
+{% else %} {# Prez #} 
+    {% if system_info.Prez.title is not none %}
+        {% set pagetitle = system_info.Prez.title %}
+    {% else %}
+        {% set pagetitle = "Prez" %}
+    {% endif %}
+{% endif %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="{{ url_for('static', path='img/favicon.ico') }}" type="image/x-icon">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/index.css') }}">
+    {% if theme_volume is not none %}
+        <link rel="shortcut icon" href="{{ url_for(theme_volume, path='img/favicon.ico') }}" type="image/x-icon">
+        <link rel="stylesheet" href="{{ url_for(theme_volume, path='css/theme.css') }}">
+        {% include "fonts.html" ignore missing %}
+    {% endif %}
+    <script src="https://kit.fontawesome.com/c112c4b9c0.js" crossorigin="anonymous"></script>
+    <title>{{ pagetitle }}</title>
+</head>
+<body>
+    {% include "header.html" %}
+    {% include "breadcrumbs.html" %}
+    <div id="mobile-header">
+        <button class="nav-toggle"><i class="far fa-bars"></i></button>
+        <div id="mobile-title">{{ pagetitle }}</div>
+        {% if has_alt %}<button class="alt-toggle">Alt</button>{% endif %}
+    </div>
+    <main>
+        <div id="container" class="{% if is_sidenav %}has-colnav{% else %}has-rownav{% endif %}">
+            <div id="lightbox"></div>
+            {% include "nav.html" %}
+            <div id="content">
+                {% block content %}
+                {% endblock %}
+            </div>
+        </div>
+    </main>
+    {% include "footer.html" %}
+    <script src="{{ url_for('static', path='js/script.js') }}"></script>
+    {% if theme_volume is not none %}
+        <script src="{{ url_for(theme_volume, path='js/script.js') }}"></script>
+    {% endif %}
+</body>
+</html>

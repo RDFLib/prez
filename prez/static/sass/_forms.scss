@@ -1,0 +1,32 @@
+input:not([type="submit"]), select, textarea {
+    padding: 8px;
+    border: 1px solid var(--footer-bg);
+    outline: none;
+    transition: border-color 0.2s ease-in-out;
+
+    &:focus-visible {
+        border: 1px solid var(--primary);
+        outline: none;
+    }
+}
+
+option {
+    padding: 6px;
+}
+
+select#endpoints {
+    padding: 0;
+}
+
+#search-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 350px;
+    width: 100%;
+}
+
+.form-text {
+    color: grey;
+    font-size: 12px;
+}
