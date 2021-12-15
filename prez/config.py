@@ -30,7 +30,7 @@ SYSTEM_INFO = json.loads(os.environ.get("SYSTEM_INFO", '''{
 DEBUG = os.environ.get("DEBUG", True)
 DEMO = os.environ.get("DEMO", True)
 SPARQL_ENDPOINT = os.environ.get(
-    "SPARQL_ENDPOINT", "http://localhost:7200/repositories/vocprez-test"
+    "SPARQL_ENDPOINT", "http://localhost:3030/surround-vocabs"
 )
 SPARQL_USERNAME = os.environ.get("SPARQL_USERNAME", "")
 SPARQL_PASSWORD = os.environ.get("SPARQL_PASSWORD", "")

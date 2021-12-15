@@ -17,7 +17,7 @@ Then run `poetry install` in the root directory, `Prez/`.
 
 To simply run locally without configuration outside of Docker, run `python3 app.py` in the `Prez/prez/` directory.
 
-Prez is designed to run in a containerised environment. Configuring & theming Prez is done in [theme-template](../theme-template). Updating triplestore data (e.g. vocabs) is done in [vocabs-template](../vocabs-template). To deploy your own instance of Prez, fork both of the above repos & configure.
+Prez is designed to run in a containerised environment. Configuring & theming Prez is done by following [surround-prez-theme](https://github.com/surroundaustralia/surround-prez-theme). Updating triplestore data (e.g. vocabs) is done by following [surround-prez-vocabs](https://github.com/surroundaustralia/surround-prez-vocabs). To deploy your own instance of Prez, fork both of the above repos & configure.
 
 ## Dev Dependencies
 
