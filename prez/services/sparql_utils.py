@@ -37,7 +37,7 @@ async def sparql_construct(query: str):
             timeout=15.0,
         )
     if 200 <= response.status_code < 300:
-        return True, Graph().parse(data=response.text, format="turtle")
+        return True, Graph().parse(data=response.text)
     else:
         return False, response.status_code, response.text
 
