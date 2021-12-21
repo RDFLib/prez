@@ -1,5 +1,5 @@
 // breakpoints (px)
-const smBreakpoint = 375;
+const smBreakpoint = 420;
 
 // sizing
 const sidenavWidth = "200px";
@@ -129,6 +129,7 @@ window.onresize = () => {
 
         if (alt) {
             alt.style.width = "unset";
+            alt.style.height = "unset";
         }
 
         if (hasSideNav) {
@@ -137,6 +138,7 @@ window.onresize = () => {
             localStorage.setItem("navOpen", true);
         } else {
             nav.style.width = "auto";
+            nav.style.height = "unset";
             localStorage.setItem("navOpen", true);
         }
     }
@@ -153,7 +155,6 @@ document.onscroll = () => {
 
     if (isMobile) {
         if (window.scrollY >= mobileHeader.offsetTop) {
-            console.log("top");
             nav.style.top = `${mobileHeader.offsetTop + 35}px`;
             nav.style.height = `calc(100vh - 35px)`;
             lightbox.style.top = `${mobileHeader.offsetTop + 35}px`;
@@ -162,7 +163,7 @@ document.onscroll = () => {
                 alt.style.top = `${mobileHeader.offsetTop + 35}px`;
                 alt.style.height = `calc(100vh - 35px)`;
             }
-    
+
             mobileTitle.style.display = "block";
         } else {
             nav.style.top = "unset";
@@ -173,8 +174,58 @@ document.onscroll = () => {
                 alt.style.top = "unset";
                 alt.style.height = `calc(100vh + ${window.scrollY}px - ${mobileHeader.offsetTop}px - 35px)`;
             }
-    
+
             mobileTitle.style.display = "none";
         }
     }
 }
+
+// toggle collapse narrower concepts
+const conceptCollapse = document.querySelectorAll(".concept-collapse-btn");
+conceptCollapse.forEach(btn => {
+    btn.onclick = () => {
+        btn.parentElement.nextElementSibling.classList.toggle("expand");
+        btn.firstChild.classList.toggle("fa-minus");
+        btn.firstChild.classList.toggle("fa-plus");
+    }
+});
+
+// toggle expand all concepts
+const expandAll = document.querySelector("#expand-all");
+expandAll.onclick = () => {
+    const conceptCollapse = document.querySelectorAll(".concept-collapse-btn");
+    const narrower = document.querySelectorAll(".narrower");
+    const icon = document.querySelector("#expand-all-icon");
+    const text = document.querySelector("#expand-all-text");
+
+    if (expandAll.classList.contains("expand")) {
+        narrower.forEach(n => {
+            n.classList.remove("expand");
+        });
+
+        conceptCollapse.forEach(btn => {
+            btn.firstChild.classList.remove("fa-minus");
+            btn.firstChild.classList.add("fa-plus");
+        });
+
+        icon.classList.remove("fa-minus");
+        icon.classList.add("fa-plus");
+
+        text.innerHTML = "Expand all";
+    } else {
+        narrower.forEach(n => {
+            n.classList.add("expand");
+        });
+
+        conceptCollapse.forEach(btn => {
+            btn.firstChild.classList.remove("fa-plus");
+            btn.firstChild.classList.add("fa-minus");
+        });
+
+        icon.classList.remove("fa-plus");
+        icon.classList.add("fa-minus");
+        text.innerHTML = "Collapse all";
+    }
+
+    expandAll.classList.toggle("expand");
+};

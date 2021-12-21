@@ -189,6 +189,26 @@ pre {
     white-space: pre-wrap;
 }
 
+ol#concept-hierarchy {
+    list-style: none;
+    padding-left: 0px;
+
+    ol.narrower {
+        list-style: none;
+        padding-left: 0px;
+        margin-left: 24px;
+        display: none;
+
+        &.expand {
+            display: block;
+        }
+    }
+
+    li:not(.concept-collapse) {
+        margin-left: 24px;
+    }
+}
+
 @media screen and (max-width: $sm-breakpoint) {
     #content-col-sidebar {
         z-index: 95;

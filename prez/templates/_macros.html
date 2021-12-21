@@ -37,22 +37,23 @@
 {% endmacro %}
 
 {% macro render_concept_hierarchy(scheme_id, concept_uri, concept_props) %}
-    <li>
-        <a href="{{ url_for('scheme', scheme_id=scheme_id) }}/{{ concept_props.id }}">{{ concept_props.label }}</a>
+    <li {% if concept_props.narrower %}class="concept-collapse"{% endif %}>
+        {% if concept_props.narrower %}
+            <button class="concept-collapse-btn"><i class="far fa-plus"></i></button>
+        {% endif %}
+        <a href="{{ url_for('concept', scheme_id=scheme_id, concept_id=concept_props.id) }}">{{ concept_props.label }}</a>
     </li>
     {% if concept_props.narrower %}
-        <li>
-            <ol style="list-style: none; padding-left: 20px;">
-                {% for child_uri, child_props in concept_props.narrower.items() | sort(attribute = "1.label") %}
-                    {{ render_concept_hierarchy(scheme_id, child_uri, child_props) }}
-                {% endfor %}
-            </ol>
-        </li>
+        <ol class="narrower">
+            {% for child_uri, child_props in concept_props.narrower.items() | sort(attribute = "1.label") %}
+                {{ render_concept_hierarchy(scheme_id, child_uri, child_props) }}
+            {% endfor %}
+        </ol>
     {% endif %}
 {% endmacro %}
 
 {% macro render_concept_list(concept) %}
-    <a href="{{ url_for('scheme', scheme_id=concept.scheme_id) }}/{{ concept.id }}">{{ concept.label }}</a>
+    <a href="{{ url_for('concept', scheme_id=concept.scheme_id, concept_id=concept.id) }}">{{ concept.label }}</a>
     <br/>
 {% endmacro %}
 

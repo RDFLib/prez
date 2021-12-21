@@ -16,7 +16,7 @@
     --table-row-bg: #eeeeee;
 
     // sizing
-    --page-max-width: 1000px;
+    --page-max-width: 1200px;
 
     // fonts
     --body-font: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
@@ -24,8 +24,8 @@
 }
 
 // breakpoints
-$sm-breakpoint: 375px;
-$m-breakpoint: 550px;
+$sm-breakpoint: 420px;
+$m-breakpoint: 650px;
 $lg-breakpoint: 900px;
 $xl-breakpoint: 1300px;
 

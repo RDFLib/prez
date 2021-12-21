@@ -13,7 +13,7 @@
   --container-direction: column;
   --main-nav-direction: row;
   --table-row-bg: #eeeeee;
-  --page-max-width: 1000px;
+  --page-max-width: 1200px;
   --body-font: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   --heading-font: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -257,7 +257,24 @@ pre {
   white-space: pre-wrap;
 }
 
-@media screen and (max-width: 375px) {
+ol#concept-hierarchy {
+  list-style: none;
+  padding-left: 0px;
+}
+ol#concept-hierarchy ol.narrower {
+  list-style: none;
+  padding-left: 0px;
+  margin-left: 24px;
+  display: none;
+}
+ol#concept-hierarchy ol.narrower.expand {
+  display: block;
+}
+ol#concept-hierarchy li:not(.concept-collapse) {
+  margin-left: 24px;
+}
+
+@media screen and (max-width: 420px) {
   #content-col-sidebar {
     z-index: 95;
     position: absolute;
@@ -453,7 +470,7 @@ nav#main-nav-side.rownav .main-nav-item {
   margin-left: 20px;
 }
 
-@media screen and (max-width: 375px) {
+@media screen and (max-width: 420px) {
   nav#main-nav-side.rownav,
 nav#main-nav-side.colnav {
     flex-direction: column !important;
@@ -528,6 +545,15 @@ button.outline, .btn.outline {
 button.outline:hover, .btn.outline:hover {
   background-color: var(--btn);
   color: white;
+}
+
+button.concept-collapse-btn {
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  padding: 0;
+  background-color: transparent;
+  color: var(--btn);
 }
 
 input:not([type=submit]), select, textarea {

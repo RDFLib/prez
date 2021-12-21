@@ -47,7 +47,8 @@
                 <tr>
                     <th>Concepts</th>
                     <td>
-                        <ol style="list-style: none; padding-left: 0px;">
+                        <button id="expand-all"><i id="expand-all-icon" class="far fa-plus"></i> <span id="expand-all-text">Expand all</span></button>
+                        <ol id="concept-hierarchy">
                             {% for concept_uri, concept_props in scheme.concepts.items() | sort(attribute = "1.label") %}
                                 {{ render_concept_hierarchy(scheme.id, concept_uri, concept_props) }}
                             {% endfor %}
