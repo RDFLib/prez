@@ -154,7 +154,10 @@ document.onscroll = () => {
     const isMobile = localStorage.getItem("isMobile") === "true";
 
     if (isMobile) {
+        console.log("mobile scroll");
         if (window.scrollY >= mobileHeader.offsetTop) {
+            console.log(`mobileHeader.offsetTop=${mobileHeader.offsetTop}`);
+            console.log(`window.scrollY=${window.scrollY}`);
             nav.style.top = `${mobileHeader.offsetTop + 35}px`;
             nav.style.height = `calc(100vh - 35px)`;
             lightbox.style.top = `${mobileHeader.offsetTop + 35}px`;
@@ -191,7 +194,7 @@ conceptCollapse.forEach(btn => {
 });
 
 // toggle expand all concepts
-const expandAll = document.querySelector("#expand-all");
+const expandAll = document.querySelector("#expand-all"); // errors when null
 expandAll.onclick = () => {
     const conceptCollapse = document.querySelectorAll(".concept-collapse-btn");
     const narrower = document.querySelectorAll(".narrower");
