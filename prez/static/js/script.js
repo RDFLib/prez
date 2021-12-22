@@ -192,40 +192,42 @@ conceptCollapse.forEach(btn => {
 
 // toggle expand all concepts
 const expandAll = document.querySelector("#expand-all"); // errors when null
-expandAll.onclick = () => {
-    const conceptCollapse = document.querySelectorAll(".concept-collapse-btn");
-    const narrower = document.querySelectorAll(".narrower");
-    const icon = document.querySelector("#expand-all-icon");
-    const text = document.querySelector("#expand-all-text");
-
-    if (expandAll.classList.contains("expand")) {
-        narrower.forEach(n => {
-            n.classList.remove("expand");
-        });
-
-        conceptCollapse.forEach(btn => {
-            btn.firstChild.classList.remove("fa-minus");
-            btn.firstChild.classList.add("fa-plus");
-        });
-
-        icon.classList.remove("fa-minus");
-        icon.classList.add("fa-plus");
-
-        text.innerHTML = "Expand all";
-    } else {
-        narrower.forEach(n => {
-            n.classList.add("expand");
-        });
-
-        conceptCollapse.forEach(btn => {
-            btn.firstChild.classList.remove("fa-plus");
-            btn.firstChild.classList.add("fa-minus");
-        });
-
-        icon.classList.remove("fa-plus");
-        icon.classList.add("fa-minus");
-        text.innerHTML = "Collapse all";
-    }
-
-    expandAll.classList.toggle("expand");
-};
+if (expandAll) {
+    expandAll.onclick = () => {
+        const conceptCollapse = document.querySelectorAll(".concept-collapse-btn");
+        const narrower = document.querySelectorAll(".narrower");
+        const icon = document.querySelector("#expand-all-icon");
+        const text = document.querySelector("#expand-all-text");
+    
+        if (expandAll.classList.contains("expand")) {
+            narrower.forEach(n => {
+                n.classList.remove("expand");
+            });
+    
+            conceptCollapse.forEach(btn => {
+                btn.firstChild.classList.remove("fa-minus");
+                btn.firstChild.classList.add("fa-plus");
+            });
+    
+            icon.classList.remove("fa-minus");
+            icon.classList.add("fa-plus");
+    
+            text.innerHTML = "Expand all";
+        } else {
+            narrower.forEach(n => {
+                n.classList.add("expand");
+            });
+    
+            conceptCollapse.forEach(btn => {
+                btn.firstChild.classList.remove("fa-plus");
+                btn.firstChild.classList.add("fa-minus");
+            });
+    
+            icon.classList.remove("fa-plus");
+            icon.classList.add("fa-minus");
+            text.innerHTML = "Collapse all";
+        }
+    
+        expandAll.classList.toggle("expand");
+    };
+}

@@ -22,7 +22,9 @@
     <link rel="shortcut icon" href="{{ url_for('static', path='img/favicon.ico') }}" type="image/x-icon">
     <link rel="stylesheet" href="{{ url_for('static', path='css/index.css') }}">
     {% if theme_volume is not none %}
-        <link rel="shortcut icon" href="{{ url_for(theme_volume, path='img/favicon.ico') }}" type="image/x-icon">
+        {% if "url_for(theme_volume, path='img/favicon.ico')" | file_exists %}
+            <link rel="shortcut icon" href="{{ url_for(theme_volume, path='img/favicon.ico') }}" type="image/x-icon">
+        {% endif %}
         <link rel="stylesheet" href="{{ url_for(theme_volume, path='css/theme.css') }}">
         {% include "fonts.html" ignore missing %}
     {% endif %}
@@ -49,7 +51,7 @@
     </main>
     {% include "footer.html" %}
     <script src="{{ url_for('static', path='js/script.js') }}"></script>
-    {% if theme_volume is not none %}
+    {% if theme_volume is not none and "url_for(theme_volume, path='js/script.js')" | file_exists %}
         <script src="{{ url_for(theme_volume, path='js/script.js') }}"></script>
     {% endif %}
 </body>

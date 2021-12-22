@@ -1,3 +1,4 @@
+import os
 from typing import Dict
 
 import jinja2
@@ -43,6 +44,9 @@ def append_qsa(uri: str, qsas: Dict[str, str]) -> str:
             path += f"&{qsa[0]}={qsa[1]}"
     return path
 
+def file_exists(path: str) -> bool:
+    """Checks whether a file exists"""
+    return os.path.isfile(path)
 
 template_list = ["templates"]
 if THEME_VOLUME is not None:
@@ -53,3 +57,4 @@ templates = Jinja2Templates(
 )
 templates.env.filters["get_config"] = get_config
 templates.env.filters["append_qsa"] = append_qsa
+templates.env.filters["file_exists"] = file_exists
