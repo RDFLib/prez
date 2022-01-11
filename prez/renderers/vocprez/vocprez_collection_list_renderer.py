@@ -5,7 +5,7 @@ from connegp import RDF_MEDIATYPES, MEDIATYPE_NAMES
 
 from renderers import ListRenderer
 from config import *
-from profiles import dcat, dd
+from profiles.vocprez_profiles import dcat, dd
 from models.vocprez import VocPrezCollectionList
 from utils import templates
 

@@ -13,7 +13,7 @@ from connegp import parse_mediatypes_from_accept_header
 from fedsearch import SkosSearch, EndpointDetails
 
 from config import *
-from routers import vocprez_router
+from routers import vocprez_router, spaceprez_router
 from services.app_service import *
 from services.sparql_utils import sparql_endpoint_query
 from utils import templates
@@ -79,6 +79,8 @@ def configure():
 def configure_routing():
     if "VocPrez" in ENABLED_PREZS:
         app.include_router(vocprez_router.router)
+    if "SpacePrez" in ENABLED_PREZS:
+        app.include_router(spaceprez_router.router)
 
 
 @app.exception_handler(RequestValidationError)
@@ -102,6 +104,8 @@ async def index(request: Request):
     if len(ENABLED_PREZS) == 1:
         if ENABLED_PREZS[0] == "VocPrez":
             return await vocprez_router.home(request)
+        elif ENABLED_PREZS[0] == "SpacePrez":
+            return await spaceprez_router.home(request)
     else:
         template_context = {"request": request, "enabled_prezs": ENABLED_PREZS}
         return templates.TemplateResponse("index.html", context=template_context)
@@ -208,6 +212,8 @@ async def about(request: Request):
     if len(ENABLED_PREZS) == 1:
         if ENABLED_PREZS[0] == "VocPrez":
             return await vocprez_router.about(request)
+        elif ENABLED_PREZS[0] == "SpacePrez":
+            return await spaceprez_router.about(request)
     else:
         template_context = {"request": request}
         return templates.TemplateResponse("about.html", context=template_context)
@@ -233,6 +239,8 @@ async def profiles(request: Request):
     if len(ENABLED_PREZS) == 1:
         if ENABLED_PREZS[0] == "VocPrez":
             return await profiles_func(request, "VocPrez")
+        elif ENABLED_PREZS[0] == "SpacePrez":
+            return await profiles_func(request, "SpacePrez")
     else:
         return await profiles_func(request)
 

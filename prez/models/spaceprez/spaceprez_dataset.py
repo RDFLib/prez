@@ -1,0 +1,56 @@
+from typing import List, Dict
+
+from rdflib import Graph
+
+from config import *
+from models import PrezModel
+
+
+class SpacePrezDataset(PrezModel):
+    # class attributes for property grouping & order
+    main_props = []
+    hidden_props = []
+
+    def __init__(self, graph: Graph) -> None:
+        super().__init__(graph)
+
+        self.uri = DATA_URI
+        self.title = SYSTEM_INFO["SpacePrez"]["title"]
+        self.description = SYSTEM_INFO["SpacePrez"]["desc"]
+
+    # override
+    def to_dict(self) -> Dict:
+        return {
+            "uri": self.uri,
+            "title": self.title,
+            "description": self.description,
+        }
+
+    # override
+    def _get_properties(self) -> List[Dict]:
+        props_dict = self._get_props_dict()
+
+        # group props in order, filtering out hidden props
+        properties = []
+        main_props = []
+        other_props = []
+
+        for uri, prop in props_dict.items():
+            if uri in SpacePrezDataset.hidden_props:
+                continue
+            elif uri in SpacePrezDataset.main_props:
+                main_props.append(prop)
+            else:
+                other_props.append(prop)
+
+        properties.extend(
+            sorted(
+                main_props,
+                key=lambda p: self._sort_within_list(
+                    p, SpacePrezDataset.main_props
+                ),
+            )
+        )
+        properties.extend(other_props)
+
+        return properties

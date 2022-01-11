@@ -8,8 +8,8 @@
     {% set main_active_page = "about" %}
 {% else %}
     {% set breadcrumbs = [
-        {"label": "VocPrez", "url": url_for("dataset")},
-        {"label": "About", "url": url_for("about")}
+        {"label": "VocPrez", "url": url_for("vocprez_home")},
+        {"label": "About", "url": url_for("vocprez_about")}
     ] %}
 {% endif %}
 

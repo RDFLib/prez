@@ -7,24 +7,24 @@ from connegp import MEDIATYPE_NAMES
 
 from config import *
 from renderers import Renderer
-from profiles.vocprez_profiles import dcat, sdo
-from models.vocprez import VocPrezDataset
+from profiles.prez_profiles import dcat, sdo
+from models.spaceprez import SpacePrezDataset
 from utils import templates
 
 
-class VocPrezDatasetRenderer(Renderer):
+class SpacePrezDatasetRenderer(Renderer):
     profiles = {"dcat": dcat, "sdo": sdo}
     default_profile_token = "dcat"
 
     def __init__(self, request: object, instance_uri: str) -> None:
         super().__init__(
             request,
-            VocPrezDatasetRenderer.profiles,
-            VocPrezDatasetRenderer.default_profile_token,
+            SpacePrezDatasetRenderer.profiles,
+            SpacePrezDatasetRenderer.default_profile_token,
             instance_uri,
         )
 
-    def set_dataset(self, dataset: VocPrezDataset) -> None:
+    def set_dataset(self, dataset: SpacePrezDataset) -> None:
         self.dataset = dataset
 
     def _render_dcat_html(
@@ -42,7 +42,7 @@ class VocPrezDatasetRenderer(Renderer):
         if template_context is not None:
             _template_context.update(template_context)
         return templates.TemplateResponse(
-            "vocprez/vocprez_home.html",
+            "spaceprez/spaceprez_home.html",
             context=_template_context,
             headers=self.headers,
         )

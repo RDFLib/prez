@@ -1,0 +1,42 @@
+{% extends "_page.html" %}
+{% set prezs = "ENABLED_PREZS" | get_config %}
+{% set has_alt = true %}
+
+{% if prezs | length == 1 %}
+    {% set main_active_page = "home" %}
+{% else %}
+{% set main_active_page = "SpacePrez" %}
+    {% set breadcrumbs = [
+        {"label": "SpacePrez", "url": url_for("spatial_dataset")}
+    ] %}
+{% endif %}
+
+{% set active_prez = "SpacePrez" %}
+{% set spaceprez_active_page = "home" %}
+
+{% block content %}
+<div id="content-col-main">
+    <h1>
+        {% if dataset.title is not none %}
+            {{ dataset.title }}
+        {% else %}
+            Dataset title
+        {% endif %}
+    </h1>
+    <div class="table-wrapper">
+        <table class="props-table">
+            <tbody>
+                {% for prop in dataset.properties %}
+                    <tr>
+                        <th>{{ render_predicate(prop) }}</th>
+                        <td>{{ render_object(prop) }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<div id="content-col-sidebar">
+    {% include "alt_link.html" %}
+</div>
+{% endblock %}

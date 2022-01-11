@@ -7,7 +7,7 @@ from rdflib.namespace import RDF, RDFS, PROF, DCTERMS, XSD
 from connegp import Connegp, Profile, RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
 
 from config import *
-from profiles import alt
+from profiles.prez_profiles import alt
 from utils import templates
 
 

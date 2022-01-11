@@ -1,0 +1,33 @@
+{% extends "_page.html" %}
+{% set prezs = "ENABLED_PREZS" | get_config %}
+
+{% if prezs | length == 1 %}
+    {% set breadcrumbs = [
+        {"label": "About", "url": url_for("about")}
+    ] %}
+    {% set main_active_page = "about" %}
+{% else %}
+    {% set breadcrumbs = [
+        {"label": "SpacePrez", "url": url_for("spaceprez_home")},
+        {"label": "About", "url": url_for("spaceprez_about")}
+    ] %}
+{% endif %}
+
+{% set active_prez = "SpacePrez" %}
+{% set spaceprez_active_page = "about" %}
+
+{% block content %}
+<div id="content-col-main">
+    <h1>About SpacePrez</h1>
+    <p>SpacePrez is the new version of SURROUND's OGC LD API</p>
+    <h2>Documentation</h2>
+    <p>Coming soon...</p>
+    <h2>License</h2>
+    <p>Coming soon...</p>
+    <h2>Contacts</h2>
+    <ul>
+        <li>Nicholas Car</li>
+        <li>Jamie Feiss</li>
+    </ul>
+</div>
+{% endblock %}

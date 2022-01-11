@@ -8,7 +8,7 @@ from connegp import Profile, RDF_MEDIATYPES
 
 from renderers import Renderer
 from config import *
-from profiles import mem
+from profiles.prez_profiles import mem
 from utils import templates
 
 

@@ -1,0 +1,24 @@
+{% extends "_page.html" %}
+{% set prezs = "ENABLED_PREZS" | get_config %}
+
+{% if prezs | length == 1 %}
+    {% set breadcrumbs = [
+        {"label": "Conformance", "url": url_for("conformance")}
+    ] %}
+    {% set main_active_page = "conformance" %}
+{% else %}
+    {% set breadcrumbs = [
+        {"label": "SpacePrez", "url": url_for("spaceprez_home")},
+        {"label": "Conformance", "url": url_for("conformance")}
+    ] %}
+{% endif %}
+
+{% set active_prez = "SpacePrez" %}
+{% set spaceprez_active_page = "conformance" %}
+
+{% block content %}
+<div id="content-col-main">
+    <h1>Conformance</h1>
+    <p>A list of conformances will appear here</p>
+</div>
+{% endblock %}

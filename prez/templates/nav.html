@@ -4,6 +4,9 @@
         {% if prezs[0] == "VocPrez" %}
             <a href="{{ url_for('schemes') }}" class="main-nav-item{% if vocprez_active_page == 'vocabs' %} active{% endif %}">Vocabs</a>
             <a href="{{ url_for('collections') }}" class="main-nav-item{% if vocprez_active_page == 'collections' %} active{% endif %}">Collections</a>
+        {% elif prezs[0] == "SpacePrez" %}
+            <a href="{{ url_for('datasets') }}" class="main-nav-item{% if spaceprez_active_page == 'datasets' %} active{% endif %}">Datasets</a>
+            <a href="{{ url_for('conformance') }}" class="main-nav-item{% if spaceprez_active_page == 'conformance' %} active{% endif %}">Conformance</a>
         {% endif %}
     {% else %}
         {% for prez in prezs %}

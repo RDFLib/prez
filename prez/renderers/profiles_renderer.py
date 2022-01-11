@@ -5,7 +5,7 @@ from connegp import MEDIATYPE_NAMES
 
 from config import *
 from renderers import Renderer
-from profiles import profiles
+from profiles.prez_profiles import profiles
 from utils import templates
 
 

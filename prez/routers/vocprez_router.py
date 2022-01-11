@@ -25,7 +25,7 @@ async def home(request: Request):
 @router.get(
     "/vocprez", summary="VocPrez Home", include_in_schema=len(ENABLED_PREZS) > 1
 )
-async def dataset(request: Request):
+async def vocprez_home(request: Request):
     """Returns a VocPrez dcat:Dataset in the necessary profile & mediatype"""
     return await home(request)
 
@@ -37,7 +37,7 @@ async def about(request: Request):
 
 
 @router.get(
-    "/vocprez-about", summary="VocPrez Home", include_in_schema=len(ENABLED_PREZS) > 1
+    "/vocprez-about", summary="VocPrez About", include_in_schema=len(ENABLED_PREZS) > 1
 )
 async def vocprez_about(request: Request):
     """Returns the VocPrez About page"""

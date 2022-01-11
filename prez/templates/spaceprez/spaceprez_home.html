@@ -1,0 +1,22 @@
+{% extends "_page.html" %}
+{% set prezs = "ENABLED_PREZS" | get_config %}
+{% set has_alt = false %}
+
+{% if prezs | length == 1 %}
+    {% set main_active_page = "home" %}
+{% else %}
+{% set main_active_page = "SpacePrez" %}
+    {% set breadcrumbs = [
+        {"label": "SpacePrez", "url": url_for("spaceprez_home")}
+    ] %}
+{% endif %}
+
+{% set active_prez = "SpacePrez" %}
+{% set spaceprez_active_page = "home" %}
+
+{% block content %}
+<div id="content-col-main">
+    <h1>System Home</h1>
+    <p>OGC API</p>
+</div>
+{% endblock %}

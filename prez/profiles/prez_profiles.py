@@ -1,42 +1,6 @@
 from connegp import Profile, RDF_MEDIATYPES
 
 
-vocpub = Profile(
-    uri="https://w3id.org/profile/vocpub",
-    id="vocpub",
-    label="VocPub",
-    comment="A profile of SKOS for the publication of Vocabularies. This profile mandates the use of one Concept "
-    "Scheme per vocabulary",
-    mediatypes=["text/html"] + RDF_MEDIATYPES,
-    default_mediatype="text/turtle",
-    languages=["en"],
-    default_language="en",
-)
-
-vocpub_supplied = Profile(
-    uri="https://w3id.org/profile/vocpub",
-    id="vocpub_supplied",
-    label="VocPub Supplied",
-    comment="A profile of SKOS for the publication of Vocabularies. This profile excludes inferred data.",
-    mediatypes=RDF_MEDIATYPES,
-    default_mediatype="text/turtle",
-    languages=["en"],
-    default_language="en",
-)
-
-skos = Profile(
-    uri="https://www.w3.org/TR/skos-reference/",
-    id="skos",
-    label="SKOS",
-    comment="Simple Knowledge Organization System (SKOS) is a W3C-authored, common data model for sharing "
-    "and linking knowledge organization systems "
-    "via the Web.",
-    mediatypes=RDF_MEDIATYPES,
-    default_mediatype="text/turtle",
-    languages=["en"],
-    default_language="en",
-)
-
 sdo = Profile(
     uri="https://schema.org",
     id="sdo",
