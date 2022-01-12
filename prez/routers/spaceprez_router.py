@@ -35,20 +35,64 @@ async def spaceprez_home(request: Request):
 @router.get("/datasets", summary="List Datasets")
 async def datasets(request: Request):
     """Returns a list of SpacePrez dcat:Datasets in the necessary profile & mediatype"""
-    return "datasets"
+    sparql_result = await list_datasets()
+    dataset_list = SpacePrezDatasetList(sparql_result)
+    dataset_list_renderer = SpacePrezDatasetListRenderer(
+        request,
+        str(request.url.remove_query_params(keys=request.query_params.keys())),
+        "Dataset list",
+        "A list of dcat:Datasets",
+        dataset_list,
+    )
+    return dataset_list_renderer.render()
 
 
 @router.get("/dataset/{dataset_id}", summary="Get Dataset")
 async def dataset(request: Request, dataset_id: str):
     """Returns a SpacePrez dcat:Dataset in the necessary profile & mediatype"""
-    return f"dataset {dataset_id}"
+    return await dataset_endpoint(request, dataset_id=dataset_id)
+
+
+async def dataset_endpoint(
+    request: Request,
+    dataset_id: Optional[str] = None,
+    dataset_uri: Optional[str] = None,
+):
+    dataset_renderer = SpacePrezDatasetRenderer(
+        request,
+        str(
+            request.url.remove_query_params(
+                keys=[key for key in request.query_params.keys() if key != "uri"]
+            )
+        ),
+    )
+
+    sparql_result = await get_dataset_construct(
+        dataset_id=dataset_id,
+        dataset_uri=dataset_uri,
+    )
+
+    if len(sparql_result) == 0:
+        raise HTTPException(status_code=404, detail="Not Found")
+    dataset = SpacePrezDataset(sparql_result, id=dataset_id, uri=dataset_uri)
+    dataset_renderer.set_dataset(dataset)
+    return dataset_renderer.render()
 
 
 # feature collections
 @router.get("/dataset/{dataset_id}/collections", summary="List FeatureCollections")
 async def feature_collections(request: Request, dataset_id: str):
     """Returns a list of SpacePrez geo:FeatureCollections in the necessary profile & mediatype"""
-    return "featurecollections"
+    sparql_result = await list_collections(dataset_id)
+    feature_collection_list = SpacePrezFeatureCollectionList(sparql_result)
+    feature_collection_list_renderer = SpacePrezFeatureCollectionListRenderer(
+        request,
+        str(request.url.remove_query_params(keys=request.query_params.keys())),
+        "FeatureCollection list",
+        "A list of geo:FeatureCollections",
+        feature_collection_list,
+    )
+    return feature_collection_list_renderer.render()
 
 
 # feature collection

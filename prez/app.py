@@ -265,23 +265,30 @@ async def object(
     # removes the leftover "?" if no other params than uri
     if params != "":
         params = "?" + params[1:]  # will start with & instead of ?
-    object_type = URIRef(sparql_response[0]["type"]["value"])
+    object_types = [URIRef(item["type"]["value"]) for item in sparql_response]
+    # object_type = URIRef(sparql_response[0]["type"]["value"])
 
     # return according to type (IF appropriate prez module is enabled)
-    if object_type == SKOS.ConceptScheme:
-        if "VocPrez" not in ENABLED_PREZS:
-            raise HTTPException(status_code=404, detail="Not Found")
-        return await vocprez_router.scheme_endpoint(request, scheme_uri=uri)
-    elif object_type == SKOS.Collection:
-        if "VocPrez" not in ENABLED_PREZS:
-            raise HTTPException(status_code=404, detail="Not Found")
-        return await vocprez_router.collection_endpoint(request, collection_uri=uri)
-    elif object_type == SKOS.Concept:
-        if "VocPrez" not in ENABLED_PREZS:
-            raise HTTPException(status_code=404, detail="Not Found")
-        return await vocprez_router.concept_endpoint(request, concept_uri=uri)
-    else:
-        raise HTTPException(status_code=404, detail="Not Found")
+    for object_type in object_types:
+        if object_type == SKOS.ConceptScheme:
+            if "VocPrez" not in ENABLED_PREZS:
+                raise HTTPException(status_code=404, detail="Not Found")
+            return await vocprez_router.scheme_endpoint(request, scheme_uri=uri)
+        elif object_type == SKOS.Collection:
+            if "VocPrez" not in ENABLED_PREZS:
+                raise HTTPException(status_code=404, detail="Not Found")
+            return await vocprez_router.collection_endpoint(request, collection_uri=uri)
+        elif object_type == SKOS.Concept:
+            if "VocPrez" not in ENABLED_PREZS:
+                raise HTTPException(status_code=404, detail="Not Found")
+            return await vocprez_router.concept_endpoint(request, concept_uri=uri)
+        elif object_type == DCAT.Dataset:
+            if "SpacePrez" not in ENABLED_PREZS:
+                raise HTTPException(status_code=404, detail="Not Found")
+            return await spaceprez_router.dataset_endpoint(request, dataset_uri=uri)
+        # else:
+    raise HTTPException(status_code=404, detail="Not Found")
+    
 
 
 if __name__ == "__main__":

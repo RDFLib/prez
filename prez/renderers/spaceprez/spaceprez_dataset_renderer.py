@@ -13,7 +13,7 @@ from utils import templates
 
 
 class SpacePrezDatasetRenderer(Renderer):
-    profiles = {"dcat": dcat, "sdo": sdo}
+    profiles = {"dcat": dcat}
     default_profile_token = "dcat"
 
     def __init__(self, request: object, instance_uri: str) -> None:
@@ -37,12 +37,12 @@ class SpacePrezDatasetRenderer(Renderer):
             "uri": self.instance_uri,
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
-            "mediatype_names": MEDIATYPE_NAMES
+            "mediatype_names": MEDIATYPE_NAMES,
         }
         if template_context is not None:
             _template_context.update(template_context)
         return templates.TemplateResponse(
-            "spaceprez/spaceprez_home.html",
+            "spaceprez/spaceprez_dataset.html",
             context=_template_context,
             headers=self.headers,
         )
@@ -102,28 +102,8 @@ class SpacePrezDatasetRenderer(Renderer):
         """Renders the DCAT profile for a dataset"""
         if self.mediatype == "text/html":
             return self._render_dcat_html(template_context)
-        else: # all other formats are RDF
+        else:  # all other formats are RDF
             return self._render_dcat_rdf()
-
-    def _generate_sdo_rdf(self) -> Graph:
-        """Generates a Graph of the SDO representation"""
-        g = Graph()
-        g.bind("sdo", SDO)
-        vs = URIRef(self.dataset.uri)
-        g.add((vs, RDF.type, SDO.Dataset))
-        g.add((vs, SDO.name, Literal(self.dataset.title)))
-        g.add((vs, SDO.description, Literal(self.dataset.description)))
-
-        return g
-
-    def _render_sdo_rdf(self) -> Response:
-        """Renders the RDF representation of the SDO profile for a dataset"""
-        g = self._generate_sdo_rdf()
-        return self._make_rdf_response(g)
-
-    def _render_sdo(self) -> Response:
-        """Renders the SDO profile for a dataset"""
-        return self._render_sdo_rdf()
 
     def render(
         self, template_context: Optional[Dict] = None
@@ -136,7 +116,5 @@ class SpacePrezDatasetRenderer(Renderer):
             return self._render_alt(template_context)
         elif self.profile == "dcat":
             return self._render_dcat(template_context)
-        elif self.profile == "sdo":
-            return self._render_sdo()
         else:
             return None

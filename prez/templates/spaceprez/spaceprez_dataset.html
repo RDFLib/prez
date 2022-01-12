@@ -1,18 +1,25 @@
 {% extends "_page.html" %}
+{% from "_macros.html" import render_predicate, render_object with context %}
 {% set prezs = "ENABLED_PREZS" | get_config %}
 {% set has_alt = true %}
 
 {% if prezs | length == 1 %}
-    {% set main_active_page = "home" %}
-{% else %}
-{% set main_active_page = "SpacePrez" %}
     {% set breadcrumbs = [
-        {"label": "SpacePrez", "url": url_for("spatial_dataset")}
+        {"label": "Datasets", "url": url_for("datasets")},
+        {"label": dataset.title, "url": url_for("dataset", dataset_id=dataset.id)}
+    ] %}
+    {% set main_active_page = "datasets" %}
+{% else %}
+    {% set main_active_page = "SpacePrez" %}
+    {% set breadcrumbs = [
+        {"label": "SpacePrez", "url": url_for("spaceprez_home")},
+        {"label": "Datasets", "url": url_for("datasets")},
+        {"label": dataset.title, "url": url_for("dataset", dataset_id=dataset.id)}
     ] %}
 {% endif %}
 
 {% set active_prez = "SpacePrez" %}
-{% set spaceprez_active_page = "home" %}
+{% set spaceprez_active_page = "datasets" %}
 
 {% block content %}
 <div id="content-col-main">
@@ -23,6 +30,7 @@
             Dataset title
         {% endif %}
     </h1>
+    <div id="map">map</div>
     <div class="table-wrapper">
         <table class="props-table">
             <tbody>
@@ -32,6 +40,10 @@
                         <td>{{ render_object(prop) }}</td>
                     </tr>
                 {% endfor %}
+                <tr>
+                    <th>Collections</th>
+                    <td><a href="{{ url_for('feature_collections', dataset_id=dataset.id) }}" class="btn">Collections</a></td>
+                </tr>
             </tbody>
         </table>
     </div>
