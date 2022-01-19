@@ -1,0 +1,58 @@
+{% extends "_page.html" %}
+{% from "_macros.html" import render_predicate, render_object with context %}
+{% set prezs = "ENABLED_PREZS" | get_config %}
+{% set has_alt = true %}
+
+{% if prezs | length == 1 %}
+    {% set breadcrumbs = [
+        {"label": "Datasets", "url": url_for("datasets")},
+        {"label": collection.dataset.title, "url": url_for("dataset", dataset_id=collection.dataset.id)},
+        {"label": "Feature Collections", "url": url_for("feature_collections", dataset_id=collection.dataset.id)},
+        {"label": collection.title, "url": url_for("feature_collection", dataset_id=collection.dataset.id, collection_id=collection.id)}
+    ] %}
+    {% set main_active_page = "datasets" %}
+{% else %}
+    {% set main_active_page = "SpacePrez" %}
+    {% set breadcrumbs = [
+        {"label": "SpacePrez", "url": url_for("spaceprez_home")},
+        {"label": "Datasets", "url": url_for("datasets")},
+        {"label": collection.dataset.title, "url": url_for("dataset", dataset_id=collection.dataset.id)},
+        {"label": "Feature Collections", "url": url_for("feature_collections", dataset_id=collection.dataset.id)},
+        {"label": collection.title, "url": url_for("feature_collection", dataset_id=collection.dataset.id, collection_id=collection.id)}
+    ] %}
+{% endif %}
+
+{% set active_prez = "SpacePrez" %}
+{% set spaceprez_active_page = "datasets" %}
+
+{% block content %}
+<div id="content-col-main">
+    <h1>
+        {% if collection.title is not none %}
+            {{ collection.title }}
+        {% else %}
+            Feature collection title
+        {% endif %}
+    </h1>
+    <div id="map">map</div>
+    <div class="table-wrapper">
+        <table class="props-table">
+            <tbody>
+                {% for prop in collection.properties %}
+                    <tr>
+                        <th>{{ render_predicate(prop) }}</th>
+                        <td>{{ render_object(prop) }}</td>
+                    </tr>
+                {% endfor %}
+                <tr>
+                    <th>Features</th>
+                    <td><a href="{{ url_for('features', dataset_id=collection.dataset.id, collection_id=collection.id) }}" class="btn">Features</a></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<div id="content-col-sidebar">
+    {% include "alt_link.html" %}
+</div>
+{% endblock %}

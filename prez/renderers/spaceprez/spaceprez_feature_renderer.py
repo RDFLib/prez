@@ -7,33 +7,33 @@ from connegp import MEDIATYPE_NAMES
 
 from config import *
 from renderers import Renderer
-from profiles.spaceprez_profiles import dcat, oai, geo
-from models.spaceprez import SpacePrezDataset
+from profiles.spaceprez_profiles import oai, geo
+from models.spaceprez import SpacePrezFeature
 from utils import templates
 
 
-class SpacePrezDatasetRenderer(Renderer):
-    profiles = {"oai": oai, "dcat": dcat, "geo": geo}
+class SpacePrezFeatureRenderer(Renderer):
+    profiles = {"oai": oai, "geo": geo}
     default_profile_token = "oai"
 
     def __init__(self, request: object, instance_uri: str) -> None:
         super().__init__(
             request,
-            SpacePrezDatasetRenderer.profiles,
-            SpacePrezDatasetRenderer.default_profile_token,
+            SpacePrezFeatureRenderer.profiles,
+            SpacePrezFeatureRenderer.default_profile_token,
             instance_uri,
         )
 
-    def set_dataset(self, dataset: SpacePrezDataset) -> None:
-        self.dataset = dataset
+    def set_feature(self, feature: SpacePrezFeature) -> None:
+        self.feature = feature
 
     def _render_oai_html(
         self, template_context: Union[Dict, None]
     ) -> templates.TemplateResponse:
-        """Renders the HTML representation of the OAI profile for a dataset"""
+        """Renders the HTML representation of the OAI profile for a feature"""
         _template_context = {
             "request": self.request,
-            "dataset": self.dataset.to_dict(),
+            "feature": self.feature.to_dict(),
             "uri": self.instance_uri,
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
@@ -42,13 +42,13 @@ class SpacePrezDatasetRenderer(Renderer):
         if template_context is not None:
             _template_context.update(template_context)
         return templates.TemplateResponse(
-            "spaceprez/spaceprez_dataset.html",
+            "spaceprez/spaceprez_feature.html",
             context=_template_context,
             headers=self.headers,
         )
-    
+
     def _render_oai_json(self) -> JSONResponse:
-        """Renders the JSON representation of the OAI profile for a dataset"""
+        """Renders the JSON representation of the OAI profile for a feature"""
         return JSONResponse(
             content={"test": "test"},
             media_type="application/json",
@@ -56,7 +56,7 @@ class SpacePrezDatasetRenderer(Renderer):
         )
     
     def _render_oai_geojson(self) -> JSONResponse:
-        """Renders the GeoJSON representation of the OAI profile for a dataset"""
+        """Renders the GeoJSON representation of the OAI profile for a feature"""
         return JSONResponse(
             content={"test": "test"},
             media_type="application/geo+json",
@@ -64,91 +64,13 @@ class SpacePrezDatasetRenderer(Renderer):
         )
 
     def _render_oai(self, template_context: Union[Dict, None]):
-        """Renders the OAI profile for a dataset"""
+        """Renders the OAI profile for a feature"""
         if self.mediatype == "application/json":
             return self._render_oai_json()
         elif self.mediatype == "application/geo+json":
             return self._render_oai_geojson()
         else:  # else return HTML
             return self._render_oai_html(template_context)
-    
-    def _render_dcat_html(
-        self, template_context: Union[Dict, None]
-    ) -> templates.TemplateResponse:
-        """Renders the HTML representation of the DCAT profile for a dataset"""
-        _template_context = {
-            "request": self.request,
-            "dataset": self.dataset.to_dict(),
-            "uri": self.instance_uri,
-            "profiles": self.profiles,
-            "default_profile": self.default_profile_token,
-            "mediatype_names": MEDIATYPE_NAMES,
-        }
-        if template_context is not None:
-            _template_context.update(template_context)
-        return templates.TemplateResponse(
-            "spaceprez/spaceprez_dataset.html",
-            context=_template_context,
-            headers=self.headers,
-        )
-
-    def _generate_dcat_rdf(self) -> Graph:
-        """Generates a Graph of the DCAT representation"""
-        g = Graph()
-        g.bind("dcat", DCAT)
-        g.bind("dcterms", DCTERMS)
-        ds = URIRef(self.dataset.uri)
-        g.add((ds, RDF.type, DCAT.Dataset))
-        g.add((ds, DCTERMS.title, Literal(self.dataset.title)))
-        g.add((ds, DCTERMS.description, Literal(self.dataset.description)))
-
-        api = URIRef(self.instance_uri)
-        g.add((api, DCAT.servesDataset, ds))
-        g.add((api, RDF.type, DCAT.DataService))
-        g.add((api, DCTERMS.title, Literal("System ConnegP API")))
-        g.add(
-            (
-                api,
-                DCTERMS.description,
-                Literal(
-                    "A Content Negotiation by Profile-compliant service that provides "
-                    "access to all of this catalogue's information"
-                ),
-            )
-        )
-        g.add((api, DCTERMS.type, URIRef("http://purl.org/dc/dcmitype/Service")))
-        g.add((api, DCAT.endpointURL, api))
-
-        sparql = URIRef(self.instance_uri + "sparql")
-        g.add((sparql, DCAT.servesDataset, ds))
-        g.add((sparql, RDF.type, DCAT.DataService))
-        g.add((sparql, DCTERMS.title, Literal("System SPARQL Service")))
-        g.add(
-            (
-                sparql,
-                DCTERMS.description,
-                Literal(
-                    "A SPARQL Protocol-compliant service that provides access to all "
-                    "of this catalogue's information"
-                ),
-            )
-        )
-        g.add((sparql, DCTERMS.type, URIRef("http://purl.org/dc/dcmitype/Service")))
-        g.add((sparql, DCAT.endpointURL, sparql))
-
-        return g
-
-    def _render_dcat_rdf(self) -> Response:
-        """Renders the RDF representation of the DCAT profile for a dataset"""
-        g = self._generate_dcat_rdf()
-        return self._make_rdf_response(g)
-
-    def _render_dcat(self, template_context: Union[Dict, None]):
-        """Renders the DCAT profile for a dataset"""
-        if self.mediatype == "text/html":
-            return self._render_dcat_html(template_context)
-        else:  # all other formats are RDF
-            return self._render_dcat_rdf()
     
     def _generate_geo_rdf(self) -> Graph:
         """Generates a Graph of the GeoSPARQL representation"""
@@ -197,14 +119,13 @@ class SpacePrezDatasetRenderer(Renderer):
         return g
 
     def _render_geo_rdf(self) -> Response:
-        """Renders the RDF representation of the GeoSPAQRL profile for a dataset"""
+        """Renders the RDF representation of the GeoSPAQRL profile for a feature"""
         g = self._generate_geo_rdf()
         return self._make_rdf_response(g)
 
     def _render_geo(self):
-        """Renders the GeoSPARQL profile for a dataset"""
+        """Renders the GeoSPARQL profile for a feature"""
         return self._render_geo_rdf()
-            
 
     def render(
         self, template_context: Optional[Dict] = None
@@ -217,8 +138,6 @@ class SpacePrezDatasetRenderer(Renderer):
             return self._render_alt(template_context)
         elif self.profile == "oai":
             return self._render_oai(template_context)
-        elif self.profile == "dcat":
-            return self._render_dcat(template_context)
         elif self.profile == "geo":
             return self._render_geo()
         else:

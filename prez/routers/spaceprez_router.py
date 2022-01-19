@@ -102,7 +102,39 @@ async def feature_collections(request: Request, dataset_id: str):
 )
 async def feature_collection(request: Request, dataset_id: str, collection_id: str):
     """Returns a SpacePrez geo:FeatureCollection in the necessary profile & mediatype"""
-    return "featurecollection"
+    return await feature_collection_endpoint(
+        request, dataset_id=dataset_id, collection_id=collection_id
+    )
+
+
+async def feature_collection_endpoint(
+    request: Request,
+    dataset_id: Optional[str] = None,
+    collection_id: Optional[str] = None,
+    collection_uri: Optional[str] = None,
+):
+    collection_renderer = SpacePrezFeatureCollectionRenderer(
+        request,
+        str(
+            request.url.remove_query_params(
+                keys=[key for key in request.query_params.keys() if key != "uri"]
+            )
+        ),
+    )
+
+    sparql_result = await get_collection_construct(
+        dataset_id=dataset_id,
+        collection_id=collection_id,
+        collection_uri=collection_uri,
+    )
+
+    if len(sparql_result) == 0:
+        raise HTTPException(status_code=404, detail="Not Found")
+    collection = SpacePrezFeatureCollection(
+        sparql_result, id=collection_id, uri=collection_uri
+    )
+    collection_renderer.set_collection(collection)
+    return collection_renderer.render()
 
 
 # features
@@ -112,7 +144,47 @@ async def feature_collection(request: Request, dataset_id: str, collection_id: s
 )
 async def features(request: Request, dataset_id: str, collection_id: str):
     """Returns a list of SpacePrez geo:Features in the necessary profile & mediatype"""
-    return "features"
+    sparql_result = await list_features(dataset_id, collection_id)
+    feature_list = SpacePrezFeatureList(sparql_result)
+    feature_list_renderer = SpacePrezFeatureListRenderer(
+        request,
+        str(request.url.remove_query_params(keys=request.query_params.keys())),
+        "Feature list",
+        "A list of geo:Features",
+        feature_list,
+    )
+    return feature_list_renderer.render()
+
+
+async def feature_endpoint(
+    request: Request,
+    dataset_id: Optional[str] = None,
+    collection_id: Optional[str] = None,
+    feature_id: Optional[str] = None,
+    feature_uri: Optional[str] = None,
+):
+    feature_renderer = SpacePrezFeatureRenderer(
+        request,
+        str(
+            request.url.remove_query_params(
+                keys=[key for key in request.query_params.keys() if key != "uri"]
+            )
+        ),
+    )
+
+    sparql_result = await get_feature_construct(
+        dataset_id=dataset_id,
+        collection_id=collection_id,
+        feature_id=feature_id,
+        feature_uri=feature_uri,
+    )
+    print(sparql_result.serialize())
+
+    if len(sparql_result) == 0:
+        raise HTTPException(status_code=404, detail="Not Found")
+    feature = SpacePrezFeature(sparql_result, id=feature_id, uri=feature_uri)
+    feature_renderer.set_feature(feature)
+    return feature_renderer.render()
 
 
 # feature
@@ -124,7 +196,12 @@ async def feature(
     request: Request, dataset_id: str, collection_id: str, feature_id: str
 ):
     """Returns a SpacePrez geo:Feature in the necessary profile & mediatype"""
-    return "feature"
+    return await feature_endpoint(
+        request,
+        dataset_id=dataset_id,
+        collection_id=collection_id,
+        feature_id=feature_id,
+    )
 
 
 # about
@@ -156,9 +233,7 @@ async def spaceprez_profiles(request: Request):
 
 
 # conform
-@router.get(
-    "/conformance", summary="Conformance", include_in_schema=len(ENABLED_PREZS) > 1
-)
+@router.get("/conformance", summary="Conformance")
 async def conformance(request: Request):
     """Returns the SpacePrez conformance page in the necessary profile & mediatype"""
     return templates.TemplateResponse(

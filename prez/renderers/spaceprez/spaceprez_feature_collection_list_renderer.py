@@ -7,14 +7,14 @@ from connegp import MEDIATYPE_NAMES
 
 from renderers import ListRenderer
 from config import *
-from profiles.spaceprez_profiles import dcat, dd
+from profiles.spaceprez_profiles import oai, dd, geo
 from models.spaceprez import SpacePrezFeatureCollectionList
 from utils import templates
 
 
 class SpacePrezFeatureCollectionListRenderer(ListRenderer):
-    profiles = {"dcat": dcat, "dd": dd}
-    default_profile_token = "dcat"
+    profiles = {"oai": oai, "geo": geo, "dd": dd}
+    default_profile_token = "oai"
 
     def __init__(
         self,
@@ -35,8 +35,8 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
         )
         self.feature_collection_list = feature_collection_list
 
-    def _render_dcat_html(self, template_context: Union[Dict, None]):
-        """Renders the HTML representation of the DCAT profile for a feature collection"""
+    def _render_oai_html(self, template_context: Union[Dict, None]):
+        """Renders the HTML representation of the OAI profile for a list of feature collections"""
         _template_context = {
             "request": self.request,
             "members": self.members,
@@ -46,7 +46,7 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
             "comment": self.comment,
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
-            "mediatype_names": MEDIATYPE_NAMES
+            "mediatype_names": dict(MEDIATYPE_NAMES, **{"application/geo+json": "GeoJSON"}),
         }
         if template_context is not None:
             _template_context.update(template_context)
@@ -55,9 +55,46 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
             context=_template_context,
             headers=self.headers,
         )
+    
+    def _render_oai_json(self) -> JSONResponse:
+        """Renders the JSON representation of the OAI profile for a dataset"""
+        return JSONResponse(
+            content={"test": "test"},
+            media_type="application/json",
+            headers=self.headers,
+        )
+    
+    def _render_oai_geojson(self) -> JSONResponse:
+        """Renders the GeoJSON representation of the OAI profile for a dataset"""
+        return JSONResponse(
+            content={"test": "test"},
+            media_type="application/geo+json",
+            headers=self.headers,
+        )
 
-    def _generate_dcat_rdf(self) -> Graph:
-        """Generates a Graph of the DCAT representation"""
+    def _render_oai(self, template_context: Union[Dict, None]):
+        """Renders the OAI profile for a list of feature collections"""
+        if self.mediatype == "application/json":
+            return self._render_oai_json()
+        elif self.mediatype == "application/geo+json":
+            return self._render_oai_geojson()
+        else:  # else return HTML
+            return self._render_oai_html(template_context)
+    
+    def _render_dd_json(self) -> JSONResponse:
+        """Renders the json representation of the dd profile for a list of feature collections"""
+        return JSONResponse(
+            content=self.feature_collection_list.get_feature_collection_flat_list(),
+            media_type="application/json",
+            headers=self.headers,
+        )
+
+    def _render_dd(self):
+        """Renders the dd profile for a list of feature collections"""
+        return self._render_dd_json()
+    
+    def _generate_geo_rdf(self) -> Graph:
+        """Generates a Graph of the GeoSPARQL representation"""
         g = self._generate_mem_rdf()
         g.bind("dcat", DCAT)
         g.bind("dcterms", DCTERMS)
@@ -119,28 +156,14 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
 
         return g
 
-    def _render_dcat_rdf(self):
-        """Renders the RDF representation of the DCAT profile for a list of feature collections"""
-        g = self._generate_dcat_rdf()
+    def _render_geo_rdf(self) -> Response:
+        """Renders the RDF representation of the GeoSPAQRL profile for a list of feature collections"""
+        g = self._generate_geo_rdf()
         return self._make_rdf_response(g)
 
-    def _render_dcat(self, template_context: Union[Dict, None]):
-        if self.mediatype == "text/html":
-            return self._render_dcat_html(template_context)
-        else: # all other formats are RDF
-            return self._render_dcat_rdf()
-    
-    def _render_dd_json(self) -> JSONResponse:
-        """Renders the json representation of the dd profile for a list of feature collections"""
-        return JSONResponse(
-            content=self.feature_collection_list.get_feature_collection_flat_list(),
-            media_type="application/json",
-            headers=self.headers,
-        )
-
-    def _render_dd(self):
-        """Renders the dd profile for a list of feature collections"""
-        return self._render_dd_json()
+    def _render_geo(self):
+        """Renders the GeoSPARQL profile for a list of feature collections"""
+        return self._render_geo_rdf()
 
     def render(
         self, template_context: Optional[Dict] = None
@@ -153,8 +176,10 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
             return self._render_mem(template_context)
         elif self.profile == "alt":
             return self._render_alt(template_context)
-        elif self.profile == "dcat":
-            return self._render_dcat(template_context)
+        elif self.profile == "oai":
+            return self._render_oai(template_context)
+        elif self.profile == "geo":
+            return self._render_geo()
         elif self.profile == "dd":
             return self._render_dd()
         else:
