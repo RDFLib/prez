@@ -210,6 +210,12 @@ ol#concept-hierarchy {
     }
 }
 
+#map {
+    height: 500px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
 @media screen and (max-width: $sm-breakpoint) {
     #content-col-sidebar {
         z-index: 95;
@@ -229,5 +235,9 @@ ol#concept-hierarchy {
         & > a {
             text-align: center;
         }
+    }
+
+    #map {
+        height: 300px;
     }
 }

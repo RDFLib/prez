@@ -122,16 +122,34 @@ async def sparql_get(request: Request, query: Optional[str] = None):
             query = request.query_params.get("query")
             if query is not None:
                 if "CONSTRUCT" in query or "DESCRIBE" in query:
-                    sparql_result = await sparql_endpoint_query(
+                    sparql_result = await sparql_endpoint_query_multiple(
                         query, accept=top_accept
                     )
-                    return Response(content=sparql_result[1], media_type=top_accept)
+                    if len(sparql_result[1]) > 0 and not ALLOW_PARTIAL_RESULTS:
+                        error_list = [
+                            f"Error code {e['code']} in {e['prez']}: {e['message']}\n"
+                            for e in sparql_result[1]
+                        ]
+                        raise Exception(
+                            f"SPARQL query error:\n{[e for e in error_list]}"
+                        )
+                    else:
+                        return Response(content=sparql_result[0], media_type=top_accept)
                 else:
-                    sparql_result = await sparql_endpoint_query(query)
-                    return JSONResponse(
-                        content=sparql_result[1],
-                        media_type="application/sparql-results+json",
-                    )
+                    sparql_result = await sparql_endpoint_query_multiple(query)
+                    if len(sparql_result[1]) > 0 and not ALLOW_PARTIAL_RESULTS:
+                        error_list = [
+                            f"Error code {e['code']} in {e['prez']}: {e['message']}\n"
+                            for e in sparql_result[1]
+                        ]
+                        raise Exception(
+                            f"SPARQL query error:\n{[e for e in error_list]}"
+                        )
+                    else:
+                        return JSONResponse(
+                            content=sparql_result[0],
+                            media_type="application/sparql-results+json",
+                        )
             else:
                 return Response(content="SPARQL service description")
 
@@ -149,13 +167,30 @@ async def sparql_post(request: Request):
         query = query_bytes.decode()
     if query is not None:
         if "CONSTRUCT" in query or "DESCRIBE" in query:
-            sparql_result = await sparql_endpoint_query(query, accept=top_accept)
-            return Response(content=sparql_result[1], media_type=top_accept)
-        else:
-            sparql_result = await sparql_endpoint_query(query)
-            return JSONResponse(
-                content=sparql_result[1], media_type="application/sparql-results+json"
+            sparql_result = await sparql_endpoint_query_multiple(
+                query, accept=top_accept
             )
+            if len(sparql_result[1]) > 0 and not ALLOW_PARTIAL_RESULTS:
+                error_list = [
+                    f"Error code {e['code']} in {e['prez']}: {e['message']}\n"
+                    for e in sparql_result[1]
+                ]
+                raise Exception(f"SPARQL query error:\n{[e for e in error_list]}")
+            else:
+                return Response(content=sparql_result[0], media_type=top_accept)
+        else:
+            sparql_result = await sparql_endpoint_query_multiple(query)
+            if len(sparql_result[1]) > 0 and not ALLOW_PARTIAL_RESULTS:
+                error_list = [
+                    f"Error code {e['code']} in {e['prez']}: {e['message']}\n"
+                    for e in sparql_result[1]
+                ]
+                raise Exception(f"SPARQL query error:\n{[e for e in error_list]}")
+            else:
+                return JSONResponse(
+                    content=sparql_result[0],
+                    media_type="application/sparql-results+json",
+                )
     else:
         return Response(content="SPARQL service description")
 
@@ -173,7 +208,9 @@ async def search(
         )
         endpoint_details = []
         for endpoint in endpoints:
-            if endpoint in [e['url'] for e in SEARCH_ENDPOINTS]:  # only use valid endpoints
+            if endpoint in [
+                e["url"] for e in SEARCH_ENDPOINTS
+            ]:  # only use valid endpoints
                 if endpoint == "self":
                     endpoint_details.append(
                         EndpointDetails(self_sparql_endpoint, None, None)
@@ -286,9 +323,28 @@ async def object(
             if "SpacePrez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
             return await spaceprez_router.dataset_endpoint(request, dataset_uri=uri)
+        elif object_type == GEO.FeatureCollection:
+            if "SpacePrez" not in ENABLED_PREZS:
+                raise HTTPException(status_code=404, detail="Not Found")
+            return await spaceprez_router.feature_collection_endpoint(request, collection_uri=uri)
+        elif object_type == GEO.Feature:
+            if "SpacePrez" not in ENABLED_PREZS:
+                raise HTTPException(status_code=404, detail="Not Found")
+            return await spaceprez_router.feature_endpoint(request, feature_uri=uri)
         # else:
     raise HTTPException(status_code=404, detail="Not Found")
-    
+
+
+@app.get("/health", summary="Health Check")
+async def health(request: Request):
+    """Returns the status of endpoints & connected triplestores"""
+    return JSONResponse(
+        content={
+            "isHealthy": True,
+        },
+        media_type="application/json",
+        headers=request.headers,
+    )
 
 
 if __name__ == "__main__":

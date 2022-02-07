@@ -20,7 +20,7 @@ async def list_datasets():
                 skos:prefLabel|dcterms:title|rdfs:label ?label .
         }}
     """
-    r = await sparql_query(q)
+    r = await sparql_query(q, "SpacePrez")
     if r[0]:
         return r[1]
     else:
@@ -51,12 +51,30 @@ async def get_dataset_construct(
         PREFIX rdfs: <{RDFS}>
         CONSTRUCT {{
             ?d ?p1 ?o1 .
+
+            ?o1 ?p2 ?o2 .
+
             ?p1 rdfs:label ?p1Label .
             ?o1 rdfs:label ?o1Label .
+            
+            ?p2 rdfs:label ?p2Label .
         }}
         WHERE {{
             {query_by_id if dataset_id is not None else query_by_uri}
             ?d ?p1 ?o1 .
+            OPTIONAL {{
+                ?o1 ?p2 ?o2 .
+                FILTER(ISBLANK(?o1))
+
+                OPTIONAL {{
+                    ?p2 rdfs:label ?p2Label .
+                    FILTER(lang(?p2Label) = "" || lang(?p2Label) = "en")
+                }}
+                OPTIONAL {{
+                    ?o2 rdfs:label ?o2Label .
+                    FILTER(lang(?o2Label) = "" || lang(?o2Label) = "en")
+                }}
+            }}
             OPTIONAL {{
                 ?p1 rdfs:label ?p1Label .
                 FILTER(lang(?p1Label) = "" || lang(?p1Label) = "en")
@@ -67,7 +85,7 @@ async def get_dataset_construct(
             }}
         }}
     """
-    r = await sparql_construct(q)
+    r = await sparql_construct(q, "SpacePrez")
     if r[0]:
         return r[1]
     else:
@@ -93,7 +111,7 @@ async def list_collections(dataset_id: str):
                 skos:prefLabel|dcterms:title|rdfs:label ?label .
         }}
     """
-    r = await sparql_query(q)
+    r = await sparql_query(q, "SpacePrez")
     if r[0]:
         return r[1]
     else:
@@ -130,8 +148,12 @@ async def get_collection_construct(
         PREFIX skos: <{SKOS}>
         CONSTRUCT {{
             ?coll ?p1 ?o1 .
+            ?o1 ?p2 ?o2 .
+
             ?p1 rdfs:label ?p1Label .
             ?o1 rdfs:label ?o1Label .
+
+            ?p2 rdfs:label ?p2Label .
 
             ?d a dcat:Dataset ;
                 dcterms:identifier ?d_id ;
@@ -141,6 +163,19 @@ async def get_collection_construct(
             {query_by_id if collection_id is not None else query_by_uri}
             ?coll ?p1 ?o1 ;
                 dcterms:isPartOf ?d .
+            OPTIONAL {{
+                ?o1 ?p2 ?o2 .
+                FILTER(ISBLANK(?o1))
+
+                OPTIONAL {{
+                    ?p2 rdfs:label ?p2Label .
+                    FILTER(lang(?p2Label) = "" || lang(?p2Label) = "en")
+                }}
+                OPTIONAL {{
+                    ?o2 rdfs:label ?o2Label .
+                    FILTER(lang(?o2Label) = "" || lang(?o2Label) = "en")
+                }}
+            }}
             ?d a dcat:Dataset ;
                 dcterms:identifier ?d_id ;
                 ?label_pred ?d_label .
@@ -155,7 +190,7 @@ async def get_collection_construct(
             }}
         }}
     """
-    r = await sparql_construct(q)
+    r = await sparql_construct(q, "SpacePrez")
     if r[0]:
         return r[1]
     else:
@@ -189,7 +224,7 @@ async def list_features(dataset_id: str, collection_id: str):
             }}
         }}
     """
-    r = await sparql_query(q)
+    r = await sparql_query(q, "SpacePrez")
     if r[0]:
         return r[1]
     else:
@@ -229,9 +264,16 @@ async def get_feature_construct(
         PREFIX rdfs: <{RDFS}>
         PREFIX skos: <{SKOS}>
         CONSTRUCT {{
-            ?f ?p1 ?o1 .
+            ?f ?p1 ?o1 ;
+                dcterms:title ?title .
+            ?o1 ?p2 ?o2 .
+            
             ?p1 rdfs:label ?p1Label .
             ?o1 rdfs:label ?o1Label .
+
+            ?p2 rdfs:label ?p2Label .
+
+            dcterms:title rdfs:label "Title" .
 
             ?coll a geo:FeatureCollection ;
                 dcterms:identifier ?coll_id ;
@@ -245,6 +287,23 @@ async def get_feature_construct(
             {query_by_id if feature_id is not None else query_by_uri}
             ?f ?p1 ?o1 ;
                 dcterms:isPartOf ?coll .
+            OPTIONAL {{
+                ?o1 ?p2 ?o2 .
+                FILTER(ISBLANK(?o1))
+
+                OPTIONAL {{
+                    ?p2 rdfs:label ?p2Label .
+                    FILTER(lang(?p2Label) = "" || lang(?p2Label) = "en")
+                }}
+                OPTIONAL {{
+                    ?o2 rdfs:label ?o2Label .
+                    FILTER(lang(?o2Label) = "" || lang(?o2Label) = "en")
+                }}
+            }}
+            OPTIONAL {{
+                ?f rdfs:label|skos:prefLabel|dcterms:title ?label .
+            }}
+            BIND(COALESCE(?label, CONCAT("Feature ", ?id)) AS ?title)
             ?coll a geo:FeatureCollection ;
                 dcterms:identifier ?coll_id ;
                 ?label_pred ?coll_label .
@@ -262,7 +321,7 @@ async def get_feature_construct(
             }}
         }}
     """
-    r = await sparql_construct(q)
+    r = await sparql_construct(q, "SpacePrez")
     if r[0]:
         return r[1]
     else:

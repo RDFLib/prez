@@ -27,10 +27,47 @@
 
 {% macro render_object(prop) %}
     {% for object in prop.objects %}
-        {% if object.label is not none %}
-            <a href="{{ object.value }}">{{ object.label }}</a>
+        {% if object.bnodes %}
+            <table class="bnode-table">
+                <tbody>
+                    {% for bnode in object.bnodes %}
+                        <tr>
+                            <th>
+                                {% if bnode.label is not none %}
+                                    <a href="{{ bnode.uri }}">{{ bnode.label | title }}</a>
+                                {% else %}
+                                    {% if bnode.prefix is not none %}
+                                        <a href="{{ bnode.uri }}">{{ bnode.prefix }}</a>
+                                    {% else %}
+                                        <a href="{{ bnode.uri }}">{{ bnode.uri }}</a>
+                                    {% endif %}
+                                {% endif %}
+                            </th>
+                            <td>
+                                {% if bnode.value | match("^[A-Z]+ \(.*\)$") or bnode.value | match("^\{.+\}$") %}
+                                    <code>{{ bnode.value }}</code>
+                                {% else %}
+                                    {% if bnode.oLabel is not none %}
+                                        <a href="{{ bnode.value }}">{{ bnode.oLabel }}</a>
+                                    {% else %}
+                                        {% if bnode.oPrefix is not none %}
+                                            <a href="{{ bnode.value }}">{{ bnode.oPrefix }}</a>
+                                        {% else %}
+                                            <a href="{{ bnode.value }}">{{ bnode.value }}</a>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         {% else %}
-            {{ object.value }}
+            {% if object.label is not none %}
+                <a href="{{ object.value }}">{{ object.label }}</a>
+            {% else %}
+                {{ object.value }}
+            {% endif %}
         {% endif %}
         <br/>
     {% endfor %}

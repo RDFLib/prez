@@ -14,7 +14,7 @@ class VocPrezDataset(PrezModel):
     def __init__(self, graph: Graph) -> None:
         super().__init__(graph)
 
-        self.uri = DATA_URI
+        self.uri = SYSTEM_INFO["VocPrez"]["data_uri"]
         self.title = SYSTEM_INFO["VocPrez"]["title"]
         self.description = SYSTEM_INFO["VocPrez"]["desc"]
 

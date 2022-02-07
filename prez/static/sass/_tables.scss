@@ -30,10 +30,31 @@ table {
 
         th {
             text-align: left;
+            min-width: 120px;
         }
 
         tbody tr:nth-child(2n + 1) {
             background-color: var(--table-row-bg);
+        }
+    }
+
+    &.bnode-table {
+        font-size: 14px;
+
+        tr {
+            background-color: unset !important;
+        }
+
+        td {
+            width: 100%;
+        }
+        
+        .props-table td > &:last-child {
+            margin-bottom: 0px;
+        }
+
+        .props-table td > &:nth-child(2n) {
+            background-color: var(--subtable-bg);
         }
     }
 }

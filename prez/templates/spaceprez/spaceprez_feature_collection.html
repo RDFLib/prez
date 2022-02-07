@@ -34,7 +34,11 @@
             Feature collection title
         {% endif %}
     </h1>
-    <div id="map">map</div>
+    {% if collection.geometries.asGeoJSON is not none %}
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
+        <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+        <div id="map"></div>
+    {% endif %}
     <div class="table-wrapper">
         <table class="props-table">
             <tbody>
@@ -55,4 +59,24 @@
 <div id="content-col-sidebar">
     {% include "alt_link.html" %}
 </div>
+{% if collection.geometries.asGeoJSON is not none %}
+    <script>
+        const data = '{{ collection.geometries.asGeoJSON | tojson }}';
+        const map = L.map('map');
+
+        L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+        accessToken: 'pk.eyJ1IjoiamFtaWVmZWlzcyIsImEiOiJja3Exb3U5anAwZ3lrMnBrMXFlMXUxazZ2In0.2rBPhgnwrWJKNl2GsXV5HQ',
+        maxZoom: 18,
+        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
+            '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+            'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+        id: 'mapbox/streets-v11',
+        tileSize: 512,
+        zoomOffset: -1
+        }).addTo(map);
+
+        const geojsonLayer = L.geoJson(JSON.parse(data.slice(1, data.length - 1))).addTo(map);
+        map.fitBounds(geojsonLayer.getBounds());
+    </script>
+{% endif %}
 {% endblock %}

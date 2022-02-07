@@ -1,4 +1,5 @@
 import os
+import re
 from typing import Dict
 
 import jinja2
@@ -48,6 +49,13 @@ def file_exists(path: str) -> bool:
     """Checks whether a file exists"""
     return os.path.isfile(path)
 
+def match(s: str, pattern: str) -> bool:
+    """Matches a string to a regex pattern"""
+    if re.match(pattern, s):
+        return True
+    else:
+        return False
+
 template_list = ["templates"]
 if THEME_VOLUME is not None:
     template_list.insert(0, f"{THEME_VOLUME}/templates")
@@ -58,3 +66,4 @@ templates = Jinja2Templates(
 templates.env.filters["get_config"] = get_config
 templates.env.filters["append_qsa"] = append_qsa
 templates.env.filters["file_exists"] = file_exists
+templates.env.filters["match"] = match

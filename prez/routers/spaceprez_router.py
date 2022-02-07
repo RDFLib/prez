@@ -178,7 +178,6 @@ async def feature_endpoint(
         feature_id=feature_id,
         feature_uri=feature_uri,
     )
-    print(sparql_result.serialize())
 
     if len(sparql_result) == 0:
         raise HTTPException(status_code=404, detail="Not Found")

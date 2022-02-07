@@ -12,7 +12,8 @@
   --footer-bg: #E6E8E6;
   --container-direction: column;
   --main-nav-direction: row;
-  --table-row-bg: #eeeeee;
+  --table-row-bg: #dddddd;
+  --subtable-bg: #eeeeee;
   --page-max-width: 1200px;
   --body-font: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   --heading-font: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
@@ -275,6 +276,12 @@ ol#concept-hierarchy li:not(.concept-collapse) {
   margin-left: 24px;
 }
 
+#map {
+  height: 500px;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
 @media screen and (max-width: 420px) {
   #content-col-sidebar {
     z-index: 95;
@@ -293,6 +300,10 @@ ol#concept-hierarchy li:not(.concept-collapse) {
   }
   .alt-quick-link > a {
     text-align: center;
+  }
+
+  #map {
+    height: 300px;
   }
 }
 #main-nav {
@@ -617,7 +628,23 @@ table.props-table td {
 }
 table.props-table th {
   text-align: left;
+  min-width: 120px;
 }
 table.props-table tbody tr:nth-child(2n+1) {
   background-color: var(--table-row-bg);
+}
+table.bnode-table {
+  font-size: 14px;
+}
+table.bnode-table tr {
+  background-color: unset !important;
+}
+table.bnode-table td {
+  width: 100%;
+}
+.props-table td > table.bnode-table:last-child {
+  margin-bottom: 0px;
+}
+.props-table td > table.bnode-table:nth-child(2n) {
+  background-color: var(--subtable-bg);
 }
