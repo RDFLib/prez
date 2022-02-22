@@ -16,6 +16,7 @@ class SpacePrezDataset(PrezModel):
     geom_props = [DCTERMS.spatial]
     hidden_props = [
         DCTERMS.identifier,
+        RDFS.seeAlso,
     ]
 
     def __init__(

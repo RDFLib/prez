@@ -1,4 +1,5 @@
 from typing import List, Dict, Optional
+import json
 
 from rdflib import Graph
 from rdflib.namespace import DCTERMS, SKOS, RDFS
@@ -98,6 +99,29 @@ class SpacePrezFeature(PrezModel):
             "collection": self.collection,
             "dataset": self.dataset,
         }
+    
+    def to_geojson(self) -> Dict:
+        r = self.graph.query(
+            f"""
+            PREFIX geo: <{GEO}>
+            SELECT ?geojson
+            WHERE {{
+                BIND (<{self.uri}> as ?f)
+                ?f geo:hasGeometry/geo:asGeoJSON ?geojson .
+            }}
+        """
+        )
+
+        geom = r.bindings[0].get("geojson")
+
+        g_dict = {
+            "type": "Feature",
+            "id": self.id,
+            "geometry": json.loads(geom) if geom is not None else {},
+            "properties": {},
+        }
+
+        return g_dict
 
     # override
     def _get_props_dict(self) -> Dict:

@@ -21,7 +21,10 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
         instance_uri: str,
         members: List[Dict],
         label: str,
-        comment: str
+        comment: str,
+        page: int,
+        per_page: int,
+        member_count: int
     ) -> None:
         profiles.update({"mem": mem})
 
@@ -34,7 +37,18 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
             self.members = members
             self.label = label
             self.comment = comment
-            self.member_count = len(members)
+            self.member_count = member_count
+
+            ceiling = lambda a, b: a // b + bool(a % b)
+            # need a way to count the total no. of features (separate query?)
+            last_page = ceiling(self.member_count, per_page)
+            self.pages = {
+                "first": 1,
+                "prev": page - 1 if page > 1 else 1,
+                "current": page,
+                "next": page + 1 if page < last_page else last_page,
+                "last": last_page,
+            }
 
     # pagination
 

@@ -4,6 +4,8 @@ from .spaceprez_feature_collection_list_renderer import SpacePrezFeatureCollecti
 from .spaceprez_feature_collection_renderer import SpacePrezFeatureCollectionRenderer
 from .spaceprez_feature_list_renderer import SpacePrezFeatureListRenderer
 from .spaceprez_feature_renderer import SpacePrezFeatureRenderer
+from .spaceprez_home_renderer import SpacePrezHomeRenderer
+from .spaceprez_conformance_renderer import SpacePrezConformanceRenderer
 
 
 __all__ = [
@@ -13,4 +15,6 @@ __all__ = [
     "SpacePrezFeatureCollectionRenderer",
     "SpacePrezFeatureListRenderer",
     "SpacePrezFeatureRenderer",
+    "SpacePrezHomeRenderer",
+    "SpacePrezConformanceRenderer",
 ]

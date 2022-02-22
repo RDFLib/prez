@@ -1,4 +1,6 @@
 {% extends "_page.html" %}
+{% from "_macros.html" import render_pagination with context %}
+
 {% set prezs = "ENABLED_PREZS" | get_config %}
 {% set has_alt = true %}
 
@@ -23,7 +25,7 @@
 {% endif %}
 
 {% set active_prez = "SpacePrez" %}
-{% set spaceprez_active_page = "datasets" %}
+{% set sub_active_page = "datasets" %}
 
 {% block content %}
 <div id="content-col-main">
@@ -36,6 +38,7 @@
             {% endfor %}
         </ul>
     </div>
+    {{ render_pagination(pages) }}
 </div>
 <div id="content-col-sidebar">
     {% include "alt_link.html" %}

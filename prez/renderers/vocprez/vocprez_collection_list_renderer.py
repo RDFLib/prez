@@ -20,7 +20,10 @@ class VocPrezCollectionListRenderer(ListRenderer):
         instance_uri: str,
         label: str,
         comment: str,
-        collection_list: VocPrezCollectionList
+        collection_list: VocPrezCollectionList,
+        page: int,
+        per_page: int,
+        member_count: int
     ) -> None:
         super().__init__(
             request,
@@ -30,6 +33,9 @@ class VocPrezCollectionListRenderer(ListRenderer):
             collection_list.members,
             label,
             comment,
+            page,
+            per_page,
+            member_count
         )
         self.collection_list = collection_list
 
@@ -39,6 +45,7 @@ class VocPrezCollectionListRenderer(ListRenderer):
             "request": self.request,
             "members": self.members,
             "uri": self.instance_uri,
+            "pages": self.pages,
             "label": self.label,
             "comment": self.comment,
             "profiles": self.profiles,

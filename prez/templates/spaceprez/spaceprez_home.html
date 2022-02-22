@@ -1,6 +1,6 @@
 {% extends "_page.html" %}
 {% set prezs = "ENABLED_PREZS" | get_config %}
-{% set has_alt = false %}
+{% set has_alt = true %}
 
 {% if prezs | length == 1 %}
     {% set main_active_page = "home" %}
@@ -12,11 +12,14 @@
 {% endif %}
 
 {% set active_prez = "SpacePrez" %}
-{% set spaceprez_active_page = "home" %}
+{% set sub_active_page = "home" %}
 
 {% block content %}
 <div id="content-col-main">
     <h1>System Home</h1>
     <p>OGC API</p>
+</div>
+<div id="content-col-sidebar">
+    {% include "alt_link.html" %}
 </div>
 {% endblock %}

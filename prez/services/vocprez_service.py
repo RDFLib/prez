@@ -6,7 +6,21 @@ from config import *
 from services.sparql_utils import *
 
 
-async def list_schemes():
+async def count_schemes():
+    q = f"""
+        PREFIX skos: <{SKOS}>
+        SELECT (COUNT(?cs) as ?count) 
+        WHERE {{
+            ?cs a skos:ConceptScheme .
+        }}
+    """
+    r = await sparql_query(q, "VocPrez")
+    if r[0]:
+        return r[1]
+    else:
+        raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
+
+async def list_schemes(page: int, per_page: int):
     q = f"""
         PREFIX dcterms: <{DCTERMS}>
         PREFIX skos: <{SKOS}>
@@ -15,16 +29,29 @@ async def list_schemes():
             ?cs a skos:ConceptScheme ;
                 dcterms:identifier ?id ;
                 skos:prefLabel ?label .
-        }}
+        }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
     """
-    r = await sparql_query(q)
+    r = await sparql_query(q, "VocPrez")
     if r[0]:
         return r[1]
     else:
         raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
 
+async def count_collections():
+    q = f"""
+        PREFIX skos: <{SKOS}>
+        SELECT (COUNT(?cs) as ?count) 
+        WHERE {{
+            ?cs a skos:Collection .
+        }}
+    """
+    r = await sparql_query(q, "VocPrez")
+    if r[0]:
+        return r[1]
+    else:
+        raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
 
-async def list_collections():
+async def list_collections(page: int, per_page: int):
     q = f"""
         PREFIX dcterms: <{DCTERMS}>
         PREFIX skos: <{SKOS}>
@@ -33,9 +60,9 @@ async def list_collections():
             ?cs a skos:Collection ;
                 dcterms:identifier ?id ;
                 skos:prefLabel ?label .
-        }}
+        }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
     """
-    r = await sparql_query(q)
+    r = await sparql_query(q, "VocPrez")
     if r[0]:
         return r[1]
     else:
@@ -106,7 +133,7 @@ async def get_scheme_construct1(
             }}
         }}
     """
-    r = await sparql_construct(q)
+    r = await sparql_construct(q, "VocPrez")
     if r[0]:
         return r[1]
     else:
@@ -164,7 +191,7 @@ async def get_scheme_construct2(
             {query_by_graph(query_in_graph, "?cs", include_inferencing)}
         }}
     """
-    r = await sparql_construct(q)
+    r = await sparql_construct(q, "VocPrez")
     if r[0]:
         return r[1]
     else:
@@ -262,7 +289,7 @@ async def get_concept_construct(
             }}
         }}
     """
-    r = await sparql_construct(q)
+    r = await sparql_construct(q, "VocPrez")
     if r[0]:
         return r[1]
     else:
@@ -291,7 +318,7 @@ async def get_dataset_construct():
             }}
         }}
     """
-    r = await sparql_construct(q)
+    r = await sparql_construct(q, "VocPrez")
     if r[0]:
         return r[1]
     else:
@@ -344,7 +371,7 @@ async def get_collection_construct1(
             }}
         }}
     """
-    r = await sparql_construct(q)
+    r = await sparql_construct(q, "VocPrez")
     if r[0]:
         return r[1]
     else:
@@ -400,7 +427,7 @@ async def get_collection_construct2(
             {query_in_graph}
         }}
     """
-    r = await sparql_construct(q)
+    r = await sparql_construct(q, "VocPrez")
     if r[0]:
         return r[1]
     else:

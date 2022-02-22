@@ -1,8 +1,8 @@
 from typing import Dict, Optional, Union
 
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from rdflib import Graph, URIRef, Literal
-from rdflib.namespace import DCAT, DCTERMS, RDF
+from rdflib import Graph
+from rdflib.namespace import DCAT, DCTERMS, RDFS
 from connegp import MEDIATYPE_NAMES
 
 from config import *
@@ -47,74 +47,84 @@ class SpacePrezFeatureCollectionRenderer(Renderer):
             headers=self.headers,
         )
     
-    def _render_oai_json(self) -> JSONResponse:
-        """Renders the JSON representation of the OAI profile for a feature collection"""
-        return JSONResponse(
-            content={"test": "test"},
-            media_type="application/json",
-            headers=self.headers,
-        )
+    # def _render_oai_json(self) -> JSONResponse:
+    #     """Renders the JSON representation of the OAI profile for a feature collection"""
+    #     return JSONResponse(
+    #         content={"test": "test"},
+    #         media_type="application/json",
+    #         headers=self.headers,
+    #     )
     
     def _render_oai_geojson(self) -> JSONResponse:
         """Renders the GeoJSON representation of the OAI profile for a feature collection"""
+        content = self.collection.to_geojson()
+
+        content["links"] = [
+            {
+                "href": str(self.request.url),
+                "rel": "self",
+                "type": self.mediatype,
+                "title": "this document",
+            },
+            {
+                "href": str(self.request.base_url)[:-1] + str(self.request.url.path),
+                "rel": "alternate",
+                "type": "text/html",
+                "title": "this document as HTML",
+            },
+        ]
+
         return JSONResponse(
-            content={"test": "test"},
+            content=content,
             media_type="application/geo+json",
             headers=self.headers,
         )
 
     def _render_oai(self, template_context: Union[Dict, None]):
         """Renders the OAI profile for a feature collection"""
-        if self.mediatype == "application/json":
-            return self._render_oai_json()
-        elif self.mediatype == "application/geo+json":
-            return self._render_oai_geojson()
-        else:  # else return HTML
+        if self.mediatype == "text/html":
             return self._render_oai_html(template_context)
+        else:  # else return GeoJSON
+            return self._render_oai_geojson()
 
     def _generate_geo_rdf(self) -> Graph:
         """Generates a Graph of the GeoSPARQL representation"""
-        g = Graph()
+        r = self.collection.graph.query(f"""
+        PREFIX dcat: <{DCAT}>
+        PREFIX dcterms: <{DCTERMS}>
+        PREFIX geo: <{GEO}>
+        PREFIX rdfs: <{RDFS}>
+        CONSTRUCT {{
+            ?fc a geo:FeatureCollection ;
+                ?fc_pred ?fc_o ;
+                geo:hasBoundingBox ?geom ;
+                rdfs:member ?mem ;
+                dcterms:isPartOf ?d .
+            ?geom ?geom_p ?geom_o .
+            ?d a dcat:Dataset .
+            ?mem a geo:Feature .
+        }}
+        WHERE {{
+            BIND (<{self.collection.uri}> AS ?fc)
+            ?fc a geo:FeatureCollection ;
+                ?fc_pred ?fc_o ;
+                rdfs:member ?mem ;
+                dcterms:isPartOf ?d .
+            FILTER (STRSTARTS(STR(?fc_pred), STR(geo:)))
+            OPTIONAL {{
+                ?fc geo:hasBoundingBox ?geom .
+                ?geom ?geom_p ?geom_o .
+            }}
+            ?d a dcat:Dataset .
+            ?mem a geo:Feature .
+        }}
+        """)
+
+        g = r.graph
         g.bind("dcat", DCAT)
         g.bind("dcterms", DCTERMS)
-        ds = URIRef(self.dataset.uri)
-        g.add((ds, RDF.type, DCAT.Dataset))
-        g.add((ds, DCTERMS.title, Literal(self.dataset.title)))
-        g.add((ds, DCTERMS.description, Literal(self.dataset.description)))
-
-        api = URIRef(self.instance_uri)
-        g.add((api, DCAT.servesDataset, ds))
-        g.add((api, RDF.type, DCAT.DataService))
-        g.add((api, DCTERMS.title, Literal("System ConnegP API")))
-        g.add(
-            (
-                api,
-                DCTERMS.description,
-                Literal(
-                    "A Content Negotiation by Profile-compliant service that provides "
-                    "access to all of this catalogue's information"
-                ),
-            )
-        )
-        g.add((api, DCTERMS.type, URIRef("http://purl.org/dc/dcmitype/Service")))
-        g.add((api, DCAT.endpointURL, api))
-
-        sparql = URIRef(self.instance_uri + "sparql")
-        g.add((sparql, DCAT.servesDataset, ds))
-        g.add((sparql, RDF.type, DCAT.DataService))
-        g.add((sparql, DCTERMS.title, Literal("System SPARQL Service")))
-        g.add(
-            (
-                sparql,
-                DCTERMS.description,
-                Literal(
-                    "A SPARQL Protocol-compliant service that provides access to all "
-                    "of this catalogue's information"
-                ),
-            )
-        )
-        g.add((sparql, DCTERMS.type, URIRef("http://purl.org/dc/dcmitype/Service")))
-        g.add((sparql, DCAT.endpointURL, sparql))
+        g.bind("geo", GEO)
+        g.bind("rdfs", RDFS)
 
         return g
 

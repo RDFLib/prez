@@ -5,17 +5,11 @@
 {% block content %}
 <div id="content-col-main">
     <h1>Welcome to Prez</h1>
-    <p>This is the new version of VocPrez (VocPrez 3), combined with CatPrez, OGC APIs, and the upcoming TimePrez.</p>
+    <p>Prez is a Linked Data API that combines VocPrez, OGC API (SpacePrez), CatPrez and the upcoming TimePrez.</p>
     <ul>
-        {% if "vocprez" in enabled_prezs %}
-            <li><a href="{{ url_for('vocprez_home') }}">VocPrez</a></li>
-        {% endif %}
+        {% for prez in prezs %}
+            <li><a href="{{ url_for(prez | lower + '_home') }}">{{ prez }}</a></li>
+        {% endfor %}
     </ul>
-    <div>
-        <a href="/object?uri=http://example.com/scheme/scheme1" class="btn">CS1</a>
-        <a href="/object?uri=http://example.com/scheme/scheme1&_profile=alt" class="btn">CS1 alt</a>
-    </div>
-    <!-- <a href="/object?uri=http://example.com/scheme/scheme1">CS link</a>
-    <a href="/object?uri=http://example.com/scheme/scheme1&_profile=alt">CS alt link</a> -->
 </div>
 {% endblock %}

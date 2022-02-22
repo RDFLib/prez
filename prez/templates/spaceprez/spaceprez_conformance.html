@@ -1,5 +1,6 @@
 {% extends "_page.html" %}
 {% set prezs = "ENABLED_PREZS" | get_config %}
+{% set has_alt = true %}
 
 {% if prezs | length == 1 %}
     {% set breadcrumbs = [
@@ -14,11 +15,14 @@
 {% endif %}
 
 {% set active_prez = "SpacePrez" %}
-{% set spaceprez_active_page = "conformance" %}
+{% set sub_active_page = "conformance" %}
 
 {% block content %}
 <div id="content-col-main">
     <h1>Conformance</h1>
     <p>A list of conformances will appear here</p>
+</div>
+<div id="content-col-sidebar">
+    {% include "alt_link.html" %}
 </div>
 {% endblock %}

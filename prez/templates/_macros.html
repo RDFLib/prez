@@ -118,3 +118,28 @@
         </div>
     </div>
 {% endmacro %}
+
+{% macro render_pagination(pages) %}
+    {% set per_page = "per_page=" + request.query_params.get("per_page") + "&" if request.query_params.get("per_page") else "" %}
+    <div id="pagination">
+        {% if pages.current > 1 %}
+            <a href="{{ request.url.path + '?' + per_page + 'page=' + pages.first | string }}" class="btn paginate-btn">{{ pages.first }}</a>
+        {% endif %}
+        {% if pages.prev > 2 %}
+            <div>...</div>
+        {% endif %}
+        {% if pages.current > 2 %}
+            <a href="{{ request.url.path + '?' + per_page + 'page=' + pages.prev | string }}" class="btn paginate-btn">{{ pages.prev }}</a>
+        {% endif %}
+        <a href="{{ request.url.path + '?' + per_page + 'page=' + pages.current | string }}" class="btn paginate-btn active">{{ pages.current }}</a>
+        {% if pages.current < pages.last - 1 %}
+            <a href="{{ request.url.path + '?' + per_page + 'page=' + pages.next | string }}" class="btn paginate-btn">{{ pages.next }}</a>
+        {% endif %}
+        {% if pages.next + 1 < pages.last %}
+            <div>...</div>
+        {% endif %}
+        {% if pages.current < pages.last %}
+            <a href="{{ request.url.path + '?' + per_page + 'page=' + pages.last | string }}" class="btn paginate-btn">{{ pages.last }}</a>
+        {% endif %}
+    </div>
+{% endmacro %}

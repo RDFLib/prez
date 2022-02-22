@@ -16,9 +16,9 @@ SYSTEM_INFO = json.loads(
         "desc": "Prez demo instance for SURROUND Australia"
     },
     "VocPrez": {
-        "title": null,
-        "desc": null,
-        "data_uri": null
+        "title": "SURROUND Vocabs",
+        "desc": "Demo vocabularies",
+        "data_uri": "http://exampledata.org"
     },
     "CatPrez": {
         "title": null,
@@ -46,9 +46,9 @@ SPARQL_CREDS = json.loads(
         "SPARQL_CREDS",
         """{
     "VocPrez": {
-        "SPARQL_ENDPOINT": null,
-        "SPARQL_USERNAME": null,
-        "SPARQL_PASSWORD": null
+        "SPARQL_ENDPOINT": "http://localhost:3030/surround-vocabs",
+        "SPARQL_USERNAME": "",
+        "SPARQL_PASSWORD": ""
     },
     "CatPrez": {
         "SPARQL_ENDPOINT": null,
@@ -69,7 +69,7 @@ SPARQL_CREDS = json.loads(
     )
 )
 ENABLED_PREZS = json.loads(
-    os.environ.get("ENABLED_PREZS", '["SpacePrez"]')
+    os.environ.get("ENABLED_PREZS", '["VocPrez", "SpacePrez"]')
 )  # must use proper capitalisation
 THEME_VOLUME = os.environ.get("THEME_VOLUME", None)
 SIDENAV = os.environ.get("SIDENAV", "False") == "True"

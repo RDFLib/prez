@@ -23,6 +23,9 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
         label: str,
         comment: str,
         feature_collection_list: SpacePrezFeatureCollectionList,
+        page: int,
+        per_page: int,
+        member_count: int,
     ) -> None:
         super().__init__(
             request,
@@ -32,6 +35,9 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
             feature_collection_list.members,
             label,
             comment,
+            page,
+            per_page,
+            member_count,
         )
         self.feature_collection_list = feature_collection_list
 
@@ -42,11 +48,14 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
             "members": self.members,
             "dataset": self.feature_collection_list.dataset,
             "uri": self.instance_uri,
+            "pages": self.pages,
             "label": self.label,
             "comment": self.comment,
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
-            "mediatype_names": dict(MEDIATYPE_NAMES, **{"application/geo+json": "GeoJSON"}),
+            "mediatype_names": dict(
+                MEDIATYPE_NAMES, **{"application/geo+json": "GeoJSON"}
+            ),
         }
         if template_context is not None:
             _template_context.update(template_context)
@@ -55,32 +64,63 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
             context=_template_context,
             headers=self.headers,
         )
-    
+
     def _render_oai_json(self) -> JSONResponse:
         """Renders the JSON representation of the OAI profile for a dataset"""
+        collections = []
+
+        for member in self.members:
+            collections.append(
+                {
+                    "id": member["id"],
+                    "title": member["title"],
+                    "links": [
+                        {
+                            "href": self.request.url_for(
+                                "features",
+                                dataset_id=self.feature_collection_list.dataset["id"],
+                                collection_id=member["id"],
+                            ),
+                            "rel": "items",
+                            "type": self.mediatype,
+                            "title": member["title"],
+                        },
+                    ],
+                }
+            )
+
+        content = {
+            "collections": collections,
+            "links": [
+                {
+                    "href": str(self.request.url),
+                    "rel": "self",
+                    "type": self.mediatype,
+                    "title": "this document",
+                },
+                {
+                    "href": str(self.request.base_url)[:-1]
+                    + str(self.request.url.path),
+                    "rel": "alternate",
+                    "type": "text/html",
+                    "title": "this document as HTML",
+                },
+            ],
+        }
+
         return JSONResponse(
-            content={"test": "test"},
+            content=content,
             media_type="application/json",
-            headers=self.headers,
-        )
-    
-    def _render_oai_geojson(self) -> JSONResponse:
-        """Renders the GeoJSON representation of the OAI profile for a dataset"""
-        return JSONResponse(
-            content={"test": "test"},
-            media_type="application/geo+json",
             headers=self.headers,
         )
 
     def _render_oai(self, template_context: Union[Dict, None]):
         """Renders the OAI profile for a list of feature collections"""
-        if self.mediatype == "application/json":
-            return self._render_oai_json()
-        elif self.mediatype == "application/geo+json":
-            return self._render_oai_geojson()
-        else:  # else return HTML
+        if self.mediatype == "text/html":
             return self._render_oai_html(template_context)
-    
+        else:  # else return JSON
+            return self._render_oai_json()
+
     def _render_dd_json(self) -> JSONResponse:
         """Renders the json representation of the dd profile for a list of feature collections"""
         return JSONResponse(
@@ -92,7 +132,7 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
     def _render_dd(self):
         """Renders the dd profile for a list of feature collections"""
         return self._render_dd_json()
-    
+
     def _generate_geo_rdf(self) -> Graph:
         """Generates a Graph of the GeoSPARQL representation"""
         g = self._generate_mem_rdf()

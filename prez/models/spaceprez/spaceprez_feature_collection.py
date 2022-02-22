@@ -1,4 +1,5 @@
 from typing import List, Dict, Optional
+import json
 
 from rdflib import Graph
 from rdflib.namespace import DCTERMS, SKOS, RDFS
@@ -16,6 +17,7 @@ class SpacePrezFeatureCollection(PrezModel):
     geom_props = [GEO.hasBoundingBox]
     hidden_props = [
         DCTERMS.identifier,
+        RDFS.member
     ]
 
     def __init__(
@@ -82,6 +84,30 @@ class SpacePrezFeatureCollection(PrezModel):
             "geometries": self.geometries,
             "dataset": self.dataset,
         }
+    
+    def to_geojson(self) -> Dict:
+        r = self.graph.query(
+            f"""
+            PREFIX geo: <{GEO}>
+            SELECT ?bbox
+            WHERE {{
+                BIND (<{self.uri}> as ?fc)
+                ?fc geo:hasBoundingBox/geo:asGeoJSON ?bbox .
+            }}
+        """
+        )
+
+        bbox = r.bindings[0].get("bbox")
+
+        g_dict = {
+            "type": "FeatureCollection",
+            "features": [], # have all features' geojson? need to query for all & call feature.to_geojson()
+        }
+
+        if bbox is not None:
+            g_dict["bbox"] = json.loads(bbox)["coordinates"][0]
+
+        return g_dict
     
     # override
     def _get_props_dict(self) -> Dict:

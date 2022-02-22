@@ -8,7 +8,7 @@ const altWidthMobile = "80%";
 
 // on page load
 document.addEventListener("DOMContentLoaded", () => {
-    const nav = document.querySelector("#main-nav-side");
+    const nav = document.querySelector("#main-nav");
     if (nav.classList.contains("colnav")) {
         localStorage.setItem("hasSideNav", true);
     } else {
@@ -41,7 +41,7 @@ toggleBtn.forEach(btn => {
         const altOpen = localStorage.getItem("altOpen") === "true";
         const hasSideNav = localStorage.getItem("hasSideNav") === "true";
 
-        const nav = document.querySelector("#main-nav-side");
+        const nav = document.querySelector("#main-nav");
         const lightbox = document.querySelector("#lightbox");
         const alt = document.querySelector("#content-col-sidebar");
 
@@ -82,7 +82,7 @@ altToggle.forEach(btn => {
         const navOpen = localStorage.getItem("navOpen") === "true";
 
         const alt = document.querySelector("#content-col-sidebar");
-        const nav = document.querySelector("#main-nav-side");
+        const nav = document.querySelector("#main-nav");
         const lightbox = document.querySelector("#lightbox");
 
         if (isMobile) {
@@ -106,7 +106,7 @@ altToggle.forEach(btn => {
 window.onresize = () => {
     const hasSideNav = localStorage.getItem("hasSideNav") === "true";
 
-    const nav = document.querySelector("#main-nav-side");
+    const nav = document.querySelector("#main-nav");
     const lightbox = document.querySelector("#lightbox");
     const alt = document.querySelector("#content-col-sidebar");
 
@@ -148,7 +148,7 @@ window.onresize = () => {
 document.onscroll = () => {
     const mobileHeader = document.querySelector("#mobile-header");
     const mobileTitle = document.querySelector("#mobile-title");
-    const nav = document.querySelector("#main-nav-side");
+    const nav = document.querySelector("#main-nav");
     const lightbox = document.querySelector("#lightbox");
     const alt = document.querySelector("#content-col-sidebar");
     const isMobile = localStorage.getItem("isMobile") === "true";
@@ -231,3 +231,5 @@ if (expandAll) {
         expandAll.classList.toggle("expand");
     };
 }
+
+// expand/collapse subnavs

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Request, HTTPException
+import asyncio
 
 from renderers.spaceprez import *
 from services.spaceprez_service import *
@@ -12,16 +13,19 @@ router = APIRouter(tags=["SpacePrez"] if len(ENABLED_PREZS) > 1 else [])
 
 
 async def home(request: Request):
-    # dataset_renderer = SpacePrezDatasetRenderer(
-    #     request, str(request.url.remove_query_params(keys=request.query_params.keys()))
+    # return templates.TemplateResponse(
+    #     "spaceprez/spaceprez_home.html", {"request": request}
     # )
-    # sparql_result = await get_dataset_construct()
-    # dataset = SpacePrezDataset(sparql_result)
-    # dataset_renderer.set_dataset(dataset)
-    # return dataset_renderer.render()
-    return templates.TemplateResponse(
-        "spaceprez/spaceprez_home.html", {"request": request}
+    home_renderer = SpacePrezHomeRenderer(
+        request,
+        str(
+            request.url.remove_query_params(
+                keys=[key for key in request.query_params.keys() if key != "uri"]
+            )
+        ),
     )
+
+    return home_renderer.render()
 
 
 @router.get(
@@ -33,9 +37,16 @@ async def spaceprez_home(request: Request):
 
 
 @router.get("/datasets", summary="List Datasets")
-async def datasets(request: Request):
+async def datasets(
+    request: Request,
+    page: int = 1,
+    per_page: int = 20,
+):
     """Returns a list of SpacePrez dcat:Datasets in the necessary profile & mediatype"""
-    sparql_result = await list_datasets()
+    dataset_count, sparql_result = await asyncio.gather(
+        count_datasets(),
+        list_datasets(page, per_page)
+    )
     dataset_list = SpacePrezDatasetList(sparql_result)
     dataset_list_renderer = SpacePrezDatasetListRenderer(
         request,
@@ -43,6 +54,9 @@ async def datasets(request: Request):
         "Dataset list",
         "A list of dcat:Datasets",
         dataset_list,
+        page,
+        per_page,
+        int(dataset_count[0]["count"]["value"])
     )
     return dataset_list_renderer.render()
 
@@ -81,9 +95,17 @@ async def dataset_endpoint(
 
 # feature collections
 @router.get("/dataset/{dataset_id}/collections", summary="List FeatureCollections")
-async def feature_collections(request: Request, dataset_id: str):
+async def feature_collections(
+    request: Request,
+    dataset_id: str,
+    page: int = 1,
+    per_page: int = 20,
+):
     """Returns a list of SpacePrez geo:FeatureCollections in the necessary profile & mediatype"""
-    sparql_result = await list_collections(dataset_id)
+    collection_count, sparql_result = await asyncio.gather(
+        count_collections(dataset_id),
+        list_collections(dataset_id, page, per_page)
+    )
     feature_collection_list = SpacePrezFeatureCollectionList(sparql_result)
     feature_collection_list_renderer = SpacePrezFeatureCollectionListRenderer(
         request,
@@ -91,6 +113,9 @@ async def feature_collections(request: Request, dataset_id: str):
         "FeatureCollection list",
         "A list of geo:FeatureCollections",
         feature_collection_list,
+        page,
+        per_page,
+        int(collection_count[0]["count"]["value"])
     )
     return feature_collection_list_renderer.render()
 
@@ -139,12 +164,21 @@ async def feature_collection_endpoint(
 
 # features
 @router.get(
-    "/dataset/{dataset_id}/collections/{collection_id}/features",
+    "/dataset/{dataset_id}/collections/{collection_id}/items",
     summary="List Features",
 )
-async def features(request: Request, dataset_id: str, collection_id: str):
+async def features(
+    request: Request,
+    dataset_id: str,
+    collection_id: str,
+    page: int = 1,
+    per_page: int = 20,
+):
     """Returns a list of SpacePrez geo:Features in the necessary profile & mediatype"""
-    sparql_result = await list_features(dataset_id, collection_id)
+    feature_count, sparql_result = await asyncio.gather(
+        count_features(dataset_id, collection_id),
+        list_features(dataset_id, collection_id, page, per_page)
+    )
     feature_list = SpacePrezFeatureList(sparql_result)
     feature_list_renderer = SpacePrezFeatureListRenderer(
         request,
@@ -152,6 +186,9 @@ async def features(request: Request, dataset_id: str, collection_id: str):
         "Feature list",
         "A list of geo:Features",
         feature_list,
+        page,
+        per_page,
+        int(feature_count[0]["count"]["value"])
     )
     return feature_list_renderer.render()
 
@@ -188,7 +225,7 @@ async def feature_endpoint(
 
 # feature
 @router.get(
-    "/dataset/{dataset_id}/collections/{collection_id}/features/{feature_id}",
+    "/dataset/{dataset_id}/collections/{collection_id}/items/{feature_id}",
     summary="Get Feature",
 )
 async def feature(
@@ -235,6 +272,15 @@ async def spaceprez_profiles(request: Request):
 @router.get("/conformance", summary="Conformance")
 async def conformance(request: Request):
     """Returns the SpacePrez conformance page in the necessary profile & mediatype"""
-    return templates.TemplateResponse(
-        "spaceprez/spaceprez_conformance.html", {"request": request}
+    # return templates.TemplateResponse(
+    #     "spaceprez/spaceprez_conformance.html", {"request": request}
+    # )
+    conformance_renderer = SpacePrezConformanceRenderer(
+        request,
+        str(
+            request.url.remove_query_params(
+                keys=[key for key in request.query_params.keys() if key != "uri"]
+            )
+        ),
     )
+    return conformance_renderer.render()

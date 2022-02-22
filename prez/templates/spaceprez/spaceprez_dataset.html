@@ -1,5 +1,6 @@
 {% extends "_page.html" %}
 {% from "_macros.html" import render_predicate, render_object with context %}
+
 {% set prezs = "ENABLED_PREZS" | get_config %}
 {% set has_alt = true %}
 
@@ -10,7 +11,6 @@
     ] %}
     {% set main_active_page = "datasets" %}
 {% else %}
-    {% set main_active_page = "SpacePrez" %}
     {% set breadcrumbs = [
         {"label": "SpacePrez", "url": url_for("spaceprez_home")},
         {"label": "Datasets", "url": url_for("datasets")},
@@ -19,7 +19,7 @@
 {% endif %}
 
 {% set active_prez = "SpacePrez" %}
-{% set spaceprez_active_page = "datasets" %}
+{% set sub_active_page = "datasets" %}
 
 {% block content %}
 <div id="content-col-main">

@@ -1,13 +1,26 @@
 from typing import Optional
 
-from rdflib import Namespace
 from rdflib.namespace import RDFS, DCAT, DCTERMS
 
 from config import *
 from services.sparql_utils import *
 
 
-async def list_datasets():
+async def count_datasets():
+    q = f"""
+        PREFIX dcat: <{DCAT}>
+        SELECT (COUNT(?d) as ?count) 
+        WHERE {{
+            ?d a dcat:Dataset .
+        }}
+    """
+    r = await sparql_query(q, "SpacePrez")
+    if r[0]:
+        return r[1]
+    else:
+        raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
+
+async def list_datasets(page: int, per_page: int):
     q = f"""
         PREFIX dcat: <{DCAT}>
         PREFIX dcterms: <{DCTERMS}>
@@ -18,7 +31,7 @@ async def list_datasets():
             ?d a dcat:Dataset ;
                 dcterms:identifier ?id ;
                 skos:prefLabel|dcterms:title|rdfs:label ?label .
-        }}
+        }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
     """
     r = await sparql_query(q, "SpacePrez")
     if r[0]:
@@ -91,8 +104,27 @@ async def get_dataset_construct(
     else:
         raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
 
+async def count_collections(dataset_id: str):
+    q = f"""
+        PREFIX dcat: <{DCAT}>
+        PREFIX dcterms: <{DCTERMS}>
+        PREFIX geo: <{GEO}>
+        SELECT (COUNT(?coll) as ?count) 
+        WHERE {{
+            ?d dcterms:identifier ?d_id ;
+                a dcat:Dataset .
+            FILTER (STR(?d_id) = "{dataset_id}")
+            ?coll a geo:FeatureCollection ;
+                dcterms:isPartOf ?d .
+        }}
+    """
+    r = await sparql_query(q, "SpacePrez")
+    if r[0]:
+        return r[1]
+    else:
+        raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
 
-async def list_collections(dataset_id: str):
+async def list_collections(dataset_id: str, page: int, per_page: int):
     q = f"""
         PREFIX dcat: <{DCAT}>
         PREFIX dcterms: <{DCTERMS}>
@@ -109,7 +141,7 @@ async def list_collections(dataset_id: str):
                 dcterms:isPartOf ?d ;
                 dcterms:identifier ?id ;
                 skos:prefLabel|dcterms:title|rdfs:label ?label .
-        }}
+        }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
     """
     r = await sparql_query(q, "SpacePrez")
     if r[0]:
@@ -158,11 +190,14 @@ async def get_collection_construct(
             ?d a dcat:Dataset ;
                 dcterms:identifier ?d_id ;
                 ?label_pred ?d_label .
+            
+            ?mem a geo:Feature .
         }}
         WHERE {{
             {query_by_id if collection_id is not None else query_by_uri}
             ?coll ?p1 ?o1 ;
-                dcterms:isPartOf ?d .
+                dcterms:isPartOf ?d ;
+                rdfs:member ?mem .
             OPTIONAL {{
                 ?o1 ?p2 ?o2 .
                 FILTER(ISBLANK(?o1))
@@ -180,6 +215,7 @@ async def get_collection_construct(
                 dcterms:identifier ?d_id ;
                 ?label_pred ?d_label .
             FILTER (?label_pred IN (skos:prefLabel, dcterms:title, rdfs:label))
+            ?mem a geo:Feature .
             OPTIONAL {{
                 ?p1 rdfs:label ?p1Label .
                 FILTER(lang(?p1Label) = "" || lang(?p1Label) = "en")
@@ -197,7 +233,32 @@ async def get_collection_construct(
         raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
 
 
-async def list_features(dataset_id: str, collection_id: str):
+async def count_features(dataset_id: str, collection_id: str):
+    q = f"""
+        PREFIX dcat: <{DCAT}>
+        PREFIX dcterms: <{DCTERMS}>
+        PREFIX geo: <{GEO}>
+        SELECT (COUNT(?f) as ?count) 
+        WHERE {{
+            ?d dcterms:identifier ?d_id ;
+                a dcat:Dataset .
+            FILTER (STR(?d_id) = "{dataset_id}")
+            ?coll dcterms:identifier ?coll_id ;
+                a geo:FeatureCollection ;
+                dcterms:isPartOf ?d .
+            FILTER (STR(?coll_id) = "{collection_id}")
+            ?f a geo:Feature ;
+                dcterms:isPartOf ?coll .
+        }}
+    """
+    r = await sparql_query(q, "SpacePrez")
+    if r[0]:
+        return r[1]
+    else:
+        raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
+
+
+async def list_features(dataset_id: str, collection_id: str, page: int, per_page: int):
     q = f"""
         PREFIX dcat: <{DCAT}>
         PREFIX dcterms: <{DCTERMS}>
@@ -222,7 +283,7 @@ async def list_features(dataset_id: str, collection_id: str):
             OPTIONAL {{
                 ?f skos:prefLabel|dcterms:title|rdfs:label ?label .
             }}
-        }}
+        }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
     """
     r = await sparql_query(q, "SpacePrez")
     if r[0]:

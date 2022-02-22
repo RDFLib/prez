@@ -166,7 +166,7 @@ header {
 }
 
 /* sidenav */
-nav#main-nav-side {
+nav#main-nav {
     display: flex;
     flex-direction: column;
     width: 200px;
@@ -174,7 +174,7 @@ nav#main-nav-side {
     transition: width 0.2s ease-in-out;
 }
 
-nav#main-nav-side.closed {
+nav#main-nav.closed {
     width: 0;
 }
 

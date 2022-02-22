@@ -46,9 +46,16 @@ async def vocprez_about(request: Request):
 
 @router.get("/scheme", summary="List ConceptSchemes")
 @router.get("/vocab", summary="List ConceptSchemes")
-async def schemes(request: Request):
+async def schemes(
+    request: Request,
+    page: int = 1,
+    per_page: int = 20,
+):
     """Returns a list of VocPrez skos:ConceptSchemes in the necessary profile & mediatype"""
-    sparql_result = await list_schemes()
+    scheme_count, sparql_result = await asyncio.gather(
+        count_schemes(), list_schemes(page, per_page)
+    )
+    # sparql_result = await list_schemes()
     scheme_list = VocPrezSchemeList(sparql_result)
     scheme_list_renderer = VocPrezSchemeListRenderer(
         request,
@@ -56,6 +63,9 @@ async def schemes(request: Request):
         "Concept Scheme list",
         "A list of skos:ConceptSchemes",
         scheme_list,
+        page,
+        per_page,
+        int(scheme_count[0]["count"]["value"]),
     )
     return scheme_list_renderer.render()
 
@@ -107,9 +117,16 @@ async def scheme_endpoint(
 
 
 @router.get("/collection", summary="List Collections")
-async def collections(request: Request):
+async def collections(
+    request: Request,
+    page: int = 1,
+    per_page: int = 20,
+):
     """Returns a list of VocPrez skos:Collections in the necessary profile & mediatype"""
-    sparql_result = await list_collections()
+    collection_count, sparql_result = await asyncio.gather(
+        count_collections(), list_collections(page, per_page)
+    )
+    # sparql_result = await list_collections()
     collection_list = VocPrezCollectionList(sparql_result)
     collection_list_renderer = VocPrezCollectionListRenderer(
         request,
@@ -117,6 +134,9 @@ async def collections(request: Request):
         "Collection list",
         "A list of skos:Collection",
         collection_list,
+        page,
+        per_page,
+        int(collection_count[0]["count"]["value"]),
     )
     return collection_list_renderer.render()
 
