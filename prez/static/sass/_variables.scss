@@ -1,19 +1,22 @@
 // root variables for overriding
 :root {
     // colours
-    --primary: #55828B;
-    --secondary: #CD4631;
-    --tertiary: #CD4631;
+    --primary: #55828b;
+    --secondary: #cd4631;
+    --tertiary: #cd4631;
     --link: var(--secondary);
     --link-hover: #e4553f;
     --btn: var(--secondary);
     --btn-hover: #e4553f;
+    --btn-active: #ff4a2e;
     --nav-color: var(--primary);
+    --nav-hover: #d4d4d4;
     --header-bg: #364958;
-    --footer-bg: #E6E8E6;
+    --footer-bg: #e6e8e6;
     --container-direction: column;
     --main-nav-direction: row;
-    --table-row-bg: #eeeeee;
+    --table-row-bg: #dddddd;
+    --subtable-bg: #eeeeee;
 
     // sizing
     --page-max-width: 1200px;

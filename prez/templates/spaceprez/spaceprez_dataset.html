@@ -1,0 +1,78 @@
+{% extends "_page.html" %}
+{% from "_macros.html" import render_predicate, render_object with context %}
+
+{% set prezs = "ENABLED_PREZS" | get_config %}
+{% set has_alt = true %}
+
+{% if prezs | length == 1 %}
+    {% set breadcrumbs = [
+        {"label": "Datasets", "url": url_for("datasets")},
+        {"label": dataset.title, "url": url_for("dataset", dataset_id=dataset.id)}
+    ] %}
+    {% set main_active_page = "datasets" %}
+{% else %}
+    {% set breadcrumbs = [
+        {"label": "SpacePrez", "url": url_for("spaceprez_home")},
+        {"label": "Datasets", "url": url_for("datasets")},
+        {"label": dataset.title, "url": url_for("dataset", dataset_id=dataset.id)}
+    ] %}
+{% endif %}
+
+{% set active_prez = "SpacePrez" %}
+{% set sub_active_page = "datasets" %}
+
+{% block content %}
+<div id="content-col-main">
+    <h1>
+        {% if dataset.title is not none %}
+            {{ dataset.title }}
+        {% else %}
+            Dataset title
+        {% endif %}
+    </h1>
+    {% if dataset.geometries.geometry is not none %}
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
+        <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+        <div id="map"></div>
+    {% endif %}
+    <div class="table-wrapper">
+        <table class="props-table">
+            <tbody>
+                {% for prop in dataset.properties %}
+                    <tr>
+                        <th>{{ render_predicate(prop) }}</th>
+                        <td>{{ render_object(prop) }}</td>
+                    </tr>
+                {% endfor %}
+                <tr>
+                    <th>Collections</th>
+                    <td><a href="{{ url_for('feature_collections', dataset_id=dataset.id) }}" class="btn">Collections</a></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<div id="content-col-sidebar">
+    {% include "alt_link.html" %}
+</div>
+{% if dataset.geometries.geometry is not none %}
+    <script>
+        const data = '{{ dataset.geometries.geometry | tojson }}';
+        const map = L.map('map');
+
+        L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+        accessToken: 'pk.eyJ1IjoiamFtaWVmZWlzcyIsImEiOiJja3Exb3U5anAwZ3lrMnBrMXFlMXUxazZ2In0.2rBPhgnwrWJKNl2GsXV5HQ',
+        maxZoom: 18,
+        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
+            '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+            'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+        id: 'mapbox/streets-v11',
+        tileSize: 512,
+        zoomOffset: -1
+        }).addTo(map);
+
+        const geojsonLayer = L.geoJson(JSON.parse(data.slice(1, data.length - 1))).addTo(map);
+        map.fitBounds(geojsonLayer.getBounds());
+    </script>
+{% endif %}
+{% endblock %}

@@ -5,6 +5,8 @@
 
 {% if active_prez == "VocPrez" %}
     {% set pagetitle = system_info.VocPrez.title %}
+{% elif active_prez == "SpacePrez" %}
+    {% set pagetitle = system_info.SpacePrez.title %}
 {% else %} {# Prez #} 
     {% if system_info.Prez.title is not none %}
         {% set pagetitle = system_info.Prez.title %}

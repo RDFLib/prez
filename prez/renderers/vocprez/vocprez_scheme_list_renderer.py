@@ -7,7 +7,7 @@ from connegp import MEDIATYPE_NAMES
 
 from renderers import ListRenderer
 from config import *
-from profiles import dcat, dd
+from profiles.vocprez_profiles import dcat, dd
 from models.vocprez import VocPrezSchemeList
 from utils import templates
 
@@ -23,6 +23,9 @@ class VocPrezSchemeListRenderer(ListRenderer):
         label: str,
         comment: str,
         scheme_list: VocPrezSchemeList,
+        page: int,
+        per_page: int,
+        member_count: int
     ) -> None:
         super().__init__(
             request,
@@ -32,6 +35,9 @@ class VocPrezSchemeListRenderer(ListRenderer):
             scheme_list.members,
             label,
             comment,
+            page,
+            per_page,
+            member_count
         )
         self.scheme_list = scheme_list
 
@@ -41,6 +47,7 @@ class VocPrezSchemeListRenderer(ListRenderer):
             "request": self.request,
             "members": self.members,
             "uri": self.instance_uri,
+            "pages": self.pages,
             "label": self.label,
             "comment": self.comment,
             "profiles": self.profiles,

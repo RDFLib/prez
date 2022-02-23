@@ -8,13 +8,13 @@
     {% set main_active_page = "about" %}
 {% else %}
     {% set breadcrumbs = [
-        {"label": "VocPrez", "url": url_for("dataset")},
-        {"label": "About", "url": url_for("about")}
+        {"label": "VocPrez", "url": url_for("vocprez_home")},
+        {"label": "About", "url": url_for("vocprez_about")}
     ] %}
 {% endif %}
 
 {% set active_prez = "VocPrez" %}
-{% set vocprez_active_page = "about" %}
+{% set sub_active_page = "about" %}
 
 {% block content %}
 <div id="content-col-main">
@@ -39,11 +39,12 @@
     <h2>Documentation</h2>
     <p>Coming soon...</p>
     <h2>License</h2>
-    <p>Coming soon...</p>
+    <p>VocPrez is licensed using the <a href="https://github.com/surroundaustralia/Prez/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">BSD 3-Clause licence</a>.</p>
     <h2>Contacts</h2>
-    <ul>
-        <li>Nicholas Car</li>
-        <li>Jamie Feiss</li>
-    </ul>
+    <p>
+        Maintainer:<br/>
+        <a href="https://surroundaustralia.com" target="_blank" rel="noopener">SURROUND Australia Pty. Ltd.</a><br/>
+        Email: <a href="mailto:info@surroundaustralia.com">info@surroundaustralia.com</a>
+    </p>
 </div>
 {% endblock %}

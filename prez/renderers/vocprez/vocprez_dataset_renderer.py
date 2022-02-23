@@ -7,7 +7,7 @@ from connegp import MEDIATYPE_NAMES
 
 from config import *
 from renderers import Renderer
-from profiles import dcat, sdo
+from profiles.vocprez_profiles import dcat, sdo
 from models.vocprez import VocPrezDataset
 from utils import templates
 

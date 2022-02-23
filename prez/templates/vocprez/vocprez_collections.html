@@ -1,4 +1,6 @@
 {% extends "_page.html" %}
+{% from "_macros.html" import render_pagination with context %}
+
 {% set prezs = "ENABLED_PREZS" | get_config %}
 {% set has_alt = true %}
 
@@ -9,13 +11,13 @@
     {% set main_active_page = "collections" %}
 {% else %}
     {% set breadcrumbs = [
-        {"label": "VocPrez", "url": url_for("dataset")},
+        {"label": "VocPrez", "url": url_for("vocprez_home")},
         {"label": "Collections", "url": url_for("collections")}
     ] %}
 {% endif %}
 
 {% set active_prez = "VocPrez" %}
-{% set vocprez_active_page = "collections" %}
+{% set sub_active_page = "collections" %}
 
 {% block content %}
 <div id="content-col-main">
@@ -28,6 +30,7 @@
             {% endfor %}
         </ul>
     </div>
+    {{ render_pagination(pages) }}
 </div>
 <div id="content-col-sidebar">
     {% include "alt_link.html" %}

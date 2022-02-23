@@ -19,9 +19,11 @@ async def get_object(uri: str):
             }}
         }}
     """
-    r = await sparql_query(q)
-    if r[0]:
-        return r[1]
+    r = await sparql_query_multiple(q)
+    if len(r[1]) > 0 and not ALLOW_PARTIAL_RESULTS:
+        error_list = [
+            f"Error code {e['code']} in {e['prez']}: {e['message']}\n" for e in r[1]
+        ]
+        raise Exception(f"SPARQL query error:\n{[e for e in error_list]}")
     else:
-        raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
-
+        return r[0]

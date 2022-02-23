@@ -37,7 +37,7 @@ main {
 #container {
     max-width: var(--page-max-width);
     width: 100%;
-    margin: 0 auto 20px auto;
+    margin: 0px auto 0px auto;
     display: flex;
     flex-grow: 1;
 
@@ -210,6 +210,41 @@ ol#concept-hierarchy {
     }
 }
 
+#map {
+    height: 500px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.card-container {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    width: 75%;
+    margin-top: 20px;
+
+    .card {
+        flex-basis: 0;
+        flex-grow: 1;
+    }
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    min-width: 100px;
+    padding: 12px;
+    background-color: var(--footer-bg);
+
+    h3 {
+        margin-top: 0px;
+    }
+
+    p {
+        font-size: 0.9rem;
+    }
+}
+
 @media screen and (max-width: $sm-breakpoint) {
     #content-col-sidebar {
         z-index: 95;
@@ -229,5 +264,14 @@ ol#concept-hierarchy {
         & > a {
             text-align: center;
         }
+    }
+
+    #map {
+        height: 300px;
+    }
+
+    .card-container {
+        flex-direction: column;
+        width: 100%;
     }
 }

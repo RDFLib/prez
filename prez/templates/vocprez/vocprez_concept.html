@@ -12,7 +12,7 @@
     {% set main_active_page = "vocabs" %}
 {% else %}
     {% set breadcrumbs = [
-        {"label": "VocPrez", "url": url_for("dataset")},
+        {"label": "VocPrez", "url": url_for("vocprez_home")},
         {"label": "Vocabs", "url": url_for("schemes")},
         {"label": concept.scheme.title, "url": url_for("scheme", scheme_id=concept.scheme.id)},
         {"label": concept.title, "url": url_for("concept", scheme_id=concept.scheme.id, concept_id=concept.id)}
@@ -20,7 +20,7 @@
 {% endif %}
 
 {% set active_prez = "VocPrez" %}
-{% set vocprez_active_page = "vocabs" %}
+{% set sub_active_page = "vocabs" %}
 
 {% block content %}
 <div id="content-col-main">

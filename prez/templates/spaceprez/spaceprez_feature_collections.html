@@ -1,0 +1,42 @@
+{% extends "_page.html" %}
+{% from "_macros.html" import render_pagination with context %}
+
+{% set prezs = "ENABLED_PREZS" | get_config %}
+{% set has_alt = true %}
+
+{% if prezs | length == 1 %}
+    {% set breadcrumbs = [
+        {"label": "Datasets", "url": url_for("datasets")},
+        {"label": dataset.title, "url": url_for("dataset", dataset_id=dataset.id)},
+        {"label": "Feature Collections", "url": url_for("feature_collections", dataset_id=dataset.id)}
+    ] %}
+    {% set main_active_page = "datasets" %}
+{% else %}
+    {% set breadcrumbs = [
+        {"label": "SpacePrez", "url": url_for("spaceprez_home")},
+        {"label": "Datasets", "url": url_for("datasets")},
+        {"label": dataset.title, "url": url_for("dataset", dataset_id=dataset.id)},
+        {"label": "Feature Collections", "url": url_for("feature_collections", dataset_id=dataset.id)}
+    ] %}
+{% endif %}
+
+{% set active_prez = "SpacePrez" %}
+{% set sub_active_page = "datasets" %}
+
+{% block content %}
+<div id="content-col-main">
+    <h1>{{ label }}</h1>
+    <p>{{ comment }}</p>
+    <div>
+        <ul>
+            {% for member in members %}
+                <li><a href="{{ url_for('feature_collection', dataset_id=dataset.id, collection_id=member.id) }}">{{ member.title }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
+    {{ render_pagination(pages) }}
+</div>
+<div id="content-col-sidebar">
+    {% include "alt_link.html" %}
+</div>
+{% endblock %}

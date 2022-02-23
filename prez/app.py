@@ -13,7 +13,7 @@ from connegp import parse_mediatypes_from_accept_header
 from fedsearch import SkosSearch, EndpointDetails
 
 from config import *
-from routers import vocprez_router
+from routers import vocprez_router, spaceprez_router
 from services.app_service import *
 from services.sparql_utils import sparql_endpoint_query
 from utils import templates
@@ -79,6 +79,8 @@ def configure():
 def configure_routing():
     if "VocPrez" in ENABLED_PREZS:
         app.include_router(vocprez_router.router)
+    if "SpacePrez" in ENABLED_PREZS:
+        app.include_router(spaceprez_router.router)
 
 
 @app.exception_handler(RequestValidationError)
@@ -102,6 +104,8 @@ async def index(request: Request):
     if len(ENABLED_PREZS) == 1:
         if ENABLED_PREZS[0] == "VocPrez":
             return await vocprez_router.home(request)
+        elif ENABLED_PREZS[0] == "SpacePrez":
+            return await spaceprez_router.home(request)
     else:
         template_context = {"request": request, "enabled_prezs": ENABLED_PREZS}
         return templates.TemplateResponse("index.html", context=template_context)
@@ -118,16 +122,34 @@ async def sparql_get(request: Request, query: Optional[str] = None):
             query = request.query_params.get("query")
             if query is not None:
                 if "CONSTRUCT" in query or "DESCRIBE" in query:
-                    sparql_result = await sparql_endpoint_query(
+                    sparql_result = await sparql_endpoint_query_multiple(
                         query, accept=top_accept
                     )
-                    return Response(content=sparql_result[1], media_type=top_accept)
+                    if len(sparql_result[1]) > 0 and not ALLOW_PARTIAL_RESULTS:
+                        error_list = [
+                            f"Error code {e['code']} in {e['prez']}: {e['message']}\n"
+                            for e in sparql_result[1]
+                        ]
+                        raise Exception(
+                            f"SPARQL query error:\n{[e for e in error_list]}"
+                        )
+                    else:
+                        return Response(content=sparql_result[0], media_type=top_accept)
                 else:
-                    sparql_result = await sparql_endpoint_query(query)
-                    return JSONResponse(
-                        content=sparql_result[1],
-                        media_type="application/sparql-results+json",
-                    )
+                    sparql_result = await sparql_endpoint_query_multiple(query)
+                    if len(sparql_result[1]) > 0 and not ALLOW_PARTIAL_RESULTS:
+                        error_list = [
+                            f"Error code {e['code']} in {e['prez']}: {e['message']}\n"
+                            for e in sparql_result[1]
+                        ]
+                        raise Exception(
+                            f"SPARQL query error:\n{[e for e in error_list]}"
+                        )
+                    else:
+                        return JSONResponse(
+                            content=sparql_result[0],
+                            media_type="application/sparql-results+json",
+                        )
             else:
                 return Response(content="SPARQL service description")
 
@@ -145,13 +167,30 @@ async def sparql_post(request: Request):
         query = query_bytes.decode()
     if query is not None:
         if "CONSTRUCT" in query or "DESCRIBE" in query:
-            sparql_result = await sparql_endpoint_query(query, accept=top_accept)
-            return Response(content=sparql_result[1], media_type=top_accept)
-        else:
-            sparql_result = await sparql_endpoint_query(query)
-            return JSONResponse(
-                content=sparql_result[1], media_type="application/sparql-results+json"
+            sparql_result = await sparql_endpoint_query_multiple(
+                query, accept=top_accept
             )
+            if len(sparql_result[1]) > 0 and not ALLOW_PARTIAL_RESULTS:
+                error_list = [
+                    f"Error code {e['code']} in {e['prez']}: {e['message']}\n"
+                    for e in sparql_result[1]
+                ]
+                raise Exception(f"SPARQL query error:\n{[e for e in error_list]}")
+            else:
+                return Response(content=sparql_result[0], media_type=top_accept)
+        else:
+            sparql_result = await sparql_endpoint_query_multiple(query)
+            if len(sparql_result[1]) > 0 and not ALLOW_PARTIAL_RESULTS:
+                error_list = [
+                    f"Error code {e['code']} in {e['prez']}: {e['message']}\n"
+                    for e in sparql_result[1]
+                ]
+                raise Exception(f"SPARQL query error:\n{[e for e in error_list]}")
+            else:
+                return JSONResponse(
+                    content=sparql_result[0],
+                    media_type="application/sparql-results+json",
+                )
     else:
         return Response(content="SPARQL service description")
 
@@ -169,7 +208,9 @@ async def search(
         )
         endpoint_details = []
         for endpoint in endpoints:
-            if endpoint in [e['url'] for e in SEARCH_ENDPOINTS]:  # only use valid endpoints
+            if endpoint in [
+                e["url"] for e in SEARCH_ENDPOINTS
+            ]:  # only use valid endpoints
                 if endpoint == "self":
                     endpoint_details.append(
                         EndpointDetails(self_sparql_endpoint, None, None)
@@ -208,6 +249,8 @@ async def about(request: Request):
     if len(ENABLED_PREZS) == 1:
         if ENABLED_PREZS[0] == "VocPrez":
             return await vocprez_router.about(request)
+        elif ENABLED_PREZS[0] == "SpacePrez":
+            return await spaceprez_router.about(request)
     else:
         template_context = {"request": request}
         return templates.TemplateResponse("about.html", context=template_context)
@@ -233,6 +276,8 @@ async def profiles(request: Request):
     if len(ENABLED_PREZS) == 1:
         if ENABLED_PREZS[0] == "VocPrez":
             return await profiles_func(request, "VocPrez")
+        elif ENABLED_PREZS[0] == "SpacePrez":
+            return await profiles_func(request, "SpacePrez")
     else:
         return await profiles_func(request)
 
@@ -257,23 +302,49 @@ async def object(
     # removes the leftover "?" if no other params than uri
     if params != "":
         params = "?" + params[1:]  # will start with & instead of ?
-    object_type = URIRef(sparql_response[0]["type"]["value"])
+    object_types = [URIRef(item["type"]["value"]) for item in sparql_response]
+    # object_type = URIRef(sparql_response[0]["type"]["value"])
 
     # return according to type (IF appropriate prez module is enabled)
-    if object_type == SKOS.ConceptScheme:
-        if "VocPrez" not in ENABLED_PREZS:
-            raise HTTPException(status_code=404, detail="Not Found")
-        return await vocprez_router.scheme_endpoint(request, scheme_uri=uri)
-    elif object_type == SKOS.Collection:
-        if "VocPrez" not in ENABLED_PREZS:
-            raise HTTPException(status_code=404, detail="Not Found")
-        return await vocprez_router.collection_endpoint(request, collection_uri=uri)
-    elif object_type == SKOS.Concept:
-        if "VocPrez" not in ENABLED_PREZS:
-            raise HTTPException(status_code=404, detail="Not Found")
-        return await vocprez_router.concept_endpoint(request, concept_uri=uri)
-    else:
-        raise HTTPException(status_code=404, detail="Not Found")
+    for object_type in object_types:
+        if object_type == SKOS.ConceptScheme:
+            if "VocPrez" not in ENABLED_PREZS:
+                raise HTTPException(status_code=404, detail="Not Found")
+            return await vocprez_router.scheme_endpoint(request, scheme_uri=uri)
+        elif object_type == SKOS.Collection:
+            if "VocPrez" not in ENABLED_PREZS:
+                raise HTTPException(status_code=404, detail="Not Found")
+            return await vocprez_router.collection_endpoint(request, collection_uri=uri)
+        elif object_type == SKOS.Concept:
+            if "VocPrez" not in ENABLED_PREZS:
+                raise HTTPException(status_code=404, detail="Not Found")
+            return await vocprez_router.concept_endpoint(request, concept_uri=uri)
+        elif object_type == DCAT.Dataset:
+            if "SpacePrez" not in ENABLED_PREZS:
+                raise HTTPException(status_code=404, detail="Not Found")
+            return await spaceprez_router.dataset_endpoint(request, dataset_uri=uri)
+        elif object_type == GEO.FeatureCollection:
+            if "SpacePrez" not in ENABLED_PREZS:
+                raise HTTPException(status_code=404, detail="Not Found")
+            return await spaceprez_router.feature_collection_endpoint(request, collection_uri=uri)
+        elif object_type == GEO.Feature:
+            if "SpacePrez" not in ENABLED_PREZS:
+                raise HTTPException(status_code=404, detail="Not Found")
+            return await spaceprez_router.feature_endpoint(request, feature_uri=uri)
+        # else:
+    raise HTTPException(status_code=404, detail="Not Found")
+
+
+@app.get("/health", summary="Health Check")
+async def health(request: Request):
+    """Returns the status of endpoints & connected triplestores"""
+    return JSONResponse(
+        content={
+            "isHealthy": True,
+        },
+        media_type="application/json",
+        headers=request.headers,
+    )
 
 
 if __name__ == "__main__":

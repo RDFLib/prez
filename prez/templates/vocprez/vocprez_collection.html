@@ -11,14 +11,14 @@
     {% set main_active_page = "collections" %}
 {% else %}
     {% set breadcrumbs = [
-        {"label": "VocPrez", "url": url_for("dataset")},
+        {"label": "VocPrez", "url": url_for("vocprez_home")},
         {"label": "Collections", "url": url_for("collections")},
         {"label": collection.title, "url": url_for("collection", collection_id=collection.id)}
     ] %}
 {% endif %}
 
 {% set active_prez = "VocPrez" %}
-{% set vocprez_active_page = "collections" %}
+{% set sub_active_page = "collections" %}
 
 {% block content %}
 <div id="content-col-main">

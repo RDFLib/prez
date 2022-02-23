@@ -19,6 +19,16 @@ To simply run locally without configuration outside of Docker, run `python3 app.
 
 Prez is designed to run in a containerised environment. Configuring & theming Prez is done by following [surround-prez-theme](https://github.com/surroundaustralia/surround-prez-theme). Updating triplestore data (e.g. vocabs) is done by following [surround-prez-vocabs](https://github.com/surroundaustralia/surround-prez-vocabs). To deploy your own instance of Prez, fork both of the above repos & configure.
 
+## Application Structure
+The standard process for an entity endpoint is as follows:
+
+1. An endpoint within a router is accessed (in `routers/`)
+2. Endpoint calls SPARQL service to POST a SPARQL query (in `services/`)
+3. The resulting RDFlib Graph is ingested by a model object (in `models/`)
+4. A renderer object is created which uses the model object (in `renderers/`)
+5. The endpoint returns the renderer's `render()` function
+    - The response can be a renderered template (in `templates/`)
+
 ## Dev Dependencies
 
 - SASS
