@@ -284,6 +284,32 @@ ol#concept-hierarchy li:not(.concept-collapse) {
   margin-bottom: 10px;
 }
 
+.card-container {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  width: 75%;
+  margin-top: 20px;
+}
+.card-container .card {
+  flex-basis: 0;
+  flex-grow: 1;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  min-width: 100px;
+  padding: 12px;
+  background-color: var(--footer-bg);
+}
+.card h3 {
+  margin-top: 0px;
+}
+.card p {
+  font-size: 0.9rem;
+}
+
 @media screen and (max-width: 420px) {
   #content-col-sidebar {
     z-index: 95;
@@ -306,6 +332,11 @@ ol#concept-hierarchy li:not(.concept-collapse) {
 
   #map {
     height: 300px;
+  }
+
+  .card-container {
+    flex-direction: column;
+    width: 100%;
   }
 }
 #breadcrumbs {
@@ -528,17 +559,15 @@ nav#main-nav.colnav .main-nav-item.prez-item > a {
     font-size: 16px !important;
     padding: 8px 12px !important;
   }
-  nav#main-nav.rownav nav#sub-nav,
-nav#main-nav.colnav nav#sub-nav {
+
+  nav#sub-nav {
     padding-left: 20px;
   }
-  .rownav nav#main-nav.rownav nav#sub-nav,
-.rownav nav#main-nav.colnav nav#sub-nav {
+  .rownav nav#sub-nav {
     order: unset;
     flex-direction: column;
   }
-  nav#main-nav.rownav nav#sub-nav .sub-nav-item,
-nav#main-nav.colnav nav#sub-nav .sub-nav-item {
+  nav#sub-nav .sub-nav-item {
     text-align: left !important;
     font-size: 16px !important;
     padding: 8px 12px !important;

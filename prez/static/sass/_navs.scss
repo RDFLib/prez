@@ -251,20 +251,20 @@ nav#sub-nav {
                 padding: 8px 12px !important;
             }
         }
+    }
 
-        nav#sub-nav {
-            padding-left: 20px;
+    nav#sub-nav {
+        padding-left: 20px;
 
-            .rownav & {
-                order: unset;
-                flex-direction: column;
-            }
+        .rownav & {
+            order: unset;
+            flex-direction: column;
+        }
 
-            .sub-nav-item {
-                text-align: left !important;
-                font-size: 16px !important;
-                padding: 8px 12px !important;
-            }
+        .sub-nav-item {
+            text-align: left !important;
+            font-size: 16px !important;
+            padding: 8px 12px !important;
         }
     }
 

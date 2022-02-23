@@ -18,7 +18,7 @@ async def count_schemes():
     if r[0]:
         return r[1]
     else:
-        raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
+        raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 async def list_schemes(page: int, per_page: int):
     q = f"""
@@ -35,7 +35,7 @@ async def list_schemes(page: int, per_page: int):
     if r[0]:
         return r[1]
     else:
-        raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
+        raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 async def count_collections():
     q = f"""
@@ -49,7 +49,7 @@ async def count_collections():
     if r[0]:
         return r[1]
     else:
-        raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
+        raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 async def list_collections(page: int, per_page: int):
     q = f"""
@@ -66,7 +66,7 @@ async def list_collections(page: int, per_page: int):
     if r[0]:
         return r[1]
     else:
-        raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
+        raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
 def query_by_graph(query: str, graph: str, include_inferencing: bool):
@@ -137,7 +137,7 @@ async def get_scheme_construct1(
     if r[0]:
         return r[1]
     else:
-        raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
+        raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
 async def get_scheme_construct2(
@@ -195,7 +195,7 @@ async def get_scheme_construct2(
     if r[0]:
         return r[1]
     else:
-        raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
+        raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
 async def get_concept_construct(
@@ -293,7 +293,7 @@ async def get_concept_construct(
     if r[0]:
         return r[1]
     else:
-        raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
+        raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
 async def get_dataset_construct():
@@ -322,7 +322,7 @@ async def get_dataset_construct():
     if r[0]:
         return r[1]
     else:
-        raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
+        raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
 async def get_collection_construct1(
@@ -375,7 +375,7 @@ async def get_collection_construct1(
     if r[0]:
         return r[1]
     else:
-        raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
+        raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
 async def get_collection_construct2(
@@ -431,4 +431,4 @@ async def get_collection_construct2(
     if r[0]:
         return r[1]
     else:
-        raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
+        raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")

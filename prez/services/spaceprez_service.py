@@ -18,7 +18,7 @@ async def count_datasets():
     if r[0]:
         return r[1]
     else:
-        raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
+        raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 async def list_datasets(page: int, per_page: int):
     q = f"""
@@ -37,7 +37,7 @@ async def list_datasets(page: int, per_page: int):
     if r[0]:
         return r[1]
     else:
-        raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
+        raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
 async def get_dataset_construct(
@@ -102,7 +102,7 @@ async def get_dataset_construct(
     if r[0]:
         return r[1]
     else:
-        raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
+        raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 async def count_collections(dataset_id: str):
     q = f"""
@@ -122,7 +122,7 @@ async def count_collections(dataset_id: str):
     if r[0]:
         return r[1]
     else:
-        raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
+        raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 async def list_collections(dataset_id: str, page: int, per_page: int):
     q = f"""
@@ -147,7 +147,7 @@ async def list_collections(dataset_id: str, page: int, per_page: int):
     if r[0]:
         return r[1]
     else:
-        raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
+        raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
 async def get_collection_construct(
@@ -230,7 +230,7 @@ async def get_collection_construct(
     if r[0]:
         return r[1]
     else:
-        raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
+        raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
 async def count_features(dataset_id: str, collection_id: str):
@@ -255,7 +255,7 @@ async def count_features(dataset_id: str, collection_id: str):
     if r[0]:
         return r[1]
     else:
-        raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
+        raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
 async def list_features(dataset_id: str, collection_id: str, page: int, per_page: int):
@@ -289,7 +289,7 @@ async def list_features(dataset_id: str, collection_id: str, page: int, per_page
     if r[0]:
         return r[1]
     else:
-        raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
+        raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 async def get_feature_construct(
     dataset_id: Optional[str] = None,
@@ -386,4 +386,4 @@ async def get_feature_construct(
     if r[0]:
         return r[1]
     else:
-        raise Exception(f"SPARQL query error code {r[1]}: {r[2]}")
+        raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")

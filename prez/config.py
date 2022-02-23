@@ -21,14 +21,14 @@ SYSTEM_INFO = json.loads(
         "data_uri": "http://exampledata.org"
     },
     "CatPrez": {
-        "title": null,
-        "desc": null,
-        "data_uri": null
+        "title": "",
+        "desc": "",
+        "data_uri": ""
     },
     "TimePrez": {
-        "title": null,
-        "desc": null,
-        "data_uri": null
+        "title": "",
+        "desc": "",
+        "data_uri": ""
     },
     "SpacePrez": {
         "title": "SURROUND Floods",
@@ -51,17 +51,17 @@ SPARQL_CREDS = json.loads(
         "SPARQL_PASSWORD": ""
     },
     "CatPrez": {
-        "SPARQL_ENDPOINT": null,
-        "SPARQL_USERNAME": null,
-        "SPARQL_PASSWORD": null
+        "SPARQL_ENDPOINT": "",
+        "SPARQL_USERNAME": "",
+        "SPARQL_PASSWORD": ""
     },
     "TimePrez": {
-        "SPARQL_ENDPOINT": null,
-        "SPARQL_USERNAME": null,
-        "SPARQL_PASSWORD": null
+        "SPARQL_ENDPOINT": "",
+        "SPARQL_USERNAME": "",
+        "SPARQL_PASSWORD": ""
     },
     "SpacePrez": {
-        "SPARQL_ENDPOINT": "http://localhost:3030/floods-2",
+        "SPARQL_ENDPOINT": "http://localhost:3030/surround-features",
         "SPARQL_USERNAME": "",
         "SPARQL_PASSWORD": ""
     }

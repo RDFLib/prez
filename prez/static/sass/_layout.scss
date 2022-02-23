@@ -216,6 +216,35 @@ ol#concept-hierarchy {
     margin-bottom: 10px;
 }
 
+.card-container {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    width: 75%;
+    margin-top: 20px;
+
+    .card {
+        flex-basis: 0;
+        flex-grow: 1;
+    }
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    min-width: 100px;
+    padding: 12px;
+    background-color: var(--footer-bg);
+
+    h3 {
+        margin-top: 0px;
+    }
+
+    p {
+        font-size: 0.9rem;
+    }
+}
+
 @media screen and (max-width: $sm-breakpoint) {
     #content-col-sidebar {
         z-index: 95;
@@ -239,5 +268,10 @@ ol#concept-hierarchy {
 
     #map {
         height: 300px;
+    }
+
+    .card-container {
+        flex-direction: column;
+        width: 100%;
     }
 }

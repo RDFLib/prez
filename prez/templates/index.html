@@ -5,11 +5,19 @@
 {% block content %}
 <div id="content-col-main">
     <h1>Welcome to Prez</h1>
-    <p>Prez is a Linked Data API that combines VocPrez, OGC API (SpacePrez), CatPrez and the upcoming TimePrez.</p>
-    <ul>
+    <p>Prez is a Linked Data API that combines VocPrez, OGC API (SpacePrez), and the upcoming CatPrez & TimePrez.</p>
+    <p>Each instance of Prez can either act as a collection of *Prezs or as a stand-alone instance of a single *Prez.</p>
+    <div class="card-container">
         {% for prez in prezs %}
-            <li><a href="{{ url_for(prez | lower + '_home') }}">{{ prez }}</a></li>
+            <div class="card">
+                <h3><a href="{{ url_for(prez | lower + '_home') }}">{{ prez }}</a></h3>
+                {% if prez == "VocPrez" %}
+                    <p>VocPrez presents Simple Knowledge Organization System (SKOS)-formulated RDF vocabularies in various formats.</p>
+                {% elif prez == "SpacePrez" %}
+                    <p>SpacePrez presents GeoSPARQL spatial features in various formats. This API conforms to the <a href="http://docs.opengeospatial.org/is/17-069r3/17-069r3.html" target="_blank" rel="noopener noreferrer">Open Geospatial Consortium (OGC) API</a> specification.
+                {% endif %}
+            </div>
         {% endfor %}
-    </ul>
+    </div>
 </div>
 {% endblock %}

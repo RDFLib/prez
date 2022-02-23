@@ -20,7 +20,12 @@
 {% block content %}
 <div id="content-col-main">
     <h1>Conformance</h1>
-    <p>A list of conformances will appear here</p>
+    <p>This API conforms to the following classes:</p>
+    <ul>
+        {% for conform in conformsTo %}
+            <li><a href="{{ conform.url }}">{{ conform.title }}</a></li>
+        {% endfor %}
+    </ul>
 </div>
 <div id="content-col-sidebar">
     {% include "alt_link.html" %}
