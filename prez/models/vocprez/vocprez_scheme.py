@@ -82,6 +82,7 @@ class VocPrezScheme(PrezModel):
             WHERE {{
                 ?c skos:inScheme <{self.uri}> ;
                     rdfs:label|skos:prefLabel|dcterms:title ?label .
+                FILTER (LANG(?label) = "en")
             }}
         """
         )
@@ -147,6 +148,7 @@ class VocPrezScheme(PrezModel):
                     a skos:Concept ;
                     skos:prefLabel ?label ;
                     dcterms:identifier ?id .
+                FILTER (LANG(?label) = "en")
                 OPTIONAL {{
                     ?c skos:narrower ?narrower .
                 }}

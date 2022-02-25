@@ -31,7 +31,7 @@ SYSTEM_INFO = json.loads(
         "data_uri": ""
     },
     "SpacePrez": {
-        "title": "SURROUND Floods",
+        "title": "SURROUND Spatial Data",
         "desc": "Floods spatial data",
         "data_uri": "http://exampledata.org"
     }
