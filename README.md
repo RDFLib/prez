@@ -3,21 +3,48 @@ Prez is a Linked Data API presentation tool using FastAPI. It is a combination o
 
 ## Features
 
-- Cross-system search
+- Cross-system search (for VocPrez)
 - Configure which *Prezs to activate
 - Acts as the *Prez at the top-level if only 1 is active
 - SPARQL endpoint
 - Modular templating
 - Mobile view
 
-## Running Prez
-Install using Poetry, which you can install [here](https://python-poetry.org/docs/#installation).
+Currently the *Prez types implemented are:
+
+- VocPrez: SKOS vocabularies
+- SpacePrez: OGC Linked Data API
+
+## Installing Prez
+Install using Poetry (optional), which you can install [here](https://python-poetry.org/docs/#installation) (recommended), or by running:
+
+```bash
+pip install poetry 
+```
 
 Then run `poetry install` in the root directory, `Prez/`.
 
-To simply run locally without configuration outside of Docker, run `python3 app.py` in the `Prez/prez/` directory.
+Otherwise install using `pip` as normal:
 
-Prez is designed to run in a containerised environment. Configuring & theming Prez is done by following [surround-prez-theme](https://github.com/surroundaustralia/surround-prez-theme). Updating triplestore data (e.g. vocabs) is done by following [surround-prez-vocabs](https://github.com/surroundaustralia/surround-prez-vocabs). To deploy your own instance of Prez, fork both of the above repos & configure.
+```bash
+pip install -r requirements.txt 
+```
+
+## Running/Deploying Prez
+To get started without any configuration, simply run `python3 app.py` in the `Prez/prez/` directory.
+
+Two additional repos are required to properly update data & customise a Prez instance for deployment:
+
+### 1. Updating Prez Data
+Each *Prez expects data to conform to a particular format. For each *Prez used in your instance, fork/clone each of these repos for updating data:
+
+- VocPrez - [surround-prez-vocabs](https://github.com/surroundaustralia/surround-prez-vocabs)
+- SpacePrez - [surround-prez-features](https://github.com/surroundaustralia/surround-prez-features)
+
+Each repo contains a validate & update script. Refer to each repo's documentation on how to use them.
+
+### 2. Customisation & Deployment
+Prez is designed to run in a containerised environment. Configuring & theming Prez is done by following [surround-prez-theme](https://github.com/surroundaustralia/surround-prez-theme). Fork/clone this repo to run/deploy your own Prez instance. Refer to the repo's documentation on how to configure.
 
 ## Application Structure
 The standard process for an entity endpoint is as follows:
