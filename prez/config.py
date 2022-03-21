@@ -61,7 +61,7 @@ SPARQL_CREDS = json.loads(
         "SPARQL_PASSWORD": ""
     },
     "SpacePrez": {
-        "SPARQL_ENDPOINT": "http://localhost:3030/surround-features",
+        "SPARQL_ENDPOINT": "http://localhost:3030/floods-2",
         "SPARQL_USERNAME": "",
         "SPARQL_PASSWORD": ""
     }
