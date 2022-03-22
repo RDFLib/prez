@@ -101,7 +101,7 @@ class SpacePrezFeatureCollection(PrezModel):
 
         g_dict = {
             "type": "FeatureCollection",
-            "features": [], # have all features' geojson? need to query for all & call feature.to_geojson()
+            "features": [],  # have all features' geojson? need to query for all & call feature.to_geojson()
         }
 
         if bbox is not None:

@@ -164,7 +164,7 @@ class SpacePrezDatasetRenderer(Renderer):
         CONSTRUCT {{
             ?d a dcat:Dataset ;
                 ?d_pred ?d_o ;
-                dcterms:spatial ?geom .
+                geo:hasBoundingBox ?geom .
             ?geom ?geom_p ?geom_o .
         }}
         WHERE {{
@@ -175,7 +175,7 @@ class SpacePrezDatasetRenderer(Renderer):
                 FILTER (STRSTARTS(STR(?d_pred), STR(geo:)))
             }}
             OPTIONAL {{
-                ?d dcterms:spatial ?geom .
+                ?d geo:hasBoundingBox ?geom .
                 ?geom ?geom_p ?geom_o .
             }}
         }}

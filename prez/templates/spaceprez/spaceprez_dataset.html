@@ -30,7 +30,7 @@
             Dataset title
         {% endif %}
     </h1>
-    {% if dataset.geometries.geometry is not none %}
+    {% if 'asGeoJSON' in dataset.geometries %}
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
         <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
         <div id="map"></div>
@@ -55,9 +55,9 @@
 <div id="content-col-sidebar">
     {% include "alt_link.html" %}
 </div>
-{% if dataset.geometries.geometry is not none %}
+{% if 'asGeoJSON' in dataset.geometries %}
     <script>
-        const data = '{{ dataset.geometries.geometry | tojson }}';
+        const data = '{{ dataset.geometries.asGeoJSON | tojson }}';
         const map = L.map('map');
 
         L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
