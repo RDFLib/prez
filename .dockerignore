@@ -8,3 +8,4 @@ venv/
 poetry.lock
 .git/
 test_*.py
+.github/
