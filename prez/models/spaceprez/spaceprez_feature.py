@@ -52,19 +52,19 @@ class SpacePrezFeature(PrezModel):
                 ?f a geo:Feature ;
                     dcterms:title ?title .
                 # OPTIONAL {{
-                #     ?f rdfs:label|skos:prefLabel|dcterms:title ?label .
+                #     ?f dcterms:title ?label .
                 # }}
                 # BIND(COALESCE(?label, CONCAT("Feature ", ?id)) AS ?title)
                 OPTIONAL {{
-                    ?f skos:definition|dcterms:description ?desc .
+                    ?f dcterms:description ?desc .
                 }}
                 ?coll a geo:FeatureCollection ;
                     rdfs:member ?f ;
                     dcterms:identifier ?coll_id ;
-                    rdfs:label|skos:prefLabel|dcterms:title ?coll_label .
+                    dcterms:title ?coll_label .
                 ?d a dcat:Dataset ;
                     dcterms:identifier ?d_id ;
-                    rdfs:label|skos:prefLabel|dcterms:title ?d_label .
+                    dcterms:title ?d_label .
             }}
         """
         )

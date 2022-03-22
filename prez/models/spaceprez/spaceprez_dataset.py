@@ -46,8 +46,8 @@ class SpacePrezDataset(PrezModel):
             WHERE {{
                 {query_by_id if id is not None else query_by_uri}
                 ?d a dcat:Dataset ;
-                    rdfs:label|skos:prefLabel|dcterms:title ?title ;
-                    skos:definition|dcterms:description ?desc .
+                    dcterms:title ?title ;
+                    dcterms:description ?desc .
             }}
         """
         )

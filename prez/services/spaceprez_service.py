@@ -373,7 +373,7 @@ async def get_feature_construct(
                 }}
             }}
             OPTIONAL {{
-                ?f rdfs:label|skos:prefLabel|dcterms:title ?label .
+                ?f dcterms:title ?label .
             }}
             BIND(COALESCE(?label, CONCAT("Feature ", ?id)) AS ?title)
             ?coll a geo:FeatureCollection ;
