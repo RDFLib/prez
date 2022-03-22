@@ -1,19 +1,24 @@
 # Prez
-Prez is a Linked Data API presentation tool using FastAPI. It is a combination of VocPrez, CatPrez, TimePrez & SpacePrez (previously OGC LD API).
+Prez is a Linked Data API presentation tool using the modern Python web framework [FastAPI](https://fastapi.tiangolo.com/). It offers several domain-specific configurations such as:
+
+- _VocPrez_ - for vocabularies
+- _CatPrez_ - for catalogues
+- _SpacePrez_ - for Semantic Web spatial data
+
+Prez can be deployed according to one or multiple of these configurations.
 
 ## Features
 
-- Cross-system search (for VocPrez)
-- Configure which *Prezs to activate
-- Acts as the *Prez at the top-level if only 1 is active
-- SPARQL endpoint
-- Modular templating
-- Mobile view
+- Linked Data delivery of content
+    - human (HTML) & machine (RDF) formats
+    - multiple data models (profiles) available
+- structured according to standardised APIs
+    - e.g. [OGC API: Features](http://www.opengis.net/doc/IS/ogcapi-features-1/1.0) for spatial data
+- highly customisable UI
+- formal data validation methods & tooling
+    - Prez uses profile data models to ensure content has all the parts needed for good delivery
 
-Currently the *Prez types implemented are:
-
-- VocPrez: SKOS vocabularies
-- SpacePrez: OGC Linked Data API
+A demo installation of a combined Voc and Space Prez is online at <https://prez.surroundaustralia.com>.
 
 ## Installing Prez
 Install using Poetry (optional), which you can install [here](https://python-poetry.org/docs/#installation) (recommended), or by running:
