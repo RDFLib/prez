@@ -98,24 +98,24 @@ class SpacePrezFeatureCollectionRenderer(Renderer):
             ?fc a geo:FeatureCollection ;
                 ?fc_pred ?fc_o ;
                 geo:hasBoundingBox ?geom ;
-                rdfs:member ?mem ;
-                dcterms:isPartOf ?d .
+                rdfs:member ?mem .
             ?geom ?geom_p ?geom_o .
-            ?d a dcat:Dataset .
+            ?d a dcat:Dataset ;
+                rdfs:member ?fc .
             ?mem a geo:Feature .
         }}
         WHERE {{
             BIND (<{self.collection.uri}> AS ?fc)
             ?fc a geo:FeatureCollection ;
                 ?fc_pred ?fc_o ;
-                rdfs:member ?mem ;
-                dcterms:isPartOf ?d .
+                rdfs:member ?mem .
             FILTER (STRSTARTS(STR(?fc_pred), STR(geo:)))
             OPTIONAL {{
                 ?fc geo:hasBoundingBox ?geom .
                 ?geom ?geom_p ?geom_o .
             }}
-            ?d a dcat:Dataset .
+            ?d a dcat:Dataset ;
+                rdfs:member ?fc .
             ?mem a geo:Feature .
         }}
         """)

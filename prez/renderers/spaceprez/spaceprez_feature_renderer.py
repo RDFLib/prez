@@ -110,17 +110,16 @@ class SpacePrezFeatureRenderer(Renderer):
             ?f a geo:Feature ;
                 ?f_pred ?f_o ;
                 geo:hasGeometry ?geom ;
-                geo:hasArea ?area ;
-                dcterms:isPartOf ?fc .
+                geo:hasArea ?area .
             ?geom ?geom_p ?geom_o .
             ?area ?area_p ?area_o .
-            ?fc a geo:FeatureCollection .
+            ?fc a geo:FeatureCollection ;
+                rdfs:member ?f .
         }}
         WHERE {{
             BIND (<{self.feature.uri}> AS ?f)
             ?f a geo:Feature ;
-                ?f_pred ?f_o ;
-                dcterms:isPartOf ?fc .
+                ?f_pred ?f_o .
             FILTER (STRSTARTS(STR(?f_pred), STR(geo:)))
             OPTIONAL {{
                 ?f geo:hasGeometry ?geom .
@@ -130,7 +129,8 @@ class SpacePrezFeatureRenderer(Renderer):
                 ?f geo:hasArea ?area .
                 ?area ?area_p ?area_o .
             }}
-            ?fc a geo:FeatureCollection .
+            ?fc a geo:FeatureCollection ;
+                rdfs:member ?f .
         }}
         """
         )

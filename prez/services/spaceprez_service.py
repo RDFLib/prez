@@ -20,6 +20,7 @@ async def count_datasets():
     else:
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
+
 async def list_datasets(page: int, per_page: int):
     q = f"""
         PREFIX dcat: <{DCAT}>
@@ -104,18 +105,20 @@ async def get_dataset_construct(
     else:
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
+
 async def count_collections(dataset_id: str):
     q = f"""
         PREFIX dcat: <{DCAT}>
         PREFIX dcterms: <{DCTERMS}>
         PREFIX geo: <{GEO}>
+        PREFIX rdfs: <{RDFS}>
         SELECT (COUNT(?coll) as ?count) 
         WHERE {{
             ?d dcterms:identifier ?d_id ;
-                a dcat:Dataset .
+                a dcat:Dataset ;
+                rdfs:member ?coll .
             FILTER (STR(?d_id) = "{dataset_id}")
-            ?coll a geo:FeatureCollection ;
-                dcterms:isPartOf ?d .
+            ?coll a geo:FeatureCollection .
         }}
     """
     r = await sparql_query(q, "SpacePrez")
@@ -123,6 +126,7 @@ async def count_collections(dataset_id: str):
         return r[1]
     else:
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
+
 
 async def list_collections(dataset_id: str, page: int, per_page: int):
     q = f"""
@@ -135,10 +139,10 @@ async def list_collections(dataset_id: str, page: int, per_page: int):
         WHERE {{
             ?d dcterms:identifier ?d_id ;
                 a dcat:Dataset ;
-                skos:prefLabel|dcterms:title|rdfs:label ?d_label .
+                skos:prefLabel|dcterms:title|rdfs:label ?d_label ;
+                rdfs:member ?coll .
             FILTER (STR(?d_id) = "{dataset_id}")
             ?coll a geo:FeatureCollection ;
-                dcterms:isPartOf ?d ;
                 dcterms:identifier ?id ;
                 skos:prefLabel|dcterms:title|rdfs:label ?label .
         }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
@@ -162,8 +166,8 @@ async def get_collection_construct(
     query_by_id = f"""
         FILTER (STR(?d_id) = "{dataset_id}")
         ?coll a geo:FeatureCollection ;
-            dcterms:isPartOf ?d ;
             dcterms:identifier ?id .
+        ?d rdfs:member ?fc .
         FILTER (STR(?id) = "{collection_id}")
     """
     # when querying by URI via /object?uri=...
@@ -189,14 +193,14 @@ async def get_collection_construct(
 
             ?d a dcat:Dataset ;
                 dcterms:identifier ?d_id ;
-                ?label_pred ?d_label .
+                ?label_pred ?d_label ;
+                rdfs:member ?coll .
             
             ?mem a geo:Feature .
         }}
         WHERE {{
             {query_by_id if collection_id is not None else query_by_uri}
             ?coll ?p1 ?o1 ;
-                dcterms:isPartOf ?d ;
                 rdfs:member ?mem .
             OPTIONAL {{
                 ?o1 ?p2 ?o2 .
@@ -213,7 +217,8 @@ async def get_collection_construct(
             }}
             ?d a dcat:Dataset ;
                 dcterms:identifier ?d_id ;
-                ?label_pred ?d_label .
+                ?label_pred ?d_label ;
+                rdfs:member ?coll .
             FILTER (?label_pred IN (skos:prefLabel, dcterms:title, rdfs:label))
             ?mem a geo:Feature .
             OPTIONAL {{
@@ -226,6 +231,7 @@ async def get_collection_construct(
             }}
         }}
     """
+    print(q)
     r = await sparql_construct(q, "SpacePrez")
     if r[0]:
         return r[1]
@@ -238,17 +244,19 @@ async def count_features(dataset_id: str, collection_id: str):
         PREFIX dcat: <{DCAT}>
         PREFIX dcterms: <{DCTERMS}>
         PREFIX geo: <{GEO}>
+        PREFIX rdfs: <{RDFS}>
+        
         SELECT (COUNT(?f) as ?count) 
         WHERE {{
             ?d dcterms:identifier ?d_id ;
-                a dcat:Dataset .
+                a dcat:Dataset ;
+                rdfs:member ?coll .
             FILTER (STR(?d_id) = "{dataset_id}")
             ?coll dcterms:identifier ?coll_id ;
                 a geo:FeatureCollection ;
-                dcterms:isPartOf ?d .
+                rdfs:member ?f .
             FILTER (STR(?coll_id) = "{collection_id}")
-            ?f a geo:Feature ;
-                dcterms:isPartOf ?coll .
+            ?f a geo:Feature .
         }}
     """
     r = await sparql_query(q, "SpacePrez")
@@ -269,15 +277,15 @@ async def list_features(dataset_id: str, collection_id: str, page: int, per_page
         WHERE {{
             ?d dcterms:identifier ?d_id ;
                 a dcat:Dataset ;
-                skos:prefLabel|dcterms:title|rdfs:label ?d_label .
+                skos:prefLabel|dcterms:title|rdfs:label ?d_label ;
+                rdfs:member ?coll .
             FILTER (STR(?d_id) = "{dataset_id}")
             ?coll a geo:FeatureCollection ;
-                dcterms:isPartOf ?d ;
                 dcterms:identifier ?coll_id ;
-                skos:prefLabel|dcterms:title|rdfs:label ?coll_label .
+                skos:prefLabel|dcterms:title|rdfs:label ?coll_label ;
+                rdfs:member ?f .
             FILTER (STR(?coll_id) = "{collection_id}")
             ?f a geo:Feature ;
-                dcterms:isPartOf ?coll ;
                 dcterms:identifier ?id .
                 
             OPTIONAL {{
@@ -291,6 +299,7 @@ async def list_features(dataset_id: str, collection_id: str, page: int, per_page
     else:
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
+
 async def get_feature_construct(
     dataset_id: Optional[str] = None,
     collection_id: Optional[str] = None,
@@ -303,12 +312,12 @@ async def get_feature_construct(
     # when querying by ID via regular URL path
     query_by_id = f"""
         FILTER (STR(?d_id) = "{dataset_id}")
+        ?d rdfs:member ?coll .
         ?coll a geo:FeatureCollection ;
-            dcterms:isPartOf ?d ;
-            dcterms:identifier ?coll_id .
+            dcterms:identifier ?coll_id ;
+            rdfs:member ?f .
         FILTER (STR(?coll_id) = "{collection_id}")
         ?f a geo:Feature ;
-            dcterms:isPartOf ?coll ;
             dcterms:identifier ?id .
         FILTER (STR(?id) = "{feature_id}")
     """
@@ -324,6 +333,7 @@ async def get_feature_construct(
         PREFIX geo: <{GEO}>
         PREFIX rdfs: <{RDFS}>
         PREFIX skos: <{SKOS}>
+        
         CONSTRUCT {{
             ?f ?p1 ?o1 ;
                 dcterms:title ?title .
@@ -338,7 +348,8 @@ async def get_feature_construct(
 
             ?coll a geo:FeatureCollection ;
                 dcterms:identifier ?coll_id ;
-                ?label_pred ?coll_label .
+                ?label_pred ?coll_label ;
+                rdfs:member ?f .
             
             ?d a dcat:Dataset ;
                 dcterms:identifier ?d_id ;
@@ -346,8 +357,8 @@ async def get_feature_construct(
         }}
         WHERE {{
             {query_by_id if feature_id is not None else query_by_uri}
-            ?f ?p1 ?o1 ;
-                dcterms:isPartOf ?coll .
+            {{?coll rdfs:member ?f .}}
+            {{?f ?p1 ?o1 . }}
             OPTIONAL {{
                 ?o1 ?p2 ?o2 .
                 FILTER(ISBLANK(?o1))

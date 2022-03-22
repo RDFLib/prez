@@ -50,7 +50,6 @@ class SpacePrezFeature(PrezModel):
             WHERE {{
                 {query_by_id if id is not None else query_by_uri}
                 ?f a geo:Feature ;
-                    dcterms:isPartOf ?coll ;
                     dcterms:title ?title .
                 # OPTIONAL {{
                 #     ?f rdfs:label|skos:prefLabel|dcterms:title ?label .
@@ -60,6 +59,7 @@ class SpacePrezFeature(PrezModel):
                     ?f skos:definition|dcterms:description ?desc .
                 }}
                 ?coll a geo:FeatureCollection ;
+                    rdfs:member ?f ;
                     dcterms:identifier ?coll_id ;
                     rdfs:label|skos:prefLabel|dcterms:title ?coll_label .
                 ?d a dcat:Dataset ;

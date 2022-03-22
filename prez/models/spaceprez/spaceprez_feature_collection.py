@@ -32,17 +32,16 @@ class SpacePrezFeatureCollection(PrezModel):
             raise ValueError("Either an ID or a URI must be provided")
 
         query_by_id = f"""
-            ?coll dcterms:identifier ?id .
-            FILTER (STR(?id) = "{id}")
+                ?coll dcterms:identifier ?id .
+                FILTER (STR(?id) = "{id}")
         """
 
         query_by_uri = f"""
-            BIND (<{uri}> as ?coll) 
-            ?coll dcterms:identifier ?id .
+                BIND (<{uri}> as ?coll) 
+                ?coll dcterms:identifier ?id .
         """
 
-        r = self.graph.query(
-            f"""
+        q = f"""
             PREFIX dcterms: <{DCTERMS}>
             PREFIX geo: <{GEO}>
             PREFIX rdfs: <{RDFS}>
@@ -50,16 +49,16 @@ class SpacePrezFeatureCollection(PrezModel):
             SELECT *
             WHERE {{
                 {query_by_id if id is not None else query_by_uri}
+                ?d rdfs:member ?coll ;
+                    dcterms:identifier ?d_id ;
+                    rdfs:label|skos:prefLabel|dcterms:title ?d_label .                
+                
                 ?coll a geo:FeatureCollection ;
                     rdfs:label|skos:prefLabel|dcterms:title ?title ;
-                    skos:definition|dcterms:description ?desc ;
-                    dcterms:isPartOf ?d .
-                ?d dcterms:identifier ?d_id ;
-                    rdfs:label|skos:prefLabel|dcterms:title ?d_label .
+                    skos:definition|dcterms:description ?desc .
             }}
         """
-        )
-
+        r = self.graph.query(q)
         result = r.bindings[0]
         self.uri = result["coll"]
         self.id = result["id"]
