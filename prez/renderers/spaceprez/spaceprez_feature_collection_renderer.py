@@ -102,7 +102,6 @@ class SpacePrezFeatureCollectionRenderer(Renderer):
             ?geom ?geom_p ?geom_o .
             ?d a dcat:Dataset ;
                 rdfs:member ?fc .
-            ?mem a geo:Feature .
         }}
         WHERE {{
             BIND (<{self.collection.uri}> AS ?fc)
@@ -116,7 +115,6 @@ class SpacePrezFeatureCollectionRenderer(Renderer):
             }}
             ?d a dcat:Dataset ;
                 rdfs:member ?fc .
-            ?mem a geo:Feature .
         }}
         """)
 

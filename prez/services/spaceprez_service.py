@@ -154,7 +154,7 @@ async def list_collections(dataset_id: str, page: int, per_page: int):
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
-async def get_collection_construct(
+async def get_collection_construct_1(
     dataset_id: Optional[str] = None,
     collection_id: Optional[str] = None,
     collection_uri: Optional[str] = None,
@@ -167,7 +167,9 @@ async def get_collection_construct(
         FILTER (STR(?d_id) = "{dataset_id}")
         ?coll a geo:FeatureCollection ;
             dcterms:identifier ?id .
-        ?d rdfs:member ?fc .
+        ?d a dcat:Dataset ;
+            rdfs:member ?fc ;
+            dcterms:identifier ?d_id .
         FILTER (STR(?id) = "{collection_id}")
     """
     # when querying by URI via /object?uri=...
@@ -193,15 +195,15 @@ async def get_collection_construct(
 
             ?d a dcat:Dataset ;
                 dcterms:identifier ?d_id ;
-                ?label_pred ?d_label ;
+                dcterms:title ?d_label ;
                 rdfs:member ?coll .
-            
-            ?mem a geo:Feature .
         }}
         WHERE {{
             {query_by_id if collection_id is not None else query_by_uri}
-            ?coll ?p1 ?o1 ;
-                rdfs:member ?mem .
+            ?coll ?p1 ?o1 .
+            
+            FILTER(!STRENDS(STR(?p1), "member"))
+
             OPTIONAL {{
                 ?o1 ?p2 ?o2 .
                 FILTER(ISBLANK(?o1))
@@ -216,11 +218,9 @@ async def get_collection_construct(
                 }}
             }}
             ?d a dcat:Dataset ;
+                rdfs:member ?fc ;
                 dcterms:identifier ?d_id ;
-                ?label_pred ?d_label ;
-                rdfs:member ?coll .
-            FILTER (?label_pred IN (skos:prefLabel, dcterms:title, rdfs:label))
-            ?mem a geo:Feature .
+                dcterms:title ?d_label .
             OPTIONAL {{
                 ?p1 rdfs:label ?p1Label .
                 FILTER(lang(?p1Label) = "" || lang(?p1Label) = "en")
@@ -231,7 +231,51 @@ async def get_collection_construct(
             }}
         }}
     """
-    print(q)
+    r = await sparql_construct(q, "SpacePrez")
+    if r[0]:
+        return r[1]
+    else:
+        raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
+
+
+async def get_collection_construct_2(
+    dataset_id: Optional[str] = None,
+    collection_id: Optional[str] = None,
+    collection_uri: Optional[str] = None,
+):
+    if collection_id is None and collection_uri is None:
+        raise ValueError("Either an ID or a URI must be provided for a SPARQL query")
+
+    # when querying by ID via regular URL path
+    query_by_id = f"""
+        FILTER (STR(?d_id) = "{dataset_id}")
+        ?coll a geo:FeatureCollection ;
+            dcterms:identifier ?id .
+        ?d a dcat:Dataset ;
+            dcterms:identifier ?d_id ;
+            rdfs:member ?fc .
+        FILTER (STR(?id) = "{collection_id}")
+    """
+    # when querying by URI via /object?uri=...
+    query_by_uri = f"""
+        BIND (<{collection_uri}> as ?coll)
+        ?coll a geo:FeatureCollection .
+    """
+
+    q = f"""
+        PREFIX dcat: <{DCAT}>
+        PREFIX dcterms: <{DCTERMS}>
+        PREFIX geo: <{GEO}>
+        PREFIX rdfs: <{RDFS}>
+        PREFIX skos: <{SKOS}>
+        CONSTRUCT {{
+            ?coll rdfs:member ?mem .
+        }}
+        WHERE {{
+            {query_by_id if collection_id is not None else query_by_uri}
+            ?coll rdfs:member ?mem .
+        }} LIMIT 20
+    """
     r = await sparql_construct(q, "SpacePrez")
     if r[0]:
         return r[1]
