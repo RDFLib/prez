@@ -147,11 +147,22 @@ async def feature_collection_endpoint(
         ),
     )
 
-    sparql_result = await get_collection_construct(
-        dataset_id=dataset_id,
-        collection_id=collection_id,
-        collection_uri=collection_uri,
+    results = await asyncio.gather(
+        get_collection_construct_1(
+            dataset_id=dataset_id,
+            collection_id=collection_id,
+            collection_uri=collection_uri,
+        ),
+        get_collection_construct_2(
+            dataset_id=dataset_id,
+            collection_id=collection_id,
+            collection_uri=collection_uri,
+        ),
     )
+
+    sparql_result = Graph()
+    for g in results:
+        sparql_result += g
 
     if len(sparql_result) == 0:
         raise HTTPException(status_code=404, detail="Not Found")
