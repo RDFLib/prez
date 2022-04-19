@@ -10,12 +10,13 @@ from models import PrezModel
 class VocPrezCollection(PrezModel):
     # class attributes for property grouping & order
     main_props = [
-        SKOS.definition,
+        # SKOS.definition,
     ]
     hidden_props = [
         SKOS.member,
         DCTERMS.identifier,
         SDO.identifier, # not being hidden
+        SKOS.definition,
     ]
 
     def __init__(
@@ -47,6 +48,7 @@ class VocPrezCollection(PrezModel):
                 ?coll a skos:Collection ;
                     rdfs:label|skos:prefLabel|dcterms:title ?title ;
                     skos:definition|dcterms:description ?desc .
+                FILTER(lang(?title) = "" || lang(?title) = "en")
             }}
         """
         )
@@ -110,6 +112,7 @@ class VocPrezCollection(PrezModel):
                 ?c rdfs:label|skos:prefLabel|dcterms:title ?label ;
                     skos:inScheme ?cs ;
                     dcterms:identifier ?id .
+                FILTER(lang(?label) = "" || lang(?label) = "en")
                 ?cs dcterms:identifier ?cs_id .
             }}
         """
@@ -137,6 +140,7 @@ class VocPrezCollection(PrezModel):
             WHERE {{
                 <{self.uri}> skos:member ?c .
                 ?c rdfs:label|skos:prefLabel|dcterms:title ?label .
+                FILTER(lang(?label) = "" || lang(?label) = "en")
             }}
         """
         )

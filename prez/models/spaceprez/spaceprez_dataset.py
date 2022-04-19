@@ -11,12 +11,13 @@ class SpacePrezDataset(PrezModel):
     # class attributes for property grouping & order
     main_props = [
         DCTERMS.title,
-        DCTERMS.description,
+        # DCTERMS.description,
     ]
     geom_props = [GEO.hasBoundingBox]
     hidden_props = [
         DCTERMS.identifier,
         RDFS.seeAlso,
+        DCTERMS.description,
     ]
 
     def __init__(
@@ -48,6 +49,7 @@ class SpacePrezDataset(PrezModel):
                 ?d a dcat:Dataset ;
                     dcterms:title ?title ;
                     dcterms:description ?desc .
+                FILTER(lang(?title) = "" || lang(?title) = "en")
             }}
         """
         )

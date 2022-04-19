@@ -46,7 +46,7 @@
                             <td>
                                 {% if bnode.value | match("^[A-Z]+ \(.*\)$") or bnode.value | match("^\{.+\}$") %}
                                     <code>{{ bnode.value }}</code>
-                                {% else %}
+                                {% elif bnode.value | match("^http\(s*\):\/\/.+") %}
                                     {% if bnode.oLabel is not none %}
                                         <a href="{{ bnode.value }}">{{ bnode.oLabel }}</a>
                                     {% else %}
@@ -54,6 +54,16 @@
                                             <a href="{{ bnode.value }}">{{ bnode.oPrefix }}</a>
                                         {% else %}
                                             <a href="{{ bnode.value }}">{{ bnode.value }}</a>
+                                        {% endif %}
+                                    {% endif %}
+                                {% else %}
+                                    {% if bnode.oLabel is not none %}
+                                        {{ bnode.oLabel }}
+                                    {% else %}
+                                        {% if bnode.oPrefix is not none %}
+                                            {{ bnode.oPrefix }}
+                                        {% else %}
+                                            {{ bnode.value }}
                                         {% endif %}
                                     {% endif %}
                                 {% endif %}

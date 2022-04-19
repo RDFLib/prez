@@ -700,6 +700,7 @@ table.props-table td {
 table.props-table th {
   text-align: left;
   min-width: 120px;
+  vertical-align: top;
 }
 table.props-table tbody tr:nth-child(2n+1) {
   background-color: var(--table-row-bg);

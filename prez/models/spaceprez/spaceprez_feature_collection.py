@@ -12,12 +12,13 @@ class SpacePrezFeatureCollection(PrezModel):
     # class attributes for property grouping & order
     main_props = [
         DCTERMS.title,
-        DCTERMS.description,
+        # DCTERMS.description,
     ]
     geom_props = [GEO.hasBoundingBox]
     hidden_props = [
         DCTERMS.identifier,
-        RDFS.member
+        RDFS.member,
+        DCTERMS.description,
     ]
 
     def __init__(
@@ -51,11 +52,12 @@ class SpacePrezFeatureCollection(PrezModel):
                 {query_by_id if id is not None else query_by_uri}
                 ?d rdfs:member ?coll ;
                     dcterms:identifier ?d_id ;
-                    dcterms:title ?d_label .                
-                
+                    dcterms:title ?d_label .
+                FILTER(lang(?d_label) = "" || lang(?d_label) = "en")
                 ?coll a geo:FeatureCollection ;
                     dcterms:title ?title ;
                     dcterms:description ?desc .
+                FILTER(lang(?title) = "" || lang(?title) = "en")
             }}
         """
         r = self.graph.query(q)

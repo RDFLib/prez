@@ -33,6 +33,12 @@
             Feature collection title
         {% endif %}
     </h1>
+    <p>Instance URI: <a href="{{ uri }}">{{ collection.uri }}</a> <small><a href="{{ collection.uri }}" target="_blank"><i class="far fa-external-link"></i></a></small></p>
+    {% if collection.description is not none %}
+        <div>
+            <p>{{ collection.description }}</p>
+        </div>
+    {% endif %}
     {% if 'asGeoJSON' in collection.geometries %}
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
         <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
