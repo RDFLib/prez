@@ -1,15 +1,17 @@
 {% set prezs = "ENABLED_PREZS" | get_config %}
-{% set system_info = "SYSTEM_INFO" | get_config %}
+{% set prez_title = "PREZ_TITLE" | get_config %}
+{% set vocprez_title = "VOCPREZ_TITLE" | get_config %}
+{% set spaceprez_title = "SPACEPREZ_TITLE" | get_config %}
 {% set is_sidenav = "SIDENAV" | get_config %}
 {% set theme_volume = "THEME_VOLUME" | get_config %}
 
 {% if active_prez == "VocPrez" %}
-    {% set pagetitle = system_info.VocPrez.title %}
+    {% set pagetitle = vocprez_title %}
 {% elif active_prez == "SpacePrez" %}
-    {% set pagetitle = system_info.SpacePrez.title %}
+    {% set pagetitle = spaceprez_title %}
 {% else %} {# Prez #} 
-    {% if system_info.Prez.title is not none %}
-        {% set pagetitle = system_info.Prez.title %}
+    {% if prez_title is not none %}
+        {% set pagetitle = prez_title %}
     {% else %}
         {% set pagetitle = "Prez" %}
     {% endif %}

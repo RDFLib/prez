@@ -102,6 +102,30 @@ altToggle.forEach(btn => {
     }
 });
 
+// geom collapse toggler
+const geomCollapseBtn = document.querySelectorAll(".geom-collapse-btn");
+geomCollapseBtn.forEach(btn => {
+    btn.onclick = () => {
+        const geomString = btn.parentNode.querySelector(".geom-string");
+        if (geomString.classList.contains("collapse")) {
+            geomString.classList.remove("collapse");
+            btn.innerHTML = '<i class="far fa-minus"></i> Collapse';
+        } else {
+            geomString.classList.add("collapse");
+            btn.innerHTML = '<i class="far fa-plus"></i> Expand';
+        }
+    }
+});
+
+// geom copy button
+const geomCopyBtn = document.querySelectorAll(".geom-copy-btn");
+geomCopyBtn.forEach(btn => {
+    btn.onclick = () => {
+        const geomString = btn.parentNode.querySelector(".geom-string");
+        navigator.clipboard.writeText(geomString.textContent);
+    }
+});
+
 // window resize
 window.onresize = () => {
     const hasSideNav = localStorage.getItem("hasSideNav") === "true";

@@ -57,5 +57,15 @@ table {
         .props-table td > &:nth-child(2n) {
             background-color: var(--subtable-bg);
         }
+
+        code.geom-string {
+            &.collapse {
+                display: inline-block;
+                width: 360px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
     }
 }

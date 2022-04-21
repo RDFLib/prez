@@ -14,9 +14,9 @@ class VocPrezDataset(PrezModel):
     def __init__(self, graph: Graph) -> None:
         super().__init__(graph)
 
-        self.uri = SYSTEM_INFO["VocPrez"]["data_uri"]
-        self.title = SYSTEM_INFO["VocPrez"]["title"]
-        self.description = SYSTEM_INFO["VocPrez"]["desc"]
+        self.uri = VOCPREZ_DATA_URI
+        self.title = VOCPREZ_TITLE
+        self.description = VOCPREZ_DESC
 
     # override
     def to_dict(self) -> Dict:

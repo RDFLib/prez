@@ -45,7 +45,12 @@
                             </th>
                             <td>
                                 {% if bnode.value | match("^[A-Z]+ \(.*\)$") or bnode.value | match("^\{.+\}$") %}
-                                    <code>{{ bnode.value }}</code>
+                                    <code class="geom-string{% if bnode.value | length > 40 %} collapse{% endif %}">{{ bnode.value }}</code>
+                                    <button class="btn outline geom-copy-btn"><i class="far fa-copy"></i></button>
+                                    {% if bnode.value | length > 40 %}
+                                        <br/>
+                                        <button class="btn outline geom-collapse-btn"><i class="far fa-plus"></i> Expand</button>
+                                    {% endif %}
                                 {% elif bnode.value | match("^http\(s*\):\/\/.+") %}
                                     {% if bnode.oLabel is not none %}
                                         <a href="{{ bnode.value }}">{{ bnode.oLabel }}</a>
@@ -77,6 +82,16 @@
                 <a href="{{ object.value }}">{{ object.label }}</a>
             {% else %}
                 {{ object.value }}
+            {% endif %}
+            {% if object.datatype is not none %}
+                {% if object.datatypePrefix is not none %}
+                    ^^{{ object.datatypePrefix }}
+                {% else %}
+                 ^^{{ object.datatype }}
+                {% endif %}
+            {% endif %}
+            {% if object.lang is not none and object.lang | length > 0 %}
+                @{{ object.lang }}
             {% endif %}
         {% endif %}
         <br/>
