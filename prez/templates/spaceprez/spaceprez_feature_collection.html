@@ -47,16 +47,17 @@
     <div class="table-wrapper">
         <table class="props-table">
             <tbody>
+                <tr>
+                    <th>Features</th>
+                    <td><a href="{{ url_for('features', dataset_id=collection.dataset.id, collection_id=collection.id) }}" class="btn">Features</a></td>
+                </tr>
                 {% for prop in collection.properties %}
                     <tr>
                         <th>{{ render_predicate(prop) }}</th>
                         <td>{{ render_object(prop) }}</td>
                     </tr>
                 {% endfor %}
-                <tr>
-                    <th>Features</th>
-                    <td><a href="{{ url_for('features', dataset_id=collection.dataset.id, collection_id=collection.id) }}" class="btn">Features</a></td>
-                </tr>
+
             </tbody>
         </table>
     </div>
