@@ -31,6 +31,7 @@ table {
         th {
             text-align: left;
             min-width: 120px;
+            vertical-align: top;
         }
 
         tbody tr:nth-child(2n + 1) {
@@ -55,6 +56,16 @@ table {
 
         .props-table td > &:nth-child(2n) {
             background-color: var(--subtable-bg);
+        }
+
+        code.geom-string {
+            &.collapse {
+                display: inline-block;
+                width: 360px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
         }
     }
 }

@@ -25,11 +25,17 @@ class PrezModel(object, metaclass=ABCMeta):
             SELECT DISTINCT *
             WHERE {{
                 <{self.uri}> ?p ?o .
+                BIND(DATATYPE(?o) AS ?datatype)
+                BIND(LANG(?o) AS ?lang)
                 OPTIONAL {{
                     ?p rdfs:label ?pLabel .
+                    BIND(DATATYPE(?pLabel) AS ?pLabelDatatype)
+                    BIND(LANG(?pLabel) AS ?pLabelLang)
                 }}
                 OPTIONAL {{
                     ?o rdfs:label ?oLabel .
+                    BIND(DATATYPE(?oLabel) AS ?oLabelDatatype)
+                    BIND(LANG(?oLabel) AS ?oLabelLang)
                 }}
             }}
         """
@@ -42,6 +48,12 @@ class PrezModel(object, metaclass=ABCMeta):
                 "value": result["o"],
                 "prefix": self._get_prefix(result["o"]),
                 "label": result.get("oLabel"),
+                "datatype": result.get("datatype"),
+                "datatypePrefix": self._get_prefix(result.get("datatype")),
+                "lang": result.get("lang"),
+                "labelDatatype": result.get("oLabelDatatype"),
+                "labelDatatypePrefix": self._get_prefix(result.get("oLabelDatatype")),
+                "labelLang": result.get("oLabelLang"),
             }
             if props_dict.get(result["p"]):
                 props_dict[result["p"]]["objects"].append(obj)
@@ -50,6 +62,9 @@ class PrezModel(object, metaclass=ABCMeta):
                     "uri": result["p"],
                     "prefix": self._get_prefix(result["p"]),
                     "label": result.get("pLabel"),
+                    "labelDatatype": result.get("pLabelDatatype"),
+                    "labelDatatypePrefix": self._get_prefix(result.get("pLabelDatatype")),
+                    "labelLang": result.get("pLabelLang"),
                     "objects": [obj],
                 }
         return props_dict

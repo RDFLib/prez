@@ -60,6 +60,7 @@ async def list_collections(page: int, per_page: int):
             ?cs a skos:Collection ;
                 dcterms:identifier ?id ;
                 skos:prefLabel ?label .
+            FILTER(lang(?label) = "" || lang(?label) = "en")
         }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
     """
     r = await sparql_query(q, "VocPrez")
@@ -103,12 +104,6 @@ async def get_scheme_construct1(
     # data which may contain inferencing
     query_in_graph = f"""
         ?cs ?p1 ?o1 .
-        OPTIONAL {{
-            ?c skos:broader ?broader .
-        }}
-        OPTIONAL {{
-            ?c skos:narrower ?narrower .
-        }}
     """
 
     q = f"""
@@ -165,6 +160,7 @@ async def get_scheme_construct2(
             a skos:Concept ;
             dcterms:identifier ?c_id ;
             ?label_pred ?c_label .
+        FILTER(lang(?c_label) = "" || lang(?c_label) = "en")
         FILTER (?label_pred IN (skos:prefLabel, dcterms:title, rdfs:label))
         OPTIONAL {{
             ?c skos:broader ?broader .

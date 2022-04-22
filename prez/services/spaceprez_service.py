@@ -31,7 +31,8 @@ async def list_datasets(page: int, per_page: int):
         WHERE {{
             ?d a dcat:Dataset ;
                 dcterms:identifier ?id ;
-                skos:prefLabel|dcterms:title|rdfs:label ?label .
+                dcterms:title ?label .
+            FILTER(lang(?label) = "" || lang(?label) = "en")
         }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
     """
     r = await sparql_query(q, "SpacePrez")
@@ -139,12 +140,14 @@ async def list_collections(dataset_id: str, page: int, per_page: int):
         WHERE {{
             ?d dcterms:identifier ?d_id ;
                 a dcat:Dataset ;
-                skos:prefLabel|dcterms:title|rdfs:label ?d_label ;
+                dcterms:title ?d_label ;
                 rdfs:member ?coll .
+            FILTER(lang(?d_label) = "" || lang(?d_label) = "en")
             FILTER (STR(?d_id) = "{dataset_id}")
             ?coll a geo:FeatureCollection ;
                 dcterms:identifier ?id ;
-                skos:prefLabel|dcterms:title|rdfs:label ?label .
+                dcterms:title ?label .
+            FILTER(lang(?label) = "" || lang(?label) = "en")
         }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
     """
     r = await sparql_query(q, "SpacePrez")
@@ -321,19 +324,22 @@ async def list_features(dataset_id: str, collection_id: str, page: int, per_page
         WHERE {{
             ?d dcterms:identifier ?d_id ;
                 a dcat:Dataset ;
-                skos:prefLabel|dcterms:title|rdfs:label ?d_label ;
+                dcterms:title ?d_label ;
                 rdfs:member ?coll .
+            FILTER(lang(?d_label) = "" || lang(?d_label) = "en")
             FILTER (STR(?d_id) = "{dataset_id}")
             ?coll a geo:FeatureCollection ;
                 dcterms:identifier ?coll_id ;
-                skos:prefLabel|dcterms:title|rdfs:label ?coll_label ;
+                dcterms:title ?coll_label ;
                 rdfs:member ?f .
+            FILTER(lang(?coll_label) = "" || lang(?coll_label) = "en")
             FILTER (STR(?coll_id) = "{collection_id}")
             ?f a geo:Feature ;
                 dcterms:identifier ?id .
                 
             OPTIONAL {{
-                ?f skos:prefLabel|dcterms:title|rdfs:label ?label .
+                ?f dcterms:title ?label .
+                FILTER(lang(?label) = "" || lang(?label) = "en")
             }}
         }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
     """
@@ -392,12 +398,12 @@ async def get_feature_construct(
 
             ?coll a geo:FeatureCollection ;
                 dcterms:identifier ?coll_id ;
-                ?label_pred ?coll_label ;
+                dcterms:title ?coll_label ;
                 rdfs:member ?f .
             
             ?d a dcat:Dataset ;
                 dcterms:identifier ?d_id ;
-                ?label_pred ?d_label .
+                dcterms:title ?d_label .
         }}
         WHERE {{
             {query_by_id if feature_id is not None else query_by_uri}
@@ -422,11 +428,10 @@ async def get_feature_construct(
             BIND(COALESCE(?label, CONCAT("Feature ", ?id)) AS ?title)
             ?coll a geo:FeatureCollection ;
                 dcterms:identifier ?coll_id ;
-                ?label_pred ?coll_label .
+                dcterms:title ?coll_label .
             ?d a dcat:Dataset ;
                 dcterms:identifier ?d_id ;
-                ?label_pred ?d_label .
-            FILTER (?label_pred IN (skos:prefLabel, dcterms:title, rdfs:label))
+                dcterms:title ?d_label .
             OPTIONAL {{
                 ?p1 rdfs:label ?p1Label .
                 FILTER(lang(?p1Label) = "" || lang(?p1Label) = "en")

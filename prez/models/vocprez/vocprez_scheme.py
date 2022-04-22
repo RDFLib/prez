@@ -10,7 +10,7 @@ from models import PrezModel
 class VocPrezScheme(PrezModel):
     # class attributes for property grouping & order
     main_props = [
-        SKOS.definition,
+        # SKOS.definition,
         DCTERMS.creator,
         DCTERMS.created,
         DCTERMS.modified,
@@ -19,6 +19,7 @@ class VocPrezScheme(PrezModel):
         RDFS.seeAlso,
         SKOS.hasTopConcept,
         DCTERMS.identifier,
+        SKOS.definition,
     ]
 
     def __init__(
@@ -50,6 +51,7 @@ class VocPrezScheme(PrezModel):
                 ?cs a skos:ConceptScheme ;
                     rdfs:label|skos:prefLabel|dcterms:title ?title ;
                     skos:definition|dcterms:description ?desc .
+                FILTER(lang(?title) = "" || lang(?title) = "en")
             }}
         """
         )
@@ -82,7 +84,7 @@ class VocPrezScheme(PrezModel):
             WHERE {{
                 ?c skos:inScheme <{self.uri}> ;
                     rdfs:label|skos:prefLabel|dcterms:title ?label .
-                FILTER (LANG(?label) = "en")
+                FILTER (lang(?label) = "" || LANG(?label) = "en")
             }}
         """
         )

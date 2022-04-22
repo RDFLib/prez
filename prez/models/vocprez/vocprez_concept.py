@@ -10,7 +10,7 @@ from models import PrezModel
 class VocPrezConcept(PrezModel):
     # class attributes for property grouping & order
     main_props = [
-        SKOS.definition,
+        # SKOS.definition,
     ]
 
     hidden_props = [
@@ -23,6 +23,7 @@ class VocPrezConcept(PrezModel):
         SKOS.topConceptOf,
         SKOS.broader,
         SKOS.narrower,
+        SKOS.definition,
     ]
 
     def __init__(
@@ -55,8 +56,10 @@ class VocPrezConcept(PrezModel):
                     rdfs:label|skos:prefLabel|dcterms:title ?title ;
                     skos:definition|dcterms:description ?desc ;
                     skos:inScheme ?cs .
+                FILTER(lang(?title) = "" || lang(?title) = "en")
                 ?cs dcterms:identifier ?cs_id ;
                     skos:prefLabel ?cs_label .
+                FILTER(lang(?cs_label) = "" || lang(?cs_label) = "en")
             }}
         """
         )
@@ -123,6 +126,7 @@ class VocPrezConcept(PrezModel):
                 ?broader dcterms:identifier ?id ;
                     rdfs:label|skos:prefLabel|dcterms:title ?label ;
                     skos:inScheme/dcterms:identifier ?cs_id .
+                FILTER(lang(?label) = "" || lang(?label) = "en")
             }}
         """)
 
@@ -146,6 +150,7 @@ class VocPrezConcept(PrezModel):
                 ?narrower dcterms:identifier ?id ;
                     rdfs:label|skos:prefLabel|dcterms:title ?label ;
                     skos:inScheme/dcterms:identifier ?cs_id .
+                FILTER(lang(?label) = "" || lang(?label) = "en")
             }}
         """)
 

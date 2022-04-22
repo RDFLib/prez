@@ -11,16 +11,30 @@ from config import *
 
 async def sparql_query(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
     """Executes a SPARQL SELECT query for a single SPARQL endpoint"""
-    creds = SPARQL_CREDS[prez]
+    creds = {
+        "endpoint": "",
+        "username": "",
+        "password": ""
+    }
+    if prez == "VocPrez":
+        creds["endpoint"] = VOCPREZ_SPARQL_ENDPOINT
+        creds["username"] = VOCPREZ_SPARQL_USERNAME
+        creds["password"] = VOCPREZ_SPARQL_PASSWORD
+    elif prez == "SpacePrez":
+        creds["endpoint"] = SPACEPREZ_SPARQL_ENDPOINT
+        creds["username"] = SPACEPREZ_SPARQL_USERNAME
+        creds["password"] = SPACEPREZ_SPARQL_PASSWORD
+    else:
+        raise Exception("Invalid prez specified in sparql_query call. Available options are: 'VocPrez', 'SpacePrez'.")
     async with AsyncClient() as client:
         response: httpxResponse = await client.post(
-            creds["SPARQL_ENDPOINT"],
+            creds["endpoint"],
             data=query,
             headers={
                 "Accept": "application/json",
                 "Content-Type": "application/sparql-query",
             },
-            auth=(creds["SPARQL_USERNAME"], creds["SPARQL_PASSWORD"]),
+            auth=(creds["username"], creds["password"]),
             timeout=15.0,
         )
     if 200 <= response.status_code < 300:
@@ -53,16 +67,30 @@ async def sparql_query_multiple(
 
 async def sparql_construct(query: str, prez: str):
     """Returns an rdflib Graph from a CONSTRUCT query for a single SPARQL endpoint"""
-    creds = SPARQL_CREDS[prez]
+    creds = {
+        "endpoint": "",
+        "username": "",
+        "password": ""
+    }
+    if prez == "VocPrez":
+        creds["endpoint"] = VOCPREZ_SPARQL_ENDPOINT
+        creds["username"] = VOCPREZ_SPARQL_USERNAME
+        creds["password"] = VOCPREZ_SPARQL_PASSWORD
+    elif prez == "SpacePrez":
+        creds["endpoint"] = SPACEPREZ_SPARQL_ENDPOINT
+        creds["username"] = SPACEPREZ_SPARQL_USERNAME
+        creds["password"] = SPACEPREZ_SPARQL_PASSWORD
+    else:
+        raise Exception("Invalid prez specified in sparql_query call. Available options are: 'VocPrez', 'SpacePrez'.")
     async with AsyncClient() as client:
         response: httpxResponse = await client.post(
-            creds["SPARQL_ENDPOINT"],
+            creds["endpoint"],
             data=query,
             headers={
                 "Accept": "text/turtle",
                 "Content-Type": "application/sparql-query",
             },
-            auth=(creds["SPARQL_USERNAME"], creds["SPARQL_PASSWORD"]),
+            auth=(creds["username"], creds["password"]),
             timeout=15.0,
         )
     if 200 <= response.status_code < 300:
@@ -79,16 +107,30 @@ async def sparql_endpoint_query(
     query: str, prez: str, accept: str
 ) -> Tuple[bool, Union[Dict, str]]:
     """Queries a SPARQL query on a single endpoint for some Accept mediatype"""
-    creds = SPARQL_CREDS[prez]
+    creds = {
+        "endpoint": "",
+        "username": "",
+        "password": ""
+    }
+    if prez == "VocPrez":
+        creds["endpoint"] = VOCPREZ_SPARQL_ENDPOINT
+        creds["username"] = VOCPREZ_SPARQL_USERNAME
+        creds["password"] = VOCPREZ_SPARQL_PASSWORD
+    elif prez == "SpacePrez":
+        creds["endpoint"] = SPACEPREZ_SPARQL_ENDPOINT
+        creds["username"] = SPACEPREZ_SPARQL_USERNAME
+        creds["password"] = SPACEPREZ_SPARQL_PASSWORD
+    else:
+        raise Exception("Invalid prez specified in sparql_query call. Available options are: 'VocPrez', 'SpacePrez'.")
     async with AsyncClient() as client:
         response: httpxResponse = await client.post(
-            creds["SPARQL_ENDPOINT"],
+            creds["endpoint"],
             data=query,
             headers={
                 "Accept": f"{accept}",
                 "Content-Type": "application/sparql-query",
             },
-            auth=(creds["SPARQL_USERNAME"], creds["SPARQL_PASSWORD"]),
+            auth=(creds["username"], creds["password"]),
             timeout=15.0,
         )
     if 200 <= response.status_code < 300:

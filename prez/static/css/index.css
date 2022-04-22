@@ -700,6 +700,7 @@ table.props-table td {
 table.props-table th {
   text-align: left;
   min-width: 120px;
+  vertical-align: top;
 }
 table.props-table tbody tr:nth-child(2n+1) {
   background-color: var(--table-row-bg);
@@ -718,4 +719,11 @@ table.bnode-table td {
 }
 .props-table td > table.bnode-table:nth-child(2n) {
   background-color: var(--subtable-bg);
+}
+table.bnode-table code.geom-string.collapse {
+  display: inline-block;
+  width: 360px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

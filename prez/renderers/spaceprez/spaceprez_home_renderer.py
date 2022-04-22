@@ -45,8 +45,8 @@ class SpacePrezHomeRenderer(Renderer):
     def _render_oai_json(self) -> JSONResponse:
         """Renders the JSON representation of the OAI profile for the home page"""
         content = {
-            "title": SYSTEM_INFO["SpacePrez"]["title"],
-            "description": SYSTEM_INFO["SpacePrez"]["desc"],
+            "title": SPACEPREZ_TITLE,
+            "description": SPACEPREZ_DESC,
             "links": [
                 {
                     "href": str(self.request.url),
