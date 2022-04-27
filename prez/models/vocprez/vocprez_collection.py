@@ -10,13 +10,13 @@ from models import PrezModel
 class VocPrezCollection(PrezModel):
     # class attributes for property grouping & order
     main_props = [
-        # SKOS.definition,
+        # str(SKOS.definition),
     ]
     hidden_props = [
-        SKOS.member,
-        DCTERMS.identifier,
-        SDO.identifier, # not being hidden
-        SKOS.definition,
+        str(SKOS.member),
+        str(DCTERMS.identifier),
+        str(SDO.identifier), # not being hidden
+        str(SKOS.definition),
     ]
 
     def __init__(
@@ -69,32 +69,26 @@ class VocPrezCollection(PrezModel):
             "properties": self._get_properties(),
             "concepts": self._get_concept_list(),
         }
-
+    
     # override
     def _get_properties(self) -> List[Dict]:
-        props_dict = self._get_props_dict()
+        props_dict = self._get_props()
 
         # group props in order, filtering out hidden props
         properties = []
         main_props = []
         other_props = []
 
-        for uri, prop in props_dict.items():
-            if uri in VocPrezCollection.hidden_props:
+        for prop in props_dict:
+            if prop["value"] in VocPrezCollection.hidden_props:
                 continue
-            elif uri in VocPrezCollection.main_props:
+            elif prop["value"] in VocPrezCollection.main_props:
                 main_props.append(prop)
             else:
                 other_props.append(prop)
 
-        properties.extend(
-            sorted(
-                main_props,
-                key=lambda p: self._sort_within_list(
-                    p, VocPrezCollection.main_props
-                ),
-            )
-        )
+        # sorts & combines into a single list
+        properties.extend(main_props)
         properties.extend(other_props)
 
         return properties

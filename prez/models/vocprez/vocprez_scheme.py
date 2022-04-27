@@ -10,16 +10,16 @@ from models import PrezModel
 class VocPrezScheme(PrezModel):
     # class attributes for property grouping & order
     main_props = [
-        # SKOS.definition,
-        DCTERMS.creator,
-        DCTERMS.created,
-        DCTERMS.modified,
+        # str(SKOS.definition),
+        str(DCTERMS.creator),
+        str(DCTERMS.created),
+        str(DCTERMS.modified),
     ]
     hidden_props = [
-        RDFS.seeAlso,
-        SKOS.hasTopConcept,
-        DCTERMS.identifier,
-        SKOS.definition,
+        str(RDFS.seeAlso),
+        str(SKOS.hasTopConcept),
+        str(DCTERMS.identifier),
+        str(SKOS.definition),
     ]
 
     def __init__(
@@ -100,29 +100,23 @@ class VocPrezScheme(PrezModel):
 
     # override
     def _get_properties(self) -> List[Dict]:
-        props_dict = self._get_props_dict()
+        props_dict = self._get_props()
 
         # group props in order, filtering out hidden props
         properties = []
         main_props = []
         other_props = []
 
-        for uri, prop in props_dict.items():
-            if uri in VocPrezScheme.hidden_props:
+        for prop in props_dict:
+            if prop["value"] in VocPrezScheme.hidden_props:
                 continue
-            elif uri in VocPrezScheme.main_props:
+            elif prop["value"] in VocPrezScheme.main_props:
                 main_props.append(prop)
             else:
                 other_props.append(prop)
 
-        properties.extend(
-            sorted(
-                main_props,
-                key=lambda p: self._sort_within_list(
-                    p, VocPrezScheme.main_props
-                ),
-            )
-        )
+        # sorts & combines into a single list
+        properties.extend(main_props)
         properties.extend(other_props)
 
         return properties

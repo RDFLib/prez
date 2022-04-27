@@ -1,5 +1,5 @@
 {% extends "_page.html" %}
-{% from "_macros.html" import render_predicate, render_object with context %}
+{% from "_macros.html" import render_row with context %}
 
 {% set prezs = "ENABLED_PREZS" | get_config %}
 {% set has_alt = true %}
@@ -45,14 +45,11 @@
         <table class="props-table">
             <tbody>
                 <tr>
-                    <th>Collections</th>
+                    <th><a href="http://www.w3.org/2000/01/rdf-schema#member" target="_blank">Members</a></th>
                     <td><a href="{{ url_for('feature_collections', dataset_id=dataset.id) }}" class="btn">Collections</a></td>
                 </tr>
                 {% for prop in dataset.properties %}
-                    <tr>
-                        <th>{{ render_predicate(prop) }}</th>
-                        <td>{{ render_object(prop) }}</td>
-                    </tr>
+                    {{ render_row(prop) }}
                 {% endfor %}
             </tbody>
         </table>
