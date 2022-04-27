@@ -2,7 +2,7 @@ from typing import List, Dict, Optional
 import json
 
 from rdflib import Graph
-from rdflib.namespace import DCTERMS, SKOS, RDFS
+from rdflib.namespace import DCTERMS, SKOS, RDFS, XSD
 
 from config import *
 from models import PrezModel
@@ -47,13 +47,14 @@ class SpacePrezFeatureCollection(PrezModel):
             PREFIX geo: <{GEO}>
             PREFIX rdfs: <{RDFS}>
             PREFIX skos: <{SKOS}>
+            PREFIX xsd: <{XSD}>
             SELECT *
             WHERE {{
                 {query_by_id if id is not None else query_by_uri}
                 ?d rdfs:member ?coll ;
                     dcterms:identifier ?d_id ;
                     dcterms:title ?d_label .
-                FILTER(lang(?d_label) = "" || lang(?d_label) = "en")
+                FILTER((lang(?d_label) = "" || lang(?d_label) = "en") && DATATYPE(?d_id) = xsd:token)
                 ?coll a geo:FeatureCollection ;
                     dcterms:title ?title ;
                     dcterms:description ?desc .

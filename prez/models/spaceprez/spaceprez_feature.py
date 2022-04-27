@@ -2,7 +2,7 @@ from typing import List, Dict, Optional
 import json
 
 from rdflib import Graph
-from rdflib.namespace import DCTERMS, SKOS, RDFS
+from rdflib.namespace import DCTERMS, SKOS, RDFS, XSD
 
 from config import *
 from models import PrezModel
@@ -47,6 +47,7 @@ class SpacePrezFeature(PrezModel):
             PREFIX geo: <{GEO}>
             PREFIX rdfs: <{RDFS}>
             PREFIX skos: <{SKOS}>
+            PREFIX xsd: <{XSD}>
             SELECT *
             WHERE {{
                 {query_by_id if id is not None else query_by_uri}

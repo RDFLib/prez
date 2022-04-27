@@ -1,6 +1,6 @@
 from typing import Optional
 
-from rdflib.namespace import RDFS, DCAT, DCTERMS
+from rdflib.namespace import RDFS, DCAT, DCTERMS, XSD
 
 from config import *
 from services.sparql_utils import *
@@ -27,12 +27,13 @@ async def list_datasets(page: int, per_page: int):
         PREFIX dcterms: <{DCTERMS}>
         PREFIX rdfs: <{RDFS}>
         PREFIX skos: <{SKOS}>
+        PREFIX xsd: <{XSD}>
         SELECT DISTINCT ?d ?id ?label
         WHERE {{
             ?d a dcat:Dataset ;
                 dcterms:identifier ?id ;
                 dcterms:title ?label .
-            FILTER(lang(?label) = "" || lang(?label) = "en")
+            FILTER((lang(?label) = "" || lang(?label) = "en") && DATATYPE(?id) = xsd:token)
         }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
     """
     r = await sparql_query(q, "SpacePrez")
@@ -113,12 +114,13 @@ async def count_collections(dataset_id: str):
         PREFIX dcterms: <{DCTERMS}>
         PREFIX geo: <{GEO}>
         PREFIX rdfs: <{RDFS}>
+        PREFIX xsd: <{XSD}>
         SELECT (COUNT(?coll) as ?count) 
         WHERE {{
             ?d dcterms:identifier ?d_id ;
                 a dcat:Dataset ;
                 rdfs:member ?coll .
-            FILTER (STR(?d_id) = "{dataset_id}")
+            FILTER (STR(?d_id) = "{dataset_id}" && DATATYPE(?d_id) = xsd:token)
             ?coll a geo:FeatureCollection .
         }}
     """
@@ -136,6 +138,7 @@ async def list_collections(dataset_id: str, page: int, per_page: int):
         PREFIX geo: <{GEO}>
         PREFIX rdfs: <{RDFS}>
         PREFIX skos: <{SKOS}>
+        PREFIX xsd: <{XSD}>
         SELECT DISTINCT *
         WHERE {{
             ?d dcterms:identifier ?d_id ;
@@ -143,11 +146,12 @@ async def list_collections(dataset_id: str, page: int, per_page: int):
                 dcterms:title ?d_label ;
                 rdfs:member ?coll .
             FILTER(lang(?d_label) = "" || lang(?d_label) = "en")
-            FILTER (STR(?d_id) = "{dataset_id}")
+            FILTER (STR(?d_id) = "{dataset_id}" && DATATYPE(?d_id) = xsd:token)
             ?coll a geo:FeatureCollection ;
                 dcterms:identifier ?id ;
                 dcterms:title ?label .
             FILTER(lang(?label) = "" || lang(?label) = "en")
+            FILTER(DATATYPE(?id) = xsd:token)
         }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
     """
     r = await sparql_query(q, "SpacePrez")
@@ -187,6 +191,7 @@ async def get_collection_construct_1(
         PREFIX geo: <{GEO}>
         PREFIX rdfs: <{RDFS}>
         PREFIX skos: <{SKOS}>
+        PREFIX xsd: <{XSD}>
         CONSTRUCT {{
             ?coll ?p1 ?o1 .
             ?o1 ?p2 ?o2 .
@@ -224,6 +229,7 @@ async def get_collection_construct_1(
                 rdfs:member ?fc ;
                 dcterms:identifier ?d_id ;
                 dcterms:title ?d_label .
+            FILTER(DATATYPE(?d_id) = xsd:token)
             OPTIONAL {{
                 ?p1 rdfs:label ?p1Label .
                 FILTER(lang(?p1Label) = "" || lang(?p1Label) = "en")
@@ -292,17 +298,18 @@ async def count_features(dataset_id: str, collection_id: str):
         PREFIX dcterms: <{DCTERMS}>
         PREFIX geo: <{GEO}>
         PREFIX rdfs: <{RDFS}>
+        PREFIX xsd: <{XSD}>
         
         SELECT (COUNT(?f) as ?count) 
         WHERE {{
             ?d dcterms:identifier ?d_id ;
                 a dcat:Dataset ;
                 rdfs:member ?coll .
-            FILTER (STR(?d_id) = "{dataset_id}")
+            FILTER (STR(?d_id) = "{dataset_id}" && DATATYPE(?d_id) = xsd:token)
             ?coll dcterms:identifier ?coll_id ;
                 a geo:FeatureCollection ;
                 rdfs:member ?f .
-            FILTER (STR(?coll_id) = "{collection_id}")
+            FILTER (STR(?coll_id) = "{collection_id}" && DATATYPE(?coll_id) = xsd:token)
             ?f a geo:Feature .
         }}
     """
@@ -320,6 +327,7 @@ async def list_features(dataset_id: str, collection_id: str, page: int, per_page
         PREFIX geo: <{GEO}>
         PREFIX rdfs: <{RDFS}>
         PREFIX skos: <{SKOS}>
+        PREFIX xsd: <{XSD}>
         SELECT DISTINCT *
         WHERE {{
             ?d dcterms:identifier ?d_id ;
@@ -327,15 +335,16 @@ async def list_features(dataset_id: str, collection_id: str, page: int, per_page
                 dcterms:title ?d_label ;
                 rdfs:member ?coll .
             FILTER(lang(?d_label) = "" || lang(?d_label) = "en")
-            FILTER (STR(?d_id) = "{dataset_id}")
+            FILTER (STR(?d_id) = "{dataset_id}" && DATATYPE(?d_id) = xsd:token)
             ?coll a geo:FeatureCollection ;
                 dcterms:identifier ?coll_id ;
                 dcterms:title ?coll_label ;
                 rdfs:member ?f .
             FILTER(lang(?coll_label) = "" || lang(?coll_label) = "en")
-            FILTER (STR(?coll_id) = "{collection_id}")
+            FILTER (STR(?coll_id) = "{collection_id}" && DATATYPE(?coll_id) = xsd:token)
             ?f a geo:Feature ;
                 dcterms:identifier ?id .
+            FILTER(DATATYPE(?id) = xsd:token)
                 
             OPTIONAL {{
                 ?f dcterms:title ?label .
@@ -383,6 +392,7 @@ async def get_feature_construct(
         PREFIX geo: <{GEO}>
         PREFIX rdfs: <{RDFS}>
         PREFIX skos: <{SKOS}>
+        PREFIX xsd: <{XSD}>
         
         CONSTRUCT {{
             ?f ?p1 ?o1 ;
