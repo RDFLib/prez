@@ -63,6 +63,9 @@ class PredCell:
         # self.explanation = explanation
         self.objects = []
 
+    def __repr__(self):
+        return f"{self.qname}"
+
     def to_dict(self) -> Dict:
         """Returns the dictionary representation for HTML display"""
         return {
@@ -94,6 +97,12 @@ class ObjCell:
         self.datatype = datatype
         self.langtag = langtag
         self.rows = []
+
+    def __repr__(self):
+        if self.qname:
+            return self.qname
+        else:
+            return self.value
 
     def to_dict(self) -> Dict:
         """Returns the dictionary representation for HTML display"""
@@ -164,8 +173,12 @@ class Table(ObjCell):
 
     def __init__(self, graph: Graph, uri: URIRef):
         super().__init__(value=uri, qname=None, label=None, datatype=None, langtag=None)
+        self.uri = uri
         self.graph = graph
         self.populate(graph, uri)
+
+    def __repr__(self):
+        return f"Table of data for \"{self.uri}\""
 
     # override
     def to_dict(self) -> List:

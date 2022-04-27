@@ -393,6 +393,7 @@ async def get_feature_construct(
             ?o1 rdfs:label ?o1Label .
 
             ?p2 rdfs:label ?p2Label .
+            ?o2 rdfs:label ?o2Label .
 
             dcterms:title rdfs:label "Title" .
 
