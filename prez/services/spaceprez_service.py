@@ -73,6 +73,7 @@ async def get_dataset_construct(
             ?o1 rdfs:label ?o1Label .
             
             ?p2 rdfs:label ?p2Label .
+            ?o2 rdfs:label ?o2Label .
         }}
         WHERE {{
             {query_by_id if dataset_id is not None else query_by_uri}
@@ -195,6 +196,7 @@ async def get_collection_construct_1(
             ?o1 rdfs:label ?o1Label .
 
             ?p2 rdfs:label ?p2Label .
+            ?o2 rdfs:label ?o2Label .
 
             ?d a dcat:Dataset ;
                 dcterms:identifier ?d_id ;
