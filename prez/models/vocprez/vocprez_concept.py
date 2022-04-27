@@ -1,6 +1,6 @@
 from typing import List, Dict, Optional
 
-from rdflib import Graph, URIRef
+from rdflib import Graph
 from rdflib.namespace import DCTERMS, SKOS
 
 from config import *
@@ -10,20 +10,20 @@ from models import PrezModel
 class VocPrezConcept(PrezModel):
     # class attributes for property grouping & order
     main_props = [
-        # SKOS.definition,
+        # str(SKOS.definition),
     ]
 
     hidden_props = [
-        SKOS.semanticRelation,
-        SKOS.broaderTransitive,
-        SKOS.narrowerTransitive,
-        DCTERMS.identifier,
-        SDO.identifier,
-        SKOS.inScheme,
-        SKOS.topConceptOf,
-        SKOS.broader,
-        SKOS.narrower,
-        SKOS.definition,
+        str(SKOS.semanticRelation),
+        str(SKOS.broaderTransitive),
+        str(SKOS.narrowerTransitive),
+        str(DCTERMS.identifier),
+        str(SDO.identifier),
+        str(SKOS.inScheme),
+        str(SKOS.topConceptOf),
+        str(SKOS.broader),
+        str(SKOS.narrower),
+        str(SKOS.definition),
     ]
 
     def __init__(
@@ -90,36 +90,31 @@ class VocPrezConcept(PrezModel):
 
     # override
     def _get_properties(self) -> List[Dict]:
-        props_dict = self._get_props_dict()
+        props_dict = self._get_props()
 
         # group props in order, filtering out hidden props
         properties = []
         main_props = []
         other_props = []
 
-        for uri, prop in props_dict.items():
-            if uri in VocPrezConcept.hidden_props:
+        for prop in props_dict:
+            if prop["value"] in VocPrezConcept.hidden_props:
                 continue
-            elif uri in VocPrezConcept.main_props:
+            elif prop["value"] in VocPrezConcept.main_props:
                 main_props.append(prop)
             else:
                 other_props.append(prop)
 
-        properties.extend(
-            sorted(
-                main_props,
-                key=lambda p: self._sort_within_list(
-                    p, VocPrezConcept.main_props
-                ),
-            )
-        )
+        # sorts & combines into a single list
+        properties.extend(main_props)
         properties.extend(other_props)
 
         return properties
-    
+
     def _get_broader_concepts(self) -> List[Dict]:
         broader = []
-        r = self.graph.query(f"""
+        r = self.graph.query(
+            f"""
             SELECT DISTINCT *
             WHERE {{
                 <{self.uri}> skos:broader ?broader .
@@ -128,7 +123,8 @@ class VocPrezConcept(PrezModel):
                     skos:inScheme/dcterms:identifier ?cs_id .
                 FILTER(lang(?label) = "" || lang(?label) = "en")
             }}
-        """)
+        """
+        )
 
         for result in r.bindings:
             broader.append(
@@ -143,7 +139,8 @@ class VocPrezConcept(PrezModel):
 
     def _get_narrower_concepts(self) -> List[Dict]:
         narrower = []
-        r = self.graph.query(f"""
+        r = self.graph.query(
+            f"""
             SELECT DISTINCT *
             WHERE {{
                 <{self.uri}> skos:narrower ?narrower .
@@ -152,7 +149,8 @@ class VocPrezConcept(PrezModel):
                     skos:inScheme/dcterms:identifier ?cs_id .
                 FILTER(lang(?label) = "" || lang(?label) = "en")
             }}
-        """)
+        """
+        )
 
         for result in r.bindings:
             narrower.append(

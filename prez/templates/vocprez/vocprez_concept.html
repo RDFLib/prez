@@ -1,5 +1,5 @@
 {% extends "_page.html" %}
-{% from "_macros.html" import render_predicate, render_predicate_o, render_object, render_concept_list with context %}
+{% from "_macros.html" import render_row, render_concept_list with context %}
 {% set prezs = "ENABLED_PREZS" | get_config %}
 {% set has_alt = true %}
 
@@ -42,14 +42,11 @@
         <table class="props-table">
             <tbody>
                 {% for prop in concept.properties %}
-                    <tr>
-                        <th>{{ render_predicate(prop) }}</th>
-                        <td>{{ render_object(prop) }}</td>
-                    </tr>
+                    {{ render_row(prop) }}
                 {% endfor %}
                 {% if concept.broader %}
                     <tr>
-                        <th>Broader</th>
+                        <th><a href="http://www.w3.org/2004/02/skos/core#broader" target="_blank">Broader</a></th>
                         <td>
                             {% for broader in concept.broader %}
                                 {{ render_concept_list(broader) }}
@@ -59,7 +56,7 @@
                 {% endif %}
                 {% if concept.narrower %}
                     <tr>
-                        <th>Narrower</th>
+                        <th><a href="http://www.w3.org/2004/02/skos/core#narrower" target="_blank">Narrower</a></th>
                         <td>
                             {% for narrower in concept.narrower %}
                                 {{ render_concept_list(narrower) }}

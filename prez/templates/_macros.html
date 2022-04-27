@@ -1,101 +1,92 @@
 {% macro render_predicate(prop) %}
     {% if prop.label is not none %}
-        <a href="{{ prop.uri }}">{{ prop.label | title }}</a>
+        <a href="{{ prop.value }}" target="_blank">{{ prop.label | title }}</a>
     {% else %}
-        {% if prop.prefix is not none %}
-            <a href="{{ prop.uri }}">{{ prop.prefix }}</a>
+        {% if prop.qname is not none %}
+            <a href="{{ prop.value }}" target="_blank">{{ prop.qname }}</a>
         {% else %}
-            <a href="{{ prop.uri }}">{{ prop.label }}</a>
+            <a href="{{ prop.value }}" target="_blank">{{ prop.value }}</a>
         {% endif %}
     {% endif %}
 {% endmacro %}
 
-{% macro render_predicate_o(prop) %}
-    {% for object in prop.objects %}
-        {% if object.label is not none %}
-            <a href="{{ object.value }}">{{ object.label }}</a>
-        {% else %}
-            {% if object.prefix is not none %}
-                <a href="{{ object.value }}">{{ object.prefix }}</a>
-            {% else %}
-                <a href="{{ object.value }}">{{ object.value }}</a>
-            {% endif %}
-        {% endif %}
-        <br/>
-    {% endfor %}
+{% macro render_datatype(datatype) %}
+    {% if datatype.qname is not none %}
+        ^^<a href="{{ datatype.value }}" target="_blank">{{ datatype.qname }}</a>
+    {% else %}
+        ^^<a href="{{ datatype.value }}" target="_blank">{{ datatype.value }}</a>
+    {% endif %}
 {% endmacro %}
 
-{% macro render_object(prop) %}
-    {% for object in prop.objects %}
-        {% if object.bnodes %}
-            <table class="bnode-table">
-                <tbody>
-                    {% for bnode in object.bnodes %}
-                        <tr>
-                            <th>
-                                {% if bnode.label is not none %}
-                                    <a href="{{ bnode.uri }}">{{ bnode.label | title }}</a>
-                                {% else %}
-                                    {% if bnode.prefix is not none %}
-                                        <a href="{{ bnode.uri }}">{{ bnode.prefix }}</a>
-                                    {% else %}
-                                        <a href="{{ bnode.uri }}">{{ bnode.uri }}</a>
-                                    {% endif %}
-                                {% endif %}
-                            </th>
-                            <td>
-                                {% if bnode.value | match("^[A-Z]+ \(.*\)$") or bnode.value | match("^\{.+\}$") %}
-                                    <code class="geom-string{% if bnode.value | length > 40 %} collapse{% endif %}">{{ bnode.value }}</code>
-                                    <button class="btn outline geom-copy-btn"><i class="far fa-copy"></i></button>
-                                    {% if bnode.value | length > 40 %}
-                                        <br/>
-                                        <button class="btn outline geom-collapse-btn"><i class="far fa-plus"></i> Expand</button>
-                                    {% endif %}
-                                {% elif bnode.value | match("^http\(s*\):\/\/.+") %}
-                                    {% if bnode.oLabel is not none %}
-                                        <a href="{{ bnode.value }}">{{ bnode.oLabel }}</a>
-                                    {% else %}
-                                        {% if bnode.oPrefix is not none %}
-                                            <a href="{{ bnode.value }}">{{ bnode.oPrefix }}</a>
-                                        {% else %}
-                                            <a href="{{ bnode.value }}">{{ bnode.value }}</a>
-                                        {% endif %}
-                                    {% endif %}
-                                {% else %}
-                                    {% if bnode.oLabel is not none %}
-                                        {{ bnode.oLabel }}
-                                    {% else %}
-                                        {% if bnode.oPrefix is not none %}
-                                            {{ bnode.oPrefix }}
-                                        {% else %}
-                                            {{ bnode.value }}
-                                        {% endif %}
-                                    {% endif %}
-                                {% endif %}
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+{% macro render_langtag(langtag) %}
+    @{{ langtag }}
+{% endmacro %}
+
+{% macro render_object_value(object) %}
+    {% if object.value | match("^[A-Z]+ \(.*\)$") or object.value | match("^\{.+\}$") %}
+        <code class="geom-string{% if object.value | length > 40 %} collapse{% endif %}">{{ object.value }}</code>
+        <button class="btn outline geom-copy-btn"><i class="far fa-copy"></i></button>
+        {% if object.value | length > 40 %}
+            <br/>
+            <button class="btn outline geom-collapse-btn"><i class="far fa-plus"></i> Expand</button>
+        {% endif %}
+    {% elif object.value | match("^http(s*):\/\/.+") %}
+        {% if object.label is not none %}
+            <a href="{{ object.value }}" target="_blank">{{ object.label }}</a>
         {% else %}
-            {% if object.label is not none %}
-                <a href="{{ object.value }}">{{ object.label }}</a>
+            {% if object.qname is not none %}
+                <a href="{{ object.value }}" target="_blank">{{ object.qname }}</a>
+            {% else %}
+                <a href="{{ object.value }}" target="_blank">{{ object.value }}</a>
+            {% endif %}
+        {% endif %}
+    {% else %}
+        {% if object.label is not none %}
+            {{ object.label }}
+        {% else %}
+            {% if object.qname is not none %}
+                {{ object.qname }}
             {% else %}
                 {{ object.value }}
             {% endif %}
-            {% if object.datatype is not none %}
-                {% if object.datatypePrefix is not none %}
-                    ^^{{ object.datatypePrefix }}
-                {% else %}
-                 ^^{{ object.datatype }}
-                {% endif %}
-            {% endif %}
-            {% if object.lang is not none and object.lang | length > 0 %}
-                @{{ object.lang }}
-            {% endif %}
         {% endif %}
-        <br/>
-    {% endfor %}
+    {% endif %}
+    {% if object.datatype is not none %}
+        {{ render_datatype(object.datatype) }}
+    {% endif %}
+    {% if object.langtag is not none %}
+        {{ render_langtag(object.langtag) }}
+    {% endif %}
+{% endmacro %}
+
+{% macro render_row(prop) %}
+    <tr>
+        <th>{{ render_predicate(prop) }}</th>
+        <td>
+            {% for object in prop.objects %}
+                {{ render_object(object) }}
+                <br/>
+            {% endfor %}
+        </td>
+    </tr>
+{% endmacro %}
+
+{% macro render_object(object) %}
+    {% if object.rows %}
+        {{ render_bnode_table(object) }}
+    {% else %}
+        {{ render_object_value(object) }}
+    {% endif %}
+{% endmacro %}
+
+{% macro render_bnode_table(object) %}
+    <table class="bnode-table">
+        <tbody>
+            {% for prop in object.rows %}
+                {{ render_row(prop) }}
+            {% endfor %}
+        </tbody>
+    </table>
 {% endmacro %}
 
 {% macro render_concept_hierarchy(scheme_id, concept_uri, concept_props) %}

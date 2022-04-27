@@ -1,74 +1,26 @@
 from abc import ABCMeta, abstractmethod
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Optional
 import re
 
-from rdflib import Graph, URIRef
+from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.namespace import RDFS
 
 
 class PrezModel(object, metaclass=ABCMeta):
     def __init__(self, graph: Graph) -> None:
         self.graph = graph
+        self.uri = URIRef("")
 
     @abstractmethod
     def to_dict(self) -> Dict:
         pass
 
     @abstractmethod
-    def _get_properties(self) -> Dict:
+    def _get_properties(self) -> List:
+        """Groups properties into specified groups (or hides them) and sorts accordingly"""
         pass
 
-    def _get_props_dict(self) -> Dict:
-        r = self.graph.query(
-            f"""
-            PREFIX rdfs: <{RDFS}>
-            SELECT DISTINCT *
-            WHERE {{
-                <{self.uri}> ?p ?o .
-                BIND(DATATYPE(?o) AS ?datatype)
-                BIND(LANG(?o) AS ?lang)
-                OPTIONAL {{
-                    ?p rdfs:label ?pLabel .
-                    BIND(DATATYPE(?pLabel) AS ?pLabelDatatype)
-                    BIND(LANG(?pLabel) AS ?pLabelLang)
-                }}
-                OPTIONAL {{
-                    ?o rdfs:label ?oLabel .
-                    BIND(DATATYPE(?oLabel) AS ?oLabelDatatype)
-                    BIND(LANG(?oLabel) AS ?oLabelLang)
-                }}
-            }}
-        """
-        )
-
-        # group objects with the same predicate
-        props_dict = {}
-        for result in r.bindings:
-            obj = {
-                "value": result["o"],
-                "prefix": self._get_prefix(result["o"]),
-                "label": result.get("oLabel"),
-                "datatype": result.get("datatype"),
-                "datatypePrefix": self._get_prefix(result.get("datatype")),
-                "lang": result.get("lang"),
-                "labelDatatype": result.get("oLabelDatatype"),
-                "labelDatatypePrefix": self._get_prefix(result.get("oLabelDatatype")),
-                "labelLang": result.get("oLabelLang"),
-            }
-            if props_dict.get(result["p"]):
-                props_dict[result["p"]]["objects"].append(obj)
-            else:
-                props_dict[result["p"]] = {
-                    "uri": result["p"],
-                    "prefix": self._get_prefix(result["p"]),
-                    "label": result.get("pLabel"),
-                    "labelDatatype": result.get("pLabelDatatype"),
-                    "labelDatatypePrefix": self._get_prefix(result.get("pLabelDatatype")),
-                    "labelLang": result.get("pLabelLang"),
-                    "objects": [obj],
-                }
-        return props_dict
-
+    # currently not being used
     def _sort_within_list(self, prop: Dict, prop_list: List[str]) -> int:
         """Ensures props are sorted in-order within class-specific property groups"""
         if prop["uri"] in prop_list:
@@ -76,6 +28,7 @@ class PrezModel(object, metaclass=ABCMeta):
         else:
             return len(prop_list)
 
+    # currently not being used
     def _get_prefix(self, var) -> Union[str, None]:
         if isinstance(var, URIRef):
             prefix = var.n3(self.graph.namespace_manager)
@@ -85,3 +38,135 @@ class PrezModel(object, metaclass=ABCMeta):
                 return prefix
         else:
             return None
+
+    def _get_props(self) -> List:
+        """Returns a list of properties as dictionaries for HTML rendering"""
+        table = Table(self.graph, self.uri)
+        return table.to_dict()
+
+
+class PredCell:
+    """Represents a HTML table cell for a predicate"""
+
+    def __init__(
+        self,
+        value: str,
+        qname: str,
+        label: str,
+        # definition: Optional[str] = None,
+        # explanation: Optional[str] = None,
+    ):
+        self.value = value
+        self.qname = qname
+        self.label = label
+        # self.definition = definition
+        # self.explanation = explanation
+        self.objects = []
+
+    def to_dict(self) -> Dict:
+        """Returns the dictionary representation for HTML display"""
+        return {
+            "value": self.value,
+            "qname": self.qname,
+            "label": self.label,
+            # "definition": self.definition,
+            # "explanation": self.explanation,
+            "objects": [obj.to_dict() for obj in self.objects],
+        }
+
+
+class ObjCell:
+    """Represents a HTML table cell for an object"""
+
+    def __init__(
+        self,
+        value: str,
+        qname: str,
+        label: str,
+        # definition: Optional[str] = None,
+        datatype: Optional[str] = None,
+        langtag: Optional[str] = None,
+    ):
+        self.value = value
+        self.qname = qname
+        self.label = label
+        # self.definition = definition
+        self.datatype = datatype
+        self.langtag = langtag
+        self.rows = []
+
+    def to_dict(self) -> Dict:
+        """Returns the dictionary representation for HTML display"""
+        return {
+            "value": self.value,
+            "qname": self.qname,
+            "label": self.label,
+            # "definition": self.definition,
+            "datatype": self.datatype,
+            "langtag": self.langtag,
+            "rows": [row.to_dict() for row in self.rows],
+        }
+
+    def get_pred(self, p: str) -> Union[PredCell, None]:
+        """Returns a PredCell object in the rows list if it exists, else returns None"""
+        for pred in self.rows:
+            if pred.value == p:
+                return pred
+        return None
+
+    def populate(self, graph: Graph, subject: Union[URIRef, BNode]) -> None:
+        """Recursively populates the rows for this object cell"""
+        for p, o in graph.predicate_objects(subject):
+            datatype = None
+            if isinstance(o, Literal) and o.datatype is not None: # attempts to get object qname
+                datatype = {
+                    "value": o.datatype,
+                    "qname": graph.namespace_manager.qname(o.datatype),
+                }
+            
+            qname = None
+            if isinstance(o, URIRef):
+                try:
+                    qname = graph.namespace_manager.qname(o)
+                except ValueError:
+                    pass
+
+            obj = ObjCell(
+                value=o.__str__(),
+                qname=qname,
+                label=graph.value(subject=o, predicate=RDFS.label),
+                # definition=graph.value(subject=o, predicate=SKOS.definition),
+                datatype=datatype,
+                langtag=o.language if isinstance(o, Literal) else None
+            )
+
+            if isinstance(o, BNode): # recursion for nested properties
+                obj.populate(graph, o)
+
+            pred = self.get_pred(p.__str__())
+
+            if pred is None:
+                pred = PredCell(
+                    value=p.__str__(),
+                    qname=graph.namespace_manager.qname(p),
+                    label=graph.value(subject=p, predicate=RDFS.label),
+                    # definition=graph.value(subject=p, predicate=SKOS.definition),
+                    # explanation=graph.value(subject=p, predicate=DCTERMS.provenance),
+                )
+                pred.objects.append(obj)
+                self.rows.append(pred)
+            else:
+                pred.objects.append(obj)
+
+
+class Table(ObjCell):
+    """Represents a HTML table"""
+
+    def __init__(self, graph: Graph, uri: URIRef):
+        super().__init__(value=uri, qname=None, label=None, datatype=None, langtag=None)
+        self.graph = graph
+        self.populate(graph, uri)
+
+    # override
+    def to_dict(self) -> List:
+        return [row.to_dict() for row in self.rows]

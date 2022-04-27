@@ -1,5 +1,5 @@
 {% extends "_page.html" %}
-{% from "_macros.html" import render_predicate, render_predicate_o, render_object, render_concept_list with context %}
+{% from "_macros.html" import render_row, render_concept_list with context %}
 {% set prezs = "ENABLED_PREZS" | get_config %}
 {% set has_alt = true %}
 
@@ -39,13 +39,10 @@
         <table class="props-table">
             <tbody>
                 {% for prop in collection.properties %}
-                    <tr>
-                        <th>{{ render_predicate(prop) }}</th>
-                        <td>{{ render_object(prop) }}</td>
-                    </tr>
+                    {{ render_row(prop) }}
                 {% endfor %}
                 <tr>
-                    <th>Concepts</th>
+                    <th><a href="http://www.w3.org/2004/02/skos/core#member" target="_blank">Concepts</a></th>
                     <td>
                         {% for concept in collection.concepts | sort(attribute = "label") %}
                             {{ render_concept_list(concept) }}
