@@ -54,13 +54,13 @@ class PredCell:
         qname: str,
         label: str,
         description: Optional[str] = None,
-        explanation: Optional[str] = None,
+        # explanation: Optional[str] = None,
     ):
         self.value = value
         self.qname = qname
         self.label = label
         self.description = description
-        self.explanation = explanation
+        # self.explanation = explanation
         self.objects = []
 
     def __repr__(self):
@@ -73,7 +73,7 @@ class PredCell:
             "qname": self.qname,
             "label": self.label,
             "description": self.description,
-            "explanation": self.explanation,
+            # "explanation": self.explanation,
             "objects": [obj.to_dict() for obj in self.objects],
         }
 
@@ -131,7 +131,6 @@ class ObjCell:
                 datatype = {
                     "value": o.datatype,
                     "qname": graph.namespace_manager.qname(o.datatype),
-                    "label": graph.value(subject=o.datatype, predicate=RDFS.label), # might need to add a line to SPARQL query to get label?
                 }
             
             qname = None
@@ -161,7 +160,7 @@ class ObjCell:
                     qname=graph.namespace_manager.qname(p),
                     label=graph.value(subject=p, predicate=RDFS.label),
                     description=graph.value(subject=p, predicate=DCTERMS.description),
-                    explanation=graph.value(subject=p, predicate=DCTERMS.provenance),
+                    # explanation=graph.value(subject=p, predicate=DCTERMS.provenance),
                 )
                 pred.objects.append(obj)
                 self.rows.append(pred)
