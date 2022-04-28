@@ -68,7 +68,6 @@ async def get_dataset_construct(
         PREFIX dcat: <{DCAT}>
         PREFIX dcterms: <{DCTERMS}>
         PREFIX rdfs: <{RDFS}>
-        PREFIX skos: <{SKOS}>
         CONSTRUCT {{
             ?d ?p1 ?o1 .
             {construct_all_prop_obj_info}
@@ -327,10 +326,12 @@ async def get_feature_construct(
     collection_id: Optional[str] = None,
     feature_id: Optional[str] = None,
     feature_uri: Optional[str] = None,
+    profile_filters: Optional[List[str]] = None,
 ):
     if feature_id is None and feature_uri is None:
         raise ValueError("Either an ID or a URI must be provided for a SPARQL query")
 
+    null_sparql = "#"
     # when querying by ID via regular URL path
     query_by_id = f"""
         FILTER (STR(?d_id) = "{dataset_id}")
@@ -377,6 +378,23 @@ async def get_feature_construct(
         }}
         WHERE {{
             {query_by_id if feature_id is not None else query_by_uri}
+            {{?coll rdfs:member ?f .}}
+            {{?f ?p1 ?o1 . }}
+            {profile_filters[0] if profile_filters else null_sparql}
+            OPTIONAL {{
+                ?o1 ?p2 ?o2 .
+                {profile_filters[1] if profile_filters else null_sparql}
+                FILTER(ISBLANK(?o1))
+
+                OPTIONAL {{
+                    ?p2 rdfs:label ?p2Label .
+                    FILTER(lang(?p2Label) = "" || lang(?p2Label) = "en")
+                }}
+                OPTIONAL {{
+                    ?o2 rdfs:label ?o2Label .
+                    FILTER(lang(?o2Label) = "" || lang(?o2Label) = "en")
+                }}
+            }}
             ?coll rdfs:member ?f .
             ?f ?p1 ?o1 .
             

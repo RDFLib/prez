@@ -3,7 +3,7 @@ from typing import Dict, List, Union, Optional
 import re
 
 from rdflib import Graph, URIRef, BNode, Literal
-from rdflib.namespace import RDFS, SKOS, DCTERMS
+from rdflib.namespace import RDFS, DCTERMS
 
 
 class PrezModel(object, metaclass=ABCMeta):
