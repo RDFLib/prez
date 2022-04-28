@@ -2,7 +2,7 @@ import urllib.request
 
 from fastapi import APIRouter, Request, HTTPException
 import asyncio
-from prez.profiles.generate_profiles import get_all_profiles
+
 from renderers.spaceprez import *
 from services.spaceprez_service import *
 from models.spaceprez import *
@@ -213,21 +213,24 @@ async def feature_endpoint(
     feature_id: Optional[str] = None,
     feature_uri: Optional[str] = None,
 ):
-    preferred_classes_and_profiles, profiles = await get_all_profiles()
-    if not feature_uri:
-        feature_uri = await get_feature_uri(feature_id)
-    feature_classes = await get_feature_classes(feature_uri)
-    available_profiles_graph = get_available_profiles()
-
-    """convert profile to list of include / exclude filters OR additional SPARQL queries to run, pass list of predicates
-     to filter on through to 'sparql_result' below"""
+    feature_renderer = SpacePrezFeatureRenderer(
+        request,
+        str(
+            request.url.remove_query_params(
+                keys=[key for key in request.query_params.keys() if key != "uri"]
+            )
+        ),
+    )
     pred1_str, pred2_str = '', ''
-    if True:  # feature_renderer.profile == 'gas':
+    if feature_renderer.profile == 'gas':
         pred1 = urllib.request.urlopen('https://raw.githubusercontent.com/surroundaustralia/ga-spaceprez-profile/main/simple-profiles/gas-pred1.txt')
         pred1_str = "VALUES ?p1 {" + ' '.join([f"<{line.decode()}>" for line in pred1]).replace('\n', '') + "}"
         pred2 = urllib.request.urlopen(
             'https://raw.githubusercontent.com/surroundaustralia/ga-spaceprez-profile/main/simple-profiles/gas-pred2.txt')
         pred2_str = "VALUES ?p2 {" + ' '.join([f"<{line.decode()}>" for line in pred2]).replace('\n', '') + "}"
+
+    """convert profile to list of include / exclude filters OR additional SPARQL queries to run, pass list of predicates
+     to filter on through to 'sparql_result' below"""
 
     sparql_result = await get_feature_construct(
         dataset_id=dataset_id,
@@ -240,18 +243,6 @@ async def feature_endpoint(
     if len(sparql_result) == 0:
         raise HTTPException(status_code=404, detail="Not Found")
     feature = SpacePrezFeature(sparql_result, id=feature_id, uri=feature_uri)
-
-    feature_renderer = SpacePrezFeatureRenderer(
-        request,
-        str(
-            request.url.remove_query_params(
-                keys=[key for key in request.query_params.keys() if key != "uri"]
-            )
-        ),
-        available_profiles=profiles,
-        default_profile=preferred_classes_and_profiles,
-    )
-
     feature_renderer.set_feature(feature)
     return feature_renderer.render()
 
