@@ -366,10 +366,12 @@ async def get_feature_construct(
     collection_id: Optional[str] = None,
     feature_id: Optional[str] = None,
     feature_uri: Optional[str] = None,
+    profile_filters: Optional[List[str]] = None,
 ):
     if feature_id is None and feature_uri is None:
         raise ValueError("Either an ID or a URI must be provided for a SPARQL query")
 
+    null_sparql = "#"
     # when querying by ID via regular URL path
     query_by_id = f"""
         FILTER (STR(?d_id) = "{dataset_id}")
@@ -422,8 +424,10 @@ async def get_feature_construct(
             {query_by_id if feature_id is not None else query_by_uri}
             {{?coll rdfs:member ?f .}}
             {{?f ?p1 ?o1 . }}
+            {profile_filters[0] if profile_filters else null_sparql}
             OPTIONAL {{
                 ?o1 ?p2 ?o2 .
+                {profile_filters[1] if profile_filters else null_sparql}
                 FILTER(ISBLANK(?o1))
 
                 OPTIONAL {{

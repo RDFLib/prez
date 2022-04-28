@@ -47,3 +47,14 @@ oai = Profile(
     languages=["en"],
     default_language="en",
 )
+
+gas = Profile(
+    uri="https://w3id.org/profile/ga-spaceprez",
+    id="gas",
+    label="Geoscience Australia Samples profile",
+    comment="A profile to implement Geoscience Australia specific views of objects",
+    mediatypes=["text/html", "application/json", "application/geo+json"],
+    default_mediatype="text/html",
+    languages=["en"],
+    default_language="en",
+)
