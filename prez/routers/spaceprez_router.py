@@ -1,3 +1,5 @@
+import urllib.request
+
 from fastapi import APIRouter, Request, HTTPException
 import asyncio
 
@@ -219,12 +221,23 @@ async def feature_endpoint(
             )
         ),
     )
+    pred1_str, pred2_str = '', ''
+    if feature_renderer.profile == 'gas':
+        pred1 = urllib.request.urlopen('https://raw.githubusercontent.com/surroundaustralia/ga-spaceprez-profile/main/simple-profiles/gas-pred1.txt')
+        pred1_str = "VALUES ?p1 {" + ' '.join([f"<{line.decode()}>" for line in pred1]).replace('\n', '') + "}"
+        pred2 = urllib.request.urlopen(
+            'https://raw.githubusercontent.com/surroundaustralia/ga-spaceprez-profile/main/simple-profiles/gas-pred2.txt')
+        pred2_str = "VALUES ?p2 {" + ' '.join([f"<{line.decode()}>" for line in pred2]).replace('\n', '') + "}"
+
+    """convert profile to list of include / exclude filters OR additional SPARQL queries to run, pass list of predicates
+     to filter on through to 'sparql_result' below"""
 
     sparql_result = await get_feature_construct(
         dataset_id=dataset_id,
         collection_id=collection_id,
         feature_id=feature_id,
         feature_uri=feature_uri,
+        profile_filters=[pred1_str, pred2_str],
     )
 
     if len(sparql_result) == 0:

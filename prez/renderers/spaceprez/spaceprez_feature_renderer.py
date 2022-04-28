@@ -7,14 +7,14 @@ from connegp import MEDIATYPE_NAMES
 
 from config import *
 from renderers import Renderer
-from profiles.spaceprez_profiles import oai, geo
+from profiles.spaceprez_profiles import oai, geo, gas
 from models.spaceprez import SpacePrezFeature
 from utils import templates
 
 
 class SpacePrezFeatureRenderer(Renderer):
-    profiles = {"oai": oai, "geo": geo}
-    default_profile_token = "oai"
+    profiles = {"oai": oai, "geo": geo, "gas": gas}
+    default_profile_token = "gas"
 
     def __init__(self, request: object, instance_uri: str) -> None:
         super().__init__(
@@ -160,6 +160,8 @@ class SpacePrezFeatureRenderer(Renderer):
         elif self.profile == "alt":
             return self._render_alt(template_context)
         elif self.profile == "oai":
+            return self._render_oai(template_context)
+        elif self.profile == "gas":
             return self._render_oai(template_context)
         elif self.profile == "geo":
             return self._render_geo()
