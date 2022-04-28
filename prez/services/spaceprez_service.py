@@ -391,14 +391,11 @@ async def get_feature_construct(
         }}
         WHERE {{
             {query_by_id if feature_id is not None else query_by_uri}
-            {profile_filters[0] if profile_filters else null_sparql}
-            ?coll rdfs:member ?f .
-            ?f ?p1 ?o1 .
-            
+            {{?coll rdfs:member ?f .}}
+            {{?f ?p1 ?o1 . }}
             OPTIONAL {{
                 ?o1 ?p2 ?o2 .
                 FILTER(ISBLANK(?o1))
-                {profile_filters[1] if profile_filters else null_sparql}
             
                 OPTIONAL {{
                     ?p2 rdfs:label ?p2Label .
