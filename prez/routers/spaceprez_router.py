@@ -1,18 +1,8 @@
 import urllib.request
 
-from aiocache import Cache, cached
-from aiocache.serializers import PickleSerializer
 from fastapi import APIRouter, Request, HTTPException
 import asyncio
 
-from rdflib import URIRef
-
-from prez.profiles.generate_profiles import (
-    get_all_profiles,
-    get_available_profiles,
-    filter_results_using_profile,
-    build_alt_graph,
-)
 from renderers.spaceprez import *
 from services.spaceprez_service import *
 from models.spaceprez import *
@@ -55,8 +45,9 @@ async def datasets(
     per_page: int = 20,
 ):
     """Returns a list of SpacePrez dcat:Datasets in the necessary profile & mediatype"""
-    dataset_count, sparql_result, profiles = await asyncio.gather(
-        count_datasets(), list_datasets(page, per_page), get_all_profiles()
+    dataset_count, sparql_result = await asyncio.gather(
+        count_datasets(),
+        list_datasets(page, per_page)
     )
     dataset_list = SpacePrezDatasetList(sparql_result)
     dataset_list_renderer = SpacePrezDatasetListRenderer(
@@ -67,9 +58,9 @@ async def datasets(
         dataset_list,
         page,
         per_page,
-        int(dataset_count[0]["count"]["value"]),
+        int(dataset_count[0]["count"]["value"])
     )
-    return dataset_list_renderer.render(alt_profiles_graph=profiles[0])
+    return dataset_list_renderer.render()
 
 
 @router.get("/dataset/{dataset_id}", summary="Get Dataset")
@@ -113,10 +104,9 @@ async def feature_collections(
     per_page: int = 20,
 ):
     """Returns a list of SpacePrez geo:FeatureCollections in the necessary profile & mediatype"""
-    collection_count, sparql_result, profiles = await asyncio.gather(
+    collection_count, sparql_result = await asyncio.gather(
         count_collections(dataset_id),
-        list_collections(dataset_id, page, per_page),
-        get_all_profiles(),
+        list_collections(dataset_id, page, per_page)
     )
     feature_collection_list = SpacePrezFeatureCollectionList(sparql_result)
     feature_collection_list_renderer = SpacePrezFeatureCollectionListRenderer(
@@ -127,9 +117,9 @@ async def feature_collections(
         feature_collection_list,
         page,
         per_page,
-        int(collection_count[0]["count"]["value"]),
+        int(collection_count[0]["count"]["value"])
     )
-    return feature_collection_list_renderer.render(alt_profiles_graph=profiles[0])
+    return feature_collection_list_renderer.render()
 
 
 # feature collection
@@ -200,23 +190,22 @@ async def features(
     """Returns a list of SpacePrez geo:Features in the necessary profile & mediatype"""
     feature_count, sparql_result = await asyncio.gather(
         count_features(dataset_id, collection_id),
-        list_features(dataset_id, collection_id, page, per_page),
+        list_features(dataset_id, collection_id, page, per_page)
     )
     feature_list = SpacePrezFeatureList(sparql_result)
     feature_list_renderer = SpacePrezFeatureListRenderer(
         request,
         str(request.url.remove_query_params(keys=request.query_params.keys())),
         "Feature list",
-        f"A list of {feature_list.collection['title']}",
+        "A list of geo:Features",
         feature_list,
         page,
         per_page,
-        int(feature_count[0]["count"]["value"]),
+        int(feature_count[0]["count"]["value"])
     )
     return feature_list_renderer.render()
 
 
-@cached(cache=Cache.MEMORY, ttl=3600)
 async def feature_endpoint(
     request: Request,
     dataset_id: Optional[str] = None,
@@ -224,35 +213,6 @@ async def feature_endpoint(
     feature_id: Optional[str] = None,
     feature_uri: Optional[str] = None,
 ):
-    (
-        profiles_g,
-        preferred_classes_and_profiles,
-        profiles,
-        profiles_formats,
-    ) = await get_all_profiles()
-    if not feature_uri:
-        feature_uri, feature_classes = await get_feature_uri_and_classes(
-            feature_id=feature_id
-        )
-    elif not feature_id:
-        _, feature_classes = get_feature_uri_and_classes(feature_uri=feature_uri)
-
-    # find the available profiles
-    available_profiles = await get_available_profiles(
-        feature_uri,
-        preferred_classes_and_profiles,
-    )
-
-    # find the most specific class for the feature
-    for klass, _ in reversed(preferred_classes_and_profiles):
-        if klass in feature_classes:
-            most_specific_class = klass
-            break
-
-    # set the default profile
-    default_profile = available_profiles[-1]
-
-    # determine which profile to use
     feature_renderer = SpacePrezFeatureRenderer(
         request,
         str(
@@ -260,42 +220,31 @@ async def feature_endpoint(
                 keys=[key for key in request.query_params.keys() if key != "uri"]
             )
         ),
-        available_profiles=profiles,
-        default_profile=default_profile,
     )
-    profile = feature_renderer.profile
-    alt_profiles_graph = None
-    if profile == "alt":
-        alt_profiles_graph = await build_alt_graph(
-            URIRef(feature_uri), profiles_formats, available_profiles
-        )
-        return feature_renderer.render(alt_profiles_graph=alt_profiles_graph)
-    else:
-        complete_feature_g = await get_feature_construct(
-            dataset_id=dataset_id,
-            collection_id=collection_id,
-            feature_id=feature_id,
-            feature_uri=feature_uri,
-        )
+    pred1_str, pred2_str = '', ''
+    if feature_renderer.profile == 'gas':
+        pred1 = urllib.request.urlopen('https://raw.githubusercontent.com/surroundaustralia/ga-spaceprez-profile/main/simple-profiles/gas-pred1.txt')
+        pred1_str = "VALUES ?p1 {" + ' '.join([f"<{line.decode()}>" for line in pred1]).replace('\n', '') + "}"
+        pred2 = urllib.request.urlopen(
+            'https://raw.githubusercontent.com/surroundaustralia/ga-spaceprez-profile/main/simple-profiles/gas-pred2.txt')
+        pred2_str = "VALUES ?p2 {" + ' '.join([f"<{line.decode()}>" for line in pred2]).replace('\n', '') + "}"
 
-        # filter results based on the profile
-        feature_shapes_g = await filter_results_using_profile(
-            profiles_g, profile, most_specific_class
-        )
+    """convert profile to list of include / exclude filters OR additional SPARQL queries to run, pass list of predicates
+     to filter on through to 'sparql_result' below"""
 
-        if len(complete_feature_g) == 0:
-            raise HTTPException(status_code=404, detail="Not Found")
+    sparql_result = await get_feature_construct(
+        dataset_id=dataset_id,
+        collection_id=collection_id,
+        feature_id=feature_id,
+        feature_uri=feature_uri,
+        profile_filters=[pred1_str, pred2_str],
+    )
 
-        feature = SpacePrezFeature(
-            complete_feature_g + feature_shapes_g,
-            id=feature_id,
-            uri=feature_uri,
-            most_specific_class=most_specific_class,
-        )
-
-        feature_renderer.set_feature(feature)
-
-        return feature_renderer.render()
+    if len(sparql_result) == 0:
+        raise HTTPException(status_code=404, detail="Not Found")
+    feature = SpacePrezFeature(sparql_result, id=feature_id, uri=feature_uri)
+    feature_renderer.set_feature(feature)
+    return feature_renderer.render()
 
 
 # feature
