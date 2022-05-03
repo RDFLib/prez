@@ -399,9 +399,12 @@ async def get_feature_construct(
             ?f ?p1 ?o1 .
             
             OPTIONAL {{
-                ?f dcterms:title ?label .
+                ?f dcterms:title ?given_title .
             }}
-            BIND(COALESCE(?label, CONCAT("Feature ", ?id)) AS ?title)
+            OPTIONAL {{
+                ?f rdfs:label ?given_label .
+            }}
+            BIND(COALESCE(COALESCE(?given_label, ?given_title), CONCAT("Feature ", ?id)) AS ?title)
             ?coll a geo:FeatureCollection ;
                 dcterms:identifier ?coll_id ;
                 dcterms:title ?coll_label .
