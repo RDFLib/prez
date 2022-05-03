@@ -16,7 +16,6 @@ class SpacePrezFeature(PrezModel):
     ]
     geom_props = [str(GEO.hasGeometry)]
     hidden_props = [
-        str(DCTERMS.identifier),
         str(DCTERMS.description),
     ]
 
