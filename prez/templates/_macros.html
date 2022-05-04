@@ -1,61 +1,122 @@
 {% macro render_predicate(prop) %}
-    {% if prop.label is not none %}
-        <a href="{{ prop.value }}" target="_blank">{{ prop.label | title }}</a>
-    {% else %}
-        {% if prop.qname is not none %}
-            <a href="{{ prop.value }}" target="_blank">{{ prop.qname }}</a>
+    <a href="{{ prop.value }}" target="_blank" {% if prop.definition is not none %}class="tooltip"{% endif %}>
+        {% if prop.label is not none %}
+            {{ prop.label | title }}
         {% else %}
-            <a href="{{ prop.value }}" target="_blank">{{ prop.value }}</a>
+            {% if prop.qname is not none %}
+                {{ prop.qname }}
+            {% else %}
+                {{ prop.value }}
+            {% endif %}
         {% endif %}
+        {% if prop.definition is not none %}
+            <span class="tooltip-text">{{ prop.definition }}</span>
+        {% endif %}
+    </a>
+    {% if prop.explanation is not none %}
+        {{ render_explanation(prop.explanation) }}
     {% endif %}
+{% endmacro %}
+
+{% macro render_explanation(expl) %}
+    <span class="pred-expl tooltip">
+        <i class="far fa-info-circle"></i>
+        <span class="tooltip-text">{{ expl }}</span>
+    </span>
 {% endmacro %}
 
 {% macro render_datatype(datatype) %}
-    {% if datatype.qname is not none %}
-        ^^<a href="{{ datatype.value }}" target="_blank">{{ datatype.qname }}</a>
+    <a class="bubble outline-bubble datatype" href="{{ datatype.value }}" target="_blank">
+        <i class="far fa-angle-up"></i>
+        <i class="far fa-angle-up"></i>
+    {% if datatype.label is not none %}
+        {{ datatype.label | title }}
     {% else %}
-        ^^<a href="{{ datatype.value }}" target="_blank">{{ datatype.value }}</a>
+        {% if datatype.qname is not none %}
+            {{ datatype.qname }}
+        {% else %}
+            {{ datatype.value }}
+        {% endif %}
     {% endif %}
+    </a>
 {% endmacro %}
 
 {% macro render_langtag(langtag) %}
-    @{{ langtag }}
+    <span class="bubble outline-bubble langtag">
+        <i class="far fa-at"></i>
+        {{ langtag }}
+    </span>
 {% endmacro %}
 
 {% macro render_object_value(object) %}
     {% if object.value | match("^[A-Z]+ \(.*\)$") or object.value | match("^\{.+\}$") %}
-        <code class="geom-string{% if object.value | length > 40 %} collapse{% endif %}">{{ object.value }}</code>
-        <button class="btn outline geom-copy-btn"><i class="far fa-copy"></i></button>
-        {% if object.value | length > 40 %}
-            <br/>
-            <button class="btn outline geom-collapse-btn"><i class="far fa-plus"></i> Expand</button>
-        {% endif %}
+        <div class="geom-string-container">
+            <div class="geom-string-data">
+                <code class="geom-string{% if object.value | length > 40 %} collapse{% endif %}{% if object.definition is not none %} tooltip{% endif %}">
+                    {{ object.value }}
+                    {% if object.definition is not none %}
+                        <span class="tooltip-text">{{ object.definition }}</span>
+                    {% endif %}
+                </code>
+                {% if object.langtag is not none %}
+                    {{ render_langtag(object.langtag) }}
+                {% else %}
+                    {% if object.datatype is not none %}
+                        {{ render_datatype(object.datatype) }}
+                    {% endif %}
+                {% endif %}
+            </div>
+            <div class="geom-string-btns">
+                {% if object.value | length > 40 %}
+                    <button class="btn outline geom-collapse-btn"><i class="far fa-plus"></i> Expand</button>
+                {% endif %}
+                <button class="btn outline geom-copy-btn"><i class="far fa-copy"></i></button>
+            </div>
+        </div>
     {% elif object.value | match("^http(s*):\/\/.+") %}
-        {% if object.label is not none %}
-            <a href="{{ object.value }}" target="_blank">{{ object.label }}</a>
-        {% else %}
-            {% if object.qname is not none %}
-                <a href="{{ object.value }}" target="_blank">{{ object.qname }}</a>
+        <a href="{{ object.value }}" target="_blank" {% if object.definition is not none %}class="tooltip"{% endif %}>
+            {% if object.label is not none %}
+                {{ object.label }}
             {% else %}
-                <a href="{{ object.value }}" target="_blank">{{ object.value }}</a>
+                {% if object.qname is not none %}
+                    {{ object.qname }}
+                {% else %}
+                    {{ object.value }}
+                {% endif %}
+            {% endif %}
+            {% if object.definition is not none %}
+                <span class="tooltip-text">{{ object.definition }}</span>
+            {% endif %}
+        </a>
+        {% if object.langtag is not none %}
+            {{ render_langtag(object.langtag) }}
+        {% else %}
+            {% if object.datatype is not none %}
+                {{ render_datatype(object.datatype) }}
             {% endif %}
         {% endif %}
     {% else %}
-        {% if object.label is not none %}
-            {{ object.label }}
-        {% else %}
-            {% if object.qname is not none %}
-                {{ object.qname }}
+        <span {% if object.definition is not none %}class="tooltip"{% endif %}>
+            {% if object.label is not none %}
+                {{ object.label }}
             {% else %}
-                {{ object.value }}
+                {% if object.qname is not none %}
+                    {{ object.qname }}
+                {% else %}
+                    {{ object.value }}
+                {% endif %}
+            {% endif %}
+            {% if object.definition is not none %}
+                <span class="tooltip-text">{{ object.definition }}</span>
+            {% endif %}
+        </span>
+        {% if object.langtag is not none %}
+            {{ render_langtag(object.langtag) }}
+        {% else %}
+            {% if object.datatype is not none %}
+                {{ render_datatype(object.datatype) }}
             {% endif %}
         {% endif %}
-    {% endif %}
-    {% if object.datatype is not none %}
-        {{ render_datatype(object.datatype) }}
-    {% endif %}
-    {% if object.langtag is not none %}
-        {{ render_langtag(object.langtag) }}
     {% endif %}
 {% endmacro %}
 
@@ -87,6 +148,33 @@
             {% endfor %}
         </tbody>
     </table>
+{% endmacro %}
+
+{% macro render_member_list(members, member_name) %}
+    <div class="member-list">
+        {% for member in members %}
+            <div class="member">
+                <div class="member-title">
+                    <a href="{{ member.link }}">{{ member.title }}</a>
+                    {% if member_name is not none and member.members is not none %}
+                        <a class="btn btn-sm" href="{{ member.members }}">
+                            <i class="far fa-list"></i>
+                            {{ member_name }}
+                        </a>
+                    {% endif %}
+                </div>
+                {% if member.desc is not none %}
+                    <div class="member-desc">
+                        {% if member.desc | length > 100 %}
+                            {{ member.desc[:100] }}...
+                        {% else %}
+                            {{ member.desc }}
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
 {% endmacro %}
 
 {% macro render_concept_hierarchy(scheme_id, concept_uri, concept_props) %}

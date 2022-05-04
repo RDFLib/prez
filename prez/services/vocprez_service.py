@@ -29,6 +29,9 @@ async def list_schemes(page: int, per_page: int):
             ?cs a skos:ConceptScheme ;
                 dcterms:identifier ?id ;
                 skos:prefLabel ?label .
+            OPTIONAL {{
+                ?cs dcterms:description ?desc .
+            }}
         }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
     """
     r = await sparql_query(q, "VocPrez")
@@ -40,9 +43,9 @@ async def list_schemes(page: int, per_page: int):
 async def count_collections():
     q = f"""
         PREFIX skos: <{SKOS}>
-        SELECT (COUNT(?cs) as ?count) 
+        SELECT (COUNT(?coll) as ?count) 
         WHERE {{
-            ?cs a skos:Collection .
+            ?coll a skos:Collection .
         }}
     """
     r = await sparql_query(q, "VocPrez")
@@ -55,11 +58,14 @@ async def list_collections(page: int, per_page: int):
     q = f"""
         PREFIX dcterms: <{DCTERMS}>
         PREFIX skos: <{SKOS}>
-        SELECT ?cs ?id ?label
+        SELECT ?coll ?id ?label
         WHERE {{
-            ?cs a skos:Collection ;
+            ?coll a skos:Collection ;
                 dcterms:identifier ?id ;
                 skos:prefLabel ?label .
+            OPTIONAL {{
+                ?coll dcterms:description ?desc .
+            }}
             FILTER(lang(?label) = "" || lang(?label) = "en")
         }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
     """
@@ -112,20 +118,12 @@ async def get_scheme_construct1(
         PREFIX skos: <{SKOS}>
         CONSTRUCT {{
             ?cs ?p1 ?o1 .
-            ?p1 rdfs:label ?p1Label .
-            ?o1 rdfs:label ?o1Label .
+            {construct_all_prop_obj_info}
         }}
         WHERE {{
             {query_by_id if scheme_id is not None else query_by_uri}
             {query_by_graph(query_in_graph, "?cs", include_inferencing)}
-            OPTIONAL {{
-                ?p1 rdfs:label ?p1Label .
-                FILTER(lang(?p1Label) = "" || lang(?p1Label) = "en")
-            }}
-            OPTIONAL {{
-                ?o1 rdfs:label ?o1Label .
-                FILTER(lang(?o1Label) = "" || lang(?o1Label) = "en")
-            }}
+            {get_all_prop_obj_info}
         }}
     """
     r = await sparql_construct(q, "VocPrez")
@@ -265,8 +263,7 @@ async def get_concept_construct(
                 skos:inScheme ?narrower_cs .
             ?narrower_cs a skos:ConceptScheme ;
                 dcterms:identifier ?cs_narrower_id .
-            ?p1 rdfs:label ?p1Label .
-            ?o1 rdfs:label ?o1Label .
+            {construct_all_prop_obj_info}
 
             ?cs a skos:ConceptScheme ;
                 dcterms:identifier ?cs_id ;
@@ -275,14 +272,7 @@ async def get_concept_construct(
         WHERE {{
             {query_by_id if concept_id is not None and scheme_id is not None else query_by_uri}
             {query_by_graph(query_in_graph, "?cs", include_inferencing)}
-            OPTIONAL {{
-                ?p1 rdfs:label ?p1Label .
-                FILTER(lang(?p1Label) = "" || lang(?p1Label) = "en")
-            }}
-            OPTIONAL {{
-                ?o1 rdfs:label ?o1Label .
-                FILTER(lang(?o1Label) = "" || lang(?o1Label) = "en")
-            }}
+            {get_all_prop_obj_info}
         }}
     """
     r = await sparql_construct(q, "VocPrez")
@@ -351,20 +341,12 @@ async def get_collection_construct1(
         PREFIX skos: <{SKOS}>
         CONSTRUCT {{
             ?coll ?p1 ?o1 .
-            ?p1 rdfs:label ?p1Label .
-            ?o1 rdfs:label ?o1Label .
+            {construct_all_prop_obj_info}
         }}
         WHERE {{
             {query_by_id if collection_id is not None else query_by_uri}
             {query_in_graph}
-            OPTIONAL {{
-                ?p1 rdfs:label ?p1Label .
-                FILTER(lang(?p1Label) = "" || lang(?p1Label) = "en")
-            }}
-            OPTIONAL {{
-                ?o1 rdfs:label ?o1Label .
-                FILTER(lang(?o1Label) = "" || lang(?o1Label) = "en")
-            }}
+            {get_all_prop_obj_info}
         }}
     """
     r = await sparql_construct(q, "VocPrez")

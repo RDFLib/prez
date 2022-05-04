@@ -8,6 +8,74 @@ from connegp import RDF_MEDIATYPES
 
 from config import *
 
+get_all_prop_obj_info = """
+OPTIONAL {
+    ?p1 rdfs:label ?p1Label .
+    FILTER(lang(?p1Label) = "" || lang(?p1Label) = "en")
+}
+OPTIONAL {
+    ?p1 skos:definition ?p1def .
+    FILTER(lang(?p1def) = "" || lang(?p1def) = "en")
+}
+OPTIONAL {
+    ?p1 dcterms:provenance ?p1expl .
+    FILTER(lang(?p1expl) = "" || lang(?p1expl) = "en")
+}
+OPTIONAL {
+    ?o1 rdfs:label ?o1Label .
+    FILTER(lang(?o1Label) = "" || lang(?o1Label) = "en")
+}
+OPTIONAL {
+    ?o1 skos:definition ?o1def .
+    FILTER(lang(?o1def) = "" || lang(?o1def) = "en")
+}
+"""
+
+get_all_bnode_prop_obj_info = """
+OPTIONAL {
+    ?o1 ?p2 ?o2 .
+    FILTER(ISBLANK(?o1))
+
+    OPTIONAL {
+        ?p2 rdfs:label ?p2Label .
+        FILTER(lang(?p2Label) = "" || lang(?p2Label) = "en")
+    }
+    OPTIONAL {
+        ?p2 skos:definition ?p2def .
+        FILTER(lang(?p2def) = "" || lang(?p2def) = "en")
+    }
+    OPTIONAL {
+        ?p2 dcterms:provenance ?p2expl .
+        FILTER(lang(?p2expl) = "" || lang(?p2expl) = "en")
+    }
+    OPTIONAL {
+        ?o2 rdfs:label ?o2Label .
+        FILTER(lang(?o2Label) = "" || lang(?o2Label) = "en")
+    }
+    OPTIONAL {
+        ?o2 skos:definition ?o2def .
+        FILTER(lang(?o2def) = "" || lang(?o2def) = "en")
+    }
+}
+"""
+
+construct_all_prop_obj_info = """
+?p1 rdfs:label ?p1Label ;
+    skos:definition ?p1def ;
+    dcterms:provenance ?p1expl .
+?o1 rdfs:label ?o1Label ;
+    skos:definition ?o1def .
+"""
+
+construct_all_bnode_prop_obj_info = """
+?o1 ?p2 ?o2 .
+?p2 rdfs:label ?p2Label ;
+    skos:definition ?p2def ;
+    dcterms:provenance ?p2expl .
+?o2 rdfs:label ?o2Label ;
+    skos:definition ?o2def .
+"""
+
 
 async def sparql_query(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
     """Executes a SPARQL SELECT query for a single SPARQL endpoint"""

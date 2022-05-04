@@ -106,7 +106,7 @@ altToggle.forEach(btn => {
 const geomCollapseBtn = document.querySelectorAll(".geom-collapse-btn");
 geomCollapseBtn.forEach(btn => {
     btn.onclick = () => {
-        const geomString = btn.parentNode.querySelector(".geom-string");
+        const geomString = btn.parentNode.parentNode.querySelector(".geom-string");
         if (geomString.classList.contains("collapse")) {
             geomString.classList.remove("collapse");
             btn.innerHTML = '<i class="far fa-minus"></i> Collapse';
@@ -121,8 +121,8 @@ geomCollapseBtn.forEach(btn => {
 const geomCopyBtn = document.querySelectorAll(".geom-copy-btn");
 geomCopyBtn.forEach(btn => {
     btn.onclick = () => {
-        const geomString = btn.parentNode.querySelector(".geom-string");
-        navigator.clipboard.writeText(geomString.textContent);
+        const geomString = btn.parentNode.parentNode.querySelector(".geom-string");
+        navigator.clipboard.writeText(geomString.textContent.trim());
     }
 });
 

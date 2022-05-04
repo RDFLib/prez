@@ -1,5 +1,5 @@
 {% extends "_page.html" %}
-{% from "_macros.html" import render_pagination with context %}
+{% from "_macros.html" import render_pagination, render_member_list with context %}
 
 {% set prezs = "ENABLED_PREZS" | get_config %}
 {% set has_alt = true %}
@@ -23,13 +23,7 @@
 <div id="content-col-main">
     <h1>{{ label }}</h1>
     <p>{{ comment }}</p>
-    <div>
-        <ul>
-            {% for member in members %}
-                <li><a href="{{ url_for('collection', collection_id=member.id) }}">{{ member.title }}</a></li>
-            {% endfor %}
-        </ul>
-    </div>
+    {{ render_member_list(members, none) }}
     {{ render_pagination(pages) }}
 </div>
 <div id="content-col-sidebar">
