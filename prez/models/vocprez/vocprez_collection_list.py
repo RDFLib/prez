@@ -5,9 +5,12 @@ class VocPrezCollectionList(object):
         self.members = []
         for result in sparql_response:
             self.members.append({
-                "uri": result["cs"]["value"],
+                "uri": result["coll"]["value"],
                 "title": result["label"]["value"],
-                "id": result["id"]["value"]
+                "id": result["id"]["value"],
+                "desc": result["desc"].get("value") if result.get("desc") else None,
+                "link": f"/collection/{result['id']['value']}",
+                "members": None,
             })
         self.members.sort(key=lambda m: m["title"])
     

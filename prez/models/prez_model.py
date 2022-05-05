@@ -3,7 +3,7 @@ from typing import Dict, List, Union, Optional
 import re
 
 from rdflib import Graph, URIRef, BNode, Literal
-from rdflib.namespace import RDFS
+from rdflib.namespace import RDFS, SKOS, DCTERMS
 
 
 class PrezModel(object, metaclass=ABCMeta):
@@ -53,14 +53,14 @@ class PredCell:
         value: str,
         qname: str,
         label: str,
-        # definition: Optional[str] = None,
-        # explanation: Optional[str] = None,
+        description: Optional[str] = None,
+        explanation: Optional[str] = None,
     ):
         self.value = value
         self.qname = qname
         self.label = label
-        # self.definition = definition
-        # self.explanation = explanation
+        self.description = description
+        self.explanation = explanation
         self.objects = []
 
     def __repr__(self):
@@ -72,8 +72,8 @@ class PredCell:
             "value": self.value,
             "qname": self.qname,
             "label": self.label,
-            # "definition": self.definition,
-            # "explanation": self.explanation,
+            "description": self.description,
+            "explanation": self.explanation,
             "objects": [obj.to_dict() for obj in self.objects],
         }
 
@@ -86,14 +86,14 @@ class ObjCell:
         value: str,
         qname: str,
         label: str,
-        # definition: Optional[str] = None,
+        description: Optional[str] = None,
         datatype: Optional[str] = None,
         langtag: Optional[str] = None,
     ):
         self.value = value
         self.qname = qname
         self.label = label
-        # self.definition = definition
+        self.description = description
         self.datatype = datatype
         self.langtag = langtag
         self.rows = []
@@ -110,7 +110,7 @@ class ObjCell:
             "value": self.value,
             "qname": self.qname,
             "label": self.label,
-            # "definition": self.definition,
+            "description": self.description,
             "datatype": self.datatype,
             "langtag": self.langtag,
             "rows": [row.to_dict() for row in self.rows],
@@ -131,6 +131,7 @@ class ObjCell:
                 datatype = {
                     "value": o.datatype,
                     "qname": graph.namespace_manager.qname(o.datatype),
+                    "label": graph.value(subject=o.datatype, predicate=RDFS.label), # might need to add a line to SPARQL query to get label?
                 }
             
             qname = None
@@ -144,7 +145,7 @@ class ObjCell:
                 value=o.__str__(),
                 qname=qname,
                 label=graph.value(subject=o, predicate=RDFS.label),
-                # definition=graph.value(subject=o, predicate=SKOS.definition),
+                description=graph.value(subject=o, predicate=DCTERMS.description),
                 datatype=datatype,
                 langtag=o.language if isinstance(o, Literal) else None
             )
@@ -159,8 +160,8 @@ class ObjCell:
                     value=p.__str__(),
                     qname=graph.namespace_manager.qname(p),
                     label=graph.value(subject=p, predicate=RDFS.label),
-                    # definition=graph.value(subject=p, predicate=SKOS.definition),
-                    # explanation=graph.value(subject=p, predicate=DCTERMS.provenance),
+                    description=graph.value(subject=p, predicate=DCTERMS.description),
+                    explanation=graph.value(subject=p, predicate=DCTERMS.provenance),
                 )
                 pred.objects.append(obj)
                 self.rows.append(pred)

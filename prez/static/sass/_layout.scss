@@ -165,23 +165,11 @@ footer {
     margin-bottom: 8px;
 }
 
-.alt-quick-link {
+.alt-quick-links {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
     gap: 6px;
-
-    & > a {
-        font-size: 12px;
-        padding: 5px 7px;
-        border-radius: 0.25rem;
-        color: white;
-        background-color: var(--primary);
-
-        &:hover {
-            color: white;
-        }
-    }
 }
 
 pre {
@@ -245,6 +233,115 @@ ol#concept-hierarchy {
     }
 }
 
+.bubble {
+    font-size: 12px;
+    padding: 5px 7px;
+    border-radius: 0.25rem;
+    color: white;
+    background-color: var(--primary);
+
+    &.outline-bubble {
+        color: var(--primary);
+        background-color: unset;
+        border: 1px solid var(--primary);
+
+        &:hover {
+            color: var(--primary);
+        }
+    }
+
+    &:hover {
+        color: white;
+    }
+
+    &.datatype > i {
+        vertical-align: text-top;
+    }
+
+    & > i {
+        font-size: 10px;
+    }
+
+    &.langtag {
+        cursor: default;
+    }
+}
+
+.member-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 20px 0px;
+
+    .member {
+        display: flex;
+        flex-direction: column;
+        // width: 80%;
+        background-color: #ececec;
+        padding: 8px;
+
+        .member-title {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+        }
+
+        .member-desc {
+            font-size: 14px;
+            color: grey;
+            font-style: italic;
+        }
+    }
+}
+
+.tooltip {
+    position: relative;
+    display: inline-block;
+    border-bottom: 1px dotted black;
+
+    .tooltip-text {
+        $arrow-size: 6px;
+        
+        position: absolute;
+        width: 250px;
+        background-color: black;
+        color: white;
+        text-align: center;
+        font-weight: normal;
+        font-size: 14px;
+        padding: 6px;
+        border-radius: 6px;
+        z-index: 999;
+        visibility: hidden;
+        bottom: calc(100% + #{$arrow-size});
+        left: 50%;
+        transform: translateX(-50%);
+        opacity: 0;
+        transition: opacity 0.2s ease-in-out;
+
+        &::after {
+            content: " ";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -$arrow-size;
+            border-width: $arrow-size;
+            border-style: solid;
+            border-color: black transparent transparent transparent;
+        }
+    }
+
+    &:hover .tooltip-text {
+        visibility: visible;
+        opacity: 0.9;
+    }
+}
+
+.pred-expl {
+    font-size: 14px;
+    color: var(--link);
+}
+
 @media screen and (max-width: $sm-breakpoint) {
     #content-col-sidebar {
         z-index: 95;
@@ -258,7 +355,7 @@ ol#concept-hierarchy {
         max-width: unset;
     }
 
-    .alt-quick-link {
+    .alt-quick-links {
         flex-direction: column;
 
         & > a {
@@ -273,5 +370,9 @@ ol#concept-hierarchy {
     .card-container {
         flex-direction: column;
         width: 100%;
+    }
+
+    .tooltip .tooltip-text {
+        max-width: 120px;
     }
 }

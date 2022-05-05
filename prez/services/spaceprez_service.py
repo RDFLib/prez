@@ -33,6 +33,9 @@ async def list_datasets(page: int, per_page: int):
             ?d a dcat:Dataset ;
                 dcterms:identifier ?id ;
                 dcterms:title ?label .
+            OPTIONAL {{
+                ?d dcterms:description ?desc .
+            }}
             FILTER((lang(?label) = "" || lang(?label) = "en") && DATATYPE(?id) = xsd:token)
         }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
     """
@@ -65,41 +68,17 @@ async def get_dataset_construct(
         PREFIX dcat: <{DCAT}>
         PREFIX dcterms: <{DCTERMS}>
         PREFIX rdfs: <{RDFS}>
+        PREFIX skos: <{SKOS}>
         CONSTRUCT {{
             ?d ?p1 ?o1 .
-
-            ?o1 ?p2 ?o2 .
-
-            ?p1 rdfs:label ?p1Label .
-            ?o1 rdfs:label ?o1Label .
-            
-            ?p2 rdfs:label ?p2Label .
-            ?o2 rdfs:label ?o2Label .
+            {construct_all_prop_obj_info}
+            {construct_all_bnode_prop_obj_info}
         }}
         WHERE {{
             {query_by_id if dataset_id is not None else query_by_uri}
             ?d ?p1 ?o1 .
-            OPTIONAL {{
-                ?o1 ?p2 ?o2 .
-                FILTER(ISBLANK(?o1))
-
-                OPTIONAL {{
-                    ?p2 rdfs:label ?p2Label .
-                    FILTER(lang(?p2Label) = "" || lang(?p2Label) = "en")
-                }}
-                OPTIONAL {{
-                    ?o2 rdfs:label ?o2Label .
-                    FILTER(lang(?o2Label) = "" || lang(?o2Label) = "en")
-                }}
-            }}
-            OPTIONAL {{
-                ?p1 rdfs:label ?p1Label .
-                FILTER(lang(?p1Label) = "" || lang(?p1Label) = "en")
-            }}
-            OPTIONAL {{
-                ?o1 rdfs:label ?o1Label .
-                FILTER(lang(?o1Label) = "" || lang(?o1Label) = "en")
-            }}
+            {get_all_bnode_prop_obj_info}
+            {get_all_prop_obj_info}
         }}
     """
     r = await sparql_construct(q, "SpacePrez")
@@ -151,6 +130,9 @@ async def list_collections(dataset_id: str, page: int, per_page: int):
             ?coll a geo:FeatureCollection ;
                 dcterms:identifier ?id ;
                 dcterms:title ?label .
+            OPTIONAL {{
+                ?coll dcterms:description ?desc .
+            }}
             FILTER(lang(?label) = "" || lang(?label) = "en")
             FILTER(DATATYPE(?id) = xsd:token)
         }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
@@ -195,13 +177,9 @@ async def get_collection_construct_1(
         PREFIX xsd: <{XSD}>
         CONSTRUCT {{
             ?coll ?p1 ?o1 .
-            ?o1 ?p2 ?o2 .
-
-            ?p1 rdfs:label ?p1Label .
-            ?o1 rdfs:label ?o1Label .
-
-            ?p2 rdfs:label ?p2Label .
-            ?o2 rdfs:label ?o2Label .
+            
+            {construct_all_prop_obj_info}
+            {construct_all_bnode_prop_obj_info}
 
             ?d a dcat:Dataset ;
                 dcterms:identifier ?d_id ;
@@ -214,32 +192,13 @@ async def get_collection_construct_1(
             
             FILTER(!STRENDS(STR(?p1), "member"))
 
-            OPTIONAL {{
-                ?o1 ?p2 ?o2 .
-                FILTER(ISBLANK(?o1))
-
-                OPTIONAL {{
-                    ?p2 rdfs:label ?p2Label .
-                    FILTER(lang(?p2Label) = "" || lang(?p2Label) = "en")
-                }}
-                OPTIONAL {{
-                    ?o2 rdfs:label ?o2Label .
-                    FILTER(lang(?o2Label) = "" || lang(?o2Label) = "en")
-                }}
-            }}
             ?d a dcat:Dataset ;
                 rdfs:member ?fc ;
                 dcterms:identifier ?d_id ;
                 dcterms:title ?d_label .
             FILTER(DATATYPE(?d_id) = xsd:token)
-            OPTIONAL {{
-                ?p1 rdfs:label ?p1Label .
-                FILTER(lang(?p1Label) = "" || lang(?p1Label) = "en")
-            }}
-            OPTIONAL {{
-                ?o1 rdfs:label ?o1Label .
-                FILTER(lang(?o1Label) = "" || lang(?o1Label) = "en")
-            }}
+            {get_all_bnode_prop_obj_info}
+            {get_all_prop_obj_info}
         }}
     """
     r = await sparql_construct(q, "SpacePrez")
@@ -347,7 +306,9 @@ async def list_features(dataset_id: str, collection_id: str, page: int, per_page
             ?f a geo:Feature ;
                 dcterms:identifier ?id .
             FILTER(DATATYPE(?id) = xsd:token)
-                
+            OPTIONAL {{
+                ?f dcterms:description ?desc .
+            }}
             OPTIONAL {{
                 ?f dcterms:title ?label .
                 FILTER(lang(?label) = "" || lang(?label) = "en")
@@ -399,13 +360,9 @@ async def get_feature_construct(
         CONSTRUCT {{
             ?f ?p1 ?o1 ;
                 dcterms:title ?title .
-            ?o1 ?p2 ?o2 .
             
-            ?p1 rdfs:label ?p1Label .
-            ?o1 rdfs:label ?o1Label .
-
-            ?p2 rdfs:label ?p2Label .
-            ?o2 rdfs:label ?o2Label .
+            {construct_all_prop_obj_info}
+            {construct_all_bnode_prop_obj_info}
 
             dcterms:title rdfs:label "Title" .
 
@@ -420,21 +377,9 @@ async def get_feature_construct(
         }}
         WHERE {{
             {query_by_id if feature_id is not None else query_by_uri}
-            {{?coll rdfs:member ?f .}}
-            {{?f ?p1 ?o1 . }}
-            OPTIONAL {{
-                ?o1 ?p2 ?o2 .
-                FILTER(ISBLANK(?o1))
-
-                OPTIONAL {{
-                    ?p2 rdfs:label ?p2Label .
-                    FILTER(lang(?p2Label) = "" || lang(?p2Label) = "en")
-                }}
-                OPTIONAL {{
-                    ?o2 rdfs:label ?o2Label .
-                    FILTER(lang(?o2Label) = "" || lang(?o2Label) = "en")
-                }}
-            }}
+            ?coll rdfs:member ?f .
+            ?f ?p1 ?o1 .
+            
             OPTIONAL {{
                 ?f dcterms:title ?label .
             }}
@@ -445,14 +390,8 @@ async def get_feature_construct(
             ?d a dcat:Dataset ;
                 dcterms:identifier ?d_id ;
                 dcterms:title ?d_label .
-            OPTIONAL {{
-                ?p1 rdfs:label ?p1Label .
-                FILTER(lang(?p1Label) = "" || lang(?p1Label) = "en")
-            }}
-            OPTIONAL {{
-                ?o1 rdfs:label ?o1Label .
-                FILTER(lang(?o1Label) = "" || lang(?o1Label) = "en")
-            }}
+            {get_all_bnode_prop_obj_info}
+            {get_all_prop_obj_info}
         }}
     """
     r = await sparql_construct(q, "SpacePrez")

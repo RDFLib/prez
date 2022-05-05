@@ -7,7 +7,10 @@ class SpacePrezDatasetList(object):
             self.members.append({
                 "uri": result["d"]["value"],
                 "title": result["label"]["value"],
-                "id": result["id"]["value"]
+                "id": result["id"]["value"],
+                "desc": result["desc"].get("value") if result.get("desc") else None,
+                "link": f"/dataset/{result['id']['value']}",
+                "members": f"/dataset/{result['id']['value']}/collections",
             })
         self.members.sort(key=lambda m: m["title"])
     

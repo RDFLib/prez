@@ -238,21 +238,11 @@ footer {
   margin-bottom: 8px;
 }
 
-.alt-quick-link {
+.alt-quick-links {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   gap: 6px;
-}
-.alt-quick-link > a {
-  font-size: 12px;
-  padding: 5px 7px;
-  border-radius: 0.25rem;
-  color: white;
-  background-color: var(--primary);
-}
-.alt-quick-link > a:hover {
-  color: white;
 }
 
 pre {
@@ -310,6 +300,100 @@ ol#concept-hierarchy li:not(.concept-collapse) {
   font-size: 0.9rem;
 }
 
+.bubble {
+  font-size: 12px;
+  padding: 5px 7px;
+  border-radius: 0.25rem;
+  color: white;
+  background-color: var(--primary);
+}
+.bubble.outline-bubble {
+  color: var(--primary);
+  background-color: unset;
+  border: 1px solid var(--primary);
+}
+.bubble.outline-bubble:hover {
+  color: var(--primary);
+}
+.bubble:hover {
+  color: white;
+}
+.bubble.datatype > i {
+  vertical-align: text-top;
+}
+.bubble > i {
+  font-size: 10px;
+}
+.bubble.langtag {
+  cursor: default;
+}
+
+.member-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 20px 0px;
+}
+.member-list .member {
+  display: flex;
+  flex-direction: column;
+  background-color: #ececec;
+  padding: 8px;
+}
+.member-list .member .member-title {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+.member-list .member .member-desc {
+  font-size: 14px;
+  color: grey;
+  font-style: italic;
+}
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+  border-bottom: 1px dotted black;
+}
+.tooltip .tooltip-text {
+  position: absolute;
+  width: 250px;
+  background-color: black;
+  color: white;
+  text-align: center;
+  font-weight: normal;
+  font-size: 14px;
+  padding: 6px;
+  border-radius: 6px;
+  z-index: 999;
+  visibility: hidden;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+.tooltip .tooltip-text::after {
+  content: " ";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -6px;
+  border-width: 6px;
+  border-style: solid;
+  border-color: black transparent transparent transparent;
+}
+.tooltip:hover .tooltip-text {
+  visibility: visible;
+  opacity: 0.9;
+}
+
+.pred-expl {
+  font-size: 14px;
+  color: var(--link);
+}
+
 @media screen and (max-width: 420px) {
   #content-col-sidebar {
     z-index: 95;
@@ -323,10 +407,10 @@ ol#concept-hierarchy li:not(.concept-collapse) {
     max-width: unset;
   }
 
-  .alt-quick-link {
+  .alt-quick-links {
     flex-direction: column;
   }
-  .alt-quick-link > a {
+  .alt-quick-links > a {
     text-align: center;
   }
 
@@ -337,6 +421,10 @@ ol#concept-hierarchy li:not(.concept-collapse) {
   .card-container {
     flex-direction: column;
     width: 100%;
+  }
+
+  .tooltip .tooltip-text {
+    max-width: 120px;
   }
 }
 #breadcrumbs {
@@ -630,6 +718,11 @@ button.outline:hover, .btn.outline:hover {
   color: white;
 }
 
+.btn-sm {
+  padding: 4px 6px;
+  font-size: 12px;
+}
+
 button.concept-collapse-btn {
   width: 20px;
   height: 20px;
@@ -669,10 +762,6 @@ select#endpoints {
 .form-text {
   color: grey;
   font-size: 12px;
-}
-
-.table-wrapper {
-  overflow-x: auto;
 }
 
 table {
@@ -720,10 +809,25 @@ table.bnode-table td {
 .props-table td > table.bnode-table:nth-child(2n) {
   background-color: var(--subtable-bg);
 }
-table.bnode-table code.geom-string.collapse {
+table.bnode-table .geom-string-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+table.bnode-table .geom-string-container .geom-string-data {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+table.bnode-table .geom-string-container .geom-string-data code.geom-string.collapse {
   display: inline-block;
   width: 360px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+table.bnode-table .geom-string-container .geom-string-btns {
+  flex-shrink: 0;
 }

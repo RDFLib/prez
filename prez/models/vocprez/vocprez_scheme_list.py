@@ -7,7 +7,10 @@ class VocPrezSchemeList(object):
             self.members.append({
                 "uri": result["cs"]["value"],
                 "title": result["label"]["value"],
-                "id": result["id"]["value"]
+                "id": result["id"]["value"],
+                "desc": result["desc"].get("value") if result.get("desc") else None,
+                "link": f"/vocab/{result['id']['value']}",
+                "members": None,
             })
         self.members.sort(key=lambda m: m["title"])
     

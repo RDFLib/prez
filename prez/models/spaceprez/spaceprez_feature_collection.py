@@ -72,7 +72,11 @@ class SpacePrezFeatureCollection(PrezModel):
             "id": result["d_id"],
             "title": result["d_label"],
         }
-        self.geometries = {}
+        self.geometries = {
+            "asDGGS": None,
+            "asGeoJSON": None,
+            "asWKT": None,
+        }
 
     # override
     def to_dict(self) -> Dict:

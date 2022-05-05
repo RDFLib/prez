@@ -59,7 +59,11 @@ class SpacePrezDataset(PrezModel):
         self.id = result["id"]
         self.title = result["title"]
         self.description = result["desc"]
-        self.geometries = {}
+        self.geometries = {
+            "asDGGS": None,
+            "asGeoJSON": None,
+            "asWKT": None,
+        }
 
     # override
     def to_dict(self) -> Dict:

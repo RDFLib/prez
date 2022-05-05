@@ -1,6 +1,6 @@
-.table-wrapper {
-    overflow-x: auto;
-}
+// .table-wrapper {
+//     overflow-x: auto;
+// }
 
 table {
     width: 100%;
@@ -58,14 +58,33 @@ table {
             background-color: var(--subtable-bg);
         }
 
-        code.geom-string {
-            &.collapse {
-                display: inline-block;
-                width: 360px;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
+        .geom-string-container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+
+            .geom-string-data {
+                flex-grow: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+                
+
+                code.geom-string {
+                    &.collapse {
+                        display: inline-block;
+                        width: 360px;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                    }
+                }
             }
-        }
+
+            .geom-string-btns {
+                flex-shrink: 0;
+            }
+        } 
     }
 }
