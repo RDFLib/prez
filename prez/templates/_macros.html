@@ -1,5 +1,5 @@
 {% macro render_predicate(prop) %}
-    <a href="{{ prop.value }}" target="_blank" {% if prop.definition is not none %}class="tooltip"{% endif %}>
+    <a href="{{ prop.value }}" target="_blank" {% if prop.description is not none %}class="tooltip"{% endif %}>
         {% if prop.label is not none %}
             {{ prop.label | title }}
         {% else %}
@@ -9,8 +9,8 @@
                 {{ prop.value }}
             {% endif %}
         {% endif %}
-        {% if prop.definition is not none %}
-            <span class="tooltip-text">{{ prop.definition }}</span>
+        {% if prop.description is not none %}
+            <span class="tooltip-text">{{ prop.description }}</span>
         {% endif %}
     </a>
     {% if prop.explanation is not none %}
@@ -52,10 +52,10 @@
     {% if object.value | match("^[A-Z]+ \(.*\)$") or object.value | match("^\{.+\}$") %}
         <div class="geom-string-container">
             <div class="geom-string-data">
-                <code class="geom-string{% if object.value | length > 40 %} collapse{% endif %}{% if object.definition is not none %} tooltip{% endif %}">
+                <code class="geom-string{% if object.value | length > 40 %} collapse{% endif %}{% if object.description is not none %} tooltip{% endif %}">
                     {{ object.value }}
-                    {% if object.definition is not none %}
-                        <span class="tooltip-text">{{ object.definition }}</span>
+                    {% if object.description is not none %}
+                        <span class="tooltip-text">{{ object.description }}</span>
                     {% endif %}
                 </code>
                 {% if object.langtag is not none %}
@@ -74,7 +74,7 @@
             </div>
         </div>
     {% elif object.value | match("^http(s*):\/\/.+") %}
-        <a href="{{ object.value }}" target="_blank" {% if object.definition is not none %}class="tooltip"{% endif %}>
+        <a href="{{ object.value }}" target="_blank" {% if object.description is not none %}class="tooltip"{% endif %}>
             {% if object.label is not none %}
                 {{ object.label }}
             {% else %}
@@ -84,8 +84,8 @@
                     {{ object.value }}
                 {% endif %}
             {% endif %}
-            {% if object.definition is not none %}
-                <span class="tooltip-text">{{ object.definition }}</span>
+            {% if object.description is not none %}
+                <span class="tooltip-text">{{ object.description }}</span>
             {% endif %}
         </a>
         {% if object.langtag is not none %}
@@ -96,7 +96,7 @@
             {% endif %}
         {% endif %}
     {% else %}
-        <span {% if object.definition is not none %}class="tooltip"{% endif %}>
+        <span {% if object.description is not none %}class="tooltip"{% endif %}>
             {% if object.label is not none %}
                 {{ object.label }}
             {% else %}
@@ -106,8 +106,8 @@
                     {{ object.value }}
                 {% endif %}
             {% endif %}
-            {% if object.definition is not none %}
-                <span class="tooltip-text">{{ object.definition }}</span>
+            {% if object.description is not none %}
+                <span class="tooltip-text">{{ object.description }}</span>
             {% endif %}
         </span>
         {% if object.langtag is not none %}

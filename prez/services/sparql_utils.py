@@ -14,7 +14,7 @@ OPTIONAL {
     FILTER(lang(?p1Label) = "" || lang(?p1Label) = "en")
 }
 OPTIONAL {
-    ?p1 skos:definition ?p1def .
+    ?p1 dcterms:description ?p1def .
     FILTER(lang(?p1def) = "" || lang(?p1def) = "en")
 }
 OPTIONAL {
@@ -26,7 +26,7 @@ OPTIONAL {
     FILTER(lang(?o1Label) = "" || lang(?o1Label) = "en")
 }
 OPTIONAL {
-    ?o1 skos:definition ?o1def .
+    ?o1 dcterms:description ?o1def .
     FILTER(lang(?o1def) = "" || lang(?o1def) = "en")
 }
 """
@@ -41,7 +41,7 @@ OPTIONAL {
         FILTER(lang(?p2Label) = "" || lang(?p2Label) = "en")
     }
     OPTIONAL {
-        ?p2 skos:definition ?p2def .
+        ?p2 dcterms:description ?p2def .
         FILTER(lang(?p2def) = "" || lang(?p2def) = "en")
     }
     OPTIONAL {
@@ -53,7 +53,7 @@ OPTIONAL {
         FILTER(lang(?o2Label) = "" || lang(?o2Label) = "en")
     }
     OPTIONAL {
-        ?o2 skos:definition ?o2def .
+        ?o2 dcterms:description ?o2def .
         FILTER(lang(?o2def) = "" || lang(?o2def) = "en")
     }
 }
@@ -61,19 +61,19 @@ OPTIONAL {
 
 construct_all_prop_obj_info = """
 ?p1 rdfs:label ?p1Label ;
-    skos:definition ?p1def ;
+    dcterms:description ?p1def ;
     dcterms:provenance ?p1expl .
 ?o1 rdfs:label ?o1Label ;
-    skos:definition ?o1def .
+    dcterms:description ?o1def .
 """
 
 construct_all_bnode_prop_obj_info = """
 ?o1 ?p2 ?o2 .
 ?p2 rdfs:label ?p2Label ;
-    skos:definition ?p2def ;
+    dcterms:description ?p2def ;
     dcterms:provenance ?p2expl .
 ?o2 rdfs:label ?o2Label ;
-    skos:definition ?o2def .
+    dcterms:description ?o2def .
 """
 
 
