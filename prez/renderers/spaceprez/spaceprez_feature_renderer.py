@@ -16,11 +16,15 @@ class SpacePrezFeatureRenderer(Renderer):
     profiles = {"oai": oai, "geo": geo, "gas": gas}
     default_profile_token = "gas"
 
-    def __init__(self, request: object, instance_uri: str) -> None:
+    def __init__(self, request: object, instance_uri: str, available_profiles: dict, default_profile: str) -> None:
+        # profiles = ...
+        # default_profile_token = ...
         super().__init__(
             request,
-            SpacePrezFeatureRenderer.profiles,
-            SpacePrezFeatureRenderer.default_profile_token,
+            # SpacePrezFeatureRenderer.profiles,
+            # SpacePrezFeatureRenderer.default_profile_token,
+            available_profiles,
+            default_profile,
             instance_uri,
         )
 
