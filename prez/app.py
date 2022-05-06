@@ -1,21 +1,18 @@
-from typing import Optional, List
+from typing import Optional
 from urllib.parse import quote_plus
 
-from fastapi import FastAPI, Request, HTTPException, Query
-from fastapi.responses import JSONResponse, RedirectResponse, Response
-from fastapi.exceptions import RequestValidationError
-from fastapi.staticfiles import StaticFiles
-from pydantic import AnyUrl
 import uvicorn
-from rdflib import URIRef
-from rdflib.namespace import SKOS
 from connegp import parse_mediatypes_from_accept_header
+from fastapi import FastAPI, Request, HTTPException, Query
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse, RedirectResponse, Response
+from fastapi.staticfiles import StaticFiles
 from fedsearch import SkosSearch, EndpointDetails
+from pydantic import AnyUrl
+from rdflib import URIRef
 
-from config import *
 from routers import vocprez_router, spaceprez_router
 from services.app_service import *
-from services.sparql_utils import sparql_endpoint_query
 from utils import templates
 from view_funcs import profiles_func
 
@@ -74,7 +71,6 @@ if THEME_VOLUME is not None:
 
 def configure():
     configure_routing()
-
 
 def configure_routing():
     if "VocPrez" in ENABLED_PREZS:

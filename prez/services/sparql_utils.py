@@ -76,6 +76,19 @@ construct_all_bnode_prop_obj_info = """
     dcterms:description ?o2def .
 """
 
+remote_profiles_query = """PREFIX prof: <http://www.w3.org/ns/dx/prof/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+CONSTRUCT { ?s ?p ?o .
+            ?x rdfs:subClassOf geo:Feature } WHERE {
+  OPTIONAL {
+    ?s a prof:Profile ;
+        ?p ?o . 
+  }
+    OPTIONAL {
+    ?x rdfs:subClassOf geo:Feature .
+  }
+}"""
 
 async def sparql_query(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
     """Executes a SPARQL SELECT query for a single SPARQL endpoint"""
