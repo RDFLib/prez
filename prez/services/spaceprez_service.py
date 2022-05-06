@@ -321,6 +321,19 @@ async def list_features(dataset_id: str, collection_id: str, page: int, per_page
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
+async def get_feature_uri(feature_id: str):
+    r = await sparql_query(f"""PREFIX dcterms: <{DCTERMS}>
+    PREFIX xsd: <{XSD}>
+    SELECT ?feature_uri {{ ?feature_uri dcterms:identifier "{feature_id}"^^xsd:token }}""", "SpacePrez")
+    if r[0]:
+        return r[1][0]['feature_uri']['value']
+
+async def get_feature_classes(feature_uri: str):
+    r = await sparql_query(f"""PREFIX dcterms: <{DCTERMS}>
+    SELECT ?class {{ <{feature_uri}> a ?class }}""", "SpacePrez")
+    if r[0]:
+        return [i['class']['value'] for i in r[1]]
+
 async def get_feature_construct(
     dataset_id: Optional[str] = None,
     collection_id: Optional[str] = None,
@@ -378,26 +391,37 @@ async def get_feature_construct(
         }}
         WHERE {{
             {query_by_id if feature_id is not None else query_by_uri}
-            {{?coll rdfs:member ?f .}}
-            {{?f ?p1 ?o1 . }}
             {profile_filters[0] if profile_filters else null_sparql}
+            ?coll rdfs:member ?f .
+            ?f ?p1 ?o1 .
+            
             OPTIONAL {{
                 ?o1 ?p2 ?o2 .
-                {profile_filters[1] if profile_filters else null_sparql}
                 FILTER(ISBLANK(?o1))
-
+                {profile_filters[1] if profile_filters else null_sparql}
+            
                 OPTIONAL {{
                     ?p2 rdfs:label ?p2Label .
                     FILTER(lang(?p2Label) = "" || lang(?p2Label) = "en")
                 }}
                 OPTIONAL {{
+                    ?p2 dcterms:description ?p2def .
+                    FILTER(lang(?p2def) = "" || lang(?p2def) = "en")
+                }}
+                OPTIONAL {{
+                    ?p2 dcterms:provenance ?p2expl .
+                    FILTER(lang(?p2expl) = "" || lang(?p2expl) = "en")
+                }}
+                OPTIONAL {{
                     ?o2 rdfs:label ?o2Label .
                     FILTER(lang(?o2Label) = "" || lang(?o2Label) = "en")
                 }}
+                OPTIONAL {{
+                    ?o2 dcterms:description ?o2def .
+                    FILTER(lang(?o2def) = "" || lang(?o2def) = "en")
+                }}
             }}
-            ?coll rdfs:member ?f .
-            ?f ?p1 ?o1 .
-            
+            {get_all_prop_obj_info}
             OPTIONAL {{
                 ?f dcterms:title ?given_title .
             }}
@@ -411,8 +435,6 @@ async def get_feature_construct(
             ?d a dcat:Dataset ;
                 dcterms:identifier ?d_id ;
                 dcterms:title ?d_label .
-            {get_all_bnode_prop_obj_info}
-            {get_all_prop_obj_info}
         }}
     """
     r = await sparql_construct(q, "SpacePrez")
