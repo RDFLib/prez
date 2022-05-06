@@ -1,34 +1,22 @@
-import logging
-
-from aiocache import cached, Cache
+import os
+from services.sparql_utils import remote_profiles_query, sparql_construct
 from connegp import Profile
 from rdflib import Graph, DCTERMS, SKOS, URIRef, Literal, BNode
 from rdflib.namespace import RDF, PROF, Namespace, RDFS
-
-from services.sparql_utils import (
-    remote_profiles_query,
-    sparql_construct,
-    sparql_query,
-)
+from functools import lru_cache
 
 
-@cached(cache=Cache.MEMORY)
 async def create_profiles_graph():
-    local_profiles_g = Graph().parse(
-        "prez/profiles/spaceprez_default_profiles.ttl", format="turtle"
-    )
+    # remote_g = Graph("SPARQLStore")
+    # remote_g.open(os.getenv("SPACEPREZ_SPARQL_ENDPOINT"))
     r = await sparql_construct(remote_profiles_query, "SpacePrez")
     if r[0]:
         remote_profiles_g = r[1]
-        profiles_g = local_profiles_g + remote_profiles_g
-        logging.info("Using local and remote profiles")
-    else:
-        profiles_g = local_profiles_g
-        logging.info("Using local profiles ONLY - no remote profiles found")
+    local_profiles_g = Graph().parse('prez/profiles/spaceprez_default_profiles.ttl', format='turtle')
+    profiles_g = local_profiles_g + remote_profiles_g
     return profiles_g
 
-
-@cached(cache=Cache.MEMORY)
+@lru_cache
 async def get_all_profiles():
     """
     Combines
@@ -58,12 +46,13 @@ async def get_all_profiles():
     profiles_formats = {}
     preferred_classes_and_profiles = []
 
-    # ordered list of feature classes and associated preferred profiles
     profiles_g = await create_profiles_graph()
     for r in profiles_g.query(get_feature_hierarchy):
-        preferred_classes_and_profiles.append((str(r["class"]), str(r["profile"])))
+        preferred_classes_and_profiles.append(
+            (str(r['class']), str(r['profile']))
+            )
 
-    ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
+    ALTREXT = Namespace('http://www.w3.org/ns/dx/conneg/altr-ext#')
     for s in profiles_g.subjects(RDF.type, PROF.Profile):
         profiles_formats[str(s)] = []
         for p, o in profiles_g.predicate_objects(s):
@@ -95,36 +84,25 @@ async def get_all_profiles():
             mediatypes=formats,
             default_mediatype=formats[0],
             languages=["en"],
-            default_language="en",
-        )
-    return profiles_g, preferred_classes_and_profiles, profiles_dict, profiles_formats
+            default_language="en"
+            )
+    return preferred_classes_and_profiles, profiles_dict
 
-
-@cached(cache=Cache.MEMORY, ttl=3600)
 async def get_available_profiles(
-    feature_uri,
-    preferred_classes_and_profiles,
-):
-    # retrieve the classes
-    r = await sparql_query(
-        f"""PREFIX dcterms: <{DCTERMS}>
-    SELECT ?class {{ <{feature_uri}> a ?class }}""",
-        "SpacePrez",
-    )
-    if r[0]:
-        objects_classes = [i["class"]["value"] for i in r[1]]
+        object_of_interest,
+        objects_classes,
+        preferred_classes_and_profiles,
+        profiles_formats
+        ):
+    # objects_classes = [str(o) for o in g.objects(object_of_interest, RDF.type)]
 
-    # the available profiles are returned in reverse preference order
     available_profiles = []
     for i, pc in enumerate(preferred_classes_and_profiles):
         for oc in objects_classes:
             if oc == pc[0]:
                 available_profiles.append(pc[1])
-    return available_profiles
 
 
-@cached(cache=Cache.MEMORY, ttl=3600)
-async def build_alt_graph(object_of_interest, profiles_formats, available_profiles):
     # build AltRep data
     ALTR = Namespace("http://www.w3.org/ns/dx/conneg/altr#")
     alt_rep = Graph()
@@ -145,23 +123,5 @@ async def build_alt_graph(object_of_interest, profiles_formats, available_profil
             alt_rep.add((bn, DCTERMS.conformsTo, URIRef(available_profile)))
             alt_rep.add((bn, DCTERMS.format, Literal(fmt)))
             alt_rep.add((object_of_interest, ALTR.hasRepresentation, bn))
-    return alt_rep
 
-
-@cached(cache=Cache.MEMORY)
-async def filter_results_using_profile(profile_g, profile, most_specific_class):
-    query = f"""PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
-                PREFIX sh: <http://www.w3.org/ns/shacl#>
-                CONSTRUCT {{ ?pbn sh:path ?predicate ;
-                                sh:order ?order ;
-                                sh:group ?group . }}
-                WHERE {{ <{profile}> altr-ext:hasNodeShape ?nodeshape_bn .
-                            ?nodeshape_bn sh:targetClass <{most_specific_class}> ;
-                                sh:closed true ;
-                                sh:property ?pbn .
-                            ?pbn sh:path ?predicate ;
-                                sh:order ?order ;
-                                sh:group ?group .
-                                }}"""
-    results = profile_g.query(query).graph
-    return results
+    print(alt_rep.serialize())
