@@ -1,11 +1,15 @@
 import os
+import urllib
+
+from aiocache.serializers import PickleSerializer
+
 from services.sparql_utils import remote_profiles_query, sparql_construct
 from connegp import Profile
 from rdflib import Graph, DCTERMS, SKOS, URIRef, Literal, BNode
 from rdflib.namespace import RDF, PROF, Namespace, RDFS
-from functools import lru_cache
+from aiocache import cached, Cache
 
-
+@cached(cache=Cache.MEMORY, key="profiles_g", serializer=PickleSerializer())
 async def create_profiles_graph():
     # remote_g = Graph("SPARQLStore")
     # remote_g.open(os.getenv("SPACEPREZ_SPARQL_ENDPOINT"))
@@ -16,7 +20,7 @@ async def create_profiles_graph():
     profiles_g = local_profiles_g + remote_profiles_g
     return profiles_g
 
-@lru_cache
+@cached(cache=Cache.MEMORY, key="key")
 async def get_all_profiles():
     """
     Combines
@@ -46,6 +50,7 @@ async def get_all_profiles():
     profiles_formats = {}
     preferred_classes_and_profiles = []
 
+    # ordered list of feature classes and associated preferred profiles
     profiles_g = await create_profiles_graph()
     for r in profiles_g.query(get_feature_hierarchy):
         preferred_classes_and_profiles.append(
@@ -86,23 +91,21 @@ async def get_all_profiles():
             languages=["en"],
             default_language="en"
             )
-    return preferred_classes_and_profiles, profiles_dict
+    return profiles_g, preferred_classes_and_profiles, profiles_dict, profiles_formats
 
 async def get_available_profiles(
-        object_of_interest,
         objects_classes,
         preferred_classes_and_profiles,
-        profiles_formats
         ):
-    # objects_classes = [str(o) for o in g.objects(object_of_interest, RDF.type)]
 
     available_profiles = []
     for i, pc in enumerate(preferred_classes_and_profiles):
         for oc in objects_classes:
             if oc == pc[0]:
                 available_profiles.append(pc[1])
+    return available_profiles
 
-
+async def build_alt_graph(object_of_interest, profiles_formats, available_profiles):
     # build AltRep data
     ALTR = Namespace("http://www.w3.org/ns/dx/conneg/altr#")
     alt_rep = Graph()
@@ -123,5 +126,26 @@ async def get_available_profiles(
             alt_rep.add((bn, DCTERMS.conformsTo, URIRef(available_profile)))
             alt_rep.add((bn, DCTERMS.format, Literal(fmt)))
             alt_rep.add((object_of_interest, ALTR.hasRepresentation, bn))
+    return alt_rep
 
-    print(alt_rep.serialize())
+@cached(cache=Cache.MEMORY, key="profile", serializer=PickleSerializer())
+async def get_predicate_filters(g, profile):
+    # get the predicate filter addresses
+    ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
+    pred_lists = []
+    bn = g.value(subject=URIRef(profile), predicate=ALTREXT.hasPredicateFilters)
+    if bn:
+        def inner_func(bn):
+            first = g.value(subject=bn, predicate=RDF.first)
+            rest = g.value(subject=bn, predicate=RDF.rest)
+            return first, rest
+        while bn != RDF.nil:
+            first, bn = inner_func(bn)
+            pred_lists.append(first)
+
+    # add the predicate filters to a list
+    pred_query_values = []
+    for i, plist in enumerate(pred_lists):
+        preds = urllib.request.urlopen(plist)
+        pred_query_values.append(f"VALUES ?p{i+1}" + "{" + ' '.join([f"<{pred.decode()}>" for pred in preds]).replace('\n', '') + "}")
+    return pred_query_values

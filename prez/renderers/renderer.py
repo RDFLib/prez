@@ -167,10 +167,10 @@ class Renderer(object, metaclass=ABCMeta):
             "alt.html", context=_template_context, headers=self.headers
         )
 
-    def _render_alt_rdf(self) -> Response:
-        """Renders the RDF representation of the alternate profiles"""
-        g = self._generate_alt_rdf()
-        return self._make_rdf_response(g)
+    # def _render_alt_rdf(self) -> Response:
+    #     """Renders the RDF representation of the alternate profiles"""
+    #     g = self._generate_alt_rdf()
+    #     return self._make_rdf_response(g)
 
     def _render_alt_json(self) -> JSONResponse:
         """Renders the JSON representation of the alternate profiles"""
@@ -185,13 +185,14 @@ class Renderer(object, metaclass=ABCMeta):
         )
 
     def _render_alt(
-        self, template_context: Union[Dict, None]
+        self, template_context: Union[Dict, None], alt_profiles_graph: Graph
     ) -> Union[templates.TemplateResponse, Response, JSONResponse]:
         """Renders the alternate profiles based on mediatype"""
         if self.mediatype == "text/html":
             return self._render_alt_html(template_context)
         elif self.mediatype in RDF_MEDIATYPES:
-            return self._render_alt_rdf()
+            # return self._render_alt_rdf()
+            return self._make_rdf_response(alt_profiles_graph)
         else:  # application/json
             return self._render_alt_json()
 
