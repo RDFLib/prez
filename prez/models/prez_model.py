@@ -54,13 +54,13 @@ class PredCell:
         qname: str,
         label: str,
         description: Optional[str] = None,
-        # explanation: Optional[str] = None,
+        explanation: Optional[str] = None,
     ):
         self.value = value
         self.qname = qname
         self.label = label
         self.description = description
-        # self.explanation = explanation
+        self.explanation = explanation
         self.objects = []
 
     def __repr__(self):
@@ -73,7 +73,7 @@ class PredCell:
             "qname": self.qname,
             "label": self.label,
             "description": self.description,
-            # "explanation": self.explanation,
+            "explanation": self.explanation,
             "objects": [obj.to_dict() for obj in self.objects],
         }
 
@@ -127,12 +127,17 @@ class ObjCell:
         """Recursively populates the rows for this object cell"""
         for p, o in graph.predicate_objects(subject):
             datatype = None
-            if isinstance(o, Literal) and o.datatype is not None: # attempts to get object qname
+            if (
+                isinstance(o, Literal) and o.datatype is not None
+            ):  # attempts to get object qname
                 datatype = {
                     "value": o.datatype,
                     "qname": graph.namespace_manager.qname(o.datatype),
+                    "label": graph.value(
+                        subject=o.datatype, predicate=RDFS.label
+                    ),  # might need to add a line to SPARQL query to get label?
                 }
-            
+
             qname = None
             if isinstance(o, URIRef):
                 try:
@@ -146,10 +151,10 @@ class ObjCell:
                 label=graph.value(subject=o, predicate=RDFS.label),
                 description=graph.value(subject=o, predicate=DCTERMS.description),
                 datatype=datatype,
-                langtag=o.language if isinstance(o, Literal) else None
+                langtag=o.language if isinstance(o, Literal) else None,
             )
 
-            if isinstance(o, BNode): # recursion for nested properties
+            if isinstance(o, BNode):  # recursion for nested properties
                 obj.populate(graph, o)
 
             pred = self.get_pred(p.__str__())
@@ -160,7 +165,7 @@ class ObjCell:
                     qname=graph.namespace_manager.qname(p),
                     label=graph.value(subject=p, predicate=RDFS.label),
                     description=graph.value(subject=p, predicate=DCTERMS.description),
-                    # explanation=graph.value(subject=p, predicate=DCTERMS.provenance),
+                    explanation=graph.value(subject=p, predicate=DCTERMS.provenance),
                 )
                 pred.objects.append(obj)
                 self.rows.append(pred)
@@ -178,7 +183,7 @@ class Table(ObjCell):
         self.populate(graph, uri)
 
     def __repr__(self):
-        return f"Table of data for \"{self.uri}\""
+        return f'Table of data for "{self.uri}"'
 
     # override
     def to_dict(self) -> List:
