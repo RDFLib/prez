@@ -15,7 +15,7 @@ class VocPrezCollection(PrezModel):
     hidden_props = [
         str(SKOS.member),
         str(DCTERMS.identifier),
-        str(SDO.identifier), # not being hidden
+        str(SDO.identifier),  # not being hidden
         str(SKOS.definition),
     ]
 
@@ -33,7 +33,7 @@ class VocPrezCollection(PrezModel):
         """
 
         query_by_uri = f"""
-            BIND (<{uri}> as ?coll) 
+            BIND (<{uri}> as ?coll)
             ?coll dcterms:identifier ?id .
         """
 
@@ -69,7 +69,7 @@ class VocPrezCollection(PrezModel):
             "properties": self._get_properties(),
             "concepts": self._get_concept_list(),
         }
-    
+
     # override
     def _get_properties(self) -> List[Dict]:
         props_dict = self._get_props()
@@ -122,7 +122,7 @@ class VocPrezCollection(PrezModel):
                 }
             )
         return sorted(concept_list, key=lambda c: c["label"])
-    
+
     def get_concept_flat_list(self) -> List[Dict[str, str]]:
         concept_list = []
         r = self.graph.query(

@@ -13,7 +13,9 @@ class ProfilesRenderer(Renderer):
     profiles = {"profiles": profiles}
     default_profile_token = "profiles"
 
-    def __init__(self, request: object, instance_uri: str, prez: Optional[str] = None) -> None:
+    def __init__(
+        self, request: object, instance_uri: str, prez: Optional[str] = None
+    ) -> None:
         super().__init__(
             request,
             ProfilesRenderer.profiles,
@@ -36,7 +38,7 @@ class ProfilesRenderer(Renderer):
             "profiles": self.profiles,
             "prez": self.prez,
             "default_profile": self.default_profile_token,
-            "mediatype_names": MEDIATYPE_NAMES
+            "mediatype_names": MEDIATYPE_NAMES,
         }
         if template_context is not None:
             _template_context.update(template_context)

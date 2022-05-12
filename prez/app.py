@@ -1,6 +1,9 @@
+import time
 from typing import Optional
 from urllib.parse import quote_plus
+from urllib.parse import urlparse
 
+import httpx
 import uvicorn
 from connegp import parse_mediatypes_from_accept_header
 from fastapi import FastAPI, Request, HTTPException, Query
@@ -11,6 +14,7 @@ from fedsearch import SkosSearch, EndpointDetails
 from pydantic import AnyUrl
 from rdflib import URIRef
 
+from profiles.generate_profiles import get_all_profiles
 from routers import vocprez_router, spaceprez_router
 from services.app_service import *
 from utils import templates
@@ -71,6 +75,8 @@ if THEME_VOLUME is not None:
 
 def configure():
     configure_routing()
+    # configure_profiles()
+
 
 def configure_routing():
     if "VocPrez" in ENABLED_PREZS:
@@ -85,6 +91,24 @@ async def validation_exception_handler(request: Request, exc):
         return await object_page(request)
     else:
         return await catch_400(request, exc)
+
+
+@app.on_event("startup")
+async def app_startup():
+    while True:
+        try:
+            url = urlparse(SPACEPREZ_SPARQL_ENDPOINT)
+            response = httpx.get(f"{url[0]}://{url[1]}")
+            if response.status_code == 200:
+                await get_all_profiles()
+                break
+        except Exception as e:
+            print(e)
+            print(
+                f"Waiting for SPACEPREZ_SPARQL_ENDPOINT ({SPACEPREZ_SPARQL_ENDPOINT}) to be available."
+            )
+            print("retrying in 3 seconds...")
+            time.sleep(3)
 
 
 async def object_page(request: Request):
@@ -322,7 +346,9 @@ async def object(
         elif object_type == GEO.FeatureCollection:
             if "SpacePrez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
-            return await spaceprez_router.feature_collection_endpoint(request, collection_uri=uri)
+            return await spaceprez_router.feature_collection_endpoint(
+                request, collection_uri=uri
+            )
         elif object_type == GEO.Feature:
             if "SpacePrez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")

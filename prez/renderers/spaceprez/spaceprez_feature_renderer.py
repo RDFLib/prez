@@ -16,7 +16,13 @@ class SpacePrezFeatureRenderer(Renderer):
     profiles = {"oai": oai, "geo": geo, "gas": gas}
     default_profile_token = "gas"
 
-    def __init__(self, request: object, instance_uri: str, available_profiles: dict, default_profile: str) -> None:
+    def __init__(
+        self,
+        request: object,
+        instance_uri: str,
+        available_profiles: dict,
+        default_profile: str,
+    ) -> None:
         # profiles = ...
         # default_profile_token = ...
         super().__init__(
@@ -155,14 +161,18 @@ class SpacePrezFeatureRenderer(Renderer):
         return self._render_geo_rdf()
 
     def render(
-        self, template_context: Optional[Dict] = None
+        self,
+        template_context: Optional[Dict] = None,
+        alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
         if self.error is not None:
             return PlainTextResponse(self.error, status_code=400)
         elif self.profile == "alt":
-            return self._render_alt(template_context)
+            return self._render_alt(
+                template_context, alt_profiles_graph=alt_profiles_graph
+            )
         elif self.profile == "oai":
             return self._render_oai(template_context)
         elif self.profile == "gas":
@@ -170,4 +180,9 @@ class SpacePrezFeatureRenderer(Renderer):
         elif self.profile == "geo":
             return self._render_geo()
         else:
-            return None
+            if self.mediatype == "text/html":
+                return self._render_oai_html(template_context)
+            elif self.mediatype == "application/geo+json":
+                return self._render_oai_geojson()
+            elif self.mediatype in RDF_MEDIATYPES:
+                return self._make_rdf_response(self.feature.graph)

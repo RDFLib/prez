@@ -9,7 +9,7 @@ from services.sparql_utils import *
 async def count_schemes():
     q = f"""
         PREFIX skos: <{SKOS}>
-        SELECT (COUNT(?cs) as ?count) 
+        SELECT (COUNT(?cs) as ?count)
         WHERE {{
             ?cs a skos:ConceptScheme .
         }}
@@ -19,6 +19,7 @@ async def count_schemes():
         return r[1]
     else:
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
+
 
 async def list_schemes(page: int, per_page: int):
     q = f"""
@@ -40,10 +41,11 @@ async def list_schemes(page: int, per_page: int):
     else:
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
+
 async def count_collections():
     q = f"""
         PREFIX skos: <{SKOS}>
-        SELECT (COUNT(?coll) as ?count) 
+        SELECT (COUNT(?coll) as ?count)
         WHERE {{
             ?coll a skos:Collection .
         }}
@@ -53,6 +55,7 @@ async def count_collections():
         return r[1]
     else:
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
+
 
 async def list_collections(page: int, per_page: int):
     q = f"""
