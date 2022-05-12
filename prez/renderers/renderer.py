@@ -159,7 +159,7 @@ class Renderer(object, metaclass=ABCMeta):
             "request": self.request,
             "uri": self.instance_uri,
             "profiles": self.profiles,
-            "default_profile": self.profiles.get(self.default_profile_token)
+            "default_profile": self.profiles.get(self.default_profile_token),
         }
         if template_context is not None:
             _template_context.update(template_context)

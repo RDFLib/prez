@@ -14,7 +14,9 @@ async def profiles_func(request: Request, prez: Optional[str] = None):
     elif prez == "SpacePrez":
         profiles_filenames.append("profiles.spaceprez_profiles")
     elif prez is None:
-        profiles_filenames.extend([f"profiles.{p.lower()}_profiles" for p in ENABLED_PREZS])
+        profiles_filenames.extend(
+            [f"profiles.{p.lower()}_profiles" for p in ENABLED_PREZS]
+        )
     else:
         raise Exception("invalid prez")
 
@@ -33,7 +35,9 @@ async def profiles_func(request: Request, prez: Optional[str] = None):
     profile_list.sort(key=lambda p: p["id"])
 
     profiles_renderer = ProfilesRenderer(
-        request, str(request.url.remove_query_params(keys=request.query_params.keys())), prez
+        request,
+        str(request.url.remove_query_params(keys=request.query_params.keys())),
+        prez,
     )
     profiles_renderer.set_profiles(profile_list)
     return profiles_renderer.render()

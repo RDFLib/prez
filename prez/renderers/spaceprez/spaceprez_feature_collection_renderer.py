@@ -37,7 +37,9 @@ class SpacePrezFeatureCollectionRenderer(Renderer):
             "uri": self.instance_uri,
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
-            "mediatype_names": dict(MEDIATYPE_NAMES, **{"application/geo+json": "GeoJSON"}),
+            "mediatype_names": dict(
+                MEDIATYPE_NAMES, **{"application/geo+json": "GeoJSON"}
+            ),
         }
         if template_context is not None:
             _template_context.update(template_context)
@@ -46,7 +48,7 @@ class SpacePrezFeatureCollectionRenderer(Renderer):
             context=_template_context,
             headers=self.headers,
         )
-    
+
     # def _render_oai_json(self) -> JSONResponse:
     #     """Renders the JSON representation of the OAI profile for a feature collection"""
     #     return JSONResponse(
@@ -54,7 +56,7 @@ class SpacePrezFeatureCollectionRenderer(Renderer):
     #         media_type="application/json",
     #         headers=self.headers,
     #     )
-    
+
     def _render_oai_geojson(self) -> JSONResponse:
         """Renders the GeoJSON representation of the OAI profile for a feature collection"""
         content = self.collection.to_geojson()
@@ -89,7 +91,8 @@ class SpacePrezFeatureCollectionRenderer(Renderer):
 
     def _generate_geo_rdf(self) -> Graph:
         """Generates a Graph of the GeoSPARQL representation"""
-        r = self.collection.graph.query(f"""
+        r = self.collection.graph.query(
+            f"""
         PREFIX dcat: <{DCAT}>
         PREFIX dcterms: <{DCTERMS}>
         PREFIX geo: <{GEO}>
@@ -116,7 +119,8 @@ class SpacePrezFeatureCollectionRenderer(Renderer):
             ?d a dcat:Dataset ;
                 rdfs:member ?fc .
         }}
-        """)
+        """
+        )
 
         g = r.graph
         g.bind("dcat", DCAT)
@@ -134,7 +138,7 @@ class SpacePrezFeatureCollectionRenderer(Renderer):
     def _render_geo(self):
         """Renders the GeoSPARQL profile for a feature collection"""
         return self._render_geo_rdf()
-    
+
     def render(
         self, template_context: Optional[Dict] = None
     ) -> Union[

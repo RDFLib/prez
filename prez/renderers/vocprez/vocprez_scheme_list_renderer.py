@@ -25,7 +25,7 @@ class VocPrezSchemeListRenderer(ListRenderer):
         scheme_list: VocPrezSchemeList,
         page: int,
         per_page: int,
-        member_count: int
+        member_count: int,
     ) -> None:
         super().__init__(
             request,
@@ -37,7 +37,7 @@ class VocPrezSchemeListRenderer(ListRenderer):
             comment,
             page,
             per_page,
-            member_count
+            member_count,
         )
         self.scheme_list = scheme_list
 
@@ -52,7 +52,7 @@ class VocPrezSchemeListRenderer(ListRenderer):
             "comment": self.comment,
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
-            "mediatype_names": MEDIATYPE_NAMES
+            "mediatype_names": MEDIATYPE_NAMES,
         }
         if template_context is not None:
             _template_context.update(template_context)
@@ -133,9 +133,9 @@ class VocPrezSchemeListRenderer(ListRenderer):
     def _render_dcat(self, template_context: Union[Dict, None]):
         if self.mediatype == "text/html":
             return self._render_dcat_html(template_context)
-        else: # all other formats are RDF
+        else:  # all other formats are RDF
             return self._render_dcat_rdf()
-    
+
     def _render_dd_json(self) -> JSONResponse:
         """Renders the json representation of the dd profile for a list of concept schemes"""
         return JSONResponse(

@@ -45,7 +45,7 @@ class VocPrezConceptRenderer(Renderer):
             "uri": self.instance_uri,
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
-            "mediatype_names": MEDIATYPE_NAMES
+            "mediatype_names": MEDIATYPE_NAMES,
         }
         if template_context is not None:
             _template_context.update(template_context)

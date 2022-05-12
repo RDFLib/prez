@@ -7,7 +7,12 @@ import asyncio
 
 from rdflib import URIRef
 
-from prez.profiles.generate_profiles import get_all_profiles, get_available_profiles, get_predicate_filters, build_alt_graph
+from prez.profiles.generate_profiles import (
+    get_all_profiles,
+    get_available_profiles,
+    get_predicate_filters,
+    build_alt_graph,
+)
 from renderers.spaceprez import *
 from services.spaceprez_service import *
 from models.spaceprez import *
@@ -51,8 +56,7 @@ async def datasets(
 ):
     """Returns a list of SpacePrez dcat:Datasets in the necessary profile & mediatype"""
     dataset_count, sparql_result = await asyncio.gather(
-        count_datasets(),
-        list_datasets(page, per_page)
+        count_datasets(), list_datasets(page, per_page)
     )
     dataset_list = SpacePrezDatasetList(sparql_result)
     dataset_list_renderer = SpacePrezDatasetListRenderer(
@@ -63,7 +67,7 @@ async def datasets(
         dataset_list,
         page,
         per_page,
-        int(dataset_count[0]["count"]["value"])
+        int(dataset_count[0]["count"]["value"]),
     )
     return dataset_list_renderer.render()
 
@@ -110,8 +114,7 @@ async def feature_collections(
 ):
     """Returns a list of SpacePrez geo:FeatureCollections in the necessary profile & mediatype"""
     collection_count, sparql_result = await asyncio.gather(
-        count_collections(dataset_id),
-        list_collections(dataset_id, page, per_page)
+        count_collections(dataset_id), list_collections(dataset_id, page, per_page)
     )
     feature_collection_list = SpacePrezFeatureCollectionList(sparql_result)
     feature_collection_list_renderer = SpacePrezFeatureCollectionListRenderer(
@@ -122,7 +125,7 @@ async def feature_collections(
         feature_collection_list,
         page,
         per_page,
-        int(collection_count[0]["count"]["value"])
+        int(collection_count[0]["count"]["value"]),
     )
     return feature_collection_list_renderer.render()
 
@@ -195,7 +198,7 @@ async def features(
     """Returns a list of SpacePrez geo:Features in the necessary profile & mediatype"""
     feature_count, sparql_result = await asyncio.gather(
         count_features(dataset_id, collection_id),
-        list_features(dataset_id, collection_id, page, per_page)
+        list_features(dataset_id, collection_id, page, per_page),
     )
     feature_list = SpacePrezFeatureList(sparql_result)
     feature_list_renderer = SpacePrezFeatureListRenderer(
@@ -206,9 +209,10 @@ async def features(
         feature_list,
         page,
         per_page,
-        int(feature_count[0]["count"]["value"])
+        int(feature_count[0]["count"]["value"]),
     )
     return feature_list_renderer.render()
+
 
 # @cached(cache=Cache.MEMORY, key="request")
 async def feature_endpoint(
@@ -218,14 +222,20 @@ async def feature_endpoint(
     feature_id: Optional[str] = None,
     feature_uri: Optional[str] = None,
 ):
-    profiles_g, preferred_classes_and_profiles, profiles, profiles_formats = await get_all_profiles()
+    (
+        profiles_g,
+        preferred_classes_and_profiles,
+        profiles,
+        profiles_formats,
+    ) = await get_all_profiles()
+    # TODO combine get feature uri and get feature classes
     if not feature_uri:
         feature_uri = await get_feature_uri(feature_id)
     feature_classes = await get_feature_classes(feature_uri)
     available_profiles = await get_available_profiles(
         feature_classes,
         preferred_classes_and_profiles,
-        )
+    )
     default_profile = available_profiles[-1]
 
     # determine which profile to use
@@ -241,8 +251,11 @@ async def feature_endpoint(
     )
     profile = feature_renderer.profile
     alt_profiles_graph = None
-    if profile == 'alt':
-        alt_profiles_graph = await build_alt_graph(URIRef(feature_uri), profiles_formats, available_profiles)
+    if profile == "alt":
+        alt_profiles_graph = await build_alt_graph(
+            URIRef(feature_uri), profiles_formats, available_profiles
+        )
+        # TODO alt can return at this point - do not need below
 
     # get the list of predicate filters (if any) for the given profile
     predicate_filters = await get_predicate_filters(profiles_g, profile)

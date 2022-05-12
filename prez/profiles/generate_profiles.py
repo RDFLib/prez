@@ -8,19 +8,24 @@ from connegp import Profile
 from rdflib import Graph, DCTERMS, SKOS, URIRef, Literal, BNode
 from rdflib.namespace import RDF, PROF, Namespace, RDFS
 from aiocache import cached, Cache
+from functools import lru_cache
 
-@cached(cache=Cache.MEMORY, key="profiles_g", serializer=PickleSerializer())
+# @cached(cache=Cache.MEMORY, key="profiles_g", serializer=PickleSerializer())
+@lru_cache()
 async def create_profiles_graph():
     # remote_g = Graph("SPARQLStore")
     # remote_g.open(os.getenv("SPACEPREZ_SPARQL_ENDPOINT"))
     r = await sparql_construct(remote_profiles_query, "SpacePrez")
     if r[0]:
         remote_profiles_g = r[1]
-    local_profiles_g = Graph().parse('prez/profiles/spaceprez_default_profiles.ttl', format='turtle')
+    local_profiles_g = Graph().parse(
+        "prez/profiles/spaceprez_default_profiles.ttl", format="turtle"
+    )
     profiles_g = local_profiles_g + remote_profiles_g
     return profiles_g
 
-@cached(cache=Cache.MEMORY, key="key")
+
+@cached(cache=Cache.MEMORY)
 async def get_all_profiles():
     """
     Combines
@@ -51,13 +56,12 @@ async def get_all_profiles():
     preferred_classes_and_profiles = []
 
     # ordered list of feature classes and associated preferred profiles
+    # TODO check what happens in case of class having two profiles - probably both get appended
     profiles_g = await create_profiles_graph()
     for r in profiles_g.query(get_feature_hierarchy):
-        preferred_classes_and_profiles.append(
-            (str(r['class']), str(r['profile']))
-            )
+        preferred_classes_and_profiles.append((str(r["class"]), str(r["profile"])))
 
-    ALTREXT = Namespace('http://www.w3.org/ns/dx/conneg/altr-ext#')
+    ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
     for s in profiles_g.subjects(RDF.type, PROF.Profile):
         profiles_formats[str(s)] = []
         for p, o in profiles_g.predicate_objects(s):
@@ -89,21 +93,23 @@ async def get_all_profiles():
             mediatypes=formats,
             default_mediatype=formats[0],
             languages=["en"],
-            default_language="en"
-            )
+            default_language="en",
+        )
     return profiles_g, preferred_classes_and_profiles, profiles_dict, profiles_formats
 
-async def get_available_profiles(
-        objects_classes,
-        preferred_classes_and_profiles,
-        ):
 
+async def get_available_profiles(
+    objects_classes,
+    preferred_classes_and_profiles,
+):
+    "the available profiles are returned in reverse preference order"
     available_profiles = []
     for i, pc in enumerate(preferred_classes_and_profiles):
         for oc in objects_classes:
             if oc == pc[0]:
                 available_profiles.append(pc[1])
     return available_profiles
+
 
 async def build_alt_graph(object_of_interest, profiles_formats, available_profiles):
     # build AltRep data
@@ -128,17 +134,20 @@ async def build_alt_graph(object_of_interest, profiles_formats, available_profil
             alt_rep.add((object_of_interest, ALTR.hasRepresentation, bn))
     return alt_rep
 
-@cached(cache=Cache.MEMORY, key="profile", serializer=PickleSerializer())
+
+# @cached(cache=Cache.MEMORY, key="profile", serializer=PickleSerializer())
 async def get_predicate_filters(g, profile):
     # get the predicate filter addresses
     ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
     pred_lists = []
     bn = g.value(subject=URIRef(profile), predicate=ALTREXT.hasPredicateFilters)
     if bn:
+
         def inner_func(bn):
             first = g.value(subject=bn, predicate=RDF.first)
             rest = g.value(subject=bn, predicate=RDF.rest)
             return first, rest
+
         while bn != RDF.nil:
             first, bn = inner_func(bn)
             pred_lists.append(first)
@@ -147,5 +156,10 @@ async def get_predicate_filters(g, profile):
     pred_query_values = []
     for i, plist in enumerate(pred_lists):
         preds = urllib.request.urlopen(plist)
-        pred_query_values.append(f"VALUES ?p{i+1}" + "{" + ' '.join([f"<{pred.decode()}>" for pred in preds]).replace('\n', '') + "}")
+        pred_query_values.append(
+            f"VALUES ?p{i+1}"
+            + "{"
+            + " ".join([f"<{pred.decode()}>" for pred in preds]).replace("\n", "")
+            + "}"
+        )
     return pred_query_values

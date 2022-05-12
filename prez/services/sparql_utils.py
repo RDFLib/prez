@@ -83,20 +83,17 @@ CONSTRUCT { ?s ?p ?o .
             ?x rdfs:subClassOf geo:Feature } WHERE {
   OPTIONAL {
     ?s a prof:Profile ;
-        ?p ?o . 
+        ?p ?o .
   }
     OPTIONAL {
     ?x rdfs:subClassOf geo:Feature .
   }
 }"""
 
+
 async def sparql_query(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
     """Executes a SPARQL SELECT query for a single SPARQL endpoint"""
-    creds = {
-        "endpoint": "",
-        "username": "",
-        "password": ""
-    }
+    creds = {"endpoint": "", "username": "", "password": ""}
     if prez == "VocPrez":
         creds["endpoint"] = VOCPREZ_SPARQL_ENDPOINT
         creds["username"] = VOCPREZ_SPARQL_USERNAME
@@ -106,7 +103,9 @@ async def sparql_query(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
         creds["username"] = SPACEPREZ_SPARQL_USERNAME
         creds["password"] = SPACEPREZ_SPARQL_PASSWORD
     else:
-        raise Exception("Invalid prez specified in sparql_query call. Available options are: 'VocPrez', 'SpacePrez'.")
+        raise Exception(
+            "Invalid prez specified in sparql_query call. Available options are: 'VocPrez', 'SpacePrez'."
+        )
     async with AsyncClient() as client:
         response: httpxResponse = await client.post(
             creds["endpoint"],
@@ -148,11 +147,7 @@ async def sparql_query_multiple(
 
 async def sparql_construct(query: str, prez: str):
     """Returns an rdflib Graph from a CONSTRUCT query for a single SPARQL endpoint"""
-    creds = {
-        "endpoint": "",
-        "username": "",
-        "password": ""
-    }
+    creds = {"endpoint": "", "username": "", "password": ""}
     if prez == "VocPrez":
         creds["endpoint"] = VOCPREZ_SPARQL_ENDPOINT
         creds["username"] = VOCPREZ_SPARQL_USERNAME
@@ -162,7 +157,9 @@ async def sparql_construct(query: str, prez: str):
         creds["username"] = SPACEPREZ_SPARQL_USERNAME
         creds["password"] = SPACEPREZ_SPARQL_PASSWORD
     else:
-        raise Exception("Invalid prez specified in sparql_query call. Available options are: 'VocPrez', 'SpacePrez'.")
+        raise Exception(
+            "Invalid prez specified in sparql_query call. Available options are: 'VocPrez', 'SpacePrez'."
+        )
     async with AsyncClient() as client:
         response: httpxResponse = await client.post(
             creds["endpoint"],
@@ -188,11 +185,7 @@ async def sparql_endpoint_query(
     query: str, prez: str, accept: str
 ) -> Tuple[bool, Union[Dict, str]]:
     """Queries a SPARQL query on a single endpoint for some Accept mediatype"""
-    creds = {
-        "endpoint": "",
-        "username": "",
-        "password": ""
-    }
+    creds = {"endpoint": "", "username": "", "password": ""}
     if prez == "VocPrez":
         creds["endpoint"] = VOCPREZ_SPARQL_ENDPOINT
         creds["username"] = VOCPREZ_SPARQL_USERNAME
@@ -202,7 +195,9 @@ async def sparql_endpoint_query(
         creds["username"] = SPACEPREZ_SPARQL_USERNAME
         creds["password"] = SPACEPREZ_SPARQL_PASSWORD
     else:
-        raise Exception("Invalid prez specified in sparql_query call. Available options are: 'VocPrez', 'SpacePrez'.")
+        raise Exception(
+            "Invalid prez specified in sparql_query call. Available options are: 'VocPrez', 'SpacePrez'."
+        )
     async with AsyncClient() as client:
         response: httpxResponse = await client.post(
             creds["endpoint"],
