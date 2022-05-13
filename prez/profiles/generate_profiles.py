@@ -4,18 +4,24 @@ from connegp import Profile
 from rdflib import Graph, DCTERMS, SKOS, URIRef, Literal, BNode
 from rdflib.namespace import RDF, PROF, Namespace, RDFS
 from aiocache import cached, Cache
+from functools import lru_cache
+import logging
 
 @cached(cache=Cache.MEMORY, key="profiles_g", serializer=PickleSerializer())
 async def create_profiles_graph():
     # remote_g = Graph("SPARQLStore")
     # remote_g.open(os.getenv("SPACEPREZ_SPARQL_ENDPOINT"))
-    r = await sparql_construct(remote_profiles_query, "SpacePrez")
-    if r[0]:
-        remote_profiles_g = r[1]
     local_profiles_g = Graph().parse(
         "prez/profiles/spaceprez_default_profiles.ttl", format="turtle"
     )
-    profiles_g = local_profiles_g + remote_profiles_g
+    r = await sparql_construct(remote_profiles_query, "SpacePrez")
+    if r[0]:
+        remote_profiles_g = r[1]
+        profiles_g = local_profiles_g + remote_profiles_g
+        logging.info("Using local and remote profiles")
+    else:
+        profiles_g = local_profiles_g
+        logging.info("Using local profiles ONLY - no remote profiles found")
     return profiles_g
 
 
@@ -87,23 +93,23 @@ async def get_all_profiles():
             languages=["en"],
             default_language="en",
         )
-    return preferred_classes_and_profiles, profiles_dict
+    return profiles_g, preferred_classes_and_profiles, profiles_dict, profiles_formats
 
 
 async def get_available_profiles(
-    object_of_interest,objects_classes,
+    objects_classes,
     preferred_classes_and_profiles,
-profiles_formats
-        ):
-    # objects_classes = [str(o) for o in g.objects(object_of_interest, RDF.type)]
+):
     "the available profiles are returned in reverse preference order"
     available_profiles = []
     for i, pc in enumerate(preferred_classes_and_profiles):
         for oc in objects_classes:
             if oc == pc[0]:
                 available_profiles.append(pc[1])
+    return available_profiles
 
 
+async def build_alt_graph(object_of_interest, profiles_formats, available_profiles):
     # build AltRep data
     ALTR = Namespace("http://www.w3.org/ns/dx/conneg/altr#")
     alt_rep = Graph()
@@ -124,6 +130,7 @@ profiles_formats
             alt_rep.add((bn, DCTERMS.conformsTo, URIRef(available_profile)))
             alt_rep.add((bn, DCTERMS.format, Literal(fmt)))
             alt_rep.add((object_of_interest, ALTR.hasRepresentation, bn))
+    return alt_rep
 
 
 # @cached(cache=Cache.MEMORY, key="profile", serializer=PickleSerializer())
