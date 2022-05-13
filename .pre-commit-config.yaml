@@ -19,3 +19,12 @@ repos:
     hooks:
       - id: codespell
         args: [--skip, "*.ttl"]
+  - repo: local
+    hooks:
+      - id: update-requirements-txt
+        name: update-requirements-txt
+        description: 'Generate requirements.txt based on poetry.lock'
+        entry: poetry
+        args: [export, --format, requirements.txt, --output, requirements.txt, --without-hashes]
+        language: system
+        pass_filenames: false
