@@ -6,16 +6,17 @@ authors = ["jamiefeiss <jamie.feiss@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-fastapi = "^0.70.0"
+fastapi = "^0.77.0"
 uvicorn = "^0.15.0"
 Jinja2 = "^3.0.2"
 aiofiles = "^0.7.0"
 httpx = "^0.20.0"
 rdflib = "^6.1.1"
-starlette-core = { git = "https://github.com/accent-starlette/starlette-core.git" }
 python-multipart = "^0.0.5"
 connegp = { git = "https://github.com/surroundaustralia/Connegp2.git", branch = "main" }
 fedsearch = { git = "https://github.com/surroundaustralia/vocprez-fedsearch.git" }
+starlette-core = { git = "https://github.com/accent-starlette/starlette-core.git" }
+aiocache = "^0.11.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
