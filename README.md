@@ -67,3 +67,32 @@ The standard process for an entity endpoint is as follows:
     - Run the SASS watcher from the `sass/` folder like so:
         - If using dart-sass: `sass --no-source-map --watch main.scss ../css/index.css`
         - If using node-sass: `sass --source-map=none --watch main.scss ../css/index.css`
+
+## Development Schedule
+
+Prez is under active development and the following fixes and features are planned:
+
+Module | Feature | Timing
+--- | --- | ---
+Prez | Data Validation documentation | Mid May, 2022
+SpacePrez | CQL search | Late May, 2022
+
+
+## Contact
+
+This tool is actively deveoped and supported by [SURROUND Australia Pty Ltd](https://surroundaustalia.com). Please contact SURROUND either by creating issues in the [Issue Tracker](https://github.com/surroundaustralia/Prez/issues) or directly emailing the lead developers:
+
+**Jamie Feiss**  
+<jamie.feiss@surroundaustralia.com>
+
+
+**David Habgood**  
+<david.habgood@surroundaustralia.com>
+
+## Contributing
+
+We love contributions to this tool and encourage you to create Issues in this repositories Issue Tracker as well as submitting Pull Requests with your own updates.
+
+## License
+
+This version of Prez and the contents of this repository are also available under the [BSD-3-Clause License](https://opensource.org/licenses/BSD-3-Clause). See [this repository's LICENSE](LICENSE) file for details.
