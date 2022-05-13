@@ -9,19 +9,24 @@ from rdflib import Graph, DCTERMS, SKOS, URIRef, Literal, BNode
 from rdflib.namespace import RDF, PROF, Namespace, RDFS
 from aiocache import cached, Cache
 from functools import lru_cache
+import logging
 
 # @cached(cache=Cache.MEMORY, key="profiles_g", serializer=PickleSerializer())
 @lru_cache()
 async def create_profiles_graph():
     # remote_g = Graph("SPARQLStore")
     # remote_g.open(os.getenv("SPACEPREZ_SPARQL_ENDPOINT"))
-    r = await sparql_construct(remote_profiles_query, "SpacePrez")
-    if r[0]:
-        remote_profiles_g = r[1]
     local_profiles_g = Graph().parse(
         "prez/profiles/spaceprez_default_profiles.ttl", format="turtle"
     )
-    profiles_g = local_profiles_g + remote_profiles_g
+    r = await sparql_construct(remote_profiles_query, "SpacePrez")
+    if r[0]:
+        remote_profiles_g = r[1]
+        profiles_g = local_profiles_g + remote_profiles_g
+        logging.info("Using local and remote profiles")
+    else:
+        profiles_g = local_profiles_g
+        logging.info("Using local profiles ONLY - no remote profiles found")
     return profiles_g
 
 
