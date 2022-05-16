@@ -5,9 +5,11 @@ PREFIX gas: <http://pid.geoscience.gov.au/def/ga-sampling/>
 PREFIX geo: <http://www.opengis.net/ont/geosparql#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX prof: <http://www.w3.org/ns/dx/prof/>
-PREFIX tern: <https://w3id.org/tern/ontologies/tern/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX sh: <http://www.w3.org/ns/shacl#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX tern: <https://w3id.org/tern/ontologies/tern/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 altr-ext:hasResourceFormat owl:propertyChainAxiom ( dcterms:conformsTo dcterms:format ) .
 
@@ -42,16 +44,6 @@ altr-ext:hasResourceFormat owl:propertyChainAxiom ( dcterms:conformsTo dcterms:f
     altr-ext:constrainsClass
         geo:Feature ,
         geo:FeatureCollection ;
-    altr-ext:hasResourceFormat "text/turtle", "application/ld+json", "application/rdf+xml", "text/html" ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
-.
-<https://w3id.org/profile/ga-spaceprez>
-    a prof:Profile ;
-    dcterms:identifier "gas" ;
-    skos:definition """A Geoscience Australia extension to the Surround Australia SpacePrez profile. This contains a specification, validators and scripts used to define, test and convert RDF data to ensure that it can be used by the SpacePrez API tool."""@en ;
-    dcterms:title "GA SpacePrez Profile" ;
-    altr-ext:constrainsClass
-        tern:MaterialSample , gas:Borehole ;
     altr-ext:hasResourceFormat "text/turtle", "application/ld+json", "application/rdf+xml", "text/html" ;
     altr-ext:hasDefaultResourceFormat "text/html" ;
 .

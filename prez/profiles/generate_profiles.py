@@ -1,16 +1,19 @@
-import os
-from services.sparql_utils import remote_profiles_query, sparql_construct
+import logging
+
+from aiocache import cached, Cache
 from connegp import Profile
 from rdflib import Graph, DCTERMS, SKOS, URIRef, Literal, BNode
 from rdflib.namespace import RDF, PROF, Namespace, RDFS
-from aiocache import cached, Cache
-from functools import lru_cache
-import logging
 
-@cached(cache=Cache.MEMORY, key="profiles_g", serializer=PickleSerializer())
+from services.sparql_utils import (
+    remote_profiles_query,
+    sparql_construct,
+    sparql_query,
+)
+
+
+@cached(cache=Cache.MEMORY)
 async def create_profiles_graph():
-    # remote_g = Graph("SPARQLStore")
-    # remote_g.open(os.getenv("SPACEPREZ_SPARQL_ENDPOINT"))
     local_profiles_g = Graph().parse(
         "prez/profiles/spaceprez_default_profiles.ttl", format="turtle"
     )
@@ -55,6 +58,7 @@ async def get_all_profiles():
     profiles_formats = {}
     preferred_classes_and_profiles = []
 
+    # ordered list of feature classes and associated preferred profiles
     profiles_g = await create_profiles_graph()
     for r in profiles_g.query(get_feature_hierarchy):
         preferred_classes_and_profiles.append((str(r["class"]), str(r["profile"])))
@@ -96,11 +100,21 @@ async def get_all_profiles():
     return profiles_g, preferred_classes_and_profiles, profiles_dict, profiles_formats
 
 
+@cached(cache=Cache.MEMORY, ttl=3600)
 async def get_available_profiles(
-    objects_classes,
+    feature_uri,
     preferred_classes_and_profiles,
 ):
-    "the available profiles are returned in reverse preference order"
+    # retrieve the classes
+    r = await sparql_query(
+        f"""PREFIX dcterms: <{DCTERMS}>
+    SELECT ?class {{ <{feature_uri}> a ?class }}""",
+        "SpacePrez",
+    )
+    if r[0]:
+        objects_classes = [i["class"]["value"] for i in r[1]]
+
+    # the available profiles are returned in reverse preference order
     available_profiles = []
     for i, pc in enumerate(preferred_classes_and_profiles):
         for oc in objects_classes:
@@ -109,6 +123,7 @@ async def get_available_profiles(
     return available_profiles
 
 
+@cached(cache=Cache.MEMORY, ttl=3600)
 async def build_alt_graph(object_of_interest, profiles_formats, available_profiles):
     # build AltRep data
     ALTR = Namespace("http://www.w3.org/ns/dx/conneg/altr#")
@@ -133,31 +148,20 @@ async def build_alt_graph(object_of_interest, profiles_formats, available_profil
     return alt_rep
 
 
-# @cached(cache=Cache.MEMORY, key="profile", serializer=PickleSerializer())
-async def get_predicate_filters(g, profile):
-    # get the predicate filter addresses
-    ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
-    pred_lists = []
-    bn = g.value(subject=URIRef(profile), predicate=ALTREXT.hasPredicateFilters)
-    if bn:
-
-        def inner_func(bn):
-            first = g.value(subject=bn, predicate=RDF.first)
-            rest = g.value(subject=bn, predicate=RDF.rest)
-            return first, rest
-
-        while bn != RDF.nil:
-            first, bn = inner_func(bn)
-            pred_lists.append(first)
-
-    # add the predicate filters to a list
-    pred_query_values = []
-    for i, plist in enumerate(pred_lists):
-        preds = urllib.request.urlopen(plist)
-        pred_query_values.append(
-            f"VALUES ?p{i+1}"
-            + "{"
-            + " ".join([f"<{pred.decode()}>" for pred in preds]).replace("\n", "")
-            + "}"
-        )
-    return pred_query_values
+@cached(cache=Cache.MEMORY)
+async def filter_results_using_profile(profile_g, profile, most_specific_class):
+    query = f"""PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
+                PREFIX sh: <http://www.w3.org/ns/shacl#>
+                CONSTRUCT {{ ?pbn sh:path ?predicate ;
+                                sh:order ?order ;
+                                sh:group ?group . }}
+                WHERE {{ <{profile}> altr-ext:hasNodeShape ?nodeshape_bn .
+                            ?nodeshape_bn sh:targetClass <{most_specific_class}> ;
+                                sh:closed true ;
+                                sh:property ?pbn .
+                            ?pbn sh:path ?predicate ;
+                                sh:order ?order ;
+                                sh:group ?group .
+                                }}"""
+    results = profile_g.query(query).graph
+    return results

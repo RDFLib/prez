@@ -1,5 +1,6 @@
 from typing import Optional
 
+from aiocache import cached, Cache
 from rdflib.namespace import RDFS, DCAT, DCTERMS, XSD
 
 from config import *
@@ -309,7 +310,7 @@ async def list_features(dataset_id: str, collection_id: str, page: int, per_page
                 ?f dcterms:description ?desc .
             }}
             OPTIONAL {{
-                ?f dcterms:title ?label .
+                ?f rdfs:label ?label .
                 FILTER(lang(?label) = "" || lang(?label) = "en")
             }}
         }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
@@ -321,38 +322,40 @@ async def list_features(dataset_id: str, collection_id: str, page: int, per_page
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
-async def get_feature_uri(feature_id: str):
-    r = await sparql_query(
-        f"""PREFIX dcterms: <{DCTERMS}>
-    PREFIX xsd: <{XSD}>
-    SELECT ?feature_uri {{ ?feature_uri dcterms:identifier "{feature_id}"^^xsd:token }}""",
-        "SpacePrez",
-    )
-    if r[0]:
-        return r[1][0]["feature_uri"]["value"]
+async def get_feature_uri_and_classes(feature_id: str = None, feature_uri: str = None):
+    if feature_id:
+        r = await sparql_query(
+            f"""PREFIX dcterms: <{DCTERMS}>
+                PREFIX rdf: <{RDF}>
+                PREFIX xsd: <{XSD}>
+                SELECT ?feature_uri ?class {{ ?feature_uri dcterms:identifier "{feature_id}"^^xsd:token ;
+                                    rdf:type ?class . }}""",
+            "SpacePrez",
+        )
+        if r[0]:
+            return r[1][0]["feature_uri"]["value"], [c["class"]["value"] for c in r[1]]
+    elif feature_uri:
+        r = await sparql_query(
+            f"""PREFIX dcterms: <{DCTERMS}>
+                PREFIX rdf: <{RDF}>
+                PREFIX xsd: <{XSD}>
+                SELECT ?class {{ <{feature_uri}> rdf:type ?class }}"""
+            "SpacePrez",
+        )
+        if r[0]:
+            return feature_uri, [c["class"]["value"] for c in r[1]]
 
 
-async def get_feature_classes(feature_uri: str):
-    r = await sparql_query(
-        f"""PREFIX dcterms: <{DCTERMS}>
-    SELECT ?class {{ <{feature_uri}> a ?class }}""",
-        "SpacePrez",
-    )
-    if r[0]:
-        return [i["class"]["value"] for i in r[1]]
-
-
+@cached(cache=Cache.MEMORY, ttl=3600)
 async def get_feature_construct(
     dataset_id: Optional[str] = None,
     collection_id: Optional[str] = None,
     feature_id: Optional[str] = None,
     feature_uri: Optional[str] = None,
-    profile_filters: Optional[List[str]] = None,
 ):
     if feature_id is None and feature_uri is None:
         raise ValueError("Either an ID or a URI must be provided for a SPARQL query")
 
-    null_sparql = "#"
     # when querying by ID via regular URL path
     query_by_id = f"""
         FILTER (STR(?d_id) = "{dataset_id}")
@@ -399,13 +402,13 @@ async def get_feature_construct(
         }}
         WHERE {{
             {query_by_id if feature_id is not None else query_by_uri}
-            {{?coll rdfs:member ?f .}}
-            {{?f ?p1 ?o1 .
-}}
+            ?coll rdfs:member ?f .
+            ?f ?p1 ?o1 .
+
             OPTIONAL {{
                 ?o1 ?p2 ?o2 .
                 FILTER(ISBLANK(?o1))
-            
+
                 OPTIONAL {{
                     ?p2 rdfs:label ?p2Label .
                     FILTER(lang(?p2Label) = "" || lang(?p2Label) = "en")
