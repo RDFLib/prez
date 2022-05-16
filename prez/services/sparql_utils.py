@@ -2,7 +2,7 @@ from typing import Dict, List, Tuple, Union
 
 from httpx import AsyncClient
 from httpx import Response as httpxResponse
-from rdflib import Graph
+from rdflib import Graph, URIRef
 import asyncio
 from connegp import RDF_MEDIATYPES
 
@@ -76,19 +76,16 @@ construct_all_bnode_prop_obj_info = """
     dcterms:description ?o2def .
 """
 
-remote_profiles_query = """PREFIX prof: <http://www.w3.org/ns/dx/prof/>
+remote_profiles_query = """
+PREFIX prof: <http://www.w3.org/ns/dx/prof/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX geo: <http://www.opengis.net/ont/geosparql#>
-CONSTRUCT { ?s ?p ?o .
-            ?x rdfs:subClassOf geo:Feature } WHERE {
-  OPTIONAL {
-    ?s a prof:Profile ;
-        ?p ?o .
+DESCRIBE ?profile ?class WHERE {
+  ?profile a prof:Profile OPTIONAL {
+    ?class rdfs:subClassOf geo:Feature .
   }
-    OPTIONAL {
-    ?x rdfs:subClassOf geo:Feature .
-  }
-}"""
+}
+"""
 
 
 async def sparql_query(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
@@ -248,3 +245,25 @@ async def sparql_endpoint_query_multiple(
         return succeeded_results.serialize(format=accept), failed_results
     else:
         return succeeded_results, failed_results
+
+
+def rdf_list_to_python_list(g: Graph, sub_pred: tuple) -> List:
+    """
+    Converts an RDF list to a Python list
+    Parameters:
+    g: and RDFLib Graph object containing the list to be converted to a python list
+    sub_pred: the subject and predicate which uniqule identify the triple beginning the RDF list in the graph
+    """
+    python_list = []
+    bn = g.value(*sub_pred)
+    if bn:
+
+        def inner_func(bn):
+            inner_first = g.value(subject=bn, predicate=RDF.first)
+            rest = g.value(subject=bn, predicate=RDF.rest)
+            return inner_first, rest
+
+        while bn != RDF.nil:
+            first, bn = inner_func(bn)
+            python_list.append(first)
+    return python_list

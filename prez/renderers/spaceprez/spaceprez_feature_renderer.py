@@ -169,18 +169,18 @@ class SpacePrezFeatureRenderer(Renderer):
     ]:
         if self.error is not None:
             return PlainTextResponse(self.error, status_code=400)
-        elif self.profile == "alt":
-            return self._render_alt(
-                template_context, alt_profiles_graph=alt_profiles_graph
-            )
-        elif self.profile == "oai":
-            return self._render_oai(template_context)
-        elif self.profile == "geo":
-            return self._render_geo()
-        else:
-            if self.mediatype == "text/html":
-                return self._render_oai_html(template_context)
-            elif self.mediatype == "application/geo+json":
-                return self._render_oai_geojson()
-            elif self.mediatype in RDF_MEDIATYPES:
-                return self._make_rdf_response(self.feature.graph)
+        # elif self.profile == "alt":
+        #     return self._render_alt(
+        #         template_context, alt_profiles_graph=alt_profiles_graph
+        #     )
+        # elif self.profile == "oai":
+        #     return self._render_oai(template_context)
+        # elif self.profile == "geo":
+        #     return self._render_geo()
+        # else:
+        elif self.mediatype == "text/html":
+            return self._render_oai_html(template_context)
+        elif self.mediatype == "application/geo+json":
+            return self._render_oai_geojson()
+        elif self.mediatype in RDF_MEDIATYPES:
+            return self._make_rdf_response(self.feature.uri, self.feature.graph)
