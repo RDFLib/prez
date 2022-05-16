@@ -206,7 +206,9 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
         return self._render_geo_rdf()
 
     def render(
-        self, template_context: Optional[Dict] = None
+        self,
+        template_context: Optional[Dict] = None,
+        alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
@@ -215,7 +217,7 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
         elif self.profile == "mem":
             return self._render_mem(template_context)
         elif self.profile == "alt":
-            return self._render_alt(template_context)
+            return self._render_alt(template_context, alt_profiles_graph)
         elif self.profile == "oai":
             return self._render_oai(template_context)
         elif self.profile == "geo":

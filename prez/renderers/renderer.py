@@ -137,11 +137,35 @@ class Renderer(object, metaclass=ABCMeta):
 
         return g
 
-    def _make_rdf_response(self, graph: Graph) -> Response:
+    def _make_rdf_response(self, feature_uri, graph: Graph) -> Response:
         """Creates an RDF response from a Graph"""
         serial_mediatype = RDF_SERIALIZER_TYPES_MAP[self.mediatype]
 
-        response_text = graph.serialize(format=serial_mediatype, encoding="utf-8")
+        # remove labels from the graph
+        query = f"""
+        CONSTRUCT {{ <{str(feature_uri)}> ?p ?o .
+                      ?o ?p2 ?o2 .
+                      ?coll a geo:FeatureCollection ;
+                        rdfs:member <{str(feature_uri)}> .
+                      ?dataset a dcat:Dataset ;
+                        rdfs:member ?coll .
+                      }}
+              WHERE {{
+                      <{str(feature_uri)}> ?p ?o .
+                      ?coll a geo:FeatureCollection ;
+                        rdfs:member <{str(feature_uri)}> .
+                      ?dataset a dcat:Dataset ;
+                        # rdfs:member ?coll .
+                OPTIONAL {{
+                ?o ?p2 ?o2 .
+                FILTER(ISBLANK(?o))
+                       }}
+                }}
+        """
+        filtered_g = Graph(namespace_manager=graph.namespace_manager)
+        filtered_g += graph.query(query).graph
+
+        response_text = filtered_g.serialize(format=serial_mediatype, encoding="utf-8")
 
         # destroy the triples in the triplestore, then delete the triplestore
         # this helps to prevent a memory leak in rdflib
@@ -166,11 +190,6 @@ class Renderer(object, metaclass=ABCMeta):
         return templates.TemplateResponse(
             "alt.html", context=_template_context, headers=self.headers
         )
-
-    # def _render_alt_rdf(self) -> Response:
-    #     """Renders the RDF representation of the alternate profiles"""
-    #     g = self._generate_alt_rdf()
-    #     return self._make_rdf_response(g)
 
     def _render_alt_json(self) -> JSONResponse:
         """Renders the JSON representation of the alternate profiles"""
