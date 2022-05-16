@@ -7,8 +7,7 @@ from rdflib.namespace import RDF, RDFS, PROF, DCTERMS, XSD
 from connegp import Connegp, Profile, RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
 
 from config import *
-
-# from profiles.prez_profiles import alt
+from profiles.prez_profiles import alt
 from utils import templates
 
 
@@ -23,8 +22,8 @@ class Renderer(object, metaclass=ABCMeta):
         instance_uri: str,
     ) -> None:
         self.error = None
-        # if default_profile_token == "alt":
-        #     self.error = "You cannot specify 'alt' as the default profile."
+        if default_profile_token == "alt":
+            self.error = "You cannot specify 'alt' as the default profile."
 
         if default_profile_token not in profiles.keys():
             self.error = (
@@ -33,7 +32,7 @@ class Renderer(object, metaclass=ABCMeta):
             )
 
         self.profiles = dict(profiles)
-        # self.profiles["alt"] = alt
+        self.profiles["alt"] = alt
         self.request = request
         self.default_profile_token = default_profile_token
         self.instance_uri = instance_uri
@@ -138,33 +137,25 @@ class Renderer(object, metaclass=ABCMeta):
 
         return g
 
-    def _make_rdf_response(self, item_uri, graph: Graph) -> Response:
+    def _make_rdf_response(self, feature_uri, graph: Graph) -> Response:
         """Creates an RDF response from a Graph"""
         serial_mediatype = RDF_SERIALIZER_TYPES_MAP[self.mediatype]
 
         # remove labels from the graph
         query = f"""
-        PREFIX geo: <{GEO}>
-        CONSTRUCT {{ <{str(item_uri)}> ?p ?o ;
-                      skos:inScheme ?cs .
+        CONSTRUCT {{ <{str(feature_uri)}> ?p ?o .
                       ?o ?p2 ?o2 .
                       ?coll a geo:FeatureCollection ;
-                        rdfs:member <{str(item_uri)}> .
+                        rdfs:member <{str(feature_uri)}> .
                       ?dataset a dcat:Dataset ;
                         rdfs:member ?coll .
-
-                        }}
+                      }}
               WHERE {{
-                      <{str(item_uri)}> ?p ?o .
-                      OPTIONAL {{
+                      <{str(feature_uri)}> ?p ?o .
                       ?coll a geo:FeatureCollection ;
-                        rdfs:member <{str(item_uri)}> .
+                        rdfs:member <{str(feature_uri)}> .
                       ?dataset a dcat:Dataset ;
-                        rdfs:member ?coll .
-                        }}
-                      OPTIONAL {{
-                      <{str(item_uri)}> skos:inScheme ?cs .
-                       }}
+                        # rdfs:member ?coll .
                 OPTIONAL {{
                 ?o ?p2 ?o2 .
                 FILTER(ISBLANK(?o))
@@ -219,8 +210,8 @@ class Renderer(object, metaclass=ABCMeta):
         if self.mediatype == "text/html":
             return self._render_alt_html(template_context)
         elif self.mediatype in RDF_MEDIATYPES:
-            response_text = alt_profiles_graph.serialize(format=self.mediatype)
-            return Response(response_text, media_type=self.mediatype)
+            # return self._render_alt_rdf()
+            return self._make_rdf_response(alt_profiles_graph)
         else:  # application/json
             return self._render_alt_json()
 

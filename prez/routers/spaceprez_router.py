@@ -1,5 +1,7 @@
 import urllib.request
 
+from aiocache import Cache, cached
+from aiocache.serializers import PickleSerializer
 from fastapi import APIRouter, Request, HTTPException
 import asyncio
 
@@ -8,10 +10,9 @@ from rdflib import URIRef
 from prez.profiles.generate_profiles import (
     get_all_profiles,
     get_available_profiles,
-    get_predicate_filters,
+    filter_results_using_profile,
     build_alt_graph,
 )
-from prez.profiles.generate_profiles import get_all_profiles
 from renderers.spaceprez import *
 from services.spaceprez_service import *
 from models.spaceprez import *
@@ -54,8 +55,8 @@ async def datasets(
     per_page: int = 20,
 ):
     """Returns a list of SpacePrez dcat:Datasets in the necessary profile & mediatype"""
-    dataset_count, sparql_result = await asyncio.gather(
-        count_datasets(), list_datasets(page, per_page)
+    dataset_count, sparql_result, profiles = await asyncio.gather(
+        count_datasets(), list_datasets(page, per_page), get_all_profiles()
     )
     dataset_list = SpacePrezDatasetList(sparql_result)
     dataset_list_renderer = SpacePrezDatasetListRenderer(
@@ -68,7 +69,7 @@ async def datasets(
         per_page,
         int(dataset_count[0]["count"]["value"]),
     )
-    return dataset_list_renderer.render()
+    return dataset_list_renderer.render(alt_profiles_graph=profiles[0])
 
 
 @router.get("/dataset/{dataset_id}", summary="Get Dataset")
@@ -112,8 +113,10 @@ async def feature_collections(
     per_page: int = 20,
 ):
     """Returns a list of SpacePrez geo:FeatureCollections in the necessary profile & mediatype"""
-    collection_count, sparql_result = await asyncio.gather(
-        count_collections(dataset_id), list_collections(dataset_id, page, per_page)
+    collection_count, sparql_result, profiles = await asyncio.gather(
+        count_collections(dataset_id),
+        list_collections(dataset_id, page, per_page),
+        get_all_profiles(),
     )
     feature_collection_list = SpacePrezFeatureCollectionList(sparql_result)
     feature_collection_list_renderer = SpacePrezFeatureCollectionListRenderer(
@@ -126,7 +129,7 @@ async def feature_collections(
         per_page,
         int(collection_count[0]["count"]["value"]),
     )
-    return feature_collection_list_renderer.render()
+    return feature_collection_list_renderer.render(alt_profiles_graph=profiles[0])
 
 
 # feature collection
@@ -204,7 +207,7 @@ async def features(
         request,
         str(request.url.remove_query_params(keys=request.query_params.keys())),
         "Feature list",
-        "A list of geo:Features",
+        f"A list of {feature_list.collection['title']}",
         feature_list,
         page,
         per_page,
@@ -213,7 +216,7 @@ async def features(
     return feature_list_renderer.render()
 
 
-# @cached(cache=Cache.MEMORY, key="request")
+@cached(cache=Cache.MEMORY, ttl=3600)
 async def feature_endpoint(
     request: Request,
     dataset_id: Optional[str] = None,
@@ -227,14 +230,26 @@ async def feature_endpoint(
         profiles,
         profiles_formats,
     ) = await get_all_profiles()
-    # TODO combine get feature uri and get feature classes
     if not feature_uri:
-        feature_uri = await get_feature_uri(feature_id)
-    feature_classes = await get_feature_classes(feature_uri)
+        feature_uri, feature_classes = await get_feature_uri_and_classes(
+            feature_id=feature_id
+        )
+    elif not feature_id:
+        _, feature_classes = get_feature_uri_and_classes(feature_uri=feature_uri)
+
+    # find the available profiles
     available_profiles = await get_available_profiles(
-        feature_classes,
+        feature_uri,
         preferred_classes_and_profiles,
     )
+
+    # find the most specific class for the feature
+    for klass, _ in reversed(preferred_classes_and_profiles):
+        if klass in feature_classes:
+            most_specific_class = klass
+            break
+
+    # set the default profile
     default_profile = available_profiles[-1]
 
     # determine which profile to use
@@ -254,36 +269,33 @@ async def feature_endpoint(
         alt_profiles_graph = await build_alt_graph(
             URIRef(feature_uri), profiles_formats, available_profiles
         )
-        # TODO alt can return at this point - do not need below
+        return feature_renderer.render(alt_profiles_graph=alt_profiles_graph)
+    else:
+        complete_feature_g = await get_feature_construct(
+            dataset_id=dataset_id,
+            collection_id=collection_id,
+            feature_id=feature_id,
+            feature_uri=feature_uri,
+        )
 
-    # get the list of predicate filters (if any) for the given profile
-    predicate_filters = await get_predicate_filters(profiles_g, profile)
+        # filter results based on the profile
+        feature_shapes_g = await filter_results_using_profile(
+            profiles_g, profile, most_specific_class
+        )
 
-    sparql_result = await get_feature_construct(
-        dataset_id=dataset_id,
-        collection_id=collection_id,
-        feature_id=feature_id,
-        feature_uri=feature_uri,
-        profile_filters=[pred1_str, pred2_str],
-    )
+        if len(complete_feature_g) == 0:
+            raise HTTPException(status_code=404, detail="Not Found")
 
-    if len(sparql_result) == 0:
-        raise HTTPException(status_code=404, detail="Not Found")
-    feature = SpacePrezFeature(sparql_result, id=feature_id, uri=feature_uri)
+        feature = SpacePrezFeature(
+            complete_feature_g + feature_shapes_g,
+            id=feature_id,
+            uri=feature_uri,
+            most_specific_class=most_specific_class,
+        )
 
-    feature_renderer = SpacePrezFeatureRenderer(
-        request,
-        str(
-            request.url.remove_query_params(
-                keys=[key for key in request.query_params.keys() if key != "uri"]
-            )
-        ),
-        available_profiles=profiles,
-        default_profile=preferred_classes_and_profiles,
-    )
+        feature_renderer.set_feature(feature)
 
-    feature_renderer.set_feature(feature)
-    return feature_renderer.render()
+        return feature_renderer.render()
 
 
 # feature
