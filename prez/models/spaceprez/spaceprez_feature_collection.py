@@ -34,7 +34,6 @@ class SpacePrezFeatureCollection(PrezModel):
 
         query_by_id = f"""
                 ?coll dcterms:identifier "{id}"^^xsd:token .
-                BIND (<{id}> as ?id)
         """
 
         query_by_uri = f"""

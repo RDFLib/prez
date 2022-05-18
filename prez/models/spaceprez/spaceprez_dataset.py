@@ -30,7 +30,6 @@ class SpacePrezDataset(PrezModel):
 
         query_by_id = f"""
             ?d dcterms:identifier "{id}"^^xsd:token .
-            BIND("{id}" AS ?id)
         """
 
         query_by_uri = f"""

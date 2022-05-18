@@ -31,8 +31,7 @@ class VocPrezScheme(PrezModel):
             raise ValueError("Either an ID or a URI must be provided")
 
         query_by_id = f"""
-            ?cs dcterms:identifier ?id .
-            FILTER (STR(?id) = "{id}")
+            ?cs profiles_g "{id}"^^xsd:token .
         """
 
         query_by_uri = f"""
