@@ -231,4 +231,4 @@ async def concept(request: Request, scheme_id: str, concept_id: str):
 )
 async def vocprez_profiles(request: Request):
     """Returns a JSON list of the profiles accepted by VocPrez"""
-    return await profiles_func(request, "VocPrez")
+    return await profiles_func(request, "vocprez")

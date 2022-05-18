@@ -84,16 +84,16 @@ async def sparql_query(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
         "username": "",
         "password": ""
     }
-    if prez == "VocPrez":
+    if prez == "vocprez":
         creds["endpoint"] = VOCPREZ_SPARQL_ENDPOINT
         creds["username"] = VOCPREZ_SPARQL_USERNAME
         creds["password"] = VOCPREZ_SPARQL_PASSWORD
-    elif prez == "SpacePrez":
+    elif prez == "spaceprez":
         creds["endpoint"] = SPACEPREZ_SPARQL_ENDPOINT
         creds["username"] = SPACEPREZ_SPARQL_USERNAME
         creds["password"] = SPACEPREZ_SPARQL_PASSWORD
     else:
-        raise Exception("Invalid prez specified in sparql_query call. Available options are: 'VocPrez', 'SpacePrez'.")
+        raise Exception("Invalid prez specified in sparql_query call. Available options are: 'vocprez', 'spaceprez'.")
     async with AsyncClient() as client:
         response: httpxResponse = await client.post(
             creds["endpoint"],
@@ -140,16 +140,16 @@ async def sparql_construct(query: str, prez: str):
         "username": "",
         "password": ""
     }
-    if prez == "VocPrez":
+    if prez == "vocprez":
         creds["endpoint"] = VOCPREZ_SPARQL_ENDPOINT
         creds["username"] = VOCPREZ_SPARQL_USERNAME
         creds["password"] = VOCPREZ_SPARQL_PASSWORD
-    elif prez == "SpacePrez":
+    elif prez == "spaceprez":
         creds["endpoint"] = SPACEPREZ_SPARQL_ENDPOINT
         creds["username"] = SPACEPREZ_SPARQL_USERNAME
         creds["password"] = SPACEPREZ_SPARQL_PASSWORD
     else:
-        raise Exception("Invalid prez specified in sparql_query call. Available options are: 'VocPrez', 'SpacePrez'.")
+        raise Exception("Invalid prez specified in sparql_query call. Available options are: 'vocprez', 'spaceprez'.")
     async with AsyncClient() as client:
         response: httpxResponse = await client.post(
             creds["endpoint"],
@@ -180,16 +180,16 @@ async def sparql_endpoint_query(
         "username": "",
         "password": ""
     }
-    if prez == "VocPrez":
+    if prez == "vocprez":
         creds["endpoint"] = VOCPREZ_SPARQL_ENDPOINT
         creds["username"] = VOCPREZ_SPARQL_USERNAME
         creds["password"] = VOCPREZ_SPARQL_PASSWORD
-    elif prez == "SpacePrez":
+    elif prez == "spaceprez":
         creds["endpoint"] = SPACEPREZ_SPARQL_ENDPOINT
         creds["username"] = SPACEPREZ_SPARQL_USERNAME
         creds["password"] = SPACEPREZ_SPARQL_PASSWORD
     else:
-        raise Exception("Invalid prez specified in sparql_query call. Available options are: 'VocPrez', 'SpacePrez'.")
+        raise Exception("Invalid prez specified in sparql_query call. Available options are: 'vocprez', 'spaceprez'.")
     async with AsyncClient() as client:
         response: httpxResponse = await client.post(
             creds["endpoint"],

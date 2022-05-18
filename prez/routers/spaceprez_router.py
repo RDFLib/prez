@@ -276,7 +276,7 @@ async def spaceprez_about(request: Request):
 )
 async def spaceprez_profiles(request: Request):
     """Returns a JSON list of the profiles accepted by SpacePrez"""
-    return await profiles_func(request, "SpacePrez")
+    return await profiles_func(request, "spaceprez")
 
 
 # conform

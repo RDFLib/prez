@@ -45,7 +45,7 @@
 nav#main-nav {
     display: flex;
     overflow: hidden;
-    background-color: var(--footer-bg);
+    background-color: var(--nav-bg);
     transition: width 0.2s ease-in-out, min-width 0.2s ease-in-out;
 
     &.colnav {
@@ -159,7 +159,7 @@ nav#sub-nav {
         font-weight: bold;
         color: var(--nav-color);
         text-decoration: none;
-        transition: background-color 0.2s ease-in-out;
+        transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
 
         .rownav & {
             text-align: center;

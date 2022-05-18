@@ -5,9 +5,9 @@
 {% set is_sidenav = "SIDENAV" | get_config %}
 {% set theme_volume = "THEME_VOLUME" | get_config %}
 
-{% if active_prez == "VocPrez" %}
+{% if active_prez == "vocprez" %}
     {% set pagetitle = vocprez_title %}
-{% elif active_prez == "SpacePrez" %}
+{% elif active_prez == "spaceprez" %}
     {% set pagetitle = spaceprez_title %}
 {% else %} {# Prez #} 
     {% if prez_title is not none %}

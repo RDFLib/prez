@@ -77,9 +77,9 @@ def configure():
 
 
 def configure_routing():
-    if "VocPrez" in ENABLED_PREZS:
+    if "vocprez" in ENABLED_PREZS:
         app.include_router(vocprez_router.router)
-    if "SpacePrez" in ENABLED_PREZS:
+    if "spaceprez" in ENABLED_PREZS:
         app.include_router(spaceprez_router.router)
 
 
@@ -102,9 +102,9 @@ async def object_page(request: Request):
 async def index(request: Request):
     """Displays the home page of Prez"""
     if len(ENABLED_PREZS) == 1:
-        if ENABLED_PREZS[0] == "VocPrez":
+        if ENABLED_PREZS[0] == "vocprez":
             return await vocprez_router.home(request)
-        elif ENABLED_PREZS[0] == "SpacePrez":
+        elif ENABLED_PREZS[0] == "spaceprez":
             return await spaceprez_router.home(request)
     else:
         template_context = {"request": request, "enabled_prezs": ENABLED_PREZS}
@@ -247,9 +247,9 @@ async def search(
 async def about(request: Request):
     """Displays the about page of Prez"""
     if len(ENABLED_PREZS) == 1:
-        if ENABLED_PREZS[0] == "VocPrez":
+        if ENABLED_PREZS[0] == "vocprez":
             return await vocprez_router.about(request)
-        elif ENABLED_PREZS[0] == "SpacePrez":
+        elif ENABLED_PREZS[0] == "spaceprez":
             return await spaceprez_router.about(request)
     else:
         template_context = {"request": request}
@@ -274,10 +274,10 @@ async def prezs(request: Request):
 async def profiles(request: Request):
     """Returns a list of profiles recognised by Prez"""
     if len(ENABLED_PREZS) == 1:
-        if ENABLED_PREZS[0] == "VocPrez":
-            return await profiles_func(request, "VocPrez")
-        elif ENABLED_PREZS[0] == "SpacePrez":
-            return await profiles_func(request, "SpacePrez")
+        if ENABLED_PREZS[0] == "vocprez":
+            return await profiles_func(request, "vocprez")
+        elif ENABLED_PREZS[0] == "spaceprez":
+            return await profiles_func(request, "spaceprez")
     else:
         return await profiles_func(request)
 
@@ -308,27 +308,27 @@ async def object(
     # return according to type (IF appropriate prez module is enabled)
     for object_type in object_types:
         if object_type == SKOS.ConceptScheme:
-            if "VocPrez" not in ENABLED_PREZS:
+            if "vocprez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
             return await vocprez_router.scheme_endpoint(request, scheme_uri=uri)
         elif object_type == SKOS.Collection:
-            if "VocPrez" not in ENABLED_PREZS:
+            if "vocprez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
             return await vocprez_router.collection_endpoint(request, collection_uri=uri)
         elif object_type == SKOS.Concept:
-            if "VocPrez" not in ENABLED_PREZS:
+            if "vocprez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
             return await vocprez_router.concept_endpoint(request, concept_uri=uri)
         elif object_type == DCAT.Dataset:
-            if "SpacePrez" not in ENABLED_PREZS:
+            if "spaceprez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
             return await spaceprez_router.dataset_endpoint(request, dataset_uri=uri)
         elif object_type == GEO.FeatureCollection:
-            if "SpacePrez" not in ENABLED_PREZS:
+            if "spaceprez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
             return await spaceprez_router.feature_collection_endpoint(request, collection_uri=uri)
         elif object_type == GEO.Feature:
-            if "SpacePrez" not in ENABLED_PREZS:
+            if "spaceprez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
             return await spaceprez_router.feature_endpoint(request, feature_uri=uri)
         # else:

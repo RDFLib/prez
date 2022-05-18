@@ -56,6 +56,12 @@ def match(s: str, pattern: str) -> bool:
     else:
         return False
 
+def prez_title(s: str) -> str:
+    """Correctly formats the casing of a *Prez string when lower case
+    i.e. vocprez -> VocPrez"""
+    return "".join([substr.capitalize() for substr in re.split("(prez)", s)[:2]])
+
+
 template_list = ["templates"]
 if THEME_VOLUME is not None:
     template_list.insert(0, f"{THEME_VOLUME}/templates")
@@ -67,3 +73,4 @@ templates.env.filters["get_config"] = get_config
 templates.env.filters["append_qsa"] = append_qsa
 templates.env.filters["file_exists"] = file_exists
 templates.env.filters["match"] = match
+templates.env.filters["prez_title"] = prez_title

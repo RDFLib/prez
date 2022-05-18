@@ -5,13 +5,13 @@
 {% if prezs | length == 1 %}
     {% set main_active_page = "home" %}
 {% else %}
-    {% set main_active_page = "SpacePrez" %}
+    {% set main_active_page = "spaceprez" %}
     {% set breadcrumbs = [
         {"label": "SpacePrez", "url": url_for("spaceprez_home")}
     ] %}
 {% endif %}
 
-{% set active_prez = "SpacePrez" %}
+{% set active_prez = "spaceprez" %}
 {% set sub_active_page = "home" %}
 
 {% block content %}

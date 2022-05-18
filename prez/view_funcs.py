@@ -9,9 +9,9 @@ from config import ENABLED_PREZS
 
 async def profiles_func(request: Request, prez: Optional[str] = None):
     profiles_filenames = ["profiles.prez_profiles"]
-    if prez == "VocPrez":
+    if prez == "vocprez":
         profiles_filenames.append("profiles.vocprez_profiles")
-    elif prez == "SpacePrez":
+    elif prez == "spaceprez":
         profiles_filenames.append("profiles.spaceprez_profiles")
     elif prez is None:
         profiles_filenames.extend([f"profiles.{p.lower()}_profiles" for p in ENABLED_PREZS])

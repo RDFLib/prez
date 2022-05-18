@@ -14,7 +14,7 @@ async def count_datasets():
             ?d a dcat:Dataset .
         }}
     """
-    r = await sparql_query(q, "SpacePrez")
+    r = await sparql_query(q, "spaceprez")
     if r[0]:
         return r[1]
     else:
@@ -39,7 +39,7 @@ async def list_datasets(page: int, per_page: int):
             FILTER((lang(?label) = "" || lang(?label) = "en") && DATATYPE(?id) = xsd:token)
         }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
     """
-    r = await sparql_query(q, "SpacePrez")
+    r = await sparql_query(q, "spaceprez")
     if r[0]:
         return r[1]
     else:
@@ -81,7 +81,7 @@ async def get_dataset_construct(
             {get_all_prop_obj_info}
         }}
     """
-    r = await sparql_construct(q, "SpacePrez")
+    r = await sparql_construct(q, "spaceprez")
     if r[0]:
         return r[1]
     else:
@@ -104,7 +104,7 @@ async def count_collections(dataset_id: str):
             ?coll a geo:FeatureCollection .
         }}
     """
-    r = await sparql_query(q, "SpacePrez")
+    r = await sparql_query(q, "spaceprez")
     if r[0]:
         return r[1]
     else:
@@ -137,7 +137,7 @@ async def list_collections(dataset_id: str, page: int, per_page: int):
             FILTER(DATATYPE(?id) = xsd:token)
         }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
     """
-    r = await sparql_query(q, "SpacePrez")
+    r = await sparql_query(q, "spaceprez")
     if r[0]:
         return r[1]
     else:
@@ -201,7 +201,7 @@ async def get_collection_construct_1(
             {get_all_prop_obj_info}
         }}
     """
-    r = await sparql_construct(q, "SpacePrez")
+    r = await sparql_construct(q, "spaceprez")
     if r[0]:
         return r[1]
     else:
@@ -246,7 +246,7 @@ async def get_collection_construct_2(
             ?coll rdfs:member ?mem .
         }} LIMIT 20
     """
-    r = await sparql_construct(q, "SpacePrez")
+    r = await sparql_construct(q, "spaceprez")
     if r[0]:
         return r[1]
     else:
@@ -274,7 +274,7 @@ async def count_features(dataset_id: str, collection_id: str):
             ?f a geo:Feature .
         }}
     """
-    r = await sparql_query(q, "SpacePrez")
+    r = await sparql_query(q, "spaceprez")
     if r[0]:
         return r[1]
     else:
@@ -315,7 +315,7 @@ async def list_features(dataset_id: str, collection_id: str, page: int, per_page
             }}
         }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
     """
-    r = await sparql_query(q, "SpacePrez")
+    r = await sparql_query(q, "spaceprez")
     if r[0]:
         return r[1]
     else:
@@ -394,7 +394,7 @@ async def get_feature_construct(
             {get_all_prop_obj_info}
         }}
     """
-    r = await sparql_construct(q, "SpacePrez")
+    r = await sparql_construct(q, "spaceprez")
     if r[0]:
         return r[1]
     else:

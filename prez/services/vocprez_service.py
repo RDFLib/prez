@@ -14,7 +14,7 @@ async def count_schemes():
             ?cs a skos:ConceptScheme .
         }}
     """
-    r = await sparql_query(q, "VocPrez")
+    r = await sparql_query(q, "vocprez")
     if r[0]:
         return r[1]
     else:
@@ -34,7 +34,7 @@ async def list_schemes(page: int, per_page: int):
             }}
         }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
     """
-    r = await sparql_query(q, "VocPrez")
+    r = await sparql_query(q, "vocprez")
     if r[0]:
         return r[1]
     else:
@@ -48,7 +48,7 @@ async def count_collections():
             ?coll a skos:Collection .
         }}
     """
-    r = await sparql_query(q, "VocPrez")
+    r = await sparql_query(q, "vocprez")
     if r[0]:
         return r[1]
     else:
@@ -69,7 +69,7 @@ async def list_collections(page: int, per_page: int):
             FILTER(lang(?label) = "" || lang(?label) = "en")
         }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
     """
-    r = await sparql_query(q, "VocPrez")
+    r = await sparql_query(q, "vocprez")
     if r[0]:
         return r[1]
     else:
@@ -126,7 +126,7 @@ async def get_scheme_construct1(
             {get_all_prop_obj_info}
         }}
     """
-    r = await sparql_construct(q, "VocPrez")
+    r = await sparql_construct(q, "vocprez")
     if r[0]:
         return r[1]
     else:
@@ -185,7 +185,7 @@ async def get_scheme_construct2(
             {query_by_graph(query_in_graph, "?cs", include_inferencing)}
         }}
     """
-    r = await sparql_construct(q, "VocPrez")
+    r = await sparql_construct(q, "vocprez")
     if r[0]:
         return r[1]
     else:
@@ -275,7 +275,7 @@ async def get_concept_construct(
             {get_all_prop_obj_info}
         }}
     """
-    r = await sparql_construct(q, "VocPrez")
+    r = await sparql_construct(q, "vocprez")
     if r[0]:
         return r[1]
     else:
@@ -304,7 +304,7 @@ async def get_dataset_construct():
             }}
         }}
     """
-    r = await sparql_construct(q, "VocPrez")
+    r = await sparql_construct(q, "vocprez")
     if r[0]:
         return r[1]
     else:
@@ -349,7 +349,7 @@ async def get_collection_construct1(
             {get_all_prop_obj_info}
         }}
     """
-    r = await sparql_construct(q, "VocPrez")
+    r = await sparql_construct(q, "vocprez")
     if r[0]:
         return r[1]
     else:
@@ -405,7 +405,7 @@ async def get_collection_construct2(
             {query_in_graph}
         }}
     """
-    r = await sparql_construct(q, "VocPrez")
+    r = await sparql_construct(q, "vocprez")
     if r[0]:
         return r[1]
     else:

@@ -1,10 +1,10 @@
 <nav id="main-nav" class="{% if is_sidenav %}colnav{% else %}rownav{% endif %}{% if prezs | length > 1 and active_prez %} has-subnav{% endif %}">
     <a href="{{ url_for('index') }}" class="main-nav-item{% if main_active_page == 'home' %} active{% endif %}">Home</a>
     {% if prezs | length == 1 %}
-        {% if prezs[0] == "VocPrez" %}
+        {% if prezs[0] == "vocprez" %}
             <a href="{{ url_for('schemes') }}" class="main-nav-item{% if sub_active_page == 'vocabs' %} active{% endif %}">Vocabs</a>
             <a href="{{ url_for('collections') }}" class="main-nav-item{% if sub_active_page == 'collections' %} active{% endif %}">Collections</a>
-        {% elif prezs[0] == "SpacePrez" %}
+        {% elif prezs[0] == "spaceprez" %}
             <a href="{{ url_for('datasets') }}" class="main-nav-item{% if sub_active_page == 'datasets' %} active{% endif %}">Datasets</a>
             <a href="{{ url_for('conformance') }}" class="main-nav-item{% if sub_active_page == 'conformance' %} active{% endif %}">Conformance</a>
         {% endif %}
@@ -12,7 +12,7 @@
         {% for prez in prezs %}
             {% set prez_lower = prez | lower %}
             <div class="main-nav-item prez-item{% if main_active_page == prez %} active{% elif active_prez == prez %} active-prez{% endif %}">
-                <a href="/{{ prez_lower }}">{{ prez }}</a>
+                <a href="/{{ prez_lower }}">{{ prez | prez_title }}</a>
                 <button class="btn"><i class="far fa-angle-down"></i></button>
             </div>
             {% if active_prez == prez %}
