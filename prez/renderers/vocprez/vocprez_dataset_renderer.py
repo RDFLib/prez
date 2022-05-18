@@ -37,7 +37,7 @@ class VocPrezDatasetRenderer(Renderer):
             "uri": self.instance_uri,
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
-            "mediatype_names": MEDIATYPE_NAMES
+            "mediatype_names": MEDIATYPE_NAMES,
         }
         if template_context is not None:
             _template_context.update(template_context)
@@ -102,7 +102,7 @@ class VocPrezDatasetRenderer(Renderer):
         """Renders the DCAT profile for a dataset"""
         if self.mediatype == "text/html":
             return self._render_dcat_html(template_context)
-        else: # all other formats are RDF
+        else:  # all other formats are RDF
             return self._render_dcat_rdf()
 
     def _generate_sdo_rdf(self) -> Graph:

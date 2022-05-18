@@ -29,12 +29,11 @@ class SpacePrezDataset(PrezModel):
             raise ValueError("Either an ID or a URI must be provided")
 
         query_by_id = f"""
-            ?d dcterms:identifier ?id .
-            FILTER (STR(?id) = "{id}")
+            ?d dcterms:identifier "{id}"^^xsd:token .
         """
 
         query_by_uri = f"""
-            BIND (<{uri}> as ?d) 
+            BIND (<{uri}> as ?d)
             ?d dcterms:identifier ?id .
         """
 

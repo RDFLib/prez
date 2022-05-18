@@ -20,6 +20,7 @@ async def count_schemes():
     else:
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
+
 async def list_schemes(page: int, per_page: int):
     q = f"""
         PREFIX dcterms: <{DCTERMS}>
@@ -40,6 +41,7 @@ async def list_schemes(page: int, per_page: int):
     else:
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
+
 async def count_collections():
     q = f"""
         PREFIX skos: <{SKOS}>
@@ -53,6 +55,7 @@ async def count_collections():
         return r[1]
     else:
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
+
 
 async def list_collections(page: int, per_page: int):
     q = f"""

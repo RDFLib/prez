@@ -44,8 +44,7 @@ async def datasets(
 ):
     """Returns a list of SpacePrez dcat:Datasets in the necessary profile & mediatype"""
     dataset_count, sparql_result = await asyncio.gather(
-        count_datasets(),
-        list_datasets(page, per_page)
+        count_datasets(), list_datasets(page, per_page)
     )
     dataset_list = SpacePrezDatasetList(sparql_result)
     dataset_list_renderer = SpacePrezDatasetListRenderer(
@@ -56,7 +55,7 @@ async def datasets(
         dataset_list,
         page,
         per_page,
-        int(dataset_count[0]["count"]["value"])
+        int(dataset_count[0]["count"]["value"]),
     )
     return dataset_list_renderer.render()
 
@@ -103,8 +102,7 @@ async def feature_collections(
 ):
     """Returns a list of SpacePrez geo:FeatureCollections in the necessary profile & mediatype"""
     collection_count, sparql_result = await asyncio.gather(
-        count_collections(dataset_id),
-        list_collections(dataset_id, page, per_page)
+        count_collections(dataset_id), list_collections(dataset_id, page, per_page)
     )
     feature_collection_list = SpacePrezFeatureCollectionList(sparql_result)
     feature_collection_list_renderer = SpacePrezFeatureCollectionListRenderer(
@@ -115,7 +113,7 @@ async def feature_collections(
         feature_collection_list,
         page,
         per_page,
-        int(collection_count[0]["count"]["value"])
+        int(collection_count[0]["count"]["value"]),
     )
     return feature_collection_list_renderer.render()
 
@@ -188,7 +186,7 @@ async def features(
     """Returns a list of SpacePrez geo:Features in the necessary profile & mediatype"""
     feature_count, sparql_result = await asyncio.gather(
         count_features(dataset_id, collection_id),
-        list_features(dataset_id, collection_id, page, per_page)
+        list_features(dataset_id, collection_id, page, per_page),
     )
     feature_list = SpacePrezFeatureList(sparql_result)
     feature_list_renderer = SpacePrezFeatureListRenderer(
@@ -199,7 +197,7 @@ async def features(
         feature_list,
         page,
         per_page,
-        int(feature_count[0]["count"]["value"])
+        int(feature_count[0]["count"]["value"]),
     )
     return feature_list_renderer.render()
 

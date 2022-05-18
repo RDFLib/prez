@@ -79,7 +79,7 @@ class SpacePrezHomeRenderer(Renderer):
                     "type": self.mediatype,
                     "title": "Datasets",
                 },
-            ]
+            ],
         }
 
         return JSONResponse(

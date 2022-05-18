@@ -24,7 +24,7 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
         comment: str,
         page: int,
         per_page: int,
-        member_count: int
+        member_count: int,
     ) -> None:
         profiles.update({"mem": mem})
 
