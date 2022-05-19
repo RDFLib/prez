@@ -46,9 +46,7 @@ class VocPrezDataset(PrezModel):
         properties.extend(
             sorted(
                 main_props,
-                key=lambda p: self._sort_within_list(
-                    p, VocPrezDataset.main_props
-                ),
+                key=lambda p: self._sort_within_list(p, VocPrezDataset.main_props),
             )
         )
         properties.extend(other_props)

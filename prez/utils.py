@@ -45,9 +45,11 @@ def append_qsa(uri: str, qsas: Dict[str, str]) -> str:
             path += f"&{qsa[0]}={qsa[1]}"
     return path
 
+
 def file_exists(path: str) -> bool:
     """Checks whether a file exists"""
     return os.path.isfile(path)
+
 
 def match(s: str, pattern: str) -> bool:
     """Matches a string to a regex pattern"""
@@ -55,6 +57,7 @@ def match(s: str, pattern: str) -> bool:
         return True
     else:
         return False
+
 
 template_list = ["templates"]
 if THEME_VOLUME is not None:

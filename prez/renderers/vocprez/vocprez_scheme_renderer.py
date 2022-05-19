@@ -35,9 +35,10 @@ class VocPrezSchemeRenderer(Renderer):
 
     def set_scheme(self, scheme: VocPrezScheme) -> None:
         self.scheme = scheme
-    
+
     def _generate_skos_rdf(self) -> Graph:
-        r = self.scheme.graph.query(f"""
+        r = self.scheme.graph.query(
+            f"""
             PREFIX skos: <{SKOS}>
             CONSTRUCT {{
                 ?cs ?cs_pred ?cs_o .
@@ -51,7 +52,8 @@ class VocPrezSchemeRenderer(Renderer):
                     ?c_pred ?c_o .
                 FILTER (STRSTARTS(STR(?c_pred), STR(skos:)))
             }}
-        """)
+        """
+        )
 
         g = r.graph
         g.bind("skos", SKOS)
@@ -78,9 +80,10 @@ class VocPrezSchemeRenderer(Renderer):
     def _render_dd(self):
         """Renders the dd profile for a scheme"""
         return self._render_dd_json()
-    
+
     def _generate_vocpub_rdf(self) -> Graph:
-        r = self.scheme.graph.query(f"""
+        r = self.scheme.graph.query(
+            f"""
             PREFIX dcterms: <{DCTERMS}>
             PREFIX prov: <{PROV}>
             PREFIX skos: <{SKOS}>
@@ -122,7 +125,8 @@ class VocPrezSchemeRenderer(Renderer):
                     ?c skos:narrower ?narrower .
                 }}
             }}
-        """)
+        """
+        )
 
         g = r.graph
         g.bind("dcterms", DCTERMS)
@@ -164,7 +168,7 @@ class VocPrezSchemeRenderer(Renderer):
             "uri": self.instance_uri,
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
-            "mediatype_names": MEDIATYPE_NAMES
+            "mediatype_names": MEDIATYPE_NAMES,
         }
         if template_context is not None:
             _template_context.update(template_context)

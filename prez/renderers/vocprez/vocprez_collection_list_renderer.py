@@ -23,7 +23,7 @@ class VocPrezCollectionListRenderer(ListRenderer):
         collection_list: VocPrezCollectionList,
         page: int,
         per_page: int,
-        member_count: int
+        member_count: int,
     ) -> None:
         super().__init__(
             request,
@@ -35,7 +35,7 @@ class VocPrezCollectionListRenderer(ListRenderer):
             comment,
             page,
             per_page,
-            member_count
+            member_count,
         )
         self.collection_list = collection_list
 
@@ -50,12 +50,14 @@ class VocPrezCollectionListRenderer(ListRenderer):
             "comment": self.comment,
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
-            "mediatype_names": MEDIATYPE_NAMES
+            "mediatype_names": MEDIATYPE_NAMES,
         }
         if template_context is not None:
             _template_context.update(template_context)
         return templates.TemplateResponse(
-            "vocprez/vocprez_collections.html", context=_template_context, headers=self.headers
+            "vocprez/vocprez_collections.html",
+            context=_template_context,
+            headers=self.headers,
         )
 
     def _render_dcat_json(self):
@@ -80,7 +82,7 @@ class VocPrezCollectionListRenderer(ListRenderer):
             return self._render_dcat_rdf()
         else:  # application/json
             return self._render_dcat_json()
-    
+
     def _render_dd_json(self) -> JSONResponse:
         """Renders the json representation of the dd profile for a list of collections"""
         return JSONResponse(
