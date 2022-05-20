@@ -69,7 +69,7 @@ async def list_collections(page: int, per_page: int):
             OPTIONAL {{
                 ?coll dcterms:description ?desc .
             }}
-            FILTER(lang(?label) = "" || lang(?label) = "en")
+            FILTER(lang(?label) = "" || lang(?label) = "en" || lang(?label) = "en-AU")
         }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
     """
     r = await sparql_query(q, "VocPrez")

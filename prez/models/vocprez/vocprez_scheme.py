@@ -36,7 +36,7 @@ class VocPrezScheme(PrezModel):
         """
 
         query_by_uri = f"""
-            BIND (<{uri}> as ?cs) 
+            BIND (<{uri}> as ?cs)
             ?cs dcterms:identifier ?id .
         """
 
@@ -84,7 +84,7 @@ class VocPrezScheme(PrezModel):
             WHERE {{
                 ?c skos:inScheme <{self.uri}> ;
                     rdfs:label|skos:prefLabel|dcterms:title ?label .
-                FILTER (lang(?label) = "" || LANG(?label) = "en")
+                FILTER (lang(?label) = "" || lang(?label) = "en" || lang(?label) = "en-AU")
             }}
         """
         )

@@ -40,6 +40,7 @@ async def home(request: Request):
     return home_renderer.render()
 
 
+@cached(cache=Cache.MEMORY)
 @router.get(
     "/spaceprez", summary="SpacePrez Home", include_in_schema=len(ENABLED_PREZS) > 1
 )
@@ -48,6 +49,7 @@ async def spaceprez_home(request: Request):
     return await home(request)
 
 
+@cached(cache=Cache.MEMORY)
 @router.get("/datasets", summary="List Datasets")
 async def datasets(
     request: Request,
@@ -72,6 +74,7 @@ async def datasets(
     return dataset_list_renderer.render(alt_profiles_graph=profiles[0])
 
 
+@cached(cache=Cache.MEMORY)
 @router.get("/dataset/{dataset_id}", summary="Get Dataset")
 async def dataset(request: Request, dataset_id: str):
     """Returns a SpacePrez dcat:Dataset in the necessary profile & mediatype"""
@@ -105,6 +108,7 @@ async def dataset_endpoint(
 
 
 # feature collections
+@cached(cache=Cache.MEMORY)
 @router.get("/dataset/{dataset_id}/collections", summary="List FeatureCollections")
 async def feature_collections(
     request: Request,
@@ -133,6 +137,7 @@ async def feature_collections(
 
 
 # feature collection
+@cached(cache=Cache.MEMORY)
 @router.get(
     "/dataset/{dataset_id}/collections/{collection_id}",
     summary="Get FeatureCollections",
@@ -186,6 +191,7 @@ async def feature_collection_endpoint(
 
 
 # features
+@cached(cache=Cache.MEMORY)
 @router.get(
     "/dataset/{dataset_id}/collections/{collection_id}/items",
     summary="List Features",
@@ -216,7 +222,6 @@ async def features(
     return feature_list_renderer.render()
 
 
-@cached(cache=Cache.MEMORY, ttl=3600)
 async def feature_endpoint(
     request: Request,
     dataset_id: Optional[str] = None,
@@ -299,6 +304,7 @@ async def feature_endpoint(
 
 
 # feature
+@cached(cache=Cache.MEMORY, ttl=3600)
 @router.get(
     "/dataset/{dataset_id}/collections/{collection_id}/items/{feature_id}",
     summary="Get Feature",
@@ -322,6 +328,7 @@ async def about(request: Request):
     )
 
 
+@cached(cache=Cache.MEMORY)
 @router.get(
     "/spaceprez-about",
     summary="SpacePrez About",
@@ -333,6 +340,7 @@ async def spaceprez_about(request: Request):
 
 
 # profiles
+@cached(cache=Cache.MEMORY)
 @router.get(
     "/spaceprez-profiles",
     summary="SpacePrez Profiles",
@@ -344,6 +352,7 @@ async def spaceprez_profiles(request: Request):
 
 
 # conform
+@cached(cache=Cache.MEMORY)
 @router.get("/conformance", summary="Conformance")
 async def conformance(request: Request):
     """Returns the SpacePrez conformance page in the necessary profile & mediatype"""

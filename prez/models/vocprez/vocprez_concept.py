@@ -40,7 +40,7 @@ class VocPrezConcept(PrezModel):
         """
 
         query_by_uri = f"""
-            BIND (<{uri}> as ?c) 
+            BIND (<{uri}> as ?c)
             ?c dcterms:identifier ?id .
         """
 
@@ -121,7 +121,7 @@ class VocPrezConcept(PrezModel):
                 ?broader dcterms:identifier ?id ;
                     rdfs:label|skos:prefLabel|dcterms:title ?label ;
                     skos:inScheme/dcterms:identifier ?cs_id .
-                FILTER(lang(?label) = "" || lang(?label) = "en")
+                FILTER(lang(?label) = "" || lang(?label) = "en" || lang(?label) = "en-AU")
             }}
         """
         )
@@ -147,7 +147,7 @@ class VocPrezConcept(PrezModel):
                 ?narrower dcterms:identifier ?id ;
                     rdfs:label|skos:prefLabel|dcterms:title ?label ;
                     skos:inScheme/dcterms:identifier ?cs_id .
-                FILTER(lang(?label) = "" || lang(?label) = "en")
+                FILTER(lang(?label) = "" || lang(?label) = "en" || lang(?label) = "en-AU")
             }}
         """
         )
