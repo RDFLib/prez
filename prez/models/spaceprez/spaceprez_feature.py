@@ -48,12 +48,16 @@ class SpacePrezFeature(PrezModel):
             PREFIX rdfs: <{RDFS}>
             PREFIX skos: <{SKOS}>
             PREFIX xsd: <{XSD}>
+            PREFIX dcat: <{DCAT}>
             SELECT *
             WHERE {{
                 {query_by_id if id is not None else query_by_uri}
-                ?f a geo:Feature ;
-                    dcterms:title ?title .
-                FILTER(lang(?title) = "" || lang(?title) = "en")
+                ?f a geo:Feature .
+                OPTIONAL {{
+                    ?f dcterms:title ?label .
+                    # ?f rdfs:label ?label .
+                }}
+                BIND(COALESCE(?label, CONCAT("Feature ", ?id)) AS ?title)
                 OPTIONAL {{
                     ?f dcterms:description ?desc .
                 }}
