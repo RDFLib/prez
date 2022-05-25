@@ -21,26 +21,37 @@ from utils import templates
 from view_funcs import profiles_func
 from config import *
 
+PREZ = Namespace("https://surroundaustralia.com/prez/")
+
 router = APIRouter(tags=["SpacePrez"] if len(ENABLED_PREZS) > 1 else [])
 
 
+@alru_cache(maxsize=20)
 async def home(request: Request):
     # return templates.TemplateResponse(
     #     "spaceprez/spaceprez_home.html", {"request": request}
     # )
+    (
+        profiles_g,
+        preferred_classes_and_profiles,
+        profiles,
+        profiles_formats,
+    ) = await get_all_profiles(PREZ.HomePage)
+    available_profiles, default_profile = await get_available_profiles(
+        None,
+        preferred_classes_and_profiles,
+    )
+
     home_renderer = SpacePrezHomeRenderer(
         request,
-        str(
-            request.url.remove_query_params(
-                keys=[key for key in request.query_params.keys() if key != "uri"]
-            )
-        ),
+        profiles,
+        default_profile,
+        str(request.url.remove_query_params(keys=request.query_params.keys())),
     )
 
     return home_renderer.render()
 
 
-@cached(cache=Cache.MEMORY)
 @router.get(
     "/spaceprez", summary="SpacePrez Home", include_in_schema=len(ENABLED_PREZS) > 1
 )
@@ -49,7 +60,6 @@ async def spaceprez_home(request: Request):
     return await home(request)
 
 
-@cached(cache=Cache.MEMORY)
 @router.get("/datasets", summary="List Datasets")
 async def datasets(
     request: Request,
@@ -58,7 +68,7 @@ async def datasets(
 ):
     """Returns a list of SpacePrez dcat:Datasets in the necessary profile & mediatype"""
     dataset_count, sparql_result, profiles = await asyncio.gather(
-        count_datasets(), list_datasets(page, per_page), get_all_profiles()
+        count_datasets(), list_datasets(page, per_page), get_all_profiles(DCAT.Dataset)
     )
     dataset_list = SpacePrezDatasetList(sparql_result)
     dataset_list_renderer = SpacePrezDatasetListRenderer(
@@ -74,26 +84,43 @@ async def datasets(
     return dataset_list_renderer.render(alt_profiles_graph=profiles[0])
 
 
-@cached(cache=Cache.MEMORY)
 @router.get("/dataset/{dataset_id}", summary="Get Dataset")
 async def dataset(request: Request, dataset_id: str):
     """Returns a SpacePrez dcat:Dataset in the necessary profile & mediatype"""
     return await dataset_endpoint(request, dataset_id=dataset_id)
 
 
+@alru_cache(maxsize=20)
 async def dataset_endpoint(
     request: Request,
     dataset_id: Optional[str] = None,
     dataset_uri: Optional[str] = None,
 ):
-    dataset_renderer = SpacePrezDatasetRenderer(
-        request,
-        str(
-            request.url.remove_query_params(
-                keys=[key for key in request.query_params.keys() if key != "uri"]
-            )
-        ),
+    (
+        profiles_g,
+        preferred_classes_and_profiles,
+        profiles,
+        profiles_formats,
+    ) = await get_all_profiles(DCAT.Dataset)
+
+    if not dataset_uri:
+        dataset_uri = await get_uri(dataset_id, URIRef(DCAT.Dataset))
+
+    available_profiles, default_profile = await get_available_profiles(
+        dataset_uri,
+        preferred_classes_and_profiles,
     )
+
+    dataset_renderer = SpacePrezDatasetRenderer(
+        request, profiles, default_profile, dataset_uri
+    )
+
+    profile = dataset_renderer.profile
+    if profile == "alt":
+        alt_profiles_graph = await build_alt_graph(
+            URIRef(dataset_uri), profiles_formats, available_profiles
+        )
+        return dataset_renderer.render(alt_profiles_graph=alt_profiles_graph)
 
     sparql_result = await get_dataset_construct(
         dataset_id=dataset_id,
@@ -108,7 +135,6 @@ async def dataset_endpoint(
 
 
 # feature collections
-@cached(cache=Cache.MEMORY)
 @router.get("/dataset/{dataset_id}/collections", summary="List FeatureCollections")
 async def feature_collections(
     request: Request,
@@ -120,7 +146,7 @@ async def feature_collections(
     collection_count, sparql_result, profiles = await asyncio.gather(
         count_collections(dataset_id),
         list_collections(dataset_id, page, per_page),
-        get_all_profiles(),
+        get_all_profiles(GEO.FeatureCollection),
     )
     feature_collection_list = SpacePrezFeatureCollectionList(sparql_result)
     feature_collection_list_renderer = SpacePrezFeatureCollectionListRenderer(
@@ -137,7 +163,6 @@ async def feature_collections(
 
 
 # feature collection
-@cached(cache=Cache.MEMORY)
 @router.get(
     "/dataset/{dataset_id}/collections/{collection_id}",
     summary="Get FeatureCollections",
@@ -149,19 +174,26 @@ async def feature_collection(request: Request, dataset_id: str, collection_id: s
     )
 
 
+@alru_cache(maxsize=20)
 async def feature_collection_endpoint(
     request: Request,
     dataset_id: Optional[str] = None,
     collection_id: Optional[str] = None,
     collection_uri: Optional[str] = None,
 ):
+    (
+        profiles_g,
+        preferred_classes_and_profiles,
+        profiles,
+        profiles_formats,
+    ) = await get_all_profiles(GEO.FeatureCollection)
+    available_profiles, default_profile = await get_available_profiles(
+        collection_uri,
+        preferred_classes_and_profiles,
+    )
+
     collection_renderer = SpacePrezFeatureCollectionRenderer(
-        request,
-        str(
-            request.url.remove_query_params(
-                keys=[key for key in request.query_params.keys() if key != "uri"]
-            )
-        ),
+        request, available_profiles, default_profile
     )
 
     results = await asyncio.gather(
@@ -191,7 +223,7 @@ async def feature_collection_endpoint(
 
 
 # features
-@cached(cache=Cache.MEMORY)
+@alru_cache(maxsize=20)
 @router.get(
     "/dataset/{dataset_id}/collections/{collection_id}/items",
     summary="List Features",
@@ -222,6 +254,7 @@ async def features(
     return feature_list_renderer.render()
 
 
+@alru_cache(maxsize=20)
 async def feature_endpoint(
     request: Request,
     dataset_id: Optional[str] = None,
@@ -234,7 +267,7 @@ async def feature_endpoint(
         preferred_classes_and_profiles,
         profiles,
         profiles_formats,
-    ) = await get_all_profiles()
+    ) = await get_all_profiles(GEO.Feature)
     if not feature_uri:
         feature_uri, feature_classes = await get_feature_uri_and_classes(
             feature_id=feature_id
@@ -243,7 +276,7 @@ async def feature_endpoint(
         _, feature_classes = get_feature_uri_and_classes(feature_uri=feature_uri)
 
     # find the available profiles
-    available_profiles = await get_available_profiles(
+    available_profiles, default_profile = await get_available_profiles(
         feature_uri,
         preferred_classes_and_profiles,
     )
@@ -254,10 +287,6 @@ async def feature_endpoint(
             most_specific_class = klass
             break
 
-    # set the default profile
-    default_profile = available_profiles[-1]
-
-    # determine which profile to use
     feature_renderer = SpacePrezFeatureRenderer(
         request,
         str(
@@ -269,7 +298,6 @@ async def feature_endpoint(
         default_profile=default_profile,
     )
     profile = feature_renderer.profile
-    alt_profiles_graph = None
     if profile == "alt":
         alt_profiles_graph = await build_alt_graph(
             URIRef(feature_uri), profiles_formats, available_profiles
@@ -304,7 +332,6 @@ async def feature_endpoint(
 
 
 # feature
-@cached(cache=Cache.MEMORY, ttl=3600)
 @router.get(
     "/dataset/{dataset_id}/collections/{collection_id}/items/{feature_id}",
     summary="Get Feature",
@@ -322,13 +349,13 @@ async def feature(
 
 
 # about
+@alru_cache(maxsize=20)
 async def about(request: Request):
     return templates.TemplateResponse(
         "spaceprez/spaceprez_about.html", {"request": request}
     )
 
 
-@cached(cache=Cache.MEMORY)
 @router.get(
     "/spaceprez-about",
     summary="SpacePrez About",
@@ -340,7 +367,6 @@ async def spaceprez_about(request: Request):
 
 
 # profiles
-@cached(cache=Cache.MEMORY)
 @router.get(
     "/spaceprez-profiles",
     summary="SpacePrez Profiles",
@@ -352,13 +378,13 @@ async def spaceprez_profiles(request: Request):
 
 
 # conform
-@cached(cache=Cache.MEMORY)
 @router.get("/conformance", summary="Conformance")
 async def conformance(request: Request):
     """Returns the SpacePrez conformance page in the necessary profile & mediatype"""
     # return templates.TemplateResponse(
     #     "spaceprez/spaceprez_conformance.html", {"request": request}
     # )
+
     conformance_renderer = SpacePrezConformanceRenderer(
         request,
         str(

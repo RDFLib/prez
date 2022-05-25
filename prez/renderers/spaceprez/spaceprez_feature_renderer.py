@@ -7,15 +7,13 @@ from connegp import MEDIATYPE_NAMES, RDF_MEDIATYPES
 
 from config import *
 from renderers import Renderer
-from profiles.spaceprez_profiles import oai, geo, gas
+
+# from profiles.spaceprez_profiles import oai, geo, gas
 from models.spaceprez import SpacePrezFeature
 from utils import templates
 
 
 class SpacePrezFeatureRenderer(Renderer):
-    profiles = {"oai": oai, "geo": geo, "gas": gas}
-    default_profile_token = "gas"
-
     def __init__(
         self,
         request: object,
@@ -23,12 +21,8 @@ class SpacePrezFeatureRenderer(Renderer):
         available_profiles: dict,
         default_profile: str,
     ) -> None:
-        # profiles = ...
-        # default_profile_token = ...
         super().__init__(
             request,
-            # SpacePrezFeatureRenderer.profiles,
-            # SpacePrezFeatureRenderer.default_profile_token,
             available_profiles,
             default_profile,
             instance_uri,
@@ -58,14 +52,6 @@ class SpacePrezFeatureRenderer(Renderer):
             context=_template_context,
             headers=self.headers,
         )
-
-    # def _render_oai_json(self) -> JSONResponse:
-    #     """Renders the JSON representation of the OAI profile for a feature"""
-    #     return JSONResponse(
-    #         content={"test": "test"},
-    #         media_type="application/json",
-    #         headers=self.headers,
-    #     )
 
     def _render_oai_geojson(self) -> JSONResponse:
         """Renders the GeoJSON representation of the OAI profile for a feature"""
@@ -169,15 +155,10 @@ class SpacePrezFeatureRenderer(Renderer):
     ]:
         if self.error is not None:
             return PlainTextResponse(self.error, status_code=400)
-        # elif self.profile == "alt":
-        #     return self._render_alt(
-        #         template_context, alt_profiles_graph=alt_profiles_graph
-        #     )
-        # elif self.profile == "oai":
-        #     return self._render_oai(template_context)
-        # elif self.profile == "geo":
-        #     return self._render_geo()
-        # else:
+        elif self.profile == "alt":
+            return self._render_alt(
+                template_context, alt_profiles_graph=alt_profiles_graph
+            )
         elif self.mediatype == "text/html":
             return self._render_oai_html(template_context)
         elif self.mediatype == "application/geo+json":

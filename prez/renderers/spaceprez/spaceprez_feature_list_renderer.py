@@ -7,14 +7,15 @@ from connegp import MEDIATYPE_NAMES
 
 from renderers import ListRenderer
 from config import *
-from profiles.spaceprez_profiles import oai, dd
+
+# from profiles.spaceprez_profiles import oai, dd
 from models.spaceprez import SpacePrezFeatureList
 from utils import templates
 
 
 class SpacePrezFeatureListRenderer(ListRenderer):
-    profiles = {"oai": oai, "dd": dd}
-    default_profile_token = "oai"
+    # profiles = {"oai": oai, "dd": dd}
+    # default_profile_token = "oai"
 
     def __init__(
         self,

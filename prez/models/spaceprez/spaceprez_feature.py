@@ -31,8 +31,8 @@ class SpacePrezFeature(PrezModel):
             raise ValueError("Either an ID or a URI must be provided")
 
         query_by_id = f"""
-            ?f dcterms:identifier ?id .
-            FILTER (STR(?id) = "{id}")
+            ?f dcterms:identifier "{id}"^^xsd:token .
+            BIND("{id}"^^xsd:token as ?id)
         """
 
         query_by_uri = f"""
@@ -53,10 +53,10 @@ class SpacePrezFeature(PrezModel):
                 {query_by_id if id is not None else query_by_uri}
                 ?f a geo:Feature .
                 OPTIONAL {{
-                    ?f dcterms:title ?label .
-                    # ?f rdfs:label ?label .
+                    # ?f dcterms:title ?label .
+                    ?f rdfs:label ?label .
                 }}
-                BIND(COALESCE(?label, CONCAT("Feature ", ?id)) AS ?title)
+                BIND(COALESCE(?label, CONCAT("Feature ", STR(?id))) AS ?title)
                 OPTIONAL {{
                     ?f dcterms:description ?desc .
                 }}

@@ -7,14 +7,15 @@ from connegp import MEDIATYPE_NAMES
 
 from config import *
 from renderers import Renderer
-from profiles.spaceprez_profiles import oai, geo
+
+# from profiles.spaceprez_profiles import oai, geo
 from models.spaceprez import SpacePrezFeatureCollection
 from utils import templates
 
 
 class SpacePrezFeatureCollectionRenderer(Renderer):
-    profiles = {"oai": oai, "geo": geo}
-    default_profile_token = "oai"
+    # profiles = {"oai": oai, "geo": geo}
+    # default_profile_token = "oai"
 
     def __init__(self, request: object, instance_uri: str) -> None:
         super().__init__(

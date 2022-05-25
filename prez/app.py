@@ -95,20 +95,77 @@ async def validation_exception_handler(request: Request, exc):
 
 @app.on_event("startup")
 async def app_startup():
-    while True:
-        try:
+    """
+    This function runs at startup and will continually poll the separate backends until their SPARQL endpoints
+    are available. Initial caching can be triggered within the try block. NB this function does not check that data is
+    appropriately configured at the SPARQL endpoint(s), only that the SPARQL endpoint(s) are reachable.
+    """
+    if "SpacePrez" in ENABLED_PREZS:
+        while True:
             url = urlparse(SPACEPREZ_SPARQL_ENDPOINT)
-            response = httpx.get(f"{url[0]}://{url[1]}")
-            if response.status_code == 200:
-                await get_all_profiles()
+            try:
+                httpx.get(f"{url[0]}://{url[1]}")
+                await get_all_profiles(DCAT.Dataset)
+                await get_all_profiles(GEO.FeatureCollection)
+                await get_all_profiles(GEO.Feature)
+                print(
+                    f"Successfully able to connect to SpacePrez endpoint {SPACEPREZ_SPARQL_ENDPOINT}"
+                )
                 break
-        except Exception as e:
-            print(e)
-            print(
-                f"Waiting for SPACEPREZ_SPARQL_ENDPOINT ({SPACEPREZ_SPARQL_ENDPOINT}) to be available."
-            )
-            print("retrying in 3 seconds...")
-            time.sleep(3)
+            except Exception:
+                print(
+                    f"Failed to connect to SpacePrez endpoint {SPACEPREZ_SPARQL_ENDPOINT}"
+                )
+                print("retrying in 3 seconds...")
+                time.sleep(3)
+
+    if "VocPrez" in ENABLED_PREZS:
+        while True:
+            url = urlparse(VOCPREZ_SPARQL_ENDPOINT)
+            try:
+                httpx.get(f"{url[0]}://{url[1]}")
+                print(
+                    f"Successfully able to connect to VocPrez endpoint {VOCPREZ_SPARQL_ENDPOINT}"
+                )
+                break
+            except Exception:
+                print(
+                    f"Failed to connect to VocPrez endpoint {VOCPREZ_SPARQL_ENDPOINT}"
+                )
+                print("retrying in 3 seconds...")
+                time.sleep(3)
+
+    if "TimePrez" in ENABLED_PREZS:
+        while True:
+            url = urlparse(TIMEPREZ_SPARQL_ENDPOINT)
+            try:
+                httpx.get(f"{url[0]}://{url[1]}")
+                print(
+                    f"Successfully able to connect to TimePrez endpoint {TIMEPREZ_SPARQL_ENDPOINT}"
+                )
+                break
+            except Exception:
+                print(
+                    f"Failed to connect to TimePrez endpoint {TIMEPREZ_SPARQL_ENDPOINT}"
+                )
+                print("retrying in 3 seconds...")
+                time.sleep(3)
+
+    if "CatPrez" in ENABLED_PREZS:
+        while True:
+            url = urlparse(CATPREZ_SPARQL_ENDPOINT)
+            try:
+                httpx.get(f"{url[0]}://{url[1]}")
+                print(
+                    f"Successfully able to connect to CatPrez endpoint {CATPREZ_SPARQL_ENDPOINT}"
+                )
+                break
+            except Exception:
+                print(
+                    f"Failed to connect to CatPrez endpoint {CATPREZ_SPARQL_ENDPOINT}"
+                )
+                print("retrying in 3 seconds...")
+                time.sleep(3)
 
 
 async def object_page(request: Request):

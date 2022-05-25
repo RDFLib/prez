@@ -5,13 +5,14 @@ from connegp import MEDIATYPE_NAMES
 
 from config import *
 from renderers import Renderer
-from profiles.spaceprez_profiles import oai
+
+# from profiles.spaceprez_profiles import oai
 from utils import templates
 
 
 class SpacePrezConformanceRenderer(Renderer):
-    profiles = {"oai": oai}
-    default_profile_token = "oai"
+    # profiles = {"oai": oai}
+    # default_profile_token = "oai"
     conformsTo = [
         {
             "title": "Conformance Class Core",

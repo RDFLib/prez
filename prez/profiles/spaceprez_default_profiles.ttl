@@ -1,9 +1,11 @@
 PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
 PREFIX dcat: <http://www.w3.org/ns/dcat#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX ex: <http://example.org/ns#>
 PREFIX gas: <http://pid.geoscience.gov.au/def/ga-sampling/>
 PREFIX geo: <http://www.opengis.net/ont/geosparql#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX prez: <https://surroundaustralia.com/prez/>
 PREFIX prof: <http://www.w3.org/ns/dx/prof/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
@@ -22,7 +24,7 @@ altr-ext:hasResourceFormat owl:propertyChainAxiom ( dcterms:conformsTo dcterms:f
         dcat:Dataset ,
         geo:Feature ,
         geo:FeatureCollection ;
-    altr-ext:hasResourceFormat "text/html", "application/vnd.geo+json";
+    altr-ext:hasResourceFormat "text/turtle", "application/ld+json", "application/rdf+xml", "text/html", "application/vnd.geo+json";
     altr-ext:hasDefaultResourceFormat "text/html" ;
 .
 
@@ -42,6 +44,33 @@ altr-ext:hasResourceFormat owl:propertyChainAxiom ( dcterms:conformsTo dcterms:f
     dcterms:identifier "geo";
     a prof:Profile ;
     altr-ext:constrainsClass
+        geo:Feature ,
+        geo:FeatureCollection ;
+    altr-ext:hasResourceFormat "text/turtle", "application/ld+json", "application/rdf+xml", "text/html" ;
+    altr-ext:hasDefaultResourceFormat "text/html" ;
+.
+
+<http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile>
+    rdfs:label "Alternates Profile" ;
+    dcterms:description "The representation of the resource that lists all other representations (profiles and Media Types)" ;
+    dcterms:identifier "alt";
+    a prof:Profile ;
+    altr-ext:constrainsClass
+        dcat:Dataset ,
+        geo:Feature ,
+        geo:FeatureCollection ;
+    altr-ext:hasResourceFormat "text/turtle", "application/ld+json", "application/rdf+xml", "text/html" ;
+    altr-ext:hasDefaultResourceFormat "text/html" ;
+.
+
+<http://www.opengis.net/spec/ogcapi-features-1/1.0/req/oas30>
+    rdfs:label "OpenAPI 3.0" ;
+    dcterms:description "The OpenAPI Specification (OAS) defines a standard, language-agnostic interface to RESTful APIs which allows both humans and computers to discover and understand the capabilities of the service without access to source code, documentation, or through network traffic inspection." ;
+    dcterms:identifier "oai";
+    a prof:Profile ;
+    altr-ext:constrainsClass
+        prez:HomePage ,
+        dcat:Dataset ,
         geo:Feature ,
         geo:FeatureCollection ;
     altr-ext:hasResourceFormat "text/turtle", "application/ld+json", "application/rdf+xml", "text/html" ;
