@@ -1,12 +1,14 @@
 from typing import Optional
 
-from fastapi import Request
+from async_lru import alru_cache
 from connegp import Profile
+from fastapi import Request
 
-from renderers import ProfilesRenderer
 from config import ENABLED_PREZS
+from renderers import ProfilesRenderer
 
 
+@alru_cache(maxsize=20)
 async def profiles_func(request: Request, prez: Optional[str] = None):
     profiles_filenames = ["profiles.prez_profiles"]
     if prez == "VocPrez":

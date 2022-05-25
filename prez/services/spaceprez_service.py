@@ -1,9 +1,8 @@
 from typing import Optional
 
-from aiocache import cached, Cache
-from rdflib.namespace import RDFS, DCAT, DCTERMS, XSD
+from async_lru import alru_cache
+from rdflib.namespace import XSD
 
-from config import *
 from services.sparql_utils import *
 
 
@@ -253,28 +252,8 @@ async def get_collection_construct_2(
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
-@cached(cache=Cache.MEMORY)
+@alru_cache(maxsize=20)
 async def count_features(dataset_id: str, collection_id: str):
-    # q = f"""
-    #     PREFIX dcat: <{DCAT}>
-    #     PREFIX dcterms: <{DCTERMS}>
-    #     PREFIX geo: <{GEO}>
-    #     PREFIX rdfs: <{RDFS}>
-    #     PREFIX xsd: <{XSD}>
-    #
-    #     SELECT (COUNT(?f) as ?count)
-    #     WHERE {{
-    #         ?d dcterms:identifier ?d_id ;
-    #             a dcat:Dataset ;
-    #             rdfs:member ?coll .
-    #         FILTER (STR(?d_id) = "{dataset_id}" && DATATYPE(?d_id) = xsd:token)
-    #         ?coll dcterms:identifier ?coll_id ;
-    #             a geo:FeatureCollection ;
-    #             rdfs:member ?f .
-    #         FILTER (STR(?coll_id) = "{collection_id}" && DATATYPE(?coll_id) = xsd:token)
-    #         ?f a geo:Feature .
-    #     }}
-    # """
     q = f"""
     PREFIX dcterms: <http://purl.org/dc/terms/>
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -282,7 +261,8 @@ async def count_features(dataset_id: str, collection_id: str):
 
     SELECT (COUNT(?f) as ?count)
     WHERE {{
-      ?coll dcterms:identifier "{collection_id}"^^xsd:token ;
+        ?dataset dcterms:identifier "{dataset_id}"^^xsd:token ;
+            rdfs:member / dcterms:identifier "{collection_id}"^^xsd:token ;
                                          rdfs:member ?f .
     }}
     """
@@ -293,7 +273,7 @@ async def count_features(dataset_id: str, collection_id: str):
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
-@cached(cache=Cache.MEMORY)
+@alru_cache(maxsize=20)
 async def list_features(dataset_id: str, collection_id: str, page: int, per_page: int):
     q = f"""
         PREFIX dcat: <{DCAT}>
@@ -335,6 +315,20 @@ async def list_features(dataset_id: str, collection_id: str, page: int, per_page
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
+async def get_uri(item_id: str = None, klass: URIRef = None):
+    if item_id:
+        r = await sparql_query(
+            f"""PREFIX dcterms: <{DCTERMS}>
+                PREFIX rdf: <{RDF}>
+                PREFIX xsd: <{XSD}>
+                SELECT ?item_uri ?class {{ ?item_uri dcterms:identifier "{item_id}"^^xsd:token ;
+                                    rdf:type <{str(klass)}> . }}""",
+            "SpacePrez",
+        )
+        if r[0]:
+            return r[1][0]["item_uri"]["value"]
+
+
 async def get_feature_uri_and_classes(feature_id: str = None, feature_uri: str = None):
     if feature_id:
         r = await sparql_query(
@@ -359,7 +353,7 @@ async def get_feature_uri_and_classes(feature_id: str = None, feature_uri: str =
             return feature_uri, [c["class"]["value"] for c in r[1]]
 
 
-@cached(cache=Cache.MEMORY, ttl=3600)
+@alru_cache(maxsize=20)
 async def get_feature_construct(
     dataset_id: Optional[str] = None,
     collection_id: Optional[str] = None,
@@ -371,15 +365,15 @@ async def get_feature_construct(
 
     # when querying by ID via regular URL path
     query_by_id = f"""
-        FILTER (STR(?d_id) = "{dataset_id}")
+        BIND("{feature_id}"^^xsd:token as ?id)
+        BIND("{dataset_id}"^^xsd:token as ?d_id)
+        BIND("{collection_id}"^^xsd:token as ?coll_id)
         ?d rdfs:member ?coll .
         ?coll a geo:FeatureCollection ;
             dcterms:identifier ?coll_id ;
             rdfs:member ?f .
-        FILTER (STR(?coll_id) = "{collection_id}")
         ?f a geo:Feature ;
             dcterms:identifier ?id .
-        FILTER (STR(?id) = "{feature_id}")
     """
     # when querying by URI via /object?uri=...
     query_by_uri = f"""
@@ -414,35 +408,12 @@ async def get_feature_construct(
                 dcterms:title ?d_label .
         }}
         WHERE {{
-            {query_by_id if feature_id is not None else query_by_uri}
+
+            {query_by_uri if feature_uri is not None else query_by_id}
             ?coll rdfs:member ?f .
             ?f ?p1 ?o1 .
 
-            OPTIONAL {{
-                ?o1 ?p2 ?o2 .
-                FILTER(ISBLANK(?o1))
-
-                OPTIONAL {{
-                    ?p2 rdfs:label ?p2Label .
-                    FILTER(lang(?p2Label) = "" || lang(?p2Label) = "en")
-                }}
-                OPTIONAL {{
-                    ?p2 dcterms:description ?p2def .
-                    FILTER(lang(?p2def) = "" || lang(?p2def) = "en")
-                }}
-                OPTIONAL {{
-                    ?p2 dcterms:provenance ?p2expl .
-                    FILTER(lang(?p2expl) = "" || lang(?p2expl) = "en")
-                }}
-                OPTIONAL {{
-                    ?o2 rdfs:label ?o2Label .
-                    FILTER(lang(?o2Label) = "" || lang(?o2Label) = "en")
-                }}
-                OPTIONAL {{
-                    ?o2 dcterms:description ?o2def .
-                    FILTER(lang(?o2def) = "" || lang(?o2def) = "en")
-                }}
-            }}
+            {get_all_bnode_prop_obj_info}
             {get_all_prop_obj_info}
             OPTIONAL {{
                 ?f dcterms:title ?given_title .

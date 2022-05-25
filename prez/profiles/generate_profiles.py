@@ -1,9 +1,10 @@
 import logging
-
+from async_lru import alru_cache
 from aiocache import cached, Cache
 from connegp import Profile
 from rdflib import Graph, DCTERMS, SKOS, URIRef, Literal, BNode
 from rdflib.namespace import RDF, PROF, Namespace, RDFS
+from rdflib.term import Node
 
 from services.sparql_utils import (
     remote_profiles_query,
@@ -12,7 +13,7 @@ from services.sparql_utils import (
 )
 
 
-@cached(cache=Cache.MEMORY)
+@alru_cache(maxsize=20)
 async def create_profiles_graph():
     local_profiles_g = Graph().parse(
         "prez/profiles/spaceprez_default_profiles.ttl", format="turtle"
@@ -28,8 +29,8 @@ async def create_profiles_graph():
     return profiles_g
 
 
-@cached(cache=Cache.MEMORY)
-async def get_all_profiles():
+@alru_cache(maxsize=20)
+async def get_all_profiles(general_class):
     """
     Combines
     1. profiles defined in data (in the triplestore), and
@@ -40,18 +41,18 @@ async def get_all_profiles():
     This is run at API startup
     """
 
-    get_feature_hierarchy = """
+    get_class_hierarchy = f"""
         PREFIX geo: <http://www.opengis.net/ont/geosparql#>
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
         PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
 
-        SELECT ?class (count(?mid) as ?distance) ?profile
-        WHERE {
-            ?mid rdfs:subClassOf* geo:Feature .
+        SELECT ?class (count(?mid) as ?distance) ?profile_id
+        WHERE {{
             ?class rdfs:subClassOf* ?mid .
-
-            ?profile altr-ext:constrainsClass ?class .
-        }
+            ?mid rdfs:subClassOf* <{general_class}> .
+            ?profile altr-ext:constrainsClass ?class ;
+                dcterms:identifier ?profile_id .
+        }}
         GROUP BY ?class
         ORDER BY DESC(?distance)
         """
@@ -60,36 +61,41 @@ async def get_all_profiles():
 
     # ordered list of feature classes and associated preferred profiles
     profiles_g = await create_profiles_graph()
-    for r in profiles_g.query(get_feature_hierarchy):
-        preferred_classes_and_profiles.append((str(r["class"]), str(r["profile"])))
+    for r in profiles_g.query(get_class_hierarchy):
+        preferred_classes_and_profiles.append((str(r["class"]), str(r["profile_id"])))
 
     ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
     for s in profiles_g.subjects(RDF.type, PROF.Profile):
-        profiles_formats[str(s)] = []
+        profile_id = str(profiles_g.value(s, DCTERMS.identifier))
+        profiles_formats[profile_id] = []
         for p, o in profiles_g.predicate_objects(s):
             # if p == EX.hasAvailableFormat:
             if p == ALTREXT.hasResourceFormat:
-                profiles_formats[str(s)].append(str(o))
+                profiles_formats[profile_id].append(str(o))
             # elif p == EX.hasDefaultAvailableFormat:
             elif p == ALTREXT.hasDefaultResourceFormat:
                 default_format = str(o)
 
-        profiles_formats[str(s)].remove(default_format)
-        profiles_formats[str(s)].insert(0, default_format)
+        profiles_formats[profile_id].remove(default_format)
+        profiles_formats[profile_id].insert(0, default_format)
 
     profiles_dict = {}
     for profile, formats in profiles_formats.items():
-        description = profiles_g.value(URIRef(profile), DCTERMS.description)
+        profile_uri = profiles_g.value(
+            predicate=DCTERMS.identifier, object=Literal(profile)
+        )
+        description = profiles_g.value(profile_uri, DCTERMS.description)
         if not description:
-            description = profiles_g.value(URIRef(profile), SKOS.definition)
-        label = profiles_g.value(URIRef(profile), RDFS.label)
+            description = profiles_g.value(profile_uri, SKOS.definition)
+        label = profiles_g.value(profile_uri, RDFS.label)
         if not label:
-            label = profiles_g.value(URIRef(profile), DCTERMS.title)
+            label = profiles_g.value(profile_uri, DCTERMS.title)
             if not label:
-                label = profiles_g.value(URIRef(profile), SKOS.prefLabel)
-        profiles_dict[profile] = Profile(
-            uri=profile,
-            id=profiles_g.value(URIRef(profile), DCTERMS.identifier),
+                label = profiles_g.value(profile_uri, SKOS.prefLabel)
+        profile_id = str(profiles_g.value(profile_uri, DCTERMS.identifier))
+        profiles_dict[profile_id] = Profile(
+            uri=profile_uri,
+            id=profile_id,
             label=label,
             comment=description,
             mediatypes=formats,
@@ -97,22 +103,30 @@ async def get_all_profiles():
             languages=["en"],
             default_language="en",
         )
-    return profiles_g, preferred_classes_and_profiles, profiles_dict, profiles_formats
+    return (
+        profiles_g,
+        tuple(preferred_classes_and_profiles),
+        profiles_dict,
+        profiles_formats,
+    )
 
 
-@cached(cache=Cache.MEMORY, ttl=3600)
+@alru_cache(maxsize=20)
 async def get_available_profiles(
-    feature_uri,
+    item_uri,
     preferred_classes_and_profiles,
 ):
     # retrieve the classes
     r = await sparql_query(
         f"""PREFIX dcterms: <{DCTERMS}>
-    SELECT ?class {{ <{feature_uri}> a ?class }}""",
+    SELECT ?class {{ <{item_uri}> a ?class }}""",
         "SpacePrez",
     )
-    if r[0]:
+    if r[0] and r[1]:
         objects_classes = [i["class"]["value"] for i in r[1]]
+    else:
+        default_profile = preferred_classes_and_profiles[0][1]
+        return tuple(default_profile), default_profile
 
     # the available profiles are returned in reverse preference order
     available_profiles = []
@@ -120,10 +134,11 @@ async def get_available_profiles(
         for oc in objects_classes:
             if oc == pc[0]:
                 available_profiles.append(pc[1])
-    return available_profiles
+    # set the default profile
+    default_profile = available_profiles[-1]
+    return tuple(available_profiles), default_profile
 
 
-@cached(cache=Cache.MEMORY, ttl=3600)
 async def build_alt_graph(object_of_interest, profiles_formats, available_profiles):
     # build AltRep data
     ALTR = Namespace("http://www.w3.org/ns/dx/conneg/altr#")
@@ -145,10 +160,46 @@ async def build_alt_graph(object_of_interest, profiles_formats, available_profil
             alt_rep.add((bn, DCTERMS.conformsTo, URIRef(available_profile)))
             alt_rep.add((bn, DCTERMS.format, Literal(fmt)))
             alt_rep.add((object_of_interest, ALTR.hasRepresentation, bn))
+
     return alt_rep
 
 
-@cached(cache=Cache.MEMORY)
+# @alru_cache(maxsize=20)
+# async def build_alt_profile(alt_graph):
+#     profiles_formats = {}
+#     ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
+#     for s in alt_graph.subjects(RDF.type, PROF.Profile):
+#         profiles_formats[str(s)] = []
+#         for p, o in alt_graph.predicate_objects(s):
+#             if p == ALTREXT.hasResourceFormat:
+#                 profiles_formats[str(s)].append(str(o))
+#             elif p == ALTREXT.hasDefaultResourceFormat:
+#                 default_format = str(o)
+#         profiles_formats[str(s)].remove(default_format)
+#         profiles_formats[str(s)].insert(0, default_format)
+#     for profile, formats in profiles_formats.items():
+#         description = alt_graph.value(URIRef(profile), DCTERMS.description)
+#         if not description:
+#             description = alt_graph.value(URIRef(profile), SKOS.definition)
+#         label = alt_graph.value(URIRef(profile), RDFS.label)
+#         if not label:
+#             label = alt_graph.value(URIRef(profile), DCTERMS.title)
+#             if not label:
+#                 label = alt_graph.value(URIRef(profile), SKOS.prefLabel)
+#         alt_profile = Profile(
+#             uri=profile,
+#             id=alt_graph.value(URIRef(profile), DCTERMS.identifier),
+#             label=label,
+#             comment=description,
+#             mediatypes=formats,
+#             default_mediatype=formats[0],
+#             languages=["en"],
+#             default_language="en",
+#             )
+#     return alt_profile
+
+
+@alru_cache(maxsize=20)
 async def filter_results_using_profile(profile_g, profile, most_specific_class):
     query = f"""PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
                 PREFIX sh: <http://www.w3.org/ns/shacl#>
