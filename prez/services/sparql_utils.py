@@ -78,11 +78,16 @@ construct_all_bnode_prop_obj_info = """
 
 remote_profiles_query = """
 PREFIX prof: <http://www.w3.org/ns/dx/prof/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX geo: <http://www.opengis.net/ont/geosparql#>
 DESCRIBE ?profile ?class WHERE {
-  ?profile a prof:Profile OPTIONAL {
+  ?profile a prof:Profile
+  OPTIONAL {
     ?class rdfs:subClassOf geo:Feature .
+  }
+  OPTIONAL {
+    ?class rdfs:subClassOf skos:Concept .
   }
 }
 """

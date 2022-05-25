@@ -5,13 +5,14 @@ from connegp import MEDIATYPE_NAMES
 
 from config import *
 from renderers import Renderer
-from profiles.prez_profiles import profiles
+
+# from profiles.prez_profiles import profiles
 from utils import templates
 
 
 class ProfilesRenderer(Renderer):
-    profiles = {"profiles": profiles}
-    default_profile_token = "profiles"
+    # profiles = {"profiles": profiles}
+    # default_profile_token = "profiles"
 
     def __init__(
         self, request: object, instance_uri: str, prez: Optional[str] = None

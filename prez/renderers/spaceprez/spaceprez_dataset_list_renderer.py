@@ -7,14 +7,15 @@ from connegp import MEDIATYPE_NAMES
 
 from renderers import ListRenderer
 from config import *
-from profiles.spaceprez_profiles import dcat, dd
+
+# from profiles.spaceprez_profiles import dcat, dd
 from models.spaceprez import SpacePrezDatasetList
 from utils import templates
 
 
 class SpacePrezDatasetListRenderer(ListRenderer):
-    profiles = {"dcat": dcat, "dd": dd}
-    default_profile_token = "dcat"
+    # profiles = {"dcat": dcat, "dd": dd}
+    # default_profile_token = "dcat"
 
     def __init__(
         self,
