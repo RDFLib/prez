@@ -28,8 +28,7 @@ class VocPrezCollection(PrezModel):
             raise ValueError("Either an ID or a URI must be provided")
 
         query_by_id = f"""
-            ?coll dcterms:identifier ?id .
-            FILTER (STR(?id) = "{id}")
+            ?coll dcterms:identifier "{id}"^^xsd:token .
         """
 
         query_by_uri = f"""
