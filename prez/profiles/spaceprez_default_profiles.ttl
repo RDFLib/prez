@@ -21,9 +21,7 @@ altr-ext:hasResourceFormat owl:propertyChainAxiom ( dcterms:conformsTo dcterms:f
     skos:prefLabel "OGC LD API Profile"@en ;
     skos:definition "This profile specifies rules that RDF data must adhere to, to be fit for use with instances of the OGC LD API tool. It also provides machine-readable data validators." ;    rdfs:label "OGC Linked " ;
     altr-ext:constrainsClass
-        dcat:Dataset ,
-        geo:Feature ,
-        geo:FeatureCollection ;
+        geo:Feature ;
     altr-ext:hasResourceFormat "text/turtle", "application/ld+json", "application/rdf+xml", "text/html", "application/vnd.geo+json";
     altr-ext:hasDefaultResourceFormat "text/html" ;
 .
@@ -44,8 +42,7 @@ altr-ext:hasResourceFormat owl:propertyChainAxiom ( dcterms:conformsTo dcterms:f
     dcterms:identifier "geo";
     a prof:Profile ;
     altr-ext:constrainsClass
-        geo:Feature ,
-        geo:FeatureCollection ;
+        geo:Feature ;
     altr-ext:hasResourceFormat "text/turtle", "application/ld+json", "application/rdf+xml", "text/html" ;
     altr-ext:hasDefaultResourceFormat "text/html" ;
 .
@@ -56,9 +53,7 @@ altr-ext:hasResourceFormat owl:propertyChainAxiom ( dcterms:conformsTo dcterms:f
     dcterms:identifier "alt";
     a prof:Profile ;
     altr-ext:constrainsClass
-        dcat:Dataset ,
-        geo:Feature ,
-        geo:FeatureCollection ;
+        geo:Feature ;
     altr-ext:hasResourceFormat "text/turtle", "application/ld+json", "application/rdf+xml", "text/html" ;
     altr-ext:hasDefaultResourceFormat "text/html" ;
 .
@@ -70,9 +65,42 @@ altr-ext:hasResourceFormat owl:propertyChainAxiom ( dcterms:conformsTo dcterms:f
     a prof:Profile ;
     altr-ext:constrainsClass
         prez:HomePage ,
-        dcat:Dataset ,
+        prez:Conformance ,
         geo:Feature ,
         geo:FeatureCollection ;
     altr-ext:hasResourceFormat "text/turtle", "application/ld+json", "application/rdf+xml", "text/html" ;
+    altr-ext:hasDefaultResourceFormat "text/html" ;
+.
+
+<https://w3id.org/profile/mem>
+    rdfs:label "Members" ;
+    dcterms:description "A very basic data model that lists the members of container objects only, i.e. not their other properties" ;
+    dcterms:identifier "mem";
+    a prof:Profile ;
+    altr-ext:constrainsClass "";
+    altr-ext:hasResourceFormat "text/turtle", "application/ld+json", "application/rdf+xml", "text/html" ;
+    altr-ext:hasDefaultResourceFormat "text/html" ;
+.
+
+<https://www.w3.org/TR/vocab-dcat/>
+    rdfs:label "DCAT" ;
+    dcterms:description "Dataset Catalogue Vocabulary (DCAT) is a W3C-authored RDF vocabulary designed to facilitate interoperability between data catalogs" ;
+    dcterms:identifier "dcat";
+    a prof:Profile ;
+    altr-ext:constrainsClass
+        dcat:Dataset ,
+        dcat:Catalog ;
+    altr-ext:hasResourceFormat "text/turtle", "application/ld+json", "application/rdf+xml", "text/html" ;
+    altr-ext:hasDefaultResourceFormat "text/html" ;
+.
+
+<http://example.com/profile/profiles>
+    rdfs:label "Profiles" ;
+    dcterms:description "List of profiles" ;
+    dcterms:identifier "profiles";
+    a prof:Profile ;
+    altr-ext:constrainsClass
+        prez:Profiles ;
+    altr-ext:hasResourceFormat "text/html", "application/json" ;
     altr-ext:hasDefaultResourceFormat "text/html" ;
 .

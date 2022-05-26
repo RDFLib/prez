@@ -14,9 +14,6 @@ from utils import templates
 
 
 class SpacePrezDatasetListRenderer(ListRenderer):
-    # profiles = {"dcat": dcat, "dd": dd}
-    # default_profile_token = "dcat"
-
     def __init__(
         self,
         request: object,
@@ -27,11 +24,13 @@ class SpacePrezDatasetListRenderer(ListRenderer):
         page: int,
         per_page: int,
         member_count: int,
+        profiles: Dict[str, str],
+        default_profile_token: Optional[str],
     ) -> None:
         super().__init__(
             request,
-            SpacePrezDatasetListRenderer.profiles,
-            SpacePrezDatasetListRenderer.default_profile_token,
+            profiles,
+            default_profile_token,
             instance_uri,
             dataset_list.members,
             label,

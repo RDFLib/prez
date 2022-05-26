@@ -1,10 +1,11 @@
 from typing import Optional
 
 from async_lru import alru_cache
-from connegp import Profile
 from fastapi import Request
+from rdflib import Namespace
 
 from config import ENABLED_PREZS
+from profiles.generate_profiles import ProfileDetails
 from renderers import ProfilesRenderer
 
 
@@ -22,23 +23,21 @@ async def profiles_func(request: Request, prez: Optional[str] = None):
     else:
         raise Exception("invalid prez")
 
-    import importlib
+    PREZ = Namespace("https://surroundaustralia.com/prez/")
 
-    profiles = [importlib.import_module(file) for file in profiles_filenames]
+    instance_uri = str(
+        request.url.remove_query_params(keys=request.query_params.keys())
+    )
+    profile_details = ProfileDetails(general_class=PREZ.Profiles, item_uri=instance_uri)
+    await profile_details.get_all_profiles()
 
-    # get distinct list of profiles
-    profile_list = []
-    for file in profiles:
-        for item in dir(file):
-            if not item.startswith("__") and not item == "profiles":
-                profile = getattr(file, item)
-                if isinstance(profile, Profile) and dict(profile) not in profile_list:
-                    profile_list.append(dict(profile))
-    profile_list.sort(key=lambda p: p["id"])
+    profile_list = [dict(profile) for profile in profile_details.profiles_dict.values()]
 
     profiles_renderer = ProfilesRenderer(
         request,
-        str(request.url.remove_query_params(keys=request.query_params.keys())),
+        profile_details.profiles_dict,
+        profile_details.default_profile,
+        instance_uri,
         prez,
     )
     profiles_renderer.set_profiles(profile_list)
