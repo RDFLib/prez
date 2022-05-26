@@ -1,10 +1,9 @@
 import logging
+
 from async_lru import alru_cache
-from aiocache import cached, Cache
 from connegp import Profile
 from rdflib import Graph, DCTERMS, SKOS, URIRef, Literal, BNode
 from rdflib.namespace import RDF, PROF, Namespace, RDFS
-from rdflib.term import Node
 
 from services.sparql_utils import (
     remote_profiles_query,
@@ -56,20 +55,6 @@ class ProfileDetails:
         self.profiles_formats = profiles_formats
         self.available_profiles = available_profiles
         self.default_profile = default_profile
-
-
-# @alru_cache(maxsize=20)
-# async def get_all_profiles(general_class, item_uri):
-#     """
-#     Wrapper function for get_general_profiles and get_specific profiles, returning results from both.
-#     The general and specific functions are split up to allow more performant caching.
-#     The get_general_profiles function caches all available profiles for the API on startup.
-#     The get_specific_profiles caches profiles information for a specific item at runtime.
-#     """
-#     profiles_g, preferred_classes_and_profiles, profiles_dict, profiles_formats = await get_general_profiles(general_class)
-#     available_profiles, default_profile = await get_specific_profiles(item_uri, preferred_classes_and_profiles)
-#     return
-#
 
 
 @alru_cache(maxsize=20)
