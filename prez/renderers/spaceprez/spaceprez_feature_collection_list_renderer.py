@@ -14,12 +14,11 @@ from utils import templates
 
 
 class SpacePrezFeatureCollectionListRenderer(ListRenderer):
-    # profiles = {"oai": oai, "geo": geo, "dd": dd}
-    # default_profile_token = "oai"
-
     def __init__(
         self,
         request: object,
+        profiles: dict,
+        default_profile: str,
         instance_uri: str,
         label: str,
         comment: str,
@@ -30,8 +29,8 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
     ) -> None:
         super().__init__(
             request,
-            SpacePrezFeatureCollectionListRenderer.profiles,
-            SpacePrezFeatureCollectionListRenderer.default_profile_token,
+            profiles,
+            default_profile,
             instance_uri,
             feature_collection_list.members,
             label,

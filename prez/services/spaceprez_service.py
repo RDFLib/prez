@@ -262,7 +262,8 @@ async def count_features(dataset_id: str, collection_id: str):
     SELECT (COUNT(?f) as ?count)
     WHERE {{
         ?dataset dcterms:identifier "{dataset_id}"^^xsd:token ;
-            rdfs:member / dcterms:identifier "{collection_id}"^^xsd:token ;
+            rdfs:member ?fc .
+             ?fc dcterms:identifier "{collection_id}"^^xsd:token ;
                                          rdfs:member ?f .
     }}
     """

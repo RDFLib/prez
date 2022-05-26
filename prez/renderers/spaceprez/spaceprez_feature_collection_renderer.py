@@ -14,14 +14,13 @@ from utils import templates
 
 
 class SpacePrezFeatureCollectionRenderer(Renderer):
-    # profiles = {"oai": oai, "geo": geo}
-    # default_profile_token = "oai"
-
-    def __init__(self, request: object, instance_uri: str) -> None:
+    def __init__(
+        self, request: object, profiles: dict, default_profile: str, instance_uri: str
+    ) -> None:
         super().__init__(
             request,
-            SpacePrezFeatureCollectionRenderer.profiles,
-            SpacePrezFeatureCollectionRenderer.default_profile_token,
+            profiles,
+            default_profile,
             instance_uri,
         )
 

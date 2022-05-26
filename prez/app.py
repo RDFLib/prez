@@ -14,7 +14,7 @@ from fedsearch import SkosSearch, EndpointDetails
 from pydantic import AnyUrl
 from rdflib import URIRef
 
-from profiles.generate_profiles import get_all_profiles
+from profiles.generate_profiles import get_general_profiles
 from routers import vocprez_router, spaceprez_router
 from services.app_service import *
 from utils import templates
@@ -105,9 +105,9 @@ async def app_startup():
             url = urlparse(SPACEPREZ_SPARQL_ENDPOINT)
             try:
                 httpx.get(f"{url[0]}://{url[1]}")
-                await get_all_profiles(DCAT.Dataset)
-                await get_all_profiles(GEO.FeatureCollection)
-                await get_all_profiles(GEO.Feature)
+                await get_general_profiles(DCAT.Dataset)
+                await get_general_profiles(GEO.FeatureCollection)
+                await get_general_profiles(GEO.Feature)
                 print(
                     f"Successfully able to connect to SpacePrez endpoint {SPACEPREZ_SPARQL_ENDPOINT}"
                 )
