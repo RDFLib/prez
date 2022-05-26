@@ -27,7 +27,6 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
         per_page: int,
         member_count: int,
     ) -> None:
-        profiles.update({"mem": mem})
 
         if default_profile_token is None:
             default_profile_token = "mem"

@@ -40,11 +40,13 @@ class SpacePrezConformanceRenderer(Renderer):
         # },
     ]
 
-    def __init__(self, request: object, instance_uri: str) -> None:
+    def __init__(
+        self, request: object, profiles, default_profile, instance_uri: str
+    ) -> None:
         super().__init__(
             request,
-            SpacePrezConformanceRenderer.profiles,
-            SpacePrezConformanceRenderer.default_profile_token,
+            profiles,
+            default_profile,
             instance_uri,
         )
 

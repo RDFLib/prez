@@ -29,8 +29,51 @@ async def create_profiles_graph():
     return profiles_g
 
 
+class ProfileDetails:
+    def __init__(self, general_class, item_uri):
+        self.general_class = general_class
+        self.item_uri = item_uri
+        self.profiles_g = Graph()
+        self.preferred_classes_and_profiles = {}
+        self.profiles_dict = {}
+        self.profiles_formats = {}
+        self.available_profiles = []
+        self.default_profile = None
+
+    async def get_all_profiles(self):
+        (
+            profiles_g,
+            preferred_classes_and_profiles,
+            profiles_dict,
+            profiles_formats,
+        ) = await get_general_profiles(self.general_class)
+        available_profiles, default_profile = await get_specific_profiles(
+            self.item_uri, preferred_classes_and_profiles
+        )
+        self.profiles_g = profiles_g
+        self.preferred_classes_and_profiles = preferred_classes_and_profiles
+        self.profiles_dict = profiles_dict
+        self.profiles_formats = profiles_formats
+        self.available_profiles = available_profiles
+        self.default_profile = default_profile
+
+
+# @alru_cache(maxsize=20)
+# async def get_all_profiles(general_class, item_uri):
+#     """
+#     Wrapper function for get_general_profiles and get_specific profiles, returning results from both.
+#     The general and specific functions are split up to allow more performant caching.
+#     The get_general_profiles function caches all available profiles for the API on startup.
+#     The get_specific_profiles caches profiles information for a specific item at runtime.
+#     """
+#     profiles_g, preferred_classes_and_profiles, profiles_dict, profiles_formats = await get_general_profiles(general_class)
+#     available_profiles, default_profile = await get_specific_profiles(item_uri, preferred_classes_and_profiles)
+#     return
+#
+
+
 @alru_cache(maxsize=20)
-async def get_all_profiles(general_class):
+async def get_general_profiles(general_class):
     """
     Combines
     1. profiles defined in data (in the triplestore), and
@@ -112,7 +155,7 @@ async def get_all_profiles(general_class):
 
 
 @alru_cache(maxsize=20)
-async def get_available_profiles(
+async def get_specific_profiles(
     item_uri,
     preferred_classes_and_profiles,
 ):
@@ -126,7 +169,7 @@ async def get_available_profiles(
         objects_classes = [i["class"]["value"] for i in r[1]]
     else:
         default_profile = preferred_classes_and_profiles[0][1]
-        return tuple(default_profile), default_profile
+        return tuple([default_profile]), default_profile
 
     # the available profiles are returned in reverse preference order
     available_profiles = []

@@ -11,16 +11,18 @@ from utils import templates
 
 
 class ProfilesRenderer(Renderer):
-    # profiles = {"profiles": profiles}
-    # default_profile_token = "profiles"
-
     def __init__(
-        self, request: object, instance_uri: str, prez: Optional[str] = None
+        self,
+        request: object,
+        profiles: dict,
+        default_profile: str,
+        instance_uri: str,
+        prez: Optional[str] = None,
     ) -> None:
         super().__init__(
             request,
-            ProfilesRenderer.profiles,
-            ProfilesRenderer.default_profile_token,
+            profiles,
+            default_profile,
             instance_uri,
         )
         self.prez = prez
