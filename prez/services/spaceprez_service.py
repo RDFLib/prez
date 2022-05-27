@@ -263,8 +263,8 @@ async def count_features(dataset_id: str, collection_id: str):
     WHERE {{
         ?dataset dcterms:identifier "{dataset_id}"^^xsd:token ;
             rdfs:member ?fc .
-             ?fc dcterms:identifier "{collection_id}"^^xsd:token ;
-                                         rdfs:member ?f .
+        ?fc dcterms:identifier "{collection_id}"^^xsd:token ;
+            rdfs:member ?f .
     }}
     """
     r = await sparql_query(q, "SpacePrez")

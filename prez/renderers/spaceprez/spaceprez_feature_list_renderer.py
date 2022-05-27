@@ -1,15 +1,10 @@
 from typing import Dict, Optional, Union
 
-from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from rdflib import Graph, URIRef, Literal
-from rdflib.namespace import DCAT, DCTERMS, RDF, RDFS
 from connegp import MEDIATYPE_NAMES
+from fastapi.responses import Response, JSONResponse, PlainTextResponse
 
-from renderers import ListRenderer
-from config import *
-
-# from profiles.spaceprez_profiles import oai, dd
 from models.spaceprez import SpacePrezFeatureList
+from renderers import ListRenderer
 from utils import templates
 
 

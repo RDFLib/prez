@@ -1,15 +1,12 @@
 from typing import Dict, Optional, Union
 
+from connegp import MEDIATYPE_NAMES, RDF_MEDIATYPES
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from rdflib import Graph
-from rdflib.namespace import DCTERMS
-from connegp import MEDIATYPE_NAMES, RDF_MEDIATYPES
 
 from config import *
-from renderers import Renderer
-
-# from profiles.spaceprez_profiles import oai, geo, gas
 from models.spaceprez import SpacePrezFeature
+from renderers import Renderer
 from utils import templates
 
 

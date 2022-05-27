@@ -1,12 +1,10 @@
 from typing import Dict, Optional, Union
 
-from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from connegp import MEDIATYPE_NAMES
+from fastapi.responses import Response, JSONResponse, PlainTextResponse
 
 from config import *
 from renderers import Renderer
-
-# from profiles.spaceprez_profiles import oai
 from utils import templates
 
 

@@ -1,14 +1,12 @@
 from abc import ABCMeta, abstractmethod
 from typing import Dict, Optional, Union
 
-from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from rdflib import Graph, Namespace, URIRef, Literal, BNode
-from rdflib.namespace import RDF, RDFS, PROF, DCTERMS, XSD
 from connegp import Connegp, Profile, RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
+from fastapi.responses import Response, JSONResponse, PlainTextResponse
+from rdflib import Graph, URIRef, Literal, BNode
+from rdflib.namespace import PROF, XSD
 
 from config import *
-
-# from profiles.prez_profiles import alt
 from utils import templates
 
 

@@ -1,18 +1,14 @@
 from typing import Dict, Optional, Union
 
-from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from connegp import MEDIATYPE_NAMES
+from fastapi.responses import Response, JSONResponse, PlainTextResponse
 
-from config import *
 from renderers import Renderer
-
-# from profiles.spaceprez_profiles import oai
 from utils import templates
 
 
 class SpacePrezConformanceRenderer(Renderer):
-    # profiles = {"oai": oai}
-    # default_profile_token = "oai"
+
     conformsTo = [
         {
             "title": "Conformance Class Core",
@@ -30,14 +26,6 @@ class SpacePrezConformanceRenderer(Renderer):
             "title": "Conformance Class OpenAPI 3.0",
             "url": "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas3",
         },
-        # {
-        #     "title": "Conformance Class GML Simple Features Level 0",
-        #     "url": "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/gmlsf0",
-        # },
-        # {
-        #     "title": "Conformance Class GML Simple Features Level 2",
-        #     "url": "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/gmlsf2",
-        # },
     ]
 
     def __init__(
