@@ -1,24 +1,19 @@
 from typing import Dict, Optional, Union
 
-from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from rdflib import Graph, URIRef, Literal
-from rdflib.namespace import DCAT, DCTERMS, RDF, RDFS
 from connegp import MEDIATYPE_NAMES
+from fastapi.responses import Response, JSONResponse, PlainTextResponse
 
-from renderers import ListRenderer
-from config import *
-from profiles.spaceprez_profiles import oai, dd
 from models.spaceprez import SpacePrezFeatureList
+from renderers import ListRenderer
 from utils import templates
 
 
 class SpacePrezFeatureListRenderer(ListRenderer):
-    profiles = {"oai": oai, "dd": dd}
-    default_profile_token = "oai"
-
     def __init__(
         self,
         request: object,
+        profiles: dict,
+        default_profile: str,
         instance_uri: str,
         label: str,
         comment: str,
@@ -29,8 +24,8 @@ class SpacePrezFeatureListRenderer(ListRenderer):
     ) -> None:
         super().__init__(
             request,
-            SpacePrezFeatureListRenderer.profiles,
-            SpacePrezFeatureListRenderer.default_profile_token,
+            profiles,
+            default_profile,
             instance_uri,
             feature_list.members,
             label,

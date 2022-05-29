@@ -9,7 +9,7 @@ from services.sparql_utils import *
 async def count_schemes():
     q = f"""
         PREFIX skos: <{SKOS}>
-        SELECT (COUNT(?cs) as ?count) 
+        SELECT (COUNT(?cs) as ?count)
         WHERE {{
             ?cs a skos:ConceptScheme .
         }}
@@ -45,7 +45,7 @@ async def list_schemes(page: int, per_page: int):
 async def count_collections():
     q = f"""
         PREFIX skos: <{SKOS}>
-        SELECT (COUNT(?coll) as ?count) 
+        SELECT (COUNT(?coll) as ?count)
         WHERE {{
             ?coll a skos:Collection .
         }}
@@ -69,7 +69,7 @@ async def list_collections(page: int, per_page: int):
             OPTIONAL {{
                 ?coll dcterms:description ?desc .
             }}
-            FILTER(lang(?label) = "" || lang(?label) = "en")
+            FILTER(lang(?label) = "" || lang(?label) = "en" || lang(?label) = "en-AU")
         }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
     """
     r = await sparql_query(q, "VocPrez")

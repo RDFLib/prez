@@ -1,23 +1,21 @@
 from typing import Dict, Optional, Union
 
-from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from connegp import MEDIATYPE_NAMES
+from fastapi.responses import Response, JSONResponse, PlainTextResponse
 
 from config import *
 from renderers import Renderer
-from profiles.spaceprez_profiles import oai
 from utils import templates
 
 
 class SpacePrezHomeRenderer(Renderer):
-    profiles = {"oai": oai}
-    default_profile_token = "oai"
-
-    def __init__(self, request: object, instance_uri: str) -> None:
+    def __init__(
+        self, request: object, profiles, default_profile, instance_uri: str
+    ) -> None:
         super().__init__(
             request,
-            SpacePrezHomeRenderer.profiles,
-            SpacePrezHomeRenderer.default_profile_token,
+            profiles,
+            default_profile,
             instance_uri,
         )
 

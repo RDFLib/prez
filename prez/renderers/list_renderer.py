@@ -8,7 +8,8 @@ from connegp import Profile, RDF_MEDIATYPES
 
 from renderers import Renderer
 from config import *
-from profiles.prez_profiles import mem
+
+# from profiles.prez_profiles import mem
 from utils import templates
 
 
@@ -26,7 +27,6 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
         per_page: int,
         member_count: int,
     ) -> None:
-        profiles.update({"mem": mem})
 
         if default_profile_token is None:
             default_profile_token = "mem"

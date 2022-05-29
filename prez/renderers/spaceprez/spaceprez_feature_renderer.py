@@ -1,26 +1,27 @@
 from typing import Dict, Optional, Union
 
+from connegp import MEDIATYPE_NAMES, RDF_MEDIATYPES
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from rdflib import Graph
-from rdflib.namespace import DCTERMS
-from connegp import MEDIATYPE_NAMES
 
 from config import *
-from renderers import Renderer
-from profiles.spaceprez_profiles import oai, geo
 from models.spaceprez import SpacePrezFeature
+from renderers import Renderer
 from utils import templates
 
 
 class SpacePrezFeatureRenderer(Renderer):
-    profiles = {"oai": oai, "geo": geo}
-    default_profile_token = "oai"
-
-    def __init__(self, request: object, instance_uri: str) -> None:
+    def __init__(
+        self,
+        request: object,
+        instance_uri: str,
+        available_profiles: dict,
+        default_profile: str,
+    ) -> None:
         super().__init__(
             request,
-            SpacePrezFeatureRenderer.profiles,
-            SpacePrezFeatureRenderer.default_profile_token,
+            available_profiles,
+            default_profile,
             instance_uri,
         )
 
@@ -48,14 +49,6 @@ class SpacePrezFeatureRenderer(Renderer):
             context=_template_context,
             headers=self.headers,
         )
-
-    # def _render_oai_json(self) -> JSONResponse:
-    #     """Renders the JSON representation of the OAI profile for a feature"""
-    #     return JSONResponse(
-    #         content={"test": "test"},
-    #         media_type="application/json",
-    #         headers=self.headers,
-    #     )
 
     def _render_oai_geojson(self) -> JSONResponse:
         """Renders the GeoJSON representation of the OAI profile for a feature"""
@@ -151,17 +144,21 @@ class SpacePrezFeatureRenderer(Renderer):
         return self._render_geo_rdf()
 
     def render(
-        self, template_context: Optional[Dict] = None
+        self,
+        template_context: Optional[Dict] = None,
+        alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
         if self.error is not None:
             return PlainTextResponse(self.error, status_code=400)
         elif self.profile == "alt":
-            return self._render_alt(template_context)
-        elif self.profile == "oai":
-            return self._render_oai(template_context)
-        elif self.profile == "geo":
-            return self._render_geo()
-        else:
-            return None
+            return self._render_alt(
+                template_context, alt_profiles_graph=alt_profiles_graph
+            )
+        elif self.mediatype == "text/html":
+            return self._render_oai_html(template_context)
+        elif self.mediatype == "application/geo+json":
+            return self._render_oai_geojson()
+        elif self.mediatype in RDF_MEDIATYPES:
+            return self._make_rdf_response(self.feature.uri, self.feature.graph)

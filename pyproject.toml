@@ -16,7 +16,7 @@ python-multipart = "^0.0.5"
 connegp = { git = "https://github.com/surroundaustralia/Connegp2.git", branch = "main" }
 fedsearch = { git = "https://github.com/surroundaustralia/vocprez-fedsearch.git" }
 starlette-core = { git = "https://github.com/accent-starlette/starlette-core.git" }
-aiocache = "^0.11.1"
+async-lru = "^1.0.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"

@@ -105,7 +105,7 @@ class VocPrezCollection(PrezModel):
                 ?c rdfs:label|skos:prefLabel|dcterms:title ?label ;
                     skos:inScheme ?cs ;
                     dcterms:identifier ?id .
-                FILTER(lang(?label) = "" || lang(?label) = "en")
+                FILTER(lang(?label) = "" || lang(?label) = "en" || lang(?label) = "en-AU")
                 ?cs dcterms:identifier ?cs_id .
             }}
         """
@@ -133,7 +133,7 @@ class VocPrezCollection(PrezModel):
             WHERE {{
                 <{self.uri}> skos:member ?c .
                 ?c rdfs:label|skos:prefLabel|dcterms:title ?label .
-                FILTER(lang(?label) = "" || lang(?label) = "en")
+                FILTER(lang(?label) = "" || lang(?label) = "en" || lang(?label) = "en-AU")
             }}
         """
         )

@@ -2,20 +2,16 @@ from typing import Dict, Optional, Union
 
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from rdflib import Graph, URIRef, Literal
-from rdflib.namespace import DCAT, DCTERMS, RDF, RDFS
 from connegp import MEDIATYPE_NAMES
 
 from renderers import ListRenderer
 from config import *
-from profiles.spaceprez_profiles import dcat, dd
+
 from models.spaceprez import SpacePrezDatasetList
 from utils import templates
 
 
 class SpacePrezDatasetListRenderer(ListRenderer):
-    profiles = {"dcat": dcat, "dd": dd}
-    default_profile_token = "dcat"
-
     def __init__(
         self,
         request: object,
@@ -26,11 +22,13 @@ class SpacePrezDatasetListRenderer(ListRenderer):
         page: int,
         per_page: int,
         member_count: int,
+        profiles: Dict[str, str],
+        default_profile_token: Optional[str],
     ) -> None:
         super().__init__(
             request,
-            SpacePrezDatasetListRenderer.profiles,
-            SpacePrezDatasetListRenderer.default_profile_token,
+            profiles,
+            default_profile_token,
             instance_uri,
             dataset_list.members,
             label,
@@ -149,7 +147,9 @@ class SpacePrezDatasetListRenderer(ListRenderer):
         return self._render_dd_json()
 
     def render(
-        self, template_context: Optional[Dict] = None
+        self,
+        template_context: Optional[Dict] = None,
+        alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
@@ -158,7 +158,7 @@ class SpacePrezDatasetListRenderer(ListRenderer):
         elif self.profile == "mem":
             return self._render_mem(template_context)
         elif self.profile == "alt":
-            return self._render_alt(template_context)
+            return self._render_alt(template_context, alt_profiles_graph)
         elif self.profile == "dcat":
             return self._render_dcat(template_context)
         elif self.profile == "dd":
