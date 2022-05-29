@@ -192,41 +192,6 @@ async def build_alt_graph(object_of_interest, profiles_formats, available_profil
     return alt_rep
 
 
-# @alru_cache(maxsize=20)
-# async def build_alt_profile(alt_graph):
-#     profiles_formats = {}
-#     ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
-#     for s in alt_graph.subjects(RDF.type, PROF.Profile):
-#         profiles_formats[str(s)] = []
-#         for p, o in alt_graph.predicate_objects(s):
-#             if p == ALTREXT.hasResourceFormat:
-#                 profiles_formats[str(s)].append(str(o))
-#             elif p == ALTREXT.hasDefaultResourceFormat:
-#                 default_format = str(o)
-#         profiles_formats[str(s)].remove(default_format)
-#         profiles_formats[str(s)].insert(0, default_format)
-#     for profile, formats in profiles_formats.items():
-#         description = alt_graph.value(URIRef(profile), DCTERMS.description)
-#         if not description:
-#             description = alt_graph.value(URIRef(profile), SKOS.definition)
-#         label = alt_graph.value(URIRef(profile), RDFS.label)
-#         if not label:
-#             label = alt_graph.value(URIRef(profile), DCTERMS.title)
-#             if not label:
-#                 label = alt_graph.value(URIRef(profile), SKOS.prefLabel)
-#         alt_profile = Profile(
-#             uri=profile,
-#             id=alt_graph.value(URIRef(profile), DCTERMS.identifier),
-#             label=label,
-#             comment=description,
-#             mediatypes=formats,
-#             default_mediatype=formats[0],
-#             languages=["en"],
-#             default_language="en",
-#             )
-#     return alt_profile
-
-
 @alru_cache(maxsize=20)
 async def filter_results_using_profile(profile_g, profile, most_specific_class):
     query = f"""PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
