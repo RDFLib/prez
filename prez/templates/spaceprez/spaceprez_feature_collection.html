@@ -60,6 +60,26 @@
 </div>
 <div id="content-col-sidebar">
     {% include "alt_link.html" %}
+    <div>
+        <h3>Feature Search</h3>
+        <form action="{{request.url}}/items" method="get">
+            <div>
+                <!-- <div>
+                    <label for="">Label</label>
+                    <input type="text" name="label" id="">
+                </div>
+                <div>
+                    <label for="">Bounding Box</label>
+                    <input type="text" name="bbox" id="">
+                </div> -->
+                <div>
+                    <label for="">CQL query</label>
+                    <textarea name="filter" id="" cols="30" rows="10"></textarea>
+                </div>
+            </div>
+            <button type="submit">Search</button>
+        </form>
+    </div>
 </div>
 {% if collection.geometries.asGeoJSON is not none %}
     <script>

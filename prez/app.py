@@ -346,6 +346,24 @@ async def health(request: Request):
         headers=request.headers,
     )
 
+# queryables
+@app.get(
+    "/queryables",
+    summary="List available query parameters for CQL search globally",
+)
+async def queryables(request: Request):
+    """Returns a SpacePrez geo:FeatureCollection in the necessary profile & mediatype"""
+    return JSONResponse(
+        content={
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "$id" : f"{request.url.remove_query_params(keys=request.query_params.keys())}",
+            "type" : "object",
+            # "title" : "Cultural (Points)",
+            # "description" : "Cultural: Information about features on the landscape with a point geometry that have been constructed by man.",
+            "properties" : {}
+        }
+    )
+
 
 if __name__ == "__main__":
     configure()

@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, Query
+from fastapi.responses import JSONResponse
 import asyncio
 
 from renderers.spaceprez import *
@@ -184,12 +185,25 @@ async def features(
     collection_id: str,
     page: int = 1,
     per_page: int = 20,
+    filter: Optional[str] = Query(None),
+    filter_lang: Optional[str] = Query(None, alias="filter-lang"),
+    filter_crs: Optional[str] = Query(None, alias="filter-crs"),
 ):
     """Returns a list of SpacePrez geo:Features in the necessary profile & mediatype"""
-    feature_count, sparql_result = await asyncio.gather(
-        count_features(dataset_id, collection_id),
-        list_features(dataset_id, collection_id, page, per_page)
-    )
+    if filter is not None:
+        # do CQL -> SPARQL mapping
+        print("CQL search")
+        
+        feature_count, sparql_result = await asyncio.gather(
+            count_features(dataset_id, collection_id),
+            list_features(dataset_id, collection_id, page, per_page)
+        )
+    else:
+        feature_count, sparql_result = await asyncio.gather(
+            count_features(dataset_id, collection_id),
+            list_features(dataset_id, collection_id, page, per_page)
+        )
+    
     feature_list = SpacePrezFeatureList(sparql_result)
     feature_list_renderer = SpacePrezFeatureListRenderer(
         request,
@@ -295,3 +309,21 @@ async def conformance(request: Request):
         ),
     )
     return conformance_renderer.render()
+
+# feature collection queryables
+@router.get(
+    "/dataset/{dataset_id}/collections/{collection_id}/queryables",
+    summary="List available query parameters for CQL search on a FeatureCollection",
+)
+async def feature_collection_queryables(request: Request, dataset_id: str, collection_id: str):
+    """Returns a SpacePrez geo:FeatureCollection in the necessary profile & mediatype"""
+    return JSONResponse(
+        content={
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "$id" : f"{request.url.remove_query_params(keys=request.query_params.keys())}",
+            "type" : "object",
+            # "title" : "Cultural (Points)",
+            # "description" : "Cultural: Information about features on the landscape with a point geometry that have been constructed by man.",
+            "properties" : {}
+        }
+    )

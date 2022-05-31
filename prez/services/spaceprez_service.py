@@ -399,3 +399,31 @@ async def get_feature_construct(
         return r[1]
     else:
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
+
+async def cql_search(params: Dict, page: int, per_page: int, collection_id: Optional[str] = None):
+    limit = params.get("limit")
+    offset = params.get("offset")
+    bbox = params.get("bbox")
+
+    # TODO convert bbox into polygon
+    bbox_polygon = ""
+
+    bbox_query = f'FILTER(geo:sfIntersects(?geom, "POLYGON(({bbox_polygon}))"^^geo:wktLiteral) )'
+
+    q = f"""
+        PREFIX dcat: <{DCAT}>
+        PREFIX dcterms: <{DCTERMS}>
+        PREFIX geo: <{GEO}>
+        PREFIX rdfs: <{RDFS}>
+        PREFIX skos: <{SKOS}>
+        PREFIX xsd: <{XSD}>
+        SELECT DISTINCT *
+        WHERE {{
+            {bbox_query if bbox is not None else ""}
+        }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
+    """
+    r = await sparql_query(q, "spaceprez")
+    if r[0]:
+        return r[1]
+    else:
+        raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
