@@ -1,8 +1,6 @@
 from typing import Dict, Optional, Union
 
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from rdflib import Graph, URIRef, Literal
-from rdflib.namespace import DCAT, DCTERMS, RDF
 from connegp import MEDIATYPE_NAMES
 
 from config import *
@@ -34,7 +32,7 @@ class VocPrezDatasetRenderer(Renderer):
         _template_context = {
             "request": self.request,
             "dataset": self.dataset.to_dict(),
-            "uri": self.instance_uri,
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
             "mediatype_names": MEDIATYPE_NAMES,
@@ -126,14 +124,15 @@ class VocPrezDatasetRenderer(Renderer):
         return self._render_sdo_rdf()
 
     def render(
-        self, template_context: Optional[Dict] = None
+        self, template_context: Optional[Dict] = None,
+        alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
         if self.error is not None:
             return PlainTextResponse(self.error, status_code=400)
         elif self.profile == "alt":
-            return self._render_alt(template_context)
+            return self._render_alt(template_context, alt_profiles_graph)
         elif self.profile == "dcat":
             return self._render_dcat(template_context)
         elif self.profile == "sdo":

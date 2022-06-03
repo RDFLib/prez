@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Request, HTTPException
-from rdflib import Graph
 import asyncio
 
 from renderers.vocprez import *

@@ -1,7 +1,6 @@
 from typing import Dict, Optional, Union
 
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from rdflib import Graph, URIRef, Literal
 from connegp import MEDIATYPE_NAMES
 
 from renderers import ListRenderer
@@ -45,7 +44,7 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
             "request": self.request,
             "members": self.members,
             "dataset": self.feature_collection_list.dataset,
-            "uri": self.instance_uri,
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
             "pages": self.pages,
             "label": self.label,
             "comment": self.comment,

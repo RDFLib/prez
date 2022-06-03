@@ -1,8 +1,8 @@
 import os
 import json
 
-from rdflib import Namespace
-from rdflib.namespace import SKOS, RDF, DCTERMS, RDFS, DCAT, PROV, OWL, SDO
+from rdflib import Graph, URIRef, Literal, BNode, Namespace
+from rdflib.namespace import SKOS, RDF, DCTERMS, RDFS, DCAT, PROV, OWL, SDO, XSD
 
 GEO = Namespace("http://www.opengis.net/ont/geosparql#")
 
@@ -12,12 +12,12 @@ SYSTEM_INFO = json.loads(
         "SYSTEM_INFO",
         """{
     "Prez": {
-        "title": "SURROUND Prez",
-        "desc": "Prez demo instance for SURROUND Australia"
+        "title": "Prez",
+        "desc": "Prez default"
     },
     "VocPrez": {
-        "title": "SURROUND Vocabs",
-        "desc": "Demo vocabularies",
+        "title": "VocPrez",
+        "desc": "VocPrez default",
         "data_uri": "http://exampledata.org"
     },
     "CatPrez": {
@@ -31,32 +31,31 @@ SYSTEM_INFO = json.loads(
         "data_uri": ""
     },
     "SpacePrez": {
-        "title": "SURROUND Spatial Data",
-        "desc": "Floods spatial data",
+        "title": "SpacePrez",
+        "desc": "Spatial default",
         "data_uri": "http://exampledata.org"
     }
 }""",
     )
 )
-# info
-PREZ_TITLE = os.environ.get("PREZ_TITLE", "SURROUND Prez")
-PREZ_DESC = os.environ.get("PREZ_DESC", "Prez demo instance for SURROUND Australia")
-VOCPREZ_TITLE = os.environ.get("VOCPREZ_TITLE", "SURROUND Vocabs")
-VOCPREZ_DESC = os.environ.get("VOCPREZ_DESC", "Demo vocabularies")
+
+PREZ_TITLE = os.environ.get("PREZ_TITLE", "Default Prez")
+PREZ_DESC = os.environ.get("PREZ_DESC", "Prez default description")
+
+VOCPREZ_TITLE = os.environ.get("VOCPREZ_TITLE", "Default VocPrez")
+VOCPREZ_DESC = os.environ.get("VOCPREZ_DESC", "VocPrez default description")
 VOCPREZ_DATA_URI = os.environ.get("VOCPREZ_DATA_URI", "http://exampledata.org")
-SPACEPREZ_TITLE = os.environ.get("SPACEPREZ_TITLE", "SURROUND Spatial Data")
-SPACEPREZ_DESC = os.environ.get("SPACEPREZ_DESC", "Floods spatial data")
+
+SPACEPREZ_TITLE = os.environ.get("SPACEPREZ_TITLE", "Default SpacePrez")
+SPACEPREZ_DESC = os.environ.get("SPACEPREZ_DESC", "SpacePrez default description")
 SPACEPREZ_DATA_URI = os.environ.get("SPACEPREZ_DATA_URI", "http://exampledata.org")
 
 # SPARQL credentials
-VOCPREZ_SPARQL_ENDPOINT = os.environ.get(
-    "VOCPREZ_SPARQL_ENDPOINT", "http://localhost:3030/surround-vocabs"
-)
+VOCPREZ_SPARQL_ENDPOINT = os.environ.get("VOCPREZ_SPARQL_ENDPOINT", "")
 VOCPREZ_SPARQL_USERNAME = os.environ.get("VOCPREZ_SPARQL_USERNAME", "")
 VOCPREZ_SPARQL_PASSWORD = os.environ.get("VOCPREZ_SPARQL_PASSWORD", "")
-SPACEPREZ_SPARQL_ENDPOINT = os.environ.get(
-    "SPACEPREZ_SPARQL_ENDPOINT", "http://localhost:3030/floods-2"
-)
+
+SPACEPREZ_SPARQL_ENDPOINT = os.environ.get("SPACEPREZ_SPARQL_ENDPOINT", "")
 SPACEPREZ_SPARQL_USERNAME = os.environ.get("SPACEPREZ_SPARQL_USERNAME", "")
 SPACEPREZ_SPARQL_PASSWORD = os.environ.get("SPACEPREZ_SPARQL_PASSWORD", "")
 
@@ -121,3 +120,5 @@ NAMESPACE_PREFIXES = {
     str(SDO): "sdo",
     str(GEO): "geo",
 }
+
+USE_PID_LINKS = False

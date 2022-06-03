@@ -2,8 +2,6 @@ from typing import Dict, Optional, Union, List
 from abc import ABCMeta, abstractmethod
 
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from rdflib import Graph, URIRef, Literal
-from rdflib.namespace import RDF, RDFS
 from connegp import Profile, RDF_MEDIATYPES
 
 from renderers import Renderer
@@ -58,7 +56,7 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
         """Renders the HTML representation of the members profiles using the 'mem.html' template"""
         _template_context = {
             "request": self.request,
-            "uri": self.instance_uri,
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
             "members": self.members,
             "label": self.label,
             "comment": self.comment,
@@ -73,7 +71,7 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
         """Renders the JSON representation of the members profile"""
         return JSONResponse(
             content={
-                "uri": self.instance_uri,
+                "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
                 "members": self.members,
                 "label": self.label,
                 "comment": self.comment,
@@ -120,7 +118,8 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
 
     @abstractmethod
     def render(
-        self, template_context: Optional[Dict] = None
+        self, template_context: Optional[Dict] = None,
+        alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
@@ -129,7 +128,7 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
         elif self.profile == "mem":
             return self._render_mem(template_context)
         elif self.profile == "alt":
-            return self._render_alt(template_context)
+            return self._render_alt(template_context, alt_profiles_graph)
         # extra profiles go here
         else:
             return None

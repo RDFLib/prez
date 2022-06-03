@@ -1,8 +1,6 @@
 from typing import Dict, Optional, Union
 
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from rdflib import Graph
-from rdflib.namespace import SKOS, PROV, DCTERMS
 from connegp import MEDIATYPE_NAMES
 
 from config import *
@@ -165,7 +163,7 @@ class VocPrezSchemeRenderer(Renderer):
         _template_context = {
             "request": self.request,
             "scheme": self.scheme.to_dict(),
-            "uri": self.instance_uri,
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
             "mediatype_names": MEDIATYPE_NAMES,
@@ -179,14 +177,15 @@ class VocPrezSchemeRenderer(Renderer):
         )
 
     def render(
-        self, template_context: Optional[Dict] = None
+        self, template_context: Optional[Dict] = None,
+        alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
         if self.error is not None:
             return PlainTextResponse(self.error, status_code=400)
         elif self.profile == "alt":
-            return self._render_alt(template_context)
+            return self._render_alt(template_context, alt_profiles_graph)
         elif self.profile == "skos":
             return self._render_skos()
         elif self.profile == "vocpub":

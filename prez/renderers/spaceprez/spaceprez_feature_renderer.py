@@ -2,7 +2,6 @@ from typing import Dict, Optional, Union
 
 from connegp import MEDIATYPE_NAMES, RDF_MEDIATYPES
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from rdflib import Graph
 
 from config import *
 from models.spaceprez import SpacePrezFeature
@@ -35,7 +34,7 @@ class SpacePrezFeatureRenderer(Renderer):
         _template_context = {
             "request": self.request,
             "feature": self.feature.to_dict(),
-            "uri": self.instance_uri,
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
             "mediatype_names": dict(
@@ -153,9 +152,7 @@ class SpacePrezFeatureRenderer(Renderer):
         if self.error is not None:
             return PlainTextResponse(self.error, status_code=400)
         elif self.profile == "alt":
-            return self._render_alt(
-                template_context, alt_profiles_graph=alt_profiles_graph
-            )
+            return self._render_alt(template_context, alt_profiles_graph)
         elif self.mediatype == "text/html":
             return self._render_oai_html(template_context)
         elif self.mediatype == "application/geo+json":

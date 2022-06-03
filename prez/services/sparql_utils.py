@@ -2,7 +2,6 @@ from typing import Dict, List, Tuple, Union
 
 from httpx import AsyncClient
 from httpx import Response as httpxResponse
-from rdflib import Graph, URIRef
 import asyncio
 from connegp import RDF_MEDIATYPES
 

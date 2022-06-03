@@ -1,8 +1,5 @@
 from typing import List, Dict, Optional
 
-from rdflib import Graph
-from rdflib.namespace import DCTERMS, SKOS, RDFS
-
 from config import *
 from models import PrezModel
 

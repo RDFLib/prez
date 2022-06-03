@@ -1,7 +1,5 @@
 from typing import List, Dict
 
-from rdflib import Graph
-
 from config import *
 from models import PrezModel
 

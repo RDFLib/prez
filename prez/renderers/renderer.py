@@ -3,8 +3,6 @@ from typing import Dict, Optional, Union
 
 from connegp import Connegp, Profile, RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from rdflib import Graph, URIRef, Literal, BNode
-from rdflib.namespace import PROF, XSD
 
 from config import *
 from utils import templates
@@ -188,7 +186,7 @@ class Renderer(object, metaclass=ABCMeta):
         """Renders the HTML representation of the alternate profiles using the 'alt.html' template"""
         _template_context = {
             "request": self.request,
-            "uri": self.instance_uri,
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
             "profiles": self.profiles,
             "default_profile": self.profiles.get(self.default_profile_token),
         }
@@ -202,7 +200,7 @@ class Renderer(object, metaclass=ABCMeta):
         """Renders the JSON representation of the alternate profiles"""
         return JSONResponse(
             content={
-                "uri": self.instance_uri,
+                "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
                 "profiles": list(self.profiles.keys()),
                 "default_profile": self.default_profile_token,
             },
@@ -211,7 +209,9 @@ class Renderer(object, metaclass=ABCMeta):
         )
 
     def _render_alt(
-        self, template_context: Union[Dict, None], alt_profiles_graph: Graph
+        self,
+        template_context: Union[Dict, None],
+        alt_profiles_graph: Graph
     ) -> Union[templates.TemplateResponse, Response, JSONResponse]:
         """Renders the alternate profiles based on mediatype"""
         if self.mediatype == "text/html":
@@ -224,7 +224,8 @@ class Renderer(object, metaclass=ABCMeta):
 
     @abstractmethod
     def render(
-        self, template_context: Optional[Dict] = None
+        self, template_context: Optional[Dict] = None,
+        alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
@@ -232,7 +233,7 @@ class Renderer(object, metaclass=ABCMeta):
         if self.error is not None:
             return PlainTextResponse(self.error, status_code=400)
         elif self.profile == "alt":
-            return self._render_alt(template_context)
+            return self._render_alt(template_context, alt_profiles_graph)
         # extra profiles go here
         else:
             return None
