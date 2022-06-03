@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Request, HTTPException, Query
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Request, HTTPException, Query, Form
+from fastapi.responses import JSONResponse, RedirectResponse
 import asyncio
 
 from renderers.spaceprez import *
@@ -9,6 +9,7 @@ from utils import templates
 
 from view_funcs import profiles_func
 from config import *
+from cql_search import CQLSearch
 
 router = APIRouter(tags=["SpacePrez"] if len(ENABLED_PREZS) > 1 else [])
 
@@ -45,8 +46,7 @@ async def datasets(
 ):
     """Returns a list of SpacePrez dcat:Datasets in the necessary profile & mediatype"""
     dataset_count, sparql_result = await asyncio.gather(
-        count_datasets(),
-        list_datasets(page, per_page)
+        count_datasets(), list_datasets(page, per_page)
     )
     dataset_list = SpacePrezDatasetList(sparql_result)
     dataset_list_renderer = SpacePrezDatasetListRenderer(
@@ -57,7 +57,7 @@ async def datasets(
         dataset_list,
         page,
         per_page,
-        int(dataset_count[0]["count"]["value"])
+        int(dataset_count[0]["count"]["value"]),
     )
     return dataset_list_renderer.render()
 
@@ -104,8 +104,7 @@ async def feature_collections(
 ):
     """Returns a list of SpacePrez geo:FeatureCollections in the necessary profile & mediatype"""
     collection_count, sparql_result = await asyncio.gather(
-        count_collections(dataset_id),
-        list_collections(dataset_id, page, per_page)
+        count_collections(dataset_id), list_collections(dataset_id, page, per_page)
     )
     feature_collection_list = SpacePrezFeatureCollectionList(sparql_result)
     feature_collection_list_renderer = SpacePrezFeatureCollectionListRenderer(
@@ -116,7 +115,7 @@ async def feature_collections(
         feature_collection_list,
         page,
         per_page,
-        int(collection_count[0]["count"]["value"])
+        int(collection_count[0]["count"]["value"]),
     )
     return feature_collection_list_renderer.render()
 
@@ -192,18 +191,24 @@ async def features(
     """Returns a list of SpacePrez geo:Features in the necessary profile & mediatype"""
     if filter is not None:
         # do CQL -> SPARQL mapping
-        print("CQL search")
-        
+        cql_query = CQLSearch(
+            filter,
+            dataset_id,
+            collection_id,
+            filter_lang=filter_lang,
+            filter_crs=filter_crs,
+        ).generate_query()
+
         feature_count, sparql_result = await asyncio.gather(
-            count_features(dataset_id, collection_id),
-            list_features(dataset_id, collection_id, page, per_page)
+            count_features(dataset_id, collection_id, cql_query),
+            list_features(dataset_id, collection_id, page, per_page, cql_query),
         )
     else:
         feature_count, sparql_result = await asyncio.gather(
             count_features(dataset_id, collection_id),
-            list_features(dataset_id, collection_id, page, per_page)
+            list_features(dataset_id, collection_id, page, per_page),
         )
-    
+
     feature_list = SpacePrezFeatureList(sparql_result)
     feature_list_renderer = SpacePrezFeatureListRenderer(
         request,
@@ -213,7 +218,7 @@ async def features(
         feature_list,
         page,
         per_page,
-        int(feature_count[0]["count"]["value"])
+        int(feature_count[0]["count"]["value"]),
     )
     return feature_list_renderer.render()
 
@@ -310,20 +315,66 @@ async def conformance(request: Request):
     )
     return conformance_renderer.render()
 
+
 # feature collection queryables
 @router.get(
     "/dataset/{dataset_id}/collections/{collection_id}/queryables",
     summary="List available query parameters for CQL search on a FeatureCollection",
 )
-async def feature_collection_queryables(request: Request, dataset_id: str, collection_id: str):
-    """Returns a SpacePrez geo:FeatureCollection in the necessary profile & mediatype"""
-    return JSONResponse(
-        content={
-            "$schema": "https://json-schema.org/draft/2019-09/schema",
-            "$id" : f"{request.url.remove_query_params(keys=request.query_params.keys())}",
-            "type" : "object",
-            # "title" : "Cultural (Points)",
-            # "description" : "Cultural: Information about features on the landscape with a point geometry that have been constructed by man.",
-            "properties" : {}
-        }
+async def feature_collection_queryables(
+    request: Request, dataset_id: str, collection_id: str
+):
+    """Returns a list of available properties to query against using CQL search for a specific geo:FeatureCollection"""
+    content = {
+        "$schema": "https://json-schema.org/draft/2019-09/schema",
+        "$id": f"{request.url.remove_query_params(keys=request.query_params.keys())}",
+        "type": "object",
+    }
+
+    properties = {key: value for key, value in CQL_PROPS.items()}
+    for value in properties.values():
+        value.pop("qname", None)
+    
+    content["properties"] = properties
+
+    # do sparql query for title & description for fc
+    sparql_result = await get_collection_info_queryables(
+        dataset_id=dataset_id, collection_id=collection_id, collection_uri=None
+    )
+
+    if len(sparql_result) == 0:
+        raise HTTPException(status_code=404, detail="Not Found")
+
+    content["title"] = sparql_result[0]["title"]["value"]
+
+    if sparql_result[0].get("desc") is not None:
+        content["description"] = sparql_result[0]["desc"]["value"]
+
+    return JSONResponse(content=content)
+
+
+# feature collection CQL search form
+@router.post(
+    "/dataset/{dataset_id}/collections/{collection_id}/cql",
+    summary="Endpoint to POST CQL search form data to",
+)
+async def feature_collection_cql(
+    request: Request,
+    dataset_id: str,
+    collection_id: str,
+    title: Optional[str] = Form(None),
+    desc: Optional[str] = Form(None),
+    filter: Optional[str] = Form(None),
+):
+    """Handles form data from a CQL search form & redirects to /items containing the filter param"""
+    filter_params = []
+    if title is not None:
+        filter_params.append(f'title LIKE "{title}"')
+    if desc is not None:
+        filter_params.append(f'desc LIKE "{desc}"')
+    if filter is not None:
+        filter_params.append(filter)
+    return RedirectResponse(
+        url=f'/dataset/{dataset_id}/collections/{collection_id}/items?filter={" AND ".join(filter_params)}',
+        status_code=302,
     )

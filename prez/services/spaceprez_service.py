@@ -253,7 +253,9 @@ async def get_collection_construct_2(
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
-async def count_features(dataset_id: str, collection_id: str):
+async def count_features(
+    dataset_id: str, collection_id: str, cql_query: Optional[str] = None
+):
     q = f"""
         PREFIX dcat: <{DCAT}>
         PREFIX dcterms: <{DCTERMS}>
@@ -272,6 +274,7 @@ async def count_features(dataset_id: str, collection_id: str):
                 rdfs:member ?f .
             FILTER (STR(?coll_id) = "{collection_id}" && DATATYPE(?coll_id) = xsd:token)
             ?f a geo:Feature .
+            {cql_query or ""}
         }}
     """
     r = await sparql_query(q, "spaceprez")
@@ -281,7 +284,13 @@ async def count_features(dataset_id: str, collection_id: str):
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
-async def list_features(dataset_id: str, collection_id: str, page: int, per_page: int):
+async def list_features(
+    dataset_id: str,
+    collection_id: str,
+    page: int,
+    per_page: int,
+    cql_query: Optional[str] = None,
+):
     q = f"""
         PREFIX dcat: <{DCAT}>
         PREFIX dcterms: <{DCTERMS}>
@@ -313,6 +322,7 @@ async def list_features(dataset_id: str, collection_id: str, page: int, per_page
                 ?f dcterms:title ?label .
                 FILTER(lang(?label) = "" || lang(?label) = "en")
             }}
+            {cql_query or ""}
         }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
     """
     r = await sparql_query(q, "spaceprez")
@@ -400,7 +410,10 @@ async def get_feature_construct(
     else:
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
-async def cql_search(params: Dict, page: int, per_page: int, collection_id: Optional[str] = None):
+
+async def cql_search(
+    params: Dict, page: int, per_page: int, collection_id: Optional[str] = None
+):
     limit = params.get("limit")
     offset = params.get("offset")
     bbox = params.get("bbox")
@@ -408,7 +421,9 @@ async def cql_search(params: Dict, page: int, per_page: int, collection_id: Opti
     # TODO convert bbox into polygon
     bbox_polygon = ""
 
-    bbox_query = f'FILTER(geo:sfIntersects(?geom, "POLYGON(({bbox_polygon}))"^^geo:wktLiteral) )'
+    bbox_query = (
+        f'FILTER(geo:sfIntersects(?geom, "POLYGON(({bbox_polygon}))"^^geo:wktLiteral) )'
+    )
 
     q = f"""
         PREFIX dcat: <{DCAT}>
@@ -421,6 +436,53 @@ async def cql_search(params: Dict, page: int, per_page: int, collection_id: Opti
         WHERE {{
             {bbox_query if bbox is not None else ""}
         }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
+    """
+    r = await sparql_query(q, "spaceprez")
+    if r[0]:
+        return r[1]
+    else:
+        raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
+
+
+async def get_collection_info_queryables(
+    dataset_id: Optional[str] = None,
+    collection_id: Optional[str] = None,
+    collection_uri: Optional[str] = None,
+):
+    if collection_id is None and collection_uri is None:
+        raise ValueError("Either an ID or a URI must be provided for a SPARQL query")
+
+    # when querying by ID via regular URL path
+    query_by_id = f"""
+        ?d a dcat:Dataset ;
+            rdfs:member ?fc ;
+            dcterms:identifier ?d_id .
+        FILTER (STR(?d_id) = "{dataset_id}" && DATATYPE(?d_id) = xsd:token)
+        ?coll a geo:FeatureCollection ;
+            dcterms:identifier ?id .
+        FILTER (STR(?id) = "{collection_id}" && DATATYPE(?id) = xsd:token)
+    """
+    # when querying by URI via /object?uri=...
+    query_by_uri = f"""
+        BIND (<{collection_uri}> as ?coll)
+        ?coll a geo:FeatureCollection .
+    """
+
+    q = f"""
+        PREFIX dcat: <{DCAT}>
+        PREFIX dcterms: <{DCTERMS}>
+        PREFIX geo: <{GEO}>
+        PREFIX rdfs: <{RDFS}>
+        PREFIX xsd: <{XSD}>
+        SELECT ?title ?desc
+        WHERE {{
+            {query_by_id if collection_id is not None else query_by_uri}
+            ?coll dcterms:title ?title .
+            OPTIONAL {{
+                ?coll dcterms:description ?desc .
+            }}
+            FILTER(lang(?title) = "" || lang(?title) = "en")
+        }}
     """
     r = await sparql_query(q, "spaceprez")
     if r[0]:
