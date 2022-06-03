@@ -1,8 +1,5 @@
 from typing import List, Dict, Optional
 
-from rdflib import Graph
-from rdflib.namespace import DCTERMS, SKOS, SDO
-
 from config import *
 from models import PrezModel
 
@@ -28,12 +25,13 @@ class VocPrezCollection(PrezModel):
             raise ValueError("Either an ID or a URI must be provided")
 
         query_by_id = f"""
-            ?coll dcterms:identifier "{id}"^^xsd:token .
+                ?coll dcterms:identifier "{id}"^^xsd:token .
+                BIND("{id}" AS ?id)
         """
 
         query_by_uri = f"""
-            BIND (<{uri}> as ?coll)
-            ?coll dcterms:identifier ?id .
+                BIND (<{uri}> as ?coll)
+                ?coll dcterms:identifier ?id .
         """
 
         r = self.graph.query(
@@ -41,9 +39,12 @@ class VocPrezCollection(PrezModel):
             PREFIX dcterms: <{DCTERMS}>
             PREFIX rdfs: <{RDFS}>
             PREFIX skos: <{SKOS}>
+            PREFIX xsd: <{XSD}>
+            
             SELECT *
             WHERE {{
                 {query_by_id if id is not None else query_by_uri}
+                
                 ?coll a skos:Collection ;
                     rdfs:label|skos:prefLabel|dcterms:title ?title ;
                     skos:definition|dcterms:description ?desc .
