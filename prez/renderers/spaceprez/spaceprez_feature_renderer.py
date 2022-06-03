@@ -152,9 +152,7 @@ class SpacePrezFeatureRenderer(Renderer):
         if self.error is not None:
             return PlainTextResponse(self.error, status_code=400)
         elif self.profile == "alt":
-            return self._render_alt(
-                template_context, alt_profiles_graph=alt_profiles_graph
-            )
+            return self._render_alt(template_context, alt_profiles_graph)
         elif self.mediatype == "text/html":
             return self._render_oai_html(template_context)
         elif self.mediatype == "application/geo+json":

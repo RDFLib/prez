@@ -118,7 +118,8 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
 
     @abstractmethod
     def render(
-        self, template_context: Optional[Dict] = None
+        self, template_context: Optional[Dict] = None,
+        alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
@@ -127,7 +128,7 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
         elif self.profile == "mem":
             return self._render_mem(template_context)
         elif self.profile == "alt":
-            return self._render_alt(template_context)
+            return self._render_alt(template_context, alt_profiles_graph)
         # extra profiles go here
         else:
             return None

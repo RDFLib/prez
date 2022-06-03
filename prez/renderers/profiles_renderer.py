@@ -63,14 +63,14 @@ class ProfilesRenderer(Renderer):
             return self._render_profiles_json()
 
     def render(
-        self, template_context: Optional[Dict] = None
+        self, template_context: Optional[Dict] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
         if self.error is not None:
             return PlainTextResponse(self.error, status_code=400)
         elif self.profile == "alt":
-            return self._render_alt(template_context)
+            return self._render_alt(template_context, alt_profiles_graph)
         elif self.profile == "profiles":
             return self._render_profiles(template_context)
         else:

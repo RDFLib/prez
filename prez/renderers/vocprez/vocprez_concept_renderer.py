@@ -22,11 +22,13 @@ class VocPrezConceptRenderer(Renderer):
         self,
         request: object,
         instance_uri: str,
+        available_profiles: dict,
+        default_profile: str,
     ) -> None:
         super().__init__(
             request,
-            VocPrezConceptRenderer.profiles,
-            VocPrezConceptRenderer.default_profile_token,
+            available_profiles,
+            default_profile,
             instance_uri,
         )
 
@@ -179,14 +181,19 @@ class VocPrezConceptRenderer(Renderer):
         return self._render_vocpub_rdf()
 
     def render(
-        self, template_context: Optional[Dict] = None
+        self, 
+        template_context: Optional[Dict] = None,
+        alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
+        print("RENDER")
+        print(self.profile)
         if self.error is not None:
             return PlainTextResponse(self.error, status_code=400)
         elif self.profile == "alt":
-            return self._render_alt(template_context)
+            print("ALT")
+            return self._render_alt(template_context, alt_profiles_graph)
         elif self.profile == "vocpub":
             return self._render_vocpub(template_context)
         elif self.profile == "skos":

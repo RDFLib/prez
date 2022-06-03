@@ -209,7 +209,9 @@ class Renderer(object, metaclass=ABCMeta):
         )
 
     def _render_alt(
-        self, template_context: Union[Dict, None], alt_profiles_graph: Graph
+        self,
+        template_context: Union[Dict, None],
+        alt_profiles_graph: Graph
     ) -> Union[templates.TemplateResponse, Response, JSONResponse]:
         """Renders the alternate profiles based on mediatype"""
         if self.mediatype == "text/html":
@@ -222,7 +224,8 @@ class Renderer(object, metaclass=ABCMeta):
 
     @abstractmethod
     def render(
-        self, template_context: Optional[Dict] = None
+        self, template_context: Optional[Dict] = None,
+        alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
@@ -230,7 +233,7 @@ class Renderer(object, metaclass=ABCMeta):
         if self.error is not None:
             return PlainTextResponse(self.error, status_code=400)
         elif self.profile == "alt":
-            return self._render_alt(template_context)
+            return self._render_alt(template_context, alt_profiles_graph)
         # extra profiles go here
         else:
             return None

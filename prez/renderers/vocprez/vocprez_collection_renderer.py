@@ -153,14 +153,15 @@ class VocPrezCollectionRenderer(Renderer):
         return self._render_dd_json()
 
     def render(
-        self, template_context: Optional[Dict] = None
+        self, template_context: Optional[Dict] = None,
+        alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
         if self.error is not None:
             return PlainTextResponse(self.error, status_code=400)
         elif self.profile == "alt":
-            return self._render_alt(template_context)
+            return self._render_alt(template_context, alt_profiles_graph)
         elif self.profile == "vocpub":
             return self._render_vocpub(template_context)
         elif self.profile == "vocpub_supplied":
