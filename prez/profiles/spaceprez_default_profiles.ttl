@@ -1,106 +1,135 @@
 PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
 PREFIX dcat: <http://www.w3.org/ns/dcat#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX ex: <http://example.org/ns#>
-PREFIX gas: <http://pid.geoscience.gov.au/def/ga-sampling/>
 PREFIX geo: <http://www.opengis.net/ont/geosparql#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX prez: <https://surroundaustralia.com/prez/>
 PREFIX prof: <http://www.w3.org/ns/dx/prof/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX sh: <http://www.w3.org/ns/shacl#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-PREFIX tern: <https://w3id.org/tern/ontologies/tern/>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
-altr-ext:hasResourceFormat owl:propertyChainAxiom ( dcterms:conformsTo dcterms:format ) .
+<http://example.com/profile/profiles>
+    a prof:Profile ;
+    rdfs:label "Profiles" ;
+    dcterms:description "List of profiles" ;
+    dcterms:identifier "profiles" ;
+    altr-ext:constrainsClass prez:Profiles ;
+    altr-ext:hasDefaultResourceFormat "text/html" ;
+    altr-ext:hasResourceFormat
+        "application/json" ,
+        "text/html" ;
+.
+
+<http://www.opengis.net/def/geosparql>
+    a prof:Profile ;
+    dcterms:description "An RDF/OWL vocabulary for representing spatial information" ;
+    dcterms:identifier "geo" ;
+    dcterms:title "GeoSPARQL" ;
+    altr-ext:constrainsClass geo:Feature ;
+    altr-ext:hasDefaultResourceFormat "text/html" ;
+    altr-ext:hasResourceFormat
+        "application/ld+json" ,
+        "application/rdf+xml" ,
+        "text/html" ,
+        "text/turtle" ;
+.
+
+<http://www.opengis.net/spec/ogcapi-features-1/1.0/req/oas30>
+    a prof:Profile ;
+    dcterms:description "The OpenAPI Specification (OAS) defines a standard, language-agnostic interface to RESTful APIs which allows both humans and computers to discover and understand the capabilities of the service without access to source code, documentation, or through network traffic inspection." ;
+    dcterms:identifier "oai" ;
+    dcterms:title "OpenAPI 3.0" ;
+    altr-ext:constrainsClass
+        geo:Feature ,
+        geo:FeatureCollection ,
+        prez:Conformance ,
+        prez:HomePage ;
+    altr-ext:hasDefaultResourceFormat "text/html" ;
+    altr-ext:hasResourceFormat
+        "application/ld+json" ,
+        "application/rdf+xml" ,
+        "text/html" ,
+        "text/turtle" ;
+.
+
+altr-ext:alt-profile
+    a prof:Profile ;
+    dcterms:description "The representation of the resource that lists all other representations (profiles and Media Types)" ;
+    dcterms:identifier "alt" ;
+    dcterms:title "Alternates Profile" ;
+    altr-ext:constrainsClass geo:Feature ;
+    altr-ext:hasDefaultResourceFormat "text/html" ;
+    altr-ext:hasResourceFormat
+        "application/ld+json" ,
+        "application/rdf+xml" ,
+        "text/html" ,
+        "text/turtle" ;
+.
+
+altr-ext:hasResourceFormat
+    owl:propertyChainAxiom (
+            dcterms:conformsTo
+            dcterms:format
+        ) ;
+.
+
+<https://w3id.org/profile/dcat2null>
+    a prof:Profile ;
+    dcterms:description "A list of fundamental profiles, that is profiles that are commonly seen/needed and widely applicable." ;
+    dcterms:identifier "dcat" ;
+    dcterms:title "Fundamental Profiles Register" ;
+    altr-ext:constrainsClass dcat:Dataset ;
+    altr-ext:hasDefaultResourceFormat "text/html" ;
+    altr-ext:hasResourceFormat
+        "application/ld+json" ,
+        "application/rdf+xml" ,
+        "text/html" ,
+        "text/turtle" ;
+.
+
+<https://w3id.org/profile/mem>
+    a prof:Profile ;
+    dcterms:description "A very basic data model that lists the members of container objects only, i.e. not their other properties" ;
+    dcterms:identifier "mem" ;
+    dcterms:title "Members" ;
+    altr-ext:constrainsClass "" ;
+    altr-ext:hasDefaultResourceFormat "text/html" ;
+    altr-ext:hasResourceFormat
+        "application/json" ,
+        "application/ld+json" ,
+        "application/rdf+xml" ,
+        "text/html" ,
+        "text/turtle" ;
+.
 
 <https://w3id.org/profile/ogcldapi>
     a prof:Profile ;
     dcterms:identifier "ogcldapi" ;
+    skos:definition "This profile specifies rules that RDF data must adhere to, to be fit for use with instances of the OGC LD API tool. It also provides machine-readable data validators." ;
     skos:prefLabel "OGC LD API Profile"@en ;
-    skos:definition "This profile specifies rules that RDF data must adhere to, to be fit for use with instances of the OGC LD API tool. It also provides machine-readable data validators." ;    rdfs:label "OGC Linked " ;
-    altr-ext:constrainsClass
-        geo:Feature ;
-    altr-ext:hasResourceFormat "text/turtle", "application/ld+json", "application/rdf+xml", "text/html", "application/vnd.geo+json";
+    altr-ext:constrainsClass geo:Feature ;
     altr-ext:hasDefaultResourceFormat "text/html" ;
-.
-
-<https://w3id.org/profile/dcat2null>
-    dcterms:identifier "dcat" ;
-    dcterms:description "A list of fundamental profiles, that is profiles that are commonly seen/needed and widely applicable." ;
-    rdfs:label "Fundamental Profiles Register" ;
-    a prof:Profile ;
-    altr-ext:constrainsClass dcat:Dataset ;
-    altr-ext:hasResourceFormat "text/turtle", "application/ld+json", "application/rdf+xml", "text/html" ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
-.
-
-<http://www.opengis.net/def/geosparql>
-    rdfs:label "GeoSPARQL" ;
-    dcterms:description "An RDF/OWL vocabulary for representing spatial information" ;
-    dcterms:identifier "geo";
-    a prof:Profile ;
-    altr-ext:constrainsClass
-        geo:Feature ;
-    altr-ext:hasResourceFormat "text/turtle", "application/ld+json", "application/rdf+xml", "text/html" ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
-.
-
-<http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile>
-    rdfs:label "Alternates Profile" ;
-    dcterms:description "The representation of the resource that lists all other representations (profiles and Media Types)" ;
-    dcterms:identifier "alt";
-    a prof:Profile ;
-    altr-ext:constrainsClass
-        geo:Feature ;
-    altr-ext:hasResourceFormat "text/turtle", "application/ld+json", "application/rdf+xml", "text/html" ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
-.
-
-<http://www.opengis.net/spec/ogcapi-features-1/1.0/req/oas30>
-    rdfs:label "OpenAPI 3.0" ;
-    dcterms:description "The OpenAPI Specification (OAS) defines a standard, language-agnostic interface to RESTful APIs which allows both humans and computers to discover and understand the capabilities of the service without access to source code, documentation, or through network traffic inspection." ;
-    dcterms:identifier "oai";
-    a prof:Profile ;
-    altr-ext:constrainsClass
-        prez:HomePage ,
-        prez:Conformance ,
-        geo:Feature ,
-        geo:FeatureCollection ;
-    altr-ext:hasResourceFormat "text/turtle", "application/ld+json", "application/rdf+xml", "text/html" ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
-.
-
-<https://w3id.org/profile/mem>
-    rdfs:label "Members" ;
-    dcterms:description "A very basic data model that lists the members of container objects only, i.e. not their other properties" ;
-    dcterms:identifier "mem";
-    a prof:Profile ;
-    altr-ext:constrainsClass "";
-    altr-ext:hasResourceFormat "text/turtle", "application/ld+json", "application/rdf+xml", "text/html" ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
+    altr-ext:hasResourceFormat
+        "application/ld+json" ,
+        "application/rdf+xml" ,
+        "application/vnd.geo+json" ,
+        "text/html" ,
+        "text/turtle" ;
 .
 
 <https://www.w3.org/TR/vocab-dcat/>
-    rdfs:label "DCAT" ;
-    dcterms:description "Dataset Catalogue Vocabulary (DCAT) is a W3C-authored RDF vocabulary designed to facilitate interoperability between data catalogs" ;
-    dcterms:identifier "dcat";
     a prof:Profile ;
+    dcterms:description "Dataset Catalog Vocabulary (DCAT) is a W3C-authored RDF vocabulary designed to facilitate interoperability between data catalogs" ;
+    dcterms:identifier "dcat" ;
+    dcterms:title "DCAT" ;
     altr-ext:constrainsClass
-        dcat:Dataset ,
-        dcat:Catalog ;
-    altr-ext:hasResourceFormat "text/turtle", "application/ld+json", "application/rdf+xml", "text/html" ;
+        dcat:Catalog ,
+        dcat:Dataset ;
     altr-ext:hasDefaultResourceFormat "text/html" ;
-.
-
-<http://example.com/profile/profiles>
-    rdfs:label "Profiles" ;
-    dcterms:description "List of profiles" ;
-    dcterms:identifier "profiles";
-    a prof:Profile ;
-    altr-ext:constrainsClass
-        prez:Profiles ;
-    altr-ext:hasResourceFormat "text/html", "application/json" ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
+    altr-ext:hasResourceFormat
+        "application/ld+json" ,
+        "application/rdf+xml" ,
+        "text/html" ,
+        "text/turtle" ;
 .

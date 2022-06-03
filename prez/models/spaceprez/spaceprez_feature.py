@@ -1,8 +1,5 @@
 from typing import List, Dict, Optional
 
-from rdflib import Graph, URIRef
-from rdflib.namespace import XSD
-
 from config import *
 from models import PrezModel
 

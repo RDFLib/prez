@@ -2,8 +2,6 @@ from typing import Dict, Optional, Union, List
 from abc import ABCMeta, abstractmethod
 
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from rdflib import Graph, URIRef, Literal
-from rdflib.namespace import RDF, RDFS
 from connegp import Profile, RDF_MEDIATYPES
 
 from renderers import Renderer
@@ -58,7 +56,7 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
         """Renders the HTML representation of the members profiles using the 'mem.html' template"""
         _template_context = {
             "request": self.request,
-            "uri": self.instance_uri,
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
             "members": self.members,
             "label": self.label,
             "comment": self.comment,
@@ -73,7 +71,7 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
         """Renders the JSON representation of the members profile"""
         return JSONResponse(
             content={
-                "uri": self.instance_uri,
+                "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
                 "members": self.members,
                 "label": self.label,
                 "comment": self.comment,

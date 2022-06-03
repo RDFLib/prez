@@ -1,9 +1,6 @@
 from typing import List, Dict, Optional
 import json
 
-from rdflib import Graph
-from rdflib.namespace import DCTERMS, SKOS, RDFS, XSD
-
 from config import *
 from models import PrezModel
 

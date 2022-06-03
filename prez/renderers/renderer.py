@@ -3,8 +3,6 @@ from typing import Dict, Optional, Union
 
 from connegp import Connegp, Profile, RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from rdflib import Graph, URIRef, Literal, BNode
-from rdflib.namespace import PROF, XSD
 
 from config import *
 from utils import templates
@@ -188,7 +186,7 @@ class Renderer(object, metaclass=ABCMeta):
         """Renders the HTML representation of the alternate profiles using the 'alt.html' template"""
         _template_context = {
             "request": self.request,
-            "uri": self.instance_uri,
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
             "profiles": self.profiles,
             "default_profile": self.profiles.get(self.default_profile_token),
         }
@@ -202,7 +200,7 @@ class Renderer(object, metaclass=ABCMeta):
         """Renders the JSON representation of the alternate profiles"""
         return JSONResponse(
             content={
-                "uri": self.instance_uri,
+                "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
                 "profiles": list(self.profiles.keys()),
                 "default_profile": self.default_profile_token,
             },

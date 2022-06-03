@@ -1,7 +1,6 @@
 from typing import Dict, Optional, Union
 
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from rdflib import Graph
 from connegp import MEDIATYPE_NAMES
 
 from config import *
@@ -32,7 +31,7 @@ class SpacePrezFeatureCollectionRenderer(Renderer):
         _template_context = {
             "request": self.request,
             "collection": self.collection.to_dict(),
-            "uri": self.instance_uri,
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
             "mediatype_names": dict(

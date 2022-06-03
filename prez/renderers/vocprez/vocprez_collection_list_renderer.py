@@ -44,7 +44,7 @@ class VocPrezCollectionListRenderer(ListRenderer):
         _template_context = {
             "request": self.request,
             "members": self.members,
-            "uri": self.instance_uri,
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
             "pages": self.pages,
             "label": self.label,
             "comment": self.comment,
@@ -63,7 +63,7 @@ class VocPrezCollectionListRenderer(ListRenderer):
     def _render_dcat_json(self):
         return JSONResponse(
             content={
-                "uri": self.instance_uri,
+                "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
                 "members": self.members,
                 "label": self.label,
                 "comment": self.comment,
