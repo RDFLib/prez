@@ -7,7 +7,6 @@ from rdflib import Graph, DCTERMS, SKOS, URIRef, Literal, BNode
 from rdflib.namespace import RDF, PROF, Namespace, RDFS
 
 from services.sparql_utils import (
-    remote_profiles_query,
     sparql_construct,
     sparql_query,
 )
@@ -19,6 +18,25 @@ async def create_profiles_graph():
     for f in Path(__file__).glob("*.ttl"):
         profiles_g.parse(f)
     logging.info("Using local profiles")
+
+    remote_profiles_query = """
+        PREFIX prof: <http://www.w3.org/ns/dx/prof/>
+        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+
+        DESCRIBE ?profile ?class 
+        WHERE {
+          ?profile a prof:Profile .
+
+          OPTIONAL {
+            ?class rdfs:subClassOf geo:Feature .
+          }
+          OPTIONAL {
+            ?class rdfs:subClassOf skos:Concept .
+          }
+        }
+        """
 
     r = await sparql_construct(remote_profiles_query, "VocPrez")
     if r[0]:
