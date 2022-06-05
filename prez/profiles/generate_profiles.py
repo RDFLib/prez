@@ -1,5 +1,6 @@
 import logging
 
+from pathlib import Path
 from async_lru import alru_cache
 from connegp import Profile
 from rdflib import Graph, DCTERMS, SKOS, URIRef, Literal, BNode
@@ -14,17 +15,21 @@ from services.sparql_utils import (
 
 @alru_cache(maxsize=20)
 async def create_profiles_graph():
-    local_profiles_g = Graph().parse(
-        "prez/profiles/spaceprez_default_profiles.ttl", format="turtle"
-    )
+    profiles_g = Graph()
+    for f in Path(__file__).glob("*.ttl"):
+        profiles_g.parse(f)
+    logging.info("Using local profiles")
+
+    r = await sparql_construct(remote_profiles_query, "VocPrez")
+    if r[0]:
+        profiles_g += r[1]
+        logging.info("Also using remote profiles for VocPrez")
+
     r = await sparql_construct(remote_profiles_query, "SpacePrez")
     if r[0]:
-        remote_profiles_g = r[1]
-        profiles_g = local_profiles_g + remote_profiles_g
-        logging.info("Using local and remote profiles")
-    else:
-        profiles_g = local_profiles_g
-        logging.info("Using local profiles ONLY - no remote profiles found")
+        profiles_g += r[1]
+        logging.info("Also using remote profiles for SpacePrez")
+
     return profiles_g
 
 
