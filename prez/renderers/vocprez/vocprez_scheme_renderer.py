@@ -164,7 +164,7 @@ class VocPrezSchemeRenderer(Renderer):
         _template_context = {
             "request": self.request,
             "scheme": self.scheme.to_dict(),
-            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.base_url),
+            "uri": self.instance_uri if True else str(self.request.base_url),
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
             "mediatype_names": MEDIATYPE_NAMES,
