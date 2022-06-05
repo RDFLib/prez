@@ -148,7 +148,7 @@ pydantic = "^1.8.2"
 type = "git"
 url = "https://github.com/surroundaustralia/Connegp2.git"
 reference = "main"
-resolved_reference = "b26e6107b48ba5253fccd7c10a995c6b3a6ba56d"
+resolved_reference = "e73f7966e3016230b3ff7d4accd48cd7fda6050a"
 
 [[package]]
 name = "distlib"
@@ -471,16 +471,17 @@ email = ["email-validator (>=1.0.3)"]
 
 [[package]]
 name = "pyjwt"
-version = "1.7.1"
+version = "2.4.0"
 description = "JSON Web Token implementation in Python"
 category = "dev"
 optional = false
-python-versions = "*"
+python-versions = ">=3.6"
 
 [package.extras]
-crypto = ["cryptography (>=1.4)"]
-flake8 = ["flake8", "flake8-import-order", "pep8-naming"]
-test = ["pytest (>=4.0.1,<5.0.0)", "pytest-cov (>=2.6.0,<3.0.0)", "pytest-runner (>=4.2,<5.0.0)"]
+crypto = ["cryptography (>=3.3.1)"]
+dev = ["sphinx", "sphinx-rtd-theme", "zope.interface", "cryptography (>=3.3.1)", "pytest (>=6.0.0,<7.0.0)", "coverage[toml] (==5.0.4)", "mypy", "pre-commit"]
+docs = ["sphinx", "sphinx-rtd-theme", "zope.interface"]
+tests = ["pytest (>=6.0.0,<7.0.0)", "coverage[toml] (==5.0.4)"]
 
 [[package]]
 name = "pykwalify"
@@ -772,7 +773,7 @@ pbr = ">=2.0.0,<2.1.0 || >2.1.0"
 
 [[package]]
 name = "tavern"
-version = "1.22.1"
+version = "1.23.1"
 description = "Simple testing of RESTful APIs"
 category = "dev"
 optional = false
@@ -781,7 +782,7 @@ python-versions = "*"
 [package.dependencies]
 jmespath = "<1"
 paho-mqtt = ">=1.3.1,<=1.5.1"
-pyjwt = ">=1.7.1,<2"
+pyjwt = ">=2.4.0,<3"
 pykwalify = ">=1.8.0,<2"
 pytest = ">=6.2,<8"
 python-box = ">4,<6"
@@ -1201,8 +1202,8 @@ pydantic = [
     {file = "pydantic-1.9.1.tar.gz", hash = "sha256:1ed987c3ff29fff7fd8c3ea3a3ea877ad310aae2ef9889a119e22d3f2db0691a"},
 ]
 pyjwt = [
-    {file = "PyJWT-1.7.1-py2.py3-none-any.whl", hash = "sha256:5c6eca3c2940464d106b99ba83b00c6add741c9becaec087fb7ccdefea71350e"},
-    {file = "PyJWT-1.7.1.tar.gz", hash = "sha256:8d59a976fb773f3e6a39c85636357c4f0e242707394cadadd9814f5cbaa20e96"},
+    {file = "PyJWT-2.4.0-py3-none-any.whl", hash = "sha256:72d1d253f32dbd4f5c88eaf1fdc62f3a19f676ccbadb9dbc5d07e951b2b26daf"},
+    {file = "PyJWT-2.4.0.tar.gz", hash = "sha256:d42908208c699b3b973cbeb01a969ba6a96c821eefb1c5bfe4c390c01d67abba"},
 ]
 pykwalify = [
     {file = "pykwalify-1.8.0-py2.py3-none-any.whl", hash = "sha256:731dfa87338cca9f559d1fca2bdea37299116e3139b73f78ca90a543722d6651"},
@@ -1364,7 +1365,7 @@ stevedore = [
     {file = "stevedore-3.5.0.tar.gz", hash = "sha256:f40253887d8712eaa2bb0ea3830374416736dc8ec0e22f5a65092c1174c44335"},
 ]
 tavern = [
-    {file = "tavern-1.22.1-py3-none-any.whl", hash = "sha256:a8d3fb5c47b73723a5005d607edc0d7f0ff79fa002272d76792714ddde047e27"},
+    {file = "tavern-1.23.1-py3-none-any.whl", hash = "sha256:1ac83e68ee2fc31a0b62405cc75211f07c4fdbb3b3c33ad630da5bc116c301b9"},
 ]
 toml = [
     {file = "toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b"},
