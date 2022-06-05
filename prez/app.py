@@ -1,4 +1,5 @@
 import time
+from pathlib import Path
 from typing import Optional
 from urllib.parse import quote_plus
 from urllib.parse import urlparse
@@ -12,13 +13,12 @@ from fastapi.responses import JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fedsearch import SkosSearch, EndpointDetails
 from pydantic import AnyUrl
-from rdflib import URIRef
 
-from profiles.generate_profiles import get_general_profiles
-from routers import vocprez_router, spaceprez_router
-from services.app_service import *
-from utils import templates
-from view_funcs import profiles_func
+from prez.profiles.generate_profiles import get_general_profiles
+from prez.routers import vocprez_router, spaceprez_router
+from prez.services.app_service import *
+from prez.utils import templates
+from prez.view_funcs import profiles_func
 
 
 async def catch_400(request: Request, exc):
@@ -64,12 +64,12 @@ app = FastAPI(
     }
 )
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
 if THEME_VOLUME is not None:
     app.mount(
-        f"/{THEME_VOLUME}",
-        StaticFiles(directory=f"{THEME_VOLUME}/static"),
-        name=THEME_VOLUME,
+        f"/theme",
+        StaticFiles(directory=Path(__file__).parent / f"{THEME_VOLUME}" / "static"),
+        name="theme",
     )
 
 
