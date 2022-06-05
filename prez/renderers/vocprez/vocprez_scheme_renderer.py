@@ -3,11 +3,11 @@ from typing import Dict, Optional, Union
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from connegp import MEDIATYPE_NAMES
 
-from config import *
-from renderers import Renderer
-from profiles.vocprez_profiles import skos, vocpub, vocpub_supplied, dd, alt
-from models.vocprez import VocPrezScheme
-from utils import templates
+from prez.config import *
+from prez.renderers import Renderer
+from prez.profiles.vocprez_profiles import skos, vocpub, vocpub_supplied, dd, alt
+from prez.models.vocprez import VocPrezScheme
+from prez.utils import templates
 
 
 class VocPrezSchemeRenderer(Renderer):
@@ -164,7 +164,7 @@ class VocPrezSchemeRenderer(Renderer):
         _template_context = {
             "request": self.request,
             "scheme": self.scheme.to_dict(),
-            "uri": self.instance_uri if True else str(self.request.base_url),
+            "uri": self.instance_uri if True else str(self.request.url),
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
             "mediatype_names": MEDIATYPE_NAMES,

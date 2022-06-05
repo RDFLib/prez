@@ -1,7 +1,7 @@
 from typing import List, Dict, Optional
 
-from config import *
-from models import PrezModel
+from prez.config import *
+from prez.models import PrezModel
 
 
 class VocPrezScheme(PrezModel):

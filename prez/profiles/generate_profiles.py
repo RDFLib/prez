@@ -6,7 +6,7 @@ from connegp import Profile
 from rdflib import Graph, DCTERMS, SKOS, URIRef, Literal, BNode
 from rdflib.namespace import RDF, PROF, Namespace, RDFS
 
-from services.sparql_utils import (
+from prez.services.sparql_utils import (
     sparql_construct,
     sparql_query,
 )
@@ -15,7 +15,7 @@ from services.sparql_utils import (
 @alru_cache(maxsize=20)
 async def create_profiles_graph():
     profiles_g = Graph()
-    for f in Path(__file__).glob("*.ttl"):
+    for f in Path(__file__).parent.glob("*.ttl"):
         profiles_g.parse(f)
     logging.info("Using local profiles")
 

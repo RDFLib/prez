@@ -3,9 +3,9 @@ from typing import Dict, Optional, Union
 from connegp import MEDIATYPE_NAMES
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 
-from renderers import Renderer
-from utils import templates
-from config import *
+from prez.renderers import Renderer
+from prez.utils import templates
+from prez.config import *
 
 
 class SpacePrezConformanceRenderer(Renderer):
@@ -45,7 +45,7 @@ class SpacePrezConformanceRenderer(Renderer):
         """Renders the HTML representation of the OAI profile for the conformance page"""
         _template_context = {
             "request": self.request,
-            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.base_url),
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
             "conformsTo": SpacePrezConformanceRenderer.conformsTo,

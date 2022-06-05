@@ -5,7 +5,7 @@ from httpx import Response as httpxResponse
 import asyncio
 from connegp import RDF_MEDIATYPES
 
-from config import *
+from prez.config import *
 
 get_all_prop_obj_info = """
 OPTIONAL {

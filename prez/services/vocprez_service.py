@@ -1,7 +1,6 @@
 from typing import Optional
 
-from config import *
-from services.sparql_utils import *
+from prez.services.sparql_utils import *
 
 
 async def count_schemes():

@@ -3,11 +3,11 @@ from typing import Dict, Optional, Union
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from connegp import MEDIATYPE_NAMES
 
-from config import *
-from renderers import Renderer
-from profiles.vocprez_profiles import vocpub, vocpub_supplied, skos, alt
-from models.vocprez import VocPrezConcept
-from utils import templates
+from prez.config import *
+from prez.renderers import Renderer
+from prez.profiles.vocprez_profiles import vocpub, vocpub_supplied, skos, alt
+from prez.models.vocprez import VocPrezConcept
+from prez.utils import templates
 
 
 class VocPrezConceptRenderer(Renderer):
@@ -43,7 +43,7 @@ class VocPrezConceptRenderer(Renderer):
         _template_context = {
             "request": self.request,
             "concept": self.concept.to_dict(),
-            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.base_url),
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
             "mediatype_names": MEDIATYPE_NAMES,

@@ -4,11 +4,10 @@ from abc import ABCMeta, abstractmethod
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from connegp import Profile, RDF_MEDIATYPES
 
-from renderers import Renderer
-from config import *
+from prez.renderers import Renderer
+from prez.config import *
 
-# from profiles.prez_profiles import mem
-from utils import templates
+from prez.utils import templates
 
 
 class ListRenderer(Renderer, metaclass=ABCMeta):
@@ -56,7 +55,7 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
         """Renders the HTML representation of the members profiles using the 'mem.html' template"""
         _template_context = {
             "request": self.request,
-            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.base_url),
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
             "members": self.members,
             "label": self.label,
             "comment": self.comment,
@@ -71,7 +70,7 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
         """Renders the JSON representation of the members profile"""
         return JSONResponse(
             content={
-                "uri": self.instance_uri if USE_PID_LINKS else str(self.request.base_url),
+                "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
                 "members": self.members,
                 "label": self.label,
                 "comment": self.comment,
@@ -103,7 +102,7 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
     def _render_mem_rdf(self) -> Response:
         """Renders the RDF representation of the members profile"""
         g = self._generate_mem_rdf()
-        return self._make_rdf_response(g)
+        return self._make_rdf_response(self.instance_uri, g)
 
     def _render_mem(
         self, template_context: Union[Dict, None]

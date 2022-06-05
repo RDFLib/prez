@@ -1,8 +1,6 @@
 from fastapi import APIRouter, Request, HTTPException
-from async_lru import alru_cache
 
-from config import *
-from models.spaceprez import *
+from prez.models.spaceprez import *
 from prez.profiles.generate_profiles import (
     ProfileDetails,
     get_general_profiles,
@@ -10,10 +8,10 @@ from prez.profiles.generate_profiles import (
     filter_results_using_profile,
     build_alt_graph,
 )
-from renderers.spaceprez import *
-from services.spaceprez_service import *
-from utils import templates
-from view_funcs import profiles_func
+from prez.renderers.spaceprez import *
+from prez.services.spaceprez_service import *
+from prez.utils import templates
+from prez.view_funcs import profiles_func
 
 PREZ = Namespace("https://surroundaustralia.com/prez/")
 

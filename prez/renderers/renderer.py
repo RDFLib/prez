@@ -4,8 +4,8 @@ from typing import Dict, Optional, Union
 from connegp import Connegp, Profile, RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 
-from config import *
-from utils import templates
+from prez.config import *
+from prez.utils import templates
 
 
 class Renderer(object, metaclass=ABCMeta):
@@ -132,6 +132,9 @@ class Renderer(object, metaclass=ABCMeta):
                 if token == self.default_profile_token and mt == p.default_mediatype:
                     g.add((instance_uri, ALTR.hasDefaultRepresentation, rep))
 
+        g = Graph()
+        g.parse(data="<a:> <a:> <a:> .")
+        print(g)
         return g
 
     def _make_rdf_response(self, item_uri, graph: Graph) -> Response:
@@ -187,12 +190,13 @@ class Renderer(object, metaclass=ABCMeta):
         return Response(response_text, media_type=self.mediatype)
 
     def _render_alt_html(
-        self, template_context: Union[Dict, None]
+        self,
+        template_context: Union[Dict, None]
     ) -> templates.TemplateResponse:
         """Renders the HTML representation of the alternate profiles using the 'alt.html' template"""
         _template_context = {
             "request": self.request,
-            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.base_url),
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
             "profiles": self.profiles,
             "default_profile": self.profiles.get(self.default_profile_token),
         }
@@ -206,7 +210,7 @@ class Renderer(object, metaclass=ABCMeta):
         """Renders the JSON representation of the alternate profiles"""
         return JSONResponse(
             content={
-                "uri": self.instance_uri if USE_PID_LINKS else str(self.request.base_url),
+                "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
                 "profiles": list(self.profiles.keys()),
                 "default_profile": self.default_profile_token,
             },

@@ -1,8 +1,7 @@
 from typing import List, Dict, Optional
-import json
 
-from config import *
-from models import PrezModel
+from prez.config import *
+from prez.models import PrezModel
 
 
 class SpacePrezFeatureCollection(PrezModel):

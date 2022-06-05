@@ -3,11 +3,11 @@ from typing import Dict, Optional, Union
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from connegp import MEDIATYPE_NAMES
 
-from renderers import ListRenderer
-from config import *
-from profiles.vocprez_profiles import dcat, dd, alt
-from models.vocprez import VocPrezSchemeList
-from utils import templates
+from prez.renderers import ListRenderer
+from prez.config import *
+from prez.profiles.vocprez_profiles import dcat, dd, alt
+from prez.models.vocprez import VocPrezSchemeList
+from prez.utils import templates
 
 
 class VocPrezSchemeListRenderer(ListRenderer):
@@ -48,7 +48,7 @@ class VocPrezSchemeListRenderer(ListRenderer):
         _template_context = {
             "request": self.request,
             "members": self.members,
-            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.base_url),
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
             "pages": self.pages,
             "label": self.label,
             "comment": self.comment,

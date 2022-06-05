@@ -1,12 +1,19 @@
 from fastapi import APIRouter, Request, HTTPException
 import asyncio
 
-from renderers.vocprez import *
-from services.vocprez_service import *
-from models.vocprez import *
-from utils import templates
-from view_funcs import profiles_func
-from config import *
+from prez.renderers.vocprez import *
+from prez.services.vocprez_service import *
+from prez.models.vocprez import *
+from prez.profiles.generate_profiles import (
+    ProfileDetails,
+    get_general_profiles,
+    get_specific_profiles,
+    filter_results_using_profile,
+    build_alt_graph,
+)
+from prez.utils import templates
+from prez.view_funcs import profiles_func
+from prez.config import *
 
 router = APIRouter(tags=["VocPrez"] if len(ENABLED_PREZS) > 1 else [])
 
@@ -192,6 +199,26 @@ async def concept_endpoint(
     concept_id: Optional[str] = None,
     concept_uri: Optional[str] = None,
 ):
+    feature_classes = ["http://www.w3.org/2004/02/skos/core#Concept"]
+    (
+        profiles_g,
+        preferred_classes_and_profiles,
+        profiles,
+        profiles_formats,
+    ) = await get_general_profiles(SKOS.Concept)
+
+    # find the available profiles
+    available_profiles, default_profile = await get_specific_profiles(
+        concept_uri,
+        preferred_classes_and_profiles,
+    )
+
+    # find the most specific class for the feature
+    for klass, _ in reversed(preferred_classes_and_profiles):
+        if klass in feature_classes:
+            most_specific_class = klass
+            break
+
     concept_renderer = VocPrezConceptRenderer(
         request,
         str(
@@ -199,6 +226,8 @@ async def concept_endpoint(
                 keys=[key for key in request.query_params.keys() if key != "uri"]
             )
         ),
+        available_profiles=profiles,
+        default_profile=default_profile,
     )
     include_inferencing = True
     if concept_renderer.profile == "vocpub_supplied":
@@ -213,6 +242,12 @@ async def concept_endpoint(
         raise HTTPException(status_code=404, detail="Not Found")
     concept = VocPrezConcept(sparql_result, id=concept_id, uri=concept_uri)
     concept_renderer.set_concept(concept)
+    # profile = concept_renderer.profile
+    # if profile == "alt":
+    #     alt_profiles_graph = await build_alt_graph(
+    #         URIRef(feature_uri), profiles_formats, available_profiles
+    #     )
+    #     return feature_renderer.render(alt_profiles_graph=alt_profiles_graph)
     return concept_renderer.render()
 
 
@@ -220,7 +255,11 @@ async def concept_endpoint(
 @router.get("/vocab/{scheme_id}/{concept_id}", summary="Get Concept")
 async def concept(request: Request, scheme_id: str, concept_id: str):
     """Returns a VocPrez skos:Concept in the necessary profile & mediatype"""
-    return await concept_endpoint(request, scheme_id=scheme_id, concept_id=concept_id)
+    return await concept_endpoint(
+        request,
+        scheme_id=scheme_id,
+        concept_id=concept_id
+    )
 
 
 @router.get(

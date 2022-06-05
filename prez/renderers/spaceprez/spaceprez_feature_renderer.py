@@ -3,10 +3,10 @@ from typing import Dict, Optional, Union
 from connegp import MEDIATYPE_NAMES, RDF_MEDIATYPES
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 
-from config import *
-from models.spaceprez import SpacePrezFeature
-from renderers import Renderer
-from utils import templates
+from prez.config import *
+from prez.models.spaceprez import SpacePrezFeature
+from prez.renderers import Renderer
+from prez.utils import templates
 
 
 class SpacePrezFeatureRenderer(Renderer):
@@ -34,7 +34,7 @@ class SpacePrezFeatureRenderer(Renderer):
         _template_context = {
             "request": self.request,
             "feature": self.feature.to_dict(),
-            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.base_url),
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
             "mediatype_names": dict(
@@ -62,7 +62,7 @@ class SpacePrezFeatureRenderer(Renderer):
                 "title": "this document",
             },
             {
-                "href": str(self.request.base_url)[:-1] + str(self.request.url.path),
+                "href": str(self.request.url)[:-1] + str(self.request.url.path),
                 "rel": "alternate",
                 "type": "text/html",
                 "title": "this document as HTML",

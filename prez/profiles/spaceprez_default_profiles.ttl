@@ -64,7 +64,8 @@ altr-ext:alt-profile
         "application/ld+json" ,
         "application/rdf+xml" ,
         "text/html" ,
-        "text/turtle" ;
+        "text/turtle" ,
+        "application/json" ;
 .
 
 altr-ext:hasResourceFormat

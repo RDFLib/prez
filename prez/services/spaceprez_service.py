@@ -1,9 +1,8 @@
 from typing import Optional
 
 from async_lru import alru_cache
-from rdflib.namespace import XSD
 
-from services.sparql_utils import *
+from prez.services.sparql_utils import *
 
 
 async def count_datasets():
