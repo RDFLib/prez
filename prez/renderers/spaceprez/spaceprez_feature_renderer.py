@@ -34,7 +34,7 @@ class SpacePrezFeatureRenderer(Renderer):
         _template_context = {
             "request": self.request,
             "feature": self.feature.to_dict(),
-            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.base_url),
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
             "mediatype_names": dict(

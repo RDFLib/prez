@@ -45,7 +45,7 @@ class SpacePrezConformanceRenderer(Renderer):
         """Renders the HTML representation of the OAI profile for the conformance page"""
         _template_context = {
             "request": self.request,
-            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.base_url),
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
             "conformsTo": SpacePrezConformanceRenderer.conformsTo,

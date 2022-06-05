@@ -44,7 +44,7 @@ class SpacePrezFeatureListRenderer(ListRenderer):
             "members": self.members,
             "dataset": self.feature_list.dataset,
             "collection": self.feature_list.collection,
-            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.base_url),
             "pages": self.pages,
             "label": self.label,
             "comment": self.comment,
@@ -119,7 +119,7 @@ class SpacePrezFeatureListRenderer(ListRenderer):
         elif self.profile == "mem":
             return self._render_mem(template_context)
         elif self.profile == "alt":
-            return self._render_alt(template_context, alt_profiles_graph=alt_profiles_graph)
+            return self._render_alt(template_context, alt_profiles_graph)
         elif self.profile == "oai":
             return self._render_oai(template_context)
         elif self.profile == "dd":

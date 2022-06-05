@@ -44,7 +44,7 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
             "request": self.request,
             "members": self.members,
             "dataset": self.feature_collection_list.dataset,
-            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.base_url),
             "pages": self.pages,
             "label": self.label,
             "comment": self.comment,
