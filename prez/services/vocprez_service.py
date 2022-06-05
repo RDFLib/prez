@@ -199,8 +199,10 @@ async def get_concept_construct(
     concept_uri: Optional[str] = None,
     include_inferencing: bool = True,
 ):
-    if concept_id is None and scheme_id is None and concept_uri is None:
-        raise ValueError("Either an ID or a URI must be provided for a SPARQL query")
+    if concept_uri is None:
+        if concept_id is None or scheme_id is None:
+            raise ValueError(
+                "Either a Concept Scheme ID and a Concept ID or a Concept URI must be provided for a SPARQL query")
 
     # when querying by ID via regular URL path
     query_by_id = f"""
