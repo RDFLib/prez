@@ -141,35 +141,42 @@ class Renderer(object, metaclass=ABCMeta):
         # remove labels from the graph
         query = f"""
         PREFIX geo: <{GEO}>
-        CONSTRUCT {{ <{str(item_uri)}> ?p ?o ;
-                      skos:inScheme ?cs .
-                      ?o ?p2 ?o2 .
-                      ?coll a geo:FeatureCollection ;
-                        rdfs:member <{str(item_uri)}> .
-                      ?dataset a dcat:Dataset ;
-                        rdfs:member ?coll .
-
-                        }}
-              WHERE {{
-                      <{str(item_uri)}> ?p ?o .
-                      OPTIONAL {{
-                      ?coll a geo:FeatureCollection ;
-                        rdfs:member <{str(item_uri)}> .
-                      ?dataset a dcat:Dataset ;
-                        rdfs:member ?coll .
-                        }}
-                      OPTIONAL {{
-                      <{str(item_uri)}> skos:inScheme ?cs .
-                       }}
-                OPTIONAL {{
+        CONSTRUCT {{ 
+            <{str(item_uri)}> ?p ?o .
+            ?o ?p2 ?o2 .
+            ?coll skos:member <{str(item_uri)}> .
+            
+            ?x rdfs:member <{str(item_uri)}> .  
+            ?y rdfs:member ?x .         
+        }}
+        WHERE {{
+            <{str(item_uri)}> ?p ?o .
+            # Blank Nodes
+            
+            OPTIONAL {{
                 ?o ?p2 ?o2 .
                 FILTER(ISBLANK(?o))
-                       }}
+            }}
+
+            # VocPrez
+            OPTIONAL {{
+                ?coll skos:member <{str(item_uri)}> .
+            }}                 
+                     
+            # SpacePrez
+            OPTIONAL {{
+                ?x rdfs:member <{str(item_uri)}> .
+                
+                OPTIONAL {{
+                    ?y rdfs:member ?x .
                 }}
+            }}
+        }}
         """
         filtered_g = Graph(namespace_manager=graph.namespace_manager)
         filtered_g += graph.query(query).graph
 
+        filtered_g = graph
         response_text = filtered_g.serialize(format=serial_mediatype, encoding="utf-8")
 
         # destroy the triples in the triplestore, then delete the triplestore
@@ -177,7 +184,6 @@ class Renderer(object, metaclass=ABCMeta):
         graph.store.remove((None, None, None))
         graph.destroy({})
         del graph
-
         return Response(response_text, media_type=self.mediatype)
 
     def _render_alt_html(
@@ -186,7 +192,7 @@ class Renderer(object, metaclass=ABCMeta):
         """Renders the HTML representation of the alternate profiles using the 'alt.html' template"""
         _template_context = {
             "request": self.request,
-            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.base_url),
             "profiles": self.profiles,
             "default_profile": self.profiles.get(self.default_profile_token),
         }
@@ -200,7 +206,7 @@ class Renderer(object, metaclass=ABCMeta):
         """Renders the JSON representation of the alternate profiles"""
         return JSONResponse(
             content={
-                "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
+                "uri": self.instance_uri if USE_PID_LINKS else str(self.request.base_url),
                 "profiles": list(self.profiles.keys()),
                 "default_profile": self.default_profile_token,
             },
