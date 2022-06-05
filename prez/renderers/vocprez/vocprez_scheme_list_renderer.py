@@ -5,13 +5,17 @@ from connegp import MEDIATYPE_NAMES
 
 from renderers import ListRenderer
 from config import *
-from profiles.vocprez_profiles import dcat, dd
+from profiles.vocprez_profiles import dcat, dd, alt
 from models.vocprez import VocPrezSchemeList
 from utils import templates
 
 
 class VocPrezSchemeListRenderer(ListRenderer):
-    profiles = {"dcat": dcat, "dd": dd}
+    profiles = {
+        "dcat": dcat,
+        "dd": dd,
+        "alt": alt
+    }
     default_profile_token = "dcat"
 
     def __init__(
@@ -44,7 +48,7 @@ class VocPrezSchemeListRenderer(ListRenderer):
         _template_context = {
             "request": self.request,
             "members": self.members,
-            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.base_url),
             "pages": self.pages,
             "label": self.label,
             "comment": self.comment,

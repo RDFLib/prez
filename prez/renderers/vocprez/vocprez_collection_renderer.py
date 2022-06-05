@@ -5,7 +5,7 @@ from connegp import MEDIATYPE_NAMES
 
 from config import *
 from renderers import Renderer
-from profiles.vocprez_profiles import skos, vocpub, vocpub_supplied, dd
+from profiles.vocprez_profiles import skos, vocpub, vocpub_supplied, dd, alt
 from models.vocprez import VocPrezCollection
 from utils import templates
 
@@ -16,6 +16,7 @@ class VocPrezCollectionRenderer(Renderer):
         "skos": skos,
         "dd": dd,
         "vocpub_supplied": vocpub_supplied,
+        "alt": alt
     }
     default_profile_token = "vocpub"
 
@@ -73,7 +74,7 @@ class VocPrezCollectionRenderer(Renderer):
         _template_context = {
             "request": self.request,
             "collection": self.collection.to_dict(),
-            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.base_url),
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
             "mediatype_names": MEDIATYPE_NAMES,

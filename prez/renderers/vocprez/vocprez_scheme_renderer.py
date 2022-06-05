@@ -5,7 +5,7 @@ from connegp import MEDIATYPE_NAMES
 
 from config import *
 from renderers import Renderer
-from profiles.vocprez_profiles import skos, vocpub, vocpub_supplied, dd
+from profiles.vocprez_profiles import skos, vocpub, vocpub_supplied, dd, alt
 from models.vocprez import VocPrezScheme
 from utils import templates
 
@@ -16,6 +16,7 @@ class VocPrezSchemeRenderer(Renderer):
         "skos": skos,
         "dd": dd,
         "vocpub_supplied": vocpub_supplied,
+        "alt": alt
     }
     default_profile_token = "vocpub"
 
@@ -61,7 +62,7 @@ class VocPrezSchemeRenderer(Renderer):
     def _render_skos_rdf(self) -> Response:
         """Renders the RDF representation of the skos profile for a scheme"""
         g = self._generate_skos_rdf()
-        return self._make_rdf_response(g)
+        return self._make_rdf_response(self.instance_uri, g)
 
     def _render_skos(self):
         """Renders the skos profile for a scheme"""
@@ -136,7 +137,7 @@ class VocPrezSchemeRenderer(Renderer):
     def _render_vocpub_rdf(self) -> Response:
         """Renders the RDF representation of the vocpub profile for a scheme"""
         g = self._generate_vocpub_rdf()
-        return self._make_rdf_response(g)
+        return self._make_rdf_response(self.instance_uri, g)
 
     def _render_vocpub(self, template_context: Union[Dict, None]):
         """Renders the vocpub profile for a scheme"""
@@ -163,7 +164,7 @@ class VocPrezSchemeRenderer(Renderer):
         _template_context = {
             "request": self.request,
             "scheme": self.scheme.to_dict(),
-            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.base_url),
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
             "mediatype_names": MEDIATYPE_NAMES,

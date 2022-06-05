@@ -5,13 +5,17 @@ from connegp import MEDIATYPE_NAMES
 
 from config import *
 from renderers import Renderer
-from profiles.vocprez_profiles import dcat, sdo
+from profiles.vocprez_profiles import dcat, sdo, alt
 from models.vocprez import VocPrezDataset
 from utils import templates
 
 
 class VocPrezDatasetRenderer(Renderer):
-    profiles = {"dcat": dcat, "sdo": sdo}
+    profiles = {
+        "dcat": dcat,
+        "sdo": sdo,
+        "alt": alt
+    }
     default_profile_token = "dcat"
 
     def __init__(self, request: object, instance_uri: str) -> None:
@@ -32,7 +36,7 @@ class VocPrezDatasetRenderer(Renderer):
         _template_context = {
             "request": self.request,
             "dataset": self.dataset.to_dict(),
-            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.base_url),
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
             "mediatype_names": MEDIATYPE_NAMES,

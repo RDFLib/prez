@@ -5,7 +5,7 @@ from connegp import MEDIATYPE_NAMES
 
 from config import *
 from renderers import Renderer
-from profiles.vocprez_profiles import vocpub, vocpub_supplied, skos
+from profiles.vocprez_profiles import vocpub, vocpub_supplied, skos, alt
 from models.vocprez import VocPrezConcept
 from utils import templates
 
@@ -15,6 +15,7 @@ class VocPrezConceptRenderer(Renderer):
         "vocpub": vocpub,
         "skos": skos,
         "vocpub_supplied": vocpub_supplied,
+        "alt": alt
     }
     default_profile_token = "vocpub"
 
@@ -42,7 +43,7 @@ class VocPrezConceptRenderer(Renderer):
         _template_context = {
             "request": self.request,
             "concept": self.concept.to_dict(),
-            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.base_url),
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
             "mediatype_names": MEDIATYPE_NAMES,
@@ -122,7 +123,7 @@ class VocPrezConceptRenderer(Renderer):
     def _render_vocpub_rdf(self) -> Response:
         """Renders the RDF representation of the vocpub profile for a concept"""
         g = self._generate_vocpub_rdf()
-        return self._make_rdf_response(g)
+        return self._make_rdf_response(self.instance_uri, g)
 
     def _render_vocpub(self, template_context: Union[Dict, None]):
         """Renders the vocpub profile for a concept"""
@@ -187,12 +188,9 @@ class VocPrezConceptRenderer(Renderer):
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
-        print("RENDER")
-        print(self.profile)
         if self.error is not None:
             return PlainTextResponse(self.error, status_code=400)
         elif self.profile == "alt":
-            print("ALT")
             return self._render_alt(template_context, alt_profiles_graph)
         elif self.profile == "vocpub":
             return self._render_vocpub(template_context)
