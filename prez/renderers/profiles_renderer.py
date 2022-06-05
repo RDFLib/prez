@@ -36,7 +36,7 @@ class ProfilesRenderer(Renderer):
         """Renders the HTML representation of the profiles profile"""
         _template_context = {
             "request": self.request,
-            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.base_url),
             "profile_list": self.profile_list,
             "profiles": self.profiles,
             "prez": self.prez,
