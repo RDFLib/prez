@@ -47,10 +47,8 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
         prez:HomePage ;
     altr-ext:hasDefaultResourceFormat "text/html" ;
     altr-ext:hasResourceFormat
-        "application/ld+json" ,
-        "application/rdf+xml" ,
         "text/html" ,
-        "text/turtle" ;
+        "application/vnd.geo+json" ;
 .
 
 altr-ext:alt-profile
@@ -104,20 +102,20 @@ altr-ext:hasResourceFormat
         "text/turtle" ;
 .
 
-<https://w3id.org/profile/ogcldapi>
-    a prof:Profile ;
-    dcterms:identifier "ogcldapi" ;
-    skos:definition "This profile specifies rules that RDF data must adhere to, to be fit for use with instances of the OGC LD API tool. It also provides machine-readable data validators." ;
-    skos:prefLabel "OGC LD API Profile"@en ;
-    altr-ext:constrainsClass geo:Feature ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
-    altr-ext:hasResourceFormat
-        "application/ld+json" ,
-        "application/rdf+xml" ,
-        "application/vnd.geo+json" ,
-        "text/html" ,
-        "text/turtle" ;
-.
+# <https://w3id.org/profile/ogcldapi>
+#     a prof:Profile ;
+#     dcterms:identifier "ogcldapi" ;
+#     skos:definition "This profile specifies rules that RDF data must adhere to, to be fit for use with instances of the OGC LD API tool. It also provides machine-readable data validators." ;
+#     skos:prefLabel "OGC LD API Profile"@en ;
+#     altr-ext:constrainsClass geo:Feature ;
+#     altr-ext:hasDefaultResourceFormat "text/html" ;
+#     altr-ext:hasResourceFormat
+#         "application/ld+json" ,
+#         "application/rdf+xml" ,
+#         "application/vnd.geo+json" ,
+#         "text/html" ,
+#         "text/turtle" ;
+# .
 
 <https://www.w3.org/TR/vocab-dcat/>
     a prof:Profile ;
