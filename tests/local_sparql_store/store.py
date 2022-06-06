@@ -3,6 +3,7 @@ import urllib.parse
 from pathlib import Path
 from rdflib import Graph
 from functools import lru_cache
+import cgi
 
 
 class SparqlServer(BaseHTTPRequestHandler):
@@ -54,6 +55,27 @@ class SparqlServer(BaseHTTPRequestHandler):
         return Graph().parse(Path(__file__).parent / "data" / "spaceprez_dataset_geofabric_small.ttl")
 
     def do_GET(self):
+        if self.path == "/":
+            self.send_response(200)
+            self.send_header("Content-type", "text/plain")
+            self.end_headers()
+            self.wfile.write(bytes("Local SPARQL store\n", "utf-8"))
+            return
+
+        if self.path == "/vocprez":
+            self.send_response(200)
+            self.send_header("Content-type", "text/plain")
+            self.end_headers()
+            self.wfile.write(bytes("Local VocPrez SPARQL store\n", "utf-8"))
+            return
+
+        if self.path == "/spaceprez":
+            self.send_response(200)
+            self.send_header("Content-type", "text/plain")
+            self.end_headers()
+            self.wfile.write(bytes("Local SpacePrez SPARQL store\n", "utf-8"))
+            return
+
         if not self.path.startswith(("/vocprez", "/spaceprez")):
             self.send_response(400)
             self.send_header("Content-type", "text/plain")
@@ -97,7 +119,43 @@ class SparqlServer(BaseHTTPRequestHandler):
             self.wfile.write(bytes(f"Your SPARQL query could not be interpreted: {e}", "utf-8"))
             return
 
+    def do_POST(self):
+        # form = cgi.FieldStorage(
+        #     fp=self.rfile,
+        #     # headers=self.headers,
+        #     # environ={'REQUEST_METHOD': 'POST'}
+        # )
+        content_length = int(self.headers['Content-Length'])
+        post_data = self.rfile.read(content_length)
+        query = post_data.decode('utf-8')
+
+        # pose the query
+        try:
+            if "vocprez" in self.path:
+                result = self.vocprez_graph.query(query)
+            else:  # "spaceprez" in self.path:
+                result = self.spaceprez_graph.query(query)
+
+            if "CONSTRUCT" in query or "DESCRIBE" in query:
+                content_type = "text/turtle"
+            else:
+                content_type = "application/sparql-results+json"
+
+            # successful response
+            self.send_response(200)
+            self.send_header("Content-type", content_type)
+            self.end_headers()
+            self.wfile.write(bytes(result.serialize(format="json").decode(), "utf-8"))
+            return
+        except Exception as e:
+            self.send_response(400)
+            self.send_header("Content-type", "text/plain")
+            self.end_headers()
+            self.wfile.write(bytes(f"Your SPARQL query could not be interpreted: {e}", "utf-8"))
+            return
 
 if __name__ == "__main__":
     srv = HTTPServer(("localhost", 3030), SparqlServer)
+    print("Local SPARQL server started on port 3030")
     srv.serve_forever()
+
