@@ -19,9 +19,38 @@ router = APIRouter(tags=["VocPrez"] if len(ENABLED_PREZS) > 1 else [])
 
 
 async def home(request: Request):
-    dataset_renderer = VocPrezDatasetRenderer(
-        request, str(request.url.remove_query_params(keys=request.query_params.keys()))
+    instances_classes = [str(DCAT.Dataset)]
+    (
+        profiles_g,
+        preferred_classes_and_profiles,
+        profiles,
+        profiles_formats,
+    ) = await get_general_profiles(DCAT.Dataset)
+
+    # find the available profiles
+    available_profiles, default_profile = await get_specific_profiles(
+        "http://localhost:8000",
+        preferred_classes_and_profiles,
     )
+
+    # find the most specific class for the feature
+    for klass, _ in reversed(preferred_classes_and_profiles):
+        if klass in instances_classes:
+            most_specific_class = klass
+            break
+
+    dataset_renderer = VocPrezDatasetRenderer(
+        request,
+        str(request.url.remove_query_params(keys=request.query_params.keys())),
+        available_profiles=profiles,
+        default_profile=default_profile,
+    )
+    profile = dataset_renderer.profile
+    if profile == "alt":
+        alt_profiles_graph = await build_alt_graph(
+            URIRef("http://localhost:8000"), profiles_formats, available_profiles
+        )
+        return dataset_renderer.render(alt_profiles_graph=alt_profiles_graph)
     sparql_result = await get_dataset_construct()
     dataset = VocPrezDataset(sparql_result)
     dataset_renderer.set_dataset(dataset)
@@ -86,6 +115,26 @@ async def scheme(request: Request, scheme_id: str):
 async def scheme_endpoint(
     request: Request, scheme_id: Optional[str] = None, scheme_uri: Optional[str] = None
 ):
+    instance_classes = [str(SKOS.ConceptScheme)]
+    (
+        profiles_g,
+        preferred_classes_and_profiles,
+        profiles,
+        profiles_formats,
+    ) = await get_general_profiles(SKOS.ConceptScheme)
+
+    # find the available profiles
+    available_profiles, default_profile = await get_specific_profiles(
+        "http://localhost:8000",
+        preferred_classes_and_profiles,
+    )
+
+    # find the most specific class for the feature
+    for klass, _ in reversed(preferred_classes_and_profiles):
+        if klass in instance_classes:
+            most_specific_class = klass
+            break
+
     scheme_renderer = VocPrezSchemeRenderer(
         request,
         str(
@@ -93,6 +142,8 @@ async def scheme_endpoint(
                 keys=[key for key in request.query_params.keys() if key != "uri"]
             )
         ),
+        available_profiles,
+        default_profile
     )
     include_inferencing = True
     if scheme_renderer.profile == "vocpub_supplied":
@@ -119,6 +170,12 @@ async def scheme_endpoint(
         raise HTTPException(status_code=404, detail="Not Found")
     scheme = VocPrezScheme(sparql_result, id=scheme_id, uri=scheme_uri)
     scheme_renderer.set_scheme(scheme)
+    profile = scheme_renderer.profile
+    if profile == "alt":
+        alt_profiles_graph = await build_alt_graph(
+            URIRef(scheme.uri), profiles_formats, available_profiles
+        )
+        return scheme_renderer.render(alt_profiles_graph=alt_profiles_graph)
     return scheme_renderer.render()
 
 
@@ -199,7 +256,7 @@ async def concept_endpoint(
     concept_id: Optional[str] = None,
     concept_uri: Optional[str] = None,
 ):
-    feature_classes = ["http://www.w3.org/2004/02/skos/core#Concept"]
+    feature_classes = [str(SKOS.Concept)]
     (
         profiles_g,
         preferred_classes_and_profiles,

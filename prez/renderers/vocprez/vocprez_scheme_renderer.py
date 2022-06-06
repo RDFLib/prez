@@ -24,11 +24,13 @@ class VocPrezSchemeRenderer(Renderer):
         self,
         request: object,
         instance_uri: str,
+        available_profiles: str,
+        default_profile: str,
     ) -> None:
         super().__init__(
             request,
-            VocPrezSchemeRenderer.profiles,
-            VocPrezSchemeRenderer.default_profile_token,
+            VocPrezSchemeRenderer.profiles,  # available_profiles
+            VocPrezSchemeRenderer.default_profile_token,  # default_profile
             instance_uri,
         )
 

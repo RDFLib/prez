@@ -26,7 +26,12 @@ altr-ext:alt-profile
     dcterms:description "The representation of the resource that lists all other representations (profiles and Media Types)" ;
     dcterms:identifier "alt" ;
     dcterms:title "Alternates Profile" ;
-    altr-ext:constrainsClass geo:Feature ;
+    altr-ext:constrainsClass
+        dcat:Catalog ,
+        dcat:Dataset ,
+        skos:ConceptScheme ,
+        skos:Concept ,
+        skos:Collection ;
     altr-ext:hasDefaultResourceFormat "text/html" ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,
@@ -47,7 +52,6 @@ altr-ext:hasResourceFormat
     dcterms:description "A very basic data model that lists the members of container objects only, i.e. not their other properties" ;
     dcterms:identifier "mem" ;
     dcterms:title "Members" ;
-    altr-ext:constrainsClass "" ;
     altr-ext:hasDefaultResourceFormat "text/html" ;
     altr-ext:hasResourceFormat
         "application/json" ,

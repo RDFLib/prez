@@ -18,11 +18,17 @@ class VocPrezDatasetRenderer(Renderer):
     }
     default_profile_token = "dcat"
 
-    def __init__(self, request: object, instance_uri: str) -> None:
+    def __init__(
+        self,
+        request: object,
+        instance_uri: str,
+        available_profiles: dict,
+        default_profile: str,
+    ) -> None:
         super().__init__(
             request,
-            VocPrezDatasetRenderer.profiles,
-            VocPrezDatasetRenderer.default_profile_token,
+            available_profiles,
+            default_profile,
             instance_uri,
         )
 
@@ -98,7 +104,7 @@ class VocPrezDatasetRenderer(Renderer):
     def _render_dcat_rdf(self) -> Response:
         """Renders the RDF representation of the DCAT profile for a dataset"""
         g = self._generate_dcat_rdf()
-        return self._make_rdf_response(g)
+        return self._make_rdf_response(self.instance_uri, g)
 
     def _render_dcat(self, template_context: Union[Dict, None]):
         """Renders the DCAT profile for a dataset"""

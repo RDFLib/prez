@@ -130,7 +130,7 @@ class VocPrezSchemeListRenderer(ListRenderer):
     def _render_dcat_rdf(self):
         """Renders the RDF representation of the DCAT profile for a dataset"""
         g = self._generate_dcat_rdf()
-        return self._make_rdf_response(g)
+        return self._make_rdf_response(self.instance_uri, g)
 
     def _render_dcat(self, template_context: Union[Dict, None]):
         if self.mediatype == "text/html":
