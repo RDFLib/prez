@@ -1,0 +1,103 @@
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import urllib.parse
+from pathlib import Path
+from rdflib import Graph
+from functools import lru_cache
+
+
+class PrezTestSparqlServer(BaseHTTPRequestHandler):
+    """A small SPARQL Protocol server for Prez testing.
+
+    This small HTTP server makes two endpoints available:
+
+        * http://{host}:{port}/vocprez
+        * http://{host}:{port}/spaceprez
+
+    It will only accept GET requests to these two endpoints with a 'query' query string parameter, e.g.
+
+        http://localhost:3030/vocprez?query=...
+
+    It expects a quote plus-encoded SPARQL query, e.g.:
+
+        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+        SELECT (COUNT(?cs) AS ?count)
+        WHERE {
+          ?cs a skos:ConceptScheme
+        }
+
+    -->
+
+        http://localhost:3030/vocprez?query=PREFIX+skos%3A+%3Chttp%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23%3E%0A%0ASELECT+%28COUNT%28%3Fcs%29+AS+%3Fcount%29+%0AWHERE+%7B+%0A++%3Fcs+a+skos%3AConceptScheme+%0A%7D
+
+    It returns responses using separate VocPrez and SpacePrez graphs which are the contents of the vocprez_... &
+    spaceprez_... files in the dummy_data/ folder.
+
+    TO RUN:
+
+        python store.py
+
+    Then the VocPrez SPARQL endpoint would be http://localhost:3030/vocprez
+    """
+    def __init__(self, *args):
+        self.vocprez_graph = self.load_vocprez_graph()
+        self.spaceprez_graph = self.load_spaceprez_graph()
+
+        BaseHTTPRequestHandler.__init__(self, *args)
+
+    @lru_cache
+    def load_vocprez_graph(self):
+        return Graph().parse(Path(__file__).parent / "data" / "vocprez_vocab_street_class.ttl")
+
+    @lru_cache
+    def load_spaceprez_graph(self):
+        return Graph().parse(Path(__file__).parent / "data" / "spaceprez_dataset_geofabric_small.ttl")
+
+    def do_GET(self):
+        if not self.path.startswith(("/vocprez", "/spaceprez")):
+            self.send_response(400)
+            self.send_header("Content-type", "text/plain")
+            self.end_headers()
+            self.wfile.write(
+                bytes("Request paths for this SPARQL Server must start with /vocprez or /spaceprez\n", "utf-8"))
+            return
+
+        if "query=" not in self.path:
+            self.send_response(400)
+            self.send_header("Content-type", "text/plain")
+            self.end_headers()
+            self.wfile.write(bytes("You are missing a query in your GET request (query=...)\n", "utf-8"))
+            return
+
+        # only handle encoded queries
+        query = urllib.parse.unquote_plus(self.path.split("query=")[1])
+
+        # pose the query
+        try:
+            if "vocprez" in self.path:
+                result = self.vocprez_graph.query(query)
+            else:  # "spaceprez" in self.path:
+                result = self.spaceprez_graph.query(query)
+
+            if "CONSTRUCT" in query or "DESCRIBE" in query:
+                content_type = "text/turtle"
+            else:
+                content_type = "application/sparql-results+json"
+
+            # successful response
+            self.send_response(200)
+            self.send_header("Content-type", content_type)
+            self.end_headers()
+            self.wfile.write(bytes(result.serialize(format="json").decode(), "utf-8"))
+            return
+        except Exception as e:
+            self.send_response(400)
+            self.send_header("Content-type", "text/plain")
+            self.end_headers()
+            self.wfile.write(bytes(f"Your SPARQL query could not be interpreted: {e}", "utf-8"))
+            return
+
+
+if __name__ == "__main__":
+    srv = HTTPServer(("localhost", 3030), PrezTestSparqlServer)
+    srv.serve_forever()
