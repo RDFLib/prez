@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 from prez.app import app
+import pytest
 
 
 client = TestClient(app)
@@ -53,57 +54,40 @@ def test_datasets_mem_json():
     assert '"comment":"A list of dcat:Datasets"' in r.text
 
 
-def test_dataset_default_default():
+@pytest.fixture(scope="module")
+def a_dataset_link():
     # get link for first dataset
     r = client.get("/datasets?_profile=mem&_mediatype=application/json")
-    link = r.json()["members"][0]["link"]
-
-    r2 = client.get(f"{link}")
-    assert f'<li class="breadcrumb"><a href="http://testserver{link}">' in r2.text
+    return r.json()["members"][0]["link"]
 
 
-def test_dataset_default_turtle():
-    # get link for first dataset
-    r = client.get("/datasets?_profile=mem&_mediatype=application/json")
-    link = r.json()["members"][0]["link"]
+def test_dataset_default_default(a_dataset_link):
+    r2 = client.get(f"{a_dataset_link}")
+    assert f'<li class="breadcrumb"><a href="http://testserver{a_dataset_link}">' in r2.text
 
-    r2 = client.get(f"{link}?_mediatype=text/turtle")
+
+def test_dataset_default_turtle(a_dataset_link):
+    r2 = client.get(f"{a_dataset_link}?_mediatype=text/turtle")
     assert f'a dcat:Dataset ;' in r2.text
 
 
-def test_dataset_alt_html():
-    # get link for first dataset
-    r = client.get("/datasets?_profile=mem&_mediatype=application/json")
-    link = r.json()["members"][0]["link"]
-
-    r2 = client.get(f"{link}?_profile=alt")
+def test_dataset_alt_html(a_dataset_link):
+    r2 = client.get(f"{a_dataset_link}?_profile=alt")
     assert "<h1>Alternate Profiles</h1>" in r2.text
 
 
-def test_dataset_alt_turtle():
-    # get link for first dataset
-    r = client.get("/datasets?_profile=mem&_mediatype=application/json")
-    link = r.json()["members"][0]["link"]
-
-    r2 = client.get(f"{link}?_profile=alt&_mediatype=text/turtle")
+def test_dataset_alt_turtle(a_dataset_link):
+    r2 = client.get(f"{a_dataset_link}?_profile=alt&_mediatype=text/turtle")
     assert "a rdfs:Resource ;" in r2.text
 
 
-def test_dataset_collections_default_default():
-    # get link for first dataset
-    r = client.get("/datasets?_profile=mem&_mediatype=application/json")
-    link = r.json()["members"][0]["link"]
-
-    r2 = client.get(f"{link}/collections")
+def test_dataset_collections_default_default(a_dataset_link):
+    r2 = client.get(f"{a_dataset_link}/collections")
     assert f'<h1>FeatureCollection list</h1>' in r2.text
 
 
-def test_dataset_collections_mem_json():
-    # get link for first dataset
-    r = client.get("/datasets?_profile=mem&_mediatype=application/json")
-    link = r.json()["members"][0]["link"]
-
-    r2 = client.get(f"{link}/collections?_profile=mem&_mediatype=application/json")
+def test_dataset_collections_mem_json(a_dataset_link):
+    r2 = client.get(f"{a_dataset_link}/collections?_profile=mem&_mediatype=application/json")
     assert f'"members":' in r2.text
 
 
@@ -155,73 +139,48 @@ def test_collection_alt_default():
 #     assert '<h1>Alternate Profiles</h1>' in r3.text
 
 
-def test_collection_items_default_default():
-    # get link for first dataset
-    r = client.get("/datasets?_profile=mem&_mediatype=application/json")
-    link = r.json()["members"][0]["link"]
+@pytest.fixture(scope="module")
+def an_fc_link(a_dataset_link):
     # get link for first collection
-    r2 = client.get(f"{link}/collections?_profile=mem&_mediatype=application/json")
-    col_link = r2.json()["members"][0]["link"]
+    r2 = client.get(f"{a_dataset_link}/collections?_profile=mem&_mediatype=application/json")
+    return r2.json()["members"][0]["link"]
 
-    r3 = client.get(f"{col_link}/items")
+
+def test_collection_items_default_default(an_fc_link):
+    r3 = client.get(f"{an_fc_link}/items")
     assert '<h1>Feature list</h1>' in r3.text
 
 
-def test_collection_items_mem_json():
-    # get link for first dataset
-    r = client.get("/datasets?_profile=mem&_mediatype=application/json")
-    link = r.json()["members"][0]["link"]
-    # get link for first collection
-    r2 = client.get(f"{link}/collections?_profile=mem&_mediatype=application/json")
-    col_link = r2.json()["members"][0]["link"]
-
-    r3 = client.get(f"{col_link}/items?_profile=mem&_mediatype=application/json")
-    assert f'"uri":"http://testserver{col_link}/items?_profile=mem&_mediatype=application/json"' in r3.text
+def test_collection_items_mem_json(an_fc_link):
+    r3 = client.get(f"{an_fc_link}/items?_profile=mem&_mediatype=application/json")
+    assert f'"uri":"http://testserver{an_fc_link}/items?_profile=mem&_mediatype=application/json"' in r3.text
 
 
-def test_feature_default_default():
-    # get link for first dataset
-    r = client.get("/datasets?_profile=mem&_mediatype=application/json")
-    link = r.json()["members"][0]["link"]
-    # get link for first collection
-    r2 = client.get(f"{link}/collections?_profile=mem&_mediatype=application/json")
-    col_link = r2.json()["members"][0]["link"]
-    # get link for first feature
-    r3 = client.get(f"{col_link}/items?_profile=mem&_mediatype=application/json")
+@pytest.fixture(scope="module")
+def a_feature_link_and_id(an_fc_link):
+    r3 = client.get(f"{an_fc_link}/items?_profile=mem&_mediatype=application/json")
     feature_link = r3.json()["members"][0]["link"]
     feature_id = r3.json()["members"][0]["id"]
+
+    return feature_link, feature_id
+
+
+def test_feature_default_default(a_feature_link_and_id):
+    feature_link, feature_id = a_feature_link_and_id
 
     r4 = client.get(f"{feature_link}")
     assert f'Feature {feature_id}' in r4.text
 
 
-def test_feature_default_turtle():
-    # get link for first dataset
-    r = client.get("/datasets?_profile=mem&_mediatype=application/json")
-    link = r.json()["members"][0]["link"]
-    # get link for first collection
-    r2 = client.get(f"{link}/collections?_profile=mem&_mediatype=application/json")
-    col_link = r2.json()["members"][0]["link"]
-    # get link for first feature
-    r3 = client.get(f"{col_link}/items?_profile=mem&_mediatype=application/json")
-    feature_link = r3.json()["members"][0]["link"]
-    feature_id = r3.json()["members"][0]["id"]
+def test_feature_default_turtle(a_feature_link_and_id):
+    feature_link, feature_id = a_feature_link_and_id
 
     r4 = client.get(f"{feature_link}?_mediatype=text/turtle")
     assert f'a geo:Feature' in r4.text
 
 
-def test_feature_alt_default():
-    # get link for first dataset
-    r = client.get("/datasets?_profile=mem&_mediatype=application/json")
-    link = r.json()["members"][0]["link"]
-    # get link for first collection
-    r2 = client.get(f"{link}/collections?_profile=mem&_mediatype=application/json")
-    col_link = r2.json()["members"][0]["link"]
-    # get link for first feature
-    r3 = client.get(f"{col_link}/items?_profile=mem&_mediatype=application/json")
-    feature_link = r3.json()["members"][0]["link"]
-    feature_id = r3.json()["members"][0]["id"]
+def test_feature_alt_default(a_feature_link_and_id):
+    feature_link, feature_id = a_feature_link_and_id
 
     r4 = client.get(f"{feature_link}?_profile=alt")
     assert '<h1>Alternate Profiles</h1>' in r4.text
