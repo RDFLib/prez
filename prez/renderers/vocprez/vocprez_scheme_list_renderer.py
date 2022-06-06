@@ -11,11 +11,7 @@ from prez.utils import templates
 
 
 class VocPrezSchemeListRenderer(ListRenderer):
-    profiles = {
-        "dcat": dcat,
-        "dd": dd,
-        "alt": alt
-    }
+    profiles = {"dcat": dcat, "dd": dd, "alt": alt}
     default_profile_token = "dcat"
 
     def __init__(
@@ -151,7 +147,8 @@ class VocPrezSchemeListRenderer(ListRenderer):
         return self._render_dd_json()
 
     def render(
-        self, template_context: Optional[Dict] = None,
+        self,
+        template_context: Optional[Dict] = None,
         alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None

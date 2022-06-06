@@ -112,7 +112,7 @@ async def app_startup():
                 await get_general_profiles(GEO.Feature)
                 print(f"Successfully connected to SpacePrez endpoint {url_to_try}")
                 break
-            except Exception:
+            except Exception as e:
                 print(
                     f"Failed to connect to SpacePrez endpoint {SPACEPREZ_SPARQL_ENDPOINT}"
                 )

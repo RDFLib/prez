@@ -123,7 +123,13 @@ class SpacePrezDatasetListRenderer(ListRenderer):
         #             g.add((o, DCTERMS.description, o2))
 
         for ds in self.dataset_list.members:
-            g.add((URIRef(ds["uri"]), DCTERMS.identifier, Literal(ds["id"], datatype=XSD.token)))
+            g.add(
+                (
+                    URIRef(ds["uri"]),
+                    DCTERMS.identifier,
+                    Literal(ds["id"], datatype=XSD.token),
+                )
+            )
             g.add((URIRef(ds["uri"]), DCTERMS.title, Literal(ds.get("title"))))
             if ds.get("desc") is not None:
                 g.add((URIRef(ds["uri"]), DCTERMS.description, Literal(ds.get("desc"))))

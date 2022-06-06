@@ -7,6 +7,7 @@ from prez.profiles.generate_profiles import (
     get_specific_profiles,
     retrieve_relevant_shapes,
     build_alt_graph,
+    apply_profile,
 )
 from prez.renderers.spaceprez import *
 from prez.services.spaceprez_service import *
@@ -269,12 +270,9 @@ async def feature_endpoint(
     feature_id: Optional[str] = None,
     feature_uri: Optional[str] = None,
 ):
-    if not feature_uri:
-        feature_uri, feature_classes = await get_feature_uri_and_classes(
-            feature_id=feature_id
-        )
-    elif not feature_id:
-        _, feature_classes = get_feature_uri_and_classes(feature_uri=feature_uri)
+    feature_id, feature_uri, feature_classes = await get_feature_uri_and_classes(
+        feature_id, feature_uri, collection_id, dataset_id
+    )
 
     (
         profiles_g,
@@ -290,20 +288,21 @@ async def feature_endpoint(
     )
 
     # find the most specific class for the feature
-    for klass, _ in reversed(preferred_classes_and_profiles):
+    for klass, _, distance in preferred_classes_and_profiles:
         if klass in feature_classes:
             most_specific_class = klass
             break
 
+    available_profiles_dict = {
+        k: v
+        for k, v in profiles.items()
+        if k in available_profiles + tuple(["profiles", "alt"])
+    }
+
     feature_renderer = SpacePrezFeatureRenderer(
         request,
         feature_uri,
-        # str(
-        #     request.url.remove_query_params(
-        #         keys=[key for key in request.query_params.keys() if key != "uri"]
-        #     )
-        # ),
-        available_profiles=profiles,
+        available_profiles=available_profiles_dict,
         default_profile=default_profile,
     )
     profile = feature_renderer.profile
@@ -320,10 +319,18 @@ async def feature_endpoint(
             feature_uri=feature_uri,
         )
 
-        # filter results based on the profile
+        # retrieve relevant shapes
         feature_shapes_g = await retrieve_relevant_shapes(
-            profiles_g, profile, most_specific_class
+            profiles_g, profiles[profile].uri, most_specific_class
         )
+
+        # filter out irrelevant properties:
+        # for closed profiles; properties not specified in the profile
+        # for open profiles; properties explicitly excluded in the profile (via dash:hidden)
+        # TODO extend for open profiles (at the moment, for an open profile, everything is included, in future
+        # open profiles should show everything except for specifically excluded properties
+        if len(feature_shapes_g) > 0:
+            complete_feature_g = apply_profile(complete_feature_g, feature_shapes_g)
 
         if len(complete_feature_g) == 0:
             raise HTTPException(status_code=404, detail="Not Found")

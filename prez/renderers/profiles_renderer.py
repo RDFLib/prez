@@ -1,7 +1,7 @@
 from typing import Dict, Optional, Union, List
 
-from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from connegp import MEDIATYPE_NAMES
+from fastapi.responses import Response, JSONResponse, PlainTextResponse
 
 from prez.config import *
 from prez.renderers import Renderer
@@ -62,7 +62,8 @@ class ProfilesRenderer(Renderer):
             return self._render_profiles_json()
 
     def render(
-        self, template_context: Optional[Dict] = None,
+        self,
+        template_context: Optional[Dict] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:

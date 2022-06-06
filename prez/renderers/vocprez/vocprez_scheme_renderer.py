@@ -16,7 +16,7 @@ class VocPrezSchemeRenderer(Renderer):
         "skos": skos,
         "dd": dd,
         "vocpub_supplied": vocpub_supplied,
-        "alt": alt
+        "alt": alt,
     }
     default_profile_token = "vocpub"
 
@@ -180,7 +180,8 @@ class VocPrezSchemeRenderer(Renderer):
         )
 
     def render(
-        self, template_context: Optional[Dict] = None,
+        self,
+        template_context: Optional[Dict] = None,
         alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None

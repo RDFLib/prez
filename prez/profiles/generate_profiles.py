@@ -124,16 +124,24 @@ async def get_general_profiles(general_class):
     ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
     for s in profiles_g.subjects(RDF.type, PROF.Profile):
         profile_id = str(profiles_g.value(s, DCTERMS.identifier))
-        profiles_formats[profile_id] = []
-        for p, o in profiles_g.predicate_objects(s):
-            if p == ALTREXT.hasResourceFormat:
-                profiles_formats[profile_id].append(str(o))
-            elif p == ALTREXT.hasDefaultResourceFormat:
-                default_format = str(o)
+        default_format = str(
+            profiles_g.value(subject=s, predicate=ALTREXT.hasDefaultResourceFormat)
+        )
+        profiles_formats[profile_id] = [default_format]
+        other_formats = list(
+            set(
+                [
+                    str(fmt)
+                    for fmt in profiles_g.objects(
+                        subject=s, predicate=ALTREXT.hasResourceFormat
+                    )
+                ]
+            )
+            - set([default_format])
+        )
+        profiles_formats[profile_id].extend(other_formats)
 
-        profiles_formats[profile_id].remove(default_format)
-        profiles_formats[profile_id].insert(0, default_format)
-
+    # Create connegP profile classes and add these to a dictionary
     profiles_dict = {}
     for profile, formats in profiles_formats.items():
         profile_uri = profiles_g.value(

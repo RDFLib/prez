@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Dict, List, Union, Optional
 import re
 
-from rdflib import Graph, URIRef, BNode, Literal, RDF
+from rdflib import Graph, URIRef, BNode, Literal, RDF, XSD
 from rdflib.namespace import RDFS, DCTERMS, SH
 
 
@@ -167,6 +167,11 @@ class ObjCell:
 
             if pred is None:
                 shape_bn = graph.value(predicate=SH.path, object=p)
+                # nodeshape = graph.value(predicate=SH.property, object=shape_bn)
+                # closed_profile = graph.value(subject=nodeshape, predicate=SH.closed)
+                # if (closed_profile == Literal("true", datatype=URIRef(XSD.boolean)) and shape_bn) or \
+                #         (closed_profile == Literal("false", datatype=URIRef(XSD.boolean))) or \
+                #         (closed_profile is None):
                 pred = PredCell(
                     value=p.__str__(),
                     qname=graph.namespace_manager.qname(p),

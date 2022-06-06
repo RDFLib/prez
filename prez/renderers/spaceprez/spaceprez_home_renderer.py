@@ -53,8 +53,7 @@ class SpacePrezHomeRenderer(Renderer):
                     "title": "this document",
                 },
                 {
-                    "href": str(self.request.url)[:-1]
-                    + str(self.request.url.path),
+                    "href": str(self.request.url)[:-1] + str(self.request.url.path),
                     "rel": "alternate",
                     "type": "text/html",
                     "title": "this document as HTML",
