@@ -1,19 +1,33 @@
 from fastapi.testclient import TestClient
-from prez.app import app
 import pytest
+
+from app import app
+from config import *
 
 
 client = TestClient(app)
 
 
 def test_home_default_default():
-    r = client.get("/")
-    assert r.status_code == 200
-    assert "<h1>System Home</h1>" in r.text
+    if len(ENABLED_PREZS) == 1 and ENABLED_PREZS[0].lower() == "spaceprez":
+        r = client.get("/")
+        assert r.status_code == 200
+        assert "<h1>System Home</h1>" in r.text
+    elif "spaceprez" in [prez.lower() for prez in ENABLED_PREZS]:
+        r = client.get("/spaceprez")
+        assert r.status_code == 200
+        assert "<h1>SpacePrez Home</h1>" in r.text
+    else:
+        assert True
 
 
 def test_home_alt_html():
-    r = client.get("/?_profile=alt")
+    if len(ENABLED_PREZS) == 1 and ENABLED_PREZS[0].lower() == "spaceprez":
+        r = client.get("/?_profile=alt")
+    elif "spaceprez" in [prez.lower() for prez in ENABLED_PREZS]:
+        r = client.get("/spaceprez?_profile=alt")
+    else:
+        assert True
     assert r.status_code == 200
     assert "<h1>Alternate Profiles</h1>" in r.text
 
@@ -68,7 +82,7 @@ def test_dataset_default_default(a_dataset_link):
 
 def test_dataset_default_turtle(a_dataset_link):
     r2 = client.get(f"{a_dataset_link}?_mediatype=text/turtle")
-    assert f'a dcat:Dataset ;' in r2.text
+    assert f'a dcat:Dataset ;' in r2.text # prefix could be e.g. ns18: instead of dcat:
 
 
 def test_dataset_alt_html(a_dataset_link):

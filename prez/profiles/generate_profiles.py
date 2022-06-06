@@ -5,6 +5,7 @@ from async_lru import alru_cache
 from connegp import Profile
 from rdflib import Graph, DCTERMS, SKOS, URIRef, Literal, BNode
 from rdflib.namespace import RDF, PROF, Namespace, RDFS
+from prez.config import ENABLED_PREZS
 
 from prez.services.sparql_utils import (
     sparql_construct,
@@ -38,15 +39,17 @@ async def create_profiles_graph():
         }
         """
 
-    r = await sparql_construct(remote_profiles_query, "VocPrez")
-    if r[0]:
-        profiles_g += r[1]
-        logging.info("Also using remote profiles for VocPrez")
+    if "VocPrez" in ENABLED_PREZS:
+        r = await sparql_construct(remote_profiles_query, "VocPrez")
+        if r[0]:
+            profiles_g += r[1]
+            logging.info("Also using remote profiles for VocPrez")
 
-    r = await sparql_construct(remote_profiles_query, "SpacePrez")
-    if r[0]:
-        profiles_g += r[1]
-        logging.info("Also using remote profiles for SpacePrez")
+    if "SpacePrez" in ENABLED_PREZS:
+        r = await sparql_construct(remote_profiles_query, "SpacePrez")
+        if r[0]:
+            profiles_g += r[1]
+            logging.info("Also using remote profiles for SpacePrez")
 
     return profiles_g
 
@@ -93,9 +96,10 @@ async def get_general_profiles(general_class):
     """
 
     get_class_hierarchy = f"""
+        PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
+        PREFIX dcterms: <http://purl.org/dc/terms/>
         PREFIX geo: <http://www.opengis.net/ont/geosparql#>
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
 
         SELECT ?class (count(?mid) as ?distance) ?profile_id
         WHERE {{
@@ -166,12 +170,13 @@ async def get_general_profiles(general_class):
 async def get_specific_profiles(
     item_uri,
     preferred_classes_and_profiles,
+    prez
 ):
     # retrieve the classes
     r = await sparql_query(
         f"""PREFIX dcterms: <{DCTERMS}>
     SELECT ?class {{ <{item_uri}> a ?class }}""",
-        "SpacePrez",
+        prez,
     )
     if r[0] and r[1]:
         objects_classes = [i["class"]["value"] for i in r[1]]

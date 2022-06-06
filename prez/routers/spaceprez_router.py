@@ -287,6 +287,7 @@ async def feature_endpoint(
     available_profiles, default_profile = await get_specific_profiles(
         feature_uri,
         preferred_classes_and_profiles,
+        "SpacePrez"
     )
 
     # find the most specific class for the feature
