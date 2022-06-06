@@ -110,9 +110,7 @@ async def app_startup():
                 await get_general_profiles(DCAT.Dataset)
                 await get_general_profiles(GEO.FeatureCollection)
                 await get_general_profiles(GEO.Feature)
-                print(
-                    f"Successfully able to connect to SpacePrez endpoint {url_to_try}"
-                )
+                print(f"Successfully connected to SpacePrez endpoint {url_to_try}")
                 break
             except Exception:
                 print(
@@ -127,7 +125,7 @@ async def app_startup():
             try:
                 httpx.get(f"{url[0]}://{url[1]}")
                 print(
-                    f"Successfully able to connect to VocPrez endpoint {VOCPREZ_SPARQL_ENDPOINT}"
+                    f"Successfully connected to VocPrez endpoint {VOCPREZ_SPARQL_ENDPOINT}"
                 )
                 break
             except Exception:
@@ -143,7 +141,7 @@ async def app_startup():
             try:
                 httpx.get(f"{url[0]}://{url[1]}")
                 print(
-                    f"Successfully able to connect to TimePrez endpoint {TIMEPREZ_SPARQL_ENDPOINT}"
+                    f"Successfully connected to TimePrez endpoint {TIMEPREZ_SPARQL_ENDPOINT}"
                 )
                 break
             except Exception:
@@ -159,7 +157,7 @@ async def app_startup():
             try:
                 httpx.get(f"{url[0]}://{url[1]}")
                 print(
-                    f"Successfully able to connect to CatPrez endpoint {CATPREZ_SPARQL_ENDPOINT}"
+                    f"Successfully connected to CatPrez endpoint {CATPREZ_SPARQL_ENDPOINT}"
                 )
                 break
             except Exception:

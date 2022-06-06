@@ -5,7 +5,7 @@ from prez.profiles.generate_profiles import (
     ProfileDetails,
     get_general_profiles,
     get_specific_profiles,
-    filter_results_using_profile,
+    retrieve_relevant_shapes,
     build_alt_graph,
 )
 from prez.renderers.spaceprez import *
@@ -321,7 +321,7 @@ async def feature_endpoint(
         )
 
         # filter results based on the profile
-        feature_shapes_g = await filter_results_using_profile(
+        feature_shapes_g = await retrieve_relevant_shapes(
             profiles_g, profile, most_specific_class
         )
 
