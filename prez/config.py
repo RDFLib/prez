@@ -3,6 +3,7 @@ import json
 
 from rdflib import Graph, URIRef, Literal, BNode, Namespace
 from rdflib.namespace import SKOS, RDF, DCTERMS, RDFS, DCAT, PROV, OWL, SDO, XSD
+PROF = Namespace("http://www.w3.org/ns/dx/prof/")
 
 GEO = Namespace("http://www.opengis.net/ont/geosparql#")
 
