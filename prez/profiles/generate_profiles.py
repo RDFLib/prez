@@ -1,7 +1,7 @@
 import logging
 import os
 from pathlib import Path
-
+from prez.config import ENABLED_PREZS
 from async_lru import alru_cache
 from connegp import Profile
 from rdflib import Graph, DCTERMS, SKOS, URIRef, Literal, BNode, SH, XSD
@@ -11,8 +11,6 @@ from prez.services.sparql_utils import (
     sparql_construct,
     sparql_query,
 )
-
-ENABLED_PREZS = os.getenv("ENABLED_PREZS")
 
 
 @alru_cache(maxsize=20)
