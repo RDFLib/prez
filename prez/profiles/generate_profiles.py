@@ -20,10 +20,10 @@ async def create_profiles_graph():
     logging.info("Using local profiles")
 
     remote_profiles_query = """
+        PREFIX geo: <http://www.opengis.net/ont/geosparql#>
         PREFIX prof: <http://www.w3.org/ns/dx/prof/>
         PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        PREFIX geo: <http://www.opengis.net/ont/geosparql#>
 
         DESCRIBE ?profile ?class 
         WHERE {

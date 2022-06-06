@@ -329,6 +329,7 @@ async def get_uri(item_id: str = None, klass: URIRef = None):
             return r[1][0]["item_uri"]["value"]
 
 
+@alru_cache(maxsize=20)
 async def get_feature_uri_and_classes(feature_id: str = None, feature_uri: str = None):
     if feature_id:
         r = await sparql_query(

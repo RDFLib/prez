@@ -132,9 +132,6 @@ class Renderer(object, metaclass=ABCMeta):
                 if token == self.default_profile_token and mt == p.default_mediatype:
                     g.add((instance_uri, ALTR.hasDefaultRepresentation, rep))
 
-        g = Graph()
-        g.parse(data="<a:> <a:> <a:> .")
-        print(g)
         return g
 
     def _make_rdf_response(self, item_uri, graph: Graph) -> Response:
