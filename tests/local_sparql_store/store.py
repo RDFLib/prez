@@ -5,7 +5,7 @@ from rdflib import Graph
 from functools import lru_cache
 
 
-class PrezTestSparqlServer(BaseHTTPRequestHandler):
+class SparqlServer(BaseHTTPRequestHandler):
     """A small SPARQL Protocol server for Prez testing.
 
     This small HTTP server makes two endpoints available:
@@ -99,5 +99,5 @@ class PrezTestSparqlServer(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    srv = HTTPServer(("localhost", 3030), PrezTestSparqlServer)
+    srv = HTTPServer(("localhost", 3030), SparqlServer)
     srv.serve_forever()
