@@ -29,8 +29,7 @@ async def home(request: Request):
 
     # find the available profiles
     available_profiles, default_profile = await get_specific_profiles(
-        "http://localhost:8000",
-        preferred_classes_and_profiles,
+        "http://localhost:8000", preferred_classes_and_profiles, "VocPrez"
     )
 
     # find the most specific class for the feature
@@ -125,8 +124,7 @@ async def scheme_endpoint(
 
     # find the available profiles
     available_profiles, default_profile = await get_specific_profiles(
-        "http://localhost:8000",
-        preferred_classes_and_profiles,
+        "http://localhost:8000", preferred_classes_and_profiles, "VocPrez"
     )
 
     # find the most specific class for the feature
@@ -266,8 +264,7 @@ async def concept_endpoint(
 
     # find the available profiles
     available_profiles, default_profile = await get_specific_profiles(
-        concept_uri,
-        preferred_classes_and_profiles,
+        concept_uri, preferred_classes_and_profiles, "VocPrez"
     )
 
     # find the most specific class for the feature
