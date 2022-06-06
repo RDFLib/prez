@@ -4,7 +4,7 @@ from prez.models.spaceprez import *
 from prez.profiles.generate_profiles import (
     ProfileDetails,
     get_general_profiles,
-    get_specific_profiles,
+    get_class_based_and_default_profiles,
     retrieve_relevant_shapes,
     build_alt_graph,
     apply_profile,
@@ -25,12 +25,21 @@ async def home(request: Request):
         general_class=PREZ.HomePage, item_uri=PREZ.HomePage
     )
     await profile_details.get_all_profiles("SpacePrez")
+
     home_renderer = SpacePrezHomeRenderer(
         request,
-        profile_details.profiles_dict,
+        profile_details.available_profiles_dict,
         profile_details.default_profile,
         PREZ.HomePage,
     )
+
+    if home_renderer.profile == "alt":
+        alt_profiles_graph = await build_alt_graph(
+            PREZ.HomePage,
+            profile_details.profiles_formats,
+            profile_details.available_profiles_dict,
+        )
+        return home_renderer.render(alt_profiles_graph=alt_profiles_graph)
 
     return home_renderer.render()
 
@@ -53,8 +62,11 @@ async def datasets(
     instance_uri = str(
         request.url.remove_query_params(keys=request.query_params.keys())
     )
-    profile_details = ProfileDetails(general_class=DCAT.Dataset, item_uri=instance_uri)
+    profile_details = ProfileDetails(
+        general_class=PREZ.DatasetList, item_uri=instance_uri
+    )
     await profile_details.get_all_profiles("SpacePrez")
+
     dataset_count, sparql_result = await asyncio.gather(
         count_datasets(), list_datasets(page, per_page)
     )
@@ -68,9 +80,18 @@ async def datasets(
         page,
         per_page,
         int(dataset_count[0]["count"]["value"]),
-        profile_details.profiles_dict,
+        profile_details.available_profiles_dict,
         profile_details.default_profile,
     )
+
+    if dataset_list_renderer.profile == "alt":
+        alt_profiles_graph = await build_alt_graph(
+            URIRef(instance_uri),
+            profile_details.profiles_formats,
+            profile_details.available_profiles_dict,
+        )
+        return dataset_list_renderer.render(alt_profiles_graph=alt_profiles_graph)
+
     return dataset_list_renderer.render()
 
 
@@ -97,7 +118,7 @@ async def dataset_endpoint(
 
     dataset_renderer = SpacePrezDatasetRenderer(
         request,
-        profile_details.profiles_dict,
+        profile_details.available_profiles_dict,
         profile_details.default_profile,
         dataset_uri,
     )
@@ -107,7 +128,7 @@ async def dataset_endpoint(
         alt_profiles_graph = await build_alt_graph(
             URIRef(dataset_uri),
             profile_details.profiles_formats,
-            profile_details.available_profiles,
+            profile_details.available_profiles_dict,
         )
         return dataset_renderer.render(alt_profiles_graph=alt_profiles_graph)
 
@@ -136,7 +157,7 @@ async def feature_collections(
         request.url.remove_query_params(keys=request.query_params.keys())
     )
     profile_details = ProfileDetails(
-        general_class=GEO.FeatureCollection, item_uri=instance_uri
+        general_class=PREZ.FeatureCollectionList, item_uri=instance_uri
     )
     await profile_details.get_all_profiles("SpacePrez")
 
@@ -147,7 +168,7 @@ async def feature_collections(
     feature_collection_list = SpacePrezFeatureCollectionList(sparql_result)
     feature_collection_list_renderer = SpacePrezFeatureCollectionListRenderer(
         request,
-        profile_details.profiles_dict,
+        profile_details.available_profiles_dict,
         profile_details.default_profile,
         instance_uri,
         "FeatureCollection list",
@@ -157,6 +178,18 @@ async def feature_collections(
         per_page,
         int(collection_count[0]["count"]["value"]),
     )
+
+    profile = feature_collection_list_renderer.profile
+    if profile == "alt":
+        alt_profiles_graph = await build_alt_graph(
+            URIRef(instance_uri),
+            profile_details.profiles_formats,
+            profile_details.available_profiles_dict,
+        )
+        return feature_collection_list_renderer.render(
+            alt_profiles_graph=alt_profiles_graph
+        )
+
     return feature_collection_list_renderer.render()
 
 
@@ -189,10 +222,19 @@ async def feature_collection_endpoint(
 
     collection_renderer = SpacePrezFeatureCollectionRenderer(
         request,
-        profile_details.profiles_dict,
+        profile_details.available_profiles_dict,
         profile_details.default_profile,
         instance_uri,
     )
+
+    profile = collection_renderer.profile
+    if profile == "alt":
+        alt_profiles_graph = await build_alt_graph(
+            URIRef(instance_uri),
+            profile_details.profiles_formats,
+            profile_details.available_profiles_dict,
+        )
+        return collection_renderer.render(alt_profiles_graph=alt_profiles_graph)
 
     results = await asyncio.gather(
         get_collection_construct_1(
@@ -237,7 +279,7 @@ async def features(
         request.url.remove_query_params(keys=request.query_params.keys())
     )
     profile_details = ProfileDetails(
-        general_class=GEO.FeatureCollection, item_uri=instance_uri
+        general_class=PREZ.FeatureList, item_uri=instance_uri
     )
     await profile_details.get_all_profiles("SpacePrez")
 
@@ -249,7 +291,7 @@ async def features(
     feature_list = SpacePrezFeatureList(sparql_result)
     feature_list_renderer = SpacePrezFeatureListRenderer(
         request,
-        profile_details.profiles_dict,
+        profile_details.available_profiles_dict,
         profile_details.default_profile,
         instance_uri,
         "Feature list",
@@ -259,6 +301,16 @@ async def features(
         per_page,
         int(feature_count[0]["count"]["value"]),
     )
+
+    profile = feature_list_renderer.profile
+    if profile == "alt":
+        alt_profiles_graph = await build_alt_graph(
+            URIRef(instance_uri),
+            profile_details.profiles_formats,
+            profile_details.available_profiles_dict,
+        )
+        return feature_list_renderer.render(alt_profiles_graph=alt_profiles_graph)
+
     return feature_list_renderer.render()
 
 
@@ -274,40 +326,42 @@ async def feature_endpoint(
         feature_id, feature_uri, collection_id, dataset_id
     )
 
-    (
-        profiles_g,
-        preferred_classes_and_profiles,
-        profiles,
-        profiles_formats,
-    ) = await get_general_profiles(GEO.Feature)
+    # (
+    #     profiles_g,
+    #     preferred_classes_and_profiles,
+    #     profiles,
+    #     profiles_formats,
+    # ) = await get_general_profiles(GEO.Feature)
+    #
+    # # find the available profiles
+    # available_profiles_dict, default_profile = await get_class_based_and_default_profiles(
+    #     feature_uri, preferred_classes_and_profiles, "SpacePrez"
+    # )
 
-    # find the available profiles
-    available_profiles, default_profile = await get_specific_profiles(
-        feature_uri, preferred_classes_and_profiles, "SpacePrez"
+    instance_uri = str(
+        request.url.remove_query_params(keys=request.query_params.keys())
     )
+    profile_details = ProfileDetails(general_class=GEO.Feature, item_uri=instance_uri)
+    await profile_details.get_all_profiles("SpacePrez")
 
     # find the most specific class for the feature
-    for klass, _, distance in preferred_classes_and_profiles:
+    for klass, _, distance in profile_details.preferred_classes_and_profiles:
         if klass in feature_classes:
             most_specific_class = klass
             break
 
-    available_profiles_dict = {
-        k: v
-        for k, v in profiles.items()
-        if k in available_profiles + tuple(["profiles", "alt"])
-    }
-
     feature_renderer = SpacePrezFeatureRenderer(
         request,
         feature_uri,
-        available_profiles=available_profiles_dict,
-        default_profile=default_profile,
+        available_profiles=profile_details.available_profiles_dict,
+        default_profile=profile_details.default_profile,
     )
     profile = feature_renderer.profile
     if profile == "alt":
         alt_profiles_graph = await build_alt_graph(
-            URIRef(feature_uri), profiles_formats, available_profiles
+            URIRef(feature_uri),
+            profile_details.profiles_formats,
+            profile_details.available_profiles_dict,
         )
         return feature_renderer.render(alt_profiles_graph=alt_profiles_graph)
     else:
@@ -320,7 +374,9 @@ async def feature_endpoint(
 
         # retrieve relevant shapes
         feature_shapes_g = await retrieve_relevant_shapes(
-            profiles_g, profiles[profile].uri, most_specific_class
+            profile_details.profiles_g,
+            profile_details.available_profiles_dict[profile].uri,
+            most_specific_class,
         )
 
         # filter out irrelevant properties:
@@ -406,7 +462,7 @@ async def conformance(request: Request):
 
     conformance_renderer = SpacePrezConformanceRenderer(
         request,
-        profile_details.profiles_dict,
+        profile_details.available_profiles_dict,
         profile_details.default_profile,
         instance_uri,
     )
