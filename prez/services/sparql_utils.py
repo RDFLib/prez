@@ -118,6 +118,10 @@ async def sparql_query_multiple(
     """Executes a SPARQL SELECT query for (potentially) multiple SPARQL endpoints
 
     If prezs arg is omitted, queries all available SPARQL endpoints.
+
+    Returns a tuple of two lists: (succeeded_results, failed_results)
+
+    The config variable ALLOW_PARTIAL_RESULTS should be used for checking if you should proceed if failed_results is not empty
     """
     results = await asyncio.gather(*[sparql_query(query, prez) for prez in prezs])
     succeeded_results = []

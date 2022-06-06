@@ -29,7 +29,7 @@ async def profiles_func(request: Request, prez: Optional[str] = None):
         request.url.remove_query_params(keys=request.query_params.keys())
     )
     profile_details = ProfileDetails(general_class=PREZ.Profiles, item_uri=instance_uri)
-    await profile_details.get_all_profiles()
+    await profile_details.get_all_profiles(prez)
 
     profile_list = [dict(profile) for profile in profile_details.profiles_dict.values()]
 
