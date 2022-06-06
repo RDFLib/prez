@@ -1,12 +1,9 @@
 from typing import Dict, Optional, Union, List
 
-from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from connegp import MEDIATYPE_NAMES
+from fastapi.responses import Response, JSONResponse, PlainTextResponse
 
-from config import *
 from renderers import Renderer
-
-# from profiles.prez_profiles import profiles
 from utils import templates
 
 
@@ -36,7 +33,7 @@ class ProfilesRenderer(Renderer):
         """Renders the HTML representation of the profiles profile"""
         _template_context = {
             "request": self.request,
-            "uri": self.instance_uri,
+            "uri": str(self.request.url),
             "profile_list": self.profile_list,
             "profiles": self.profiles,
             "prez": self.prez,

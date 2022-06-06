@@ -34,7 +34,7 @@ class VocPrezDatasetRenderer(Renderer):
         _template_context = {
             "request": self.request,
             "dataset": self.dataset.to_dict(),
-            "uri": self.instance_uri,
+            "uri": str(self.request.url),
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
             "mediatype_names": MEDIATYPE_NAMES,

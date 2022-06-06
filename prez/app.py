@@ -428,6 +428,6 @@ async def health(request: Request):
 
 if __name__ == "__main__":
     configure()
-    uvicorn.run("app:app", port=8000, host=SYSTEM_URI, reload=True)
+    uvicorn.run("app:app", port=8001, host=SYSTEM_URI, reload=True)
 else:
     configure()

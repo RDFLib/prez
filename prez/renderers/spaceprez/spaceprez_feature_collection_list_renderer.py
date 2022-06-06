@@ -45,7 +45,7 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
             "request": self.request,
             "members": self.members,
             "dataset": self.feature_collection_list.dataset,
-            "uri": self.instance_uri,
+            "uri": str(self.request.url),
             "pages": self.pages,
             "label": self.label,
             "comment": self.comment,

@@ -44,7 +44,7 @@ class SpacePrezDatasetListRenderer(ListRenderer):
         _template_context = {
             "request": self.request,
             "members": self.members,
-            "uri": self.instance_uri,
+            "uri": str(self.request.url),
             "pages": self.pages,
             "label": self.label,
             "comment": self.comment,

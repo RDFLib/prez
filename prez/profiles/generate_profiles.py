@@ -2,7 +2,7 @@ import logging
 
 from async_lru import alru_cache
 from connegp import Profile
-from rdflib import Graph, DCTERMS, SKOS, URIRef, Literal, BNode
+from rdflib import Graph, DCTERMS, SKOS, URIRef, Literal, BNode, SH, XSD
 from rdflib.namespace import RDF, PROF, Namespace, RDFS
 
 from services.sparql_utils import (
@@ -81,7 +81,7 @@ async def get_general_profiles(general_class):
             ?profile altr-ext:constrainsClass ?class ;
                 dcterms:identifier ?profile_id .
         }}
-        GROUP BY ?class
+        GROUP BY ?class ?profile_id
         ORDER BY DESC(?distance)
         """
     profiles_formats = {}
@@ -90,17 +90,17 @@ async def get_general_profiles(general_class):
     # ordered list of feature classes and associated preferred profiles
     profiles_g = await create_profiles_graph()
     for r in profiles_g.query(get_class_hierarchy):
-        preferred_classes_and_profiles.append((str(r["class"]), str(r["profile_id"])))
+        preferred_classes_and_profiles.append(
+            (str(r["class"]), str(r["profile_id"]), str(r["distance"]))
+        )
 
     ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
     for s in profiles_g.subjects(RDF.type, PROF.Profile):
         profile_id = str(profiles_g.value(s, DCTERMS.identifier))
         profiles_formats[profile_id] = []
         for p, o in profiles_g.predicate_objects(s):
-            # if p == EX.hasAvailableFormat:
             if p == ALTREXT.hasResourceFormat:
                 profiles_formats[profile_id].append(str(o))
-            # elif p == EX.hasDefaultAvailableFormat:
             elif p == ALTREXT.hasDefaultResourceFormat:
                 default_format = str(o)
 
@@ -163,8 +163,27 @@ async def get_specific_profiles(
             if oc == pc[0]:
                 available_profiles.append(pc[1])
     # set the default profile
-    default_profile = available_profiles[-1]
+    default_profile = available_profiles[0]
     return tuple(available_profiles), default_profile
+
+
+def apply_profile(complete_feature_g: Graph, feature_shapes_g: Graph):
+    """
+    Apply the profile to the feature graph - returning only the relevant features
+    """
+    query = """
+    CONSTRUCT { ?s ?p ?o .
+			    ?s2 ?p2 ?o2 }
+    WHERE { ?s ?p ?o .
+    ?shape_bn sh:path ?p
+      OPTIONAL {?s2 ?p2 ?o2
+            VALUES ?p2 { rdf:type dcterms:identifier rdfs:label rdfs:member dcterms:title }
+        }
+    }
+    """
+    new_g = (complete_feature_g + feature_shapes_g).query(query).graph
+    new_g.namespaces = complete_feature_g.namespaces
+    return new_g
 
 
 async def build_alt_graph(object_of_interest, profiles_formats, available_profiles):
@@ -193,15 +212,17 @@ async def build_alt_graph(object_of_interest, profiles_formats, available_profil
 
 
 @alru_cache(maxsize=20)
-async def filter_results_using_profile(profile_g, profile, most_specific_class):
+async def retrieve_relevant_shapes(profile_g, profile, most_specific_class):
     query = f"""PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
                 PREFIX sh: <http://www.w3.org/ns/shacl#>
-                CONSTRUCT {{ ?pbn sh:path ?predicate ;
+                CONSTRUCT {{ ?nodeshape_bn sh:property ?pbn ;
+                                sh:closed ?closed_profile .
+                            ?pbn sh:path ?predicate ;
                                 sh:order ?order ;
                                 sh:group ?group . }}
                 WHERE {{ <{profile}> altr-ext:hasNodeShape ?nodeshape_bn .
                             ?nodeshape_bn sh:targetClass <{most_specific_class}> ;
-                                sh:closed true ;
+                                sh:closed ?closed_profile ;
                                 sh:property ?pbn .
                             ?pbn sh:path ?predicate ;
                                 sh:order ?order ;

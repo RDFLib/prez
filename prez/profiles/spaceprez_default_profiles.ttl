@@ -15,6 +15,28 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 altr-ext:hasResourceFormat owl:propertyChainAxiom ( dcterms:conformsTo dcterms:format ) .
 
+<http://surroundaustralia.com/profile/prez>
+    a prof:Profile ;
+    dcterms:identifier "prez" ;
+    skos:preflabel "Prez profile" ;
+    altr-ext:constrainsClass
+        dcat:Dataset ,
+        geo:FeatureCollection ;
+    altr-ext:constrainsClass
+        dcat:Dataset ,
+        geo:FeatureCollection ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass dcat:Dataset ;
+        altr-ext:hasDefaultProfile <http://www.opengis.net/spec/ogcapi-features-1/1.0/req/oas30>
+    ] , [
+        a sh:NodeShape ;
+        sh:targetClass geo:FeatureCollection ;
+        altr-ext:hasDefaultProfile <http://www.opengis.net/spec/ogcapi-features-1/1.0/req/oas30>
+    ]
+.
+
+
 <https://w3id.org/profile/ogcldapi>
     a prof:Profile ;
     dcterms:identifier "ogcldapi" ;
@@ -52,8 +74,6 @@ altr-ext:hasResourceFormat owl:propertyChainAxiom ( dcterms:conformsTo dcterms:f
     dcterms:description "The representation of the resource that lists all other representations (profiles and Media Types)" ;
     dcterms:identifier "alt";
     a prof:Profile ;
-    altr-ext:constrainsClass
-        geo:Feature ;
     altr-ext:hasResourceFormat "text/turtle", "application/ld+json", "application/rdf+xml", "text/html" ;
     altr-ext:hasDefaultResourceFormat "text/html" ;
 .

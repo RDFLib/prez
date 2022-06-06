@@ -165,7 +165,7 @@ class VocPrezSchemeRenderer(Renderer):
         _template_context = {
             "request": self.request,
             "scheme": self.scheme.to_dict(),
-            "uri": self.instance_uri,
+            "uri": str(self.request.url),
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
             "mediatype_names": MEDIATYPE_NAMES,

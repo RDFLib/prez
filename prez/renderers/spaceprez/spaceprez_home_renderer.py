@@ -25,7 +25,7 @@ class SpacePrezHomeRenderer(Renderer):
         """Renders the HTML representation of the OAI profile for the home page"""
         _template_context = {
             "request": self.request,
-            "uri": self.instance_uri,
+            "uri": str(self.request.url),
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
             "mediatype_names": dict(

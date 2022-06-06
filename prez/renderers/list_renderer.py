@@ -58,7 +58,7 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
         """Renders the HTML representation of the members profiles using the 'mem.html' template"""
         _template_context = {
             "request": self.request,
-            "uri": self.instance_uri,
+            "uri": str(self.request.url),
             "members": self.members,
             "label": self.label,
             "comment": self.comment,
@@ -73,7 +73,7 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
         """Renders the JSON representation of the members profile"""
         return JSONResponse(
             content={
-                "uri": self.instance_uri,
+                "uri": str(self.request.url),
                 "members": self.members,
                 "label": self.label,
                 "comment": self.comment,

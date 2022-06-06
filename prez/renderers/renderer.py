@@ -188,7 +188,7 @@ class Renderer(object, metaclass=ABCMeta):
         """Renders the HTML representation of the alternate profiles using the 'alt.html' template"""
         _template_context = {
             "request": self.request,
-            "uri": self.instance_uri,
+            "uri": str(self.request.url),
             "profiles": self.profiles,
             "default_profile": self.profiles.get(self.default_profile_token),
         }
@@ -202,7 +202,7 @@ class Renderer(object, metaclass=ABCMeta):
         """Renders the JSON representation of the alternate profiles"""
         return JSONResponse(
             content={
-                "uri": self.instance_uri,
+                "uri": str(self.request.url),
                 "profiles": list(self.profiles.keys()),
                 "default_profile": self.default_profile_token,
             },
