@@ -23,7 +23,7 @@ async def home(request: Request):
     profile_details = ProfileDetails(
         general_class=PREZ.HomePage, item_uri=PREZ.HomePage
     )
-    await profile_details.get_all_profiles()
+    await profile_details.get_all_profiles("SpacePrez")
     home_renderer = SpacePrezHomeRenderer(
         request,
         profile_details.profiles_dict,
@@ -53,7 +53,7 @@ async def datasets(
         request.url.remove_query_params(keys=request.query_params.keys())
     )
     profile_details = ProfileDetails(general_class=DCAT.Dataset, item_uri=instance_uri)
-    await profile_details.get_all_profiles()
+    await profile_details.get_all_profiles("SpacePrez")
     dataset_count, sparql_result = await asyncio.gather(
         count_datasets(), list_datasets(page, per_page)
     )
@@ -89,7 +89,7 @@ async def dataset_endpoint(
         request.url.remove_query_params(keys=request.query_params.keys())
     )
     profile_details = ProfileDetails(general_class=DCAT.Dataset, item_uri=instance_uri)
-    await profile_details.get_all_profiles()
+    await profile_details.get_all_profiles("SpacePrez")
 
     if not dataset_uri:
         dataset_uri = await get_uri(dataset_id, URIRef(DCAT.Dataset))
@@ -137,7 +137,7 @@ async def feature_collections(
     profile_details = ProfileDetails(
         general_class=GEO.FeatureCollection, item_uri=instance_uri
     )
-    await profile_details.get_all_profiles()
+    await profile_details.get_all_profiles("SpacePrez")
 
     collection_count, sparql_result = await asyncio.gather(
         count_collections(dataset_id),
@@ -184,7 +184,7 @@ async def feature_collection_endpoint(
     profile_details = ProfileDetails(
         general_class=GEO.FeatureCollection, item_uri=instance_uri
     )
-    await profile_details.get_all_profiles()
+    await profile_details.get_all_profiles("SpacePrez")
 
     collection_renderer = SpacePrezFeatureCollectionRenderer(
         request,
@@ -238,7 +238,7 @@ async def features(
     profile_details = ProfileDetails(
         general_class=GEO.FeatureCollection, item_uri=instance_uri
     )
-    await profile_details.get_all_profiles()
+    await profile_details.get_all_profiles("SpacePrez")
 
     """Returns a list of SpacePrez geo:Features in the necessary profile & mediatype"""
     feature_count, sparql_result = await asyncio.gather(
@@ -397,7 +397,7 @@ async def conformance(request: Request):
     profile_details = ProfileDetails(
         general_class=PREZ.Conformance, item_uri=instance_uri
     )
-    await profile_details.get_all_profiles()
+    await profile_details.get_all_profiles("SpacePrez")
 
     conformance_renderer = SpacePrezConformanceRenderer(
         request,

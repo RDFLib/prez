@@ -1,20 +1,22 @@
 import logging
-
 from pathlib import Path
+from typing import Optional, Union
+
 from async_lru import alru_cache
-from connegp import Profile
 from rdflib import Graph, DCTERMS, SKOS, URIRef, Literal, BNode
 from rdflib.namespace import RDF, PROF, Namespace, RDFS
-from prez.config import ENABLED_PREZS
+from connegp import Profile
 
+from prez.config import ENABLED_PREZS
 from prez.services.sparql_utils import (
     sparql_construct,
     sparql_query,
+    sparql_query_multiple,
 )
 
 
 @alru_cache(maxsize=20)
-async def create_profiles_graph():
+async def create_profiles_graph() -> Graph:
     profiles_g = Graph()
     for f in Path(__file__).parent.glob("*.ttl"):
         profiles_g.parse(f)
@@ -38,18 +40,12 @@ async def create_profiles_graph():
           }
         }
         """
-
-    if "VocPrez" in ENABLED_PREZS:
-        r = await sparql_construct(remote_profiles_query, "VocPrez")
+    
+    for p in ENABLED_PREZS:
+        r = await sparql_construct(remote_profiles_query, p)
         if r[0]:
             profiles_g += r[1]
-            logging.info("Also using remote profiles for VocPrez")
-
-    if "SpacePrez" in ENABLED_PREZS:
-        r = await sparql_construct(remote_profiles_query, "SpacePrez")
-        if r[0]:
-            profiles_g += r[1]
-            logging.info("Also using remote profiles for SpacePrez")
+            logging.info(f"Also using remote profiles for {p}")
 
     return profiles_g
 
@@ -65,7 +61,7 @@ class ProfileDetails:
         self.available_profiles = []
         self.default_profile = None
 
-    async def get_all_profiles(self):
+    async def get_all_profiles(self, prez: Optional[str] = None):
         (
             profiles_g,
             preferred_classes_and_profiles,
@@ -73,7 +69,7 @@ class ProfileDetails:
             profiles_formats,
         ) = await get_general_profiles(self.general_class)
         available_profiles, default_profile = await get_specific_profiles(
-            self.item_uri, preferred_classes_and_profiles
+            self.item_uri, preferred_classes_and_profiles, prez
         )
         self.profiles_g = profiles_g
         self.preferred_classes_and_profiles = preferred_classes_and_profiles
@@ -170,15 +166,15 @@ async def get_general_profiles(general_class):
 async def get_specific_profiles(
     item_uri,
     preferred_classes_and_profiles,
-    prez
+    prez: Union[str, None]
 ):
     # retrieve the classes
-    r = await sparql_query(
+    r = await sparql_query_multiple(
         f"""PREFIX dcterms: <{DCTERMS}>
     SELECT ?class {{ <{item_uri}> a ?class }}""",
-        prez,
+        prezs=[prez] if prez is not None else ENABLED_PREZS,
     )
-    if r[0] and r[1]:
+    if r[0] and not r[1]:
         objects_classes = [i["class"]["value"] for i in r[1]]
     else:
         default_profile = preferred_classes_and_profiles[0][1]

@@ -29,7 +29,7 @@ async def home(request: Request):
 
     # find the available profiles
     available_profiles, default_profile = await get_specific_profiles(
-        "http://localhost:8000",
+        "http://localhost:8000", # should cater for multiple *Prezs - i.e. when vocprez_home is /vocprez, not /
         preferred_classes_and_profiles,
         "VocPrez"
     )
