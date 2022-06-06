@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Optional, Union
 
 from async_lru import alru_cache
-from rdflib import Graph, DCTERMS, SKOS, URIRef, Literal, BNode
+from rdflib import Graph, DCTERMS, SKOS, URIRef, Literal, BNode, SH
 from rdflib.namespace import RDF, PROF, Namespace, RDFS
 from connegp import Profile
 
@@ -58,24 +58,39 @@ class ProfileDetails:
         self.preferred_classes_and_profiles = {}
         self.profiles_dict = {}
         self.profiles_formats = {}
-        self.available_profiles = []
+        self.available_profiles_dict = {}
         self.default_profile = None
 
     async def get_all_profiles(self, prez: Optional[str] = None):
+
+        # get general profiles
         (
             profiles_g,
             preferred_classes_and_profiles,
             profiles_dict,
             profiles_formats,
         ) = await get_general_profiles(self.general_class)
-        available_profiles, default_profile = await get_specific_profiles(
+
+        # get profiles specific to the given class, and the default profile
+        (
+            available_profiles,
+            default_profile,
+        ) = await get_class_based_and_default_profiles(
             self.item_uri, preferred_classes_and_profiles, prez
         )
+
+        # slice the total set of profiles by those available for the given class
+        available_profiles_dict = {
+            k: v
+            for k, v in profiles_dict.items()
+            if k in tuple([i[1] for i in available_profiles]) + tuple(["alt"])
+        }
+
         self.profiles_g = profiles_g
         self.preferred_classes_and_profiles = preferred_classes_and_profiles
         self.profiles_dict = profiles_dict
         self.profiles_formats = profiles_formats
-        self.available_profiles = available_profiles
+        self.available_profiles_dict = available_profiles_dict
         self.default_profile = default_profile
 
 
@@ -96,7 +111,7 @@ async def get_general_profiles(general_class):
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
         PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
 
-        SELECT ?class (count(?mid) as ?distance) ?profile_id
+        SELECT ?class (count(?mid) as ?distance) ?profile_id ?profile
         WHERE {{
             ?class rdfs:subClassOf* ?mid .
             ?mid rdfs:subClassOf* <{general_class}> .
@@ -111,10 +126,34 @@ async def get_general_profiles(general_class):
 
     # ordered list of feature classes and associated preferred profiles
     profiles_g = await create_profiles_graph()
-    for r in profiles_g.query(get_class_hierarchy):
-        preferred_classes_and_profiles.append(
-            (str(r["class"]), str(r["profile_id"]), str(r["distance"]))
+
+    # check for hardcoded API default profiles
+    ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
+    default_profile_nodeshapes = profiles_g.objects(
+        subject=URIRef("http://surroundaustralia.com/profile/prez"),
+        predicate=ALTREXT.hasNodeShape,
+    )
+    class_default_profiles = []
+    # if default_profile_nodeshapes:
+    for nodeshape_bn in default_profile_nodeshapes:
+        classes_with_default = profiles_g.value(
+            subject=nodeshape_bn, predicate=SH.targetClass
         )
+        default_for_class = profiles_g.value(
+            subject=nodeshape_bn, predicate=ALTREXT.hasDefaultProfile
+        )
+        class_default_profiles.append(tuple([classes_with_default, default_for_class]))
+
+    for r in profiles_g.query(get_class_hierarchy):
+        distance = str(r["distance"])
+        if tuple([r["class"], r["profile"]]) in class_default_profiles:
+            distance = 0  # this will ensure the profile is selected by default
+        preferred_classes_and_profiles.append(
+            (str(r["class"]), str(r["profile_id"]), distance)
+        )
+
+    # sort by preference order
+    preferred_classes_and_profiles.sort(key=lambda x: int(x[2]))
 
     ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
     for s in profiles_g.subjects(RDF.type, PROF.Profile):
@@ -161,6 +200,7 @@ async def get_general_profiles(general_class):
             languages=["en"],
             default_language="en",
         )
+
     return (
         profiles_g,
         tuple(preferred_classes_and_profiles),
@@ -170,7 +210,7 @@ async def get_general_profiles(general_class):
 
 
 @alru_cache(maxsize=20)
-async def get_specific_profiles(
+async def get_class_based_and_default_profiles(
     item_uri, preferred_classes_and_profiles, prez: Union[str, None]
 ):
     # retrieve the classes
@@ -179,20 +219,29 @@ async def get_specific_profiles(
     SELECT ?class {{ <{item_uri}> a ?class }}""",
         prezs=[prez] if prez is not None else ENABLED_PREZS,
     )
+    """
+        if r[0] and r[1]:
+        objects_classes = [i["class"]["value"] for i in r[1]]"""
+
+    objects_classes = []
     if r[0] and not r[1]:
-        objects_classes = [i["class"]["value"] for i in r[1]]
+        for result in r[0]:
+            objects_classes.append(result["class"]["value"])
+        # class information is available, check which classes we have profiles for
+        #     objects_classes = [i["class"]["value"] for i in results[1]]
     else:
+        # check for Prez API configured default profiles
         default_profile = preferred_classes_and_profiles[0][1]
-        return tuple([default_profile]), default_profile
+        return preferred_classes_and_profiles, default_profile
 
     # the available profiles are returned in reverse preference order
     available_profiles = []
     for i, pc in enumerate(preferred_classes_and_profiles):
         for oc in objects_classes:
             if oc == pc[0]:
-                available_profiles.append(pc[1])
+                available_profiles.append(pc)
     # set the default profile
-    default_profile = available_profiles[0]
+    default_profile = available_profiles[0][1]
     return tuple(available_profiles), default_profile
 
 
@@ -223,17 +272,17 @@ async def build_alt_graph(object_of_interest, profiles_formats, available_profil
     alt_rep.add((object_of_interest, RDF.type, RDFS.Resource))
     alt_rep.add((object_of_interest, RDFS.label, Literal("placeholder")))
 
-    for available_profile in available_profiles:
-        for i, fmt in enumerate(profiles_formats[available_profile]):
+    for available_profile in available_profiles.values():
+        for i, fmt in enumerate(profiles_formats[available_profile.id]):
             bn = BNode()
             if i == 0:
                 alt_rep.add((bn, RDF.type, ALTR.Representation))
-                alt_rep.add((bn, DCTERMS.conformsTo, URIRef(available_profile)))
+                alt_rep.add((bn, DCTERMS.conformsTo, URIRef(available_profile.uri)))
                 alt_rep.add((bn, DCTERMS.format, Literal(fmt)))
                 alt_rep.add((object_of_interest, ALTR.hasDefaultRepresentation, bn))
 
             alt_rep.add((bn, RDF.type, ALTR.Representation))
-            alt_rep.add((bn, DCTERMS.conformsTo, URIRef(available_profile)))
+            alt_rep.add((bn, DCTERMS.conformsTo, URIRef(available_profile.uri)))
             alt_rep.add((bn, DCTERMS.format, Literal(fmt)))
             alt_rep.add((object_of_interest, ALTR.hasRepresentation, bn))
 
