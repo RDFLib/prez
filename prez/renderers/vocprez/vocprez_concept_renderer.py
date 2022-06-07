@@ -15,7 +15,7 @@ class VocPrezConceptRenderer(Renderer):
         "vocpub": vocpub,
         "skos": skos,
         "vocpub_supplied": vocpub_supplied,
-        "alt": alt
+        "alt": alt,
     }
     default_profile_token = "vocpub"
 
@@ -182,7 +182,7 @@ class VocPrezConceptRenderer(Renderer):
         return self._render_vocpub_rdf()
 
     def render(
-        self, 
+        self,
         template_context: Optional[Dict] = None,
         alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[

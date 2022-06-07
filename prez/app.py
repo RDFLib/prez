@@ -64,7 +64,9 @@ app = FastAPI(
     }
 )
 
-app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
+app.mount(
+    "/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static"
+)
 if THEME_VOLUME is not None:
     app.mount(
         f"/theme",
@@ -75,7 +77,6 @@ if THEME_VOLUME is not None:
 
 def configure():
     configure_routing()
-    # configure_profiles()
 
 
 def configure_routing():
@@ -104,15 +105,14 @@ async def app_startup():
         while True:
             url = urlparse(SPACEPREZ_SPARQL_ENDPOINT)
             try:
-                httpx.get(f"{url[0]}://{url[1]}")
+                url_to_try = f"{url[0]}://{url[1]}"
+                httpx.get(url_to_try)
                 await get_general_profiles(DCAT.Dataset)
                 await get_general_profiles(GEO.FeatureCollection)
                 await get_general_profiles(GEO.Feature)
-                print(
-                    f"Successfully able to connect to SpacePrez endpoint {SPACEPREZ_SPARQL_ENDPOINT}"
-                )
+                print(f"Successfully connected to SpacePrez endpoint {url_to_try}")
                 break
-            except Exception:
+            except Exception as e:
                 print(
                     f"Failed to connect to SpacePrez endpoint {SPACEPREZ_SPARQL_ENDPOINT}"
                 )
@@ -125,7 +125,7 @@ async def app_startup():
             try:
                 httpx.get(f"{url[0]}://{url[1]}")
                 print(
-                    f"Successfully able to connect to VocPrez endpoint {VOCPREZ_SPARQL_ENDPOINT}"
+                    f"Successfully connected to VocPrez endpoint {VOCPREZ_SPARQL_ENDPOINT}"
                 )
                 break
             except Exception:
@@ -141,7 +141,7 @@ async def app_startup():
             try:
                 httpx.get(f"{url[0]}://{url[1]}")
                 print(
-                    f"Successfully able to connect to TimePrez endpoint {TIMEPREZ_SPARQL_ENDPOINT}"
+                    f"Successfully connected to TimePrez endpoint {TIMEPREZ_SPARQL_ENDPOINT}"
                 )
                 break
             except Exception:
@@ -157,7 +157,7 @@ async def app_startup():
             try:
                 httpx.get(f"{url[0]}://{url[1]}")
                 print(
-                    f"Successfully able to connect to CatPrez endpoint {CATPREZ_SPARQL_ENDPOINT}"
+                    f"Successfully connected to CatPrez endpoint {CATPREZ_SPARQL_ENDPOINT}"
                 )
                 break
             except Exception:

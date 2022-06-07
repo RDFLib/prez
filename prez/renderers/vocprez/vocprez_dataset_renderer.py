@@ -11,11 +11,7 @@ from prez.utils import templates
 
 
 class VocPrezDatasetRenderer(Renderer):
-    profiles = {
-        "dcat": dcat,
-        "sdo": sdo,
-        "alt": alt
-    }
+    profiles = {"dcat": dcat, "sdo": sdo, "alt": alt}
     default_profile_token = "dcat"
 
     def __init__(
@@ -134,7 +130,8 @@ class VocPrezDatasetRenderer(Renderer):
         return self._render_sdo_rdf()
 
     def render(
-        self, template_context: Optional[Dict] = None,
+        self,
+        template_context: Optional[Dict] = None,
         alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None

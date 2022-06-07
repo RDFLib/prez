@@ -7,8 +7,8 @@ from prez.models.vocprez import *
 from prez.profiles.generate_profiles import (
     ProfileDetails,
     get_general_profiles,
-    get_specific_profiles,
-    filter_results_using_profile,
+    get_class_based_and_default_profiles,
+    retrieve_relevant_shapes,
     build_alt_graph,
 )
 from prez.utils import templates
@@ -28,10 +28,10 @@ async def home(request: Request):
     ) = await get_general_profiles(DCAT.Dataset)
 
     # find the available profiles
-    available_profiles, default_profile = await get_specific_profiles(
-        "http://localhost:8000", # should cater for multiple *Prezs - i.e. when vocprez_home is /vocprez, not /
+    available_profiles, default_profile = await get_class_based_and_default_profiles(
+        "http://localhost:8000",  # should cater for multiple *Prezs - i.e. when vocprez_home is /vocprez, not /
         preferred_classes_and_profiles,
-        "VocPrez"
+        "VocPrez",
     )
 
     # find the most specific class for the feature
@@ -125,10 +125,8 @@ async def scheme_endpoint(
     ) = await get_general_profiles(SKOS.ConceptScheme)
 
     # find the available profiles
-    available_profiles, default_profile = await get_specific_profiles(
-        "http://localhost:8000",
-        preferred_classes_and_profiles,
-        "VocPrez"
+    available_profiles, default_profile = await get_class_based_and_default_profiles(
+        "http://localhost:8000", preferred_classes_and_profiles, "VocPrez"
     )
 
     # find the most specific class for the feature
@@ -145,7 +143,7 @@ async def scheme_endpoint(
             )
         ),
         available_profiles,
-        default_profile
+        default_profile,
     )
     include_inferencing = True
     if scheme_renderer.profile == "vocpub_supplied":
@@ -267,10 +265,8 @@ async def concept_endpoint(
     ) = await get_general_profiles(SKOS.Concept)
 
     # find the available profiles
-    available_profiles, default_profile = await get_specific_profiles(
-        concept_uri,
-        preferred_classes_and_profiles,
-        "VocPrez"
+    available_profiles, default_profile = await get_class_based_and_default_profiles(
+        concept_uri, preferred_classes_and_profiles, "VocPrez"
     )
 
     # find the most specific class for the feature
@@ -315,11 +311,7 @@ async def concept_endpoint(
 @router.get("/vocab/{scheme_id}/{concept_id}", summary="Get Concept")
 async def concept(request: Request, scheme_id: str, concept_id: str):
     """Returns a VocPrez skos:Concept in the necessary profile & mediatype"""
-    return await concept_endpoint(
-        request,
-        scheme_id=scheme_id,
-        concept_id=concept_id
-    )
+    return await concept_endpoint(request, scheme_id=scheme_id, concept_id=concept_id)
 
 
 @router.get(

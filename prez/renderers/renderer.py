@@ -29,7 +29,6 @@ class Renderer(object, metaclass=ABCMeta):
             )
 
         self.profiles = dict(profiles)
-        # self.profiles["alt"] = alt
         self.request = request
         self.default_profile_token = default_profile_token
         self.instance_uri = instance_uri
@@ -37,6 +36,8 @@ class Renderer(object, metaclass=ABCMeta):
         connegp = Connegp(request, self.profiles, default_profile_token)
         self.profile = connegp.profile
         self.mediatype = connegp.mediatype
+        self.profiles_requested = connegp.profiles_requested
+        self.mediatypes_requested = connegp.mediatypes_requested
 
         # make headers
         if self.error is None:
@@ -141,18 +142,18 @@ class Renderer(object, metaclass=ABCMeta):
         # remove labels from the graph
         query = f"""
         PREFIX geo: <{GEO}>
-        CONSTRUCT {{ 
+        CONSTRUCT {{
             <{str(item_uri)}> ?p ?o .
             ?o ?p2 ?o2 .
             ?coll skos:member <{str(item_uri)}> .
-            
-            ?x rdfs:member <{str(item_uri)}> .  
-            ?y rdfs:member ?x .         
+
+            ?x rdfs:member <{str(item_uri)}> .
+            ?y rdfs:member ?x .
         }}
         WHERE {{
             <{str(item_uri)}> ?p ?o .
             # Blank Nodes
-            
+
             OPTIONAL {{
                 ?o ?p2 ?o2 .
                 FILTER(ISBLANK(?o))
@@ -161,12 +162,12 @@ class Renderer(object, metaclass=ABCMeta):
             # VocPrez
             OPTIONAL {{
                 ?coll skos:member <{str(item_uri)}> .
-            }}                 
-                     
+            }}
+
             # SpacePrez
             OPTIONAL {{
                 ?x rdfs:member <{str(item_uri)}> .
-                
+
                 OPTIONAL {{
                     ?y rdfs:member ?x .
                 }}
@@ -187,8 +188,7 @@ class Renderer(object, metaclass=ABCMeta):
         return Response(response_text, media_type=self.mediatype)
 
     def _render_alt_html(
-        self,
-        template_context: Union[Dict, None]
+        self, template_context: Union[Dict, None]
     ) -> templates.TemplateResponse:
         """Renders the HTML representation of the alternate profiles using the 'alt.html' template"""
         _template_context = {
@@ -216,9 +216,7 @@ class Renderer(object, metaclass=ABCMeta):
         )
 
     def _render_alt(
-        self,
-        template_context: Union[Dict, None],
-        alt_profiles_graph: Graph
+        self, template_context: Union[Dict, None], alt_profiles_graph: Graph
     ) -> Union[templates.TemplateResponse, Response, JSONResponse]:
         """Renders the alternate profiles based on mediatype"""
         if self.mediatype == "text/html":
@@ -231,7 +229,8 @@ class Renderer(object, metaclass=ABCMeta):
 
     @abstractmethod
     def render(
-        self, template_context: Optional[Dict] = None,
+        self,
+        template_context: Optional[Dict] = None,
         alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None

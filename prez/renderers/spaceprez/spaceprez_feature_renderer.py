@@ -153,6 +153,11 @@ class SpacePrezFeatureRenderer(Renderer):
             return PlainTextResponse(self.error, status_code=400)
         elif self.profile == "alt":
             return self._render_alt(template_context, alt_profiles_graph)
+        elif self.profile == "oai" and self.mediatypes_requested[0] in RDF_MEDIATYPES:
+            # ignore secondary mediatypes requested - assume connegp has done its job
+            # change the mediatype to that requested, and return an RDF response
+            self.mediatype = self.mediatypes_requested[0]
+            return self._make_rdf_response(self.feature.uri, self.feature.graph)
         elif self.mediatype == "text/html":
             return self._render_oai_html(template_context)
         elif self.mediatype == "application/geo+json":

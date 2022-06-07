@@ -83,7 +83,8 @@ class SpacePrezConformanceRenderer(Renderer):
             return self._render_oai_json()
 
     def render(
-        self, template_context: Optional[Dict] = None,
+        self,
+        template_context: Optional[Dict] = None,
         alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
