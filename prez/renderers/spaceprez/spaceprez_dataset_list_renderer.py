@@ -3,11 +3,11 @@ from typing import Dict, Optional, Union
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from connegp import MEDIATYPE_NAMES
 
-from renderers import ListRenderer
-from config import *
+from prez.renderers import ListRenderer
+from prez.config import *
 
-from models.spaceprez import SpacePrezDatasetList
-from utils import templates
+from prez.models.spaceprez import SpacePrezDatasetList
+from prez.utils import templates
 
 
 class SpacePrezDatasetListRenderer(ListRenderer):
@@ -108,24 +108,38 @@ class SpacePrezDatasetListRenderer(ListRenderer):
             g.add((sparql, DCTERMS.type, URIRef("http://purl.org/dc/dcmitype/Service")))
             g.add((sparql, DCAT.endpointURL, sparql))
 
-        for s, o in g.subject_objects(predicate=RDFS.member):
-            g.remove((s, RDFS.member, o))
-            g.add((o, RDF.type, DCAT.Dataset))
-            g.add((s, DCAT.dataset, o))
-            for p2, o2 in g.predicate_objects(subject=o):
-                if p2 == RDFS.label:
-                    g.remove((o, p2, o2))
-                    g.add((o, DCTERMS.title, o2))
-                elif p2 == RDFS.comment:
-                    g.remove((o, p2, o2))
-                    g.add((o, DCTERMS.description, o2))
+        # for s, o in g.subject_objects(predicate=RDFS.member):
+        #     g.remove((s, RDFS.member, o))
+        #     g.add((o, RDF.type, DCAT.Dataset))
+        #     g.add((s, DCAT.dataset, o))
+        #     for p2, o2 in g.predicate_objects(subject=o):
+        #         if p2 == DCTERMS.identifier:
+        #             g.add((o, DCTERMS.identifier, o2))
+        #         elif p2 == RDFS.label:
+        #             g.remove((o, p2, o2))
+        #             g.add((o, DCTERMS.title, o2))
+        #         elif p2 == RDFS.comment:
+        #             g.remove((o, p2, o2))
+        #             g.add((o, DCTERMS.description, o2))
+
+        for ds in self.dataset_list.members:
+            g.add(
+                (
+                    URIRef(ds["uri"]),
+                    DCTERMS.identifier,
+                    Literal(ds["id"], datatype=XSD.token),
+                )
+            )
+            g.add((URIRef(ds["uri"]), DCTERMS.title, Literal(ds.get("title"))))
+            if ds.get("desc") is not None:
+                g.add((URIRef(ds["uri"]), DCTERMS.description, Literal(ds.get("desc"))))
 
         return g
 
     def _render_dcat_rdf(self):
         """Renders the RDF representation of the DCAT profile for a list of datasets"""
         g = self._generate_dcat_rdf()
-        return self._make_rdf_response(g)
+        return self._make_rdf_response(self.instance_uri, g)
 
     def _render_dcat(self, template_context: Union[Dict, None]):
         if self.mediatype == "text/html":

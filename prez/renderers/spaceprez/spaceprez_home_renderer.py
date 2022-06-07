@@ -3,9 +3,9 @@ from typing import Dict, Optional, Union
 from connegp import MEDIATYPE_NAMES
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 
-from config import *
-from renderers import Renderer
-from utils import templates
+from prez.config import *
+from prez.renderers import Renderer
+from prez.utils import templates
 
 
 class SpacePrezHomeRenderer(Renderer):
@@ -53,14 +53,13 @@ class SpacePrezHomeRenderer(Renderer):
                     "title": "this document",
                 },
                 {
-                    "href": str(self.request.base_url)[:-1]
-                    + str(self.request.url.path),
+                    "href": str(self.request.url)[:-1] + str(self.request.url.path),
                     "rel": "alternate",
                     "type": "text/html",
                     "title": "this document as HTML",
                 },
                 {
-                    "href": str(self.request.base_url) + "docs",
+                    "href": str(self.request.url) + "docs",
                     "rel": "service-doc",
                     "type": self.mediatype,
                     "title": "API Definition",
@@ -94,7 +93,8 @@ class SpacePrezHomeRenderer(Renderer):
             return self._render_oai_json()
 
     def render(
-        self, template_context: Optional[Dict] = None,
+        self,
+        template_context: Optional[Dict] = None,
         alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None

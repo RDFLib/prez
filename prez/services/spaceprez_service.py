@@ -1,9 +1,8 @@
 from typing import Optional
 
 from async_lru import alru_cache
-from rdflib.namespace import XSD
 
-from services.sparql_utils import *
+from prez.services.sparql_utils import *
 
 
 async def count_datasets():
@@ -330,18 +329,35 @@ async def get_uri(item_id: str = None, klass: URIRef = None):
             return r[1][0]["item_uri"]["value"]
 
 
-async def get_feature_uri_and_classes(feature_id: str = None, feature_uri: str = None):
+async def get_feature_uri_and_classes(
+    feature_id: str = None,
+    feature_uri: str = None,
+    collection_id: str = None,
+    dataset_id: str = None,
+):
     if feature_id:
         r = await sparql_query(
             f"""PREFIX dcterms: <{DCTERMS}>
                 PREFIX rdf: <{RDF}>
                 PREFIX xsd: <{XSD}>
-                SELECT ?feature_uri ?class {{ ?feature_uri dcterms:identifier "{feature_id}"^^xsd:token ;
+                PREFIX dcat: <{DCAT}>
+                PREFIX rdfs: <{RDFS}>
+                SELECT ?feature_uri ?class {{
+                        ?d dcterms:identifier "{dataset_id}"^^xsd:token ;
+                            a dcat:Dataset ;
+                            rdfs:member ?fc .
+                        ?fc dcterms:identifier "{collection_id}"^^xsd:token ;
+                            rdfs:member ?feature_uri .
+                ?feature_uri dcterms:identifier "{feature_id}"^^xsd:token ;
                                     rdf:type ?class . }}""",
             "SpacePrez",
         )
         if r[0]:
-            return r[1][0]["feature_uri"]["value"], [c["class"]["value"] for c in r[1]]
+            return (
+                feature_id,
+                r[1][0]["feature_uri"]["value"],
+                [c["class"]["value"] for c in r[1]],
+            )
     elif feature_uri:
         r = await sparql_query(
             f"""PREFIX dcterms: <{DCTERMS}>
@@ -351,7 +367,7 @@ async def get_feature_uri_and_classes(feature_id: str = None, feature_uri: str =
             "SpacePrez",
         )
         if r[0]:
-            return feature_uri, [c["class"]["value"] for c in r[1]]
+            return feature_id, feature_uri, [c["class"]["value"] for c in r[1]]
 
 
 @alru_cache(maxsize=20)

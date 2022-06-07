@@ -3,10 +3,10 @@ from typing import Dict, Optional, Union
 from connegp import MEDIATYPE_NAMES
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 
-from models.spaceprez import SpacePrezFeatureList
-from renderers import ListRenderer
-from utils import templates
-from config import *
+from prez.models.spaceprez import SpacePrezFeatureList
+from prez.renderers import ListRenderer
+from prez.utils import templates
+from prez.config import *
 
 
 class SpacePrezFeatureListRenderer(ListRenderer):
@@ -73,8 +73,7 @@ class SpacePrezFeatureListRenderer(ListRenderer):
                     "title": "this document",
                 },
                 {
-                    "href": str(self.request.base_url)[:-1]
-                    + str(self.request.url.path),
+                    "href": str(self.request.url)[:-1] + str(self.request.url.path),
                     "rel": "alternate",
                     "type": "text/html",
                     "title": "this document as HTML",
@@ -119,7 +118,7 @@ class SpacePrezFeatureListRenderer(ListRenderer):
         elif self.profile == "mem":
             return self._render_mem(template_context)
         elif self.profile == "alt":
-            return self._render_alt(template_context, alt_profiles_graph=alt_profiles_graph)
+            return self._render_alt(template_context, alt_profiles_graph)
         elif self.profile == "oai":
             return self._render_oai(template_context)
         elif self.profile == "dd":

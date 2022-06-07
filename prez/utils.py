@@ -4,7 +4,7 @@ from typing import Dict
 import jinja2
 from starlette_core.templating import Jinja2Templates
 
-from config import *
+from prez.config import *
 
 
 def get_config(var):

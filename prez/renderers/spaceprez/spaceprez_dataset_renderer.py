@@ -3,11 +3,11 @@ from typing import Dict, Optional, Union
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from connegp import MEDIATYPE_NAMES, RDF_MEDIATYPES
 
-from config import *
-from renderers import Renderer
+from prez.config import *
+from prez.renderers import Renderer
 
-from models.spaceprez import SpacePrezDataset
-from utils import templates
+from prez.models.spaceprez import SpacePrezDataset
+from prez.utils import templates
 
 
 class SpacePrezDatasetRenderer(Renderer):
@@ -57,8 +57,7 @@ class SpacePrezDatasetRenderer(Renderer):
                     "title": "this document",
                 },
                 {
-                    "href": str(self.request.base_url)[:-1]
-                    + str(self.request.url.path),
+                    "href": str(self.request.url)[:-1] + str(self.request.url.path),
                     "rel": "alternate",
                     "type": "text/html",
                     "title": "this document as HTML",

@@ -5,7 +5,7 @@ from httpx import Response as httpxResponse
 import asyncio
 from connegp import RDF_MEDIATYPES
 
-from config import *
+from prez.config import *
 
 get_all_prop_obj_info = """
 OPTIONAL {
@@ -75,22 +75,6 @@ construct_all_bnode_prop_obj_info = """
     dcterms:description ?o2def .
 """
 
-remote_profiles_query = """
-PREFIX prof: <http://www.w3.org/ns/dx/prof/>
-PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX geo: <http://www.opengis.net/ont/geosparql#>
-DESCRIBE ?profile ?class WHERE {
-  ?profile a prof:Profile
-  OPTIONAL {
-    ?class rdfs:subClassOf geo:Feature .
-  }
-  OPTIONAL {
-    ?class rdfs:subClassOf skos:Concept .
-  }
-}
-"""
-
 
 async def sparql_query(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
     """Executes a SPARQL SELECT query for a single SPARQL endpoint"""
@@ -134,6 +118,10 @@ async def sparql_query_multiple(
     """Executes a SPARQL SELECT query for (potentially) multiple SPARQL endpoints
 
     If prezs arg is omitted, queries all available SPARQL endpoints.
+
+    Returns a tuple of two lists: (succeeded_results, failed_results)
+
+    The config variable ALLOW_PARTIAL_RESULTS should be used for checking if you should proceed if failed_results is not empty
     """
     results = await asyncio.gather(*[sparql_query(query, prez) for prez in prezs])
     succeeded_results = []

@@ -4,11 +4,10 @@ from abc import ABCMeta, abstractmethod
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from connegp import Profile, RDF_MEDIATYPES
 
-from renderers import Renderer
-from config import *
+from prez.renderers import Renderer
+from prez.config import *
 
-# from profiles.prez_profiles import mem
-from utils import templates
+from prez.utils import templates
 
 
 class ListRenderer(Renderer, metaclass=ABCMeta):
@@ -103,7 +102,7 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
     def _render_mem_rdf(self) -> Response:
         """Renders the RDF representation of the members profile"""
         g = self._generate_mem_rdf()
-        return self._make_rdf_response(g)
+        return self._make_rdf_response(self.instance_uri, g)
 
     def _render_mem(
         self, template_context: Union[Dict, None]
@@ -118,7 +117,8 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
 
     @abstractmethod
     def render(
-        self, template_context: Optional[Dict] = None,
+        self,
+        template_context: Optional[Dict] = None,
         alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None

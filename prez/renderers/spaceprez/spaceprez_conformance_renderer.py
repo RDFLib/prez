@@ -3,9 +3,9 @@ from typing import Dict, Optional, Union
 from connegp import MEDIATYPE_NAMES
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 
-from renderers import Renderer
-from utils import templates
-from config import *
+from prez.renderers import Renderer
+from prez.utils import templates
+from prez.config import *
 
 
 class SpacePrezConformanceRenderer(Renderer):
@@ -83,7 +83,8 @@ class SpacePrezConformanceRenderer(Renderer):
             return self._render_oai_json()
 
     def render(
-        self, template_context: Optional[Dict] = None,
+        self,
+        template_context: Optional[Dict] = None,
         alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None

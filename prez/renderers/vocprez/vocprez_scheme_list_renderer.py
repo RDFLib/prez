@@ -3,15 +3,15 @@ from typing import Dict, Optional, Union
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from connegp import MEDIATYPE_NAMES
 
-from renderers import ListRenderer
-from config import *
-from profiles.vocprez_profiles import dcat, dd
-from models.vocprez import VocPrezSchemeList
-from utils import templates
+from prez.renderers import ListRenderer
+from prez.config import *
+from prez.profiles.vocprez_profiles import dcat, dd, alt
+from prez.models.vocprez import VocPrezSchemeList
+from prez.utils import templates
 
 
 class VocPrezSchemeListRenderer(ListRenderer):
-    profiles = {"dcat": dcat, "dd": dd}
+    profiles = {"dcat": dcat, "dd": dd, "alt": alt}
     default_profile_token = "dcat"
 
     def __init__(
@@ -126,7 +126,7 @@ class VocPrezSchemeListRenderer(ListRenderer):
     def _render_dcat_rdf(self):
         """Renders the RDF representation of the DCAT profile for a dataset"""
         g = self._generate_dcat_rdf()
-        return self._make_rdf_response(g)
+        return self._make_rdf_response(self.instance_uri, g)
 
     def _render_dcat(self, template_context: Union[Dict, None]):
         if self.mediatype == "text/html":
@@ -147,7 +147,8 @@ class VocPrezSchemeListRenderer(ListRenderer):
         return self._render_dd_json()
 
     def render(
-        self, template_context: Optional[Dict] = None,
+        self,
+        template_context: Optional[Dict] = None,
         alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None

@@ -3,22 +3,28 @@ from typing import Dict, Optional, Union
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from connegp import MEDIATYPE_NAMES
 
-from config import *
-from renderers import Renderer
-from profiles.vocprez_profiles import dcat, sdo
-from models.vocprez import VocPrezDataset
-from utils import templates
+from prez.config import *
+from prez.renderers import Renderer
+from prez.profiles.vocprez_profiles import dcat, sdo, alt
+from prez.models.vocprez import VocPrezDataset
+from prez.utils import templates
 
 
 class VocPrezDatasetRenderer(Renderer):
-    profiles = {"dcat": dcat, "sdo": sdo}
+    profiles = {"dcat": dcat, "sdo": sdo, "alt": alt}
     default_profile_token = "dcat"
 
-    def __init__(self, request: object, instance_uri: str) -> None:
+    def __init__(
+        self,
+        request: object,
+        instance_uri: str,
+        available_profiles: dict,
+        default_profile: str,
+    ) -> None:
         super().__init__(
             request,
-            VocPrezDatasetRenderer.profiles,
-            VocPrezDatasetRenderer.default_profile_token,
+            available_profiles,
+            default_profile,
             instance_uri,
         )
 
@@ -94,7 +100,7 @@ class VocPrezDatasetRenderer(Renderer):
     def _render_dcat_rdf(self) -> Response:
         """Renders the RDF representation of the DCAT profile for a dataset"""
         g = self._generate_dcat_rdf()
-        return self._make_rdf_response(g)
+        return self._make_rdf_response(self.instance_uri, g)
 
     def _render_dcat(self, template_context: Union[Dict, None]):
         """Renders the DCAT profile for a dataset"""
@@ -124,7 +130,8 @@ class VocPrezDatasetRenderer(Renderer):
         return self._render_sdo_rdf()
 
     def render(
-        self, template_context: Optional[Dict] = None,
+        self,
+        template_context: Optional[Dict] = None,
         alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None

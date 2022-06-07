@@ -3,11 +3,11 @@ from typing import Dict, Optional, Union
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from connegp import MEDIATYPE_NAMES
 
-from renderers import ListRenderer
-from config import *
+from prez.renderers import ListRenderer
+from prez.config import *
 
-from models.spaceprez import SpacePrezFeatureCollectionList
-from utils import templates
+from prez.models.spaceprez import SpacePrezFeatureCollectionList
+from prez.utils import templates
 
 
 class SpacePrezFeatureCollectionListRenderer(ListRenderer):
@@ -96,8 +96,7 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
                     "title": "this document",
                 },
                 {
-                    "href": str(self.request.base_url)[:-1]
-                    + str(self.request.url.path),
+                    "href": str(self.request.url)[:-1] + str(self.request.url.path),
                     "rel": "alternate",
                     "type": "text/html",
                     "title": "this document as HTML",

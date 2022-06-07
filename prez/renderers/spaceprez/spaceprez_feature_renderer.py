@@ -3,10 +3,10 @@ from typing import Dict, Optional, Union
 from connegp import MEDIATYPE_NAMES, RDF_MEDIATYPES
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 
-from config import *
-from models.spaceprez import SpacePrezFeature
-from renderers import Renderer
-from utils import templates
+from prez.config import *
+from prez.models.spaceprez import SpacePrezFeature
+from prez.renderers import Renderer
+from prez.utils import templates
 
 
 class SpacePrezFeatureRenderer(Renderer):
@@ -62,7 +62,7 @@ class SpacePrezFeatureRenderer(Renderer):
                 "title": "this document",
             },
             {
-                "href": str(self.request.base_url)[:-1] + str(self.request.url.path),
+                "href": str(self.request.url)[:-1] + str(self.request.url.path),
                 "rel": "alternate",
                 "type": "text/html",
                 "title": "this document as HTML",
@@ -153,6 +153,11 @@ class SpacePrezFeatureRenderer(Renderer):
             return PlainTextResponse(self.error, status_code=400)
         elif self.profile == "alt":
             return self._render_alt(template_context, alt_profiles_graph)
+        elif self.profile == "oai" and self.mediatypes_requested[0] in RDF_MEDIATYPES:
+            # ignore secondary mediatypes requested - assume connegp has done its job
+            # change the mediatype to that requested, and return an RDF response
+            self.mediatype = self.mediatypes_requested[0]
+            return self._make_rdf_response(self.feature.uri, self.feature.graph)
         elif self.mediatype == "text/html":
             return self._render_oai_html(template_context)
         elif self.mediatype == "application/geo+json":

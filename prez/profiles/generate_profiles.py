@@ -1,30 +1,52 @@
 import logging
+from pathlib import Path
+from typing import Optional, Union
 
 from async_lru import alru_cache
-from connegp import Profile
-from rdflib import Graph, DCTERMS, SKOS, URIRef, Literal, BNode
+from rdflib import Graph, DCTERMS, SKOS, URIRef, Literal, BNode, SH
 from rdflib.namespace import RDF, PROF, Namespace, RDFS
+from connegp import Profile
 
-from services.sparql_utils import (
-    remote_profiles_query,
+from prez.config import ENABLED_PREZS
+from prez.services.sparql_utils import (
     sparql_construct,
     sparql_query,
+    sparql_query_multiple,
 )
 
 
 @alru_cache(maxsize=20)
-async def create_profiles_graph():
-    local_profiles_g = Graph().parse(
-        "prez/profiles/spaceprez_default_profiles.ttl", format="turtle"
-    )
-    r = await sparql_construct(remote_profiles_query, "SpacePrez")
-    if r[0]:
-        remote_profiles_g = r[1]
-        profiles_g = local_profiles_g + remote_profiles_g
-        logging.info("Using local and remote profiles")
-    else:
-        profiles_g = local_profiles_g
-        logging.info("Using local profiles ONLY - no remote profiles found")
+async def create_profiles_graph() -> Graph:
+    profiles_g = Graph()
+    for f in Path(__file__).parent.glob("*.ttl"):
+        profiles_g.parse(f)
+    logging.info("Loaded local profiles")
+
+    remote_profiles_query = """
+        PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+        PREFIX prof: <http://www.w3.org/ns/dx/prof/>
+        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+        DESCRIBE ?profile ?class
+        WHERE {
+          ?profile a prof:Profile .
+
+          OPTIONAL {
+            ?class rdfs:subClassOf geo:Feature .
+          }
+          OPTIONAL {
+            ?class rdfs:subClassOf skos:Concept .
+          }
+        }
+        """
+
+    for p in ENABLED_PREZS:
+        r = await sparql_construct(remote_profiles_query, p)
+        if r[0]:
+            profiles_g += r[1]
+            logging.info(f"Also using remote profiles for {p}")
+
     return profiles_g
 
 
@@ -36,24 +58,39 @@ class ProfileDetails:
         self.preferred_classes_and_profiles = {}
         self.profiles_dict = {}
         self.profiles_formats = {}
-        self.available_profiles = []
+        self.available_profiles_dict = {}
         self.default_profile = None
 
-    async def get_all_profiles(self):
+    async def get_all_profiles(self, prez: Optional[str] = None):
+
+        # get general profiles
         (
             profiles_g,
             preferred_classes_and_profiles,
             profiles_dict,
             profiles_formats,
         ) = await get_general_profiles(self.general_class)
-        available_profiles, default_profile = await get_specific_profiles(
-            self.item_uri, preferred_classes_and_profiles
+
+        # get profiles specific to the given class, and the default profile
+        (
+            available_profiles,
+            default_profile,
+        ) = await get_class_based_and_default_profiles(
+            self.item_uri, preferred_classes_and_profiles, prez
         )
+
+        # slice the total set of profiles by those available for the given class
+        available_profiles_dict = {
+            k: v
+            for k, v in profiles_dict.items()
+            if k in tuple([i[1] for i in available_profiles]) + tuple(["alt"])
+        }
+
         self.profiles_g = profiles_g
         self.preferred_classes_and_profiles = preferred_classes_and_profiles
         self.profiles_dict = profiles_dict
         self.profiles_formats = profiles_formats
-        self.available_profiles = available_profiles
+        self.available_profiles_dict = available_profiles_dict
         self.default_profile = default_profile
 
 
@@ -74,14 +111,14 @@ async def get_general_profiles(general_class):
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
         PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
 
-        SELECT ?class (count(?mid) as ?distance) ?profile_id
+        SELECT ?class (count(?mid) as ?distance) ?profile_id ?profile
         WHERE {{
             ?class rdfs:subClassOf* ?mid .
             ?mid rdfs:subClassOf* <{general_class}> .
             ?profile altr-ext:constrainsClass ?class ;
                 dcterms:identifier ?profile_id .
         }}
-        GROUP BY ?class
+        GROUP BY ?class ?profile_id
         ORDER BY DESC(?distance)
         """
     profiles_formats = {}
@@ -89,24 +126,56 @@ async def get_general_profiles(general_class):
 
     # ordered list of feature classes and associated preferred profiles
     profiles_g = await create_profiles_graph()
+
+    # check for hardcoded API default profiles
+    ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
+    default_profile_nodeshapes = profiles_g.objects(
+        subject=URIRef("http://surroundaustralia.com/profile/prez"),
+        predicate=ALTREXT.hasNodeShape,
+    )
+    class_default_profiles = []
+    # if default_profile_nodeshapes:
+    for nodeshape_bn in default_profile_nodeshapes:
+        classes_with_default = profiles_g.value(
+            subject=nodeshape_bn, predicate=SH.targetClass
+        )
+        default_for_class = profiles_g.value(
+            subject=nodeshape_bn, predicate=ALTREXT.hasDefaultProfile
+        )
+        class_default_profiles.append(tuple([classes_with_default, default_for_class]))
+
     for r in profiles_g.query(get_class_hierarchy):
-        preferred_classes_and_profiles.append((str(r["class"]), str(r["profile_id"])))
+        distance = str(r["distance"])
+        if tuple([r["class"], r["profile"]]) in class_default_profiles:
+            distance = 0  # this will ensure the profile is selected by default
+        preferred_classes_and_profiles.append(
+            (str(r["class"]), str(r["profile_id"]), distance)
+        )
+
+    # sort by preference order
+    preferred_classes_and_profiles.sort(key=lambda x: int(x[2]))
 
     ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
     for s in profiles_g.subjects(RDF.type, PROF.Profile):
         profile_id = str(profiles_g.value(s, DCTERMS.identifier))
-        profiles_formats[profile_id] = []
-        for p, o in profiles_g.predicate_objects(s):
-            # if p == EX.hasAvailableFormat:
-            if p == ALTREXT.hasResourceFormat:
-                profiles_formats[profile_id].append(str(o))
-            # elif p == EX.hasDefaultAvailableFormat:
-            elif p == ALTREXT.hasDefaultResourceFormat:
-                default_format = str(o)
+        default_format = str(
+            profiles_g.value(subject=s, predicate=ALTREXT.hasDefaultResourceFormat)
+        )
+        profiles_formats[profile_id] = [default_format]
+        other_formats = list(
+            set(
+                [
+                    str(fmt)
+                    for fmt in profiles_g.objects(
+                        subject=s, predicate=ALTREXT.hasResourceFormat
+                    )
+                ]
+            )
+            - set([default_format])
+        )
+        profiles_formats[profile_id].extend(other_formats)
 
-        profiles_formats[profile_id].remove(default_format)
-        profiles_formats[profile_id].insert(0, default_format)
-
+    # Create connegP profile classes and add these to a dictionary
     profiles_dict = {}
     for profile, formats in profiles_formats.items():
         profile_uri = profiles_g.value(
@@ -131,6 +200,7 @@ async def get_general_profiles(general_class):
             languages=["en"],
             default_language="en",
         )
+
     return (
         profiles_g,
         tuple(preferred_classes_and_profiles),
@@ -140,31 +210,58 @@ async def get_general_profiles(general_class):
 
 
 @alru_cache(maxsize=20)
-async def get_specific_profiles(
-    item_uri,
-    preferred_classes_and_profiles,
+async def get_class_based_and_default_profiles(
+    item_uri, preferred_classes_and_profiles, prez: Union[str, None]
 ):
     # retrieve the classes
-    r = await sparql_query(
+    r = await sparql_query_multiple(
         f"""PREFIX dcterms: <{DCTERMS}>
     SELECT ?class {{ <{item_uri}> a ?class }}""",
-        "SpacePrez",
+        prezs=[prez] if prez is not None else ENABLED_PREZS,
     )
-    if r[0] and r[1]:
-        objects_classes = [i["class"]["value"] for i in r[1]]
+    """
+        if r[0] and r[1]:
+        objects_classes = [i["class"]["value"] for i in r[1]]"""
+
+    objects_classes = []
+    if r[0] and not r[1]:
+        for result in r[0]:
+            objects_classes.append(result["class"]["value"])
+        # class information is available, check which classes we have profiles for
+        #     objects_classes = [i["class"]["value"] for i in results[1]]
     else:
+        # check for Prez API configured default profiles
         default_profile = preferred_classes_and_profiles[0][1]
-        return tuple([default_profile]), default_profile
+        return preferred_classes_and_profiles, default_profile
 
     # the available profiles are returned in reverse preference order
     available_profiles = []
     for i, pc in enumerate(preferred_classes_and_profiles):
         for oc in objects_classes:
             if oc == pc[0]:
-                available_profiles.append(pc[1])
+                available_profiles.append(pc)
     # set the default profile
-    default_profile = available_profiles[-1]
+    default_profile = available_profiles[0][1]
     return tuple(available_profiles), default_profile
+
+
+def apply_profile(complete_feature_g: Graph, feature_shapes_g: Graph):
+    """
+    Apply the profile to the feature graph - returning only the relevant features
+    """
+    query = """
+    CONSTRUCT { ?s ?p ?o .
+			    ?s2 ?p2 ?o2 }
+    WHERE { ?s ?p ?o .
+    ?shape_bn sh:path ?p
+      OPTIONAL {?s2 ?p2 ?o2
+            VALUES ?p2 { rdf:type dcterms:identifier rdfs:label rdfs:member dcterms:title }
+        }
+    }
+    """
+    new_g = (complete_feature_g + feature_shapes_g).query(query).graph
+    new_g.namespaces = complete_feature_g.namespaces
+    return new_g
 
 
 async def build_alt_graph(object_of_interest, profiles_formats, available_profiles):
@@ -175,17 +272,17 @@ async def build_alt_graph(object_of_interest, profiles_formats, available_profil
     alt_rep.add((object_of_interest, RDF.type, RDFS.Resource))
     alt_rep.add((object_of_interest, RDFS.label, Literal("placeholder")))
 
-    for available_profile in available_profiles:
-        for i, fmt in enumerate(profiles_formats[available_profile]):
+    for available_profile in available_profiles.values():
+        for i, fmt in enumerate(profiles_formats[available_profile.id]):
             bn = BNode()
             if i == 0:
                 alt_rep.add((bn, RDF.type, ALTR.Representation))
-                alt_rep.add((bn, DCTERMS.conformsTo, URIRef(available_profile)))
+                alt_rep.add((bn, DCTERMS.conformsTo, URIRef(available_profile.uri)))
                 alt_rep.add((bn, DCTERMS.format, Literal(fmt)))
                 alt_rep.add((object_of_interest, ALTR.hasDefaultRepresentation, bn))
 
             alt_rep.add((bn, RDF.type, ALTR.Representation))
-            alt_rep.add((bn, DCTERMS.conformsTo, URIRef(available_profile)))
+            alt_rep.add((bn, DCTERMS.conformsTo, URIRef(available_profile.uri)))
             alt_rep.add((bn, DCTERMS.format, Literal(fmt)))
             alt_rep.add((object_of_interest, ALTR.hasRepresentation, bn))
 
@@ -193,15 +290,17 @@ async def build_alt_graph(object_of_interest, profiles_formats, available_profil
 
 
 @alru_cache(maxsize=20)
-async def filter_results_using_profile(profile_g, profile, most_specific_class):
+async def retrieve_relevant_shapes(profile_g, profile, most_specific_class):
     query = f"""PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
                 PREFIX sh: <http://www.w3.org/ns/shacl#>
-                CONSTRUCT {{ ?pbn sh:path ?predicate ;
+                CONSTRUCT {{ ?nodeshape_bn sh:property ?pbn ;
+                                sh:closed ?closed_profile .
+                            ?pbn sh:path ?predicate ;
                                 sh:order ?order ;
                                 sh:group ?group . }}
                 WHERE {{ <{profile}> altr-ext:hasNodeShape ?nodeshape_bn .
                             ?nodeshape_bn sh:targetClass <{most_specific_class}> ;
-                                sh:closed true ;
+                                sh:closed ?closed_profile ;
                                 sh:property ?pbn .
                             ?pbn sh:path ?predicate ;
                                 sh:order ?order ;

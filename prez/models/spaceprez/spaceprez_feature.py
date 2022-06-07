@@ -1,7 +1,7 @@
 from typing import List, Dict, Optional
 
-from config import *
-from models import PrezModel
+from prez.config import *
+from prez.models import PrezModel
 
 
 class SpacePrezFeature(PrezModel):
@@ -131,7 +131,6 @@ class SpacePrezFeature(PrezModel):
     # override
     def _get_properties(self) -> List[Dict]:
         props_dict = self._get_props()
-        from operator import itemgetter
 
         props_dict.sort(key=lambda x: float(x["order"]) if x["order"] else 100)
         # group props in order, filtering out hidden props

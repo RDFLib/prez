@@ -4,8 +4,8 @@ from typing import Dict, Optional, Union
 from connegp import Connegp, Profile, RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 
-from config import *
-from utils import templates
+from prez.config import *
+from prez.utils import templates
 
 
 class Renderer(object, metaclass=ABCMeta):
@@ -29,7 +29,6 @@ class Renderer(object, metaclass=ABCMeta):
             )
 
         self.profiles = dict(profiles)
-        # self.profiles["alt"] = alt
         self.request = request
         self.default_profile_token = default_profile_token
         self.instance_uri = instance_uri
@@ -37,6 +36,8 @@ class Renderer(object, metaclass=ABCMeta):
         connegp = Connegp(request, self.profiles, default_profile_token)
         self.profile = connegp.profile
         self.mediatype = connegp.mediatype
+        self.profiles_requested = connegp.profiles_requested
+        self.mediatypes_requested = connegp.mediatypes_requested
 
         # make headers
         if self.error is None:
@@ -141,35 +142,42 @@ class Renderer(object, metaclass=ABCMeta):
         # remove labels from the graph
         query = f"""
         PREFIX geo: <{GEO}>
-        CONSTRUCT {{ <{str(item_uri)}> ?p ?o ;
-                      skos:inScheme ?cs .
-                      ?o ?p2 ?o2 .
-                      ?coll a geo:FeatureCollection ;
-                        rdfs:member <{str(item_uri)}> .
-                      ?dataset a dcat:Dataset ;
-                        rdfs:member ?coll .
+        CONSTRUCT {{
+            <{str(item_uri)}> ?p ?o .
+            ?o ?p2 ?o2 .
+            ?coll skos:member <{str(item_uri)}> .
 
-                        }}
-              WHERE {{
-                      <{str(item_uri)}> ?p ?o .
-                      OPTIONAL {{
-                      ?coll a geo:FeatureCollection ;
-                        rdfs:member <{str(item_uri)}> .
-                      ?dataset a dcat:Dataset ;
-                        rdfs:member ?coll .
-                        }}
-                      OPTIONAL {{
-                      <{str(item_uri)}> skos:inScheme ?cs .
-                       }}
-                OPTIONAL {{
+            ?x rdfs:member <{str(item_uri)}> .
+            ?y rdfs:member ?x .
+        }}
+        WHERE {{
+            <{str(item_uri)}> ?p ?o .
+            # Blank Nodes
+
+            OPTIONAL {{
                 ?o ?p2 ?o2 .
                 FILTER(ISBLANK(?o))
-                       }}
+            }}
+
+            # VocPrez
+            OPTIONAL {{
+                ?coll skos:member <{str(item_uri)}> .
+            }}
+
+            # SpacePrez
+            OPTIONAL {{
+                ?x rdfs:member <{str(item_uri)}> .
+
+                OPTIONAL {{
+                    ?y rdfs:member ?x .
                 }}
+            }}
+        }}
         """
         filtered_g = Graph(namespace_manager=graph.namespace_manager)
         filtered_g += graph.query(query).graph
 
+        filtered_g = graph
         response_text = filtered_g.serialize(format=serial_mediatype, encoding="utf-8")
 
         # destroy the triples in the triplestore, then delete the triplestore
@@ -177,7 +185,6 @@ class Renderer(object, metaclass=ABCMeta):
         graph.store.remove((None, None, None))
         graph.destroy({})
         del graph
-
         return Response(response_text, media_type=self.mediatype)
 
     def _render_alt_html(
@@ -209,9 +216,7 @@ class Renderer(object, metaclass=ABCMeta):
         )
 
     def _render_alt(
-        self,
-        template_context: Union[Dict, None],
-        alt_profiles_graph: Graph
+        self, template_context: Union[Dict, None], alt_profiles_graph: Graph
     ) -> Union[templates.TemplateResponse, Response, JSONResponse]:
         """Renders the alternate profiles based on mediatype"""
         if self.mediatype == "text/html":
@@ -224,7 +229,8 @@ class Renderer(object, metaclass=ABCMeta):
 
     @abstractmethod
     def render(
-        self, template_context: Optional[Dict] = None,
+        self,
+        template_context: Optional[Dict] = None,
         alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None

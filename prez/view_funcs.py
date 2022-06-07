@@ -4,9 +4,9 @@ from async_lru import alru_cache
 from fastapi import Request
 from rdflib import Namespace
 
-from config import ENABLED_PREZS
-from profiles.generate_profiles import ProfileDetails
-from renderers import ProfilesRenderer
+from prez.config import ENABLED_PREZS
+from prez.profiles.generate_profiles import ProfileDetails
+from prez.renderers import ProfilesRenderer
 
 
 @alru_cache(maxsize=20)
@@ -29,7 +29,7 @@ async def profiles_func(request: Request, prez: Optional[str] = None):
         request.url.remove_query_params(keys=request.query_params.keys())
     )
     profile_details = ProfileDetails(general_class=PREZ.Profiles, item_uri=instance_uri)
-    await profile_details.get_all_profiles()
+    await profile_details.get_all_profiles(prez)
 
     profile_list = [dict(profile) for profile in profile_details.profiles_dict.values()]
 

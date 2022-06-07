@@ -3,11 +3,11 @@ from typing import Dict, Optional, Union
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from connegp import MEDIATYPE_NAMES
 
-from config import *
-from renderers import Renderer
-from profiles.vocprez_profiles import skos, vocpub, vocpub_supplied, dd
-from models.vocprez import VocPrezScheme
-from utils import templates
+from prez.config import *
+from prez.renderers import Renderer
+from prez.profiles.vocprez_profiles import skos, vocpub, vocpub_supplied, dd, alt
+from prez.models.vocprez import VocPrezScheme
+from prez.utils import templates
 
 
 class VocPrezSchemeRenderer(Renderer):
@@ -16,6 +16,7 @@ class VocPrezSchemeRenderer(Renderer):
         "skos": skos,
         "dd": dd,
         "vocpub_supplied": vocpub_supplied,
+        "alt": alt,
     }
     default_profile_token = "vocpub"
 
@@ -23,11 +24,13 @@ class VocPrezSchemeRenderer(Renderer):
         self,
         request: object,
         instance_uri: str,
+        available_profiles: str,
+        default_profile: str,
     ) -> None:
         super().__init__(
             request,
-            VocPrezSchemeRenderer.profiles,
-            VocPrezSchemeRenderer.default_profile_token,
+            VocPrezSchemeRenderer.profiles,  # available_profiles
+            VocPrezSchemeRenderer.default_profile_token,  # default_profile
             instance_uri,
         )
 
@@ -61,7 +64,7 @@ class VocPrezSchemeRenderer(Renderer):
     def _render_skos_rdf(self) -> Response:
         """Renders the RDF representation of the skos profile for a scheme"""
         g = self._generate_skos_rdf()
-        return self._make_rdf_response(g)
+        return self._make_rdf_response(self.instance_uri, g)
 
     def _render_skos(self):
         """Renders the skos profile for a scheme"""
@@ -136,7 +139,7 @@ class VocPrezSchemeRenderer(Renderer):
     def _render_vocpub_rdf(self) -> Response:
         """Renders the RDF representation of the vocpub profile for a scheme"""
         g = self._generate_vocpub_rdf()
-        return self._make_rdf_response(g)
+        return self._make_rdf_response(self.instance_uri, g)
 
     def _render_vocpub(self, template_context: Union[Dict, None]):
         """Renders the vocpub profile for a scheme"""
@@ -163,7 +166,7 @@ class VocPrezSchemeRenderer(Renderer):
         _template_context = {
             "request": self.request,
             "scheme": self.scheme.to_dict(),
-            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
+            "uri": self.instance_uri if True else str(self.request.url),
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
             "mediatype_names": MEDIATYPE_NAMES,
@@ -177,7 +180,8 @@ class VocPrezSchemeRenderer(Renderer):
         )
 
     def render(
-        self, template_context: Optional[Dict] = None,
+        self,
+        template_context: Optional[Dict] = None,
         alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None

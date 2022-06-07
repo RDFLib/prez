@@ -3,15 +3,15 @@ from typing import Dict, Optional, Union
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from connegp import RDF_MEDIATYPES, MEDIATYPE_NAMES
 
-from renderers import ListRenderer
-from config import *
-from profiles.vocprez_profiles import dcat, dd
-from models.vocprez import VocPrezCollectionList
-from utils import templates
+from prez.renderers import ListRenderer
+from prez.config import *
+from prez.profiles.vocprez_profiles import dcat, dd, alt
+from prez.models.vocprez import VocPrezCollectionList
+from prez.utils import templates
 
 
 class VocPrezCollectionListRenderer(ListRenderer):
-    profiles = {"dcat": dcat, "dd": dd}
+    profiles = {"dcat": dcat, "dd": dd, "alt": alt}
     default_profile_token = "dcat"
 
     def __init__(
@@ -96,7 +96,8 @@ class VocPrezCollectionListRenderer(ListRenderer):
         return self._render_dd_json()
 
     def render(
-        self, template_context: Optional[Dict] = None,
+        self,
+        template_context: Optional[Dict] = None,
         alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
