@@ -333,7 +333,7 @@ async def feature_endpoint(
     await profile_details.get_all_profiles("SpacePrez")
 
     # find the most specific class for the feature
-    for klass, _, distance in profile_details.preferred_classes_and_profiles:
+    for klass, _, distance in reversed(profile_details.preferred_classes_and_profiles):
         if klass in feature_classes:
             most_specific_class = klass
             break
