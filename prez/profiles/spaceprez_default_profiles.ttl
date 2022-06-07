@@ -93,7 +93,7 @@ altr-ext:hasResourceFormat owl:propertyChainAxiom ( dcterms:conformsTo dcterms:f
     altr-ext:hasDefaultResourceFormat "text/html" ;
     altr-ext:hasResourceFormat
         "text/html" ,
-        "application/vnd.geo+json" ;
+        "application/geo+json" ;
 .
 
 altr-ext:alt-profile
@@ -158,7 +158,7 @@ altr-ext:hasResourceFormat
 #     altr-ext:hasResourceFormat
 #         "application/ld+json" ,
 #         "application/rdf+xml" ,
-#         "application/vnd.geo+json" ,
+#         "application/geo+json" ,
 #         "text/html" ,
 #         "text/turtle" ;
 # .

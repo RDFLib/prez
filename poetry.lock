@@ -148,7 +148,7 @@ pydantic = "^1.8.2"
 type = "git"
 url = "https://github.com/surroundaustralia/Connegp2.git"
 reference = "main"
-resolved_reference = "e73f7966e3016230b3ff7d4accd48cd7fda6050a"
+resolved_reference = "8221acd637d4460912fd624af04749733150f1a6"
 
 [[package]]
 name = "distlib"

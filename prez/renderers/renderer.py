@@ -29,7 +29,6 @@ class Renderer(object, metaclass=ABCMeta):
             )
 
         self.profiles = dict(profiles)
-        # self.profiles["alt"] = alt
         self.request = request
         self.default_profile_token = default_profile_token
         self.instance_uri = instance_uri
@@ -37,6 +36,8 @@ class Renderer(object, metaclass=ABCMeta):
         connegp = Connegp(request, self.profiles, default_profile_token)
         self.profile = connegp.profile
         self.mediatype = connegp.mediatype
+        self.profiles_requested = connegp.profiles_requested
+        self.mediatypes_requested = connegp.mediatypes_requested
 
         # make headers
         if self.error is None:
