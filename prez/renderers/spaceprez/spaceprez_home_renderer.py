@@ -6,17 +6,18 @@ from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from prez.config import *
 from prez.renderers import Renderer
 from prez.utils import templates
+from starlette.requests import Request
 
 
 class SpacePrezHomeRenderer(Renderer):
     def __init__(
-        self, request: object, profiles, default_profile, instance_uri: str
+        self, request: Request
     ) -> None:
         super().__init__(
             request,
-            profiles,
-            default_profile,
-            instance_uri,
+            self.instance_uri,
+            self.feature_classes,
+            GEO.Feature
         )
 
     def _render_oai_html(

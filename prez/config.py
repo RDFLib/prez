@@ -99,7 +99,7 @@ SPARQL_CREDS = json.loads(
     )
 )
 ENABLED_PREZS = json.loads(
-    os.environ.get("ENABLED_PREZS", '["VocPrez", "SpacePrez"]')
+    os.environ.get("ENABLED_PREZS", '["SpacePrez"]')
 )  # must use proper capitalisation
 THEME_VOLUME = os.environ.get("THEME_VOLUME", None)
 SIDENAV = os.environ.get("SIDENAV", "False") == "True"

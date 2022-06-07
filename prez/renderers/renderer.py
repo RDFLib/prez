@@ -5,6 +5,7 @@ from connegp import Connegp, Profile, RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 
 from prez.config import *
+from prez.profiles.generate_profiles import ProfileDetails
 from prez.utils import templates
 
 
@@ -14,26 +15,18 @@ class Renderer(object, metaclass=ABCMeta):
     def __init__(
         self,
         request: object,
-        profiles: Dict[str, Profile],
-        default_profile_token: str,
         instance_uri: str,
+        instance_classes,
+        general_class: URIRef = OWL.Class
     ) -> None:
         self.error = None
-        # if default_profile_token == "alt":
-        #     self.error = "You cannot specify 'alt' as the default profile."
-
-        if default_profile_token not in profiles.keys():
-            self.error = (
-                f"The profile token you specified ({default_profile_token}) for the default profile "
-                "is not in the list of profiles you supplied ({profiles})"
-            )
-
-        self.profiles = dict(profiles)
         self.request = request
-        self.default_profile_token = default_profile_token
         self.instance_uri = instance_uri
+        self.instance_classes = instance_classes
+        self.general_class = general_class
+        self.profile_details = ProfileDetails(self.instance_uri, self.instance_classes, self.general_class)
 
-        connegp = Connegp(request, self.profiles, default_profile_token)
+        connegp = Connegp(request, self.profile_details.available_profiles_dict, self.profile_details.default_profile)
         self.profile = connegp.profile
         self.mediatype = connegp.mediatype
         self.profiles_requested = connegp.profiles_requested
@@ -42,7 +35,7 @@ class Renderer(object, metaclass=ABCMeta):
         # make headers
         if self.error is None:
             self.headers = {
-                "Link": f'<{self.profiles[self.profile].uri}>; rel="profile"',
+                "Link": f'<{self.profile_details.profiles_dict[self.profile].uri}>; rel="profile"',
                 "Content-Type": self.mediatype,
                 "Access-Control-Allow-Origin": "*",
             }
@@ -54,7 +47,7 @@ class Renderer(object, metaclass=ABCMeta):
         individual_links = []
         link_header_template = '<http://www.w3.org/ns/dx/prof/Profile>; rel="type"; token="{}"; anchor=<{}>, '
 
-        for token, profile in self.profiles.items():
+        for token, profile in self.profile_details.profiles_dict.items():
             individual_links.append(link_header_template.format(token, profile.uri))
 
         return "".join(individual_links).rstrip(", ")
@@ -62,14 +55,14 @@ class Renderer(object, metaclass=ABCMeta):
     def _make_header_link_list_profiles(self) -> str:
         """Creates the Link header URIs for each possible profile representation"""
         individual_links = []
-        for token, profile in self.profiles.items():
+        for token, profile in self.profile_details.profiles_dict.items():
             # create an individual Link statement per Media Type
             for mediatype in profile.mediatypes:
                 # set the rel="self" just for this profile & mediatype
                 if mediatype != "_internal":
                     if (
-                        token == self.default_profile_token
-                        and mediatype == self.profiles[self.profile].default_mediatype
+                        token == self.profile_details.default_profile
+                        and mediatype == self.profile_details.profiles_dict[self.profile].default_mediatype
                     ):
                         rel = "self"
                     else:
