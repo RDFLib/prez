@@ -55,81 +55,60 @@ class SparqlServer(BaseHTTPRequestHandler):
         return Graph().parse(Path(__file__).parent / "data" / "spaceprez_dataset_geofabric_small.ttl")
 
     def do_GET(self):
-        if self.path == "/":
-            self.send_response(200)
-            self.send_header("Content-type", "text/plain")
-            self.end_headers()
-            self.wfile.write(bytes("Local SPARQL store\n", "utf-8"))
-            return
+        status, content_type, content = self.validate_path()
+
+        if status is not None:
+            return self.http_response(status, content_type, content)
 
         if self.path == "/vocprez":
-            self.send_response(200)
-            self.send_header("Content-type", "text/plain")
-            self.end_headers()
-            self.wfile.write(bytes("Local VocPrez SPARQL store\n", "utf-8"))
-            return
-
+            status = 200
+            content_type = "text/plain"
+            content = "Local VocPrez SPARQL store"
         if self.path == "/spaceprez":
-            self.send_response(200)
-            self.send_header("Content-type", "text/plain")
-            self.end_headers()
-            self.wfile.write(bytes("Local SpacePrez SPARQL store\n", "utf-8"))
-            return
+            status = 200
+            content_type = "text/plain"
+            content = "Local SpacPrez SPARQL store"
 
-        if not self.path.startswith(("/vocprez", "/spaceprez")):
-            self.send_response(400)
-            self.send_header("Content-type", "text/plain")
-            self.end_headers()
-            self.wfile.write(
-                bytes("Request paths for this SPARQL Server must start with /vocprez or /spaceprez\n", "utf-8"))
-            return
+        if status is not None:
+            return self.http_response(status, content_type, content)
 
         if "query=" not in self.path:
-            self.send_response(400)
-            self.send_header("Content-type", "text/plain")
-            self.end_headers()
-            self.wfile.write(bytes("You are missing a query in your GET request (query=...)\n", "utf-8"))
-            return
+            return self.http_response(400, "text/plain", "You are missing a query in your GET request (query=...)")
 
+        # get query from URL query string args
         # only handle encoded queries
         query = urllib.parse.unquote_plus(self.path.split("query=")[1])
 
-        # pose the query
-        try:
-            if "vocprez" in self.path:
-                result = self.vocprez_graph.query(query)
-            else:  # "spaceprez" in self.path:
-                result = self.spaceprez_graph.query(query)
-
-            if "CONSTRUCT" in query or "DESCRIBE" in query:
-                content_type = "text/turtle"
-            else:
-                content_type = "application/sparql-results+json"
-
-            # successful response
-            self.send_response(200)
-            self.send_header("Content-type", content_type)
-            self.end_headers()
-            self.wfile.write(bytes(result.serialize(format="json").decode(), "utf-8"))
-            return
-        except Exception as e:
-            self.send_response(400)
-            self.send_header("Content-type", "text/plain")
-            self.end_headers()
-            self.wfile.write(bytes(f"Your SPARQL query could not be interpreted: {e}", "utf-8"))
-            return
+        self.apply_sparql_query(query)
 
     def do_POST(self):
-        # form = cgi.FieldStorage(
-        #     fp=self.rfile,
-        #     # headers=self.headers,
-        #     # environ={'REQUEST_METHOD': 'POST'}
-        # )
-        content_length = int(self.headers['Content-Length'])
-        post_data = self.rfile.read(content_length)
-        query = post_data.decode('utf-8')
+        status, content_type, content = self.validate_path()
 
-        # pose the query
+        if status is not None:
+            return self.http_response(status, content_type, content)
+
+        # get query from POST body
+        query = self.rfile.read(int(self.headers['Content-Length'])).decode('utf-8')
+
+        self.apply_sparql_query(query)
+
+    def validate_path(self):
+        status = None
+        content_type = None
+        content = None
+
+        if self.path == "/":
+            status = 200
+            content_type = "text/plain"
+            content = "Local SPARQL store"
+        elif not self.path.startswith(("/vocprez", "/spaceprez")):
+            status = 404
+            content_type = "text/plain"
+            content = "Endpoint unknown"
+
+        return status, content_type, content
+
+    def apply_sparql_query(self, query):
         try:
             if "vocprez" in self.path:
                 result = self.vocprez_graph.query(query)
@@ -141,18 +120,17 @@ class SparqlServer(BaseHTTPRequestHandler):
             else:
                 content_type = "application/sparql-results+json"
 
-            # successful response
-            self.send_response(200)
-            self.send_header("Content-type", content_type)
-            self.end_headers()
-            self.wfile.write(bytes(result.serialize(format="json").decode(), "utf-8"))
-            return
+            return self.http_response(200, content_type, result.serialize(format="json").decode())
         except Exception as e:
-            self.send_response(400)
-            self.send_header("Content-type", "text/plain")
-            self.end_headers()
-            self.wfile.write(bytes(f"Your SPARQL query could not be interpreted: {e}", "utf-8"))
-            return
+            return self.http_response(400, "text.plain", f"Your SPARQL query could not be interpreted: {e}")
+
+    def http_response(self, status, content_type, content):
+        self.send_response(status)
+        self.send_header("Content-type", content_type)
+        self.end_headers()
+        self.wfile.write(bytes(f"{content}\n", "utf-8"))
+        return
+
 
 if __name__ == "__main__":
     srv = HTTPServer(("localhost", 3030), SparqlServer)
