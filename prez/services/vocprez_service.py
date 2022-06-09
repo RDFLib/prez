@@ -44,7 +44,7 @@ async def count_collections():
         PREFIX skos: <{SKOS}>
         SELECT (COUNT(?coll) as ?count)
         WHERE {{
-            ?coll a skos:Collection .
+            ?coll a skos:ConceptScheme .
         }}
     """
     r = await sparql_query(q, "VocPrez")
@@ -201,12 +201,13 @@ async def get_concept_construct(
     if concept_uri is None:
         if concept_id is None or scheme_id is None:
             raise ValueError(
-                "Either a Concept Scheme ID and a Concept ID or a Concept URI must be provided for a SPARQL query")
+                "Either a Concept Scheme ID and a Concept ID or a Concept URI must be provided for a SPARQL query"
+            )
 
     # when querying by ID via regular URL path
     query_by_id = f"""
         ?cs dcterms:identifier "{scheme_id}"^^xsd:token .
-        
+
         ?c dcterms:identifier "{concept_id}"^^xsd:token ;
             skos:inScheme ?cs .
         """
@@ -248,7 +249,7 @@ async def get_concept_construct(
         PREFIX rdfs: <{RDFS}>
         PREFIX skos: <{SKOS}>
         PREFIX xsd: <{XSD}>
-        
+
         CONSTRUCT {{
             ?c ?p1 ?o1 ;
                 skos:broader ?broader ;
@@ -311,6 +312,35 @@ async def get_dataset_construct():
         return r[1]
     else:
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
+
+
+def get_scheme_uri(
+    scheme_id: str = None,
+    scheme_uri: URIRef = None,
+):
+    if scheme_uri is not None:
+        r = sparql_query_non_async(
+            f"""
+            PREFIX dcterms: <{DCTERMS}>
+            PREFIX xsd: <{XSD}>
+            SELECT ?cs_uri ?cs_id
+            {{ <{scheme_uri}> dcterms:identifier ?cs_id^^xsd:token . }} """,
+            "VocPrez",
+        )
+        if r[0]:
+            scheme_id = r[1][0].get("cs_id")["value"]
+    elif scheme_id is not None:
+        r = sparql_query_non_async(
+            f"""
+            PREFIX dcterms: <{DCTERMS}>
+            PREFIX xsd: <{XSD}>
+            SELECT ?cs_uri ?cs_id
+            {{ ?cs_uri dcterms:identifier "{scheme_id}"^^xsd:token . }} """,
+            "VocPrez",
+        )
+        if r[0]:
+            scheme_uri = r[1][0].get("cs_uri")["value"]
+    return scheme_id, scheme_uri
 
 
 async def get_collection_construct1(

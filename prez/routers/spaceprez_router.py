@@ -26,7 +26,7 @@ async def spaceprez_home_endpoint(request: Request):
     home_renderer = SpacePrezHomeRenderer(request)
     if home_renderer.profile == "alt":
         alt_profiles_graph = await build_alt_graph(
-            PREZ.Home,
+            PREZ.SpacePrezHome,
             home_renderer.profile_details.profiles_formats,
             home_renderer.profile_details.available_profiles_dict,
         )

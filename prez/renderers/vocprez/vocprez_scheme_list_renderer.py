@@ -11,15 +11,9 @@ from prez.utils import templates
 
 
 class VocPrezSchemeListRenderer(ListRenderer):
-    profiles = {"dcat": dcat, "dd": dd, "alt": alt}
-    default_profile_token = "dcat"
-
     def __init__(
         self,
         request: object,
-        instance_uri: str,
-        label: str,
-        comment: str,
         scheme_list: VocPrezSchemeList,
         page: int,
         per_page: int,
@@ -27,15 +21,15 @@ class VocPrezSchemeListRenderer(ListRenderer):
     ) -> None:
         super().__init__(
             request,
-            VocPrezSchemeListRenderer.profiles,
-            VocPrezSchemeListRenderer.default_profile_token,
-            instance_uri,
+            PREZ.Schemes,
             scheme_list.members,
-            label,
-            comment,
+            "Concept Scheme list",
+            "A list of skos:ConceptSchemes",
             page,
             per_page,
             member_count,
+            PREZ.Schemes,
+            PREZ.Schemes,
         )
         self.scheme_list = scheme_list
 
@@ -48,8 +42,8 @@ class VocPrezSchemeListRenderer(ListRenderer):
             "pages": self.pages,
             "label": self.label,
             "comment": self.comment,
-            "profiles": self.profiles,
-            "default_profile": self.default_profile_token,
+            "profiles": self.profile_details.available_profiles_dict,
+            "default_profile": self.profile_details.default_profile,
             "mediatype_names": MEDIATYPE_NAMES,
         }
         if template_context is not None:

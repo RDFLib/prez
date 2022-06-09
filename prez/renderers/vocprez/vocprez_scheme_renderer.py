@@ -8,6 +8,7 @@ from prez.renderers import Renderer
 from prez.profiles.vocprez_profiles import skos, vocpub, vocpub_supplied, dd, alt
 from prez.models.vocprez import VocPrezScheme
 from prez.utils import templates
+from services.vocprez_service import get_scheme_uri
 
 
 class VocPrezSchemeRenderer(Renderer):
@@ -23,15 +24,16 @@ class VocPrezSchemeRenderer(Renderer):
     def __init__(
         self,
         request: object,
-        instance_uri: str,
-        available_profiles: str,
-        default_profile: str,
     ) -> None:
+        (self.scheme_id, self.scheme_uri) = get_scheme_uri(
+            request.path_params.get("scheme_id"),
+            request.path_params.get("scheme_uri"),
+        )
         super().__init__(
             request,
-            VocPrezSchemeRenderer.profiles,  # available_profiles
-            VocPrezSchemeRenderer.default_profile_token,  # default_profile
-            instance_uri,
+            self.scheme_uri,
+            SKOS.ConceptScheme,
+            SKOS.ConceptScheme,
         )
 
     def set_scheme(self, scheme: VocPrezScheme) -> None:

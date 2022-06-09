@@ -19,43 +19,19 @@ router = APIRouter(tags=["VocPrez"] if len(ENABLED_PREZS) > 1 else [])
 
 
 async def home(request: Request):
-    instances_classes = [str(DCAT.Dataset)]
-    (
-        profiles_g,
-        preferred_classes_and_profiles,
-        profiles,
-        profiles_formats,
-    ) = await get_general_profiles(DCAT.Dataset)
-
-    # find the available profiles
-    available_profiles, default_profile = await get_class_based_and_default_profiles(
-        "http://localhost:8000",  # should cater for multiple *Prezs - i.e. when vocprez_home is /vocprez, not /
-        preferred_classes_and_profiles,
-        "VocPrez",
-    )
-
-    # find the most specific class for the feature
-    for klass, _ in reversed(preferred_classes_and_profiles):
-        if klass in instances_classes:
-            most_specific_class = klass
-            break
-
-    dataset_renderer = VocPrezDatasetRenderer(
-        request,
-        str(request.url.remove_query_params(keys=request.query_params.keys())),
-        available_profiles=profiles,
-        default_profile=default_profile,
-    )
-    profile = dataset_renderer.profile
-    if profile == "alt":
+    """Returns the VocPrez home page in the necessary profile & mediatype"""
+    home_renderer = VocPrezDatasetRenderer(request)
+    if home_renderer.profile == "alt":
         alt_profiles_graph = await build_alt_graph(
-            URIRef("http://localhost:8000"), profiles_formats, available_profiles
+            PREZ.VocPrezHome,
+            home_renderer.profile_details.profiles_formats,
+            home_renderer.profile_details.available_profiles_dict,
         )
-        return dataset_renderer.render(alt_profiles_graph=alt_profiles_graph)
+        return home_renderer.render(alt_profiles_graph=alt_profiles_graph)
     sparql_result = await get_dataset_construct()
     dataset = VocPrezDataset(sparql_result)
-    dataset_renderer.set_dataset(dataset)
-    return dataset_renderer.render()
+    home_renderer.set_dataset(dataset)
+    return home_renderer.render()
 
 
 @router.get(
@@ -82,7 +58,7 @@ async def vocprez_about(request: Request):
 
 @router.get("/scheme", summary="List ConceptSchemes")
 @router.get("/vocab", summary="List ConceptSchemes")
-async def schemes(
+async def schemes_endpoint(
     request: Request,
     page: int = 1,
     per_page: int = 20,
@@ -91,73 +67,46 @@ async def schemes(
     scheme_count, sparql_result = await asyncio.gather(
         count_schemes(), list_schemes(page, per_page)
     )
-    # sparql_result = await list_schemes()
     scheme_list = VocPrezSchemeList(sparql_result)
     scheme_list_renderer = VocPrezSchemeListRenderer(
         request,
-        str(request.url.remove_query_params(keys=request.query_params.keys())),
-        "Concept Scheme list",
-        "A list of skos:ConceptSchemes",
         scheme_list,
         page,
         per_page,
         int(scheme_count[0]["count"]["value"]),
     )
+    if scheme_list_renderer.profile == "alt":
+        alt_profiles_graph = await build_alt_graph(
+            URIRef(scheme_list_renderer.instance_uri),
+            scheme_list_renderer.profile_details.profiles_formats,
+            scheme_list_renderer.profile_details.available_profiles_dict,
+        )
+        return scheme_list_renderer.render(alt_profiles_graph=alt_profiles_graph)
     return scheme_list_renderer.render()
 
 
 @router.get("/scheme/{scheme_id}", summary="Get ConceptScheme")
 @router.get("/vocab/{scheme_id}", summary="Get ConceptScheme")
-async def scheme(request: Request, scheme_id: str):
+async def scheme_endpoint(request: Request):
     """Returns a VocPrez skos:ConceptScheme in the necessary profile & mediatype"""
-    return await scheme_endpoint(request, scheme_id=scheme_id)
+    return await scheme(request)
 
 
-async def scheme_endpoint(
-    request: Request, scheme_id: Optional[str] = None, scheme_uri: Optional[str] = None
-):
-    instance_classes = [str(SKOS.ConceptScheme)]
-    (
-        profiles_g,
-        preferred_classes_and_profiles,
-        profiles,
-        profiles_formats,
-    ) = await get_general_profiles(SKOS.ConceptScheme)
-
-    # find the available profiles
-    available_profiles, default_profile = await get_class_based_and_default_profiles(
-        "http://localhost:8000", preferred_classes_and_profiles, "VocPrez"
-    )
-
-    # find the most specific class for the feature
-    for klass, _ in reversed(preferred_classes_and_profiles):
-        if klass in instance_classes:
-            most_specific_class = klass
-            break
-
-    scheme_renderer = VocPrezSchemeRenderer(
-        request,
-        str(
-            request.url.remove_query_params(
-                keys=[key for key in request.query_params.keys() if key != "uri"]
-            )
-        ),
-        available_profiles,
-        default_profile,
-    )
+async def scheme(request: Request):
+    scheme_renderer = VocPrezSchemeRenderer(request)
     include_inferencing = True
     if scheme_renderer.profile == "vocpub_supplied":
         include_inferencing = False
 
     results = await asyncio.gather(
         get_scheme_construct1(
-            scheme_id=scheme_id,
-            scheme_uri=scheme_uri,
+            scheme_id=scheme_renderer.scheme_id,
+            scheme_uri=scheme_renderer.scheme_uri,
             include_inferencing=include_inferencing,
         ),
         get_scheme_construct2(
-            scheme_id=scheme_id,
-            scheme_uri=scheme_uri,
+            scheme_id=scheme_renderer.scheme_id,
+            scheme_uri=scheme_renderer.scheme_uri,
             include_inferencing=include_inferencing,
         ),
     )
@@ -168,19 +117,22 @@ async def scheme_endpoint(
 
     if len(sparql_result) == 0:
         raise HTTPException(status_code=404, detail="Not Found")
-    scheme = VocPrezScheme(sparql_result, id=scheme_id, uri=scheme_uri)
+    scheme = VocPrezScheme(
+        sparql_result, id=scheme_renderer.scheme_id, uri=scheme_renderer.scheme_uri
+    )
     scheme_renderer.set_scheme(scheme)
-    profile = scheme_renderer.profile
-    if profile == "alt":
+    if scheme_renderer.profile == "alt":
         alt_profiles_graph = await build_alt_graph(
-            URIRef(scheme.uri), profiles_formats, available_profiles
+            URIRef(scheme_renderer.instance_uri),
+            scheme_renderer.profile_details.profiles_formats,
+            scheme_renderer.profile_details.available_profiles_dict,
         )
         return scheme_renderer.render(alt_profiles_graph=alt_profiles_graph)
     return scheme_renderer.render()
 
 
 @router.get("/collection", summary="List Collections")
-async def collections(
+async def collections_endpoint(
     request: Request,
     page: int = 1,
     per_page: int = 20,
