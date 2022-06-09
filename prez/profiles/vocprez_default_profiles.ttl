@@ -7,7 +7,16 @@ PREFIX prez: <https://surroundaustralia.com/prez/>
 PREFIX prof: <http://www.w3.org/ns/dx/prof/>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX sh: <http://www.w3.org/ns/shacl#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+<http://surroundaustralia.com/profile/prez>
+    a prof:Profile ;
+    dcterms:identifier "prez" ;
+    dcterms:description "A profile for the Prez Linked Data API" ;
+    skos:prefLabel "Prez profile" ;
+    altr-ext:hasDefaultResourceFormat "text/html" ;
+    .
 
 <http://example.com/profile/profiles>
     a prof:Profile ;
@@ -26,12 +35,6 @@ altr-ext:alt-profile
     dcterms:description "The representation of the resource that lists all other representations (profiles and Media Types)" ;
     dcterms:identifier "alt" ;
     dcterms:title "Alternates Profile" ;
-    altr-ext:constrainsClass
-        dcat:Catalog ,
-        dcat:Dataset ,
-        skos:ConceptScheme ,
-        skos:Concept ,
-        skos:Collection ;
     altr-ext:hasDefaultResourceFormat "text/html" ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,
@@ -68,7 +71,8 @@ altr-ext:hasResourceFormat
     dcterms:title "DCAT" ;
     altr-ext:constrainsClass
         dcat:Catalog ,
-        dcat:Dataset ;
+        dcat:Dataset ,
+        prez:VocPrezHome;
     altr-ext:hasDefaultResourceFormat "text/html" ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,

@@ -19,43 +19,19 @@ router = APIRouter(tags=["VocPrez"] if len(ENABLED_PREZS) > 1 else [])
 
 
 async def home(request: Request):
-    instances_classes = [str(DCAT.Dataset)]
-    (
-        profiles_g,
-        preferred_classes_and_profiles,
-        profiles,
-        profiles_formats,
-    ) = await get_general_profiles(DCAT.Dataset)
-
-    # find the available profiles
-    available_profiles, default_profile = await get_class_based_and_default_profiles(
-        "http://localhost:8000",  # should cater for multiple *Prezs - i.e. when vocprez_home is /vocprez, not /
-        preferred_classes_and_profiles,
-        "VocPrez",
-    )
-
-    # find the most specific class for the feature
-    for klass, _ in reversed(preferred_classes_and_profiles):
-        if klass in instances_classes:
-            most_specific_class = klass
-            break
-
-    dataset_renderer = VocPrezDatasetRenderer(
-        request,
-        str(request.url.remove_query_params(keys=request.query_params.keys())),
-        available_profiles=profiles,
-        default_profile=default_profile,
-    )
-    profile = dataset_renderer.profile
-    if profile == "alt":
+    """Returns the VocPrez home page in the necessary profile & mediatype"""
+    home_renderer = VocPrezDatasetRenderer(request)
+    if home_renderer.profile == "alt":
         alt_profiles_graph = await build_alt_graph(
-            URIRef("http://localhost:8000"), profiles_formats, available_profiles
+            PREZ.VocPrezHome,
+            home_renderer.profile_details.profiles_formats,
+            home_renderer.profile_details.available_profiles_dict,
         )
-        return dataset_renderer.render(alt_profiles_graph=alt_profiles_graph)
+        return home_renderer.render(alt_profiles_graph=alt_profiles_graph)
     sparql_result = await get_dataset_construct()
     dataset = VocPrezDataset(sparql_result)
-    dataset_renderer.set_dataset(dataset)
-    return dataset_renderer.render()
+    home_renderer.set_dataset(dataset)
+    return home_renderer.render()
 
 
 @router.get(
@@ -82,7 +58,7 @@ async def vocprez_about(request: Request):
 
 @router.get("/scheme", summary="List ConceptSchemes")
 @router.get("/vocab", summary="List ConceptSchemes")
-async def schemes(
+async def schemes_endpoint(
     request: Request,
     page: int = 1,
     per_page: int = 20,
@@ -180,7 +156,7 @@ async def scheme_endpoint(
 
 
 @router.get("/collection", summary="List Collections")
-async def collections(
+async def collections_endpoint(
     request: Request,
     page: int = 1,
     per_page: int = 20,

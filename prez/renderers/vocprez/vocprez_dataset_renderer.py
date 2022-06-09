@@ -11,21 +11,15 @@ from prez.utils import templates
 
 
 class VocPrezDatasetRenderer(Renderer):
-    profiles = {"dcat": dcat, "sdo": sdo, "alt": alt}
-    default_profile_token = "dcat"
-
     def __init__(
         self,
         request: object,
-        instance_uri: str,
-        available_profiles: dict,
-        default_profile: str,
     ) -> None:
         super().__init__(
             request,
-            available_profiles,
-            default_profile,
-            instance_uri,
+            PREZ.VocPrezHome,
+            PREZ.VocPrezHome,
+            PREZ.VocPrezHome,
         )
 
     def set_dataset(self, dataset: VocPrezDataset) -> None:
@@ -39,8 +33,8 @@ class VocPrezDatasetRenderer(Renderer):
             "request": self.request,
             "dataset": self.dataset.to_dict(),
             "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
-            "profiles": self.profiles,
-            "default_profile": self.default_profile_token,
+            "profiles": self.profile_details.available_profiles_dict,
+            "default_profile": self.profile_details.default_profile,
             "mediatype_names": MEDIATYPE_NAMES,
         }
         if template_context is not None:
