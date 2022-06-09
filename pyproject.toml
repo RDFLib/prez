@@ -17,6 +17,7 @@ connegp = { git = "https://github.com/surroundaustralia/Connegp2.git", branch = 
 fedsearch = { git = "https://github.com/surroundaustralia/vocprez-fedsearch.git" }
 starlette-core = { git = "https://github.com/accent-starlette/starlette-core.git" }
 async-lru = "^1.0.3"
+Shapely = "^1.8.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
