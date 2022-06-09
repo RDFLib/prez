@@ -8,18 +8,28 @@ from prez.renderers import Renderer
 
 from prez.models.spaceprez import SpacePrezDataset
 from prez.utils import templates
+from services.spaceprez_service import get_object_uri_and_classes
 
 
 class SpacePrezDatasetRenderer(Renderer):
-    def __init__(
-        self, request: object, available_profiles, default_profile, instance_uri: str
-    ) -> None:
-        super().__init__(
-            request,
-            available_profiles,
-            default_profile,
-            instance_uri,
+    def __init__(self, request: object) -> None:
+        (
+            _,  # feature_id
+            _,  # collection_id
+            self.dataset_id,
+            _,  # feature_uri
+            _,  # collection
+            self.instance_uri,
+            _,  # classes
+        ) = get_object_uri_and_classes(
+            None,  # feature_id
+            None,  # collection_id
+            request.path_params.get("dataset_id"),
+            None,  # feature_uri
+            None,  # collection_uri
+            request.query_params.get("dataset_uri"),
         )
+        super().__init__(request, self.instance_uri, DCAT.Dataset, DCAT.Dataset)
 
     def set_dataset(self, dataset: SpacePrezDataset) -> None:
         self.dataset = dataset
@@ -32,8 +42,8 @@ class SpacePrezDatasetRenderer(Renderer):
             "request": self.request,
             "dataset": self.dataset.to_dict(),
             "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
-            "profiles": self.profiles,
-            "default_profile": self.default_profile_token,
+            "profiles": self.profile_details.available_profiles_dict,
+            "default_profile": self.profile_details.default_profile,
             "mediatype_names": dict(
                 MEDIATYPE_NAMES, **{"application/geo+json": "GeoJSON"}
             ),

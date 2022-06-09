@@ -3,37 +3,33 @@ from typing import Dict, Optional, Union
 from connegp import MEDIATYPE_NAMES
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
 
+from prez.config import *
 from prez.models.spaceprez import SpacePrezFeatureList
 from prez.renderers import ListRenderer
 from prez.utils import templates
-from prez.config import *
 
 
 class SpacePrezFeatureListRenderer(ListRenderer):
     def __init__(
         self,
         request: object,
-        profiles: dict,
-        default_profile: str,
         instance_uri: str,
-        label: str,
-        comment: str,
-        feature_list: SpacePrezFeatureList,
         page: int,
         per_page: int,
         member_count: int,
+        feature_list: SpacePrezFeatureList,
     ) -> None:
         super().__init__(
             request,
-            profiles,
-            default_profile,
             instance_uri,
             feature_list.members,
-            label,
-            comment,
+            "Feature list",
+            "A list of geo:Features",
             page,
             per_page,
             member_count,
+            PREZ.FeatureList,
+            PREZ.FeatureList,
         )
         self.feature_list = feature_list
 
@@ -48,8 +44,8 @@ class SpacePrezFeatureListRenderer(ListRenderer):
             "pages": self.pages,
             "label": self.label,
             "comment": self.comment,
-            "profiles": self.profiles,
-            "default_profile": self.default_profile_token,
+            "profiles": self.profile_details.available_profiles_dict,
+            "default_profile": self.profile_details.default_profile,
             "mediatype_names": dict(
                 MEDIATYPE_NAMES, **{"application/geo+json": "GeoJSON"}
             ),

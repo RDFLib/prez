@@ -21,14 +21,16 @@ class SpacePrezFeatureRenderer(Renderer):
             self.collection_id,
             self.dataset_id,
             self.instance_uri,
-            _,
-            _,
+            _,  # collection_uri
+            _,  # dataset_uri
             self.feature_classes,
         ) = get_object_uri_and_classes(
             request.path_params.get("feature_id"),
             request.path_params.get("collection_id"),
             request.path_params.get("dataset_id"),
             request.query_params.get("feature_uri"),
+            None,  # collection_uri
+            None,  # dataset_uri
         )
 
         super().__init__(request, self.instance_uri, self.feature_classes, GEO.Feature)

@@ -29,15 +29,8 @@ class SpacePrezConformanceRenderer(Renderer):
         },
     ]
 
-    def __init__(
-        self, request: object, profiles, default_profile, instance_uri: str
-    ) -> None:
-        super().__init__(
-            request,
-            profiles,
-            default_profile,
-            instance_uri,
-        )
+    def __init__(self, request: object) -> None:
+        super().__init__(request, PREZ.Conformance, PREZ.Conformance, PREZ.Conformance)
 
     def _render_oai_html(
         self, template_context: Union[Dict, None]
@@ -46,8 +39,8 @@ class SpacePrezConformanceRenderer(Renderer):
         _template_context = {
             "request": self.request,
             "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
-            "profiles": self.profiles,
-            "default_profile": self.default_profile_token,
+            "profiles": self.profile_details.available_profiles_dict,
+            "default_profile": self.profile_details.default_profile,
             "conformsTo": SpacePrezConformanceRenderer.conformsTo,
             "mediatype_names": dict(
                 MEDIATYPE_NAMES, **{"application/geo+json": "GeoJSON"}

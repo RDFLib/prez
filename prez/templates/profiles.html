@@ -9,7 +9,7 @@
         {% set main_active_page = "profiles" %}
     {% else %}
         {% set breadcrumbs = [
-            {"label": prez, "url": url_for(prez | lower + "_home")},
+            {"label": prez, "url": url_for(prez | lower + "_home_endpoint")},
             {"label": "Profiles", "url": url_for(prez | lower + "_profiles")}
         ] %}
     {% endif %}

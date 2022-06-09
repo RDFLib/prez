@@ -13,21 +13,12 @@ class ProfilesRenderer(Renderer):
     def __init__(
         self,
         request: object,
-        profiles: dict,
-        default_profile: str,
-        instance_uri: str,
         prez: Optional[str] = None,
+        profile_list: Optional[List[Dict]] = None,
     ) -> None:
-        super().__init__(
-            request,
-            profiles,
-            default_profile,
-            instance_uri,
-        )
-        self.prez = prez
-
-    def set_profiles(self, profile_list: List[Dict]) -> None:
         self.profile_list = profile_list
+        super().__init__(request, PREZ.Profiles, PREZ.Profiles, PREZ.Profiles)
+        self.prez = prez
 
     def _render_profiles_html(
         self, template_context: Union[Dict, None]
@@ -37,9 +28,9 @@ class ProfilesRenderer(Renderer):
             "request": self.request,
             "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
             "profile_list": self.profile_list,
-            "profiles": self.profiles,
+            "profiles": self.profile_details.available_profiles_dict,
             "prez": self.prez,
-            "default_profile": self.default_profile_token,
+            "default_profile": self.profile_details.default_profile,
             "mediatype_names": MEDIATYPE_NAMES,
         }
         if template_context is not None:

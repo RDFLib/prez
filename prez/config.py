@@ -3,8 +3,9 @@ import json
 
 from rdflib import Graph, URIRef, Literal, BNode, Namespace
 from rdflib.namespace import SKOS, RDF, DCTERMS, RDFS, DCAT, PROV, OWL, SDO, XSD
-PROF = Namespace("http://www.w3.org/ns/dx/prof/")
 
+PROF = Namespace("http://www.w3.org/ns/dx/prof/")
+PREZ = Namespace("https://surroundaustralia.com/prez/")
 GEO = Namespace("http://www.opengis.net/ont/geosparql#")
 
 SYSTEM_URI = os.environ.get("SYSTEM_URI", "localhost")

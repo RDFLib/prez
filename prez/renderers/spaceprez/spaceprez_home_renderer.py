@@ -10,15 +10,8 @@ from starlette.requests import Request
 
 
 class SpacePrezHomeRenderer(Renderer):
-    def __init__(
-        self, request: Request
-    ) -> None:
-        super().__init__(
-            request,
-            self.instance_uri,
-            self.feature_classes,
-            GEO.Feature
-        )
+    def __init__(self, request: Request) -> None:
+        super().__init__(request, PREZ.Home, PREZ.Home, PREZ.Home)
 
     def _render_oai_html(
         self, template_context: Union[Dict, None]
@@ -27,8 +20,8 @@ class SpacePrezHomeRenderer(Renderer):
         _template_context = {
             "request": self.request,
             "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
-            "profiles": self.profiles,
-            "default_profile": self.default_profile_token,
+            "profiles": self.profile_details.available_profiles_dict,
+            "default_profile": self.profile_details.default_profile,
             "mediatype_names": dict(
                 MEDIATYPE_NAMES, **{"application/geo+json": "GeoJSON"}
             ),

@@ -10,31 +10,30 @@ from prez.models.spaceprez import SpacePrezDatasetList
 from prez.utils import templates
 
 
+PREZ = Namespace("https://surroundaustralia.com/prez/")
+
+
 class SpacePrezDatasetListRenderer(ListRenderer):
     def __init__(
         self,
         request: object,
         instance_uri: str,
-        label: str,
-        comment: str,
-        dataset_list: SpacePrezDatasetList,
         page: int,
         per_page: int,
         member_count: int,
-        profiles: Dict[str, str],
-        default_profile_token: Optional[str],
+        dataset_list: SpacePrezDatasetList,
     ) -> None:
         super().__init__(
             request,
-            profiles,
-            default_profile_token,
             instance_uri,
             dataset_list.members,
-            label,
-            comment,
+            "Dataset list",
+            "A list of dcat:Datasets",
             page,
             per_page,
             member_count,
+            PREZ.DatasetList,
+            PREZ.DatasetList,
         )
         self.dataset_list = dataset_list
 
@@ -47,8 +46,8 @@ class SpacePrezDatasetListRenderer(ListRenderer):
             "pages": self.pages,
             "label": self.label,
             "comment": self.comment,
-            "profiles": self.profiles,
-            "default_profile": self.default_profile_token,
+            "profiles": self.profile_details.available_profiles_dict,
+            "default_profile": self.profile_details.default_profile,
             "mediatype_names": MEDIATYPE_NAMES,
         }
         if template_context is not None:
