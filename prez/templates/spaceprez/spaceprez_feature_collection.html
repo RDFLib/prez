@@ -5,19 +5,19 @@
 
 {% if prezs | length == 1 %}
     {% set breadcrumbs = [
-        {"label": "Datasets", "url": url_for("datasets")},
-        {"label": collection.dataset.title, "url": url_for("dataset", dataset_id=collection.dataset.id)},
-        {"label": "Feature Collections", "url": url_for("feature_collections", dataset_id=collection.dataset.id)},
-        {"label": collection.title, "url": url_for("feature_collection", dataset_id=collection.dataset.id, collection_id=collection.id)}
+        {"label": "Datasets", "url": url_for("datasets_endpoint")},
+        {"label": collection.dataset.title, "url": url_for("dataset_endpoint", dataset_id=collection.dataset.id)},
+        {"label": "Feature Collections", "url": url_for("feature_collections_endpoint", dataset_id=collection.dataset.id)},
+        {"label": collection.title, "url": url_for("feature_collection_endpoint", dataset_id=collection.dataset.id, collection_id=collection.id)}
     ] %}
     {% set main_active_page = "datasets" %}
 {% else %}
     {% set breadcrumbs = [
-        {"label": "SpacePrez", "url": url_for("spaceprez_home")},
-        {"label": "Datasets", "url": url_for("datasets")},
-        {"label": collection.dataset.title, "url": url_for("dataset", dataset_id=collection.dataset.id)},
-        {"label": "Feature Collections", "url": url_for("feature_collections", dataset_id=collection.dataset.id)},
-        {"label": collection.title, "url": url_for("feature_collection", dataset_id=collection.dataset.id, collection_id=collection.id)}
+        {"label": "SpacePrez", "url": url_for("spaceprez_home_endpoint")},
+        {"label": "Datasets", "url": url_for("datasets_endpoint")},
+        {"label": collection.dataset.title, "url": url_for("dataset_endpoint_endpoint", dataset_id=collection.dataset.id)},
+        {"label": "Feature Collections", "url": url_for("feature_collections_endpoint", dataset_id=collection.dataset.id)},
+        {"label": collection.title, "url": url_for("feature_collection_endpoint", dataset_id=collection.dataset.id, collection_id=collection.id)}
     ] %}
 {% endif %}
 
@@ -49,7 +49,7 @@
             <tbody>
                 <tr>
                     <th><a href="http://www.w3.org/2000/01/rdf-schema#member" target="_blank">Members</a></th>
-                    <td><a href="{{ url_for('features', dataset_id=collection.dataset.id, collection_id=collection.id) }}" class="btn">Features</a></td>
+                    <td><a href="{{ url_for('features_endpoint', dataset_id=collection.dataset.id, collection_id=collection.id) }}" class="btn">Features</a></td>
                 </tr>
                 {% for prop in collection.properties %}
                     {{ render_row(prop) }}

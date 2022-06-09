@@ -6,7 +6,7 @@ from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from prez.config import *
 from prez.models.spaceprez import SpacePrezFeature
 from prez.renderers import Renderer
-from prez.services.spaceprez_service import get_feature_uri_and_classes
+from prez.services.spaceprez_service import get_object_uri_and_classes
 from prez.utils import templates
 from starlette.requests import Request
 
@@ -16,20 +16,22 @@ class SpacePrezFeatureRenderer(Renderer):
         self,
         request: Request,
     ) -> None:
-        self.feature_id, self.collection_id, self.dataset_id, self.instance_uri, self.feature_classes = \
-            get_feature_uri_and_classes(
-                request.path_params.get("feature_id"),
-                request.path_params.get("collection_id"),
-                request.path_params.get("dataset_id"),
-                request.query_params.get("feature_uri")
-            )
-
-        super().__init__(
-            request,
+        (
+            self.feature_id,
+            self.collection_id,
+            self.dataset_id,
             self.instance_uri,
+            _,
+            _,
             self.feature_classes,
-            GEO.Feature
+        ) = get_object_uri_and_classes(
+            request.path_params.get("feature_id"),
+            request.path_params.get("collection_id"),
+            request.path_params.get("dataset_id"),
+            request.query_params.get("feature_uri"),
         )
+
+        super().__init__(request, self.instance_uri, self.feature_classes, GEO.Feature)
 
     def set_feature(self, feature: SpacePrezFeature) -> None:
         self.feature = feature

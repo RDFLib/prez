@@ -14,8 +14,6 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
     def __init__(
         self,
         request: object,
-        profiles: Dict[str, Profile],
-        default_profile_token: str,
         instance_uri: str,
         members: List[Dict],
         label: str,
@@ -23,12 +21,11 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
         page: int,
         per_page: int,
         member_count: int,
+        instance_classes: list,
+        general_class: str,
     ) -> None:
 
-        if default_profile_token is None:
-            default_profile_token = "mem"
-
-        super().__init__(request, profiles, default_profile_token, instance_uri)
+        super().__init__(request, instance_uri, instance_classes, general_class)
 
         if self.error is None:
             self.members = members

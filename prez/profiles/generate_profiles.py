@@ -15,8 +15,7 @@ from prez.services.sparql_utils import (
     sparql_construct_non_async,
     sparql_query,
     sparql_query_multiple,
-    sparql_query_multiple_non_async
-
+    sparql_query_multiple_non_async,
 )
 
 
@@ -56,7 +55,7 @@ def create_profiles_graph() -> Graph:
 
 
 class ProfileDetails:
-    def __init__(self, instance_uri, instance_classes, general_class):
+    def __init__(self, instance_uri, instance_classes: list, general_class):
         self.available_profiles_dict = {}
 
         # get general profiles
@@ -208,10 +207,7 @@ def get_general_profiles(general_class):
 
 
 @lru_cache(maxsize=20)
-def get_class_based_and_default_profiles(
-    instance_uri,
-    preferred_classes_and_profiles
-):
+def get_class_based_and_default_profiles(instance_uri, preferred_classes_and_profiles):
     # retrieve the classes
     r = sparql_query_multiple_non_async(
         f"""SELECT ?class {{ <{instance_uri}> a ?class }}"""

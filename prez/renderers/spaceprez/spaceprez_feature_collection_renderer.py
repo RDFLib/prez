@@ -8,17 +8,28 @@ from prez.renderers import Renderer
 
 from prez.models.spaceprez import SpacePrezFeatureCollection
 from prez.utils import templates
+from services.spaceprez_service import get_object_uri_and_classes
 
 
 class SpacePrezFeatureCollectionRenderer(Renderer):
-    def __init__(
-        self, request: object, profiles: dict, default_profile: str, instance_uri: str
-    ) -> None:
+    def __init__(self, request: object) -> None:
+        (
+            _,  # feature_id
+            self.collection_id,
+            self.dataset_id,
+            _,  # feature_uri
+            self.instance_uri,  # collection
+            _,  # dataset_uri
+            _,  # classes
+        ) = get_object_uri_and_classes(
+            None,  # feature_id
+            request.path_params.get("collection_id"),
+            request.path_params.get("dataset_id"),
+            request.query_params.get("feature_uri"),
+        )
+
         super().__init__(
-            request,
-            profiles,
-            default_profile,
-            instance_uri,
+            request, self.instance_uri, GEO.FeatureCollection, GEO.FeatureCollection
         )
 
     def set_collection(self, collection: SpacePrezFeatureCollection) -> None:
@@ -32,8 +43,8 @@ class SpacePrezFeatureCollectionRenderer(Renderer):
             "request": self.request,
             "collection": self.collection.to_dict(),
             "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
-            "profiles": self.profiles,
-            "default_profile": self.default_profile_token,
+            "profiles": self.profile_details.available_profiles_dict,
+            "default_profile": self.profile_details.default_profile,
             "mediatype_names": dict(
                 MEDIATYPE_NAMES, **{"application/geo+json": "GeoJSON"}
             ),

@@ -101,49 +101,70 @@ async def datasets_endpoint(
 @router.get("/dataset/{dataset_id}/collections", summary="List FeatureCollections")
 async def feature_collections_endpoint(
     request: Request,
-    dataset_id: str,
     page: int = 1,
     per_page: int = 20,
 ):
     """Returns a list of SpacePrez geo:FeatureCollections in the necessary profile & mediatype"""
-    instance_uri = str(
-        request.url.remove_query_params(keys=request.query_params.keys())
-    )
-    profile_details = ProfileDetails(
-        general_class=PREZ.FeatureCollectionList, instance_uri=instance_uri
-    )
-    await profile_details.get_all_profiles("SpacePrez")
+    dataset_id = request.path_params.get("dataset_id")  # can't be called by object ID
 
     collection_count, sparql_result = await asyncio.gather(
         count_collections(dataset_id),
         list_collections(dataset_id, page, per_page),
     )
+
     feature_collection_list = SpacePrezFeatureCollectionList(sparql_result)
+
     feature_collection_list_renderer = SpacePrezFeatureCollectionListRenderer(
         request,
-        profile_details.available_profiles_dict,
-        profile_details.default_profile,
-        instance_uri,
-        "FeatureCollection list",
-        "A list of geo:FeatureCollections",
-        feature_collection_list,
+        PREZ.FeatureCollectionList,
         page,
         per_page,
         int(collection_count[0]["count"]["value"]),
+        feature_collection_list,
     )
 
-    profile = feature_collection_list_renderer.profile
-    if profile == "alt":
+    if feature_collection_list_renderer.profile == "alt":
         alt_profiles_graph = await build_alt_graph(
-            URIRef(instance_uri),
-            profile_details.profiles_formats,
-            profile_details.available_profiles_dict,
+            URIRef(feature_collection_list_renderer.instance_uri),
+            feature_collection_list_renderer.profile_details.profiles_formats,
+            feature_collection_list_renderer.profile_details.available_profiles_dict,
         )
         return feature_collection_list_renderer.render(
             alt_profiles_graph=alt_profiles_graph
         )
+    else:
+        return feature_collection_list_renderer.render()
 
-    return feature_collection_list_renderer.render()
+    # collection_count, sparql_result = await asyncio.gather(
+    #     count_collections(dataset_id),
+    #     list_collections(dataset_id, page, per_page),
+    # )
+    # feature_collection_list = SpacePrezFeatureCollectionList(sparql_result)
+    # feature_collection_list_renderer = SpacePrezFeatureCollectionListRenderer(
+    #     request,
+    #     profile_details.available_profiles_dict,
+    #     profile_details.default_profile,
+    #     instance_uri,
+    #     "FeatureCollection list",
+    #     "A list of geo:FeatureCollections",
+    #     feature_collection_list,
+    #     page,
+    #     per_page,
+    #     int(collection_count[0]["count"]["value"]),
+    # )
+    #
+    # profile = feature_collection_list_renderer.profile
+    # if profile == "alt":
+    #     alt_profiles_graph = await build_alt_graph(
+    #         URIRef(instance_uri),
+    #         profile_details.profiles_formats,
+    #         profile_details.available_profiles_dict,
+    #     )
+    #     return feature_collection_list_renderer.render(
+    #         alt_profiles_graph=alt_profiles_graph
+    #     )
+    #
+    # return feature_collection_list_renderer.render()
 
 
 @alru_cache(maxsize=5)
@@ -212,7 +233,9 @@ async def dataset(
     instance_uri = str(
         request.url.remove_query_params(keys=request.query_params.keys())
     )
-    profile_details = ProfileDetails(general_class=DCAT.Dataset, instance_uri=instance_uri)
+    profile_details = ProfileDetails(
+        general_class=DCAT.Dataset, instance_uri=instance_uri
+    )
     await profile_details.get_all_profiles("SpacePrez")
 
     if not dataset_uri:
@@ -250,71 +273,55 @@ async def dataset(
     "/dataset/{dataset_id}/collections/{collection_id}",
     summary="Get FeatureCollections",
 )
-async def feature_collection_endpoint(request: Request, dataset_id: str, collection_id: str):
+async def feature_collection_endpoint(request: Request):
     """Returns a SpacePrez geo:FeatureCollection in the necessary profile & mediatype"""
-    return await feature_collection(
-        request, dataset_id=dataset_id, collection_id=collection_id
-    )
+    return await feature_collection(request)
 
 
 @alru_cache(maxsize=20)
-async def feature_collection(
-    request: Request,
-    dataset_id: Optional[str] = None,
-    collection_id: Optional[str] = None,
-    collection_uri: Optional[str] = None,
-):
-    instance_uri = str(
-        request.url.remove_query_params(keys=request.query_params.keys())
-    )
-    profile_details = ProfileDetails(
-        general_class=GEO.FeatureCollection, instance_uri=instance_uri
-    )
-    await profile_details.get_all_profiles("SpacePrez")
+async def feature_collection(request: Request):
+    collection_renderer = SpacePrezFeatureCollectionRenderer(request)
 
-    collection_renderer = SpacePrezFeatureCollectionRenderer(
-        request,
-        profile_details.available_profiles_dict,
-        profile_details.default_profile,
-        instance_uri,
-    )
-
-    profile = collection_renderer.profile
-    if profile == "alt":
+    if collection_renderer.profile == "alt":
         alt_profiles_graph = await build_alt_graph(
-            URIRef(instance_uri),
-            profile_details.profiles_formats,
-            profile_details.available_profiles_dict,
+            URIRef(collection_renderer.instance_uri),
+            collection_renderer.profile_details.profiles_formats,
+            collection_renderer.profile_details.available_profiles_dict,
         )
         return collection_renderer.render(alt_profiles_graph=alt_profiles_graph)
+    else:
+        results = await asyncio.gather(
+            get_collection_construct_1(
+                dataset_id=collection_renderer.dataset_id,
+                collection_id=collection_renderer.collection_id,
+                collection_uri=collection_renderer.instance_uri,
+            ),
+            get_collection_construct_2(
+                dataset_id=collection_renderer.dataset_id,
+                collection_id=collection_renderer.collection_id,
+                collection_uri=collection_renderer.instance_uri,
+            ),
+        )
 
-    results = await asyncio.gather(
-        get_collection_construct_1(
-            dataset_id=dataset_id,
-            collection_id=collection_id,
-            collection_uri=collection_uri,
-        ),
-        get_collection_construct_2(
-            dataset_id=dataset_id,
-            collection_id=collection_id,
-            collection_uri=collection_uri,
-        ),
-    )
+        complete_feature_g = Graph()
+        for g in results:
+            complete_feature_g += g
 
-    sparql_result = Graph()
-    for g in results:
-        sparql_result += g
+        if len(complete_feature_g) == 0:
+            raise HTTPException(status_code=404, detail="Not Found")
 
-    if len(sparql_result) == 0:
-        raise HTTPException(status_code=404, detail="Not Found")
-    collection = SpacePrezFeatureCollection(
-        sparql_result, id=collection_id, uri=collection_uri
-    )
-    collection_renderer.set_collection(collection)
-    return collection_renderer.render()
+        collection = SpacePrezFeatureCollection(
+            complete_feature_g,
+            id=collection_renderer.collection_id,
+            uri=collection_renderer.instance_uri,
+            most_specific_class=collection_renderer.profile_details.most_specific_class,
+        )
+
+        collection_renderer.set_collection(collection)
+
+        return collection_renderer.render()
 
 
-# feature
 @router.get(
     "/dataset/{dataset_id}/collections/{collection_id}/items/{feature_id}",
     summary="Get Feature",
@@ -327,9 +334,7 @@ async def feature_endpoint(
 
 
 @alru_cache(maxsize=20)
-async def feature(
-    request: Request
-):
+async def feature(request: Request):
     feature_renderer = SpacePrezFeatureRenderer(request)
 
     if feature_renderer.profile == "alt":
@@ -345,7 +350,9 @@ async def feature(
         # retrieve relevant shapes
         feature_shapes_g = retrieve_relevant_shapes(
             feature_renderer.profile_details.profiles_g,
-            feature_renderer.profile_details.available_profiles_dict[feature_renderer.profile].uri,
+            feature_renderer.profile_details.available_profiles_dict[
+                feature_renderer.profile
+            ].uri,
             feature_renderer.profile_details.most_specific_class,
         )
 
