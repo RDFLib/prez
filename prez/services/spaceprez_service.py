@@ -111,7 +111,9 @@ async def count_collections(dataset_id: str):
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
-async def list_collections(dataset_id: str, page: int, per_page: int):
+async def list_collections(
+    dataset_id: str, page: Optional[int] = None, per_page: Optional[int] = None
+):
     q = f"""
         PREFIX dcat: <{DCAT}>
         PREFIX dcterms: <{DCTERMS}>
@@ -135,7 +137,7 @@ async def list_collections(dataset_id: str, page: int, per_page: int):
             }}
             FILTER(lang(?label) = "" || lang(?label) = "en")
             FILTER(DATATYPE(?id) = xsd:token)
-        }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
+        }}{f"LIMIT {per_page} OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
     """
     r = await sparql_query(q, "spaceprez")
     if r[0]:
@@ -254,7 +256,9 @@ async def get_collection_construct_2(
 
 
 async def count_features(
-    dataset_id: str, collection_id: str, cql_query: Optional[str] = None
+    dataset_id: Optional[str] = None,
+    collection_id: Optional[str] = None,
+    cql_query: Optional[str] = None,
 ):
     q = f"""
         PREFIX dcat: <{DCAT}>
@@ -268,11 +272,11 @@ async def count_features(
             ?d dcterms:identifier ?d_id ;
                 a dcat:Dataset ;
                 rdfs:member ?coll .
-            FILTER (STR(?d_id) = "{dataset_id}" && DATATYPE(?d_id) = xsd:token)
+            FILTER ({f'STR(?d_id) = "{dataset_id}" && ' if dataset_id is not None else ""}DATATYPE(?d_id) = xsd:token)
             ?coll dcterms:identifier ?coll_id ;
                 a geo:FeatureCollection ;
                 rdfs:member ?f .
-            FILTER (STR(?coll_id) = "{collection_id}" && DATATYPE(?coll_id) = xsd:token)
+            FILTER ({f'STR(?coll_id) = "{collection_id}" && ' if collection_id is not None else ""}DATATYPE(?coll_id) = xsd:token)
             ?f a geo:Feature .
             {cql_query or ""}
         }}
@@ -285,11 +289,11 @@ async def count_features(
 
 
 async def list_features(
-    dataset_id: str,
-    collection_id: str,
-    page: int,
-    per_page: int,
+    dataset_id: Optional[str] = None,
+    collection_id: Optional[str] = None,
     cql_query: Optional[str] = None,
+    page: Optional[int] = None,
+    per_page: Optional[int] = None,
 ):
     q = f"""
         PREFIX dcat: <{DCAT}>
@@ -305,13 +309,13 @@ async def list_features(
                 dcterms:title ?d_label ;
                 rdfs:member ?coll .
             FILTER(lang(?d_label) = "" || lang(?d_label) = "en")
-            FILTER (STR(?d_id) = "{dataset_id}" && DATATYPE(?d_id) = xsd:token)
+            FILTER ({f'STR(?d_id) = "{dataset_id}" && ' if dataset_id is not None else ""}DATATYPE(?d_id) = xsd:token)
             ?coll a geo:FeatureCollection ;
                 dcterms:identifier ?coll_id ;
                 dcterms:title ?coll_label ;
                 rdfs:member ?f .
             FILTER(lang(?coll_label) = "" || lang(?coll_label) = "en")
-            FILTER (STR(?coll_id) = "{collection_id}" && DATATYPE(?coll_id) = xsd:token)
+            FILTER ({f'STR(?coll_id) = "{collection_id}" && ' if collection_id is not None else ""}DATATYPE(?coll_id) = xsd:token)
             ?f a geo:Feature ;
                 dcterms:identifier ?id .
             FILTER(DATATYPE(?id) = xsd:token)
@@ -322,8 +326,8 @@ async def list_features(
                 ?f dcterms:title ?label .
                 FILTER(lang(?label) = "" || lang(?label) = "en")
             }}
-            {cql_query or ""}
-        }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
+            {cql_query if cql_query is not None else ""}
+        }}{f" LIMIT {per_page} OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
     """
     r = await sparql_query(q, "spaceprez")
     if r[0]:
@@ -483,6 +487,50 @@ async def get_collection_info_queryables(
             }}
             FILTER(lang(?title) = "" || lang(?title) = "en")
         }}
+    """
+    r = await sparql_query(q, "spaceprez")
+    if r[0]:
+        return r[1]
+    else:
+        raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
+
+async def get_dataset_label(
+    dataset_id: str
+):
+    q = f"""
+        PREFIX dcat: <{DCAT}>
+        PREFIX dcterms: <{DCTERMS}>
+        PREFIX xsd: <{XSD}>
+        SELECT ?title
+        WHERE {{
+            ?d a dcat:Dataset ;
+                dcterms:title ?title ;
+                dcterms:identifier ?d_id .
+            FILTER (STR(?d_id) = "{dataset_id}" && DATATYPE(?d_id) = xsd:token)
+            FILTER(lang(?title) = "" || lang(?title) = "en")
+        }} LIMIT 1
+    """
+    r = await sparql_query(q, "spaceprez")
+    if r[0]:
+        return r[1]
+    else:
+        raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
+
+async def get_collection_label(
+    collection_id: str
+):
+    q = f"""
+        PREFIX dcterms: <{DCTERMS}>
+        PREFIX geo: <{GEO}>
+        PREFIX xsd: <{XSD}>
+        SELECT ?title
+        WHERE {{
+            ?coll a geo:FeatureCollection ;
+                dcterms:title ?title ;
+                dcterms:identifier ?coll_id .
+            FILTER (STR(?coll_id) = "{collection_id}" && DATATYPE(?coll_id) = xsd:token)
+            FILTER(lang(?title) = "" || lang(?title) = "en")
+        }} LIMIT 1
     """
     r = await sparql_query(q, "spaceprez")
     if r[0]:

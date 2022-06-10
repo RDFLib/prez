@@ -67,10 +67,10 @@
         <div>For the list of available properties, see <a href="{{request.url}}/queryables">here.</a></div>
         <form action="{{request.url}}/cql" method="post">
             <div class="cql-form">
-                {% for prop in props.values() %}
+                {% for prop_name, prop_dict in props.items() %}
                     <div class="form-item">
-                        <label for="cql-{{ prop.title | lower }}">{{ prop.title }}</label>
-                        <input type="text" name="{{ prop.title | lower }}" id="cql-{{ prop.title | lower }}" placeholder="Search by {{ prop.title | lower }}...">
+                        <label for="cql-{{ prop_name }}">{{ prop_dict.title }}</label>
+                        <input type="text" name="{{ prop_name }}" id="cql-{{ prop_name }}" placeholder="Search by {{ prop_dict.title | lower }}...">
                     </div>
                 {% endfor %}
                 <div class="form-item">

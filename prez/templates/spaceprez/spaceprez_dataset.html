@@ -1,6 +1,7 @@
 {% extends "_page.html" %}
-{% from "_macros.html" import render_row with context %}
+{% from "_macros.html" import render_row, render_cql_form with context %}
 
+{% set props = "CQL_PROPS" | get_config %}
 {% set prezs = "ENABLED_PREZS" | get_config %}
 {% set has_alt = true %}
 
@@ -57,6 +58,7 @@
 </div>
 <div id="content-col-sidebar">
     {% include "alt_link.html" %}
+    {{ render_cql_form(props, "Dataset") }}
 </div>
 {% if dataset.geometries.asGeoJSON is not none %}
     <script>

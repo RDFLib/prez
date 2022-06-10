@@ -247,3 +247,26 @@
         {% endif %}
     </div>
 {% endmacro %}
+
+{% macro render_cql_form(props, level) %}
+    <div>
+        <h3>Feature Search</h3>
+        <div>Search features {% if level is not none %}within this {{ level }}{% else %}across all Datasets{% endif %}. <a href="https://docs.ogc.org/DRAFTS/21-065.html" target="_blank">CQL</a> can be used in the optional advanced search field.</div>
+        <div>For the list of available properties, see <a href="{{request.url}}/queryables">here.</a></div>
+        <form action="{{request.url}}/cql" method="post">
+            <div class="cql-form">
+                {% for prop_name, prop_dict in props.items() %}
+                    <div class="form-item">
+                        <label for="cql-{{ prop_name }}">{{ prop_dict.title }}</label>
+                        <input type="text" name="{{ prop_name }}" id="cql-{{ prop_name }}" placeholder="Search by {{ prop_dict.title | lower }}...">
+                    </div>
+                {% endfor %}
+                <div class="form-item">
+                    <label for="">CQL query</label>
+                    <textarea name="filter" id="" cols="30" rows="10" placeholder="Advanced CQL search..."></textarea>
+                </div>
+                <div><button type="submit">Search</button></div>
+            </div>
+        </form>
+    </div>
+{% endmacro %}

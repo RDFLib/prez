@@ -23,7 +23,7 @@ from view_funcs import profiles_func
 async def catch_400(request: Request, exc):
     accepts = parse_mediatypes_from_accept_header(request.headers.get("Accept"))
     if "text/html" in accepts:
-        template_context = {"request": request, "message": str(exc)}
+        template_context = {"request": request, "message": exc.detail}
         return templates.TemplateResponse(
             "400.html", context=template_context, status_code=400
         )

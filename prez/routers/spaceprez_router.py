@@ -199,17 +199,30 @@ async def features(
             filter_crs=filter_crs,
         ).generate_query()
 
-        feature_count, sparql_result = await asyncio.gather(
-            count_features(dataset_id, collection_id, cql_query),
-            list_features(dataset_id, collection_id, page, per_page, cql_query),
+        feature_count, sparql_result, dataset_title_result, collection_title_result = await asyncio.gather(
+            count_features(dataset_id=dataset_id, collection_id=collection_id, cql_query=cql_query),
+            list_features(dataset_id=dataset_id, collection_id=collection_id, page=page, per_page=per_page, cql_query=cql_query),
+            get_dataset_label(dataset_id=dataset_id),
+            get_collection_label(collection_id=collection_id)
         )
     else:
-        feature_count, sparql_result = await asyncio.gather(
-            count_features(dataset_id, collection_id),
-            list_features(dataset_id, collection_id, page, per_page),
+        feature_count, sparql_result, dataset_title_result, collection_title_result = await asyncio.gather(
+            count_features(dataset_id=dataset_id, collection_id=collection_id),
+            list_features(dataset_id=dataset_id, collection_id=collection_id, page=page, per_page=per_page),
+            get_dataset_label(dataset_id=dataset_id),
+            get_collection_label(collection_id=collection_id)
         )
+    
+    d = {
+        "id": dataset_id,
+        "title": dataset_title_result[0]["title"]["value"]
+    }
+    coll = {
+        "id": collection_id,
+        "title": collection_title_result[0]["title"]["value"]
+    }
 
-    feature_list = SpacePrezFeatureList(sparql_result)
+    feature_list = SpacePrezFeatureList(sparql_result, dataset=d, collection=coll)
     feature_list_renderer = SpacePrezFeatureListRenderer(
         request,
         str(request.url.remove_query_params(keys=request.query_params.keys())),
@@ -376,5 +389,89 @@ async def feature_collection_cql(
         filter_params.append(filter)
     return RedirectResponse(
         url=f'/dataset/{dataset_id}/collections/{collection_id}/items?filter={" AND ".join(filter_params)}',
+        status_code=302,
+    )
+
+# dataset features
+@router.get(
+    "/dataset/{dataset_id}/items",
+    summary="List Features",
+)
+async def dataset_features(
+    request: Request,
+    dataset_id: str,
+    page: int = 1,
+    per_page: int = 20,
+    filter: Optional[str] = Query(None),
+    filter_lang: Optional[str] = Query(None, alias="filter-lang"),
+    filter_crs: Optional[str] = Query(None, alias="filter-crs"),
+):
+    """Returns a list of SpacePrez geo:Features in the necessary profile & mediatype"""
+    if filter is not None:
+        # get list of collections
+        coll_sparql_result = await list_collections(dataset_id)
+        coll_list = [result["id"]["value"] for result in coll_sparql_result]
+
+        # do CQL -> SPARQL mapping
+        cql_query = CQLSearch(
+            filter,
+            dataset_id,
+            ",".join(coll_list),
+            filter_lang=filter_lang,
+            filter_crs=filter_crs,
+        ).generate_query()
+
+        feature_count, sparql_result, dataset_title_result = await asyncio.gather(
+            count_features(dataset_id=dataset_id, cql_query=cql_query),
+            list_features(dataset_id=dataset_id, cql_query=cql_query, page=page, per_page=per_page),
+            get_dataset_label(dataset_id=dataset_id)
+        )
+    else:
+        feature_count, sparql_result, dataset_title_result = await asyncio.gather(
+            count_features(dataset_id=dataset_id),
+            list_features(dataset_id=dataset_id, page=page, per_page=per_page),
+            get_dataset_label(dataset_id=dataset_id)
+        )
+    
+    d = {
+        "id": dataset_id,
+        "title": dataset_title_result[0]["title"]["value"]
+    }
+
+    feature_list = SpacePrezFeatureList(sparql_result, dataset=d)
+    feature_list_renderer = SpacePrezFeatureListRenderer(
+        request,
+        str(request.url.remove_query_params(keys=request.query_params.keys())),
+        "Feature list",
+        "A list of geo:Features",
+        feature_list,
+        page,
+        per_page,
+        int(feature_count[0]["count"]["value"]),
+    )
+    return feature_list_renderer.render()
+
+# feature collection CQL search form
+@router.post(
+    "/dataset/{dataset_id}/cql",
+    summary="Endpoint to POST CQL search form data to",
+)
+async def dataset_cql(
+    request: Request,
+    dataset_id: str,
+    title: Optional[str] = Form(None),
+    desc: Optional[str] = Form(None),
+    filter: Optional[str] = Form(None),
+):
+    """Handles form data from a CQL search form & redirects to /items containing the filter param"""
+    filter_params = []
+    if title is not None:
+        filter_params.append(f'title LIKE "{title}"')
+    if desc is not None:
+        filter_params.append(f'desc LIKE "{desc}"')
+    if filter is not None:
+        filter_params.append(filter)
+    return RedirectResponse(
+        url=f'/dataset/{dataset_id}/items?filter={" AND ".join(filter_params)}',
         status_code=302,
     )
