@@ -101,44 +101,115 @@ async def app_startup():
     are available. Initial caching can be triggered within the try block. NB this function does not check that data is
     appropriately configured at the SPARQL endpoint(s), only that the SPARQL endpoint(s) are reachable.
     """
-    if "VocPrez" in ENABLED_PREZS:
-        while True:
-            url = urlparse(VOCPREZ_SPARQL_ENDPOINT)
-            try:
-                httpx.get(f"{url[0]}://{url[1]}")
-                get_general_profiles(DCAT.Dataset),
-                get_general_profiles(SKOS.ConceptScheme)
-                get_general_profiles(SKOS.Collection)
-                get_general_profiles(SKOS.Concept)
-                print(
-                    f"Successfully connected to VocPrez endpoint {VOCPREZ_SPARQL_ENDPOINT}"
-                )
-                break
-            except Exception:
-                print(
-                    f"Failed to connect to VocPrez endpoint {VOCPREZ_SPARQL_ENDPOINT}"
-                )
-                print("retrying in 3 seconds...")
-                time.sleep(3)
+    prez2endpoint = {
+        "SpacePrez": SPACEPREZ_SPARQL_ENDPOINT,
+        "VocPrez": VOCPREZ_SPARQL_ENDPOINT,
+        "TimePrez": TIMEPREZ_SPARQL_ENDPOINT,
+        "CatPrez": CATPREZ_SPARQL_ENDPOINT,
+    }
+    if len(ENABLED_PREZS) > 0:
+        for prez in ENABLED_PREZS:
+            connected_to_prez_flavour = False
+            url = urlparse(prez2endpoint[prez])
+            url_to_try = f"{url[0]}://{url[1]}/$/ping"
+            while not connected_to_prez_flavour:
+                try:
+                    response = httpx.get(url_to_try)
+                    response.raise_for_status()
+                    if response.reason_phrase == "OK":
+                        print(
+                            f"Successfully connected to {prez} endpoint {prez2endpoint[prez]}"
+                        )
+                        # Check whether there are any remote profiles, and if so, cache them.
+                        # If there will be remote profiles but they haven't yet been loaded to fuseki, they will be not be
+                        # cached at startup, but will be cached after any endpoint using profiles is called.
+                        query_for_profiles = """PREFIX prof: <http://www.w3.org/ns/dx/prof/>
+                                                DESCRIBE ?profile { ?profile a prof:Profile } LIMIT 1"""
+                        query_success, profiles_g = await sparql_construct(
+                            query_for_profiles, prez
+                        )
+                        if query_success and len(profiles_g) > 0:
+                            print(f"Profiles found in Fuseki for {prez}, caching them")
+                            if prez == "SpacePrez":
+                                pass
+                                await get_general_profiles(DCAT.Dataset)
+                                await get_general_profiles(GEO.FeatureCollection)
+                                await get_general_profiles(GEO.Feature)
+                            if prez == "VocPrez":
+                                pass
+                        else:
+                            print(
+                                f"No profiles found in Fuseki for {prez}, continuing with Prez startup"
+                            )
+                        connected_to_prez_flavour = True
+                    else:
+                        raise httpx.HTTPError
+                        # are there any non "OK" responses that would *not* raise for status?
+                except httpx.HTTPError as exc:
+                    print(f"HTTP Exception for {exc.request.url} - {exc}")
+                    print(f"Failed to connect to {prez} endpoint {prez2endpoint[prez]}")
+                    print("retrying in 3 seconds...")
+                    time.sleep(3)
+    else:
+        raise ValueError(
+            'No Prezs enabled - set "ENABLED_PREZS" environment variable to a list of enabled Prezs'
+        )
 
-    if "SpacePrez" in ENABLED_PREZS:
-        while True:
-            url = urlparse(SPACEPREZ_SPARQL_ENDPOINT)
-            try:
-                url_to_try = f"{url[0]}://{url[1]}"
-                httpx.get(url_to_try)
-                # TODO: David to check for any more general classes
-                get_general_profiles(DCAT.Dataset)
-                get_general_profiles(GEO.FeatureCollection)
-                get_general_profiles(GEO.Feature)
-                print(f"Successfully connected to SpacePrez endpoint {url_to_try}")
-                break
-            except Exception as e:
-                print(
-                    f"Failed to connect to SpacePrez endpoint {SPACEPREZ_SPARQL_ENDPOINT}"
-                )
-                print("retrying in 3 seconds...")
-                time.sleep(3)
+
+@app.get("/purge-cache", summary="Purge LRU and ALRU caches")
+async def purge_cache():
+    import gc
+    import functools
+
+    objects = [
+        i for i in gc.get_objects() if isinstance(i, functools._lru_cache_wrapper)
+    ]
+    # All objects cleared
+    for object in objects:
+        print(object)
+        object.cache_clear()
+
+    from async_lru import _cache_clear
+    from prez.profiles.generate_profiles import (
+        retrieve_relevant_shapes,
+        get_general_profiles,
+        get_class_based_and_default_profiles,
+        create_profiles_graph,
+    )
+    from prez.routers.spaceprez_router import (
+        spaceprez_home_endpoint,
+        dataset_endpoint,
+        spaceprez_about,
+        feature_endpoint,
+        features_endpoint,
+        feature_collection_endpoint,
+    )
+    from prez.services.spaceprez_service import (
+        list_features,
+        count_features,
+        get_feature_construct,
+    )
+    from prez.view_funcs import profiles_func
+
+    funclist = [
+        get_general_profiles,
+        create_profiles_graph,
+        profiles_func,
+        feature_collection_endpoint,
+        features_endpoint,
+        feature_endpoint,
+        get_class_based_and_default_profiles,
+        retrieve_relevant_shapes,
+        spaceprez_home_endpoint,
+        dataset_endpoint,
+        about,
+        count_features,
+        list_features,
+        get_feature_construct,
+    ]
+    for func in funclist:
+        _cache_clear(func)
+    return "cache purged"
 
 
 async def object_page(request: Request):

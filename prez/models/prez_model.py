@@ -1,9 +1,15 @@
+import json
+import re
 from abc import ABCMeta, abstractmethod
 from typing import Dict, List, Union, Optional
-import re
 
-from rdflib import Graph, URIRef, BNode, Literal, RDF, XSD
+from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.namespace import RDFS, DCTERMS, SH
+from shapely.geometry import mapping
+from shapely.ops import orient
+from shapely.wkt import loads
+
+from config import GEO
 
 
 class PrezModel(object, metaclass=ABCMeta):
@@ -194,6 +200,7 @@ class Table(ObjCell):
         super().__init__(value=uri, qname=None, label=None, datatype=None, langtag=None)
         self.uri = uri
         self.graph = graph
+        self.add_geojson_from_wkt()
         self.populate(graph, uri)
 
     def __repr__(self):
@@ -202,3 +209,20 @@ class Table(ObjCell):
     # override
     def to_dict(self) -> List:
         return [row.to_dict() for row in self.rows]
+
+    def add_geojson_from_wkt(self):
+        """Adds a geojson property to the table if the data has a wkt property but not geojson
+        NB table will only be called when rendering HTML views, so the geojson is not added to any RDF or other formats
+        """
+        geom_instances_bnodes = self.graph.objects(
+            subject=self.uri, predicate=GEO.hasGeometry
+        )
+        for bnode in geom_instances_bnodes:
+            wkt_literal = self.graph.value(subject=bnode, predicate=GEO.asWKT)
+            geojson_literal = self.graph.value(subject=bnode, predicate=GEO.asGeoJSON)
+            if wkt_literal and not geojson_literal:
+                geojson_text = json.dumps(mapping(orient(loads(str(wkt_literal)))))
+                geojson_literal = Literal(
+                    geojson_text, datatype=URIRef(GEO.geoJSONLiteral)
+                )
+                self.graph.add((bnode, GEO.asGeoJSON, geojson_literal))
