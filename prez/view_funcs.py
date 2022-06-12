@@ -28,17 +28,9 @@ async def profiles_func(request: Request, prez: Optional[str] = None):
     instance_uri = str(
         request.url.remove_query_params(keys=request.query_params.keys())
     )
-    profile_details = ProfileDetails(general_class=PREZ.Profiles, item_uri=instance_uri)
-    await profile_details.get_all_profiles(prez)
+    profile_details = ProfileDetails(PREZ.Profiles, PREZ.Profiles, PREZ.Profiles)
 
     profile_list = [dict(profile) for profile in profile_details.profiles_dict.values()]
 
-    profiles_renderer = ProfilesRenderer(
-        request,
-        profile_details.profiles_dict,
-        profile_details.default_profile,
-        instance_uri,
-        prez,
-    )
-    profiles_renderer.set_profiles(profile_list)
+    profiles_renderer = ProfilesRenderer(request, prez, profile_list)
     return profiles_renderer.render()

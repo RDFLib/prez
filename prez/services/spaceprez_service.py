@@ -2,6 +2,8 @@ from typing import Optional
 
 from async_lru import alru_cache
 
+from functools import lru_cache
+
 from prez.services.sparql_utils import *
 
 
@@ -329,75 +331,86 @@ async def get_uri(item_id: str = None, klass: URIRef = None):
             return r[1][0]["item_uri"]["value"]
 
 
-async def get_feature_uri_and_classes(
+@lru_cache(maxsize=50)
+def get_object_uri_and_classes(
     feature_id: str = None,
-    feature_uri: str = None,
     collection_id: str = None,
     dataset_id: str = None,
+    feature_uri: str = None,
+    collection_uri: str = None,
+    dataset_uri: str = None,
 ):
-    if feature_id:
-        r = await sparql_query(
-            f"""PREFIX dcterms: <{DCTERMS}>
-                PREFIX rdf: <{RDF}>
-                PREFIX xsd: <{XSD}>
-                PREFIX dcat: <{DCAT}>
+    if dataset_id:
+        r = sparql_query_non_async(
+            f"""PREFIX dcat: <{DCAT}>
+                PREFIX dcterms: <{DCTERMS}>
+                PREFIX geo: <{GEO}>
                 PREFIX rdfs: <{RDFS}>
-                SELECT ?feature_uri ?class {{
-                        ?d dcterms:identifier "{dataset_id}"^^xsd:token ;
-                            a dcat:Dataset ;
-                            rdfs:member ?fc .
-                        ?fc dcterms:identifier "{collection_id}"^^xsd:token ;
-                            rdfs:member ?feature_uri .
-                ?feature_uri dcterms:identifier "{feature_id}"^^xsd:token ;
-                                    rdf:type ?class . }}""",
+                PREFIX xsd: <{XSD}>
+
+                SELECT ?f ?fc ?d ?class {{
+                        OPTIONAL {{ ?d dcterms:identifier "{dataset_id}"^^xsd:token ;
+                                a dcat:Dataset . }}
+                        OPTIONAL {{ ?fc dcterms:identifier "{collection_id}"^^xsd:token ;
+                                a geo:FeatureCollection .
+                            ?d rdfs:member ?fc . }}
+                        OPTIONAL {{ ?f dcterms:identifier "{feature_id}"^^xsd:token ;
+                                a geo:Feature ;
+                                a ?class .
+                            ?fc rdfs:member ?f . }}
+                            }} """,
+            "SpacePrez",
+        )
+        if r[0]:
+            f = r[1][0].get("f")
+            fc = r[1][0].get("fc")
+            d = r[1][0].get("d")
+            classes = []
+            if f:  # find feature classes
+                classes = [c["class"]["value"] for c in r[1]]
+            return (
+                feature_id,
+                collection_id,
+                dataset_id,
+                f["value"] if f else None,
+                fc["value"] if fc else None,
+                d["value"] if d else None,
+                classes,
+            )
+    elif feature_uri or collection_uri or dataset_uri:
+        r = sparql_query_non_async(
+            f"""SELECT ?f ?fc ?d ?class
+                {{
+                    BIND(<{feature_uri}> AS ?f)
+                    BIND(<{collection_uri}> AS ?fc)
+                    BIND(<{dataset_uri}> AS ?d)
+                    ?f a ?class ;
+                        rdfs:member^ ?fc ;
+                        dcterms:identifier ?f_id^^xsd:token .
+                    ?fc a geo:FeatureCollection ;
+                        rdfs:member^ ?d ;
+                        dcterms:identifier ?fc_id^^xsd:token .
+                    ?d a dcat:Dataset ;
+                        dcterms:identifier ?d_id^^xsd:token .
+                }}""",
             "SpacePrez",
         )
         if r[0]:
             return (
-                feature_id,
-                r[1][0]["feature_uri"]["value"],
+                r[1][0]["f_id"]["value"],
+                r[1][0]["fc_id"]["value"],
+                r[1][0]["d_id"]["value"],
+                r[1][0]["f"]["value"],
+                r[1][0]["fc"]["value"],
+                r[1][0]["d"]["value"],
                 [c["class"]["value"] for c in r[1]],
             )
-    elif feature_uri:
-        r = await sparql_query(
-            f"""PREFIX dcterms: <{DCTERMS}>
-                PREFIX rdf: <{RDF}>
-                PREFIX xsd: <{XSD}>
-                SELECT ?class {{ <{feature_uri}> rdf:type ?class }}"""
-            "SpacePrez",
-        )
-        if r[0]:
-            return feature_id, feature_uri, [c["class"]["value"] for c in r[1]]
+
+    return None, None, None, None, None  # effectively 404 - can't find this thing
 
 
-@alru_cache(maxsize=20)
-async def get_feature_construct(
-    dataset_id: Optional[str] = None,
-    collection_id: Optional[str] = None,
-    feature_id: Optional[str] = None,
-    feature_uri: Optional[str] = None,
-):
-    if feature_id is None and feature_uri is None:
-        raise ValueError("Either an ID or a URI must be provided for a SPARQL query")
-
-    # when querying by ID via regular URL path
-    query_by_id = f"""
-        BIND("{feature_id}"^^xsd:token as ?id)
-        BIND("{dataset_id}"^^xsd:token as ?d_id)
-        BIND("{collection_id}"^^xsd:token as ?coll_id)
-        ?d rdfs:member ?coll .
-        ?coll a geo:FeatureCollection ;
-            dcterms:identifier ?coll_id ;
-            rdfs:member ?f .
-        ?f a geo:Feature ;
-            dcterms:identifier ?id .
-    """
-    # when querying by URI via /object?uri=...
-    query_by_uri = f"""
-        BIND (<{feature_uri}> as ?f)
-        ?f a geo:Feature .
-    """
-
+@lru_cache(maxsize=20)
+def get_feature_construct(feature_uri: Optional[str]):
     q = f"""
         PREFIX dcat: <{DCAT}>
         PREFIX dcterms: <{DCTERMS}>
@@ -425,10 +438,21 @@ async def get_feature_construct(
                 dcterms:title ?d_label .
         }}
         WHERE {{
+            BIND (<{feature_uri}> as ?f)
+            ?f a geo:Feature ;
+               ?p1 ?o1 .
 
-            {query_by_uri if feature_uri is not None else query_by_id}
-            ?coll rdfs:member ?f .
-            ?f ?p1 ?o1 .
+            ?coll
+                a geo:FeatureCollection ;
+                dcterms:identifier ?coll_id ;
+                dcterms:title ?coll_label ;
+                rdfs:member ?f .
+
+            ?d
+                a dcat:Dataset ;
+                dcterms:identifier ?d_id ;
+                dcterms:title ?d_label ;
+                rdfs:member ?coll .
 
             {get_all_bnode_prop_obj_info}
             {get_all_prop_obj_info}
@@ -439,15 +463,9 @@ async def get_feature_construct(
                 ?f rdfs:label ?given_label .
             }}
             BIND(COALESCE(COALESCE(?given_label, ?given_title), CONCAT("Feature ", ?id)) AS ?title)
-            ?coll a geo:FeatureCollection ;
-                dcterms:identifier ?coll_id ;
-                dcterms:title ?coll_label .
-            ?d a dcat:Dataset ;
-                dcterms:identifier ?d_id ;
-                dcterms:title ?d_label .
         }}
     """
-    r = await sparql_construct(q, "SpacePrez")
+    r = sparql_construct_non_async(q, "SpacePrez")
     if r[0]:
         return r[1]
     else:

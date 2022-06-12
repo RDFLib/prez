@@ -11,15 +11,10 @@ from prez.utils import templates
 
 
 class VocPrezCollectionListRenderer(ListRenderer):
-    profiles = {"dcat": dcat, "dd": dd, "alt": alt}
-    default_profile_token = "dcat"
-
     def __init__(
         self,
         request: object,
         instance_uri: str,
-        label: str,
-        comment: str,
         collection_list: VocPrezCollectionList,
         page: int,
         per_page: int,
@@ -27,15 +22,15 @@ class VocPrezCollectionListRenderer(ListRenderer):
     ) -> None:
         super().__init__(
             request,
-            VocPrezCollectionListRenderer.profiles,
-            VocPrezCollectionListRenderer.default_profile_token,
             instance_uri,
             collection_list.members,
-            label,
-            comment,
+            "Collection list",
+            "A list of skos:Collection",
             page,
             per_page,
             member_count,
+            [PREZ.VocPrezCollectionList],
+            PREZ.VocPrezCollectionList,
         )
         self.collection_list = collection_list
 
@@ -48,8 +43,8 @@ class VocPrezCollectionListRenderer(ListRenderer):
             "pages": self.pages,
             "label": self.label,
             "comment": self.comment,
-            "profiles": self.profiles,
-            "default_profile": self.default_profile_token,
+            "profiles": self.profile_details.available_profiles_dict,
+            "default_profile": self.profile_details.default_profile,
             "mediatype_names": MEDIATYPE_NAMES,
         }
         if template_context is not None:

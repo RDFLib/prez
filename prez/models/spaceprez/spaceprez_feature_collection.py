@@ -22,6 +22,7 @@ class SpacePrezFeatureCollection(PrezModel):
         graph: Graph,
         id: Optional[str] = None,
         uri: Optional[str] = None,
+        most_specific_class: Optional[str] = None,
     ) -> None:
         super().__init__(graph)
 

@@ -6,15 +6,15 @@
 
 {% if prezs | length == 1 %}
     {% set breadcrumbs = [
-        {"label": "Datasets", "url": url_for("datasets")},
-        {"label": dataset.title, "url": url_for("dataset", dataset_id=dataset.id)}
+        {"label": "Datasets", "url": url_for("datasets_endpoint")},
+        {"label": dataset.title, "url": url_for("dataset_endpoint", dataset_id=dataset.id)}
     ] %}
     {% set main_active_page = "datasets" %}
 {% else %}
     {% set breadcrumbs = [
-        {"label": "SpacePrez", "url": url_for("spaceprez_home")},
-        {"label": "Datasets", "url": url_for("datasets")},
-        {"label": dataset.title, "url": url_for("dataset", dataset_id=dataset.id)}
+        {"label": "SpacePrez", "url": url_for("spaceprez_home_endpoint")},
+        {"label": "Datasets", "url": url_for("datasets_endpoint")},
+        {"label": dataset.title, "url": url_for("dataset_endpoint", dataset_id=dataset.id)}
     ] %}
 {% endif %}
 
@@ -46,7 +46,7 @@
             <tbody>
                 <tr>
                     <th><a href="http://www.w3.org/2000/01/rdf-schema#member" target="_blank">Members</a></th>
-                    <td><a href="{{ url_for('feature_collections', dataset_id=dataset.id) }}" class="btn">Collections</a></td>
+                    <td><a href="{{ url_for('feature_collections_endpoint', dataset_id=dataset.id) }}" class="btn">Collections</a></td>
                 </tr>
                 {% for prop in dataset.properties %}
                     {{ render_row(prop) }}

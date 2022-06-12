@@ -6,18 +6,12 @@ from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from prez.config import *
 from prez.renderers import Renderer
 from prez.utils import templates
+from starlette.requests import Request
 
 
 class SpacePrezHomeRenderer(Renderer):
-    def __init__(
-        self, request: object, profiles, default_profile, instance_uri: str
-    ) -> None:
-        super().__init__(
-            request,
-            profiles,
-            default_profile,
-            instance_uri,
-        )
+    def __init__(self, request: Request) -> None:
+        super().__init__(request, PREZ.Home, PREZ.Home, PREZ.Home)
 
     def _render_oai_html(
         self, template_context: Union[Dict, None]
@@ -26,8 +20,8 @@ class SpacePrezHomeRenderer(Renderer):
         _template_context = {
             "request": self.request,
             "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
-            "profiles": self.profiles,
-            "default_profile": self.default_profile_token,
+            "profiles": self.profile_details.available_profiles_dict,
+            "default_profile": self.profile_details.default_profile,
             "mediatype_names": dict(
                 MEDIATYPE_NAMES, **{"application/geo+json": "GeoJSON"}
             ),
@@ -71,7 +65,7 @@ class SpacePrezHomeRenderer(Renderer):
                     "title": "Conformance",
                 },
                 {
-                    "href": self.request.url_for("datasets"),
+                    "href": self.request.url_for("datasets_endpoint"),
                     "rel": "data",
                     "type": self.mediatype,
                     "title": "Datasets",

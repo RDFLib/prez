@@ -1,6 +1,6 @@
 <nav id="sub-nav">
-    <a href="{{ url_for('schemes') }}" class="sub-nav-item{% if sub_active_page == 'vocabs' %} active{% endif %}">Vocabs</a>
-    <a href="{{ url_for('collections') }}" class="sub-nav-item{% if sub_active_page == 'collections' %} active{% endif %}">Collections</a>
+    <a href="{{ url_for('schemes_endpoint') }}" class="sub-nav-item{% if sub_active_page == 'vocabs' %} active{% endif %}">Vocabs</a>
+    <a href="{{ url_for('collections_endpoint') }}" class="sub-nav-item{% if sub_active_page == 'collections' %} active{% endif %}">Collections</a>
     <a href="{{ url_for('vocprez_profiles') }}" class="sub-nav-item{% if sub_active_page == 'profiles' %} active{% endif %}">Profiles</a>
     <a href="{{ url_for('vocprez_about') }}" class="sub-nav-item{% if sub_active_page == 'about' %} active{% endif %}">About</a>
 </nav>

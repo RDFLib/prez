@@ -2,21 +2,25 @@ import logging
 from pathlib import Path
 from typing import Optional, Union
 
+from functools import lru_cache
+
 from async_lru import alru_cache
 from rdflib import Graph, DCTERMS, SKOS, URIRef, Literal, BNode, SH
-from rdflib.namespace import RDF, PROF, Namespace, RDFS
+from rdflib.namespace import RDF, PROF, Namespace, RDFS, OWL
 from connegp import Profile
 
 from prez.config import ENABLED_PREZS
 from prez.services.sparql_utils import (
     sparql_construct,
+    sparql_construct_non_async,
     sparql_query,
     sparql_query_multiple,
+    sparql_query_multiple_non_async,
 )
 
 
-@alru_cache(maxsize=20)
-async def create_profiles_graph() -> Graph:
+@lru_cache(maxsize=20)
+def create_profiles_graph() -> Graph:
     profiles_g = Graph()
     for f in Path(__file__).parent.glob("*.ttl"):
         profiles_g.parse(f)
@@ -42,7 +46,7 @@ async def create_profiles_graph() -> Graph:
         """
 
     for p in ENABLED_PREZS:
-        r = await sparql_construct(remote_profiles_query, p)
+        r = sparql_construct_non_async(remote_profiles_query, p)
         if r[0]:
             profiles_g += r[1]
             logging.info(f"Also using remote profiles for {p}")
@@ -51,51 +55,44 @@ async def create_profiles_graph() -> Graph:
 
 
 class ProfileDetails:
-    def __init__(self, general_class, item_uri):
-        self.general_class = general_class
-        self.item_uri = item_uri
-        self.profiles_g = Graph()
-        self.preferred_classes_and_profiles = {}
-        self.profiles_dict = {}
-        self.profiles_formats = {}
+    def __init__(self, instance_uri, instance_classes: list, general_class):
         self.available_profiles_dict = {}
-        self.default_profile = None
-
-    async def get_all_profiles(self, prez: Optional[str] = None):
 
         # get general profiles
         (
-            profiles_g,
-            preferred_classes_and_profiles,
-            profiles_dict,
-            profiles_formats,
-        ) = await get_general_profiles(self.general_class)
+            self.profiles_g,
+            self.preferred_classes_and_profiles,
+            self.profiles_dict,
+            self.profiles_formats,
+        ) = get_general_profiles(general_class)
 
         # get profiles specific to the given class, and the default profile
         (
-            available_profiles,
-            default_profile,
-        ) = await get_class_based_and_default_profiles(
-            self.item_uri, preferred_classes_and_profiles, prez
+            self.available_profiles,
+            self.default_profile,
+        ) = get_class_based_and_default_profiles(
+            instance_uri, self.preferred_classes_and_profiles
         )
 
         # slice the total set of profiles by those available for the given class
-        available_profiles_dict = {
+        self.available_profiles_dict = {
             k: v
-            for k, v in profiles_dict.items()
-            if k in tuple([i[1] for i in available_profiles]) + tuple(["alt"])
+            for k, v in self.profiles_dict.items()
+            if k in tuple([i[1] for i in self.available_profiles]) + tuple(["alt"])
         }
 
-        self.profiles_g = profiles_g
-        self.preferred_classes_and_profiles = preferred_classes_and_profiles
-        self.profiles_dict = profiles_dict
-        self.profiles_formats = profiles_formats
-        self.available_profiles_dict = available_profiles_dict
-        self.default_profile = default_profile
+        self.most_specific_class = None
+        # find the most specific class for the feature
+        for klass, _, distance in self.preferred_classes_and_profiles:
+            if klass in instance_classes:
+                self.most_specific_class = klass
+                break
+        if self.most_specific_class is None:
+            self.most_specific_class = OWL.Class
 
 
-@alru_cache(maxsize=20)
-async def get_general_profiles(general_class):
+@lru_cache(maxsize=20)
+def get_general_profiles(general_class):
     """
     Combines
     1. profiles defined in data (in the triplestore), and
@@ -125,7 +122,7 @@ async def get_general_profiles(general_class):
     preferred_classes_and_profiles = []
 
     # ordered list of feature classes and associated preferred profiles
-    profiles_g = await create_profiles_graph()
+    profiles_g = create_profiles_graph()
 
     # check for hardcoded API default profiles
     ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
@@ -134,7 +131,7 @@ async def get_general_profiles(general_class):
         predicate=ALTREXT.hasNodeShape,
     )
     class_default_profiles = []
-    # if default_profile_nodeshapes:
+
     for nodeshape_bn in default_profile_nodeshapes:
         classes_with_default = profiles_g.value(
             subject=nodeshape_bn, predicate=SH.targetClass
@@ -209,26 +206,16 @@ async def get_general_profiles(general_class):
     )
 
 
-@alru_cache(maxsize=20)
-async def get_class_based_and_default_profiles(
-    item_uri, preferred_classes_and_profiles, prez: Union[str, None]
-):
+@lru_cache(maxsize=20)
+def get_class_based_and_default_profiles(instance_uri, preferred_classes_and_profiles):
     # retrieve the classes
-    r = await sparql_query_multiple(
-        f"""PREFIX dcterms: <{DCTERMS}>
-    SELECT ?class {{ <{item_uri}> a ?class }}""",
-        prezs=[prez] if prez is not None else ENABLED_PREZS,
+    r = sparql_query_multiple_non_async(
+        f"""SELECT ?class {{ <{instance_uri}> a ?class }}"""
     )
-    """
-        if r[0] and r[1]:
-        objects_classes = [i["class"]["value"] for i in r[1]]"""
-
     objects_classes = []
     if r[0] and not r[1]:
         for result in r[0]:
             objects_classes.append(result["class"]["value"])
-        # class information is available, check which classes we have profiles for
-        #     objects_classes = [i["class"]["value"] for i in results[1]]
     else:
         # check for Prez API configured default profiles
         default_profile = preferred_classes_and_profiles[0][1]
@@ -289,8 +276,8 @@ async def build_alt_graph(object_of_interest, profiles_formats, available_profil
     return alt_rep
 
 
-@alru_cache(maxsize=20)
-async def retrieve_relevant_shapes(profile_g, profile, most_specific_class):
+@lru_cache(maxsize=20)
+def retrieve_relevant_shapes(profile_g, profile, most_specific_class):
     query = f"""PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
                 PREFIX sh: <http://www.w3.org/ns/shacl#>
                 CONSTRUCT {{ ?nodeshape_bn sh:property ?pbn ;

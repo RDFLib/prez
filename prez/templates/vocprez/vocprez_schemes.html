@@ -6,13 +6,13 @@
 
 {% if prezs | length == 1 %}
     {% set breadcrumbs = [
-        {"label": "Vocabs", "url": url_for("schemes")}
+        {"label": "Vocabs", "url": url_for("schemes_endpoint")}
     ] %}
     {% set main_active_page = "vocabs" %}
 {% else %}
     {% set breadcrumbs = [
-        {"label": "VocPrez", "url": url_for("vocprez_home")},
-        {"label": "Vocabs", "url": url_for("schemes")}
+        {"label": "VocPrez", "url": url_for("vocprez_home_endpoint")},
+        {"label": "Vocabs", "url": url_for("schemes_endpoint")}
     ] %}
 {% endif %}
 

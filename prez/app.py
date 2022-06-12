@@ -101,29 +101,15 @@ async def app_startup():
     are available. Initial caching can be triggered within the try block. NB this function does not check that data is
     appropriately configured at the SPARQL endpoint(s), only that the SPARQL endpoint(s) are reachable.
     """
-    if "SpacePrez" in ENABLED_PREZS:
-        while True:
-            url = urlparse(SPACEPREZ_SPARQL_ENDPOINT)
-            try:
-                url_to_try = f"{url[0]}://{url[1]}"
-                httpx.get(url_to_try)
-                await get_general_profiles(DCAT.Dataset)
-                await get_general_profiles(GEO.FeatureCollection)
-                await get_general_profiles(GEO.Feature)
-                print(f"Successfully connected to SpacePrez endpoint {url_to_try}")
-                break
-            except Exception as e:
-                print(
-                    f"Failed to connect to SpacePrez endpoint {SPACEPREZ_SPARQL_ENDPOINT}"
-                )
-                print("retrying in 3 seconds...")
-                time.sleep(3)
-
     if "VocPrez" in ENABLED_PREZS:
         while True:
             url = urlparse(VOCPREZ_SPARQL_ENDPOINT)
             try:
                 httpx.get(f"{url[0]}://{url[1]}")
+                get_general_profiles(DCAT.Dataset),
+                get_general_profiles(SKOS.ConceptScheme)
+                get_general_profiles(SKOS.Collection)
+                get_general_profiles(SKOS.Concept)
                 print(
                     f"Successfully connected to VocPrez endpoint {VOCPREZ_SPARQL_ENDPOINT}"
                 )
@@ -135,34 +121,21 @@ async def app_startup():
                 print("retrying in 3 seconds...")
                 time.sleep(3)
 
-    if "TimePrez" in ENABLED_PREZS:
+    if "SpacePrez" in ENABLED_PREZS:
         while True:
-            url = urlparse(TIMEPREZ_SPARQL_ENDPOINT)
+            url = urlparse(SPACEPREZ_SPARQL_ENDPOINT)
             try:
-                httpx.get(f"{url[0]}://{url[1]}")
-                print(
-                    f"Successfully connected to TimePrez endpoint {TIMEPREZ_SPARQL_ENDPOINT}"
-                )
+                url_to_try = f"{url[0]}://{url[1]}"
+                httpx.get(url_to_try)
+                # TODO: David to check for any more general classes
+                get_general_profiles(DCAT.Dataset)
+                get_general_profiles(GEO.FeatureCollection)
+                get_general_profiles(GEO.Feature)
+                print(f"Successfully connected to SpacePrez endpoint {url_to_try}")
                 break
-            except Exception:
+            except Exception as e:
                 print(
-                    f"Failed to connect to TimePrez endpoint {TIMEPREZ_SPARQL_ENDPOINT}"
-                )
-                print("retrying in 3 seconds...")
-                time.sleep(3)
-
-    if "CatPrez" in ENABLED_PREZS:
-        while True:
-            url = urlparse(CATPREZ_SPARQL_ENDPOINT)
-            try:
-                httpx.get(f"{url[0]}://{url[1]}")
-                print(
-                    f"Successfully connected to CatPrez endpoint {CATPREZ_SPARQL_ENDPOINT}"
-                )
-                break
-            except Exception:
-                print(
-                    f"Failed to connect to CatPrez endpoint {CATPREZ_SPARQL_ENDPOINT}"
+                    f"Failed to connect to SpacePrez endpoint {SPACEPREZ_SPARQL_ENDPOINT}"
                 )
                 print("retrying in 3 seconds...")
                 time.sleep(3)
@@ -182,7 +155,7 @@ async def index(request: Request):
         if ENABLED_PREZS[0] == "VocPrez":
             return await vocprez_router.home(request)
         elif ENABLED_PREZS[0] == "SpacePrez":
-            return await spaceprez_router.home(request)
+            return await spaceprez_router.spaceprez_home_endpoint(request)
     else:
         template_context = {"request": request, "enabled_prezs": ENABLED_PREZS}
         return templates.TemplateResponse("index.html", context=template_context)
@@ -327,7 +300,7 @@ async def about(request: Request):
         if ENABLED_PREZS[0] == "VocPrez":
             return await vocprez_router.about(request)
         elif ENABLED_PREZS[0] == "SpacePrez":
-            return await spaceprez_router.about(request)
+            return await spaceprez_router.spaceprez_about(request)
     else:
         template_context = {"request": request}
         return templates.TemplateResponse("about.html", context=template_context)
@@ -387,29 +360,29 @@ async def object(
         if object_type == SKOS.ConceptScheme:
             if "VocPrez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
-            return await vocprez_router.scheme_endpoint(request, scheme_uri=uri)
+            return await vocprez_router.scheme(request, scheme_uri=uri)
         elif object_type == SKOS.Collection:
             if "VocPrez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
-            return await vocprez_router.collection_endpoint(request, collection_uri=uri)
+            return await vocprez_router.collection(request, collection_uri=uri)
         elif object_type == SKOS.Concept:
             if "VocPrez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
-            return await vocprez_router.concept_endpoint(request, concept_uri=uri)
+            return await vocprez_router.concept(request, concept_uri=uri)
         elif object_type == DCAT.Dataset:
             if "SpacePrez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
-            return await spaceprez_router.dataset_endpoint(request, dataset_uri=uri)
+            return await spaceprez_router.dataset(request, dataset_uri=uri)
         elif object_type == GEO.FeatureCollection:
             if "SpacePrez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
-            return await spaceprez_router.feature_collection_endpoint(
+            return await spaceprez_router.feature_collection(
                 request, collection_uri=uri
             )
         elif object_type == GEO.Feature:
             if "SpacePrez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
-            return await spaceprez_router.feature_endpoint(request, feature_uri=uri)
+            return await spaceprez_router.feature(request, feature_uri=uri)
         # else:
     raise HTTPException(status_code=404, detail="Not Found")
 

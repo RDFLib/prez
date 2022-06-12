@@ -43,9 +43,7 @@ async def count_collections():
     q = f"""
         PREFIX skos: <{SKOS}>
         SELECT (COUNT(?coll) as ?count)
-        WHERE {{
-            ?coll a skos:Collection .
-        }}
+        WHERE {{ ?coll a skos:Collection . }}
     """
     r = await sparql_query(q, "VocPrez")
     if r[0]:
@@ -201,12 +199,13 @@ async def get_concept_construct(
     if concept_uri is None:
         if concept_id is None or scheme_id is None:
             raise ValueError(
-                "Either a Concept Scheme ID and a Concept ID or a Concept URI must be provided for a SPARQL query")
+                "Either a Concept Scheme ID and a Concept ID or a Concept URI must be provided for a SPARQL query"
+            )
 
     # when querying by ID via regular URL path
     query_by_id = f"""
         ?cs dcterms:identifier "{scheme_id}"^^xsd:token .
-        
+
         ?c dcterms:identifier "{concept_id}"^^xsd:token ;
             skos:inScheme ?cs .
         """
@@ -248,7 +247,7 @@ async def get_concept_construct(
         PREFIX rdfs: <{RDFS}>
         PREFIX skos: <{SKOS}>
         PREFIX xsd: <{XSD}>
-        
+
         CONSTRUCT {{
             ?c ?p1 ?o1 ;
                 skos:broader ?broader ;
@@ -311,6 +310,81 @@ async def get_dataset_construct():
         return r[1]
     else:
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
+
+
+def get_scheme_or_collection_uri(
+    scheme_or_collection: str,
+    id: str = None,
+    uri: URIRef = None,
+):
+    assert scheme_or_collection in ["ConceptScheme", "Collection"]
+    if uri is not None:
+        r = sparql_query_non_async(
+            f"""
+            PREFIX dcterms: <{DCTERMS}>
+            PREFIX xsd: <{XSD}>
+            SELECT ?uri ?id
+            {{ <{uri}> dcterms:identifier ?id^^xsd:token .
+            OPTIONAL {{ }}
+            }} """,
+            "VocPrez",
+        )
+        if r[0]:
+            id = r[1][0].get("id")["value"]
+    elif id is not None:
+        r = sparql_query_non_async(
+            f"""
+            PREFIX dcterms: <{DCTERMS}>
+            PREFIX xsd: <{XSD}>
+            PREFIX skos: <{SKOS}>
+            SELECT ?uri ?id ?concept
+            {{ ?uri dcterms:identifier "{id}"^^xsd:token ;
+                    a skos:{scheme_or_collection}
+                    }} """,
+            "VocPrez",
+        )
+        if r[0]:
+            uri = r[1][0].get("uri")["value"]
+    return id, uri
+
+
+def get_concept_and_scheme_uri(
+    scheme_id: str = None,
+    concept_id: str = None,
+    concept_uri: URIRef = None,
+):
+    if concept_uri is not None:
+        r = sparql_query_non_async(
+            f"""
+            PREFIX dcterms: <{DCTERMS}>
+            PREFIX xsd: <{XSD}>
+            SELECT ?concept_id scheme_id
+            {{ <{concept_uri}> dcterms:identifier ?concept_id^^xsd:token ;
+                    a skos:Concept ;
+                    skos:inScheme / dcterms:identifier ?scheme_id .
+            OPTIONAL {{ }}
+            }} """,
+            "VocPrez",
+        )
+        if r[0]:
+            concept_id = r[1][0].get("concept_id")["value"]
+            scheme_id = r[1][0].get("scheme_id")["value"]
+    elif concept_id is not None:
+        r = sparql_query_non_async(
+            f"""
+            PREFIX dcterms: <{DCTERMS}>
+            PREFIX xsd: <{XSD}>
+            PREFIX skos: <{SKOS}>
+            SELECT ?uri
+            {{ ?uri dcterms:identifier "{concept_id}"^^xsd:token ;
+                    a skos:Concept ;
+                    skos:inScheme / dcterms:identifier "{scheme_id}"^^xsd:token .
+                    }} """,
+            "VocPrez",
+        )
+        if r[0]:
+            concept_uri = r[1][0].get("uri")["value"]
+    return scheme_id, concept_id, concept_uri
 
 
 async def get_collection_construct1(

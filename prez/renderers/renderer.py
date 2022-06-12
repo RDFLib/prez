@@ -1,10 +1,12 @@
 from abc import ABCMeta, abstractmethod
 from typing import Dict, Optional, Union
 
-from connegp import Connegp, Profile, RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
+from connegp import Connegp, RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
+from rdflib import URIRef
 
 from prez.config import *
+from prez.profiles.generate_profiles import ProfileDetails
 from prez.utils import templates
 
 
@@ -14,26 +16,24 @@ class Renderer(object, metaclass=ABCMeta):
     def __init__(
         self,
         request: object,
-        profiles: Dict[str, Profile],
-        default_profile_token: str,
         instance_uri: str,
+        instance_classes,
+        general_class: URIRef = OWL.Class,
     ) -> None:
         self.error = None
-        # if default_profile_token == "alt":
-        #     self.error = "You cannot specify 'alt' as the default profile."
-
-        if default_profile_token not in profiles.keys():
-            self.error = (
-                f"The profile token you specified ({default_profile_token}) for the default profile "
-                "is not in the list of profiles you supplied ({profiles})"
-            )
-
-        self.profiles = dict(profiles)
         self.request = request
-        self.default_profile_token = default_profile_token
         self.instance_uri = instance_uri
+        self.instance_classes = instance_classes
+        self.general_class = general_class
+        self.profile_details = ProfileDetails(
+            self.instance_uri, self.instance_classes, self.general_class
+        )
 
-        connegp = Connegp(request, self.profiles, default_profile_token)
+        connegp = Connegp(
+            request,
+            self.profile_details.available_profiles_dict,
+            self.profile_details.default_profile,
+        )
         self.profile = connegp.profile
         self.mediatype = connegp.mediatype
         self.profiles_requested = connegp.profiles_requested
@@ -42,7 +42,7 @@ class Renderer(object, metaclass=ABCMeta):
         # make headers
         if self.error is None:
             self.headers = {
-                "Link": f'<{self.profiles[self.profile].uri}>; rel="profile"',
+                "Link": f'<{self.profile_details.profiles_dict[self.profile].uri}>; rel="profile"',
                 "Content-Type": self.mediatype,
                 "Access-Control-Allow-Origin": "*",
             }
@@ -54,7 +54,7 @@ class Renderer(object, metaclass=ABCMeta):
         individual_links = []
         link_header_template = '<http://www.w3.org/ns/dx/prof/Profile>; rel="type"; token="{}"; anchor=<{}>, '
 
-        for token, profile in self.profiles.items():
+        for token, profile in self.profile_details.profiles_dict.items():
             individual_links.append(link_header_template.format(token, profile.uri))
 
         return "".join(individual_links).rstrip(", ")
@@ -62,14 +62,17 @@ class Renderer(object, metaclass=ABCMeta):
     def _make_header_link_list_profiles(self) -> str:
         """Creates the Link header URIs for each possible profile representation"""
         individual_links = []
-        for token, profile in self.profiles.items():
+        for token, profile in self.profile_details.profiles_dict.items():
             # create an individual Link statement per Media Type
             for mediatype in profile.mediatypes:
                 # set the rel="self" just for this profile & mediatype
                 if mediatype != "_internal":
                     if (
-                        token == self.default_profile_token
-                        and mediatype == self.profiles[self.profile].default_mediatype
+                        token == self.profile_details.default_profile
+                        and mediatype
+                        == self.profile_details.profiles_dict[
+                            self.profile
+                        ].default_mediatype
                     ):
                         rel = "self"
                     else:
@@ -88,52 +91,6 @@ class Renderer(object, metaclass=ABCMeta):
 
         # append to, or create, Link header
         return "".join(individual_links).rstrip(", ")
-
-    def _generate_alt_rdf(self) -> Graph:
-        """Creates a graph of the alternate profiles"""
-        # Alt R Data Model as per https://www.w3.org/TR/dx-prof-conneg/#altr
-        g = Graph()
-        ALTR = Namespace("http://www.w3.org/ns/dx/conneg/altr#")
-        g.bind("altr", ALTR)
-        g.bind("dct", DCTERMS)
-        g.bind("prof", PROF)
-
-        instance_uri = URIRef(self.instance_uri)
-
-        # for each Profile, lis it via its URI and give annotations
-        for token, p in self.profiles.items():
-            profile_uri = URIRef(p.uri)
-            g.add((profile_uri, RDF.type, PROF.Profile))
-            g.add((profile_uri, RDFS.label, Literal(p.label, datatype=XSD.string)))
-            g.add((profile_uri, RDFS.comment, Literal(p.comment, datatype=XSD.string)))
-
-        # for each Profile and Media Type, create a Representation
-        for token, p in self.profiles.items():
-            for mt in p.mediatypes:
-                rep = BNode()
-                g.add((rep, RDF.type, ALTR.Representation))
-                g.add((rep, DCTERMS.conformsTo, URIRef(p.uri)))
-                g.add((rep, URIRef(DCTERMS + "format"), Literal(mt)))
-                g.add((rep, PROF.hasToken, Literal(token, datatype=XSD.token)))
-
-                # if this is the default format for the Profile, say so
-                if mt == p.default_mediatype:
-                    g.add(
-                        (
-                            rep,
-                            ALTR.isProfilesDefault,
-                            Literal(True, datatype=XSD.boolean),
-                        )
-                    )
-
-                # link this representation to the instances
-                g.add((instance_uri, ALTR.hasRepresentation, rep))
-
-                # if this is the default Profile and the default Media Type, set it as the instance's default Rep
-                if token == self.default_profile_token and mt == p.default_mediatype:
-                    g.add((instance_uri, ALTR.hasDefaultRepresentation, rep))
-
-        return g
 
     def _make_rdf_response(self, item_uri, graph: Graph) -> Response:
         """Creates an RDF response from a Graph"""
@@ -194,8 +151,8 @@ class Renderer(object, metaclass=ABCMeta):
         _template_context = {
             "request": self.request,
             "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
-            "profiles": self.profiles,
-            "default_profile": self.profiles.get(self.default_profile_token),
+            "profiles": self.profile_details.available_profiles_dict,
+            "default_profile": self.profile_details.default_profile,
         }
         if template_context is not None:
             _template_context.update(template_context)
@@ -208,8 +165,8 @@ class Renderer(object, metaclass=ABCMeta):
         return JSONResponse(
             content={
                 "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
-                "profiles": list(self.profiles.keys()),
-                "default_profile": self.default_profile_token,
+                "profiles": list(self.profile_details.available_profiles_dict.keys()),
+                "default_profile": self.profile_details.default_profile,
             },
             media_type="application/json",
             headers=self.headers,

@@ -6,13 +6,13 @@
 
 {% if prezs | length == 1 %}
     {% set breadcrumbs = [
-        {"label": "Datasets", "url": url_for("datasets")}
+        {"label": "Datasets", "url": url_for("datasets_endpoint")}
     ] %}
     {% set main_active_page = "datasets" %}
 {% else %}
     {% set breadcrumbs = [
-        {"label": "SpacePrez", "url": url_for("spaceprez_home")},
-        {"label": "Datasets", "url": url_for("datasets")}
+        {"label": "SpacePrez", "url": url_for("spaceprez_home_endpoint")},
+        {"label": "Datasets", "url": url_for("datasets_endpoint")}
     ] %}
 {% endif %}
 

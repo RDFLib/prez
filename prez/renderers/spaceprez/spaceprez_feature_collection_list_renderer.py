@@ -1,7 +1,7 @@
 from typing import Dict, Optional, Union
 
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from connegp import MEDIATYPE_NAMES
+from connegp import MEDIATYPE_NAMES, RDF_MEDIATYPES
 
 from prez.renderers import ListRenderer
 from prez.config import *
@@ -9,34 +9,32 @@ from prez.config import *
 from prez.models.spaceprez import SpacePrezFeatureCollectionList
 from prez.utils import templates
 
+PREZ = Namespace("https://surroundaustralia.com/prez/")
+
 
 class SpacePrezFeatureCollectionListRenderer(ListRenderer):
     def __init__(
         self,
         request: object,
-        profiles: dict,
-        default_profile: str,
         instance_uri: str,
-        label: str,
-        comment: str,
-        feature_collection_list: SpacePrezFeatureCollectionList,
         page: int,
         per_page: int,
         member_count: int,
+        feature_collection_list: SpacePrezFeatureCollectionList,
     ) -> None:
-        super().__init__(
-            request,
-            profiles,
-            default_profile,
-            instance_uri,
-            feature_collection_list.members,
-            label,
-            comment,
-            page,
-            per_page,
-            member_count,
-        )
         self.feature_collection_list = feature_collection_list
+        super().__init__(
+            request=request,
+            instance_uri=instance_uri,
+            members=feature_collection_list.members,
+            label="FeatureCollection list",
+            comment="A list of geo:FeatureCollections",
+            page=page,
+            per_page=per_page,
+            member_count=member_count,
+            instance_classes=[PREZ.FeatureCollectionList],
+            general_class=PREZ.FeatureCollectionList,
+        )
 
     def _render_oai_html(self, template_context: Union[Dict, None]):
         """Renders the HTML representation of the OAI profile for a list of feature collections"""
@@ -48,8 +46,8 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
             "pages": self.pages,
             "label": self.label,
             "comment": self.comment,
-            "profiles": self.profiles,
-            "default_profile": self.default_profile_token,
+            "profiles": self.profile_details.available_profiles_dict,
+            "default_profile": self.profile_details.default_profile,
             "mediatype_names": dict(
                 MEDIATYPE_NAMES, **{"application/geo+json": "GeoJSON"}
             ),
@@ -74,7 +72,7 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
                     "links": [
                         {
                             "href": self.request.url_for(
-                                "features",
+                                "features_endpoint",
                                 dataset_id=self.feature_collection_list.dataset["id"],
                                 collection_id=member["id"],
                             ),
@@ -212,8 +210,8 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
             return PlainTextResponse(self.error, status_code=400)
         elif self.profile == "mem":
             return self._render_mem(template_context)
-        elif self.profile == "alt":
-            return self._render_alt(template_context, alt_profiles_graph)
+        # elif self.profile == "alt":
+        #     return self._render_alt(template_context, alt_profiles_graph)
         elif self.profile == "oai":
             return self._render_oai(template_context)
         elif self.profile == "geo":

@@ -4,7 +4,7 @@
 <div id="content-col-main">
     <h1>{{ label }}</h1>
     <p>{{ comment }}</p>
-    <p>Instance URI: <a href="{{ uri }}">{{ uri }}</a></p>
+{#    <p>Instance URI: <a href="{{ uri }}">{{ uri }}</a></p>#}
     <ul>
         {% for member in members %}
             <li><a href="{{ member.uri }}">{{ member.title }}</a></li>

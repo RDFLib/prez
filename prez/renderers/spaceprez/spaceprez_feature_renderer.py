@@ -6,23 +6,34 @@ from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from prez.config import *
 from prez.models.spaceprez import SpacePrezFeature
 from prez.renderers import Renderer
+from prez.services.spaceprez_service import get_object_uri_and_classes
 from prez.utils import templates
+from starlette.requests import Request
 
 
 class SpacePrezFeatureRenderer(Renderer):
     def __init__(
         self,
-        request: object,
-        instance_uri: str,
-        available_profiles: dict,
-        default_profile: str,
+        request: Request,
     ) -> None:
-        super().__init__(
-            request,
-            available_profiles,
-            default_profile,
-            instance_uri,
+        (
+            self.feature_id,
+            self.collection_id,
+            self.dataset_id,
+            self.instance_uri,
+            _,  # collection_uri
+            _,  # dataset_uri
+            self.feature_classes,
+        ) = get_object_uri_and_classes(
+            request.path_params.get("feature_id"),
+            request.path_params.get("collection_id"),
+            request.path_params.get("dataset_id"),
+            request.query_params.get("feature_uri"),
+            None,  # collection_uri
+            None,  # dataset_uri
         )
+
+        super().__init__(request, self.instance_uri, self.feature_classes, GEO.Feature)
 
     def set_feature(self, feature: SpacePrezFeature) -> None:
         self.feature = feature
@@ -35,8 +46,8 @@ class SpacePrezFeatureRenderer(Renderer):
             "request": self.request,
             "feature": self.feature.to_dict(),
             "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
-            "profiles": self.profiles,
-            "default_profile": self.default_profile_token,
+            "profiles": self.profile_details.available_profiles_dict,
+            "default_profile": self.profile_details.default_profile,
             "mediatype_names": dict(
                 MEDIATYPE_NAMES, **{"application/geo+json": "GeoJSON"}
             ),
@@ -69,9 +80,9 @@ class SpacePrezFeatureRenderer(Renderer):
             },
             {
                 "href": self.request.url_for(
-                    "feature_collection",
-                    dataset_id=self.feature.dataset["id"],
-                    collection_id=self.feature.collection["id"],
+                    "feature_collection_endpoint",
+                    dataset_id=self.dataset_id,
+                    collection_id=self.collection_id,
                 ),
                 "rel": "collection",
                 "type": "text/html",

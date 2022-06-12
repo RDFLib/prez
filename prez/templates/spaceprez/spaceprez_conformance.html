@@ -9,7 +9,7 @@
     {% set main_active_page = "conformance" %}
 {% else %}
     {% set breadcrumbs = [
-        {"label": "SpacePrez", "url": url_for("spaceprez_home")},
+        {"label": "SpacePrez", "url": url_for("spaceprez_home_endpoint")},
         {"label": "Conformance", "url": url_for("conformance")}
     ] %}
 {% endif %}
