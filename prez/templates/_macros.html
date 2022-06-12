@@ -182,7 +182,7 @@
         {% if concept_props.narrower %}
             <button class="concept-collapse-btn"><i class="far fa-plus"></i></button>
         {% endif %}
-        <a href="{{ url_for('concept', scheme_id=scheme_id, concept_id=concept_props.id) }}">{{ concept_props.label }}</a>
+        <a href="{{ url_for('concept_endpoint', scheme_id=scheme_id, concept_id=concept_props.id) }}">{{ concept_props.label }}</a>
     </li>
     {% if concept_props.narrower %}
         <ol class="narrower">
@@ -194,7 +194,7 @@
 {% endmacro %}
 
 {% macro render_concept_list(concept) %}
-    <a href="{{ url_for('concept', scheme_id=concept.scheme_id, concept_id=concept.id) }}">{{ concept.label }}</a>
+    <a href="{{ url_for('concept_endpoint', scheme_id=concept.scheme_id, concept_id=concept.id) }}">{{ concept.label }}</a>
     <br/>
 {% endmacro %}
 
@@ -218,7 +218,7 @@
             <div>
                 <a class="search-result-vocab" href="{{ base_url }}/object?uri={{ result.g.value }}"{% if not is_self %} target="_blank"{% endif %}>Vocab</a>
             </div>
-            <div class="search-result-desc">desc</div>    
+            <div class="search-result-desc">desc</div>
         </div>
     </div>
 {% endmacro %}

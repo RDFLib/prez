@@ -8,28 +8,33 @@ from prez.renderers import Renderer
 from prez.profiles.vocprez_profiles import skos, vocpub, vocpub_supplied, dd, alt
 from prez.models.vocprez import VocPrezCollection
 from prez.utils import templates
+from services.vocprez_service import get_scheme_or_collection_uri
 
 
 class VocPrezCollectionRenderer(Renderer):
-    profiles = {
-        "vocpub": vocpub,
-        "skos": skos,
-        "dd": dd,
-        "vocpub_supplied": vocpub_supplied,
-        "alt": alt,
-    }
-    default_profile_token = "vocpub"
+    # profiles = {
+    #     "vocpub": vocpub,
+    #     "skos": skos,
+    #     "dd": dd,
+    #     "vocpub_supplied": vocpub_supplied,
+    #     "alt": alt,
+    # }
+    # default_profile_token = "vocpub"
 
     def __init__(
         self,
         request: object,
-        instance_uri: str,
     ) -> None:
+        (self.collection_id, self.collection_uri) = get_scheme_or_collection_uri(
+            "Collection",
+            request.path_params.get("scheme_id"),
+            request.path_params.get("scheme_uri"),
+        )
         super().__init__(
             request,
-            VocPrezCollectionRenderer.profiles,
-            VocPrezCollectionRenderer.default_profile_token,
-            instance_uri,
+            self.collection_uri,
+            SKOS.Collection,
+            SKOS.Collection,
         )
 
     def set_collection(self, collection: VocPrezCollection) -> None:
@@ -75,8 +80,8 @@ class VocPrezCollectionRenderer(Renderer):
             "request": self.request,
             "collection": self.collection.to_dict(),
             "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
-            "profiles": self.profiles,
-            "default_profile": self.default_profile_token,
+            "profiles": self.profile_details.available_profiles_dict,
+            "default_profile": self.profile_details.default_profile,
             "mediatype_names": MEDIATYPE_NAMES,
         }
         if template_context is not None:

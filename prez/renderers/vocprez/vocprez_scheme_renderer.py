@@ -8,24 +8,16 @@ from prez.renderers import Renderer
 from prez.profiles.vocprez_profiles import skos, vocpub, vocpub_supplied, dd, alt
 from prez.models.vocprez import VocPrezScheme
 from prez.utils import templates
-from services.vocprez_service import get_scheme_uri
+from services.vocprez_service import get_scheme_or_collection_uri
 
 
 class VocPrezSchemeRenderer(Renderer):
-    profiles = {
-        "vocpub": vocpub,
-        "skos": skos,
-        "dd": dd,
-        "vocpub_supplied": vocpub_supplied,
-        "alt": alt,
-    }
-    default_profile_token = "vocpub"
-
     def __init__(
         self,
         request: object,
     ) -> None:
-        (self.scheme_id, self.scheme_uri) = get_scheme_uri(
+        (self.scheme_id, self.scheme_uri) = get_scheme_or_collection_uri(
+            "ConceptScheme",
             request.path_params.get("scheme_id"),
             request.path_params.get("scheme_uri"),
         )
@@ -168,9 +160,9 @@ class VocPrezSchemeRenderer(Renderer):
         _template_context = {
             "request": self.request,
             "scheme": self.scheme.to_dict(),
-            "uri": self.instance_uri if True else str(self.request.url),
-            "profiles": self.profiles,
-            "default_profile": self.default_profile_token,
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
+            "profiles": self.profile_details.available_profiles_dict,
+            "default_profile": self.profile_details.default_profile,
             "mediatype_names": MEDIATYPE_NAMES,
         }
         if template_context is not None:

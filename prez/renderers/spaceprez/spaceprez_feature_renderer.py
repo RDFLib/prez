@@ -80,7 +80,7 @@ class SpacePrezFeatureRenderer(Renderer):
             },
             {
                 "href": self.request.url_for(
-                    "feature_collection",
+                    "feature_collection_endpoint",
                     dataset_id=self.dataset_id,
                     collection_id=self.collection_id,
                 ),

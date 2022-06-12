@@ -72,7 +72,7 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
                     "links": [
                         {
                             "href": self.request.url_for(
-                                "features",
+                                "features_endpoint",
                                 dataset_id=self.feature_collection_list.dataset["id"],
                                 collection_id=member["id"],
                             ),

@@ -37,7 +37,7 @@ async def home(request: Request):
 @router.get(
     "/vocprez", summary="VocPrez Home", include_in_schema=len(ENABLED_PREZS) > 1
 )
-async def vocprez_home(request: Request):
+async def vocprez_home_endpoint(request: Request):
     """Returns a VocPrez dcat:Dataset in the necessary profile & mediatype"""
     return await home(request)
 
@@ -141,13 +141,10 @@ async def collections_endpoint(
     collection_count, sparql_result = await asyncio.gather(
         count_collections(), list_collections(page, per_page)
     )
-    # sparql_result = await list_collections()
     collection_list = VocPrezCollectionList(sparql_result)
     collection_list_renderer = VocPrezCollectionListRenderer(
         request,
-        str(request.url.remove_query_params(keys=request.query_params.keys())),
-        "Collection list",
-        "A list of skos:Collection",
+        PREZ.VocPrezCollectionList,
         collection_list,
         page,
         per_page,
@@ -156,31 +153,26 @@ async def collections_endpoint(
     return collection_list_renderer.render()
 
 
-async def collection_endpoint(
-    request: Request,
-    collection_id: Optional[str] = None,
-    collection_uri: Optional[str] = None,
-):
-    collection_renderer = VocPrezCollectionRenderer(
-        request,
-        str(
-            request.url.remove_query_params(
-                keys=[key for key in request.query_params.keys() if key != "uri"]
-            )
-        ),
-    )
+@router.get("/collection/{collection_id}", summary="Get Collection")
+async def collection_endpoint(request: Request):
+    """Returns a VocPrez skos:Collection in the necessary profile & mediatype"""
+    return await collection(request)
+
+
+async def collection(request: Request):
+    collection_renderer = VocPrezCollectionRenderer(request)
     include_inferencing = True
     if collection_renderer.profile == "vocpub_supplied":
         include_inferencing = False
     results = await asyncio.gather(
         get_collection_construct1(
-            collection_id=collection_id,
-            collection_uri=collection_uri,
+            collection_id=collection_renderer.collection_id,
+            collection_uri=collection_renderer.collection_uri,
             include_inferencing=include_inferencing,
         ),
         get_collection_construct2(
-            collection_id=collection_id,
-            collection_uri=collection_uri,
+            collection_id=collection_renderer.collection_id,
+            collection_uri=collection_renderer.collection_uri,
             include_inferencing=include_inferencing,
         ),
     )
@@ -191,79 +183,50 @@ async def collection_endpoint(
 
     if len(sparql_result) == 0:
         raise HTTPException(status_code=404, detail="Not Found")
-    collection = VocPrezCollection(sparql_result, id=collection_id, uri=collection_uri)
+    collection = VocPrezCollection(
+        sparql_result,
+        id=collection_renderer.collection_id,
+        uri=collection_renderer.collection_uri,
+    )
     collection_renderer.set_collection(collection)
     return collection_renderer.render()
 
 
-@router.get("/collection/{collection_id}", summary="Get Collection")
-async def collection(request: Request, collection_id: str):
-    """Returns a VocPrez skos:Collection in the necessary profile & mediatype"""
-    return await collection_endpoint(request, collection_id=collection_id)
-
-
-async def concept_endpoint(
+async def concept(
     request: Request,
-    scheme_id: Optional[str] = None,
-    concept_id: Optional[str] = None,
-    concept_uri: Optional[str] = None,
 ):
-    feature_classes = [str(SKOS.Concept)]
-    (
-        profiles_g,
-        preferred_classes_and_profiles,
-        profiles,
-        profiles_formats,
-    ) = await get_general_profiles(SKOS.Concept)
-
-    # find the available profiles
-    available_profiles, default_profile = await get_class_based_and_default_profiles(
-        concept_uri, preferred_classes_and_profiles, "VocPrez"
-    )
-
-    # find the most specific class for the feature
-    for klass, _ in reversed(preferred_classes_and_profiles):
-        if klass in feature_classes:
-            most_specific_class = klass
-            break
-
-    concept_renderer = VocPrezConceptRenderer(
-        request,
-        str(
-            request.url.remove_query_params(
-                keys=[key for key in request.query_params.keys() if key != "uri"]
-            )
-        ),
-        available_profiles=profiles,
-        default_profile=default_profile,
-    )
+    concept_renderer = VocPrezConceptRenderer(request)
     include_inferencing = True
     if concept_renderer.profile == "vocpub_supplied":
         include_inferencing = False
     sparql_result = await get_concept_construct(
-        concept_id=concept_id,
-        scheme_id=scheme_id,
-        concept_uri=concept_uri,
+        concept_id=concept_renderer.concept_id,
+        scheme_id=concept_renderer.scheme_id,
+        concept_uri=concept_renderer.concept_uri,
         include_inferencing=include_inferencing,
     )
     if len(sparql_result) == 0:
         raise HTTPException(status_code=404, detail="Not Found")
-    concept = VocPrezConcept(sparql_result, id=concept_id, uri=concept_uri)
+    concept = VocPrezConcept(
+        sparql_result, id=concept_renderer.concept_id, uri=concept_renderer.concept_uri
+    )
     concept_renderer.set_concept(concept)
-    # profile = concept_renderer.profile
-    # if profile == "alt":
-    #     alt_profiles_graph = await build_alt_graph(
-    #         URIRef(feature_uri), profiles_formats, available_profiles
-    #     )
-    #     return feature_renderer.render(alt_profiles_graph=alt_profiles_graph)
+    profile = concept_renderer.profile
+    if profile == "alt":
+        alt_profiles_graph = await build_alt_graph(
+            URIRef(concept_renderer.concept_uri),
+            concept_renderer.profile_details.profiles_formats,
+            concept_renderer.profile_details.available_profiles_dict,
+        )
+        return concept_renderer.render(alt_profiles_graph=alt_profiles_graph)
     return concept_renderer.render()
 
 
 @router.get("/scheme/{scheme_id}/{concept_id}", summary="Get Concept")
 @router.get("/vocab/{scheme_id}/{concept_id}", summary="Get Concept")
-async def concept(request: Request, scheme_id: str, concept_id: str):
+async def concept_endpoint(request: Request):
     """Returns a VocPrez skos:Concept in the necessary profile & mediatype"""
-    return await concept_endpoint(request, scheme_id=scheme_id, concept_id=concept_id)
+    return await concept(request)
 
 
 @router.get(

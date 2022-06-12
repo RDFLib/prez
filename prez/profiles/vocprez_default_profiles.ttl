@@ -20,8 +20,21 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
         a sh:NodeShape ;
         sh:targetClass prez:Schemes ;
         altr-ext:hasDefaultProfile <https://www.w3.org/TR/vocab-dcat/>
+    ] , [
+        a sh:NodeShape ;
+        sh:targetClass prez:VocPrezCollectionList ;
+        altr-ext:hasDefaultProfile <https://www.w3.org/TR/vocab-dcat/>
+    ] , [
+        a sh:NodeShape ;
+        sh:targetClass skos:Collection ;
+        altr-ext:hasDefaultProfile <https://w3id.org/profile/vocpub>
+    ] , [
+        a sh:NodeShape ;
+        sh:targetClass skos:Concept ;
+        altr-ext:hasDefaultProfile <https://w3id.org/profile/vocpub>
     ]
     .
+
 
 <http://example.com/profile/profiles>
     a prof:Profile ;
@@ -78,7 +91,8 @@ altr-ext:hasResourceFormat
         dcat:Catalog ,
         dcat:Dataset ,
         prez:VocPrezHome,
-        prez:Schemes ;
+        prez:Schemes ,
+        prez:VocPrezCollectionList ;
     altr-ext:hasDefaultResourceFormat "text/html" ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,
@@ -112,7 +126,6 @@ altr-ext:hasResourceFormat
     altr-ext:constrainsClass
         skos:Dataset ,
         skos:ConceptScheme ,
-        skos:Concept ,
         skos:Collection ;
     altr-ext:hasDefaultResourceFormat "text/html" ;
     altr-ext:hasResourceFormat
@@ -128,7 +141,10 @@ altr-ext:hasResourceFormat
     dcterms:identifier "dd" ;
     dcterms:title "Drop-Down List" ;
     altr-ext:constrainsClass
-        prez:Schemes ;
+        prez:Schemes ,
+        prez:VocPrezCollectionList ,
+        skos:ConceptScheme ,
+        skos:Collection ;
     altr-ext:hasDefaultResourceFormat "application/json" ;
     altr-ext:hasResourceFormat "application/json" ;
 .

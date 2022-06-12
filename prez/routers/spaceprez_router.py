@@ -144,36 +144,6 @@ async def features_endpoint(
     else:
         return feature_list_renderer.render()
 
-    # """Returns a list of SpacePrez geo:Features in the necessary profile & mediatype"""
-    # feature_count, sparql_result = await asyncio.gather(
-    #     count_features(dataset_id, collection_id),
-    #     list_features(dataset_id, collection_id, page, per_page),
-    # )
-    # feature_list = SpacePrezFeatureList(sparql_result)
-    # feature_list_renderer = SpacePrezFeatureListRenderer(
-    #     request,
-    #     profile_details.available_profiles_dict,
-    #     profile_details.default_profile,
-    #     instance_uri,
-    #     "Feature list",
-    #     f"A list of {feature_list.collection['title']}",
-    #     feature_list,
-    #     page,
-    #     per_page,
-    #     int(feature_count[0]["count"]["value"]),
-    # )
-    #
-    # profile = feature_list_renderer.profile
-    # if profile == "alt":
-    #     alt_profiles_graph = await build_alt_graph(
-    #         URIRef(instance_uri),
-    #         profile_details.profiles_formats,
-    #         profile_details.available_profiles_dict,
-    #     )
-    #     return feature_list_renderer.render(alt_profiles_graph=alt_profiles_graph)
-    #
-    # return feature_list_renderer.render()
-
 
 @router.get("/dataset/{dataset_id}", summary="Get Dataset")
 async def dataset_endpoint(request: Request):

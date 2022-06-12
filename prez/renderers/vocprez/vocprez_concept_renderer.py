@@ -1,36 +1,43 @@
 from typing import Dict, Optional, Union
 
-from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from connegp import MEDIATYPE_NAMES
+from fastapi.responses import Response, JSONResponse, PlainTextResponse
 
 from prez.config import *
-from prez.renderers import Renderer
-from prez.profiles.vocprez_profiles import vocpub, vocpub_supplied, skos, alt
 from prez.models.vocprez import VocPrezConcept
+from prez.profiles.vocprez_profiles import vocpub, vocpub_supplied, skos, alt
+from prez.renderers import Renderer
 from prez.utils import templates
+from services.vocprez_service import get_concept_and_scheme_uri
 
 
 class VocPrezConceptRenderer(Renderer):
-    profiles = {
-        "vocpub": vocpub,
-        "skos": skos,
-        "vocpub_supplied": vocpub_supplied,
-        "alt": alt,
-    }
-    default_profile_token = "vocpub"
+    # profiles = {
+    #     "vocpub": vocpub,
+    #     "skos": skos,
+    #     "vocpub_supplied": vocpub_supplied,
+    #     "alt": alt,
+    # }
+    # default_profile_token = "vocpub"
 
     def __init__(
         self,
         request: object,
-        instance_uri: str,
-        available_profiles: dict,
-        default_profile: str,
     ) -> None:
+        (
+            self.scheme_id,
+            self.concept_id,
+            self.concept_uri,
+        ) = get_concept_and_scheme_uri(
+            request.path_params.get("scheme_id"),
+            request.path_params.get("concept_id"),
+            request.path_params.get("concept_uri"),
+        )
         super().__init__(
             request,
-            available_profiles,
-            default_profile,
-            instance_uri,
+            self.concept_uri,
+            SKOS.Concept,
+            SKOS.Concept,
         )
 
     def set_concept(self, concept: VocPrezConcept) -> None:
@@ -44,8 +51,8 @@ class VocPrezConceptRenderer(Renderer):
             "request": self.request,
             "concept": self.concept.to_dict(),
             "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
-            "profiles": self.profiles,
-            "default_profile": self.default_profile_token,
+            "profiles": self.profile_details.available_profiles_dict,
+            "default_profile": self.profile_details.default_profile,
             "mediatype_names": MEDIATYPE_NAMES,
         }
         if template_context is not None:

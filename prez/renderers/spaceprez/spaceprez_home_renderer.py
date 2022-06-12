@@ -65,7 +65,7 @@ class SpacePrezHomeRenderer(Renderer):
                     "title": "Conformance",
                 },
                 {
-                    "href": self.request.url_for("datasets"),
+                    "href": self.request.url_for("datasets_endpoint"),
                     "rel": "data",
                     "type": self.mediatype,
                     "title": "Datasets",

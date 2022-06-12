@@ -15,9 +15,9 @@
     {% set main_active_page = "datasets" %}
 {% else %}
     {% set breadcrumbs = [
-        {"label": "SpacePrez", "url": url_for("spaceprez_home")},
+        {"label": "SpacePrez", "url": url_for("spaceprez_home_endpoint")},
         {"label": "Datasets", "url": url_for("datasets_endpoint")},
-        {"label": feature.dataset.title, "url": url_for("dataset_endpoint_endpoint", dataset_id=feature.dataset.id)},
+        {"label": feature.dataset.title, "url": url_for("dataset_endpoint", dataset_id=feature.dataset.id)},
         {"label": "Feature Collections", "url": url_for("feature_collections_endpoint", dataset_id=feature.dataset.id)},
         {"label": feature.collection.title, "url": url_for("feature_collection_endpoint", dataset_id=feature.dataset.id, collection_id=feature.collection.id)},
         {"label": "Features", "url": url_for("features_endpoint", dataset_id=feature.dataset.id, collection_id=feature.collection.id)},
