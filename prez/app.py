@@ -11,6 +11,7 @@ from fastapi import FastAPI, Request, HTTPException, Query
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.cors import CORSMiddleware
 from fedsearch import SkosSearch, EndpointDetails
 from pydantic import AnyUrl
 
@@ -74,6 +75,14 @@ if THEME_VOLUME is not None:
         StaticFiles(directory=Path(__file__).parent / f"{THEME_VOLUME}" / "static"),
         name="theme",
     )
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["x-apigateway-header", "Content-Type", "X-Amz-Date"],
+)
 
 
 def configure():
