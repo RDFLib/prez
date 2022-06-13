@@ -8,12 +8,12 @@
     {% set main_active_page = "about" %}
 {% else %}
     {% set breadcrumbs = [
-        {"label": "VocPrez", "url": url_for("vocprez_home")},
+        {"label": "VocPrez", "url": url_for("vocprez_home_endpoint")},
         {"label": "About", "url": url_for("vocprez_about")}
     ] %}
 {% endif %}
 
-{% set active_prez = "vocprez" %}
+{% set active_prez = "VocPrez" %}
 {% set sub_active_page = "about" %}
 
 {% block content %}

@@ -5,19 +5,19 @@
 
 {% if prezs | length == 1 %}
     {% set breadcrumbs = [
-        {"label": "Vocabs", "url": url_for("schemes")},
-        {"label": scheme.title, "url": url_for("scheme", scheme_id=scheme.id)}
+        {"label": "Vocabs", "url": url_for("schemes_endpoint")},
+        {"label": scheme.title, "url": url_for("scheme_endpoint", scheme_id=scheme.id)}
     ] %}
     {% set main_active_page = "vocabs" %}
 {% else %}
     {% set breadcrumbs = [
-        {"label": "VocPrez", "url": url_for("vocprez_home")},
-        {"label": "Vocabs", "url": url_for("schemes")},
-        {"label": scheme.title, "url": url_for("scheme", scheme_id=scheme.id)}
+        {"label": "VocPrez", "url": url_for("vocprez_home_endpoint")},
+        {"label": "Vocabs", "url": url_for("schemes_endpoint")},
+        {"label": scheme.title, "url": url_for("scheme_endpoint", scheme_id=scheme.id)}
     ] %}
 {% endif %}
 
-{% set active_prez = "vocprez" %}
+{% set active_prez = "VocPrez" %}
 {% set sub_active_page = "vocabs" %}
 
 {% block content %}

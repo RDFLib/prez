@@ -1,43 +1,39 @@
 from typing import Dict, Optional, Union
 
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from rdflib import Graph
-from rdflib.namespace import SKOS, PROV, DCTERMS
 from connegp import MEDIATYPE_NAMES
 
-from config import *
-from renderers import Renderer
-from profiles.vocprez_profiles import skos, vocpub, vocpub_supplied, dd
-from models.vocprez import VocPrezScheme
-from utils import templates
+from prez.config import *
+from prez.renderers import Renderer
+from prez.profiles.vocprez_profiles import skos, vocpub, vocpub_supplied, dd, alt
+from prez.models.vocprez import VocPrezScheme
+from prez.utils import templates
+from services.vocprez_service import get_scheme_or_collection_uri
 
 
 class VocPrezSchemeRenderer(Renderer):
-    profiles = {
-        "vocpub": vocpub,
-        "skos": skos,
-        "dd": dd,
-        "vocpub_supplied": vocpub_supplied,
-    }
-    default_profile_token = "vocpub"
-
     def __init__(
         self,
         request: object,
-        instance_uri: str,
     ) -> None:
+        (self.scheme_id, self.scheme_uri) = get_scheme_or_collection_uri(
+            "ConceptScheme",
+            request.path_params.get("scheme_id"),
+            request.path_params.get("scheme_uri"),
+        )
         super().__init__(
             request,
-            VocPrezSchemeRenderer.profiles,
-            VocPrezSchemeRenderer.default_profile_token,
-            instance_uri,
+            self.scheme_uri,
+            SKOS.ConceptScheme,
+            SKOS.ConceptScheme,
         )
 
     def set_scheme(self, scheme: VocPrezScheme) -> None:
         self.scheme = scheme
-    
+
     def _generate_skos_rdf(self) -> Graph:
-        r = self.scheme.graph.query(f"""
+        r = self.scheme.graph.query(
+            f"""
             PREFIX skos: <{SKOS}>
             CONSTRUCT {{
                 ?cs ?cs_pred ?cs_o .
@@ -51,7 +47,8 @@ class VocPrezSchemeRenderer(Renderer):
                     ?c_pred ?c_o .
                 FILTER (STRSTARTS(STR(?c_pred), STR(skos:)))
             }}
-        """)
+        """
+        )
 
         g = r.graph
         g.bind("skos", SKOS)
@@ -61,7 +58,7 @@ class VocPrezSchemeRenderer(Renderer):
     def _render_skos_rdf(self) -> Response:
         """Renders the RDF representation of the skos profile for a scheme"""
         g = self._generate_skos_rdf()
-        return self._make_rdf_response(g)
+        return self._make_rdf_response(self.instance_uri, g)
 
     def _render_skos(self):
         """Renders the skos profile for a scheme"""
@@ -78,9 +75,10 @@ class VocPrezSchemeRenderer(Renderer):
     def _render_dd(self):
         """Renders the dd profile for a scheme"""
         return self._render_dd_json()
-    
+
     def _generate_vocpub_rdf(self) -> Graph:
-        r = self.scheme.graph.query(f"""
+        r = self.scheme.graph.query(
+            f"""
             PREFIX dcterms: <{DCTERMS}>
             PREFIX prov: <{PROV}>
             PREFIX skos: <{SKOS}>
@@ -122,7 +120,8 @@ class VocPrezSchemeRenderer(Renderer):
                     ?c skos:narrower ?narrower .
                 }}
             }}
-        """)
+        """
+        )
 
         g = r.graph
         g.bind("dcterms", DCTERMS)
@@ -134,7 +133,7 @@ class VocPrezSchemeRenderer(Renderer):
     def _render_vocpub_rdf(self) -> Response:
         """Renders the RDF representation of the vocpub profile for a scheme"""
         g = self._generate_vocpub_rdf()
-        return self._make_rdf_response(g)
+        return self._make_rdf_response(self.instance_uri, g)
 
     def _render_vocpub(self, template_context: Union[Dict, None]):
         """Renders the vocpub profile for a scheme"""
@@ -161,10 +160,10 @@ class VocPrezSchemeRenderer(Renderer):
         _template_context = {
             "request": self.request,
             "scheme": self.scheme.to_dict(),
-            "uri": self.instance_uri,
-            "profiles": self.profiles,
-            "default_profile": self.default_profile_token,
-            "mediatype_names": MEDIATYPE_NAMES
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
+            "profiles": self.profile_details.available_profiles_dict,
+            "default_profile": self.profile_details.default_profile,
+            "mediatype_names": MEDIATYPE_NAMES,
         }
         if template_context is not None:
             _template_context.update(template_context)
@@ -175,14 +174,16 @@ class VocPrezSchemeRenderer(Renderer):
         )
 
     def render(
-        self, template_context: Optional[Dict] = None
+        self,
+        template_context: Optional[Dict] = None,
+        alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
         if self.error is not None:
             return PlainTextResponse(self.error, status_code=400)
         elif self.profile == "alt":
-            return self._render_alt(template_context)
+            return self._render_alt(template_context, alt_profiles_graph)
         elif self.profile == "skos":
             return self._render_skos()
         elif self.profile == "vocpub":

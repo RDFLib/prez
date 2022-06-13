@@ -1,27 +1,37 @@
 from typing import Dict, Optional, Union
 
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from rdflib import Graph
-from rdflib.namespace import DCAT, DCTERMS, RDFS
 from connegp import MEDIATYPE_NAMES
 
-from config import *
-from renderers import Renderer
-from profiles.spaceprez_profiles import oai, geo
-from models.spaceprez import SpacePrezFeatureCollection
-from utils import templates
+from prez.config import *
+from prez.renderers import Renderer
+
+from prez.models.spaceprez import SpacePrezFeatureCollection
+from prez.utils import templates
+from services.spaceprez_service import get_object_uri_and_classes
 
 
 class SpacePrezFeatureCollectionRenderer(Renderer):
-    profiles = {"oai": oai, "geo": geo}
-    default_profile_token = "oai"
+    def __init__(self, request: object) -> None:
+        (
+            _,  # feature_id
+            self.collection_id,
+            self.dataset_id,
+            _,  # feature_uri
+            self.instance_uri,  # collection
+            _,  # dataset_uri
+            _,  # classes
+        ) = get_object_uri_and_classes(
+            None,  # feature_id
+            request.path_params.get("collection_id"),
+            request.path_params.get("dataset_id"),
+            None,  # feature_uri
+            request.query_params.get("collection_uri"),
+            None,  # dataset_uri
+        )
 
-    def __init__(self, request: object, instance_uri: str) -> None:
         super().__init__(
-            request,
-            SpacePrezFeatureCollectionRenderer.profiles,
-            SpacePrezFeatureCollectionRenderer.default_profile_token,
-            instance_uri,
+            request, self.instance_uri, GEO.FeatureCollection, GEO.FeatureCollection
         )
 
     def set_collection(self, collection: SpacePrezFeatureCollection) -> None:
@@ -34,10 +44,12 @@ class SpacePrezFeatureCollectionRenderer(Renderer):
         _template_context = {
             "request": self.request,
             "collection": self.collection.to_dict(),
-            "uri": self.instance_uri,
-            "profiles": self.profiles,
-            "default_profile": self.default_profile_token,
-            "mediatype_names": dict(MEDIATYPE_NAMES, **{"application/geo+json": "GeoJSON"}),
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
+            "profiles": self.profile_details.available_profiles_dict,
+            "default_profile": self.profile_details.default_profile,
+            "mediatype_names": dict(
+                MEDIATYPE_NAMES, **{"application/geo+json": "GeoJSON"}
+            ),
         }
         if template_context is not None:
             _template_context.update(template_context)
@@ -46,7 +58,7 @@ class SpacePrezFeatureCollectionRenderer(Renderer):
             context=_template_context,
             headers=self.headers,
         )
-    
+
     # def _render_oai_json(self) -> JSONResponse:
     #     """Renders the JSON representation of the OAI profile for a feature collection"""
     #     return JSONResponse(
@@ -54,7 +66,7 @@ class SpacePrezFeatureCollectionRenderer(Renderer):
     #         media_type="application/json",
     #         headers=self.headers,
     #     )
-    
+
     def _render_oai_geojson(self) -> JSONResponse:
         """Renders the GeoJSON representation of the OAI profile for a feature collection"""
         content = self.collection.to_geojson()
@@ -67,7 +79,7 @@ class SpacePrezFeatureCollectionRenderer(Renderer):
                 "title": "this document",
             },
             {
-                "href": str(self.request.base_url)[:-1] + str(self.request.url.path),
+                "href": str(self.request.url)[:-1] + str(self.request.url.path),
                 "rel": "alternate",
                 "type": "text/html",
                 "title": "this document as HTML",
@@ -89,7 +101,8 @@ class SpacePrezFeatureCollectionRenderer(Renderer):
 
     def _generate_geo_rdf(self) -> Graph:
         """Generates a Graph of the GeoSPARQL representation"""
-        r = self.collection.graph.query(f"""
+        r = self.collection.graph.query(
+            f"""
         PREFIX dcat: <{DCAT}>
         PREFIX dcterms: <{DCTERMS}>
         PREFIX geo: <{GEO}>
@@ -116,7 +129,8 @@ class SpacePrezFeatureCollectionRenderer(Renderer):
             ?d a dcat:Dataset ;
                 rdfs:member ?fc .
         }}
-        """)
+        """
+        )
 
         g = r.graph
         g.bind("dcat", DCAT)
@@ -134,16 +148,18 @@ class SpacePrezFeatureCollectionRenderer(Renderer):
     def _render_geo(self):
         """Renders the GeoSPARQL profile for a feature collection"""
         return self._render_geo_rdf()
-    
+
     def render(
-        self, template_context: Optional[Dict] = None
+        self,
+        template_context: Optional[Dict] = None,
+        alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
         if self.error is not None:
             return PlainTextResponse(self.error, status_code=400)
         elif self.profile == "alt":
-            return self._render_alt(template_context)
+            return self._render_alt(template_context, alt_profiles_graph)
         elif self.profile == "oai":
             return self._render_oai(template_context)
         elif self.profile == "geo":

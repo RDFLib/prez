@@ -1,9 +1,7 @@
 from typing import List, Dict
 
-from rdflib import Graph
-
-from config import *
-from models import PrezModel
+from prez.config import *
+from prez.models import PrezModel
 
 
 class VocPrezDataset(PrezModel):
@@ -46,9 +44,7 @@ class VocPrezDataset(PrezModel):
         properties.extend(
             sorted(
                 main_props,
-                key=lambda p: self._sort_within_list(
-                    p, VocPrezDataset.main_props
-                ),
+                key=lambda p: self._sort_within_list(p, VocPrezDataset.main_props),
             )
         )
         properties.extend(other_props)

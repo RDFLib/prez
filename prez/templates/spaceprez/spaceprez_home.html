@@ -5,13 +5,13 @@
 {% if prezs | length == 1 %}
     {% set main_active_page = "home" %}
 {% else %}
-    {% set main_active_page = "spaceprez" %}
+    {% set main_active_page = "SpacePrez" %}
     {% set breadcrumbs = [
-        {"label": "SpacePrez", "url": url_for("spaceprez_home")}
+        {"label": "SpacePrez", "url": url_for("spaceprez_home_endpoint")}
     ] %}
 {% endif %}
 
-{% set active_prez = "spaceprez" %}
+{% set active_prez = "SpacePrez" %}
 {% set sub_active_page = "home" %}
 
 {% block content %}
@@ -30,7 +30,7 @@
     <p>
         Datasets are packages of data usually managed as one. Datasets, in SpacePrez, may contain multiple Feature Collections. SpacePrez can deliver multiple datasets at once and the data from them is cross-queryable thus SpacePrez is a catalogue of integrated spatial datasets.
     </p>
-    <p>See the <a href="{{ url_for('datasets') }}">Datasets page</a> for a list of Datasets for this SpacePrez instance.</p>
+    <p>See the <a href="{{ url_for('datasets_endpoint') }}">Datasets page</a> for a list of Datasets for this SpacePrez instance.</p>
     <h2>Feature Collections</h2>
     <p>
         Datasets may have collections of more than one type of Feature and these are presented in "Feature Collections". SpacePrez' data model uses the <a href="https://opengeospatial.github.io/ogc-geosparql/geosparql11/spec.html#_class_geofeaturecollection" target="_blank" rel="noopener noreferrer">GeoSPARQL 1.1 FeatureCollection</a> class to represent these and delivers them as OGC API feature collections.

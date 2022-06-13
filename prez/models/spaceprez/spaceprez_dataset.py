@@ -1,10 +1,7 @@
 from typing import List, Dict, Optional
 
-from rdflib import Graph
-from rdflib.namespace import DCTERMS, SKOS, RDFS
-
-from config import *
-from models import PrezModel
+from prez.config import *
+from prez.models import PrezModel
 
 
 class SpacePrezDataset(PrezModel):
@@ -35,12 +32,12 @@ class SpacePrezDataset(PrezModel):
             raise ValueError("Either an ID or a URI must be provided")
 
         query_by_id = f"""
-            ?d dcterms:identifier ?id .
-            FILTER (STR(?id) = "{id}")
+            ?d dcterms:identifier "{id}"^^xsd:token .
+            BIND("{id}" AS ?id)
         """
 
         query_by_uri = f"""
-            BIND (<{uri}> as ?d) 
+            BIND (<{uri}> as ?d)
             ?d dcterms:identifier ?id .
         """
 
@@ -72,10 +69,12 @@ class SpacePrezDataset(PrezModel):
                 self.title = result["title"]
             if self.description is None:
                 self.description = result["desc"]
-            self.collections.append({
-                "id": result["coll_id"],
-                "title": result["coll_title"],
-            })
+            self.collections.append(
+                {
+                    "id": result["coll_id"],
+                    "title": result["coll_title"],
+                }
+            )
 
         self.geometries = {
             "asDGGS": None,

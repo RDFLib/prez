@@ -1,10 +1,7 @@
 from typing import List, Dict, Optional
 
-from rdflib import Graph
-from rdflib.namespace import DCTERMS, SKOS, SDO
-
-from config import *
-from models import PrezModel
+from prez.config import *
+from prez.models import PrezModel
 
 
 class VocPrezCollection(PrezModel):
@@ -15,7 +12,7 @@ class VocPrezCollection(PrezModel):
     hidden_props = [
         str(SKOS.member),
         str(DCTERMS.identifier),
-        str(SDO.identifier), # not being hidden
+        str(SDO.identifier),  # not being hidden
         str(SKOS.definition),
     ]
 
@@ -28,13 +25,13 @@ class VocPrezCollection(PrezModel):
             raise ValueError("Either an ID or a URI must be provided")
 
         query_by_id = f"""
-            ?coll dcterms:identifier ?id .
-            FILTER (STR(?id) = "{id}")
+                ?coll dcterms:identifier "{id}"^^xsd:token .
+                BIND("{id}" AS ?id)
         """
 
         query_by_uri = f"""
-            BIND (<{uri}> as ?coll) 
-            ?coll dcterms:identifier ?id .
+                BIND (<{uri}> as ?coll)
+                ?coll dcterms:identifier ?id .
         """
 
         r = self.graph.query(
@@ -42,9 +39,12 @@ class VocPrezCollection(PrezModel):
             PREFIX dcterms: <{DCTERMS}>
             PREFIX rdfs: <{RDFS}>
             PREFIX skos: <{SKOS}>
+            PREFIX xsd: <{XSD}>
+            
             SELECT *
             WHERE {{
                 {query_by_id if id is not None else query_by_uri}
+                
                 ?coll a skos:Collection ;
                     rdfs:label|skos:prefLabel|dcterms:title ?title ;
                     skos:definition|dcterms:description ?desc .
@@ -69,7 +69,7 @@ class VocPrezCollection(PrezModel):
             "properties": self._get_properties(),
             "concepts": self._get_concept_list(),
         }
-    
+
     # override
     def _get_properties(self) -> List[Dict]:
         props_dict = self._get_props()
@@ -106,7 +106,7 @@ class VocPrezCollection(PrezModel):
                 ?c rdfs:label|skos:prefLabel|dcterms:title ?label ;
                     skos:inScheme ?cs ;
                     dcterms:identifier ?id .
-                FILTER(lang(?label) = "" || lang(?label) = "en")
+                FILTER(lang(?label) = "" || lang(?label) = "en" || lang(?label) = "en-AU")
                 ?cs dcterms:identifier ?cs_id .
             }}
         """
@@ -122,7 +122,7 @@ class VocPrezCollection(PrezModel):
                 }
             )
         return sorted(concept_list, key=lambda c: c["label"])
-    
+
     def get_concept_flat_list(self) -> List[Dict[str, str]]:
         concept_list = []
         r = self.graph.query(
@@ -134,7 +134,7 @@ class VocPrezCollection(PrezModel):
             WHERE {{
                 <{self.uri}> skos:member ?c .
                 ?c rdfs:label|skos:prefLabel|dcterms:title ?label .
-                FILTER(lang(?label) = "" || lang(?label) = "en")
+                FILTER(lang(?label) = "" || lang(?label) = "en" || lang(?label) = "en-AU")
             }}
         """
         )

@@ -6,17 +6,17 @@
 
 {% if prezs | length == 1 %}
     {% set breadcrumbs = [
-        {"label": "Collections", "url": url_for("collections")}
+        {"label": "Collections", "url": url_for("collections_endpoint")}
     ] %}
     {% set main_active_page = "collections" %}
 {% else %}
     {% set breadcrumbs = [
-        {"label": "VocPrez", "url": url_for("vocprez_home")},
-        {"label": "Collections", "url": url_for("collections")}
+        {"label": "VocPrez", "url": url_for("vocprez_home_endpoint")},
+        {"label": "Collections", "url": url_for("collections_endpoint")}
     ] %}
 {% endif %}
 
-{% set active_prez = "vocprez" %}
+{% set active_prez = "VocPrez" %}
 {% set sub_active_page = "collections" %}
 
 {% block content %}

@@ -5,8 +5,8 @@ class SpacePrezFeatureList(object):
     def __init__(
         self,
         sparql_response: List,
-        dataset: Optional[Dict] = None, # {"id": "", "title": ""}
-        collection: Optional[Dict] = None, # {"id": "", "title": ""}
+        dataset: Optional[Dict] = None,  # {"id": "", "title": ""}
+        collection: Optional[Dict] = None,  # {"id": "", "title": ""}
     ) -> None:
         self.dataset = dataset
         self.collection = collection

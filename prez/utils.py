@@ -5,7 +5,7 @@ from typing import Dict, List
 import jinja2
 from starlette_core.templating import Jinja2Templates
 
-from config import *
+from prez.config import *
 
 
 def get_config(var):
@@ -45,9 +45,11 @@ def append_qsa(uri: str, qsas: Dict[str, str]) -> str:
             path += f"&{qsa[0]}={qsa[1]}"
     return path
 
+
 def file_exists(path: str) -> bool:
     """Checks whether a file exists"""
     return os.path.isfile(path)
+
 
 def match(s: str, pattern: str) -> bool:
     """Matches a string to a regex pattern"""
@@ -56,10 +58,6 @@ def match(s: str, pattern: str) -> bool:
     else:
         return False
 
-def prez_title(s: str) -> str:
-    """Correctly formats the casing of a *Prez string when lower case
-    i.e. vocprez -> VocPrez"""
-    return "".join([substr.capitalize() for substr in re.split("(prez)", s)[:2]])
 
 def join_list_keys(l: List, key: str, sep: str) -> str:
     """Concatenates a list of dicts into a string of key values with a specified separator"""
@@ -77,5 +75,4 @@ templates.env.filters["get_config"] = get_config
 templates.env.filters["append_qsa"] = append_qsa
 templates.env.filters["file_exists"] = file_exists
 templates.env.filters["match"] = match
-templates.env.filters["prez_title"] = prez_title
 templates.env.filters["join_list_keys"] = join_list_keys

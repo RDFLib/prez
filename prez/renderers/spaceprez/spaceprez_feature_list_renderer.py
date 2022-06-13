@@ -1,43 +1,35 @@
 from typing import Dict, Optional, Union
 
-from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from rdflib import Graph, URIRef, Literal
-from rdflib.namespace import DCAT, DCTERMS, RDF, RDFS
 from connegp import MEDIATYPE_NAMES
+from fastapi.responses import Response, JSONResponse, PlainTextResponse
 
-from renderers import ListRenderer
-from config import *
-from profiles.spaceprez_profiles import oai, dd
-from models.spaceprez import SpacePrezFeatureList
-from utils import templates
+from prez.config import *
+from prez.models.spaceprez import SpacePrezFeatureList
+from prez.renderers import ListRenderer
+from prez.utils import templates
 
 
 class SpacePrezFeatureListRenderer(ListRenderer):
-    profiles = {"oai": oai, "dd": dd}
-    default_profile_token = "oai"
-
     def __init__(
         self,
         request: object,
         instance_uri: str,
-        label: str,
-        comment: str,
-        feature_list: SpacePrezFeatureList,
         page: int,
         per_page: int,
         member_count: int,
+        feature_list: SpacePrezFeatureList,
     ) -> None:
         super().__init__(
             request,
-            SpacePrezFeatureListRenderer.profiles,
-            SpacePrezFeatureListRenderer.default_profile_token,
             instance_uri,
             feature_list.members,
-            label,
-            comment,
+            "Feature list",
+            "A list of geo:Features",
             page,
             per_page,
             member_count,
+            PREZ.FeatureList,
+            PREZ.FeatureList,
         )
         self.feature_list = feature_list
 
@@ -48,12 +40,12 @@ class SpacePrezFeatureListRenderer(ListRenderer):
             "members": self.members,
             "dataset": self.feature_list.dataset,
             "collection": self.feature_list.collection,
-            "uri": self.instance_uri,
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
             "pages": self.pages,
             "label": self.label,
             "comment": self.comment,
-            "profiles": self.profiles,
-            "default_profile": self.default_profile_token,
+            "profiles": self.profile_details.available_profiles_dict,
+            "default_profile": self.profile_details.default_profile,
             "mediatype_names": dict(
                 MEDIATYPE_NAMES, **{"application/geo+json": "GeoJSON"}
             ),
@@ -77,8 +69,7 @@ class SpacePrezFeatureListRenderer(ListRenderer):
                     "title": "this document",
                 },
                 {
-                    "href": str(self.request.base_url)[:-1]
-                    + str(self.request.url.path),
+                    "href": str(self.request.url)[:-1] + str(self.request.url.path),
                     "rel": "alternate",
                     "type": "text/html",
                     "title": "this document as HTML",
@@ -112,7 +103,9 @@ class SpacePrezFeatureListRenderer(ListRenderer):
         return self._render_dd_json()
 
     def render(
-        self, template_context: Optional[Dict] = None
+        self,
+        template_context: Optional[Dict] = None,
+        alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
@@ -121,7 +114,7 @@ class SpacePrezFeatureListRenderer(ListRenderer):
         elif self.profile == "mem":
             return self._render_mem(template_context)
         elif self.profile == "alt":
-            return self._render_alt(template_context)
+            return self._render_alt(template_context, alt_profiles_graph)
         elif self.profile == "oai":
             return self._render_oai(template_context)
         elif self.profile == "dd":

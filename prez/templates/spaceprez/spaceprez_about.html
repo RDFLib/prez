@@ -8,12 +8,12 @@
     {% set main_active_page = "about" %}
 {% else %}
     {% set breadcrumbs = [
-        {"label": "SpacePrez", "url": url_for("spaceprez_home")},
+        {"label": "SpacePrez", "url": url_for("spaceprez_home_endpoint")},
         {"label": "About", "url": url_for("spaceprez_about")}
     ] %}
 {% endif %}
 
-{% set active_prez = "spaceprez" %}
+{% set active_prez = "SpacePrez" %}
 {% set sub_active_page = "about" %}
 
 {% block content %}

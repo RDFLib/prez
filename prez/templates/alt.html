@@ -3,8 +3,8 @@
 {% block content %}
 <div id="content-col-main">
     <h1>Alternate Profiles</h1>
-    <p>Instance URI: <a href="{{ uri }}">{{ uri }}</a></p>
-    <p>Default profile: <a href="{{ uri }}?_profile={{ default_profile.id }}">{{ default_profile.id }}</a></p>
+{#    <p>Instance URI: <a href="{{ uri }}">{{ uri }}</a></p>#}
+    <p>Default profile: <a href="{{ uri }}?_profile={{ default_profile }}">{{ default_profile }}</a></p>
     <div class="table-wrapper">
         <table class="alt-table">
             <thead>

@@ -1,28 +1,39 @@
 from typing import Dict, Optional, Union
 
+from connegp import MEDIATYPE_NAMES, RDF_MEDIATYPES
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from rdflib import Graph
-from rdflib.namespace import DCTERMS
-from connegp import MEDIATYPE_NAMES
 
-from config import *
-from renderers import Renderer
-from profiles.spaceprez_profiles import oai, geo
-from models.spaceprez import SpacePrezFeature
-from utils import templates
+from prez.config import *
+from prez.models.spaceprez import SpacePrezFeature
+from prez.renderers import Renderer
+from prez.services.spaceprez_service import get_object_uri_and_classes
+from prez.utils import templates
+from starlette.requests import Request
 
 
 class SpacePrezFeatureRenderer(Renderer):
-    profiles = {"oai": oai, "geo": geo}
-    default_profile_token = "oai"
-
-    def __init__(self, request: object, instance_uri: str) -> None:
-        super().__init__(
-            request,
-            SpacePrezFeatureRenderer.profiles,
-            SpacePrezFeatureRenderer.default_profile_token,
-            instance_uri,
+    def __init__(
+        self,
+        request: Request,
+    ) -> None:
+        (
+            self.feature_id,
+            self.collection_id,
+            self.dataset_id,
+            self.instance_uri,
+            _,  # collection_uri
+            _,  # dataset_uri
+            self.feature_classes,
+        ) = get_object_uri_and_classes(
+            request.path_params.get("feature_id"),
+            request.path_params.get("collection_id"),
+            request.path_params.get("dataset_id"),
+            request.query_params.get("feature_uri"),
+            None,  # collection_uri
+            None,  # dataset_uri
         )
+
+        super().__init__(request, self.instance_uri, self.feature_classes, GEO.Feature)
 
     def set_feature(self, feature: SpacePrezFeature) -> None:
         self.feature = feature
@@ -34,9 +45,9 @@ class SpacePrezFeatureRenderer(Renderer):
         _template_context = {
             "request": self.request,
             "feature": self.feature.to_dict(),
-            "uri": self.instance_uri,
-            "profiles": self.profiles,
-            "default_profile": self.default_profile_token,
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
+            "profiles": self.profile_details.available_profiles_dict,
+            "default_profile": self.profile_details.default_profile,
             "mediatype_names": dict(
                 MEDIATYPE_NAMES, **{"application/geo+json": "GeoJSON"}
             ),
@@ -48,14 +59,6 @@ class SpacePrezFeatureRenderer(Renderer):
             context=_template_context,
             headers=self.headers,
         )
-
-    # def _render_oai_json(self) -> JSONResponse:
-    #     """Renders the JSON representation of the OAI profile for a feature"""
-    #     return JSONResponse(
-    #         content={"test": "test"},
-    #         media_type="application/json",
-    #         headers=self.headers,
-    #     )
 
     def _render_oai_geojson(self) -> JSONResponse:
         """Renders the GeoJSON representation of the OAI profile for a feature"""
@@ -70,16 +73,16 @@ class SpacePrezFeatureRenderer(Renderer):
                 "title": "this document",
             },
             {
-                "href": str(self.request.base_url)[:-1] + str(self.request.url.path),
+                "href": str(self.request.url)[:-1] + str(self.request.url.path),
                 "rel": "alternate",
                 "type": "text/html",
                 "title": "this document as HTML",
             },
             {
                 "href": self.request.url_for(
-                    "feature_collection",
-                    dataset_id=self.feature.dataset["id"],
-                    collection_id=self.feature.collection["id"],
+                    "feature_collection_endpoint",
+                    dataset_id=self.dataset_id,
+                    collection_id=self.collection_id,
                 ),
                 "rel": "collection",
                 "type": "text/html",
@@ -151,17 +154,24 @@ class SpacePrezFeatureRenderer(Renderer):
         return self._render_geo_rdf()
 
     def render(
-        self, template_context: Optional[Dict] = None
+        self,
+        template_context: Optional[Dict] = None,
+        alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
         if self.error is not None:
             return PlainTextResponse(self.error, status_code=400)
         elif self.profile == "alt":
-            return self._render_alt(template_context)
-        elif self.profile == "oai":
-            return self._render_oai(template_context)
-        elif self.profile == "geo":
-            return self._render_geo()
-        else:
-            return None
+            return self._render_alt(template_context, alt_profiles_graph)
+        elif self.profile == "oai" and self.mediatypes_requested[0] in RDF_MEDIATYPES:
+            # ignore secondary mediatypes requested - assume connegp has done its job
+            # change the mediatype to that requested, and return an RDF response
+            self.mediatype = self.mediatypes_requested[0]
+            return self._make_rdf_response(self.feature.uri, self.feature.graph)
+        elif self.mediatype == "text/html":
+            return self._render_oai_html(template_context)
+        elif self.mediatype == "application/geo+json":
+            return self._render_oai_geojson()
+        elif self.mediatype in RDF_MEDIATYPES:
+            return self._make_rdf_response(self.feature.uri, self.feature.graph)

@@ -1,10 +1,7 @@
 from typing import List, Dict, Optional
 
-from rdflib import Graph
-from rdflib.namespace import DCTERMS, SKOS, RDFS
-
-from config import *
-from models import PrezModel
+from prez.config import *
+from prez.models import PrezModel
 
 
 class VocPrezScheme(PrezModel):
@@ -31,30 +28,33 @@ class VocPrezScheme(PrezModel):
             raise ValueError("Either an ID or a URI must be provided")
 
         query_by_id = f"""
-            ?cs dcterms:identifier ?id .
-            FILTER (STR(?id) = "{id}")
+                ?cs dcterms:identifier "{id}"^^xsd:token .
+                BIND("{id}" AS ?id)
         """
 
         query_by_uri = f"""
-            BIND (<{uri}> as ?cs) 
-            ?cs dcterms:identifier ?id .
+                BIND (<{uri}> as ?cs)
+                ?cs dcterms:identifier ?id .
         """
 
-        r = self.graph.query(
-            f"""
+        qx = f"""
             PREFIX dcterms: <{DCTERMS}>
             PREFIX rdfs: <{RDFS}>
             PREFIX skos: <{SKOS}>
+            PREFIX xsd: <{XSD}>
+            
             SELECT *
             WHERE {{
                 {query_by_id if id is not None else query_by_uri}
+                
                 ?cs a skos:ConceptScheme ;
                     rdfs:label|skos:prefLabel|dcterms:title ?title ;
                     skos:definition|dcterms:description ?desc .
                 FILTER(lang(?title) = "" || lang(?title) = "en")
             }}
-        """
-        )
+            """
+
+        r = self.graph.query(qx)
 
         result = r.bindings[0]
         self.uri = result["cs"]
@@ -84,7 +84,7 @@ class VocPrezScheme(PrezModel):
             WHERE {{
                 ?c skos:inScheme <{self.uri}> ;
                     rdfs:label|skos:prefLabel|dcterms:title ?label .
-                FILTER (lang(?label) = "" || LANG(?label) = "en")
+                FILTER (lang(?label) = "" || lang(?label) = "en" || lang(?label) = "en-AU")
             }}
         """
         )

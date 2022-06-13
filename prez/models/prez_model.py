@@ -1,9 +1,15 @@
+import json
+import re
 from abc import ABCMeta, abstractmethod
 from typing import Dict, List, Union, Optional
-import re
 
 from rdflib import Graph, URIRef, BNode, Literal
-from rdflib.namespace import RDFS, SKOS, DCTERMS
+from rdflib.namespace import RDFS, DCTERMS, SH
+from shapely.geometry import mapping
+from shapely.ops import orient
+from shapely.wkt import loads
+
+from config import GEO
 
 
 class PrezModel(object, metaclass=ABCMeta):
@@ -55,6 +61,8 @@ class PredCell:
         label: str,
         description: Optional[str] = None,
         explanation: Optional[str] = None,
+        pgroup: Optional[str] = None,
+        porder: Optional[int] = None,
     ):
         self.value = value
         self.qname = qname
@@ -62,6 +70,8 @@ class PredCell:
         self.description = description
         self.explanation = explanation
         self.objects = []
+        self.pgroup = pgroup
+        self.order = porder
 
     def __repr__(self):
         return f"{self.qname}"
@@ -75,6 +85,8 @@ class PredCell:
             "description": self.description,
             "explanation": self.explanation,
             "objects": [obj.to_dict() for obj in self.objects],
+            "pgroup": self.pgroup,
+            "order": self.order,
         }
 
 
@@ -127,13 +139,17 @@ class ObjCell:
         """Recursively populates the rows for this object cell"""
         for p, o in graph.predicate_objects(subject):
             datatype = None
-            if isinstance(o, Literal) and o.datatype is not None: # attempts to get object qname
+            if (
+                isinstance(o, Literal) and o.datatype is not None
+            ):  # attempts to get object qname
                 datatype = {
                     "value": o.datatype,
                     "qname": graph.namespace_manager.qname(o.datatype),
-                    "label": graph.value(subject=o.datatype, predicate=RDFS.label), # might need to add a line to SPARQL query to get label?
+                    "label": graph.value(
+                        subject=o.datatype, predicate=RDFS.label
+                    ),  # might need to add a line to SPARQL query to get label?
                 }
-            
+
             qname = None
             if isinstance(o, URIRef):
                 try:
@@ -147,21 +163,29 @@ class ObjCell:
                 label=graph.value(subject=o, predicate=RDFS.label),
                 description=graph.value(subject=o, predicate=DCTERMS.description),
                 datatype=datatype,
-                langtag=o.language if isinstance(o, Literal) else None
+                langtag=o.language if isinstance(o, Literal) else None,
             )
 
-            if isinstance(o, BNode): # recursion for nested properties
+            if isinstance(o, BNode):  # recursion for nested properties
                 obj.populate(graph, o)
 
             pred = self.get_pred(p.__str__())
 
             if pred is None:
+                shape_bn = graph.value(predicate=SH.path, object=p)
+                # nodeshape = graph.value(predicate=SH.property, object=shape_bn)
+                # closed_profile = graph.value(subject=nodeshape, predicate=SH.closed)
+                # if (closed_profile == Literal("true", datatype=URIRef(XSD.boolean)) and shape_bn) or \
+                #         (closed_profile == Literal("false", datatype=URIRef(XSD.boolean))) or \
+                #         (closed_profile is None):
                 pred = PredCell(
                     value=p.__str__(),
                     qname=graph.namespace_manager.qname(p),
                     label=graph.value(subject=p, predicate=RDFS.label),
                     description=graph.value(subject=p, predicate=DCTERMS.description),
                     explanation=graph.value(subject=p, predicate=DCTERMS.provenance),
+                    pgroup=graph.value(subject=shape_bn, predicate=SH.group),
+                    porder=graph.value(subject=shape_bn, predicate=SH.order),
                 )
                 pred.objects.append(obj)
                 self.rows.append(pred)
@@ -176,11 +200,29 @@ class Table(ObjCell):
         super().__init__(value=uri, qname=None, label=None, datatype=None, langtag=None)
         self.uri = uri
         self.graph = graph
+        self.add_geojson_from_wkt()
         self.populate(graph, uri)
 
     def __repr__(self):
-        return f"Table of data for \"{self.uri}\""
+        return f'Table of data for "{self.uri}"'
 
     # override
     def to_dict(self) -> List:
         return [row.to_dict() for row in self.rows]
+
+    def add_geojson_from_wkt(self):
+        """Adds a geojson property to the table if the data has a wkt property but not geojson
+        NB table will only be called when rendering HTML views, so the geojson is not added to any RDF or other formats
+        """
+        geom_instances_bnodes = self.graph.objects(
+            subject=self.uri, predicate=GEO.hasGeometry
+        )
+        for bnode in geom_instances_bnodes:
+            wkt_literal = self.graph.value(subject=bnode, predicate=GEO.asWKT)
+            geojson_literal = self.graph.value(subject=bnode, predicate=GEO.asGeoJSON)
+            if wkt_literal and not geojson_literal:
+                geojson_text = json.dumps(mapping(orient(loads(str(wkt_literal)))))
+                geojson_literal = Literal(
+                    geojson_text, datatype=URIRef(GEO.geoJSONLiteral)
+                )
+                self.graph.add((bnode, GEO.asGeoJSON, geojson_literal))

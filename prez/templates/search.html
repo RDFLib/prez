@@ -12,7 +12,7 @@
 <div id="content-col-main">
     <h1>Global Search</h1>
     <div id="search-forms">
-        {% if "vocprez" in prezs %}
+        {% if "VocPrez" in prezs %}
             <div>
                 <h2>Concept Search</h2>
                 <p>This search can query across multiple VocPrez instances.</p>
@@ -36,7 +36,7 @@
                 
             </div>
         {% endif %}
-        {% if "spaceprez" in prezs %}
+        {% if "SpacePrez" in prezs %}
             {{ render_cql_form(props, datasets, collections) }}
         {% endif %}
     </div>
