@@ -1,19 +1,15 @@
+from async_lru import alru_cache
 from fastapi import APIRouter, Request, HTTPException
-import asyncio
 
-from prez.renderers.vocprez import *
-from prez.services.vocprez_service import *
+from prez.config import *
 from prez.models.vocprez import *
 from prez.profiles.generate_profiles import (
-    ProfileDetails,
-    get_general_profiles,
-    get_class_based_and_default_profiles,
-    retrieve_relevant_shapes,
     build_alt_graph,
 )
+from prez.renderers.vocprez import *
+from prez.services.vocprez_service import *
 from prez.utils import templates
 from prez.view_funcs import profiles_func
-from prez.config import *
 
 router = APIRouter(tags=["VocPrez"] if len(ENABLED_PREZS) > 1 else [])
 
@@ -34,6 +30,7 @@ async def home(request: Request):
     return home_renderer.render()
 
 
+@alru_cache(maxsize=5)
 @router.get(
     "/vocprez", summary="VocPrez Home", include_in_schema=len(ENABLED_PREZS) > 1
 )

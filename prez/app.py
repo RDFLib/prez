@@ -19,6 +19,7 @@ from prez.routers import vocprez_router, spaceprez_router
 from prez.services.app_service import *
 from prez.utils import templates
 from prez.view_funcs import profiles_func
+from routers.vocprez_router import vocprez_home_endpoint
 
 
 async def catch_400(request: Request, exc):
@@ -201,6 +202,7 @@ async def purge_cache():
         get_class_based_and_default_profiles,
         retrieve_relevant_shapes,
         spaceprez_home_endpoint,
+        vocprez_home_endpoint,
         dataset_endpoint,
         about,
         count_features,
