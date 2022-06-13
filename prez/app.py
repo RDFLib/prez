@@ -79,9 +79,9 @@ if THEME_VOLUME is not None:
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["x-apigateway-header", "Content-Type", "X-Amz-Date"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
