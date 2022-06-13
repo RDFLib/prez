@@ -1,26 +1,26 @@
 from typing import Dict, Optional, Union
 
-from connegp import MEDIATYPE_NAMES, RDF_MEDIATYPES
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
+from rdflib import Graph
+from rdflib.namespace import DCTERMS
+from connegp import MEDIATYPE_NAMES
 
-from prez.config import *
-from prez.models.spaceprez import SpacePrezFeature
-from prez.renderers import Renderer
-from prez.utils import templates
+from config import *
+from renderers import Renderer
+from profiles.spaceprez_profiles import oai, geo
+from models.spaceprez import SpacePrezFeature
+from utils import templates
 
 
 class SpacePrezFeatureRenderer(Renderer):
-    def __init__(
-        self,
-        request: object,
-        instance_uri: str,
-        available_profiles: dict,
-        default_profile: str,
-    ) -> None:
+    profiles = {"oai": oai, "geo": geo}
+    default_profile_token = "oai"
+
+    def __init__(self, request: object, instance_uri: str) -> None:
         super().__init__(
             request,
-            available_profiles,
-            default_profile,
+            SpacePrezFeatureRenderer.profiles,
+            SpacePrezFeatureRenderer.default_profile_token,
             instance_uri,
         )
 
@@ -34,7 +34,7 @@ class SpacePrezFeatureRenderer(Renderer):
         _template_context = {
             "request": self.request,
             "feature": self.feature.to_dict(),
-            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
+            "uri": self.instance_uri,
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
             "mediatype_names": dict(
@@ -49,6 +49,14 @@ class SpacePrezFeatureRenderer(Renderer):
             headers=self.headers,
         )
 
+    # def _render_oai_json(self) -> JSONResponse:
+    #     """Renders the JSON representation of the OAI profile for a feature"""
+    #     return JSONResponse(
+    #         content={"test": "test"},
+    #         media_type="application/json",
+    #         headers=self.headers,
+    #     )
+
     def _render_oai_geojson(self) -> JSONResponse:
         """Renders the GeoJSON representation of the OAI profile for a feature"""
 
@@ -62,7 +70,7 @@ class SpacePrezFeatureRenderer(Renderer):
                 "title": "this document",
             },
             {
-                "href": str(self.request.url)[:-1] + str(self.request.url.path),
+                "href": str(self.request.base_url)[:-1] + str(self.request.url.path),
                 "rel": "alternate",
                 "type": "text/html",
                 "title": "this document as HTML",
@@ -143,24 +151,17 @@ class SpacePrezFeatureRenderer(Renderer):
         return self._render_geo_rdf()
 
     def render(
-        self,
-        template_context: Optional[Dict] = None,
-        alt_profiles_graph: Optional[Graph] = None,
+        self, template_context: Optional[Dict] = None
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
         if self.error is not None:
             return PlainTextResponse(self.error, status_code=400)
         elif self.profile == "alt":
-            return self._render_alt(template_context, alt_profiles_graph)
-        elif self.profile == "oai" and self.mediatypes_requested[0] in RDF_MEDIATYPES:
-            # ignore secondary mediatypes requested - assume connegp has done its job
-            # change the mediatype to that requested, and return an RDF response
-            self.mediatype = self.mediatypes_requested[0]
-            return self._make_rdf_response(self.feature.uri, self.feature.graph)
-        elif self.mediatype == "text/html":
-            return self._render_oai_html(template_context)
-        elif self.mediatype == "application/geo+json":
-            return self._render_oai_geojson()
-        elif self.mediatype in RDF_MEDIATYPES:
-            return self._make_rdf_response(self.feature.uri, self.feature.graph)
+            return self._render_alt(template_context)
+        elif self.profile == "oai":
+            return self._render_oai(template_context)
+        elif self.profile == "geo":
+            return self._render_geo()
+        else:
+            return None

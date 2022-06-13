@@ -1,25 +1,24 @@
-import time
-from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 from urllib.parse import quote_plus
-from urllib.parse import urlparse
 
-import httpx
-import uvicorn
-from connegp import parse_mediatypes_from_accept_header
 from fastapi import FastAPI, Request, HTTPException, Query
-from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse, Response
+from fastapi.exceptions import RequestValidationError
 from fastapi.staticfiles import StaticFiles
-from fedsearch import SkosSearch, EndpointDetails
 from pydantic import AnyUrl
+import uvicorn
+from rdflib import URIRef
+from rdflib.namespace import SKOS
+from connegp import parse_mediatypes_from_accept_header
+from fedsearch import SkosSearch, EndpointDetails
 
-from prez.profiles.generate_profiles import get_general_profiles
-from prez.routers import vocprez_router, spaceprez_router
-from prez.services.app_service import *
-from prez.services.spaceprez_service import list_datasets, list_collections
-from prez.utils import templates
-from prez.view_funcs import profiles_func
+from config import *
+from routers import vocprez_router, spaceprez_router
+from services.app_service import *
+from services.spaceprez_service import list_datasets, list_collections
+from services.sparql_utils import sparql_endpoint_query
+from utils import templates
+from view_funcs import profiles_func
 
 
 async def catch_400(request: Request, exc):
@@ -65,14 +64,12 @@ app = FastAPI(
     }
 )
 
-app.mount(
-    "/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static"
-)
+app.mount("/static", StaticFiles(directory="static"), name="static")
 if THEME_VOLUME is not None:
     app.mount(
-        f"/theme",
-        StaticFiles(directory=Path(__file__).parent / f"{THEME_VOLUME}" / "static"),
-        name="theme",
+        f"/{THEME_VOLUME}",
+        StaticFiles(directory=f"{THEME_VOLUME}/static"),
+        name=THEME_VOLUME,
     )
 
 
@@ -93,80 +90,6 @@ async def validation_exception_handler(request: Request, exc):
         return await object_page(request)
     else:
         return await catch_400(request, exc)
-
-
-@app.on_event("startup")
-async def app_startup():
-    """
-    This function runs at startup and will continually poll the separate backends until their SPARQL endpoints
-    are available. Initial caching can be triggered within the try block. NB this function does not check that data is
-    appropriately configured at the SPARQL endpoint(s), only that the SPARQL endpoint(s) are reachable.
-    """
-    if "SpacePrez" in ENABLED_PREZS:
-        while True:
-            url = urlparse(SPACEPREZ_SPARQL_ENDPOINT)
-            try:
-                url_to_try = f"{url[0]}://{url[1]}"
-                httpx.get(url_to_try)
-                await get_general_profiles(DCAT.Dataset)
-                await get_general_profiles(GEO.FeatureCollection)
-                await get_general_profiles(GEO.Feature)
-                print(f"Successfully connected to SpacePrez endpoint {url_to_try}")
-                break
-            except Exception as e:
-                print(
-                    f"Failed to connect to SpacePrez endpoint {SPACEPREZ_SPARQL_ENDPOINT}"
-                )
-                print("retrying in 3 seconds...")
-                time.sleep(3)
-
-    if "VocPrez" in ENABLED_PREZS:
-        while True:
-            url = urlparse(VOCPREZ_SPARQL_ENDPOINT)
-            try:
-                httpx.get(f"{url[0]}://{url[1]}")
-                print(
-                    f"Successfully connected to VocPrez endpoint {VOCPREZ_SPARQL_ENDPOINT}"
-                )
-                break
-            except Exception:
-                print(
-                    f"Failed to connect to VocPrez endpoint {VOCPREZ_SPARQL_ENDPOINT}"
-                )
-                print("retrying in 3 seconds...")
-                time.sleep(3)
-
-    if "TimePrez" in ENABLED_PREZS:
-        while True:
-            url = urlparse(TIMEPREZ_SPARQL_ENDPOINT)
-            try:
-                httpx.get(f"{url[0]}://{url[1]}")
-                print(
-                    f"Successfully connected to TimePrez endpoint {TIMEPREZ_SPARQL_ENDPOINT}"
-                )
-                break
-            except Exception:
-                print(
-                    f"Failed to connect to TimePrez endpoint {TIMEPREZ_SPARQL_ENDPOINT}"
-                )
-                print("retrying in 3 seconds...")
-                time.sleep(3)
-
-    if "CatPrez" in ENABLED_PREZS:
-        while True:
-            url = urlparse(CATPREZ_SPARQL_ENDPOINT)
-            try:
-                httpx.get(f"{url[0]}://{url[1]}")
-                print(
-                    f"Successfully connected to CatPrez endpoint {CATPREZ_SPARQL_ENDPOINT}"
-                )
-                break
-            except Exception:
-                print(
-                    f"Failed to connect to CatPrez endpoint {CATPREZ_SPARQL_ENDPOINT}"
-                )
-                print("retrying in 3 seconds...")
-                time.sleep(3)
 
 
 async def object_page(request: Request):
@@ -425,9 +348,7 @@ async def object(
         elif object_type == GEO.FeatureCollection:
             if "spaceprez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
-            return await spaceprez_router.feature_collection_endpoint(
-                request, collection_uri=uri
-            )
+            return await spaceprez_router.feature_collection_endpoint(request, collection_uri=uri)
         elif object_type == GEO.Feature:
             if "spaceprez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")

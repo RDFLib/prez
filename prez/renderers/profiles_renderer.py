@@ -1,27 +1,23 @@
 from typing import Dict, Optional, Union, List
 
-from connegp import MEDIATYPE_NAMES
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
+from connegp import MEDIATYPE_NAMES
 
-from prez.config import *
-from prez.renderers import Renderer
-
-from prez.utils import templates
+from config import *
+from renderers import Renderer
+from profiles.prez_profiles import profiles
+from utils import templates
 
 
 class ProfilesRenderer(Renderer):
-    def __init__(
-        self,
-        request: object,
-        profiles: dict,
-        default_profile: str,
-        instance_uri: str,
-        prez: Optional[str] = None,
-    ) -> None:
+    profiles = {"profiles": profiles}
+    default_profile_token = "profiles"
+
+    def __init__(self, request: object, instance_uri: str, prez: Optional[str] = None) -> None:
         super().__init__(
             request,
-            profiles,
-            default_profile,
+            ProfilesRenderer.profiles,
+            ProfilesRenderer.default_profile_token,
             instance_uri,
         )
         self.prez = prez
@@ -35,12 +31,12 @@ class ProfilesRenderer(Renderer):
         """Renders the HTML representation of the profiles profile"""
         _template_context = {
             "request": self.request,
-            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
+            "uri": self.instance_uri,
             "profile_list": self.profile_list,
             "profiles": self.profiles,
             "prez": self.prez,
             "default_profile": self.default_profile_token,
-            "mediatype_names": MEDIATYPE_NAMES,
+            "mediatype_names": MEDIATYPE_NAMES
         }
         if template_context is not None:
             _template_context.update(template_context)
@@ -62,15 +58,14 @@ class ProfilesRenderer(Renderer):
             return self._render_profiles_json()
 
     def render(
-        self,
-        template_context: Optional[Dict] = None,
+        self, template_context: Optional[Dict] = None
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
         if self.error is not None:
             return PlainTextResponse(self.error, status_code=400)
         elif self.profile == "alt":
-            return self._render_alt(template_context, alt_profiles_graph)
+            return self._render_alt(template_context)
         elif self.profile == "profiles":
             return self._render_profiles(template_context)
         else:

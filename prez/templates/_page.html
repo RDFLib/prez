@@ -9,7 +9,7 @@
     {% set pagetitle = vocprez_title %}
 {% elif active_prez == "spaceprez" %}
     {% set pagetitle = spaceprez_title %}
-{% else %} {# Prez #}
+{% else %} {# Prez #} 
     {% if prez_title is not none %}
         {% set pagetitle = prez_title %}
     {% else %}
@@ -23,20 +23,17 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- standard Prez stylesheet -->
     <link rel="stylesheet" href="/static/css/index.css">
-    <!-- if a theme is set, also load it's favicon & stylesheet -->
     {% if theme_volume is not none %}
-        <link rel="stylesheet" href="/{{ theme_volume }}/static/css/theme.css">
         {% if ("/" + theme_volume + "/img/favicon.ico") | file_exists %}
             <link rel="shortcut icon" href="/{{ theme_volume }}/img/favicon.ico" type="image/x-icon">
         {% else %}
-            <link rel="shortcut icon" href="{{ url_for('static', path='img/favicon.ico') }}" type="image/x-icon">
+            <link rel="shortcut icon" href="/static/img/favicon.ico" type="image/x-icon">
         {% endif %}
-        <link rel="stylesheet" href="/{{ url_for('theme', path='static/css/theme.css') }}">
+        <link rel="stylesheet" href="/{{ theme_volume }}/css/theme.css">
         {% include "fonts.html" ignore missing %}
     {% else %}
-        <link rel="shortcut icon" href="{{ url_for('static', path='img/favicon.ico') }}" type="image/x-icon">
+        <link rel="shortcut icon" href="/static/img/favicon.ico" type="image/x-icon">
     {% endif %}
     <script src="https://kit.fontawesome.com/c112c4b9c0.js" crossorigin="anonymous"></script>
     <title>{{ pagetitle }}</title>

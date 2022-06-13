@@ -2,10 +2,11 @@ from typing import Dict, List, Tuple, Union
 
 from httpx import AsyncClient
 from httpx import Response as httpxResponse
+from rdflib import Graph
 import asyncio
 from connegp import RDF_MEDIATYPES
 
-from prez.config import *
+from config import *
 
 get_all_prop_obj_info = """
 OPTIONAL {
@@ -78,19 +79,21 @@ construct_all_bnode_prop_obj_info = """
 
 async def sparql_query(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
     """Executes a SPARQL SELECT query for a single SPARQL endpoint"""
-    creds = {"endpoint": "", "username": "", "password": ""}
-    if prez == "VocPrez":
+    creds = {
+        "endpoint": "",
+        "username": "",
+        "password": ""
+    }
+    if prez == "vocprez":
         creds["endpoint"] = VOCPREZ_SPARQL_ENDPOINT
         creds["username"] = VOCPREZ_SPARQL_USERNAME
         creds["password"] = VOCPREZ_SPARQL_PASSWORD
-    elif prez == "SpacePrez":
+    elif prez == "spaceprez":
         creds["endpoint"] = SPACEPREZ_SPARQL_ENDPOINT
         creds["username"] = SPACEPREZ_SPARQL_USERNAME
         creds["password"] = SPACEPREZ_SPARQL_PASSWORD
     else:
-        raise Exception(
-            "Invalid prez specified in sparql_query call. Available options are: 'VocPrez', 'SpacePrez'."
-        )
+        raise Exception("Invalid prez specified in sparql_query call. Available options are: 'vocprez', 'spaceprez'.")
     async with AsyncClient() as client:
         response: httpxResponse = await client.post(
             creds["endpoint"],
@@ -118,10 +121,6 @@ async def sparql_query_multiple(
     """Executes a SPARQL SELECT query for (potentially) multiple SPARQL endpoints
 
     If prezs arg is omitted, queries all available SPARQL endpoints.
-
-    Returns a tuple of two lists: (succeeded_results, failed_results)
-
-    The config variable ALLOW_PARTIAL_RESULTS should be used for checking if you should proceed if failed_results is not empty
     """
     results = await asyncio.gather(*[sparql_query(query, prez) for prez in prezs])
     succeeded_results = []
@@ -136,19 +135,21 @@ async def sparql_query_multiple(
 
 async def sparql_construct(query: str, prez: str):
     """Returns an rdflib Graph from a CONSTRUCT query for a single SPARQL endpoint"""
-    creds = {"endpoint": "", "username": "", "password": ""}
-    if prez == "VocPrez":
+    creds = {
+        "endpoint": "",
+        "username": "",
+        "password": ""
+    }
+    if prez == "vocprez":
         creds["endpoint"] = VOCPREZ_SPARQL_ENDPOINT
         creds["username"] = VOCPREZ_SPARQL_USERNAME
         creds["password"] = VOCPREZ_SPARQL_PASSWORD
-    elif prez == "SpacePrez":
+    elif prez == "spaceprez":
         creds["endpoint"] = SPACEPREZ_SPARQL_ENDPOINT
         creds["username"] = SPACEPREZ_SPARQL_USERNAME
         creds["password"] = SPACEPREZ_SPARQL_PASSWORD
     else:
-        raise Exception(
-            "Invalid prez specified in sparql_query call. Available options are: 'VocPrez', 'SpacePrez'."
-        )
+        raise Exception("Invalid prez specified in sparql_query call. Available options are: 'vocprez', 'spaceprez'.")
     async with AsyncClient() as client:
         response: httpxResponse = await client.post(
             creds["endpoint"],
@@ -174,19 +175,21 @@ async def sparql_endpoint_query(
     query: str, prez: str, accept: str
 ) -> Tuple[bool, Union[Dict, str]]:
     """Queries a SPARQL query on a single endpoint for some Accept mediatype"""
-    creds = {"endpoint": "", "username": "", "password": ""}
-    if prez == "VocPrez":
+    creds = {
+        "endpoint": "",
+        "username": "",
+        "password": ""
+    }
+    if prez == "vocprez":
         creds["endpoint"] = VOCPREZ_SPARQL_ENDPOINT
         creds["username"] = VOCPREZ_SPARQL_USERNAME
         creds["password"] = VOCPREZ_SPARQL_PASSWORD
-    elif prez == "SpacePrez":
+    elif prez == "spaceprez":
         creds["endpoint"] = SPACEPREZ_SPARQL_ENDPOINT
         creds["username"] = SPACEPREZ_SPARQL_USERNAME
         creds["password"] = SPACEPREZ_SPARQL_PASSWORD
     else:
-        raise Exception(
-            "Invalid prez specified in sparql_query call. Available options are: 'VocPrez', 'SpacePrez'."
-        )
+        raise Exception("Invalid prez specified in sparql_query call. Available options are: 'vocprez', 'spaceprez'.")
     async with AsyncClient() as client:
         response: httpxResponse = await client.post(
             creds["endpoint"],
@@ -237,25 +240,3 @@ async def sparql_endpoint_query_multiple(
         return succeeded_results.serialize(format=accept), failed_results
     else:
         return succeeded_results, failed_results
-
-
-def rdf_list_to_python_list(g: Graph, sub_pred: tuple) -> List:
-    """
-    Converts an RDF list to a Python list
-    Parameters:
-    g: and RDFLib Graph object containing the list to be converted to a python list
-    sub_pred: the subject and predicate which uniqule identify the triple beginning the RDF list in the graph
-    """
-    python_list = []
-    bn = g.value(*sub_pred)
-    if bn:
-
-        def inner_func(bn):
-            inner_first = g.value(subject=bn, predicate=RDF.first)
-            rest = g.value(subject=bn, predicate=RDF.rest)
-            return inner_first, rest
-
-        while bn != RDF.nil:
-            first, bn = inner_func(bn)
-            python_list.append(first)
-    return python_list

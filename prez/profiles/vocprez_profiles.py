@@ -74,14 +74,3 @@ dcat = Profile(
     languages=["en"],
     default_language="en",
 )
-
-alt = Profile(
-    uri="http://www.w3.org/ns/dx/conneg/altr",
-    id="alt",
-    label="Alternate Representations",
-    comment="The representation of the resource that lists all other representations (profiles and Media Types)",
-    mediatypes=["text/html"] + RDF_MEDIATYPES,
-    default_mediatype="text/html",
-    languages=["en"],
-    default_language="en",
-)

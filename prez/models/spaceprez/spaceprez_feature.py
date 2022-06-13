@@ -1,7 +1,11 @@
 from typing import List, Dict, Optional
+import json
 
-from prez.config import *
-from prez.models import PrezModel
+from rdflib import Graph
+from rdflib.namespace import DCTERMS, SKOS, RDFS, XSD
+
+from config import *
+from models import PrezModel
 
 
 class SpacePrezFeature(PrezModel):
@@ -12,6 +16,7 @@ class SpacePrezFeature(PrezModel):
     ]
     geom_props = [str(GEO.hasGeometry)]
     hidden_props = [
+        str(DCTERMS.identifier),
         str(DCTERMS.description),
     ]
 
@@ -20,7 +25,6 @@ class SpacePrezFeature(PrezModel):
         graph: Graph,
         id: Optional[str] = None,
         uri: Optional[str] = None,
-        most_specific_class: Optional[str] = None,
     ) -> None:
         super().__init__(graph)
 
@@ -28,12 +32,12 @@ class SpacePrezFeature(PrezModel):
             raise ValueError("Either an ID or a URI must be provided")
 
         query_by_id = f"""
-            ?f dcterms:identifier "{id}"^^xsd:token .
-            BIND("{id}"^^xsd:token as ?id)
+            ?f dcterms:identifier ?id .
+            FILTER (STR(?id) = "{id}")
         """
 
         query_by_uri = f"""
-            BIND (<{uri}> as ?f)
+            BIND (<{uri}> as ?f) 
             ?f dcterms:identifier ?id .
         """
 
@@ -44,16 +48,16 @@ class SpacePrezFeature(PrezModel):
             PREFIX rdfs: <{RDFS}>
             PREFIX skos: <{SKOS}>
             PREFIX xsd: <{XSD}>
-            PREFIX dcat: <{DCAT}>
             SELECT *
             WHERE {{
                 {query_by_id if id is not None else query_by_uri}
-                ?f a geo:Feature .
-                OPTIONAL {{
-                    # ?f dcterms:title ?label .
-                    ?f rdfs:label ?label .
-                }}
-                BIND(COALESCE(?label, CONCAT("Feature ", STR(?id))) AS ?title)
+                ?f a geo:Feature ;
+                    dcterms:title ?title .
+                FILTER(lang(?title) = "" || lang(?title) = "en")
+                # OPTIONAL {{
+                #     ?f dcterms:title ?label .
+                # }}
+                # BIND(COALESCE(?label, CONCAT("Feature ", ?id)) AS ?title)
                 OPTIONAL {{
                     ?f dcterms:description ?desc .
                 }}
@@ -69,7 +73,7 @@ class SpacePrezFeature(PrezModel):
             }}
         """
         )
-        self.most_specific_class = most_specific_class
+
         result = r.bindings[0]
         self.uri = result["f"]
         self.id = result["id"]
@@ -132,12 +136,10 @@ class SpacePrezFeature(PrezModel):
     def _get_properties(self) -> List[Dict]:
         props_dict = self._get_props()
 
-        props_dict.sort(key=lambda x: float(x["order"]) if x["order"] else 100)
         # group props in order, filtering out hidden props
         properties = []
         main_props = []
         geom_props = []
-        type_props = []
         other_props = []
 
         for prop in props_dict:
@@ -151,19 +153,12 @@ class SpacePrezFeature(PrezModel):
                     bnode_prop_name = bnode["value"].split("#")[1]
                     if bnode_prop_name in ["asDGGS", "asGeoJSON", "asWKT"]:
                         self.geometries[bnode_prop_name] = bnode["objects"][0]["value"]
-            elif prop["value"] == str(RDF.type):
-                for i, obj in enumerate(prop["objects"]):
-                    if obj["value"] == self.most_specific_class:
-                        retain_index = i
-                        break
-                prop["objects"] = [prop["objects"][retain_index]]
-                type_props.append(prop)
             else:
                 other_props.append(prop)
 
         # sorts & combines into a single list
         properties.extend(main_props)
         properties.extend(geom_props)
-        properties.extend(type_props)
         properties.extend(other_props)
+
         return properties

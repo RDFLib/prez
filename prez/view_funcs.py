@@ -1,15 +1,12 @@
 from typing import Optional
 
-from async_lru import alru_cache
 from fastapi import Request
-from rdflib import Namespace
+from connegp import Profile
 
-from prez.config import ENABLED_PREZS
-from prez.profiles.generate_profiles import ProfileDetails
-from prez.renderers import ProfilesRenderer
+from renderers import ProfilesRenderer
+from config import ENABLED_PREZS
 
 
-@alru_cache(maxsize=20)
 async def profiles_func(request: Request, prez: Optional[str] = None):
     profiles_filenames = ["profiles.prez_profiles"]
     if prez == "vocprez":
@@ -17,28 +14,26 @@ async def profiles_func(request: Request, prez: Optional[str] = None):
     elif prez == "spaceprez":
         profiles_filenames.append("profiles.spaceprez_profiles")
     elif prez is None:
-        profiles_filenames.extend(
-            [f"profiles.{p.lower()}_profiles" for p in ENABLED_PREZS]
-        )
+        profiles_filenames.extend([f"profiles.{p.lower()}_profiles" for p in ENABLED_PREZS])
     else:
         raise Exception("invalid prez")
 
-    PREZ = Namespace("https://surroundaustralia.com/prez/")
+    import importlib
 
-    instance_uri = str(
-        request.url.remove_query_params(keys=request.query_params.keys())
-    )
-    profile_details = ProfileDetails(general_class=PREZ.Profiles, item_uri=instance_uri)
-    await profile_details.get_all_profiles(prez)
+    profiles = [importlib.import_module(file) for file in profiles_filenames]
 
-    profile_list = [dict(profile) for profile in profile_details.profiles_dict.values()]
+    # get distinct list of profiles
+    profile_list = []
+    for file in profiles:
+        for item in dir(file):
+            if not item.startswith("__") and not item == "profiles":
+                profile = getattr(file, item)
+                if isinstance(profile, Profile) and dict(profile) not in profile_list:
+                    profile_list.append(dict(profile))
+    profile_list.sort(key=lambda p: p["id"])
 
     profiles_renderer = ProfilesRenderer(
-        request,
-        profile_details.profiles_dict,
-        profile_details.default_profile,
-        instance_uri,
-        prez,
+        request, str(request.url.remove_query_params(keys=request.query_params.keys())), prez
     )
     profiles_renderer.set_profiles(profile_list)
     return profiles_renderer.render()

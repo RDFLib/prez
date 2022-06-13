@@ -1,15 +1,17 @@
 from typing import Dict, Optional, Union
 
-from connegp import MEDIATYPE_NAMES
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
+from connegp import MEDIATYPE_NAMES
 
-from prez.renderers import Renderer
-from prez.utils import templates
-from prez.config import *
+from config import *
+from renderers import Renderer
+from profiles.spaceprez_profiles import oai
+from utils import templates
 
 
 class SpacePrezConformanceRenderer(Renderer):
-
+    profiles = {"oai": oai}
+    default_profile_token = "oai"
     conformsTo = [
         {
             "title": "Conformance Class Core",
@@ -27,15 +29,21 @@ class SpacePrezConformanceRenderer(Renderer):
             "title": "Conformance Class OpenAPI 3.0",
             "url": "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas3",
         },
+        # {
+        #     "title": "Conformance Class GML Simple Features Level 0",
+        #     "url": "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/gmlsf0",
+        # },
+        # {
+        #     "title": "Conformance Class GML Simple Features Level 2",
+        #     "url": "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/gmlsf2",
+        # },
     ]
 
-    def __init__(
-        self, request: object, profiles, default_profile, instance_uri: str
-    ) -> None:
+    def __init__(self, request: object, instance_uri: str) -> None:
         super().__init__(
             request,
-            profiles,
-            default_profile,
+            SpacePrezConformanceRenderer.profiles,
+            SpacePrezConformanceRenderer.default_profile_token,
             instance_uri,
         )
 
@@ -45,7 +53,7 @@ class SpacePrezConformanceRenderer(Renderer):
         """Renders the HTML representation of the OAI profile for the conformance page"""
         _template_context = {
             "request": self.request,
-            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
+            "uri": self.instance_uri,
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
             "conformsTo": SpacePrezConformanceRenderer.conformsTo,
@@ -83,16 +91,14 @@ class SpacePrezConformanceRenderer(Renderer):
             return self._render_oai_json()
 
     def render(
-        self,
-        template_context: Optional[Dict] = None,
-        alt_profiles_graph: Optional[Graph] = None,
+        self, template_context: Optional[Dict] = None
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
         if self.error is not None:
             return PlainTextResponse(self.error, status_code=400)
         elif self.profile == "alt":
-            return self._render_alt(template_context, alt_profiles_graph)
+            return self._render_alt(template_context)
         elif self.profile == "oai":
             return self._render_oai(template_context)
         else:

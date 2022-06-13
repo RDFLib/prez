@@ -2,12 +2,14 @@ from typing import Dict, Optional, Union, List
 from abc import ABCMeta, abstractmethod
 
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
+from rdflib import Graph, URIRef, Literal
+from rdflib.namespace import RDF, RDFS
 from connegp import Profile, RDF_MEDIATYPES
 
-from prez.renderers import Renderer
-from prez.config import *
-
-from prez.utils import templates
+from renderers import Renderer
+from config import *
+from profiles.prez_profiles import mem
+from utils import templates
 
 
 class ListRenderer(Renderer, metaclass=ABCMeta):
@@ -22,8 +24,9 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
         comment: str,
         page: int,
         per_page: int,
-        member_count: int,
+        member_count: int
     ) -> None:
+        profiles.update({"mem": mem})
 
         if default_profile_token is None:
             default_profile_token = "mem"
@@ -55,7 +58,7 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
         """Renders the HTML representation of the members profiles using the 'mem.html' template"""
         _template_context = {
             "request": self.request,
-            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
+            "uri": self.instance_uri,
             "members": self.members,
             "label": self.label,
             "comment": self.comment,
@@ -70,7 +73,7 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
         """Renders the JSON representation of the members profile"""
         return JSONResponse(
             content={
-                "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
+                "uri": self.instance_uri,
                 "members": self.members,
                 "label": self.label,
                 "comment": self.comment,
@@ -102,7 +105,7 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
     def _render_mem_rdf(self) -> Response:
         """Renders the RDF representation of the members profile"""
         g = self._generate_mem_rdf()
-        return self._make_rdf_response(self.instance_uri, g)
+        return self._make_rdf_response(g)
 
     def _render_mem(
         self, template_context: Union[Dict, None]
@@ -117,9 +120,7 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
 
     @abstractmethod
     def render(
-        self,
-        template_context: Optional[Dict] = None,
-        alt_profiles_graph: Optional[Graph] = None,
+        self, template_context: Optional[Dict] = None
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
@@ -128,7 +129,7 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
         elif self.profile == "mem":
             return self._render_mem(template_context)
         elif self.profile == "alt":
-            return self._render_alt(template_context, alt_profiles_graph)
+            return self._render_alt(template_context)
         # extra profiles go here
         else:
             return None
