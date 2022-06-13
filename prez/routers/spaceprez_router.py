@@ -481,13 +481,11 @@ async def dataset_features(
     feature_list = SpacePrezFeatureList(sparql_result, dataset=d)
     feature_list_renderer = SpacePrezFeatureListRenderer(
         request,
-        str(request.url.remove_query_params(keys=request.query_params.keys())),
-        "Feature list",
-        "A list of geo:Features",
-        feature_list,
+        PREZ.FeatureList,
         page,
         per_page,
         int(feature_count[0]["count"]["value"]),
+        feature_list,
     )
     return feature_list_renderer.render()
 
@@ -612,13 +610,11 @@ async def spaceprez_features(
     feature_list = SpacePrezFeatureList(sparql_result)
     feature_list_renderer = SpacePrezFeatureListRenderer(
         request,
-        str(request.url.remove_query_params(keys=request.query_params.keys())),
-        "Feature list",
-        "A list of geo:Features",
-        feature_list,
+        PREZ.FeatureList,
         page,
         per_page,
         int(feature_count[0]["count"]["value"]),
+        feature_list,
     )
     return feature_list_renderer.render()
 

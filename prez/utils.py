@@ -32,7 +32,7 @@ def append_qsa(uri: str, qsas: Dict[str, str]) -> str:
     if "?" in uri:
         path, qsa_str = uri.split("?")
         for qsa in qsa_str.split("&"):
-            key, value = qsa.split("=")
+            key, value = qsa.split("=", maxsplit=1)
             qsa_dict[key] = value
     else:
         path = uri

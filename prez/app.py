@@ -360,7 +360,7 @@ async def search(
         results = []
 
     # CQL search
-    if "spaceprez" in ENABLED_PREZS:
+    if "SpacePrez" in ENABLED_PREZS:
         dataset_sparql_result, collection_sparql_result = await asyncio.gather(
             list_datasets(),
             list_collections(),
