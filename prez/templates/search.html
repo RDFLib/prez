@@ -1,5 +1,7 @@
 {% extends "_page.html" %}
-{% from "_macros.html" import render_search_result with context %}
+{% from "_macros.html" import render_search_result, render_cql_form with context %}
+{% set prezs = "ENABLED_PREZS" | get_config %}
+{% set props = "CQL_PROPS" | get_config %}
 
 {% set breadcrumbs = [
     {"label": "Search", "url": url_for("search")}
@@ -9,30 +11,43 @@
 {% block content %}
 <div id="content-col-main">
     <h1>Global Search</h1>
-    <p>This search can query across multiple VocPrez instances.</p>
-    <p>
-        The search function here looks for matches within SKOS Concepts' various labels - preferred, alternate, hidden - and their definitions. It weights results based on the field it is found in, as per the order just given. 
-    </p>
-    <form action="{{ url_for('search') }}" method="get">
-        <div id="search-form">
-            <input type="text" name="search" id="search" placeholder="Search..."{% if last_search_term %}value="{{last_search_term}}"{% endif %}>
-            <select multiple name="endpoints" id="endpoints">
-                {% for endpoint_option in endpoint_options %}
-                    <option value="{{ endpoint_option['url'] }}"{% if endpoint_option["url"] in last_endpoints %} selected{% endif %}>{{ endpoint_option["name"] }}</option>
-                {% endfor %}
-            </select>
-            <div class="form-text">Multiple endpoints can be selected. "Self" represents this Prez instance.</div>
+    <div id="search-forms">
+        {% if "vocprez" in prezs %}
             <div>
-                <button type="submit">Search</button>
+                <h2>Concept Search</h2>
+                <p>This search can query across multiple VocPrez instances.</p>
+                <p>
+                    The search function here looks for matches within SKOS Concepts' various labels - preferred, alternate, hidden - and their definitions. It weights results based on the field it is found in, as per the order just given. 
+                </p>
+                <form action="{{ url_for('search') }}" method="get">
+                    <div id="search-form">
+                        <input type="text" name="search" id="search" placeholder="Search..."{% if last_search_term %}value="{{last_search_term}}"{% endif %}>
+                        <select multiple name="endpoints" id="endpoints">
+                            {% for endpoint_option in endpoint_options %}
+                                <option value="{{ endpoint_option['url'] }}"{% if endpoint_option["url"] in last_endpoints %} selected{% endif %}>{{ endpoint_option["name"] }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Multiple endpoints can be selected. "Self" represents this Prez instance.</div>
+                        <div>
+                            <button type="submit">Search</button>
+                        </div>
+                    </div>
+                </form>
+                
             </div>
-        </div>
-    </form>
-    {% if results | length > 0 %}
-        <h2>Search Results</h2>
-        <div id="search-results">
-            {% for result in results %}
-                {{ render_search_result(result) }}
-            {% endfor %}
+        {% endif %}
+        {% if "spaceprez" in prezs %}
+            {{ render_cql_form(props, datasets, collections) }}
+        {% endif %}
+    </div>
+    {% if "vocprez" in prezs and results | length > 0 %}
+        <div>
+            <h2>Search Results</h2>
+            <div id="search-results">
+                {% for result in results %}
+                    {{ render_search_result(result) }}
+                {% endfor %}
+            </div>
         </div>
     {% endif %}
 </div>

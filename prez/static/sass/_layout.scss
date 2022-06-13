@@ -81,6 +81,17 @@ main {
     overflow-x: hidden;
 }
 
+#search-forms {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+
+    & > div {
+        flex-basis: 0;
+        flex-grow: 1;
+    }
+}
+
 #search-results {
     display: flex;
     flex-direction: column;
@@ -374,5 +385,14 @@ ol#concept-hierarchy {
 
     .tooltip .tooltip-text {
         max-width: 120px;
+    }
+
+    #search-forms {
+        flex-direction: column;
+    
+        & > div {
+            flex-basis: unset;
+            flex-grow: unset;
+        }
     }
 }

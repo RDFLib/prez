@@ -1,6 +1,6 @@
 import os
 import re
-from typing import Dict
+from typing import Dict, List
 
 import jinja2
 from starlette_core.templating import Jinja2Templates
@@ -61,6 +61,10 @@ def prez_title(s: str) -> str:
     i.e. vocprez -> VocPrez"""
     return "".join([substr.capitalize() for substr in re.split("(prez)", s)[:2]])
 
+def join_list_keys(l: List, key: str, sep: str) -> str:
+    """Concatenates a list of dicts into a string of key values with a specified separator"""
+    return sep.join([e[key] for e in l])
+
 
 template_list = ["templates"]
 if THEME_VOLUME is not None:
@@ -74,3 +78,4 @@ templates.env.filters["append_qsa"] = append_qsa
 templates.env.filters["file_exists"] = file_exists
 templates.env.filters["match"] = match
 templates.env.filters["prez_title"] = prez_title
+templates.env.filters["join_list_keys"] = join_list_keys

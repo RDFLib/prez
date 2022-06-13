@@ -15,6 +15,7 @@ from fedsearch import SkosSearch, EndpointDetails
 from config import *
 from routers import vocprez_router, spaceprez_router
 from services.app_service import *
+from services.spaceprez_service import list_datasets, list_collections
 from services.sparql_utils import sparql_endpoint_query
 from utils import templates
 from view_funcs import profiles_func
@@ -202,6 +203,7 @@ async def search(
     endpoints: List[str] = Query(["self"]),
 ):
     """Displays the search page of Prez"""
+    # Concept search
     if search is not None and search != "":
         self_sparql_endpoint = str(request.base_url)[:-1] + app.router.url_path_for(
             "sparql_get"
@@ -233,13 +235,33 @@ async def search(
         results = SkosSearch.combine_search_results(s, "preflabel")
     else:
         results = []
-    template_context = {
-        "request": request,
-        "endpoint_options": SEARCH_ENDPOINTS,
-        "results": results,
-        "last_search_term": search,
-        "last_endpoints": endpoints,
-    }
+    
+    # CQL search
+    if "spaceprez" in ENABLED_PREZS:
+        dataset_sparql_result, collection_sparql_result = await asyncio.gather(
+            list_datasets(),
+            list_collections(),
+        )
+        datasets = [{"id": result["id"]["value"], "title": result["label"]["value"]} for result in dataset_sparql_result]
+        collections = [{"id": result["id"]["value"], "title": result["label"]["value"]} for result in collection_sparql_result]
+
+        template_context = {
+            "request": request,
+            "endpoint_options": SEARCH_ENDPOINTS,
+            "results": results,
+            "last_search_term": search,
+            "last_endpoints": endpoints,
+            "datasets": datasets,
+            "collections": collections,
+        }
+    else:
+        template_context = {
+            "request": request,
+            "endpoint_options": SEARCH_ENDPOINTS,
+            "results": results,
+            "last_search_term": search,
+            "last_endpoints": endpoints,
+        }
     return templates.TemplateResponse("search.html", context=template_context)
 
 
@@ -344,24 +366,6 @@ async def health(request: Request):
         },
         media_type="application/json",
         headers=request.headers,
-    )
-
-# queryables
-@app.get(
-    "/queryables",
-    summary="List available query parameters for CQL search globally",
-)
-async def queryables(request: Request):
-    """Returns a SpacePrez geo:FeatureCollection in the necessary profile & mediatype"""
-    return JSONResponse(
-        content={
-            "$schema": "https://json-schema.org/draft/2019-09/schema",
-            "$id" : f"{request.url.remove_query_params(keys=request.query_params.keys())}",
-            "type" : "object",
-            # "title" : "Cultural (Points)",
-            # "description" : "Cultural: Information about features on the landscape with a point geometry that have been constructed by man.",
-            "properties" : {}
-        }
     )
 
 

@@ -1,5 +1,5 @@
 {% extends "_page.html" %}
-{% from "_macros.html" import render_row with context %}
+{% from "_macros.html" import render_row, render_cql_form with context %}
 {% set prezs = "ENABLED_PREZS" | get_config %}
 {% set props = "CQL_PROPS" | get_config %}
 {% set has_alt = true %}
@@ -61,26 +61,7 @@
 </div>
 <div id="content-col-sidebar">
     {% include "alt_link.html" %}
-    <div>
-        <h3>Feature Search</h3>
-        <div>Search features within this Feature Collection. <a href="https://docs.ogc.org/DRAFTS/21-065.html" target="_blank">CQL</a> can be used in the optional advanced search field.</div>
-        <div>For the list of available properties, see <a href="{{request.url}}/queryables">here.</a></div>
-        <form action="{{request.url}}/cql" method="post">
-            <div class="cql-form">
-                {% for prop_name, prop_dict in props.items() %}
-                    <div class="form-item">
-                        <label for="cql-{{ prop_name }}">{{ prop_dict.title }}</label>
-                        <input type="text" name="{{ prop_name }}" id="cql-{{ prop_name }}" placeholder="Search by {{ prop_dict.title | lower }}...">
-                    </div>
-                {% endfor %}
-                <div class="form-item">
-                    <label for="">CQL query</label>
-                    <textarea name="filter" id="" cols="30" rows="10" placeholder="Advanced CQL search..."></textarea>
-                </div>
-                <div><button type="submit">Search</button></div>
-            </div>
-        </form>
-    </div>
+    {{ render_cql_form(props, none, none) }}
 </div>
 {% if collection.geometries.asGeoJSON is not none %}
     <script>

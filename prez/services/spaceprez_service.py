@@ -21,7 +21,7 @@ async def count_datasets():
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
-async def list_datasets(page: int, per_page: int):
+async def list_datasets(page: Optional[int] = None, per_page: Optional[int] = None):
     q = f"""
         PREFIX dcat: <{DCAT}>
         PREFIX dcterms: <{DCTERMS}>
@@ -37,7 +37,7 @@ async def list_datasets(page: int, per_page: int):
                 ?d dcterms:description ?desc .
             }}
             FILTER((lang(?label) = "" || lang(?label) = "en") && DATATYPE(?id) = xsd:token)
-        }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
+        }}{f"LIMIT {per_page} OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
     """
     r = await sparql_query(q, "spaceprez")
     if r[0]:
@@ -70,13 +70,19 @@ async def get_dataset_construct(
         PREFIX rdfs: <{RDFS}>
         PREFIX skos: <{SKOS}>
         CONSTRUCT {{
-            ?d ?p1 ?o1 .
+            ?d ?p1 ?o1 ;
+                rdfs:member ?coll .
+            ?coll dcterms:identifier ?coll_id ;
+                dcterms:title ?coll_title .
             {construct_all_prop_obj_info}
             {construct_all_bnode_prop_obj_info}
         }}
         WHERE {{
             {query_by_id if dataset_id is not None else query_by_uri}
-            ?d ?p1 ?o1 .
+            ?d ?p1 ?o1 ;
+                rdfs:member ?coll .
+            ?coll dcterms:identifier ?coll_id ;
+                dcterms:title ?coll_title .
             {get_all_bnode_prop_obj_info}
             {get_all_prop_obj_info}
         }}
@@ -88,7 +94,7 @@ async def get_dataset_construct(
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
-async def count_collections(dataset_id: str):
+async def count_collections(dataset_id: Optional[str] = None):
     q = f"""
         PREFIX dcat: <{DCAT}>
         PREFIX dcterms: <{DCTERMS}>
@@ -100,7 +106,7 @@ async def count_collections(dataset_id: str):
             ?d dcterms:identifier ?d_id ;
                 a dcat:Dataset ;
                 rdfs:member ?coll .
-            FILTER (STR(?d_id) = "{dataset_id}" && DATATYPE(?d_id) = xsd:token)
+            FILTER ({f'STR(?d_id) = "{dataset_id}" && ' if dataset_id is not None else ""}DATATYPE(?d_id) = xsd:token)
             ?coll a geo:FeatureCollection .
         }}
     """
@@ -112,7 +118,7 @@ async def count_collections(dataset_id: str):
 
 
 async def list_collections(
-    dataset_id: str, page: Optional[int] = None, per_page: Optional[int] = None
+    dataset_id: Optional[str] = None, page: Optional[int] = None, per_page: Optional[int] = None
 ):
     q = f"""
         PREFIX dcat: <{DCAT}>
@@ -128,7 +134,7 @@ async def list_collections(
                 dcterms:title ?d_label ;
                 rdfs:member ?coll .
             FILTER(lang(?d_label) = "" || lang(?d_label) = "en")
-            FILTER (STR(?d_id) = "{dataset_id}" && DATATYPE(?d_id) = xsd:token)
+            FILTER ({f'STR(?d_id) = "{dataset_id}" && ' if dataset_id is not None else ""}DATATYPE(?d_id) = xsd:token)
             ?coll a geo:FeatureCollection ;
                 dcterms:identifier ?id ;
                 dcterms:title ?label .
@@ -484,6 +490,46 @@ async def get_collection_info_queryables(
             ?coll dcterms:title ?title .
             OPTIONAL {{
                 ?coll dcterms:description ?desc .
+            }}
+            FILTER(lang(?title) = "" || lang(?title) = "en")
+        }}
+    """
+    r = await sparql_query(q, "spaceprez")
+    if r[0]:
+        return r[1]
+    else:
+        raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
+
+async def get_dataset_info_queryables(
+    dataset_id: Optional[str] = None,
+    dataset_uri: Optional[str] = None,
+):
+    if dataset_id is None and dataset_uri is None:
+        raise ValueError("Either an ID or a URI must be provided for a SPARQL query")
+
+    # when querying by ID via regular URL path
+    query_by_id = f"""
+        ?d a dcat:Dataset ;
+            dcterms:identifier ?d_id .
+        FILTER (STR(?d_id) = "{dataset_id}" && DATATYPE(?d_id) = xsd:token)
+    """
+    # when querying by URI via /object?uri=...
+    query_by_uri = f"""
+        BIND (<{dataset_uri}> as ?d)
+        ?d a dcat:Dataset .
+    """
+
+    q = f"""
+        PREFIX dcat: <{DCAT}>
+        PREFIX dcterms: <{DCTERMS}>
+        PREFIX rdfs: <{RDFS}>
+        PREFIX xsd: <{XSD}>
+        SELECT ?title ?desc
+        WHERE {{
+            {query_by_id if dataset_id is not None else query_by_uri}
+            ?d dcterms:title ?title .
+            OPTIONAL {{
+                ?d dcterms:description ?desc .
             }}
             FILTER(lang(?title) = "" || lang(?title) = "en")
         }}
