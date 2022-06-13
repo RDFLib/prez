@@ -1,19 +1,17 @@
 from typing import Dict, Optional, Union
 
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from rdflib import Graph, URIRef, Literal
-from rdflib.namespace import DCAT, DCTERMS, RDF, RDFS
 from connegp import MEDIATYPE_NAMES
 
-from renderers import ListRenderer
-from config import *
-from profiles.vocprez_profiles import dcat, dd
-from models.vocprez import VocPrezSchemeList
-from utils import templates
+from prez.renderers import ListRenderer
+from prez.config import *
+from prez.profiles.vocprez_profiles import dcat, dd, alt
+from prez.models.vocprez import VocPrezSchemeList
+from prez.utils import templates
 
 
 class VocPrezSchemeListRenderer(ListRenderer):
-    profiles = {"dcat": dcat, "dd": dd}
+    profiles = {"dcat": dcat, "dd": dd, "alt": alt}
     default_profile_token = "dcat"
 
     def __init__(
@@ -25,7 +23,7 @@ class VocPrezSchemeListRenderer(ListRenderer):
         scheme_list: VocPrezSchemeList,
         page: int,
         per_page: int,
-        member_count: int
+        member_count: int,
     ) -> None:
         super().__init__(
             request,
@@ -37,7 +35,7 @@ class VocPrezSchemeListRenderer(ListRenderer):
             comment,
             page,
             per_page,
-            member_count
+            member_count,
         )
         self.scheme_list = scheme_list
 
@@ -46,13 +44,13 @@ class VocPrezSchemeListRenderer(ListRenderer):
         _template_context = {
             "request": self.request,
             "members": self.members,
-            "uri": self.instance_uri,
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
             "pages": self.pages,
             "label": self.label,
             "comment": self.comment,
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
-            "mediatype_names": MEDIATYPE_NAMES
+            "mediatype_names": MEDIATYPE_NAMES,
         }
         if template_context is not None:
             _template_context.update(template_context)
@@ -128,14 +126,14 @@ class VocPrezSchemeListRenderer(ListRenderer):
     def _render_dcat_rdf(self):
         """Renders the RDF representation of the DCAT profile for a dataset"""
         g = self._generate_dcat_rdf()
-        return self._make_rdf_response(g)
+        return self._make_rdf_response(self.instance_uri, g)
 
     def _render_dcat(self, template_context: Union[Dict, None]):
         if self.mediatype == "text/html":
             return self._render_dcat_html(template_context)
-        else: # all other formats are RDF
+        else:  # all other formats are RDF
             return self._render_dcat_rdf()
-    
+
     def _render_dd_json(self) -> JSONResponse:
         """Renders the json representation of the dd profile for a list of concept schemes"""
         return JSONResponse(
@@ -149,7 +147,9 @@ class VocPrezSchemeListRenderer(ListRenderer):
         return self._render_dd_json()
 
     def render(
-        self, template_context: Optional[Dict] = None
+        self,
+        template_context: Optional[Dict] = None,
+        alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
@@ -158,7 +158,7 @@ class VocPrezSchemeListRenderer(ListRenderer):
         elif self.profile == "mem":
             return self._render_mem(template_context)
         elif self.profile == "alt":
-            return self._render_alt(template_context)
+            return self._render_alt(template_context, alt_profiles_graph)
         elif self.profile == "dcat":
             return self._render_dcat(template_context)
         elif self.profile == "dd":

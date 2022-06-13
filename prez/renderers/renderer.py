@@ -1,14 +1,11 @@
 from abc import ABCMeta, abstractmethod
 from typing import Dict, Optional, Union
 
-from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from rdflib import Graph, Namespace, URIRef, Literal, BNode
-from rdflib.namespace import RDF, RDFS, PROF, DCTERMS, XSD
 from connegp import Connegp, Profile, RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
+from fastapi.responses import Response, JSONResponse, PlainTextResponse
 
-from config import *
-from profiles.prez_profiles import alt
-from utils import templates
+from prez.config import *
+from prez.utils import templates
 
 
 class Renderer(object, metaclass=ABCMeta):
@@ -22,8 +19,8 @@ class Renderer(object, metaclass=ABCMeta):
         instance_uri: str,
     ) -> None:
         self.error = None
-        if default_profile_token == "alt":
-            self.error = "You cannot specify 'alt' as the default profile."
+        # if default_profile_token == "alt":
+        #     self.error = "You cannot specify 'alt' as the default profile."
 
         if default_profile_token not in profiles.keys():
             self.error = (
@@ -32,7 +29,6 @@ class Renderer(object, metaclass=ABCMeta):
             )
 
         self.profiles = dict(profiles)
-        self.profiles["alt"] = alt
         self.request = request
         self.default_profile_token = default_profile_token
         self.instance_uri = instance_uri
@@ -40,6 +36,8 @@ class Renderer(object, metaclass=ABCMeta):
         connegp = Connegp(request, self.profiles, default_profile_token)
         self.profile = connegp.profile
         self.mediatype = connegp.mediatype
+        self.profiles_requested = connegp.profiles_requested
+        self.mediatypes_requested = connegp.mediatypes_requested
 
         # make headers
         if self.error is None:
@@ -137,18 +135,56 @@ class Renderer(object, metaclass=ABCMeta):
 
         return g
 
-    def _make_rdf_response(self, graph: Graph) -> Response:
+    def _make_rdf_response(self, item_uri, graph: Graph) -> Response:
         """Creates an RDF response from a Graph"""
         serial_mediatype = RDF_SERIALIZER_TYPES_MAP[self.mediatype]
 
-        response_text = graph.serialize(format=serial_mediatype, encoding="utf-8")
+        # remove labels from the graph
+        query = f"""
+        PREFIX geo: <{GEO}>
+        CONSTRUCT {{
+            <{str(item_uri)}> ?p ?o .
+            ?o ?p2 ?o2 .
+            ?coll skos:member <{str(item_uri)}> .
+
+            ?x rdfs:member <{str(item_uri)}> .
+            ?y rdfs:member ?x .
+        }}
+        WHERE {{
+            <{str(item_uri)}> ?p ?o .
+            # Blank Nodes
+
+            OPTIONAL {{
+                ?o ?p2 ?o2 .
+                FILTER(ISBLANK(?o))
+            }}
+
+            # VocPrez
+            OPTIONAL {{
+                ?coll skos:member <{str(item_uri)}> .
+            }}
+
+            # SpacePrez
+            OPTIONAL {{
+                ?x rdfs:member <{str(item_uri)}> .
+
+                OPTIONAL {{
+                    ?y rdfs:member ?x .
+                }}
+            }}
+        }}
+        """
+        filtered_g = Graph(namespace_manager=graph.namespace_manager)
+        filtered_g += graph.query(query).graph
+
+        filtered_g = graph
+        response_text = filtered_g.serialize(format=serial_mediatype, encoding="utf-8")
 
         # destroy the triples in the triplestore, then delete the triplestore
         # this helps to prevent a memory leak in rdflib
         graph.store.remove((None, None, None))
         graph.destroy({})
         del graph
-
         return Response(response_text, media_type=self.mediatype)
 
     def _render_alt_html(
@@ -157,9 +193,9 @@ class Renderer(object, metaclass=ABCMeta):
         """Renders the HTML representation of the alternate profiles using the 'alt.html' template"""
         _template_context = {
             "request": self.request,
-            "uri": self.instance_uri,
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
             "profiles": self.profiles,
-            "default_profile": self.profiles.get(self.default_profile_token)
+            "default_profile": self.profiles.get(self.default_profile_token),
         }
         if template_context is not None:
             _template_context.update(template_context)
@@ -167,16 +203,11 @@ class Renderer(object, metaclass=ABCMeta):
             "alt.html", context=_template_context, headers=self.headers
         )
 
-    def _render_alt_rdf(self) -> Response:
-        """Renders the RDF representation of the alternate profiles"""
-        g = self._generate_alt_rdf()
-        return self._make_rdf_response(g)
-
     def _render_alt_json(self) -> JSONResponse:
         """Renders the JSON representation of the alternate profiles"""
         return JSONResponse(
             content={
-                "uri": self.instance_uri,
+                "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
                 "profiles": list(self.profiles.keys()),
                 "default_profile": self.default_profile_token,
             },
@@ -185,19 +216,22 @@ class Renderer(object, metaclass=ABCMeta):
         )
 
     def _render_alt(
-        self, template_context: Union[Dict, None]
+        self, template_context: Union[Dict, None], alt_profiles_graph: Graph
     ) -> Union[templates.TemplateResponse, Response, JSONResponse]:
         """Renders the alternate profiles based on mediatype"""
         if self.mediatype == "text/html":
             return self._render_alt_html(template_context)
         elif self.mediatype in RDF_MEDIATYPES:
-            return self._render_alt_rdf()
+            response_text = alt_profiles_graph.serialize(format=self.mediatype)
+            return Response(response_text, media_type=self.mediatype)
         else:  # application/json
             return self._render_alt_json()
 
     @abstractmethod
     def render(
-        self, template_context: Optional[Dict] = None
+        self,
+        template_context: Optional[Dict] = None,
+        alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
@@ -205,7 +239,7 @@ class Renderer(object, metaclass=ABCMeta):
         if self.error is not None:
             return PlainTextResponse(self.error, status_code=400)
         elif self.profile == "alt":
-            return self._render_alt(template_context)
+            return self._render_alt(template_context, alt_profiles_graph)
         # extra profiles go here
         else:
             return None

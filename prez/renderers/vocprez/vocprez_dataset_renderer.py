@@ -1,26 +1,30 @@
 from typing import Dict, Optional, Union
 
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from rdflib import Graph, URIRef, Literal
-from rdflib.namespace import DCAT, DCTERMS, RDF
 from connegp import MEDIATYPE_NAMES
 
-from config import *
-from renderers import Renderer
-from profiles.vocprez_profiles import dcat, sdo
-from models.vocprez import VocPrezDataset
-from utils import templates
+from prez.config import *
+from prez.renderers import Renderer
+from prez.profiles.vocprez_profiles import dcat, sdo, alt
+from prez.models.vocprez import VocPrezDataset
+from prez.utils import templates
 
 
 class VocPrezDatasetRenderer(Renderer):
-    profiles = {"dcat": dcat, "sdo": sdo}
+    profiles = {"dcat": dcat, "sdo": sdo, "alt": alt}
     default_profile_token = "dcat"
 
-    def __init__(self, request: object, instance_uri: str) -> None:
+    def __init__(
+        self,
+        request: object,
+        instance_uri: str,
+        available_profiles: dict,
+        default_profile: str,
+    ) -> None:
         super().__init__(
             request,
-            VocPrezDatasetRenderer.profiles,
-            VocPrezDatasetRenderer.default_profile_token,
+            available_profiles,
+            default_profile,
             instance_uri,
         )
 
@@ -34,10 +38,10 @@ class VocPrezDatasetRenderer(Renderer):
         _template_context = {
             "request": self.request,
             "dataset": self.dataset.to_dict(),
-            "uri": self.instance_uri,
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
-            "mediatype_names": MEDIATYPE_NAMES
+            "mediatype_names": MEDIATYPE_NAMES,
         }
         if template_context is not None:
             _template_context.update(template_context)
@@ -96,13 +100,13 @@ class VocPrezDatasetRenderer(Renderer):
     def _render_dcat_rdf(self) -> Response:
         """Renders the RDF representation of the DCAT profile for a dataset"""
         g = self._generate_dcat_rdf()
-        return self._make_rdf_response(g)
+        return self._make_rdf_response(self.instance_uri, g)
 
     def _render_dcat(self, template_context: Union[Dict, None]):
         """Renders the DCAT profile for a dataset"""
         if self.mediatype == "text/html":
             return self._render_dcat_html(template_context)
-        else: # all other formats are RDF
+        else:  # all other formats are RDF
             return self._render_dcat_rdf()
 
     def _generate_sdo_rdf(self) -> Graph:
@@ -126,14 +130,16 @@ class VocPrezDatasetRenderer(Renderer):
         return self._render_sdo_rdf()
 
     def render(
-        self, template_context: Optional[Dict] = None
+        self,
+        template_context: Optional[Dict] = None,
+        alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
         if self.error is not None:
             return PlainTextResponse(self.error, status_code=400)
         elif self.profile == "alt":
-            return self._render_alt(template_context)
+            return self._render_alt(template_context, alt_profiles_graph)
         elif self.profile == "dcat":
             return self._render_dcat(template_context)
         elif self.profile == "sdo":

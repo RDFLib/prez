@@ -1,15 +1,12 @@
 from typing import Optional
 
-from rdflib.namespace import RDFS, DCAT, DCTERMS
-
-from config import *
-from services.sparql_utils import *
+from prez.services.sparql_utils import *
 
 
 async def count_schemes():
     q = f"""
         PREFIX skos: <{SKOS}>
-        SELECT (COUNT(?cs) as ?count) 
+        SELECT (COUNT(?cs) as ?count)
         WHERE {{
             ?cs a skos:ConceptScheme .
         }}
@@ -19,6 +16,7 @@ async def count_schemes():
         return r[1]
     else:
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
+
 
 async def list_schemes(page: int, per_page: int):
     q = f"""
@@ -40,10 +38,11 @@ async def list_schemes(page: int, per_page: int):
     else:
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
+
 async def count_collections():
     q = f"""
         PREFIX skos: <{SKOS}>
-        SELECT (COUNT(?coll) as ?count) 
+        SELECT (COUNT(?coll) as ?count)
         WHERE {{
             ?coll a skos:Collection .
         }}
@@ -53,6 +52,7 @@ async def count_collections():
         return r[1]
     else:
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
+
 
 async def list_collections(page: int, per_page: int):
     q = f"""
@@ -66,7 +66,7 @@ async def list_collections(page: int, per_page: int):
             OPTIONAL {{
                 ?coll dcterms:description ?desc .
             }}
-            FILTER(lang(?label) = "" || lang(?label) = "en")
+            FILTER(lang(?label) = "" || lang(?label) = "en" || lang(?label) = "en-AU")
         }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
     """
     r = await sparql_query(q, "vocprez")
@@ -198,25 +198,25 @@ async def get_concept_construct(
     concept_uri: Optional[str] = None,
     include_inferencing: bool = True,
 ):
-    if concept_id is None and scheme_id is None and concept_uri is None:
-        raise ValueError("Either an ID or a URI must be provided for a SPARQL query")
+    if concept_uri is None:
+        if concept_id is None or scheme_id is None:
+            raise ValueError(
+                "Either a Concept Scheme ID and a Concept ID or a Concept URI must be provided for a SPARQL query")
 
     # when querying by ID via regular URL path
     query_by_id = f"""
-        ?c dcterms:identifier ?c_id ;
-            a skos:Concept ;
+        ?cs dcterms:identifier "{scheme_id}"^^xsd:token .
+        
+        ?c dcterms:identifier "{concept_id}"^^xsd:token ;
             skos:inScheme ?cs .
-        FILTER (STR(?c_id) = "{concept_id}")
-        ?cs dcterms:identifier ?cs_id ;
-            a skos:ConceptScheme .
-        FILTER (STR(?cs_id) = "{scheme_id}")
-    """
+        """
+
     # when querying by URI via /object?uri=...
     query_by_uri = f"""
         BIND (<{concept_uri}> as ?c)
-        ?c a skos:Concept ;
-            skos:inScheme ?cs .
-    """
+        ?c skos:inScheme ?cs .
+        """
+
     # data which may contain inferencing
     query_in_graph = f"""
         ?c ?p1 ?o1 .
@@ -247,6 +247,8 @@ async def get_concept_construct(
         PREFIX dcterms: <{DCTERMS}>
         PREFIX rdfs: <{RDFS}>
         PREFIX skos: <{SKOS}>
+        PREFIX xsd: <{XSD}>
+        
         CONSTRUCT {{
             ?c ?p1 ?o1 ;
                 skos:broader ?broader ;

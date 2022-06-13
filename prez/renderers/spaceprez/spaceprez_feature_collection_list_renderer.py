@@ -1,24 +1,21 @@
 from typing import Dict, Optional, Union
 
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from rdflib import Graph, URIRef, Literal
-from rdflib.namespace import DCAT, DCTERMS, RDF, RDFS
 from connegp import MEDIATYPE_NAMES
 
-from renderers import ListRenderer
-from config import *
-from profiles.spaceprez_profiles import oai, dd, geo
-from models.spaceprez import SpacePrezFeatureCollectionList
-from utils import templates
+from prez.renderers import ListRenderer
+from prez.config import *
+
+from prez.models.spaceprez import SpacePrezFeatureCollectionList
+from prez.utils import templates
 
 
 class SpacePrezFeatureCollectionListRenderer(ListRenderer):
-    profiles = {"oai": oai, "geo": geo, "dd": dd}
-    default_profile_token = "oai"
-
     def __init__(
         self,
         request: object,
+        profiles: dict,
+        default_profile: str,
         instance_uri: str,
         label: str,
         comment: str,
@@ -29,8 +26,8 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
     ) -> None:
         super().__init__(
             request,
-            SpacePrezFeatureCollectionListRenderer.profiles,
-            SpacePrezFeatureCollectionListRenderer.default_profile_token,
+            profiles,
+            default_profile,
             instance_uri,
             feature_collection_list.members,
             label,
@@ -47,7 +44,7 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
             "request": self.request,
             "members": self.members,
             "dataset": self.feature_collection_list.dataset,
-            "uri": self.instance_uri,
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
             "pages": self.pages,
             "label": self.label,
             "comment": self.comment,
@@ -99,8 +96,7 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
                     "title": "this document",
                 },
                 {
-                    "href": str(self.request.base_url)[:-1]
-                    + str(self.request.url.path),
+                    "href": str(self.request.url)[:-1] + str(self.request.url.path),
                     "rel": "alternate",
                     "type": "text/html",
                     "title": "this document as HTML",
@@ -206,7 +202,9 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
         return self._render_geo_rdf()
 
     def render(
-        self, template_context: Optional[Dict] = None
+        self,
+        template_context: Optional[Dict] = None,
+        alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
@@ -215,7 +213,7 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
         elif self.profile == "mem":
             return self._render_mem(template_context)
         elif self.profile == "alt":
-            return self._render_alt(template_context)
+            return self._render_alt(template_context, alt_profiles_graph)
         elif self.profile == "oai":
             return self._render_oai(template_context)
         elif self.profile == "geo":

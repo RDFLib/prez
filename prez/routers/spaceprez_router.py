@@ -2,30 +2,48 @@ from fastapi import APIRouter, Request, HTTPException, Query, Form
 from fastapi.responses import JSONResponse, RedirectResponse
 import asyncio
 
-from renderers.spaceprez import *
-from services.spaceprez_service import *
-from models.spaceprez import *
-from utils import templates
+from prez.models.spaceprez import *
+from prez.profiles.generate_profiles import (
+    ProfileDetails,
+    get_general_profiles,
+    get_class_based_and_default_profiles,
+    retrieve_relevant_shapes,
+    build_alt_graph,
+    apply_profile,
+)
+from prez.renderers.spaceprez import *
+from prez.services.spaceprez_service import *
+from prez.utils import templates
+from prez.view_funcs import profiles_func
+from prez.config import *
+from prez.cql_search import CQLSearch
 
-from view_funcs import profiles_func
-from config import *
-from cql_search import CQLSearch
+PREZ = Namespace("https://surroundaustralia.com/prez/")
 
 router = APIRouter(tags=["SpacePrez"] if len(ENABLED_PREZS) > 1 else [])
 
 
+@alru_cache(maxsize=20)
 async def home(request: Request):
-    # return templates.TemplateResponse(
-    #     "spaceprez/spaceprez_home.html", {"request": request}
-    # )
+    profile_details = ProfileDetails(
+        general_class=PREZ.HomePage, item_uri=PREZ.HomePage
+    )
+    await profile_details.get_all_profiles("SpacePrez")
+
     home_renderer = SpacePrezHomeRenderer(
         request,
-        str(
-            request.url.remove_query_params(
-                keys=[key for key in request.query_params.keys() if key != "uri"]
-            )
-        ),
+        profile_details.available_profiles_dict,
+        profile_details.default_profile,
+        PREZ.HomePage,
     )
+
+    if home_renderer.profile == "alt":
+        alt_profiles_graph = await build_alt_graph(
+            PREZ.HomePage,
+            profile_details.profiles_formats,
+            profile_details.available_profiles_dict,
+        )
+        return home_renderer.render(alt_profiles_graph=alt_profiles_graph)
 
     return home_renderer.render()
 
@@ -45,20 +63,39 @@ async def datasets(
     per_page: int = 20,
 ):
     """Returns a list of SpacePrez dcat:Datasets in the necessary profile & mediatype"""
+    instance_uri = str(
+        request.url.remove_query_params(keys=request.query_params.keys())
+    )
+    profile_details = ProfileDetails(
+        general_class=PREZ.DatasetList, item_uri=instance_uri
+    )
+    await profile_details.get_all_profiles("SpacePrez")
+
     dataset_count, sparql_result = await asyncio.gather(
         count_datasets(), list_datasets(page, per_page)
     )
     dataset_list = SpacePrezDatasetList(sparql_result)
     dataset_list_renderer = SpacePrezDatasetListRenderer(
         request,
-        str(request.url.remove_query_params(keys=request.query_params.keys())),
+        instance_uri,
         "Dataset list",
         "A list of dcat:Datasets",
         dataset_list,
         page,
         per_page,
         int(dataset_count[0]["count"]["value"]),
+        profile_details.available_profiles_dict,
+        profile_details.default_profile,
     )
+
+    if dataset_list_renderer.profile == "alt":
+        alt_profiles_graph = await build_alt_graph(
+            URIRef(instance_uri),
+            profile_details.profiles_formats,
+            profile_details.available_profiles_dict,
+        )
+        return dataset_list_renderer.render(alt_profiles_graph=alt_profiles_graph)
+
     return dataset_list_renderer.render()
 
 
@@ -68,19 +105,36 @@ async def dataset(request: Request, dataset_id: str):
     return await dataset_endpoint(request, dataset_id=dataset_id)
 
 
+@alru_cache(maxsize=20)
 async def dataset_endpoint(
     request: Request,
     dataset_id: Optional[str] = None,
     dataset_uri: Optional[str] = None,
 ):
+    instance_uri = str(
+        request.url.remove_query_params(keys=request.query_params.keys())
+    )
+    profile_details = ProfileDetails(general_class=DCAT.Dataset, item_uri=instance_uri)
+    await profile_details.get_all_profiles("SpacePrez")
+
+    if not dataset_uri:
+        dataset_uri = await get_uri(dataset_id, URIRef(DCAT.Dataset))
+
     dataset_renderer = SpacePrezDatasetRenderer(
         request,
-        str(
-            request.url.remove_query_params(
-                keys=[key for key in request.query_params.keys() if key != "uri"]
-            )
-        ),
+        profile_details.available_profiles_dict,
+        profile_details.default_profile,
+        dataset_uri,
     )
+
+    profile = dataset_renderer.profile
+    if profile == "alt":
+        alt_profiles_graph = await build_alt_graph(
+            URIRef(dataset_uri),
+            profile_details.profiles_formats,
+            profile_details.available_profiles_dict,
+        )
+        return dataset_renderer.render(alt_profiles_graph=alt_profiles_graph)
 
     sparql_result = await get_dataset_construct(
         dataset_id=dataset_id,
@@ -103,13 +157,24 @@ async def feature_collections(
     per_page: int = 20,
 ):
     """Returns a list of SpacePrez geo:FeatureCollections in the necessary profile & mediatype"""
+    instance_uri = str(
+        request.url.remove_query_params(keys=request.query_params.keys())
+    )
+    profile_details = ProfileDetails(
+        general_class=PREZ.FeatureCollectionList, item_uri=instance_uri
+    )
+    await profile_details.get_all_profiles("SpacePrez")
+
     collection_count, sparql_result = await asyncio.gather(
-        count_collections(dataset_id), list_collections(dataset_id, page, per_page)
+        count_collections(dataset_id),
+        list_collections(dataset_id, page, per_page),
     )
     feature_collection_list = SpacePrezFeatureCollectionList(sparql_result)
     feature_collection_list_renderer = SpacePrezFeatureCollectionListRenderer(
         request,
-        str(request.url.remove_query_params(keys=request.query_params.keys())),
+        profile_details.available_profiles_dict,
+        profile_details.default_profile,
+        instance_uri,
         "FeatureCollection list",
         "A list of geo:FeatureCollections",
         feature_collection_list,
@@ -117,6 +182,18 @@ async def feature_collections(
         per_page,
         int(collection_count[0]["count"]["value"]),
     )
+
+    profile = feature_collection_list_renderer.profile
+    if profile == "alt":
+        alt_profiles_graph = await build_alt_graph(
+            URIRef(instance_uri),
+            profile_details.profiles_formats,
+            profile_details.available_profiles_dict,
+        )
+        return feature_collection_list_renderer.render(
+            alt_profiles_graph=alt_profiles_graph
+        )
+
     return feature_collection_list_renderer.render()
 
 
@@ -132,20 +209,36 @@ async def feature_collection(request: Request, dataset_id: str, collection_id: s
     )
 
 
+@alru_cache(maxsize=20)
 async def feature_collection_endpoint(
     request: Request,
     dataset_id: Optional[str] = None,
     collection_id: Optional[str] = None,
     collection_uri: Optional[str] = None,
 ):
+    instance_uri = str(
+        request.url.remove_query_params(keys=request.query_params.keys())
+    )
+    profile_details = ProfileDetails(
+        general_class=GEO.FeatureCollection, item_uri=instance_uri
+    )
+    await profile_details.get_all_profiles("SpacePrez")
+
     collection_renderer = SpacePrezFeatureCollectionRenderer(
         request,
-        str(
-            request.url.remove_query_params(
-                keys=[key for key in request.query_params.keys() if key != "uri"]
-            )
-        ),
+        profile_details.available_profiles_dict,
+        profile_details.default_profile,
+        instance_uri,
     )
+
+    profile = collection_renderer.profile
+    if profile == "alt":
+        alt_profiles_graph = await build_alt_graph(
+            URIRef(instance_uri),
+            profile_details.profiles_formats,
+            profile_details.available_profiles_dict,
+        )
+        return collection_renderer.render(alt_profiles_graph=alt_profiles_graph)
 
     results = await asyncio.gather(
         get_collection_construct_1(
@@ -174,6 +267,7 @@ async def feature_collection_endpoint(
 
 
 # features
+@alru_cache(maxsize=20)
 @router.get(
     "/dataset/{dataset_id}/collections/{collection_id}/items",
     summary="List Features",
@@ -188,6 +282,14 @@ async def features(
     filter_lang: Optional[str] = Query(None, alias="filter-lang"),
     filter_crs: Optional[str] = Query(None, alias="filter-crs"),
 ):
+    instance_uri = str(
+        request.url.remove_query_params(keys=request.query_params.keys())
+    )
+    profile_details = ProfileDetails(
+        general_class=PREZ.FeatureList, item_uri=instance_uri
+    )
+    await profile_details.get_all_profiles("SpacePrez")
+
     """Returns a list of SpacePrez geo:Features in the necessary profile & mediatype"""
     if filter is not None:
         # do CQL -> SPARQL mapping
@@ -225,17 +327,30 @@ async def features(
     feature_list = SpacePrezFeatureList(sparql_result, dataset=d, collection=coll)
     feature_list_renderer = SpacePrezFeatureListRenderer(
         request,
-        str(request.url.remove_query_params(keys=request.query_params.keys())),
+        profile_details.available_profiles_dict,
+        profile_details.default_profile,
+        instance_uri,
         "Feature list",
-        "A list of geo:Features",
+        f"A list of {feature_list.collection['title']}",
         feature_list,
         page,
         per_page,
         int(feature_count[0]["count"]["value"]),
     )
+
+    profile = feature_list_renderer.profile
+    if profile == "alt":
+        alt_profiles_graph = await build_alt_graph(
+            URIRef(instance_uri),
+            profile_details.profiles_formats,
+            profile_details.available_profiles_dict,
+        )
+        return feature_list_renderer.render(alt_profiles_graph=alt_profiles_graph)
+
     return feature_list_renderer.render()
 
 
+@alru_cache(maxsize=20)
 async def feature_endpoint(
     request: Request,
     dataset_id: Optional[str] = None,
@@ -243,27 +358,72 @@ async def feature_endpoint(
     feature_id: Optional[str] = None,
     feature_uri: Optional[str] = None,
 ):
+    feature_id, feature_uri, feature_classes = await get_feature_uri_and_classes(
+        feature_id, feature_uri, collection_id, dataset_id
+    )
+
+    instance_uri = str(
+        request.url.remove_query_params(keys=request.query_params.keys())
+    )
+    profile_details = ProfileDetails(general_class=GEO.Feature, item_uri=instance_uri)
+    await profile_details.get_all_profiles("SpacePrez")
+
+    # find the most specific class for the feature
+    for klass, _, distance in profile_details.preferred_classes_and_profiles:
+        if klass in feature_classes:
+            most_specific_class = klass
+            break
+
     feature_renderer = SpacePrezFeatureRenderer(
         request,
-        str(
-            request.url.remove_query_params(
-                keys=[key for key in request.query_params.keys() if key != "uri"]
-            )
-        ),
+        feature_uri,
+        available_profiles=profile_details.available_profiles_dict,
+        default_profile=profile_details.default_profile,
     )
+    profile = feature_renderer.profile
+    if profile == "alt":
+        alt_profiles_graph = await build_alt_graph(
+            URIRef(feature_uri),
+            profile_details.profiles_formats,
+            profile_details.available_profiles_dict,
+        )
+        return feature_renderer.render(alt_profiles_graph=alt_profiles_graph)
+    else:
+        complete_feature_g = await get_feature_construct(
+            dataset_id=dataset_id,
+            collection_id=collection_id,
+            feature_id=feature_id,
+            feature_uri=feature_uri,
+        )
 
-    sparql_result = await get_feature_construct(
-        dataset_id=dataset_id,
-        collection_id=collection_id,
-        feature_id=feature_id,
-        feature_uri=feature_uri,
-    )
+        # retrieve relevant shapes
+        feature_shapes_g = await retrieve_relevant_shapes(
+            profile_details.profiles_g,
+            profile_details.available_profiles_dict[profile].uri,
+            most_specific_class,
+        )
 
-    if len(sparql_result) == 0:
-        raise HTTPException(status_code=404, detail="Not Found")
-    feature = SpacePrezFeature(sparql_result, id=feature_id, uri=feature_uri)
-    feature_renderer.set_feature(feature)
-    return feature_renderer.render()
+        # filter out irrelevant properties:
+        # for closed profiles; properties not specified in the profile
+        # for open profiles; properties explicitly excluded in the profile (via dash:hidden)
+        # TODO extend for open profiles (at the moment, for an open profile, everything is included, in future
+        # open profiles should show everything except for specifically excluded properties
+        if len(feature_shapes_g) > 0:
+            complete_feature_g = apply_profile(complete_feature_g, feature_shapes_g)
+
+        if len(complete_feature_g) == 0:
+            raise HTTPException(status_code=404, detail="Not Found")
+
+        feature = SpacePrezFeature(
+            complete_feature_g + feature_shapes_g,
+            id=feature_id,
+            uri=feature_uri,
+            most_specific_class=most_specific_class,
+        )
+
+        feature_renderer.set_feature(feature)
+
+        return feature_renderer.render()
 
 
 # feature
@@ -284,6 +444,7 @@ async def feature(
 
 
 # about
+@alru_cache(maxsize=20)
 async def about(request: Request):
     return templates.TemplateResponse(
         "spaceprez/spaceprez_about.html", {"request": request}
@@ -315,16 +476,19 @@ async def spaceprez_profiles(request: Request):
 @router.get("/conformance", summary="Conformance")
 async def conformance(request: Request):
     """Returns the SpacePrez conformance page in the necessary profile & mediatype"""
-    # return templates.TemplateResponse(
-    #     "spaceprez/spaceprez_conformance.html", {"request": request}
-    # )
+    instance_uri = str(
+        request.url.remove_query_params(keys=request.query_params.keys())
+    )
+    profile_details = ProfileDetails(
+        general_class=PREZ.Conformance, item_uri=instance_uri
+    )
+    await profile_details.get_all_profiles("SpacePrez")
+
     conformance_renderer = SpacePrezConformanceRenderer(
         request,
-        str(
-            request.url.remove_query_params(
-                keys=[key for key in request.query_params.keys() if key != "uri"]
-            )
-        ),
+        profile_details.available_profiles_dict,
+        profile_details.default_profile,
+        instance_uri,
     )
     return conformance_renderer.render()
 

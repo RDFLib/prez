@@ -1,10 +1,7 @@
 from typing import List, Dict, Optional
 
-from rdflib import Graph
-from rdflib.namespace import DCTERMS, SKOS
-
-from config import *
-from models import PrezModel
+from prez.config import *
+from prez.models import PrezModel
 
 
 class VocPrezConcept(PrezModel):
@@ -35,34 +32,40 @@ class VocPrezConcept(PrezModel):
             raise ValueError("Either an ID or a URI must be provided")
 
         query_by_id = f"""
-            ?c dcterms:identifier ?id .
-            FILTER (STR(?id) = "{id}")
+                ?c dcterms:identifier "{id}"^^xsd:token .     
+                BIND("{id}" AS ?id)
         """
 
         query_by_uri = f"""
-            BIND (<{uri}> as ?c) 
-            ?c dcterms:identifier ?id .
+                BIND (<{uri}> as ?c)
+                ?c dcterms:identifier ?id .
         """
 
-        r = self.graph.query(
-            f"""
+        qx = f"""
             PREFIX dcterms: <{DCTERMS}>
             PREFIX rdfs: <{RDFS}>
             PREFIX skos: <{SKOS}>
-            SELECT *
+            PREFIX xsd: <{XSD}>
+            
+            SELECT DISTINCT *
             WHERE {{
                 {query_by_id if id is not None else query_by_uri}
-                ?c a skos:Concept ;
-                    rdfs:label|skos:prefLabel|dcterms:title ?title ;
-                    skos:definition|dcterms:description ?desc ;
-                    skos:inScheme ?cs .
-                FILTER(lang(?title) = "" || lang(?title) = "en")
+
                 ?cs dcterms:identifier ?cs_id ;
                     skos:prefLabel ?cs_label .
+                    
                 FILTER(lang(?cs_label) = "" || lang(?cs_label) = "en")
+                
+                ?c a skos:Concept ;
+                    skos:prefLabel ?title ;
+                    skos:definition ?desc ;
+                    skos:inScheme ?cs .
+                    
+                FILTER(lang(?title) = "" || lang(?title) = "en")                
             }}
-        """
-        )
+            """
+
+        r = self.graph.query(qx)
 
         result = r.bindings[0]
         self.uri = result["c"]
@@ -119,9 +122,10 @@ class VocPrezConcept(PrezModel):
             WHERE {{
                 <{self.uri}> skos:broader ?broader .
                 ?broader dcterms:identifier ?id ;
-                    rdfs:label|skos:prefLabel|dcterms:title ?label ;
+                    skos:prefLabel ?label ;
                     skos:inScheme/dcterms:identifier ?cs_id .
-                FILTER(lang(?label) = "" || lang(?label) = "en")
+                    
+                FILTER(lang(?label) = "" || lang(?label) = "en" || lang(?label) = "en-AU")
             }}
         """
         )
@@ -145,9 +149,10 @@ class VocPrezConcept(PrezModel):
             WHERE {{
                 <{self.uri}> skos:narrower ?narrower .
                 ?narrower dcterms:identifier ?id ;
-                    rdfs:label|skos:prefLabel|dcterms:title ?label ;
+                    skos:prefLabel ?label ;
                     skos:inScheme/dcterms:identifier ?cs_id .
-                FILTER(lang(?label) = "" || lang(?label) = "en")
+                    
+                FILTER(lang(?label) = "" || lang(?label) = "en" || lang(?label) = "en-AU")
             }}
         """
         )

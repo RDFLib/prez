@@ -1,7 +1,4 @@
-from rdflib.namespace import DCTERMS, SKOS, XSD
-
-from config import *
-from services.sparql_utils import *
+from prez.services.sparql_utils import *
 
 
 async def get_object(uri: str):

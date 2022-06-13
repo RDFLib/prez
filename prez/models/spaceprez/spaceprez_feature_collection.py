@@ -1,11 +1,7 @@
 from typing import List, Dict, Optional
-import json
 
-from rdflib import Graph
-from rdflib.namespace import DCTERMS, SKOS, RDFS, XSD
-
-from config import *
-from models import PrezModel
+from prez.config import *
+from prez.models import PrezModel
 
 
 class SpacePrezFeatureCollection(PrezModel):
@@ -33,12 +29,12 @@ class SpacePrezFeatureCollection(PrezModel):
             raise ValueError("Either an ID or a URI must be provided")
 
         query_by_id = f"""
-                ?coll dcterms:identifier ?id .
-                FILTER (STR(?id) = "{id}")
+                ?coll dcterms:identifier "{id}"^^xsd:token .
+                BIND (<{id}> as ?id)
         """
 
         query_by_uri = f"""
-                BIND (<{uri}> as ?coll) 
+                BIND (<{uri}> as ?coll)
                 ?coll dcterms:identifier ?id .
         """
 

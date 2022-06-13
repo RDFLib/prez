@@ -1,15 +1,13 @@
 from typing import Dict, Optional, Union
 
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from rdflib import Graph
-from rdflib.namespace import SKOS, PROV, DCTERMS
 from connegp import MEDIATYPE_NAMES
 
-from config import *
-from renderers import Renderer
-from profiles.vocprez_profiles import skos, vocpub, vocpub_supplied, dd
-from models.vocprez import VocPrezCollection
-from utils import templates
+from prez.config import *
+from prez.renderers import Renderer
+from prez.profiles.vocprez_profiles import skos, vocpub, vocpub_supplied, dd, alt
+from prez.models.vocprez import VocPrezCollection
+from prez.utils import templates
 
 
 class VocPrezCollectionRenderer(Renderer):
@@ -18,6 +16,7 @@ class VocPrezCollectionRenderer(Renderer):
         "skos": skos,
         "dd": dd,
         "vocpub_supplied": vocpub_supplied,
+        "alt": alt,
     }
     default_profile_token = "vocpub"
 
@@ -75,10 +74,10 @@ class VocPrezCollectionRenderer(Renderer):
         _template_context = {
             "request": self.request,
             "collection": self.collection.to_dict(),
-            "uri": self.instance_uri,
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
-            "mediatype_names": MEDIATYPE_NAMES
+            "mediatype_names": MEDIATYPE_NAMES,
         }
         if template_context is not None:
             _template_context.update(template_context)
@@ -141,7 +140,7 @@ class VocPrezCollectionRenderer(Renderer):
     def _render_vocpub_supplied(self):
         """Renders the vocpub_supplied profile for a collection"""
         return self._render_vocpub_rdf()
-    
+
     def _render_dd_json(self) -> JSONResponse:
         """Renders the json representation of the dd profile for a collection"""
         return JSONResponse(
@@ -155,14 +154,16 @@ class VocPrezCollectionRenderer(Renderer):
         return self._render_dd_json()
 
     def render(
-        self, template_context: Optional[Dict] = None
+        self,
+        template_context: Optional[Dict] = None,
+        alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
         if self.error is not None:
             return PlainTextResponse(self.error, status_code=400)
         elif self.profile == "alt":
-            return self._render_alt(template_context)
+            return self._render_alt(template_context, alt_profiles_graph)
         elif self.profile == "vocpub":
             return self._render_vocpub(template_context)
         elif self.profile == "vocpub_supplied":

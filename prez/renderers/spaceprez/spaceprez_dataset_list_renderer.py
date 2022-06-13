@@ -1,21 +1,16 @@
 from typing import Dict, Optional, Union
 
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from rdflib import Graph, URIRef, Literal
-from rdflib.namespace import DCAT, DCTERMS, RDF, RDFS
 from connegp import MEDIATYPE_NAMES
 
-from renderers import ListRenderer
-from config import *
-from profiles.spaceprez_profiles import dcat, dd
-from models.spaceprez import SpacePrezDatasetList
-from utils import templates
+from prez.renderers import ListRenderer
+from prez.config import *
+
+from prez.models.spaceprez import SpacePrezDatasetList
+from prez.utils import templates
 
 
 class SpacePrezDatasetListRenderer(ListRenderer):
-    profiles = {"dcat": dcat, "dd": dd}
-    default_profile_token = "dcat"
-
     def __init__(
         self,
         request: object,
@@ -25,19 +20,21 @@ class SpacePrezDatasetListRenderer(ListRenderer):
         dataset_list: SpacePrezDatasetList,
         page: int,
         per_page: int,
-        member_count: int
+        member_count: int,
+        profiles: Dict[str, str],
+        default_profile_token: Optional[str],
     ) -> None:
         super().__init__(
             request,
-            SpacePrezDatasetListRenderer.profiles,
-            SpacePrezDatasetListRenderer.default_profile_token,
+            profiles,
+            default_profile_token,
             instance_uri,
             dataset_list.members,
             label,
             comment,
             page,
             per_page,
-            member_count
+            member_count,
         )
         self.dataset_list = dataset_list
 
@@ -46,13 +43,13 @@ class SpacePrezDatasetListRenderer(ListRenderer):
         _template_context = {
             "request": self.request,
             "members": self.members,
-            "uri": self.instance_uri,
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
             "pages": self.pages,
             "label": self.label,
             "comment": self.comment,
             "profiles": self.profiles,
             "default_profile": self.default_profile_token,
-            "mediatype_names": MEDIATYPE_NAMES
+            "mediatype_names": MEDIATYPE_NAMES,
         }
         if template_context is not None:
             _template_context.update(template_context)
@@ -111,31 +108,45 @@ class SpacePrezDatasetListRenderer(ListRenderer):
             g.add((sparql, DCTERMS.type, URIRef("http://purl.org/dc/dcmitype/Service")))
             g.add((sparql, DCAT.endpointURL, sparql))
 
-        for s, o in g.subject_objects(predicate=RDFS.member):
-            g.remove((s, RDFS.member, o))
-            g.add((o, RDF.type, DCAT.Dataset))
-            g.add((s, DCAT.dataset, o))
-            for p2, o2 in g.predicate_objects(subject=o):
-                if p2 == RDFS.label:
-                    g.remove((o, p2, o2))
-                    g.add((o, DCTERMS.title, o2))
-                elif p2 == RDFS.comment:
-                    g.remove((o, p2, o2))
-                    g.add((o, DCTERMS.description, o2))
+        # for s, o in g.subject_objects(predicate=RDFS.member):
+        #     g.remove((s, RDFS.member, o))
+        #     g.add((o, RDF.type, DCAT.Dataset))
+        #     g.add((s, DCAT.dataset, o))
+        #     for p2, o2 in g.predicate_objects(subject=o):
+        #         if p2 == DCTERMS.identifier:
+        #             g.add((o, DCTERMS.identifier, o2))
+        #         elif p2 == RDFS.label:
+        #             g.remove((o, p2, o2))
+        #             g.add((o, DCTERMS.title, o2))
+        #         elif p2 == RDFS.comment:
+        #             g.remove((o, p2, o2))
+        #             g.add((o, DCTERMS.description, o2))
+
+        for ds in self.dataset_list.members:
+            g.add(
+                (
+                    URIRef(ds["uri"]),
+                    DCTERMS.identifier,
+                    Literal(ds["id"], datatype=XSD.token),
+                )
+            )
+            g.add((URIRef(ds["uri"]), DCTERMS.title, Literal(ds.get("title"))))
+            if ds.get("desc") is not None:
+                g.add((URIRef(ds["uri"]), DCTERMS.description, Literal(ds.get("desc"))))
 
         return g
 
     def _render_dcat_rdf(self):
         """Renders the RDF representation of the DCAT profile for a list of datasets"""
         g = self._generate_dcat_rdf()
-        return self._make_rdf_response(g)
+        return self._make_rdf_response(self.instance_uri, g)
 
     def _render_dcat(self, template_context: Union[Dict, None]):
         if self.mediatype == "text/html":
             return self._render_dcat_html(template_context)
-        else: # all other formats are RDF
+        else:  # all other formats are RDF
             return self._render_dcat_rdf()
-    
+
     def _render_dd_json(self) -> JSONResponse:
         """Renders the json representation of the dd profile for a list of datasets"""
         return JSONResponse(
@@ -149,7 +160,9 @@ class SpacePrezDatasetListRenderer(ListRenderer):
         return self._render_dd_json()
 
     def render(
-        self, template_context: Optional[Dict] = None
+        self,
+        template_context: Optional[Dict] = None,
+        alt_profiles_graph: Optional[Graph] = None,
     ) -> Union[
         PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
     ]:
@@ -158,7 +171,7 @@ class SpacePrezDatasetListRenderer(ListRenderer):
         elif self.profile == "mem":
             return self._render_mem(template_context)
         elif self.profile == "alt":
-            return self._render_alt(template_context)
+            return self._render_alt(template_context, alt_profiles_graph)
         elif self.profile == "dcat":
             return self._render_dcat(template_context)
         elif self.profile == "dd":
