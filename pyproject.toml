@@ -5,7 +5,7 @@ description = ""
 authors = ["jamiefeiss <jamie.feiss@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.10"
 fastapi = "^0.77.0"
 uvicorn = "^0.15.0"
 Jinja2 = "3.0.3"
