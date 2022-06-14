@@ -88,8 +88,7 @@ altr-ext:hasResourceFormat owl:propertyChainAxiom ( dcterms:conformsTo dcterms:f
         prez:FeatureCollectionList ,
         prez:FeatureList ,
         prez:Conformance ,
-        prez:SpacePrezHome ,
-        prez:VocPrezHome ;
+        prez:SpacePrezHome ;
     altr-ext:hasDefaultResourceFormat "text/html" ;
     altr-ext:hasResourceFormat
         "text/html" ,
