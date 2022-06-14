@@ -8,16 +8,22 @@
 {% block content %}
 <div id="content-col-main">
     <h1>About Prez</h1>
-    <p>Prez is a Linked Data API that combines VocPrez, OGC API (SpacePrez), and the upcoming CatPrez & TimePrez.</p>
-    <h2>Documentation</h2>
-    <p>Coming soon...</p>
-    <h2>License</h2>
-    <p>Prez is licensed using the <a href="https://github.com/surroundaustralia/Prez/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">BSD 3-Clause licence</a>.</p>
-    <h2>Contacts</h2>
     <p>
-        Maintainer:<br/>
-        <a href="https://surroundaustralia.com" target="_blank" rel="noopener">SURROUND Australia Pty. Ltd.</a><br/>
-        Email: <a href="mailto:info@surroundaustralia.com">info@surroundaustralia.com</a>
+        Prez is an oen source an Application Programming Interface (API) that implements <a href="https://www.w3.org/standards/semanticweb/data">Linked Data</a>
+        methods for providing access to a wide range of data on the web. It also implements the <a href="https://docs.ogc.org/is/17-069r3/17-069r3.html">OGC API:Features</a>
+        for spatial data.
     </p>
+    <p>
+        Prez comes in a number of "flavours", one or more of which may be implemented in any one Prez system. If implemented here, these links will work:
+    </p>
+    <ul>
+        <li><a href="{{ url_for("vocprez_home_endpoint") }}">VocPrez</a> - for presenting vocabularies</li>
+        <li><a href="{{ url_for("spaceprez_home_endpoint") }}">SpacePrez</a> - for presenting spatial data</li>
+    </ul>
+    <p>Each enabled flavour will have links to its home page in the main menu.</p>
+    <h2>License</h2>
+    <p>Prez is licensed using the <a href="https://github.com/rdflib/prez/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">BSD 3-Clause licence</a>.</p>
+    <h2>Documentation</h2>
+    <p>See <a href="http://rdflib.dev/prez/">http://rdflib.dev/prez/</a> for detailed Prez documentation.</p>
 </div>
 {% endblock %}
