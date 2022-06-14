@@ -67,40 +67,6 @@ async def datasets_endpoint(
     else:
         return dataset_list_renderer.render()
 
-@router.get("/dataset/{dataset_id}", summary="Get Dataset")
-async def dataset_endpoint(request: Request):
-    """Returns a SpacePrez dcat:Dataset in the necessary profile & mediatype"""
-    return await dataset(request)
-
-
-@alru_cache(maxsize=20)
-async def dataset(
-    request: Request,
-):
-    """Returns a SpacePrez dcat:Dataset in the necessary profile & mediatype"""
-    dataset_renderer = SpacePrezDatasetRenderer(request)
-
-    if dataset_renderer.profile == "alt":
-        alt_profiles_graph = await build_alt_graph(
-            URIRef(dataset_renderer.instance_uri),
-            dataset_renderer.profile_details.profiles_formats,
-            dataset_renderer.profile_details.available_profiles_dict,
-        )
-        return dataset_renderer.render(alt_profiles_graph=alt_profiles_graph)
-    else:
-        sparql_result = await get_dataset_construct(
-            dataset_id=dataset_renderer.dataset_id,
-            dataset_uri=dataset_renderer.instance_uri,
-        )
-        if len(sparql_result) == 0:
-            raise HTTPException(status_code=404, detail="Not Found")
-        dataset = SpacePrezDataset(
-            sparql_result,
-            id=dataset_renderer.dataset_id,
-            uri=dataset_renderer.instance_uri,
-        )
-        dataset_renderer.set_dataset(dataset)
-        return dataset_renderer.render()
 
 @alru_cache(maxsize=5)
 @router.get("/dataset/{dataset_id}/collections", summary="List FeatureCollections")
@@ -140,56 +106,6 @@ async def feature_collections_endpoint(
     else:
         return feature_collection_list_renderer.render()
 
-@router.get(
-    "/dataset/{dataset_id}/collections/{collection_id}",
-    summary="Get FeatureCollections",
-)
-async def feature_collection_endpoint(request: Request):
-    """Returns a SpacePrez geo:FeatureCollection in the necessary profile & mediatype"""
-    return await feature_collection(request)
-
-@alru_cache(maxsize=20)
-async def feature_collection(request: Request):
-    collection_renderer = SpacePrezFeatureCollectionRenderer(request)
-
-    if collection_renderer.profile == "alt":
-        alt_profiles_graph = await build_alt_graph(
-            URIRef(collection_renderer.instance_uri),
-            collection_renderer.profile_details.profiles_formats,
-            collection_renderer.profile_details.available_profiles_dict,
-        )
-        return collection_renderer.render(alt_profiles_graph=alt_profiles_graph)
-    else:
-        results = await asyncio.gather(
-            get_collection_construct_1(
-                dataset_id=collection_renderer.dataset_id,
-                collection_id=collection_renderer.collection_id,
-                collection_uri=collection_renderer.instance_uri,
-            ),
-            get_collection_construct_2(
-                dataset_id=collection_renderer.dataset_id,
-                collection_id=collection_renderer.collection_id,
-                collection_uri=collection_renderer.instance_uri,
-            ),
-        )
-
-        complete_feature_g = Graph()
-        for g in results:
-            complete_feature_g += g
-
-        if len(complete_feature_g) == 0:
-            raise HTTPException(status_code=404, detail="Not Found")
-
-        collection = SpacePrezFeatureCollection(
-            complete_feature_g,
-            id=collection_renderer.collection_id,
-            uri=collection_renderer.instance_uri,
-            most_specific_class=collection_renderer.profile_details.most_specific_class,
-        )
-
-        collection_renderer.set_collection(collection)
-
-        return collection_renderer.render()
 
 @alru_cache(maxsize=5)
 @router.get(
@@ -276,6 +192,95 @@ async def features_endpoint(
         return feature_list_renderer.render(alt_profiles_graph=alt_profiles_graph)
     else:
         return feature_list_renderer.render()
+
+
+@router.get("/dataset/{dataset_id}", summary="Get Dataset")
+async def dataset_endpoint(request: Request):
+    """Returns a SpacePrez dcat:Dataset in the necessary profile & mediatype"""
+    return await dataset(request)
+
+
+@alru_cache(maxsize=20)
+async def dataset(
+    request: Request,
+):
+    """Returns a SpacePrez dcat:Dataset in the necessary profile & mediatype"""
+    dataset_renderer = SpacePrezDatasetRenderer(request)
+
+    if dataset_renderer.profile == "alt":
+        alt_profiles_graph = await build_alt_graph(
+            URIRef(dataset_renderer.instance_uri),
+            dataset_renderer.profile_details.profiles_formats,
+            dataset_renderer.profile_details.available_profiles_dict,
+        )
+        return dataset_renderer.render(alt_profiles_graph=alt_profiles_graph)
+    else:
+        sparql_result = await get_dataset_construct(
+            dataset_id=dataset_renderer.dataset_id,
+            dataset_uri=dataset_renderer.instance_uri,
+        )
+        if len(sparql_result) == 0:
+            raise HTTPException(status_code=404, detail="Not Found")
+        dataset = SpacePrezDataset(
+            sparql_result,
+            id=dataset_renderer.dataset_id,
+            uri=dataset_renderer.instance_uri,
+        )
+        dataset_renderer.set_dataset(dataset)
+        return dataset_renderer.render()
+
+
+@router.get(
+    "/dataset/{dataset_id}/collections/{collection_id}",
+    summary="Get FeatureCollections",
+)
+async def feature_collection_endpoint(request: Request):
+    """Returns a SpacePrez geo:FeatureCollection in the necessary profile & mediatype"""
+    return await feature_collection(request)
+
+
+@alru_cache(maxsize=20)
+async def feature_collection(request: Request):
+    collection_renderer = SpacePrezFeatureCollectionRenderer(request)
+
+    if collection_renderer.profile == "alt":
+        alt_profiles_graph = await build_alt_graph(
+            URIRef(collection_renderer.instance_uri),
+            collection_renderer.profile_details.profiles_formats,
+            collection_renderer.profile_details.available_profiles_dict,
+        )
+        return collection_renderer.render(alt_profiles_graph=alt_profiles_graph)
+    else:
+        results = await asyncio.gather(
+            get_collection_construct_1(
+                dataset_id=collection_renderer.dataset_id,
+                collection_id=collection_renderer.collection_id,
+                collection_uri=collection_renderer.instance_uri,
+            ),
+            get_collection_construct_2(
+                dataset_id=collection_renderer.dataset_id,
+                collection_id=collection_renderer.collection_id,
+                collection_uri=collection_renderer.instance_uri,
+            ),
+        )
+
+        complete_feature_g = Graph()
+        for g in results:
+            complete_feature_g += g
+
+        if len(complete_feature_g) == 0:
+            raise HTTPException(status_code=404, detail="Not Found")
+
+        collection = SpacePrezFeatureCollection(
+            complete_feature_g,
+            id=collection_renderer.collection_id,
+            uri=collection_renderer.instance_uri,
+            most_specific_class=collection_renderer.profile_details.most_specific_class,
+        )
+
+        collection_renderer.set_collection(collection)
+
+        return collection_renderer.render()
 
 
 @router.get(

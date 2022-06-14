@@ -9,7 +9,7 @@ from shapely.geometry import mapping
 from shapely.ops import orient
 from shapely.wkt import loads
 
-from config import GEO
+from prez.config import GEO
 
 
 class PrezModel(object, metaclass=ABCMeta):
@@ -214,9 +214,13 @@ class Table(ObjCell):
         """Adds a geojson property to the table if the data has a wkt property but not geojson
         NB table will only be called when rendering HTML views, so the geojson is not added to any RDF or other formats
         """
-        geom_instances_bnodes = self.graph.objects(
-            subject=self.uri, predicate=GEO.hasGeometry
+        has_geometry_bnodes = list(
+            self.graph.objects(subject=self.uri, predicate=GEO.hasGeometry)
         )
+        has_bounding_box_bnodes = list(
+            self.graph.objects(subject=self.uri, predicate=GEO.hasBoundingBox)
+        )
+        geom_instances_bnodes = has_geometry_bnodes + has_bounding_box_bnodes
         for bnode in geom_instances_bnodes:
             wkt_literal = self.graph.value(subject=bnode, predicate=GEO.asWKT)
             geojson_literal = self.graph.value(subject=bnode, predicate=GEO.asGeoJSON)
@@ -226,3 +230,6 @@ class Table(ObjCell):
                     geojson_text, datatype=URIRef(GEO.geoJSONLiteral)
                 )
                 self.graph.add((bnode, GEO.asGeoJSON, geojson_literal))
+                self.graph.add(
+                    (GEO.asGeoJSON, RDFS.label, Literal("as GeoJSON", lang="en"))
+                )

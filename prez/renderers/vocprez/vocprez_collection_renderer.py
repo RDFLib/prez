@@ -27,8 +27,8 @@ class VocPrezCollectionRenderer(Renderer):
     ) -> None:
         (self.collection_id, self.collection_uri) = get_scheme_or_collection_uri(
             "Collection",
-            request.path_params.get("scheme_id"),
-            request.path_params.get("scheme_uri"),
+            request.path_params.get("collection_id"),
+            request.path_params.get("collection_uri"),
         )
         super().__init__(
             request,

@@ -158,8 +158,6 @@ async def collection_endpoint(request: Request):
 
 async def collection(request: Request):
     collection_renderer = VocPrezCollectionRenderer(request)
-    print(collection_renderer.collection_id)
-    print(collection_renderer.collection_uri)
     include_inferencing = True
     if collection_renderer.profile == "vocpub_supplied":
         include_inferencing = False
