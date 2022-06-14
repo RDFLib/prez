@@ -1,5 +1,6 @@
+import os
 import re
-from typing import Dict
+from typing import Dict, List
 
 import jinja2
 from starlette_core.templating import Jinja2Templates
@@ -31,7 +32,7 @@ def append_qsa(uri: str, qsas: Dict[str, str]) -> str:
     if "?" in uri:
         path, qsa_str = uri.split("?")
         for qsa in qsa_str.split("&"):
-            key, value = qsa.split("=")
+            key, value = qsa.split("=", maxsplit=1)
             qsa_dict[key] = value
     else:
         path = uri
@@ -58,6 +59,11 @@ def match(s: str, pattern: str) -> bool:
         return False
 
 
+def join_list_keys(l: List, key: str, sep: str) -> str:
+    """Concatenates a list of dicts into a string of key values with a specified separator"""
+    return sep.join([e[key] for e in l])
+
+
 template_list = ["templates"]
 if THEME_VOLUME is not None:
     template_list.insert(0, f"{THEME_VOLUME}/templates")
@@ -69,3 +75,4 @@ templates.env.filters["get_config"] = get_config
 templates.env.filters["append_qsa"] = append_qsa
 templates.env.filters["file_exists"] = file_exists
 templates.env.filters["match"] = match
+templates.env.filters["join_list_keys"] = join_list_keys

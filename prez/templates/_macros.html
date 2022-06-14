@@ -247,3 +247,48 @@
         {% endif %}
     </div>
 {% endmacro %}
+
+{% macro render_cql_form(props, datasets, collections) %}
+    <div>
+        {% if datasets is not none and collections is not none %}<h2>Feature Search</h2>{% else %}<h3>Feature Search</h3>{% endif %}
+        <div>Search features {% if datasets is not none %}across all Datasets{% elif collections is not none %}within this Dataset{% else %}within this Feature Collection{% endif %}. <a href="https://docs.ogc.org/DRAFTS/21-065.html" target="_blank">CQL</a> can be used in the optional advanced search field.</div>
+        <div>For the list of available properties, see <a href="{% if datasets is none %}{{request.url}}{% endif %}/queryables">here.</a></div>
+        <form action="{% if datasets is none %}{{request.url}}{% endif %}/cql" method="post">
+            <div class="cql-form">
+                {% for prop_name, prop_dict in props.items() %}
+                    <div class="form-item">
+                        <label for="cql-{{ prop_name }}">{{ prop_dict.title }}</label>
+                        <input type="text" name="{{ prop_name }}" id="cql-{{ prop_name }}" placeholder="Search by {{ prop_dict.title | lower }}...">
+                    </div>
+                {% endfor %}
+                {% if datasets is not none %}
+                    <div class="form-item">
+                        <label for="">Datasets</label>
+                        <select name="datasets" id="" multiple>
+                            <option value="{{ datasets | join_list_keys('id', ',') }}" selected>All datasets</option>
+                            {% for dataset in datasets %}
+                                <option value="{{ dataset.id }}">{{ dataset.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endif %}
+                {% if collections is not none %}
+                    <div class="form-item">
+                        <label for="">Feature Collections</label>
+                        <select name="collections" id="" multiple>
+                            <option value="{{ collections | join_list_keys('id', ',') }}" selected>All collections</option>
+                            {% for collection in collections %}
+                                <option value="{{ collection.id }}">{{ collection.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endif %}
+                <div class="form-item">
+                    <label for="">CQL query</label>
+                    <textarea name="filter" id="" cols="30" rows="10" placeholder="Advanced CQL search..."></textarea>
+                </div>
+                <div><button type="submit">Search</button></div>
+            </div>
+        </form>
+    </div>
+{% endmacro %}

@@ -8,10 +8,12 @@
   --btn: var(--secondary);
   --btn-hover: #e4553f;
   --btn-active: #ff4a2e;
+  --nav-bg: #e6e8e6;
   --nav-color: var(--primary);
   --nav-hover: #d4d4d4;
   --header-bg: #364958;
   --footer-bg: #e6e8e6;
+  --card-bg: #e6e8e6;
   --container-direction: column;
   --main-nav-direction: row;
   --table-row-bg: #dddddd;
@@ -155,6 +157,16 @@ main {
   overflow-x: hidden;
 }
 
+#search-forms {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+}
+#search-forms > div {
+  flex-basis: 0;
+  flex-grow: 1;
+}
+
 #search-results {
   display: flex;
   flex-direction: column;
@@ -291,7 +303,7 @@ ol#concept-hierarchy li:not(.concept-collapse) {
   flex-direction: column;
   min-width: 100px;
   padding: 12px;
-  background-color: var(--footer-bg);
+  background-color: var(--card-bg);
 }
 .card h3 {
   margin-top: 0px;
@@ -426,6 +438,14 @@ ol#concept-hierarchy li:not(.concept-collapse) {
   .tooltip .tooltip-text {
     max-width: 120px;
   }
+
+  #search-forms {
+    flex-direction: column;
+  }
+  #search-forms > div {
+    flex-basis: unset;
+    flex-grow: unset;
+  }
 }
 #breadcrumbs {
   display: flex;
@@ -469,7 +489,7 @@ ol#concept-hierarchy li:not(.concept-collapse) {
 nav#main-nav {
   display: flex;
   overflow: hidden;
-  background-color: var(--footer-bg);
+  background-color: var(--nav-bg);
   transition: width 0.2s ease-in-out, min-width 0.2s ease-in-out;
 }
 nav#main-nav.colnav {
@@ -564,7 +584,7 @@ nav#sub-nav > .sub-nav-item {
   font-weight: bold;
   color: var(--nav-color);
   text-decoration: none;
-  transition: background-color 0.2s ease-in-out;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
 }
 .rownav nav#sub-nav > .sub-nav-item {
   text-align: center;
@@ -762,6 +782,18 @@ select#endpoints {
 .form-text {
   color: grey;
   font-size: 12px;
+}
+
+.cql-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+.cql-form .form-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 table {

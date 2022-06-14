@@ -31,11 +31,11 @@
         {% if ("/" + theme_volume + "/img/favicon.ico") | file_exists %}
             <link rel="shortcut icon" href="/{{ theme_volume }}/img/favicon.ico" type="image/x-icon">
         {% else %}
-            <link rel="shortcut icon" href="{{ url_for('static', path='img/favicon.ico') }}" type="image/x-icon">
+            <link rel="shortcut icon" href="/static/img/favicon.ico" type="image/x-icon">
         {% endif %}
         {% include "fonts.html" ignore missing %}
     {% else %}
-        <link rel="shortcut icon" href="{{ url_for('static', path='img/favicon.ico') }}" type="image/x-icon">
+        <link rel="shortcut icon" href="/static/img/favicon.ico" type="image/x-icon">
     {% endif %}
     <script src="https://kit.fontawesome.com/c112c4b9c0.js" crossorigin="anonymous"></script>
     <title>{{ pagetitle }}</title>

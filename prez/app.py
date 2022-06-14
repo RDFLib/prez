@@ -18,6 +18,7 @@ from pydantic import AnyUrl
 from prez.profiles.generate_profiles import get_general_profiles
 from prez.routers import vocprez_router, spaceprez_router
 from prez.services.app_service import *
+from services.spaceprez_service import list_datasets, list_collections
 from prez.utils import templates
 from prez.view_funcs import profiles_func
 from routers.vocprez_router import vocprez_home_endpoint
@@ -26,7 +27,7 @@ from routers.vocprez_router import vocprez_home_endpoint
 async def catch_400(request: Request, exc):
     accepts = parse_mediatypes_from_accept_header(request.headers.get("Accept"))
     if "text/html" in accepts:
-        template_context = {"request": request, "message": str(exc)}
+        template_context = {"request": request, "message": exc.detail}
         return templates.TemplateResponse(
             "400.html", context=template_context, status_code=400
         )
@@ -334,6 +335,7 @@ async def search(
     endpoints: List[str] = Query(["self"]),
 ):
     """Displays the search page of Prez"""
+    # Concept search
     if search is not None and search != "":
         self_sparql_endpoint = str(request.base_url)[:-1] + app.router.url_path_for(
             "sparql_get"
@@ -365,13 +367,39 @@ async def search(
         results = SkosSearch.combine_search_results(s, "preflabel")
     else:
         results = []
-    template_context = {
-        "request": request,
-        "endpoint_options": SEARCH_ENDPOINTS,
-        "results": results,
-        "last_search_term": search,
-        "last_endpoints": endpoints,
-    }
+
+    # CQL search
+    if "SpacePrez" in ENABLED_PREZS:
+        dataset_sparql_result, collection_sparql_result = await asyncio.gather(
+            list_datasets(),
+            list_collections(),
+        )
+        datasets = [
+            {"id": result["id"]["value"], "title": result["label"]["value"]}
+            for result in dataset_sparql_result
+        ]
+        collections = [
+            {"id": result["id"]["value"], "title": result["label"]["value"]}
+            for result in collection_sparql_result
+        ]
+
+        template_context = {
+            "request": request,
+            "endpoint_options": SEARCH_ENDPOINTS,
+            "results": results,
+            "last_search_term": search,
+            "last_endpoints": endpoints,
+            "datasets": datasets,
+            "collections": collections,
+        }
+    else:
+        template_context = {
+            "request": request,
+            "endpoint_options": SEARCH_ENDPOINTS,
+            "results": results,
+            "last_search_term": search,
+            "last_endpoints": endpoints,
+        }
     return templates.TemplateResponse("search.html", context=template_context)
 
 

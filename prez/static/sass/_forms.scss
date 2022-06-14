@@ -30,3 +30,16 @@ select#endpoints {
     color: grey;
     font-size: 12px;
 }
+
+.cql-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 12px;
+
+    .form-item {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+}

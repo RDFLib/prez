@@ -22,6 +22,12 @@ class SpacePrezDataset(PrezModel):
     ) -> None:
         super().__init__(graph)
 
+        self.uri = None
+        self.id = None
+        self.title = None
+        self.description = None
+        self.collections = []
+
         if id is None and uri is None:
             raise ValueError("Either an ID or a URI must be provided")
 
@@ -40,22 +46,36 @@ class SpacePrezDataset(PrezModel):
             PREFIX dcterms: <{DCTERMS}>
             PREFIX rdfs: <{RDFS}>
             PREFIX skos: <{SKOS}>
-            SELECT *
+            SELECT DISTINCT *
             WHERE {{
                 {query_by_id if id is not None else query_by_uri}
                 ?d a dcat:Dataset ;
                     dcterms:title ?title ;
-                    dcterms:description ?desc .
+                    dcterms:description ?desc ;
+                    rdfs:member ?coll .
+                ?coll dcterms:identifier ?coll_id ;
+                    dcterms:title ?coll_title .
                 FILTER(lang(?title) = "" || lang(?title) = "en")
             }}
         """
         )
 
-        result = r.bindings[0]
-        self.uri = result["d"]
-        self.id = result["id"]
-        self.title = result["title"]
-        self.description = result["desc"]
+        for result in r.bindings:
+            if self.uri is None:
+                self.uri = result["d"]
+            if self.id is None:
+                self.id = result["id"]
+            if self.title is None:
+                self.title = result["title"]
+            if self.description is None:
+                self.description = result["desc"]
+            self.collections.append(
+                {
+                    "id": result["coll_id"],
+                    "title": result["coll_title"],
+                }
+            )
+
         self.geometries = {
             "asDGGS": None,
             "asGeoJSON": None,
@@ -71,6 +91,7 @@ class SpacePrezDataset(PrezModel):
             "description": self.description,
             "properties": self._get_properties(),
             "geometries": self.geometries,
+            "collections": self.collections,
         }
 
     # override

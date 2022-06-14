@@ -43,7 +43,7 @@ DEMO = os.environ.get("DEMO", True)
 ALLOW_PARTIAL_RESULTS = os.environ.get("ALLOW_PARTIAL_RESULTS", True)
 
 ENABLED_PREZS = json.loads(
-    os.environ.get("ENABLED_PREZS", '["VocPrez"]')
+    os.environ.get("ENABLED_PREZS", '["VocPrez", "SpacePrez"]')
 )  # must use proper capitalisation
 THEME_VOLUME = os.environ.get("THEME_VOLUME", None)
 SIDENAV = os.environ.get("SIDENAV", "False") == "True"
@@ -67,3 +67,19 @@ NAMESPACE_PREFIXES = {
 }
 
 USE_PID_LINKS = False
+
+# available properties for CQL search
+CQL_PROPS = {
+    "title": {
+        "title": "Title",
+        "description": "The title of a geo:Feature",
+        "qname": "dcterms:title",
+        "type": "string",
+    },
+    "desc": {
+        "title": "Description",
+        "description": "The description of a geo:Feature",
+        "qname": "dcterms:description",
+        "type": "string",
+    }
+}
