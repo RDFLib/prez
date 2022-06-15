@@ -580,24 +580,34 @@ async def spaceprez_features(
     filter: Optional[str] = Query(None),
     filter_lang: Optional[str] = Query(None, alias="filter-lang"),
     filter_crs: Optional[str] = Query(None, alias="filter-crs"),
+    dataset: Optional[str] = Query(None),
+    collection: Optional[str] = Query(None),
 ):
     """Returns a list of SpacePrez geo:Features in the necessary profile & mediatype"""
     if filter is not None:
-        # get list of datasets
-        d_sparql_result = await list_datasets(page, per_page)
-        d_list = [result["id"]["value"] for result in d_sparql_result]
+        if dataset is None:
+            # get list of datasets
+            d_sparql_result = await list_datasets()
+            d_list = [result["id"]["value"] for result in d_sparql_result]
+            d_ids = ",".join(d_list)
+        else:
+            d_ids = dataset
 
-        # get list of collections
-        coll_sparql_result, *_ = await asyncio.gather(
-            *[list_collections(dataset_id) for dataset_id in d_list]
-        )
-        coll_list = [result["id"]["value"] for result in coll_sparql_result]
+        if collection is None:
+            # get list of collections
+            coll_sparql_result, *_ = await asyncio.gather(
+                *[list_collections(dataset_id) for dataset_id in d_list]
+            )
+            coll_list = [result["id"]["value"] for result in coll_sparql_result]
+            coll_ids = ",".join(coll_list)
+        else:
+            coll_ids = collection
 
         # do CQL -> SPARQL mapping
         cql_query = CQLSearch(
             filter,
-            ",".join(d_list),
-            ",".join(coll_list),
+            d_ids,
+            coll_ids,
             filter_lang=filter_lang,
             filter_crs=filter_crs,
         ).generate_query()
