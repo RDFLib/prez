@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple
 
 from async_lru import alru_cache
 
@@ -266,8 +266,14 @@ async def get_collection_construct_2(
 async def count_features(
     dataset_id: Optional[str] = None,
     collection_id: Optional[str] = None,
-    cql_query: Optional[str] = None,
+    cql_query: Optional[Tuple] = None,
 ):
+    dataset_query = ""
+    collection_query = ""
+    filter_query = ""
+    if cql_query is not None:
+        dataset_query, collection_query, filter_query = cql_query
+    
     q = f"""
         PREFIX dcat: <{DCAT}>
         PREFIX dcterms: <{DCTERMS}>
@@ -277,16 +283,18 @@ async def count_features(
         
         SELECT (COUNT(?f) as ?count) 
         WHERE {{
-            ?d dcterms:identifier ?d_id ;
+            ?d dcterms:identifier {f'"{dataset_id}"^^xsd:token' if dataset_id is not None else "?d_id"} ;
                 a dcat:Dataset ;
                 rdfs:member ?coll .
-            FILTER ({f'STR(?d_id) = "{dataset_id}" && ' if dataset_id is not None else ""}DATATYPE(?d_id) = xsd:token)
-            ?coll dcterms:identifier ?coll_id ;
+            {f'BIND("{dataset_id}" AS ?d_id)' if dataset_id is not None else "FILTER(DATATYPE(?d_id) = xsd:token)"}
+            {dataset_query if dataset_id is None else ""}
+            ?coll dcterms:identifier {f'"{collection_id}"^^xsd:token' if collection_id is not None else "?coll_id"} ;
                 a geo:FeatureCollection ;
                 rdfs:member ?f .
-            FILTER ({f'STR(?coll_id) = "{collection_id}" && ' if collection_id is not None else ""}DATATYPE(?coll_id) = xsd:token)
+            {f'BIND("{collection_id}" AS ?coll_id)' if collection_id is not None else "FILTER(DATATYPE(?coll_id) = xsd:token)"}
+            {collection_query if collection_id is None else ""}
             ?f a geo:Feature .
-            {cql_query or ""}
+            {filter_query}
         }}
     """
     r = await sparql_query(q, "SpacePrez")
@@ -300,10 +308,16 @@ async def count_features(
 async def list_features(
     dataset_id: Optional[str] = None,
     collection_id: Optional[str] = None,
-    cql_query: Optional[str] = None,
+    cql_query: Optional[Tuple] = None,
     page: Optional[int] = None,
     per_page: Optional[int] = None,
 ):
+    dataset_query = ""
+    collection_query = ""
+    filter_query = ""
+    if cql_query is not None:
+        dataset_query, collection_query, filter_query = cql_query
+
     q = f"""
         PREFIX dcat: <{DCAT}>
         PREFIX dcterms: <{DCTERMS}>
@@ -313,18 +327,20 @@ async def list_features(
         PREFIX xsd: <{XSD}>
         SELECT DISTINCT *
         WHERE {{
-            ?d dcterms:identifier ?d_id ;
+            ?d dcterms:identifier {f'"{dataset_id}"^^xsd:token' if dataset_id is not None else "?d_id"} ;
                 a dcat:Dataset ;
-                dcterms:title ?d_label ;
+                dcterms:title ?d_title ;
                 rdfs:member ?coll .
-            FILTER(lang(?d_label) = "" || lang(?d_label) = "en")
-            FILTER ({f'STR(?d_id) = "{dataset_id}" && ' if dataset_id is not None else ""}DATATYPE(?d_id) = xsd:token)
+            FILTER(lang(?d_title) = "" || lang(?d_title) = "en")
+            {f'BIND("{dataset_id}" AS ?d_id)' if dataset_id is not None else "FILTER(DATATYPE(?d_id) = xsd:token)"}
+            {dataset_query if dataset_id is None else ""}
             ?coll a geo:FeatureCollection ;
-                dcterms:identifier ?coll_id ;
-                dcterms:title ?coll_label ;
+                dcterms:identifier {f'"{collection_id}"^^xsd:token' if collection_id is not None else "?coll_id"} ;
+                dcterms:title ?coll_title ;
                 rdfs:member ?f .
-            FILTER(lang(?coll_label) = "" || lang(?coll_label) = "en")
-            FILTER ({f'STR(?coll_id) = "{collection_id}" && ' if collection_id is not None else ""}DATATYPE(?coll_id) = xsd:token)
+            FILTER(lang(?coll_title) = "" || lang(?coll_title) = "en")
+            {f'BIND("{collection_id}" AS ?coll_id)' if collection_id is not None else "FILTER(DATATYPE(?coll_id) = xsd:token)"}
+            {collection_query if collection_id is None else ""}
             ?f a geo:Feature ;
                 dcterms:identifier ?id .
             FILTER(DATATYPE(?id) = xsd:token)
@@ -332,10 +348,10 @@ async def list_features(
                 ?f dcterms:description ?desc .
             }}
             OPTIONAL {{
-                ?f dcterms:title ?label .
-                FILTER(lang(?label) = "" || lang(?label) = "en" || lang(?label) = "en-AU")
+                ?f dcterms:title ?title .
+                FILTER(lang(?title) = "" || lang(?title) = "en" || lang(?title) = "en-AU")
             }}
-            {cql_query if cql_query is not None else ""}
+            {filter_query}
         }}{f" LIMIT {per_page} OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
     """
     r = await sparql_query(q, "SpacePrez")

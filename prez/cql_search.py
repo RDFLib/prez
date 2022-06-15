@@ -1,6 +1,5 @@
-from typing import Optional
+from typing import Optional, Tuple
 import re
-import json
 
 from fastapi import HTTPException
 
@@ -160,33 +159,21 @@ class CQLSearch(object):
             flags=re.IGNORECASE,
         )
 
-    def generate_query(self) -> str:
-        # handle empty query
+    def generate_query(self) -> Tuple[str, str, str]:
         if self.filter == "":
-            return ""
-
-        # cater for specifying datasets & not collections
-        self.query = f"""
-            ?d a dcat:Dataset ;
-                dcterms:identifier ?d_id ;
-                rdfs:member ?coll .
-           
+            return ("", "", "")
+        
+        self.dataset_query = f"""
             BIND(STR(?d_id) AS ?d_id_str)
             VALUES ?d_id_str {{{" ".join([f'"{d.strip()}"' for d in self.datasets.split(',')])}}}
-            BIND(DATATYPE(?d_id) AS ?d_id_dt)
-            FILTER(?d_id_dt = xsd:token)
+        """
 
-            ?coll a geo:FeatureCollection ;
-                dcterms:identifier ?coll_id ;
-                rdfs:member ?f .
-            
+        self.collection_query = f"""
             BIND(STR(?coll_id) AS ?coll_id_str)
             VALUES ?coll_id_str {{{" ".join([f'"{coll.strip()}"' for coll in self.collections.split(',')])}}}
-            BIND(DATATYPE(?coll_id) AS ?coll_id_dt)
-            FILTER(?coll_id_dt = xsd:token)
-
-            ?f a geo:Feature .
         """
+
+        self.query = ""
 
         self.filter = self._parse_eq_ops(self.filter)
         self.filter = self._parse_between(self.filter)
@@ -211,4 +198,4 @@ class CQLSearch(object):
 
         self.filter = f"FILTER({self.filter})"
         self.query += f"\n{self.filter}"
-        return self.query
+        return self.dataset_query, self.collection_query, self.query

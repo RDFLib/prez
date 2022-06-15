@@ -224,26 +224,46 @@
 {% endmacro %}
 
 {% macro render_pagination(pages) %}
-    {% set per_page = "per_page=" + request.query_params.get("per_page") + "&" if request.query_params.get("per_page") else "" %}
+    {% set per_page = request.query_params.get("per_page") %}
     <div id="pagination">
         {% if pages.current > 1 %}
-            <a href="{{ request.url.path + '?' + per_page + 'page=' + pages.first | string }}" class="btn paginate-btn">{{ pages.first }}</a>
+            {% if per_page %}
+                <a href="{{ request.url | string | append_qsa({'page': pages.first, 'per_page': per_page}) }}" class="btn paginate-btn">{{ pages.first }}</a>
+            {% else %}
+                <a href="{{ request.url | string | append_qsa({'page': pages.first}) }}" class="btn paginate-btn">{{ pages.first }}</a>
+            {% endif %}
         {% endif %}
         {% if pages.prev > 2 %}
             <div>...</div>
         {% endif %}
         {% if pages.current > 2 %}
-            <a href="{{ request.url.path + '?' + per_page + 'page=' + pages.prev | string }}" class="btn paginate-btn">{{ pages.prev }}</a>
+            {% if per_page %}
+                <a href="{{ request.url | string | append_qsa({'page': pages.prev, 'per_page': per_page}) }}" class="btn paginate-btn">{{ pages.prev }}</a>
+            {% else %}
+                <a href="{{ request.url | string | append_qsa({'page': pages.prev}) }}" class="btn paginate-btn">{{ pages.prev }}</a>
+            {% endif %}
         {% endif %}
-        <a href="{{ request.url.path + '?' + per_page + 'page=' + pages.current | string }}" class="btn paginate-btn active">{{ pages.current }}</a>
+        {% if per_page %}
+            <a href="{{ request.url | string | append_qsa({'page': pages.current, 'per_page': per_page}) }}" class="btn paginate-btn active">{{ pages.current }}</a>
+        {% else %}
+            <a href="{{ request.url | string | append_qsa({'page': pages.current}) }}" class="btn paginate-btn active">{{ pages.current }}</a>
+        {% endif %}
         {% if pages.current < pages.last - 1 %}
-            <a href="{{ request.url.path + '?' + per_page + 'page=' + pages.next | string }}" class="btn paginate-btn">{{ pages.next }}</a>
+            {% if per_page %}
+                <a href="{{ request.url | string | append_qsa({'page': pages.next, 'per_page': per_page}) }}" class="btn paginate-btn">{{ pages.next }}</a>
+            {% else %}
+                <a href="{{ request.url | string | append_qsa({'page': pages.next}) }}" class="btn paginate-btn">{{ pages.next }}</a>
+            {% endif %}
         {% endif %}
         {% if pages.next + 1 < pages.last %}
             <div>...</div>
         {% endif %}
         {% if pages.current < pages.last %}
-            <a href="{{ request.url.path + '?' + per_page + 'page=' + pages.last | string }}" class="btn paginate-btn">{{ pages.last }}</a>
+            {% if per_page %}
+                <a href="{{ request.url | string | append_qsa({'page': pages.last, 'per_page': per_page}) }}" class="btn paginate-btn">{{ pages.last }}</a>
+            {% else %}
+                <a href="{{ request.url | string | append_qsa({'page': pages.last}) }}" class="btn paginate-btn">{{ pages.last }}</a>
+            {% endif %}
         {% endif %}
     </div>
 {% endmacro %}

@@ -7,6 +7,8 @@ from connegp import RDF_MEDIATYPES
 
 from prez.config import *
 
+TIMEOUT = 30.0
+
 get_all_prop_obj_info = """
 OPTIONAL {
     ?p1 rdfs:label ?p1Label .
@@ -100,7 +102,7 @@ def sparql_query_non_async(query: str, prez: str) -> Tuple[bool, Union[List, Dic
                 "Content-Type": "application/sparql-query",
             },
             auth=(creds["username"], creds["password"]),
-            timeout=15.0,
+            timeout=TIMEOUT,
         )
     if 200 <= response.status_code < 300:
         return True, response.json()["results"]["bindings"]
@@ -136,7 +138,7 @@ async def sparql_query(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
                 "Content-Type": "application/sparql-query",
             },
             auth=(creds["username"], creds["password"]),
-            timeout=15.0,
+            timeout=TIMEOUT,
         )
     if 200 <= response.status_code < 300:
         return True, response.json()["results"]["bindings"]
@@ -216,7 +218,7 @@ async def sparql_construct(query: str, prez: str):
                 "Content-Type": "application/sparql-query",
             },
             auth=(creds["username"], creds["password"]),
-            timeout=15.0,
+            timeout=TIMEOUT,
         )
     if 200 <= response.status_code < 300:
         return True, Graph().parse(data=response.text)
@@ -252,7 +254,7 @@ def sparql_construct_non_async(query: str, prez: str):
                 "Content-Type": "application/sparql-query",
             },
             auth=(creds["username"], creds["password"]),
-            timeout=15.0,
+            timeout=TIMEOUT,
         )
     if 200 <= response.status_code < 300:
         return True, Graph().parse(data=response.text)
@@ -290,7 +292,7 @@ async def sparql_endpoint_query(
                 "Content-Type": "application/sparql-query",
             },
             auth=(creds["username"], creds["password"]),
-            timeout=15.0,
+            timeout=TIMEOUT,
         )
     if 200 <= response.status_code < 300:
         if accept in ["application/sparql-results+json", "application/json"]:
