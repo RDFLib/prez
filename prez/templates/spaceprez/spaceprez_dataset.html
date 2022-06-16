@@ -58,7 +58,7 @@
 </div>
 <div id="content-col-sidebar">
     {% include "alt_link.html" %}
-    {{ render_cql_form(props, none, dataset.collections) }}
+    {{ render_cql_form(props, none, dataset.collections, dataset.id, none) }}
 </div>
 {% if dataset.geometries.asGeoJSON is not none %}
     <script>

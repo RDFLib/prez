@@ -37,7 +37,7 @@
             </div>
         {% endif %}
         {% if "SpacePrez" in prezs %}
-            {{ render_cql_form(props, datasets, collections) }}
+            {{ render_cql_form(props, datasets, collections, none, none) }}
         {% endif %}
     </div>
     {% if "VocPrez" in prezs and results | length > 0 %}
