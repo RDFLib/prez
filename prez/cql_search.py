@@ -160,42 +160,46 @@ class CQLSearch(object):
         )
 
     def generate_query(self) -> Tuple[str, str, str]:
-        if self.filter == "":
-            return ("", "", "")
-        
-        self.dataset_query = f"""
-            BIND(STR(?d_id) AS ?d_id_str)
-            VALUES ?d_id_str {{{" ".join([f'"{d.strip()}"' for d in self.datasets.split(',')])}}}
-        """
+        self.dataset_query = ""
 
-        self.collection_query = f"""
-            BIND(STR(?coll_id) AS ?coll_id_str)
-            VALUES ?coll_id_str {{{" ".join([f'"{coll.strip()}"' for coll in self.collections.split(',')])}}}
-        """
+        if self.datasets != "":
+            self.dataset_query = f"""
+                BIND(STR(?d_id) AS ?d_id_str)
+                VALUES ?d_id_str {{{" ".join([f'"{d.strip()}"' for d in self.datasets.split(',')])}}}
+            """
+
+        self.collection_query = ""
+
+        if self.collections != "":
+            self.collection_query = f"""
+                BIND(STR(?coll_id) AS ?coll_id_str)
+                VALUES ?coll_id_str {{{" ".join([f'"{coll.strip()}"' for coll in self.collections.split(',')])}}}
+            """
 
         self.query = ""
 
-        self.filter = self._parse_eq_ops(self.filter)
-        self.filter = self._parse_between(self.filter)
-        self.filter = self._parse_or(self.filter)
-        self.filter = self._parse_and(self.filter)
-        self.filter = self._parse_like(self.filter)
-        self.filter = self._parse_is(self.filter)
-        self.filter = self._parse_in(self.filter)
+        if self.filter != "":
+            self.filter = self._parse_eq_ops(self.filter)
+            self.filter = self._parse_between(self.filter)
+            self.filter = self._parse_or(self.filter)
+            self.filter = self._parse_and(self.filter)
+            self.filter = self._parse_like(self.filter)
+            self.filter = self._parse_is(self.filter)
+            self.filter = self._parse_in(self.filter)
 
-        for prop in CQL_PROPS.keys():
-            if f"?{prop}" in self.filter:
-                # checks for exists/is null to avoid inserting unnecessary triples
-                # if the only reference of a prop is with EXISTS, then don't insert triple
-                if len(re.findall(f"\?{prop}", self.filter)) > len(
-                    re.findall(
-                        f"EXISTS\s?{{\s?\?f {CQL_PROPS[prop]['qname']} \?{prop}",
-                        self.filter,
-                        flags=re.IGNORECASE,
-                    )
-                ):
-                    self.query += f"\n?f {CQL_PROPS[prop]['qname']} ?{prop} ."
+            for prop in CQL_PROPS.keys():
+                if f"?{prop}" in self.filter:
+                    # checks for exists/is null to avoid inserting unnecessary triples
+                    # if the only reference of a prop is with EXISTS, then don't insert triple
+                    if len(re.findall(f"\?{prop}", self.filter)) > len(
+                        re.findall(
+                            f"EXISTS\s?{{\s?\?f {CQL_PROPS[prop]['qname']} \?{prop}",
+                            self.filter,
+                            flags=re.IGNORECASE,
+                        )
+                    ):
+                        self.query += f"\n?f {CQL_PROPS[prop]['qname']} ?{prop} ."
 
-        self.filter = f"FILTER({self.filter})"
-        self.query += f"\n{self.filter}"
+            self.filter = f"FILTER({self.filter})"
+            self.query += f"\n{self.filter}"
         return self.dataset_query, self.collection_query, self.query

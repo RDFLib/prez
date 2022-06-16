@@ -11,7 +11,7 @@ TIMEOUT = 30.0
 
 get_all_prop_obj_info = """
 OPTIONAL {
-    ?p1 rdfs:label ?p1Label .
+    ?p1 rdfs:label|dcterms:title ?p1Label .
     FILTER(lang(?p1Label) = "" || lang(?p1Label) = "en")
 }
 OPTIONAL {
@@ -23,7 +23,7 @@ OPTIONAL {
     FILTER(lang(?p1expl) = "" || lang(?p1expl) = "en")
 }
 OPTIONAL {
-    ?o1 rdfs:label ?o1Label .
+    ?o1 rdfs:label|dcterms:title ?o1Label .
     FILTER(lang(?o1Label) = "" || lang(?o1Label) = "en")
 }
 OPTIONAL {
@@ -38,7 +38,7 @@ OPTIONAL {
     FILTER(ISBLANK(?o1))
 
     OPTIONAL {
-        ?p2 rdfs:label ?p2Label .
+        ?p2 rdfs:label|dcterms:title ?p2Label .
         FILTER(lang(?p2Label) = "" || lang(?p2Label) = "en")
     }
     OPTIONAL {
@@ -50,7 +50,7 @@ OPTIONAL {
         FILTER(lang(?p2expl) = "" || lang(?p2expl) = "en")
     }
     OPTIONAL {
-        ?o2 rdfs:label ?o2Label .
+        ?o2 rdfs:label|dcterms:title ?o2Label .
         FILTER(lang(?o2Label) = "" || lang(?o2Label) = "en")
     }
     OPTIONAL {
