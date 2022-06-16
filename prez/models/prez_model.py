@@ -233,3 +233,10 @@ class Table(ObjCell):
                 self.graph.add(
                     (GEO.asGeoJSON, RDFS.label, Literal("as GeoJSON", lang="en"))
                 )
+                self.graph.add(
+                    (
+                        GEO.asGeoJSON,
+                        DCTERMS.description,
+                        Literal("The GeoJSON serialization of a Geometry", lang="en"),
+                    )
+                )

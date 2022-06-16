@@ -142,10 +142,9 @@ async def app_startup():
                         if query_success and len(profiles_g) > 0:
                             print(f"Profiles found in Fuseki for {prez}, caching them")
                             if prez == "SpacePrez":
-                                pass
-                                await get_general_profiles(DCAT.Dataset)
-                                await get_general_profiles(GEO.FeatureCollection)
-                                await get_general_profiles(GEO.Feature)
+                                get_general_profiles(DCAT.Dataset)
+                                get_general_profiles(GEO.FeatureCollection)
+                                get_general_profiles(GEO.Feature)
                             if prez == "VocPrez":
                                 pass
                         else:
