@@ -3,7 +3,6 @@ import urllib.parse
 from pathlib import Path
 from rdflib import Graph
 from functools import lru_cache
-import cgi
 
 
 class SparqlServer(BaseHTTPRequestHandler):
@@ -48,11 +47,17 @@ class SparqlServer(BaseHTTPRequestHandler):
 
     @lru_cache
     def load_vocprez_graph(self):
-        return Graph().parse(Path(__file__).parent / "data" / "vocprez_vocab_street_class.ttl")
+        g = Graph()
+        for f in Path(Path(__file__).parent / "data" / "vocprez").glob("*.ttl"):
+            g.parse(f)
+        return g
 
     @lru_cache
     def load_spaceprez_graph(self):
-        return Graph().parse(Path(__file__).parent / "data" / "spaceprez_dataset_geofabric_small.ttl")
+        g = Graph()
+        for f in Path(Path(__file__).parent / "data" / "spaceprez").glob("*.ttl"):
+            g.parse(f)
+        return g
 
     def do_GET(self):
         status, content_type, content = self.validate_path()
@@ -92,6 +97,9 @@ class SparqlServer(BaseHTTPRequestHandler):
 
         self.apply_sparql_query(query)
 
+    def do_HEAD(self):
+        return self.http_response(200, "text/plain", "")
+
     def validate_path(self):
         status = None
         content_type = None
@@ -120,7 +128,7 @@ class SparqlServer(BaseHTTPRequestHandler):
             else:
                 content_type = "application/sparql-results+json"
 
-            return self.http_response(200, content_type, result.serialize(format="json").decode())
+            return self.http_response(200, content_type, result.serialize(format=content_type).decode())
         except Exception as e:
             return self.http_response(400, "text.plain", f"Your SPARQL query could not be interpreted: {e}")
 
