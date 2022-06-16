@@ -47,11 +47,17 @@ class SparqlServer(BaseHTTPRequestHandler):
 
     @lru_cache
     def load_vocprez_graph(self):
-        return Graph().parse(Path(__file__).parent / "data" / "vocprez_vocab_street_class.ttl")
+        g = Graph()
+        for f in Path(Path(__file__).parent / "data" / "vocprez").glob("*.ttl"):
+            g.parse(f)
+        return g
 
     @lru_cache
     def load_spaceprez_graph(self):
-        return Graph().parse(Path(__file__).parent / "data" / "spaceprez_dataset_geofabric_small.ttl")
+        g = Graph()
+        for f in Path(Path(__file__).parent / "data" / "spaceprez").glob("*.ttl"):
+            g.parse(f)
+        return g
 
     def do_GET(self):
         status, content_type, content = self.validate_path()
