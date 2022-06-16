@@ -121,11 +121,9 @@ async def app_startup():
     if len(ENABLED_PREZS) > 0:
         for prez in ENABLED_PREZS:
             connected_to_prez_flavour = False
-            url = urlparse(prez2endpoint[prez])
-            url_to_try = f"{url[0]}://{url[1]}/$/ping"
             while not connected_to_prez_flavour:
                 try:
-                    response = httpx.get(url_to_try)
+                    response = httpx.head(prez2endpoint[prez])
                     response.raise_for_status()
                     if response.reason_phrase == "OK":
                         print(

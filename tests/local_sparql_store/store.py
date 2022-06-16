@@ -3,7 +3,6 @@ import urllib.parse
 from pathlib import Path
 from rdflib import Graph
 from functools import lru_cache
-import cgi
 
 
 class SparqlServer(BaseHTTPRequestHandler):
@@ -92,6 +91,9 @@ class SparqlServer(BaseHTTPRequestHandler):
 
         self.apply_sparql_query(query)
 
+    def do_HEAD(self):
+        return self.http_response(200, "text/plain", "")
+
     def validate_path(self):
         status = None
         content_type = None
@@ -120,7 +122,7 @@ class SparqlServer(BaseHTTPRequestHandler):
             else:
                 content_type = "application/sparql-results+json"
 
-            return self.http_response(200, content_type, result.serialize(format="json").decode())
+            return self.http_response(200, content_type, result.serialize(format=content_type).decode())
         except Exception as e:
             return self.http_response(400, "text.plain", f"Your SPARQL query could not be interpreted: {e}")
 
