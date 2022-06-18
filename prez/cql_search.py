@@ -3,7 +3,7 @@ import re
 
 from fastapi import HTTPException
 
-from config import CQL_PROPS
+from prez.config import CQL_PROPS
 
 
 class CQLSearch(object):

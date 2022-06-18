@@ -18,10 +18,10 @@ from pydantic import AnyUrl
 from prez.profiles.generate_profiles import get_general_profiles
 from prez.routers import vocprez_router, spaceprez_router
 from prez.services.app_service import *
-from services.spaceprez_service import list_datasets, list_collections
+from prez.services.spaceprez_service import list_datasets, list_collections
 from prez.utils import templates
 from prez.view_funcs import profiles_func
-from routers.vocprez_router import vocprez_home_endpoint
+from prez.routers.vocprez_router import vocprez_home_endpoint
 
 
 async def catch_400(request: Request, exc):

@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 import re
 from typing import Dict, List
 
@@ -10,7 +10,7 @@ from prez.config import *
 
 def get_config(var):
     """Gets a config variable from config.py"""
-    import config
+    import prez.config as config
 
     return getattr(config, var)
 
@@ -64,7 +64,7 @@ def join_list_keys(l: List, key: str, sep: str) -> str:
     return sep.join([e[key] for e in l])
 
 
-template_list = ["templates"]
+template_list = [str(Path(__file__).parent / "templates")]
 if THEME_VOLUME is not None:
     template_list.insert(0, f"{THEME_VOLUME}/templates")
 
