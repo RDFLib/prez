@@ -18,9 +18,10 @@ fedsearch = { git = "https://github.com/surroundaustralia/vocprez-fedsearch.git"
 starlette-core = { git = "https://github.com/accent-starlette/starlette-core.git" }
 async-lru = "^1.0.3"
 Shapely = "^1.8.2"
+pytest = "^7.1.2"
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.2.5"
+pytest = "^7.1.2"
 pre-commit = "^2.15.0"
 tavern = "^1.16.3"
 black = "^22.3.0"

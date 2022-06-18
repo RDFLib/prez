@@ -8,7 +8,7 @@ from prez.renderers import Renderer
 
 from prez.models.spaceprez import SpacePrezFeatureCollection
 from prez.utils import templates
-from services.spaceprez_service import get_object_uri_and_classes
+from prez.services.spaceprez_service import get_object_uri_and_classes
 
 
 class SpacePrezFeatureCollectionRenderer(Renderer):

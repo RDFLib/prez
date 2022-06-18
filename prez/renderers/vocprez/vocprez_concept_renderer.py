@@ -5,10 +5,9 @@ from fastapi.responses import Response, JSONResponse, PlainTextResponse
 
 from prez.config import *
 from prez.models.vocprez import VocPrezConcept
-from prez.profiles.vocprez_profiles import vocpub, vocpub_supplied, skos, alt
 from prez.renderers import Renderer
 from prez.utils import templates
-from services.vocprez_service import get_concept_and_scheme_uri
+from prez.services.vocprez_service import get_concept_and_scheme_uri
 
 
 class VocPrezConceptRenderer(Renderer):

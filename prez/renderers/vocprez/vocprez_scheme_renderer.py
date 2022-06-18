@@ -5,10 +5,9 @@ from connegp import MEDIATYPE_NAMES
 
 from prez.config import *
 from prez.renderers import Renderer
-from prez.profiles.vocprez_profiles import skos, vocpub, vocpub_supplied, dd, alt
 from prez.models.vocprez import VocPrezScheme
 from prez.utils import templates
-from services.vocprez_service import get_scheme_or_collection_uri
+from prez.services.vocprez_service import get_scheme_or_collection_uri
 
 
 class VocPrezSchemeRenderer(Renderer):
