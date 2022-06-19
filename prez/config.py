@@ -1,8 +1,8 @@
 import json
 import os
 
-from rdflib import Namespace
-from rdflib.namespace import SKOS, RDF, DCTERMS, RDFS, DCAT, PROV, OWL, SDO
+from rdflib import Namespace, Graph, URIRef
+from rdflib.namespace import SKOS, RDF, DCTERMS, RDFS, DCAT, PROV, OWL, SDO, XSD
 
 PROF = Namespace("http://www.w3.org/ns/dx/prof/")
 PREZ = Namespace("https://surroundaustralia.com/prez/")
@@ -81,5 +81,5 @@ CQL_PROPS = {
         "description": "The description of a geo:Feature",
         "qname": "dcterms:description",
         "type": "string",
-    }
+    },
 }
