@@ -69,6 +69,7 @@ class SpacePrezFeature(PrezModel):
             }}
         """
         )
+        self.graph.bind("geo", GEO)
         self.most_specific_class = most_specific_class
         result = r.bindings[0]
         self.uri = result["f"]
