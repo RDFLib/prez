@@ -117,6 +117,7 @@ class SparqlServer(BaseHTTPRequestHandler):
         return status, content_type, content
 
     def apply_sparql_query(self, query):
+        print(f"query: {query}")
         try:
             if "vocprez" in self.path:
                 result = self.vocprez_graph.query(query)
