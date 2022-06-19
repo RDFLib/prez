@@ -5,8 +5,8 @@ import shutil
 import os
 import sys
 import subprocess
-PREZ_DIR = Path("/Users/nick/Work/Prez/prez/")
-LOCAL_SPARQL_STORE = Path("/Users/nick/Work/Prez/tests/local_sparql_store/store.py")
+PREZ_DIR = Path(Path(__file__).parent.parent / "prez").absolute()
+LOCAL_SPARQL_STORE = Path(Path(__file__).parent / "local_sparql_store/store.py")
 sys.path.insert(0, str(PREZ_DIR.parent.absolute()))
 from fastapi.testclient import TestClient
 
@@ -66,7 +66,7 @@ def a_vocab_id_and_a_concept_id(vp_test_client, a_vocab_id):
 
 def test_home_default_default(vp_test_client):
     r = vp_test_client.get("/")
-    assert "<h1>Test VocPrez</h1>" in r.text
+    assert "<h1>System Home</h1>" in r.text
 
 
 def test_home_default_turtle(vp_test_client):
