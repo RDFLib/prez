@@ -4,19 +4,23 @@ from pathlib import Path
 import shutil
 import os
 import sys
+import subprocess
 PREZ_DIR = Path("/Users/nick/Work/Prez/prez/")
+LOCAL_SPARQL_STORE = Path("/Users/nick/Work/Prez/tests/local_sparql_store/store.py")
 sys.path.insert(0, str(PREZ_DIR.parent.absolute()))
 from fastapi.testclient import TestClient
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def vp_test_client(request):
+    print("Run Local SPARQL Store")
+    p1 = subprocess.Popen(["python", str(LOCAL_SPARQL_STORE)])
     print('\nDoing config setup')
     # preserve original config file
     shutil.copyfile(PREZ_DIR / "config.py", PREZ_DIR / "config.py.original")
 
     # alter config file contents
-    with open(PREZ_DIR / "config.py", "rt") as f:
+    with open(PREZ_DIR / "config.py") as f:
         config = f.read()
         config = config.replace("Default Prez", "Test Prez")
         config = config.replace("Default VocPrez", "Test VocPrez")
@@ -30,6 +34,8 @@ def vp_test_client(request):
 
     def teardown():
         print("\nDoing teardown")
+        p1.kill()
+
         # remove altered config file
         os.unlink(PREZ_DIR / "config.py")
 
