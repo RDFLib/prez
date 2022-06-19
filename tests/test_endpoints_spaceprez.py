@@ -4,6 +4,7 @@ import shutil
 import os
 import sys
 import subprocess
+
 PREZ_DIR = Path("/Users/nick/Work/Prez/prez/")
 LOCAL_SPARQL_STORE = Path("/Users/nick/Work/Prez/tests/local_sparql_store/store.py")
 sys.path.insert(0, str(PREZ_DIR.parent.absolute()))
@@ -14,7 +15,7 @@ from fastapi.testclient import TestClient
 def sp_test_client(request):
     print("Run Local SPARQL Store")
     p1 = subprocess.Popen(["python", str(LOCAL_SPARQL_STORE)])
-    print('\nDoing config setup')
+    print("\nDoing config setup")
     # preserve original config file
     shutil.copyfile(PREZ_DIR / "config.py", PREZ_DIR / "config.py.original")
 
@@ -24,7 +25,10 @@ def sp_test_client(request):
         config = config.replace("Default Prez", "Test Prez")
         config = config.replace("Default SpacePrez", "Test SpacePrez")
         config = config.replace('["VocPrez", "SpacePrez"]', '["SpacePrez"]')
-        config = config.replace('"SPACEPREZ_SPARQL_ENDPOINT", ""', '"SPACEPREZ_SPARQL_ENDPOINT", "http://localhost:3030/spaceprez"')
+        config = config.replace(
+            '"SPACEPREZ_SPARQL_ENDPOINT", ""',
+            '"SPACEPREZ_SPARQL_ENDPOINT", "http://localhost:3030/spaceprez"',
+        )
 
     # write altered config contents to config.py
     with open(PREZ_DIR / "config.py", "w") as f:
@@ -46,6 +50,7 @@ def sp_test_client(request):
 
     # must only import app after config.py has been altered above so config is retained
     from prez.app import app
+
     return TestClient(app)
 
 
@@ -67,7 +72,9 @@ def an_fc_link(sp_test_client, a_dataset_link):
 
 @pytest.fixture(scope="module")
 def a_feature_link_and_id(sp_test_client, an_fc_link):
-    r = sp_test_client.get(f"{an_fc_link}/items?_profile=mem&_mediatype=application/json")
+    r = sp_test_client.get(
+        f"{an_fc_link}/items?_profile=mem&_mediatype=application/json"
+    )
     feature_link = r.json()["members"][0]["link"]
     feature_id = r.json()["members"][0]["id"]
 
@@ -125,8 +132,7 @@ def test_datasets_mem_json(sp_test_client):
 def test_dataset_default_default(sp_test_client, a_dataset_link):
     r = sp_test_client.get(f"{a_dataset_link}")
     assert (
-        f'<li class="breadcrumb"><a href="http://testserver{a_dataset_link}">'
-        in r.text
+        f'<li class="breadcrumb"><a href="http://testserver{a_dataset_link}">' in r.text
     )
 
 
@@ -200,7 +206,9 @@ def test_collection_items_default_default(sp_test_client, an_fc_link):
 
 
 def test_collection_items_mem_json(sp_test_client, an_fc_link):
-    r3 = sp_test_client.get(f"{an_fc_link}/items?_profile=mem&_mediatype=application/json")
+    r3 = sp_test_client.get(
+        f"{an_fc_link}/items?_profile=mem&_mediatype=application/json"
+    )
     assert (
         f'"uri":"http://testserver{an_fc_link}/items?_profile=mem&_mediatype=application/json"'
         in r3.text

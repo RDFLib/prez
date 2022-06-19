@@ -8,11 +8,9 @@ WHERE {
   ?cs a skos:ConceptScheme 
 }"""
 
-r = httpx.get(
-    "http://localhost:3030/vocprez",
-    params={
-        "query": q
-    }
-)
+r = httpx.get("http://localhost:3030/vocprez", params={"query": q})
 
-assert r.text == '{"results": {"bindings": [{"count": {"type": "literal", "value": "1", "datatype": "http://www.w3.org/2001/XMLSchema#integer"}}]}, "head": {"vars": ["count"]}}'
+assert (
+    r.text
+    == '{"results": {"bindings": [{"count": {"type": "literal", "value": "1", "datatype": "http://www.w3.org/2001/XMLSchema#integer"}}]}, "head": {"vars": ["count"]}}'
+)

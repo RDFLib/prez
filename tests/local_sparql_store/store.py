@@ -39,6 +39,7 @@ class SparqlServer(BaseHTTPRequestHandler):
 
     Then the VocPrez SPARQL endpoint would be http://localhost:3030/vocprez
     """
+
     def __init__(self, *args):
         self.vocprez_graph = self.load_vocprez_graph()
         self.spaceprez_graph = self.load_spaceprez_graph()
@@ -78,7 +79,11 @@ class SparqlServer(BaseHTTPRequestHandler):
             return self.http_response(status, content_type, content)
 
         if "query=" not in self.path:
-            return self.http_response(400, "text/plain", "You are missing a query in your GET request (query=...)")
+            return self.http_response(
+                400,
+                "text/plain",
+                "You are missing a query in your GET request (query=...)",
+            )
 
         # get query from URL query string args
         # only handle encoded queries
@@ -93,7 +98,7 @@ class SparqlServer(BaseHTTPRequestHandler):
             return self.http_response(status, content_type, content)
 
         # get query from POST body
-        query = self.rfile.read(int(self.headers['Content-Length'])).decode('utf-8')
+        query = self.rfile.read(int(self.headers["Content-Length"])).decode("utf-8")
 
         self.apply_sparql_query(query)
 
@@ -129,9 +134,13 @@ class SparqlServer(BaseHTTPRequestHandler):
             else:
                 content_type = "application/sparql-results+json"
 
-            return self.http_response(200, content_type, result.serialize(format=content_type).decode())
+            return self.http_response(
+                200, content_type, result.serialize(format=content_type).decode()
+            )
         except Exception as e:
-            return self.http_response(400, "text.plain", f"Your SPARQL query could not be interpreted: {e}")
+            return self.http_response(
+                400, "text.plain", f"Your SPARQL query could not be interpreted: {e}"
+            )
 
     def http_response(self, status, content_type, content):
         self.send_response(status)
@@ -145,4 +154,3 @@ if __name__ == "__main__":
     srv = HTTPServer(("localhost", 3030), SparqlServer)
     print("Local SPARQL server started on port 3030")
     srv.serve_forever()
-
