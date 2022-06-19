@@ -1,10 +1,11 @@
-import pytest
-import re
-from pathlib import Path
-import shutil
 import os
-import sys
+import re
+import shutil
 import subprocess
+import sys
+from pathlib import Path
+
+import pytest
 
 PREZ_DIR = Path(Path(__file__).parent.parent / "prez").absolute()
 LOCAL_SPARQL_STORE = Path(Path(__file__).parent / "local_sparql_store/store.py")

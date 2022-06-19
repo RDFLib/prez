@@ -1,9 +1,10 @@
-import pytest
-from pathlib import Path
-import shutil
 import os
-import sys
+import shutil
 import subprocess
+import sys
+from pathlib import Path
+
+import pytest
 
 PREZ_DIR = Path("/Users/nick/Work/Prez/prez/")
 LOCAL_SPARQL_STORE = Path("/Users/nick/Work/Prez/tests/local_sparql_store/store.py")

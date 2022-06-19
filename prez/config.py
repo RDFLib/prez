@@ -1,8 +1,8 @@
-import os
 import json
+import os
 
-from rdflib import Graph, URIRef, Literal, BNode, Namespace
-from rdflib.namespace import SKOS, RDF, DCTERMS, RDFS, DCAT, PROV, OWL, SDO, XSD
+from rdflib import Namespace
+from rdflib.namespace import SKOS, RDF, DCTERMS, RDFS, DCAT, PROV, OWL, SDO
 
 PROF = Namespace("http://www.w3.org/ns/dx/prof/")
 PREZ = Namespace("https://surroundaustralia.com/prez/")

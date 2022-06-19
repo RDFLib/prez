@@ -1,8 +1,9 @@
-from http.server import BaseHTTPRequestHandler, HTTPServer
 import urllib.parse
-from pathlib import Path
-from rdflib import Graph
 from functools import lru_cache
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from pathlib import Path
+
+from rdflib import Graph
 
 
 class SparqlServer(BaseHTTPRequestHandler):

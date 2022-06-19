@@ -2,7 +2,6 @@ import time
 from pathlib import Path
 from typing import Optional
 from urllib.parse import quote_plus
-from urllib.parse import urlparse
 
 import httpx
 import uvicorn
@@ -11,17 +10,17 @@ from fastapi import FastAPI, Request, HTTPException, Query
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
-from starlette.middleware.cors import CORSMiddleware
 from fedsearch import SkosSearch, EndpointDetails
 from pydantic import AnyUrl
+from starlette.middleware.cors import CORSMiddleware
 
 from prez.profiles.generate_profiles import get_general_profiles
 from prez.routers import vocprez_router, spaceprez_router
+from prez.routers.vocprez_router import vocprez_home_endpoint
 from prez.services.app_service import *
 from prez.services.spaceprez_service import list_datasets, list_collections
 from prez.utils import templates
 from prez.view_funcs import profiles_func
-from prez.routers.vocprez_router import vocprez_home_endpoint
 
 
 async def catch_400(request: Request, exc):
@@ -187,7 +186,6 @@ async def purge_cache():
     from prez.routers.spaceprez_router import (
         spaceprez_home_endpoint,
         dataset_endpoint,
-        spaceprez_about,
         feature_endpoint,
         features_endpoint,
         feature_collection_endpoint,
