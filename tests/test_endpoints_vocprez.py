@@ -65,7 +65,7 @@ def a_vocab_id(vp_test_client):
 @pytest.fixture(scope="module")
 def a_vocab_id_and_a_concept_id(vp_test_client, a_vocab_id):
     # get the first concept endpoint
-    r = vp_test_client.get(f"/vocab/{a_vocab_id}?_mediatype=text/html")
+    r = vp_test_client.get(f"/vocab/{a_vocab_id}?_profile=vocpub&_mediatype=text/html")
     patt = f'<a href="http://testserver/vocab/{a_vocab_id}/(.*)">'
     return (a_vocab_id, re.search(patt, r.text)[1])
 
@@ -107,7 +107,7 @@ def test_vocabs_dd_json(vp_test_client):
 
 def test_vocab_default_default(vp_test_client, a_vocab_id):
     r = vp_test_client.get(
-        f"/vocab/{a_vocab_id}?_mediatype=text/html"
+        f"/vocab/{a_vocab_id}?_profile=vocpub&_mediatype=text/html"
     )  # TODO: work out why HTML has to be specified here?
     assert (
         f'<li class="breadcrumb"><a href="http://testserver/vocab/{a_vocab_id}">'
@@ -116,8 +116,8 @@ def test_vocab_default_default(vp_test_client, a_vocab_id):
 
 
 def test_vocab_default_turtle(vp_test_client, a_vocab_id):
-    r2 = vp_test_client.get(f"/vocab/{a_vocab_id}?_mediatype=text/turtle")
-    assert "a skos:ConceptScheme" in r2.text
+    r = vp_test_client.get(f"/vocab/{a_vocab_id}?_profile=vocpub&_mediatype=text/turtle")
+    assert "a skos:ConceptScheme" in r.text
 
 
 def test_vocab_alt_default(vp_test_client, a_vocab_id):
