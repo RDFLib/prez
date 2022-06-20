@@ -83,7 +83,7 @@ class ProfileDetails:
 
         self.most_specific_class = None
         # find the most specific class for the feature
-        for klass, _, distance in self.preferred_classes_and_profiles:
+        for klass, _, distance in reversed(self.preferred_classes_and_profiles):
             if klass in instance_classes:
                 self.most_specific_class = klass
                 break
@@ -144,13 +144,13 @@ def get_general_profiles(general_class):
     for r in profiles_g.query(get_class_hierarchy):
         distance = str(r["distance"])
         if tuple([r["class"], r["profile"]]) in class_default_profiles:
-            distance = 0  # this will ensure the profile is selected by default
+            distance = 1.5  # this will ensure the profile is selected by default
         preferred_classes_and_profiles.append(
             (str(r["class"]), str(r["profile_id"]), distance)
         )
 
     # sort by preference order
-    preferred_classes_and_profiles.sort(key=lambda x: int(x[2]))
+    preferred_classes_and_profiles.sort(key=lambda x: float(x[2]))
 
     ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
     for s in profiles_g.subjects(RDF.type, PROF.Profile):
@@ -218,7 +218,7 @@ def get_class_based_and_default_profiles(instance_uri, preferred_classes_and_pro
             objects_classes.append(result["class"]["value"])
     else:
         # check for Prez API configured default profiles
-        default_profile = preferred_classes_and_profiles[0][1]
+        default_profile = preferred_classes_and_profiles[-1][1]
         return preferred_classes_and_profiles, default_profile
 
     # the available profiles are returned in reverse preference order
@@ -228,7 +228,7 @@ def get_class_based_and_default_profiles(instance_uri, preferred_classes_and_pro
             if oc == pc[0]:
                 available_profiles.append(pc)
     # set the default profile
-    default_profile = available_profiles[0][1]
+    default_profile = available_profiles[-1][1]
     return tuple(available_profiles), default_profile
 
 
