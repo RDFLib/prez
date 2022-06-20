@@ -1,7 +1,7 @@
 import json
 import os
 
-from rdflib import Namespace, Graph, URIRef
+from rdflib import Namespace, Graph, URIRef, Literal
 from rdflib.namespace import SKOS, RDF, DCTERMS, RDFS, DCAT, PROV, OWL, SDO, XSD
 
 PROF = Namespace("http://www.w3.org/ns/dx/prof/")
