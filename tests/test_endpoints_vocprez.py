@@ -107,18 +107,24 @@ def test_vocabs_dd_json(vp_test_client):
     assert '[{"uri":"' in r.text
 
 
+@pytest.mark.xfail
 def test_vocab_default_default(vp_test_client, a_vocab_id):
+    # ?_profile=vocpub&_mediatype=text/html" -- this is needed to pass
+    # Should not need to set _profile or _mediatype for default
     r = vp_test_client.get(
-        f"/vocab/{a_vocab_id}?_profile=vocpub&_mediatype=text/html"
-    )  # TODO: work out why HTML has to be specified here?
+        f"/vocab/{a_vocab_id}"
+    )
     assert (
         f'<li class="breadcrumb"><a href="http://testserver/vocab/{a_vocab_id}">'
         in r.text
     )
 
 
+@pytest.mark.xfail
 def test_vocab_default_turtle(vp_test_client, a_vocab_id):
-    r = vp_test_client.get(f"/vocab/{a_vocab_id}?_profile=vocpub&_mediatype=text/turtle")
+    # ?_profile=vocpub" -- this is needed to pass
+    # Should not need to set _profile
+    r = vp_test_client.get(f"/vocab/{a_vocab_id}?_mediatype=text/turtle")
     assert "a skos:ConceptScheme" in r.text
 
 
@@ -139,24 +145,28 @@ def test_vocab_dd_json(vp_test_client, a_vocab_id):
     assert '[{"uri":"http' in r2.text
 
 
+@pytest.mark.xfail
 def test_concept_default_default(vp_test_client, a_vocab_id_and_a_concept_id):
+    # ?_profile=vocpub&_mediatype=text/html
+    # should not have to et the _profile & _mediatype for defaults
     a_vocab_id, a_concept_id = a_vocab_id_and_a_concept_id
 
-    # TODO: should not have to specify vocpub for default
-    r3 = vp_test_client.get(
-        f"/vocab/{a_vocab_id}/{a_concept_id}?_profile=vocpub&_mediatype=text/html"
+    r = vp_test_client.get(
+        f"/vocab/{a_vocab_id}/{a_concept_id}"
     )
     assert (
         '<a href="http://www.w3.org/2004/02/skos/core#Concept" target="_blank" >'
-        in r3.text
+        in r.text
     )
 
 
+@pytest.mark.xfail
 def test_concept_default_turtle(vp_test_client, a_vocab_id_and_a_concept_id):
+    # should not have to set _profile=vocpub
     a_vocab_id, a_concept_id = a_vocab_id_and_a_concept_id
 
     r3 = vp_test_client.get(
-        f"/vocab/{a_vocab_id}/{a_concept_id}?_profile=vocpub&_mediatype=text/turtle"
+        f"/vocab/{a_vocab_id}/{a_concept_id}?_mediatype=text/turtle"
     )
     assert "a skos:Concept" in r3.text
 
