@@ -2,7 +2,7 @@ import urllib.parse
 from functools import lru_cache
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
-
+import argparse
 from rdflib import Graph
 
 
@@ -152,6 +152,13 @@ class SparqlServer(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    srv = HTTPServer(("localhost", 3030), SparqlServer)
-    print("Local SPARQL server started on port 3030")
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('-p', '--port',
+                        default=3030,
+                        help='Optionally a port to run on')
+    args = parser.parse_args()
+
+    srv = HTTPServer(("localhost", int(args.port)), SparqlServer)
+    print(f"Local SPARQL server started on port {args.port}")
     srv.serve_forever()

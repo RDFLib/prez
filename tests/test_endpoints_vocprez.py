@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from time import sleep
 
 PREZ_DIR = Path(__file__).parent.parent.absolute() / "prez"
 LOCAL_SPARQL_STORE = Path(Path(__file__).parent / "local_sparql_store/store.py")
@@ -16,7 +17,8 @@ from fastapi.testclient import TestClient
 @pytest.fixture(scope="module")
 def vp_test_client(request):
     print("Run Local SPARQL Store")
-    p1 = subprocess.Popen(["python", str(LOCAL_SPARQL_STORE)])
+    p1 = subprocess.Popen(["python", str(LOCAL_SPARQL_STORE), "-p", "3031"])
+    sleep(1)
     print("\nDoing config setup")
     # preserve original config file
     shutil.copyfile(PREZ_DIR / "config.py", PREZ_DIR / "config.py.original")
@@ -29,7 +31,7 @@ def vp_test_client(request):
         config = config.replace('["VocPrez", "SpacePrez"]', '["VocPrez"]')
         config = config.replace(
             '"VOCPREZ_SPARQL_ENDPOINT", ""',
-            '"VOCPREZ_SPARQL_ENDPOINT", "http://localhost:3030/vocprez"',
+            '"VOCPREZ_SPARQL_ENDPOINT", "http://localhost:3031/vocprez"',
         )
 
     # write altered config contents to config.py
