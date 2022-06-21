@@ -15,7 +15,7 @@ from prez.utils import templates
 from prez.view_funcs import profiles_func
 
 PREZ = Namespace("https://surroundaustralia.com/prez/")
-from cql_search import CQLSearch
+from prez.cql_search import CQLSearch
 
 router = APIRouter(tags=["SpacePrez"] if len(ENABLED_PREZS) > 1 else [])
 

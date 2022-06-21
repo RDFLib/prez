@@ -1,8 +1,9 @@
-from http.server import BaseHTTPRequestHandler, HTTPServer
 import urllib.parse
-from pathlib import Path
-from rdflib import Graph
 from functools import lru_cache
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from pathlib import Path
+import argparse
+from rdflib import Graph
 
 
 class SparqlServer(BaseHTTPRequestHandler):
@@ -39,6 +40,7 @@ class SparqlServer(BaseHTTPRequestHandler):
 
     Then the VocPrez SPARQL endpoint would be http://localhost:3030/vocprez
     """
+
     def __init__(self, *args):
         self.vocprez_graph = self.load_vocprez_graph()
         self.spaceprez_graph = self.load_spaceprez_graph()
@@ -78,7 +80,11 @@ class SparqlServer(BaseHTTPRequestHandler):
             return self.http_response(status, content_type, content)
 
         if "query=" not in self.path:
-            return self.http_response(400, "text/plain", "You are missing a query in your GET request (query=...)")
+            return self.http_response(
+                400,
+                "text/plain",
+                "You are missing a query in your GET request (query=...)",
+            )
 
         # get query from URL query string args
         # only handle encoded queries
@@ -93,7 +99,7 @@ class SparqlServer(BaseHTTPRequestHandler):
             return self.http_response(status, content_type, content)
 
         # get query from POST body
-        query = self.rfile.read(int(self.headers['Content-Length'])).decode('utf-8')
+        query = self.rfile.read(int(self.headers["Content-Length"])).decode("utf-8")
 
         self.apply_sparql_query(query)
 
@@ -117,6 +123,7 @@ class SparqlServer(BaseHTTPRequestHandler):
         return status, content_type, content
 
     def apply_sparql_query(self, query):
+        print(f"query: {query}")
         try:
             if "vocprez" in self.path:
                 result = self.vocprez_graph.query(query)
@@ -128,9 +135,13 @@ class SparqlServer(BaseHTTPRequestHandler):
             else:
                 content_type = "application/sparql-results+json"
 
-            return self.http_response(200, content_type, result.serialize(format=content_type).decode())
+            return self.http_response(
+                200, content_type, result.serialize(format=content_type).decode()
+            )
         except Exception as e:
-            return self.http_response(400, "text.plain", f"Your SPARQL query could not be interpreted: {e}")
+            return self.http_response(
+                400, "text.plain", f"Your SPARQL query could not be interpreted: {e}"
+            )
 
     def http_response(self, status, content_type, content):
         self.send_response(status)
@@ -141,7 +152,13 @@ class SparqlServer(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    srv = HTTPServer(("localhost", 3030), SparqlServer)
-    print("Local SPARQL server started on port 3030")
-    srv.serve_forever()
+    parser = argparse.ArgumentParser()
 
+    parser.add_argument('-p', '--port',
+                        default=3030,
+                        help='Optionally a port to run on')
+    args = parser.parse_args()
+
+    srv = HTTPServer(("localhost", int(args.port)), SparqlServer)
+    print(f"Local SPARQL server started on port {args.port}")
+    srv.serve_forever()

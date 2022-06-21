@@ -5,7 +5,6 @@ from connegp import MEDIATYPE_NAMES
 
 from prez.config import *
 from prez.renderers import Renderer
-from prez.profiles.vocprez_profiles import dcat, sdo, alt
 from prez.models.vocprez import VocPrezDataset
 from prez.utils import templates
 

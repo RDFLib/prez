@@ -1,9 +1,9 @@
-from typing import Optional, Tuple
 import re
+from typing import Optional, Tuple
 
 from fastapi import HTTPException
 
-from config import CQL_PROPS
+from prez.config import CQL_PROPS
 
 
 class CQLSearch(object):

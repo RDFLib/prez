@@ -2,7 +2,7 @@ from typing import Dict, Optional, Union, List
 from abc import ABCMeta, abstractmethod
 
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from connegp import Profile, RDF_MEDIATYPES
+from connegp import RDF_MEDIATYPES
 
 from prez.renderers import Renderer
 from prez.config import *
