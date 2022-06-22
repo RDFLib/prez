@@ -7,7 +7,7 @@ import pytest
 from time import sleep
 
 PREZ_DIR = Path(__file__).parent.parent.absolute() / "prez"
-LOCAL_SPARQL_STORE = Path("local_sparql_store/store.py")
+LOCAL_SPARQL_STORE = Path(Path(__file__).parent / "local_sparql_store/store.py")
 sys.path.insert(0, str(PREZ_DIR.parent.absolute()))
 from fastapi.testclient import TestClient
 
@@ -69,6 +69,7 @@ def an_fc_link(sp_test_client, a_dataset_link):
     r = sp_test_client.get(
         f"{a_dataset_link}/collections?_profile=mem&_mediatype=application/json"
     )
+    print(r.json())
     return r.json()["members"][0]["link"]
 
 

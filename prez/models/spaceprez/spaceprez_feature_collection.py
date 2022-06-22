@@ -31,7 +31,7 @@ class SpacePrezFeatureCollection(PrezModel):
 
         query_by_id = f"""
                 ?coll dcterms:identifier "{id}"^^xsd:token .
-                BIND (<{id}> as ?id)
+                BIND ("{id}"^^xsd:token as ?id)
         """
 
         query_by_uri = f"""
@@ -51,7 +51,7 @@ class SpacePrezFeatureCollection(PrezModel):
                 ?d rdfs:member ?coll ;
                     dcterms:identifier ?d_id ;
                     dcterms:title ?d_label .
-                FILTER((lang(?d_label) = "" || lang(?d_label) = "en") && DATATYPE(?d_id) = xsd:token)
+                FILTER(lang(?d_label) = "" || lang(?d_label) = "en")
                 ?coll a geo:FeatureCollection ;
                     dcterms:title ?title ;
                     dcterms:description ?desc .
