@@ -7,6 +7,7 @@ from functools import lru_cache
 from prez.services.sparql_utils import *
 
 
+@alru_cache(maxsize=20)
 async def count_datasets():
     q = f"""
         PREFIX dcat: <{DCAT}>
@@ -22,6 +23,7 @@ async def count_datasets():
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
+@alru_cache(maxsize=20)
 async def list_datasets(page: Optional[int] = None, per_page: Optional[int] = None):
     q = f"""
         PREFIX dcat: <{DCAT}>
@@ -29,7 +31,7 @@ async def list_datasets(page: Optional[int] = None, per_page: Optional[int] = No
         PREFIX rdfs: <{RDFS}>
         PREFIX skos: <{SKOS}>
         PREFIX xsd: <{XSD}>
-        SELECT DISTINCT ?d ?id ?label
+        SELECT DISTINCT ?d ?id ?label ?desc
         WHERE {{
             ?d a dcat:Dataset ;
                 dcterms:identifier ?id ;
@@ -47,6 +49,7 @@ async def list_datasets(page: Optional[int] = None, per_page: Optional[int] = No
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
+@alru_cache(maxsize=20)
 async def get_dataset_construct(
     dataset_id: Optional[str] = None, dataset_uri: Optional[str] = None
 ):
@@ -95,6 +98,7 @@ async def get_dataset_construct(
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
+@alru_cache(maxsize=20)
 async def count_collections(dataset_id: Optional[str] = None):
     q = f"""
         PREFIX dcat: <{DCAT}>
@@ -104,10 +108,10 @@ async def count_collections(dataset_id: Optional[str] = None):
         PREFIX xsd: <{XSD}>
         SELECT (COUNT(?coll) as ?count)
         WHERE {{
-            ?d dcterms:identifier ?d_id ;
+            ?d dcterms:identifier {f'"{dataset_id}"^^xsd:token' if dataset_id is not None else "?d_id"} ;
                 a dcat:Dataset ;
                 rdfs:member ?coll .
-            FILTER ({f'STR(?d_id) = "{dataset_id}" && ' if dataset_id is not None else ""}DATATYPE(?d_id) = xsd:token)
+            {f'BIND("{dataset_id}" AS ?d_id)' if dataset_id is not None else "FILTER(DATATYPE(?d_id) = xsd:token)"}
             ?coll a geo:FeatureCollection .
         }}
     """
@@ -118,6 +122,7 @@ async def count_collections(dataset_id: Optional[str] = None):
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
+@alru_cache(maxsize=20)
 async def list_collections(
     dataset_id: Optional[str] = None, page: Optional[int] = None, per_page: Optional[int] = None
 ):
@@ -130,12 +135,12 @@ async def list_collections(
         PREFIX xsd: <{XSD}>
         SELECT DISTINCT *
         WHERE {{
-            ?d dcterms:identifier ?d_id ;
+            ?d dcterms:identifier {f'"{dataset_id}"^^xsd:token' if dataset_id is not None else "?d_id"} ;
                 a dcat:Dataset ;
                 dcterms:title ?d_label ;
                 rdfs:member ?coll .
-            FILTER(lang(?d_label) = "" || lang(?d_label) = "en" || lang(?label) = "en-AU")
-            FILTER ({f'STR(?d_id) = "{dataset_id}" && ' if dataset_id is not None else ""}DATATYPE(?d_id) = xsd:token)
+            FILTER(lang(?d_label) = "" || lang(?d_label) = "en" || lang(?d_label) = "en-AU")
+            {f'BIND("{dataset_id}" AS ?d_id)' if dataset_id is not None else "FILTER(DATATYPE(?d_id) = xsd:token)"}
             ?coll a geo:FeatureCollection ;
                 dcterms:identifier ?id ;
                 dcterms:title ?label .
@@ -153,6 +158,7 @@ async def list_collections(
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
+@alru_cache(maxsize=20)
 async def get_collection_construct_1(
     dataset_id: Optional[str] = None,
     collection_id: Optional[str] = None,
@@ -163,19 +169,22 @@ async def get_collection_construct_1(
 
     # when querying by ID via regular URL path
     query_by_id = f"""
-        FILTER (STR(?d_id) = "{dataset_id}")
-        ?coll a geo:FeatureCollection ;
-            dcterms:identifier ?id .
-        ?d a dcat:Dataset ;
-            rdfs:member ?fc ;
-            dcterms:identifier ?d_id .
-        FILTER (STR(?id) = "{collection_id}")
+        ?coll dcterms:identifier "{collection_id}"^^xsd:token ;
+            a geo:FeatureCollection .
+        BIND("{collection_id}" AS ?id)
+        ?d dcterms:identifier "{dataset_id}"^^xsd:token ;
+            a dcat:Dataset ;
+            rdfs:member ?coll .
+        BIND("{dataset_id}" AS ?d_id)
     """
     # when querying by URI via /object?uri=...
     query_by_uri = f"""
         BIND (<{collection_uri}> as ?coll)
         ?coll a geo:FeatureCollection .
     """
+
+    # How would BIND (from line 178) affect the datatype in line 214 (& line 203)?
+    # Do we need to use STRDT?
 
     q = f"""
         PREFIX dcat: <{DCAT}>
@@ -197,12 +206,11 @@ async def get_collection_construct_1(
         }}
         WHERE {{
             {query_by_id if collection_id is not None else query_by_uri}
+            VALUES ?p1 {{dcterms:title geo:hasBoundingBox dcterms:provenance rdfs:label dcterms:description}}
             ?coll ?p1 ?o1 .
-            
-            FILTER(!STRENDS(STR(?p1), "member"))
 
             ?d a dcat:Dataset ;
-                rdfs:member ?fc ;
+                rdfs:member ?coll ;
                 dcterms:identifier ?d_id ;
                 dcterms:title ?d_label .
             FILTER(DATATYPE(?d_id) = xsd:token)
@@ -217,6 +225,7 @@ async def get_collection_construct_1(
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
+@alru_cache(maxsize=20)
 async def get_collection_construct_2(
     dataset_id: Optional[str] = None,
     collection_id: Optional[str] = None,
@@ -227,13 +236,11 @@ async def get_collection_construct_2(
 
     # when querying by ID via regular URL path
     query_by_id = f"""
-        FILTER (STR(?d_id) = "{dataset_id}")
-        ?coll a geo:FeatureCollection ;
-            dcterms:identifier ?id .
-        ?d a dcat:Dataset ;
-            dcterms:identifier ?d_id ;
-            rdfs:member ?fc .
-        FILTER (STR(?id) = "{collection_id}")
+        ?coll dcterms:identifier "{collection_id}"^^xsd:token ;
+            a geo:FeatureCollection .
+        ?d dcterms:identifier "{dataset_id}"^^xsd:token ;
+            a dcat:Dataset ;
+            rdfs:member ?coll .
     """
     # when querying by URI via /object?uri=...
     query_by_uri = f"""
