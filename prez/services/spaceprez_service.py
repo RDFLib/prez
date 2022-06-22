@@ -124,7 +124,9 @@ async def count_collections(dataset_id: Optional[str] = None):
 
 @alru_cache(maxsize=20)
 async def list_collections(
-    dataset_id: Optional[str] = None, page: Optional[int] = None, per_page: Optional[int] = None
+    dataset_id: Optional[str] = None,
+    page: Optional[int] = None,
+    per_page: Optional[int] = None,
 ):
     q = f"""
         PREFIX dcat: <{DCAT}>
@@ -195,7 +197,7 @@ async def get_collection_construct_1(
         PREFIX xsd: <{XSD}>
         CONSTRUCT {{
             ?coll ?p1 ?o1 .
-            
+
             {construct_all_prop_obj_info}
             {construct_all_bnode_prop_obj_info}
 
@@ -280,15 +282,37 @@ async def count_features(
     filter_query = ""
     if cql_query is not None:
         dataset_query, collection_query, filter_query = cql_query
-    
+    # first check for hardcoded feature count
+    q = f"""
+        PREFIX prez: <https://surroundaustralia.com/prez/>
+        PREFIX dcat: <{DCAT}>
+        PREFIX dcterms: <{DCTERMS}>
+        PREFIX geo: <{GEO}>
+        PREFIX rdfs: <{RDFS}>
+        PREFIX xsd: <{XSD}>
+
+        SELECT ?count {{
+        ?d dcterms:identifier "{dataset_id}"^^xsd:token ;
+            a dcat:Dataset ;
+            rdfs:member ?coll .
+        ?coll dcterms:identifier "{collection_id}"^^xsd:token ;
+            a geo:FeatureCollection ;
+            prez:count ?count }}
+    """
+    r = await sparql_query(q, "SpacePrez")
+    if r[0]:
+        return r[1]
+    else:
+        pass
+    # do a SPARQL count
     q = f"""
         PREFIX dcat: <{DCAT}>
         PREFIX dcterms: <{DCTERMS}>
         PREFIX geo: <{GEO}>
         PREFIX rdfs: <{RDFS}>
         PREFIX xsd: <{XSD}>
-        
-        SELECT (COUNT(?f) as ?count) 
+
+        SELECT (COUNT(?f) as ?count)
         WHERE {{
             ?d dcterms:identifier {f'"{dataset_id}"^^xsd:token' if dataset_id is not None else "?d_id"} ;
                 a dcat:Dataset ;
@@ -366,6 +390,7 @@ async def list_features(
         return r[1]
     else:
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
+
 
 async def get_uri(item_id: str = None, klass: URIRef = None):
     if item_id:
@@ -601,6 +626,7 @@ async def get_collection_info_queryables(
     else:
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
+
 async def get_dataset_info_queryables(
     dataset_id: Optional[str] = None,
     dataset_uri: Optional[str] = None,
@@ -641,9 +667,8 @@ async def get_dataset_info_queryables(
     else:
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
-async def get_dataset_label(
-    dataset_id: str
-):
+
+async def get_dataset_label(dataset_id: str):
     q = f"""
         PREFIX dcat: <{DCAT}>
         PREFIX dcterms: <{DCTERMS}>
@@ -652,8 +677,7 @@ async def get_dataset_label(
         WHERE {{
             ?d a dcat:Dataset ;
                 dcterms:title ?title ;
-                dcterms:identifier ?d_id .
-            FILTER (STR(?d_id) = "{dataset_id}" && DATATYPE(?d_id) = xsd:token)
+                dcterms:identifier "{dataset_id}"^^xsd:token .
             FILTER(lang(?title) = "" || lang(?title) = "en")
         }} LIMIT 1
     """
@@ -663,9 +687,8 @@ async def get_dataset_label(
     else:
         raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
-async def get_collection_label(
-    collection_id: str
-):
+
+async def get_collection_label(collection_id: str):
     q = f"""
         PREFIX dcterms: <{DCTERMS}>
         PREFIX geo: <{GEO}>
@@ -674,8 +697,7 @@ async def get_collection_label(
         WHERE {{
             ?coll a geo:FeatureCollection ;
                 dcterms:title ?title ;
-                dcterms:identifier ?coll_id .
-            FILTER (STR(?coll_id) = "{collection_id}" && DATATYPE(?coll_id) = xsd:token)
+                dcterms:identifier "{collection_id}"^^xsd:token .
             FILTER(lang(?title) = "" || lang(?title) = "en")
         }} LIMIT 1
     """
