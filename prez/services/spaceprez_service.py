@@ -173,11 +173,11 @@ async def get_collection_construct_1(
     query_by_id = f"""
         ?coll dcterms:identifier "{collection_id}"^^xsd:token ;
             a geo:FeatureCollection .
-        BIND("{collection_id}" AS ?id)
+        BIND("{collection_id}"^^xsd:token AS ?id)
         ?d dcterms:identifier "{dataset_id}"^^xsd:token ;
             a dcat:Dataset ;
             rdfs:member ?coll .
-        BIND("{dataset_id}" AS ?d_id)
+        BIND("{dataset_id}"^^xsd:token AS ?d_id)
     """
     # when querying by URI via /object?uri=...
     query_by_uri = f"""
@@ -192,6 +192,7 @@ async def get_collection_construct_1(
         PREFIX dcat: <{DCAT}>
         PREFIX dcterms: <{DCTERMS}>
         PREFIX geo: <{GEO}>
+        PREFIX rdf: <{RDF}>
         PREFIX rdfs: <{RDFS}>
         PREFIX skos: <{SKOS}>
         PREFIX xsd: <{XSD}>
@@ -208,14 +209,13 @@ async def get_collection_construct_1(
         }}
         WHERE {{
             {query_by_id if collection_id is not None else query_by_uri}
-            VALUES ?p1 {{dcterms:title geo:hasBoundingBox dcterms:provenance rdfs:label dcterms:description}}
+            VALUES ?p1 {{rdf:type dcterms:identifier dcterms:title geo:hasBoundingBox dcterms:provenance rdfs:label dcterms:description}}
             ?coll ?p1 ?o1 .
 
             ?d a dcat:Dataset ;
                 rdfs:member ?coll ;
                 dcterms:identifier ?d_id ;
                 dcterms:title ?d_label .
-            FILTER(DATATYPE(?d_id) = xsd:token)
             {get_all_bnode_prop_obj_info}
             {get_all_prop_obj_info}
         }}
@@ -300,7 +300,7 @@ async def count_features(
             prez:count ?count }}
     """
     r = await sparql_query(q, "SpacePrez")
-    if r[0]:
+    if r[0] and r[1]:
         return r[1]
     else:
         pass
