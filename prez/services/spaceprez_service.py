@@ -256,6 +256,7 @@ async def get_collection_construct_2(
         PREFIX geo: <{GEO}>
         PREFIX rdfs: <{RDFS}>
         PREFIX skos: <{SKOS}>
+        PREFIX xsd: <{XSD}>
         CONSTRUCT {{
             ?coll rdfs:member ?mem .
         }}
