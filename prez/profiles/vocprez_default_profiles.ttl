@@ -32,6 +32,10 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
         a sh:NodeShape ;
         sh:targetClass skos:Concept ;
         altr-ext:hasDefaultProfile <https://w3id.org/profile/vocpub>
+    ] , [
+        a sh:NodeShape ;
+        sh:targetClass skos:ConceptScheme ;
+        altr-ext:hasDefaultProfile <https://w3id.org/profile/vocpub>
     ]
     .
 

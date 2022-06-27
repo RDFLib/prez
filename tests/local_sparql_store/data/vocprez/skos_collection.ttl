@@ -1,0 +1,43 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+<http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole> a skos:Collection ;
+    dcterms:provenance "this vocabulary"@en ;
+    skos:definition "All Concepts in this vocabulary"@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/compoundmaterialconstituentpartrole> ;
+    skos:member <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/armoured_relict_crystal>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/armoured_relict_inclusion>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/chadacryst>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/clast_supporting_orthomatrix>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/clot>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/constituent_role_not_specified>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/corona>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/corrosion_rim>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/crystalline_framework_constituent>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/dropstone>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/epimatrix>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/floating_clast>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/granular_framework_constituent>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/groundmass_constituent>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/inclusion>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/interstitial_constituent>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/irregular_part>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/kelyphitic_rim>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/layer>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/matrix>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/megacryst>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/oikocryst>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/orthomatrix>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/overgrowth>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/particulate_constituent>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/phenoclast>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/phenocryst>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/porphyroblast>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/porphyroclast>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/protomatrix>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/pseudomatrix>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/sedimentary_rock_cement>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/small_concretion>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/structural_part>,
+        <http://resource.geosciml.org/classifier/cgi/compoundmaterialconstituentpartrole/vein> ;
+    skos:prefLabel "Compound Material Constituent Part - All Concepts"@en .

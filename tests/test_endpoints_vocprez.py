@@ -72,6 +72,12 @@ def a_vocab_id_and_a_concept_id(vp_test_client, a_vocab_id):
     return (a_vocab_id, re.search(patt, r.text)[1])
 
 
+@pytest.fixture(scope="module")
+def a_collection_id(vp_test_client):
+    r = vp_test_client.get("/collection")
+    return re.search(r'<a href="/collection/(.*)">', r.text)[1]
+
+
 def test_home_default_default(vp_test_client):
     r = vp_test_client.get("/")
     assert "<h1>System Home</h1>" in r.text
@@ -107,20 +113,16 @@ def test_vocabs_dd_json(vp_test_client):
     assert '[{"uri":"' in r.text
 
 
-@pytest.mark.xfail
 def test_vocab_default_default(vp_test_client, a_vocab_id):
     # ?_profile=vocpub&_mediatype=text/html" -- this is needed to pass
     # Should not need to set _profile or _mediatype for default
-    r = vp_test_client.get(
-        f"/vocab/{a_vocab_id}"
-    )
+    r = vp_test_client.get(f"/vocab/{a_vocab_id}")
     assert (
         f'<li class="breadcrumb"><a href="http://testserver/vocab/{a_vocab_id}">'
         in r.text
     )
 
 
-@pytest.mark.xfail
 def test_vocab_default_turtle(vp_test_client, a_vocab_id):
     # ?_profile=vocpub" -- this is needed to pass
     # Should not need to set _profile
@@ -145,22 +147,18 @@ def test_vocab_dd_json(vp_test_client, a_vocab_id):
     assert '[{"uri":"http' in r2.text
 
 
-@pytest.mark.xfail
 def test_concept_default_default(vp_test_client, a_vocab_id_and_a_concept_id):
     # ?_profile=vocpub&_mediatype=text/html
     # should not have to et the _profile & _mediatype for defaults
     a_vocab_id, a_concept_id = a_vocab_id_and_a_concept_id
 
-    r = vp_test_client.get(
-        f"/vocab/{a_vocab_id}/{a_concept_id}"
-    )
+    r = vp_test_client.get(f"/vocab/{a_vocab_id}/{a_concept_id}")
     assert (
         '<a href="http://www.w3.org/2004/02/skos/core#Concept" target="_blank" >'
         in r.text
     )
 
 
-@pytest.mark.xfail
 def test_concept_default_turtle(vp_test_client, a_vocab_id_and_a_concept_id):
     # should not have to set _profile=vocpub
     a_vocab_id, a_concept_id = a_vocab_id_and_a_concept_id
@@ -183,3 +181,18 @@ def test_concept_alt_default(vp_test_client, a_vocab_id_and_a_concept_id):
 #
 #     r3 = config_setup.get(f"/vocab/{a_vocab_id}/{a_concept_id}?_profile=alt&_mediatype=text/turtle")
 #     assert '<h1>Alternate Profiles</h1>' in r3.text
+
+
+def test_collections_default_default(vp_test_client):
+    r = vp_test_client.get("/collection")
+    assert "Collection list" in r.text
+
+
+# the skos_collection.ttl data is likely missing some data that is required by vocprez
+@pytest.mark.xfail
+def test_collection_default_default(vp_test_client, a_collection_id):
+    r = vp_test_client.get(f"/collection/{a_collection_id}")
+    assert (
+        f'<li class="breadcrumb"><a href="http://testserver/collection/{a_collection_id}">'
+        in r.text
+    )
