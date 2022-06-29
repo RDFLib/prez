@@ -194,12 +194,28 @@ async def purge_cache():
     )
     from prez.services.spaceprez_service import (
         list_features,
+        list_collections,
+        list_datasets,
         count_features,
+        count_collections,
+        count_datasets,
+        get_dataset_construct,
         get_feature_construct,
+        get_collection_construct_1,
+        get_collection_construct_2,
+        get_object_uri_and_classes,
     )
     from prez.view_funcs import profiles_func
 
     funclist = [
+        list_collections,
+        list_datasets,
+        count_collections,
+        count_datasets,
+        get_dataset_construct,
+        get_collection_construct_1,
+        get_collection_construct_2,
+        get_object_uri_and_classes,
         get_general_profiles,
         create_profiles_graph,
         profiles_func,
@@ -510,6 +526,6 @@ async def health(request: Request):
 
 if __name__ == "__main__":
     configure()
-    uvicorn.run("app:app", port=8000, host=SYSTEM_URI, reload=True)
+    uvicorn.run("app:app", port=8001, host=SYSTEM_URI, reload=True)
 else:
     configure()
