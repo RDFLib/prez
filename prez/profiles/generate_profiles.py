@@ -291,11 +291,13 @@ async def build_alt_graph(object_of_interest, profiles_formats, available_profil
 def retrieve_relevant_shapes(profile_g, profile, most_specific_class):
     query = f"""PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
                 PREFIX sh: <http://www.w3.org/ns/shacl#>
+                PREFIX dash: <http://datashapes.org/dash#>
                 CONSTRUCT {{ ?nodeshape_bn sh:property ?pbn ;
                                 sh:closed ?closed_profile .
                             ?pbn sh:path ?predicate ;
                                 sh:order ?order ;
-                                sh:group ?group . }}
+                                sh:group ?group ;
+                                dash:hidden ?hidden . }}
                 WHERE {{ <{profile}> altr-ext:hasNodeShape ?nodeshape_bn .
                             ?nodeshape_bn sh:targetClass <{most_specific_class}> ;
                                 sh:closed ?closed_profile ;
@@ -303,6 +305,7 @@ def retrieve_relevant_shapes(profile_g, profile, most_specific_class):
                             ?pbn sh:path ?predicate ;
                                 sh:order ?order ;
                                 sh:group ?group .
+                            OPTIONAL {{ ?pbn dash:hidden ?hidden }}
                                 }}"""
     results = profile_g.query(query).graph
     return results

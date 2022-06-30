@@ -142,25 +142,31 @@ class SpacePrezFeature(PrezModel):
         other_props = []
 
         for prop in props_dict:
-            if prop["value"] in SpacePrezFeature.hidden_props:
-                continue
-            elif prop["value"] in SpacePrezFeature.main_props:
-                main_props.append(prop)
-            elif prop["value"] in SpacePrezFeature.geom_props:
-                geom_props.append(prop)
+            hidden = self.graph.value(
+                subject=self.graph.value(
+                    predicate=SH.path, object=URIRef(prop["value"])
+                ),
+                predicate=DASH.hidden,
+            )
+            if not hidden:
+                if prop["value"] in SpacePrezFeature.main_props:
+                    main_props.append(prop)
+                elif prop["value"] == str(RDF.type):
+                    for i, obj in enumerate(prop["objects"]):
+                        if obj["value"] == self.most_specific_class:
+                            retain_index = i
+                            break
+                    prop["objects"] = [prop["objects"][retain_index]]
+                    type_props.append(prop)
+                else:
+                    # geom props get added here IF specified in profile
+                    other_props.append(prop)
+
+            if prop["value"] in SpacePrezFeature.geom_props:
                 for bnode in prop["objects"][0]["rows"]:
                     bnode_prop_name = bnode["value"].split("#")[1]
                     if bnode_prop_name in ["asDGGS", "asGeoJSON", "asWKT"]:
                         self.geometries[bnode_prop_name] = bnode["objects"][0]["value"]
-            elif prop["value"] == str(RDF.type):
-                for i, obj in enumerate(prop["objects"]):
-                    if obj["value"] == self.most_specific_class:
-                        retain_index = i
-                        break
-                prop["objects"] = [prop["objects"][retain_index]]
-                type_props.append(prop)
-            else:
-                other_props.append(prop)
 
         # sorts & combines into a single list
         properties.extend(main_props)
