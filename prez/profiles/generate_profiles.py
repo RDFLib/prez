@@ -9,7 +9,7 @@ from rdflib import Graph, DCTERMS, SKOS, URIRef, Literal, BNode, SH
 from rdflib.namespace import RDF, PROF, Namespace, RDFS, OWL
 from connegp import Profile
 
-from prez.config import ENABLED_PREZS
+from prez.config import ENABLED_PREZS, GEO
 from prez.services.sparql_utils import (
     sparql_construct,
     sparql_construct_non_async,
@@ -32,15 +32,24 @@ def create_profiles_graph() -> Graph:
         PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-        DESCRIBE ?profile ?class
-        WHERE {
-          ?profile a prof:Profile .
-
-          OPTIONAL {
-            ?class rdfs:subClassOf geo:Feature .
+        CONSTRUCT {?s ?p ?o .
+                    ?o ?p2 ?o2 .
+                    ?o2 ?p3 ?o3 .
+                    ?class ?cp ?co}
+        WHERE {?s a prof:Profile ;
+                      ?p ?o
+          OPTIONAL {?o ?p2 ?o2
+            FILTER(ISBLANK(?o))
+            OPTIONAL {?o2 ?p3 ?o3
+            FILTER(ISBLANK(?o2))}
           }
           OPTIONAL {
-            ?class rdfs:subClassOf skos:Concept .
+            ?class rdfs:subClassOf geo:Feature ;
+                ?cp ?co .
+          }
+          OPTIONAL {
+            ?class rdfs:subClassOf skos:Concept ;
+                ?cp ?co .
           }
         }
         """
@@ -236,17 +245,19 @@ def apply_profile(complete_feature_g: Graph, feature_shapes_g: Graph):
     """
     Apply the profile to the feature graph - returning only the relevant features
     """
-    query = """
-    CONSTRUCT { ?s ?p ?o .
-			    ?s2 ?p2 ?o2 }
-    WHERE { ?s ?p ?o .
-    ?shape_bn sh:path ?p
-      OPTIONAL {?s2 ?p2 ?o2
-            VALUES ?p2 { rdf:type dcterms:identifier rdfs:label rdfs:member dcterms:title }
-        }
-    }
-    """
-    new_g = (complete_feature_g + feature_shapes_g).query(query).graph
+    allowed_predicates = [
+        so[1]
+        for so in feature_shapes_g.subject_objects(
+            URIRef("http://www.w3.org/ns/shacl#path")
+        )
+    ]
+    allowed_predicates.extend(
+        [RDF.type, DCTERMS.identifier, RDFS.label, RDFS.member, DCTERMS.title]
+    )
+    triples = [(s, p, o) for s, p, o in complete_feature_g if p in allowed_predicates]
+    new_g = Graph()
+    for triple in triples:
+        new_g.add(triple)
     new_g.namespaces = complete_feature_g.namespaces
     return new_g
 
@@ -280,11 +291,13 @@ async def build_alt_graph(object_of_interest, profiles_formats, available_profil
 def retrieve_relevant_shapes(profile_g, profile, most_specific_class):
     query = f"""PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
                 PREFIX sh: <http://www.w3.org/ns/shacl#>
+                PREFIX dash: <http://datashapes.org/dash#>
                 CONSTRUCT {{ ?nodeshape_bn sh:property ?pbn ;
                                 sh:closed ?closed_profile .
                             ?pbn sh:path ?predicate ;
                                 sh:order ?order ;
-                                sh:group ?group . }}
+                                sh:group ?group ;
+                                dash:hidden ?hidden . }}
                 WHERE {{ <{profile}> altr-ext:hasNodeShape ?nodeshape_bn .
                             ?nodeshape_bn sh:targetClass <{most_specific_class}> ;
                                 sh:closed ?closed_profile ;
@@ -292,6 +305,7 @@ def retrieve_relevant_shapes(profile_g, profile, most_specific_class):
                             ?pbn sh:path ?predicate ;
                                 sh:order ?order ;
                                 sh:group ?group .
+                            OPTIONAL {{ ?pbn dash:hidden ?hidden }}
                                 }}"""
     results = profile_g.query(query).graph
     return results

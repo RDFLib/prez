@@ -7,6 +7,8 @@ from rdflib.namespace import SKOS, RDF, DCTERMS, RDFS, DCAT, PROV, OWL, SDO, XSD
 PROF = Namespace("http://www.w3.org/ns/dx/prof/")
 PREZ = Namespace("https://surroundaustralia.com/prez/")
 GEO = Namespace("http://www.opengis.net/ont/geosparql#")
+DASH = Namespace("http://datashapes.org/dash#")
+SH = Namespace("http://www.w3.org/ns/shacl#")
 
 SYSTEM_URI = os.environ.get("SYSTEM_URI", "localhost")
 
