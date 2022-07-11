@@ -425,16 +425,16 @@ def get_object_uri_and_classes(
                 PREFIX xsd: <{XSD}>
 
                 SELECT ?f ?fc ?d ?class {{
-                        OPTIONAL {{ ?d dcterms:identifier "{dataset_id}"^^xsd:token ;
-                                a dcat:Dataset . }}
-                        OPTIONAL {{ ?fc dcterms:identifier "{collection_id}"^^xsd:token ;
-                                a geo:FeatureCollection .
-                            ?d rdfs:member ?fc . }}
-                        OPTIONAL {{ ?f dcterms:identifier "{feature_id}"^^xsd:token ;
-                                a geo:Feature ;
-                                a ?class .
-                            ?fc rdfs:member ?f . }}
-                            }} """,
+                    OPTIONAL {{ ?d dcterms:identifier "{dataset_id}"^^xsd:token ;
+                            a dcat:Dataset . }}
+                    OPTIONAL {{ ?fc dcterms:identifier "{collection_id}"^^xsd:token ;
+                            a geo:FeatureCollection .
+                        ?d rdfs:member ?fc . }}
+                    OPTIONAL {{ ?f dcterms:identifier "{feature_id}"^^xsd:token ;
+                            a geo:Feature ;
+                            a ?class .
+                        ?fc rdfs:member ?f . }}
+                }} """,
             "SpacePrez",
         )
         if r[0]:
@@ -455,30 +455,37 @@ def get_object_uri_and_classes(
             )
     elif feature_uri or collection_uri or dataset_uri:
         r = sparql_query_non_async(
-            f"""SELECT ?f ?fc ?d ?class
-                {{
-                    BIND(<{feature_uri}> AS ?f)
-                    BIND(<{collection_uri}> AS ?fc)
-                    BIND(<{dataset_uri}> AS ?d)
+            f"""PREFIX dcat: <{DCAT}>
+                PREFIX dcterms: <{DCTERMS}>
+                PREFIX geo: <{GEO}>
+                PREFIX rdfs: <{RDFS}>
+                PREFIX xsd: <{XSD}>
+                SELECT ?f ?fc ?d ?class {{
+                    {f"BIND(<{feature_uri}> AS ?f)" if feature_uri is not None else ""}
+                    {f"BIND(<{collection_uri}> AS ?fc)" if collection_uri is not None else ""}
+                    {f"BIND(<{dataset_uri}> AS ?d)" if dataset_uri is not None else ""}
                     ?f a ?class ;
-                        rdfs:member^ ?fc ;
-                        dcterms:identifier ?f_id^^xsd:token .
+                        ^rdfs:member ?fc ;
+                        dcterms:identifier ?f_id .
+                    FILTER(DATATYPE(?f_id) = xsd:token)
                     ?fc a geo:FeatureCollection ;
-                        rdfs:member^ ?d ;
-                        dcterms:identifier ?fc_id^^xsd:token .
+                        ^rdfs:member ?d ;
+                        dcterms:identifier ?fc_id .
+                    FILTER(DATATYPE(?fc_id) = xsd:token)
                     ?d a dcat:Dataset ;
-                        dcterms:identifier ?d_id^^xsd:token .
+                        dcterms:identifier ?d_id .
+                    FILTER(DATATYPE(?d_id) = xsd:token)
                 }}""",
             "SpacePrez",
         )
         if r[0]:
             return (
-                r[1][0]["f_id"]["value"],
-                r[1][0]["fc_id"]["value"],
-                r[1][0]["d_id"]["value"],
-                r[1][0]["f"]["value"],
-                r[1][0]["fc"]["value"],
-                r[1][0]["d"]["value"],
+                r[1][0]["f_id"]["value"] if r[1][0].get("f_id") is not None else None,
+                r[1][0]["fc_id"]["value"] if r[1][0].get("f_fc_idid") is not None else None,
+                r[1][0]["d_id"]["value"] if r[1][0].get("d_id") is not None else None,
+                r[1][0]["f"]["value"] if r[1][0].get("f") is not None else None,
+                r[1][0]["fc"]["value"] if r[1][0].get("fc") is not None else None,
+                r[1][0]["d"]["value"] if r[1][0].get("d") is not None else None,
                 [c["class"]["value"] for c in r[1]],
             )
 

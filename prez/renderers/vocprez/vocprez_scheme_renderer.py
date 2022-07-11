@@ -18,7 +18,7 @@ class VocPrezSchemeRenderer(Renderer):
         (self.scheme_id, self.scheme_uri) = get_scheme_or_collection_uri(
             "ConceptScheme",
             request.path_params.get("scheme_id"),
-            request.path_params.get("scheme_uri"),
+            request.query_params.get("uri"),
         )
         super().__init__(
             request,

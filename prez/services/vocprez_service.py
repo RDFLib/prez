@@ -32,7 +32,6 @@ async def list_schemes(page: int, per_page: int):
             }}
         }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
     """
-    print(q)
     r = await sparql_query(q, "VocPrez")
     if r[0]:
         return r[1]
