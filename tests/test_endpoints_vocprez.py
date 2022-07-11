@@ -188,8 +188,6 @@ def test_collections_default_default(vp_test_client):
     assert "Collection list" in r.text
 
 
-# the skos_collection.ttl data is likely missing some data that is required by vocprez
-@pytest.mark.xfail
 def test_collection_default_default(vp_test_client, a_collection_id):
     r = vp_test_client.get(f"/collection/{a_collection_id}")
     assert (

@@ -8,6 +8,7 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 <http://resource.geosciml.org/classifier/cgi/contacttype>
     a skos:Collection ;
+    dcterms:identifier "contacttype"^^xsd:token ;
     dcterms:provenance "this vocabulary" ;
     skos:definition "All Concepts in this vocabulary" ;
     skos:member
