@@ -141,15 +141,15 @@ def test_vocab_alt_turtle(vp_test_client, a_vocab_id):
 
 
 def test_vocab_dd_json(vp_test_client, a_vocab_id):
-    r2 = vp_test_client.get(
+    r = vp_test_client.get(
         f"/vocab/{a_vocab_id}?_profile=dd&_mediatype=application/json"
     )
-    assert '[{"iri":"http' in r2.textv
+    assert '[{"iri":"http' in r.text
 
 
 def test_vocab_dd_csv(vp_test_client, a_vocab_id):
-    r2 = vp_test_client.get(f"/vocab/{a_vocab_id}?_profile=dd&_mediatype=text/csv")
-    assert '"ConceptIRI","PrefLabel","Broader"' in r2.text
+    r = vp_test_client.get(f"/vocab/{a_vocab_id}?_profile=dd&_mediatype=text/csv")
+    assert '"ConceptIRI","PrefLabel","Broader"' in r.text
 
 
 def test_concept_default_default(vp_test_client, a_vocab_id_and_a_concept_id):
