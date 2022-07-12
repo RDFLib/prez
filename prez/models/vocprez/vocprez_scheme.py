@@ -74,28 +74,43 @@ class VocPrezScheme(PrezModel):
         }
 
     def get_concept_flat_list(self) -> List[Dict[str, str]]:
-        concept_list = []
         r = self.graph.query(
             f"""
             PREFIX dcterms: <{DCTERMS}>
             PREFIX rdfs: <{RDFS}>
             PREFIX skos: <{SKOS}>
-            SELECT DISTINCT ?c ?label
+            SELECT DISTINCT ?c ?label ?b
             WHERE {{
                 ?c skos:inScheme <{self.uri}> ;
                     rdfs:label|skos:prefLabel|dcterms:title ?label .
+                OPTIONAL {{
+                    {{ ?c skos:broader ?b }}
+                    UNION
+                    {{ ?b skos:narrower ?c }}
+                }}
                 FILTER (lang(?label) = "" || lang(?label) = "en" || lang(?label) = "en-AU")
             }}
-        """
+            """
         )
 
+        last_concept = {}
+        concept_list = []
+
         for result in r.bindings:
-            concept_list.append(
-                {
-                    "uri": result["c"],
+            if result["c"] != last_concept.get("iri"):
+                if last_concept != {}:
+                    concept_list.append(last_concept)
+
+                last_concept = {
+                    "iri": result["c"],
                     "prefLabel": result["label"],
+                    "broader": [result["b"]] if result.get("b") else [],
                 }
-            )
+            else:
+                if result.get("b"):
+                    last_concept["broader"].append(result["b"])
+        concept_list.append(last_concept)
+
         return sorted(concept_list, key=lambda c: c["prefLabel"])
 
     # override
@@ -146,7 +161,9 @@ class VocPrezScheme(PrezModel):
                     dcterms:identifier ?id .
                 FILTER (LANG(?label) = "en")
                 OPTIONAL {{
-                    ?c skos:narrower ?narrower .
+                    {{ ?c skos:narrower ?narrower }}
+                    UNION 
+                    {{ ?narrower skos:broader ?c }}
                 }}
             }}
         """

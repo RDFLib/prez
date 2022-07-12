@@ -150,5 +150,7 @@ altr-ext:hasResourceFormat
         skos:ConceptScheme ,
         skos:Collection ;
     altr-ext:hasDefaultResourceFormat "application/json" ;
-    altr-ext:hasResourceFormat "application/json" ;
+    altr-ext:hasResourceFormat
+        "application/json" ,
+        "text/csv"
 .

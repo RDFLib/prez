@@ -1,7 +1,6 @@
 from async_lru import alru_cache
 from fastapi import APIRouter, Request, HTTPException
 
-from prez.config import *
 from prez.models.vocprez import *
 from prez.profiles.generate_profiles import (
     build_alt_graph,

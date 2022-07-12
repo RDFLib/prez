@@ -1,5 +1,7 @@
 import json
 import os
+from functools import cache
+from pathlib import Path
 
 from rdflib import Namespace, Graph, URIRef, Literal
 from rdflib.namespace import SKOS, RDF, DCTERMS, RDFS, DCAT, PROV, OWL, SDO, XSD
@@ -85,3 +87,13 @@ CQL_PROPS = {
         "type": "string",
     },
 }
+
+
+@cache
+def get_version():
+    for line in open(Path(__file__).parent.parent / "pyproject.toml").readlines():
+        if line.startswith("version = "):
+            return line.split("\"")[1]
+
+
+VERSION = get_version()
