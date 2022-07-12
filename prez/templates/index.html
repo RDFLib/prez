@@ -4,20 +4,62 @@
 
 {% block content %}
 <div id="content-col-main">
-    <h1>System Home</h1>
-    <p>Prez is a Linked Data API that combines VocPrez, OGC API (SpacePrez), and the upcoming CatPrez & TimePrez.</p>
-    <p>Each instance of Prez can either act as a collection of *Prezs or as a stand-alone instance of a single *Prez.</p>
-    <div class="card-container">
-        {% for prez in prezs %}
-            <div class="card">
-                <h3><a href="{{ url_for(prez | lower + '_home_endpoint') }}">{{ prez }}</a></h3>
-                {% if prez == "VocPrez" %}
-                    <p>VocPrez presents Simple Knowledge Organization System (SKOS)-formulated RDF vocabularies in various formats.</p>
-                {% elif prez == "SpacePrez" %}
-                    <p>SpacePrez presents GeoSPARQL spatial features in various formats. This API conforms to the <a href="http://docs.opengeospatial.org/is/17-069r3/17-069r3.html" target="_blank" rel="noopener noreferrer">Open Geospatial Consortium (OGC) API</a> specification.
-                {% endif %}
-            </div>
-        {% endfor %}
-    </div>
+    <h1>FSDF Linked Data APIs</h1>
+    <p>
+        This is the homepage of the <a href="https://fsdf.org.au">Foundational Spatial Data Framework (FSDF) Project</a>'s
+        <a href="https://www.w3.org/standards/semanticweb/data">Linked Data</a> Application Programming Interfaces (APIs).
+    </p>
+    <p>
+        This is one API providing access to multiple spatial datasets and vocabularies and there are other APIs similar to this one too:
+    </p>
+    <ul>
+        <li>
+            <strong><a href="https://linked.fsdf.org.au/spaceprez">This API - Spatial</a></strong>
+            <ul>
+                <li>Electrical Infrastructure</li>
+                <li>Facilities</li>
+                <li>Floods</li>
+                <li>Place Names</li>
+            </ul>
+        </li>
+        <li>
+            <strong><a href="https://linked.fsdf.org.au/vocprez">This API - Vocabularies</a></strong>
+            <ul>
+                <li>Multiple FSDF vocabularies</li>
+            </ul>
+        </li>
+        <li>
+            <strong><a href="https://asgs.linked.fsdf.org.au">ASGS API</a></strong>
+            <ul>
+                <li><a href="https://asgs.linked.fsdf.org.au/dataset/asgsed3">ASGS Edition 3</a></li>
+            </ul>
+        </li>
+        <li>
+            <strong><a href="https://geofabric.linked.fsdf.org.au">Geofabric API</a></strong>
+            <ul>
+                <li><a href="https://geofabric.linked.fsdf.org.au/dataset/geofabric">Geofabric Version 3</a></li>
+            </ul>
+        </li>
+        <li>
+            <strong><a href="https://gnaf.linked.fsdf.org.au">G-NAF API</a></strong>
+            <ul>
+                <li><a href="https://gnaf.linked.fsdf.org.au/dataset/gnaf">G-NAF, Latest public version</a></li>
+            </ul>
+        </li>
+    </ul>
+    <p>
+        These APIs are the point-of-truth for their content and persistent identifiers for their content will resolve to them.
+    </p>
+    <p>
+        Additionally there is a combined API that contains a copy of all of the above, aggregated together for ease of cross-querying:
+    </p>
+    <ul>
+        <li>
+            <strong><a href="https://cache.linked.fsdf.org.au">Cache API</a></strong>
+            <ul>
+                <li><a href="https://cache.linked.fsdf.org.au/datasets">All datasets</a></li>
+            </ul>
+        </li>
+    </ul>
 </div>
 {% endblock %}

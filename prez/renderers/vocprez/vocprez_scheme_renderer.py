@@ -1,13 +1,15 @@
+import csv
+from io import StringIO
+
+from connegp import MEDIATYPE_NAMES
+from fastapi.responses import Response, JSONResponse, PlainTextResponse
 from typing import Dict, Optional, Union
 
-from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from connegp import MEDIATYPE_NAMES
-
 from prez.config import *
-from prez.renderers import Renderer
 from prez.models.vocprez import VocPrezScheme
-from prez.utils import templates
+from prez.renderers import Renderer
 from prez.services.vocprez_service import get_scheme_or_collection_uri
+from prez.utils import templates
 
 
 class VocPrezSchemeRenderer(Renderer):
@@ -71,9 +73,29 @@ class VocPrezSchemeRenderer(Renderer):
             headers=self.headers,
         )
 
+    def _render_dd_csv(self) -> PlainTextResponse:
+        """Renders the CSV representation of the dd profile for a scheme"""
+        data = self.scheme.get_concept_flat_list()
+        output = StringIO()
+        writer = csv.writer(output, quoting=csv.QUOTE_NONNUMERIC)
+        writer.writerow(["ConceptIRI", "PrefLabel", "Broader"])
+        for c in data:
+            writer.writerow(
+                [c["iri"], c["prefLabel"], "\n".join([b for b in c["broader"]])]
+            )
+
+        return PlainTextResponse(
+            content=output.getvalue(),
+            media_type="test/csv",
+            headers=self.headers,
+        )
+
     def _render_dd(self):
         """Renders the dd profile for a scheme"""
-        return self._render_dd_json()
+        if self.mediatype == "text/csv":
+            return self._render_dd_csv()
+        else:
+            return self._render_dd_json()
 
     def _generate_vocpub_rdf(self) -> Graph:
         r = self.scheme.graph.query(

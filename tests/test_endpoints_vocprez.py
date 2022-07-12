@@ -4,9 +4,9 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from time import sleep
 
 import pytest
-from time import sleep
 
 PREZ_DIR = Path(__file__).parent.parent.absolute() / "prez"
 LOCAL_SPARQL_STORE = Path(Path(__file__).parent / "local_sparql_store/store.py")
@@ -144,7 +144,12 @@ def test_vocab_dd_json(vp_test_client, a_vocab_id):
     r2 = vp_test_client.get(
         f"/vocab/{a_vocab_id}?_profile=dd&_mediatype=application/json"
     )
-    assert '[{"uri":"http' in r2.text
+    assert '[{"iri":"http' in r2.textv
+
+
+def test_vocab_dd_csv(vp_test_client, a_vocab_id):
+    r2 = vp_test_client.get(f"/vocab/{a_vocab_id}?_profile=dd&_mediatype=text/csv")
+    assert '"ConceptIRI","PrefLabel","Broader"' in r2.text
 
 
 def test_concept_default_default(vp_test_client, a_vocab_id_and_a_concept_id):
