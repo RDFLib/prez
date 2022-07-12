@@ -50,10 +50,15 @@ class SpacePrezFeature(PrezModel):
                 {query_by_id if id is not None else query_by_uri}
                 ?f a geo:Feature .
                 OPTIONAL {{
-                    # ?f dcterms:title ?label .
-                    ?f rdfs:label ?label .
+                    ?f dcterms:title ?title1 .
                 }}
-                BIND(COALESCE(?label, CONCAT("Feature ", STR(?id))) AS ?title)
+                OPTIONAL {{
+                    ?f skos:prefLabel ?title2 .
+                }}                
+                OPTIONAL {{                    
+                    ?f rdfs:label ?title3 .
+                }}                
+                BIND(COALESCE(?title1, ?title2, ?title3, CONCAT("Feature ", STR(?id))) AS ?title)
                 OPTIONAL {{
                     ?f dcterms:description ?desc .
                 }}
