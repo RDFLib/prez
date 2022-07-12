@@ -161,7 +161,9 @@ class VocPrezScheme(PrezModel):
                     dcterms:identifier ?id .
                 FILTER (LANG(?label) = "en")
                 OPTIONAL {{
-                    ?c skos:narrower ?narrower .
+                    {{ ?c skos:narrower ?narrower }}
+                    UNION 
+                    {{ ?narrower skos:broader ?c }}
                 }}
             }}
         """
