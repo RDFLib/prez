@@ -118,9 +118,9 @@ altr-ext:hasResourceFormat
 
 <https://w3id.org/profile/dcat2null>
     a prof:Profile ;
-    dcterms:description "A list of fundamental profiles, that is profiles that are commonly seen/needed and widely applicable." ;
+    dcterms:description "A null profile of the Data Catalog Vocabulary (DCAT)" ;
     dcterms:identifier "dcat" ;
-    dcterms:title "Fundamental Profiles Register" ;
+    dcterms:title "DCAT" ;
     altr-ext:constrainsClass dcat:Dataset ;
     altr-ext:hasDefaultResourceFormat "text/html" ;
     altr-ext:hasResourceFormat

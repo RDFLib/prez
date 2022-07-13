@@ -8,6 +8,7 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 <http://resource.geosciml.org/classifier/cgi/contacttype>
     a skos:Collection ;
+    dcterms:identifier "contacttype"^^xsd:token ;
     dcterms:provenance "this vocabulary" ;
     skos:definition "All Concepts in this vocabulary" ;
     skos:member
@@ -327,7 +328,9 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
     reg:status status:submitted ;
     rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
-    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/unconformable_contact> ;
+    skos:broader
+        <http://resource.geosciml.org/classifier/cgi/contacttype/unconformable_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/igneous_intrusive_contact> ;
     skos:definition "An unconformable contact between two geological units in which the bedding of the older, underlying unit is parallel to the bedding of the younger, overlying unit, in which the contact between the two units is planar, and may be coincident with a bedding plane."@en ;
     skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
     skos:prefLabel "paraconformable contact"@en ;

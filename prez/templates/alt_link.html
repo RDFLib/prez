@@ -9,7 +9,13 @@
                 <div class="alt-quick-title"><a href="{{ uri | append_qsa({'_profile': profile.id}) }}">{{ profile.label }}</a></div>
                 <div class="alt-quick-links">
                     {% for mediatype in profile.mediatypes %}
-                        <a class="bubble" href="{{ uri | append_qsa({'_profile': profile.id, '_mediatype': mediatype}) }}">{{ mediatype_names[mediatype] }}</a>
+                        <a class="bubble" href="{{ uri | append_qsa({'_profile': profile.id, '_mediatype': mediatype}) }}">
+                            {% if mediatype_names[mediatype] is defined %}
+                                {{ mediatype_names[mediatype] }}
+                            {% else %}
+                                {{ mediatype }}
+                            {% endif %}
+                        </a>
                     {% endfor %}
                 </div>
             </div>

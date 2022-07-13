@@ -4,9 +4,9 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from time import sleep
 
 import pytest
-from time import sleep
 
 PREZ_DIR = Path(__file__).parent.parent.absolute() / "prez"
 LOCAL_SPARQL_STORE = Path(Path(__file__).parent / "local_sparql_store/store.py")
@@ -141,10 +141,15 @@ def test_vocab_alt_turtle(vp_test_client, a_vocab_id):
 
 
 def test_vocab_dd_json(vp_test_client, a_vocab_id):
-    r2 = vp_test_client.get(
+    r = vp_test_client.get(
         f"/vocab/{a_vocab_id}?_profile=dd&_mediatype=application/json"
     )
-    assert '[{"uri":"http' in r2.text
+    assert '[{"iri":"http' in r.text
+
+
+def test_vocab_dd_csv(vp_test_client, a_vocab_id):
+    r = vp_test_client.get(f"/vocab/{a_vocab_id}?_profile=dd&_mediatype=text/csv")
+    assert '"ConceptIRI","PrefLabel","Broader"' in r.text
 
 
 def test_concept_default_default(vp_test_client, a_vocab_id_and_a_concept_id):
@@ -188,8 +193,6 @@ def test_collections_default_default(vp_test_client):
     assert "Collection list" in r.text
 
 
-# the skos_collection.ttl data is likely missing some data that is required by vocprez
-@pytest.mark.xfail
 def test_collection_default_default(vp_test_client, a_collection_id):
     r = vp_test_client.get(f"/collection/{a_collection_id}")
     assert (

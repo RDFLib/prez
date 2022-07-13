@@ -209,20 +209,20 @@ def test_collection_items_default_default(sp_test_client, an_fc_link):
 
 
 def test_collection_items_mem_json(sp_test_client, an_fc_link):
-    r3 = sp_test_client.get(
+    r = sp_test_client.get(
         f"{an_fc_link}/items?_profile=mem&_mediatype=application/json"
     )
     assert (
         f'"uri":"http://testserver{an_fc_link}/items?_profile=mem&_mediatype=application/json"'
-        in r3.text
+        in r.text
     )
 
 
 def test_feature_default_default(sp_test_client, a_feature_link_and_id):
     feature_link, feature_id = a_feature_link_and_id
 
-    r4 = sp_test_client.get(f"{feature_link}")
-    assert f"Feature {feature_id}" in r4.text
+    r = sp_test_client.get(f"{feature_link}")
+    assert f' <p>Instance URI: <a href="http://testserver{feature_link}">' in r.text
 
 
 def test_feature_default_turtle(sp_test_client, a_feature_link_and_id):
@@ -235,5 +235,5 @@ def test_feature_default_turtle(sp_test_client, a_feature_link_and_id):
 def test_feature_alt_default(sp_test_client, a_feature_link_and_id):
     feature_link, feature_id = a_feature_link_and_id
 
-    r4 = sp_test_client.get(f"{feature_link}?_profile=alt")
-    assert "<h1>Alternate Profiles</h1>" in r4.text
+    r = sp_test_client.get(f"{feature_link}?_profile=alt")
+    assert "<h1>Alternate Profiles</h1>" in r.text
