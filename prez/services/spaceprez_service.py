@@ -311,6 +311,8 @@ async def count_features(
         PREFIX dcterms: <{DCTERMS}>
         PREFIX geo: <{GEO}>
         PREFIX rdfs: <{RDFS}>
+        PREFIX sdo: <{SDO}>
+        PREFIX skos: <{SKOS}>
         PREFIX xsd: <{XSD}>
 
         SELECT (COUNT(?f) as ?count)
@@ -355,6 +357,7 @@ async def list_features(
         PREFIX dcterms: <{DCTERMS}>
         PREFIX geo: <{GEO}>
         PREFIX rdfs: <{RDFS}>
+        PREFIX sdo: <{SDO}>
         PREFIX skos: <{SKOS}>
         PREFIX xsd: <{XSD}>
         SELECT DISTINCT *
@@ -377,11 +380,32 @@ async def list_features(
                 dcterms:identifier ?id .
             FILTER(DATATYPE(?id) = xsd:token)
             OPTIONAL {{
-                ?f dcterms:description ?desc .
+                OPTIONAL {{
+                    ?f dcterms:description ?dcDesc .
+                }}
+                OPTIONAL {{
+                    ?f skos:definition ?def .
+                }}
+                OPTIONAL {{
+                    ?f sdo:description ?sdoDesc .
+                }}
+                BIND(COALESCE(?dcDesc, COALESCE(?def, ?sdoDesc)) AS ?desc)
             }}
             OPTIONAL {{
-                ?f dcterms:title ?title .
-                FILTER(lang(?title) = "" || lang(?title) = "en" || lang(?title) = "en-AU")
+                ?f rdfs:label ?label .
+                FILTER(lang(?label) = "" || lang(?label) = "en" || lang(?label) = "en-AU")
+            }}
+            OPTIONAL {{
+                ?f dcterms:title ?dcTitle .
+                FILTER(lang(?dcTitle) = "" || lang(?dcTitle) = "en" || lang(?dcTitle) = "en-AU")
+            }}
+            OPTIONAL {{
+                ?f sdo:name ?name .
+                FILTER(lang(?name) = "" || lang(?name) = "en" || lang(?name) = "en-AU")
+            }}
+            OPTIONAL {{
+                ?f skos:prefLabel ?prefLabel .
+                FILTER(lang(?prefLabel) = "" || lang(?prefLabel) = "en" || lang(?prefLabel) = "en-AU")
             }}
             {filter_query}
         }}{f" LIMIT {per_page} OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
@@ -400,7 +424,7 @@ async def get_uri(item_id: str = None, klass: URIRef = None):
                 PREFIX rdf: <{RDF}>
                 PREFIX xsd: <{XSD}>
                 SELECT ?item_uri ?class {{ ?item_uri dcterms:identifier "{item_id}"^^xsd:token ;
-                                    rdf:type <{str(klass)}> . }}""",
+                        rdf:type <{str(klass)}> . }}""",
             "SpacePrez",
         )
         if r[0]:

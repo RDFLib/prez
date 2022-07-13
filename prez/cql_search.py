@@ -159,6 +159,36 @@ class CQLSearch(object):
             flags=re.IGNORECASE,
         )
 
+    def _insert_triple(self, prop: str) -> None:
+        prop_dict = CQL_PROPS[prop]
+        qname = prop_dict["qname"]
+        prop_type = prop_dict.get("type")
+        if isinstance(qname, str) or (
+            isinstance(qname, list) and len(qname) == 1
+        ):  # string or single element list
+            self.query += f"\n?f {qname} ?{prop} ."
+        else:  # list
+            if prop_dict.get("ordered"):  # qname preference order
+                optionals = ""
+                bind = "BIND("
+                for i, q in enumerate(qname):
+                    optionals += f"""
+                        OPTIONAL {{
+                            ?f {q} ?{prop}Pred{i} .
+                            {f'FILTER(lang(?{prop}Pred{i}) = "" || lang(?{prop}Pred{i}) = "en" || lang(?{prop}Pred{i}) = "en-AU")' if prop_type == "string" else ""}
+                        }}
+                    """
+                    if i + 1 == len(qname):
+                        bind += f"?{prop}Pred{i}{''.join([')' for _ in range(len(qname) - 1)])}"
+                    else:
+                        bind += f"COALESCE(?{prop}Pred{i}, "
+                bind += f" AS ?{prop})"
+                self.query += optionals
+                self.query += bind
+            else:  # unordered
+                self.query += f"""\nVALUES ?{prop}Pred {{{" ".join(qname)}}}
+                    ?f ?{prop}Pred ?{prop} ."""
+
     def generate_query(self) -> Tuple[str, str, str]:
         self.dataset_query = ""
 
@@ -198,7 +228,7 @@ class CQLSearch(object):
                             flags=re.IGNORECASE,
                         )
                     ):
-                        self.query += f"\n?f {CQL_PROPS[prop]['qname']} ?{prop} ."
+                        self._insert_triple(prop)
 
             self.filter = f"FILTER({self.filter})"
             self.query += f"\n{self.filter}"
