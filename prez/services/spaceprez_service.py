@@ -284,6 +284,7 @@ async def count_features(
     if cql_query is not None:
         dataset_query, collection_query, filter_query = cql_query
     # first check for hardcoded feature count
+    # this will need to catered for/be ignored for CQL search
     q = f"""
         PREFIX prez: <https://surroundaustralia.com/prez/>
         PREFIX dcat: <{DCAT}>
@@ -306,6 +307,7 @@ async def count_features(
     else:
         pass
     # do a SPARQL count
+    # will need to query for all CQL feature props to get the correct count 
     q = f"""
         PREFIX dcat: <{DCAT}>
         PREFIX dcterms: <{DCTERMS}>
@@ -327,7 +329,38 @@ async def count_features(
                 rdfs:member ?f .
             {f'BIND("{collection_id}" AS ?coll_id)' if collection_id is not None else "FILTER(DATATYPE(?coll_id) = xsd:token)"}
             {collection_query if collection_id is None else ""}
-            ?f a geo:Feature .
+            ?f a geo:Feature ;
+                dcterms:identifier ?id .
+            FILTER(DATATYPE(?id) = xsd:token)
+            OPTIONAL {{
+                OPTIONAL {{
+                    ?f dcterms:description ?dcDesc .
+                }}
+                OPTIONAL {{
+                    ?f skos:definition ?def .
+                }}
+                OPTIONAL {{
+                    ?f sdo:description ?sdoDesc .
+                }}
+                BIND(COALESCE(?dcDesc, ?def, ?sdoDesc) AS ?desc)
+            }}
+            OPTIONAL {{
+                ?f rdfs:label ?label .
+                FILTER(lang(?label) = "" || lang(?label) = "en" || lang(?label) = "en-AU")
+            }}
+            OPTIONAL {{
+                ?f dcterms:title ?dcTitle .
+                FILTER(lang(?dcTitle) = "" || lang(?dcTitle) = "en" || lang(?dcTitle) = "en-AU")
+            }}
+            OPTIONAL {{
+                ?f sdo:name ?name .
+                FILTER(lang(?name) = "" || lang(?name) = "en" || lang(?name) = "en-AU")
+            }}
+            OPTIONAL {{
+                ?f skos:prefLabel ?prefLabel .
+                FILTER(lang(?prefLabel) = "" || lang(?prefLabel) = "en" || lang(?prefLabel) = "en-AU")
+            }}
+            BIND(COALESCE(?label, ?dcTitle, ?name, ?prefLabel, CONCAT("Feature "), ?id) AS ?title)
             {filter_query}
         }}
     """
@@ -389,7 +422,7 @@ async def list_features(
                 OPTIONAL {{
                     ?f sdo:description ?sdoDesc .
                 }}
-                BIND(COALESCE(?dcDesc, COALESCE(?def, ?sdoDesc)) AS ?desc)
+                BIND(COALESCE(?dcDesc, ?def, ?sdoDesc) AS ?desc)
             }}
             OPTIONAL {{
                 ?f rdfs:label ?label .
@@ -407,6 +440,7 @@ async def list_features(
                 ?f skos:prefLabel ?prefLabel .
                 FILTER(lang(?prefLabel) = "" || lang(?prefLabel) = "en" || lang(?prefLabel) = "en-AU")
             }}
+            BIND(COALESCE(?label, ?dcTitle, ?name, ?prefLabel, CONCAT("Feature "), ?id) AS ?title)
             {filter_query}
         }}{f" LIMIT {per_page} OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
     """

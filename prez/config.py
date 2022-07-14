@@ -77,16 +77,12 @@ CQL_PROPS = {
     "title": {
         "title": "Title",
         "description": "The title of a geo:Feature",
-        "qname": ["rdfs:label", "dcterms:title", "sdo:name", "skos:prefLabel"],
         "type": "string",
-        "ordered": True,
     },
     "desc": {
         "title": "Description",
         "description": "The description of a geo:Feature",
-        "qname": ["dcterms:description", "skos:definition", "sdo:description"],
         "type": "string",
-        "ordered": True,
     },
 }
 

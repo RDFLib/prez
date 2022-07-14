@@ -20,7 +20,6 @@ class CQLSearch(object):
         self.collections = collections
         self.filter_lang = filter_lang
         self.filter_crs = filter_crs
-        self.query = ""
 
     def _check_prop_exists(self, prop: str) -> bool:
         return prop in CQL_PROPS.keys()
@@ -126,7 +125,8 @@ class CQLSearch(object):
     def _parse_is(self, f: str) -> str:
         return re.sub(
             r"(\w+) is (not )?null",
-            lambda x: f'{"NOT " if x.group(2) is None else ""}EXISTS {{?f {CQL_PROPS[x.group(1)]["qname"]} ?{x.group(1)}}}',
+            # no longer using FILTER(EXISTS {?f qname ?prop}), which is in the spec - https://opengeospatial.github.io/ogc-geosparql/geosparql11/spec.html#_f_2_4_comparison_predicates
+            lambda x: f'{"!" if x.group(2) is None else ""}BOUND(?{x.group(1)})',
             f,
             flags=re.IGNORECASE,
         )
@@ -159,36 +159,6 @@ class CQLSearch(object):
             flags=re.IGNORECASE,
         )
 
-    def _insert_triple(self, prop: str) -> None:
-        prop_dict = CQL_PROPS[prop]
-        qname = prop_dict["qname"]
-        prop_type = prop_dict.get("type")
-        if isinstance(qname, str) or (
-            isinstance(qname, list) and len(qname) == 1
-        ):  # string or single element list
-            self.query += f"\n?f {qname} ?{prop} ."
-        else:  # list
-            if prop_dict.get("ordered"):  # qname preference order
-                optionals = ""
-                bind = "BIND("
-                for i, q in enumerate(qname):
-                    optionals += f"""
-                        OPTIONAL {{
-                            ?f {q} ?{prop}Pred{i} .
-                            {f'FILTER(lang(?{prop}Pred{i}) = "" || lang(?{prop}Pred{i}) = "en" || lang(?{prop}Pred{i}) = "en-AU")' if prop_type == "string" else ""}
-                        }}
-                    """
-                    if i + 1 == len(qname):
-                        bind += f"?{prop}Pred{i}{''.join([')' for _ in range(len(qname) - 1)])}"
-                    else:
-                        bind += f"COALESCE(?{prop}Pred{i}, "
-                bind += f" AS ?{prop})"
-                self.query += optionals
-                self.query += bind
-            else:  # unordered
-                self.query += f"""\nVALUES ?{prop}Pred {{{" ".join(qname)}}}
-                    ?f ?{prop}Pred ?{prop} ."""
-
     def generate_query(self) -> Tuple[str, str, str]:
         self.dataset_query = ""
 
@@ -206,8 +176,6 @@ class CQLSearch(object):
                 VALUES ?coll_id_str {{{" ".join([f'"{coll.strip()}"' for coll in self.collections.split(',')])}}}
             """
 
-        self.query = ""
-
         if self.filter != "":
             self.filter = self._parse_eq_ops(self.filter)
             self.filter = self._parse_between(self.filter)
@@ -217,19 +185,5 @@ class CQLSearch(object):
             self.filter = self._parse_is(self.filter)
             self.filter = self._parse_in(self.filter)
 
-            for prop in CQL_PROPS.keys():
-                if f"?{prop}" in self.filter:
-                    # checks for exists/is null to avoid inserting unnecessary triples
-                    # if the only reference of a prop is with EXISTS, then don't insert triple
-                    if len(re.findall(f"\?{prop}", self.filter)) > len(
-                        re.findall(
-                            f"EXISTS\s?{{\s?\?f {CQL_PROPS[prop]['qname']} \?{prop}",
-                            self.filter,
-                            flags=re.IGNORECASE,
-                        )
-                    ):
-                        self._insert_triple(prop)
-
             self.filter = f"FILTER({self.filter})"
-            self.query += f"\n{self.filter}"
-        return self.dataset_query, self.collection_query, self.query
+        return self.dataset_query, self.collection_query, self.filter
