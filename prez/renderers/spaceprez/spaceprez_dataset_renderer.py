@@ -27,7 +27,7 @@ class SpacePrezDatasetRenderer(Renderer):
             request.path_params.get("dataset_id"),
             None,  # feature_uri
             None,  # collection_uri
-            request.query_params.get("dataset_uri"),
+            request.query_params.get("uri"),
         )
         super().__init__(request, self.instance_uri, DCAT.Dataset, DCAT.Dataset)
 

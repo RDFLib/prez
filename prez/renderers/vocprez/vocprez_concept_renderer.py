@@ -30,7 +30,7 @@ class VocPrezConceptRenderer(Renderer):
         ) = get_concept_and_scheme_uri(
             request.path_params.get("scheme_id"),
             request.path_params.get("concept_id"),
-            request.path_params.get("concept_uri"),
+            request.query_params.get("uri"),
         )
         super().__init__(
             request,

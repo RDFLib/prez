@@ -352,9 +352,7 @@ async def search(
     """Displays the search page of Prez"""
     # Concept search
     if search is not None and search != "":
-        self_sparql_endpoint = str(request.base_url)[:-1] + app.router.url_path_for(
-            "sparql_get"
-        )
+        self_sparql_endpoint = str(request.base_url)[:-1] + "/sparql"
         endpoint_details = []
         for endpoint in endpoints:
             if endpoint in [
@@ -485,29 +483,29 @@ async def object(
         if object_type == SKOS.ConceptScheme:
             if "VocPrez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
-            return await vocprez_router.scheme(request, scheme_uri=uri)
+            return await vocprez_router.scheme(request)
         elif object_type == SKOS.Collection:
             if "VocPrez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
-            return await vocprez_router.collection(request, collection_uri=uri)
+            return await vocprez_router.collection(request)
         elif object_type == SKOS.Concept:
             if "VocPrez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
-            return await vocprez_router.concept(request, concept_uri=uri)
+            return await vocprez_router.concept(request)
         elif object_type == DCAT.Dataset:
             if "SpacePrez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
-            return await spaceprez_router.dataset(request, dataset_uri=uri)
+            return await spaceprez_router.dataset(request)
         elif object_type == GEO.FeatureCollection:
             if "SpacePrez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
             return await spaceprez_router.feature_collection(
-                request, collection_uri=uri
+                request
             )
         elif object_type == GEO.Feature:
             if "SpacePrez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
-            return await spaceprez_router.feature(request, feature_uri=uri)
+            return await spaceprez_router.feature(request)
         # else:
     raise HTTPException(status_code=404, detail="Not Found")
 

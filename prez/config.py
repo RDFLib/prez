@@ -77,13 +77,11 @@ CQL_PROPS = {
     "title": {
         "title": "Title",
         "description": "The title of a geo:Feature",
-        "qname": "dcterms:title",
         "type": "string",
     },
     "desc": {
         "title": "Description",
         "description": "The description of a geo:Feature",
-        "qname": "dcterms:description",
         "type": "string",
     },
 }

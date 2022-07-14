@@ -5,7 +5,7 @@ async def get_object(uri: str):
     q = f"""
         PREFIX dcterms: <{DCTERMS}>
         PREFIX skos: <{SKOS}>
-        PREFIX xsd:, <{XSD}>
+        PREFIX xsd: <{XSD}>
         SELECT ?type ?id ?cs_id
         WHERE {{
             <{uri}> a ?type ;

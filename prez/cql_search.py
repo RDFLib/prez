@@ -20,7 +20,6 @@ class CQLSearch(object):
         self.collections = collections
         self.filter_lang = filter_lang
         self.filter_crs = filter_crs
-        self.query = ""
 
     def _check_prop_exists(self, prop: str) -> bool:
         return prop in CQL_PROPS.keys()
@@ -126,7 +125,8 @@ class CQLSearch(object):
     def _parse_is(self, f: str) -> str:
         return re.sub(
             r"(\w+) is (not )?null",
-            lambda x: f'{"NOT " if x.group(2) is None else ""}EXISTS {{?f {CQL_PROPS[x.group(1)]["qname"]} ?{x.group(1)}}}',
+            # no longer using FILTER(EXISTS {?f qname ?prop}), which is in the spec - https://opengeospatial.github.io/ogc-geosparql/geosparql11/spec.html#_f_2_4_comparison_predicates
+            lambda x: f'{"!" if x.group(2) is None else ""}BOUND(?{x.group(1)})',
             f,
             flags=re.IGNORECASE,
         )
@@ -176,8 +176,6 @@ class CQLSearch(object):
                 VALUES ?coll_id_str {{{" ".join([f'"{coll.strip()}"' for coll in self.collections.split(',')])}}}
             """
 
-        self.query = ""
-
         if self.filter != "":
             self.filter = self._parse_eq_ops(self.filter)
             self.filter = self._parse_between(self.filter)
@@ -187,19 +185,5 @@ class CQLSearch(object):
             self.filter = self._parse_is(self.filter)
             self.filter = self._parse_in(self.filter)
 
-            for prop in CQL_PROPS.keys():
-                if f"?{prop}" in self.filter:
-                    # checks for exists/is null to avoid inserting unnecessary triples
-                    # if the only reference of a prop is with EXISTS, then don't insert triple
-                    if len(re.findall(f"\?{prop}", self.filter)) > len(
-                        re.findall(
-                            f"EXISTS\s?{{\s?\?f {CQL_PROPS[prop]['qname']} \?{prop}",
-                            self.filter,
-                            flags=re.IGNORECASE,
-                        )
-                    ):
-                        self.query += f"\n?f {CQL_PROPS[prop]['qname']} ?{prop} ."
-
             self.filter = f"FILTER({self.filter})"
-            self.query += f"\n{self.filter}"
-        return self.dataset_query, self.collection_query, self.query
+        return self.dataset_query, self.collection_query, self.filter

@@ -26,7 +26,7 @@ class SpacePrezFeatureCollectionRenderer(Renderer):
             request.path_params.get("collection_id"),
             request.path_params.get("dataset_id"),
             None,  # feature_uri
-            request.query_params.get("collection_uri"),
+            request.query_params.get("uri"),
             None,  # dataset_uri
         )
 

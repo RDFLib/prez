@@ -284,6 +284,7 @@ async def count_features(
     if cql_query is not None:
         dataset_query, collection_query, filter_query = cql_query
     # first check for hardcoded feature count
+    # this will need to catered for/be ignored for CQL search
     q = f"""
         PREFIX prez: <https://surroundaustralia.com/prez/>
         PREFIX dcat: <{DCAT}>
@@ -306,11 +307,14 @@ async def count_features(
     else:
         pass
     # do a SPARQL count
+    # will need to query for all CQL feature props to get the correct count 
     q = f"""
         PREFIX dcat: <{DCAT}>
         PREFIX dcterms: <{DCTERMS}>
         PREFIX geo: <{GEO}>
         PREFIX rdfs: <{RDFS}>
+        PREFIX sdo: <{SDO}>
+        PREFIX skos: <{SKOS}>
         PREFIX xsd: <{XSD}>
 
         SELECT (COUNT(?f) as ?count)
@@ -325,7 +329,38 @@ async def count_features(
                 rdfs:member ?f .
             {f'BIND("{collection_id}" AS ?coll_id)' if collection_id is not None else "FILTER(DATATYPE(?coll_id) = xsd:token)"}
             {collection_query if collection_id is None else ""}
-            ?f a geo:Feature .
+            ?f a geo:Feature ;
+                dcterms:identifier ?id .
+            FILTER(DATATYPE(?id) = xsd:token)
+            OPTIONAL {{
+                OPTIONAL {{
+                    ?f dcterms:description ?dcDesc .
+                }}
+                OPTIONAL {{
+                    ?f skos:definition ?def .
+                }}
+                OPTIONAL {{
+                    ?f sdo:description ?sdoDesc .
+                }}
+                BIND(COALESCE(?dcDesc, ?def, ?sdoDesc) AS ?desc)
+            }}
+            OPTIONAL {{
+                ?f rdfs:label ?label .
+                FILTER(lang(?label) = "" || lang(?label) = "en" || lang(?label) = "en-AU")
+            }}
+            OPTIONAL {{
+                ?f dcterms:title ?dcTitle .
+                FILTER(lang(?dcTitle) = "" || lang(?dcTitle) = "en" || lang(?dcTitle) = "en-AU")
+            }}
+            OPTIONAL {{
+                ?f sdo:name ?name .
+                FILTER(lang(?name) = "" || lang(?name) = "en" || lang(?name) = "en-AU")
+            }}
+            OPTIONAL {{
+                ?f skos:prefLabel ?prefLabel .
+                FILTER(lang(?prefLabel) = "" || lang(?prefLabel) = "en" || lang(?prefLabel) = "en-AU")
+            }}
+            BIND(COALESCE(?label, ?dcTitle, ?name, ?prefLabel, CONCAT("Feature "), ?id) AS ?title)
             {filter_query}
         }}
     """
@@ -355,6 +390,7 @@ async def list_features(
         PREFIX dcterms: <{DCTERMS}>
         PREFIX geo: <{GEO}>
         PREFIX rdfs: <{RDFS}>
+        PREFIX sdo: <{SDO}>
         PREFIX skos: <{SKOS}>
         PREFIX xsd: <{XSD}>
         SELECT DISTINCT *
@@ -377,12 +413,34 @@ async def list_features(
                 dcterms:identifier ?id .
             FILTER(DATATYPE(?id) = xsd:token)
             OPTIONAL {{
-                ?f dcterms:description ?desc .
+                OPTIONAL {{
+                    ?f dcterms:description ?dcDesc .
+                }}
+                OPTIONAL {{
+                    ?f skos:definition ?def .
+                }}
+                OPTIONAL {{
+                    ?f sdo:description ?sdoDesc .
+                }}
+                BIND(COALESCE(?dcDesc, ?def, ?sdoDesc) AS ?desc)
             }}
             OPTIONAL {{
-                ?f dcterms:title ?title .
-                FILTER(lang(?title) = "" || lang(?title) = "en" || lang(?title) = "en-AU")
+                ?f rdfs:label ?label .
+                FILTER(lang(?label) = "" || lang(?label) = "en" || lang(?label) = "en-AU")
             }}
+            OPTIONAL {{
+                ?f dcterms:title ?dcTitle .
+                FILTER(lang(?dcTitle) = "" || lang(?dcTitle) = "en" || lang(?dcTitle) = "en-AU")
+            }}
+            OPTIONAL {{
+                ?f sdo:name ?name .
+                FILTER(lang(?name) = "" || lang(?name) = "en" || lang(?name) = "en-AU")
+            }}
+            OPTIONAL {{
+                ?f skos:prefLabel ?prefLabel .
+                FILTER(lang(?prefLabel) = "" || lang(?prefLabel) = "en" || lang(?prefLabel) = "en-AU")
+            }}
+            BIND(COALESCE(?label, ?dcTitle, ?name, ?prefLabel, CONCAT("Feature "), ?id) AS ?title)
             {filter_query}
         }}{f" LIMIT {per_page} OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
     """
@@ -400,7 +458,7 @@ async def get_uri(item_id: str = None, klass: URIRef = None):
                 PREFIX rdf: <{RDF}>
                 PREFIX xsd: <{XSD}>
                 SELECT ?item_uri ?class {{ ?item_uri dcterms:identifier "{item_id}"^^xsd:token ;
-                                    rdf:type <{str(klass)}> . }}""",
+                        rdf:type <{str(klass)}> . }}""",
             "SpacePrez",
         )
         if r[0]:
@@ -425,16 +483,16 @@ def get_object_uri_and_classes(
                 PREFIX xsd: <{XSD}>
 
                 SELECT ?f ?fc ?d ?class {{
-                        OPTIONAL {{ ?d dcterms:identifier "{dataset_id}"^^xsd:token ;
-                                a dcat:Dataset . }}
-                        OPTIONAL {{ ?fc dcterms:identifier "{collection_id}"^^xsd:token ;
-                                a geo:FeatureCollection .
-                            ?d rdfs:member ?fc . }}
-                        OPTIONAL {{ ?f dcterms:identifier "{feature_id}"^^xsd:token ;
-                                a geo:Feature ;
-                                a ?class .
-                            ?fc rdfs:member ?f . }}
-                            }} """,
+                    OPTIONAL {{ ?d dcterms:identifier "{dataset_id}"^^xsd:token ;
+                            a dcat:Dataset . }}
+                    OPTIONAL {{ ?fc dcterms:identifier "{collection_id}"^^xsd:token ;
+                            a geo:FeatureCollection .
+                        ?d rdfs:member ?fc . }}
+                    OPTIONAL {{ ?f dcterms:identifier "{feature_id}"^^xsd:token ;
+                            a geo:Feature ;
+                            a ?class .
+                        ?fc rdfs:member ?f . }}
+                }} """,
             "SpacePrez",
         )
         if r[0]:
@@ -455,30 +513,37 @@ def get_object_uri_and_classes(
             )
     elif feature_uri or collection_uri or dataset_uri:
         r = sparql_query_non_async(
-            f"""SELECT ?f ?fc ?d ?class
-                {{
-                    BIND(<{feature_uri}> AS ?f)
-                    BIND(<{collection_uri}> AS ?fc)
-                    BIND(<{dataset_uri}> AS ?d)
+            f"""PREFIX dcat: <{DCAT}>
+                PREFIX dcterms: <{DCTERMS}>
+                PREFIX geo: <{GEO}>
+                PREFIX rdfs: <{RDFS}>
+                PREFIX xsd: <{XSD}>
+                SELECT ?f ?fc ?d ?class {{
+                    {f"BIND(<{feature_uri}> AS ?f)" if feature_uri is not None else ""}
+                    {f"BIND(<{collection_uri}> AS ?fc)" if collection_uri is not None else ""}
+                    {f"BIND(<{dataset_uri}> AS ?d)" if dataset_uri is not None else ""}
                     ?f a ?class ;
-                        rdfs:member^ ?fc ;
-                        dcterms:identifier ?f_id^^xsd:token .
+                        ^rdfs:member ?fc ;
+                        dcterms:identifier ?f_id .
+                    FILTER(DATATYPE(?f_id) = xsd:token)
                     ?fc a geo:FeatureCollection ;
-                        rdfs:member^ ?d ;
-                        dcterms:identifier ?fc_id^^xsd:token .
+                        ^rdfs:member ?d ;
+                        dcterms:identifier ?fc_id .
+                    FILTER(DATATYPE(?fc_id) = xsd:token)
                     ?d a dcat:Dataset ;
-                        dcterms:identifier ?d_id^^xsd:token .
+                        dcterms:identifier ?d_id .
+                    FILTER(DATATYPE(?d_id) = xsd:token)
                 }}""",
             "SpacePrez",
         )
         if r[0]:
             return (
-                r[1][0]["f_id"]["value"],
-                r[1][0]["fc_id"]["value"],
-                r[1][0]["d_id"]["value"],
-                r[1][0]["f"]["value"],
-                r[1][0]["fc"]["value"],
-                r[1][0]["d"]["value"],
+                r[1][0]["f_id"]["value"] if r[1][0].get("f_id") is not None else None,
+                r[1][0]["fc_id"]["value"] if r[1][0].get("f_fc_idid") is not None else None,
+                r[1][0]["d_id"]["value"] if r[1][0].get("d_id") is not None else None,
+                r[1][0]["f"]["value"] if r[1][0].get("f") is not None else None,
+                r[1][0]["fc"]["value"] if r[1][0].get("fc") is not None else None,
+                r[1][0]["d"]["value"] if r[1][0].get("d") is not None else None,
                 [c["class"]["value"] for c in r[1]],
             )
 
