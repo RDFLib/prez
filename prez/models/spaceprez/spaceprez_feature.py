@@ -2,6 +2,9 @@ from typing import List, Dict, Optional
 
 from prez.config import *
 from prez.models import PrezModel
+from shapely.geometry import mapping
+from shapely.ops import orient
+from shapely.wkt import loads as load_wkt
 
 
 class SpacePrezFeature(PrezModel):
@@ -115,24 +118,26 @@ class SpacePrezFeature(PrezModel):
         r = self.graph.query(
             f"""
             PREFIX geo: <{GEO}>
-            SELECT ?geojson
+            SELECT ?geojson ?wkt
             WHERE {{
-                BIND (<{self.uri}> as ?f)
-                ?f geo:hasGeometry/geo:asGeoJSON ?geojson .
+                <{self.uri}> geo:hasGeometry/geo:asWKT ?wkt .
+                OPTIONAL {{ <{self.uri}> geo:hasGeometry/geo:asGeoJSON ?geojson }}                
             }}
-        """
+            """
         )
-
-        geom = r.bindings[0].get("geojson")
-
-        g_dict = {
+        # see if this Geometry has GeoJSON and, if it has, return it
+        geojson_str = r.bindings[0].get("geojson")
+        if geojson_str is not None:
+            geojson = json.loads(geojson_str)
+        else:  # if it doesn't use the WKT, which is required to be present
+            wkt = r.bindings[0].get("wkt")
+            geojson = mapping(orient(load_wkt(wkt)))
+        return {
             "type": "Feature",
             "id": self.id,
-            "geometry": json.loads(geom) if geom is not None else {},
+            "geometry": geojson,
             "properties": {},
         }
-
-        return g_dict
 
     # override
     def _get_properties(self) -> List[Dict]:

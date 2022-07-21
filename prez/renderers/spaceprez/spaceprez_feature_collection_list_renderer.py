@@ -37,7 +37,7 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
         )
 
     def _render_oai_html(self, template_context: Union[Dict, None]):
-        """Renders the HTML representation of the OAI profile for a list of feature collections"""
+        """Renders the HTML representation of the OGC Features Core profile for a list of feature collections"""
         _template_context = {
             "request": self.request,
             "members": self.members,
@@ -61,7 +61,7 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
         )
 
     def _render_oai_json(self) -> JSONResponse:
-        """Renders the JSON representation of the OAI profile for a dataset"""
+        """Renders the JSON representation of the OGC Features Core profile for a dataset"""
         collections = []
 
         for member in self.members:
@@ -109,7 +109,7 @@ class SpacePrezFeatureCollectionListRenderer(ListRenderer):
         )
 
     def _render_oai(self, template_context: Union[Dict, None]):
-        """Renders the OAI profile for a list of feature collections"""
+        """Renders the OGC Features Core profile for a list of feature collections"""
         if self.mediatype == "text/html":
             return self._render_oai_html(template_context)
         else:  # else return JSON

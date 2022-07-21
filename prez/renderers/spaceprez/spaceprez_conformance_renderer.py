@@ -35,7 +35,7 @@ class SpacePrezConformanceRenderer(Renderer):
     def _render_oai_html(
         self, template_context: Union[Dict, None]
     ) -> templates.TemplateResponse:
-        """Renders the HTML representation of the OAI profile for the conformance page"""
+        """Renders the HTML representation of the OGC Features Core profile for the conformance page"""
         _template_context = {
             "request": self.request,
             "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
@@ -55,7 +55,7 @@ class SpacePrezConformanceRenderer(Renderer):
         )
 
     def _render_oai_json(self) -> JSONResponse:
-        """Renders the JSON representation of the OAI profile for the conformance page"""
+        """Renders the JSON representation of the OGC Features Core profile for the conformance page"""
         content = {
             "conformsTo": [
                 conform["url"] for conform in SpacePrezConformanceRenderer.conformsTo
@@ -69,7 +69,7 @@ class SpacePrezConformanceRenderer(Renderer):
         )
 
     def _render_oai(self, template_context: Union[Dict, None]):
-        """Renders the OAI profile for the conformance page"""
+        """Renders the OGC Features Core profile for the conformance page"""
         if self.mediatype == "text/html":
             return self._render_oai_html(template_context)
         else:  # else return JSON

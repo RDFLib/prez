@@ -37,7 +37,7 @@ class SpacePrezDatasetRenderer(Renderer):
     def _render_oai_html(
         self, template_context: Union[Dict, None]
     ) -> templates.TemplateResponse:
-        """Renders the HTML representation of the OAI profile for a dataset"""
+        """Renders the HTML representation of the OGC Features Core profile for a dataset"""
         _template_context = {
             "request": self.request,
             "dataset": self.dataset.to_dict(),
@@ -57,7 +57,7 @@ class SpacePrezDatasetRenderer(Renderer):
         )
 
     def _render_oai_json(self) -> JSONResponse:
-        """Renders the JSON representation of the OAI profile for a dataset"""
+        """Renders the JSON representation of the OGC Features Core profile for a dataset"""
         content = {
             "links": [
                 {
@@ -82,7 +82,7 @@ class SpacePrezDatasetRenderer(Renderer):
         )
 
     def _render_oai(self, template_context: Union[Dict, None]):
-        """Renders the OAI profile for a dataset"""
+        """Renders the OGC Features Core profile for a dataset"""
         if self.mediatype == "text/html":
             return self._render_oai_html(template_context)
         else:  # else return JSON
@@ -195,6 +195,117 @@ class SpacePrezDatasetRenderer(Renderer):
     def _render_geo(self):
         """Renders the GeoSPARQL profile for a dataset"""
         return self._render_geo_rdf()
+
+    def _render_oai_geojson(self) -> JSONResponse:
+        """Renders the GeoJSON representation of the OGC Features Core profile for a Dataset"""
+
+        '''
+        {
+            "request": self.request,
+            "dataset": self.dataset.to_dict(),
+            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
+            "profiles": self.profile_details.available_profiles_dict,
+            "default_profile": self.profile_details.default_profile,
+            "mediatype_names": dict(
+                MEDIATYPE_NAMES, **{"application/geo+json": "GeoJSON"}
+            ),
+        }
+        
+        {
+            "uri": self.uri,
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "properties": self._get_properties(),
+            "geometries": self.geometries,
+            "collections": self.collections,
+        }
+        '''
+        content = self.dataset.to_geojson()
+
+        '''
+        { 
+            "href": "http://data.example.org/",
+            "rel": "self", 
+            "type": "application/json", 
+            "title": "this document" },
+        { 
+            "href": "http://data.example.org/api",
+            "rel": "service-desc", 
+            "type": "application/vnd.oai.openapi+json;version=3.0", 
+            "title": "the API definition" },
+        { 
+            "href": "http://data.example.org/api.html",
+            "rel": "service-doc", 
+            "type": "text/html", 
+            "title": "the API documentation" },
+        { 
+            "href": "http://data.example.org/conformance",
+            "rel": "conformance", 
+            "type": "application/json", 
+            "title": "OGC API conformance classes implemented by this server" },
+        { 
+            "href": "http://data.example.org/collections",
+            "rel": "data", 
+            "type": "application/json", 
+            "title": "Information about the feature collections" }        
+        '''
+        content["links"] = [
+            {
+                "href": str(self.request.url),
+                "rel": "self",
+                "type": self.mediatype,
+                "title": "This document",
+            },
+            {
+                "href": self.request.url_for("index") + "api",
+                "rel": "service-desc",
+                "type": "application/vnd.oai.openapi+json;version=3.0",
+                "title": "The API definition"
+            },
+            {
+                "href": self.request.url_for("index") + "api.html",
+                "rel": "service-doc",
+                "type": "text/html",
+                "title": "The API documentation"
+            },
+            {
+                "href": self.request.url_for("conformance"),
+                "rel": "conformance",
+                "type": "application/json",
+                "title": "OGC API conformance classes implemented by this server"
+            },
+            {
+                "href": str(self.request.url).split("?_profile=oai")[0] + "?_profile=oai" + "&" + "_mediatype=text/html",
+                "rel": "alternate",
+                "type": "text/html",
+                "title": "this document as HTML",
+            },
+            {
+                "href": self.request.url_for(
+                    "feature_collections_endpoint",
+                    dataset_id=self.dataset_id
+                ),
+                "rel": "data",
+                "type": "text/html",
+                "title": "Information about the feature collections",
+            },
+            {
+                "href": self.request.url_for(
+                    "feature_collections_endpoint",
+                    dataset_id=self.dataset_id
+                ) + "?_mediatype=application/geo+json",
+                "rel": "data",
+                "type": "application/geo+json",
+                "title": "Information about the feature collections in GeoJSON",
+            },
+        ]
+
+        return JSONResponse(
+            content=content,
+            media_type="application/geo+json",
+            headers=self.headers,
+        )
 
     def render(
         self,

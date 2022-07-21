@@ -16,7 +16,7 @@ class SpacePrezHomeRenderer(Renderer):
     def _render_oai_html(
         self, template_context: Union[Dict, None]
     ) -> templates.TemplateResponse:
-        """Renders the HTML representation of the OAI profile for the home page"""
+        """Renders the HTML representation of the OGC Features Core profile for the home page"""
         _template_context = {
             "request": self.request,
             "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
@@ -35,7 +35,7 @@ class SpacePrezHomeRenderer(Renderer):
         )
 
     def _render_oai_json(self) -> JSONResponse:
-        """Renders the JSON representation of the OAI profile for the home page"""
+        """Renders the JSON representation of the OGC Features Core profile for the home page"""
         content = {
             "title": SPACEPREZ_TITLE,
             "description": SPACEPREZ_DESC,
@@ -80,7 +80,7 @@ class SpacePrezHomeRenderer(Renderer):
         )
 
     def _render_oai(self, template_context: Union[Dict, None]):
-        """Renders the OAI profile for the home page"""
+        """Renders the OGC Features Core profile for the home page"""
         if self.mediatype == "text/html":
             return self._render_oai_html(template_context)
         else:  # else return JSON

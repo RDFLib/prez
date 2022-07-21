@@ -69,7 +69,6 @@ def an_fc_link(sp_test_client, a_dataset_link):
     r = sp_test_client.get(
         f"{a_dataset_link}/collections?_profile=mem&_mediatype=application/json"
     )
-    print(r.json())
     return r.json()["members"][0]["link"]
 
 
@@ -137,6 +136,14 @@ def test_dataset_default_default(sp_test_client, a_dataset_link):
     assert (
         f'<li class="breadcrumb"><a href="http://testserver{a_dataset_link}">' in r.text
     )
+
+
+def test_dataset_oai_geojson(sp_test_client, a_dataset_link):
+    ds_iri = f"http://testserver{a_dataset_link}?_profile=oai&_mediatype=application/geo+json"
+    r = sp_test_client.get(ds_iri)
+    j = r.json()
+    assert j.get("title") is not None
+    assert j.get("geometry") is not None
 
 
 def test_dataset_default_turtle(sp_test_client, a_dataset_link):
@@ -223,6 +230,24 @@ def test_feature_default_default(sp_test_client, a_feature_link_and_id):
 
     r = sp_test_client.get(f"{feature_link}")
     assert f' <p>Instance URI: <a href="http://testserver{feature_link}">' in r.text
+
+
+def test_feature_default_geojson(sp_test_client, a_feature_link_and_id):
+    feature_link, feature_id = a_feature_link_and_id
+
+    r = sp_test_client.get(f"{feature_link}?_mediatype=application/geo+json")
+    j = r.json()
+    assert j.get("geometry") is not None
+
+
+def test_feature_default_geojson_given_v_generated(sp_test_client):
+    # checks that the get GeoJSON function is trying to return given GeoJSON
+    # but, if not finding it, calculates it from WKT which must be present
+    r = sp_test_client.get("http://testserver/dataset/geofabric/collections/catchments/items/cabbage-tree?_mediatype=application/geo+json")
+    assert len(r.json()["geometry"]["coordinates"][0]) == 16
+
+    r = sp_test_client.get("http://testserver/dataset/geofabric/collections/catchments/items/cabbage-tree-geojson?_mediatype=application/geo+json")
+    assert len(r.json()["geometry"]["coordinates"][0]) == 14
 
 
 def test_feature_default_turtle(sp_test_client, a_feature_link_and_id):
