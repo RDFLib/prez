@@ -281,7 +281,7 @@ async def sparql_endpoint_query(
         creds["password"] = SPACEPREZ_SPARQL_PASSWORD
     else:
         raise Exception(
-            "Invalid prez specified in sparql_query call. Available options are: 'VocPrez', 'SpacePrez'."
+            "Invalid Prez specified in sparql_query call. Available options are: 'VocPrez', 'SpacePrez'."
         )
     async with AsyncClient() as client:
         response: httpxResponse = await client.post(
@@ -298,6 +298,10 @@ async def sparql_endpoint_query(
         if accept in ["application/sparql-results+json", "application/json"]:
             return True, response.json()
         else:
+            print("accept")
+            print(accept)
+            print("response.headers")
+            print(response.headers)
             return True, response.text
     else:
         return False, {
@@ -316,23 +320,30 @@ async def sparql_endpoint_query_multiple(
     )
     succeeded_results = Graph() if accept in RDF_MEDIATYPES else {}
     failed_results = []
-    for result in results:
+    for i, result in enumerate(results):
         if result[0]:
             if accept in RDF_MEDIATYPES:
-                succeeded_results += Graph().parse(result[1], format=accept)
-            else:  # JSON for now (need to cater for CSV & TSV)
+                print("xxxxxxxxxxxx")
+                print(accept)
+                print("xxxxxxxxxxxx")
+                print(result[1])
+                succeeded_results += Graph().parse(data=result[1], format=accept)
+            elif accept in ["application/sparql-results+json", "application/json"]:
+                # JSON for now (need to cater for XML, CSV & TSV)
                 if len(succeeded_results.keys()) == 0:
                     succeeded_results = result[1]
                 else:
-                    succeeded_results["results"]["bindings"] += result[1]["results"][
-                        "bindings"
-                    ]
+                    succeeded_results["results"]["bindings"] += result[1]["results"]["bindings"]
+            else:  # XML
+                succeeded_results[i] = result[1]
         else:
             failed_results += result[1]
     if accept in RDF_MEDIATYPES:
         return succeeded_results.serialize(format=accept), failed_results
-    else:
+    elif accept in ["application/sparql-results+json", "application/json"]:
         return succeeded_results, failed_results
+    else:  # XML
+        return succeeded_results[0], failed_results
 
 
 def rdf_list_to_python_list(g: Graph, sub_pred: tuple) -> List:
