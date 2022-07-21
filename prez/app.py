@@ -499,9 +499,7 @@ async def object(
         elif object_type == GEO.FeatureCollection:
             if "SpacePrez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
-            return await spaceprez_router.feature_collection(
-                request
-            )
+            return await spaceprez_router.feature_collection(request)
         elif object_type == GEO.Feature:
             if "SpacePrez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")

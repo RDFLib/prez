@@ -1,10 +1,10 @@
+from shapely.geometry import mapping
+from shapely.ops import orient
+from shapely.wkt import loads as load_wkt
 from typing import List, Dict, Optional
 
 from prez.config import *
 from prez.models import PrezModel
-from shapely.geometry import mapping
-from shapely.ops import orient
-from shapely.wkt import loads as load_wkt
 
 
 class SpacePrezFeature(PrezModel):

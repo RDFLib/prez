@@ -129,29 +129,6 @@ class SpacePrezDataset(PrezModel):
 
     def to_geojson(self) -> Dict:
         """Returns the GeoJSON representation for the OGC API Feature Core profile"""
-        # r = self.graph.query(
-        #     f"""
-        #     PREFIX geo: <{GEO}>
-        #     SELECT ?geojson ?wkt
-        #     WHERE {{
-        #         <{self.uri}> geo:hasGeometry/geo:asWKT ?wkt .
-        #         OPTIONAL {{ <{self.uri}> geo:hasGeometry/geo:asGeoJSON ?geojson }}
-        #     }}
-        #     """
-        # )
-        # # see if this Geometry has GeoJSON and, if it has, return it
-        # geojson_str = r.bindings[0].get("geojson")
-        # if geojson_str is not None:
-        #     geojson = json.loads(geojson_str)
-        # else:  # if it doesn't use the WKT, which is required to be present
-        #     wkt = r.bindings[0].get("wkt")
-        #     geojson = mapping(orient(load_wkt(wkt)))
-        # return {
-        #     "type": "Feature",
-        #     "id": self.id,
-        #     "geometry": geojson,
-        #     "properties": {},
-        # }
         d = self.to_dict()
         g = {
             "title": d["title"],
@@ -163,9 +140,9 @@ class SpacePrezDataset(PrezModel):
                 "@context": {
                     "geo": "http://www.opengis.net/ont/geosparql#",
                     "dcterms": "http://purl.org/dc/terms/",
-                    "source": "dcterms:source"
+                    "source": "dcterms:source",
                 }
-            }
+            },
         }
         for prop in d["properties"]:
             if prop["value"] == "http://purl.org/dc/terms/source":

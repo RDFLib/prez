@@ -91,7 +91,7 @@ CQL_PROPS = {
 def get_version():
     for line in open(Path(__file__).parent.parent / "pyproject.toml").readlines():
         if line.startswith("version = "):
-            return line.split("\"")[1]
+            return line.split('"')[1]
 
 
 VERSION = get_version()

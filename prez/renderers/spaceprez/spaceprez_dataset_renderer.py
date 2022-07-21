@@ -199,7 +199,7 @@ class SpacePrezDatasetRenderer(Renderer):
     def _render_oai_geojson(self) -> JSONResponse:
         """Renders the GeoJSON representation of the OGC Features Core profile for a Dataset"""
 
-        '''
+        """
         {
             "request": self.request,
             "dataset": self.dataset.to_dict(),
@@ -220,10 +220,10 @@ class SpacePrezDatasetRenderer(Renderer):
             "geometries": self.geometries,
             "collections": self.collections,
         }
-        '''
+        """
         content = self.dataset.to_geojson()
 
-        '''
+        """
         { 
             "href": "http://data.example.org/",
             "rel": "self", 
@@ -249,7 +249,7 @@ class SpacePrezDatasetRenderer(Renderer):
             "rel": "data", 
             "type": "application/json", 
             "title": "Information about the feature collections" }        
-        '''
+        """
         content["links"] = [
             {
                 "href": str(self.request.url),
@@ -261,30 +261,32 @@ class SpacePrezDatasetRenderer(Renderer):
                 "href": self.request.url_for("index") + "api",
                 "rel": "service-desc",
                 "type": "application/vnd.oai.openapi+json;version=3.0",
-                "title": "The API definition"
+                "title": "The API definition",
             },
             {
                 "href": self.request.url_for("index") + "api.html",
                 "rel": "service-doc",
                 "type": "text/html",
-                "title": "The API documentation"
+                "title": "The API documentation",
             },
             {
                 "href": self.request.url_for("conformance"),
                 "rel": "conformance",
                 "type": "application/json",
-                "title": "OGC API conformance classes implemented by this server"
+                "title": "OGC API conformance classes implemented by this server",
             },
             {
-                "href": str(self.request.url).split("?_profile=oai")[0] + "?_profile=oai" + "&" + "_mediatype=text/html",
+                "href": str(self.request.url).split("?_profile=oai")[0]
+                + "?_profile=oai"
+                + "&"
+                + "_mediatype=text/html",
                 "rel": "alternate",
                 "type": "text/html",
                 "title": "this document as HTML",
             },
             {
                 "href": self.request.url_for(
-                    "feature_collections_endpoint",
-                    dataset_id=self.dataset_id
+                    "feature_collections_endpoint", dataset_id=self.dataset_id
                 ),
                 "rel": "data",
                 "type": "text/html",
@@ -292,9 +294,9 @@ class SpacePrezDatasetRenderer(Renderer):
             },
             {
                 "href": self.request.url_for(
-                    "feature_collections_endpoint",
-                    dataset_id=self.dataset_id
-                ) + "?_mediatype=application/geo+json",
+                    "feature_collections_endpoint", dataset_id=self.dataset_id
+                )
+                + "?_mediatype=application/geo+json",
                 "rel": "data",
                 "type": "application/geo+json",
                 "title": "Information about the feature collections in GeoJSON",

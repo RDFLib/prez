@@ -3,6 +3,7 @@ import subprocess
 import httpx
 from pathlib import Path
 from time import sleep
+
 LOCAL_SPARQL_STORE = Path(__file__).parent.parent / "store.py"
 
 
@@ -36,10 +37,7 @@ def test_vocprez_query(store_instance):
             ?cs a skos:ConceptScheme 
         }
         """
-    r = httpx.post(
-        f"http://localhost:{store_instance}/vocprez",
-        data=q
-    )
+    r = httpx.post(f"http://localhost:{store_instance}/vocprez", data=q)
     assert r.status_code == 200
     assert r.json()["results"]["bindings"][0]["c"]["value"] == "2"
 
@@ -47,7 +45,7 @@ def test_vocprez_query(store_instance):
 def test_spaceprez_query(store_instance):
     r = httpx.post(
         f"http://localhost:{store_instance}/spaceprez",
-        data="SELECT * WHERE {?c a dcat:Dataset}"
+        data="SELECT * WHERE {?c a dcat:Dataset}",
     )
     assert r.status_code == 200
 

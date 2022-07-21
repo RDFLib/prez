@@ -243,10 +243,14 @@ def test_feature_default_geojson(sp_test_client, a_feature_link_and_id):
 def test_feature_default_geojson_given_v_generated(sp_test_client):
     # checks that the get GeoJSON function is trying to return given GeoJSON
     # but, if not finding it, calculates it from WKT which must be present
-    r = sp_test_client.get("http://testserver/dataset/geofabric/collections/catchments/items/cabbage-tree?_mediatype=application/geo+json")
+    r = sp_test_client.get(
+        "http://testserver/dataset/geofabric/collections/catchments/items/cabbage-tree?_mediatype=application/geo+json"
+    )
     assert len(r.json()["geometry"]["coordinates"][0]) == 16
 
-    r = sp_test_client.get("http://testserver/dataset/geofabric/collections/catchments/items/cabbage-tree-geojson?_mediatype=application/geo+json")
+    r = sp_test_client.get(
+        "http://testserver/dataset/geofabric/collections/catchments/items/cabbage-tree-geojson?_mediatype=application/geo+json"
+    )
     assert len(r.json()["geometry"]["coordinates"][0]) == 14
 
 
