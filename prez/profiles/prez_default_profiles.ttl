@@ -21,9 +21,9 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
 <http://www.opengis.net/spec/ogcapi-features-1/1.0/req/oas30>
     a prof:Profile ;
-    dcterms:description "The OpenAPI Specification (OAS) defines a standard, language-agnostic interface to RESTful APIs which allows both humans and computers to discover and understand the capabilities of the service without access to source code, documentation, or through network traffic inspection." ;
+    dcterms:description "The OGC API Features specifies the behavior of Web APIs that provide access to features in a dataset in a manner independent of the underlying data store." ;
     dcterms:identifier "oai" ;
-    dcterms:title "OpenAPI 3.0" ;
+    dcterms:title "OGC API Features" ;
     altr-ext:constrainsClass
         prez:Home ;
     altr-ext:hasDefaultResourceFormat "text/html" ;

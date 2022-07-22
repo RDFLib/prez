@@ -1,3 +1,5 @@
+import json
+
 from typing import List, Dict, Optional
 
 from prez.config import *
@@ -124,3 +126,26 @@ class SpacePrezDataset(PrezModel):
         properties.extend(other_props)
 
         return properties
+
+    def to_geojson(self) -> Dict:
+        """Returns the GeoJSON representation for the OGC API Feature Core profile"""
+        d = self.to_dict()
+        g = {
+            "title": d["title"],
+            "description": d["description"],
+            "id": d["id"],
+            "uri": d["uri"],
+            "geometry": json.loads(d["geometries"]["asGeoJSON"]),
+            "properties": {
+                "@context": {
+                    "geo": "http://www.opengis.net/ont/geosparql#",
+                    "dcterms": "http://purl.org/dc/terms/",
+                    "source": "dcterms:source",
+                }
+            },
+        }
+        for prop in d["properties"]:
+            if prop["value"] == "http://purl.org/dc/terms/source":
+                g["properties"]["source"] = prop["objects"][0]["value"]
+
+        return g

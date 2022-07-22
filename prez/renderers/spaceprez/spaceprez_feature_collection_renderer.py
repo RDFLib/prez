@@ -60,7 +60,7 @@ class SpacePrezFeatureCollectionRenderer(Renderer):
         )
 
     # def _render_oai_json(self) -> JSONResponse:
-    #     """Renders the JSON representation of the OAI profile for a feature collection"""
+    #     """Renders the JSON representation of the OGC Features Core profile for a feature collection"""
     #     return JSONResponse(
     #         content={"test": "test"},
     #         media_type="application/json",
@@ -68,7 +68,7 @@ class SpacePrezFeatureCollectionRenderer(Renderer):
     #     )
 
     def _render_oai_geojson(self) -> JSONResponse:
-        """Renders the GeoJSON representation of the OAI profile for a feature collection"""
+        """Renders the GeoJSON representation of the OGC Features Core profile for a feature collection"""
         content = self.collection.to_geojson()
 
         content["links"] = [
@@ -93,7 +93,7 @@ class SpacePrezFeatureCollectionRenderer(Renderer):
         )
 
     def _render_oai(self, template_context: Union[Dict, None]):
-        """Renders the OAI profile for a feature collection"""
+        """Renders the OGC Features Core profile for a feature collection"""
         if self.mediatype == "text/html":
             return self._render_oai_html(template_context)
         else:  # else return GeoJSON

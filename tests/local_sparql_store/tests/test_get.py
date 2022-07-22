@@ -3,6 +3,7 @@ import subprocess
 import httpx
 from pathlib import Path
 from time import sleep
+
 LOCAL_SPARQL_STORE = Path(__file__).parent.parent / "store.py"
 
 

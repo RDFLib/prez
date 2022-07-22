@@ -154,9 +154,9 @@ class SparqlServer(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-p', '--port',
-                        default=3030,
-                        help='Optionally a port to run on')
+    parser.add_argument(
+        "-p", "--port", default=3030, help="Optionally a port to run on"
+    )
     args = parser.parse_args()
 
     srv = HTTPServer(("localhost", int(args.port)), SparqlServer)

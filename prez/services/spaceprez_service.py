@@ -307,7 +307,7 @@ async def count_features(
     else:
         pass
     # do a SPARQL count
-    # will need to query for all CQL feature props to get the correct count 
+    # will need to query for all CQL feature props to get the correct count
     q = f"""
         PREFIX dcat: <{DCAT}>
         PREFIX dcterms: <{DCTERMS}>
@@ -539,7 +539,9 @@ def get_object_uri_and_classes(
         if r[0]:
             return (
                 r[1][0]["f_id"]["value"] if r[1][0].get("f_id") is not None else None,
-                r[1][0]["fc_id"]["value"] if r[1][0].get("f_fc_idid") is not None else None,
+                r[1][0]["fc_id"]["value"]
+                if r[1][0].get("f_fc_idid") is not None
+                else None,
                 r[1][0]["d_id"]["value"] if r[1][0].get("d_id") is not None else None,
                 r[1][0]["f"]["value"] if r[1][0].get("f") is not None else None,
                 r[1][0]["fc"]["value"] if r[1][0].get("fc") is not None else None,
