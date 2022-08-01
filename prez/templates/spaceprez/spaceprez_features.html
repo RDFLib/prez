@@ -61,6 +61,7 @@
 <div id="content-col-main">
     <h1>{{ label }}</h1>
     <p>{{ comment }}</p>
+    <p><i>Page {{ pages.current }} of {{ pages.member_count | commafy }} Features</i></p>
     {{ render_member_list(members, none) }}
     {{ render_pagination(pages) }}
 </div>
