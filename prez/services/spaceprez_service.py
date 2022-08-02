@@ -445,8 +445,6 @@ async def list_features(
         }}{f" LIMIT {per_page} OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
     """
     r = await sparql_query(q, "SpacePrez")
-    import pprint
-    pprint.pprint(r[1])
     if r[0]:
         return r[1]
     else:
