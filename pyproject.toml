@@ -19,6 +19,7 @@ starlette-core = { git = "https://github.com/accent-starlette/starlette-core.git
 async-lru = "^1.0.3"
 Shapely = "^1.8.2"
 pytest = "^7.1.2"
+geojson-rewind = "^1.0.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"

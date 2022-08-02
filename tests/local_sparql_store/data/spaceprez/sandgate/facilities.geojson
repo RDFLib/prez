@@ -1,0 +1,16 @@
+{
+    "type": "FeatureCollection",
+    "bbox": [153.0144819, -27.3506599, 153.1143102, -27.2234024],
+    "features": [
+        {"type": "Feature", "properties": {"id": "bhc"}, "geometry": {"type": "Point", "coordinates": [153.0638169, -27.2897951]}},
+        {"type": "Feature", "properties": {"id": "bhca"}, "geometry": {"type": "Polygon", "coordinates": [[[153.063644,-27.2894036],[153.0635207,-27.2896229],[153.0631612,-27.2896182],[153.0631291,-27.289909],[153.0631559,-27.290338],[153.0644487,-27.2904858],[153.0645614,-27.2899185],[153.0648349,-27.2895324],[153.0648135,-27.2889174],[153.0637674,-27.2887362],[153.063644,-27.2894036]]]}},
+        {"type": "Feature", "properties": {"id": "bps"}, "geometry": {"type": "Point", "coordinates": [153.0536022, -27.3497934]}},
+        {"type": "Feature", "properties": {"id": "cpc"}, "geometry": {"type": "Point", "coordinates": [153.0144819, -27.3506599]}},
+        {"type": "Feature", "properties": {"id": "jcabi"}, "geometry": {"type": "Point", "coordinates": [153.0632873, -27.2918652]}},
+        {"type": "Feature", "properties": {"id": "rps"}, "geometry": {"type": "Point", "coordinates": [153.1143102, -27.2234024]}},
+        {"type": "Feature", "properties": {"id": "sac"}, "geometry": {"type": "Point", "coordinates": [153.0688897, -27.3122011]}},
+        {"type": "Feature", "properties": {"id": "sps"}, "geometry": {"type": "Point", "coordinates": [153.0677583, -27.318185]}},
+        {"type": "Feature", "properties": {"id": "src"}, "geometry": {"type": "Point", "coordinates": [153.0614757, -27.3111489]}},
+        {"type": "Feature", "properties": {"id": "srca"}, "geometry": {"type": "Polygon", "coordinates": [[[153.0606281,-27.3096141], [153.0604564,-27.3105197], [153.0600487,-27.3109296], [153.0607354,-27.3127218], [153.063203,-27.3121212], [153.0621623,-27.3095187], [153.0617868,-27.3098333], [153.0606281,-27.3096141]]]}}
+    ]
+}
