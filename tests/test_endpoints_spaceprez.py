@@ -83,6 +83,31 @@ def a_feature_link_and_id(sp_test_client, an_fc_link):
     return feature_link, feature_id
 
 
+@pytest.fixture(scope="module")
+def a_dataset_uri(sp_test_client):
+    # get uri for first dataset
+    r = sp_test_client.get("/datasets?_profile=mem&_mediatype=application/json")
+    return r.json()["members"][0]["uri"]
+
+
+@pytest.fixture(scope="module")
+def an_fc_uri(sp_test_client, a_dataset_link):
+    # get uri for a dataset's collections
+    r = sp_test_client.get(
+        f"{a_dataset_link}/collections?_profile=mem&_mediatype=application/json"
+    )
+    return r.json()["members"][0]["uri"]
+
+
+@pytest.fixture(scope="module")
+def a_feature_uri(sp_test_client, an_fc_link):
+    # get uri for a feature
+    r = sp_test_client.get(
+        f"{an_fc_link}/items?_profile=mem&_mediatype=application/json"
+    )
+    return r.json()["members"][0]["uri"]
+
+
 def test_home_default_default(sp_test_client):
     r = sp_test_client.get("/")
     assert r.status_code == 200
@@ -266,3 +291,18 @@ def test_feature_alt_default(sp_test_client, a_feature_link_and_id):
 
     r = sp_test_client.get(f"{feature_link}?_profile=alt")
     assert "<h1>Alternate Profiles</h1>" in r.text
+
+
+def test_object_endpoint_dataset(sp_test_client, a_dataset_uri):
+    r = sp_test_client.get(f"/object?uri={a_dataset_uri}")
+    assert f'<a href="{a_dataset_uri}"' in r.text
+
+
+def test_object_endpoint_feature_collection(sp_test_client, an_fc_uri):
+    r = sp_test_client.get(f"/object?uri={an_fc_uri}")
+    assert f'<a href="{an_fc_uri}"' in r.text
+
+
+def test_object_endpoint_feature(sp_test_client, a_feature_uri):
+    r = sp_test_client.get(f"/object?uri={a_feature_uri}")
+    assert f'<a href="{a_feature_uri}"' in r.text

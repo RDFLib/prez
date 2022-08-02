@@ -518,18 +518,18 @@ def get_object_uri_and_classes(
                 PREFIX geo: <{GEO}>
                 PREFIX rdfs: <{RDFS}>
                 PREFIX xsd: <{XSD}>
-                SELECT ?f ?fc ?d ?class {{
+                SELECT * {{
                     {f"BIND(<{feature_uri}> AS ?f)" if feature_uri is not None else ""}
                     {f"BIND(<{collection_uri}> AS ?fc)" if collection_uri is not None else ""}
                     {f"BIND(<{dataset_uri}> AS ?d)" if dataset_uri is not None else ""}
-                    ?f a ?class ;
+                    {f'''?f a ?class ;
                         ^rdfs:member ?fc ;
                         dcterms:identifier ?f_id .
-                    FILTER(DATATYPE(?f_id) = xsd:token)
-                    ?fc a geo:FeatureCollection ;
+                    FILTER(DATATYPE(?f_id) = xsd:token)''' if feature_uri is not None else ""}
+                    {f'''?fc a geo:FeatureCollection ;
                         ^rdfs:member ?d ;
                         dcterms:identifier ?fc_id .
-                    FILTER(DATATYPE(?fc_id) = xsd:token)
+                    FILTER(DATATYPE(?fc_id) = xsd:token)''' if (collection_uri or feature_uri) is not None else ""}
                     ?d a dcat:Dataset ;
                         dcterms:identifier ?d_id .
                     FILTER(DATATYPE(?d_id) = xsd:token)
@@ -539,14 +539,14 @@ def get_object_uri_and_classes(
         if r[0]:
             return (
                 r[1][0]["f_id"]["value"] if r[1][0].get("f_id") is not None else None,
-                r[1][0]["fc_id"]["value"]
-                if r[1][0].get("f_fc_idid") is not None
-                else None,
+                r[1][0]["fc_id"]["value"] if r[1][0].get("fc_id") is not None else None,
                 r[1][0]["d_id"]["value"] if r[1][0].get("d_id") is not None else None,
                 r[1][0]["f"]["value"] if r[1][0].get("f") is not None else None,
                 r[1][0]["fc"]["value"] if r[1][0].get("fc") is not None else None,
                 r[1][0]["d"]["value"] if r[1][0].get("d") is not None else None,
-                [c["class"]["value"] for c in r[1]],
+                [c["class"]["value"] for c in r[1]]
+                if r[1][0].get("class") is not None
+                else None,
             )
 
     return None, None, None, None, None  # effectively 404 - can't find this thing

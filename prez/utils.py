@@ -64,6 +64,11 @@ def join_list_keys(l: List, key: str, sep: str) -> str:
     return sep.join([e[key] for e in l])
 
 
+def commafy(value):
+    """Applies thousands separator to integers"""
+    return "{:,d}".format(value)
+
+
 template_list = [str(Path(__file__).parent / "templates")]
 if THEME_VOLUME is not None:
     template_list.insert(0, f"{THEME_VOLUME}/templates")
@@ -76,3 +81,4 @@ templates.env.filters["append_qsa"] = append_qsa
 templates.env.filters["file_exists"] = file_exists
 templates.env.filters["match"] = match
 templates.env.filters["join_list_keys"] = join_list_keys
+templates.env.filters["commafy"] = commafy
