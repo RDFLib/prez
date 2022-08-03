@@ -27,6 +27,7 @@ def create_profiles_graph() -> Graph:
     logging.info("Loaded local profiles")
 
     remote_profiles_query = """
+        PREFIX dcat: <http://www.w3.org/ns/dcat#>
         PREFIX geo: <http://www.opengis.net/ont/geosparql#>
         PREFIX prof: <http://www.w3.org/ns/dx/prof/>
         PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
@@ -42,6 +43,10 @@ def create_profiles_graph() -> Graph:
             FILTER(ISBLANK(?o))
             OPTIONAL {?o2 ?p3 ?o3
             FILTER(ISBLANK(?o2))}
+          }
+          OPTIONAL {
+            ?class rdfs:subClassOf dcat:Resource ;
+                ?cp ?co .
           }
           OPTIONAL {
             ?class rdfs:subClassOf geo:Feature ;
@@ -181,7 +186,7 @@ def get_general_profiles(general_class):
         )
         profiles_formats[profile_id].extend(other_formats)
 
-    # Create connegP profile classes and add these to a dictionary
+    # Create ConnegP profile classes and add these to a dictionary
     profiles_dict = {}
     for profile, formats in profiles_formats.items():
         profile_uri = profiles_g.value(

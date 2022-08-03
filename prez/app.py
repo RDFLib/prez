@@ -15,7 +15,7 @@ from pydantic import AnyUrl
 from starlette.middleware.cors import CORSMiddleware
 
 from prez.profiles.generate_profiles import get_general_profiles
-from prez.routers import vocprez_router, spaceprez_router
+from prez.routers import catprez_router, vocprez_router, spaceprez_router
 from prez.routers.vocprez_router import vocprez_home_endpoint
 from prez.services.app_service import *
 from prez.services.spaceprez_service import list_datasets, list_collections
@@ -90,6 +90,8 @@ def configure():
 
 
 def configure_routing():
+    if "CatPrez" in ENABLED_PREZS:
+        app.include_router(catprez_router.router)
     if "VocPrez" in ENABLED_PREZS:
         app.include_router(vocprez_router.router)
     if "SpacePrez" in ENABLED_PREZS:
@@ -122,6 +124,7 @@ async def app_startup():
             connected_to_prez_flavour = False
             while not connected_to_prez_flavour:
                 try:
+                    print(f"Trying endpoint {prez2endpoint[prez]}")
                     response = httpx.head(prez2endpoint[prez])
                     response.raise_for_status()
                     if response.reason_phrase == "OK":
@@ -137,7 +140,10 @@ async def app_startup():
                             query_for_profiles, prez
                         )
                         if query_success and len(profiles_g) > 0:
-                            print(f"Profiles found in Fuseki for {prez}, caching them")
+                            print(f"Profiles found in data store for {prez}, caching them")
+                            if prez == "CatPrez":
+                                get_general_profiles(DCAT.Dataset)
+                                get_general_profiles(DCAT.Resource)
                             if prez == "SpacePrez":
                                 get_general_profiles(DCAT.Dataset)
                                 get_general_profiles(GEO.FeatureCollection)
@@ -146,7 +152,7 @@ async def app_startup():
                                 pass
                         else:
                             print(
-                                f"No profiles found in Fuseki for {prez}, continuing with Prez startup"
+                                f"No profiles found in data store for {prez}, continuing with startup"
                             )
                         connected_to_prez_flavour = True
                     else:
@@ -173,7 +179,6 @@ async def purge_cache():
     ]
     # All objects cleared
     for object in objects:
-        print(object)
         object.cache_clear()
 
     from async_lru import _cache_clear
@@ -250,7 +255,9 @@ async def object_page(request: Request):
 async def index(request: Request):
     """Displays the home page of Prez"""
     if len(ENABLED_PREZS) == 1:
-        if ENABLED_PREZS[0] == "VocPrez":
+        if ENABLED_PREZS[0] == "CatPrez":
+            return await catprez_router.home(request)
+        elif ENABLED_PREZS[0] == "VocPrez":
             return await vocprez_router.home(request)
         elif ENABLED_PREZS[0] == "SpacePrez":
             return await spaceprez_router.spaceprez_home_endpoint(request)

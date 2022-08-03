@@ -1,0 +1,74 @@
+{% extends "_page.html" %}
+{% from "_macros.html" import render_row, render_concept_list with context %}
+{% set prezs = "ENABLED_PREZS" | get_config %}
+{% set has_alt = true %}
+
+{% if prezs | length == 1 %}
+    {% set breadcrumbs = [
+        {"label": "Datasets", "url": url_for("schemes_endpoint")},
+        {"label": concept.scheme.title, "url": url_for("scheme_endpoint", scheme_id=concept.scheme.id)},
+        {"label": concept.title, "url": url_for("concept_endpoint", scheme_id=concept.scheme.id, concept_id=concept.id)}
+    ] %}
+    {% set main_active_page = "datasets" %}
+{% else %}
+    {% set breadcrumbs = [
+        {"label": "CatPrez", "url": url_for("catprez_home_endpoint")},
+        {"label": "Datasets", "url": url_for("schemes_endpoint")},
+        {"label": concept.scheme.title, "url": url_for("scheme_endpoint", scheme_id=concept.scheme.id)},
+        {"label": concept.title, "url": url_for("concept_endpoint", scheme_id=concept.scheme.id, concept_id=concept.id)}
+    ] %}
+{% endif %}
+
+{% set active_prez = "CatPrez" %}
+{% set sub_active_page = "datasets" %}
+
+{% block content %}
+<div id="content-col-main">
+    <h1>
+        {% if concept.title is not none %}
+            {{ concept.title }}
+        {% else %}
+            Concept title
+        {% endif %}
+    </h1>
+    <p>Instance URI: <a href="{{ uri }}">{{ concept.uri }}</a> <small><a href="{{ concept.uri }}" target="_blank"><i class="far fa-external-link"></i></a></small></p>
+    <p>Within scheme: <a href="{{ url_for('scheme_endpoint', scheme_id=concept.scheme.id) }}">{{ concept.scheme.title }}</a></p>
+    {% if concept.description is not none %}
+        <div>
+            <p>{{ concept.description }}</p>
+        </div>
+    {% endif %}
+    <div class="table-wrapper">
+        <table class="props-table">
+            <tbody>
+                {% for prop in concept.properties %}
+                    {{ render_row(prop) }}
+                {% endfor %}
+                {% if concept.broader %}
+                    <tr>
+                        <th><a href="http://www.w3.org/2004/02/skos/core#broader" target="_blank">Broader</a></th>
+                        <td>
+                            {% for broader in concept.broader %}
+                                {{ render_concept_list(broader) }}
+                            {% endfor %}
+                        </td>
+                    </tr>
+                {% endif %}
+                {% if concept.narrower %}
+                    <tr>
+                        <th><a href="http://www.w3.org/2004/02/skos/core#narrower" target="_blank">Narrower</a></th>
+                        <td>
+                            {% for narrower in concept.narrower %}
+                                {{ render_concept_list(narrower) }}
+                            {% endfor %}
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<div id="content-col-sidebar">
+    {% include "alt_link.html" %}
+</div>
+{% endblock %}

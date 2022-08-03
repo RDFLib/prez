@@ -12,7 +12,9 @@ from prez.renderers import ProfilesRenderer
 @alru_cache(maxsize=20)
 async def profiles_func(request: Request, prez: Optional[str] = None):
     profiles_filenames = ["profiles.prez_profiles"]
-    if prez == "VocPrez":
+    if prez == "CatPrez":
+        profiles_filenames.append("profiles.catprez_profiles")
+    elif prez == "VocPrez":
         profiles_filenames.append("profiles.vocprez_profiles")
     elif prez == "SpacePrez":
         profiles_filenames.append("profiles.spaceprez_profiles")

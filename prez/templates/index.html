@@ -11,7 +11,9 @@
         {% for prez in prezs %}
             <div class="card">
                 <h3><a href="{{ url_for(prez | lower + '_home_endpoint') }}">{{ prez }}</a></h3>
-                {% if prez == "VocPrez" %}
+                {% if prez == "CatPrez" %}
+                    <p>CatPrez presents Data Catalog Vocabulary (DCAT) catalogue information in RDF, in various formats.</p>
+                {% elif prez == "VocPrez" %}
                     <p>VocPrez presents Simple Knowledge Organization System (SKOS)-formulated RDF vocabularies in various formats.</p>
                 {% elif prez == "SpacePrez" %}
                     <p>SpacePrez presents GeoSPARQL spatial features in various formats. This API conforms to the <a href="http://docs.opengeospatial.org/is/17-069r3/17-069r3.html" target="_blank" rel="noopener noreferrer">Open Geospatial Consortium (OGC) API</a> specification.
