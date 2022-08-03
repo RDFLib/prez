@@ -173,7 +173,7 @@ def test_dataset_oai_geojson(sp_test_client, a_dataset_link):
 
 def test_dataset_default_turtle(sp_test_client, a_dataset_link):
     r2 = sp_test_client.get(f"{a_dataset_link}?_mediatype=text/turtle")
-    assert f"a dcat:Dataset ;" in r2.text
+    assert f"a <http://www.w3.org/ns/dcat#Dataset> ;" in r2.text
 
 
 def test_dataset_alt_html(sp_test_client, a_dataset_link):

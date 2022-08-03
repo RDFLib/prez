@@ -45,6 +45,7 @@ class SpacePrezDataset(PrezModel):
 
         r = self.graph.query(
             f"""
+            PREFIX dcat: <{DCAT}>
             PREFIX dcterms: <{DCTERMS}>
             PREFIX rdfs: <{RDFS}>
             PREFIX skos: <{SKOS}>
