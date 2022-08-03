@@ -50,14 +50,14 @@ class SparqlServer(BaseHTTPRequestHandler):
     @lru_cache
     def load_vocprez_graph(self):
         g = Graph()
-        for f in Path(Path(__file__).parent / "data" / "vocprez").glob("*.ttl"):
+        for f in list(Path(Path(__file__).parent / "data" / "vocprez").glob("*.ttl")):
             g.parse(f)
         return g
 
     @lru_cache
     def load_spaceprez_graph(self):
         g = Graph()
-        for f in Path(Path(__file__).parent / "data" / "spaceprez").glob("*.ttl"):
+        for f in list(Path(Path(__file__).parent / "data" / "spaceprez").glob("*.ttl")):
             g.parse(f)
         return g
 

@@ -174,7 +174,6 @@ async def purge_cache():
     ]
     # All objects cleared
     for object in objects:
-        print(object)
         object.cache_clear()
 
     from async_lru import _cache_clear

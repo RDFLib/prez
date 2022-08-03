@@ -440,7 +440,7 @@ async def list_features(
                 ?f skos:prefLabel ?prefLabel .
                 FILTER(lang(?prefLabel) = "" || lang(?prefLabel) = "en" || lang(?prefLabel) = "en-AU")
             }}
-            BIND(COALESCE(?label, ?dcTitle, ?name, ?prefLabel, CONCAT("Feature "), ?id) AS ?title)
+            BIND(COALESCE(?label, ?dcTitle, ?name, ?prefLabel, CONCAT("Feature ", STR(?id))) AS ?title)
             {filter_query}
         }}{f" LIMIT {per_page} OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
     """
