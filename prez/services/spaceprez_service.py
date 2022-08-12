@@ -483,15 +483,15 @@ def get_object_uri_and_classes(
                 PREFIX xsd: <{XSD}>
 
                 SELECT ?f ?fc ?d ?class {{
-                    OPTIONAL {{ ?d dcterms:identifier "{dataset_id}"^^xsd:token ;
-                            a dcat:Dataset . }}
-                    OPTIONAL {{ ?fc dcterms:identifier "{collection_id}"^^xsd:token ;
+                    ?d dcterms:identifier "{dataset_id}"^^xsd:token ;
+                            a dcat:Dataset .
+                    {f'''?fc dcterms:identifier "{collection_id}"^^xsd:token ;
                             a geo:FeatureCollection .
-                        ?d rdfs:member ?fc . }}
-                    OPTIONAL {{ ?f dcterms:identifier "{feature_id}"^^xsd:token ;
+                        ?d rdfs:member ?fc .''' if collection_id else ""}
+                    {f'''?f dcterms:identifier "{feature_id}"^^xsd:token ;
                             a geo:Feature ;
                             a ?class .
-                        ?fc rdfs:member ?f . }}
+                        ?fc rdfs:member ?f .''' if feature_id else ""}
                 }} """,
             "SpacePrez",
         )
