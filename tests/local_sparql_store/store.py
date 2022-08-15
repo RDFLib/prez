@@ -6,6 +6,42 @@ import argparse
 from rdflib import Graph
 
 
+KEEP_RUNNING = True
+
+
+def keep_running():
+    return KEEP_RUNNING
+
+
+def load_catprez_graph():
+    print("loading CatPrez graph")
+    g = Graph()
+    for f in Path("/Users/nick/Work/idn/catalogue-data/data").rglob("*.ttl"):
+        g.parse(f)
+    return g
+
+
+def load_spaceprez_graph():
+    print("loading SpacePrez graph")
+    g = Graph()
+    for f in Path(Path(__file__).parent / "data" / "spaceprez").glob("*.ttl"):
+        g.parse(f)
+    return g
+
+
+def load_vocprez_graph():
+        print("loading VocPrez graph")
+        g = Graph()
+        for f in Path(Path(__file__).parent / "data" / "vocprez").glob("*.ttl"):
+            g.parse(f)
+        return g
+
+
+catprez_graph = load_catprez_graph()
+vocprez_graph = load_vocprez_graph()
+spaceprez_graph = load_spaceprez_graph()
+
+
 class SparqlServer(BaseHTTPRequestHandler):
     """A small SPARQL Protocol server for Prez testing.
 
@@ -42,34 +78,7 @@ class SparqlServer(BaseHTTPRequestHandler):
     """
 
     def __init__(self, *args):
-        self.catprez_graph = self.load_catprez_graph()
-        self.vocprez_graph = self.load_vocprez_graph()
-        self.spaceprez_graph = self.load_spaceprez_graph()
-
         BaseHTTPRequestHandler.__init__(self, *args)
-
-    @lru_cache
-    def load_catprez_graph(self):
-        g = Graph()
-        for f in Path(Path(__file__).parent / "data" / "catprez").glob("*.ttl"):
-            g.parse(f)
-        return g
-
-    @lru_cache
-    def load_spaceprez_graph(self):
-        print("loading SpacePrez graph")
-        g = Graph()
-        for f in Path(Path(__file__).parent / "data" / "spaceprez").glob("*.ttl"):
-            g.parse(f)
-        return g
-
-    @lru_cache
-    def load_vocprez_graph(self):
-        print("loading VocPrez graph")
-        g = Graph()
-        for f in Path(Path(__file__).parent / "data" / "vocprez").glob("*.ttl"):
-            g.parse(f)
-        return g
 
     def do_GET(self):
         status, content_type, content = self.validate_path()
@@ -140,11 +149,11 @@ class SparqlServer(BaseHTTPRequestHandler):
         print(f"query: {query}")
         try:
             if "catprez" in self.path:
-                result = self.catprez_graph.query(query)
+                result = catprez_graph.query(query)
             elif "vocprez" in self.path:
-                result = self.vocprez_graph.query(query)
+                result = vocprez_graph.query(query)
             else:  # "spaceprez" in self.path:
-                result = self.spaceprez_graph.query(query)
+                result = spaceprez_graph.query(query)
 
             if "CONSTRUCT" in query or "DESCRIBE" in query:
                 content_type = "text/turtle"
@@ -177,13 +186,13 @@ if __name__ == "__main__":
                         help='Optionally a port to run on')
     args = parser.parse_args()
 
-    port = int(args.port)
-
-    srv = HTTPServer((args.server, port), SparqlServer)
+    srv = HTTPServer((args.server, int(args.port)), SparqlServer)
 
     print(f"Local SPARQL server started on port {args.port}")
     print("Configured endpoints are:")
-    print(f"- http://{args.server}:{port}/catprez")
-    print(f"- http://{args.server}:{port}/spaceprez")
-    print(f"- http://{args.server}:{port}/vocprez")
-    srv.serve_forever()
+    print(f"- http://{args.server}:{args.port}/catprez")
+    print(f"- http://{args.server}:{args.port}/spaceprez")
+    print(f"- http://{args.server}:{args.port}/vocprez")
+
+    while keep_running():
+        srv.handle_request()

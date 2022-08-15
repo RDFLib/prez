@@ -5,15 +5,20 @@ from connegp import MEDIATYPE_NAMES
 
 from prez.config import *
 from prez.renderers import Renderer
-from prez.models.catprez import CatPrezDataset
+from prez.models.catprez import CatPrezResource
+from prez.services.catprez_service import get_resource_uri
 from prez.utils import templates
 
 
-class CatPrezDatasetRenderer(Renderer):
+class CatPrezResourceRenderer(Renderer):
     def __init__(
         self,
         request: object,
     ) -> None:
+        self.resource_id, self.resource_uri = get_resource_uri(
+            request.path_params.get("resource_id"),
+            request.query_params.get("uri"),
+        )
         super().__init__(
             request,
             PREZ.CatPrezHome,
@@ -21,8 +26,8 @@ class CatPrezDatasetRenderer(Renderer):
             PREZ.CatPrezHome,
         )
 
-    def set_dataset(self, dataset: CatPrezDataset) -> None:
-        self.dataset = dataset
+    def set_resource(self, resource: CatPrezResource) -> None:
+        self.resource = resource
 
     def _render_dcat_html(
         self, template_context: Union[Dict, None]
@@ -30,16 +35,17 @@ class CatPrezDatasetRenderer(Renderer):
         """Renders the HTML representation of the DCAT profile for a dataset"""
         _template_context = {
             "request": self.request,
-            "dataset": self.dataset.to_dict(),
+            "resource": self.resource.to_dict(),
             "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
             "profiles": self.profile_details.available_profiles_dict,
             "default_profile": self.profile_details.default_profile,
             "mediatype_names": MEDIATYPE_NAMES,
+            "catalog": {"title": "XXX Catalogue", "id": "xxx"}
         }
         if template_context is not None:
             _template_context.update(template_context)
         return templates.TemplateResponse(
-            "catprez/catprez_home.html",
+            "catprez/catprez_resource.html",
             context=_template_context,
             headers=self.headers,
         )
@@ -50,7 +56,7 @@ class CatPrezDatasetRenderer(Renderer):
         g.bind("dcat", DCAT)
         g.bind("dcterms", DCTERMS)
         ds = URIRef(self.dataset.uri)
-        g.add((ds, RDF.type, DCAT.Dataset))
+        g.add((ds, RDF.type, DCAT.Resource))
         g.add((ds, DCTERMS.title, Literal(self.dataset.title)))
         g.add((ds, DCTERMS.description, Literal(self.dataset.description)))
 

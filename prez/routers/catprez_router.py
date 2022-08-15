@@ -80,14 +80,14 @@ async def catalogs_endpoint(
     return catalog_list_renderer.render()
 
 
-@router.get("/catalog/{catalog_id}", summary="Get ConceptScheme")
+@router.get("/catalog/{catalog_id}", summary="Get Catalog")
 async def catalog_endpoint(request: Request):
-    """Returns a CatPrez skos:ConceptScheme in the necessary profile & mediatype"""
+    """Returns a CatPrez dcat:Catalog in the necessary profile & mediatype"""
     return await catalog(request)
 
 
 async def catalog(request: Request):
-    """Returns a SpacePrez dcat:Dataset in the necessary profile & mediatype"""
+    """Returns a CatPrez dcat:Catalog in the necessary profile & mediatype"""
     catalog_renderer = CatPrezCatalogRenderer(request)
 
     if catalog_renderer.profile == "alt":
@@ -109,12 +109,42 @@ async def catalog(request: Request):
             id=catalog_renderer.catalog_id,
             uri=catalog_renderer.instance_uri,
         )
-        print("sparql_result")
-        print(sparql_result)
-        print("dataset")
-        print(dataset)
         catalog_renderer.set_catalog(dataset)
         return catalog_renderer.render()
+
+
+@router.get("/catalog/{catalog_id}/{resource_id}", summary="Get Resource")
+async def catalog_endpoint(request: Request):
+    """Returns a CatPrez dcat:Resource in the necessary profile & mediatype"""
+    return await resource(request)
+
+
+async def resource(request: Request):
+    """Returns a CatPrez dcat:Resource in the necessary profile & mediatype"""
+    resource_renderer = CatPrezResourceRenderer(request)
+
+    if resource_renderer.profile == "alt":
+        alt_profiles_graph = await build_alt_graph(
+            URIRef(resource_renderer.instance_uri),
+            resource_renderer.profile_details.profiles_formats,
+            resource_renderer.profile_details.available_profiles_dict,
+        )
+        return resource_renderer.render(alt_profiles_graph=alt_profiles_graph)
+    else:
+        sparql_result = await get_resource_construct(
+            resource_id=resource_renderer.resource_id,
+            resource_uri=resource_renderer.resource_uri,
+        )
+
+        if len(sparql_result) == 0:
+            raise HTTPException(status_code=404, detail="Not Found")
+        resource = CatPrezResource(
+            sparql_result,
+            id=resource_renderer.resource_id,
+            uri=resource_renderer.instance_uri,
+        )
+        resource_renderer.set_resource(resource)
+        return resource_renderer.render()
 
 
 @router.get(
