@@ -15,7 +15,7 @@ router = APIRouter(tags=["CatPrez"] if len(ENABLED_PREZS) > 1 else [])
 
 async def home(request: Request):
     """Returns the CatPrez home page in the necessary profile & mediatype"""
-    home_renderer = CatPrezDatasetRenderer(request)
+    home_renderer = CatPrezResourceRenderer(request)
     if home_renderer.profile == "alt":
         alt_profiles_graph = await build_alt_graph(
             PREZ.CatPrezHome,
@@ -23,9 +23,9 @@ async def home(request: Request):
             home_renderer.profile_details.available_profiles_dict,
         )
         return home_renderer.render(alt_profiles_graph=alt_profiles_graph)
-    sparql_result = await get_catalog_construct("catprez")
-    dataset = CatPrezDataset(sparql_result)
-    home_renderer.set_dataset(dataset)
+    sparql_result = await get_catprez_home_construct()
+    resource = CatPrezResource(sparql_result, id="catprez")
+    home_renderer.set_resource(resource)
     return home_renderer.render()
 
 

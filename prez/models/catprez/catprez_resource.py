@@ -7,16 +7,18 @@ from prez.models import PrezModel
 class CatPrezResource(PrezModel):
     # class attributes for property grouping & order
     main_props = [
-        str(DCTERMS.identifier),
         str(DCTERMS.creator),
         str(DCTERMS.publisher),
         str(DCTERMS.created),
         str(DCTERMS.modified),
-        str(RDF.type),
     ]
     hidden_props = [
+        str(RDF.type),
+        str(DCTERMS.identifier),
+        str(DCTERMS.title),
         str(DCTERMS.description),
         str(RDFS.label),
+        str(DCTERMS.hasPart),
     ]
 
     def __init__(

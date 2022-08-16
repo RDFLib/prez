@@ -85,9 +85,11 @@ def get_resource_uri(
             PREFIX dcterms: <{DCTERMS}>
             PREFIX xsd: <{XSD}>
             SELECT ?uri ?id
-            {{ <{uri}> dcterms:identifier ?id^^xsd:token .
-            OPTIONAL {{ }}
-            }} """,
+            WHERE {{ 
+                <{uri}> dcterms:identifier ?id^^xsd:token .
+                BIND (<{uri}> AS ?uri)
+            }}
+            """,
             "CatPrez",
         )
         if r[0]:
@@ -98,15 +100,70 @@ def get_resource_uri(
             PREFIX dcterms: <{DCTERMS}>
             PREFIX xsd: <{XSD}>
             PREFIX skos: <{SKOS}>
-            SELECT ?uri ?id ?concept
-            {{ ?uri dcterms:identifier "{id}"^^xsd:token ;
-                    a dcat:Resource
-                    }} """,
+            SELECT ?uri ?id
+            WHERE {{ 
+                ?uri dcterms:identifier "{id}"^^xsd:token .
+                BIND ("{id}" AS ?id)
+            }}
+            """,
             "CatPrez",
         )
         if r[0]:
             uri = r[1][0].get("uri")["value"]
     return id, uri
+
+
+async def get_catprez_home_construct():
+    q = """
+        PREFIX dcat: <http://www.w3.org/ns/dcat#>
+        PREFIX dcterms: <http://purl.org/dc/terms/>
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+        
+        CONSTRUCT {
+            ?c a dcat:Dataset ;
+                dcterms:identifier "catprez"^^xsd:token ;
+                dcterms:title ?title ;
+                dcterms:description ?desc ;
+                dcterms:hasPart ?part ;
+            .
+            ?part
+                dcterms:identifier ?part_id ;
+                rdfs:label ?part_title ;
+            .
+            ?p
+                rdfs:label ?p_label ;
+                rdfs:comment ?p_comment ;
+            .
+        }
+        WHERE {
+            ?c a dcat:Catalog ;
+                dcterms:identifier "catprez"^^xsd:token ;
+                dcterms:title ?title ;
+                dcterms:description ?desc ;
+            .
+          
+            ?part a dcat:Catalog ;
+                dcterms:identifier ?part_id ;
+                dcterms:title ?part_title ;
+            .
+          
+            VALUES ?p { dcterms:identifier dcterms:title dcterms:description dcterms:hasPart }
+            OPTIONAL {
+                ?p rdfs:label ?p_label .
+            } 
+            OPTIONAL {
+                ?p rdfs:comment ?p_comment .
+            }  
+          
+            FILTER (?part_id != "catprez"^^xsd:string )          
+        }
+        """
+    r = await sparql_construct(q, "CatPrez")
+    if r[0]:
+        return r[1]
+    else:
+        raise Exception(f"SPARQL query error code {r[1]['code']}: {r[1]['message']}")
 
 
 async def get_catalog_construct(catalog_id=None, catalog_uri=None):
@@ -200,18 +257,9 @@ async def get_resource_construct(resource_id=None, resource_uri=None):
             .
         }}
         WHERE {{
+            VALUES ?type {{ dcat:Resource dcat:Dataset }}
             {{
-                {{
-                    {s}
-                        a dcat:Resource ;
-                    .
-                }}
-                UNION
-                {{
-                    {s}
-                        a dcat:Dataset ;
-                    .
-                }}                
+                {s} a ?type .
             }}
             {{
                 {p}

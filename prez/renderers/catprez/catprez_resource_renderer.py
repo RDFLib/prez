@@ -33,6 +33,18 @@ class CatPrezResourceRenderer(Renderer):
         self, template_context: Union[Dict, None]
     ) -> templates.TemplateResponse:
         """Renders the HTML representation of the DCAT profile for a dataset"""
+        parts = []
+        for o in self.resource.graph.objects(None, DCTERMS.hasPart):
+            lbl = None
+            id = None
+            for p, o2 in self.resource.graph.predicate_objects(o):
+                if p == RDFS.label or p == DCTERMS.type:
+                    lbl = str(o2)
+                elif p == DCTERMS.identifier:
+                    id = str(o2)
+            if lbl is not None and id is not None:
+                parts.append((id, lbl))
+
         _template_context = {
             "request": self.request,
             "resource": self.resource.to_dict(),
@@ -40,7 +52,8 @@ class CatPrezResourceRenderer(Renderer):
             "profiles": self.profile_details.available_profiles_dict,
             "default_profile": self.profile_details.default_profile,
             "mediatype_names": MEDIATYPE_NAMES,
-            "catalog": {"title": "XXX Catalogue", "id": "xxx"}
+            "catalog": {"title": "XXX Catalogue", "id": "xxx"},
+            "parts": parts,
         }
         if template_context is not None:
             _template_context.update(template_context)
