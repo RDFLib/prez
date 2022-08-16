@@ -6,6 +6,7 @@ from prez.profiles.generate_profiles import (
     build_alt_graph,
 )
 from prez.renderers.catprez import *
+from prez.renderers.catprez.catprez_conformance_renderer import CatPrezConformanceRenderer
 from prez.services.catprez_service import *
 from prez.utils import templates
 from prez.view_funcs import profiles_func
@@ -114,7 +115,7 @@ async def catalog(request: Request):
 
 
 @router.get("/catalog/{catalog_id}/{resource_id}", summary="Get Resource")
-async def catalog_endpoint(request: Request):
+async def resource_endpoint(request: Request):
     """Returns a CatPrez dcat:Resource in the necessary profile & mediatype"""
     return await resource(request)
 
@@ -155,3 +156,22 @@ async def resource(request: Request):
 async def catprez_profiles(request: Request):
     """Returns a JSON list of the profiles accepted by CatPrez"""
     return await profiles_func(request, "CatPrez")
+
+
+@router.get("/conformance", summary="Conformance")
+async def conformance(request: Request):
+    """Returns the SpacePrez conformance page in the necessary profile & mediatype"""
+    conformance_renderer = CatPrezConformanceRenderer(request)
+    return conformance_renderer.render()
+
+
+@router.get(
+    "/catprez-about",
+    summary="CatPrez About",
+    include_in_schema=len(ENABLED_PREZS) > 1,
+)
+async def catprez_about(request: Request):
+    """Returns the SpacePrez about page in the necessary profile & mediatype"""
+    return templates.TemplateResponse(
+        "catprez/catprez_about.html", {"request": request}
+    )

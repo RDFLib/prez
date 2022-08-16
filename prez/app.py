@@ -490,6 +490,8 @@ async def about(request: Request):
             return await vocprez_router.about(request)
         elif ENABLED_PREZS[0] == "SpacePrez":
             return await spaceprez_router.spaceprez_about(request)
+        elif ENABLED_PREZS[0] == "CatPrez":
+            return await catprez_router.catprez_about(request)
     else:
         template_context = {"request": request}
         return templates.TemplateResponse("about.html", context=template_context)

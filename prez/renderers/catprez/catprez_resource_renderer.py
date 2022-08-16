@@ -52,7 +52,7 @@ class CatPrezResourceRenderer(Renderer):
             "profiles": self.profile_details.available_profiles_dict,
             "default_profile": self.profile_details.default_profile,
             "mediatype_names": MEDIATYPE_NAMES,
-            "catalog": {"title": "XXX Catalogue", "id": "xxx"},
+            "catalog": {"title": "CatPrez System Catalogue", "id": "catprez"},
             "parts": parts,
         }
         if template_context is not None:

@@ -5,10 +5,10 @@
 
 {% if prezs | length == 1 %}
     {% set breadcrumbs = [
-        {"label": "Catabs", "url": url_for("catalogs_endpoint")},
+        {"label": "Catalogues", "url": url_for("catalogs_endpoint")},
         {"label": catalog.title, "url": url_for("catalog_endpoint", catalog_id=catalog.id)}
     ] %}
-    {% set main_active_page = "datasets" %}
+    {% set main_active_page = "catalogs" %}
 {% else %}
     {% set breadcrumbs = [
         {"label": "CatPrez", "url": url_for("catprez_home_endpoint")},
@@ -53,7 +53,11 @@
                     <td>
                         <ul>
                         {% for part in parts %}
-                            <li><a href="/catalog/{{ catalog.id }}/{{ part[0] }}">{{ part[1] }}</a></li>
+                            {% if catalog.id|lower == 'catprez' %}
+                                <li><a href="/catalog/{{ part[0] }}">{{ part[1] }}</a></li>
+                            {% else %}
+                                <li><a href="/catalog/{{ catalog.id }}/{{ part[0] }}">{{ part[1] }}</a></li>
+                            {% endif %}
                         {% endfor %}
                         </ul>
                     </td>
