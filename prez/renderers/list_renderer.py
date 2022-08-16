@@ -42,6 +42,7 @@ class ListRenderer(Renderer, metaclass=ABCMeta):
                 "current": page,
                 "next": page + 1 if page < last_page else last_page,
                 "last": last_page,
+                "member_count": self.member_count,
             }
 
     # pagination

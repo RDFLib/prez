@@ -69,7 +69,6 @@ def an_fc_link(sp_test_client, a_dataset_link):
     r = sp_test_client.get(
         f"{a_dataset_link}/collections?_profile=mem&_mediatype=application/json"
     )
-    print(r.json())
     return r.json()["members"][0]["link"]
 
 
@@ -82,6 +81,31 @@ def a_feature_link_and_id(sp_test_client, an_fc_link):
     feature_id = r.json()["members"][0]["id"]
 
     return feature_link, feature_id
+
+
+@pytest.fixture(scope="module")
+def a_dataset_uri(sp_test_client):
+    # get uri for first dataset
+    r = sp_test_client.get("/datasets?_profile=mem&_mediatype=application/json")
+    return r.json()["members"][0]["uri"]
+
+
+@pytest.fixture(scope="module")
+def an_fc_uri(sp_test_client, a_dataset_link):
+    # get uri for a dataset's collections
+    r = sp_test_client.get(
+        f"{a_dataset_link}/collections?_profile=mem&_mediatype=application/json"
+    )
+    return r.json()["members"][0]["uri"]
+
+
+@pytest.fixture(scope="module")
+def a_feature_uri(sp_test_client, an_fc_link):
+    # get uri for a feature
+    r = sp_test_client.get(
+        f"{an_fc_link}/items?_profile=mem&_mediatype=application/json"
+    )
+    return r.json()["members"][0]["uri"]
 
 
 def test_home_default_default(sp_test_client):
@@ -139,9 +163,17 @@ def test_dataset_default_default(sp_test_client, a_dataset_link):
     )
 
 
+def test_dataset_oai_geojson(sp_test_client, a_dataset_link):
+    ds_iri = f"http://testserver{a_dataset_link}?_profile=oai&_mediatype=application/geo+json"
+    r = sp_test_client.get(ds_iri)
+    j = r.json()
+    assert j.get("title") is not None
+    assert j.get("geometry") is not None
+
+
 def test_dataset_default_turtle(sp_test_client, a_dataset_link):
     r2 = sp_test_client.get(f"{a_dataset_link}?_mediatype=text/turtle")
-    assert f"a dcat:Dataset ;" in r2.text
+    assert f"a <http://www.w3.org/ns/dcat#Dataset> ;" in r2.text
 
 
 def test_dataset_alt_html(sp_test_client, a_dataset_link):
@@ -225,6 +257,28 @@ def test_feature_default_default(sp_test_client, a_feature_link_and_id):
     assert f' <p>Instance URI: <a href="http://testserver{feature_link}">' in r.text
 
 
+def test_feature_default_geojson(sp_test_client, a_feature_link_and_id):
+    feature_link, feature_id = a_feature_link_and_id
+
+    r = sp_test_client.get(f"{feature_link}?_mediatype=application/geo+json")
+    j = r.json()
+    assert j.get("geometry") is not None
+
+
+def test_feature_default_geojson_given_v_generated(sp_test_client):
+    # checks that the get GeoJSON function is trying to return given GeoJSON
+    # but, if not finding it, calculates it from WKT which must be present
+    r = sp_test_client.get(
+        "http://testserver/dataset/geofabric/collections/catchments/items/cabbage-tree?_mediatype=application/geo+json"
+    )
+    assert len(r.json()["geometry"]["coordinates"][0]) == 16
+
+    r = sp_test_client.get(
+        "http://testserver/dataset/geofabric/collections/catchments/items/cabbage-tree-geojson?_mediatype=application/geo+json"
+    )
+    assert len(r.json()["geometry"]["coordinates"][0]) == 14
+
+
 def test_feature_default_turtle(sp_test_client, a_feature_link_and_id):
     feature_link, feature_id = a_feature_link_and_id
 
@@ -237,3 +291,18 @@ def test_feature_alt_default(sp_test_client, a_feature_link_and_id):
 
     r = sp_test_client.get(f"{feature_link}?_profile=alt")
     assert "<h1>Alternate Profiles</h1>" in r.text
+
+
+def test_object_endpoint_dataset(sp_test_client, a_dataset_uri):
+    r = sp_test_client.get(f"/object?uri={a_dataset_uri}")
+    assert f'<a href="{a_dataset_uri}"' in r.text
+
+
+def test_object_endpoint_feature_collection(sp_test_client, an_fc_uri):
+    r = sp_test_client.get(f"/object?uri={an_fc_uri}")
+    assert f'<a href="{an_fc_uri}"' in r.text
+
+
+def test_object_endpoint_feature(sp_test_client, a_feature_uri):
+    r = sp_test_client.get(f"/object?uri={a_feature_uri}")
+    assert f'<a href="{a_feature_uri}"' in r.text

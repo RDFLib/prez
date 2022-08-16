@@ -41,7 +41,7 @@ class SpacePrezFeatureRenderer(Renderer):
     def _render_oai_html(
         self, template_context: Union[Dict, None]
     ) -> templates.TemplateResponse:
-        """Renders the HTML representation of the OAI profile for a feature"""
+        """Renders the HTML representation of the OGC Features Core profile for a feature"""
         _template_context = {
             "request": self.request,
             "feature": self.feature.to_dict(),
@@ -61,7 +61,7 @@ class SpacePrezFeatureRenderer(Renderer):
         )
 
     def _render_oai_geojson(self) -> JSONResponse:
-        """Renders the GeoJSON representation of the OAI profile for a feature"""
+        """Renders the GeoJSON representation of the OGC Features Core profile for a Feature"""
 
         content = self.feature.to_geojson()
 
@@ -97,7 +97,7 @@ class SpacePrezFeatureRenderer(Renderer):
         )
 
     def _render_oai(self, template_context: Union[Dict, None]):
-        """Renders the OAI profile for a feature"""
+        """Renders the OGC Features Core profile for a feature"""
         if self.mediatype == "text/html":
             return self._render_oai_html(template_context)
         else:  # else return GeoJSON

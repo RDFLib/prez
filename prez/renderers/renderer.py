@@ -98,6 +98,7 @@ class Renderer(object, metaclass=ABCMeta):
 
         # remove labels from the graph
         query = f"""
+        PREFIX skos: <{SKOS}>
         CONSTRUCT {{
             <{str(item_uri)}> ?p ?o .
             ?o ?p2 ?o2 .

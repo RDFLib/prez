@@ -21,6 +21,7 @@ from prez.services.app_service import *
 from prez.services.spaceprez_service import list_datasets, list_collections
 from prez.utils import templates
 from prez.view_funcs import profiles_func
+from textwrap import dedent
 
 
 async def catch_400(request: Request, exc):
@@ -266,88 +267,146 @@ async def index(request: Request):
         return templates.TemplateResponse("index.html", context=template_context)
 
 
+def _get_sparql_service_description(request, format):
+    """Return an RDF description of PROMS' read only SPARQL endpoint in a requested format
+    :param rdf_fmt: 'turtle', 'n3', 'xml', 'json-ld'
+    :return: string of RDF in the requested format
+    """
+    ttl = """
+        @prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+        @prefix sd:     <http://www.w3.org/ns/sparql-service-description#> .
+        @prefix sdf:    <http://www.w3.org/ns/formats/> .
+        @prefix void:   <http://rdfs.org/ns/void#> .
+        @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+        <{0}>
+            a                       sd:Service ;
+            sd:endpoint             <{0}> ;
+            sd:supportedLanguage    sd:SPARQL11Query ; # yes, read only, sorry!
+            sd:resultFormat         sdf:SPARQL_Results_JSON ;  # yes, we only deliver JSON results, sorry!
+            sd:feature sd:DereferencesURIs ;
+            sd:defaultDataset [
+                a sd:Dataset ;
+                sd:defaultGraph [
+                    a sd:Graph ;
+                    void:triples "100"^^xsd:integer
+                ]
+            ]
+        .
+    """.format(request.url_for("sparql_get"))
+    if format == "text/turtle":
+        return dedent(ttl)
+    else:
+        return Graph().parse(data=ttl).serialize(format=format)
+
+
 @app.get("/sparql", summary="SPARQL Endpoint")
 async def sparql_get(request: Request, query: Optional[str] = None):
-    accepts = request.headers.get("accept")
-    if accepts is not None:
-        top_accept = accepts.split(",")[0].split(";")[0]
-        if top_accept == "text/html":
-            return templates.TemplateResponse("sparql.html", {"request": request})
+    accept = request.query_params.get("accept") if request.query_params.get("accept") is not None else request.query_params.get("Accept")
+    if accept is not None:
+        if " " in accept:
+            accept = accept.replace(" ", "+")
+    else:  # accept is None:
+        accepts = request.headers.get("accept")
+        if accepts is not None:
+            accept = accepts.split(",")[0].split(";")[0]
+
+    if accept == "text/html":
+        return templates.TemplateResponse("sparql.html", {"request": request})
+
+    # fallback - can't find an accept value
+    if accept is None:
+        accept = "application/sparql-results+json"
+
+    query = request.query_params.get("query")
+
+    if query is not None:
+        sparql_result = await sparql_endpoint_query_multiple(query, accept=accept)
+        if len(sparql_result[1]) > 0 and not ALLOW_PARTIAL_RESULTS:
+            error_list = "\n".join([
+                f"Error code {e['code']} in {e['prez']}: {e['message']}\n"
+                for e in sparql_result[1]
+            ])
+            Response(
+                content=f"SPARQL query error:\n{error_list}",
+                media_type="text/plain"
+            )
         else:
-            query = request.query_params.get("query")
-            if query is not None:
-                if "CONSTRUCT" in query or "DESCRIBE" in query:
-                    sparql_result = await sparql_endpoint_query_multiple(
-                        query, accept=top_accept
-                    )
-                    if len(sparql_result[1]) > 0 and not ALLOW_PARTIAL_RESULTS:
-                        error_list = [
-                            f"Error code {e['code']} in {e['prez']}: {e['message']}\n"
-                            for e in sparql_result[1]
-                        ]
-                        raise Exception(
-                            f"SPARQL query error:\n{[e for e in error_list]}"
-                        )
-                    else:
-                        return Response(content=sparql_result[0], media_type=top_accept)
-                else:
-                    sparql_result = await sparql_endpoint_query_multiple(query)
-                    if len(sparql_result[1]) > 0 and not ALLOW_PARTIAL_RESULTS:
-                        error_list = [
-                            f"Error code {e['code']} in {e['prez']}: {e['message']}\n"
-                            for e in sparql_result[1]
-                        ]
-                        raise Exception(
-                            f"SPARQL query error:\n{[e for e in error_list]}"
-                        )
-                    else:
-                        return JSONResponse(
-                            content=sparql_result[0],
-                            media_type="application/sparql-results+json",
-                        )
+            if accept in RDF_MEDIATYPES:
+                return Response(
+                    content=sparql_result[0],
+                    media_type=accept
+                )
+            elif accept in ["application/sparql-results+json", "application/json"]:
+                return JSONResponse(
+                    content=sparql_result[0],
+                    media_type="application/sparql-results+json",
+                )
             else:
-                return Response(content="SPARQL service description")
+                return Response(
+                    content=sparql_result[0],
+                    media_type=accept,
+                    headers={
+                        "content-disposition": "attachment; filename=result.xml"
+                    }
+                )
+    else:
+        return Response(content=_get_sparql_service_description(request, accept))
 
 
 @app.post("/sparql", summary="SPARQL Endpoint")
 async def sparql_post(request: Request):
-    content_type = request.headers.get("content-type")
-    accepts = request.headers.get("accept")
-    top_accept = accepts.split(",")[0].split(";")[0]
-    if content_type == "application/x-www-form-urlencoded":
+    accept = request.query_params.get("accept") if request.query_params.get("accept") is not None else request.query_params.get("Accept")
+    if accept is not None:
+        if " " in accept:
+            accept = accept.replace(" ", "+")
+    else:  # accept is None:
+        accepts = request.headers.get("accept")
+        if accepts is not None:
+            accept = accepts.split(",")[0].split(";")[0]
+
+    # fallback - can't find an accept value
+    if accept is None:
+        accept = "application/sparql-results+json"
+
+    if request.headers.get("content-type") == "application/x-www-form-urlencoded":
         formdata = await request.form()
         query = formdata.get("query")
     else:
         query_bytes = await request.body()
         query = query_bytes.decode()
+
     if query is not None:
-        if "CONSTRUCT" in query or "DESCRIBE" in query:
-            sparql_result = await sparql_endpoint_query_multiple(
-                query, accept=top_accept
+        sparql_result = await sparql_endpoint_query_multiple(query, accept=accept)
+        if len(sparql_result[1]) > 0 and not ALLOW_PARTIAL_RESULTS:
+            error_list = "\n".join([
+                f"Error code {e['code']} in {e['prez']}: {e['message']}\n"
+                for e in sparql_result[1]
+            ])
+            Response(
+                content=f"SPARQL query error:\n{error_list}",
+                media_type="text/plain"
             )
-            if len(sparql_result[1]) > 0 and not ALLOW_PARTIAL_RESULTS:
-                error_list = [
-                    f"Error code {e['code']} in {e['prez']}: {e['message']}\n"
-                    for e in sparql_result[1]
-                ]
-                raise Exception(f"SPARQL query error:\n{[e for e in error_list]}")
-            else:
-                return Response(content=sparql_result[0], media_type=top_accept)
         else:
-            sparql_result = await sparql_endpoint_query_multiple(query)
-            if len(sparql_result[1]) > 0 and not ALLOW_PARTIAL_RESULTS:
-                error_list = [
-                    f"Error code {e['code']} in {e['prez']}: {e['message']}\n"
-                    for e in sparql_result[1]
-                ]
-                raise Exception(f"SPARQL query error:\n{[e for e in error_list]}")
-            else:
+            if accept in RDF_MEDIATYPES:
+                return Response(
+                    content=sparql_result[0],
+                    media_type=accept
+                )
+            elif accept in ["application/sparql-results+json", "application/json"]:
                 return JSONResponse(
                     content=sparql_result[0],
                     media_type="application/sparql-results+json",
                 )
+            else:
+                return Response(
+                    content=sparql_result[0],
+                    media_type=accept,
+                    headers={
+                        "content-disposition": "attachment; filename=result.xml"
+                    }
+                )
     else:
-        return Response(content="SPARQL service description")
+        return Response(content=_get_sparql_service_description(request, accept))
 
 
 @app.get("/search", summary="Search page")
@@ -506,9 +565,7 @@ async def object(
         elif object_type == GEO.FeatureCollection:
             if "SpacePrez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
-            return await spaceprez_router.feature_collection(
-                request
-            )
+            return await spaceprez_router.feature_collection(request)
         elif object_type == GEO.Feature:
             if "SpacePrez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
