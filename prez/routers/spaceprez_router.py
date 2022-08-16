@@ -194,13 +194,13 @@ async def features_endpoint(
         return feature_list_renderer.render()
 
 
+@alru_cache(maxsize=20)
 @router.get("/dataset/{dataset_id}", summary="Get Dataset")
 async def dataset_endpoint(request: Request):
     """Returns a SpacePrez dcat:Dataset in the necessary profile & mediatype"""
     return await dataset(request)
 
 
-@alru_cache(maxsize=20)
 async def dataset(
     request: Request,
 ):
