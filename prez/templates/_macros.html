@@ -249,7 +249,7 @@
         {% endif %}
 
         {% for page in range(pages.current + 1, pages.current + n_pages_before_after) %}
-            {%  if page < pages.last %}
+            {%  if page <= pages.last %}
                 {% if per_page %}
                     <a href="{{ request.url | string | append_qsa({'page': page, 'per_page': per_page}) }}" class="btn paginate-btn">{{ page }}</a>
                 {% else %}
