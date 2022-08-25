@@ -1,5 +1,3 @@
-NOTICE: the open source community now maintains Prez at [RDFLib/Prez](https://github.com/RDFLib/Prez)
-
 # Prez
 Prez is a Linked Data API framework tool that delivers read-only access to Knowledge Graph data according to particular domain _profiles_.
 
