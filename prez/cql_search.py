@@ -164,16 +164,14 @@ class CQLSearch(object):
 
         if self.datasets != "":
             self.dataset_query = f"""
-                BIND(STR(?d_id) AS ?d_id_str)
-                VALUES ?d_id_str {{{" ".join([f'"{d.strip()}"' for d in self.datasets.split(',')])}}}
+                VALUES ?d_id {{{" ".join([f'"{d.strip()}"^^xsd:token' for d in self.datasets.split(',')])}}}
             """
 
         self.collection_query = ""
 
         if self.collections != "":
             self.collection_query = f"""
-                BIND(STR(?coll_id) AS ?coll_id_str)
-                VALUES ?coll_id_str {{{" ".join([f'"{coll.strip()}"' for coll in self.collections.split(',')])}}}
+                VALUES ?coll_id {{{" ".join([f'"{coll.strip()}"^^xsd:token' for coll in self.collections.split(',')])}}}
             """
 
         if self.filter != "":
