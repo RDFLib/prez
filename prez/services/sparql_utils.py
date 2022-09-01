@@ -81,7 +81,11 @@ construct_all_bnode_prop_obj_info = """
 def sparql_query_non_async(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
     """Executes a SPARQL SELECT query for a single SPARQL endpoint"""
     creds = {"endpoint": "", "username": "", "password": ""}
-    if prez == "VocPrez":
+    if prez == "CatPrez":
+        creds["endpoint"] = CATPREZ_SPARQL_ENDPOINT
+        creds["username"] = CATPREZ_SPARQL_USERNAME
+        creds["password"] = CATPREZ_SPARQL_PASSWORD
+    elif prez == "VocPrez":
         creds["endpoint"] = VOCPREZ_SPARQL_ENDPOINT
         creds["username"] = VOCPREZ_SPARQL_USERNAME
         creds["password"] = VOCPREZ_SPARQL_PASSWORD
@@ -117,7 +121,11 @@ def sparql_query_non_async(query: str, prez: str) -> Tuple[bool, Union[List, Dic
 async def sparql_query(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
     """Executes a SPARQL SELECT query for a single SPARQL endpoint"""
     creds = {"endpoint": "", "username": "", "password": ""}
-    if prez == "VocPrez":
+    if prez == "CatPrez":
+        creds["endpoint"] = CATPREZ_SPARQL_ENDPOINT
+        creds["username"] = CATPREZ_SPARQL_USERNAME
+        creds["password"] = CATPREZ_SPARQL_PASSWORD
+    elif prez == "VocPrez":
         creds["endpoint"] = VOCPREZ_SPARQL_ENDPOINT
         creds["username"] = VOCPREZ_SPARQL_USERNAME
         creds["password"] = VOCPREZ_SPARQL_PASSWORD
@@ -127,7 +135,7 @@ async def sparql_query(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
         creds["password"] = SPACEPREZ_SPARQL_PASSWORD
     else:
         raise Exception(
-            "Invalid prez specified in sparql_query call. Available options are: 'VocPrez', 'SpacePrez'."
+            "Invalid prez specified in sparql_query call. Available options are: 'CatPrez', 'VocPrez', 'SpacePrez'."
         )
     async with AsyncClient() as client:
         response: httpxResponse = await client.post(
@@ -197,7 +205,11 @@ async def sparql_query_multiple(
 async def sparql_construct(query: str, prez: str):
     """Returns an rdflib Graph from a CONSTRUCT query for a single SPARQL endpoint"""
     creds = {"endpoint": "", "username": "", "password": ""}
-    if prez == "VocPrez":
+    if prez == "CatPrez":
+        creds["endpoint"] = CATPREZ_SPARQL_ENDPOINT
+        creds["username"] = CATPREZ_SPARQL_USERNAME
+        creds["password"] = CATPREZ_SPARQL_PASSWORD
+    elif prez == "VocPrez":
         creds["endpoint"] = VOCPREZ_SPARQL_ENDPOINT
         creds["username"] = VOCPREZ_SPARQL_USERNAME
         creds["password"] = VOCPREZ_SPARQL_PASSWORD
@@ -207,7 +219,7 @@ async def sparql_construct(query: str, prez: str):
         creds["password"] = SPACEPREZ_SPARQL_PASSWORD
     else:
         raise Exception(
-            "Invalid prez specified in sparql_query call. Available options are: 'VocPrez', 'SpacePrez'."
+            "Invalid prez specified in sparql_query call. Available options are: 'CatPrez', 'VocPrez', 'SpacePrez'."
         )
     async with AsyncClient() as client:
         response: httpxResponse = await client.post(
@@ -233,7 +245,11 @@ async def sparql_construct(query: str, prez: str):
 def sparql_construct_non_async(query: str, prez: str):
     """Returns an rdflib Graph from a CONSTRUCT query for a single SPARQL endpoint"""
     creds = {"endpoint": "", "username": "", "password": ""}
-    if prez == "VocPrez":
+    if prez == "CatPrez":
+        creds["endpoint"] = CATPREZ_SPARQL_ENDPOINT
+        creds["username"] = CATPREZ_SPARQL_USERNAME
+        creds["password"] = CATPREZ_SPARQL_PASSWORD
+    elif prez == "VocPrez":
         creds["endpoint"] = VOCPREZ_SPARQL_ENDPOINT
         creds["username"] = VOCPREZ_SPARQL_USERNAME
         creds["password"] = VOCPREZ_SPARQL_PASSWORD
@@ -243,7 +259,7 @@ def sparql_construct_non_async(query: str, prez: str):
         creds["password"] = SPACEPREZ_SPARQL_PASSWORD
     else:
         raise Exception(
-            "Invalid prez specified in sparql_query call. Available options are: 'VocPrez', 'SpacePrez'."
+            "Invalid prez specified in sparql_query call. Available options are: 'CatPrez', 'VocPrez', 'SpacePrez'."
         )
     with Client() as client:
         response: httpxResponse = client.post(

@@ -29,7 +29,7 @@ class PrezModel(object, metaclass=ABCMeta):
     # currently not being used
     def _sort_within_list(self, prop: Dict, prop_list: List[str]) -> int:
         """Ensures props are sorted in-order within class-specific property groups"""
-        if prop["uri"] in prop_list:
+        if prop.get("uri") in prop_list:
             return prop_list.index(prop["uri"])
         else:
             return len(prop_list)

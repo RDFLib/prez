@@ -1,0 +1,73 @@
+{% extends "_page.html" %}
+{% from "_macros.html" import render_row, render_concept_hierarchy with context %}
+{% set prezs = "ENABLED_PREZS" | get_config %}
+{% set has_alt = true %}
+
+{% if prezs | length == 1 %}
+    {% set breadcrumbs = [
+        {"label": "Catalogues", "url": url_for("catalogs_endpoint")},
+        {"label": catalog.title, "url": url_for("catalog_endpoint", catalog_id=catalog.id)}
+    ] %}
+    {% set main_active_page = "catalogs" %}
+{% else %}
+    {% set breadcrumbs = [
+        {"label": "CatPrez", "url": url_for("catprez_home_endpoint")},
+        {"label": "Catalogs", "url": url_for("catalogs_endpoint")},
+        {"label": catalog.title, "url": url_for("catalog_endpoint", catalog_id=catalog.id)}
+    ] %}
+{% endif %}
+
+{% set active_prez = "CatPrez" %}
+{% set sub_active_page = "catalogs" %}
+
+{% block content %}
+<div id="content-col-main">
+    <h1>
+        {% if catalog.title is not none %}
+            {{ catalog.title }}
+        {% else %}
+            Catalog title
+        {% endif %}
+    </h1>
+    <p>Instance URI: <a href="{{ uri }}">{{ catalog.uri }}</a> <small><a href="{{ catalog.uri }}" target="_blank"><i class="far fa-external-link"></i></a></small></p>
+    {% if catalog.description is not none %}
+        <div>
+            <p>{{ catalog.description }}</p>
+        </div>
+    {% endif %}
+    <div class="table-wrapper">
+        <table class="props-table">
+            <tbody>
+                {% for prop in catalog.properties %}
+                    {% if prop.value != "http://purl.org/dc/terms/hasPart" %}
+                        {{ render_row(prop) }}
+                    {% endif %}
+                {% endfor %}
+                {% if parts|length > 0 %}
+                <tr>
+                    <th>
+                        <a href="http://purl.org/dc/terms/hasPart" target="_blank" class="tooltip">Has Part
+                            <span class="tooltip-text">A related resource that is included either physically or logically in the described resource.</span>
+                        </a>
+                    </th>
+                    <td>
+                        <ul>
+                        {% for part in parts %}
+                            {% if catalog.id|lower == 'catprez' %}
+                                <li><a href="/catalog/{{ part[0] }}">{{ part[1] }}</a></li>
+                            {% else %}
+                                <li><a href="/catalog/{{ catalog.id }}/{{ part[0] }}">{{ part[1] }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+                        </ul>
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<div id="content-col-sidebar">
+    {% include "alt_link.html" %}
+</div>
+{% endblock %}

@@ -17,6 +17,10 @@ SYSTEM_URI = os.environ.get("SYSTEM_URI", "localhost")
 PREZ_TITLE = os.environ.get("PREZ_TITLE", "Default Prez")
 PREZ_DESC = os.environ.get("PREZ_DESC", "Prez default description")
 
+CATPREZ_TITLE = os.environ.get("CATPREZ_TITLE", "Default CatPrez")
+CATPREZ_DESC = os.environ.get("CATPREZ_DESC", "CatPrez default description")
+CATPREZ_DATA_URI = os.environ.get("CATPREZ_DATA_URI", "http://exampledata.org")
+
 VOCPREZ_TITLE = os.environ.get("VOCPREZ_TITLE", "Default VocPrez")
 VOCPREZ_DESC = os.environ.get("VOCPREZ_DESC", "VocPrez default description")
 VOCPREZ_DATA_URI = os.environ.get("VOCPREZ_DATA_URI", "http://exampledata.org")
@@ -26,6 +30,10 @@ SPACEPREZ_DESC = os.environ.get("SPACEPREZ_DESC", "SpacePrez default description
 SPACEPREZ_DATA_URI = os.environ.get("SPACEPREZ_DATA_URI", "http://exampledata.org")
 
 # SPARQL credentials
+CATPREZ_SPARQL_ENDPOINT = os.environ.get("CATPREZ_SPARQL_ENDPOINT", "")
+CATPREZ_SPARQL_USERNAME = os.environ.get("CATPREZ_SPARQL_USERNAME", "")
+CATPREZ_SPARQL_PASSWORD = os.environ.get("CATPREZ_SPARQL_PASSWORD", "")
+
 VOCPREZ_SPARQL_ENDPOINT = os.environ.get("VOCPREZ_SPARQL_ENDPOINT", "")
 VOCPREZ_SPARQL_USERNAME = os.environ.get("VOCPREZ_SPARQL_USERNAME", "")
 VOCPREZ_SPARQL_PASSWORD = os.environ.get("VOCPREZ_SPARQL_PASSWORD", "")
@@ -38,16 +46,12 @@ TIMEPREZ_SPARQL_ENDPOINT = os.environ.get("TIMEPREZ_SPARQL_ENDPOINT", "")
 TIMEPREZ_SPARQL_USERNAME = os.environ.get("TIMEPREZ_SPARQL_USERNAME", "")
 TIMEPREZ_SPARQL_PASSWORD = os.environ.get("TIMEPREZ_SPARQL_PASSWORD", "")
 
-CATPREZ_SPARQL_ENDPOINT = os.environ.get("CATPREZ_SPARQL_ENDPOINT", "")
-CATPREZ_SPARQL_USERNAME = os.environ.get("CATPREZ_SPARQL_USERNAME", "")
-CATPREZ_SPARQL_PASSWORD = os.environ.get("CATPREZ_SPARQL_PASSWORD", "")
-
 DEBUG = os.environ.get("DEBUG", True)
 DEMO = os.environ.get("DEMO", True)
 ALLOW_PARTIAL_RESULTS = os.environ.get("ALLOW_PARTIAL_RESULTS", True)
 
 ENABLED_PREZS = json.loads(
-    os.environ.get("ENABLED_PREZS", '["VocPrez", "SpacePrez"]')
+    os.environ.get("ENABLED_PREZS", '["CatPrez", "VocPrez", "SpacePrez"]')
 )  # must use proper capitalisation
 THEME_VOLUME = os.environ.get("THEME_VOLUME", None)
 SIDENAV = os.environ.get("SIDENAV", "False") == "True"

@@ -1,0 +1,32 @@
+{% extends "_page.html" %}
+{% from "_macros.html" import render_pagination, render_member_list with context %}
+
+{% set prezs = "ENABLED_PREZS" | get_config %}
+{% set has_alt = true %}
+
+{% if prezs | length == 1 %}
+    {% set breadcrumbs = [
+        {"label": "Catalogues", "url": url_for("catalogs_endpoint")}
+    ] %}
+    {% set main_active_page = "catalogs" %}
+{% else %}
+    {% set breadcrumbs = [
+        {"label": "CatPrez", "url": url_for("catprez_home_endpoint")},
+        {"label": "Catalogues", "url": url_for("catalogs_endpoint")}
+    ] %}
+{% endif %}
+
+{% set active_prez = "CatPrez" %}
+{% set sub_active_page = "catalogs" %}
+
+{% block content %}
+<div id="content-col-main">
+    <h1>{{ label }}</h1>
+    <p>{{ comment }}</p>
+    {{ render_member_list(members, none) }}
+    {{ render_pagination(pages) }}
+</div>
+<div id="content-col-sidebar">
+    {% include "alt_link.html" %}
+</div>
+{% endblock %}

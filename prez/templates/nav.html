@@ -7,6 +7,9 @@
         {% elif prezs[0] == "SpacePrez" %}
             <a href="{{ url_for('datasets_endpoint') }}" class="main-nav-item{% if sub_active_page == 'datasets' %} active{% endif %}">Datasets</a>
             <a href="{{ url_for('conformance') }}" class="main-nav-item{% if sub_active_page == 'conformance' %} active{% endif %}">Conformance</a>
+        {% elif prezs[0] == "CatPrez" %}
+            <a href="{{ url_for('catalog_endpoint', catalog_id="catprez") }}" class="main-nav-item{% if sub_active_page == 'catalogs' %} active{% endif %}">Catalogues</a>
+            <a href="{{ url_for('conformance') }}" class="main-nav-item{% if sub_active_page == 'conformance' %} active{% endif %}">Conformance</a>
         {% endif %}
     {% else %}
         {% for prez in prezs %}

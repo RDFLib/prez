@@ -6,6 +6,42 @@ import argparse
 from rdflib import Graph
 
 
+KEEP_RUNNING = True
+
+
+def keep_running():
+    return KEEP_RUNNING
+
+
+def load_catprez_graph():
+    print("loading CatPrez graph")
+    g = Graph()
+    for f in Path("/Users/nick/Work/idn/catalogue-data/data").rglob("*.ttl"):
+        g.parse(f)
+    return g
+
+
+def load_spaceprez_graph():
+    print("loading SpacePrez graph")
+    g = Graph()
+    for f in Path(Path(__file__).parent / "data" / "spaceprez").glob("*.ttl"):
+        g.parse(f)
+    return g
+
+
+def load_vocprez_graph():
+        print("loading VocPrez graph")
+        g = Graph()
+        for f in Path(Path(__file__).parent / "data" / "vocprez").glob("*.ttl"):
+            g.parse(f)
+        return g
+
+
+catprez_graph = load_catprez_graph()
+vocprez_graph = load_vocprez_graph()
+spaceprez_graph = load_spaceprez_graph()
+
+
 class SparqlServer(BaseHTTPRequestHandler):
     """A small SPARQL Protocol server for Prez testing.
 
@@ -42,24 +78,7 @@ class SparqlServer(BaseHTTPRequestHandler):
     """
 
     def __init__(self, *args):
-        self.vocprez_graph = self.load_vocprez_graph()
-        self.spaceprez_graph = self.load_spaceprez_graph()
-
         BaseHTTPRequestHandler.__init__(self, *args)
-
-    @lru_cache
-    def load_vocprez_graph(self):
-        g = Graph()
-        for f in list(Path(Path(__file__).parent / "data" / "vocprez").glob("*.ttl")):
-            g.parse(f)
-        return g
-
-    @lru_cache
-    def load_spaceprez_graph(self):
-        g = Graph()
-        for f in list(Path(Path(__file__).parent / "data" / "spaceprez").glob("*.ttl")):
-            g.parse(f)
-        return g
 
     def do_GET(self):
         status, content_type, content = self.validate_path()
@@ -67,6 +86,10 @@ class SparqlServer(BaseHTTPRequestHandler):
         if status is not None:
             return self.http_response(status, content_type, content)
 
+        if self.path == "/catprez":
+            status = 200
+            content_type = "text/plain"
+            content = "Local CatPrez SPARQL store"
         if self.path == "/vocprez":
             status = 200
             content_type = "text/plain"
@@ -74,7 +97,7 @@ class SparqlServer(BaseHTTPRequestHandler):
         if self.path == "/spaceprez":
             status = 200
             content_type = "text/plain"
-            content = "Local SpacPrez SPARQL store"
+            content = "Local SpacePrez SPARQL store"
 
         if status is not None:
             return self.http_response(status, content_type, content)
@@ -115,7 +138,7 @@ class SparqlServer(BaseHTTPRequestHandler):
             status = 200
             content_type = "text/plain"
             content = "Local SPARQL store"
-        elif not self.path.startswith(("/vocprez", "/spaceprez")):
+        elif not self.path.startswith(("/vocprez", "/spaceprez", "/catprez")):
             status = 404
             content_type = "text/plain"
             content = "Endpoint unknown"
@@ -125,10 +148,12 @@ class SparqlServer(BaseHTTPRequestHandler):
     def apply_sparql_query(self, query):
         print(f"query: {query}")
         try:
-            if "vocprez" in self.path:
-                result = self.vocprez_graph.query(query)
+            if "catprez" in self.path:
+                result = catprez_graph.query(query)
+            elif "vocprez" in self.path:
+                result = vocprez_graph.query(query)
             else:  # "spaceprez" in self.path:
-                result = self.spaceprez_graph.query(query)
+                result = spaceprez_graph.query(query)
 
             if "CONSTRUCT" in query or "DESCRIBE" in query:
                 content_type = "text/turtle"
@@ -153,12 +178,21 @@ class SparqlServer(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        "-p", "--port", default=3030, help="Optionally a port to run on"
-    )
+    parser.add_argument('-s', '--server',
+                        default="localhost",
+                        help='Optionally a server location')
+    parser.add_argument('-p', '--port',
+                        default=3030,
+                        help='Optionally a port to run on')
     args = parser.parse_args()
 
-    srv = HTTPServer(("localhost", int(args.port)), SparqlServer)
+    srv = HTTPServer((args.server, int(args.port)), SparqlServer)
+
     print(f"Local SPARQL server started on port {args.port}")
-    srv.serve_forever()
+    print("Configured endpoints are:")
+    print(f"- http://{args.server}:{args.port}/catprez")
+    print(f"- http://{args.server}:{args.port}/spaceprez")
+    print(f"- http://{args.server}:{args.port}/vocprez")
+
+    while keep_running():
+        srv.handle_request()

@@ -1,11 +1,14 @@
 {% set prezs = "ENABLED_PREZS" | get_config %}
 {% set prez_title = "PREZ_TITLE" | get_config %}
+{% set catprez_title = "CATPREZ_TITLE" | get_config %}
 {% set vocprez_title = "VOCPREZ_TITLE" | get_config %}
 {% set spaceprez_title = "SPACEPREZ_TITLE" | get_config %}
 {% set is_sidenav = "SIDENAV" | get_config %}
 {% set theme_volume = "THEME_VOLUME" | get_config %}
 
-{% if active_prez == "VocPrez" %}
+{% if active_prez == "CatPrez" %}
+    {% set pagetitle = catprez_title %}
+{% elif active_prez == "VocPrez" %}
     {% set pagetitle = vocprez_title %}
 {% elif active_prez == "SpacePrez" %}
     {% set pagetitle = spaceprez_title %}
