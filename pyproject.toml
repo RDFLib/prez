@@ -2,7 +2,7 @@
 name = "prez"
 version = "0.4.0"
 description = ""
-authors = ["Jamie Feiss <jamie.feiss@gmail.com>", "Nicholas Car <nick@kurrawogn.net>", "David Habgood <david.habgood@surroundaustralia.com>"]
+authors = ["Jamie Feiss <jamie.feiss@gmail.com>", "Nicholas Car <nick@kurrawong.net>", "David Habgood <david.habgood@surroundaustralia.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.10"

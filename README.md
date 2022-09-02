@@ -5,6 +5,7 @@ Prez comes in two main profile flavours:
 
 - _VocPrez_ - for vocabularies, based on the [SKOS](https://www.w3.org/TR/skos-reference/) data model
 - _SpacePrez_ - for spatial data, based on [OGC API](https://docs.ogc.org/is/17-069r3/17-069r3.html) specification and the [GeoSPARQL](https://opengeospatial.github.io/ogc-geosparql/geosparql11/spec.html) data model
+- _CatPrez_ - for DCAT data catalogs
 
 Prez is pretty straight-forward to install and operate and all while being high-performance. It uses the modern [FastAPI](https://fastapi.tiangolo.com/) Python web framework.
 
@@ -41,7 +42,7 @@ Installation, use development schedule and more are documented at https://surrou
 
 ## Contact
 
-This tool is actively developed and supported by [SURROUND Australia Pty Ltd](https://surroundaustalia.com). Please contact SURROUND either by creating issues in the [Issue Tracker](https://github.com/surroundaustralia/Prez/issues) or directly emailing the lead developers:
+This tool is actively developed and supported by [SURROUND Australia Pty Ltd](https://surroundaustralia.com). Please contact SURROUND either by creating issues in the [Issue Tracker](https://github.com/RDFLib/prez/issues) or directly emailing the lead developers:
 
 **Jamie Feiss**
 <jamie.feiss@surroundaustralia.com>
