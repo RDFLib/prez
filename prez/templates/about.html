@@ -17,8 +17,9 @@
         Prez comes in a number of "flavours", one or more of which may be implemented in any one Prez system. If implemented here, these links will work:
     </p>
     <ul>
-        <li><a href="{{ url_for("vocprez_home_endpoint") }}">VocPrez</a> - for presenting vocabularies</li>
-        <li><a href="{{ url_for("spaceprez_home_endpoint") }}">SpacePrez</a> - for presenting spatial data</li>
+        <li>{% if "VocPrez" in prezs %}<a href="{{ url_for('vocprez_home_endpoint') }}">VocPrez</a>{% else %}VocPrez{% endif %} - for presenting vocabularies</li>
+        <li>{% if "SpacePrez" in prezs %}<a href="{{ url_for('spaceprez_home_endpoint') }}">SpacePrez</a>{% else %}SpacePrez{% endif %} - for presenting spatial data</li>
+        <li>{% if "CatPrez" in prezs %}<a href="{{ url_for('catprez_home_endpoint') }}">CatPrez</a>{% else %}CatPrez{% endif %} - for presenting data catalog information</li>
     </ul>
     <p>Each enabled flavour will have links to its home page in the main menu.</p>
     <h2>License</h2>
