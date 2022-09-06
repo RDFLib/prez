@@ -29,7 +29,7 @@
         Resource title
     {% endif %}
 </h1>
-<p>Instance URI: <a href="{{ uri }}">{{ resource.uri }}</a> <small><a href="{{ catalog.uri }}" target="_blank"><i class="far fa-external-link"></i></a></small></p>
+<p>Instance URI: <a href="{{ uri }}">{{ resource.uri }}</a> <small><a href="{{ resource.uri }}" target="_blank"><i class="far fa-external-link"></i></a></small></p>
 {% if resource.description is not none %}
     <div>
         <p>{{ resource.description }}</p>
