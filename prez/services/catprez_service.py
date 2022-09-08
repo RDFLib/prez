@@ -192,10 +192,19 @@ async def get_catalog_construct(catalog_id=None, catalog_uri=None):
                 rdfs:label ?p_label ;
                 dcterms:description ?p_comment ;
             .
+            ?o 
+                rdfs:label ?o_label ;
+                dcterms:description ?o_comment ;
+            .
             ?part 
                 rdfs:label ?part_title ;
                 dcterms:identifier ?part_id ;
             .
+            ?o ?p2 ?o2 .
+            ?p2 rdfs:label ?p2_label ;
+                dcterms:description ?p2_comment .
+            ?o2 rdfs:label ?o2_label ;
+                dcterms:description ?o2_comment .
         }}
         WHERE {{
             {{
@@ -212,12 +221,41 @@ async def get_catalog_construct(catalog_id=None, catalog_uri=None):
             .
 
             OPTIONAL {{
-                ?p rdfs:label|dcterms:title ?p_label .
+                ?p rdfs:label|dcterms:title|skos:prefLabel ?p_label .
             }}
 
             OPTIONAL {{
                 ?p rdfs:comment|dcterms:description|skos:definition ?p_comment .
             }}                    
+
+            OPTIONAL {{
+                ?o rdfs:label|dcterms:title|skos:prefLabel ?o_label .
+            }}
+
+            OPTIONAL {{
+                ?o rdfs:comment|dcterms:description|skos:definition ?o_comment .
+            }} 
+
+            OPTIONAL {{
+                ?o ?p2 ?o2 .
+                FILTER(ISBLANK(?o))
+
+                OPTIONAL {{
+                    ?p2 rdfs:label|dcterms:title|skos:prefLabel ?p2_label .
+                }}
+
+                OPTIONAL {{
+                    ?p2 rdfs:comment|dcterms:description|skos:definition ?p2_comment .
+                }}
+
+                OPTIONAL {{
+                    ?o2 rdfs:label|dcterms:title|skos:prefLabel ?o2_label .
+                }}
+
+                OPTIONAL {{
+                    ?o2 rdfs:comment|dcterms:description|skos:definition ?o2_comment .
+                }}
+            }}
 
             {b}
         }}
@@ -255,6 +293,15 @@ async def get_resource_construct(resource_id=None, resource_uri=None):
                 rdfs:label ?p_label ;
                 dcterms:description ?p_comment ;
             .
+            ?o 
+                rdfs:label ?o_label ;
+                dcterms:description ?o_comment ;
+            .
+            ?o ?p2 ?o2 .
+            ?p2 rdfs:label ?p2_label ;
+                dcterms:description ?p2_comment .
+            ?o2 rdfs:label ?o2_label ;
+                dcterms:description ?o2_comment .
         }}
         WHERE {{
             VALUES ?type {{ dcat:Resource dcat:Dataset }}
@@ -266,17 +313,45 @@ async def get_resource_construct(resource_id=None, resource_uri=None):
             }}
 
             OPTIONAL {{
-                ?p rdfs:label|dcterms:title ?p_label .
+                ?p rdfs:label|dcterms:title|skos:prefLabel ?p_label .
             }}
 
             OPTIONAL {{
                 ?p rdfs:comment|dcterms:description|skos:definition ?p_comment .
             }}                    
 
+            OPTIONAL {{
+                ?o rdfs:label|dcterms:title|skos:prefLabel ?o_label .
+            }}
+
+            OPTIONAL {{
+                ?o rdfs:comment|dcterms:description|skos:definition ?o_comment .
+            }} 
+
+            OPTIONAL {{
+                ?o ?p2 ?o2 .
+                FILTER(ISBLANK(?o))
+
+                OPTIONAL {{
+                    ?p2 rdfs:label|dcterms:title|skos:prefLabel ?p2_label .
+                }}
+
+                OPTIONAL {{
+                    ?p2 rdfs:comment|dcterms:description|skos:definition ?p2_comment .
+                }}
+
+                OPTIONAL {{
+                    ?o2 rdfs:label|dcterms:title|skos:prefLabel ?o2_label .
+                }}
+
+                OPTIONAL {{
+                    ?o2 rdfs:comment|dcterms:description|skos:definition ?o2_comment .
+                }}
+            }}
+
             {b}
         }}
     """
-    print(q)
     r = await sparql_construct(q, "CatPrez")
     if r[0]:
         return r[1]

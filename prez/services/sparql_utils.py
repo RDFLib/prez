@@ -287,7 +287,11 @@ async def sparql_endpoint_query(
 ) -> Tuple[bool, Union[Dict, str]]:
     """Queries a SPARQL query on a single endpoint for some Accept mediatype"""
     creds = {"endpoint": "", "username": "", "password": ""}
-    if prez == "VocPrez":
+    if prez == "CatPrez":
+        creds["endpoint"] = CATPREZ_SPARQL_ENDPOINT
+        creds["username"] = CATPREZ_SPARQL_USERNAME
+        creds["password"] = CATPREZ_SPARQL_PASSWORD
+    elif prez == "VocPrez":
         creds["endpoint"] = VOCPREZ_SPARQL_ENDPOINT
         creds["username"] = VOCPREZ_SPARQL_USERNAME
         creds["password"] = VOCPREZ_SPARQL_PASSWORD

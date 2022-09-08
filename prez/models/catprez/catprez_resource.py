@@ -12,6 +12,7 @@ class CatPrezResource(PrezModel):
         str(DCTERMS.created),
         str(DCTERMS.modified),
     ]
+    geom_props = [str(GEO.hasBoundingBox)]
     hidden_props = [
         str(RDF.type),
         str(DCTERMS.identifier),
@@ -65,6 +66,12 @@ class CatPrezResource(PrezModel):
         self.title = result["title"]
         self.description = result["desc"]
 
+        self.geometries = {
+            "asDGGS": None,
+            "asGeoJSON": None,
+            "asWKT": None,
+        }
+
     # override
     def to_dict(self) -> Dict:
         return {
@@ -73,6 +80,7 @@ class CatPrezResource(PrezModel):
             "title": self.title,
             "description": self.description,
             "properties": self._get_properties(),
+            "geometries": self.geometries,
         }
 
     # override
@@ -89,6 +97,11 @@ class CatPrezResource(PrezModel):
                 continue
             elif prop["value"] in CatPrezResource.main_props:
                 main_props.append(prop)
+            elif prop["value"] in CatPrezResource.geom_props:
+                for bnode in prop["objects"][0]["rows"]:
+                    bnode_prop_name = bnode["value"].split("#")[1]
+                    if bnode_prop_name in ["asDGGS", "asGeoJSON", "asWKT"]:
+                        self.geometries[bnode_prop_name] = bnode["objects"][0]["value"]
             else:
                 other_props.append(prop)
 
