@@ -318,10 +318,6 @@ async def sparql_endpoint_query(
         if accept in ["application/sparql-results+json", "application/json"]:
             return True, response.json()
         else:
-            print("accept")
-            print(accept)
-            print("response.headers")
-            print(response.headers)
             return True, response.text
     else:
         return False, {
@@ -343,10 +339,6 @@ async def sparql_endpoint_query_multiple(
     for i, result in enumerate(results):
         if result[0]:
             if accept in RDF_MEDIATYPES:
-                print("xxxxxxxxxxxx")
-                print(accept)
-                print("xxxxxxxxxxxx")
-                print(result[1])
                 succeeded_results += Graph().parse(data=result[1], format=accept)
             elif accept in ["application/sparql-results+json", "application/json"]:
                 # JSON for now (need to cater for XML, CSV & TSV)

@@ -168,23 +168,6 @@ class VocPrezScheme(PrezModel):
             }}
         """
         )
-        print(            f"""
-            PREFIX dcterms: <{DCTERMS}>
-            PREFIX skos: <{SKOS}>
-            SELECT DISTINCT *
-            WHERE {{
-                ?c skos:inScheme <{self.uri}> ;
-                    a skos:Concept ;
-                    skos:prefLabel ?label ;
-                    dcterms:identifier ?id .
-                FILTER (LANG(?label) = "en")
-                OPTIONAL {{
-                    {{ ?c skos:narrower ?narrower }}
-                    UNION 
-                    {{ ?narrower skos:broader ?c }}
-                }}
-            }}
-        """)
 
         concepts_dict = {}
         for result in r.bindings:
