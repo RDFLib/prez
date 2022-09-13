@@ -59,7 +59,6 @@ class CatPrezResource(PrezModel):
             }}
             """
         r = self.graph.query(qx)
-
         result = r.bindings[0]
         self.uri = result["c"]
         self.id = result["id"]

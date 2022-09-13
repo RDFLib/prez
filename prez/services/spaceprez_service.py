@@ -475,26 +475,26 @@ def get_object_uri_and_classes(
     dataset_uri: str = None,
 ):
     if dataset_id:
-        r = sparql_query_non_async(
-            f"""PREFIX dcat: <{DCAT}>
-                PREFIX dcterms: <{DCTERMS}>
-                PREFIX geo: <{GEO}>
-                PREFIX rdfs: <{RDFS}>
-                PREFIX xsd: <{XSD}>
+        q = f"""
+            PREFIX dcat: <{DCAT}>
+            PREFIX dcterms: <{DCTERMS}>
+            PREFIX geo: <{GEO}>
+            PREFIX rdfs: <{RDFS}>
+            PREFIX xsd: <{XSD}>
 
-                SELECT ?f ?fc ?d ?class {{
-                    ?d dcterms:identifier "{dataset_id}"^^xsd:token ;
-                            a dcat:Dataset .
-                    {f'''?fc dcterms:identifier "{collection_id}"^^xsd:token ;
-                            a geo:FeatureCollection .
-                        ?d rdfs:member ?fc .''' if collection_id else ""}
-                    {f'''?f dcterms:identifier "{feature_id}"^^xsd:token ;
-                            a geo:Feature ;
-                            a ?class .
-                        ?fc rdfs:member ?f .''' if feature_id else ""}
-                }} """,
-            "SpacePrez",
-        )
+            SELECT ?f ?fc ?d ?class {{
+                ?d dcterms:identifier "{dataset_id}"^^xsd:token ;
+                        a dcat:Dataset .
+                {f'''?fc dcterms:identifier "{collection_id}"^^xsd:token ;
+                        a geo:FeatureCollection .
+                    ?d rdfs:member ?fc .''' if collection_id else ""}
+                {f'''?f dcterms:identifier "{feature_id}"^^xsd:token ;
+                        a geo:Feature ;
+                        a ?class .
+                    ?fc rdfs:member ?f .''' if feature_id else ""}
+            }}
+            """
+        r = sparql_query_non_async(q, "SpacePrez")
         if r[0]:
             f = r[1][0].get("f")
             fc = r[1][0].get("fc")

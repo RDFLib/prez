@@ -118,6 +118,8 @@ class VocPrezConcept(PrezModel):
         broader = []
         r = self.graph.query(
             f"""
+            PREFIX skos: <{SKOS}>
+            
             SELECT DISTINCT *
             WHERE {{
                 <{self.uri}> skos:broader ?broader .
@@ -145,6 +147,8 @@ class VocPrezConcept(PrezModel):
         narrower = []
         r = self.graph.query(
             f"""
+            PREFIX skos: <{SKOS}>
+            
             SELECT DISTINCT *
             WHERE {{
                 <{self.uri}> skos:narrower ?narrower .
