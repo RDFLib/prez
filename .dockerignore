@@ -5,7 +5,6 @@ __pycache__/
 venv/
 .vscode/
 .idea/
-poetry.lock
 .git/
 test_*.py
 .github/
