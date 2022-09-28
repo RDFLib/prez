@@ -1,0 +1,39 @@
+# https://taskfile.dev/usage/
+# https://pkg.go.dev/text/template
+# https://go-task.github.io/slim-sprig/
+version: "3"
+
+vars:
+  TASKFILE_DIR:
+    sh: pwd
+  DOCKER: docker
+  OCI_REFERENCE: ghcr.io/rdflib/prez
+tasks:
+  docker:latest:
+    desc: ...
+    cmds:
+      - cmd: |
+          # fetch for caching ...
+          {{.DOCKER}} image pull {{.OCI_REFERENCE}}:latest || :
+
+          set -eo pipefail
+
+          {{.DOCKER}} buildx build \
+            --cache-to=type=inline \
+            --cache-from=type=registry,ref={{.OCI_REFERENCE}}:latest \
+            --tag {{.OCI_REFERENCE}}:latest \
+            --progress plain \
+            -f docker/latest/Dockerfile \
+            {{.DOCKER_BUILD_ARGS}} \
+            .
+
+          _latest_prez_version=$({{.DOCKER}} run --entrypoint= {{.OCI_REFERENCE}}:latest bash -c 'grep -m 1 version pyproject.toml | tr -s ' ' | tr -d '"' | tr -d "'" | cut -d' ' -f3')
+          echo "_latest_prez_version=${_latest_prez_version}"
+
+          {{.DOCKER}} image tag {{.OCI_REFERENCE}}:latest {{.OCI_REFERENCE}}:${_latest_prez_version}
+
+          if {{.DOCKER_PUSH | default "false"}}
+          then
+            {{.DOCKER}} image push {{.OCI_REFERENCE}}:latest
+            {{.DOCKER}} image push {{.OCI_REFERENCE}}:${_latest_prez_version}
+          fi
