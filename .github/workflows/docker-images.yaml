@@ -49,7 +49,7 @@ jobs:
         run: |
           task \
             OCI_REFERENCE="${{ needs.setup.outputs.oci-reference }}" \
-            docker:latest docker:unstable
+            docker:latest
   push:
     if: "${{ needs.setup.outputs.docker-push == 'true' }}"
     needs: [ setup, build ]
@@ -78,4 +78,4 @@ jobs:
           task \
             DOCKER_PUSH=true \
             OCI_REFERENCE="${{ needs.setup.outputs.oci-reference }}" \
-            docker:latest docker:unstable
+            docker:latest
