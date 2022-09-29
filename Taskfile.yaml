@@ -23,7 +23,7 @@ tasks:
             --cache-from=type=registry,ref={{.OCI_REFERENCE}}:latest \
             --tag {{.OCI_REFERENCE}}:latest \
             --progress plain \
-            -f docker/latest/Dockerfile \
+            -f Dockerfile \
             {{.DOCKER_BUILD_ARGS}} \
             .
 
