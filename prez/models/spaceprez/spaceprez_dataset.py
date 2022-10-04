@@ -12,7 +12,7 @@ class SpacePrezDataset(PrezModel):
         str(DCTERMS.title),
         # str(DCTERMS.description),
     ]
-    geom_props = [str(GEO.hasBoundingBox)]
+    geom_props = [str(GEO.hasBoundingBox), str(DCTERMS.spatial)]
     hidden_props = [
         str(DCTERMS.identifier),
         str(RDFS.seeAlso),
@@ -116,8 +116,12 @@ class SpacePrezDataset(PrezModel):
                 geom_props.append(prop)
                 for bnode in prop["objects"][0]["rows"]:
                     bnode_prop_name = bnode["value"].split("#")[1]
-                    if bnode_prop_name in ["asDGGS", "asGeoJSON", "asWKT"]:
+                    if bnode_prop_name in ["asDGGS", "asGeoJSON", "asWKT", "bbox"]:
                         self.geometries[bnode_prop_name] = bnode["objects"][0]["value"]
+                    elif bnode_prop_name == "geometry":  # for locn:geometry
+                        self.geometries["asGeoJSON"] = bnode["objects"][0][
+                            "value"
+                        ]  # assume locn:geometry is geojson
             else:
                 other_props.append(prop)
 
