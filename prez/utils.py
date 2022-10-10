@@ -71,7 +71,7 @@ def commafy(value):
 
 template_list = [str(Path(__file__).parent / "templates")]
 if THEME_VOLUME is not None:
-    template_list.insert(0, f"{THEME_VOLUME}/templates")
+    template_list.insert(0, f"{Path(__file__).parent / THEME_VOLUME}/templates")
 
 templates = Jinja2Templates(
     loader=jinja2.ChoiceLoader([jinja2.FileSystemLoader(template_list)])
