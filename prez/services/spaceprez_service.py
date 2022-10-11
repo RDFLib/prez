@@ -549,7 +549,15 @@ def get_object_uri_and_classes(
                 else None,
             )
 
-    return None, None, None, None, None  # effectively 404 - can't find this thing
+    return (
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    )  # effectively 404 - can't find this thing
 
 
 @lru_cache(maxsize=20)

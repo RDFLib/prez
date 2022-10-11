@@ -14,13 +14,20 @@ from fedsearch import SkosSearch, EndpointDetails
 from pydantic import AnyUrl
 from starlette.middleware.cors import CORSMiddleware
 
+from prez.cache import tbox_cache, update_tbox_label_cache
 from prez.profiles.generate_profiles import get_general_profiles
-from prez.routers import catprez_router, vocprez_router, spaceprez_router
+from prez.routers import (
+    catprez_router,
+    vocprez_router,
+    spaceprez_router,
+    spaceprez_router_new,
+)
 from prez.routers.vocprez_router import vocprez_home_endpoint
 from prez.services.app_service import *
 from prez.services.spaceprez_service import list_datasets, list_collections
 from prez.utils import templates
 from prez.view_funcs import profiles_func
+
 from textwrap import dedent
 
 
@@ -97,6 +104,7 @@ def configure_routing():
         app.include_router(vocprez_router.router)
     if "SpacePrez" in ENABLED_PREZS:
         app.include_router(spaceprez_router.router)
+        app.include_router(spaceprez_router_new.router)
 
 
 @app.exception_handler(RequestValidationError)
@@ -129,9 +137,13 @@ async def app_startup():
                     response = httpx.head(prez2endpoint[prez])
                     response.raise_for_status()
                     if response.reason_phrase == "OK":
+
                         print(
                             f"Successfully connected to {prez} endpoint {prez2endpoint[prez]}"
                         )
+                        # update the tbox cache
+                        update_tbox_label_cache(os.getenv("CONTEXT_GRAPH_IRI"))
+
                         # Check whether there are any remote profiles, and if so, cache them.
                         # If there will be remote profiles but they haven't yet been loaded to fuseki, they will be not be
                         # cached at startup, but will be cached after any endpoint using profiles is called.
@@ -141,7 +153,9 @@ async def app_startup():
                             query_for_profiles, prez
                         )
                         if query_success and len(profiles_g) > 0:
-                            print(f"Profiles found in data store for {prez}, caching them")
+                            print(
+                                f"Profiles found in data store for {prez}, caching them"
+                            )
                             if prez == "CatPrez":
                                 get_general_profiles(DCAT.Dataset)
                                 get_general_profiles(DCAT.Resource)
@@ -292,7 +306,9 @@ def _get_sparql_service_description(request, format):
                 ]
             ]
         .
-    """.format(request.url_for("sparql_get"))
+    """.format(
+        request.url_for("sparql_get")
+    )
     if format == "text/turtle":
         return dedent(ttl)
     else:
@@ -301,7 +317,11 @@ def _get_sparql_service_description(request, format):
 
 @app.get("/sparql", summary="SPARQL Endpoint")
 async def sparql_get(request: Request, query: Optional[str] = None):
-    accept = request.query_params.get("accept") if request.query_params.get("accept") is not None else request.query_params.get("Accept")
+    accept = (
+        request.query_params.get("accept")
+        if request.query_params.get("accept") is not None
+        else request.query_params.get("Accept")
+    )
     if accept is not None:
         if " " in accept:
             accept = accept.replace(" ", "+")
@@ -322,20 +342,18 @@ async def sparql_get(request: Request, query: Optional[str] = None):
     if query is not None:
         sparql_result = await sparql_endpoint_query_multiple(query, accept=accept)
         if len(sparql_result[1]) > 0 and not ALLOW_PARTIAL_RESULTS:
-            error_list = "\n".join([
-                f"Error code {e['code']} in {e['prez']}: {e['message']}\n"
-                for e in sparql_result[1]
-            ])
+            error_list = "\n".join(
+                [
+                    f"Error code {e['code']} in {e['prez']}: {e['message']}\n"
+                    for e in sparql_result[1]
+                ]
+            )
             Response(
-                content=f"SPARQL query error:\n{error_list}",
-                media_type="text/plain"
+                content=f"SPARQL query error:\n{error_list}", media_type="text/plain"
             )
         else:
             if accept in RDF_MEDIATYPES:
-                return Response(
-                    content=sparql_result[0],
-                    media_type=accept
-                )
+                return Response(content=sparql_result[0], media_type=accept)
             elif accept in ["application/sparql-results+json", "application/json"]:
                 return JSONResponse(
                     content=sparql_result[0],
@@ -345,9 +363,7 @@ async def sparql_get(request: Request, query: Optional[str] = None):
                 return Response(
                     content=sparql_result[0],
                     media_type=accept,
-                    headers={
-                        "content-disposition": "attachment; filename=result.xml"
-                    }
+                    headers={"content-disposition": "attachment; filename=result.xml"},
                 )
     else:
         return Response(content=_get_sparql_service_description(request, accept))
@@ -355,7 +371,11 @@ async def sparql_get(request: Request, query: Optional[str] = None):
 
 @app.post("/sparql", summary="SPARQL Endpoint")
 async def sparql_post(request: Request):
-    accept = request.query_params.get("accept") if request.query_params.get("accept") is not None else request.query_params.get("Accept")
+    accept = (
+        request.query_params.get("accept")
+        if request.query_params.get("accept") is not None
+        else request.query_params.get("Accept")
+    )
     if accept is not None:
         if " " in accept:
             accept = accept.replace(" ", "+")
@@ -378,20 +398,18 @@ async def sparql_post(request: Request):
     if query is not None:
         sparql_result = await sparql_endpoint_query_multiple(query, accept=accept)
         if len(sparql_result[1]) > 0 and not ALLOW_PARTIAL_RESULTS:
-            error_list = "\n".join([
-                f"Error code {e['code']} in {e['prez']}: {e['message']}\n"
-                for e in sparql_result[1]
-            ])
+            error_list = "\n".join(
+                [
+                    f"Error code {e['code']} in {e['prez']}: {e['message']}\n"
+                    for e in sparql_result[1]
+                ]
+            )
             Response(
-                content=f"SPARQL query error:\n{error_list}",
-                media_type="text/plain"
+                content=f"SPARQL query error:\n{error_list}", media_type="text/plain"
             )
         else:
             if accept in RDF_MEDIATYPES:
-                return Response(
-                    content=sparql_result[0],
-                    media_type=accept
-                )
+                return Response(content=sparql_result[0], media_type=accept)
             elif accept in ["application/sparql-results+json", "application/json"]:
                 return JSONResponse(
                     content=sparql_result[0],
@@ -401,9 +419,7 @@ async def sparql_post(request: Request):
                 return Response(
                     content=sparql_result[0],
                     media_type=accept,
-                    headers={
-                        "content-disposition": "attachment; filename=result.xml"
-                    }
+                    headers={"content-disposition": "attachment; filename=result.xml"},
                 )
     else:
         return Response(content=_get_sparql_service_description(request, accept))
