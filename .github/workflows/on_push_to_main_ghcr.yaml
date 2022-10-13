@@ -1,0 +1,27 @@
+name: Push latest image to GitHub Container Registry
+
+on:
+  push:
+    branches: ["rdflib-docker-gh-action"]
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: ghcr.io/rdflib/prez
+
+jobs:
+  push_latest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          push: true
+          tags: ${{ env.IMAGE_NAME }}:latest

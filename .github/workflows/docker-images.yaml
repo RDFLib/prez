@@ -1,9 +1,9 @@
 name: Docker Images
 
 on:
-  push:
-    branches: ["rdflib-docker-gh-action"]
-  pull_request:
+  # push:
+  #   branches: ["rdflib-docker-gh-action"]
+  # pull_request:
   workflow_dispatch:
 
 concurrency:
