@@ -62,7 +62,7 @@ def sp_test_client(request):
 
 def test_feature_item():
     pass
-    # item = Item(feature_uri="test")
+    item = Item(feature_uri="test")
     # item.populate()
     # assert item.uri == "http://example.com/test"
     # assert item.feature_classes == ["http://example.com/Class"]

@@ -9,21 +9,28 @@ from prez.services.sparql_utils import sparql_construct
 
 
 def generate_listing_construct(
-    item_class_and_parent_uri: tuple,
+    item_class: URIRef,
+    parent_uri: URIRef,
     page: Optional[int] = None,
     per_page: Optional[int] = None,
     profile: dict = {},  # unused - we don't currently filter or otherwise change listings based on profiles
 ):
-    item_class, parent_uri = item_class_and_parent_uri
+    """
+    Generates a SPARQL construct query for a listing of items, including labels
+    """
     construct_query = f"""PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
 
-CONSTRUCT {{ ?item dcterms:identifier ?id }}
+CONSTRUCT {{ ?item dcterms:identifier ?id ;
+                   rdfs:label ?label ; }}
 WHERE {{ \
 {chr(10) + chr(9) + f'<{parent_uri}> rdfs:member ?item .' if parent_uri else ""}
     ?item a <{item_class}> ;
-          dcterms:identifier ?id .
+          dcterms:identifier ?id ;
+          rdfs:label|dcterms:title|skos:prefLabel ?label .
   	FILTER(DATATYPE(?id) = xsd:token)
     }} {f"LIMIT {per_page} OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
     """
@@ -113,6 +120,7 @@ async def get_labels(
         f"CONSTRUCT {{ <{term}> <{label_property}> ?label }} WHERE {{ <{term}> <{label_property}> ?label }}"
         for term in uncached_terms
     ]
+    # untested assumption is running multiple queries in parallel is faster than running one query for all labels
     results = await asyncio.gather(
         *[sparql_construct(query, "SpacePrez") for query in queries]
     )
