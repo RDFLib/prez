@@ -72,7 +72,7 @@ class CatPrezCatalogRenderer(Renderer):
         """Renders the RDF representation of the dcat profile for a catalog"""
         return Response(
             self._generate_dcat_rdf().serialize(format=self.mediatype),
-            media_type=self.mediatype
+            media_type=self.mediatype,
         )
 
     def _render_dcat_html(

@@ -26,11 +26,11 @@ async def list_catalogs(page: int, per_page: int):
         WHERE {{
             ?c a dcat:Catalog ;
                 dcterms:identifier ?id ;
-                dcterms:title ?label .                
+                dcterms:title ?label .
             OPTIONAL {{
                 ?c dcterms:description ?desc .
-            }}        
-            
+            }}
+
             FILTER (?c != <https://example.com/prez/catprez>)
         }} LIMIT {per_page} OFFSET {(page - 1) * per_page}
     """
@@ -85,7 +85,7 @@ def get_resource_uri(
             PREFIX dcterms: <{DCTERMS}>
             PREFIX xsd: <{XSD}>
             SELECT ?uri ?id
-            WHERE {{ 
+            WHERE {{
                 <{uri}> dcterms:identifier ?id^^xsd:token .
                 BIND (<{uri}> AS ?uri)
             }}
@@ -101,7 +101,7 @@ def get_resource_uri(
             PREFIX xsd: <{XSD}>
             PREFIX skos: <{SKOS}>
             SELECT ?uri ?id
-            WHERE {{ 
+            WHERE {{
                 ?uri dcterms:identifier "{id}"^^xsd:token .
                 BIND ("{id}" AS ?id)
             }}
@@ -119,7 +119,7 @@ async def get_catprez_home_construct():
         PREFIX dcterms: <http://purl.org/dc/terms/>
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
         PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-        
+
         CONSTRUCT {
             ?c a dcat:Dataset ;
                 dcterms:identifier "catprez"^^xsd:token ;
@@ -142,21 +142,21 @@ async def get_catprez_home_construct():
                 dcterms:title ?title ;
                 dcterms:description ?desc ;
             .
-          
+
             ?part a dcat:Catalog ;
                 dcterms:identifier ?part_id ;
                 dcterms:title ?part_title ;
             .
-          
+
             VALUES ?p { dcterms:identifier dcterms:title dcterms:description dcterms:hasPart }
             OPTIONAL {
                 ?p rdfs:label ?p_label .
-            } 
+            }
             OPTIONAL {
                 ?p rdfs:comment ?p_comment .
-            }  
-          
-            FILTER (?part_id != "catprez"^^xsd:string )          
+            }
+
+            FILTER (?part_id != "catprez"^^xsd:string )
         }
         """
     r = await sparql_construct(q, "CatPrez")
@@ -188,15 +188,15 @@ async def get_catalog_construct(catalog_id=None, catalog_uri=None):
 
         CONSTRUCT {{
             ?uri ?p ?o .
-            ?p 
+            ?p
                 rdfs:label ?p_label ;
                 dcterms:description ?p_comment ;
             .
-            ?o 
+            ?o
                 rdfs:label ?o_label ;
                 dcterms:description ?o_comment ;
             .
-            ?part 
+            ?part
                 rdfs:label ?part_title ;
                 dcterms:identifier ?part_id ;
             .
@@ -215,7 +215,7 @@ async def get_catalog_construct(catalog_id=None, catalog_uri=None):
             {{
                 {p}
             }}
-            ?part 
+            ?part
                 dcterms:title ?part_title ;
                 dcterms:identifier ?part_id ;
             .
@@ -226,7 +226,7 @@ async def get_catalog_construct(catalog_id=None, catalog_uri=None):
 
             OPTIONAL {{
                 ?p rdfs:comment|dcterms:description|skos:definition ?p_comment .
-            }}                    
+            }}
 
             OPTIONAL {{
                 ?o rdfs:label|dcterms:title|skos:prefLabel ?o_label .
@@ -234,7 +234,7 @@ async def get_catalog_construct(catalog_id=None, catalog_uri=None):
 
             OPTIONAL {{
                 ?o rdfs:comment|dcterms:description|skos:definition ?o_comment .
-            }} 
+            }}
 
             OPTIONAL {{
                 ?o ?p2 ?o2 .
@@ -289,11 +289,11 @@ async def get_resource_construct(resource_id=None, resource_uri=None):
 
         CONSTRUCT {{
             ?uri ?p ?o .
-            ?p 
+            ?p
                 rdfs:label ?p_label ;
                 dcterms:description ?p_comment ;
             .
-            ?o 
+            ?o
                 rdfs:label ?o_label ;
                 dcterms:description ?o_comment ;
             .
@@ -318,7 +318,7 @@ async def get_resource_construct(resource_id=None, resource_uri=None):
 
             OPTIONAL {{
                 ?p rdfs:comment|dcterms:description|skos:definition ?p_comment .
-            }}                    
+            }}
 
             OPTIONAL {{
                 ?o rdfs:label|dcterms:title|skos:prefLabel ?o_label .
@@ -326,7 +326,7 @@ async def get_resource_construct(resource_id=None, resource_uri=None):
 
             OPTIONAL {{
                 ?o rdfs:comment|dcterms:description|skos:definition ?o_comment .
-            }} 
+            }}
 
             OPTIONAL {{
                 ?o ?p2 ?o2 .

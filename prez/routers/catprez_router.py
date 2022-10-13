@@ -6,7 +6,9 @@ from prez.profiles.generate_profiles import (
     build_alt_graph,
 )
 from prez.renderers.catprez import *
-from prez.renderers.catprez.catprez_conformance_renderer import CatPrezConformanceRenderer
+from prez.renderers.catprez.catprez_conformance_renderer import (
+    CatPrezConformanceRenderer,
+)
 from prez.services.catprez_service import *
 from prez.utils import templates
 from prez.view_funcs import profiles_func

@@ -465,6 +465,7 @@ async def get_uri(item_id: str = None, klass: URIRef = None):
             return r[1][0]["item_uri"]["value"]
 
 
+# TODO turn this in to a class with a populate method to reduce the function signature
 @lru_cache(maxsize=50)
 def get_object_uri_and_classes(
     feature_id: str = None,

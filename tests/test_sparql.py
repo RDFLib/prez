@@ -49,17 +49,11 @@ def vp_test_client(request):
 
 
 def test_service_description(vp_test_client):
-    r = vp_test_client.get(
-        "/sparql",
-        headers={"Accept": "application/rdf+xml"}
-    )
+    r = vp_test_client.get("/sparql", headers={"Accept": "application/rdf+xml"})
     assert r.text.startswith('<?xml version="1.0" encoding="utf-8"?>')
 
-    r = vp_test_client.get(
-        "/sparql",
-        headers={"Accept": "application/n-triples"}
-    )
-    assert r.text.startswith('<')
+    r = vp_test_client.get("/sparql", headers={"Accept": "application/n-triples"})
+    assert r.text.startswith("<")
 
 
 def test_raw_query_get_header(vp_test_client):
@@ -75,7 +69,7 @@ def test_raw_query_get_header(vp_test_client):
                      }
                      """
         },
-        headers={"Accept": "application/sparql-results+json"}
+        headers={"Accept": "application/sparql-results+json"},
     )
     # print(r.json().get("results").get("bindings")[0].get("count").get("value"))
     assert '"datatype":"http://www.w3.org/2001/XMLSchema#integer","value"' in r.text
@@ -92,7 +86,7 @@ def test_raw_query_get_header(vp_test_client):
                      }
                      """
         },
-        headers={"Accept": "application/sparql-results+xml"}
+        headers={"Accept": "application/sparql-results+xml"},
     )
     assert '<literal datatype="http://www.w3.org/2001/XMLSchema#integer">' in r.text
 
@@ -101,7 +95,7 @@ def test_raw_query_get_header(vp_test_client):
         params={
             "query": """
                     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-                    
+
                     CONSTRUCT {
                       ?c a skos:Concept .
                     }
@@ -111,7 +105,7 @@ def test_raw_query_get_header(vp_test_client):
                     LIMIT 3
                      """
         },
-        headers={"Accept": "text/turtle"}
+        headers={"Accept": "text/turtle"},
     )
     assert "a skos:Concept" in r.text
 
@@ -130,7 +124,7 @@ def test_raw_query_get_header(vp_test_client):
                     LIMIT 3
                      """
         },
-        headers={"Accept": "application/ld+json"}
+        headers={"Accept": "application/ld+json"},
     )
     assert type(r.json()[0]["@id"]) == str
 
@@ -147,8 +141,8 @@ def test_raw_query_get_accept_param(vp_test_client):
                         ?c a skos:Concept .
                      }
                      """,
-            "Accept": "application/sparql-results+json"
-        }
+            "Accept": "application/sparql-results+json",
+        },
     )
     # print(r.json().get("results").get("bindings")[0].get("count").get("value"))
     assert '"datatype":"http://www.w3.org/2001/XMLSchema#integer","value"' in r.text
@@ -164,8 +158,8 @@ def test_raw_query_get_accept_param(vp_test_client):
                         ?c a skos:Concept .
                      }
                      """,
-            "Accept": "application/sparql-results+xml"
-        }
+            "Accept": "application/sparql-results+xml",
+        },
     )
     assert '<literal datatype="http://www.w3.org/2001/XMLSchema#integer">' in r.text
 
@@ -183,8 +177,8 @@ def test_raw_query_get_accept_param(vp_test_client):
                     }
                     LIMIT 3
                      """,
-            "Accept": "text/turtle"
-        }
+            "Accept": "text/turtle",
+        },
     )
     assert "a skos:Concept" in r.text
 
@@ -202,8 +196,8 @@ def test_raw_query_get_accept_param(vp_test_client):
                     }
                     LIMIT 3
                      """,
-            "Accept": "application/ld+json"
-        }
+            "Accept": "application/ld+json",
+        },
     )
     assert type(r.json()[0]["@id"]) == str
 
@@ -219,7 +213,7 @@ def test_raw_query_post_header(vp_test_client):
                 ?c a skos:Concept .
              }
              """,
-        headers={"Accept": "application/sparql-results+json"}
+        headers={"Accept": "application/sparql-results+json"},
     )
     # print(r.json().get("results").get("bindings")[0].get("count").get("value"))
     assert '"datatype":"http://www.w3.org/2001/XMLSchema#integer","value"' in r.text
@@ -234,7 +228,7 @@ def test_raw_query_post_header(vp_test_client):
                 ?c a skos:Concept .
              }
              """,
-        headers={"Accept": "application/sparql-results+xml"}
+        headers={"Accept": "application/sparql-results+xml"},
     )
     assert '<literal datatype="http://www.w3.org/2001/XMLSchema#integer">' in r.text
 
@@ -251,7 +245,7 @@ def test_raw_query_post_header(vp_test_client):
             }
             LIMIT 3
              """,
-        headers={"Accept": "text/turtle"}
+        headers={"Accept": "text/turtle"},
     )
     # assert '<literal datatype="http://www.w3.org/2001/XMLSchema#integer">' in r.text
     assert "a skos:Concept" in r.text
@@ -266,6 +260,6 @@ def test_raw_query_post_header(vp_test_client):
                 ?c a skos:Concept .
              }
              """,
-        headers={"Accept": "application/ld+json"}
+        headers={"Accept": "application/ld+json"},
     )
     assert type(r.json()[0]["@id"]) == str

@@ -30,11 +30,11 @@ def load_spaceprez_graph():
 
 
 def load_vocprez_graph():
-        print("loading VocPrez graph")
-        g = Graph()
-        for f in Path(Path(__file__).parent / "data" / "vocprez").glob("*.ttl"):
-            g.parse(f)
-        return g
+    print("loading VocPrez graph")
+    g = Graph()
+    for f in Path(Path(__file__).parent / "data" / "vocprez").glob("*.ttl"):
+        g.parse(f)
+    return g
 
 
 catprez_graph = load_catprez_graph()
@@ -178,12 +178,12 @@ class SparqlServer(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--server',
-                        default="localhost",
-                        help='Optionally a server location')
-    parser.add_argument('-p', '--port',
-                        default=3030,
-                        help='Optionally a port to run on')
+    parser.add_argument(
+        "-s", "--server", default="localhost", help="Optionally a server location"
+    )
+    parser.add_argument(
+        "-p", "--port", default=3030, help="Optionally a port to run on"
+    )
     args = parser.parse_args()
 
     srv = HTTPServer((args.server, int(args.port)), SparqlServer)

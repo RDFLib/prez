@@ -12,13 +12,9 @@ class CatPrezCatalog(PrezModel):
         str(DCTERMS.publisher),
         str(DCTERMS.created),
         str(DCTERMS.modified),
-        str(DCTERMS.hasPart)
+        str(DCTERMS.hasPart),
     ]
-    hidden_props = [
-        str(DCTERMS.description),
-        str(RDFS.label),
-        str(RDF.type)
-    ]
+    hidden_props = [str(DCTERMS.description), str(RDFS.label), str(RDF.type)]
 
     def __init__(
         self, graph: Graph, id: Optional[str] = None, uri: Optional[str] = None
@@ -42,11 +38,11 @@ class CatPrezCatalog(PrezModel):
             PREFIX dcterms: <{DCTERMS}>
             PREFIX rdfs: <{RDFS}>
             PREFIX xsd: <{XSD}>
-            
+
             SELECT *
             WHERE {{
                 {query_by_id if id is not None else query_by_uri}
-                
+
                 ?c
                     a dcat:Catalog ;
                     dcterms:title ?title ;

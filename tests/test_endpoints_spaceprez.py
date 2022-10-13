@@ -26,7 +26,7 @@ def sp_test_client(request):
         config = f.read()
         config = config.replace("Default Prez", "Test Prez")
         config = config.replace("Default SpacePrez", "Test SpacePrez")
-        config = config.replace('["VocPrez", "SpacePrez"]', '["SpacePrez"]')
+        config = config.replace('["CatPrez", "VocPrez", "SpacePrez"]', '["SpacePrez"]')
         config = config.replace(
             '"SPACEPREZ_SPARQL_ENDPOINT", ""',
             '"SPACEPREZ_SPARQL_ENDPOINT", "http://localhost:3032/spaceprez"',

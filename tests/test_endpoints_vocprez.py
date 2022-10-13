@@ -28,7 +28,7 @@ def vp_test_client(request):
         config = f.read()
         config = config.replace("Default Prez", "Test Prez")
         config = config.replace("Default VocPrez", "Test VocPrez")
-        config = config.replace('["VocPrez", "SpacePrez"]', '["VocPrez"]')
+        config = config.replace('["CatPrez", "VocPrez", "SpacePrez"]', '["VocPrez"]')
         config = config.replace(
             '"VOCPREZ_SPARQL_ENDPOINT", ""',
             '"VOCPREZ_SPARQL_ENDPOINT", "http://localhost:3031/vocprez"',

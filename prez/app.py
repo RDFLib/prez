@@ -20,7 +20,6 @@ from prez.routers import (
     catprez_router,
     vocprez_router,
     spaceprez_router,
-    spaceprez_router_new,
 )
 from prez.routers.vocprez_router import vocprez_home_endpoint
 from prez.services.app_service import *
@@ -104,7 +103,6 @@ def configure_routing():
         app.include_router(vocprez_router.router)
     if "SpacePrez" in ENABLED_PREZS:
         app.include_router(spaceprez_router.router)
-        app.include_router(spaceprez_router_new.router)
 
 
 @app.exception_handler(RequestValidationError)

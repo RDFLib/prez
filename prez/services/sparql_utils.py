@@ -345,7 +345,9 @@ async def sparql_endpoint_query_multiple(
                 if len(succeeded_results.keys()) == 0:
                     succeeded_results = result[1]
                 else:
-                    succeeded_results["results"]["bindings"] += result[1]["results"]["bindings"]
+                    succeeded_results["results"]["bindings"] += result[1]["results"][
+                        "bindings"
+                    ]
             else:  # XML
                 succeeded_results[i] = result[1]
         else:

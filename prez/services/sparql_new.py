@@ -2,15 +2,39 @@ import asyncio
 import time
 from prez.cache import tbox_cache
 from rdflib import Graph, URIRef, Literal
-from typing import List
+from rdflib.namespace import GEO, DCAT
+from typing import List, Optional
 
 from prez.services.sparql_utils import sparql_construct
 
 
-def generate_construct(object_uri: URIRef, profile: URIRef):
+def generate_listing_construct(
+    item_class_and_parent_uri: tuple,
+    page: Optional[int] = None,
+    per_page: Optional[int] = None,
+    profile: dict = {},  # unused - we don't currently filter or otherwise change listings based on profiles
+):
+    item_class, parent_uri = item_class_and_parent_uri
+    construct_query = f"""PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+CONSTRUCT {{ ?item dcterms:identifier ?id }}
+WHERE {{ \
+{chr(10) + chr(9) + f'<{parent_uri}> rdfs:member ?item .' if parent_uri else ""}
+    ?item a <{item_class}> ;
+          dcterms:identifier ?id .
+  	FILTER(DATATYPE(?id) = xsd:token)
+    }} {f"LIMIT {per_page} OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
+    """
+    return construct_query
+
+
+def generate_item_construct(object_uri: URIRef, profile: dict):
+
     include_predicates = []  # TODO from profile
     exclude_predicates = []  # TODO from profile
-    bnode_depth = 2  # TODO from profile
+    bnode_depth = profile.get("bnode_depth", 2)  # TODO from profile
     construct_query = f"""PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n
 CONSTRUCT {{
     <{object_uri}> ?p ?o1 .
@@ -18,8 +42,8 @@ CONSTRUCT {{
   }}
 WHERE {{
     <{object_uri}> !rdfs:member ?o1 ;
-        ?p ?o1 . \
-        {generate_include_predicates(include_predicates)}
+        ?p ?o1 . \n
+{generate_include_predicates(include_predicates)} \
 {generate_bnode_select(bnode_depth)}
 }}
 """
@@ -32,7 +56,7 @@ def generate_include_predicates(include_predicates):
     VALUES ?p { <http://example1.com> <http://example2.com> }
     """
     if include_predicates:
-        return f"""VALUES ?p{{ \n{chr(10).join([f"<{p}>" for p in include_predicates])}\n}}"""
+        return f"""VALUES ?p{{\n{chr(10).join([f"<{p}>" for p in include_predicates])}\n}}"""
     else:
         return ""
 

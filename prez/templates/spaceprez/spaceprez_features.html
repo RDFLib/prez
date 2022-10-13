@@ -13,15 +13,15 @@
         {% if collection is none %}
             {% set breadcrumbs = [
                 {"label": "Datasets", "url": url_for("datasets_endpoint")},
-                {"label": dataset.title, "url": url_for("dataset_endpoint", dataset_id=dataset.id)},
+                {"label": dataset.title, "url": url_for("item_endpoint", dataset_id=dataset.id)},
                 {"label": "Features", "url": url_for("dataset_features", dataset_id=dataset.id)},
             ] %}
         {% else %}
             {% set breadcrumbs = [
                 {"label": "Datasets", "url": url_for("datasets_endpoint")},
-                {"label": dataset.title, "url": url_for("dataset_endpoint", dataset_id=dataset.id)},
+                {"label": dataset.title, "url": url_for("item_endpoint", dataset_id=dataset.id)},
                 {"label": "Feature Collections", "url": url_for("feature_collections_endpoint", dataset_id=dataset.id)},
-                {"label": collection.title, "url": url_for("feature_collection_endpoint", dataset_id=dataset.id, collection_id=collection.id)},
+                {"label": collection.title, "url": url_for("item_endpoint", dataset_id=dataset.id, collection_id=collection.id)},
                 {"label": "Features", "url": url_for("features_endpoint", dataset_id=dataset.id, collection_id=collection.id)},
             ] %}
         {% endif %}
@@ -38,16 +38,16 @@
             {% set breadcrumbs = [
                 {"label": "SpacePrez", "url": url_for("spaceprez_home_endpoint")},
                 {"label": "Datasets", "url": url_for("datasets_endpoint")},
-                {"label": dataset.title, "url": url_for("dataset_endpoint", dataset_id=dataset.id)},
+                {"label": dataset.title, "url": url_for("item_endpoint", dataset_id=dataset.id)},
                 {"label": "Features", "url": url_for("dataset_features", dataset_id=dataset.id)},
             ] %}
         {% else %}
             {% set breadcrumbs = [
                 {"label": "SpacePrez", "url": url_for("spaceprez_home_endpoint")},
                 {"label": "Datasets", "url": url_for("datasets_endpoint")},
-                {"label": dataset.title, "url": url_for("dataset_endpoint", dataset_id=dataset.id)},
+                {"label": dataset.title, "url": url_for("item_endpoint", dataset_id=dataset.id)},
                 {"label": "Feature Collections", "url": url_for("feature_collections_endpoint", dataset_id=dataset.id)},
-                {"label": collection.title, "url": url_for("feature_collection_endpoint", dataset_id=dataset.id, collection_id=collection.id)},
+                {"label": collection.title, "url": url_for("item_endpoint", dataset_id=dataset.id, collection_id=collection.id)},
                 {"label": "Features", "url": url_for("features_endpoint", dataset_id=dataset.id, collection_id=collection.id)},
             ] %}
         {% endif %}
