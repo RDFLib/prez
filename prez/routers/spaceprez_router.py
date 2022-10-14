@@ -413,14 +413,6 @@ async def spaceprez_cql(
 
 
 @router.get("/datasets", summary="List Datasets")
-@router.get(
-    "/dataset/{dataset_id}/collections",
-    summary="List Feature Collections",
-)
-@router.get(
-    "/dataset/{dataset_id}/collections/{collection_id}/items",
-    summary="List Features",
-)
 async def list_items(request: Request, page: int = 1, per_page: int = 20):
     mediatype = "application/json"
     parent_item = Item(**request.path_params)
@@ -431,15 +423,53 @@ async def list_items(request: Request, page: int = 1, per_page: int = 20):
     return await return_data(request, query, mediatype, profile, parent_item)
 
 
+@router.get(
+    "/dataset/{dataset_id}/collections",
+    summary="List Feature Collections",
+)
+async def list_items_feature_collections(
+    request: Request, dataset_id: str, page: int = 1, per_page: int = 20
+):
+    return await list_items(request, page, per_page)
+
+
+@router.get(
+    "/dataset/{dataset_id}/collections/{collection_id}/items",
+    summary="List Features",
+)
+async def list_items_features(
+    request: Request,
+    dataset_id: str,
+    collection_id: str,
+    page: int = 1,
+    per_page: int = 20,
+):
+    return await list_items(request, page, per_page)
+
+
 @router.get("/dataset/{dataset_id}", summary="Get Dataset")
+async def dataset_item(request: Request, dataset_id: str):
+    return await item_endpoint(request)
+
+
 @router.get(
     "/dataset/{dataset_id}/collections/{collection_id}",
     summary="Get Feature Collection",
 )
+async def dataset_item(request: Request, dataset_id: str, collection_id: str):
+    return await item_endpoint(request)
+
+
 @router.get(
     "/dataset/{dataset_id}/collections/{collection_id}/items/{feature_id}",
     summary="Get Feature",
 )
+async def dataset_item(
+    request: Request, dataset_id: str, collection_id: str, feature_id: str
+):
+    return await item_endpoint(request)
+
+
 async def item_endpoint(request: Request):
     mediatype = "text/html"
     item = Item(**request.path_params)
