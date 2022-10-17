@@ -65,7 +65,7 @@ class SpacePrezHomeRenderer(Renderer):
                     "title": "Conformance",
                 },
                 {
-                    "href": self.request.url_for("datasets_endpoint"),
+                    "href": self.request.url_for("list_items"),
                     "rel": "data",
                     "type": self.mediatype,
                     "title": "Datasets",
@@ -76,7 +76,7 @@ class SpacePrezHomeRenderer(Renderer):
         return JSONResponse(
             content=content,
             media_type="application/json",
-            headers=self.headers,
+            # headers=self.headers,
         )
 
     def _render_oai(self, template_context: Union[Dict, None]):

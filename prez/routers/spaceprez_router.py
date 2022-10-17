@@ -8,7 +8,6 @@ from fastapi.openapi.models import Response
 from fastapi.responses import JSONResponse, RedirectResponse, StreamingResponse
 from pydantic import BaseModel
 from rdflib import Namespace, URIRef
-
 from prez.config import ENABLED_PREZS, SPACEPREZ_SPARQL_ENDPOINT
 from prez.cql_search import CQLSearch
 from prez.models.spaceprez import *
@@ -20,12 +19,13 @@ from prez.services.spaceprez_service import *
 from prez.services.spaceprez_service import get_object_uri_and_classes, sparql_construct
 from prez.services.sparql_new import (
     generate_item_construct,
-    get_labels,
+    get_annotation_properties,
     generate_listing_construct,
 )
 from prez.utils import templates
 from prez.view_funcs import profiles_func
 from prez.models.spaceprez.spaceprez_item import Item
+from prez.cache import tbox_cache, missing_annotations
 
 PREZ = Namespace("https://surroundaustralia.com/prez/")
 
@@ -38,15 +38,17 @@ router = APIRouter(tags=["SpacePrez"] if len(ENABLED_PREZS) > 1 else [])
 )
 async def spaceprez_home_endpoint(request: Request):
     """Returns the SpacePrez home page in the necessary profile & mediatype"""
-    home_renderer = SpacePrezHomeRenderer(request)
-    if home_renderer.profile == "alt":
-        alt_profiles_graph = await build_alt_graph(
-            PREZ.SpacePrezHome,
-            home_renderer.profile_details.profiles_formats,
-            home_renderer.profile_details.available_profiles_dict,
-        )
-        return home_renderer.render(alt_profiles_graph=alt_profiles_graph)
-    return home_renderer.render()
+    return SpacePrezHomeRenderer(request)._render_oai_json()
+    # # if home_renderer.profile == "alt":
+    # alt_profiles_graph = await build_alt_graph(
+    #     PREZ.SpacePrezHome,
+    #     home_renderer.profile_details.profiles_formats,
+    #     home_renderer.profile_details.available_profiles_dict,
+    # )
+    # obj = io.BytesIO(alt_profiles_graph.serialize(format="json-ld", encoding="utf-8"))
+    # return StreamingResponse(obj, media_type="application/ld+json")
+    #     return home_renderer.render(alt_profiles_graph=alt_profiles_graph)
+    # return home_renderer.render()
 
 
 @router.get(
@@ -413,14 +415,18 @@ async def spaceprez_cql(
 
 
 @router.get("/datasets", summary="List Datasets")
-async def list_items(request: Request, page: int = 1, per_page: int = 20):
-    mediatype = "application/json"
-    parent_item = Item(**request.path_params)
-    profile, _ = connegp_placeholder(request, parent_item.general_class)
-    query = generate_listing_construct(
-        parent_item.children_general_class, parent_item.uri, page, per_page, profile
+async def list_items(
+    request: Request, page: Optional[int] = 1, per_page: Optional[int] = 20
+):
+    """Returns a list of SpacePrez datasets in the requested profile & mediatype"""
+    general_item = Item(**request.path_params)
+    profile, mediatype = connegp_placeholder(
+        request, general_item.children_general_class
     )
-    return await return_data(request, query, mediatype, profile, parent_item)
+    query = generate_listing_construct(
+        general_item.children_general_class, general_item.uri, page, per_page, profile
+    )
+    return await return_data(query, mediatype, profile, "SpacePrez")
 
 
 @router.get(
@@ -471,59 +477,50 @@ async def dataset_item(
 
 
 async def item_endpoint(request: Request):
-    mediatype = "text/html"
-    item = Item(**request.path_params)
-    profile, _ = connegp_placeholder(request, item.classes)
+    item = Item(**request.path_params, url=request.url)
+    profile, mediatype = connegp_placeholder(request, item.classes)
     query = generate_item_construct(item.uri, profile)  # profile will go here in future
-    return await return_data(request, query, mediatype, profile, item)
+    return await return_data(query, mediatype, profile, "SpacePrez")
 
 
-async def return_data(request, query, mediatype, profile, item):
-    if mediatype in RDF_MEDIATYPES:
-        # return Response(graph.serialize(format=mediatype), media_type=mediatype)
-        response = RedirectResponse(  # TODO confirm this is a valid response - not sure it will work outside browsers!
-            url=SPACEPREZ_SPARQL_ENDPOINT + "?query=" + quote_plus(query),
-            headers=request.headers,
+async def return_data(query_or_queries, mediatype, profile, prez):
+    cache_ref = tbox_cache
+    if isinstance(query_or_queries, list):
+        results = await asyncio.gather(
+            *[sparql_construct(query, prez) for query in query_or_queries]
         )
-        return response
+        graph = Graph()
+        for result in results:
+            graph += result[1]
+    else:
+        _, graph = await sparql_construct(query_or_queries, prez)
+    if mediatype in RDF_MEDIATYPES:
+        obj = io.BytesIO(graph.serialize(format=mediatype, encoding="utf-8"))
+        return StreamingResponse(content=obj, media_type=mediatype)
     else:  # all other responses require the RDF in memory
-        _, graph = await sparql_construct(query, "SpacePrez")
         if mediatype == "text/html":
-            labels_graph = await get_labels(graph)
-
-            obj = io.BytesIO(
-                (graph + labels_graph).serialize(format="json-ld", encoding="utf-8")
+            queries_for_uncached, labels_graph = await get_annotation_properties(graph)
+            results = await asyncio.gather(
+                *[sparql_construct(query, prez) for query in queries_for_uncached]
             )
-            return StreamingResponse(content=obj, media_type="application/ld+json")
-        elif mediatype == "application/json":
-            # TODO complete - or move to frontend app
-            if profile["uri"] == URIRef("https://w3id.org/profile/mem"):
-                inner = {}
-                for i, item_uri in enumerate(set(graph.subjects())):
-                    inner[i] = {"uri": item_uri}
-                    inner[i]["id"] = graph.value(
-                        subject=item_uri, predicate=DCTERMS.identifier
-                    )
-                    inner[i]["title"] = graph.value(
-                        subject=item_uri, predicate=DCTERMS.title
-                    )
-                    inner[i]["desc"] = graph.value(
-                        subject=item_uri, predicate=DCTERMS.description
-                    )
-                    if item.children_general_class == GEO.FeatureCollection:
-                        link = (
-                            f"/dataset/{item.dataset_id}/collections/{inner[i]['id']}"
-                        )
-                    elif item.children_general_class == GEO.Feature:
-                        link = f"/dataset/{item.dataset_id}/collections/{item.collection_id}/items/{inner[i]['id']}"
-                    inner[i]["link"] = link
-            outer = {"uri": str(request.url), "members": inner}
-            return JSONResponse(content=outer)
+            for i, r in enumerate(results):
+                if r[1]:
+                    labels_graph += r[1]
+                    cache_ref += r[1]
+                else:
+                    missing_annotations.append(queries_for_uncached[i])
+            obj = io.BytesIO(
+                (graph + labels_graph).serialize(format="turtle", encoding="utf-8")
+            )
+            return StreamingResponse(content=obj, media_type="text/turtle")
 
 
 def connegp_placeholder(request, classes):
     """placeholder function for connegp"""
     return (
-        {"uri": URIRef("https://w3id.org/profile/mem"), "bnode_depth": 2},
-        None,
+        {
+            "uri": URIRef("https://w3id.org/profile/mem"),
+            "bnode_depth": 2,
+        },
+        "text/html",
     )

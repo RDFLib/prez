@@ -1,5 +1,6 @@
 from fastapi import APIRouter
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel, root_validator, BaseConfig
+from starlette.datastructures import URL
 
 from prez.services.spaceprez_service import *
 
@@ -7,12 +8,14 @@ PREZ = Namespace("https://surroundaustralia.com/prez/")
 
 router = APIRouter(tags=["SpacePrez"] if len(ENABLED_PREZS) > 1 else [])
 
+BaseConfig.arbitrary_types_allowed = True
+
 
 class Item(BaseModel):
     id: Optional[str]
     uri: Optional[URIRef]
     general_class: Optional[URIRef]
-    children_general_class: Optional[URIRef]
+    children_general_class: Optional[URIRef] = DCAT.Dataset
     feature_id: Optional[str]
     feature_classes: Optional[List[URIRef]]  # TODO make generic not just for features
     collection_id: Optional[str]

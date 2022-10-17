@@ -14,7 +14,7 @@ from fedsearch import SkosSearch, EndpointDetails
 from pydantic import AnyUrl
 from starlette.middleware.cors import CORSMiddleware
 
-from prez.cache import tbox_cache, update_tbox_label_cache
+from prez.cache import tbox_cache
 from prez.profiles.generate_profiles import get_general_profiles
 from prez.routers import (
     catprez_router,
@@ -139,8 +139,6 @@ async def app_startup():
                         print(
                             f"Successfully connected to {prez} endpoint {prez2endpoint[prez]}"
                         )
-                        # update the tbox cache
-                        update_tbox_label_cache(os.getenv("CONTEXT_GRAPH_IRI"))
 
                         # Check whether there are any remote profiles, and if so, cache them.
                         # If there will be remote profiles but they haven't yet been loaded to fuseki, they will be not be
@@ -565,7 +563,7 @@ async def object(
         if object_type == SKOS.ConceptScheme:
             if "VocPrez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
-            return await vocprez_router.scheme(request)
+            return await vocprez_router.scheme_endpoint(request)
         elif object_type == SKOS.Collection:
             if "VocPrez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")

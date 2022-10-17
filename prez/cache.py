@@ -1,12 +1,12 @@
-from rdflib import URIRef, Literal
+from rdflib import URIRef, Literal, Graph
 
-tbox_cache = {
-    URIRef("http://www.opengis.net/ont/geosparql#asWKT"): Literal("as WKT"),
-    URIRef("http://www.opengis.net/ont/geosparql#hasGeometry"): Literal("has Geometry"),
-}
+tbox_cache = Graph()
+tbox_cache.add(
+    (
+        URIRef("http://www.w3.org/ns/dcat#Dataset"),
+        URIRef("http://www.w3.org/2000/01/rdf-schema#label"),
+        Literal("Dataset"),
+    )
+)
 
-# TODO populate from SPARQL endpoint on startup
-
-
-def update_tbox_label_cache(graph_iri: URIRef):
-    pass
+missing_annotations = []

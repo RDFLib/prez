@@ -14,7 +14,7 @@ SH = Namespace("http://www.w3.org/ns/shacl#")
 
 SYSTEM_URI = os.environ.get("SYSTEM_URI", "localhost")
 
-PREZ_TITLE = os.environ.get("PREZ_TITLE", "Test Prez")
+PREZ_TITLE = os.environ.get("PREZ_TITLE", "Default Prez")
 PREZ_DESC = os.environ.get("PREZ_DESC", "Prez default description")
 
 CATPREZ_TITLE = os.environ.get("CATPREZ_TITLE", "Default CatPrez")
@@ -25,7 +25,7 @@ VOCPREZ_TITLE = os.environ.get("VOCPREZ_TITLE", "Default VocPrez")
 VOCPREZ_DESC = os.environ.get("VOCPREZ_DESC", "VocPrez default description")
 VOCPREZ_DATA_URI = os.environ.get("VOCPREZ_DATA_URI", "http://exampledata.org")
 
-SPACEPREZ_TITLE = os.environ.get("SPACEPREZ_TITLE", "Test SpacePrez")
+SPACEPREZ_TITLE = os.environ.get("SPACEPREZ_TITLE", "Default SpacePrez")
 SPACEPREZ_DESC = os.environ.get("SPACEPREZ_DESC", "SpacePrez default description")
 SPACEPREZ_DATA_URI = os.environ.get("SPACEPREZ_DATA_URI", "http://exampledata.org")
 
@@ -38,9 +38,7 @@ VOCPREZ_SPARQL_ENDPOINT = os.environ.get("VOCPREZ_SPARQL_ENDPOINT", "")
 VOCPREZ_SPARQL_USERNAME = os.environ.get("VOCPREZ_SPARQL_USERNAME", "")
 VOCPREZ_SPARQL_PASSWORD = os.environ.get("VOCPREZ_SPARQL_PASSWORD", "")
 
-SPACEPREZ_SPARQL_ENDPOINT = os.environ.get(
-    "SPACEPREZ_SPARQL_ENDPOINT", "http://localhost:3032/spaceprez"
-)
+SPACEPREZ_SPARQL_ENDPOINT = os.environ.get("SPACEPREZ_SPARQL_ENDPOINT", "")
 SPACEPREZ_SPARQL_USERNAME = os.environ.get("SPACEPREZ_SPARQL_USERNAME", "")
 SPACEPREZ_SPARQL_PASSWORD = os.environ.get("SPACEPREZ_SPARQL_PASSWORD", "")
 
@@ -53,7 +51,7 @@ DEMO = os.environ.get("DEMO", True)
 ALLOW_PARTIAL_RESULTS = os.environ.get("ALLOW_PARTIAL_RESULTS", True)
 
 ENABLED_PREZS = json.loads(
-    os.environ.get("ENABLED_PREZS", '["SpacePrez"]')
+    os.environ.get("ENABLED_PREZS", '["CatPrez", "VocPrez", "SpacePrez"]')
 )  # must use proper capitalisation
 THEME_VOLUME = os.environ.get("THEME_VOLUME", None)
 SIDENAV = os.environ.get("SIDENAV", "False") == "True"

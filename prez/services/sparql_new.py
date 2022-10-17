@@ -1,11 +1,9 @@
-import asyncio
-import time
-from prez.cache import tbox_cache
-from rdflib import Graph, URIRef, Literal
-from rdflib.namespace import GEO, DCAT
 from typing import List, Optional
 
-from prez.services.sparql_utils import sparql_construct
+from rdflib import Graph, URIRef, RDFS, DCTERMS
+from rdflib.graph import BatchAddGraph
+
+from prez.cache import tbox_cache, missing_annotations
 
 
 def generate_listing_construct(
@@ -38,7 +36,6 @@ WHERE {{ \
 
 
 def generate_item_construct(object_uri: URIRef, profile: dict):
-
     include_predicates = []  # TODO from profile
     exclude_predicates = []  # TODO from profile
     bnode_depth = profile.get("bnode_depth", 2)  # TODO from profile
@@ -106,46 +103,83 @@ def generate_bnode_select(depth):
     return part_one + part_two
 
 
-async def get_labels(
+async def get_annotation_properties(
     object_graph: Graph,
     label_property: URIRef = URIRef("http://www.w3.org/2000/01/rdf-schema#label"),
 ):
+    """
+    Gets annotation data used for HTML display.
+    This includes the label, description, and provenance, if available.
+    """
     terms = set(i for i in object_graph.predicates() if isinstance(i, URIRef)) | set(
         i for i in object_graph.objects() if isinstance(i, URIRef)
     )
     # read labels from the tbox cache, this should be the majority of labels
-    uncached_terms, labels_g = get_labels_from_tbox_cache(terms)
+    uncached_terms, labels_g = get_annotations_from_tbox_cache(terms)
     # read remaining labels from the SPARQL endpoint
-    queries = [
-        f"CONSTRUCT {{ <{term}> <{label_property}> ?label }} WHERE {{ <{term}> <{label_property}> ?label }}"
+    queries_for_uncached = [
+        f"""CONSTRUCT {{ <{term}> <{label_property}> ?label }}
+WHERE {{ <{term}> <{label_property}> ?label
+FILTER(lang(?label) = "" || lang(?label) = "en" || lang(?label) = "en-AU")
+}}"""
         for term in uncached_terms
     ]
+    # remove any queries we previously didn't get a result for from the SPARQL endpoint
+    queries_for_uncached = list(set(queries_for_uncached) - set(missing_annotations))
     # untested assumption is running multiple queries in parallel is faster than running one query for all labels
-    results = await asyncio.gather(
-        *[sparql_construct(query, "SpacePrez") for query in queries]
-    )
-    for r in results:
-        if r[0]:
-            labels_g += r[1]
-    return labels_g
+    return queries_for_uncached, labels_g
 
 
-def get_labels_from_tbox_cache(terms: List[URIRef]):
+def get_annotations_from_tbox_cache(terms: List[URIRef]):
     """
     Gets labels from the TBox cache, returns a list of terms that were not found in the cache, and a graph of labels
     """
-    uncached_terms = []
     labels_from_cache = Graph()
-    cache_keys = tbox_cache.keys()
-    for term in terms:
-        if term in cache_keys:
-            labels_from_cache.add(
-                (
-                    term,
-                    URIRef("http://www.w3.org/2000/01/rdf-schema#label"),
-                    tbox_cache[term],
-                )
-            )
-        else:
-            uncached_terms.append(term)
+    for property in [RDFS.label, DCTERMS.description, DCTERMS.provenance]:
+        cache_keys = [i for i in tbox_cache.subjects(predicate=property)]
+        if cache_keys:
+            cached_terms = [term for term in terms if term in cache_keys]
+            uncached_terms = set(terms) - set(cached_terms)
+            cached_props = [
+                (term, property, tbox_cache.value(subject=term, predicate=property))
+                for term in cached_terms
+            ]
+            [labels_from_cache.add(triple) for triple in cached_props]
     return uncached_terms, labels_from_cache
+
+
+def generate_listing_count_construct(
+    collection_uri: Optional[URIRef] = None, general_class: Optional[URIRef] = None
+):
+    """
+    Generates a SPARQL construct query to count either:
+    1. the members of a collection, given a collection URI, or;
+    2. the number of instances of a general class, given a general class.
+    """
+    if not (collection_uri or general_class):
+        raise ValueError("Either a collection URI or a general class must be provided")
+    if collection_uri:
+        query_explicit = f"""PREFIX prez: <https://surroundaustralia.com/prez/>
+
+CONSTRUCT {{ <{collection_uri}> prez:count ?count }}
+WHERE {{ <{collection_uri}> prez:count ?count }}"""
+
+        query_implicit = f"""PREFIX prez: <https://surroundaustralia.com/prez/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+CONSTRUCT {{ <{collection_uri}> prez:count ?count }}
+WHERE {{
+    SELECT (COUNT(?item) as ?count) {{
+        <{collection_uri}> rdfs:member ?item .
+    }}
+}}"""
+        return query_explicit, query_implicit
+    else:  # general_class
+        return f"""PREFIX prez: <https://surroundaustralia.com/prez/>
+
+CONSTRUCT {{ <{general_class}> prez:count ?count }}
+WHERE {{
+    SELECT (COUNT(?item) as ?count) {{
+        ?item a <{general_class}> .
+    }}
+}}"""

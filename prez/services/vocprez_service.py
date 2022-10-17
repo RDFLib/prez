@@ -27,6 +27,7 @@ async def list_schemes(page: int, per_page: int):
             ?cs a skos:ConceptScheme ;
                 dcterms:identifier ?id ;
                 skos:prefLabel ?label .
+            FILTER(DATATYPE(?id) = xsd:token)
             OPTIONAL {{
                 ?cs dcterms:description ?desc .
             }}

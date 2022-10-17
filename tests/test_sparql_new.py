@@ -83,7 +83,7 @@ def test_generate_include_predicates():
 @pytest.mark.asyncio
 async def test_get_labels():
     spaceprez_graph = load_spaceprez_graph()
-    labels = await get_labels(spaceprez_graph)
+    labels_queries = await get_annotation_properties(spaceprez_graph)
 
 
 def test_get_labels_from_tbox_cache():
@@ -98,7 +98,7 @@ def test_get_labels_from_tbox_cache():
         URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
         URIRef("http://purl.org/dc/terms/type"),
     }
-    uncached_terms, labels_from_cache = get_labels_from_tbox_cache(terms)
+    uncached_terms, labels_from_cache = get_annotations_from_tbox_cache(terms)
     assert len(uncached_terms) == 7
     assert len(labels_from_cache) == 2
 
