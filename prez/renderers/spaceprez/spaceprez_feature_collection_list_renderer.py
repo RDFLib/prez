@@ -9,7 +9,7 @@ from prez.config import *
 from prez.models.spaceprez import SpacePrezFeatureCollectionList
 from prez.utils import templates
 
-PREZ = Namespace("https://surroundaustralia.com/prez/")
+PREZ = Namespace("https://kurrawong.net/prez/")
 
 
 class SpacePrezFeatureCollectionListRenderer(ListRenderer):

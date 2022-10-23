@@ -141,7 +141,7 @@ def get_general_profiles(general_class):
     # check for hardcoded API default profiles
     ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
     default_profile_nodeshapes = profiles_g.objects(
-        subject=URIRef("http://surroundaustralia.com/profile/prez"),
+        subject=URIRef("http://kurrawong.net/profile/prez"),
         predicate=ALTREXT.hasNodeShape,
     )
     class_default_profiles = []

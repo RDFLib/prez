@@ -4,7 +4,7 @@ from starlette.datastructures import URL
 
 from prez.services.spaceprez_service import *
 
-PREZ = Namespace("https://surroundaustralia.com/prez/")
+PREZ = Namespace("https://kurrawong.net/prez/")
 
 router = APIRouter(tags=["SpacePrez"] if len(ENABLED_PREZS) > 1 else [])
 
@@ -23,12 +23,14 @@ class Item(BaseModel):
     parent_id: Optional[str]
     parent_uri: Optional[URIRef]
     classes: Optional[URIRef]
+    link_constructor: Optional[str] = "/dataset/"
 
     @root_validator
     def populate(cls, values):
         dataset_id = values.get("dataset_id")
         collection_id = values.get("collection_id")
         feature_id = values.get("feature_id")
+        uri = values.get("uri")
         if dataset_id:
             q = f"""
                 PREFIX dcat: <{DCAT}>
@@ -70,9 +72,25 @@ class Item(BaseModel):
                     values["children_general_class"] = GEO.Feature
                     values["parent_uri"] = URIRef(d["value"])
                     values["parent_id"] = dataset_id
+                    values[
+                        "link_constructor"
+                    ] = f"/dataset/{dataset_id}/collections/{collection_id}/items/"
                 else:
                     values["id"] = dataset_id
                     values["uri"] = URIRef(d["value"])
                     values["general_class"] = DCAT.Dataset
                     values["children_general_class"] = GEO.FeatureCollection
+                    values["link_constructor"] = f"/dataset/{dataset_id}/collections/"
+        elif uri:  # uri provided, get the ID
+            q = f"""
+                    PREFIX dcterms: <{DCTERMS}>
+
+                    SELECT ?id {{
+                        <{uri}> dcterms:identifier ?id ;
+                        FILTER(DATATYPE(?id) = xsd:token)
+                    }}
+                    """
+            r = sparql_query_non_async(q, "SpacePrez")
+            if r[0]:
+                values["id"] = r[1][0]["id"]["value"]
         return values

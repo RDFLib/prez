@@ -1,0 +1,12 @@
+@prefix ns1: <http://purl.org/dc/terms/> .
+@prefix ns2: <http://www.opengis.net/ont/geosparql#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://example.com/dataset/sandgate/catchments> a ns2:FeatureCollection ;
+    ns1:description "Hydrological catchments that are 'contracted', that is, guarenteed, to appear on multiple Geofabric surface hydrology data products"@en ;
+    ns1:identifier "catchments"^^xsd:token ;
+    ns1:title "Geofabric Contracted Catchments"@en ;
+    ns2:hasBoundingBox [ a ns2:Geometry ;
+            ns2:asWKT "POLYGON ((152.9075 -27.42,153.16 -27.42,153.16 -27.2775,152.9075 -27.2775,152.9075 -27.42))"^^ns2:wktLiteral ] .
+ns1:identifier rdfs:label "Identifier" .

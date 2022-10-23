@@ -1,6 +1,4 @@
-import pytest
-
-from prez.models.spaceprez.spaceprez_item import Item
+from models.spaceprez_item import Item
 
 import os
 import shutil

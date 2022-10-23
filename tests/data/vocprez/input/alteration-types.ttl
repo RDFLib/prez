@@ -332,4 +332,3 @@ cs:
         :zeolitic ;
     skos:prefLabel "WAROX Alteration Type"@en ;
 .
-

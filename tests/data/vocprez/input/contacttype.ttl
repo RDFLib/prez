@@ -563,4 +563,3 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     skos:hasTopConcept <http://resource.geosciml.org/classifier/cgi/contacttype/contact> ;
     skos:prefLabel "Contact Type"@en ;
 .
-

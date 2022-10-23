@@ -563,7 +563,7 @@ async def object(
         if object_type == SKOS.ConceptScheme:
             if "VocPrez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
-            return await vocprez_router.scheme_endpoint(request)
+            return await vocprez_router.item_endpoint(request)
         elif object_type == SKOS.Collection:
             if "VocPrez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")

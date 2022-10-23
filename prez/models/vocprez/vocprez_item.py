@@ -3,7 +3,7 @@ from pydantic import BaseModel, root_validator
 
 from prez.services.spaceprez_service import *
 
-PREZ = Namespace("https://surroundaustralia.com/prez/")
+PREZ = Namespace("https://kurrawong.net/prez/")
 
 router = APIRouter(tags=["SpacePrez"] if len(ENABLED_PREZS) > 1 else [])
 
@@ -14,37 +14,43 @@ class VocPrezItem(BaseModel):
     general_class: Optional[URIRef] = None
     scheme_id: Optional[str] = None
     collection_id: Optional[str] = None
+    concept_id: Optional[str] = None
     url: Optional[str] = None
 
     @root_validator
     def populate(cls, values):
         url = values.get("url")
-        id = values.get("scheme_id", values.get("collection_id"))
         uri = values.get("uri")
-        assert id or uri, "Either an id or uri must be provided"
         url_parts = url.split("/")
-        if url_parts[1] == "collection":
+        if len(url_parts) == 4:
+            values["general_class"] = SKOS.Concept
+            id = values.get("concept_id")
+        elif url_parts[1] == "collection":
             values["general_class"] = SKOS.Collection
+            id = values.get("collection_id")
         elif url_parts[1] == "scheme":
             values["general_class"] = SKOS.ConceptScheme
+            id = values.get("scheme_id")
         elif url_parts[1] == "vocab":
             values["general_class"] = SKOS.ConceptScheme
+            id = values.get("scheme_id")
+        assert id or uri, "Either an id or uri must be provided"
         if id:  # get the URI
             q = f"""
                 PREFIX dcterms: <{DCTERMS}>
                 PREFIX xsd: <{XSD}>
 
-                SELECT ?cs_uri {{
-                    ?cs_uri dcterms:identifier "{id}"^^xsd:token ;
+                SELECT ?uri {{
+                    ?uri dcterms:identifier "{id}"^^xsd:token ;
                 }}
                 """
             r = sparql_query_non_async(q, "VocPrez")
             if r[0]:
                 # set the uri of the item
-                cs_uri = r[1][0].get("cs_uri")["value"]
-                if cs_uri:
-                    values["uri"] = cs_uri
-        else:  # uri provided, get the scheme ID
+                uri = r[1][0].get("uri")["value"]
+                if uri:
+                    values["uri"] = uri
+        else:  # uri provided, get the ID
             q = f"""
                 PREFIX dcterms: <{DCTERMS}>
 

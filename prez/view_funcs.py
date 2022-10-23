@@ -25,7 +25,7 @@ async def profiles_func(request: Request, prez: Optional[str] = None):
     else:
         raise Exception("invalid prez")
 
-    PREZ = Namespace("https://surroundaustralia.com/prez/")
+    PREZ = Namespace("https://kurrawong.net/prez/")
 
     instance_uri = str(
         request.url.remove_query_params(keys=request.query_params.keys())

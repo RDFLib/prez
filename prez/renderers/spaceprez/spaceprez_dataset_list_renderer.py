@@ -10,7 +10,7 @@ from prez.models.spaceprez import SpacePrezDatasetList
 from prez.utils import templates
 
 
-PREZ = Namespace("https://surroundaustralia.com/prez/")
+PREZ = Namespace("https://kurrawong.net/prez/")
 
 
 class SpacePrezDatasetListRenderer(ListRenderer):

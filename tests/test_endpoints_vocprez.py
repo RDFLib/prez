@@ -7,6 +7,7 @@ from pathlib import Path
 from time import sleep
 
 import pytest
+from rdflib import Graph, URIRef, RDFS, DCTERMS
 
 PREZ_DIR = Path(__file__).parent.parent.absolute() / "prez"
 LOCAL_SPARQL_STORE = Path(Path(__file__).parent / "local_sparql_store/store.py")
@@ -61,13 +62,23 @@ def vp_test_client(request):
 @pytest.fixture(scope="module")
 def a_vocab_id(vp_test_client):
     r = vp_test_client.get("/vocab")
-    return re.search(r'<a href="/vocab/(.*)">', r.text)[1]
+    g = Graph().parse(data=r.text)
+    vocab_uri = g.value(
+        URIRef("https://kurrawong.net/prez/memberList"), RDFS.member, None
+    )
+    vocab_id = g.value(vocab_uri, DCTERMS.identifier, None)
+    return vocab_id
 
 
 @pytest.fixture(scope="module")
 def a_vocab_id_and_a_concept_id(vp_test_client, a_vocab_id):
     # get the first concept endpoint
-    r = vp_test_client.get(f"/vocab/{a_vocab_id}?_profile=vocpub&_mediatype=text/html")
+    r = vp_test_client.get(f"/vocab/{a_vocab_id}")
+    g = Graph().parse(data=r.text)
+    concept_uri = g.objects(
+        URIRef("https://kurrawong.net/prez/memberList"), RDFS.member, None
+    )
+    vocab_id = g
     patt = f'<a href="http://testserver/vocab/{a_vocab_id}/(.*)">'
     return (a_vocab_id, re.search(patt, r.text)[1])
 

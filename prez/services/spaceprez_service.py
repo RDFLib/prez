@@ -286,7 +286,7 @@ async def count_features(
     # first check for hardcoded feature count
     # this will need to catered for/be ignored for CQL search
     q = f"""
-        PREFIX prez: <https://surroundaustralia.com/prez/>
+        PREFIX prez: <https://kurrawong.net/prez/>
         PREFIX dcat: <{DCAT}>
         PREFIX dcterms: <{DCTERMS}>
         PREFIX geo: <{GEO}>

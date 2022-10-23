@@ -6,6 +6,8 @@ from pathlib import Path
 import pytest
 from time import sleep
 
+from rdflib import Graph, URIRef, RDFS, DCTERMS
+
 PREZ_DIR = Path(__file__).parent.parent.absolute() / "prez"
 LOCAL_SPARQL_STORE = Path(Path(__file__).parent / "local_sparql_store/store.py")
 sys.path.insert(0, str(PREZ_DIR.parent.absolute()))
@@ -59,250 +61,118 @@ def sp_test_client(request):
 @pytest.fixture(scope="module")
 def a_dataset_link(sp_test_client):
     # get link for first dataset
-    r = sp_test_client.get("/datasets?_profile=mem&_mediatype=application/json")
-    return r.json()["members"][0]["link"]
+    r = sp_test_client.get("/datasets")
+    g = Graph().parse(data=r.text)
+    member_uri = g.value(
+        URIRef("https://kurrawong.net/prez/memberList"), RDFS.member, None
+    )
+    link = g.value(member_uri, URIRef(f"https://kurrawong.net/prez/link", None))
+    return link
 
 
 @pytest.fixture(scope="module")
 def an_fc_link(sp_test_client, a_dataset_link):
     # get link for a dataset's collections
-    r = sp_test_client.get(
-        f"{a_dataset_link}/collections?_profile=mem&_mediatype=application/json"
+    r = sp_test_client.get(f"{a_dataset_link}/collections")
+    g = Graph().parse(data=r.text)
+    member_uri = g.value(
+        URIRef("https://kurrawong.net/prez/memberList"), RDFS.member, None
     )
-    return r.json()["members"][0]["link"]
+    link = g.value(member_uri, URIRef(f"https://kurrawong.net/prez/link", None))
+    return link
 
 
 @pytest.fixture(scope="module")
 def a_feature_link_and_id(sp_test_client, an_fc_link):
-    r = sp_test_client.get(
-        f"{an_fc_link}/items?_profile=mem&_mediatype=application/json"
+    r = sp_test_client.get(f"{an_fc_link}/items")
+    g = Graph().parse(data=r.text)
+    member_uri = g.value(
+        URIRef("https://kurrawong.net/prez/memberList"), RDFS.member, None
     )
-    feature_link = r.json()["members"][0]["link"]
-    feature_id = r.json()["members"][0]["id"]
-
-    return feature_link, feature_id
+    link = g.value(member_uri, URIRef(f"https://kurrawong.net/prez/link", None))
+    id = g.value(member_uri, DCTERMS.identifier, None)
+    return link, id
 
 
 @pytest.fixture(scope="module")
 def a_dataset_uri(sp_test_client):
     # get uri for first dataset
-    r = sp_test_client.get("/datasets?_profile=mem&_mediatype=application/json")
-    return r.json()["members"][0]["uri"]
-
-
-@pytest.fixture(scope="module")
-def an_fc_uri(sp_test_client, a_dataset_link):
-    # get uri for a dataset's collections
-    r = sp_test_client.get(
-        f"{a_dataset_link}/collections?_profile=mem&_mediatype=application/json"
-    )
-    return r.json()["members"][0]["uri"]
-
-
-@pytest.fixture(scope="module")
-def a_feature_uri(sp_test_client, an_fc_link):
-    # get uri for a feature
-    r = sp_test_client.get(
-        f"{an_fc_link}/items?_profile=mem&_mediatype=application/json"
-    )
-    return r.json()["members"][0]["uri"]
-
-
-def test_home_default_default(sp_test_client):
-    r = sp_test_client.get("/")
-    assert r.status_code == 200
-    assert "<h1>System Home</h1>" in r.text
-
-
-def test_home_alt_html(sp_test_client):
-    r = sp_test_client.get("/?_profile=alt")
-    assert r.status_code == 200
-    assert "<h1>Alternate Profiles</h1>" in r.text
-
-
-# def test_home_alt_turtle(sp_test_client):
-#     r = sp_test_client.get("/?_profile=alt&_mediatype=text/turtle")
-#     assert r.status_code == 200
-#     assert "<h1>Alternate Profiles</h1>" in r.text
-
-
-def test_datasets_default_default(sp_test_client):
     r = sp_test_client.get("/datasets")
-    assert r.status_code == 200
-    assert "<h1>Dataset list</h1>" in r.text
+    g = Graph().parse(data=r.text)
+    member_uri = g.value(
+        URIRef("https://kurrawong.net/prez/memberList"), RDFS.member, None
+    )
+    return member_uri
 
 
-def test_datasets_alt_html(sp_test_client):
-    r = sp_test_client.get("/datasets?_profile=alt")
-    assert r.status_code == 200
-    assert "<h1>Alternate Profiles</h1>" in r.text
-
-
-# def test_datasets_alt_turtle(sp_test_client):
-#     r = sp_test_client.get("/datasets?_profile=alt&_mediatype=text/turtle")
-#     assert r.status_code == 200
-#     assert "<h1>Alternate Profiles</h1>" in r.text
-
-
-def test_datasets_default_jsonld(sp_test_client):
-    r = sp_test_client.get("/datasets?_mediatype=application/ld+json")
-    assert r.status_code == 200
-    assert '"@value": "A list of dcat:Datasets"' in r.text
-
-
-def test_datasets_mem_json(sp_test_client):
-    r = sp_test_client.get("/datasets?_profile=mem&_mediatype=application/json")
-    assert r.status_code == 200
-    assert '"comment":"A list of dcat:Datasets"' in r.text
-
-
-def test_dataset_default_default(sp_test_client, a_dataset_link):
+def test_dataset_html(sp_test_client, a_dataset_link):
     r = sp_test_client.get(f"{a_dataset_link}")
-    assert (
-        f'<li class="breadcrumb"><a href="http://testserver{a_dataset_link}">' in r.text
+    response_graph = Graph().parse(data=r.text)
+    expected_graph = Graph().parse(
+        Path(__file__).parent / "data/spaceprez/expected_responses/dataset_html.ttl"
     )
+    assert response_graph.isomorphic(expected_graph)
 
 
-def test_dataset_oai_geojson(sp_test_client, a_dataset_link):
-    ds_iri = f"http://testserver{a_dataset_link}?_profile=oai&_mediatype=application/geo+json"
-    r = sp_test_client.get(ds_iri)
-    j = r.json()
-    assert j.get("title") is not None
-    assert j.get("geometry") is not None
-
-
-def test_dataset_default_turtle(sp_test_client, a_dataset_link):
-    r2 = sp_test_client.get(f"{a_dataset_link}?_mediatype=text/turtle")
-    assert f"a <http://www.w3.org/ns/dcat#Dataset> ;" in r2.text
-
-
-def test_dataset_alt_html(sp_test_client, a_dataset_link):
-    r2 = sp_test_client.get(f"{a_dataset_link}?_profile=alt")
-    assert "<h1>Alternate Profiles</h1>" in r2.text
-
-
-def test_dataset_alt_turtle(sp_test_client, a_dataset_link):
-    r2 = sp_test_client.get(f"{a_dataset_link}?_profile=alt&_mediatype=text/turtle")
-    assert "a rdfs:Resource ;" in r2.text
-
-
-def test_dataset_collections_default_default(sp_test_client, a_dataset_link):
-    r2 = sp_test_client.get(f"{a_dataset_link}/collections")
-    assert f"<h1>FeatureCollection list</h1>" in r2.text
-
-
-def test_dataset_collections_mem_json(sp_test_client, a_dataset_link):
-    r2 = sp_test_client.get(
-        f"{a_dataset_link}/collections?_profile=mem&_mediatype=application/json"
-    )
-    assert f'"members":' in r2.text
-
-
-def test_collection_default_default(sp_test_client, an_fc_link):
+def test_feature_collection_html(sp_test_client, an_fc_link):
     r = sp_test_client.get(f"{an_fc_link}")
-    assert (
-        '<a href="http://www.opengis.net/ont/geosparql#FeatureCollection" target="_blank" >'
-        in r.text
+    response_graph = Graph().parse(data=r.text)
+    expected_graph = Graph().parse(
+        Path(__file__).parent
+        / "data/spaceprez/expected_responses/feature_collection_html.ttl"
     )
+    assert response_graph.isomorphic(expected_graph)
 
 
-# def test_collection_default_geojson(sp_test_client):
-#     # get link for first dataset
-#     r = sp_test_client.get("/datasets?_profile=mem&_mediatype=application/json")
-#     link = r.json()["members"][0]["link"]
-#     # get link for first collection
-#     r2 = sp_test_client.get(f"{link}/collections?_profile=mem&_mediatype=application/json")
-#     col_link = r2.json()["members"][0]["link"]
-#
-#     r3 = sp_test_client.get(f"{col_link}?_mediatype=application/geo+json")
-#     assert '"type":"FeatureCollection"' in r3.text
+def test_feature_html(sp_test_client, a_feature_link_and_id):
+    r = sp_test_client.get(f"{a_feature_link_and_id[0]}")
+    response_graph = Graph().parse(data=r.text)
+    expected_graph = Graph().parse(
+        Path(__file__).parent / "data/spaceprez/expected_responses/feature_html.ttl"
+    )
+    assert response_graph.isomorphic(expected_graph)
 
 
-def test_collection_alt_default(sp_test_client, an_fc_link):
-    r = sp_test_client.get(f"{an_fc_link}?_profile=alt")
-    assert "<h1>Alternate Profiles</h1>" in r.text
+def test_dataset_listing_html(sp_test_client):
+    r = sp_test_client.get(f"/datasets")
+    response_graph = Graph().parse(data=r.text)
+    expected_graph = Graph().parse(
+        Path(__file__).parent
+        / "data/spaceprez/expected_responses/dataset_listing_html.ttl"
+    )
+    assert response_graph.isomorphic(expected_graph)
 
 
-# def test_dataset_collection_alt_turtle():
-#     # get link for first dataset
-#     r = sp_test_client.get("/datasets?_profile=mem&_mediatype=application/json")
-#     link = r.json()["members"][0]["link"]
-#     # get link for first collection
-#     r2 = sp_test_client.get(f"{link}/collections?_profile=mem&_mediatype=application/json")
-#     col_link = r2.json()["members"][0]["link"]
-#
-#     r3 = sp_test_client.get(f"{col_link}?_profile=alt&_mediatype=text/turtle")
-#     assert '<h1>Alternate Profiles</h1>' in r3.text
+def test_feature_collection_listing_html(sp_test_client, a_dataset_link):
+    r = sp_test_client.get(f"{a_dataset_link}/collections")
+    response_graph = Graph().parse(data=r.text)
+    expected_graph = Graph().parse(
+        Path(__file__).parent
+        / "data/spaceprez/expected_responses/feature_collection_listing_html.ttl"
+    )
+    assert response_graph.isomorphic(expected_graph)
 
 
-def test_collection_items_default_default(sp_test_client, an_fc_link):
+def test_feature_listing_html(sp_test_client, an_fc_link):
     r = sp_test_client.get(f"{an_fc_link}/items")
-    assert "<h1>Feature list</h1>" in r.text
-
-
-def test_collection_items_mem_json(sp_test_client, an_fc_link):
-    r = sp_test_client.get(
-        f"{an_fc_link}/items?_profile=mem&_mediatype=application/json"
+    response_graph = Graph().parse(data=r.text)
+    expected_graph = Graph().parse(
+        Path(__file__).parent
+        / "data/spaceprez/expected_responses/feature_listing_html.ttl"
     )
-    assert (
-        f'"uri":"http://testserver{an_fc_link}/items?_profile=mem&_mediatype=application/json"'
-        in r.text
-    )
+    assert response_graph.isomorphic(expected_graph)
 
 
-def test_feature_default_default(sp_test_client, a_feature_link_and_id):
-    feature_link, feature_id = a_feature_link_and_id
-
-    r = sp_test_client.get(f"{feature_link}")
-    assert f' <p>Instance URI: <a href="http://testserver{feature_link}">' in r.text
-
-
-def test_feature_default_geojson(sp_test_client, a_feature_link_and_id):
-    feature_link, feature_id = a_feature_link_and_id
-
-    r = sp_test_client.get(f"{feature_link}?_mediatype=application/geo+json")
-    j = r.json()
-    assert j.get("geometry") is not None
-
-
-def test_feature_default_geojson_given_v_generated(sp_test_client):
-    # checks that the get GeoJSON function is trying to return given GeoJSON
-    # but, if not finding it, calculates it from WKT which must be present
-    r = sp_test_client.get(
-        "http://testserver/dataset/geofabric/collections/catchments/items/cabbage-tree?_mediatype=application/geo+json"
-    )
-    assert len(r.json()["geometry"]["coordinates"][0]) == 16
-
-    r = sp_test_client.get(
-        "http://testserver/dataset/geofabric/collections/catchments/items/cabbage-tree-geojson?_mediatype=application/geo+json"
-    )
-    assert len(r.json()["geometry"]["coordinates"][0]) == 14
-
-
-def test_feature_default_turtle(sp_test_client, a_feature_link_and_id):
-    feature_link, feature_id = a_feature_link_and_id
-
-    r = sp_test_client.get(f"{feature_link}?_mediatype=text/turtle")
-    assert f"> a geo:Feature" in r.text
-
-
-def test_feature_alt_default(sp_test_client, a_feature_link_and_id):
-    feature_link, feature_id = a_feature_link_and_id
-
-    r = sp_test_client.get(f"{feature_link}?_profile=alt")
-    assert "<h1>Alternate Profiles</h1>" in r.text
-
-
-def test_object_endpoint_dataset(sp_test_client, a_dataset_uri):
-    r = sp_test_client.get(f"/object?uri={a_dataset_uri}")
-    assert f'<a href="{a_dataset_uri}"' in r.text
-
-
-def test_object_endpoint_feature_collection(sp_test_client, an_fc_uri):
-    r = sp_test_client.get(f"/object?uri={an_fc_uri}")
-    assert f'<a href="{an_fc_uri}"' in r.text
-
-
-def test_object_endpoint_feature(sp_test_client, a_feature_uri):
-    r = sp_test_client.get(f"/object?uri={a_feature_uri}")
-    assert f'<a href="{a_feature_uri}"' in r.text
+# def test_object_endpoint_dataset(sp_test_client, a_dataset_uri):
+#     r = sp_test_client.get(f"/object?uri={a_dataset_uri}")
+#     assert f'<a href="{a_dataset_uri}"' in r.text
+#
+#
+# def test_object_endpoint_feature_collection(sp_test_client, an_fc_uri):
+#     r = sp_test_client.get(f"/object?uri={an_fc_uri}")
+#     assert f'<a href="{an_fc_uri}"' in r.text
+#
+#
+# def test_object_endpoint_feature(sp_test_client, a_feature_uri):
+#     r = sp_test_client.get(f"/object?uri={a_feature_uri}")
+#     assert f'<a href="{a_feature_uri}"' in r.text

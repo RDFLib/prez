@@ -1,22 +1,12 @@
 import io
-from urllib.parse import quote_plus
 
-from connegp import RDF_MEDIATYPES
 from fastapi import APIRouter, Request
 from fastapi import HTTPException, Query, Form
-from fastapi.openapi.models import Response
 from fastapi.responses import JSONResponse, RedirectResponse, StreamingResponse
-from pydantic import BaseModel
-from rdflib import Namespace, URIRef
-from prez.config import ENABLED_PREZS, SPACEPREZ_SPARQL_ENDPOINT
 from prez.cql_search import CQLSearch
-from prez.models.spaceprez import *
-from prez.profiles.generate_profiles import (
-    build_alt_graph,
-)
 from prez.renderers.spaceprez import *
 from prez.services.spaceprez_service import *
-from prez.services.spaceprez_service import get_object_uri_and_classes, sparql_construct
+from prez.services.spaceprez_service import sparql_construct
 from prez.services.sparql_new import (
     generate_item_construct,
     get_annotation_properties,
@@ -24,10 +14,10 @@ from prez.services.sparql_new import (
 )
 from prez.utils import templates
 from prez.view_funcs import profiles_func
-from prez.models.spaceprez.spaceprez_item import Item
+from prez.models.spaceprez_item import Item
 from prez.cache import tbox_cache, missing_annotations
 
-PREZ = Namespace("https://surroundaustralia.com/prez/")
+PREZ = Namespace("https://kurrawong.net/prez/")
 
 router = APIRouter(tags=["SpacePrez"] if len(ENABLED_PREZS) > 1 else [])
 
@@ -38,6 +28,7 @@ router = APIRouter(tags=["SpacePrez"] if len(ENABLED_PREZS) > 1 else [])
 )
 async def spaceprez_home_endpoint(request: Request):
     """Returns the SpacePrez home page in the necessary profile & mediatype"""
+
     return SpacePrezHomeRenderer(request)._render_oai_json()
     # # if home_renderer.profile == "alt":
     # alt_profiles_graph = await build_alt_graph(
@@ -423,9 +414,7 @@ async def list_items(
     profile, mediatype = connegp_placeholder(
         request, general_item.children_general_class
     )
-    query = generate_listing_construct(
-        general_item.children_general_class, general_item.uri, page, per_page, profile
-    )
+    query = generate_listing_construct(general_item, page, per_page, profile)
     return await return_data(query, mediatype, profile, "SpacePrez")
 
 
@@ -479,7 +468,7 @@ async def dataset_item(
 async def item_endpoint(request: Request):
     item = Item(**request.path_params, url=request.url)
     profile, mediatype = connegp_placeholder(request, item.classes)
-    query = generate_item_construct(item.uri, profile)  # profile will go here in future
+    query = generate_item_construct(item, profile)  # profile will go here in future
     return await return_data(query, mediatype, profile, "SpacePrez")
 
 
@@ -500,15 +489,16 @@ async def return_data(query_or_queries, mediatype, profile, prez):
     else:  # all other responses require the RDF in memory
         if mediatype == "text/html":
             queries_for_uncached, labels_graph = await get_annotation_properties(graph)
-            results = await asyncio.gather(
-                *[sparql_construct(query, prez) for query in queries_for_uncached]
-            )
-            for i, r in enumerate(results):
-                if r[1]:
-                    labels_graph += r[1]
-                    cache_ref += r[1]
-                else:
-                    missing_annotations.append(queries_for_uncached[i])
+            results = await sparql_construct(queries_for_uncached, prez)
+            # results = await asyncio.gather(
+            #     *[sparql_construct(query, prez) for query in queries_for_uncached]
+            # )
+            # for i, r in enumerate(results):
+            if results[1]:
+                labels_graph += results[1]
+                cache_ref += results[1]
+                # else:
+                #     missing_annotations.append(queries_for_uncached[i])
             obj = io.BytesIO(
                 (graph + labels_graph).serialize(format="turtle", encoding="utf-8")
             )

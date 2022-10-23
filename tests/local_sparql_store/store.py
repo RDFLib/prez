@@ -24,7 +24,9 @@ def load_catprez_graph():
 def load_spaceprez_graph():
     print("loading SpacePrez graph")
     g = Graph()
-    for f in Path(Path(__file__).parent / "data" / "spaceprez").glob("*.ttl"):
+    for f in Path(Path(__file__).parent.parent / "data" / "spaceprez" / "input").glob(
+        "*.ttl"
+    ):
         g.parse(f)
     return g
 
@@ -32,7 +34,9 @@ def load_spaceprez_graph():
 def load_vocprez_graph():
     print("loading VocPrez graph")
     g = Graph()
-    for f in Path(Path(__file__).parent / "data" / "vocprez").glob("*.ttl"):
+    for f in Path(Path(__file__).parent.parent / "data" / "vocprez" / "input").glob(
+        "*.ttl"
+    ):
         g.parse(f)
     return g
 

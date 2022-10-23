@@ -1,6 +1,8 @@
 import pytest
+from rdflib.namespace import GEO
+
 from prez.services.sparql_new import *
-from rdflib import URIRef
+from rdflib import URIRef, DCAT, SKOS
 
 from tests.local_sparql_store.store import load_spaceprez_graph
 
@@ -174,3 +176,10 @@ WHERE {
     } LIMIT 40 OFFSET 1160
     """
     assert returned == expected
+
+
+def test_get_profile_predicates():
+    profile_uri = URIRef("https://w3id.org/profile/vocpub")
+    profile = {"uri": profile_uri}
+    general_class = SKOS.ConceptScheme
+    get_profile_predicates(profile, general_class)
