@@ -24,7 +24,7 @@ from prez.routers import (
 from prez.routers.vocprez_router import vocprez_home_endpoint
 from prez.services.app_service import *
 from prez.services.spaceprez_service import list_datasets, list_collections
-from prez.utils import templates
+
 from prez.view_funcs import profiles_func
 
 from textwrap import dedent
@@ -42,27 +42,11 @@ async def catch_400(request: Request, exc):
 
 
 async def catch_404(request: Request, exc):
-    accepts = parse_mediatypes_from_accept_header(request.headers.get("Accept"))
-    if "text/html" in accepts:
-        template_context = {"request": request}
-        return templates.TemplateResponse(
-            "404.html", context=template_context, status_code=404
-        )
-    else:
-        return JSONResponse(content={"detail": str(exc.detail)}, status_code=404)
+    return JSONResponse(content={"detail": str(exc.detail)}, status_code=404)
 
 
 async def catch_500(request: Request, exc):
-    accepts = parse_mediatypes_from_accept_header(request.headers.get("Accept"))
-    if "text/html" in accepts:
-        template_context = {"request": request}
-        return templates.TemplateResponse(
-            "500.html", context=template_context, status_code=500
-        )
-    else:
-        return JSONResponse(
-            content={"detail": "Internal Server Error"}, status_code=500
-        )
+    return JSONResponse(content={"detail": "Internal Server Error"}, status_code=500)
 
 
 app = FastAPI(
@@ -201,12 +185,6 @@ async def purge_cache():
     )
     from prez.routers.spaceprez_router import (
         spaceprez_home_endpoint,
-        dataset_endpoint,
-        datasets_endpoint,
-        feature_endpoint,
-        features_endpoint,
-        feature_collection_endpoint,
-        feature_collections_endpoint,
     )
     from prez.services.spaceprez_service import (
         list_features,
@@ -235,12 +213,6 @@ async def purge_cache():
         get_general_profiles,
         create_profiles_graph,
         profiles_func,
-        dataset_endpoint,
-        datasets_endpoint,
-        feature_collection_endpoint,
-        feature_collections_endpoint,
-        features_endpoint,
-        feature_endpoint,
         get_class_based_and_default_profiles,
         retrieve_relevant_shapes,
         spaceprez_home_endpoint,
@@ -572,18 +544,16 @@ async def object(
             if "VocPrez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
             return await vocprez_router.concept(request)
-        elif object_type == DCAT.Dataset:
+        elif object_type in [
+            GEO.Feature,
+            GEO.FeatureCollection,
+            DCAT.Dataset,
+        ]:  # TODO DCAT.Dataset will need some more thought
             if "SpacePrez" not in ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
-            return await spaceprez_router.dataset(request)
-        elif object_type == GEO.FeatureCollection:
-            if "SpacePrez" not in ENABLED_PREZS:
-                raise HTTPException(status_code=404, detail="Not Found")
-            return await spaceprez_router.feature_collection(request)
-        elif object_type == GEO.Feature:
-            if "SpacePrez" not in ENABLED_PREZS:
-                raise HTTPException(status_code=404, detail="Not Found")
-            return await spaceprez_router.feature(request)
+            return RedirectResponse(
+                f"/s/object?{request.url.components.query}", headers=request.headers
+            )
         # else:
     raise HTTPException(status_code=404, detail="Not Found")
 

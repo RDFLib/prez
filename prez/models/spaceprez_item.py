@@ -31,7 +31,9 @@ class SpatialItem(BaseModel):
         collection_id = values.get("collection_id")
         feature_id = values.get("feature_id")
         uri = values.get("uri")
-        if dataset_id:
+        if uri:
+            return values
+        elif dataset_id:
             q = f"""
                 PREFIX dcat: <{DCAT}>
                 PREFIX dcterms: <{DCTERMS}>

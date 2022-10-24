@@ -172,7 +172,7 @@ async def get_annotation_properties(
     #     ]
     queries_for_uncached = f"""CONSTRUCT {{ ?term <{label_property}> ?label }}
         WHERE {{ ?term <{label_property}> ?label .
-        VALUES ?term {{ {" ".join('<' + term + '>' for term in uncached_terms)} }}
+        VALUES ?term {{ {" ".join('<' + str(term) + '>' for term in uncached_terms)} }}
         FILTER(lang(?label) = "" || lang(?label) = "en" || lang(?label) = "en-AU")
         }}"""
     # remove any queries we previously didn't get a result for from the SPARQL endpoint

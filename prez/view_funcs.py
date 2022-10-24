@@ -6,7 +6,6 @@ from rdflib import Namespace
 
 from prez.config import ENABLED_PREZS
 from prez.profiles.generate_profiles import ProfileDetails
-from prez.renderers import ProfilesRenderer
 
 
 @alru_cache(maxsize=20)

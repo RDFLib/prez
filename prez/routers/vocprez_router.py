@@ -1,20 +1,14 @@
-import io
-
 from async_lru import alru_cache
-from fastapi import APIRouter, Request, HTTPException
-from starlette.responses import StreamingResponse
+from fastapi import APIRouter, Request
 
-from prez.models.vocprez import *
 from prez.profiles.generate_profiles import (
     build_alt_graph,
 )
-from prez.renderers.vocprez import *
 from prez.services.vocprez_service import *
-from prez.utils import templates
 from prez.view_funcs import profiles_func
 from prez.routers.spaceprez_router import connegp_placeholder, return_data
-from prez.models.vocprez.vocprez_listings import VocPrezMembers
-from prez.models.vocprez.vocprez_item import VocabItem
+from prez.models.vocprez_listings import VocPrezMembers
+from prez.models.vocprez_item import VocabItem
 from prez.services.sparql_new import (
     generate_listing_construct,
     generate_listing_count_construct,
@@ -86,6 +80,10 @@ async def schemes_endpoint(
 @router.get("/scheme/{scheme_id}", summary="Get ConceptScheme")
 @router.get("/vocab/{scheme_id}", summary="Get ConceptScheme")
 @router.get("/collection/{collection_id}", summary="Get Collection")
+async def vocprez_collections(request: Request, collection_id: str):
+    return await item_endpoint(request)
+
+
 @router.get("/scheme/{scheme_id}/{concept_id}", summary="Get Concept")
 @router.get("/vocab/{scheme_id}/{concept_id}", summary="Get Concept")
 async def item_endpoint(request: Request):

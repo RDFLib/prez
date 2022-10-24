@@ -4,7 +4,6 @@ from fastapi import APIRouter, Request
 from fastapi import HTTPException, Query, Form
 from fastapi.responses import JSONResponse, RedirectResponse, StreamingResponse
 from prez.cql_search import CQLSearch
-from prez.renderers.spaceprez import *
 from prez.services.spaceprez_service import *
 from prez.services.spaceprez_service import sparql_construct
 from prez.services.sparql_new import (
@@ -12,7 +11,7 @@ from prez.services.sparql_new import (
     get_annotation_properties,
     generate_listing_construct,
 )
-from prez.utils import templates
+
 from prez.view_funcs import profiles_func
 from prez.models.spaceprez_item import SpatialItem
 from prez.cache import tbox_cache, missing_annotations
@@ -29,7 +28,7 @@ router = APIRouter(tags=["SpacePrez"] if len(ENABLED_PREZS) > 1 else [])
 async def spaceprez_home_endpoint(request: Request):
     """Returns the SpacePrez home page in the necessary profile & mediatype"""
 
-    return SpacePrezHomeRenderer(request)._render_oai_json()
+    # return SpacePrezHomeRenderer(request)._render_oai_json()
     # # if home_renderer.profile == "alt":
     # alt_profiles_graph = await build_alt_graph(
     #     PREZ.SpacePrezHome,
@@ -64,11 +63,11 @@ async def spaceprez_profiles(request: Request):
     return await profiles_func(request, "SpacePrez")
 
 
-@router.get("/conformance", summary="Conformance")
-async def conformance(request: Request):
-    """Returns the SpacePrez conformance page in the necessary profile & mediatype"""
-    conformance_renderer = SpacePrezConformanceRenderer(request)
-    return conformance_renderer.render()
+# @router.get("/conformance", summary="Conformance")
+# async def conformance(request: Request):
+#     """Returns the SpacePrez conformance page in the necessary profile & mediatype"""
+#     conformance_renderer = SpacePrezConformanceRenderer(request)
+#     return conformance_renderer.render()
 
 
 # feature collection queryables
@@ -451,7 +450,9 @@ async def dataset_item(request: Request, dataset_id: str):
     "/dataset/{dataset_id}/collections/{collection_id}",
     summary="Get Feature Collection",
 )
-async def dataset_item(request: Request, dataset_id: str, collection_id: str):
+async def feature_collection_item(
+    request: Request, dataset_id: str, collection_id: str
+):
     return await item_endpoint(request)
 
 
@@ -459,14 +460,15 @@ async def dataset_item(request: Request, dataset_id: str, collection_id: str):
     "/dataset/{dataset_id}/collections/{collection_id}/items/{feature_id}",
     summary="Get Feature",
 )
-async def dataset_item(
+async def feature_item(
     request: Request, dataset_id: str, collection_id: str, feature_id: str
 ):
     return await item_endpoint(request)
 
 
+@router.get("/s/object")
 async def item_endpoint(request: Request):
-    item = SpatialItem(**request.path_params, url=request.url)
+    item = SpatialItem(**request.path_params, **request.query_params, url=request.url)
     profile, mediatype = connegp_placeholder(request, item.classes)
     query = generate_item_construct(item, profile)
     return await return_data(query, mediatype, profile, "SpacePrez")

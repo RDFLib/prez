@@ -5,40 +5,35 @@ from prez.models.catprez import *
 from prez.profiles.generate_profiles import (
     build_alt_graph,
 )
-from prez.renderers.catprez import *
-from prez.renderers.catprez.catprez_conformance_renderer import (
-    CatPrezConformanceRenderer,
-)
 from prez.services.catprez_service import *
-from prez.utils import templates
 from prez.view_funcs import profiles_func
 
 router = APIRouter(tags=["CatPrez"] if len(ENABLED_PREZS) > 1 else [])
 
 
-async def home(request: Request):
-    """Returns the CatPrez home page in the necessary profile & mediatype"""
-    home_renderer = CatPrezResourceRenderer(request)
-    if home_renderer.profile == "alt":
-        alt_profiles_graph = await build_alt_graph(
-            PREZ.CatPrezHome,
-            home_renderer.profile_details.profiles_formats,
-            home_renderer.profile_details.available_profiles_dict,
-        )
-        return home_renderer.render(alt_profiles_graph=alt_profiles_graph)
-    sparql_result = await get_catprez_home_construct()
-    resource = CatPrezResource(sparql_result, id="catprez")
-    home_renderer.set_resource(resource)
-    return home_renderer.render()
-
-
-@alru_cache(maxsize=5)
-@router.get(
-    "/catprez", summary="CatPrez Home", include_in_schema=len(ENABLED_PREZS) > 1
-)
-async def catprez_home_endpoint(request: Request):
-    """Returns a CatPrez dcat:Dataset in the necessary profile & mediatype"""
-    return await home(request)
+# async def home(request: Request):
+#     """Returns the CatPrez home page in the necessary profile & mediatype"""
+#     home_renderer = CatPrezResourceRenderer(request)
+#     if home_renderer.profile == "alt":
+#         alt_profiles_graph = await build_alt_graph(
+#             PREZ.CatPrezHome,
+#             home_renderer.profile_details.profiles_formats,
+#             home_renderer.profile_details.available_profiles_dict,
+#         )
+#         return home_renderer.render(alt_profiles_graph=alt_profiles_graph)
+#     sparql_result = await get_catprez_home_construct()
+#     resource = CatPrezResource(sparql_result, id="catprez")
+#     home_renderer.set_resource(resource)
+#     return home_renderer.render()
+#
+#
+# @alru_cache(maxsize=5)
+# @router.get(
+#     "/catprez", summary="CatPrez Home", include_in_schema=len(ENABLED_PREZS) > 1
+# )
+# async def catprez_home_endpoint(request: Request):
+#     """Returns a CatPrez dcat:Dataset in the necessary profile & mediatype"""
+#     return await home(request)
 
 
 async def about(request: Request):

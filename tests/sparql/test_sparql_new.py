@@ -5,12 +5,10 @@ from time import sleep
 
 import pytest
 from rdflib import DCAT, SKOS
-from rdflib import Graph, URIRef, RDFS, DCTERMS
 from rdflib.namespace import GEO
 
-from prez.models.vocprez.vocprez_item import VocabItem
+from models.vocprez_item import VocabItem
 from prez.services.sparql_new import *
-from tests.local_sparql_store.store import load_vocprez_graph
 
 PREZ_DIR = Path(__file__).parent.parent.parent.absolute() / "prez"
 LOCAL_SPARQL_STORE = Path(Path(__file__).parent.parent / "local_sparql_store/store.py")
