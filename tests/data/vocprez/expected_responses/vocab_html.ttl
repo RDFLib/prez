@@ -1,0 +1,105 @@
+@prefix ns1: <http://purl.org/dc/terms/> .
+@prefix ns2: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://linked.data.gov.au/def/warox-alteration-types>
+    a                 ns2:ConceptScheme ;
+    ns1:created       "2021-09-26"^^xsd:date ;
+    ns1:creator       <https://linked.data.gov.au/org/gswa> ;
+    ns1:identifier    "warox-alteration-type"^^xsd:token ;
+    ns1:modified      "2021-09-29"^^xsd:date ;
+    ns1:provenance    "This vocabulary was built on an extract of the WAROX system's lookup table"@en ;
+    ns2:definition    "This vocabulary give Alteration Type concepts, listed in the Geologicla Survey of Western Australia's WAROX database."@en ;
+    ns2:hasTopConcept <https://linked.data.gov.au/def/warox-alteration-types/albitic>,
+                      <https://linked.data.gov.au/def/warox-alteration-types/alkali-metasomatism>,
+                      <https://linked.data.gov.au/def/warox-alteration-types/argillic>,
+                      <https://linked.data.gov.au/def/warox-alteration-types/carbonate>,
+                      <https://linked.data.gov.au/def/warox-alteration-types/chloritic>,
+                      <https://linked.data.gov.au/def/warox-alteration-types/deuteric>,
+                      <https://linked.data.gov.au/def/warox-alteration-types/fenitization>,
+                      <https://linked.data.gov.au/def/warox-alteration-types/fluorite-and-topaz>,
+                      <https://linked.data.gov.au/def/warox-alteration-types/greisen>,
+                      <https://linked.data.gov.au/def/warox-alteration-types/hematitic>,
+                      <https://linked.data.gov.au/def/warox-alteration-types/jasperoid>,
+                      <https://linked.data.gov.au/def/warox-alteration-types/listvenitization>,
+                      <https://linked.data.gov.au/def/warox-alteration-types/phyllic-qsp>,
+                      <https://linked.data.gov.au/def/warox-alteration-types/potassic>,
+                      <https://linked.data.gov.au/def/warox-alteration-types/propylitic>,
+                      <https://linked.data.gov.au/def/warox-alteration-types/pyritic>,
+                      <https://linked.data.gov.au/def/warox-alteration-types/rodingitization>,
+                      <https://linked.data.gov.au/def/warox-alteration-types/sericitic>,
+                      <https://linked.data.gov.au/def/warox-alteration-types/serpentinization>,
+                      <https://linked.data.gov.au/def/warox-alteration-types/silicification>,
+                      <https://linked.data.gov.au/def/warox-alteration-types/skarn>,
+                      <https://linked.data.gov.au/def/warox-alteration-types/tourmalinization>,
+                      <https://linked.data.gov.au/def/warox-alteration-types/zeolitic> ;
+    ns2:prefLabel     "WAROX Alteration Type"@en .
+
+<https://linked.data.gov.au/def/warox-alteration-types/albitic>
+    ns1:identifier "albitic"^^xsd:token .
+
+<https://linked.data.gov.au/def/warox-alteration-types/alkali-metasomatism>
+    ns1:identifier "alkali-metasomatism"^^xsd:token .
+
+<https://linked.data.gov.au/def/warox-alteration-types/argillic>
+    ns1:identifier "argillic"^^xsd:token .
+
+<https://linked.data.gov.au/def/warox-alteration-types/carbonate>
+    ns1:identifier "carbonate"^^xsd:token .
+
+<https://linked.data.gov.au/def/warox-alteration-types/chloritic>
+    ns1:identifier "chloritic"^^xsd:token .
+
+<https://linked.data.gov.au/def/warox-alteration-types/deuteric>
+    ns1:identifier "deuteric"^^xsd:token .
+
+<https://linked.data.gov.au/def/warox-alteration-types/fenitization>
+    ns1:identifier "fenitization"^^xsd:token .
+
+<https://linked.data.gov.au/def/warox-alteration-types/fluorite-and-topaz>
+    ns1:identifier "fluorite-and-topaz"^^xsd:token .
+
+<https://linked.data.gov.au/def/warox-alteration-types/greisen>
+    ns1:identifier "greisen"^^xsd:token .
+
+<https://linked.data.gov.au/def/warox-alteration-types/hematitic>
+    ns1:identifier "hematitic"^^xsd:token .
+
+<https://linked.data.gov.au/def/warox-alteration-types/jasperoid>
+    ns1:identifier "jasperoid"^^xsd:token .
+
+<https://linked.data.gov.au/def/warox-alteration-types/listvenitization>
+    ns1:identifier "listvenitization"^^xsd:token .
+
+<https://linked.data.gov.au/def/warox-alteration-types/phyllic-qsp>
+    ns1:identifier "phyllic-qsp"^^xsd:token .
+
+<https://linked.data.gov.au/def/warox-alteration-types/potassic>
+    ns1:identifier "potassic"^^xsd:token .
+
+<https://linked.data.gov.au/def/warox-alteration-types/propylitic>
+    ns1:identifier "propylitic"^^xsd:token .
+
+<https://linked.data.gov.au/def/warox-alteration-types/pyritic>
+    ns1:identifier "pyritic"^^xsd:token .
+
+<https://linked.data.gov.au/def/warox-alteration-types/rodingitization>
+    ns1:identifier "rodingitization"^^xsd:token .
+
+<https://linked.data.gov.au/def/warox-alteration-types/sericitic>
+    ns1:identifier "sericitic"^^xsd:token .
+
+<https://linked.data.gov.au/def/warox-alteration-types/serpentinization>
+    ns1:identifier "serpentinization"^^xsd:token .
+
+<https://linked.data.gov.au/def/warox-alteration-types/silicification>
+    ns1:identifier "silicification"^^xsd:token .
+
+<https://linked.data.gov.au/def/warox-alteration-types/skarn>
+    ns1:identifier "skarn"^^xsd:token .
+
+<https://linked.data.gov.au/def/warox-alteration-types/tourmalinization>
+    ns1:identifier "tourmalinization"^^xsd:token .
+
+<https://linked.data.gov.au/def/warox-alteration-types/zeolitic>
+    ns1:identifier "zeolitic"^^xsd:token .

@@ -11,7 +11,7 @@ router = APIRouter(tags=["SpacePrez"] if len(ENABLED_PREZS) > 1 else [])
 BaseConfig.arbitrary_types_allowed = True
 
 
-class Item(BaseModel):
+class SpatialItem(BaseModel):
     id: Optional[str]
     uri: Optional[URIRef]
     general_class: Optional[URIRef]
@@ -81,16 +81,17 @@ class Item(BaseModel):
                     values["general_class"] = DCAT.Dataset
                     values["children_general_class"] = GEO.FeatureCollection
                     values["link_constructor"] = f"/dataset/{dataset_id}/collections/"
-        elif uri:  # uri provided, get the ID
-            q = f"""
-                    PREFIX dcterms: <{DCTERMS}>
-
-                    SELECT ?id {{
-                        <{uri}> dcterms:identifier ?id ;
-                        FILTER(DATATYPE(?id) = xsd:token)
-                    }}
-                    """
-            r = sparql_query_non_async(q, "SpacePrez")
-            if r[0]:
-                values["id"] = r[1][0]["id"]["value"]
+        # TODO figure out if id is required
+        # elif uri:  # uri provided, get the ID
+        #     q = f"""
+        #             PREFIX dcterms: <{DCTERMS}>
+        #
+        #             SELECT ?id {{
+        #                 <{uri}> dcterms:identifier ?id ;
+        #                 FILTER(DATATYPE(?id) = xsd:token)
+        #             }}
+        #             """
+        #     r = sparql_query_non_async(q, "SpacePrez")
+        #     if r[0]:
+        #         values["id"] = r[1][0]["id"]["value"]
         return values

@@ -1,0 +1,19 @@
+@prefix ns1: <https://kurrawong.net/prez/> .
+@prefix ns2: <http://purl.org/dc/terms/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://www.w3.org/2004/02/skos/core#ConceptScheme> ns1:count 2 .
+
+ns1:memberList a rdf:Bag ;
+    rdfs:member <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype>,
+        <https://linked.data.gov.au/def/warox-alteration-types> .
+
+<http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> rdfs:label "Contact Type"@en ;
+    ns2:identifier "contacttype"^^xsd:token ;
+    ns1:link "/vocab/contacttype" .
+
+<https://linked.data.gov.au/def/warox-alteration-types> rdfs:label "WAROX Alteration Type"@en ;
+    ns2:identifier "warox-alteration-type"^^xsd:token ;
+    ns1:link "/vocab/warox-alteration-type" .

@@ -1,0 +1,14 @@
+@prefix ns1: <http://purl.org/dc/terms/> .
+@prefix ns2: <https://kurrawong.net/prez/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://www.w3.org/2004/02/skos/core#Collection> ns2:count 1 .
+
+ns2:memberList a rdf:Bag ;
+    rdfs:member <http://resource.geosciml.org/classifier/cgi/contacttype> .
+
+<http://resource.geosciml.org/classifier/cgi/contacttype> rdfs:label "Contact Type - All Concepts"@en ;
+    ns1:identifier "contacttype"^^xsd:token ;
+    ns2:link "/collection/contacttype" .

@@ -204,6 +204,8 @@ async def sparql_query_multiple(
 
 async def sparql_construct(query: str, prez: str):
     """Returns an rdflib Graph from a CONSTRUCT query for a single SPARQL endpoint"""
+    if not query:
+        return False, None
     creds = {"endpoint": "", "username": "", "password": ""}
     if prez == "CatPrez":
         creds["endpoint"] = CATPREZ_SPARQL_ENDPOINT

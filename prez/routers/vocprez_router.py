@@ -14,7 +14,7 @@ from prez.utils import templates
 from prez.view_funcs import profiles_func
 from prez.routers.spaceprez_router import connegp_placeholder, return_data
 from prez.models.vocprez.vocprez_listings import VocPrezMembers
-from prez.models.vocprez.vocprez_item import VocPrezItem
+from prez.models.vocprez.vocprez_item import VocabItem
 from prez.services.sparql_new import (
     generate_listing_construct,
     generate_listing_count_construct,
@@ -90,12 +90,12 @@ async def schemes_endpoint(
 @router.get("/vocab/{scheme_id}/{concept_id}", summary="Get Concept")
 async def item_endpoint(request: Request):
     """Returns a VocPrez skos:Concept, Collection, Vocabulary, or ConceptScheme in the requested profile & mediatype"""
-    vp_item = VocPrezItem(**request.path_params, url=str(request.url.path))
+    vp_item = VocabItem(**request.path_params, url=str(request.url.path))
     profile, mediatype = connegp_placeholder(request, vp_item.general_class)
     ### TODO - remove temporary hardcoding of profile - profile will be determined in a connegp like manner
     profile = {"uri": URIRef("https://w3id.org/profile/vocpub")}
     ###
-    query = generate_item_construct(vp_item.uri, profile)
+    query = generate_item_construct(vp_item, profile)
     return await return_data(query, mediatype, profile, "VocPrez")
 
 

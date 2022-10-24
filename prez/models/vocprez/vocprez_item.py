@@ -8,7 +8,7 @@ PREZ = Namespace("https://kurrawong.net/prez/")
 router = APIRouter(tags=["SpacePrez"] if len(ENABLED_PREZS) > 1 else [])
 
 
-class VocPrezItem(BaseModel):
+class VocabItem(BaseModel):
     uri: Optional[URIRef] = None
     id: Optional[str] = None
     general_class: Optional[URIRef] = None
@@ -50,18 +50,19 @@ class VocPrezItem(BaseModel):
                 uri = r[1][0].get("uri")["value"]
                 if uri:
                     values["uri"] = uri
-        else:  # uri provided, get the ID
-            q = f"""
-                PREFIX dcterms: <{DCTERMS}>
-
-                SELECT ?id {{
-                    <{uri}> dcterms:identifier ?id ;
-                }}
-                """
-            r = sparql_query_non_async(q, "VocPrez")
-            if r[0]:
-                # set the uri of the item
-                scheme_id = r[1][0].get("id")
-                if scheme_id:
-                    values["id"] = id
+        # TODO figure out if id is actually required anywhere
+        # else:  # uri provided, get the ID
+        #     q = f"""
+        #         PREFIX dcterms: <{DCTERMS}>
+        #
+        #         SELECT ?id {{
+        #             <{uri}> dcterms:identifier ?id ;
+        #         }}
+        #         """
+        #     r = sparql_query_non_async(q, "VocPrez")
+        #     if r[0]:
+        #         # set the uri of the item
+        #         scheme_id = r[1][0].get("id")
+        #         if scheme_id:
+        #             values["id"] = id
         return values

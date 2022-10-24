@@ -123,7 +123,7 @@ altr-ext:hasResourceFormat
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
         sh:targetClass skos:ConceptScheme ;
-        sh:sequencePath ( rdfs:member dcterms:identifier) ;
+        sh:sequencePath ( skos:hasTopConcept dcterms:identifier ) ;
     ] ;
 .
 

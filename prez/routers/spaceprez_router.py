@@ -14,7 +14,7 @@ from prez.services.sparql_new import (
 )
 from prez.utils import templates
 from prez.view_funcs import profiles_func
-from prez.models.spaceprez_item import Item
+from prez.models.spaceprez_item import SpatialItem
 from prez.cache import tbox_cache, missing_annotations
 
 PREZ = Namespace("https://kurrawong.net/prez/")
@@ -410,7 +410,7 @@ async def list_items(
     request: Request, page: Optional[int] = 1, per_page: Optional[int] = 20
 ):
     """Returns a list of SpacePrez datasets in the requested profile & mediatype"""
-    general_item = Item(**request.path_params)
+    general_item = SpatialItem(**request.path_params)
     profile, mediatype = connegp_placeholder(
         request, general_item.children_general_class
     )
@@ -466,9 +466,9 @@ async def dataset_item(
 
 
 async def item_endpoint(request: Request):
-    item = Item(**request.path_params, url=request.url)
+    item = SpatialItem(**request.path_params, url=request.url)
     profile, mediatype = connegp_placeholder(request, item.classes)
-    query = generate_item_construct(item, profile)  # profile will go here in future
+    query = generate_item_construct(item, profile)
     return await return_data(query, mediatype, profile, "SpacePrez")
 
 

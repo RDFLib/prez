@@ -3,12 +3,12 @@ from typing import List, Optional
 from rdflib import Graph, URIRef, RDFS, DCTERMS
 
 from prez.cache import tbox_cache, missing_annotations
-from prez.models.spaceprez_item import Item
+from prez.models.spaceprez_item import SpatialItem
 from prez.profiles.generate_profiles import create_profiles_graph
 
 
 def generate_listing_construct(
-    item: Item,
+    item: SpatialItem,
     page: Optional[int] = None,
     per_page: Optional[int] = None,
     profile: dict = {},  # unused - we don't currently filter or otherwise change listings based on profiles
@@ -52,14 +52,15 @@ def generate_item_construct(item, profile: dict):
     bnode_depth = profile.get("bnode_depth", 2)
     construct_query = f"""PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n
 CONSTRUCT {{
-    <{object_uri}> ?p ?o1 .
-    {f'?s ?inbound_p <{object_uri}> .' if inverse_predicates else chr(10)}
-{generate_bnode_construct(bnode_depth)}
-  }}
+\t<{object_uri}> ?p ?o1 .
+{generate_sequence_construct(object_uri, sequence_predicates) if sequence_predicates else ""} \
+{f'{chr(9)}?s ?inbound_p <{object_uri}> .' if inverse_predicates else ""} \
+{generate_bnode_construct(bnode_depth)} \
+\n}}
 WHERE {{
-    <{object_uri}> !rdfs:member ?o1 ;
-        ?p ?o1 .
-    {f'?s ?inbound_p <{object_uri}>{chr(10)}' if inverse_predicates else chr(10)}
+\t<{object_uri}> ?p ?o1 .
+{generate_sequence_construct(object_uri, sequence_predicates) if sequence_predicates else chr(10)} \
+{f'?s ?inbound_p <{object_uri}>{chr(10)}' if inverse_predicates else chr(10)} \
 {generate_include_predicates(include_predicates)} \
 {generate_inverse_predicates(inverse_predicates)} \
 {generate_bnode_select(bnode_depth)}
@@ -90,6 +91,22 @@ def generate_inverse_predicates(inverse_predicates):
         return ""
 
 
+def generate_sequence_construct(object_uri, sequence_predicates):
+    """ """
+    if sequence_predicates:
+        all_sequence_construct = ""
+        for predicate_list in sequence_predicates:
+            construct_and_where = f"\t<{object_uri}> <{predicate_list[0]}> ?seq_o1 ."
+            for i in range(1, len(predicate_list)):
+                construct_and_where += (
+                    f"\n\t?seq_o{i} <{predicate_list[i]}> ?seq_o{i + 1} ."
+                )
+            all_sequence_construct += construct_and_where
+        return all_sequence_construct
+    else:
+        return ""
+
+
 def generate_bnode_construct(depth):
     """
     Generate the construct query for the bnodes, this is of the form:
@@ -97,7 +114,9 @@ def generate_bnode_construct(depth):
         ?o2 ?p3 ?o3 .
         ...
     """
-    return "\n".join([f"\t?o{i + 1} ?p{i + 2} ?o{i + 2} ." for i in range(depth)])
+    return "\n" + "\n".join(
+        [f"\t?o{i + 1} ?p{i + 2} ?o{i + 2} ." for i in range(depth)]
+    )
 
 
 def generate_bnode_select(depth):
@@ -139,6 +158,8 @@ async def get_annotation_properties(
     terms = set(i for i in object_graph.predicates() if isinstance(i, URIRef)) | set(
         i for i in object_graph.objects() if isinstance(i, URIRef)
     )
+    if not terms:
+        return None, Graph()
     # read labels from the tbox cache, this should be the majority of labels
     uncached_terms, labels_g = get_annotations_from_tbox_cache(terms)
     # read remaining labels from the SPARQL endpoint
@@ -238,19 +259,8 @@ def get_profile_predicates(profile, general_class):
             object=general_class,
         )
     ]
-    sequence_nodes = [
-        i[2]
-        for i in profiles_g.triples_choices(
-            (
-                relevant_shape_bns,
-                URIRef("http://www.w3.org/ns/shacl#sequencePath"),
-                None,
-            )
-        )
-    ]
-    sequence_paths = [
-        [path_item for path_item in profiles_g.items(i)] for i in sequence_nodes
-    ]
+    if not relevant_shape_bns:
+        return None, None, None, None
     includes = [
         i[2]
         for i in profiles_g.triples_choices(
@@ -263,5 +273,18 @@ def get_profile_predicates(profile, general_class):
         for i in profiles_g.triples_choices(
             (relevant_shape_bns, URIRef("http://www.w3.org/ns/shacl#inversePath"), None)
         )
+    ]
+    sequence_nodes = [
+        i[2]
+        for i in profiles_g.triples_choices(
+            (
+                relevant_shape_bns,
+                URIRef("http://www.w3.org/ns/shacl#sequencePath"),
+                None,
+            )
+        )
+    ]
+    sequence_paths = [
+        [path_item for path_item in profiles_g.items(i)] for i in sequence_nodes
     ]
     return includes, excludes, inverses, sequence_paths

@@ -150,7 +150,7 @@ class SparqlServer(BaseHTTPRequestHandler):
         return status, content_type, content
 
     def apply_sparql_query(self, query):
-        print(f"query: {query}")
+        # print(f"query: {query}")
         try:
             if "catprez" in self.path:
                 result = catprez_graph.query(query)

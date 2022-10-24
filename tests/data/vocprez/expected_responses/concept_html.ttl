@@ -1,0 +1,12 @@
+@prefix ns1: <http://www.w3.org/2004/02/skos/core#> .
+@prefix ns2: <http://purl.org/linked-data/registry#> .
+@prefix ns3: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://linked.data.gov.au/def/warox-alteration-types/deuteric> a ns1:Concept ;
+    ns3:identifier "deuteric"^^xsd:token ;
+    ns3:provenance "From WAROX"@en ;
+    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:definition "Not given"@en ;
+    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
+    ns1:prefLabel "deuteric"@en .

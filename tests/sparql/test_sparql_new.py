@@ -1,10 +1,50 @@
+import subprocess
+import sys
+from pathlib import Path
+from time import sleep
+
 import pytest
+from rdflib import DCAT, SKOS
+from rdflib import Graph, URIRef, RDFS, DCTERMS
 from rdflib.namespace import GEO
 
+from prez.models.vocprez.vocprez_item import VocabItem
 from prez.services.sparql_new import *
-from rdflib import URIRef, DCAT, SKOS
+from tests.local_sparql_store.store import load_vocprez_graph
 
-from tests.local_sparql_store.store import load_spaceprez_graph
+PREZ_DIR = Path(__file__).parent.parent.parent.absolute() / "prez"
+LOCAL_SPARQL_STORE = Path(Path(__file__).parent.parent / "local_sparql_store/store.py")
+sys.path.insert(0, str(PREZ_DIR.parent.absolute()))
+from fastapi.testclient import TestClient
+
+
+@pytest.fixture(scope="module")
+def sparql_test_client(request):
+    print("Run Local SPARQL Store")
+    p1 = subprocess.Popen(["python", str(LOCAL_SPARQL_STORE), "-p", "3033"])
+    sleep(1)
+
+    def teardown():
+        print("\nDoing teardown")
+        p1.kill()
+
+    request.addfinalizer(teardown)
+
+    # must only import app after config.py has been altered above so config is retained
+    from prez.app import app
+
+    return TestClient(app)
+
+
+@pytest.fixture(scope="module")
+def sparql_vocab_id(sparql_test_client):
+    r = sparql_test_client.get("/vocab")
+    g = Graph().parse(data=r.text)
+    vocab_uri = g.value(
+        URIRef("https://kurrawong.net/prez/memberList"), RDFS.member, None
+    )
+    vocab_id = g.value(vocab_uri, DCTERMS.identifier, None)
+    return vocab_id
 
 
 def test_generate_bnode_construct():
@@ -40,9 +80,9 @@ def test_generate_bnode_select():
 
 
 def test_generate_construct_open():
-    object_uri = "http://example.com"
+    item = SpatialItem(uri=URIRef("http://example.com"))
     profile = {"bnode_depth": 2}
-    returned = generate_item_construct(object_uri, profile)
+    returned = generate_item_construct(item, profile)
     expected = """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
 CONSTRUCT {
@@ -178,8 +218,45 @@ WHERE {
     assert returned == expected
 
 
-def test_get_profile_predicates():
+def test_get_profile_predicates_sequence(sp_test_client):
     profile_uri = URIRef("https://w3id.org/profile/vocpub")
     profile = {"uri": profile_uri}
     general_class = SKOS.ConceptScheme
-    get_profile_predicates(profile, general_class)
+    preds = get_profile_predicates(profile, general_class)
+    assert preds[3] == [
+        [
+            URIRef("http://www.w3.org/2000/01/rdf-schema#member"),
+            URIRef("http://purl.org/dc/terms/identifier"),
+        ]
+    ]
+
+
+def test_construct_query_with_sequence(sparql_test_client, sparql_vocab_id):
+    profile_uri = URIRef("https://w3id.org/profile/vocpub")
+    profile = {"uri": profile_uri}
+    item = VocabItem(uri=profile_uri, url="/vocab")
+    returned = generate_item_construct(item, profile)
+    expected = """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+CONSTRUCT {
+	<https://w3id.org/profile/vocpub> ?p ?o1 .
+	<https://w3id.org/profile/vocpub> <http://www.w3.org/2000/01/rdf-schema#member> ?seq_o1 .
+	?seq_o1 <http://purl.org/dc/terms/identifier> ?seq_o2 .
+	?o1 ?p2 ?o2 .
+	?o2 ?p3 ?o3 .
+}
+WHERE {
+	<https://w3id.org/profile/vocpub> ?p ?o1 .
+	<https://w3id.org/profile/vocpub> <http://www.w3.org/2000/01/rdf-schema#member> ?seq_o1 .
+	?seq_o1 <http://purl.org/dc/terms/identifier> ?seq_o2 .
+   	OPTIONAL {
+		FILTER(ISBLANK(?o1))
+		?o1 ?p2 ?o2 .
+		OPTIONAL {
+			FILTER(ISBLANK(?o2))
+			?o2 ?p3 ?o3 .
+		}
+	}
+}
+"""
+    assert returned == expected
