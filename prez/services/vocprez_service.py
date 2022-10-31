@@ -1,5 +1,7 @@
 from typing import Optional
 
+from rdflib import URIRef, DCTERMS, XSD, SKOS
+
 from prez.services.sparql_utils import *
 
 

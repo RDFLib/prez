@@ -3,21 +3,23 @@ from typing import Optional, Tuple
 
 from fastapi import HTTPException
 
-from prez.config import CQL_PROPS
+import os
+
+CQL_PROPS = os.getenv("CQL_PROPS")
 
 
 class CQLSearch(object):
     def __init__(
         self,
         filter: str,
-        datasets: str,
-        collections: str,
+        # datasets: str,
+        # collections: str,
         filter_lang: Optional[str] = None,
         filter_crs: Optional[str] = None,
     ) -> None:
         self.filter = filter
-        self.datasets = datasets
-        self.collections = collections
+        # self.datasets = datasets
+        # self.collections = collections
         self.filter_lang = filter_lang
         self.filter_crs = filter_crs
 

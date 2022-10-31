@@ -2,7 +2,7 @@ PREFIX addr: <http://w3id.org/profile/anz-address/>
 PREFIX dcat: <http://www.w3.org/ns/dcat#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX geo: <http://www.opengis.net/ont/geosparql#>
-PREFIX gnaf: <https://linked.data.gov.au/dataset/gnaf/>
+PREFIX gnaf: <https://linked.data.gov.au/datasets/gnaf/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX sdo: <https://schema.org/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
@@ -10,10 +10,10 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 
 
-<https://linked.data.gov.au/dataset/gnaf>
+<https://linked.data.gov.au/datasets/gnaf>
     a dcat:Dataset ;
     dcterms:identifier "gnaf"^^xsd:token ;
-    dcterms:source "https://data.gov.au/data/dataset/19432f89-dc3a-4ef3-b943-5326ef1dbecc"^^xsd:anyURI ;
+    dcterms:source "https://data.gov.au/data/datasets/19432f89-dc3a-4ef3-b943-5326ef1dbecc"^^xsd:anyURI ;
     dcterms:title "Geocoded National Address File"@en ;
     geo:hasBoundingBox [
             a geo:Geometry ;
@@ -39,20 +39,20 @@ gnaf:address
     a geo:FeatureCollection ;
     dcterms:description "Contains the G-NAF's instances of the National Address Model's Address class"@en ;
     dcterms:identifier "address"^^xsd:token ;
-    dcterms:isPartOf <https://linked.data.gov.au/dataset/gnaf> ;
+    dcterms:isPartOf <https://linked.data.gov.au/datasets/gnaf> ;
     dcterms:title "Addresses Feature Collection"@en ;
     geo:hasBoundingBox [
             a geo:Geometry ;
             geo:asWKT "POLYGON ((96 -45, 96 -9, 168 -9, 168 -45, 96 -45))"^^geo:wktLiteral
         ] ;
     rdfs:member
-        <https://linked.data.gov.au/dataset/gnaf/address/GAQLD155129953> ,
-        <https://linked.data.gov.au/dataset/gnaf/address/GAQLD159032388> ,
-        <https://linked.data.gov.au/dataset/gnaf/address/GAQLD163179943> ,
-        <https://linked.data.gov.au/dataset/gnaf/address/GAQLD719299059> ;
+        <https://linked.data.gov.au/datasets/gnaf/address/GAQLD155129953> ,
+        <https://linked.data.gov.au/datasets/gnaf/address/GAQLD159032388> ,
+        <https://linked.data.gov.au/datasets/gnaf/address/GAQLD163179943> ,
+        <https://linked.data.gov.au/datasets/gnaf/address/GAQLD719299059> ;
 .
 
-<https://linked.data.gov.au/dataset/gnaf/address/GAQLD155129953>
+<https://linked.data.gov.au/datasets/gnaf/address/GAQLD155129953>
     a
         addr:Address ,
         geo:Feature ;
@@ -63,12 +63,12 @@ gnaf:address
         [
             addr:hasAddressComponentType <https://linked.data.gov.au/def/AnzAddressComponentType/locality> ;
             addr:hasTextValue "locc589ce7a8432" ;
-            addr:hasValue <https://linked.data.gov.au/dataset/gnaf/locality/locc589ce7a8432>
+            addr:hasValue <https://linked.data.gov.au/datasets/gnaf/locality/locc589ce7a8432>
         ] ,
         [
             addr:hasAddressComponentType <https://linked.data.gov.au/def/AnzAddressComponentType/streetLocality> ;
             addr:hasTextValue "QLD172655" ;
-            addr:hasValue <https://linked.data.gov.au/dataset/gnaf/streetLocality/QLD172655>
+            addr:hasValue <https://linked.data.gov.au/datasets/gnaf/streetLocality/QLD172655>
         ] ,
         [
             addr:hasAddressComponentType <https://linked.data.gov.au/def/AnzAddressComponentType/numberFirst> ;
@@ -78,7 +78,7 @@ gnaf:address
         [
             addr:hasAddressComponentType <https://linked.data.gov.au/def/AnzAddressComponentType/postcode> ;
             addr:hasTextValue "4116" ;
-            addr:hasValue <https://linked.data.gov.au/dataset/gnaf/postcode/4116>
+            addr:hasValue <https://linked.data.gov.au/datasets/gnaf/postcode/4116>
         ] ,
         [
             addr:hasAddressComponentType <https://linked.data.gov.au/def/AnzAddressComponentType/lotNumber> ;
@@ -86,7 +86,7 @@ gnaf:address
             addr:hasValue "11"
         ] ;
     addr:hasQualifiedGeometry [
-            addr:hasRole <https://linked.data.gov.au/dataset/gnaf/code/geocodeType/PC> ;
+            addr:hasRole <https://linked.data.gov.au/datasets/gnaf/code/geocodeType/PC> ;
             geo:hasGeometry [
                     a geo:Geometry ;
                     geo:asWKT "POINT (153.0550911 -27.61729753)"^^geo:wktLiteral ;
@@ -97,14 +97,14 @@ gnaf:address
             geo:asWKT "POINT (153.0550911 -27.61729753)"^^geo:wktLiteral ;
         ] ;
     addr:isAddressFor
-        <https://linked.data.gov.au/dataset/gnaf/addressSite/155111407> ,
-        <https://linked.data.gov.au/dataset/gnaf/parcel/11-SP233899> ;
+        <https://linked.data.gov.au/datasets/gnaf/addressSite/155111407> ,
+        <https://linked.data.gov.au/datasets/gnaf/parcel/11-SP233899> ;
     geo:sfWithin
-        <https://linked.data.gov.au/dataset/asgs2016/MB/30044850000> ,
-        <https://linked.data.gov.au/dataset/asgsed3/MB/30044850000> ;
+        <https://linked.data.gov.au/datasets/asgs2016/MB/30044850000> ,
+        <https://linked.data.gov.au/datasets/asgsed3/MB/30044850000> ;
 .
 
-<https://linked.data.gov.au/dataset/gnaf/address/GAQLD159032388>
+<https://linked.data.gov.au/datasets/gnaf/address/GAQLD159032388>
     a
         addr:Address ,
         geo:Feature ;
@@ -115,12 +115,12 @@ gnaf:address
         [
             addr:hasAddressComponentType <https://linked.data.gov.au/def/AnzAddressComponentType/streetLocality> ;
             addr:hasTextValue "QLD125772" ;
-            addr:hasValue <https://linked.data.gov.au/dataset/gnaf/streetLocality/QLD125772>
+            addr:hasValue <https://linked.data.gov.au/datasets/gnaf/streetLocality/QLD125772>
         ] ,
         [
             addr:hasAddressComponentType <https://linked.data.gov.au/def/AnzAddressComponentType/locality> ;
             addr:hasTextValue "loc69e70bdd81a8" ;
-            addr:hasValue <https://linked.data.gov.au/dataset/gnaf/locality/loc69e70bdd81a8>
+            addr:hasValue <https://linked.data.gov.au/datasets/gnaf/locality/loc69e70bdd81a8>
         ] ,
         [
             addr:hasAddressComponentType <https://linked.data.gov.au/def/AnzAddressComponentType/numberFirst> ;
@@ -130,7 +130,7 @@ gnaf:address
         [
             addr:hasAddressComponentType <https://linked.data.gov.au/def/AnzAddressComponentType/postcode> ;
             addr:hasTextValue "4013" ;
-            addr:hasValue <https://linked.data.gov.au/dataset/gnaf/postcode/4013>
+            addr:hasValue <https://linked.data.gov.au/datasets/gnaf/postcode/4013>
         ] ,
         [
             addr:hasAddressComponentType <https://linked.data.gov.au/def/AnzAddressComponentType/flatNumber> ;
@@ -142,9 +142,9 @@ gnaf:address
             addr:hasTextValue "UNIT" ;
             addr:hasValue "UNIT"
         ] ;
-    addr:hasPrimary <https://linked.data.gov.au/dataset/gnaf/address/GAQLD155658049> ;
+    addr:hasPrimary <https://linked.data.gov.au/datasets/gnaf/address/GAQLD155658049> ;
     addr:hasQualifiedGeometry [
-            addr:hasRole <https://linked.data.gov.au/dataset/gnaf/code/geocodeType/PC> ;
+            addr:hasRole <https://linked.data.gov.au/datasets/gnaf/code/geocodeType/PC> ;
             geo:hasGeometry [
                     a geo:Geometry ;
                     geo:asWKT "POINT (153.07162251 -27.39373631)"^^geo:wktLiteral ;
@@ -155,14 +155,14 @@ gnaf:address
             geo:asWKT "POINT (153.07162251 -27.39373631)"^^geo:wktLiteral ;
         ] ;
     addr:isAddressFor
-        <https://linked.data.gov.au/dataset/gnaf/addressSite/159007519> ,
-        <https://linked.data.gov.au/dataset/gnaf/parcel/10-RP72491> ;
+        <https://linked.data.gov.au/datasets/gnaf/addressSite/159007519> ,
+        <https://linked.data.gov.au/datasets/gnaf/parcel/10-RP72491> ;
     geo:sfWithin
-        <https://linked.data.gov.au/dataset/asgs2016/MB/30563194000> ,
-        <https://linked.data.gov.au/dataset/asgsed3/MB/30563194000> ;
+        <https://linked.data.gov.au/datasets/asgs2016/MB/30563194000> ,
+        <https://linked.data.gov.au/datasets/asgsed3/MB/30563194000> ;
 .
 
-<https://linked.data.gov.au/dataset/gnaf/address/GAQLD163179943>
+<https://linked.data.gov.au/datasets/gnaf/address/GAQLD163179943>
     a
         addr:Address ,
         geo:Feature ;
@@ -173,12 +173,12 @@ gnaf:address
         [
             addr:hasAddressComponentType <https://linked.data.gov.au/def/AnzAddressComponentType/streetLocality> ;
             addr:hasTextValue "QLD3324769" ;
-            addr:hasValue <https://linked.data.gov.au/dataset/gnaf/streetLocality/QLD3324769>
+            addr:hasValue <https://linked.data.gov.au/datasets/gnaf/streetLocality/QLD3324769>
         ] ,
         [
             addr:hasAddressComponentType <https://linked.data.gov.au/def/AnzAddressComponentType/postcode> ;
             addr:hasTextValue "4818" ;
-            addr:hasValue <https://linked.data.gov.au/dataset/gnaf/postcode/4818>
+            addr:hasValue <https://linked.data.gov.au/datasets/gnaf/postcode/4818>
         ] ,
         [
             addr:hasAddressComponentType <https://linked.data.gov.au/def/AnzAddressComponentType/lotNumber> ;
@@ -193,10 +193,10 @@ gnaf:address
         [
             addr:hasAddressComponentType <https://linked.data.gov.au/def/AnzAddressComponentType/locality> ;
             addr:hasTextValue "loc510fd5eb7c24" ;
-            addr:hasValue <https://linked.data.gov.au/dataset/gnaf/locality/loc510fd5eb7c24>
+            addr:hasValue <https://linked.data.gov.au/datasets/gnaf/locality/loc510fd5eb7c24>
         ] ;
     addr:hasQualifiedGeometry [
-            addr:hasRole <https://linked.data.gov.au/dataset/gnaf/code/geocodeType/PC> ;
+            addr:hasRole <https://linked.data.gov.au/datasets/gnaf/code/geocodeType/PC> ;
             geo:hasGeometry [
                     a geo:Geometry ;
                     geo:asWKT "POINT (146.70866358 -19.25418702)"^^geo:wktLiteral ;
@@ -207,14 +207,14 @@ gnaf:address
             geo:asWKT "POINT (146.70866358 -19.25418702)"^^geo:wktLiteral ;
         ] ;
     addr:isAddressFor
-        <https://linked.data.gov.au/dataset/gnaf/addressSite/163017156> ,
-        <https://linked.data.gov.au/dataset/gnaf/parcel/102-SP211567> ;
+        <https://linked.data.gov.au/datasets/gnaf/addressSite/163017156> ,
+        <https://linked.data.gov.au/datasets/gnaf/parcel/102-SP211567> ;
     geo:sfWithin
-        <https://linked.data.gov.au/dataset/asgs2016/MB/30562777400> ,
-        <https://linked.data.gov.au/dataset/asgsed3/MB/30562777400> ;
+        <https://linked.data.gov.au/datasets/asgs2016/MB/30562777400> ,
+        <https://linked.data.gov.au/datasets/asgsed3/MB/30562777400> ;
 .
 
-<https://linked.data.gov.au/dataset/gnaf/address/GAQLD719299059>
+<https://linked.data.gov.au/datasets/gnaf/address/GAQLD719299059>
     a
         addr:Address ,
         geo:Feature ;
@@ -225,7 +225,7 @@ gnaf:address
         [
             addr:hasAddressComponentType <https://linked.data.gov.au/def/AnzAddressComponentType/postcode> ;
             addr:hasTextValue "4132" ;
-            addr:hasValue <https://linked.data.gov.au/dataset/gnaf/postcode/4132>
+            addr:hasValue <https://linked.data.gov.au/datasets/gnaf/postcode/4132>
         ] ,
         [
             addr:hasAddressComponentType <https://linked.data.gov.au/def/AnzAddressComponentType/lotNumber> ;
@@ -235,12 +235,12 @@ gnaf:address
         [
             addr:hasAddressComponentType <https://linked.data.gov.au/def/AnzAddressComponentType/locality> ;
             addr:hasTextValue "loc0e23d7691901" ;
-            addr:hasValue <https://linked.data.gov.au/dataset/gnaf/locality/loc0e23d7691901>
+            addr:hasValue <https://linked.data.gov.au/datasets/gnaf/locality/loc0e23d7691901>
         ] ,
         [
             addr:hasAddressComponentType <https://linked.data.gov.au/def/AnzAddressComponentType/streetLocality> ;
             addr:hasTextValue "QLD110859" ;
-            addr:hasValue <https://linked.data.gov.au/dataset/gnaf/streetLocality/QLD110859>
+            addr:hasValue <https://linked.data.gov.au/datasets/gnaf/streetLocality/QLD110859>
         ] ,
         [
             addr:hasAddressComponentType <https://linked.data.gov.au/def/AnzAddressComponentType/numberFirst> ;
@@ -248,7 +248,7 @@ gnaf:address
             addr:hasValue "82"
         ] ;
     addr:hasQualifiedGeometry [
-            addr:hasRole <https://linked.data.gov.au/dataset/gnaf/code/geocodeType/PC> ;
+            addr:hasRole <https://linked.data.gov.au/datasets/gnaf/code/geocodeType/PC> ;
             geo:hasGeometry [
                     a geo:Geometry ;
                     geo:asWKT "POINT (153.08998758 -27.66876057)"^^geo:wktLiteral
@@ -259,60 +259,60 @@ gnaf:address
             geo:asWKT "POINT (153.08998758 -27.66876057)"^^geo:wktLiteral
         ] ;
     addr:hasSecondary
-        <https://linked.data.gov.au/dataset/gnaf/address/GAQLD719557043> ,
-        <https://linked.data.gov.au/dataset/gnaf/address/GAQLD719635745> ;
+        <https://linked.data.gov.au/datasets/gnaf/address/GAQLD719557043> ,
+        <https://linked.data.gov.au/datasets/gnaf/address/GAQLD719635745> ;
     addr:isAddressFor
-        <https://linked.data.gov.au/dataset/gnaf/addressSite/714684087> ,
-        <https://linked.data.gov.au/dataset/gnaf/parcel/44-SP282624> ;
+        <https://linked.data.gov.au/datasets/gnaf/addressSite/714684087> ,
+        <https://linked.data.gov.au/datasets/gnaf/parcel/44-SP282624> ;
     geo:sfWithin
-        <https://linked.data.gov.au/dataset/asgs2016/MB/30562470700> ,
-        <https://linked.data.gov.au/dataset/asgsed3/MB/30562470700> ;
+        <https://linked.data.gov.au/datasets/asgs2016/MB/30562470700> ,
+        <https://linked.data.gov.au/datasets/asgsed3/MB/30562470700> ;
 .
 
-<https://linked.data.gov.au/dataset/gnaf/locality/loc0e23d7691901>
+<https://linked.data.gov.au/datasets/gnaf/locality/loc0e23d7691901>
     rdfs:label "Marsden" ;
 .
 
-<https://linked.data.gov.au/dataset/gnaf/locality/loc510fd5eb7c24>
+<https://linked.data.gov.au/datasets/gnaf/locality/loc510fd5eb7c24>
     rdfs:label "Burdell" ;
 .
 
-<https://linked.data.gov.au/dataset/gnaf/locality/loc69e70bdd81a8>
+<https://linked.data.gov.au/datasets/gnaf/locality/loc69e70bdd81a8>
     rdfs:label "Northgate" ;
 .
 
-<https://linked.data.gov.au/dataset/gnaf/locality/locc589ce7a8432>
+<https://linked.data.gov.au/datasets/gnaf/locality/locc589ce7a8432>
     rdfs:label "Calamvale" ;
 .
 
-<https://linked.data.gov.au/dataset/gnaf/streetLocality/QLD110859>
+<https://linked.data.gov.au/datasets/gnaf/streetLocality/QLD110859>
     rdfs:label "Kerry" ;
 .
 
-<https://linked.data.gov.au/dataset/gnaf/streetLocality/QLD125772>
+<https://linked.data.gov.au/datasets/gnaf/streetLocality/QLD125772>
     rdfs:label "Melton" ;
 .
 
-<https://linked.data.gov.au/dataset/gnaf/streetLocality/QLD172655>
+<https://linked.data.gov.au/datasets/gnaf/streetLocality/QLD172655>
     rdfs:label "Palatine" ;
 .
 
-<https://linked.data.gov.au/dataset/gnaf/streetLocality/QLD3324769>
+<https://linked.data.gov.au/datasets/gnaf/streetLocality/QLD3324769>
     rdfs:label "Lady Musgrave" ;
 .
 
-<https://linked.data.gov.au/dataset/asgsed3/MB/30044850000>
+<https://linked.data.gov.au/datasets/asgsed3/MB/30044850000>
     rdfs:label "Mesh Block 30044850000" ;
 .
 
-<https://linked.data.gov.au/dataset/asgsed3/MB/30562470700>
+<https://linked.data.gov.au/datasets/asgsed3/MB/30562470700>
     rdfs:label "Mesh Block 30562470700" ;
 .
 
-<https://linked.data.gov.au/dataset/asgsed3/MB/30562777400>
+<https://linked.data.gov.au/datasets/asgsed3/MB/30562777400>
     rdfs:label "Mesh Block 30562777400" ;
 .
 
-<https://linked.data.gov.au/dataset/asgsed3/MB/30563194000>
+<https://linked.data.gov.au/datasets/asgsed3/MB/30563194000>
     rdfs:label "Mesh Block 30563194000" ;
 .

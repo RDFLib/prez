@@ -94,6 +94,21 @@ altr-ext:hasResourceFormat owl:propertyChainAxiom ( dcterms:conformsTo dcterms:f
     altr-ext:hasResourceFormat
         "text/html" ,
         "application/geo+json" ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass geo:FeatureCollection ;
+        sh:path rdf:type,
+                dcterms:identifier,
+                dcterms:title,
+                geo:hasBoundingBox,
+                dcterms:provenance,
+                rdfs:label,
+                dcterms:description ;
+    ] ,
+    [  a sh:NodeShape ;
+        sh:targetClass geo:FeatureCollection ;
+        altr-ext:largeOutboundLinks rdfs:member ;
+    ]
 .
 
 altr-ext:alt-profile

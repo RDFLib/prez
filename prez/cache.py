@@ -1,12 +1,11 @@
-from rdflib import URIRef, Literal, Graph
+from rdflib import Graph, URIRef, RDFS, Literal, DCTERMS
+from pathlib import Path
 
-tbox_cache = Graph()
-tbox_cache.add(
-    (
-        URIRef("http://www.w3.org/ns/dcat#Dataset"),
-        URIRef("http://www.w3.org/2000/01/rdf-schema#label"),
-        Literal("Dataset"),
-    )
-)
+if Path("tbox_cache.nt").exists():
+    tbox_cache = Graph().parse("tbox_cache.nt", format="nt")
+else:
+    tbox_cache = Graph()
 
-missing_annotations = []
+profiles_graph_cache = Graph()
+
+api_info_graph = Graph()

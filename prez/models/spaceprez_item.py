@@ -1,10 +1,13 @@
+import os
+
 from fastapi import APIRouter
 from pydantic import BaseModel, root_validator, BaseConfig
-from starlette.datastructures import URL
+from rdflib import Namespace
 
 from prez.services.spaceprez_service import *
 
 PREZ = Namespace("https://kurrawong.net/prez/")
+ENABLED_PREZS = os.getenv("ENABLED_PREZS").split("|")
 
 router = APIRouter(tags=["SpacePrez"] if len(ENABLED_PREZS) > 1 else [])
 
@@ -22,8 +25,8 @@ class SpatialItem(BaseModel):
     dataset_id: Optional[str]
     parent_id: Optional[str]
     parent_uri: Optional[URIRef]
-    classes: Optional[URIRef]
-    link_constructor: Optional[str] = "/dataset/"
+    # classes: Optional[URIRef]
+    link_constructor: Optional[str] = "/datasets/"
 
     @root_validator
     def populate(cls, values):
@@ -66,7 +69,7 @@ class SpatialItem(BaseModel):
                     values["general_class"] = GEO.Feature
                     values["parent_uri"] = URIRef(fc["value"])
                     values["parent_id"] = collection_id
-                    values["classes"] = [c["class"]["value"] for c in r[1]]
+                    # values["classes"] = [c["class"]["value"] for c in r[1]]
                 elif fc:
                     values["id"] = collection_id
                     values["uri"] = URIRef(fc["value"])
@@ -76,13 +79,13 @@ class SpatialItem(BaseModel):
                     values["parent_id"] = dataset_id
                     values[
                         "link_constructor"
-                    ] = f"/dataset/{dataset_id}/collections/{collection_id}/items/"
+                    ] = f"/datasets/{dataset_id}/collections/{collection_id}/items/"
                 else:
                     values["id"] = dataset_id
                     values["uri"] = URIRef(d["value"])
                     values["general_class"] = DCAT.Dataset
                     values["children_general_class"] = GEO.FeatureCollection
-                    values["link_constructor"] = f"/dataset/{dataset_id}/collections/"
+                    values["link_constructor"] = f"/datasets/{dataset_id}/collections/"
         # TODO figure out if id is required
         # elif uri:  # uri provided, get the ID
         #     q = f"""

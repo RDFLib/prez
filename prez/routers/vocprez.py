@@ -1,60 +1,22 @@
+import os
+
 from async_lru import alru_cache
 from fastapi import APIRouter, Request
 
-from prez.profiles.generate_profiles import (
-    build_alt_graph,
-)
-from prez.services.vocprez_service import *
-from prez.view_funcs import profiles_func
-from prez.routers.spaceprez_router import connegp_placeholder, return_data
-from prez.models.vocprez_listings import VocPrezMembers
 from prez.models.vocprez_item import VocabItem
+from prez.models.vocprez_listings import VocPrezMembers
+
+from prez.routers.spaceprez import connegp_placeholder, return_data
 from prez.services.sparql_new import (
     generate_listing_construct,
     generate_listing_count_construct,
     generate_item_construct,
 )
+from prez.services.vocprez_service import *
 
-router = APIRouter(tags=["VocPrez"] if len(ENABLED_PREZS) > 1 else [])
+ENABLED_PREZS = os.getenv("ENABLED_PREZS").split("|")
 
-
-@alru_cache(maxsize=5)
-@router.get(
-    "/vocprez", summary="VocPrez Home", include_in_schema=len(ENABLED_PREZS) > 1
-)
-async def vocprez_home_endpoint(request: Request):
-    """Returns a VocPrez dcat:Dataset in the necessary profile & mediatype"""
-    return await home(request)
-
-
-async def home(request: Request):
-    """Returns the VocPrez home page in the necessary profile & mediatype"""
-    home_renderer = VocPrezDatasetRenderer(request)
-    if home_renderer.profile == "alt":
-        alt_profiles_graph = await build_alt_graph(
-            PREZ.VocPrezHome,
-            home_renderer.profile_details.profiles_formats,
-            home_renderer.profile_details.available_profiles_dict,
-        )
-        return home_renderer.render(alt_profiles_graph=alt_profiles_graph)
-    sparql_result = await get_dataset_construct()
-    dataset = VocPrezDataset(sparql_result)
-    home_renderer.set_dataset(dataset)
-    return home_renderer.render()
-
-
-async def about(request: Request):
-    return templates.TemplateResponse(
-        "vocprez/vocprez_about.html", {"request": request}
-    )
-
-
-@router.get(
-    "/vocprez-about", summary="VocPrez About", include_in_schema=len(ENABLED_PREZS) > 1
-)
-async def vocprez_about(request: Request):
-    """Returns the VocPrez About page"""
-    return await about(request)
+router = APIRouter(tags=["VocPrez"])
 
 
 @router.get("/collection", summary="List Collections")
@@ -77,16 +39,22 @@ async def schemes_endpoint(
     return await return_data([list_query, count_query], mediatype, profile, "VocPrez")
 
 
-@router.get("/scheme/{scheme_id}", summary="Get ConceptScheme")
 @router.get("/vocab/{scheme_id}", summary="Get ConceptScheme")
+@router.get("/scheme/{scheme_id}", summary="Get ConceptScheme")
+async def vocprez_collection(request: Request, scheme_id: str):
+    return await item_endpoint(request)
+
+
 @router.get("/collection/{collection_id}", summary="Get Collection")
-async def vocprez_collections(request: Request, collection_id: str):
+async def vocprez_collection(request: Request, collection_id: str):
     return await item_endpoint(request)
 
 
 @router.get("/scheme/{scheme_id}/{concept_id}", summary="Get Concept")
 @router.get("/vocab/{scheme_id}/{concept_id}", summary="Get Concept")
-async def item_endpoint(request: Request):
+async def item_endpoint(
+    request: Request, scheme_id: str = None, concept_id: str = None
+):
     """Returns a VocPrez skos:Concept, Collection, Vocabulary, or ConceptScheme in the requested profile & mediatype"""
     vp_item = VocabItem(**request.path_params, url=str(request.url.path))
     profile, mediatype = connegp_placeholder(request, vp_item.general_class)
@@ -94,6 +62,7 @@ async def item_endpoint(request: Request):
     profile = {"uri": URIRef("https://w3id.org/profile/vocpub")}
     ###
     query = generate_item_construct(vp_item, profile)
+    print(query)
     return await return_data(query, mediatype, profile, "VocPrez")
 
 

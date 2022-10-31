@@ -3,10 +3,10 @@ PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX geo: <http://www.opengis.net/ont/geosparql#>
 PREFIX geofab: <https://linked.data.gov.au/def/geofabric#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX sand: <http://example.com/dataset/sandgate/>
+PREFIX sand: <http://example.com/datasets/sandgate/>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
-<http://example.com/dataset/sandgate>
+<http://example.com/datasets/sandgate>
     a dcat:Dataset ;
     dcterms:description "Example floods, roads, catchment and facilities in the Sandgate are"@en ;
     dcterms:identifier "sandgate"^^xsd:token ;

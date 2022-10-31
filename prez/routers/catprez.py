@@ -1,14 +1,15 @@
-from async_lru import alru_cache
+import os
+
 from fastapi import APIRouter, Request, HTTPException
 
-from prez.models.catprez import *
 from prez.profiles.generate_profiles import (
     build_alt_graph,
 )
 from prez.services.catprez_service import *
-from prez.view_funcs import profiles_func
 
-router = APIRouter(tags=["CatPrez"] if len(ENABLED_PREZS) > 1 else [])
+ENABLED_PREZS = os.getenv("ENABLED_PREZS").split("|")
+
+router = APIRouter(tags=["CatPrez"])
 
 
 # async def home(request: Request):

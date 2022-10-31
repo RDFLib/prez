@@ -1,10 +1,14 @@
+import os
+
 from fastapi import APIRouter
 from pydantic import BaseModel, root_validator
+from rdflib import Namespace
 
 from prez.services.spaceprez_service import *
 
 PREZ = Namespace("https://kurrawong.net/prez/")
 
+ENABLED_PREZS = os.getenv("ENABLED_PREZS").split("|")
 router = APIRouter(tags=["SpacePrez"] if len(ENABLED_PREZS) > 1 else [])
 
 

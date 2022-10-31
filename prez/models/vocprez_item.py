@@ -1,11 +1,6 @@
-from fastapi import APIRouter
 from pydantic import BaseModel, root_validator
 
 from prez.services.spaceprez_service import *
-
-PREZ = Namespace("https://kurrawong.net/prez/")
-
-router = APIRouter(tags=["SpacePrez"] if len(ENABLED_PREZS) > 1 else [])
 
 
 class VocabItem(BaseModel):

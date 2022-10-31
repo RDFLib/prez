@@ -7,18 +7,18 @@
 ns1:identifier rdfs:label "Identifier" .
 
 ns2:memberList a rdf:Bag ;
-    rdfs:member <http://example.com/dataset/sandgate>,
-        <https://linked.data.gov.au/dataset/geofabric>,
-        <https://linked.data.gov.au/dataset/gnaf> .
+    rdfs:member <http://example.com/datasets/sandgate>,
+        <https://linked.data.gov.au/datasets/geofabric>,
+        <https://linked.data.gov.au/datasets/gnaf> .
 
-<http://example.com/dataset/sandgate> rdfs:label "Sandgate example dataset"@en ;
+<http://example.com/datasets/sandgate> rdfs:label "Sandgate example dataset"@en ;
     ns1:identifier "sandgate"^^xsd:token ;
-    ns2:link "/dataset/sandgate" .
+    ns2:link "/datasets/sandgate" .
 
-<https://linked.data.gov.au/dataset/geofabric> rdfs:label "Australian Hydrological Geospatial Fabric"@en ;
+<https://linked.data.gov.au/datasets/geofabric> rdfs:label "Australian Hydrological Geospatial Fabric"@en ;
     ns1:identifier "geofabric"^^xsd:token ;
-    ns2:link "/dataset/geofabric" .
+    ns2:link "/datasets/geofabric" .
 
-<https://linked.data.gov.au/dataset/gnaf> rdfs:label "Geocoded National Address File"@en ;
+<https://linked.data.gov.au/datasets/gnaf> rdfs:label "Geocoded National Address File"@en ;
     ns1:identifier "gnaf"^^xsd:token ;
-    ns2:link "/dataset/gnaf" .
+    ns2:link "/datasets/gnaf" .

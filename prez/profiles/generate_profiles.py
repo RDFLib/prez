@@ -1,29 +1,23 @@
 import logging
-from pathlib import Path
-from typing import Optional, Union
-
+import os
 from functools import lru_cache
+from pathlib import Path
 
-from async_lru import alru_cache
+from connegp import Profile
 from rdflib import Graph, DCTERMS, SKOS, URIRef, Literal, BNode, SH
 from rdflib.namespace import RDF, PROF, Namespace, RDFS, OWL
-from connegp import Profile
 
-from prez.config import ENABLED_PREZS, GEO
+from prez.cache import profiles_graph_cache
 from prez.services.sparql_utils import (
-    sparql_construct,
     sparql_construct_non_async,
-    sparql_query,
-    sparql_query_multiple,
     sparql_query_multiple_non_async,
 )
 
 
-@lru_cache(maxsize=20)
-def create_profiles_graph() -> Graph:
-    profiles_g = Graph()
+def create_profiles_graph(ENABLED_PREZS) -> Graph:
+    # g = Graph()
     for f in Path(__file__).parent.glob("*.ttl"):
-        profiles_g.parse(f)
+        profiles_graph_cache.parse(f)
     logging.info("Loaded local profiles")
 
     remote_profiles_query = """
@@ -62,10 +56,10 @@ def create_profiles_graph() -> Graph:
     for p in ENABLED_PREZS:
         r = sparql_construct_non_async(remote_profiles_query, p)
         if r[0]:
-            profiles_g += r[1]
+            profiles_graph_cache.__add__(r[1])
             logging.info(f"Also using remote profiles for {p}")
 
-    return profiles_g
+    # return g
 
 
 class ProfileDetails:
@@ -74,7 +68,6 @@ class ProfileDetails:
 
         # get general profiles
         (
-            self.profiles_g,
             self.preferred_classes_and_profiles,
             self.profiles_dict,
             self.profiles_formats,
@@ -127,7 +120,11 @@ def get_general_profiles(general_class):
             ?class rdfs:subClassOf* ?mid .
             ?mid rdfs:subClassOf* <{general_class}> .
             ?profile altr-ext:constrainsClass ?class ;
-                dcterms:identifier ?profile_id .
+                dcterms:identifier ?profile_id ;
+
+                altr-ext:hasDefaultResourceFormat ?def_format ;
+                altr-ext:hasResourceFormat  .
+
         }}
         GROUP BY ?class ?profile_id
         ORDER BY DESC(?distance)
@@ -135,27 +132,24 @@ def get_general_profiles(general_class):
     profiles_formats = {}
     preferred_classes_and_profiles = []
 
-    # ordered list of feature classes and associated preferred profiles
-    profiles_g = create_profiles_graph()
-
     # check for hardcoded API default profiles
     ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
-    default_profile_nodeshapes = profiles_g.objects(
+    default_profile_nodeshapes = profiles_graph_cache.objects(
         subject=URIRef("http://kurrawong.net/profile/prez"),
         predicate=ALTREXT.hasNodeShape,
     )
     class_default_profiles = []
 
     for nodeshape_bn in default_profile_nodeshapes:
-        classes_with_default = profiles_g.value(
+        classes_with_default = profiles_graph_cache.value(
             subject=nodeshape_bn, predicate=SH.targetClass
         )
-        default_for_class = profiles_g.value(
+        default_for_class = profiles_graph_cache.value(
             subject=nodeshape_bn, predicate=ALTREXT.hasDefaultProfile
         )
         class_default_profiles.append(tuple([classes_with_default, default_for_class]))
 
-    for r in profiles_g.query(get_class_hierarchy):
+    for r in profiles_graph_cache.query(get_class_hierarchy):
         distance = str(r["distance"])
         if tuple([r["class"], r["profile"]]) in class_default_profiles:
             distance = 1.5  # this will ensure the profile is selected by default
@@ -167,17 +161,19 @@ def get_general_profiles(general_class):
     preferred_classes_and_profiles.sort(key=lambda x: float(x[2]))
 
     ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
-    for s in profiles_g.subjects(RDF.type, PROF.Profile):
-        profile_id = str(profiles_g.value(s, DCTERMS.identifier))
+    for s in profiles_graph_cache.subjects(RDF.type, PROF.Profile):
+        profile_id = str(profiles_graph_cache.value(s, DCTERMS.identifier))
         default_format = str(
-            profiles_g.value(subject=s, predicate=ALTREXT.hasDefaultResourceFormat)
+            profiles_graph_cache.value(
+                subject=s, predicate=ALTREXT.hasDefaultResourceFormat
+            )
         )
         profiles_formats[profile_id] = [default_format]
         other_formats = list(
             set(
                 [
                     str(fmt)
-                    for fmt in profiles_g.objects(
+                    for fmt in profiles_graph_cache.objects(
                         subject=s, predicate=ALTREXT.hasResourceFormat
                     )
                 ]
@@ -189,18 +185,18 @@ def get_general_profiles(general_class):
     # Create ConnegP profile classes and add these to a dictionary
     profiles_dict = {}
     for profile, formats in profiles_formats.items():
-        profile_uri = profiles_g.value(
+        profile_uri = profiles_graph_cache.value(
             predicate=DCTERMS.identifier, object=Literal(profile)
         )
-        description = profiles_g.value(profile_uri, DCTERMS.description)
+        description = profiles_graph_cache.value(profile_uri, DCTERMS.description)
         if not description:
-            description = profiles_g.value(profile_uri, SKOS.definition)
-        label = profiles_g.value(profile_uri, RDFS.label)
+            description = profiles_graph_cache.value(profile_uri, SKOS.definition)
+        label = profiles_graph_cache.value(profile_uri, RDFS.label)
         if not label:
-            label = profiles_g.value(profile_uri, DCTERMS.title)
+            label = profiles_graph_cache.value(profile_uri, DCTERMS.title)
             if not label:
-                label = profiles_g.value(profile_uri, SKOS.prefLabel)
-        profile_id = str(profiles_g.value(profile_uri, DCTERMS.identifier))
+                label = profiles_graph_cache.value(profile_uri, SKOS.prefLabel)
+        profile_id = str(profiles_graph_cache.value(profile_uri, DCTERMS.identifier))
         profiles_dict[profile_id] = Profile(
             uri=profile_uri,
             id=profile_id,
@@ -213,7 +209,6 @@ def get_general_profiles(general_class):
         )
 
     return (
-        profiles_g,
         tuple(preferred_classes_and_profiles),
         profiles_dict,
         profiles_formats,

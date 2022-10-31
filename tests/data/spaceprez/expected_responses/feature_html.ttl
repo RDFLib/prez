@@ -4,7 +4,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 
-<http://example.com/dataset/sandgate/cc12109444> a ns1:Feature,
+<http://example.com/datasets/sandgate/cc12109444> a ns1:Feature,
         <https://linked.data.gov.au/def/geofabric#ContractedCatchment> ;
     rdfs:label "Contracted Catchment 12109444" ;
     ns2:identifier "cc12109444"^^xsd:token ;

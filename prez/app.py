@@ -1,44 +1,30 @@
-import time
-from pathlib import Path
+from textwrap import dedent
+from textwrap import dedent
 from typing import Optional
 from urllib.parse import quote_plus
 
-import httpx
 import uvicorn
-from connegp import parse_mediatypes_from_accept_header
 from fastapi import FastAPI, Request, HTTPException, Query
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse, RedirectResponse, Response
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse, RedirectResponse
 from fedsearch import SkosSearch, EndpointDetails
 from pydantic import AnyUrl
 from starlette.middleware.cors import CORSMiddleware
 
 from prez.cache import tbox_cache
-from prez.profiles.generate_profiles import get_general_profiles
-from prez.routers import (
-    catprez_router,
-    vocprez_router,
-    spaceprez_router,
-)
-from prez.routers.vocprez_router import vocprez_home_endpoint
+from prez.config import Settings
+from prez.profiles.generate_profiles import create_profiles_graph
+from prez.routers.spaceprez import router as spaceprez_router
+from prez.routers.vocprez import router as vocprez_router
+from prez.routers.catprez import router as catprez_router
+from prez.routers.cql import router as cql_router
+
+
 from prez.services.app_service import *
 from prez.services.spaceprez_service import list_datasets, list_collections
 
-from prez.view_funcs import profiles_func
-
-from textwrap import dedent
-
 
 async def catch_400(request: Request, exc):
-    accepts = parse_mediatypes_from_accept_header(request.headers.get("Accept"))
-    if "text/html" in accepts:
-        template_context = {"request": request, "message": exc.detail}
-        return templates.TemplateResponse(
-            "400.html", context=template_context, status_code=400
-        )
-    else:
-        return JSONResponse(content={"detail": exc}, status_code=400)
+    return JSONResponse(content={"detail": exc}, status_code=400)
 
 
 async def catch_404(request: Request, exc):
@@ -56,16 +42,7 @@ app = FastAPI(
         500: catch_500,
     }
 )
-
-app.mount(
-    "/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static"
-)
-if THEME_VOLUME is not None:
-    app.mount(
-        f"/theme",
-        StaticFiles(directory=Path(__file__).parent / f"{THEME_VOLUME}" / "static"),
-        name="theme",
-    )
+settings = Settings()
 
 app.add_middleware(
     CORSMiddleware,
@@ -76,25 +53,13 @@ app.add_middleware(
 )
 
 
-def configure():
-    configure_routing()
-
-
-def configure_routing():
-    if "CatPrez" in ENABLED_PREZS:
-        app.include_router(catprez_router.router)
-    if "VocPrez" in ENABLED_PREZS:
-        app.include_router(vocprez_router.router)
-    if "SpacePrez" in ENABLED_PREZS:
-        app.include_router(spaceprez_router.router)
-
-
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc):
-    if str(request.url).endswith("object"):
-        return await object_page(request)
-    else:
-        return await catch_400(request, exc)
+app.include_router(cql_router)
+if settings.catprez_sparql_endpoint:
+    app.include_router(catprez_router)
+if settings.vocprez_sparql_endpoint:
+    app.include_router(vocprez_router)
+if settings.spaceprez_sparql_endpoint:
+    app.include_router(spaceprez_router)
 
 
 @app.on_event("startup")
@@ -104,127 +69,19 @@ async def app_startup():
     are available. Initial caching can be triggered within the try block. NB this function does not check that data is
     appropriately configured at the SPARQL endpoint(s), only that the SPARQL endpoint(s) are reachable.
     """
-    prez2endpoint = {
-        "SpacePrez": SPACEPREZ_SPARQL_ENDPOINT,
-        "VocPrez": VOCPREZ_SPARQL_ENDPOINT,
-        "TimePrez": TIMEPREZ_SPARQL_ENDPOINT,
-        "CatPrez": CATPREZ_SPARQL_ENDPOINT,
-    }
-    if len(ENABLED_PREZS) > 0:
-        for prez in ENABLED_PREZS:
-            connected_to_prez_flavour = False
-            while not connected_to_prez_flavour:
-                try:
-                    print(f"Trying endpoint {prez2endpoint[prez]}")
-                    response = httpx.head(prez2endpoint[prez])
-                    response.raise_for_status()
-                    if response.reason_phrase == "OK":
-
-                        print(
-                            f"Successfully connected to {prez} endpoint {prez2endpoint[prez]}"
-                        )
-
-                        # Check whether there are any remote profiles, and if so, cache them.
-                        # If there will be remote profiles but they haven't yet been loaded to fuseki, they will be not be
-                        # cached at startup, but will be cached after any endpoint using profiles is called.
-                        query_for_profiles = """PREFIX prof: <http://www.w3.org/ns/dx/prof/>
-                                                DESCRIBE ?profile { ?profile a prof:Profile } LIMIT 1"""
-                        query_success, profiles_g = await sparql_construct(
-                            query_for_profiles, prez
-                        )
-                        if query_success and len(profiles_g) > 0:
-                            print(
-                                f"Profiles found in data store for {prez}, caching them"
-                            )
-                            if prez == "CatPrez":
-                                get_general_profiles(DCAT.Dataset)
-                                get_general_profiles(DCAT.Resource)
-                            if prez == "SpacePrez":
-                                get_general_profiles(DCAT.Dataset)
-                                get_general_profiles(GEO.FeatureCollection)
-                                get_general_profiles(GEO.Feature)
-                            if prez == "VocPrez":
-                                pass
-                        else:
-                            print(
-                                f"No profiles found in data store for {prez}, continuing with startup"
-                            )
-                        connected_to_prez_flavour = True
-                    else:
-                        raise httpx.HTTPError
-                        # are there any non "OK" responses that would *not* raise for status?
-                except httpx.HTTPError as exc:
-                    print(f"HTTP Exception for {exc.request.url} - {exc}")
-                    print(f"Failed to connect to {prez} endpoint {prez2endpoint[prez]}")
-                    print("retrying in 3 seconds...")
-                    time.sleep(3)
-    else:
-        raise ValueError(
-            'No Prezs enabled - set "ENABLED_PREZS" environment variable to a list of enabled Prezs'
-        )
+    print("Starting up...")
+    await healthcheck_sparql_endpoints(settings)
+    create_profiles_graph(settings.enabled_prezs.split("|"))
 
 
-@app.get("/purge-cache", summary="Purge LRU and ALRU caches")
-async def purge_cache():
-    import gc
-    import functools
-
-    objects = [
-        i for i in gc.get_objects() if isinstance(i, functools._lru_cache_wrapper)
-    ]
-    # All objects cleared
-    for object in objects:
-        object.cache_clear()
-
-    from async_lru import _cache_clear
-    from prez.profiles.generate_profiles import (
-        retrieve_relevant_shapes,
-        get_general_profiles,
-        get_class_based_and_default_profiles,
-        create_profiles_graph,
-    )
-    from prez.routers.spaceprez_router import (
-        spaceprez_home_endpoint,
-    )
-    from prez.services.spaceprez_service import (
-        list_features,
-        list_collections,
-        list_datasets,
-        count_features,
-        count_collections,
-        count_datasets,
-        get_dataset_construct,
-        get_feature_construct,
-        get_collection_construct_1,
-        get_collection_construct_2,
-        get_object_uri_and_classes,
-    )
-    from prez.view_funcs import profiles_func
-
-    funclist = [
-        list_collections,
-        list_datasets,
-        count_collections,
-        count_datasets,
-        get_dataset_construct,
-        get_collection_construct_1,
-        get_collection_construct_2,
-        get_object_uri_and_classes,
-        get_general_profiles,
-        create_profiles_graph,
-        profiles_func,
-        get_class_based_and_default_profiles,
-        retrieve_relevant_shapes,
-        spaceprez_home_endpoint,
-        vocprez_home_endpoint,
-        about,
-        count_features,
-        list_features,
-        get_feature_construct,
-    ]
-    for func in funclist:
-        _cache_clear(func)
-    return "cache purged"
+@app.on_event("shutdown")
+async def app_shutdown():
+    """
+    persists caches
+    """
+    print("Shutting down...")
+    if len(tbox_cache) > 0:
+        tbox_cache.serialize(destination="tbox_cache.nt", format="nt")
 
 
 async def object_page(request: Request):
@@ -234,19 +91,10 @@ async def object_page(request: Request):
     )
 
 
-@app.get("/", summary="Home page")
-async def index(request: Request):
-    """Displays the home page of Prez"""
-    if len(ENABLED_PREZS) == 1:
-        if ENABLED_PREZS[0] == "CatPrez":
-            return await catprez_router.home(request)
-        elif ENABLED_PREZS[0] == "VocPrez":
-            return await vocprez_router.home(request)
-        elif ENABLED_PREZS[0] == "SpacePrez":
-            return await spaceprez_router.spaceprez_home_endpoint(request)
-    else:
-        template_context = {"request": request, "enabled_prezs": ENABLED_PREZS}
-        return templates.TemplateResponse("index.html", context=template_context)
+# @app.get("/", summary="Home page")
+# async def index(request: Request):
+#     """Returns the following information about the API"""
+#     return await return_rdf(api_info_graph)
 
 
 def _get_sparql_service_description(request, format):
@@ -283,114 +131,119 @@ def _get_sparql_service_description(request, format):
         return Graph().parse(data=ttl).serialize(format=format)
 
 
-@app.get("/sparql", summary="SPARQL Endpoint")
+@app.get("/s/sparql", summary="SPARQL Endpoint")
 async def sparql_get(request: Request, query: Optional[str] = None):
-    accept = (
-        request.query_params.get("accept")
-        if request.query_params.get("accept") is not None
-        else request.query_params.get("Accept")
+    if not request.query_params:
+        raise ValueError("A SPARQL query must be provided as a query parameter")
+    return RedirectResponse(
+        url=settings.SPACEPREZ_SPARQL_ENDPOINT + "?" + str(request.query_params)
     )
-    if accept is not None:
-        if " " in accept:
-            accept = accept.replace(" ", "+")
-    else:  # accept is None:
-        accepts = request.headers.get("accept")
-        if accepts is not None:
-            accept = accepts.split(",")[0].split(";")[0]
+    # accept = (
+    #     request.query_params.get("accept")
+    #     if request.query_params.get("accept") is not None
+    #     else request.query_params.get("Accept")
+    # )
+    # if accept is not None:
+    #     if " " in accept:
+    #         accept = accept.replace(" ", "+")
+    # else:  # accept is None:
+    #     accepts = request.headers.get("accept")
+    #     if accepts is not None:
+    #         accept = accepts.split(",")[0].split(";")[0]
+    #
+    # if accept == "text/html":
+    #     return templates.TemplateResponse("sparql.html", {"request": request})
+    #
+    # # fallback - can't find an accept value
+    # if accept is None:
+    #     accept = "application/sparql-results+json"
+    #
+    # query = request.query_params.get("query")
+    #
+    # if query is not None:
+    #     sparql_result = await sparql_endpoint_query_multiple(query, accept=accept)
+    #     if len(sparql_result[1]) > 0 and not ALLOW_PARTIAL_RESULTS:
+    #         error_list = "\n".join(
+    #             [
+    #                 f"Error code {e['code']} in {e['prez']}: {e['message']}\n"
+    #                 for e in sparql_result[1]
+    #             ]
+    #         )
+    #         Response(
+    #             content=f"SPARQL query error:\n{error_list}", media_type="text/plain"
+    #         )
+    #     else:
+    #         if accept in RDF_MEDIATYPES:
+    #             return Response(content=sparql_result[0], media_type=accept)
+    #         elif accept in ["application/sparql-results+json", "application/json"]:
+    #             return JSONResponse(
+    #                 content=sparql_result[0],
+    #                 media_type="application/sparql-results+json",
+    #             )
+    #         else:
+    #             return Response(
+    #                 content=sparql_result[0],
+    #                 media_type=accept,
+    #                 headers={"content-disposition": "attachment; filename=result.xml"},
+    #             )
+    # else:
+    #     return Response(content=_get_sparql_service_description(request, accept))
 
-    if accept == "text/html":
-        return templates.TemplateResponse("sparql.html", {"request": request})
 
-    # fallback - can't find an accept value
-    if accept is None:
-        accept = "application/sparql-results+json"
-
-    query = request.query_params.get("query")
-
-    if query is not None:
-        sparql_result = await sparql_endpoint_query_multiple(query, accept=accept)
-        if len(sparql_result[1]) > 0 and not ALLOW_PARTIAL_RESULTS:
-            error_list = "\n".join(
-                [
-                    f"Error code {e['code']} in {e['prez']}: {e['message']}\n"
-                    for e in sparql_result[1]
-                ]
-            )
-            Response(
-                content=f"SPARQL query error:\n{error_list}", media_type="text/plain"
-            )
-        else:
-            if accept in RDF_MEDIATYPES:
-                return Response(content=sparql_result[0], media_type=accept)
-            elif accept in ["application/sparql-results+json", "application/json"]:
-                return JSONResponse(
-                    content=sparql_result[0],
-                    media_type="application/sparql-results+json",
-                )
-            else:
-                return Response(
-                    content=sparql_result[0],
-                    media_type=accept,
-                    headers={"content-disposition": "attachment; filename=result.xml"},
-                )
-    else:
-        return Response(content=_get_sparql_service_description(request, accept))
-
-
-@app.post("/sparql", summary="SPARQL Endpoint")
-async def sparql_post(request: Request):
-    accept = (
-        request.query_params.get("accept")
-        if request.query_params.get("accept") is not None
-        else request.query_params.get("Accept")
-    )
-    if accept is not None:
-        if " " in accept:
-            accept = accept.replace(" ", "+")
-    else:  # accept is None:
-        accepts = request.headers.get("accept")
-        if accepts is not None:
-            accept = accepts.split(",")[0].split(";")[0]
-
-    # fallback - can't find an accept value
-    if accept is None:
-        accept = "application/sparql-results+json"
-
-    if request.headers.get("content-type") == "application/x-www-form-urlencoded":
-        formdata = await request.form()
-        query = formdata.get("query")
-    else:
-        query_bytes = await request.body()
-        query = query_bytes.decode()
-
-    if query is not None:
-        sparql_result = await sparql_endpoint_query_multiple(query, accept=accept)
-        if len(sparql_result[1]) > 0 and not ALLOW_PARTIAL_RESULTS:
-            error_list = "\n".join(
-                [
-                    f"Error code {e['code']} in {e['prez']}: {e['message']}\n"
-                    for e in sparql_result[1]
-                ]
-            )
-            Response(
-                content=f"SPARQL query error:\n{error_list}", media_type="text/plain"
-            )
-        else:
-            if accept in RDF_MEDIATYPES:
-                return Response(content=sparql_result[0], media_type=accept)
-            elif accept in ["application/sparql-results+json", "application/json"]:
-                return JSONResponse(
-                    content=sparql_result[0],
-                    media_type="application/sparql-results+json",
-                )
-            else:
-                return Response(
-                    content=sparql_result[0],
-                    media_type=accept,
-                    headers={"content-disposition": "attachment; filename=result.xml"},
-                )
-    else:
-        return Response(content=_get_sparql_service_description(request, accept))
+# @app.post("/sparql", summary="SPARQL Endpoint")
+# async def sparql_post(request: Request):
+#     accept = (
+#         request.query_params.get("accept")
+#         if request.query_params.get("accept") is not None
+#         else request.query_params.get("Accept")
+#     )
+#     if accept is not None:
+#         if " " in accept:
+#             accept = accept.replace(" ", "+")
+#     else:  # accept is None:
+#         accepts = request.headers.get("accept")
+#         if accepts is not None:
+#             accept = accepts.split(",")[0].split(";")[0]
+#
+#     # fallback - can't find an accept value
+#     if accept is None:
+#         accept = "application/sparql-results+json"
+#
+#     if request.headers.get("content-type") == "application/x-www-form-urlencoded":
+#         formdata = await request.form()
+#         query = formdata.get("query")
+#     else:
+#         query_bytes = await request.body()
+#         query = query_bytes.decode()
+#
+#     if query is not None:
+#         sparql_result = await sparql_endpoint_query_multiple(query, accept=accept)
+#         if len(sparql_result[1]) > 0 and not ALLOW_PARTIAL_RESULTS:
+#             error_list = "\n".join(
+#                 [
+#                     f"Error code {e['code']} in {e['prez']}: {e['message']}\n"
+#                     for e in sparql_result[1]
+#                 ]
+#             )
+#             Response(
+#                 content=f"SPARQL query error:\n{error_list}", media_type="text/plain"
+#             )
+#         else:
+#             if accept in RDF_MEDIATYPES:
+#                 return Response(content=sparql_result[0], media_type=accept)
+#             elif accept in ["application/sparql-results+json", "application/json"]:
+#                 return JSONResponse(
+#                     content=sparql_result[0],
+#                     media_type="application/sparql-results+json",
+#                 )
+#             else:
+#                 return Response(
+#                     content=sparql_result[0],
+#                     media_type=accept,
+#                     headers={"content-disposition": "attachment; filename=result.xml"},
+#                 )
+#     else:
+#         return Response(content=_get_sparql_service_description(request, accept))
 
 
 @app.get("/search", summary="Search page")
@@ -432,7 +285,7 @@ async def search(
         results = []
 
     # CQL search
-    if "SpacePrez" in ENABLED_PREZS:
+    if "SpacePrez" in settings.ENABLED_PREZS:
         dataset_sparql_result, collection_sparql_result = await asyncio.gather(
             list_datasets(),
             list_collections(),
@@ -469,12 +322,12 @@ async def search(
 @app.get("/about", summary="About page")
 async def about(request: Request):
     """Displays the about page of Prez"""
-    if len(ENABLED_PREZS) == 1:
-        if ENABLED_PREZS[0] == "VocPrez":
+    if len(settings.ENABLED_PREZS) == 1:
+        if settings.ENABLED_PREZS[0] == "VocPrez":
             return await vocprez_router.about(request)
-        elif ENABLED_PREZS[0] == "SpacePrez":
+        elif settings.ENABLED_PREZS[0] == "SpacePrez":
             return await spaceprez_router.spaceprez_about(request)
-        elif ENABLED_PREZS[0] == "CatPrez":
+        elif settings.ENABLED_PREZS[0] == "CatPrez":
             return await catprez_router.catprez_about(request)
     else:
         template_context = {"request": request}
@@ -488,7 +341,7 @@ async def prezs(request: Request):
     return JSONResponse(
         content={
             "uri": uri,
-            "prezs": [f"{uri}{prez.lower()}" for prez in ENABLED_PREZS],
+            "prezs": [f"{uri}{prez.lower()}" for prez in settings.ENABLED_PREZS],
         },
         media_type="application/json",
         headers=request.headers,
@@ -498,10 +351,10 @@ async def prezs(request: Request):
 @app.get("/profiles", summary="Profiles")
 async def profiles(request: Request):
     """Returns a list of profiles recognised by Prez"""
-    if len(ENABLED_PREZS) == 1:
-        if ENABLED_PREZS[0] == "VocPrez":
+    if len(settings.ENABLED_PREZS) == 1:
+        if settings.ENABLED_PREZS[0] == "VocPrez":
             return await profiles_func(request, "VocPrez")
-        elif ENABLED_PREZS[0] == "SpacePrez":
+        elif settings.ENABLED_PREZS[0] == "SpacePrez":
             return await profiles_func(request, "SpacePrez")
     else:
         return await profiles_func(request)
@@ -533,15 +386,15 @@ async def object(
     # return according to type (IF appropriate prez module is enabled)
     for object_type in object_types:
         if object_type == SKOS.ConceptScheme:
-            if "VocPrez" not in ENABLED_PREZS:
+            if "VocPrez" not in settings.ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
             return await vocprez_router.item_endpoint(request)
         elif object_type == SKOS.Collection:
-            if "VocPrez" not in ENABLED_PREZS:
+            if "VocPrez" not in settings.ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
             return await vocprez_router.collection(request)
         elif object_type == SKOS.Concept:
-            if "VocPrez" not in ENABLED_PREZS:
+            if "VocPrez" not in settings.ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
             return await vocprez_router.concept(request)
         elif object_type in [
@@ -549,7 +402,7 @@ async def object(
             GEO.FeatureCollection,
             DCAT.Dataset,
         ]:  # TODO DCAT.Dataset will need some more thought
-            if "SpacePrez" not in ENABLED_PREZS:
+            if "SpacePrez" not in settings.ENABLED_PREZS:
                 raise HTTPException(status_code=404, detail="Not Found")
             return RedirectResponse(
                 f"/s/object?{request.url.components.query}", headers=request.headers
@@ -571,7 +424,4 @@ async def health(request: Request):
 
 
 if __name__ == "__main__":
-    configure()
-    uvicorn.run("app:app", port=8000, host=SYSTEM_URI, reload=True)
-else:
-    configure()
+    uvicorn.run("app:app", port=8000, host=settings.system_uri, reload=True)
