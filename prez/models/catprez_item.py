@@ -2,19 +2,19 @@ from typing import Optional
 from typing import Set
 
 from pydantic import BaseModel, root_validator
-from rdflib import URIRef, SKOS, DCTERMS, XSD
+from rdflib import URIRef
+from rdflib.namespace import SKOS, DCTERMS, XSD, DCAT
 
 from services.sparql_utils import sparql_query_non_async
 
 
-class VocabItem(BaseModel):
+class CatprezItem(BaseModel):
     uri: Optional[URIRef] = None
     classes: Optional[Set[URIRef]]
     id: Optional[str] = None
     general_class: Optional[URIRef] = None
-    scheme_id: Optional[str] = None
-    collection_id: Optional[str] = None
-    concept_id: Optional[str] = None
+    catalog_id: Optional[str] = None
+    resource_id: Optional[str] = None
     url_path: Optional[str] = None
 
     def __hash__(self):
@@ -25,18 +25,13 @@ class VocabItem(BaseModel):
         url_path = values.get("url_path")
         uri = values.get("uri")
         url_parts = url_path.split("/")
-        if len(url_parts) == 4:
-            values["general_class"] = SKOS.Concept
-            id = values.get("concept_id")
-        elif url_parts[1] == "collection":
-            values["general_class"] = SKOS.Collection
-            id = values.get("collection_id")
-        elif url_parts[1] == "scheme":
-            values["general_class"] = SKOS.ConceptScheme
-            id = values.get("scheme_id")
-        elif url_parts[1] == "vocab":
-            values["general_class"] = SKOS.ConceptScheme
-            id = values.get("scheme_id")
+        if len(url_parts) == 3:
+            values["general_class"] = DCAT.Catalog
+            id = values.get("catalog_id")
+        elif len(url_parts) == 4:
+            values["general_class"] = DCAT.Resource
+            id = values.get("resource_id")
+
         assert id or uri, "Either an id or uri must be provided"
         if id:  # get the URI
             q = f"""
@@ -48,7 +43,7 @@ class VocabItem(BaseModel):
                         a ?class .
                 }}
                 """
-            r = sparql_query_non_async(q, "VocPrez")
+            r = sparql_query_non_async(q, "CatPrez")
             if r[0]:
                 # set the uri of the item
                 uri = r[1][0].get("uri")["value"]
@@ -57,7 +52,7 @@ class VocabItem(BaseModel):
                 values["classes"] = frozenset([c["class"]["value"] for c in r[1]])
         else:  # uri provided, get the ID
             q = f"""SELECT ?class {{ <{uri}> a ?class }}"""
-            r = sparql_query_non_async(q, "VocPrez")
+            r = sparql_query_non_async(q, "CatPrez")
             if r[0]:
                 # set the uri of the item
                 values["classes"] = frozenset([c["class"]["value"] for c in r[1]])

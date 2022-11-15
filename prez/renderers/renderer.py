@@ -2,6 +2,10 @@ import io
 
 from fastapi.responses import StreamingResponse
 import time
+
+from rdflib import Literal
+from starlette.responses import PlainTextResponse
+
 from prez.services.spaceprez_service import *
 from prez.services.spaceprez_service import sparql_construct
 from prez.services.sparql_new import get_annotation_properties
@@ -20,16 +24,15 @@ async def return_data(query_or_queries, mediatype, profile, prez):
             graph += result[1]
     else:
         _, graph = await sparql_construct(query_or_queries, prez)
-
     # return the data
-    if mediatype in RDF_MEDIATYPES:
+    if str(mediatype) in RDF_MEDIATYPES:
         return await return_rdf(graph, mediatype)
 
     # elif mediatype == "xml":
     #     ...
 
     else:
-        if mediatype == "text/html":
+        if mediatype == Literal("text/html"):
             return await return_html(graph, prez)
 
 

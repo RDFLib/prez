@@ -1,10 +1,9 @@
+import argparse
 import urllib.parse
-from functools import lru_cache
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
-import argparse
-from rdflib import Graph
 
+from rdflib import Graph
 
 KEEP_RUNNING = True
 
@@ -16,7 +15,9 @@ def keep_running():
 def load_catprez_graph():
     print("loading CatPrez graph")
     g = Graph()
-    for f in Path("/Users/nick/Work/idn/catalogue-data/data").rglob("*.ttl"):
+    for f in Path(Path(__file__).parent.parent / "data" / "catprez" / "input").glob(
+        "*.ttl"
+    ):
         g.parse(f)
     return g
 

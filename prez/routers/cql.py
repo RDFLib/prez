@@ -1,78 +1,78 @@
+from typing import Optional, List
+
 from fastapi import APIRouter, Request
-from fastapi import HTTPException, Query, Form
+from fastapi import Form
 from fastapi.responses import JSONResponse, RedirectResponse
 from rdflib import Namespace
-from prez.cql_search import CQLSearch
-from prez.services.spaceprez_service import *
 
 PREZ = Namespace("https://kurrawong.net/prez/")
 
 router = APIRouter(tags=["CQL"])
 
-# top-level features
-@router.get(
-    "/items",
-    summary="List Features",
-)
-async def spaceprez_features(
-    request: Request,
-    page: int = 1,
-    per_page: int = 20,
-    filter: Optional[str] = Query(None),
-    filter_lang: Optional[str] = Query(None, alias="filter-lang"),
-    filter_crs: Optional[str] = Query(None, alias="filter-crs"),
-    dataset: Optional[str] = Query(None),
-    collection: Optional[str] = Query(None),
-):
-    """Returns a list of SpacePrez geo:Features in the necessary profile & mediatype"""
-    if filter is not None:
-        if dataset is None:
-            # get list of datasets
-            d_sparql_result = await list_datasets()
-            d_list = [result["id"]["value"] for result in d_sparql_result]
-            d_ids = ",".join(d_list)
-        else:
-            d_ids = dataset
-
-        if collection is None:
-            # get list of collections
-            coll_sparql_result, *_ = await asyncio.gather(
-                *[list_collections(dataset_id) for dataset_id in d_list]
-            )
-            coll_list = [result["id"]["value"] for result in coll_sparql_result]
-            coll_ids = ",".join(coll_list)
-        else:
-            coll_ids = collection
-
-        # do CQL -> SPARQL mapping
-        cql_query = CQLSearch(
-            filter,
-            d_ids,
-            coll_ids,
-            filter_lang=filter_lang,
-            filter_crs=filter_crs,
-        ).generate_query()
-
-        feature_count, sparql_result = await asyncio.gather(
-            count_features(cql_query=cql_query),
-            list_features(cql_query=cql_query, page=page, per_page=per_page),
-        )
-    else:
-        feature_count, sparql_result = await asyncio.gather(
-            count_features(),
-            list_features(page=page, per_page=per_page),
-        )
-
-    feature_list = SpacePrezFeatureList(sparql_result)
-    feature_list_renderer = SpacePrezFeatureListRenderer(
-        request,
-        PREZ.FeatureList,
-        page,
-        per_page,
-        int(feature_count[0]["count"]["value"]),
-        feature_list,
-    )
-    return feature_list_renderer.render()
+# # top-level features
+# @router.get(
+#     "/items",
+#     summary="List Features",
+# )
+# async def spaceprez_features(
+#     request: Request,
+#     page: int = 1,
+#     per_page: int = 20,
+#     filter: Optional[str] = Query(None),
+#     filter_lang: Optional[str] = Query(None, alias="filter-lang"),
+#     filter_crs: Optional[str] = Query(None, alias="filter-crs"),
+#     dataset: Optional[str] = Query(None),
+#     collection: Optional[str] = Query(None),
+# ):
+#     """Returns a list of SpacePrez geo:Features in the necessary profile & mediatype"""
+#     if filter is not None:
+#         if dataset is None:
+#             # get list of datasets
+#             d_sparql_result = await list_datasets()
+#             d_list = [result["id"]["value"] for result in d_sparql_result]
+#             d_ids = ",".join(d_list)
+#         else:
+#             d_ids = dataset
+#
+#         if collection is None:
+#             # get list of collections
+#             coll_sparql_result, *_ = await asyncio.gather(
+#                 *[list_collections(dataset_id) for dataset_id in d_list]
+#             )
+#             coll_list = [result["id"]["value"] for result in coll_sparql_result]
+#             coll_ids = ",".join(coll_list)
+#         else:
+#             coll_ids = collection
+#
+#         # do CQL -> SPARQL mapping
+#         cql_query = CQLSearch(
+#             filter,
+#             d_ids,
+#             coll_ids,
+#             filter_lang=filter_lang,
+#             filter_crs=filter_crs,
+#         ).generate_query()
+#
+#         feature_count, sparql_result = await asyncio.gather(
+#             count_features(cql_query=cql_query),
+#             list_features(cql_query=cql_query, page=page, per_page=per_page),
+#         )
+#     else:
+#         feature_count, sparql_result = await asyncio.gather(
+#             count_features(),
+#             list_features(page=page, per_page=per_page),
+#         )
+#
+#     feature_list = SpacePrezFeatureList(sparql_result)
+#     feature_list_renderer = SpacePrezFeatureListRenderer(
+#         request,
+#         PREZ.FeatureList,
+#         page,
+#         per_page,
+#         int(feature_count[0]["count"]["value"]),
+#         feature_list,
+#     )
+#     return feature_list_renderer.render()
 
 
 # top-level queryables
@@ -80,7 +80,7 @@ async def spaceprez_features(
     "/queryables",
     summary="List available query parameters for CQL search globally",
 )
-async def dataset_queryables(
+async def queryables(
     request: Request,
 ):
     from app import settings
@@ -97,10 +97,10 @@ async def dataset_queryables(
         value.pop("qname", None)
 
     content["properties"] = properties
-    content["title"] = SPACEPREZ_TITLE
+    content["title"] = settings.spaceprez_title
 
-    if SPACEPREZ_DESC != "":
-        content["description"] = SPACEPREZ_DESC
+    if settings.spaceprez_desc != "":
+        content["description"] = settings.spaceprez_desc
 
     return JSONResponse(content=content)
 

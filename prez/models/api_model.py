@@ -1,15 +1,10 @@
-from rdflib import Graph, Namespace, URIRef
+from rdflib import Namespace, URIRef
 
-from app import settings
-
-SYSTEM_URI = settings.SYSTEM_URI
-ENABLED_PREZS = settings.ENABLED_PREZS.split("|")
+from prez.cache import api_info_graph
 
 PREZ = Namespace("https://kurrawong.net/prez/")
 
-api_info_graph = Graph()
 
-
-def populate_api_info():
+def populate_api_info(ENABLED_PREZS, SYSTEM_URI):
     for prez in ENABLED_PREZS:
         api_info_graph.add((URIRef(SYSTEM_URI), PREZ.enabledPrezFlavour, PREZ[prez]))

@@ -14,16 +14,16 @@ ns2:memberList a rdf:Bag ;
 
 <http://example.com/datasets/sandgate/catchments> rdfs:label "Geofabric Contracted Catchments"@en ;
     ns1:identifier "catchments"^^xsd:token ;
-    ns2:link "/datasets/sandgate/collections/catchments" .
+    ns2:link "/s/datasets/sandgate/collections/catchments" .
 
 <http://example.com/datasets/sandgate/facilities> rdfs:label "Sandgate are demo Facilities"@en ;
     ns1:identifier "facilities"^^xsd:token ;
-    ns2:link "/datasets/sandgate/collections/facilities" .
+    ns2:link "/s/datasets/sandgate/collections/facilities" .
 
 <http://example.com/datasets/sandgate/floods> rdfs:label "Sandgate flooded areas"@en ;
     ns1:identifier "floods"^^xsd:token ;
-    ns2:link "/datasets/sandgate/collections/floods" .
+    ns2:link "/s/datasets/sandgate/collections/floods" .
 
 <http://example.com/datasets/sandgate/roads> rdfs:label "Sandgate main roads"@en ;
     ns1:identifier "roads"^^xsd:token ;
-    ns2:link "/datasets/sandgate/collections/roads" .
+    ns2:link "/s/datasets/sandgate/collections/roads" .

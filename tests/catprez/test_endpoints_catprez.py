@@ -1,10 +1,12 @@
 import os
+import shutil
 import subprocess
+import sys
 from pathlib import Path
+import pytest
 from time import sleep
 
-import pytest
-from rdflib import Graph, URIRef, RDFS, DCTERMS
+from rdflib import Graph, URIRef, RDFS, DCTERMS, SKOS
 
 PREZ_DIR = os.getenv("PREZ_DIR")
 LOCAL_SPARQL_STORE = os.getenv("LOCAL_SPARQL_STORE")
@@ -16,7 +18,7 @@ from fastapi.testclient import TestClient
 @pytest.fixture(scope="module")
 def sp_test_client(request):
     print("Run Local SPARQL Store")
-    p1 = subprocess.Popen(["python", str(LOCAL_SPARQL_STORE), "-p", "3032"])
+    p1 = subprocess.Popen(["python", str(LOCAL_SPARQL_STORE), "-p", "3033"])
     sleep(1)
 
     def teardown():
@@ -32,10 +34,10 @@ def sp_test_client(request):
 
 
 @pytest.fixture(scope="module")
-def a_dataset_link(sp_test_client):
+def a_catalog_link(sp_test_client):
     with sp_test_client as client:
-        # get link for first dataset
-        r = client.get("/s/datasets")
+        # get link for first catalog
+        r = client.get("/c/catalogs")
         g = Graph().parse(data=r.text)
         member_uri = g.value(
             URIRef("https://kurrawong.net/prez/memberList"), RDFS.member, None
@@ -45,10 +47,10 @@ def a_dataset_link(sp_test_client):
 
 
 @pytest.fixture(scope="module")
-def an_fc_link(sp_test_client, a_dataset_link):
+def a_resource_link(sp_test_client, a_catalog_link):
     with sp_test_client as client:
         # get link for a dataset's collections
-        r = client.get(f"{a_dataset_link}/collections")
+        r = client.get(f"{a_catalog_link}/collections")
         g = Graph().parse(data=r.text)
         member_uri = g.value(
             URIRef("https://kurrawong.net/prez/memberList"), RDFS.member, None
@@ -82,9 +84,9 @@ def a_dataset_uri(sp_test_client):
         return member_uri
 
 
-def test_dataset_html(sp_test_client, a_dataset_link):
+def test_dataset_html(sp_test_client, a_catalog_link):
     with sp_test_client as client:
-        r = client.get(f"{a_dataset_link}")
+        r = client.get(f"{a_catalog_link}")
         response_graph = Graph().parse(data=r.text)
         expected_graph = Graph().parse(
             Path(__file__).parent

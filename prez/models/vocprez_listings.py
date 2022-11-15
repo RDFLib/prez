@@ -1,33 +1,32 @@
-import os
+from typing import Optional, FrozenSet
 
-from fastapi import APIRouter
 from pydantic import BaseModel, root_validator
 from rdflib import Namespace
-
-from prez.services.spaceprez_service import *
+from rdflib.namespace import URIRef, SKOS
 
 PREZ = Namespace("https://kurrawong.net/prez/")
 
-ENABLED_PREZS = os.getenv("ENABLED_PREZS").split("|")
-router = APIRouter(tags=["SpacePrez"] if len(ENABLED_PREZS) > 1 else [])
-
 
 class VocPrezMembers(BaseModel):
-    url: str
+    url_path: str
     uri: Optional[URIRef] = None
-    children_general_class: Optional[URIRef]
+    general_class: Optional[URIRef]
+    classes: Optional[FrozenSet[URIRef]]
     link_constructor: Optional[str]
 
     @root_validator
     def populate(cls, values):
-        url = values.get("url")
-        if url == "/collection":
-            values["children_general_class"] = SKOS.Collection
+        url_path = values.get("url_path")
+        if url_path == "/collection":
+            values["general_class"] = SKOS.Collection
             values["link_constructor"] = "/collection/"
-        elif url == "/scheme":
-            values["children_general_class"] = SKOS.ConceptScheme
+            values["classes"] = frozenset([PREZ.VocPrezCollectionList])
+        elif url_path == "/scheme":
+            values["general_class"] = SKOS.ConceptScheme
             values["link_constructor"] = "/scheme/"
-        elif url == "/vocab":
-            values["children_general_class"] = SKOS.ConceptScheme
+            values["classes"] = frozenset([PREZ.SchemesList])
+        elif url_path == "/vocab":
+            values["general_class"] = SKOS.ConceptScheme
             values["link_constructor"] = "/vocab/"
+            values["classes"] = frozenset([PREZ.SchemesList])
         return values

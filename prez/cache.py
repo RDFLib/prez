@@ -1,3 +1,4 @@
+import httpx
 from rdflib import Graph, URIRef, RDFS, Literal, DCTERMS
 from pathlib import Path
 

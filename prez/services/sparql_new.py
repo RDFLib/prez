@@ -1,6 +1,7 @@
-from typing import List, Optional
+from functools import lru_cache
+from typing import List, Optional, Tuple
 
-from rdflib import Graph, URIRef, RDFS, DCTERMS, RDF, PROF
+from rdflib import Graph, URIRef, RDFS, DCTERMS
 
 from prez.cache import tbox_cache, profiles_graph_cache
 from prez.models.spaceprez_item import SpatialItem
@@ -10,7 +11,6 @@ def generate_listing_construct(
     item: SpatialItem,
     page: Optional[int] = None,
     per_page: Optional[int] = None,
-    profile: dict = {},  # unused - we don't currently filter or otherwise change listings based on profiles
 ):
     """
     Generates a SPARQL construct query for a listing of items, including labels
@@ -30,7 +30,7 @@ CONSTRUCT {{ ?item dcterms:identifier ?id ;
                     rdfs:member ?item .}}
 WHERE {{ \
 {chr(10) + chr(9) + f'<{item.uri}> rdfs:member ?item .' if item.uri else ""}
-    ?item a <{item.children_general_class}> ;
+    ?item a <{item.general_class}> ;
           dcterms:identifier ?id ;
           rdfs:label|dcterms:title|skos:prefLabel ?label .
   	FILTER(DATATYPE(?id) = xsd:token)
@@ -40,7 +40,8 @@ WHERE {{ \
     return construct_query
 
 
-def generate_item_construct(item, profile: dict):
+@lru_cache(maxsize=128)
+def generate_item_construct(item, profile: URIRef):
     object_uri = item.uri
     (
         include_predicates,
@@ -49,7 +50,12 @@ def generate_item_construct(item, profile: dict):
         sequence_predicates,
         large_outbound_predicates,
     ) = get_profile_predicates(profile, item.general_class)
-    bnode_depth = profile.get("bnode_depth", 2)
+    bnode_depth = profiles_graph_cache.value(
+        profile,
+        URIRef("http://www.w3.org/ns/dx/conneg/altr-ext#hasBNodeDepth"),
+        None,
+        default=2,
+    )
     construct_query = f"""PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n
 CONSTRUCT {{
 \t<{object_uri}> ?p ?o1 .
@@ -251,9 +257,8 @@ def get_profile_predicates(profile, general_class):
     - inverse path predicates to include (inbound links to the object). Uses sh:inversePath.
     - sequence path predicates to include, expressed as a list. Uses sh:sequencePath.
     """
-    profile_uri = profile.get("uri")
     shape_bns = profiles_graph_cache.objects(
-        subject=profile_uri,
+        subject=profile,
         predicate=URIRef("http://www.w3.org/ns/dx/conneg/altr-ext#hasNodeShape"),
     )
     relevant_shape_bns = [
@@ -309,40 +314,81 @@ def get_profile_predicates(profile, general_class):
 
 
 def select_profile_mediatype(
-    uri: URIRef, requested_profile: URIRef = None, requested_mediatype: URIRef = None
+    classes: List[URIRef],
+    requested_profile: URIRef = None,
+    requested_mediatypes: List[Tuple] = None,
 ):
-    if requested_profile:
-        matched_profiles = profiles_graph_cache.subjects(
-            requested_profile, RDF.type, PROF.Profile
-        )
-    profiles_graph_cache.triples_choices(
-        (
-            None,
-            URIRef("http://www.w3.org/ns/dx/conneg/altr-ext#constrainsClass"),
-            classes,
-        )
-    )
-    # profiles_g = create_profiles_graph()
-    get_class_hierarchy = f"""
-        PREFIX geo: <http://www.opengis.net/ont/geosparql#>
-        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
+    """
+    Returns a SPARQL SELECT query which will determine the profile and mediatype to return based on user requests,
+    defaults, and the availability of these in profiles.
 
-        SELECT ?class (count(?mid) as ?distance) ?profile_id ?profile
-        WHERE {{
-            <{uri}> a ?class .
-            ?specific_class rdfs:subClassOf* ?mid .
-            ?mid rdfs:subClassOf* ?class .
-            ?profile altr-ext:constrainsClass ?class ;
-                dcterms:identifier ?profile_id ;
+    The following logic is used:
+    NB: Most specific class refers to the rdfs:Class of an object which has the most specific rdfs:subClassOf links to
+    the general class delivered by that API endpoint. The general classes delivered by each API endpoint are:
 
-                altr-ext:hasDefaultResourceFormat ?def_format ;
-                altr-ext:hasResourceFormat  .
+    1. If a profile and mediatype are requested, they are returned if a matching profile which has the requested
+    mediatype is found, otherwise the default profile for the most specific class is returned, with its default
+    mediatype.
+    2. If a profile only is requested, if it can be found it is returned, otherwise the default profile for the most
+    specific class is returned. In both cases the default mediatype is returned.
+    3. If a mediatype only is requested, the default profile for the most specific class is returned, and if the
+    requested mediatype is available for that profile, it is returned, otherwise the default mediatype for that profile
+    is returned.
+    4. If neither a profile nor mediatype is requested, the default profile for the most specific class is returned,
+    with the default mediatype for that profile.
+    """
+    query = f"""
+PREFIX dcat: <http://www.w3.org/ns/dcat#>
+PREFIX sh: <http://www.w3.org/ns/shacl#>
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prez: <https://kurrawong.net/prez/>
 
-        }}
-        GROUP BY ?class ?profile_id
-        ORDER BY DESC(?distance)
+SELECT ?profile ?class (count(?mid) as ?distance) ?req_profile ?def_profile ?format ?req_format ?def_format
+
+WHERE {{
+  VALUES ?class {{{" ".join('<' + klass + '>' for klass in classes)}}}
+  ?class rdfs:subClassOf* ?mid .
+  ?mid rdfs:subClassOf* ?general_class .
+  VALUES ?general_class {{ dcat:Dataset geo:FeatureCollection geo:Feature skos:ConceptScheme skos:Concept
+  skos:Collection prez:DatasetList prez:FeatureCollectionList prez:FeatureList prez:VocPrezCollectionList
+  prez:SchemesList prez:CatalogList dcat:Catalog dcat:Resource }}
+  ?profile altr-ext:constrainsClass ?class ;
+           altr-ext:hasResourceFormat ?format .
+  {f'BIND(?profile=<{requested_profile}> as ?req_profile)' if requested_profile else ''}
+  BIND(EXISTS {{ ?shape sh:targetClass ?class ;
+                       altr-ext:hasDefaultProfile ?profile }} AS ?def_profile)
+  {generate_mediatype_if_statements(requested_mediatypes) if requested_mediatypes else ''}
+  BIND(EXISTS {{ ?profile altr-ext:hasDefaultResourceFormat ?format }} AS ?def_format)
+}}
+
+GROUP BY ?class ?profile ?req_profile ?def_profile ?format ?req_format ?def_format
+ORDER BY DESC(?req_profile) DESC(?distance) DESC(?def_profile) DESC(?req_format) DESC(?def_format)
+LIMIT 1
         """
+    return query
+
+
+def generate_mediatype_if_statements(requested_mediatypes: list):
+    """
+    Generates a list of if statements which will be used to determine the mediatype to return based on user requests,
+    and the availability of these in profiles.
+    These are of the form:
+      BIND(
+        IF(?format="application/ld+json", "0.9",
+          IF(?format="text/html", "0.8",
+            IF(?format="image/apng", "0.7", ""))) AS ?req_format)
+    """
+    line_join = "," + "\n"
+    ifs = (
+        f"BIND(\n"
+        f"""{line_join.join({'IF(?format="' + tup[1] + '", "' + str(tup[0]) + '"' for tup in requested_mediatypes})}"""
+        f""", ""{')' * len(requested_mediatypes)}\n"""
+        f"AS ?req_format)"
+    )
+    return ifs
 
 
 def generage_large_outbound_links(

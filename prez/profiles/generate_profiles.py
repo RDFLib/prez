@@ -1,13 +1,14 @@
 import logging
-import os
 from functools import lru_cache
 from pathlib import Path
+from typing import List
 
 from connegp import Profile
 from rdflib import Graph, DCTERMS, SKOS, URIRef, Literal, BNode, SH
-from rdflib.namespace import RDF, PROF, Namespace, RDFS, OWL
+from rdflib.namespace import RDF, PROF, Namespace, RDFS
 
 from prez.cache import profiles_graph_cache
+from prez.services.sparql_new import select_profile_mediatype
 from prez.services.sparql_utils import (
     sparql_construct_non_async,
     sparql_query_multiple_non_async,
@@ -15,7 +16,6 @@ from prez.services.sparql_utils import (
 
 
 def create_profiles_graph(ENABLED_PREZS) -> Graph:
-    # g = Graph()
     for f in Path(__file__).parent.glob("*.ttl"):
         profiles_graph_cache.parse(f)
     logging.info("Loaded local profiles")
@@ -62,40 +62,58 @@ def create_profiles_graph(ENABLED_PREZS) -> Graph:
     # return g
 
 
-class ProfileDetails:
-    def __init__(self, instance_uri, instance_classes: list, general_class):
-        self.available_profiles_dict = {}
+# class ProfileDetails:
+#     def __init__(self, instance_uri, instance_classes: list, general_class):
+#         self.available_profiles_dict = {}
+#
+#         # get general profiles
+#         (
+#             self.preferred_classes_and_profiles,
+#             self.profiles_dict,
+#             self.profiles_formats,
+#         ) = get_general_profiles(general_class)
+#
+#         # get profiles specific to the given class, and the default profile
+#         (
+#             self.available_profiles,
+#             self.default_profile,
+#         ) = get_class_based_and_default_profiles(
+#             instance_uri, self.preferred_classes_and_profiles
+#         )
+#
+#         # slice the total set of profiles by those available for the given class
+#         self.available_profiles_dict = {
+#             k: v
+#             for k, v in self.profiles_dict.items()
+#             if k in tuple([i[1] for i in self.available_profiles]) + tuple(["alt"])
+#         }
+#
+#         self.most_specific_class = None
+#         # find the most specific class for the feature
+#         for klass, _, distance in reversed(self.preferred_classes_and_profiles):
+#             if klass in instance_classes:
+#                 self.most_specific_class = klass
+#                 break
+#         if self.most_specific_class is None:
+#             self.most_specific_class = OWL.Class
 
-        # get general profiles
-        (
-            self.preferred_classes_and_profiles,
-            self.profiles_dict,
-            self.profiles_formats,
-        ) = get_general_profiles(general_class)
 
-        # get profiles specific to the given class, and the default profile
-        (
-            self.available_profiles,
-            self.default_profile,
-        ) = get_class_based_and_default_profiles(
-            instance_uri, self.preferred_classes_and_profiles
+@lru_cache(maxsize=128)
+def get_profile_and_mediatype(
+    classes: List[URIRef],
+    requested_profile: URIRef = None,
+    requested_mediatype: URIRef = None,
+):
+    query = select_profile_mediatype(classes, requested_profile, requested_mediatype)
+    response = profiles_graph_cache.query(query)
+    if len(response.bindings[0]) == 0:
+        raise ValueError(
+            f"No profiles and or mediatypes could be found to render the resource. The resource class(es) searched for "
+            f"were: {', '.join(klass for klass in classes)}"
         )
-
-        # slice the total set of profiles by those available for the given class
-        self.available_profiles_dict = {
-            k: v
-            for k, v in self.profiles_dict.items()
-            if k in tuple([i[1] for i in self.available_profiles]) + tuple(["alt"])
-        }
-
-        self.most_specific_class = None
-        # find the most specific class for the feature
-        for klass, _, distance in reversed(self.preferred_classes_and_profiles):
-            if klass in instance_classes:
-                self.most_specific_class = klass
-                break
-        if self.most_specific_class is None:
-            self.most_specific_class = OWL.Class
+    profile = response.bindings[0]["profile"]
+    mediatype = response.bindings[0]["format"]
+    return profile, mediatype
 
 
 @lru_cache(maxsize=20)
@@ -109,6 +127,11 @@ def get_general_profiles(general_class):
     2. Which mediatypes are are available for that profile
     This is run at API startup
     """
+    # get profiles information from remote
+    # get class subclass of information from remote
+
+    # values SPARQL query
+    # query which profiles constrain the class
 
     get_class_hierarchy = f"""
         PREFIX geo: <http://www.opengis.net/ont/geosparql#>

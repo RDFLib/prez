@@ -121,7 +121,7 @@ class Settings(BaseSettings):
     catprez_sparql_password: Optional[str]
     vocprez_sparql_password: Optional[str]
     system_uri: str = "localhost"
-    enabled_prezs: str = "SpacePrez, VocPrez"
+    # enabled_prezs: Optionallist
     cql_props: dict = {
         "title": {
             "title": "Title",
@@ -137,11 +137,17 @@ class Settings(BaseSettings):
 
     @root_validator()
     def check_endpoints(cls, values):
-        if (
-            (values.get("spaceprez_sparql_endpoint") is None)
-            and (values.get("catprez_sparql_endpoint") is None)
-            and (values.get("vocprez_sparql_endpoint") is None)
-        ):
+        sp_ep = values.get("spaceprez_sparql_endpoint")
+        cp_ep = values.get("catprez_sparql_endpoint")
+        vp_ep = values.get("vocprez_sparql_endpoint")
+        values["enabled_prezs"] = [
+            name
+            for name, ep in zip(
+                ["SpacePrez", "CatPrez", "VocPrez"], [sp_ep, cp_ep, vp_ep]
+            )
+            if ep
+        ]
+        if len(values["enabled_prezs"]) == 0:
             raise ValueError(
                 "one or more of spaceprez, vocprez, or catprez SPARQL endpoints are required"
             )
@@ -154,7 +160,7 @@ class Settings(BaseSettings):
             "VocPrez": {},
             "SpacePrez": {},
         }
-        for prez in values["enabled_prezs"].split("|"):
+        for prez in values["enabled_prezs"]:
             for attr in ["endpoint", "username", "password"]:
                 key = f"{prez.lower()}_sparql_{attr}"
                 value = values[key]

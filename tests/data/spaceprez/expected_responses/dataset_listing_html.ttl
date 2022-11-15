@@ -13,12 +13,12 @@ ns2:memberList a rdf:Bag ;
 
 <http://example.com/datasets/sandgate> rdfs:label "Sandgate example dataset"@en ;
     ns1:identifier "sandgate"^^xsd:token ;
-    ns2:link "/datasets/sandgate" .
+    ns2:link "/s/datasets/sandgate" .
 
 <https://linked.data.gov.au/datasets/geofabric> rdfs:label "Australian Hydrological Geospatial Fabric"@en ;
     ns1:identifier "geofabric"^^xsd:token ;
-    ns2:link "/datasets/geofabric" .
+    ns2:link "/s/datasets/geofabric" .
 
 <https://linked.data.gov.au/datasets/gnaf> rdfs:label "Geocoded National Address File"@en ;
     ns1:identifier "gnaf"^^xsd:token ;
-    ns2:link "/datasets/gnaf" .
+    ns2:link "/s/datasets/gnaf" .

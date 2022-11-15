@@ -1,5 +1,4 @@
 from textwrap import dedent
-from textwrap import dedent
 from typing import Optional
 from urllib.parse import quote_plus
 
@@ -10,17 +9,17 @@ from fedsearch import SkosSearch, EndpointDetails
 from pydantic import AnyUrl
 from starlette.middleware.cors import CORSMiddleware
 
-from prez.cache import tbox_cache
+from prez.models.api_model import populate_api_info
+from prez.cache import tbox_cache, api_info_graph
 from prez.config import Settings
 from prez.profiles.generate_profiles import create_profiles_graph
-from prez.routers.spaceprez import router as spaceprez_router
-from prez.routers.vocprez import router as vocprez_router
 from prez.routers.catprez import router as catprez_router
 from prez.routers.cql import router as cql_router
-
-
+from prez.routers.spaceprez import router as spaceprez_router
+from prez.routers.vocprez import router as vocprez_router
 from prez.services.app_service import *
 from prez.services.spaceprez_service import list_datasets, list_collections
+from prez.renderers.renderer import return_rdf
 
 
 async def catch_400(request: Request, exc):
@@ -71,7 +70,8 @@ async def app_startup():
     """
     print("Starting up...")
     await healthcheck_sparql_endpoints(settings)
-    create_profiles_graph(settings.enabled_prezs.split("|"))
+    create_profiles_graph(settings.enabled_prezs)
+    populate_api_info(settings.enabled_prezs, settings.system_uri)
 
 
 @app.on_event("shutdown")
@@ -84,17 +84,11 @@ async def app_shutdown():
         tbox_cache.serialize(destination="tbox_cache.nt", format="nt")
 
 
-async def object_page(request: Request):
-    template_context = {"request": request}
-    return templates.TemplateResponse(
-        "object.html", context=template_context, status_code=400
-    )
-
-
-# @app.get("/", summary="Home page")
-# async def index(request: Request):
-#     """Returns the following information about the API"""
-#     return await return_rdf(api_info_graph)
+@app.get("/", summary="Home page")
+async def index(request: Request):
+    """Returns the following information about the API"""
+    # TODO connegp on request. don't need profiles for this
+    return await return_rdf(api_info_graph, mediatype="text/turtle")
 
 
 def _get_sparql_service_description(request, format):
@@ -131,119 +125,32 @@ def _get_sparql_service_description(request, format):
         return Graph().parse(data=ttl).serialize(format=format)
 
 
-@app.get("/s/sparql", summary="SPARQL Endpoint")
+# TODO DRY fix 3x SPARQL endpoints below
+@app.get("/s/sparql", summary="SpacePrez SPARQL Endpoint")
 async def sparql_get(request: Request, query: Optional[str] = None):
     if not request.query_params:
         raise ValueError("A SPARQL query must be provided as a query parameter")
     return RedirectResponse(
         url=settings.SPACEPREZ_SPARQL_ENDPOINT + "?" + str(request.query_params)
     )
-    # accept = (
-    #     request.query_params.get("accept")
-    #     if request.query_params.get("accept") is not None
-    #     else request.query_params.get("Accept")
-    # )
-    # if accept is not None:
-    #     if " " in accept:
-    #         accept = accept.replace(" ", "+")
-    # else:  # accept is None:
-    #     accepts = request.headers.get("accept")
-    #     if accepts is not None:
-    #         accept = accepts.split(",")[0].split(";")[0]
-    #
-    # if accept == "text/html":
-    #     return templates.TemplateResponse("sparql.html", {"request": request})
-    #
-    # # fallback - can't find an accept value
-    # if accept is None:
-    #     accept = "application/sparql-results+json"
-    #
-    # query = request.query_params.get("query")
-    #
-    # if query is not None:
-    #     sparql_result = await sparql_endpoint_query_multiple(query, accept=accept)
-    #     if len(sparql_result[1]) > 0 and not ALLOW_PARTIAL_RESULTS:
-    #         error_list = "\n".join(
-    #             [
-    #                 f"Error code {e['code']} in {e['prez']}: {e['message']}\n"
-    #                 for e in sparql_result[1]
-    #             ]
-    #         )
-    #         Response(
-    #             content=f"SPARQL query error:\n{error_list}", media_type="text/plain"
-    #         )
-    #     else:
-    #         if accept in RDF_MEDIATYPES:
-    #             return Response(content=sparql_result[0], media_type=accept)
-    #         elif accept in ["application/sparql-results+json", "application/json"]:
-    #             return JSONResponse(
-    #                 content=sparql_result[0],
-    #                 media_type="application/sparql-results+json",
-    #             )
-    #         else:
-    #             return Response(
-    #                 content=sparql_result[0],
-    #                 media_type=accept,
-    #                 headers={"content-disposition": "attachment; filename=result.xml"},
-    #             )
-    # else:
-    #     return Response(content=_get_sparql_service_description(request, accept))
 
 
-# @app.post("/sparql", summary="SPARQL Endpoint")
-# async def sparql_post(request: Request):
-#     accept = (
-#         request.query_params.get("accept")
-#         if request.query_params.get("accept") is not None
-#         else request.query_params.get("Accept")
-#     )
-#     if accept is not None:
-#         if " " in accept:
-#             accept = accept.replace(" ", "+")
-#     else:  # accept is None:
-#         accepts = request.headers.get("accept")
-#         if accepts is not None:
-#             accept = accepts.split(",")[0].split(";")[0]
-#
-#     # fallback - can't find an accept value
-#     if accept is None:
-#         accept = "application/sparql-results+json"
-#
-#     if request.headers.get("content-type") == "application/x-www-form-urlencoded":
-#         formdata = await request.form()
-#         query = formdata.get("query")
-#     else:
-#         query_bytes = await request.body()
-#         query = query_bytes.decode()
-#
-#     if query is not None:
-#         sparql_result = await sparql_endpoint_query_multiple(query, accept=accept)
-#         if len(sparql_result[1]) > 0 and not ALLOW_PARTIAL_RESULTS:
-#             error_list = "\n".join(
-#                 [
-#                     f"Error code {e['code']} in {e['prez']}: {e['message']}\n"
-#                     for e in sparql_result[1]
-#                 ]
-#             )
-#             Response(
-#                 content=f"SPARQL query error:\n{error_list}", media_type="text/plain"
-#             )
-#         else:
-#             if accept in RDF_MEDIATYPES:
-#                 return Response(content=sparql_result[0], media_type=accept)
-#             elif accept in ["application/sparql-results+json", "application/json"]:
-#                 return JSONResponse(
-#                     content=sparql_result[0],
-#                     media_type="application/sparql-results+json",
-#                 )
-#             else:
-#                 return Response(
-#                     content=sparql_result[0],
-#                     media_type=accept,
-#                     headers={"content-disposition": "attachment; filename=result.xml"},
-#                 )
-#     else:
-#         return Response(content=_get_sparql_service_description(request, accept))
+@app.get("/v/sparql", summary="VocPrez SPARQL Endpoint")
+async def sparql_get(request: Request, query: Optional[str] = None):
+    if not request.query_params:
+        raise ValueError("A SPARQL query must be provided as a query parameter")
+    return RedirectResponse(
+        url=settings.VOCPREZ_SPARQL_ENDPOINT + "?" + str(request.query_params)
+    )
+
+
+@app.get("/c/sparql", summary="CatPrez SPARQL Endpoint")
+async def sparql_get(request: Request, query: Optional[str] = None):
+    if not request.query_params:
+        raise ValueError("A SPARQL query must be provided as a query parameter")
+    return RedirectResponse(
+        url=settings.CATPREZ_SPARQL_ENDPOINT + "?" + str(request.query_params)
+    )
 
 
 @app.get("/search", summary="Search page")

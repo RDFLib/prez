@@ -18,7 +18,7 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
     altr-ext:hasDefaultResourceFormat "text/html" ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
-        sh:targetClass prez:Schemes ;
+        sh:targetClass prez:SchemesList ;
         altr-ext:hasDefaultProfile <https://www.w3.org/TR/vocab-dcat/>
     ] , [
         a sh:NodeShape ;
@@ -95,7 +95,7 @@ altr-ext:hasResourceFormat
         dcat:Catalog ,
         dcat:Dataset ,
         prez:VocPrezHome,
-        prez:Schemes ,
+        prez:SchemesList ,
         prez:VocPrezCollectionList ;
     altr-ext:hasDefaultResourceFormat "text/html" ;
     altr-ext:hasResourceFormat
@@ -150,7 +150,7 @@ altr-ext:hasResourceFormat
     dcterms:identifier "dd" ;
     dcterms:title "Drop-Down List" ;
     altr-ext:constrainsClass
-        prez:Schemes ,
+        prez:SchemesList ,
         prez:VocPrezCollectionList ,
         skos:ConceptScheme ,
         skos:Collection ;

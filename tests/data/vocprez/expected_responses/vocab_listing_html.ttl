@@ -17,3 +17,5 @@ ns1:memberList a rdf:Bag ;
 <https://linked.data.gov.au/def/warox-alteration-types> rdfs:label "WAROX Alteration Type"@en ;
     ns2:identifier "warox-alteration-type"^^xsd:token ;
     ns1:link "/vocab/warox-alteration-type" .
+
+<http://purl.org/dc/terms/identifier> rdfs:label "Identifier" .

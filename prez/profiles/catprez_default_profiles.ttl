@@ -18,24 +18,16 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
     altr-ext:hasDefaultResourceFormat "text/html" ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
-        sh:targetClass prez:Schemes ;
+        sh:targetClass prez:CatalogList ;
         altr-ext:hasDefaultProfile <https://www.w3.org/TR/vocab-dcat/>
     ] , [
         a sh:NodeShape ;
-        sh:targetClass prez:CatPrezCollectionList ;
+        sh:targetClass dcat:Catalog ;
         altr-ext:hasDefaultProfile <https://www.w3.org/TR/vocab-dcat/>
     ] , [
         a sh:NodeShape ;
-        sh:targetClass skos:Collection ;
-        altr-ext:hasDefaultProfile <https://w3id.org/profile/vocpub>
-    ] , [
-        a sh:NodeShape ;
-        sh:targetClass skos:Concept ;
-        altr-ext:hasDefaultProfile <https://w3id.org/profile/vocpub>
-    ] , [
-        a sh:NodeShape ;
-        sh:targetClass skos:ConceptScheme ;
-        altr-ext:hasDefaultProfile <https://w3id.org/profile/vocpub>
+        sh:targetClass dcat:Resource ;
+        altr-ext:hasDefaultProfile <https://www.w3.org/TR/vocab-dcat/>
     ]
     .
 
@@ -94,9 +86,8 @@ altr-ext:hasResourceFormat
     altr-ext:constrainsClass
         dcat:Catalog ,
         dcat:Dataset ,
-        prez:CatPrezHome,
-        prez:Schemes ,
-        prez:CatPrezCollectionList ;
+        dcat:Resource ,
+        prez:CatalogList ;
     altr-ext:hasDefaultResourceFormat "text/html" ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,
@@ -111,9 +102,7 @@ altr-ext:hasResourceFormat
     dcterms:identifier "sdo" ;
     dcterms:title "schema.org" ;
     altr-ext:constrainsClass
-        skos:Dataset ,
-        skos:ConceptScheme ,
-        skos:Collection ;
+        skos:Dataset ;
     altr-ext:hasDefaultResourceFormat "text/html" ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,

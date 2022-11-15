@@ -2,6 +2,7 @@
 @prefix ns2: <http://purl.org/linked-data/registry#> .
 @prefix ns3: <http://purl.org/dc/terms/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
 <https://linked.data.gov.au/def/warox-alteration-types/deuteric> a ns1:Concept ;
     ns3:identifier "deuteric"^^xsd:token ;
@@ -10,3 +11,5 @@
     ns1:definition "Not given"@en ;
     ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
     ns1:prefLabel "deuteric"@en .
+
+<http://purl.org/dc/terms/identifier> rdfs:label "Identifier" .

@@ -1,6 +1,7 @@
 @prefix ns1: <http://purl.org/dc/terms/> .
 @prefix ns2: <http://www.w3.org/2004/02/skos/core#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
 <https://linked.data.gov.au/def/warox-alteration-types>
     a                 ns2:ConceptScheme ;
@@ -103,3 +104,5 @@
 
 <https://linked.data.gov.au/def/warox-alteration-types/zeolitic>
     ns1:identifier "zeolitic"^^xsd:token .
+
+<http://purl.org/dc/terms/identifier> rdfs:label "Identifier" .

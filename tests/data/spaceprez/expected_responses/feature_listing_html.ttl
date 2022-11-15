@@ -12,8 +12,8 @@ ns1:memberList a rdf:Bag ;
 
 <http://example.com/datasets/sandgate/cc12109444> rdfs:label "Contracted Catchment 12109444" ;
     ns2:identifier "cc12109444"^^xsd:token ;
-    ns1:link "/datasets/sandgate/collections/catchments/items/cc12109444" .
+    ns1:link "/s/datasets/sandgate/collections/catchments/items/cc12109444" .
 
 <http://example.com/datasets/sandgate/cc12109445> rdfs:label "Contracted Catchment 12109445" ;
     ns2:identifier "cc12109445"^^xsd:token ;
-    ns1:link "/datasets/sandgate/collections/catchments/items/cc12109445" .
+    ns1:link "/s/datasets/sandgate/collections/catchments/items/cc12109445" .

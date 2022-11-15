@@ -1,10 +1,12 @@
 from typing import Optional
 
 from fastapi import APIRouter, Request
-from rdflib import Namespace, URIRef
+from rdflib import Namespace
 
 from prez.models.spaceprez_item import SpatialItem
+from prez.profiles.generate_profiles import get_profile_and_mediatype
 from prez.renderers.renderer import return_data
+from prez.services.connegp_service import get_requested_profile_and_mediatype
 from prez.services.sparql_new import generate_item_construct, generate_listing_construct
 
 PREZ = Namespace("https://kurrawong.net/prez/")
@@ -18,21 +20,22 @@ async def spaceprez_profiles(request: Request):
     pass
 
 
-@router.get("/datasets", summary="List Datasets")
+@router.get("/s/datasets", summary="List Datasets")
 async def list_items(
     request: Request, page: Optional[int] = 1, per_page: Optional[int] = 20
 ):
     """Returns a list of SpacePrez datasets in the requested profile & mediatype"""
-    general_item = SpatialItem(**request.path_params)
-    profile, mediatype = connegp_placeholder(
-        request, general_item.children_general_class
+    general_item = SpatialItem(**request.path_params, url_path=str(request.url.path))
+    req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
+    profile, mediatype = get_profile_and_mediatype(
+        general_item.classes, req_profiles, req_mediatypes
     )
-    query = generate_listing_construct(general_item, page, per_page, profile)
+    query = generate_listing_construct(general_item, page, per_page)
     return await return_data(query, mediatype, profile, "SpacePrez")
 
 
 @router.get(
-    "/datasets/{dataset_id}/collections",
+    "/s/datasets/{dataset_id}/collections",
     summary="List Feature Collections",
 )
 async def list_items_feature_collections(
@@ -42,7 +45,7 @@ async def list_items_feature_collections(
 
 
 @router.get(
-    "/datasets/{dataset_id}/collections/{collection_id}/items",
+    "/s/datasets/{dataset_id}/collections/{collection_id}/items",
     summary="List Features",
 )
 async def list_items_features(
@@ -55,13 +58,13 @@ async def list_items_features(
     return await list_items(request, page, per_page)
 
 
-@router.get("/datasets/{dataset_id}", summary="Get Dataset")
+@router.get("/s/datasets/{dataset_id}", summary="Get Dataset")
 async def dataset_item(request: Request, dataset_id: str):
     return await item_endpoint(request)
 
 
 @router.get(
-    "/datasets/{dataset_id}/collections/{collection_id}",
+    "/s/datasets/{dataset_id}/collections/{collection_id}",
     summary="Get Feature Collection",
 )
 async def feature_collection_item(
@@ -71,7 +74,7 @@ async def feature_collection_item(
 
 
 @router.get(
-    "/datasets/{dataset_id}/collections/{collection_id}/items/{feature_id}",
+    "/s/datasets/{dataset_id}/collections/{collection_id}/items/{feature_id}",
     summary="Get Feature",
 )
 async def feature_item(
@@ -82,20 +85,13 @@ async def feature_item(
 
 @router.get("/s/object")
 async def item_endpoint(request: Request):
-    item = SpatialItem(**request.path_params, **request.query_params, url=request.url)
-    profile, mediatype = connegp_placeholder(request, None)
-    query = generate_item_construct(item, profile)
-    return await return_data(query, mediatype, profile, "SpacePrez")
-
-
-def connegp_placeholder(request, classes):
-    """placeholder function for connegp"""
-    return (
-        {
-            "uri": URIRef(
-                "http://www.opengis.net/spec/ogcapi-features-1/1.0/req/oas30"
-            ),
-            "bnode_depth": 2,
-        },
-        "text/html",
+    item = SpatialItem(
+        **request.path_params, **request.query_params, url_path=str(request.url.path)
     )
+    req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
+    profile, mediatype = get_profile_and_mediatype(
+        item.classes, req_profiles, req_mediatypes
+    )
+    query = generate_item_construct(item, profile)
+    response = await return_data(query, mediatype, profile, "SpacePrez")
+    return response

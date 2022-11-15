@@ -1,15 +1,14 @@
-import os
+from typing import Optional
+from typing import Set
 
-from fastapi import APIRouter
-from pydantic import BaseModel, root_validator, BaseConfig
-from rdflib import Namespace
+from pydantic import BaseConfig
+from pydantic import BaseModel, root_validator
+from rdflib import Namespace, URIRef
+from rdflib.namespace import DCTERMS, XSD, DCAT, GEO, RDFS
 
-from prez.services.spaceprez_service import *
+from services.sparql_utils import sparql_query_non_async
 
 PREZ = Namespace("https://kurrawong.net/prez/")
-ENABLED_PREZS = os.getenv("ENABLED_PREZS").split("|")
-
-router = APIRouter(tags=["SpacePrez"] if len(ENABLED_PREZS) > 1 else [])
 
 BaseConfig.arbitrary_types_allowed = True
 
@@ -17,16 +16,21 @@ BaseConfig.arbitrary_types_allowed = True
 class SpatialItem(BaseModel):
     id: Optional[str]
     uri: Optional[URIRef]
+    url_path: Optional[str]
     general_class: Optional[URIRef]
-    children_general_class: Optional[URIRef] = DCAT.Dataset
+    children_general_class: Optional[URIRef]
     feature_id: Optional[str]
-    feature_classes: Optional[List[URIRef]]  # TODO make generic not just for features
     collection_id: Optional[str]
     dataset_id: Optional[str]
     parent_id: Optional[str]
     parent_uri: Optional[URIRef]
-    # classes: Optional[URIRef]
-    link_constructor: Optional[str] = "/datasets/"
+    classes: Optional[
+        Set[URIRef]
+    ]  # TODO confirm it's sufficient to only get classes for object of interest (ignoring parents)
+    link_constructor: Optional[str]
+
+    def __hash__(self):
+        return hash(self.uri)
 
     @root_validator
     def populate(cls, values):
@@ -35,6 +39,11 @@ class SpatialItem(BaseModel):
         feature_id = values.get("feature_id")
         uri = values.get("uri")
         if uri:
+            q = f"""SELECT ?class {{ <{uri}> a ?class }}"""
+            r = sparql_query_non_async(q, "SpacePrez")
+            if r[0]:
+                # set the uri of the item
+                values["classes"] = frozenset([c["class"]["value"] for c in r[1]])
             return values
         elif dataset_id:
             q = f"""
@@ -44,19 +53,20 @@ class SpatialItem(BaseModel):
                 PREFIX rdfs: <{RDFS}>
                 PREFIX xsd: <{XSD}>
 
-                SELECT ?f ?fc ?d ?class {{
+                SELECT ?f ?fc ?d ?f_class ?fc_class ?d_class {{
                     ?d dcterms:identifier "{dataset_id}"^^xsd:token ;
-                            a dcat:Dataset .
+                            a dcat:Dataset ;
+                            a ?d_class .
                     {f'''?fc dcterms:identifier "{collection_id}"^^xsd:token ;
-                            a geo:FeatureCollection .
+                            a geo:FeatureCollection ;
+                            a ?fc_class .
                         ?d rdfs:member ?fc .''' if collection_id else ""}
                     {f'''?f dcterms:identifier "{feature_id}"^^xsd:token ;
                             a geo:Feature ;
-                            a ?class .
+                            a ?f_class .
                         ?fc rdfs:member ?f .''' if feature_id else ""}
                 }}
                 """
-
             r = sparql_query_non_async(q, "SpacePrez")
             if r[0]:
                 # set the uri of the item
@@ -69,7 +79,7 @@ class SpatialItem(BaseModel):
                     values["general_class"] = GEO.Feature
                     values["parent_uri"] = URIRef(fc["value"])
                     values["parent_id"] = collection_id
-                    # values["classes"] = [c["class"]["value"] for c in r[1]]
+                    values["classes"] = frozenset([c["f_class"]["value"] for c in r[1]])
                 elif fc:
                     values["id"] = collection_id
                     values["uri"] = URIRef(fc["value"])
@@ -79,24 +89,33 @@ class SpatialItem(BaseModel):
                     values["parent_id"] = dataset_id
                     values[
                         "link_constructor"
-                    ] = f"/datasets/{dataset_id}/collections/{collection_id}/items/"
+                    ] = f"/s/datasets/{dataset_id}/collections/{collection_id}/items/"
+                    values["classes"] = frozenset(
+                        [c["fc_class"]["value"] for c in r[1]]
+                    )
                 else:
                     values["id"] = dataset_id
                     values["uri"] = URIRef(d["value"])
                     values["general_class"] = DCAT.Dataset
                     values["children_general_class"] = GEO.FeatureCollection
-                    values["link_constructor"] = f"/datasets/{dataset_id}/collections/"
-        # TODO figure out if id is required
-        # elif uri:  # uri provided, get the ID
-        #     q = f"""
-        #             PREFIX dcterms: <{DCTERMS}>
-        #
-        #             SELECT ?id {{
-        #                 <{uri}> dcterms:identifier ?id ;
-        #                 FILTER(DATATYPE(?id) = xsd:token)
-        #             }}
-        #             """
-        #     r = sparql_query_non_async(q, "SpacePrez")
-        #     if r[0]:
-        #         values["id"] = r[1][0]["id"]["value"]
+                    values[
+                        "link_constructor"
+                    ] = f"/s/datasets/{dataset_id}/collections/"
+                    values["classes"] = frozenset([c["d_class"]["value"] for c in r[1]])
+        url_path = values.get("url_path")
+        if url_path == "/s/datasets":
+            values["general_class"] = DCAT.Dataset
+            values["children_general_class"] = GEO.FeatureCollection
+            values["link_constructor"] = f"/s/datasets/"
+            values["classes"] = frozenset([PREZ.DatasetList])
+        elif url_path.endswith("/collections"):
+            values["general_class"] = GEO.FeatureCollection
+            values["children_general_class"] = GEO.Feature
+            values["link_constructor"] = f"{url_path}/"
+            values["classes"] = frozenset([PREZ.FeatureCollectionList])
+        elif url_path.endswith("/items"):
+            values["general_class"] = GEO.Feature
+            values["children_general_class"] = None
+            values["link_constructor"] = f"{url_path}/"
+            values["classes"] = frozenset([PREZ.FeatureList])
         return values

@@ -12,3 +12,5 @@ ns2:memberList a rdf:Bag ;
 <http://resource.geosciml.org/classifier/cgi/contacttype> rdfs:label "Contact Type - All Concepts"@en ;
     ns1:identifier "contacttype"^^xsd:token ;
     ns2:link "/collection/contacttype" .
+
+<http://purl.org/dc/terms/identifier> rdfs:label "Identifier" .

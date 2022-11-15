@@ -1,6 +1,4 @@
-import os
 import re
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -8,8 +6,6 @@ from time import sleep
 
 import pytest
 from rdflib import Graph, URIRef, RDFS, DCTERMS
-from tests.local_sparql_store.store import load_vocprez_graph
-
 
 PREZ_DIR = Path(__file__).parent.parent.parent.absolute() / "prez"
 LOCAL_SPARQL_STORE = Path(Path(__file__).parent.parent / "local_sparql_store/store.py")
@@ -37,13 +33,14 @@ def vp_test_client(request):
 
 @pytest.fixture(scope="module")
 def a_vocab_id(vp_test_client):
-    r = vp_test_client.get("/vocab")
-    g = Graph().parse(data=r.text)
-    vocab_uri = g.value(
-        URIRef("https://kurrawong.net/prez/memberList"), RDFS.member, None
-    )
-    vocab_id = g.value(vocab_uri, DCTERMS.identifier, None)
-    return vocab_id
+    with vp_test_client as client:
+        r = client.get("/vocab")
+        g = Graph().parse(data=r.text)
+        vocab_uri = g.value(
+            URIRef("https://kurrawong.net/prez/memberList"), RDFS.member, None
+        )
+        vocab_id = g.value(vocab_uri, DCTERMS.identifier, None)
+        return vocab_id
 
 
 @pytest.fixture(scope="module")
@@ -64,47 +61,64 @@ def a_vocab_id_and_a_concept_id(vp_test_client, a_vocab_id):
 
 @pytest.fixture(scope="module")
 def a_collection_id(vp_test_client):
-    r = vp_test_client.get("/collection")
-    return re.search(r'<a href="/collection/(.*)">', r.text)[1]
+    with vp_test_client as client:
+        r = client.get("/collection")
+        return re.search(r'<a href="/collection/(.*)">', r.text)[1]
 
 
 def test_vocab_item(vp_test_client, a_vocab_id_and_a_concept_id):
-    r = vp_test_client.get(
-        f"/vocab/{a_vocab_id_and_a_concept_id[0]}"
-    )  # hardcoded to a smaller vocabulary - sparql store has poor performance w/ CONSTRUCT
-    response_graph = Graph().parse(data=r.text)
-    expected_graph = Graph().parse(
-        Path(__file__).parent / "../data/vocprez/expected_responses/vocab_html.ttl"
-    )
-    assert response_graph.isomorphic(expected_graph)
+    with vp_test_client as client:
+        r = client.get(
+            f"/vocab/{a_vocab_id_and_a_concept_id[0]}"
+        )  # hardcoded to a smaller vocabulary - sparql store has poor performance w/ CONSTRUCT
+        response_graph = Graph().parse(data=r.text)
+        expected_graph = Graph().parse(
+            Path(__file__).parent / "../data/vocprez/expected_responses/vocab_html.ttl"
+        )
+        assert response_graph.isomorphic(expected_graph), print(
+            f"Graph delta:{(expected_graph - response_graph).serialize()}"
+        )
 
 
 def test_vocab_listing(vp_test_client):
-    r = vp_test_client.get(f"/vocab")
-    response_graph = Graph().parse(data=r.text)
-    expected_graph = Graph().parse(
-        Path(__file__).parent
-        / "../data/vocprez/expected_responses/vocab_listing_html.ttl"
-    )
-    assert response_graph.isomorphic(expected_graph)
+    with vp_test_client as client:
+        r = client.get(f"/vocab")
+        response_graph = Graph().parse(data=r.text)
+        expected_graph = Graph().parse(
+            Path(__file__).parent
+            / "../data/vocprez/expected_responses/vocab_listing_html.ttl"
+        )
+        assert response_graph.isomorphic(expected_graph), print(
+            f"Graph delta:{(expected_graph - response_graph).serialize()}"
+        )
 
 
 def test_concept(vp_test_client, a_vocab_id_and_a_concept_id):
-    r = vp_test_client.get(
-        f"/vocab/{a_vocab_id_and_a_concept_id[0]}/{a_vocab_id_and_a_concept_id[1]}"
-    )
-    response_graph = Graph().parse(data=r.text)
-    expected_graph = Graph().parse(
-        Path(__file__).parent / "../data/vocprez/expected_responses/concept_html.ttl"
-    )
-    assert response_graph.isomorphic(expected_graph)
+    with vp_test_client as client:
+        r = client.get(
+            f"/vocab/{a_vocab_id_and_a_concept_id[0]}/{a_vocab_id_and_a_concept_id[1]}"
+        )
+        response_graph = Graph().parse(data=r.text)
+        expected_graph = Graph().parse(
+            Path(__file__).parent
+            / "../data/vocprez/expected_responses/concept_html.ttl"
+        )
+        assert response_graph.isomorphic(expected_graph), print(
+            f"Graph delta:{(expected_graph - response_graph).serialize()}"
+        )
 
 
 def test_collection_listing(vp_test_client):
-    r = vp_test_client.get(f"/collection")
-    response_graph = Graph().parse(data=r.text)
-    expected_graph = Graph().parse(
-        Path(__file__).parent
-        / "../data/vocprez/expected_responses/collection_listing_html.ttl"
-    )
-    assert response_graph.isomorphic(expected_graph)
+    with vp_test_client as client:
+        r = client.get(f"/collection")
+        response_graph = Graph().parse(data=r.text)
+        expected_graph = Graph().parse(
+            Path(__file__).parent
+            / "../data/vocprez/expected_responses/collection_listing_html.ttl"
+        )
+        # print(f'response:{response_graph.serialize()}')
+        # print(f'expected:{expected_graph.serialize()}')
+        # print((response_graph-expected_graph).serialize())
+        assert response_graph.isomorphic(expected_graph), print(
+            f"Graph delta:{(expected_graph - response_graph).serialize()}"
+        )
