@@ -13,7 +13,7 @@ aiofiles = "^0.7.0"
 httpx = "^0.20.0"
 rdflib = "^6.1.1"
 python-multipart = "^0.0.5"
-connegp = { file = "/mnt/sda2/Surround/Connegp2/dist/connegp-0.1.3-py3-none-any.whl" }
+connegp = { file = "connegp-0.1.4-py3-none-any.whl" }
 fedsearch = { git = "https://github.com/surroundaustralia/vocprez-fedsearch.git" }
 starlette-core = { git = "https://github.com/accent-starlette/starlette-core.git" }
 async-lru = "^1.0.3"

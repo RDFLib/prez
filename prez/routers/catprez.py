@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Request
+from rdflib import DCTERMS
 
-from models.catprez_item import CatprezItem
-from models.catprez_listings import CatPrezMembers
+from prez.models.catprez_item import CatprezItem
+from prez.models.catprez_listings import CatPrezMembers
 from prez.profiles.generate_profiles import get_profile_and_mediatype
-from renderers.renderer import return_data
-from services.connegp_service import get_requested_profile_and_mediatype
-from services.sparql_new import (
+from prez.renderers.renderer import return_data
+from prez.services.connegp_service import get_requested_profile_and_mediatype
+from prez.services.sparql_new import (
     generate_listing_construct,
     generate_listing_count_construct,
     generate_item_construct,
@@ -33,7 +34,7 @@ async def catalogs_endpoint(
     return await return_data([list_query, count_query], mediatype, profile, "CatPrez")
 
 
-@router.get("/c/catalog/{catalog_id}/{resource_id}", summary="Get Resource")
+@router.get("/c/catalogs/{catalog_id}/{resource_id}", summary="Get Resource")
 @router.get("/c/catalogs/{catalog_id}", summary="Get Catalog")
 async def item_endpoint(
     request: Request, catalog_id: str = None, resource_id: str = None
@@ -44,9 +45,11 @@ async def item_endpoint(
     profile, mediatype = get_profile_and_mediatype(
         cp_item.classes, req_profiles, req_mediatypes
     )
-    query = generate_item_construct(cp_item, profile)
-    print(query)
-    return await return_data(query, mediatype, profile, "CatPrez")
+    item_query = generate_item_construct(cp_item, profile)
+    item_members_query = generate_listing_construct(cp_item, 1, 100, DCTERMS.hasPart)
+    return await return_data(
+        [item_query, item_members_query], mediatype, profile, "CatPrez"
+    )
 
 
 @router.get("/c/profiles", summary="CatPrez Profiles")

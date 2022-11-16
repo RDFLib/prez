@@ -1,0 +1,23 @@
+PREFIX dcat: <http://www.w3.org/ns/dcat#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX isoroles: <http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+<https://w3id.org/idn/dataset/agents>
+    a dcat:Catalog ;
+    dcterms:created "2022-08-15"^^xsd:date ;
+    dcterms:description """The Indigenous Data Network's catalogue of Agents. This catalogue contains instances of Agents - People and Organisations - related to the holding of indigenous data. This includes non-indigenous Agents
+
+This catalogue extends on standard Agent information to include properties useful to understand the indigeneity of Agents: whether they are or not, or how much they are, indigenous"""@en ;
+    dcterms:identifier "idnac"^^xsd:token ;
+    dcterms:modified "2022-08-15"^^xsd:date ;
+    dcterms:title "IDN Agents Catalogue" ;
+    prov:qualifiedAttribution [
+        dcat:hadRole
+            isoroles:author ,
+            isoroles:custodian ,
+            isoroles:owner ;
+        prov:agent <https://linked.data.gov.au/org/idn>
+    ] ;
+.

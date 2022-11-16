@@ -4,7 +4,7 @@ from typing import Set
 from pydantic import BaseModel, root_validator
 from rdflib import URIRef, SKOS, DCTERMS, XSD
 
-from services.sparql_utils import sparql_query_non_async
+from prez.services.sparql_utils import sparql_query_non_async
 
 
 class VocabItem(BaseModel):
@@ -25,18 +25,22 @@ class VocabItem(BaseModel):
         url_path = values.get("url_path")
         uri = values.get("uri")
         url_parts = url_path.split("/")
-        if len(url_parts) == 4:
+        if len(url_parts) == 5:
             values["general_class"] = SKOS.Concept
             id = values.get("concept_id")
-        elif url_parts[1] == "collection":
+            values["link_constructor"] = f"/v/vocab/{id}/"
+        elif url_parts[2] == "collection":
             values["general_class"] = SKOS.Collection
             id = values.get("collection_id")
-        elif url_parts[1] == "scheme":
+            values["link_constructor"] = f"/v/vocab/{id}/"
+        elif url_parts[2] == "scheme":
             values["general_class"] = SKOS.ConceptScheme
             id = values.get("scheme_id")
-        elif url_parts[1] == "vocab":
+            values["link_constructor"] = f"/v/scheme/{id}/"
+        elif url_parts[2] == "vocab":
             values["general_class"] = SKOS.ConceptScheme
             id = values.get("scheme_id")
+            values["link_constructor"] = f"/v/vocab/{id}/"
         assert id or uri, "Either an id or uri must be provided"
         if id:  # get the URI
             q = f"""

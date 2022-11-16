@@ -4,17 +4,18 @@ from typing import List, Optional, Tuple
 from rdflib import Graph, URIRef, RDFS, DCTERMS
 
 from prez.cache import tbox_cache, profiles_graph_cache
-from prez.models.spaceprez_item import SpatialItem
 
 
 def generate_listing_construct(
-    item: SpatialItem,
+    item,
     page: Optional[int] = None,
     per_page: Optional[int] = None,
+    profile: Optional[str] = None,
 ):
     """
     Generates a SPARQL construct query for a listing of items, including labels
     """
+    _, _, _, _, members_predicates = get_profile_predicates(profile, item.general_class)
     construct_query = f"""PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX prez: <https://kurrawong.net/prez/>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -23,16 +24,18 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 
-CONSTRUCT {{ ?item dcterms:identifier ?id ;
-                   rdfs:label ?label ;
-                   prez:link ?link .
-            prez:memberList a rdf:Bag ;
-                    rdfs:member ?item .}}
+CONSTRUCT {{ {f'<{item.uri}> ?members_pred ?item .' if item.uri else ""}
+            ?item dcterms:identifier ?id ;
+                  rdfs:label ?label ;
+                  prez:link ?link .
+{           f'prez:memberList a rdf:Bag ;'
+                            f'?members_pred ?item .' if not item.uri else ""} \
+    }}
 WHERE {{ \
-{chr(10) + chr(9) + f'<{item.uri}> rdfs:member ?item .' if item.uri else ""}
-    ?item a <{item.general_class}> ;
-          dcterms:identifier ?id ;
-          rdfs:label|dcterms:title|skos:prefLabel ?label .
+{generate_members_predicates(item, members_predicates)} \
+{chr(10) + chr(9) + f'?item a <{item.general_class}> .' if not item.uri else chr(10)} \
+    ?item dcterms:identifier ?id ;
+        rdfs:label|dcterms:title|skos:prefLabel ?label .
   	FILTER(DATATYPE(?id) = xsd:token)
   	BIND(CONCAT("{item.link_constructor}", STR(?id)) AS ?link)
     }} {f"LIMIT {per_page} OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
@@ -48,7 +51,7 @@ def generate_item_construct(item, profile: URIRef):
         exclude_predicates,
         inverse_predicates,
         sequence_predicates,
-        large_outbound_predicates,
+        _,
     ) = get_profile_predicates(profile, item.general_class)
     bnode_depth = profiles_graph_cache.value(
         profile,
@@ -72,10 +75,16 @@ WHERE {{
     {generate_inverse_predicates(inverse_predicates)} \
     {generate_bnode_select(bnode_depth)} \
     }} \
-    {generage_large_outbound_links(object_uri, large_outbound_predicates) if large_outbound_predicates else ""} \
 }}
 """
     return construct_query
+
+
+def generate_members_predicates(item, members_predicates):
+    if members_predicates:
+        return f"""<{item.uri}> ?members_pred ?item .
+    VALUES ?members_pred {{ {" ".join('<'+pred+'>' for pred in members_predicates)} }}"""
+    return ""
 
 
 def generate_include_predicates(include_predicates):
@@ -85,8 +94,7 @@ def generate_include_predicates(include_predicates):
     """
     if include_predicates:
         return f"""VALUES ?p{{\n{chr(10).join([f"<{p}>" for p in include_predicates])}\n}}"""
-    else:
-        return ""
+    return ""
 
 
 def generate_inverse_predicates(inverse_predicates):
@@ -96,8 +104,7 @@ def generate_inverse_predicates(inverse_predicates):
     """
     if inverse_predicates:
         return f"""VALUES ?inbound_p{{\n{chr(10).join([f"<{p}>" for p in inverse_predicates])}\n}}"""
-    else:
-        return ""
+    return ""
 
 
 def generate_sequence_construct(object_uri, sequence_predicates):
@@ -114,8 +121,7 @@ def generate_sequence_construct(object_uri, sequence_predicates):
                 )
             all_sequence_construct += construct_and_where
         return all_sequence_construct
-    else:
-        return ""
+    return ""
 
 
 def generate_bnode_construct(depth):
@@ -256,6 +262,7 @@ def get_profile_predicates(profile, general_class):
     - predicates to exclude. Uses sh:path in conjunction with dash:hidden.
     - inverse path predicates to include (inbound links to the object). Uses sh:inversePath.
     - sequence path predicates to include, expressed as a list. Uses sh:sequencePath.
+    - member links to include. Uses altr-ext:members.
     """
     shape_bns = profiles_graph_cache.objects(
         subject=profile,
@@ -300,17 +307,17 @@ def get_profile_predicates(profile, general_class):
         [path_item for path_item in profiles_graph_cache.items(i)]
         for i in sequence_nodes
     ]
-    large_outbound = [
+    members = [
         i[2]
         for i in profiles_graph_cache.triples_choices(
             (
                 relevant_shape_bns,
-                URIRef("http://www.w3.org/ns/dx/conneg/altr-ext#largeOutboundLinks"),
+                URIRef("http://www.w3.org/ns/dx/conneg/altr-ext#members"),
                 None,
             )
         )
     ]
-    return includes, excludes, inverses, sequence_paths, large_outbound
+    return includes, excludes, inverses, sequence_paths, members
 
 
 def select_profile_mediatype(
@@ -352,9 +359,9 @@ WHERE {{
   VALUES ?class {{{" ".join('<' + klass + '>' for klass in classes)}}}
   ?class rdfs:subClassOf* ?mid .
   ?mid rdfs:subClassOf* ?general_class .
-  VALUES ?general_class {{ dcat:Dataset geo:FeatureCollection geo:Feature skos:ConceptScheme skos:Concept
-  skos:Collection prez:DatasetList prez:FeatureCollectionList prez:FeatureList prez:VocPrezCollectionList
-  prez:SchemesList prez:CatalogList dcat:Catalog dcat:Resource }}
+  VALUES ?general_class {{ dcat:Dataset geo:FeatureCollection prez:FeatureCollectionList prez:FeatureList geo:Feature
+  skos:ConceptScheme skos:Concept skos:Collection prez:DatasetList prez:VocPrezCollectionList prez:SchemesList
+  prez:CatalogList dcat:Catalog dcat:Resource }}
   ?profile altr-ext:constrainsClass ?class ;
            altr-ext:hasResourceFormat ?format .
   {f'BIND(?profile=<{requested_profile}> as ?req_profile)' if requested_profile else ''}

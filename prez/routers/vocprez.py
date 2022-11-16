@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Request
+from rdflib import SKOS
 
 from prez.models.vocprez_item import VocabItem
 from prez.models.vocprez_listings import VocPrezMembers
@@ -14,9 +15,9 @@ from prez.services.sparql_new import (
 router = APIRouter(tags=["VocPrez"])
 
 
-@router.get("/collection", summary="List Collections")
-@router.get("/scheme", summary="List ConceptSchemes")
-@router.get("/vocab", summary="List Vocabularies")
+@router.get("/v/collection", summary="List Collections")
+@router.get("/v/scheme", summary="List ConceptSchemes")
+@router.get("/v/vocab", summary="List Vocabularies")
 async def schemes_endpoint(
     request: Request,
     page: int = 1,
@@ -35,19 +36,19 @@ async def schemes_endpoint(
     return await return_data([list_query, count_query], mediatype, profile, "VocPrez")
 
 
-@router.get("/vocab/{scheme_id}", summary="Get ConceptScheme")
-@router.get("/scheme/{scheme_id}", summary="Get ConceptScheme")
+@router.get("/v/vocab/{scheme_id}", summary="Get ConceptScheme")
+@router.get("/v/scheme/{scheme_id}", summary="Get ConceptScheme")
 async def vocprez_collection(request: Request, scheme_id: str):
     return await item_endpoint(request)
 
 
-@router.get("/collection/{collection_id}", summary="Get Collection")
+@router.get("/v/collection/{collection_id}", summary="Get Collection")
 async def vocprez_collection(request: Request, collection_id: str):
     return await item_endpoint(request)
 
 
-@router.get("/scheme/{scheme_id}/{concept_id}", summary="Get Concept")
-@router.get("/vocab/{scheme_id}/{concept_id}", summary="Get Concept")
+@router.get("/v/scheme/{scheme_id}/{concept_id}", summary="Get Concept")
+@router.get("/v/vocab/{scheme_id}/{concept_id}", summary="Get Concept")
 async def item_endpoint(
     request: Request, scheme_id: str = None, concept_id: str = None
 ):
@@ -57,9 +58,11 @@ async def item_endpoint(
     profile, mediatype = get_profile_and_mediatype(
         vp_item.classes, req_profiles, req_mediatypes
     )
-    query = generate_item_construct(vp_item, profile)
-    print(query)
-    return await return_data(query, mediatype, profile, "VocPrez")
+    item_query = generate_item_construct(vp_item, profile)
+    item_members_query = generate_listing_construct(vp_item, 1, 100, SKOS.member)
+    return await return_data(
+        [item_query, item_members_query], mediatype, profile, "VocPrez"
+    )
 
 
 @router.get(

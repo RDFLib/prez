@@ -3,9 +3,9 @@ from typing import Set
 
 from pydantic import BaseModel, root_validator
 from rdflib import URIRef
-from rdflib.namespace import SKOS, DCTERMS, XSD, DCAT
+from rdflib.namespace import DCTERMS, XSD, DCAT
 
-from services.sparql_utils import sparql_query_non_async
+from prez.services.sparql_utils import sparql_query_non_async
 
 
 class CatprezItem(BaseModel):
@@ -16,6 +16,7 @@ class CatprezItem(BaseModel):
     catalog_id: Optional[str] = None
     resource_id: Optional[str] = None
     url_path: Optional[str] = None
+    link_constructor: Optional[str] = None
 
     def __hash__(self):
         return hash(self.uri)
@@ -25,10 +26,11 @@ class CatprezItem(BaseModel):
         url_path = values.get("url_path")
         uri = values.get("uri")
         url_parts = url_path.split("/")
-        if len(url_parts) == 3:
+        if len(url_parts) == 4:
             values["general_class"] = DCAT.Catalog
             id = values.get("catalog_id")
-        elif len(url_parts) == 4:
+            values["link_constructor"] = f"/c/catalogs/{id}/"
+        elif len(url_parts) == 5:
             values["general_class"] = DCAT.Resource
             id = values.get("resource_id")
 

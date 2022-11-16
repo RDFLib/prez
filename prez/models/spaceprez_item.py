@@ -6,7 +6,7 @@ from pydantic import BaseModel, root_validator
 from rdflib import Namespace, URIRef
 from rdflib.namespace import DCTERMS, XSD, DCAT, GEO, RDFS
 
-from services.sparql_utils import sparql_query_non_async
+from prez.services.sparql_utils import sparql_query_non_async
 
 PREZ = Namespace("https://kurrawong.net/prez/")
 
@@ -24,9 +24,7 @@ class SpatialItem(BaseModel):
     dataset_id: Optional[str]
     parent_id: Optional[str]
     parent_uri: Optional[URIRef]
-    classes: Optional[
-        Set[URIRef]
-    ]  # TODO confirm it's sufficient to only get classes for object of interest (ignoring parents)
+    classes: Optional[Set[URIRef]]
     link_constructor: Optional[str]
 
     def __hash__(self):

@@ -29,7 +29,7 @@ RUN curl -sSL https://install.python-poetry.org | python && \
     chmod a+x /opt/poetry/bin/poetry
 
 WORKDIR /app
-COPY poetry.lock pyproject.toml ./
+COPY poetry.lock pyproject.toml connegp-0.1.4-py3-none-any.whl ./
 RUN poetry install --only main --no-root --no-ansi
 
 FROM python:3.10.5-slim-buster
