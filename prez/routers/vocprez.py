@@ -26,10 +26,10 @@ async def schemes_endpoint(
     """Returns a list of VocPrez skos:ConceptSchemes in the necessary profile & mediatype"""
     vocprez_members = VocPrezMembers(url_path=str(request.url.path))
     req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
-    profile, mediatype = get_profile_and_mediatype(
+    profile, mediatype, _ = get_profile_and_mediatype(
         vocprez_members.classes, req_profiles, req_mediatypes
     )
-    list_query = generate_listing_construct(vocprez_members, page, per_page)
+    list_query = generate_listing_construct(vocprez_members, profile, page, per_page)
     count_query = generate_listing_count_construct(
         general_class=vocprez_members.general_class
     )
@@ -55,11 +55,11 @@ async def item_endpoint(
     """Returns a VocPrez skos:Concept, Collection, Vocabulary, or ConceptScheme in the requested profile & mediatype"""
     vp_item = VocabItem(**request.path_params, url_path=str(request.url.path))
     req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
-    profile, mediatype = get_profile_and_mediatype(
+    profile, mediatype, vp_item.selected_class = get_profile_and_mediatype(
         vp_item.classes, req_profiles, req_mediatypes
     )
     item_query = generate_item_construct(vp_item, profile)
-    item_members_query = generate_listing_construct(vp_item, 1, 100, SKOS.member)
+    item_members_query = generate_listing_construct(vp_item, profile, 1, 100)
     return await return_data(
         [item_query, item_members_query], mediatype, profile, "VocPrez"
     )

@@ -12,6 +12,7 @@ class VocPrezMembers(BaseModel):
     uri: Optional[URIRef] = None
     general_class: Optional[URIRef]
     classes: Optional[FrozenSet[URIRef]]
+    selected_class: Optional[URIRef] = None
     link_constructor: Optional[str]
 
     @root_validator

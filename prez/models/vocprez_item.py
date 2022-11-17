@@ -16,6 +16,7 @@ class VocabItem(BaseModel):
     collection_id: Optional[str] = None
     concept_id: Optional[str] = None
     url_path: Optional[str] = None
+    selected_class: Optional[URIRef] = None
 
     def __hash__(self):
         return hash(self.uri)
@@ -28,19 +29,20 @@ class VocabItem(BaseModel):
         if len(url_parts) == 5:
             values["general_class"] = SKOS.Concept
             id = values.get("concept_id")
-            values["link_constructor"] = f"/v/vocab/{id}/"
+            scheme_id = values.get("scheme_id")
+            values["link_constructor"] = f"/v/vocab/{scheme_id}"
         elif url_parts[2] == "collection":
             values["general_class"] = SKOS.Collection
             id = values.get("collection_id")
-            values["link_constructor"] = f"/v/vocab/{id}/"
+            values["link_constructor"] = f"/v/vocab/{id}"
         elif url_parts[2] == "scheme":
             values["general_class"] = SKOS.ConceptScheme
             id = values.get("scheme_id")
-            values["link_constructor"] = f"/v/scheme/{id}/"
+            values["link_constructor"] = f"/v/scheme/{id}"
         elif url_parts[2] == "vocab":
             values["general_class"] = SKOS.ConceptScheme
             id = values.get("scheme_id")
-            values["link_constructor"] = f"/v/vocab/{id}/"
+            values["link_constructor"] = f"/v/vocab/{id}"
         assert id or uri, "Either an id or uri must be provided"
         if id:  # get the URI
             q = f"""

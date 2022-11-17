@@ -144,7 +144,7 @@ def test_get_labels_from_tbox_cache():
 
 
 def test_generate_listing_construct_datasets():
-    returned = generate_listing_construct((DCAT.Dataset, None), page=1, per_page=20)
+    returned = generate_listing_construct(item, profile, page=1, per_page=20)
     expected = """PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
@@ -160,9 +160,7 @@ WHERE {
 
 
 def test_generate_listing_construct_feature_collections():
-    returned = generate_listing_construct(
-        (GEO.FeatureCollection, URIRef("http://parent-dataset")), page=1, per_page=20
-    )
+    returned = generate_listing_construct(item, profile, page=1, per_page=20)
     expected = """PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
@@ -179,9 +177,7 @@ WHERE {
 
 
 def test_generate_listing_construct_features():
-    returned = generate_listing_construct(
-        (GEO.Feature, URIRef("http://parent-feature-collection")), page=1, per_page=20
-    )
+    returned = generate_listing_construct(item, profile, page=1, per_page=20)
     expected = """PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
@@ -198,9 +194,7 @@ WHERE {
 
 
 def test_generate_listing_construct_pagination():
-    returned = generate_listing_construct(
-        (GEO.Feature, URIRef("http://parent-feature-collection")), page=30, per_page=40
-    )
+    returned = generate_listing_construct(item, profile, page=30, per_page=40)
     expected = """PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>

@@ -3,15 +3,12 @@ from functools import lru_cache
 from pathlib import Path
 from typing import List
 
-from connegp import Profile
-from rdflib import Graph, DCTERMS, SKOS, URIRef, Literal, BNode, SH
-from rdflib.namespace import RDF, PROF, Namespace, RDFS
+from rdflib import Graph, URIRef
 
 from prez.cache import profiles_graph_cache
 from prez.services.sparql_new import select_profile_mediatype
 from prez.services.sparql_utils import (
     sparql_construct_non_async,
-    sparql_query_multiple_non_async,
 )
 
 
@@ -113,7 +110,8 @@ def get_profile_and_mediatype(
         )
     profile = response.bindings[0]["profile"]
     mediatype = response.bindings[0]["format"]
-    return profile, mediatype
+    selected_class = response.bindings[0]["class"]
+    return profile, mediatype, selected_class
 
 
 # @lru_cache(maxsize=20)

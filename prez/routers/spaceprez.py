@@ -30,7 +30,7 @@ async def list_items(
     profile, mediatype = get_profile_and_mediatype(
         general_item.classes, req_profiles, req_mediatypes
     )
-    query = generate_listing_construct(general_item, page, per_page)
+    query = generate_listing_construct(general_item, profile, page, per_page)
     return await return_data(query, mediatype, profile, "SpacePrez")
 
 

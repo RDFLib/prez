@@ -5,7 +5,7 @@ from typing import Dict, List, Tuple, Union
 
 from async_lru import alru_cache
 from connegp import RDF_MEDIATYPES
-from httpx import AsyncClient, Client
+from httpx import AsyncClient, Client, HTTPError
 from httpx import Response as httpxResponse
 from rdflib import Graph, RDF
 
@@ -107,7 +107,6 @@ async def sparql_query_multiple(query: str, prezs: List[str]) -> Tuple[List, Lis
     return succeeded_results, failed_results
 
 
-@alru_cache(maxsize=128)
 async def sparql_construct(query: str, prez: str):
     """Returns an rdflib Graph from a CONSTRUCT query for a single SPARQL endpoint"""
     from prez.app import settings
@@ -115,20 +114,29 @@ async def sparql_construct(query: str, prez: str):
     if not query:
         return False, None
     async with AsyncClient() as client:
-        response: httpxResponse = await client.post(
-            settings.sparql_creds[prez]["endpoint"],
-            data=query,
-            headers={
-                "Accept": "text/turtle",
-                "Content-Type": "application/sparql-query",
-                "Accept-Encoding": "gzip, deflate",
-            },
-            # auth=(settings.sparql_creds[prez]["username"], settings.sparql_creds[prez]["password"]),
-            timeout=TIMEOUT,
-        )
+        try:
+            response: httpxResponse = await client.post(
+                settings.sparql_creds[prez]["endpoint"],
+                data=query,
+                headers={
+                    "Accept": "text/turtle",
+                    "Content-Type": "application/sparql-query",
+                    "Accept-Encoding": "gzip, deflate",
+                },
+                # auth=(settings.sparql_creds[prez]["username"], settings.sparql_creds[prez]["password"]),
+                timeout=TIMEOUT,
+            )
+            response.raise_for_status()
+        except HTTPError:
+            raise
+            #     "code": e.response.status_code,
+            #     "message": e.response.text,
+            #     "prez": prez,
+            # }
     if 200 <= response.status_code < 300:
         return True, Graph().parse(data=response.text)
     else:
+        raise HTTPError(response=response)
         return False, {
             "code": response.status_code,
             "message": response.text,

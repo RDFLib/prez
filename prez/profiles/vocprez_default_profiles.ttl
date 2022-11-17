@@ -120,15 +120,20 @@ altr-ext:hasResourceFormat
         "application/rdf+xml" ,
         "text/html" ,
         "text/turtle" ;
-#    altr-ext:hasNodeShape [
-#        a sh:NodeShape ;
-#        sh:targetClass skos:ConceptScheme ;
-#        sh:sequencePath ( skos:hasTopConcept dcterms:identifier ) ;
-#    ] ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
         sh:targetClass skos:ConceptScheme ;
-        altr-ext:members skos:hasTopConcept ;
+        altr-ext:outboundChildren skos:hasTopConcept ;
+    ] ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass skos:ConceptScheme ;
+        altr-ext:inboundChildren skos:inScheme ;
+    ] ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass skos:Concept ;
+        altr-ext:outboundParents skos:inScheme ;
     ] ;
 .
 

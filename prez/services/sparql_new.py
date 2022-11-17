@@ -1,43 +1,53 @@
 from functools import lru_cache
 from typing import List, Optional, Tuple
 
-from rdflib import Graph, URIRef, RDFS, DCTERMS
+from rdflib import Graph, URIRef, RDFS, DCTERMS, Namespace
 
 from prez.cache import tbox_cache, profiles_graph_cache
+
+ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
 
 
 def generate_listing_construct(
     item,
-    page: Optional[int] = None,
-    per_page: Optional[int] = None,
-    profile: Optional[str] = None,
+    profile,
+    page: Optional[int] = 1,
+    per_page: Optional[int] = 20,
 ):
     """
     Generates a SPARQL construct query for a listing of items, including labels
     """
-    _, _, _, _, members_predicates = get_profile_predicates(profile, item.general_class)
+    (
+        inbound_children,
+        inbound_parents,
+        outbound_children,
+        outbound_parents,
+    ) = get_listing_predicates(profile, item.general_class)
     construct_query = f"""PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX prez: <https://kurrawong.net/prez/>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-PREFIX dcterms: <http://purl.org/dc/terms/>
 
-CONSTRUCT {{ {f'<{item.uri}> ?members_pred ?item .' if item.uri else ""}
-            ?item dcterms:identifier ?id ;
-                  rdfs:label ?label ;
-                  prez:link ?link .
-{           f'prez:memberList a rdf:Bag ;'
-                            f'?members_pred ?item .' if not item.uri else ""} \
+CONSTRUCT {{ {f'<{item.uri}> ?outbound_members_pred ?item .{chr(10)}' if item.uri else ""} \
+    {f'''?s ?inbound_members_pred <{item.uri}> .{chr(10)}
+            prez:link ?inbound_children_link ;
+            prez:link ?inbound_parent_link''' if (inbound_children + inbound_parents) else ""} \
+             ?item rdfs:label ?label ;
+                  prez:link ?outbound_children_link ;
+                  prez:link ?outbound_parent_link .
+{f'prez:memberList a rdf:Bag ;'
+ f'?members_pred ?item .' if not item.uri else ""} \
     }}
 WHERE {{ \
-{generate_members_predicates(item, members_predicates)} \
-{chr(10) + chr(9) + f'?item a <{item.general_class}> .' if not item.uri else chr(10)} \
-    ?item dcterms:identifier ?id ;
+{generate_outbound_predicates(item, outbound_children, outbound_parents)} \
+{generate_inbound_predicates(item, inbound_children, inbound_parents)} \
+{chr(9) + f'?item a <{item.general_class}> .' if not item.uri else chr(10)} \
+    ?item dcterms:identifier ?outbound_id ;
         rdfs:label|dcterms:title|skos:prefLabel ?label .
-  	FILTER(DATATYPE(?id) = xsd:token)
-  	BIND(CONCAT("{item.link_constructor}", STR(?id)) AS ?link)
+  	FILTER(DATATYPE(?outbound_id) = xsd:token)
+{generate_id_listing_binds(item, inbound_children,inbound_parents, outbound_children, outbound_parents)}
     }} {f"LIMIT {per_page} OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
     """
     return construct_query
@@ -51,25 +61,24 @@ def generate_item_construct(item, profile: URIRef):
         exclude_predicates,
         inverse_predicates,
         sequence_predicates,
-        _,
-    ) = get_profile_predicates(profile, item.general_class)
+    ) = get_item_predicates(profile, item.selected_class)
     bnode_depth = profiles_graph_cache.value(
         profile,
-        URIRef("http://www.w3.org/ns/dx/conneg/altr-ext#hasBNodeDepth"),
+        ALTREXT.hasBNodeDepth,
         None,
         default=2,
     )
     construct_query = f"""PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n
 CONSTRUCT {{
 \t<{object_uri}> ?p ?o1 .
-{generate_sequence_construct(object_uri, sequence_predicates) if sequence_predicates else ""} \
-{f'{chr(9)}?s ?inbound_p <{object_uri}> .' if inverse_predicates else ""} \
+{generate_sequence_construct(object_uri, sequence_predicates) if sequence_predicates else ""}
+{f'{chr(9)}?s ?inbound_p <{object_uri}> .' if inverse_predicates else ""}
 {generate_bnode_construct(bnode_depth)} \
 \n}}
 WHERE {{
     {{
-    <{object_uri}> ?p ?o1 . \
-    {generate_sequence_construct(object_uri, sequence_predicates) if sequence_predicates else chr(10)} \
+    <{object_uri}> ?p ?o1 . {chr(10)} \
+{generate_sequence_construct(object_uri, sequence_predicates) if sequence_predicates else chr(10)} \
     {f'?s ?inbound_p <{object_uri}>{chr(10)}' if inverse_predicates else chr(10)} \
     {generate_include_predicates(include_predicates)} \
     {generate_inverse_predicates(inverse_predicates)} \
@@ -80,11 +89,56 @@ WHERE {{
     return construct_query
 
 
-def generate_members_predicates(item, members_predicates):
-    if members_predicates:
-        return f"""<{item.uri}> ?members_pred ?item .
-    VALUES ?members_pred {{ {" ".join('<'+pred+'>' for pred in members_predicates)} }}"""
+def generate_outbound_predicates(item, outbound_children, outbound_parents):
+    if item.uri:
+        where = ""
+        if outbound_children:
+            where += f"""<{item.uri}> ?outbound_children ?item ;
+            dcterms:identifier ?outbound_children_id .
+            FILTER(DATATYPE(?outbound_children_id) = xsd:token)
+            VALUES ?outbound_children {{ {" ".join('<' + pred + '>' for pred in outbound_children)} }}\n"""
+        if outbound_parents:
+            where += f"""<{item.uri}> ?outbound_parents ?item ;
+            dcterms:identifier ?outbound_parents_id .
+            FILTER(DATATYPE(?outbound_parents_id) = xsd:token)
+            VALUES ?outbound_parents {{ {" ".join('<' + pred + '>' for pred in outbound_parents)} }}\n"""
+        if not outbound_children and not outbound_parents:
+            where += "VALUES ?outbound_children {}\nVALUES ?outbound_parents {}"
+        return where
     return ""
+
+
+def generate_inbound_predicates(item, inbound_children, inbound_parents):
+    where = ""
+    if inbound_children:
+        where += f"""?inbound_child_s ?inbound_child <{item.uri}> ;
+        dcterms:identifier ?inbound_id .
+        FILTER(DATATYPE(?inbound_id) = xsd:token)
+        VALUES ?inbound_child {{ {" ".join('<' + pred + '>' for pred in inbound_children)} }}\n"""
+    if inbound_parents:
+        where += f"""?inbound_parent_s ?inbound_parent <{item.uri}> ;
+        dcterms:identifier ?inbound_id .
+        FILTER(DATATYPE(?inbound_id) = xsd:token)
+        VALUES ?inbound_parent {{ {" ".join('<' + pred + '>' for pred in inbound_parents)} }}\n"""
+    if not inbound_children and not inbound_parents:
+        where += "VALUES ?inbound_child {}\nVALUES ?inbound_parent {}"
+    return ""
+
+
+def generate_id_listing_binds(item, ic, ip, oc, op):
+    """
+    Generate the BIND statements for the inbound and outbound predicates
+    """
+    binds = ""
+    if ic:
+        binds += f"""BIND(CONCAT("{item.link_constructor}", "/", STR(?outbound_children_id)) AS ?outbound_children_link)\n"""
+    if ip:
+        binds += f"""BIND(CONCAT("{item.link_constructor}", "/", STR(?inbound_children_id)) AS ?inbound_children_link)\n"""
+    if oc:
+        binds += f"""BIND("{item.link_constructor}" AS ?inbound_children_link)\n"""
+    if op:
+        binds += f"""BIND("{item.link_constructor}" AS ?outbound_parent_link)\n"""
+    return binds
 
 
 def generate_include_predicates(include_predicates):
@@ -255,49 +309,116 @@ WHERE {{
 }}"""
 
 
-def get_profile_predicates(profile, general_class):
+def get_relevant_shape_bns_for_profile(selected_class, profile):
     """
-    Gets any predicates specified in the profile, this includes:
-    - predicates to include. Uses sh:path
-    - predicates to exclude. Uses sh:path in conjunction with dash:hidden.
-    - inverse path predicates to include (inbound links to the object). Uses sh:inversePath.
-    - sequence path predicates to include, expressed as a list. Uses sh:sequencePath.
-    - member links to include. Uses altr-ext:members.
+    Gets the shape blank nodes URIs from the profiles graph for a given profile.
     """
-    shape_bns = profiles_graph_cache.objects(
-        subject=profile,
-        predicate=URIRef("http://www.w3.org/ns/dx/conneg/altr-ext#hasNodeShape"),
+    shape_bns = list(
+        profiles_graph_cache.objects(
+            subject=profile,
+            predicate=ALTREXT.hasNodeShape,
+        )
     )
+    if not shape_bns:
+        return None
     relevant_shape_bns = [
         triple[0]
         for triple in profiles_graph_cache.triples_choices(
             (
                 list(shape_bns),
                 URIRef("http://www.w3.org/ns/shacl#targetClass"),
-                general_class,
+                selected_class,
             )
         )
     ]
-    if not relevant_shape_bns:
-        return None, None, None, None, None
+    return relevant_shape_bns
+
+
+def get_listing_predicates(profile, selected_class):
+    """
+    Gets predicates relevant to listings of objects as specified in the profile.
+    This is used in two scenarios:
+    1. "Collection" endpoints, for top level listing of objects of a particular type
+    2. For a specific object, where it has members
+    The predicates retrieved from profiles are:
+    - member links to include. Uses altr-ext:members. For example :featureCollection rdfs:member :object
+    - inbound members. Uses altr-ext:inboundMembers. For example :concept skos:inScheme :scheme
+    """
+    shape_bns = get_relevant_shape_bns_for_profile(selected_class, profile)
+    if not shape_bns:
+        return None, None
+    inbound_children = [
+        i[2]
+        for i in profiles_graph_cache.triples_choices(
+            (
+                shape_bns,
+                ALTREXT.inboundChildren,
+                None,
+            )
+        )
+    ]
+    inbound_parents = [
+        i[2]
+        for i in profiles_graph_cache.triples_choices(
+            (
+                shape_bns,
+                ALTREXT.inboundParents,
+                None,
+            )
+        )
+    ]
+    outbound_children = [
+        i[2]
+        for i in profiles_graph_cache.triples_choices(
+            (
+                shape_bns,
+                ALTREXT.outboundChildren,
+                None,
+            )
+        )
+    ]
+    outbound_parents = [
+        i[2]
+        for i in profiles_graph_cache.triples_choices(
+            (
+                shape_bns,
+                ALTREXT.outboundParents,
+                None,
+            )
+        )
+    ]
+    return inbound_children, inbound_parents, outbound_children, outbound_parents
+
+
+def get_item_predicates(profile, selected_class):
+    """
+    Gets any predicates specified in the profile, this includes:
+    - predicates to include. Uses sh:path
+    - predicates to exclude. Uses sh:path in conjunction with dash:hidden.
+    - inverse path predicates to include (inbound links to the object). Uses sh:inversePath.
+    - sequence path predicates to include, expressed as a list. Uses sh:sequencePath.
+    """
+    shape_bns = get_relevant_shape_bns_for_profile(selected_class, profile)
+    if not shape_bns:
+        return None, None, None, None
     includes = [
         i[2]
         for i in profiles_graph_cache.triples_choices(
-            (relevant_shape_bns, URIRef("http://www.w3.org/ns/shacl#path"), None)
+            (shape_bns, URIRef("http://www.w3.org/ns/shacl#path"), None)
         )
     ]
     excludes = ...
     inverses = [
         i[2]
         for i in profiles_graph_cache.triples_choices(
-            (relevant_shape_bns, URIRef("http://www.w3.org/ns/shacl#inversePath"), None)
+            (shape_bns, URIRef("http://www.w3.org/ns/shacl#inversePath"), None)
         )
     ]
-    sequence_nodes = [
+    _sequence_nodes = [
         i[2]
         for i in profiles_graph_cache.triples_choices(
             (
-                relevant_shape_bns,
+                shape_bns,
                 URIRef("http://www.w3.org/ns/shacl#sequencePath"),
                 None,
             )
@@ -305,19 +426,9 @@ def get_profile_predicates(profile, general_class):
     ]
     sequence_paths = [
         [path_item for path_item in profiles_graph_cache.items(i)]
-        for i in sequence_nodes
+        for i in _sequence_nodes
     ]
-    members = [
-        i[2]
-        for i in profiles_graph_cache.triples_choices(
-            (
-                relevant_shape_bns,
-                URIRef("http://www.w3.org/ns/dx/conneg/altr-ext#members"),
-                None,
-            )
-        )
-    ]
-    return includes, excludes, inverses, sequence_paths, members
+    return includes, excludes, inverses, sequence_paths
 
 
 def select_profile_mediatype(
@@ -398,14 +509,13 @@ def generate_mediatype_if_statements(requested_mediatypes: list):
     return ifs
 
 
-def generage_large_outbound_links(
-    uri: URIRef, outbound_predicate: URIRef, limit: int = 10
-):
-    outbound_pred_subset = f"""UNION
-\t{{
-\tSELECT * {{
-\t<{uri}> <{outbound_predicate[0]}> ?o1 ;
-\t\t?p ?o1
-\t}} LIMIT {limit}}}
+def get_profiles_for_class(klass: URIRef):
     """
-    return outbound_pred_subset
+    Returns a list of profiles which constrain the given class.
+    """
+    profiles = profiles_graph_cache.subjects(None, ALTREXT.constrainsClass, klass)
+    relevant_profiles = Graph()
+    for profile in profiles:
+        query = generate_item_construct(profile, None)
+        relevant_profiles += profiles_graph_cache.query(query)
+    return relevant_profiles

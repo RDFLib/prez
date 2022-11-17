@@ -105,7 +105,7 @@ altr-ext:hasResourceFormat owl:propertyChainAxiom ( dcterms:conformsTo dcterms:f
     ] ,
     [  a sh:NodeShape ;
         sh:targetClass geo:FeatureCollection ;
-        altr-ext:largeOutboundLinks rdfs:member ;
+        altr-ext:members rdfs:member ;
     ]
 .
 

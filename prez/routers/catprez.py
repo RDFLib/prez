@@ -27,7 +27,7 @@ async def catalogs_endpoint(
     profile, mediatype = get_profile_and_mediatype(
         catprez_members.classes, req_profiles, req_mediatypes
     )
-    list_query = generate_listing_construct(catprez_members, page, per_page)
+    list_query = generate_listing_construct(catprez_members, profile, page, per_page)
     count_query = generate_listing_count_construct(
         general_class=catprez_members.general_class
     )
@@ -46,7 +46,7 @@ async def item_endpoint(
         cp_item.classes, req_profiles, req_mediatypes
     )
     item_query = generate_item_construct(cp_item, profile)
-    item_members_query = generate_listing_construct(cp_item, 1, 100, DCTERMS.hasPart)
+    item_members_query = generate_listing_construct(cp_item, profile, 1, 100)
     return await return_data(
         [item_query, item_members_query], mediatype, profile, "CatPrez"
     )
