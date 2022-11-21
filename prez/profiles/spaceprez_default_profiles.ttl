@@ -104,8 +104,8 @@ altr-ext:hasResourceFormat owl:propertyChainAxiom ( dcterms:conformsTo dcterms:f
                 dcterms:description ;
     ] ,
     [  a sh:NodeShape ;
-        sh:targetClass geo:FeatureCollection ;
-        altr-ext:members rdfs:member ;
+        sh:targetClass geo:FeatureCollection , prez:FeatureCollectionList , prez:FeatureList ;
+        altr-ext:outboundChildren rdfs:member ;
     ]
 .
 
@@ -191,4 +191,9 @@ altr-ext:hasResourceFormat
         "application/rdf+xml" ,
         "text/html" ,
         "text/turtle" ;
+    altr-ext:hasNodeShape [
+      a sh:NodeShape ;
+        sh:targetClass dcat:Dataset ;
+        altr-ext:outboundChildren rdfs:member ;
+    ]
 .

@@ -30,9 +30,7 @@ async def schemes_endpoint(
         vocprez_members.classes, req_profiles, req_mediatypes
     )
     list_query = generate_listing_construct(vocprez_members, profile, page, per_page)
-    count_query = generate_listing_count_construct(
-        general_class=vocprez_members.general_class
-    )
+    count_query = generate_listing_count_construct(vocprez_members)
     return await return_data([list_query, count_query], mediatype, profile, "VocPrez")
 
 

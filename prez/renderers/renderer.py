@@ -21,7 +21,8 @@ async def return_data(query_or_queries, mediatype, profile, prez):
         )
         graph = Graph()
         for result in results:
-            graph += result[1]
+            if result[0]:
+                graph += result[1]
     else:
         _, graph = await sparql_construct(query_or_queries, prez)
     # return the data

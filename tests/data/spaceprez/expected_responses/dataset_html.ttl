@@ -2,6 +2,8 @@
 @prefix ns2: <http://purl.org/dc/terms/> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ns3: <https://kurrawong.net/prez/> .
+
 
 <http://example.com/datasets/sandgate> a <http://www.w3.org/ns/dcat#Dataset> ;
     ns2:description "Example floods, roads, catchment and facilities in the Sandgate are"@en ;
@@ -15,3 +17,12 @@
         <http://example.com/datasets/sandgate/roads> .
 ns2:identifier rdfs:label "Identifier" .
 <http://www.w3.org/ns/dcat#Dataset> rdfs:label "Dataset" .
+
+<http://example.com/datasets/sandgate/catchments> rdfs:label "Geofabric Contracted Catchments"@en ;
+    ns3:link "/s/datasets/sandgate/collections/catchments" .
+<http://example.com/datasets/sandgate/facilities> rdfs:label "Sandgate are demo Facilities"@en ;
+    ns3:link "/s/datasets/sandgate/collections/facilities" .
+<http://example.com/datasets/sandgate/floods> rdfs:label "Sandgate flooded areas"@en ;
+    ns3:link "/s/datasets/sandgate/collections/floods" .
+<http://example.com/datasets/sandgate/roads> rdfs:label "Sandgate main roads"@en ;
+    ns3:link "/s/datasets/sandgate/collections/roads" .

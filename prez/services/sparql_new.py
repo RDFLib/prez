@@ -1,15 +1,22 @@
 from functools import lru_cache
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 from rdflib import Graph, URIRef, RDFS, DCTERMS, Namespace
 
+from prez.models import (
+    CatPrezItem,
+    CatPrezMembers,
+    SpatialItem,
+    VocabItem,
+    VocPrezMembers,
+)
 from prez.cache import tbox_cache, profiles_graph_cache
 
 ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
 
 
 def generate_listing_construct(
-    item,
+    parent_item,
     profile,
     page: Optional[int] = 1,
     per_page: Optional[int] = 20,
@@ -22,7 +29,15 @@ def generate_listing_construct(
         inbound_parents,
         outbound_children,
         outbound_parents,
-    ) = get_listing_predicates(profile, item.general_class)
+    ) = get_listing_predicates(profile, parent_item.selected_class)
+    if (
+        parent_item.uri
+        and not inbound_children
+        and not inbound_parents
+        and not outbound_children
+        and not outbound_parents
+    ):
+        return ""
     construct_query = f"""PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX prez: <https://kurrawong.net/prez/>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -30,24 +45,27 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
-CONSTRUCT {{ {f'<{item.uri}> ?outbound_members_pred ?item .{chr(10)}' if item.uri else ""} \
-    {f'''?s ?inbound_members_pred <{item.uri}> .{chr(10)}
-            prez:link ?inbound_children_link ;
-            prez:link ?inbound_parent_link''' if (inbound_children + inbound_parents) else ""} \
-             ?item rdfs:label ?label ;
-                  prez:link ?outbound_children_link ;
-                  prez:link ?outbound_parent_link .
-{f'prez:memberList a rdf:Bag ;'
- f'?members_pred ?item .' if not item.uri else ""} \
+CONSTRUCT {{
+{f'<{parent_item.uri}> ?outbound_children ?item .'
+        f'?item prez:link ?outbound_children_link .{chr(10)}' if outbound_children or parent_item.uri else ""}\
+{f'<{parent_item.uri}> ?outbound_parents ?item .'
+        f'?item prez:link ?outbound_parents_link .{chr(10)}' if outbound_parents or parent_item.uri else ""}\
+{f'?inbound_child_s ?inbound_child <{parent_item.uri}> .'
+        f'?item prez:link ?inbound_children_link .{chr(10)}' if inbound_children else ""}\
+{f'?inbound_parent_s ?inbound_parent <{parent_item.uri}> .'
+        f'?item prez:link ?inbound_parent_link .{chr(10)}' if inbound_parents else ""}\
+        ?item rdfs:label ?label .
+{f'''prez:memberList a rdf:Bag ;
+                rdfs:member ?item .
+    ?item prez:link ?outbound_general_link''' if not parent_item.uri else ""} \
     }}
-WHERE {{ \
-{generate_outbound_predicates(item, outbound_children, outbound_parents)} \
-{generate_inbound_predicates(item, inbound_children, inbound_parents)} \
-{chr(9) + f'?item a <{item.general_class}> .' if not item.uri else chr(10)} \
-    ?item dcterms:identifier ?outbound_id ;
-        rdfs:label|dcterms:title|skos:prefLabel ?label .
-  	FILTER(DATATYPE(?outbound_id) = xsd:token)
-{generate_id_listing_binds(item, inbound_children,inbound_parents, outbound_children, outbound_parents)}
+WHERE {{
+{generate_outbound_predicates(parent_item, outbound_children, outbound_parents)} \
+{generate_inbound_predicates(parent_item, inbound_children, inbound_parents)} \
+    {f'''?item a <{parent_item.general_class}> .
+    ?item dcterms:identifier ?outbound_id . ''' if not parent_item.uri else ""}
+    ?item rdfs:label|dcterms:title|skos:prefLabel ?label .
+{generate_id_listing_binds(parent_item, inbound_children, inbound_parents, outbound_children, outbound_parents)}
     }} {f"LIMIT {per_page} OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
     """
     return construct_query
@@ -90,16 +108,16 @@ WHERE {{
 
 
 def generate_outbound_predicates(item, outbound_children, outbound_parents):
+    where = ""
     if item.uri:
-        where = ""
         if outbound_children:
-            where += f"""<{item.uri}> ?outbound_children ?item ;
-            dcterms:identifier ?outbound_children_id .
+            where += f"""<{item.uri}> ?outbound_children ?item .
+            ?item dcterms:identifier ?outbound_children_id .
             FILTER(DATATYPE(?outbound_children_id) = xsd:token)
             VALUES ?outbound_children {{ {" ".join('<' + pred + '>' for pred in outbound_children)} }}\n"""
         if outbound_parents:
-            where += f"""<{item.uri}> ?outbound_parents ?item ;
-            dcterms:identifier ?outbound_parents_id .
+            where += f"""<{item.uri}> ?outbound_parents ?item .
+            ?item dcterms:identifier ?outbound_parents_id .
             FILTER(DATATYPE(?outbound_parents_id) = xsd:token)
             VALUES ?outbound_parents {{ {" ".join('<' + pred + '>' for pred in outbound_parents)} }}\n"""
         if not outbound_children and not outbound_parents:
@@ -131,13 +149,18 @@ def generate_id_listing_binds(item, ic, ip, oc, op):
     """
     binds = ""
     if ic:
-        binds += f"""BIND(CONCAT("{item.link_constructor}", "/", STR(?outbound_children_id)) AS ?outbound_children_link)\n"""
-    if ip:
-        binds += f"""BIND(CONCAT("{item.link_constructor}", "/", STR(?inbound_children_id)) AS ?inbound_children_link)\n"""
+        binds += f"""BIND(CONCAT("{item.link_constructor}", "/", STR(?inbound_children_id))\
+AS ?inbound_children_link)\n"""
     if oc:
-        binds += f"""BIND("{item.link_constructor}" AS ?inbound_children_link)\n"""
+        binds += f"""BIND(CONCAT("{item.link_constructor}", "/", STR(?outbound_children_id))\
+AS ?outbound_children_link)\n"""
+    if ip:
+        binds += f"""BIND("{item.link_constructor}" AS ?inbound_parent_link)\n"""
     if op:
         binds += f"""BIND("{item.link_constructor}" AS ?outbound_parent_link)\n"""
+    if not binds:  # for general listings of objects
+        binds += f"""BIND(CONCAT("{item.link_constructor}", "/", STR(?outbound_id))\
+AS ?outbound_general_link)\n"""
     return binds
 
 
@@ -272,41 +295,36 @@ def get_annotations_from_tbox_cache(terms: List[URIRef]):
     return uncached_terms, labels_from_cache
 
 
+# hit the count cache first, if it's not there, hit the SPARQL endpoint
 def generate_listing_count_construct(
-    collection_uri: Optional[URIRef] = None, general_class: Optional[URIRef] = None
+    item: Union[SpatialItem, VocPrezMembers, VocabItem, CatPrezItem, CatPrezMembers]
 ):
     """
     Generates a SPARQL construct query to count either:
-    1. the members of a collection, given a collection URI, or;
+    1. the members of a collection, if a URI is given, or;
     2. the number of instances of a general class, given a general class.
     """
-    if not (collection_uri or general_class):
-        raise ValueError("Either a collection URI or a general class must be provided")
-    if collection_uri:
-        query_explicit = f"""PREFIX prez: <https://kurrawong.net/prez/>
-
-CONSTRUCT {{ <{collection_uri}> prez:count ?count }}
-WHERE {{ <{collection_uri}> prez:count ?count }}"""
-
+    if item.uri:
         query_implicit = f"""PREFIX prez: <https://kurrawong.net/prez/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-CONSTRUCT {{ <{collection_uri}> prez:count ?count }}
+CONSTRUCT {{ <{item.uri}> prez:count ?count }}
 WHERE {{
     SELECT (COUNT(?item) as ?count) {{
-        <{collection_uri}> rdfs:member ?item .
+        <{item.uri}> rdfs:member ?item .
     }}
 }}"""
-        return query_explicit, query_implicit
-    else:  # general_class
-        return f"""PREFIX prez: <https://kurrawong.net/prez/>
+        return query_implicit
+    else:  # item.selected_class
+        query = f"""PREFIX prez: <https://kurrawong.net/prez/>
 
-CONSTRUCT {{ <{general_class}> prez:count ?count }}
+CONSTRUCT {{ <{item.general_class}> prez:count ?count }}
 WHERE {{
     SELECT (COUNT(?item) as ?count) {{
-        ?item a <{general_class}> .
+        ?item a <{item.general_class}> .
     }}
 }}"""
+        return query
 
 
 def get_relevant_shape_bns_for_profile(selected_class, profile):
@@ -341,12 +359,18 @@ def get_listing_predicates(profile, selected_class):
     1. "Collection" endpoints, for top level listing of objects of a particular type
     2. For a specific object, where it has members
     The predicates retrieved from profiles are:
-    - member links to include. Uses altr-ext:members. For example :featureCollection rdfs:member :object
-    - inbound members. Uses altr-ext:inboundMembers. For example :concept skos:inScheme :scheme
+    - inbound children, for example where the object of interest is a Concept Scheme, and is linked to Concept(s) via
+        the predicate skos:inScheme
+    - outbound children, for example where the object of interest is a Feature Collection, and is linked to Feature(s)
+        via the predicate rdfs:member
+    - inbound parents, for example where the object of interest is a Feature Collection, and is linked to Dataset(s) via
+        the predicate dcterms:hasPart
+    - outbound parents, for example where the object of interest is a Concept, and is linked to Concept Scheme(s) via
+    the predicate skos:inScheme
     """
     shape_bns = get_relevant_shape_bns_for_profile(selected_class, profile)
     if not shape_bns:
-        return None, None
+        return [], [], [], []
     inbound_children = [
         i[2]
         for i in profiles_graph_cache.triples_choices(
@@ -519,3 +543,12 @@ def get_profiles_for_class(klass: URIRef):
         query = generate_item_construct(profile, None)
         relevant_profiles += profiles_graph_cache.query(query)
     return relevant_profiles
+
+
+def startup_count_objects():
+    """
+    Retrieves hardcoded counts for collections in the dataset (feature collections, datasets etc.)
+    """
+    return f"""PREFIX prez: <https://kurrawong.net/prez/>
+CONSTRUCT {{ ?collection prez:count ?count }}
+WHERE {{ ?collection prez:count ?count }}"""

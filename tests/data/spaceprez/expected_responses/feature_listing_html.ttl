@@ -4,16 +4,13 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-ns2:identifier rdfs:label "Identifier" .
-
-ns1:memberList a rdf:Bag ;
-    rdfs:member <http://example.com/datasets/sandgate/cc12109444>,
+<http://example.com/datasets/sandgate/catchments> rdfs:member <http://example.com/datasets/sandgate/cc12109444>,
         <http://example.com/datasets/sandgate/cc12109445> .
 
 <http://example.com/datasets/sandgate/cc12109444> rdfs:label "Contracted Catchment 12109444" ;
-    ns2:identifier "cc12109444"^^xsd:token ;
     ns1:link "/s/datasets/sandgate/collections/catchments/items/cc12109444" .
 
 <http://example.com/datasets/sandgate/cc12109445> rdfs:label "Contracted Catchment 12109445" ;
-    ns2:identifier "cc12109445"^^xsd:token ;
     ns1:link "/s/datasets/sandgate/collections/catchments/items/cc12109445" .
+
+<http://example.com/datasets/sandgate/catchments> ns1:count 2 .

@@ -1,5 +1,5 @@
 from textwrap import dedent
-from typing import Optional
+from typing import Optional, List
 from urllib.parse import quote_plus
 
 import uvicorn
@@ -71,6 +71,7 @@ async def app_startup():
     print("Starting up...")
     await healthcheck_sparql_endpoints(settings)
     create_profiles_graph(settings.enabled_prezs)
+    await count_objects(settings)
     populate_api_info(settings.enabled_prezs, settings.system_uri)
 
 

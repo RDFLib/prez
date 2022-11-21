@@ -26,6 +26,7 @@ class SpatialItem(BaseModel):
     parent_uri: Optional[URIRef]
     classes: Optional[Set[URIRef]]
     link_constructor: Optional[str]
+    selected_class: Optional[URIRef] = None
 
     def __hash__(self):
         return hash(self.uri)
@@ -87,7 +88,7 @@ class SpatialItem(BaseModel):
                     values["parent_id"] = dataset_id
                     values[
                         "link_constructor"
-                    ] = f"/s/datasets/{dataset_id}/collections/{collection_id}/items/"
+                    ] = f"/s/datasets/{dataset_id}/collections/{collection_id}/items"
                     values["classes"] = frozenset(
                         [c["fc_class"]["value"] for c in r[1]]
                     )
@@ -96,24 +97,22 @@ class SpatialItem(BaseModel):
                     values["uri"] = URIRef(d["value"])
                     values["general_class"] = DCAT.Dataset
                     values["children_general_class"] = GEO.FeatureCollection
-                    values[
-                        "link_constructor"
-                    ] = f"/s/datasets/{dataset_id}/collections/"
+                    values["link_constructor"] = f"/s/datasets/{dataset_id}/collections"
                     values["classes"] = frozenset([c["d_class"]["value"] for c in r[1]])
         url_path = values.get("url_path")
         if url_path == "/s/datasets":
             values["general_class"] = DCAT.Dataset
             values["children_general_class"] = GEO.FeatureCollection
-            values["link_constructor"] = f"/s/datasets/"
+            values["link_constructor"] = f"/s/datasets"
             values["classes"] = frozenset([PREZ.DatasetList])
         elif url_path.endswith("/collections"):
             values["general_class"] = GEO.FeatureCollection
             values["children_general_class"] = GEO.Feature
-            values["link_constructor"] = f"{url_path}/"
+            values["link_constructor"] = f"{url_path}"
             values["classes"] = frozenset([PREZ.FeatureCollectionList])
         elif url_path.endswith("/items"):
             values["general_class"] = GEO.Feature
             values["children_general_class"] = None
-            values["link_constructor"] = f"{url_path}/"
+            values["link_constructor"] = f"{url_path}"
             values["classes"] = frozenset([PREZ.FeatureList])
         return values

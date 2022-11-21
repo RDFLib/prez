@@ -8,7 +8,7 @@ from rdflib.namespace import DCTERMS, XSD, DCAT
 from prez.services.sparql_utils import sparql_query_non_async
 
 
-class CatprezItem(BaseModel):
+class CatPrezItem(BaseModel):
     uri: Optional[URIRef] = None
     classes: Optional[Set[URIRef]]
     id: Optional[str] = None

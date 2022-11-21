@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request
 from rdflib import DCTERMS
 
-from prez.models.catprez_item import CatprezItem
+from prez.models.catprez_item import CatPrezItem
 from prez.models.catprez_listings import CatPrezMembers
 from prez.profiles.generate_profiles import get_profile_and_mediatype
 from prez.renderers.renderer import return_data
@@ -40,7 +40,7 @@ async def item_endpoint(
     request: Request, catalog_id: str = None, resource_id: str = None
 ):
     """Returns a CatPrez Catalog or Resource"""
-    cp_item = CatprezItem(**request.path_params, url_path=str(request.url.path))
+    cp_item = CatPrezItem(**request.path_params, url_path=str(request.url.path))
     req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
     profile, mediatype = get_profile_and_mediatype(
         cp_item.classes, req_profiles, req_mediatypes

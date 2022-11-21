@@ -1,3 +1,4 @@
+import asyncio
 import os
 import subprocess
 from pathlib import Path
@@ -49,25 +50,24 @@ def an_fc_link(sp_test_client, a_dataset_link):
     with sp_test_client as client:
         # get link for a dataset's collections
         r = client.get(f"{a_dataset_link}/collections")
-        g = Graph().parse(data=r.text)
-        member_uri = g.value(
-            URIRef("https://kurrawong.net/prez/memberList"), RDFS.member, None
-        )
-        link = g.value(member_uri, URIRef(f"https://kurrawong.net/prez/link", None))
-        return link
+    g = Graph().parse(data=r.text)
+    member_uri = g.value(
+        URIRef("http://example.com/datasets/sandgate"), RDFS.member, None
+    )
+    link = g.value(member_uri, URIRef(f"https://kurrawong.net/prez/link", None))
+    return link
 
 
 @pytest.fixture(scope="module")
-def a_feature_link_and_id(sp_test_client, an_fc_link):
+def a_feature_link(sp_test_client, an_fc_link):
     with sp_test_client as client:
         r = client.get(f"{an_fc_link}/items")
         g = Graph().parse(data=r.text)
         member_uri = g.value(
-            URIRef("https://kurrawong.net/prez/memberList"), RDFS.member, None
+            URIRef("http://example.com/datasets/sandgate/catchments"), RDFS.member, None
         )
         link = g.value(member_uri, URIRef(f"https://kurrawong.net/prez/link", None))
-        id = g.value(member_uri, DCTERMS.identifier, None)
-        return link, id
+        return link
 
 
 @pytest.fixture(scope="module")
@@ -108,9 +108,9 @@ def test_feature_collection_html(sp_test_client, an_fc_link):
         )
 
 
-def test_feature_html(sp_test_client, a_feature_link_and_id):
+def test_feature_html(sp_test_client, a_feature_link):
     with sp_test_client as client:
-        r = client.get(f"{a_feature_link_and_id[0]}")
+        r = client.get(f"{a_feature_link}")
         response_graph = Graph().parse(data=r.text)
         expected_graph = Graph().parse(
             Path(__file__).parent

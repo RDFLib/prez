@@ -34,7 +34,7 @@ def vp_test_client(request):
 @pytest.fixture(scope="module")
 def a_vocab_id(vp_test_client):
     with vp_test_client as client:
-        r = client.get("/vocab")
+        r = client.get("/v/vocab")
         g = Graph().parse(data=r.text)
         vocab_uri = g.value(
             URIRef("https://kurrawong.net/prez/memberList"), RDFS.member, None
@@ -62,14 +62,14 @@ def a_vocab_id_and_a_concept_id(vp_test_client, a_vocab_id):
 @pytest.fixture(scope="module")
 def a_collection_id(vp_test_client):
     with vp_test_client as client:
-        r = client.get("/collection")
+        r = client.get("/v/collection")
         return re.search(r'<a href="/collection/(.*)">', r.text)[1]
 
 
 def test_vocab_item(vp_test_client, a_vocab_id_and_a_concept_id):
     with vp_test_client as client:
         r = client.get(
-            f"/vocab/{a_vocab_id_and_a_concept_id[0]}"
+            f"/v/vocab/{a_vocab_id_and_a_concept_id[0]}"
         )  # hardcoded to a smaller vocabulary - sparql store has poor performance w/ CONSTRUCT
         response_graph = Graph().parse(data=r.text)
         expected_graph = Graph().parse(
@@ -82,7 +82,7 @@ def test_vocab_item(vp_test_client, a_vocab_id_and_a_concept_id):
 
 def test_vocab_listing(vp_test_client):
     with vp_test_client as client:
-        r = client.get(f"/vocab")
+        r = client.get(f"/v/vocab")
         response_graph = Graph().parse(data=r.text)
         expected_graph = Graph().parse(
             Path(__file__).parent
@@ -96,7 +96,7 @@ def test_vocab_listing(vp_test_client):
 def test_concept(vp_test_client, a_vocab_id_and_a_concept_id):
     with vp_test_client as client:
         r = client.get(
-            f"/vocab/{a_vocab_id_and_a_concept_id[0]}/{a_vocab_id_and_a_concept_id[1]}"
+            f"/v/vocab/{a_vocab_id_and_a_concept_id[0]}/{a_vocab_id_and_a_concept_id[1]}"
         )
         response_graph = Graph().parse(data=r.text)
         expected_graph = Graph().parse(
@@ -110,7 +110,7 @@ def test_concept(vp_test_client, a_vocab_id_and_a_concept_id):
 
 def test_collection_listing(vp_test_client):
     with vp_test_client as client:
-        r = client.get(f"/collection")
+        r = client.get(f"/v/collection")
         response_graph = Graph().parse(data=r.text)
         expected_graph = Graph().parse(
             Path(__file__).parent

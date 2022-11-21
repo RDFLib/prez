@@ -7,7 +7,11 @@ from prez.models.spaceprez_item import SpatialItem
 from prez.profiles.generate_profiles import get_profile_and_mediatype
 from prez.renderers.renderer import return_data
 from prez.services.connegp_service import get_requested_profile_and_mediatype
-from prez.services.sparql_new import generate_item_construct, generate_listing_construct
+from prez.services.sparql_new import (
+    generate_item_construct,
+    generate_listing_construct,
+    generate_listing_count_construct,
+)
 
 PREZ = Namespace("https://kurrawong.net/prez/")
 
@@ -25,13 +29,14 @@ async def list_items(
     request: Request, page: Optional[int] = 1, per_page: Optional[int] = 20
 ):
     """Returns a list of SpacePrez datasets in the requested profile & mediatype"""
-    general_item = SpatialItem(**request.path_params, url_path=str(request.url.path))
+    spatial_item = SpatialItem(**request.path_params, url_path=str(request.url.path))
     req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
-    profile, mediatype = get_profile_and_mediatype(
-        general_item.classes, req_profiles, req_mediatypes
+    profile, mediatype, spatial_item.selected_class = get_profile_and_mediatype(
+        spatial_item.classes, req_profiles, req_mediatypes
     )
-    query = generate_listing_construct(general_item, profile, page, per_page)
-    return await return_data(query, mediatype, profile, "SpacePrez")
+    list_query = generate_listing_construct(spatial_item, profile, page, per_page)
+    count_query = generate_listing_count_construct(spatial_item)
+    return await return_data([list_query, count_query], mediatype, profile, "SpacePrez")
 
 
 @router.get(
@@ -89,9 +94,11 @@ async def item_endpoint(request: Request):
         **request.path_params, **request.query_params, url_path=str(request.url.path)
     )
     req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
-    profile, mediatype = get_profile_and_mediatype(
+    profile, mediatype, item.selected_class = get_profile_and_mediatype(
         item.classes, req_profiles, req_mediatypes
     )
-    query = generate_item_construct(item, profile)
-    response = await return_data(query, mediatype, profile, "SpacePrez")
-    return response
+    item_query = generate_item_construct(item, profile)
+    item_members_query = generate_listing_construct(item, profile, 1, 10)
+    return await return_data(
+        [item_query, item_members_query], mediatype, profile, "SpacePrez"
+    )

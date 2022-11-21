@@ -1,8 +1,14 @@
 import time
 
 import httpx
+from rdflib import Namespace
+from rdflib.namespace import SKOS, DCTERMS, XSD
 
-from prez.services.sparql_utils import *
+from prez.services.sparql_new import startup_count_objects
+from prez.services.sparql_utils import sparql_construct
+from prez.cache import counts_graph
+
+ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
 
 
 async def get_object(uri: str):
@@ -79,3 +85,11 @@ async def healthcheck_sparql_endpoints(settings):
             'No Prezs enabled - set one or more Prez SPARQL endpoint environment variables: ("SPACEPREZ_SPARQL_ENDPOINT",'
             '"VOCPREZ_SPARQL_ENDPOINT", and "CATPREZ_SPARQL_ENDPOINT")'
         )
+
+
+async def count_objects(settings):
+    query = startup_count_objects()
+    for prez in settings.enabled_prezs:
+        results = await sparql_construct(query, prez)
+        if results[0]:
+            counts_graph.__add__(results[1])

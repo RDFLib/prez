@@ -107,14 +107,35 @@ async def sparql_query_multiple(query: str, prezs: List[str]) -> Tuple[List, Lis
     return succeeded_results, failed_results
 
 
+# async def sparql_construct(query: str, prez: str):
+#     """Returns an rdflib Graph from a CONSTRUCT query for a single SPARQL endpoint"""
+#     from prez.app import settings
+#
+#     if not query:
+#         return False, None
+#     async with AsyncClient() as client:
+#         response: httpxResponse = await client.post(
+#             url=settings.sparql_creds[prez]["endpoint"],
+#             data=query,
+#             headers={
+#                 "Accept": "text/turtle",
+#                 "Content-Type": "application/sparql-query",
+#             },
+#             # auth=(settings.sparql_creds[prez]["username"], settings.sparql_creds[prez]["password"]),
+#             timeout=TIMEOUT,
+#         )
+#     if 200 <= response.status_code < 300:
+#         return True, Graph().parse(data=response.text)
+
+
 async def sparql_construct(query: str, prez: str):
     """Returns an rdflib Graph from a CONSTRUCT query for a single SPARQL endpoint"""
     from prez.app import settings
 
     if not query:
         return False, None
-    async with AsyncClient() as client:
-        try:
+    try:
+        async with AsyncClient() as client:
             response: httpxResponse = await client.post(
                 settings.sparql_creds[prez]["endpoint"],
                 data=query,
@@ -127,16 +148,15 @@ async def sparql_construct(query: str, prez: str):
                 timeout=TIMEOUT,
             )
             response.raise_for_status()
-        except HTTPError:
-            raise
-            #     "code": e.response.status_code,
-            #     "message": e.response.text,
-            #     "prez": prez,
-            # }
+    except HTTPError as e:
+        {
+            "code": e.response.status_code,
+            "message": e.response.text,
+            "prez": prez,
+        }
     if 200 <= response.status_code < 300:
         return True, Graph().parse(data=response.text)
     else:
-        raise HTTPError(response=response)
         return False, {
             "code": response.status_code,
             "message": response.text,
