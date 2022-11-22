@@ -50,10 +50,10 @@ CONSTRUCT {{
         f'?item prez:link ?outbound_children_link .{chr(10)}' if outbound_children or parent_item.uri else ""}\
 {f'<{parent_item.uri}> ?outbound_parents ?item .'
         f'?item prez:link ?outbound_parents_link .{chr(10)}' if outbound_parents or parent_item.uri else ""}\
-{f'?inbound_child_s ?inbound_child <{parent_item.uri}> .'
-        f'?item prez:link ?inbound_children_link .{chr(10)}' if inbound_children else ""}\
-{f'?inbound_parent_s ?inbound_parent <{parent_item.uri}> .'
-        f'?item prez:link ?inbound_parent_link .{chr(10)}' if inbound_parents else ""}\
+{f'?inbound_child_s ?inbound_child <{parent_item.uri}> ;'
+            f'prez:link ?inbound_children_link .{chr(10)}' if inbound_children else ""}\
+{f'?inbound_parent_s ?inbound_parent <{parent_item.uri}> ;'
+            f'prez:link ?inbound_parent_link .{chr(10)}' if inbound_parents else ""}\
         ?item rdfs:label ?label .
 {f'''prez:memberList a rdf:Bag ;
                 rdfs:member ?item .
@@ -127,20 +127,22 @@ def generate_outbound_predicates(item, outbound_children, outbound_parents):
 
 
 def generate_inbound_predicates(item, inbound_children, inbound_parents):
+    if not inbound_children and not inbound_parents:
+        return ""
     where = ""
     if inbound_children:
         where += f"""?inbound_child_s ?inbound_child <{item.uri}> ;
-        dcterms:identifier ?inbound_id .
-        FILTER(DATATYPE(?inbound_id) = xsd:token)
+        dcterms:identifier ?inbound_children_id .
+        FILTER(DATATYPE(?inbound_children_id) = xsd:token)
         VALUES ?inbound_child {{ {" ".join('<' + pred + '>' for pred in inbound_children)} }}\n"""
     if inbound_parents:
         where += f"""?inbound_parent_s ?inbound_parent <{item.uri}> ;
-        dcterms:identifier ?inbound_id .
-        FILTER(DATATYPE(?inbound_id) = xsd:token)
+        dcterms:identifier ?inbound_parent_id .
+        FILTER(DATATYPE(?inbound_parent_id) = xsd:token)
         VALUES ?inbound_parent {{ {" ".join('<' + pred + '>' for pred in inbound_parents)} }}\n"""
-    if not inbound_children and not inbound_parents:
-        where += "VALUES ?inbound_child {}\nVALUES ?inbound_parent {}"
-    return ""
+    # if not inbound_children and not inbound_parents:
+    #     where += "VALUES ?inbound_child {}\nVALUES ?inbound_parent {}"
+    return where
 
 
 def generate_id_listing_binds(item, ic, ip, oc, op):

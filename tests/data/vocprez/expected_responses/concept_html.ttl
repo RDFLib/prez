@@ -12,4 +12,4 @@
     ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
     ns1:prefLabel "deuteric"@en .
 
-<http://purl.org/dc/terms/identifier> rdfs:label "Identifier" .
+<https://linked.data.gov.au/def/warox-alteration-types> rdfs:label "WAROX Alteration Type"@en .

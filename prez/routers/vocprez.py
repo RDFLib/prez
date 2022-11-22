@@ -26,7 +26,7 @@ async def schemes_endpoint(
     """Returns a list of VocPrez skos:ConceptSchemes in the necessary profile & mediatype"""
     vocprez_members = VocPrezMembers(url_path=str(request.url.path))
     req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
-    profile, mediatype, _ = get_profile_and_mediatype(
+    profile, mediatype, vocprez_members.selected_class = get_profile_and_mediatype(
         vocprez_members.classes, req_profiles, req_mediatypes
     )
     list_query = generate_listing_construct(vocprez_members, profile, page, per_page)

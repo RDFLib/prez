@@ -20,14 +20,14 @@ class VocPrezMembers(BaseModel):
         url_path = values.get("url_path")
         if url_path == "/v/collection":
             values["general_class"] = SKOS.Collection
-            values["link_constructor"] = "/v/collection/"
+            values["link_constructor"] = "/v/collection"
             values["classes"] = frozenset([PREZ.VocPrezCollectionList])
         elif url_path == "/v/scheme":
             values["general_class"] = SKOS.ConceptScheme
-            values["link_constructor"] = "/v/scheme/"
+            values["link_constructor"] = "/v/scheme"
             values["classes"] = frozenset([PREZ.SchemesList])
         elif url_path == "/v/vocab":
             values["general_class"] = SKOS.ConceptScheme
-            values["link_constructor"] = "/v/vocab/"
+            values["link_constructor"] = "/v/vocab"
             values["classes"] = frozenset([PREZ.SchemesList])
         return values

@@ -116,9 +116,6 @@ def test_collection_listing(vp_test_client):
             Path(__file__).parent
             / "../data/vocprez/expected_responses/collection_listing_html.ttl"
         )
-        # print(f'response:{response_graph.serialize()}')
-        # print(f'expected:{expected_graph.serialize()}')
-        # print((response_graph-expected_graph).serialize())
         assert response_graph.isomorphic(expected_graph), print(
             f"Graph delta:{(expected_graph - response_graph).serialize()}"
         )

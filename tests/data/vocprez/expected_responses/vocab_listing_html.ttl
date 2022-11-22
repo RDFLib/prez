@@ -11,9 +11,7 @@ ns1:memberList a rdf:Bag ;
         <https://linked.data.gov.au/def/warox-alteration-types> .
 
 <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> rdfs:label "Contact Type"@en ;
-    ns1:link "/vocab/contacttype" .
+    ns1:link "/v/vocab/contacttype" .
 
 <https://linked.data.gov.au/def/warox-alteration-types> rdfs:label "WAROX Alteration Type"@en ;
-    ns1:link "/vocab/warox-alteration-type" .
-
-<http://purl.org/dc/terms/identifier> rdfs:label "Identifier" .
+    ns1:link "/v/vocab/warox-alteration-type" .
