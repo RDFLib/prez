@@ -4,7 +4,7 @@ from fastapi import APIRouter, Request
 from rdflib import Namespace
 
 from prez.models.spaceprez_item import SpatialItem
-from prez.profiles.generate_profiles import get_profile_and_mediatype
+from prez.profiles.generate_profiles import get_profiles_and_mediatypes
 from prez.renderers.renderer import return_data
 from prez.services.connegp_service import get_requested_profile_and_mediatype
 from prez.services.sparql_new import (
@@ -31,12 +31,17 @@ async def list_items(
     """Returns a list of SpacePrez datasets in the requested profile & mediatype"""
     spatial_item = SpatialItem(**request.path_params, url_path=str(request.url.path))
     req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
-    profile, mediatype, spatial_item.selected_class = get_profile_and_mediatype(
-        spatial_item.classes, req_profiles, req_mediatypes
-    )
+    (
+        profile,
+        mediatype,
+        spatial_item.selected_class,
+        profile_headers,
+    ) = get_profiles_and_mediatypes(spatial_item.classes, req_profiles, req_mediatypes)
     list_query = generate_listing_construct(spatial_item, profile, page, per_page)
     count_query = generate_listing_count_construct(spatial_item)
-    return await return_data([list_query, count_query], mediatype, profile, "SpacePrez")
+    return await return_data(
+        [list_query, count_query], mediatype, profile, profile_headers, "SpacePrez"
+    )
 
 
 @router.get(
@@ -94,9 +99,12 @@ async def item_endpoint(request: Request):
         **request.path_params, **request.query_params, url_path=str(request.url.path)
     )
     req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
-    profile, mediatype, item.selected_class = get_profile_and_mediatype(
-        item.classes, req_profiles, req_mediatypes
-    )
+    (
+        profile,
+        mediatype,
+        item.selected_class,
+        profile_headers,
+    ) = get_profiles_and_mediatypes(item.classes, req_profiles, req_mediatypes)
     item_query = generate_item_construct(item, profile)
     item_members_query = generate_listing_construct(item, profile, 1, 10)
     return await return_data(

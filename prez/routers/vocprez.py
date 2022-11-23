@@ -3,7 +3,7 @@ from rdflib import SKOS
 
 from prez.models.vocprez_item import VocabItem
 from prez.models.vocprez_listings import VocPrezMembers
-from prez.profiles.generate_profiles import get_profile_and_mediatype
+from prez.profiles.generate_profiles import get_profiles_and_mediatypes
 from prez.renderers.renderer import return_data
 from prez.services.connegp_service import get_requested_profile_and_mediatype
 from prez.services.sparql_new import (
@@ -26,7 +26,7 @@ async def schemes_endpoint(
     """Returns a list of VocPrez skos:ConceptSchemes in the necessary profile & mediatype"""
     vocprez_members = VocPrezMembers(url_path=str(request.url.path))
     req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
-    profile, mediatype, vocprez_members.selected_class = get_profile_and_mediatype(
+    profile, mediatype, vocprez_members.selected_class = get_profiles_and_mediatypes(
         vocprez_members.classes, req_profiles, req_mediatypes
     )
     list_query = generate_listing_construct(vocprez_members, profile, page, per_page)
@@ -53,7 +53,7 @@ async def item_endpoint(
     """Returns a VocPrez skos:Concept, Collection, Vocabulary, or ConceptScheme in the requested profile & mediatype"""
     vp_item = VocabItem(**request.path_params, url_path=str(request.url.path))
     req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
-    profile, mediatype, vp_item.selected_class = get_profile_and_mediatype(
+    profile, mediatype, vp_item.selected_class = get_profiles_and_mediatypes(
         vp_item.classes, req_profiles, req_mediatypes
     )
     item_query = generate_item_construct(vp_item, profile)

@@ -13,7 +13,7 @@ from prez.services.sparql_new import get_annotation_properties
 from prez.cache import tbox_cache
 
 
-async def return_data(query_or_queries, mediatype, profile, prez):
+async def return_data(query_or_queries, mediatype, profile, profile_headers, prez):
     # run the queries
     if isinstance(query_or_queries, list):
         results = await asyncio.gather(
@@ -27,22 +27,22 @@ async def return_data(query_or_queries, mediatype, profile, prez):
         _, graph = await sparql_construct(query_or_queries, prez)
     # return the data
     if str(mediatype) in RDF_MEDIATYPES:
-        return await return_rdf(graph, mediatype)
+        return await return_rdf(graph, mediatype, profile_headers)
 
     # elif mediatype == "xml":
     #     ...
 
     else:
         if mediatype == Literal("text/html"):
-            return await return_html(graph, prez)
+            return await return_html(graph, prez, profile_headers)
 
 
-async def return_rdf(graph, mediatype):
+async def return_rdf(graph, mediatype, profile_headers):
     obj = io.BytesIO(graph.serialize(format=mediatype, encoding="utf-8"))
-    return StreamingResponse(content=obj, media_type=mediatype)
+    return StreamingResponse(content=obj, media_type=mediatype, headers=profile_headers)
 
 
-async def return_html(graph, prez):
+async def return_html(graph, prez, profile_headers):
     cache = tbox_cache
     queries_for_uncached, labels_graph = await get_annotation_properties(graph)
     results = await sparql_construct(queries_for_uncached, prez)
@@ -52,4 +52,6 @@ async def return_html(graph, prez):
     obj = io.BytesIO(
         (graph + labels_graph).serialize(format="turtle", encoding="utf-8")
     )
-    return StreamingResponse(content=obj, media_type="text/turtle")
+    return StreamingResponse(
+        content=obj, media_type="text/turtle", headers=profile_headers
+    )

@@ -490,7 +490,7 @@ PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX prez: <https://kurrawong.net/prez/>
 
-SELECT ?profile ?class (count(?mid) as ?distance) ?req_profile ?def_profile ?format ?req_format ?def_format
+SELECT ?profile ?class (count(?mid) as ?distance) ?req_profile ?def_profile ?format ?req_format ?def_format ?token
 
 WHERE {{
   VALUES ?class {{{" ".join('<' + klass + '>' for klass in classes)}}}
@@ -500,7 +500,8 @@ WHERE {{
   skos:ConceptScheme skos:Concept skos:Collection prez:DatasetList prez:VocPrezCollectionList prez:SchemesList
   prez:CatalogList dcat:Catalog dcat:Resource }}
   ?profile altr-ext:constrainsClass ?class ;
-           altr-ext:hasResourceFormat ?format .
+           altr-ext:hasResourceFormat ?format ;
+           dcterms:identifier ?token .
   {f'BIND(?profile=<{requested_profile}> as ?req_profile)' if requested_profile else ''}
   BIND(EXISTS {{ ?shape sh:targetClass ?class ;
                        altr-ext:hasDefaultProfile ?profile }} AS ?def_profile)
@@ -510,7 +511,6 @@ WHERE {{
 
 GROUP BY ?class ?profile ?req_profile ?def_profile ?format ?req_format ?def_format
 ORDER BY DESC(?req_profile) DESC(?distance) DESC(?def_profile) DESC(?req_format) DESC(?def_format)
-LIMIT 1
         """
     return query
 

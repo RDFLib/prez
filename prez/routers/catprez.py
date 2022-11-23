@@ -3,7 +3,7 @@ from rdflib import DCTERMS
 
 from prez.models.catprez_item import CatPrezItem
 from prez.models.catprez_listings import CatPrezMembers
-from prez.profiles.generate_profiles import get_profile_and_mediatype
+from prez.profiles.generate_profiles import get_profiles_and_mediatypes
 from prez.renderers.renderer import return_data
 from prez.services.connegp_service import get_requested_profile_and_mediatype
 from prez.services.sparql_new import (
@@ -24,7 +24,7 @@ async def catalogs_endpoint(
     """Returns a list of CatPrez skos:ConceptSchemes in the necessary profile & mediatype"""
     catprez_members = CatPrezMembers(url_path=str(request.url.path))
     req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
-    profile, mediatype = get_profile_and_mediatype(
+    profile, mediatype = get_profiles_and_mediatypes(
         catprez_members.classes, req_profiles, req_mediatypes
     )
     list_query = generate_listing_construct(catprez_members, profile, page, per_page)
@@ -42,7 +42,7 @@ async def item_endpoint(
     """Returns a CatPrez Catalog or Resource"""
     cp_item = CatPrezItem(**request.path_params, url_path=str(request.url.path))
     req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
-    profile, mediatype = get_profile_and_mediatype(
+    profile, mediatype = get_profiles_and_mediatypes(
         cp_item.classes, req_profiles, req_mediatypes
     )
     item_query = generate_item_construct(cp_item, profile)

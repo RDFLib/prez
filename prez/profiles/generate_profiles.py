@@ -96,7 +96,7 @@ def create_profiles_graph(ENABLED_PREZS) -> Graph:
 
 
 @lru_cache(maxsize=128)
-def get_profile_and_mediatype(
+def get_profiles_and_mediatypes(
     classes: List[URIRef],
     requested_profile: URIRef = None,
     requested_mediatype: URIRef = None,
@@ -111,7 +111,45 @@ def get_profile_and_mediatype(
     profile = response.bindings[0]["profile"]
     mediatype = response.bindings[0]["format"]
     selected_class = response.bindings[0]["class"]
-    return profile, mediatype, selected_class
+    profile_headers = generate_profiles_headers(
+        selected_class, response, profile, mediatype
+    )
+    return profile, mediatype, selected_class, profile_headers
+
+
+def generate_profiles_headers(selected_class, response, profile, mediatype):
+    headers = {
+        "Access-Control-Allow-Origin": "*",
+    }
+    if mediatype == "text/html":
+        headers["Content-Type"] = "text/turtle"
+        # TODO does something else need to be returned? the front end knows what it requested - if HTML was requested,
+        #  and RDF is returned, it will know to render it as HTML
+    else:
+        headers["Content-Type"] = mediatype
+    avail_profiles = set((i["token"], i["profile"]) for i in response.bindings)
+    avail_profiles_headers = ", ".join(
+        [
+            f'<http://www.w3.org/ns/dx/prof/Profile>; rel="type"; token="{i[0]}"; anchor=<{i[1]}>'
+            for i in avail_profiles
+        ]
+    )
+    avail_mediatypes_headers = ", ".join(
+        [
+            f"""<{selected_class}?_profile={i["token"]}&_mediatype={i["format"]}>; \
+rel="{"self" if i["def_profile"] and i["def_format"] else "alternate"}"; type="{i["format"]}"; profile="{i["profile"]}"\
+"""
+            for i in response.bindings
+        ]
+    )
+    headers["Link"] = ", ".join(
+        [
+            f'<{profile}>; rel="profile"',
+            avail_profiles_headers,
+            avail_mediatypes_headers,
+        ]
+    )
+    return headers
 
 
 # @lru_cache(maxsize=20)
