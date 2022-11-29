@@ -24,14 +24,21 @@ async def catalogs_endpoint(
     """Returns a list of CatPrez skos:ConceptSchemes in the necessary profile & mediatype"""
     catprez_members = CatPrezMembers(url_path=str(request.url.path))
     req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
-    profile, mediatype = get_profiles_and_mediatypes(
+    (
+        profile,
+        mediatype,
+        catprez_members.selected_class,
+        profile_headers,
+    ) = get_profiles_and_mediatypes(
         catprez_members.classes, req_profiles, req_mediatypes
     )
     list_query = generate_listing_construct(catprez_members, profile, page, per_page)
     count_query = generate_listing_count_construct(
         general_class=catprez_members.general_class
     )
-    return await return_data([list_query, count_query], mediatype, profile, "CatPrez")
+    return await return_data(
+        [list_query, count_query], mediatype, profile, profile_headers, "CatPrez"
+    )
 
 
 @router.get("/c/catalogs/{catalog_id}/{resource_id}", summary="Get Resource")
@@ -42,24 +49,27 @@ async def item_endpoint(
     """Returns a CatPrez Catalog or Resource"""
     cp_item = CatPrezItem(**request.path_params, url_path=str(request.url.path))
     req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
-    profile, mediatype = get_profiles_and_mediatypes(
-        cp_item.classes, req_profiles, req_mediatypes
-    )
+    (
+        profile,
+        mediatype,
+        cp_item.selected_class,
+        profile_headers,
+    ) = get_profiles_and_mediatypes(cp_item.classes, req_profiles, req_mediatypes)
     item_query = generate_item_construct(cp_item, profile)
     item_members_query = generate_listing_construct(cp_item, profile, 1, 100)
     return await return_data(
-        [item_query, item_members_query], mediatype, profile, "CatPrez"
+        [item_query, item_members_query], mediatype, profile, profile_headers, "CatPrez"
     )
 
 
-@router.get("/c/profiles", summary="CatPrez Profiles")
-async def catprez_profiles(request: Request):
-    """Returns a JSON list of the profiles accepted by CatPrez"""
-    return await profiles_func(request, "CatPrez")
-
-
-@router.get("/conformance", summary="Conformance")
-async def conformance(request: Request):
-    """Returns the SpacePrez conformance page in the necessary profile & mediatype"""
-    conformance_renderer = CatPrezConformanceRenderer(request)
-    return conformance_renderer.render()
+# @router.get("/c/profiles", summary="CatPrez Profiles")
+# async def catprez_profiles(request: Request):
+#     """Returns a JSON list of the profiles accepted by CatPrez"""
+#     return await profiles_func(request, "CatPrez")
+#
+#
+# @router.get("/conformance", summary="Conformance")
+# async def conformance(request: Request):
+#     """Returns the SpacePrez conformance page in the necessary profile & mediatype"""
+#     conformance_renderer = CatPrezConformanceRenderer(request)
+#     return conformance_renderer.render()

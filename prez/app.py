@@ -49,6 +49,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 
@@ -332,4 +333,4 @@ async def health(request: Request):
 
 
 if __name__ == "__main__":
-    uvicorn.run("app:app", port=8001, host=settings.system_uri, reload=True)
+    uvicorn.run("app:app", port=8000, host=settings.system_uri, reload=True)

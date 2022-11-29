@@ -16,6 +16,7 @@ class CatPrezItem(BaseModel):
     catalog_id: Optional[str] = None
     resource_id: Optional[str] = None
     url_path: Optional[str] = None
+    selected_class: Optional[URIRef] = None
     link_constructor: Optional[str] = None
 
     def __hash__(self):

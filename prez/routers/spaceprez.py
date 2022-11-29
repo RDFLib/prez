@@ -108,5 +108,9 @@ async def item_endpoint(request: Request):
     item_query = generate_item_construct(item, profile)
     item_members_query = generate_listing_construct(item, profile, 1, 10)
     return await return_data(
-        [item_query, item_members_query], mediatype, profile, "SpacePrez"
+        [item_query, item_members_query],
+        mediatype,
+        profile,
+        profile_headers,
+        "SpacePrez",
     )

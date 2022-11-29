@@ -26,12 +26,19 @@ async def schemes_endpoint(
     """Returns a list of VocPrez skos:ConceptSchemes in the necessary profile & mediatype"""
     vocprez_members = VocPrezMembers(url_path=str(request.url.path))
     req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
-    profile, mediatype, vocprez_members.selected_class = get_profiles_and_mediatypes(
+    (
+        profile,
+        mediatype,
+        vocprez_members.selected_class,
+        profile_headers,
+    ) = get_profiles_and_mediatypes(
         vocprez_members.classes, req_profiles, req_mediatypes
     )
     list_query = generate_listing_construct(vocprez_members, profile, page, per_page)
     count_query = generate_listing_count_construct(vocprez_members)
-    return await return_data([list_query, count_query], mediatype, profile, "VocPrez")
+    return await return_data(
+        [list_query, count_query], mediatype, profile, profile_headers, "VocPrez"
+    )
 
 
 @router.get("/v/vocab/{scheme_id}", summary="Get ConceptScheme")
@@ -53,13 +60,16 @@ async def item_endpoint(
     """Returns a VocPrez skos:Concept, Collection, Vocabulary, or ConceptScheme in the requested profile & mediatype"""
     vp_item = VocabItem(**request.path_params, url_path=str(request.url.path))
     req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
-    profile, mediatype, vp_item.selected_class = get_profiles_and_mediatypes(
-        vp_item.classes, req_profiles, req_mediatypes
-    )
+    (
+        profile,
+        mediatype,
+        vp_item.selected_class,
+        profile_headers,
+    ) = get_profiles_and_mediatypes(vp_item.classes, req_profiles, req_mediatypes)
     item_query = generate_item_construct(vp_item, profile)
     item_members_query = generate_listing_construct(vp_item, profile, 1, 100)
     return await return_data(
-        [item_query, item_members_query], mediatype, profile, "VocPrez"
+        [item_query, item_members_query], mediatype, profile, profile_headers, "VocPrez"
     )
 
 
