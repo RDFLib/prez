@@ -8,6 +8,7 @@ on:
       - main
   workflow_dispatch:
 
+# based on https://github.com/snok/install-poetry
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -58,7 +59,10 @@ jobs:
       - name: Run tests
         run: |
           source .venv/bin/activate
+          echo $PWD
           cd tests/catprez && pytest
+          echo $PWD
           cd ../tests/vocprez && pytest
+          echo $PWD
           cd ../tests/spaceprez && pytest
           coverage report
