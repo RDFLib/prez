@@ -1,24 +1,16 @@
-@prefix ns1: <http://purl.org/dc/terms/> .
-@prefix ns2: <https://kurrawong.net/prez/> .
-@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix ns1: <https://kurrawong.net/prez/> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-
 <http://example.com/datasets/sandgate> rdfs:member <http://example.com/datasets/sandgate/catchments>,
         <http://example.com/datasets/sandgate/facilities>,
         <http://example.com/datasets/sandgate/floods>,
-        <http://example.com/datasets/sandgate/roads> .
-
+        <http://example.com/datasets/sandgate/roads> ;
+    ns1:count 4 .
 <http://example.com/datasets/sandgate/catchments> rdfs:label "Geofabric Contracted Catchments"@en ;
-    ns2:link "/s/datasets/sandgate/collections/catchments" .
-
+    ns1:link "/s/datasets/sandgate/collections/catchments" .
 <http://example.com/datasets/sandgate/facilities> rdfs:label "Sandgate are demo Facilities"@en ;
-    ns2:link "/s/datasets/sandgate/collections/facilities" .
-
+    ns1:link "/s/datasets/sandgate/collections/facilities" .
 <http://example.com/datasets/sandgate/floods> rdfs:label "Sandgate flooded areas"@en ;
-    ns2:link "/s/datasets/sandgate/collections/floods" .
-
+    ns1:link "/s/datasets/sandgate/collections/floods" .
 <http://example.com/datasets/sandgate/roads> rdfs:label "Sandgate main roads"@en ;
-    ns2:link "/s/datasets/sandgate/collections/roads" .
-
-<http://example.com/datasets/sandgate> ns2:count 4 .
+    ns1:link "/s/datasets/sandgate/collections/roads" .

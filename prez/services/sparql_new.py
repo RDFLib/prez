@@ -4,11 +4,12 @@ from typing import List, Optional, Tuple, Union
 from rdflib import Graph, URIRef, RDFS, DCTERMS, Namespace
 
 from prez.models import (
-    CatPrezItem,
-    CatPrezMembers,
+    CatalogItem,
+    CatalogMembers,
     SpatialItem,
+    SpatialMembers,
     VocabItem,
-    VocPrezMembers,
+    VocabMembers,
 )
 from prez.cache import tbox_cache, profiles_graph_cache
 
@@ -299,7 +300,14 @@ def get_annotations_from_tbox_cache(terms: List[URIRef]):
 
 # hit the count cache first, if it's not there, hit the SPARQL endpoint
 def generate_listing_count_construct(
-    item: Union[SpatialItem, VocPrezMembers, VocabItem, CatPrezItem, CatPrezMembers]
+    item: Union[
+        SpatialItem,
+        SpatialMembers,
+        VocabMembers,
+        VocabItem,
+        CatalogItem,
+        CatalogMembers,
+    ]
 ):
     """
     Generates a SPARQL construct query to count either:
@@ -490,7 +498,7 @@ PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX prez: <https://kurrawong.net/prez/>
 
-SELECT ?profile ?class (count(?mid) as ?distance) ?req_profile ?def_profile ?format ?req_format ?def_format ?token
+SELECT ?profile ?title ?class (count(?mid) as ?distance) ?req_profile ?def_profile ?format ?req_format ?def_format ?token
 
 WHERE {{
   VALUES ?class {{{" ".join('<' + klass + '>' for klass in classes)}}}
@@ -501,7 +509,8 @@ WHERE {{
   prez:CatalogList dcat:Catalog dcat:Resource }}
   ?profile altr-ext:constrainsClass ?class ;
            altr-ext:hasResourceFormat ?format ;
-           dcterms:identifier ?token .
+           dcterms:identifier ?token ;
+           dcterms:title ?title .
   {f'BIND(?profile=<{requested_profile}> as ?req_profile)' if requested_profile else ''}
   BIND(EXISTS {{ ?shape sh:targetClass ?class ;
                        altr-ext:hasDefaultProfile ?profile }} AS ?def_profile)

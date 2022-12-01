@@ -4,6 +4,7 @@ from fastapi import APIRouter, Request
 from rdflib import Namespace
 
 from prez.models.spaceprez_item import SpatialItem
+from prez.models.spaceprez_listings import SpatialMembers
 from prez.profiles.generate_profiles import get_profiles_and_mediatypes
 from prez.renderers.renderer import return_data
 from prez.services.connegp_service import get_requested_profile_and_mediatype
@@ -29,7 +30,7 @@ async def list_items(
     request: Request, page: Optional[int] = 1, per_page: Optional[int] = 20
 ):
     """Returns a list of SpacePrez datasets in the requested profile & mediatype"""
-    spatial_item = SpatialItem(**request.path_params, url_path=str(request.url.path))
+    spatial_item = SpatialMembers(**request.path_params, url_path=str(request.url.path))
     req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
     (
         profile,

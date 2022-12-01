@@ -4,10 +4,8 @@ from pathlib import Path
 from time import sleep
 
 import pytest
-from rdflib import DCAT, SKOS
-from rdflib.namespace import GEO
+from rdflib import SKOS
 
-from models.vocprez_item import VocabItem
 from prez.services.sparql_new import *
 
 PREZ_DIR = Path(__file__).parent.parent.parent.absolute() / "prez"

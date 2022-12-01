@@ -1,0 +1,25 @@
+@prefix ns1: <http://purl.org/dc/terms/> .
+@prefix ns2: <http://www.w3.org/ns/prov#> .
+@prefix ns3: <http://www.w3.org/ns/dcat#> .
+@prefix ns4: <https://kurrawong.net/prez/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://w3id.org/idn/dataset/agents> a ns3:Catalog ;
+    ns1:created "2022-08-15"^^xsd:date ;
+    ns1:description """The Indigenous Data Network's catalogue of Agents. This catalogue contains instances of Agents - People and Organisations - related to the holding of indigenous data. This includes non-indigenous Agents
+
+This catalogue extends on standard Agent information to include properties useful to understand the indigeneity of Agents: whether they are or not, or how much they are, indigenous"""@en ;
+    ns1:hasPart <https://www.atsida.edu.au/archive/datasets/au.edu.anu.ada.ddi.20002-sa> ;
+    ns1:identifier "idnac"^^xsd:token ;
+    ns1:modified "2022-08-15"^^xsd:date ;
+    ns1:title "IDN Agents Catalogue" ;
+    ns2:qualifiedAttribution [ ns3:hadRole <http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/author>,
+                <http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/custodian>,
+                <http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/owner> ;
+            ns2:agent <https://linked.data.gov.au/org/idn> ] .
+
+<https://linked.data.gov.au/org/idn> rdfs:label "Indigenous Data Network" .
+
+<https://www.atsida.edu.au/archive/datasets/au.edu.anu.ada.ddi.20002-sa> rdfs:label "Annual Aboriginal Census,1921-1944 - South Australia" ;
+    ns4:link "/c/catalogs/idnac/AAC-SA" .

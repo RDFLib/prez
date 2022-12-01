@@ -8,7 +8,7 @@ from rdflib.namespace import DCTERMS, XSD, DCAT
 from prez.services.sparql_utils import sparql_query_non_async
 
 
-class CatPrezItem(BaseModel):
+class CatalogItem(BaseModel):
     uri: Optional[URIRef] = None
     classes: Optional[Set[URIRef]]
     id: Optional[str] = None
@@ -30,7 +30,7 @@ class CatPrezItem(BaseModel):
         if len(url_parts) == 4:
             values["general_class"] = DCAT.Catalog
             id = values.get("catalog_id")
-            values["link_constructor"] = f"/c/catalogs/{id}/"
+            values["link_constructor"] = f"/c/catalogs/{id}"
         elif len(url_parts) == 5:
             values["general_class"] = DCAT.Resource
             id = values.get("resource_id")

@@ -9,6 +9,10 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     dcterms:hasPart <https://www.atsida.edu.au/archive/datasets/au.edu.anu.ada.ddi.20002-sa> ;
 .
 
+<https://w3id.org/idn/dataset/agents>
+    dcterms:hasPart <https://www.atsida.edu.au/archive/datasets/au.edu.anu.ada.ddi.20002-sa> ;
+.
+
 <https://www.atsida.edu.au/archive/datasets/au.edu.anu.ada.ddi.20002-sa>
     a dcat:Resource ;
     dcterms:description """This study contains time series of data of the Annual Aboriginal Census for Australia, Australian Capital Territory, New South Wales, Northern Territory, Queensland, South Australia, Tasmania, Victoria and Western Australia from 1921 to 1944.

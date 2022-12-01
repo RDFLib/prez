@@ -1,11 +1,10 @@
-import asyncio
 import os
 import subprocess
 from pathlib import Path
 from time import sleep
 
 import pytest
-from rdflib import Graph, URIRef, RDFS, DCTERMS
+from rdflib import Graph, URIRef, RDFS
 
 PREZ_DIR = os.getenv("PREZ_DIR")
 LOCAL_SPARQL_STORE = os.getenv("LOCAL_SPARQL_STORE")
@@ -27,6 +26,7 @@ def sp_test_client(request):
     request.addfinalizer(teardown)
 
     # must only import app after config.py has been altered above so config is retained
+
     from prez.app import app
 
     return TestClient(app)

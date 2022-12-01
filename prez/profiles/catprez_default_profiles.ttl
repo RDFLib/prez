@@ -94,6 +94,11 @@ altr-ext:hasResourceFormat
         "application/rdf+xml" ,
         "text/html" ,
         "text/turtle" ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass dcat:Catalog ;
+        altr-ext:outboundChildren dcterms:hasPart
+    ]
 .
 
 <https://schema.org>

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request
 from rdflib import SKOS
 
 from prez.models.vocprez_item import VocabItem
-from prez.models.vocprez_listings import VocPrezMembers
+from prez.models.vocprez_listings import VocabMembers
 from prez.profiles.generate_profiles import get_profiles_and_mediatypes
 from prez.renderers.renderer import return_data
 from prez.services.connegp_service import get_requested_profile_and_mediatype
@@ -24,7 +24,7 @@ async def schemes_endpoint(
     per_page: int = 20,
 ):
     """Returns a list of VocPrez skos:ConceptSchemes in the necessary profile & mediatype"""
-    vocprez_members = VocPrezMembers(url_path=str(request.url.path))
+    vocprez_members = VocabMembers(url_path=str(request.url.path))
     req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
     (
         profile,

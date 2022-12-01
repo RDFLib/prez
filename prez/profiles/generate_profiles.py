@@ -13,6 +13,11 @@ from prez.services.sparql_utils import (
 
 
 def create_profiles_graph(ENABLED_PREZS) -> Graph:
+    if (
+        len(profiles_graph_cache) > 0
+    ):  # pytest imports app.py multiple times, so this is needed. Not sure why cache is
+        # not cleared between calls
+        return
     for f in Path(__file__).parent.glob("*.ttl"):
         profiles_graph_cache.parse(f)
     logging.info("Loaded local profiles")
@@ -130,10 +135,12 @@ def generate_profiles_headers(selected_class, response, profile, mediatype):
         #  and RDF is returned, it will know to render it as HTML
     else:
         headers["Content-Type"] = mediatype
-    avail_profiles = set((i["token"], i["profile"]) for i in response.bindings)
+    avail_profiles = set(
+        (i["token"], i["profile"], i["title"]) for i in response.bindings
+    )
     avail_profiles_headers = ", ".join(
         [
-            f'<http://www.w3.org/ns/dx/prof/Profile>; rel="type"; token="{i[0]}"; anchor=<{i[1]}>'
+            f'<http://www.w3.org/ns/dx/prof/Profile>; rel="type"; title="{i[2]}"; token="{i[0]}"; anchor=<{i[1]}>'
             for i in avail_profiles
         ]
     )

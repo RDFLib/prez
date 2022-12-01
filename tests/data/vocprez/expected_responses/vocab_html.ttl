@@ -30,10 +30,12 @@
 <https://linked.data.gov.au/def/warox-alteration-types/argillic> ns2:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
     ns1:link "/v/vocab/warox-alteration-type/argillic" .
 
-<https://linked.data.gov.au/def/warox-alteration-types/carbonate> ns2:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
+<https://linked.data.gov.au/def/warox-alteration-types/carbonate> rdfs:label "carbonate"@en ;
+    ns2:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
     ns1:link "/v/vocab/warox-alteration-type/carbonate" .
 
-<https://linked.data.gov.au/def/warox-alteration-types/chloritic> ns2:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
+<https://linked.data.gov.au/def/warox-alteration-types/chloritic> rdfs:label "chloritic"@en ;
+    ns2:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
     ns1:link "/v/vocab/warox-alteration-type/chloritic" .
 
 <https://linked.data.gov.au/def/warox-alteration-types/deuteric> ns2:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;

@@ -7,7 +7,7 @@ from rdflib.namespace import DCAT
 PREZ = Namespace("https://kurrawong.net/prez/")
 
 
-class CatPrezMembers(BaseModel):
+class CatalogMembers(BaseModel):
     url_path: str
     uri: Optional[URIRef] = None
     general_class: Optional[URIRef]
@@ -20,6 +20,6 @@ class CatPrezMembers(BaseModel):
         url_path = values.get("url_path")
         if url_path == "/c/catalogs":
             values["general_class"] = DCAT.Catalog
-            values["link_constructor"] = "/c/catalogs/"
+            values["link_constructor"] = "/c/catalogs"
             values["classes"] = frozenset([PREZ.CatalogList])
         return values

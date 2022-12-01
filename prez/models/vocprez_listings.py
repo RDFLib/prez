@@ -7,7 +7,7 @@ from rdflib.namespace import URIRef, SKOS
 PREZ = Namespace("https://kurrawong.net/prez/")
 
 
-class VocPrezMembers(BaseModel):
+class VocabMembers(BaseModel):
     url_path: str
     uri: Optional[URIRef] = None
     general_class: Optional[URIRef]

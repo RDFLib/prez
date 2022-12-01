@@ -18,7 +18,6 @@ class SpatialItem(BaseModel):
     uri: Optional[URIRef]
     url_path: Optional[str]
     general_class: Optional[URIRef]
-    children_general_class: Optional[URIRef]
     feature_id: Optional[str]
     collection_id: Optional[str]
     dataset_id: Optional[str]
@@ -83,7 +82,6 @@ class SpatialItem(BaseModel):
                     values["id"] = collection_id
                     values["uri"] = URIRef(fc["value"])
                     values["general_class"] = GEO.FeatureCollection
-                    values["children_general_class"] = GEO.Feature
                     values["parent_uri"] = URIRef(d["value"])
                     values["parent_id"] = dataset_id
                     values[
@@ -96,23 +94,6 @@ class SpatialItem(BaseModel):
                     values["id"] = dataset_id
                     values["uri"] = URIRef(d["value"])
                     values["general_class"] = DCAT.Dataset
-                    values["children_general_class"] = GEO.FeatureCollection
                     values["link_constructor"] = f"/s/datasets/{dataset_id}/collections"
                     values["classes"] = frozenset([c["d_class"]["value"] for c in r[1]])
-        url_path = values.get("url_path")
-        if url_path == "/s/datasets":
-            values["general_class"] = DCAT.Dataset
-            values["children_general_class"] = GEO.FeatureCollection
-            values["link_constructor"] = f"/s/datasets"
-            values["classes"] = frozenset([PREZ.DatasetList])
-        elif url_path.endswith("/collections"):
-            values["general_class"] = GEO.FeatureCollection
-            values["children_general_class"] = GEO.Feature
-            values["link_constructor"] = f"{url_path}"
-            values["classes"] = frozenset([PREZ.FeatureCollectionList])
-        elif url_path.endswith("/items"):
-            values["general_class"] = GEO.Feature
-            values["children_general_class"] = None
-            values["link_constructor"] = f"{url_path}"
-            values["classes"] = frozenset([PREZ.FeatureList])
         return values

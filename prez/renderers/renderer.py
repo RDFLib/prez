@@ -16,6 +16,8 @@ from prez.cache import tbox_cache
 async def return_data(query_or_queries, mediatype, profile, profile_headers, prez):
     # run the queries
     if isinstance(query_or_queries, list):
+        # TODO union the queries and return respone directly - if the mediatype is RDF without annotations - or even if it is ?? annotations bit can be appended as well ??
+        # probably still more performant to parse the graph and add the annotations in rdflib? or is parsing the graph the slow part?
         results = await asyncio.gather(
             *[sparql_construct(query, prez) for query in query_or_queries]
         )

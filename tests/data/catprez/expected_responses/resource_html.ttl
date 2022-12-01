@@ -1,0 +1,31 @@
+@prefix ns1: <http://purl.org/dc/terms/> .
+@prefix ns2: <http://www.w3.org/ns/prov#> .
+@prefix ns3: <http://www.w3.org/ns/dcat#> .
+@prefix ns4: <https://example.com/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://www.atsida.edu.au/archive/datasets/au.edu.anu.ada.ddi.20002-sa> a ns3:Resource ;
+    ns1:accessRights <https://linked.data.gov.au/def/data-access-rights/metadata-only> ;
+    ns1:description """This study contains time series of data of the Annual Aboriginal Census for Australia, Australian Capital Territory, New South Wales, Northern Territory, Queensland, South Australia, Tasmania, Victoria and Western Australia from 1921 to 1944.
+
+Special care notice:
+Aboriginal and Torres Strait Islander people, researchers and other users should be aware that material in this dataset may contain material that is considered offensive. The data has been retained in its original format because it represents an evidential record of language, beliefs or other cultural situations at a point in time.""" ;
+    ns1:identifier "AAC-SA"^^xsd:token ;
+    ns1:issued "2011-07-22"^^xsd:date ;
+    ns1:license "All Rights Reserved" ;
+    ns1:rights "Copyright Â© 2011, The Australian National University. All rights reserved." ;
+    ns1:spatial <https://linked.data.gov.au/dataset/asgsed3/STE/4>,
+        <https://linked.data.gov.au/dataset/asgsed3/STE/7> ;
+    ns1:temporal "1921-1944" ;
+    ns1:title "Annual Aboriginal Census,1921-1944 - South Australia" ;
+    ns3:accessURL "https://www.atsida.edu.au/archive/datasets/au.edu.anu.ada.ddi.20002-sa"^^xsd:anyURI ;
+    ns3:theme <https://w3id.org/idn/def/idn-th/subject>,
+        <https://w3id.org/idn/def/indigeneity/about-indigenous-people> ;
+    ns2:qualifiedAttribution [ ns3:hadRole <http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/originator> ;
+            ns2:agent "Gordon Briscoe, Len Smith" ],
+        [ ns3:hadRole <http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/rightsHolder> ;
+            ns2:agent <https://linked.data.gov.au/org/anu> ],
+        [ ns3:hadRole <http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/custodian> ;
+            ns2:agent "ATSIDA.1" ] ;
+    ns4:home "https://www.atsida.edu.au/" ;
+    ns4:notes "The Annual Aboriginal Census is considered as a significant official source of Aboriginal population statistics. It was conducted annually in June from 1921 to 1944, exempting the war years between 1941 and 1944 in each State and Territory. The 1944 census was incomplete with New South Wales not taking part at all. Enumeration of Aboriginal populations was poor and difficulties in classification occurred. The Census was a collaboration of the Commonwealth Bureau of Census and Statistics who initiated the study, State and Territory Statisticians, the Protector of Aborigines, and local police officers who conducted the enumeration. The Annual Aboriginal Census is also referred to as the Annual Census of Aborigines and Police Census." .
