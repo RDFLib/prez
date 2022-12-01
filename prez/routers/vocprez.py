@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Request
-from rdflib import SKOS
 
 from prez.models.vocprez_item import VocabItem
 from prez.models.vocprez_listings import VocabMembers
-from prez.profiles.generate_profiles import get_profiles_and_mediatypes
-from prez.renderers.renderer import return_data
+from prez.profiles.generate_profiles import get_profiles_and_mediatypes, prez_profiles
+from prez.renderers.renderer import return_from_queries
 from prez.services.connegp_service import get_requested_profile_and_mediatype
 from prez.services.sparql_new import (
     generate_listing_construct,
@@ -31,12 +30,13 @@ async def schemes_endpoint(
         mediatype,
         vocprez_members.selected_class,
         profile_headers,
+        _,
     ) = get_profiles_and_mediatypes(
         vocprez_members.classes, req_profiles, req_mediatypes
     )
     list_query = generate_listing_construct(vocprez_members, profile, page, per_page)
     count_query = generate_listing_count_construct(vocprez_members)
-    return await return_data(
+    return await return_from_queries(
         [list_query, count_query], mediatype, profile, profile_headers, "VocPrez"
     )
 
@@ -65,10 +65,11 @@ async def item_endpoint(
         mediatype,
         vp_item.selected_class,
         profile_headers,
+        _,
     ) = get_profiles_and_mediatypes(vp_item.classes, req_profiles, req_mediatypes)
     item_query = generate_item_construct(vp_item, profile)
     item_members_query = generate_listing_construct(vp_item, profile, 1, 100)
-    return await return_data(
+    return await return_from_queries(
         [item_query, item_members_query], mediatype, profile, profile_headers, "VocPrez"
     )
 
@@ -79,4 +80,4 @@ async def item_endpoint(
 )
 async def vocprez_profiles(request: Request):
     """Returns a JSON list of the profiles accepted by VocPrez"""
-    return await profiles_func(request, "VocPrez")
+    return await prez_profiles(request, "VocPrez")

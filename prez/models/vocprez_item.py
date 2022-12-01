@@ -34,6 +34,7 @@ class VocabItem(BaseModel):
         elif url_parts[2] == "collection":
             values["general_class"] = SKOS.Collection
             id = values.get("collection_id")
+            # TODO probably requires a /object?uri=xyz as the members of a collection can be Concepts or ConceptSchemes
             values["link_constructor"] = f"/v/vocab/{id}"
         elif url_parts[2] == "scheme":
             values["general_class"] = SKOS.ConceptScheme

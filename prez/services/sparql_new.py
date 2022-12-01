@@ -3,6 +3,7 @@ from typing import List, Optional, Tuple, Union
 
 from rdflib import Graph, URIRef, RDFS, DCTERMS, Namespace
 
+from prez.cache import tbox_cache, profiles_graph_cache
 from prez.models import (
     CatalogItem,
     CatalogMembers,
@@ -11,7 +12,6 @@ from prez.models import (
     VocabItem,
     VocabMembers,
 )
-from prez.cache import tbox_cache, profiles_graph_cache
 
 ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
 
@@ -245,52 +245,47 @@ def generate_bnode_select(depth):
 
 
 async def get_annotation_properties(
-    object_graph: Graph,
-    label_property: URIRef = URIRef("http://www.w3.org/2000/01/rdf-schema#label"),
+    item_graph: Graph,
+    label_prop: URIRef = RDFS.label,
+    description_prop: URIRef = DCTERMS.description,
+    explanation_prop: URIRef = DCTERMS.provenance,
 ):
     """
     Gets annotation data used for HTML display.
     This includes the label, description, and provenance, if available.
     """
-    terms = set(i for i in object_graph.predicates() if isinstance(i, URIRef)) | set(
-        i for i in object_graph.objects() if isinstance(i, URIRef)
+    terms = set(i for i in item_graph.predicates() if isinstance(i, URIRef)) | set(
+        i for i in item_graph.objects() if isinstance(i, URIRef)
     )
     if not terms:
         return None, Graph()
     # read labels from the tbox cache, this should be the majority of labels
-    uncached_terms, labels_g = get_annotations_from_tbox_cache(terms)
-    # read remaining labels from the SPARQL endpoint
-    #     queries_for_uncached = [
-    #         f"""CONSTRUCT {{ <{term}> <{label_property}> ?label }}
-    # WHERE {{ <{term}> <{label_property}> ?label
-    # FILTER(lang(?label) = "" || lang(?label) = "en" || lang(?label) = "en-AU")
-    # }}"""
-    #         for term in uncached_terms
-    #     ]
-    queries_for_uncached = f"""CONSTRUCT {{ ?term <{label_property}> ?label }}
-        WHERE {{ ?term <{label_property}> ?label .
+    uncached_terms, labels_g = get_annotations_from_tbox_cache(
+        terms, label_prop, description_prop, explanation_prop
+    )
+    queries_for_uncached = f"""CONSTRUCT {{ ?term ?prop ?label }}
+        WHERE {{ ?term ?prop ?label .
         VALUES ?term {{ {" ".join('<' + str(term) + '>' for term in uncached_terms)} }}
+        VALUES ?prop {{ {" ".join('<' + str(prop) + '>' for prop in [label_prop, description_prop, explanation_prop])} }}
         FILTER(lang(?label) = "" || lang(?label) = "en" || lang(?label) = "en-AU")
         }}"""
     # remove any queries we previously didn't get a result for from the SPARQL endpoint
-    # queries_for_uncached = list(set(queries_for_uncached) - set(missing_annotations))
-    # untested assumption is running multiple queries in parallel is faster than running one query for all labels
     return queries_for_uncached, labels_g
 
 
-def get_annotations_from_tbox_cache(terms: List[URIRef]):
+def get_annotations_from_tbox_cache(
+    terms: List[URIRef], label_prop, description_prop, explanation_prop
+):
     """
     Gets labels from the TBox cache, returns a list of terms that were not found in the cache, and a graph of labels
     """
     labels_from_cache = Graph()
     terms_list = list(terms)
-    labels = list(tbox_cache.triples_choices((terms_list, RDFS.label, None)))
+    labels = list(tbox_cache.triples_choices((terms_list, label_prop, None)))
     descriptions = list(
-        tbox_cache.triples_choices((terms_list, DCTERMS.description, None))
+        tbox_cache.triples_choices((terms_list, description_prop, None))
     )
-    provenance = list(
-        tbox_cache.triples_choices((terms_list, DCTERMS.provenance, None))
-    )
+    provenance = list(tbox_cache.triples_choices((terms_list, explanation_prop, None)))
     all = labels + descriptions + provenance
     for triple in all:
         labels_from_cache.add(triple)
@@ -534,6 +529,11 @@ def generate_mediatype_if_statements(requested_mediatypes: list):
           IF(?format="text/html", "0.8",
             IF(?format="image/apng", "0.7", ""))) AS ?req_format)
     """
+    # TODO ConnegP appears to return a tuple of q values and profiles for headers, and only profiles (no q values) if they
+    # are not specified in QSAs.
+    if not isinstance(next(iter(requested_mediatypes)), tuple):
+        requested_mediatypes = [(1, mt) for mt in requested_mediatypes]
+
     line_join = "," + "\n"
     ifs = (
         f"BIND(\n"
@@ -542,18 +542,6 @@ def generate_mediatype_if_statements(requested_mediatypes: list):
         f"AS ?req_format)"
     )
     return ifs
-
-
-def get_profiles_for_class(klass: URIRef):
-    """
-    Returns a list of profiles which constrain the given class.
-    """
-    profiles = profiles_graph_cache.subjects(None, ALTREXT.constrainsClass, klass)
-    relevant_profiles = Graph()
-    for profile in profiles:
-        query = generate_item_construct(profile, None)
-        relevant_profiles += profiles_graph_cache.query(query)
-    return relevant_profiles
 
 
 def startup_count_objects():

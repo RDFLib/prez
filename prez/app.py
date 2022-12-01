@@ -6,20 +6,21 @@ import uvicorn
 from fastapi import FastAPI, Request, HTTPException, Query
 from fastapi.responses import JSONResponse, RedirectResponse
 from fedsearch import SkosSearch, EndpointDetails
+from prez.services.spaceprez_service import list_datasets, list_collections
 from pydantic import AnyUrl
 from starlette.middleware.cors import CORSMiddleware
+from starlette.responses import PlainTextResponse
 
-from prez.models.api_model import populate_api_info
 from prez.cache import tbox_cache, api_info_graph
 from prez.config import Settings
+from prez.models.api_model import populate_api_info
 from prez.profiles.generate_profiles import create_profiles_graph
+from prez.renderers.renderer import return_rdf
 from prez.routers.catprez import router as catprez_router
 from prez.routers.cql import router as cql_router
 from prez.routers.spaceprez import router as spaceprez_router
 from prez.routers.vocprez import router as vocprez_router
 from prez.services.app_service import *
-from prez.services.spaceprez_service import list_datasets, list_collections
-from prez.renderers.renderer import return_rdf
 
 
 async def catch_400(request: Request, exc):
@@ -127,31 +128,32 @@ def _get_sparql_service_description(request, format):
         return Graph().parse(data=ttl).serialize(format=format)
 
 
+# see: https://github.com/tiangolo/fastapi/issues/1788 for how to restructure this.
 # TODO DRY fix 3x SPARQL endpoints below
 @app.get("/s/sparql", summary="SpacePrez SPARQL Endpoint")
 async def sparql_get(request: Request, query: Optional[str] = None):
     if not request.query_params:
-        raise ValueError("A SPARQL query must be provided as a query parameter")
+        return PlainTextResponse("A SPARQL query must be provided as a query parameter")
     return RedirectResponse(
-        url=settings.SPACEPREZ_SPARQL_ENDPOINT + "?" + str(request.query_params)
+        url=settings.spaceprez_sparql_endpoint + "?" + str(request.query_params)
     )
 
 
 @app.get("/v/sparql", summary="VocPrez SPARQL Endpoint")
 async def sparql_get(request: Request, query: Optional[str] = None):
     if not request.query_params:
-        raise ValueError("A SPARQL query must be provided as a query parameter")
+        return PlainTextResponse("A SPARQL query must be provided as a query parameter")
     return RedirectResponse(
-        url=settings.VOCPREZ_SPARQL_ENDPOINT + "?" + str(request.query_params)
+        url=settings.vocprez_sparql_endpoint + "?" + str(request.query_params)
     )
 
 
 @app.get("/c/sparql", summary="CatPrez SPARQL Endpoint")
 async def sparql_get(request: Request, query: Optional[str] = None):
     if not request.query_params:
-        raise ValueError("A SPARQL query must be provided as a query parameter")
+        return PlainTextResponse("A SPARQL query must be provided as a query parameter")
     return RedirectResponse(
-        url=settings.CATPREZ_SPARQL_ENDPOINT + "?" + str(request.query_params)
+        url=settings.catprez_sparql_endpoint + "?" + str(request.query_params)
     )
 
 

@@ -1,19 +1,18 @@
+import asyncio
 import io
 
+from connegp import RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
 from fastapi.responses import StreamingResponse
-import time
-
-from rdflib import Literal
-from starlette.responses import PlainTextResponse
-
-from prez.services.spaceprez_service import *
-from prez.services.spaceprez_service import sparql_construct
-from prez.services.sparql_new import get_annotation_properties
+from rdflib import Literal, Graph
 
 from prez.cache import tbox_cache
+from prez.services.sparql_new import get_annotation_properties
+from services.sparql_utils import sparql_construct
 
 
-async def return_data(query_or_queries, mediatype, profile, profile_headers, prez):
+async def return_from_queries(
+    query_or_queries, mediatype, profile, profile_headers, prez
+):
     # run the queries
     if isinstance(query_or_queries, list):
         # TODO union the queries and return respone directly - if the mediatype is RDF without annotations - or even if it is ?? annotations bit can be appended as well ??
@@ -28,6 +27,10 @@ async def return_data(query_or_queries, mediatype, profile, profile_headers, pre
     else:
         _, graph = await sparql_construct(query_or_queries, prez)
     # return the data
+    return await return_from_graph(graph, mediatype, profile, profile_headers, prez)
+
+
+async def return_from_graph(graph, mediatype, profile, profile_headers, prez):
     if str(mediatype) in RDF_MEDIATYPES:
         return await return_rdf(graph, mediatype, profile_headers)
 
@@ -40,7 +43,11 @@ async def return_data(query_or_queries, mediatype, profile, profile_headers, pre
 
 
 async def return_rdf(graph, mediatype, profile_headers):
-    obj = io.BytesIO(graph.serialize(format=mediatype, encoding="utf-8"))
+    obj = io.BytesIO(
+        graph.serialize(
+            format=RDF_SERIALIZER_TYPES_MAP[str(mediatype)], encoding="utf-8"
+        )
+    )
     return StreamingResponse(content=obj, media_type=mediatype, headers=profile_headers)
 
 

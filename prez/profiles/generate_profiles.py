@@ -1,15 +1,21 @@
 import logging
 from functools import lru_cache
 from pathlib import Path
-from typing import List
+from typing import FrozenSet
 
-from rdflib import Graph, URIRef
+from rdflib import Graph, URIRef, DCAT, SKOS
+from rdflib.namespace import GEO
+from starlette.requests import Request
+from starlette.responses import Response
 
+from models import SpatialItem, VocabItem, CatalogItem
 from prez.cache import profiles_graph_cache
-from prez.services.sparql_new import select_profile_mediatype
+from prez.services.sparql_new import select_profile_mediatype, generate_item_construct
 from prez.services.sparql_utils import (
     sparql_construct_non_async,
 )
+from renderers.renderer import return_from_graph
+from services.connegp_service import get_requested_profile_and_mediatype
 
 
 def create_profiles_graph(ENABLED_PREZS) -> Graph:
@@ -61,48 +67,10 @@ def create_profiles_graph(ENABLED_PREZS) -> Graph:
             profiles_graph_cache.__add__(r[1])
             logging.info(f"Also using remote profiles for {p}")
 
-    # return g
-
-
-# class ProfileDetails:
-#     def __init__(self, instance_uri, instance_classes: list, general_class):
-#         self.available_profiles_dict = {}
-#
-#         # get general profiles
-#         (
-#             self.preferred_classes_and_profiles,
-#             self.profiles_dict,
-#             self.profiles_formats,
-#         ) = get_general_profiles(general_class)
-#
-#         # get profiles specific to the given class, and the default profile
-#         (
-#             self.available_profiles,
-#             self.default_profile,
-#         ) = get_class_based_and_default_profiles(
-#             instance_uri, self.preferred_classes_and_profiles
-#         )
-#
-#         # slice the total set of profiles by those available for the given class
-#         self.available_profiles_dict = {
-#             k: v
-#             for k, v in self.profiles_dict.items()
-#             if k in tuple([i[1] for i in self.available_profiles]) + tuple(["alt"])
-#         }
-#
-#         self.most_specific_class = None
-#         # find the most specific class for the feature
-#         for klass, _, distance in reversed(self.preferred_classes_and_profiles):
-#             if klass in instance_classes:
-#                 self.most_specific_class = klass
-#                 break
-#         if self.most_specific_class is None:
-#             self.most_specific_class = OWL.Class
-
 
 @lru_cache(maxsize=128)
 def get_profiles_and_mediatypes(
-    classes: List[URIRef],
+    classes: FrozenSet[URIRef],
     requested_profile: URIRef = None,
     requested_mediatype: URIRef = None,
 ):
@@ -119,10 +87,10 @@ def get_profiles_and_mediatypes(
         top_result["format"],
         top_result["class"],
     )
-    profile_headers = generate_profiles_headers(
+    profile_headers, avail_profile_uris = generate_profiles_headers(
         selected_class, response, profile, mediatype
     )
-    return profile, mediatype, selected_class, profile_headers
+    return profile, mediatype, selected_class, profile_headers, avail_profile_uris
 
 
 def generate_profiles_headers(selected_class, response, profile, mediatype):
@@ -159,4 +127,37 @@ rel="{"self" if i["def_profile"] and i["def_format"] else "alternate"}"; type="{
             avail_mediatypes_headers,
         ]
     )
-    return headers
+    avail_profile_uris = [i[1] for i in avail_profiles]
+    return headers, avail_profile_uris
+
+
+async def prez_profiles(request: Request, prez_type) -> Response:
+    prez_classes = {
+        "SpacePrez": frozenset([GEO.Feature, GEO.FeatureCollection, DCAT.Dataset]),
+        "VocPrez": frozenset([SKOS.Concept, SKOS.ConceptScheme, SKOS.Collection]),
+        "CatPrez": frozenset([DCAT.Catalog, DCAT.Resource]),
+    }
+    prez_items = {
+        "SpacePrez": SpatialItem,
+        "VocPrez": VocabItem,
+        "CatPrez": CatalogItem,
+    }
+    req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
+    (
+        profile,
+        mediatype,
+        selected_class,
+        profile_headers,
+        avail_profile_uris,
+    ) = get_profiles_and_mediatypes(
+        prez_classes[prez_type], req_profiles, req_mediatypes
+    )
+    items = [prez_items[prez_type](uri=uri) for uri in avail_profile_uris]
+    queries = [
+        generate_item_construct(profile, URIRef("http://kurrawong.net/profile/prez"))
+        for profile in items
+    ]
+    g = Graph()
+    for q in queries:
+        g += profiles_graph_cache.query(q)
+    return await return_from_graph(g, mediatype, profile, profile_headers, prez_type)
