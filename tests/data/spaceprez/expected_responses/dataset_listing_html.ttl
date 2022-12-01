@@ -12,10 +12,13 @@ ns2:memberList a rdf:Bag ;
         <https://linked.data.gov.au/datasets/gnaf> .
 
 <http://example.com/datasets/sandgate> rdfs:label "Sandgate example dataset"@en ;
+    ns1:description "Example floods, roads, catchment and facilities in the Sandgate are"@en ;
     ns2:link "/s/datasets/sandgate" .
 
 <https://linked.data.gov.au/datasets/geofabric> rdfs:label "Australian Hydrological Geospatial Fabric"@en ;
+    ns1:description "The Australian national dataset of important hydrological features such as rivers, water bodies, aquifers and monitoring points"@en ;
     ns2:link "/s/datasets/geofabric" .
 
 <https://linked.data.gov.au/datasets/gnaf> rdfs:label "Geocoded National Address File"@en ;
+    ns1:description "The Australian Geocoded National Address File (G-NAF) is Australiaâs authoritative, geocoded address file. It is built and maintained by Geoscape Australia using authoritative government data.."@en ;
     ns2:link "/s/datasets/gnaf" .

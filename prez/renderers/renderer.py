@@ -7,7 +7,7 @@ from rdflib import Literal, Graph
 
 from prez.cache import tbox_cache
 from prez.services.sparql_new import get_annotation_properties
-from services.sparql_utils import sparql_construct
+from prez.services.sparql_utils import sparql_construct
 
 
 async def return_from_queries(

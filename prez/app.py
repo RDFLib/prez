@@ -1,13 +1,12 @@
 from textwrap import dedent
-from typing import Optional, List
+from typing import Optional
 from urllib.parse import quote_plus
 
 import uvicorn
-from fastapi import FastAPI, Request, HTTPException, Query
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse, RedirectResponse
-from fedsearch import SkosSearch, EndpointDetails
-from prez.services.spaceprez_service import list_datasets, list_collections
 from pydantic import AnyUrl
+from rdflib import Graph
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import PlainTextResponse
 
@@ -157,77 +156,77 @@ async def sparql_get(request: Request, query: Optional[str] = None):
     )
 
 
-@app.get("/search", summary="Search page")
-async def search(
-    request: Request,
-    search: Optional[str] = None,
-    endpoints: List[str] = Query(["self"]),
-):
-    """Displays the search page of Prez"""
-    # Concept search
-    if search is not None and search != "":
-        self_sparql_endpoint = str(request.base_url)[:-1] + "/sparql"
-        endpoint_details = []
-        for endpoint in endpoints:
-            if endpoint in [
-                e["url"] for e in SEARCH_ENDPOINTS
-            ]:  # only use valid endpoints
-                if endpoint == "self":
-                    endpoint_details.append(
-                        EndpointDetails(self_sparql_endpoint, None, None)
-                    )
-                else:
-                    endpoint_details.append(EndpointDetails(endpoint, None, None))
-        s = []
-        retries = 0
-        while retries < 3:
-            try:
-                s = await SkosSearch.federated_search(
-                    search, "preflabel", endpoint_details
-                )
-                break
-            except Exception:
-                retries += 1
-                continue
-        if retries == 3:
-            raise Exception("Max retries reached")
-        results = SkosSearch.combine_search_results(s, "preflabel")
-    else:
-        results = []
-
-    # CQL search
-    if "SpacePrez" in settings.ENABLED_PREZS:
-        dataset_sparql_result, collection_sparql_result = await asyncio.gather(
-            list_datasets(),
-            list_collections(),
-        )
-        datasets = [
-            {"id": result["id"]["value"], "title": result["label"]["value"]}
-            for result in dataset_sparql_result
-        ]
-        collections = [
-            {"id": result["id"]["value"], "title": result["label"]["value"]}
-            for result in collection_sparql_result
-        ]
-
-        template_context = {
-            "request": request,
-            "endpoint_options": SEARCH_ENDPOINTS,
-            "results": results,
-            "last_search_term": search,
-            "last_endpoints": endpoints,
-            "datasets": datasets,
-            "collections": collections,
-        }
-    else:
-        template_context = {
-            "request": request,
-            "endpoint_options": SEARCH_ENDPOINTS,
-            "results": results,
-            "last_search_term": search,
-            "last_endpoints": endpoints,
-        }
-    return templates.TemplateResponse("search.html", context=template_context)
+# @app.get("/search", summary="Search page")
+# async def search(
+#     request: Request,
+#     search: Optional[str] = None,
+#     endpoints: List[str] = Query(["self"]),
+# ):
+#     """Displays the search page of Prez"""
+#     # Concept search
+#     if search is not None and search != "":
+#         self_sparql_endpoint = str(request.base_url)[:-1] + "/sparql"
+#         endpoint_details = []
+#         for endpoint in endpoints:
+#             if endpoint in [
+#                 e["url"] for e in SEARCH_ENDPOINTS
+#             ]:  # only use valid endpoints
+#                 if endpoint == "self":
+#                     endpoint_details.append(
+#                         EndpointDetails(self_sparql_endpoint, None, None)
+#                     )
+#                 else:
+#                     endpoint_details.append(EndpointDetails(endpoint, None, None))
+#         s = []
+#         retries = 0
+#         while retries < 3:
+#             try:
+#                 s = await SkosSearch.federated_search(
+#                     search, "preflabel", endpoint_details
+#                 )
+#                 break
+#             except Exception:
+#                 retries += 1
+#                 continue
+#         if retries == 3:
+#             raise Exception("Max retries reached")
+#         results = SkosSearch.combine_search_results(s, "preflabel")
+#     else:
+#         results = []
+#
+#     # CQL search
+#     if "SpacePrez" in settings.ENABLED_PREZS:
+#         dataset_sparql_result, collection_sparql_result = await asyncio.gather(
+#             list_datasets(),
+#             list_collections(),
+#         )
+#         datasets = [
+#             {"id": result["id"]["value"], "title": result["label"]["value"]}
+#             for result in dataset_sparql_result
+#         ]
+#         collections = [
+#             {"id": result["id"]["value"], "title": result["label"]["value"]}
+#             for result in collection_sparql_result
+#         ]
+#
+#         template_context = {
+#             "request": request,
+#             "endpoint_options": SEARCH_ENDPOINTS,
+#             "results": results,
+#             "last_search_term": search,
+#             "last_endpoints": endpoints,
+#             "datasets": datasets,
+#             "collections": collections,
+#         }
+#     else:
+#         template_context = {
+#             "request": request,
+#             "endpoint_options": SEARCH_ENDPOINTS,
+#             "results": results,
+#             "last_search_term": search,
+#             "last_endpoints": endpoints,
+#         }
+#     return templates.TemplateResponse("search.html", context=template_context)
 
 
 @app.get("/about", summary="About page")

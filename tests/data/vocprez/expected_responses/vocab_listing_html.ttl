@@ -1,17 +1,19 @@
-@prefix ns1: <https://kurrawong.net/prez/> .
-@prefix ns2: <http://purl.org/dc/terms/> .
+@prefix ns1: <http://purl.org/dc/terms/> .
+@prefix ns2: <https://kurrawong.net/prez/> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<http://www.w3.org/2004/02/skos/core#ConceptScheme> ns1:count 2 .
+<http://www.w3.org/2004/02/skos/core#ConceptScheme> ns2:count 2 .
 
-ns1:memberList a rdf:Bag ;
+ns2:memberList a rdf:Bag ;
     rdfs:member <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype>,
         <https://linked.data.gov.au/def/warox-alteration-types> .
 
 <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> rdfs:label "Contact Type"@en ;
-    ns1:link "/v/vocab/contacttype" .
+    ns1:provenance "Original set of terms from the GeosciML standard" ;
+    ns2:link "/v/vocab/contacttype" .
 
 <https://linked.data.gov.au/def/warox-alteration-types> rdfs:label "WAROX Alteration Type"@en ;
-    ns1:link "/v/vocab/warox-alteration-type" .
+    ns1:provenance "This vocabulary was built on an extract of the WAROX system's lookup table"@en ;
+    ns2:link "/v/vocab/warox-alteration-type" .

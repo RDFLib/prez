@@ -8,14 +8,14 @@ from rdflib.namespace import GEO
 from starlette.requests import Request
 from starlette.responses import Response
 
-from models import SpatialItem, VocabItem, CatalogItem
+from prez.models import SpatialItem, VocabItem, CatalogItem
 from prez.cache import profiles_graph_cache
 from prez.services.sparql_new import select_profile_mediatype, generate_item_construct
 from prez.services.sparql_utils import (
     sparql_construct_non_async,
 )
-from renderers.renderer import return_from_graph
-from services.connegp_service import get_requested_profile_and_mediatype
+from prez.renderers.renderer import return_from_graph
+from prez.services.connegp_service import get_requested_profile_and_mediatype
 
 
 def create_profiles_graph(ENABLED_PREZS) -> Graph:
