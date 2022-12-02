@@ -152,7 +152,10 @@ async def prez_profiles(request: Request, prez_type) -> Response:
     ) = get_profiles_and_mediatypes(
         prez_classes[prez_type], req_profiles, req_mediatypes
     )
-    items = [prez_items[prez_type](uri=uri) for uri in avail_profile_uris]
+    items = [
+        prez_items[prez_type](uri=uri, url_path=str(request.url.path))
+        for uri in avail_profile_uris
+    ]
     queries = [
         generate_item_construct(profile, URIRef("http://kurrawong.net/profile/prez"))
         for profile in items

@@ -26,7 +26,9 @@ class VocabItem(BaseModel):
         url_path = values.get("url_path")
         uri = values.get("uri")
         url_parts = url_path.split("/")
-        if len(url_parts) == 5:
+        if len(url_parts) == 3:
+            id = None  # /v/profiles
+        elif len(url_parts) == 5:
             values["general_class"] = SKOS.Concept
             id = values.get("concept_id")
             scheme_id = values.get("scheme_id")
