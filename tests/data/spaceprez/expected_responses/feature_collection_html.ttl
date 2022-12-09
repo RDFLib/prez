@@ -2,7 +2,7 @@
 @prefix ns2: <http://www.opengis.net/ont/geosparql#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix ns3: <https://kurrawong.net/prez/> .
+@prefix ns3: <https://prez.dev/> .
 
 <http://example.com/datasets/sandgate/catchments> a ns2:FeatureCollection ;
     ns1:description "Hydrological catchments that are 'contracted', that is, guarenteed, to appear on multiple Geofabric surface hydrology data products"@en ;

@@ -4,7 +4,7 @@ from pydantic import BaseModel, root_validator
 from rdflib import Namespace
 from rdflib.namespace import URIRef, SKOS
 
-PREZ = Namespace("https://kurrawong.net/prez/")
+PREZ = Namespace("https://prez.dev/")
 
 
 class VocabMembers(BaseModel):

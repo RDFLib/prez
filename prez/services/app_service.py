@@ -50,36 +50,36 @@ async def healthcheck_sparql_endpoints(settings):
             else:
                 auth = None
             while not connected_to_prez_flavour:
+                # try:
+                #     response = httpx.head(
+                #         settings.sparql_creds[prez]["endpoint"], auth=auth
+                #     )
+                #     response.raise_for_status()
+                #     if response.reason_phrase == "OK":
+                #         print(
+                #             f"Successfully connected to {prez} endpoint {settings.sparql_creds[prez]['endpoint']}"
+                #         )
+                #         connected_to_prez_flavour = True
+                # except httpx.HTTPError:
                 try:
-                    response = httpx.head(
-                        settings.sparql_creds[prez]["endpoint"], auth=auth
+                    response = httpx.get(
+                        settings.sparql_creds[prez]["endpoint"],
+                        auth=auth,
+                        params={"query": "ASK {}"},
                     )
                     response.raise_for_status()
-                    if response.reason_phrase == "OK":
+                    if response.status_code == 200:
                         print(
                             f"Successfully connected to {prez} endpoint {settings.sparql_creds[prez]['endpoint']}"
                         )
                         connected_to_prez_flavour = True
-                except httpx.HTTPError:
-                    try:
-                        response = httpx.get(
-                            settings.sparql_creds[prez]["endpoint"],
-                            auth=auth,
-                            params={"query": "ASK {}"},
-                        )
-                        response.raise_for_status()
-                        if response.status_code == 200:
-                            print(
-                                f"Successfully connected to {prez} endpoint {settings.sparql_creds[prez]['endpoint']}"
-                            )
-                            connected_to_prez_flavour = True
-                    except httpx.HTTPError as exc:
-                        print(f"HTTP Exception for {exc.request.url} - {exc}")
-                        print(
-                            f"Failed to connect to {prez} endpoint {settings.sparql_creds[prez]}"
-                        )
-                        print("retrying in 3 seconds...")
-                        time.sleep(3)
+                except httpx.HTTPError as exc:
+                    print(f"HTTP Exception for {exc.request.url} - {exc}")
+                    print(
+                        f"Failed to connect to {prez} endpoint {settings.sparql_creds[prez]}"
+                    )
+                    print("retrying in 3 seconds...")
+                    time.sleep(3)
     else:
         raise ValueError(
             'No Prezs enabled - set one or more Prez SPARQL endpoint environment variables: ("SPACEPREZ_SPARQL_ENDPOINT",'

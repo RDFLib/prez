@@ -16,13 +16,120 @@ from prez.models import (
 ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
 
 
-def generate_listing_construct(
+def top_level_updates(topmost_classes: List[URIRef], general_classes: List[URIRef]):
+    """ """
+    update = f"""PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX dcat: <http://www.w3.org/ns/dcat#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prez: <https://prez.dev/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+INSERT {{
+    GRAPH prez:system-graph {{?support_graph_uri prez:hasContextFor ?instance_of_main_class . }}
+	GRAPH ?support_graph_uri {{?collectionList rdfs:member ?instance_of_main_class .
+    	?instance_of_main_class dcterms:identifier ?prez_id . }}
+}}
+WHERE {{
+  {{  ?instance_of_main_class a ?general_class .
+    VALUES ?general_class {{ {(chr(10)+2*chr(9)).join('<'+uri+'>' for uri in general_classes)}\n }}
+    MINUS {{ GRAPH prez:system-graph {{?a_context_graph prez:hasContextFor ?instance_of_main_class}} }}
+  }}
+  OPTIONAL {{?instance_of_main_class a ?topmost_class
+    VALUES ?topmost_class {{ {(chr(10)+2*chr(9)).join('<'+uri+'>' for uri in topmost_classes)}\n }}
+  }}
+  BIND(
+    IF(?topmost_class=dcat:Dataset, prez:DatasetList,
+      IF(?topmost_class=dcat:Catalog,prez:CatalogList,
+        IF(?topmost_class=skos:ConceptScheme,prez:SchemesList,
+          IF(?topmost_class=skos:Collection,prez:VocPrezCollectionList,"")))) AS ?collectionList)
+  OPTIONAL {{?instance_of_main_class dcterms:identifier ?id
+    BIND(DATATYPE(?id) AS ?dtype_id)
+    FILTER(?dtype_id = xsd:token)
+  }}
+  BIND(STRDT(COALESCE(?id,MD5(STR(?instance_of_main_class))), prez:slug) AS ?prez_id)
+  BIND(URI(CONCAT(STR(?instance_of_main_class),"#support-graph")) AS ?support_graph_uri)
+}}"""
+    return update
+
+
+# startup check
+def construct_main_classes_and_context_graphs(general_classes: List[URIRef]):
+    """
+    Checks the backend for the existence of some classes
+    """
+    query = f"""PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prez: <https://prez.dev/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+CONSTRUCT {{ ?instance_of_main_class a ?general_class ;
+    dcterms:identifier ?id_token, ?id_prez_slug .
+    ?context_graph prez:hasContextFor ?instance_of_main_class }}
+WHERE {{
+{{  ?instance_of_main_class a ?general_class .
+    ?instance_of_main_class dcterms:identifier ?id_token .
+    VALUES ?general_class {{ {(chr(10)+2*chr(9)).join('<'+uri+'>' for uri in general_classes)}\n}}
+    }}
+    BIND(DATATYPE(?id_token) as ?token_dtype)
+    FILTER(?token_dtype = xsd:token)
+    OPTIONAL {{ {{ GRAPH prez:system-graph {{ ?context_graph prez:hasContextFor ?instance_of_main_class .
+    ?instance_of_main_class dcterms:identifier ?id_prez_slug . }}
+    BIND(DATATYPE(?id_prez_slug) as ?slug_dtype)
+    FILTER(?slug_dtype = prez:slug) }} }} }}"""
+    return query
+
+
+def construct_instances_without_context_graph():
+    """
+    Also returns existing identifiers in use.
+    """
+    query = """PREFIX prez: <https://prez.dev/>
+CONSTRUCT { ?instance a ?class }
+WHERE { ?instance a ?class ;
+    MINUS
+    { ?context_graph prez:hasContextFor ?instance }
+}"""
+    return query
+
+
+def generate_listing_construct_from_general_class(
     parent_item,
     profile,
     page: Optional[int] = 1,
     per_page: Optional[int] = 20,
 ):
     """
+    For a given general class, find instances of this class.
+    Generates a SPARQL construct query for a listing of items
+    """
+    construct_query = f"""PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prez: <https://prez.dev/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+CONSTRUCT {{
+<{parent_item.uri}> rdfs:member ?item .'
+?item a <{parent_item.general_class}> ;
+    dcterms:identifier ?id }}
+WHERE {{
+<{parent_item.uri}> rdfs:member ?item .'
+?item a <{parent_item.general_class}> ;
+    dcterms:identifier ?id }}
+
+    }} {f"LIMIT {per_page} OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
+    """
+    return construct_query
+
+
+def generate_listing_construct_from_uri(
+    parent_item,
+    profile,
+    page: Optional[int] = 1,
+    per_page: Optional[int] = 20,
+):
+    """
+    For a given URI, finds items with the specified relation(s).
     Generates a SPARQL construct query for a listing of items, including labels
     """
     (
@@ -40,7 +147,7 @@ def generate_listing_construct(
     ):
         return ""
     construct_query = f"""PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX prez: <https://kurrawong.net/prez/>
+PREFIX prez: <https://prez.dev/>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
@@ -63,8 +170,6 @@ CONSTRUCT {{
 WHERE {{
 {generate_outbound_predicates(parent_item, outbound_children, outbound_parents)} \
 {generate_inbound_predicates(parent_item, inbound_children, inbound_parents)} \
-    {f'''?item a <{parent_item.general_class}> .
-    ?item dcterms:identifier ?outbound_id . ''' if not parent_item.uri else ""}
     ?item rdfs:label|dcterms:title|skos:prefLabel ?label .
 {generate_id_listing_binds(parent_item, inbound_children, inbound_parents, outbound_children, outbound_parents)}
     }} {f"LIMIT {per_page} OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
@@ -310,7 +415,7 @@ def generate_listing_count_construct(
     2. the number of instances of a general class, given a general class.
     """
     if item.uri:
-        query_implicit = f"""PREFIX prez: <https://kurrawong.net/prez/>
+        query_implicit = f"""PREFIX prez: <https://prez.dev/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
 CONSTRUCT {{ <{item.uri}> prez:count ?count }}
@@ -321,7 +426,7 @@ WHERE {{
 }}"""
         return query_implicit
     else:  # item.selected_class
-        query = f"""PREFIX prez: <https://kurrawong.net/prez/>
+        query = f"""PREFIX prez: <https://prez.dev/>
 
 CONSTRUCT {{ <{item.general_class}> prez:count ?count }}
 WHERE {{
@@ -336,6 +441,8 @@ def get_relevant_shape_bns_for_profile(selected_class, profile):
     """
     Gets the shape blank nodes URIs from the profiles graph for a given profile.
     """
+    if not profile:
+        return None
     shape_bns = list(
         profiles_graph_cache.objects(
             subject=profile,
@@ -491,7 +598,7 @@ PREFIX geo: <http://www.opengis.net/ont/geosparql#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX prez: <https://kurrawong.net/prez/>
+PREFIX prez: <https://prez.dev/>
 
 SELECT ?profile ?title ?class (count(?mid) as ?distance) ?req_profile ?def_profile ?format ?req_format ?def_format ?token
 
@@ -548,6 +655,6 @@ def startup_count_objects():
     """
     Retrieves hardcoded counts for collections in the dataset (feature collections, datasets etc.)
     """
-    return f"""PREFIX prez: <https://kurrawong.net/prez/>
+    return f"""PREFIX prez: <https://prez.dev/>
 CONSTRUCT {{ ?collection prez:count ?count }}
 WHERE {{ ?collection prez:count ?count }}"""

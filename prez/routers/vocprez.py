@@ -6,7 +6,7 @@ from prez.profiles.generate_profiles import get_profiles_and_mediatypes, prez_pr
 from prez.renderers.renderer import return_from_queries
 from prez.services.connegp_service import get_requested_profile_and_mediatype
 from prez.services.sparql_new import (
-    generate_listing_construct,
+    generate_listing_construct_from_uri,
     generate_listing_count_construct,
     generate_item_construct,
 )
@@ -34,7 +34,9 @@ async def schemes_endpoint(
     ) = get_profiles_and_mediatypes(
         vocprez_members.classes, req_profiles, req_mediatypes
     )
-    list_query = generate_listing_construct(vocprez_members, profile, page, per_page)
+    list_query = generate_listing_construct_from_uri(
+        vocprez_members, profile, page, per_page
+    )
     count_query = generate_listing_count_construct(vocprez_members)
     return await return_from_queries(
         [list_query, count_query], mediatype, profile, profile_headers, "VocPrez"
@@ -43,7 +45,7 @@ async def schemes_endpoint(
 
 @router.get("/v/vocab/{scheme_id}", summary="Get ConceptScheme")
 @router.get("/v/scheme/{scheme_id}", summary="Get ConceptScheme")
-async def vocprez_collection(request: Request, scheme_id: str):
+async def vocprez_scheme(request: Request, scheme_id: str):
     return await item_endpoint(request)
 
 
@@ -68,7 +70,7 @@ async def item_endpoint(
         _,
     ) = get_profiles_and_mediatypes(vp_item.classes, req_profiles, req_mediatypes)
     item_query = generate_item_construct(vp_item, profile)
-    item_members_query = generate_listing_construct(vp_item, profile, 1, 100)
+    item_members_query = generate_listing_construct_from_uri(vp_item, profile, 1, 100)
     return await return_from_queries(
         [item_query, item_members_query], mediatype, profile, profile_headers, "VocPrez"
     )

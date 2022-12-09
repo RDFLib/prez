@@ -5,7 +5,7 @@ from fastapi import Form
 from fastapi.responses import JSONResponse, RedirectResponse
 from rdflib import Namespace
 
-PREZ = Namespace("https://kurrawong.net/prez/")
+PREZ = Namespace("https://prez.dev/")
 
 router = APIRouter(tags=["CQL"])
 

@@ -8,7 +8,7 @@ from rdflib.namespace import DCTERMS, XSD, DCAT, GEO, RDFS
 
 from prez.services.sparql_utils import sparql_query_non_async
 
-PREZ = Namespace("https://kurrawong.net/prez/")
+PREZ = Namespace("https://prez.dev/")
 
 BaseConfig.arbitrary_types_allowed = True
 

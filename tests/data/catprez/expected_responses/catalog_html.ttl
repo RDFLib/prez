@@ -1,6 +1,6 @@
 @prefix ns1: <http://www.w3.org/ns/prov#> .
 @prefix ns2: <http://purl.org/dc/terms/> .
-@prefix ns3: <https://kurrawong.net/prez/> .
+@prefix ns3: <https://prez.dev/> .
 @prefix ns4: <http://www.w3.org/ns/dcat#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .

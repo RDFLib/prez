@@ -38,10 +38,8 @@ def a_dataset_link(sp_test_client):
         # get link for first dataset
         r = client.get("/s/datasets")
         g = Graph().parse(data=r.text)
-        member_uri = g.value(
-            URIRef("https://kurrawong.net/prez/memberList"), RDFS.member, None
-        )
-        link = g.value(member_uri, URIRef(f"https://kurrawong.net/prez/link", None))
+        member_uri = g.value(URIRef("https://prez.dev/memberList"), RDFS.member, None)
+        link = g.value(member_uri, URIRef(f"https://prez.dev/link", None))
         return link
 
 
@@ -54,7 +52,7 @@ def an_fc_link(sp_test_client, a_dataset_link):
     member_uri = g.value(
         URIRef("http://example.com/datasets/sandgate"), RDFS.member, None
     )
-    link = g.value(member_uri, URIRef(f"https://kurrawong.net/prez/link", None))
+    link = g.value(member_uri, URIRef(f"https://prez.dev/link", None))
     return link
 
 
@@ -66,7 +64,7 @@ def a_feature_link(sp_test_client, an_fc_link):
         member_uri = g.value(
             URIRef("http://example.com/datasets/sandgate/catchments"), RDFS.member, None
         )
-        link = g.value(member_uri, URIRef(f"https://kurrawong.net/prez/link", None))
+        link = g.value(member_uri, URIRef(f"https://prez.dev/link", None))
         return link
 
 
@@ -76,9 +74,7 @@ def a_dataset_uri(sp_test_client):
     with sp_test_client as client:
         r = client.get("/datasets")
         g = Graph().parse(data=r.text)
-        member_uri = g.value(
-            URIRef("https://kurrawong.net/prez/memberList"), RDFS.member, None
-        )
+        member_uri = g.value(URIRef("https://prez.dev/memberList"), RDFS.member, None)
         return member_uri
 
 
@@ -158,18 +154,3 @@ def test_feature_listing_html(sp_test_client, an_fc_link):
         assert response_graph.isomorphic(expected_graph), print(
             f"Graph delta:{(expected_graph - response_graph).serialize()}"
         )
-
-
-# def test_object_endpoint_dataset(sp_test_client, a_dataset_uri):
-#     r = sp_test_client.get(f"/object?uri={a_dataset_uri}")
-#     assert f'<a href="{a_dataset_uri}"' in r.text
-#
-#
-# def test_object_endpoint_feature_collection(sp_test_client, an_fc_uri):
-#     r = sp_test_client.get(f"/object?uri={an_fc_uri}")
-#     assert f'<a href="{an_fc_uri}"' in r.text
-#
-#
-# def test_object_endpoint_feature(sp_test_client, a_feature_uri):
-#     r = sp_test_client.get(f"/object?uri={a_feature_uri}")
-#     assert f'<a href="{a_feature_uri}"' in r.text

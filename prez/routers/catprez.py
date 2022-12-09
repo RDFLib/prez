@@ -6,7 +6,7 @@ from prez.profiles.generate_profiles import get_profiles_and_mediatypes, prez_pr
 from prez.renderers.renderer import return_from_queries
 from prez.services.connegp_service import get_requested_profile_and_mediatype
 from prez.services.sparql_new import (
-    generate_listing_construct,
+    generate_listing_construct_from_uri,
     generate_listing_count_construct,
     generate_item_construct,
 )
@@ -32,7 +32,9 @@ async def catalogs_endpoint(
     ) = get_profiles_and_mediatypes(
         catprez_members.classes, req_profiles, req_mediatypes
     )
-    list_query = generate_listing_construct(catprez_members, profile, page, per_page)
+    list_query = generate_listing_construct_from_uri(
+        catprez_members, profile, page, per_page
+    )
     count_query = generate_listing_count_construct(catprez_members)
     return await return_from_queries(
         [list_query, count_query], mediatype, profile, profile_headers, "CatPrez"
@@ -55,7 +57,7 @@ async def item_endpoint(
         _,
     ) = get_profiles_and_mediatypes(cp_item.classes, req_profiles, req_mediatypes)
     item_query = generate_item_construct(cp_item, profile)
-    item_members_query = generate_listing_construct(cp_item, profile, 1, 100)
+    item_members_query = generate_listing_construct_from_uri(cp_item, profile, 1, 100)
     return await return_from_queries(
         [item_query, item_members_query], mediatype, profile, profile_headers, "CatPrez"
     )

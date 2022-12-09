@@ -10,7 +10,7 @@ from rdflib import Graph
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import PlainTextResponse
 
-from prez.cache import tbox_cache, api_info_graph
+from prez.cache import tbox_cache
 from prez.config import Settings
 from prez.models.api_model import populate_api_info
 from prez.profiles.generate_profiles import create_profiles_graph
@@ -19,7 +19,7 @@ from prez.routers.catprez import router as catprez_router
 from prez.routers.cql import router as cql_router
 from prez.routers.spaceprez import router as spaceprez_router
 from prez.routers.vocprez import router as vocprez_router
-from prez.services.app_service import *
+from prez.services.app_service import healthcheck_sparql_endpoints, count_objects
 
 
 async def catch_400(request: Request, exc):
@@ -52,7 +52,6 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
-
 app.include_router(cql_router)
 if settings.catprez_sparql_endpoint:
     app.include_router(catprez_router)
@@ -73,7 +72,7 @@ async def app_startup():
     await healthcheck_sparql_endpoints(settings)
     create_profiles_graph(settings.enabled_prezs)
     await count_objects(settings)
-    populate_api_info(settings.enabled_prezs, settings.system_uri)
+    await populate_api_info(settings)
 
 
 @app.on_event("shutdown")
@@ -90,7 +89,13 @@ async def app_shutdown():
 async def index(request: Request):
     """Returns the following information about the API"""
     # TODO connegp on request. don't need profiles for this
-    return await return_rdf(api_info_graph, mediatype="text/turtle")
+    from prez.cache import (
+        prez_system_graph,
+    )  # importing at module level will get the empty graph before it's populated
+
+    return await return_rdf(
+        prez_system_graph, mediatype="text/turtle", profile_headers=None
+    )
 
 
 def _get_sparql_service_description(request, format):
@@ -229,21 +234,6 @@ async def sparql_get(request: Request, query: Optional[str] = None):
 #     return templates.TemplateResponse("search.html", context=template_context)
 
 
-@app.get("/about", summary="About page")
-async def about(request: Request):
-    """Displays the about page of Prez"""
-    if len(settings.ENABLED_PREZS) == 1:
-        if settings.ENABLED_PREZS[0] == "VocPrez":
-            return await vocprez_router.about(request)
-        elif settings.ENABLED_PREZS[0] == "SpacePrez":
-            return await spaceprez_router.spaceprez_about(request)
-        elif settings.ENABLED_PREZS[0] == "CatPrez":
-            return await catprez_router.catprez_about(request)
-    else:
-        template_context = {"request": request}
-        return templates.TemplateResponse("about.html", context=template_context)
-
-
 @app.get("/prezs", summary="Enabled Prezs")
 async def prezs(request: Request):
     """Returns a list of the enabled *Prez 'modules'"""
@@ -261,13 +251,7 @@ async def prezs(request: Request):
 @app.get("/profiles", summary="Profiles")
 async def profiles(request: Request):
     """Returns a list of profiles recognised by Prez"""
-    if len(settings.ENABLED_PREZS) == 1:
-        if settings.ENABLED_PREZS[0] == "VocPrez":
-            return await profiles_func(request, "VocPrez")
-        elif settings.ENABLED_PREZS[0] == "SpacePrez":
-            return await profiles_func(request, "SpacePrez")
-    else:
-        return await profiles_func(request)
+    pass
 
 
 @app.get("/object", summary="Get object", response_class=RedirectResponse)
@@ -278,60 +262,49 @@ async def object(
     _mediatype: Optional[str] = None,
 ):
     """Generic endpoint to get any object. Returns the appropriate endpoint based on type"""
+    pass
     # query to get basic info for object
-    sparql_response = await get_object(uri)
-    if len(sparql_response) == 0:
-        raise HTTPException(status_code=404, detail="Not Found")
-    params = (
-        str(request.query_params)
-        .replace(f"&uri={quote_plus(uri)}", "")
-        .replace(f"uri={quote_plus(uri)}", "")  # if uri param at start of query string
-    )
-    # removes the leftover "?" if no other params than uri
-    if params != "":
-        params = "?" + params[1:]  # will start with & instead of ?
-    object_types = [URIRef(item["type"]["value"]) for item in sparql_response]
-    # object_type = URIRef(sparql_response[0]["type"]["value"])
-
-    # return according to type (IF appropriate prez module is enabled)
-    for object_type in object_types:
-        if object_type == SKOS.ConceptScheme:
-            if "VocPrez" not in settings.ENABLED_PREZS:
-                raise HTTPException(status_code=404, detail="Not Found")
-            return await vocprez_router.item_endpoint(request)
-        elif object_type == SKOS.Collection:
-            if "VocPrez" not in settings.ENABLED_PREZS:
-                raise HTTPException(status_code=404, detail="Not Found")
-            return await vocprez_router.collection(request)
-        elif object_type == SKOS.Concept:
-            if "VocPrez" not in settings.ENABLED_PREZS:
-                raise HTTPException(status_code=404, detail="Not Found")
-            return await vocprez_router.concept(request)
-        elif object_type in [
-            GEO.Feature,
-            GEO.FeatureCollection,
-            DCAT.Dataset,
-        ]:  # TODO DCAT.Dataset will need some more thought
-            if "SpacePrez" not in settings.ENABLED_PREZS:
-                raise HTTPException(status_code=404, detail="Not Found")
-            return RedirectResponse(
-                f"/s/object?{request.url.components.query}", headers=request.headers
-            )
-        # else:
-    raise HTTPException(status_code=404, detail="Not Found")
-
-
-@app.get("/health", summary="Health Check")
-async def health(request: Request):
-    """Returns the status of endpoints & connected triplestores"""
-    return JSONResponse(
-        content={
-            "isHealthy": True,
-        },
-        media_type="application/json",
-        headers=request.headers,
-    )
+    # sparql_response = await get_object(uri)
+    # if len(sparql_response) == 0:
+    #     raise HTTPException(status_code=404, detail="Not Found")
+    # params = (
+    #     str(request.query_params)
+    #     .replace(f"&uri={quote_plus(uri)}", "")
+    #     .replace(f"uri={quote_plus(uri)}", "")  # if uri param at start of query string
+    # )
+    # # removes the leftover "?" if no other params than uri
+    # if params != "":
+    #     params = "?" + params[1:]  # will start with & instead of ?
+    # object_types = [URIRef(item["type"]["value"]) for item in sparql_response]
+    # # object_type = URIRef(sparql_response[0]["type"]["value"])
+    #
+    # # return according to type (IF appropriate prez module is enabled)
+    # for object_type in object_types:
+    #     if object_type == SKOS.ConceptScheme:
+    #         if "VocPrez" not in settings.ENABLED_PREZS:
+    #             raise HTTPException(status_code=404, detail="Not Found")
+    #         return await vocprez_router.item_endpoint(request)
+    #     elif object_type == SKOS.Collection:
+    #         if "VocPrez" not in settings.ENABLED_PREZS:
+    #             raise HTTPException(status_code=404, detail="Not Found")
+    #         return await vocprez_router.collection(request)
+    #     elif object_type == SKOS.Concept:
+    #         if "VocPrez" not in settings.ENABLED_PREZS:
+    #             raise HTTPException(status_code=404, detail="Not Found")
+    #         return await vocprez_router.concept(request)
+    #     elif object_type in [
+    #         GEO.Feature,
+    #         GEO.FeatureCollection,
+    #         DCAT.Dataset,
+    #     ]:  # TODO DCAT.Dataset will need some more thought
+    #         if "SpacePrez" not in settings.ENABLED_PREZS:
+    #             raise HTTPException(status_code=404, detail="Not Found")
+    #         return RedirectResponse(
+    #             f"/s/object?{request.url.components.query}", headers=request.headers
+    #         )
+    #     # else:
+    # raise HTTPException(status_code=404, detail="Not Found")
 
 
 if __name__ == "__main__":
-    uvicorn.run("app:app", port=8000, host=settings.system_uri, reload=True)
+    uvicorn.run("app:app", port=settings.port, host=settings.host, reload=True)

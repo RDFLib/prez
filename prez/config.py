@@ -108,6 +108,8 @@ from pydantic import (
     validator,
     root_validator,
 )
+from rdflib import DCAT, SKOS
+from rdflib.namespace import GEO
 
 
 class Settings(BaseSettings):
@@ -120,8 +122,15 @@ class Settings(BaseSettings):
     spaceprez_sparql_password: Optional[str]
     catprez_sparql_password: Optional[str]
     vocprez_sparql_password: Optional[str]
-    system_uri: str = "localhost"
-    # enabled_prezs: Optionallist
+    protocol: str = "http"
+    host: str = "localhost"
+    port: int = 8000
+    system_uri: Optional[str]
+    top_level_classes: Optional[dict]
+    collection_classes: Optional[dict]
+    general_classes: Optional[dict]
+    enabled_prezs: Optional[list]
+    generate_context: bool = False
     cql_props: dict = {
         "title": {
             "title": "Title",
@@ -134,6 +143,14 @@ class Settings(BaseSettings):
             "type": "string",
         },
     }
+
+    @root_validator()
+    def set_system_uri(cls, values):
+        if not values.get("system_uri"):
+            values[
+                "system_uri"
+            ] = f"{values['protocol']}://{values['host']}:{values['port']}"
+        return values
 
     @root_validator()
     def check_endpoints(cls, values):
@@ -149,11 +166,11 @@ class Settings(BaseSettings):
         ]
         if len(values["enabled_prezs"]) == 0:
             raise ValueError(
-                "one or more of spaceprez, vocprez, or catprez SPARQL endpoints are required"
+                "one or more of spaceprez, vocprez, or catprez SPARQL endpoints are required for Prez to start."
             )
         return values
 
-    @root_validator()  # TODO refactor as JSON config
+    @root_validator()
     def populate_sparql_creds(cls, values):
         values["sparql_creds"] = {
             "CatPrez": {},
@@ -166,4 +183,44 @@ class Settings(BaseSettings):
                 value = values[key]
                 if value:
                     values["sparql_creds"][prez][attr] = value
+        return values
+
+    @root_validator()
+    def populate_top_level_classes(cls, values):
+        top_level_classes = {
+            "SpacePrez": [DCAT.Dataset],
+            "VocPrez": [SKOS.ConceptScheme, SKOS.Collection],
+            "CatPrez": [DCAT.Catalog],
+        }
+        values["top_level_classes"] = {}
+        for prez in values["enabled_prezs"]:
+            values["top_level_classes"][prez] = top_level_classes[prez]
+        return values
+
+    @root_validator()
+    def populate_collection_classes(cls, values):
+        additional_classes = {
+            "SpacePrez": [GEO.FeatureCollection],
+            "VocPrez": [],
+            "CatPrez": [DCAT.Resource],
+        }
+        values["collection_classes"] = {}
+        for prez in values["enabled_prezs"]:
+            values["collection_classes"][prez] = (
+                values["top_level_classes"].get(prez) + additional_classes[prez]
+            )
+        return values
+
+    @root_validator()
+    def populate_general_classes(cls, values):
+        additional_classes = {
+            "SpacePrez": [GEO.Feature],
+            "VocPrez": [SKOS.Concept],
+            "CatPrez": [DCAT.Dataset],
+        }
+        values["general_classes"] = {}
+        for prez in values["enabled_prezs"]:
+            values["general_classes"][prez] = (
+                values["collection_classes"].get(prez) + additional_classes[prez]
+            )
         return values

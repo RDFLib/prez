@@ -1,23 +1,32 @@
+import os
 import subprocess
-import sys
 from pathlib import Path
 from time import sleep
 
 import pytest
-from rdflib import SKOS
+from rdflib import Graph, URIRef, RDFS, SKOS
 
-from prez.services.sparql_new import *
+from models import SpatialItem
+from services.sparql_new import (
+    generate_bnode_construct,
+    generate_bnode_select,
+    generate_item_construct,
+    generate_include_predicates,
+    get_annotations_from_tbox_cache,
+    get_item_predicates,
+)
 
-PREZ_DIR = Path(__file__).parent.parent.parent.absolute() / "prez"
-LOCAL_SPARQL_STORE = Path(Path(__file__).parent.parent / "local_sparql_store/store.py")
-sys.path.insert(0, str(PREZ_DIR.parent.absolute()))
+PREZ_DIR = os.getenv("PREZ_DIR")
+LOCAL_SPARQL_STORE = os.getenv("LOCAL_SPARQL_STORE")
 from fastapi.testclient import TestClient
+
+# https://www.python-httpx.org/advanced/#calling-into-python-web-apps
 
 
 @pytest.fixture(scope="module")
-def sparql_test_client(request):
+def sp_test_client(request):
     print("Run Local SPARQL Store")
-    p1 = subprocess.Popen(["python", str(LOCAL_SPARQL_STORE), "-p", "3033"])
+    p1 = subprocess.Popen(["python", str(LOCAL_SPARQL_STORE), "-p", "3032"])
     sleep(1)
 
     def teardown():
@@ -27,26 +36,16 @@ def sparql_test_client(request):
     request.addfinalizer(teardown)
 
     # must only import app after config.py has been altered above so config is retained
+
     from prez.app import app
 
     return TestClient(app)
 
 
-@pytest.fixture(scope="module")
-def sparql_vocab_id(sparql_test_client):
-    r = sparql_test_client.get("/vocab")
-    g = Graph().parse(data=r.text)
-    vocab_uri = g.value(
-        URIRef("https://kurrawong.net/prez/memberList"), RDFS.member, None
-    )
-    vocab_id = g.value(vocab_uri, DCTERMS.identifier, None)
-    return vocab_id
-
-
 def test_generate_bnode_construct():
     depth = 4
     returned = generate_bnode_construct(depth)
-    expected = """	?o1 ?p2 ?o2 .
+    expected = """\n\t?o1 ?p2 ?o2 .
 	?o2 ?p3 ?o3 .
 	?o3 ?p4 ?o4 .
 	?o4 ?p5 ?o5 ."""
@@ -77,8 +76,7 @@ def test_generate_bnode_select():
 
 def test_generate_construct_open():
     item = SpatialItem(uri=URIRef("http://example.com"))
-    profile = {"bnode_depth": 2}
-    returned = generate_item_construct(item, profile)
+    returned = generate_item_construct(item, None)
     expected = """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
 CONSTRUCT {
@@ -118,10 +116,10 @@ def test_generate_include_predicates():
     assert returned == expected
 
 
-@pytest.mark.asyncio
-async def test_get_labels():
-    spaceprez_graph = load_spaceprez_graph()
-    labels_queries = await get_annotation_properties(spaceprez_graph)
+# @pytest.mark.asyncio
+# async def test_get_labels():
+#     spaceprez_graph = load_spaceprez_graph()
+#     labels_queries = await get_annotation_properties(spaceprez_graph)
 
 
 def test_get_labels_from_tbox_cache():
@@ -209,10 +207,9 @@ WHERE {
 
 
 def test_get_profile_predicates_sequence(sp_test_client):
-    profile_uri = URIRef("https://w3id.org/profile/vocpub")
-    profile = {"uri": profile_uri}
+    profile = URIRef("https://w3id.org/profile/vocpub")
     general_class = SKOS.ConceptScheme
-    preds = get_profile_predicates(profile, general_class)
+    preds = get_item_predicates(profile, general_class)
     assert preds[3] == [
         [
             URIRef("http://www.w3.org/2000/01/rdf-schema#member"),

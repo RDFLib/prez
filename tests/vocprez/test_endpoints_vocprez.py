@@ -36,9 +36,7 @@ def a_vocab_id(vp_test_client):
     with vp_test_client as client:
         r = client.get("/v/vocab")
         g = Graph().parse(data=r.text)
-        vocab_uri = g.value(
-            URIRef("https://kurrawong.net/prez/memberList"), RDFS.member, None
-        )
+        vocab_uri = g.value(URIRef("https://prez.dev/memberList"), RDFS.member, None)
         vocab_id = g.value(vocab_uri, DCTERMS.identifier, None)
         return vocab_id
 
@@ -49,7 +47,7 @@ def a_vocab_id_and_a_concept_id(vp_test_client, a_vocab_id):
     # r = vp_test_client.get(f"/vocab/{a_vocab_id}")
     # g = Graph().parse(data=r.text)
     # concept_uri = g.objects(
-    #     URIRef("https://kurrawong.net/prez/memberList"), RDFS.member, None
+    #     URIRef("https://prez.dev/memberList"), RDFS.member, None
     #     )
     # vocab_id = g
     # patt = f'<a href="http://testserver/vocab/{a_vocab_id}/(.*)">'

@@ -6,7 +6,7 @@ from rdflib.namespace import URIRef, GEO
 
 from prez.services.sparql_utils import sparql_query_non_async
 
-PREZ = Namespace("https://kurrawong.net/prez/")
+PREZ = Namespace("https://prez.dev/")
 
 
 class SpatialMembers(BaseModel):

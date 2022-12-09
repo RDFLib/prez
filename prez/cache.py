@@ -9,6 +9,6 @@ else:
 
 profiles_graph_cache = Graph()
 
-api_info_graph = Graph()
+prez_system_graph = Graph()
 
 counts_graph = Graph()

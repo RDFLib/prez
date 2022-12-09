@@ -39,10 +39,8 @@ def a_catalog_link(cp_test_client):
         # get link for first catalog
         r = client.get("/c/catalogs")
         g = Graph().parse(data=r.text)
-        member_uri = g.value(
-            URIRef("https://kurrawong.net/prez/memberList"), RDFS.member, None
-        )
-        link = g.value(member_uri, URIRef(f"https://kurrawong.net/prez/link", None))
+        member_uri = g.value(URIRef("https://prez.dev/memberList"), RDFS.member, None)
+        link = g.value(member_uri, URIRef(f"https://prez.dev/link", None))
         return link
 
 
@@ -51,9 +49,7 @@ def a_resource_link(cp_test_client, a_catalog_link):
     with cp_test_client as client:
         r = client.get("/c/catalogs/idnac")
         g = Graph().parse(data=r.text)
-        link = [
-            i for i in g.objects(None, URIRef(f"https://kurrawong.net/prez/link", None))
-        ][0]
+        link = [i for i in g.objects(None, URIRef(f"https://prez.dev/link", None))][0]
         return link
 
 

@@ -1,4 +1,4 @@
-@prefix ns1: <https://kurrawong.net/prez/> .
+@prefix ns1: <https://prez.dev/> .
 @prefix ns2: <http://www.opengis.net/ont/geosparql#> .
 @prefix ns3: <http://purl.org/dc/terms/> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .

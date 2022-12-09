@@ -10,13 +10,19 @@ from prez.renderers.renderer import return_from_queries
 from prez.services.connegp_service import get_requested_profile_and_mediatype
 from prez.services.sparql_new import (
     generate_item_construct,
-    generate_listing_construct,
+    generate_listing_construct_from_uri,
     generate_listing_count_construct,
 )
 
-PREZ = Namespace("https://kurrawong.net/prez/")
+PREZ = Namespace("https://prez.dev/")
 
 router = APIRouter(tags=["SpacePrez"])
+
+
+@router.get("/s", summary="SpacePrez Home")
+async def spaceprez_home(request: Request):
+
+    return await prez_profiles(request, "SpacePrez")
 
 
 @router.get("/s/profiles", summary="SpacePrez Profiles")
@@ -39,7 +45,9 @@ async def list_items(
         profile_headers,
         _,
     ) = get_profiles_and_mediatypes(spatial_item.classes, req_profiles, req_mediatypes)
-    list_query = generate_listing_construct(spatial_item, profile, page, per_page)
+    list_query = generate_listing_construct_from_uri(
+        spatial_item, profile, page, per_page
+    )
     count_query = generate_listing_count_construct(spatial_item)
     return await return_from_queries(
         [list_query, count_query], mediatype, profile, profile_headers, "SpacePrez"
@@ -109,7 +117,7 @@ async def item_endpoint(request: Request):
         _,
     ) = get_profiles_and_mediatypes(item.classes, req_profiles, req_mediatypes)
     item_query = generate_item_construct(item, profile)
-    item_members_query = generate_listing_construct(item, profile, 1, 10)
+    item_members_query = generate_listing_construct_from_uri(item, profile, 1, 10)
     return await return_from_queries(
         [item_query, item_members_query],
         mediatype,

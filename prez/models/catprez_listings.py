@@ -4,7 +4,7 @@ from pydantic import BaseModel, root_validator
 from rdflib import Namespace, URIRef
 from rdflib.namespace import DCAT
 
-PREZ = Namespace("https://kurrawong.net/prez/")
+PREZ = Namespace("https://prez.dev/")
 
 
 class CatalogMembers(BaseModel):
