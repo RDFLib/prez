@@ -154,14 +154,14 @@ class CQLSearch(object):
 
         if self.datasets != "":
             self.dataset_query = f"""
-                VALUES ?d_id {{{" ".join([f'"{d.strip()}"^^xsd:token' for d in self.datasets.split(',')])}}}
+                VALUES ?d_id {{{" ".join([f'"{d.strip()}"^^prez:slug' for d in self.datasets.split(',')])}}}
             """
 
         self.collection_query = ""
 
         if self.collections != "":
             self.collection_query = f"""
-                VALUES ?coll_id {{{" ".join([f'"{coll.strip()}"^^xsd:token' for coll in self.collections.split(',')])}}}
+                VALUES ?coll_id {{{" ".join([f'"{coll.strip()}"^^prez:slug' for coll in self.collections.split(',')])}}}
             """
 
         # TODO run regex at once, then separately parse components

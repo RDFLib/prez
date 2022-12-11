@@ -26,6 +26,7 @@ class SpatialMembers(BaseModel):
             values["general_class"] = DCAT.Dataset
             values["link_constructor"] = "/s/datasets"
             values["classes"] = frozenset([PREZ.DatasetList])
+            values["uri"] = PREZ.DatasetList
         elif n_url_path_components == 5:  # /s/datasets/{dataset_id}/collections
             dataset_id = values.get("dataset_id")
             values["general_class"] = GEO.FeatureCollection
@@ -52,12 +53,13 @@ def get_uri(dataset_id, collection_id=None):
         PREFIX dcterms: <{DCTERMS}>
         PREFIX geo: <{GEO}>
         PREFIX rdfs: <{RDFS}>
+        PREFIX prez: <{PREZ}>
         PREFIX xsd: <{XSD}>
 
         SELECT ?fc ?d {{
-            ?d dcterms:identifier "{dataset_id}"^^xsd:token ;
+            ?d dcterms:identifier "{dataset_id}"^^prez:slug ;
                     a dcat:Dataset .
-            {f'''?fc dcterms:identifier "{collection_id}"^^xsd:token ;
+            {f'''?fc dcterms:identifier "{collection_id}"^^prez:slug ;
                     a geo:FeatureCollection .
                 ?d rdfs:member ?fc .''' if collection_id else ""}
                 }}

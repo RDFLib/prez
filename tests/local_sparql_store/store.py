@@ -3,7 +3,7 @@ import urllib.parse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
-from rdflib import Graph
+from rdflib import Graph, Dataset, ConjunctiveGraph
 
 KEEP_RUNNING = True
 
@@ -14,7 +14,7 @@ def keep_running():
 
 def load_catprez_graph():
     print("loading CatPrez graph")
-    g = Graph()
+    g = ConjunctiveGraph()
     for f in Path(Path(__file__).parent.parent / "data" / "catprez" / "input").glob(
         "*.ttl"
     ):
@@ -24,7 +24,7 @@ def load_catprez_graph():
 
 def load_spaceprez_graph():
     print("loading SpacePrez graph")
-    g = Graph()
+    g = ConjunctiveGraph()
     for f in Path(Path(__file__).parent.parent / "data" / "spaceprez" / "input").glob(
         "*.ttl"
     ):
@@ -128,8 +128,11 @@ class SparqlServer(BaseHTTPRequestHandler):
 
         # get query from POST body
         query = self.rfile.read(int(self.headers["Content-Length"])).decode("utf-8")
-
-        self.apply_sparql_query(query)
+        if query.startswith("update="):
+            update = query.split("update=")[1]
+            self.apply_sparql_update(update)
+        else:
+            self.apply_sparql_query(query)
 
     def do_HEAD(self):
         return self.http_response(200, "text/plain", "")
@@ -168,6 +171,26 @@ class SparqlServer(BaseHTTPRequestHandler):
             return self.http_response(
                 200, content_type, result.serialize(format=content_type).decode()
             )
+        except Exception as e:
+            return self.http_response(
+                400, "text.plain", f"Your SPARQL query could not be interpreted: {e}"
+            )
+
+    def apply_sparql_update(self, update):
+
+        update = urllib.parse.unquote_plus(update)
+
+        try:
+            if "catprez" in self.path:
+                result = catprez_graph.update(update)
+            elif "vocprez" in self.path:
+                result = vocprez_graph.update(update)
+            else:  # "spaceprez" in self.path:
+                result = spaceprez_graph.update(update)
+
+            content_type = "text/plain"
+
+            return self.http_response(200, content_type, "Update succeeded")
         except Exception as e:
             return self.http_response(
                 400, "text.plain", f"Your SPARQL query could not be interpreted: {e}"

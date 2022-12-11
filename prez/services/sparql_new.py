@@ -1,3 +1,4 @@
+import logging
 from functools import lru_cache
 from typing import List, Optional, Tuple, Union
 
@@ -13,12 +14,27 @@ from prez.models import (
     VocabMembers,
 )
 
+log = logging.getLogger(__name__)
+
 ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
+PREZ = Namespace("https://prez.dev/")
 
 
-def top_level_updates(topmost_classes: List[URIRef], general_classes: List[URIRef]):
+def generate_insert_context(settings, prez: str):
     """ """
-    update = f"""PREFIX dcterms: <http://purl.org/dc/terms/>
+    topmost_classes = settings.top_level_classes[prez]
+    collection_classes = settings.collection_classes[prez]
+    member_relation = {
+        "SpacePrez": "rdfs:member",
+        "VocPrez": "^skos:inScheme",
+        "CatPrez": "dcterms:hasPart",
+    }
+    topmost_class_collection = {
+        "SpacePrez": "prez:DatasetList",
+        "VocPrez": "prez:VocabCollection",
+        "CatPrez": "prez:CatalogList",
+    }
+    insert = f"""PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX dcat: <http://www.w3.org/ns/dcat#>
@@ -26,100 +42,65 @@ PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX prez: <https://prez.dev/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 INSERT {{
-    GRAPH prez:system-graph {{?support_graph_uri prez:hasContextFor ?instance_of_main_class . }}
-	GRAPH ?support_graph_uri {{?collectionList rdfs:member ?instance_of_main_class .
-    	?instance_of_main_class dcterms:identifier ?prez_id . }}
+    GRAPH prez:{prez.lower()}-system-graph {{?support_graph_uri prez:hasContextFor ?instance_of_main_class .
+     {topmost_class_collection[prez]} rdfs:member ?instance_of_top_class . }}
+	GRAPH ?support_graph_uri {{ ?instance_of_main_class dcterms:identifier ?prez_id .
+    	?member dcterms:identifier ?prez_mem_id . }}
 }}
 WHERE {{
-  {{  ?instance_of_main_class a ?general_class .
-    VALUES ?general_class {{ {(chr(10)+2*chr(9)).join('<'+uri+'>' for uri in general_classes)}\n }}
-    MINUS {{ GRAPH prez:system-graph {{?a_context_graph prez:hasContextFor ?instance_of_main_class}} }}
-  }}
-  OPTIONAL {{?instance_of_main_class a ?topmost_class
-    VALUES ?topmost_class {{ {(chr(10)+2*chr(9)).join('<'+uri+'>' for uri in topmost_classes)}\n }}
-  }}
-  BIND(
-    IF(?topmost_class=dcat:Dataset, prez:DatasetList,
-      IF(?topmost_class=dcat:Catalog,prez:CatalogList,
-        IF(?topmost_class=skos:ConceptScheme,prez:SchemesList,
-          IF(?topmost_class=skos:Collection,prez:VocPrezCollectionList,"")))) AS ?collectionList)
-  OPTIONAL {{?instance_of_main_class dcterms:identifier ?id
-    BIND(DATATYPE(?id) AS ?dtype_id)
-    FILTER(?dtype_id = xsd:token)
-  }}
-  BIND(STRDT(COALESCE(?id,MD5(STR(?instance_of_main_class))), prez:slug) AS ?prez_id)
-  BIND(URI(CONCAT(STR(?instance_of_main_class),"#support-graph")) AS ?support_graph_uri)
-}}"""
-    return update
-
-
-# startup check
-def construct_main_classes_and_context_graphs(general_classes: List[URIRef]):
-    """
-    Checks the backend for the existence of some classes
-    """
-    query = f"""PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX prez: <https://prez.dev/>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-CONSTRUCT {{ ?instance_of_main_class a ?general_class ;
-    dcterms:identifier ?id_token, ?id_prez_slug .
-    ?context_graph prez:hasContextFor ?instance_of_main_class }}
-WHERE {{
-{{  ?instance_of_main_class a ?general_class .
-    ?instance_of_main_class dcterms:identifier ?id_token .
-    VALUES ?general_class {{ {(chr(10)+2*chr(9)).join('<'+uri+'>' for uri in general_classes)}\n}}
+  {{
+    ?instance_of_main_class a ?collection_class .
+        VALUES ?collection_class {{ {(chr(10) + 2 * chr(9)).join('<' + str(uri) + '>' for uri in collection_classes)} }}
+    OPTIONAL {{?instance_of_top_class a ?topmost_class
+        VALUES ?topmost_class {{ {(chr(10) + 2 * chr(9)).join('<' + str(uri) + '>' for uri in topmost_classes)} }}
     }}
-    BIND(DATATYPE(?id_token) as ?token_dtype)
-    FILTER(?token_dtype = xsd:token)
-    OPTIONAL {{ {{ GRAPH prez:system-graph {{ ?context_graph prez:hasContextFor ?instance_of_main_class .
-    ?instance_of_main_class dcterms:identifier ?id_prez_slug . }}
-    BIND(DATATYPE(?id_prez_slug) as ?slug_dtype)
-    FILTER(?slug_dtype = prez:slug) }} }} }}"""
-    return query
+    MINUS {{ GRAPH prez:{prez.lower()}-system-graph {{?a_context_graph prez:hasContextFor ?instance_of_main_class}}
+    }}
+    OPTIONAL {{?instance_of_main_class dcterms:identifier ?id
+        BIND(DATATYPE(?id) AS ?dtype_id)
+        FILTER(?dtype_id = xsd:token)
+        }}
+    OPTIONAL {{?instance_of_main_class {member_relation[prez]} ?member
+        OPTIONAL {{?member dcterms:identifier ?mem_id
+            BIND(DATATYPE(?mem_id) AS ?dtype_mem_id)
+            FILTER(?dtype_mem_id = xsd:token) }} }}
+    }}
+    BIND(STRDT(COALESCE(?id,MD5(STR(?instance_of_main_class))), prez:slug) AS ?prez_id)
+    BIND(STRDT(COALESCE(?mem_id,MD5(STR(?member))), prez:slug) AS ?prez_mem_id)
+    BIND(URI(CONCAT(STR(?instance_of_main_class),"#support-graph")) AS ?support_graph_uri)
+}}"""
+    return insert
 
 
-def construct_instances_without_context_graph():
-    """
-    Also returns existing identifiers in use.
-    """
-    query = """PREFIX prez: <https://prez.dev/>
-CONSTRUCT { ?instance a ?class }
-WHERE { ?instance a ?class ;
-    MINUS
-    { ?context_graph prez:hasContextFor ?instance }
-}"""
-    return query
-
-
-def generate_listing_construct_from_general_class(
-    parent_item,
-    profile,
-    page: Optional[int] = 1,
-    per_page: Optional[int] = 20,
-):
-    """
-    For a given general class, find instances of this class.
-    Generates a SPARQL construct query for a listing of items
-    """
-    construct_query = f"""PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX prez: <https://prez.dev/>
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-
-CONSTRUCT {{
-<{parent_item.uri}> rdfs:member ?item .'
-?item a <{parent_item.general_class}> ;
-    dcterms:identifier ?id }}
-WHERE {{
-<{parent_item.uri}> rdfs:member ?item .'
-?item a <{parent_item.general_class}> ;
-    dcterms:identifier ?id }}
-
-    }} {f"LIMIT {per_page} OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
-    """
-    return construct_query
+# def generate_listing_construct_from_general_class(
+#         parent_item,
+#         profile,
+#         page: Optional[int] = 1,
+#         per_page: Optional[int] = 20,
+#         ):
+#     """
+#     For a given general class, find instances of this class.
+#     Generates a SPARQL construct query for a listing of items
+#     """
+#     construct_query = f"""PREFIX dcterms: <http://purl.org/dc/terms/>
+# PREFIX prez: <https://prez.dev/>
+# PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+# PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+# PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+# PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+#
+# CONSTRUCT {{
+# <{parent_item.uri}> rdfs:member ?item .'
+# ?item a <{parent_item.general_class}> ;
+#     dcterms:identifier ?id }}
+# WHERE {{
+# <{parent_item.uri}> rdfs:member ?item .'
+# ?item a <{parent_item.general_class}> ;
+#     dcterms:identifier ?id }}
+#
+#     }} {f"LIMIT {per_page} OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
+#     """
+#     return construct_query
 
 
 def generate_listing_construct_from_uri(
@@ -145,6 +126,10 @@ def generate_listing_construct_from_uri(
         and not outbound_children
         and not outbound_parents
     ):
+        log.warning(
+            f"Requested listing of objects related to {parent_item.uri}, however the profile {profile} does not"
+            f" define any listing relations for this for this class, for example outbound children."
+        )
         return ""
     construct_query = f"""PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX prez: <https://prez.dev/>
@@ -154,16 +139,16 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
 CONSTRUCT {{
-{f'<{parent_item.uri}> ?outbound_children ?item .'
-        f'?item prez:link ?outbound_children_link .{chr(10)}' if outbound_children or parent_item.uri else ""}\
-{f'<{parent_item.uri}> ?outbound_parents ?item .'
-        f'?item prez:link ?outbound_parents_link .{chr(10)}' if outbound_parents or parent_item.uri else ""}\
-{f'?inbound_child_s ?inbound_child <{parent_item.uri}> ;'
-            f'prez:link ?inbound_children_link .{chr(10)}' if inbound_children else ""}\
-{f'?inbound_parent_s ?inbound_parent <{parent_item.uri}> ;'
-            f'prez:link ?inbound_parent_link .{chr(10)}' if inbound_parents else ""}\
-        ?item rdfs:label ?label .
-{f'''prez:memberList a rdf:Bag ;
+    {f'<{parent_item.uri}> ?outbound_children ?item .{chr(10)}'
+     f'?item prez:link ?outbound_children_link .{chr(10)}' if outbound_children else ""}\
+    {f'<{parent_item.uri}> ?outbound_parents ?item .{chr(10)}'
+     f'?item prez:link ?outbound_parents_link .{chr(10)}' if outbound_parents else ""}\
+    {f'?inbound_child_s ?inbound_child <{parent_item.uri}> ;{chr(10)}'
+     f'prez:link ?inbound_children_link .{chr(10)}' if inbound_children else ""}\
+    {f'?inbound_parent_s ?inbound_parent <{parent_item.uri}> ;{chr(10)}'
+     f'prez:link ?inbound_parent_link .{chr(10)}' if inbound_parents else ""}\
+    ?item rdfs:label ?label .
+    {f'''prez:memberList a rdf:Bag ;
                 rdfs:member ?item .
     ?item prez:link ?outbound_general_link''' if not parent_item.uri else ""} \
     }}
@@ -219,13 +204,13 @@ def generate_outbound_predicates(item, outbound_children, outbound_parents):
         if outbound_children:
             where += f"""<{item.uri}> ?outbound_children ?item .
             ?item dcterms:identifier ?outbound_children_id .
-            FILTER(DATATYPE(?outbound_children_id) = xsd:token)
-            VALUES ?outbound_children {{ {" ".join('<' + pred + '>' for pred in outbound_children)} }}\n"""
+            FILTER(DATATYPE(?outbound_children_id) = prez:slug)
+            VALUES ?outbound_children {{ {" ".join('<' + str(pred) + '>' for pred in outbound_children)} }}\n"""
         if outbound_parents:
             where += f"""<{item.uri}> ?outbound_parents ?item .
             ?item dcterms:identifier ?outbound_parents_id .
-            FILTER(DATATYPE(?outbound_parents_id) = xsd:token)
-            VALUES ?outbound_parents {{ {" ".join('<' + pred + '>' for pred in outbound_parents)} }}\n"""
+            FILTER(DATATYPE(?outbound_parents_id) = prez:slug)
+            VALUES ?outbound_parents {{ {" ".join('<' + str(pred) + '>' for pred in outbound_parents)} }}\n"""
         if not outbound_children and not outbound_parents:
             where += "VALUES ?outbound_children {}\nVALUES ?outbound_parents {}"
         return where
@@ -239,13 +224,13 @@ def generate_inbound_predicates(item, inbound_children, inbound_parents):
     if inbound_children:
         where += f"""?inbound_child_s ?inbound_child <{item.uri}> ;
         dcterms:identifier ?inbound_children_id .
-        FILTER(DATATYPE(?inbound_children_id) = xsd:token)
-        VALUES ?inbound_child {{ {" ".join('<' + pred + '>' for pred in inbound_children)} }}\n"""
+        FILTER(DATATYPE(?inbound_children_id) = prez:slug)
+        VALUES ?inbound_child {{ {" ".join('<' + str(pred) + '>' for pred in inbound_children)} }}\n"""
     if inbound_parents:
         where += f"""?inbound_parent_s ?inbound_parent <{item.uri}> ;
         dcterms:identifier ?inbound_parent_id .
-        FILTER(DATATYPE(?inbound_parent_id) = xsd:token)
-        VALUES ?inbound_parent {{ {" ".join('<' + pred + '>' for pred in inbound_parents)} }}\n"""
+        FILTER(DATATYPE(?inbound_parent_id) = prez:slug)
+        VALUES ?inbound_parent {{ {" ".join('<' + str(pred) + '>' for pred in inbound_parents)} }}\n"""
     # if not inbound_children and not inbound_parents:
     #     where += "VALUES ?inbound_child {}\nVALUES ?inbound_parent {}"
     return where
@@ -603,7 +588,7 @@ PREFIX prez: <https://prez.dev/>
 SELECT ?profile ?title ?class (count(?mid) as ?distance) ?req_profile ?def_profile ?format ?req_format ?def_format ?token
 
 WHERE {{
-  VALUES ?class {{{" ".join('<' + klass + '>' for klass in classes)}}}
+  VALUES ?class {{{" ".join('<' + str(klass) + '>' for klass in classes)}}}
   ?class rdfs:subClassOf* ?mid .
   ?mid rdfs:subClassOf* ?general_class .
   VALUES ?general_class {{ dcat:Dataset geo:FeatureCollection prez:FeatureCollectionList prez:FeatureList geo:Feature
@@ -658,3 +643,10 @@ def startup_count_objects():
     return f"""PREFIX prez: <https://prez.dev/>
 CONSTRUCT {{ ?collection prez:count ?count }}
 WHERE {{ ?collection prez:count ?count }}"""
+
+
+def ask_system_graph(prez_flavour: str):
+    """
+    Checks if the system graph exists in the triple store.
+    """
+    return f"ASK {{ GRAPH <{PREZ[prez_flavour.lower() + '-system-graph']}> {{ ?s ?p ?o }} }} LIMIT 1"

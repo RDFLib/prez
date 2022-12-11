@@ -1,14 +1,17 @@
+import logging
 import time
 
 import httpx
 from rdflib import Namespace
 from rdflib.namespace import SKOS, DCTERMS, XSD
 
+from prez.cache import counts_graph
 from prez.services.sparql_new import startup_count_objects
 from prez.services.sparql_utils import sparql_construct
-from prez.cache import counts_graph
 
 ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
+
+log = logging.getLogger(__name__)
 
 
 async def get_object(uri: str):
@@ -20,7 +23,7 @@ async def get_object(uri: str):
         WHERE {{
             <{uri}> a ?type ;
                 dcterms:identifier ?id .
-            FILTER(DATATYPE(?id) = xsd:token)
+            FILTER(DATATYPE(?id) = prez:slug)
             OPTIONAL {{
                 <{uri}> skos:inScheme|skos:topConceptOf ?cs .
                 ?cs dcterms:identifier ?cs_id .
@@ -42,7 +45,9 @@ async def healthcheck_sparql_endpoints(settings):
     if len(ENABLED_PREZS) > 0:
         for prez in ENABLED_PREZS:
             connected_to_prez_flavour = False
-            print(f"Trying endpoint {settings.sparql_creds[prez]['endpoint']}")
+            log.info(
+                f"Checking {prez} SPARQL endpoint {settings.sparql_creds[prez]['endpoint']} is online"
+            )
             username = settings.sparql_creds[prez].get("username")
             password = settings.sparql_creds[prez].get("password")
             if username or password:
@@ -50,17 +55,6 @@ async def healthcheck_sparql_endpoints(settings):
             else:
                 auth = None
             while not connected_to_prez_flavour:
-                # try:
-                #     response = httpx.head(
-                #         settings.sparql_creds[prez]["endpoint"], auth=auth
-                #     )
-                #     response.raise_for_status()
-                #     if response.reason_phrase == "OK":
-                #         print(
-                #             f"Successfully connected to {prez} endpoint {settings.sparql_creds[prez]['endpoint']}"
-                #         )
-                #         connected_to_prez_flavour = True
-                # except httpx.HTTPError:
                 try:
                     response = httpx.get(
                         settings.sparql_creds[prez]["endpoint"],
@@ -69,16 +63,14 @@ async def healthcheck_sparql_endpoints(settings):
                     )
                     response.raise_for_status()
                     if response.status_code == 200:
-                        print(
-                            f"Successfully connected to {prez} endpoint {settings.sparql_creds[prez]['endpoint']}"
-                        )
+                        log.info(f"Successfully connected to {prez} SPARQL endpoint")
                         connected_to_prez_flavour = True
                 except httpx.HTTPError as exc:
-                    print(f"HTTP Exception for {exc.request.url} - {exc}")
-                    print(
+                    log.error(f"HTTP Exception for {exc.request.url} - {exc}")
+                    log.error(
                         f"Failed to connect to {prez} endpoint {settings.sparql_creds[prez]}"
                     )
-                    print("retrying in 3 seconds...")
+                    log.info("retrying in 3 seconds...")
                     time.sleep(3)
     else:
         raise ValueError(

@@ -42,7 +42,7 @@ class CatalogItem(BaseModel):
                 PREFIX xsd: <{XSD}>
 
                 SELECT ?uri ?class {{
-                    ?uri dcterms:identifier "{id}"^^xsd:token ;
+                    ?uri dcterms:identifier "{id}"^^prez:slug ;
                         a ?class .
                 }}
                 """

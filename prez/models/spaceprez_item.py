@@ -48,18 +48,19 @@ class SpatialItem(BaseModel):
                 PREFIX dcat: <{DCAT}>
                 PREFIX dcterms: <{DCTERMS}>
                 PREFIX geo: <{GEO}>
+                PREFIX prez: <{PREZ}>
                 PREFIX rdfs: <{RDFS}>
                 PREFIX xsd: <{XSD}>
 
                 SELECT ?f ?fc ?d ?f_class ?fc_class ?d_class {{
-                    ?d dcterms:identifier "{dataset_id}"^^xsd:token ;
+                    ?d dcterms:identifier "{dataset_id}"^^prez:slug ;
                             a dcat:Dataset ;
                             a ?d_class .
-                    {f'''?fc dcterms:identifier "{collection_id}"^^xsd:token ;
+                    {f'''?fc dcterms:identifier "{collection_id}"^^prez:slug ;
                             a geo:FeatureCollection ;
                             a ?fc_class .
                         ?d rdfs:member ?fc .''' if collection_id else ""}
-                    {f'''?f dcterms:identifier "{feature_id}"^^xsd:token ;
+                    {f'''?f dcterms:identifier "{feature_id}"^^prez:slug ;
                             a geo:Feature ;
                             a ?f_class .
                         ?fc rdfs:member ?f .''' if feature_id else ""}

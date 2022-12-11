@@ -1,3 +1,4 @@
+import logging
 from textwrap import dedent
 from typing import Optional
 from urllib.parse import quote_plus
@@ -12,7 +13,7 @@ from starlette.responses import PlainTextResponse
 
 from prez.cache import tbox_cache
 from prez.config import Settings
-from prez.models.api_model import populate_api_info
+from prez.models.api_model import populate_api_info, generate_context
 from prez.profiles.generate_profiles import create_profiles_graph
 from prez.renderers.renderer import return_rdf
 from prez.routers.catprez import router as catprez_router
@@ -20,6 +21,7 @@ from prez.routers.cql import router as cql_router
 from prez.routers.spaceprez import router as spaceprez_router
 from prez.routers.vocprez import router as vocprez_router
 from prez.services.app_service import healthcheck_sparql_endpoints, count_objects
+from prez.utils.prez_logging import setup_logger
 
 
 async def catch_400(request: Request, exc):
@@ -68,11 +70,14 @@ async def app_startup():
     are available. Initial caching can be triggered within the try block. NB this function does not check that data is
     appropriately configured at the SPARQL endpoint(s), only that the SPARQL endpoint(s) are reachable.
     """
-    print("Starting up...")
+    setup_logger(settings)
+    log = logging.getLogger("prez")
+    log.info("Starting up")
     await healthcheck_sparql_endpoints(settings)
     create_profiles_graph(settings.enabled_prezs)
     await count_objects(settings)
     await populate_api_info(settings)
+    await generate_context(settings)
 
 
 @app.on_event("shutdown")
@@ -80,7 +85,8 @@ async def app_shutdown():
     """
     persists caches
     """
-    print("Shutting down...")
+    log = logging.getLogger("prez")
+    log.info("Shutting down...")
     if len(tbox_cache) > 0:
         tbox_cache.serialize(destination="tbox_cache.nt", format="nt")
 

@@ -193,7 +193,7 @@ altr-ext:hasResourceFormat
         "text/turtle" ;
     altr-ext:hasNodeShape [
       a sh:NodeShape ;
-        sh:targetClass dcat:Dataset ;
+        sh:targetClass dcat:Dataset , prez:DatasetList ;
         altr-ext:outboundChildren rdfs:member ;
     ]
 .
