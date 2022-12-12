@@ -13,6 +13,7 @@ from prez.models import (
     VocabItem,
     VocabMembers,
 )
+from itertools import chain
 
 log = logging.getLogger(__name__)
 
@@ -25,14 +26,11 @@ def generate_insert_context(settings, prez: str):
     topmost_classes = settings.top_level_classes[prez]
     collection_classes = settings.collection_classes[prez]
     member_relation = {
-        "SpacePrez": "rdfs:member",
-        "VocPrez": "^skos:inScheme",
-        "CatPrez": "dcterms:hasPart",
-    }
-    topmost_class_collection = {
-        "SpacePrez": "prez:DatasetList",
-        "VocPrez": "prez:VocabCollection",
-        "CatPrez": "prez:CatalogList",
+        "SpacePrez": "?instance_of_main_class rdfs:member ?member",
+        "VocPrez": """{?instance_of_main_class ^skos:inScheme ?member }
+                        UNION
+      		          { ?instance_of_main_class skos:member ?member }""",
+        "CatPrez": "?instance_of_main_class dcterms:hasPart ?member",
     }
     insert = f"""PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -43,9 +41,10 @@ PREFIX prez: <https://prez.dev/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 INSERT {{
     GRAPH prez:{prez.lower()}-system-graph {{?support_graph_uri prez:hasContextFor ?instance_of_main_class .
-     {topmost_class_collection[prez]} rdfs:member ?instance_of_top_class . }}
-	GRAPH ?support_graph_uri {{ ?instance_of_main_class dcterms:identifier ?prez_id .
-    	?member dcterms:identifier ?prez_mem_id . }}
+     ?collectionList rdfs:member ?instance_of_top_class .
+     ?instance_of_main_class dcterms:identifier ?prez_id .
+     }}
+	GRAPH ?support_graph_uri {{ ?member dcterms:identifier ?prez_mem_id . }}
 }}
 WHERE {{
   {{
@@ -60,11 +59,16 @@ WHERE {{
         BIND(DATATYPE(?id) AS ?dtype_id)
         FILTER(?dtype_id = xsd:token)
         }}
-    OPTIONAL {{?instance_of_main_class {member_relation[prez]} ?member
+    OPTIONAL {{ {member_relation[prez]}
         OPTIONAL {{?member dcterms:identifier ?mem_id
             BIND(DATATYPE(?mem_id) AS ?dtype_mem_id)
             FILTER(?dtype_mem_id = xsd:token) }} }}
     }}
+    BIND(
+        IF(?topmost_class=dcat:Dataset, prez:DatasetList,
+          IF(?topmost_class=dcat:Catalog,prez:CatalogList,
+            IF(?topmost_class=skos:ConceptScheme,prez:SchemesList,
+              IF(?topmost_class=skos:Collection,prez:VocPrezCollectionList,"")))) AS ?collectionList)
     BIND(STRDT(COALESCE(?id,MD5(STR(?instance_of_main_class))), prez:slug) AS ?prez_id)
     BIND(STRDT(COALESCE(?mem_id,MD5(STR(?member))), prez:slug) AS ?prez_mem_id)
     BIND(URI(CONCAT(STR(?instance_of_main_class),"#support-graph")) AS ?support_graph_uri)
@@ -147,7 +151,6 @@ CONSTRUCT {{
      f'prez:link ?inbound_children_link .{chr(10)}' if inbound_children else ""}\
     {f'?inbound_parent_s ?inbound_parent <{parent_item.uri}> ;{chr(10)}'
      f'prez:link ?inbound_parent_link .{chr(10)}' if inbound_parents else ""}\
-    ?item rdfs:label ?label .
     {f'''prez:memberList a rdf:Bag ;
                 rdfs:member ?item .
     ?item prez:link ?outbound_general_link''' if not parent_item.uri else ""} \
@@ -155,7 +158,6 @@ CONSTRUCT {{
 WHERE {{
 {generate_outbound_predicates(parent_item, outbound_children, outbound_parents)} \
 {generate_inbound_predicates(parent_item, inbound_children, inbound_parents)} \
-    ?item rdfs:label|dcterms:title|skos:prefLabel ?label .
 {generate_id_listing_binds(parent_item, inbound_children, inbound_parents, outbound_children, outbound_parents)}
     }} {f"LIMIT {per_page} OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
     """
@@ -344,6 +346,12 @@ async def get_annotation_properties(
     Gets annotation data used for HTML display.
     This includes the label, description, and provenance, if available.
     """
+    if not label_prop:
+        label_prop = RDFS.label
+    if not description_prop:
+        description_prop = DCTERMS.description
+    if not explanation_prop:
+        explanation_prop = DCTERMS.provenance
     terms = set(i for i in item_graph.predicates() if isinstance(i, URIRef)) | set(
         i for i in item_graph.objects() if isinstance(i, URIRef)
     )
@@ -353,13 +361,32 @@ async def get_annotation_properties(
     uncached_terms, labels_g = get_annotations_from_tbox_cache(
         terms, label_prop, description_prop, explanation_prop
     )
-    queries_for_uncached = f"""CONSTRUCT {{ ?term ?prop ?label }}
-        WHERE {{ ?term ?prop ?label .
-        VALUES ?term {{ {" ".join('<' + str(term) + '>' for term in uncached_terms)} }}
-        VALUES ?prop {{ {" ".join('<' + str(prop) + '>' for prop in [label_prop, description_prop, explanation_prop])} }}
-        FILTER(lang(?label) = "" || lang(?label) = "en" || lang(?label) = "en-AU")
+    queries_for_uncached = f"""CONSTRUCT {{
+    ?unlabeled_term ?label_prop ?label .
+    ?undescribed_term ?desc_prop ?description .
+    ?unexplained_term ?expl_prop ?explanation . }}
+        WHERE {{
+            {{
+                ?unlabeled_term ?label_prop ?label .
+                VALUES ?label_prop {{ <{str(label_prop)}> }}
+                VALUES ?unlabeled_term {{ {" ".join('<' + str(term) + '>' for term in uncached_terms["labels"])} }}
+                FILTER(lang(?label) = "" || lang(?label) = "en" || lang(?label) = "en-AU")
+            }}
+            UNION
+            {{
+                ?undescribed_term ?desc_prop ?description .
+                VALUES ?desc_prop {{ <{str(description_prop)}> }}
+                VALUES ?undescribed_term {{ {" ".join('<' + str(term) + '>' for term in uncached_terms["descriptions"])}
+                }}
+            }}
+            UNION
+            {{
+                ?unexplained_term ?expl_prop ?explanation .
+                VALUES ?expl_prop {{ <{str(explanation_prop)}> }}
+                VALUES ?unexplained_term {{ {" ".join('<' + str(term) + '>' for term in uncached_terms["provenance"])}
+                }}
+            }}
         }}"""
-    # remove any queries we previously didn't get a result for from the SPARQL endpoint
     return queries_for_uncached, labels_g
 
 
@@ -367,20 +394,28 @@ def get_annotations_from_tbox_cache(
     terms: List[URIRef], label_prop, description_prop, explanation_prop
 ):
     """
-    Gets labels from the TBox cache, returns a list of terms that were not found in the cache, and a graph of labels
+    Gets labels from the TBox cache, returns a list of terms that were not found in the cache, and a graph of labels,
+    descriptions, and explanations
     """
     labels_from_cache = Graph()
     terms_list = list(terms)
-    labels = list(tbox_cache.triples_choices((terms_list, label_prop, None)))
-    descriptions = list(
-        tbox_cache.triples_choices((terms_list, description_prop, None))
-    )
-    provenance = list(tbox_cache.triples_choices((terms_list, explanation_prop, None)))
-    all = labels + descriptions + provenance
+    props_from_cache = {
+        "labels": list(tbox_cache.triples_choices((terms_list, label_prop, None))),
+        "descriptions": list(
+            tbox_cache.triples_choices((terms_list, description_prop, None))
+        ),
+        "provenance": list(
+            tbox_cache.triples_choices((terms_list, explanation_prop, None))
+        ),
+    }
+    all = list(chain(*props_from_cache.values()))
     for triple in all:
         labels_from_cache.add(triple)
-    uncached_terms = list(set(terms) - set(triple[0] for triple in all))
-    return uncached_terms, labels_from_cache
+    uncached_props = {
+        k: list(set(terms) - set(triple[0] for triple in v))
+        for k, v in props_from_cache.items()
+    }
+    return uncached_props, labels_from_cache
 
 
 # hit the count cache first, if it's not there, hit the SPARQL endpoint
@@ -447,6 +482,25 @@ def get_relevant_shape_bns_for_profile(selected_class, profile):
         )
     ]
     return relevant_shape_bns
+
+
+def get_annotation_predicates(profile):
+    """
+    Gets the annotation predicates from the profiles graph for a given profile.
+    If no predicates are found, "None" is returned by RDFLib
+    """
+    if not profile:
+        return None, None, None
+    label_predicate = profiles_graph_cache.value(
+        subject=profile, predicate=ALTREXT.hasLabelPredicate
+    )
+    description_predicate = profiles_graph_cache.value(
+        subject=profile, predicate=ALTREXT.hasDescriptionPredicate
+    )
+    explanation_predicate = profiles_graph_cache.value(
+        subject=profile, predicate=ALTREXT.hasExplanationPredicate
+    )
+    return label_predicate, description_predicate, explanation_predicate
 
 
 def get_listing_predicates(profile, selected_class):

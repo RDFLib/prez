@@ -34,7 +34,7 @@ def load_spaceprez_graph():
 
 def load_vocprez_graph():
     print("loading VocPrez graph")
-    g = Graph()
+    g = ConjunctiveGraph()
     for f in Path(Path(__file__).parent.parent / "data" / "vocprez" / "input").glob(
         "*.ttl"
     ):

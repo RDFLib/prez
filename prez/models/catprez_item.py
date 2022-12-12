@@ -26,6 +26,7 @@ class CatalogItem(BaseModel):
     def populate(cls, values):
         url_path = values.get("url_path")
         uri = values.get("uri")
+        id = values.get("id")
         url_parts = url_path.split("/")
         if len(url_parts) == 4:
             values["general_class"] = DCAT.Catalog

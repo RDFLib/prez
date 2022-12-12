@@ -14,14 +14,18 @@ from starlette.responses import PlainTextResponse
 from prez.cache import tbox_cache
 from prez.config import Settings
 from prez.models.api_model import populate_api_info, generate_context
-from prez.profiles.generate_profiles import create_profiles_graph
-from prez.renderers.renderer import return_rdf
+from prez.profiles.generate_profiles import (
+    create_profiles_graph,
+    get_profiles_and_mediatypes,
+)
+from prez.renderers.renderer import return_rdf, return_from_graph
 from prez.routers.catprez import router as catprez_router
 from prez.routers.cql import router as cql_router
 from prez.routers.spaceprez import router as spaceprez_router
 from prez.routers.vocprez import router as vocprez_router
 from prez.services.app_service import healthcheck_sparql_endpoints, count_objects
 from prez.utils.prez_logging import setup_logger
+from services.connegp_service import get_requested_profile_and_mediatype
 
 
 async def catch_400(request: Request, exc):
@@ -257,7 +261,17 @@ async def prezs(request: Request):
 @app.get("/profiles", summary="Profiles")
 async def profiles(request: Request):
     """Returns a list of profiles recognised by Prez"""
-    pass
+    return PlainTextResponse("Not yet implemented - requires a profile model")
+    # from prez.cache import profiles_graph_cache
+    # req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
+    # (
+    #     profile,
+    #     mediatype,
+    #     item.selected_class,
+    #     profile_headers,
+    #     _,
+    # ) = get_profiles_and_mediatypes(item.classes, req_profiles, req_mediatypes)
+    # return await return_from_graph(profiles_graph_cache, mediatype, profile, profile_headers, None)
 
 
 @app.get("/object", summary="Get object", response_class=RedirectResponse)

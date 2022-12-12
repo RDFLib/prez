@@ -6,7 +6,10 @@ from fastapi.responses import StreamingResponse
 from rdflib import Literal, Graph
 
 from prez.cache import tbox_cache
-from prez.services.sparql_new import get_annotation_properties
+from prez.services.sparql_new import (
+    get_annotation_properties,
+    get_annotation_predicates,
+)
 from prez.services.sparql_utils import sparql_construct
 
 
@@ -39,7 +42,7 @@ async def return_from_graph(graph, mediatype, profile, profile_headers, prez):
 
     else:
         if mediatype == Literal("text/html"):
-            return await return_html(graph, prez, profile_headers)
+            return await return_html(graph, prez, profile_headers, profile)
 
 
 async def return_rdf(graph, mediatype, profile_headers):
@@ -51,15 +54,18 @@ async def return_rdf(graph, mediatype, profile_headers):
     return StreamingResponse(content=obj, media_type=mediatype, headers=profile_headers)
 
 
-async def return_html(graph, prez, profile_headers):
+async def return_html(graph, prez, profile_headers, profile):
     cache = tbox_cache
-    queries_for_uncached, labels_graph = await get_annotation_properties(graph)
+    profile_annotation_props = get_annotation_predicates(profile)
+    queries_for_uncached, annotations_graph = await get_annotation_properties(
+        graph, *profile_annotation_props
+    )
     results = await sparql_construct(queries_for_uncached, prez)
     if results[1]:
-        labels_graph += results[1]
+        annotations_graph += results[1]
         cache += results[1]
     obj = io.BytesIO(
-        (graph + labels_graph).serialize(format="turtle", encoding="utf-8")
+        (graph + annotations_graph).serialize(format="turtle", encoding="utf-8")
     )
     return StreamingResponse(
         content=obj, media_type="text/turtle", headers=profile_headers

@@ -103,6 +103,11 @@ altr-ext:hasResourceFormat
         "application/rdf+xml" ,
         "text/html" ,
         "text/turtle" ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass prez:SchemesList , prez:VocPrezCollectionList ;
+        altr-ext:outboundChildren rdfs:member ;
+    ] ;
 .
 
 <https://w3id.org/profile/vocpub>
@@ -110,6 +115,7 @@ altr-ext:hasResourceFormat
     dcterms:description "This is a profile of the taxonomy data model SKOS - i.e. SKOS with additional constraints." ;
     dcterms:identifier "vocpub" ;
     dcterms:title "VocPub" ;
+    altr-ext:hasLabelPredicate skos:prefLabel ;
     altr-ext:constrainsClass
         skos:ConceptScheme ,
         skos:Concept ,
@@ -124,6 +130,11 @@ altr-ext:hasResourceFormat
         a sh:NodeShape ;
         sh:targetClass skos:ConceptScheme ;
         altr-ext:outboundChildren skos:hasTopConcept ;
+    ] ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass skos:Collection ;
+        altr-ext:outboundChildren skos:member ;
     ] ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;

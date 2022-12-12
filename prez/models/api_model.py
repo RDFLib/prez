@@ -32,10 +32,13 @@ async def generate_context(settings):
         ask = ask_system_graph(prez)
         sys_g_exists = await sparql_ask(ask, prez)
         if sys_g_exists[0] and sys_g_exists[1]:
-            return
+            log.info(
+                f"System graph for {prez} already exists, skipping generation of context"
+            )
         # select instances which do not have context graphs, log these instances
-        if settings.generate_context:
+        elif settings.generate_context:
             insert_context = generate_insert_context(settings, prez)
             response = await sparql_update(insert_context, prez)
+            log.info(f"Generated context for {prez}")
             # if not response[0]:
             #     raise Exception(response[1])

@@ -49,12 +49,15 @@ class VocabItem(BaseModel):
         assert id or uri, "Either an id or uri must be provided"
         if id:  # get the URI
             q = f"""
-                PREFIX dcterms: <{DCTERMS}>
-                PREFIX xsd: <{XSD}>
+                PREFIX dcterms: <http://purl.org/dc/terms/>
+                PREFIX prez: <https://prez.dev/>
+                PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
                 SELECT ?uri ?class {{
                     ?uri dcterms:identifier "{id}"^^prez:slug ;
                         a ?class .
+                    ?class rdfs:subClassOf* <{values["general_class"]}> .
                 }}
                 """
             r = sparql_query_non_async(q, "VocPrez")
