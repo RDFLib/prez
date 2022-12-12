@@ -352,9 +352,13 @@ async def get_annotation_properties(
         description_prop = DCTERMS.description
     if not explanation_prop:
         explanation_prop = DCTERMS.provenance
-    terms = set(i for i in item_graph.predicates() if isinstance(i, URIRef)) | set(
-        i for i in item_graph.objects() if isinstance(i, URIRef)
+    terms = (
+        set(i for i in item_graph.predicates() if isinstance(i, URIRef))
+        | set(i for i in item_graph.objects() if isinstance(i, URIRef))
+        | set(i for i in item_graph.subjects() if isinstance(i, URIRef))
     )
+    # TODO confirm caching of SUBJECT labels does not cause issues! this could be a lot of labels. Perhaps these are
+    # better separated and put in an LRU cache. Or it may not be worth the effort.
     if not terms:
         return None, Graph()
     # read labels from the tbox cache, this should be the majority of labels
