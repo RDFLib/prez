@@ -20,11 +20,11 @@ async def populate_api_info(settings):
         log.debug(f"Populated API info for {prez}")
 
 
-async def generate_context(settings):
+async def generate_support_graphs(settings):
     """
-    Generates the contextual graphs needed for the Prez API.
-    Although context is placed in specific graphs, prez itself is graph agnostic: it is assumed backend triplestores
-    have a default union graph that covers all data intended to be delivered by the API.
+    Generates the support graphs needed for the Prez API.
+    Although supporting triples are placed in specific graphs, Prez itself is graph agnostic: it is assumed backend
+    triplestores have a default union graph that covers all data intended to be delivered by the API.
     """
     for prez in settings.enabled_prezs:
         # if running on startup, there may already be a system graph, in which case we don't need to generate it
@@ -36,7 +36,7 @@ async def generate_context(settings):
                 f"System graph for {prez} already exists, skipping generation of context"
             )
         # select instances which do not have context graphs, log these instances
-        elif settings.generate_context:
+        elif settings.generate_support_graphs:
             insert_context = generate_insert_context(settings, prez)
             response = await sparql_update(insert_context, prez)
             log.info(f"Generated context for {prez}")

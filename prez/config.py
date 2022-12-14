@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     collection_classes: Optional[dict]
     general_classes: Optional[dict]
     enabled_prezs: Optional[list]
-    generate_context: bool = True
+    generate_support_graphs: bool = True
     log_level = "INFO"
     log_output = "stdout"
     cql_props: dict = {

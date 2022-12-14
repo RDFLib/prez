@@ -13,7 +13,7 @@ from starlette.responses import PlainTextResponse
 
 from prez.cache import tbox_cache
 from prez.config import Settings
-from prez.models.api_model import populate_api_info, generate_context
+from prez.models.api_model import populate_api_info, generate_support_graphs
 from prez.profiles.generate_profiles import (
     create_profiles_graph,
 )
@@ -91,7 +91,7 @@ async def app_startup():
     create_profiles_graph(settings.enabled_prezs)
     await count_objects(settings)
     await populate_api_info(settings)
-    await generate_context(settings)
+    await generate_support_graphs(settings)
 
 
 @app.on_event("shutdown")
