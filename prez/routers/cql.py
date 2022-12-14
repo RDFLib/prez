@@ -4,6 +4,7 @@ from fastapi import APIRouter, Request
 from fastapi import Form
 from fastapi.responses import JSONResponse, RedirectResponse
 from rdflib import Namespace
+from prez.config import Settings
 
 PREZ = Namespace("https://prez.dev/")
 
@@ -83,7 +84,7 @@ router = APIRouter(tags=["CQL"])
 async def queryables(
     request: Request,
 ):
-    from app import settings
+    settings = Settings()
 
     """Returns a list of available properties to query against using CQL search globally"""
     content = {
@@ -92,7 +93,7 @@ async def queryables(
         "type": "object",
     }
 
-    properties = {key: value for key, value in settings.CQL_PROPS.items()}
+    properties = {key: value for key, value in settings.cql_props.items()}
     for value in properties.values():
         value.pop("qname", None)
 
