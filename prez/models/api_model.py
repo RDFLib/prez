@@ -1,6 +1,6 @@
 import logging
 
-from rdflib import Namespace, URIRef, DCTERMS, RDF, XSD
+from rdflib import Namespace, URIRef, DCTERMS, RDF, XSD, SKOS
 
 from prez.cache import prez_system_graph
 from prez.services.sparql_new import generate_insert_context, ask_system_graph
@@ -40,5 +40,5 @@ async def generate_context(settings):
             insert_context = generate_insert_context(settings, prez)
             response = await sparql_update(insert_context, prez)
             log.info(f"Generated context for {prez}")
-            # if not response[0]:
-            #     raise Exception(response[1])
+            if not response[0]:
+                raise Exception(response[1])

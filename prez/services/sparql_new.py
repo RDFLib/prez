@@ -32,19 +32,19 @@ def generate_insert_context(settings, prez: str):
       		          { ?instance_of_main_class skos:member ?member }""",
         "CatPrez": "?instance_of_main_class dcterms:hasPart ?member",
     }
-    insert = f"""PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-PREFIX dcat: <http://www.w3.org/ns/dcat#>
+    insert = f"""PREFIX dcat: <http://www.w3.org/ns/dcat#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX prez: <https://prez.dev/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 INSERT {{
-    GRAPH prez:{prez.lower()}-system-graph {{?support_graph_uri prez:hasContextFor ?instance_of_main_class .
+    GRAPH prez:{prez.lower()}-system-graph {{
+     ?support_graph_uri prez:hasContextFor ?instance_of_main_class .
      ?collectionList rdfs:member ?instance_of_top_class .
      ?instance_of_main_class dcterms:identifier ?prez_id .
      }}
-	GRAPH ?support_graph_uri {{ ?member dcterms:identifier ?prez_mem_id . }}
+    GRAPH ?support_graph_uri {{ ?member dcterms:identifier ?prez_mem_id . }}
 }}
 WHERE {{
   {{
@@ -71,7 +71,7 @@ WHERE {{
               IF(?topmost_class=skos:Collection,prez:VocPrezCollectionList,"")))) AS ?collectionList)
     BIND(STRDT(COALESCE(?id,MD5(STR(?instance_of_main_class))), prez:slug) AS ?prez_id)
     BIND(STRDT(COALESCE(?mem_id,MD5(STR(?member))), prez:slug) AS ?prez_mem_id)
-    BIND(URI(CONCAT(STR(?instance_of_main_class),"#support-graph")) AS ?support_graph_uri)
+    BIND(URI(CONCAT(STR(?instance_of_main_class),"/support-graph")) AS ?support_graph_uri)
 }}"""
     return insert
 

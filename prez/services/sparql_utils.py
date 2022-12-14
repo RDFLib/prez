@@ -179,12 +179,10 @@ async def sparql_update(query: str, prez: str):
     try:
         async with AsyncClient() as client:
             response: httpxResponse = await client.post(
-                settings.sparql_creds[prez]["endpoint"],
-                data={"update": query},
+                settings.sparql_creds[prez]["update"],
+                data=query,
                 headers={
-                    "Accept": "text/turtle",
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    "Accept-Encoding": "gzip, deflate",
+                    "Content-Type": "application/sparql-update",
                 },
                 # auth=(settings.sparql_creds[prez]["username"], settings.sparql_creds[prez]["password"]),
                 timeout=TIMEOUT,
