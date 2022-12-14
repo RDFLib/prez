@@ -1,10 +1,10 @@
 import logging
 from textwrap import dedent
 from typing import Optional
-from urllib.parse import quote_plus
 
 import uvicorn
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request
+from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import AnyUrl
 from rdflib import Graph
@@ -16,16 +16,14 @@ from prez.config import Settings
 from prez.models.api_model import populate_api_info, generate_context
 from prez.profiles.generate_profiles import (
     create_profiles_graph,
-    get_profiles_and_mediatypes,
 )
-from prez.renderers.renderer import return_rdf, return_from_graph
+from prez.renderers.renderer import return_rdf
 from prez.routers.catprez import router as catprez_router
 from prez.routers.cql import router as cql_router
 from prez.routers.spaceprez import router as spaceprez_router
 from prez.routers.vocprez import router as vocprez_router
 from prez.services.app_service import healthcheck_sparql_endpoints, count_objects
 from prez.utils.prez_logging import setup_logger
-from services.connegp_service import get_requested_profile_and_mediatype
 
 
 async def catch_400(request: Request, exc):
@@ -67,6 +65,18 @@ if settings.spaceprez_sparql_endpoint:
     app.include_router(spaceprez_router)
 
 
+def prez_open_api_metadata():
+   return get_openapi(
+       title=settings.prez_title,
+       version=settings.prez_version,
+       description=settings.prez_desc,
+       routes=app.routes,
+   )
+
+
+app.openapi = prez_open_api_metadata
+
+
 @app.on_event("startup")
 async def app_startup():
     """
@@ -95,7 +105,7 @@ async def app_shutdown():
         tbox_cache.serialize(destination="tbox_cache.nt", format="nt")
 
 
-@app.get("/", summary="Home page")
+@app.get("/", summary="Home page", tags=["Prez"])
 async def index(request: Request):
     """Returns the following information about the API"""
     # TODO connegp on request. don't need profiles for this
@@ -144,7 +154,7 @@ def _get_sparql_service_description(request, format):
 
 # see: https://github.com/tiangolo/fastapi/issues/1788 for how to restructure this.
 # TODO DRY fix 3x SPARQL endpoints below
-@app.get("/s/sparql", summary="SpacePrez SPARQL Endpoint")
+@app.get("/s/sparql", summary="SpacePrez SPARQL Endpoint", tags=["Prez"])
 async def sparql_get(request: Request, query: Optional[str] = None):
     if not request.query_params:
         return PlainTextResponse("A SPARQL query must be provided as a query parameter")
@@ -153,7 +163,7 @@ async def sparql_get(request: Request, query: Optional[str] = None):
     )
 
 
-@app.get("/v/sparql", summary="VocPrez SPARQL Endpoint")
+@app.get("/v/sparql", summary="VocPrez SPARQL Endpoint", tags=["Prez"])
 async def sparql_get(request: Request, query: Optional[str] = None):
     if not request.query_params:
         return PlainTextResponse("A SPARQL query must be provided as a query parameter")
@@ -162,7 +172,7 @@ async def sparql_get(request: Request, query: Optional[str] = None):
     )
 
 
-@app.get("/c/sparql", summary="CatPrez SPARQL Endpoint")
+@app.get("/c/sparql", summary="CatPrez SPARQL Endpoint", tags=["Prez"])
 async def sparql_get(request: Request, query: Optional[str] = None):
     if not request.query_params:
         return PlainTextResponse("A SPARQL query must be provided as a query parameter")
@@ -244,7 +254,7 @@ async def sparql_get(request: Request, query: Optional[str] = None):
 #     return templates.TemplateResponse("search.html", context=template_context)
 
 
-@app.get("/prezs", summary="Enabled Prezs")
+@app.get("/prezs", summary="Enabled Prezs", tags=["Prez"])
 async def prezs(request: Request):
     """Returns a list of the enabled *Prez 'modules'"""
     uri = str(request.base_url)
@@ -258,7 +268,7 @@ async def prezs(request: Request):
     )
 
 
-@app.get("/profiles", summary="Profiles")
+@app.get("/profiles", summary="Profiles", tags=["Prez"])
 async def profiles(request: Request):
     """Returns a list of profiles recognised by Prez"""
     return PlainTextResponse("Not yet implemented - requires a profile model")
@@ -274,7 +284,7 @@ async def profiles(request: Request):
     # return await return_from_graph(profiles_graph_cache, mediatype, profile, profile_headers, None)
 
 
-@app.get("/object", summary="Get object", response_class=RedirectResponse)
+@app.get("/object", summary="Get object", response_class=RedirectResponse, tags=["Prez"])
 async def object(
     request: Request,
     uri: AnyUrl,
