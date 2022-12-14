@@ -33,12 +33,13 @@ async def generate_support_graphs(settings):
         sys_g_exists = await sparql_ask(ask, prez)
         if sys_g_exists[0] and sys_g_exists[1]:
             log.info(
-                f"System graph for {prez} already exists, skipping generation of context"
+                f"System graph for {prez} already exists, skipping generation of support graphs"
             )
-        # select instances which do not have context graphs, log these instances
+        # select instances which do not have support graphs, log these instances
         elif settings.generate_support_graphs:
+            log.info(f"Generating Support Graphs for {prez}")
             insert_context = generate_insert_context(settings, prez)
             response = await sparql_update(insert_context, prez)
-            log.info(f"Generated context for {prez}")
+            log.info(f"Completed generating Support Graphs for {prez}")
             if not response[0]:
                 raise Exception(response[1])
