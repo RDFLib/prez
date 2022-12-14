@@ -3,8 +3,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import FrozenSet
 
-from rdflib import Graph, URIRef, DCAT, SKOS
-from rdflib.namespace import GEO
+from rdflib import Graph, URIRef, Namespace
+from rdflib.namespace import GEO, DCAT, SKOS
 from starlette.requests import Request
 from starlette.responses import Response
 
@@ -160,7 +160,8 @@ async def prez_profiles(request: Request, prez_type) -> Response:
         generate_item_construct(profile, URIRef("http://kurrawong.net/profile/prez"))
         for profile in items
     ]
-    g = Graph()
+    g = Graph(bind_namespaces="rdflib")
+    g.bind("altr-ext", Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#"))
     for q in queries:
         g += profiles_graph_cache.query(q)
     return await return_from_graph(g, mediatype, profile, profile_headers, prez_type)

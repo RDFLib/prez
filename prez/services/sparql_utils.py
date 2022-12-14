@@ -161,7 +161,7 @@ async def sparql_construct(query: str, prez: str):
             "prez": prez,
         }
     if 200 <= response.status_code < 300:
-        return True, Graph().parse(data=response.text)
+        return True, Graph(bind_namespaces="rdflib").parse(data=response.text)
     else:
         return False, {
             "code": response.status_code,
@@ -256,7 +256,7 @@ def sparql_construct_non_async(query: str, prez: str):
             timeout=TIMEOUT,
         )
     if 200 <= response.status_code < 300:
-        return True, Graph().parse(data=response.text)
+        return True, Graph(bind_namespaces="rdflib").parse(data=response.text)
     else:
         return False, {
             "code": response.status_code,

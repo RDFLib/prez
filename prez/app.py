@@ -149,7 +149,7 @@ def _get_sparql_service_description(request, format):
     if format == "text/turtle":
         return dedent(ttl)
     else:
-        return Graph().parse(data=ttl).serialize(format=format)
+        return Graph(bind_namespaces="rdflib").parse(data=ttl).serialize(format=format)
 
 
 # see: https://github.com/tiangolo/fastapi/issues/1788 for how to restructure this.

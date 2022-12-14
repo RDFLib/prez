@@ -401,7 +401,7 @@ def get_annotations_from_tbox_cache(
     Gets labels from the TBox cache, returns a list of terms that were not found in the cache, and a graph of labels,
     descriptions, and explanations
     """
-    labels_from_cache = Graph()
+    labels_from_cache = Graph(bind_namespaces="rdflib")
     terms_list = list(terms)
     props_from_cache = {
         "labels": list(tbox_cache.triples_choices((terms_list, label_prop, None))),
