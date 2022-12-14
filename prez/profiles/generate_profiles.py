@@ -10,7 +10,10 @@ from starlette.responses import Response
 
 from prez.models import SpatialItem, VocabItem, CatalogItem
 from prez.cache import profiles_graph_cache
-from prez.services.sparql_new import select_profile_mediatype, generate_item_construct
+from prez.services.sparql_queries import (
+    select_profile_mediatype,
+    generate_item_construct,
+)
 from prez.services.sparql_utils import (
     sparql_construct_non_async,
 )

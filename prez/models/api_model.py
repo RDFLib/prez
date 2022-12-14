@@ -3,7 +3,7 @@ import logging
 from rdflib import Namespace, URIRef, DCTERMS, RDF, XSD, SKOS
 
 from prez.cache import prez_system_graph
-from prez.services.sparql_new import generate_insert_context, ask_system_graph
+from prez.services.sparql_queries import generate_insert_context, ask_system_graph
 from prez.services.sparql_utils import sparql_construct, sparql_update, sparql_ask
 
 log = logging.getLogger(__name__)

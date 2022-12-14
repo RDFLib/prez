@@ -4,7 +4,7 @@ import time
 import requests
 
 response = os.system(
-    "docker run -d -v ${PWD}/dev:/fuseki/configuration -p 3030:3030 ghcr.io/zazuko/fuseki-geosparql"
+    "docker run -d -v ${PWD}/dev/dev-config.ttl:/fuseki/config.ttl -p 3030:3030 ghcr.io/zazuko/fuseki-geosparql"
 )
 
 time.sleep(15)
@@ -19,7 +19,7 @@ def setup_sp():
             "myfile",
             (
                 "geofabric_small.ttl",
-                open("../tests/data/spaceprez/input/geofabric_small.ttl", "rb"),
+                open("tests/data/spaceprez/input/geofabric_small.ttl", "rb"),
                 "application/octet-stream",
             ),
         ),
@@ -27,7 +27,7 @@ def setup_sp():
             "myfile2",
             (
                 "gnaf_small.ttl",
-                open("../tests/data/spaceprez/input/gnaf_small.ttl", "rb"),
+                open("tests/data/spaceprez/input/gnaf_small.ttl", "rb"),
                 "application/octet-stream",
             ),
         ),
@@ -35,7 +35,7 @@ def setup_sp():
             "myfile3",
             (
                 "labels.ttl",
-                open("../tests/data/spaceprez/input/labels.ttl", "rb"),
+                open("tests/data/spaceprez/input/labels.ttl", "rb"),
                 "application/octet-stream",
             ),
         ),
@@ -43,7 +43,7 @@ def setup_sp():
             "myfile4",
             (
                 "sandgate.ttl",
-                open("../tests/data/spaceprez/input/sandgate.ttl", "rb"),
+                open("tests/data/spaceprez/input/sandgate.ttl", "rb"),
                 "application/octet-stream",
             ),
         ),
@@ -71,7 +71,7 @@ def setup_vp():
             "myfile",
             (
                 "alteration-types.ttl",
-                open("../tests/data/vocprez/input/alteration-types.ttl", "rb"),
+                open("tests/data/vocprez/input/alteration-types.ttl", "rb"),
                 "application/octet-stream",
             ),
         ),
@@ -79,7 +79,7 @@ def setup_vp():
             "myfile2",
             (
                 "contacttype.ttl",
-                open("../tests/data/vocprez/input/contacttype.ttl", "rb"),
+                open("tests/data/vocprez/input/contacttype.ttl", "rb"),
                 "application/octet-stream",
             ),
         ),
@@ -107,7 +107,7 @@ def setup_cp():
             "myfile",
             (
                 "_idn-ac.ttl",
-                open("../tests/data/catprez/input/_idn-ac.ttl", "rb"),
+                open("tests/data/catprez/input/_idn-ac.ttl", "rb"),
                 "application/octet-stream",
             ),
         ),
@@ -115,7 +115,7 @@ def setup_cp():
             "myfile2",
             (
                 "_idn-dc.ttl",
-                open("../tests/data/catprez/input/_idn-dc.ttl", "rb"),
+                open("tests/data/catprez/input/_idn-dc.ttl", "rb"),
                 "application/octet-stream",
             ),
         ),
@@ -123,7 +123,7 @@ def setup_cp():
             "myfile3",
             (
                 "_system-catalog.ttl",
-                open("../tests/data/catprez/input/_system-catalog.ttl", "rb"),
+                open("tests/data/catprez/input/_system-catalog.ttl", "rb"),
                 "application/octet-stream",
             ),
         ),
@@ -131,7 +131,7 @@ def setup_cp():
             "myfile4",
             (
                 "AAC-SA.ttl",
-                open("../tests/data/catprez/input/AAC-SA.ttl", "rb"),
+                open("tests/data/catprez/input/AAC-SA.ttl", "rb"),
                 "application/octet-stream",
             ),
         ),
@@ -139,7 +139,7 @@ def setup_cp():
             "myfile5",
             (
                 "agents.ttl",
-                open("../tests/data/catprez/input/agents.ttl", "rb"),
+                open("tests/data/catprez/input/agents.ttl", "rb"),
                 "application/octet-stream",
             ),
         ),

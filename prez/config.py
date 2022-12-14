@@ -45,8 +45,10 @@ class Settings(BaseSettings):
         },
     }
     prez_title: Optional[str] = "Prez"
-    prez_desc: Optional[str] = "A web framework API for delivering Linked Data. It provides read-only access to " \
-                               "Knowledge Graph data which can be subset according to information profiles."
+    prez_desc: Optional[str] = (
+        "A web framework API for delivering Linked Data. It provides read-only access to "
+        "Knowledge Graph data which can be subset according to information profiles."
+    )
     prez_version: str = "3.0.0"
 
     @root_validator()
@@ -73,6 +75,28 @@ class Settings(BaseSettings):
             raise ValueError(
                 "one or more of spaceprez, vocprez, or catprez SPARQL endpoints are required for Prez to start."
             )
+        return values
+
+    @root_validator()
+    def set_sparql_update_endpoints(cls, values):
+        cp_sparql = values.get("catprez_sparql_endpoint")
+        if cp_sparql is not None:
+            cp_update = values.get("catprez_sparql_update")
+            if cp_update is None:
+                values["catprez_sparql_update"] = cp_sparql
+
+        sp_sparql = values.get("spaceprez_sparql_endpoint")
+        if sp_sparql is not None:
+            sp_update = values.get("spaceprez_sparql_update")
+            if sp_update is None:
+                values["spaceprez_sparql_update"] = sp_sparql
+
+        vp_sparql = values.get("vocprez_sparql_endpoint")
+        if vp_sparql is not None:
+            vp_update = values.get("vocprez_sparql_update")
+            if vp_update is None:
+                values["vocprez_sparql_update"] = vp_sparql
+
         return values
 
     @root_validator()
@@ -128,26 +152,4 @@ class Settings(BaseSettings):
             values["general_classes"][prez] = (
                 values["collection_classes"].get(prez) + additional_classes[prez]
             )
-        return values
-
-    @root_validator()
-    def set_sparql_update_endpoints(cls, values):
-        cp_sparql = values.get("catprez_sparql_endpoint")
-        if cp_sparql is not None:
-            cp_update = values.get("catprez_update_endpoint")
-            if cp_update is None:
-                values["catprez_update_endpoint"] = cp_sparql
-
-        sp_sparql = values.get("spaceprez_sparql_endpoint")
-        if sp_sparql is not None:
-            sp_update = values.get("spaceprez_update_endpoint")
-            if sp_update is None:
-                values["spaceprez_update_endpoint"] = sp_sparql
-
-        vp_sparql = values.get("vocprez_sparql_endpoint")
-        if vp_sparql is not None:
-            vp_update = values.get("vocprez_update_endpoint")
-            if vp_update is None:
-                values["vocprez_update_endpoint"] = vp_sparql
-
         return values

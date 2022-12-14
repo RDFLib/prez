@@ -6,7 +6,7 @@ from fastapi.responses import StreamingResponse
 from rdflib import Literal, Graph
 
 from prez.cache import tbox_cache
-from prez.services.sparql_new import (
+from prez.services.sparql_queries import (
     get_annotation_properties,
     get_annotation_predicates,
 )
