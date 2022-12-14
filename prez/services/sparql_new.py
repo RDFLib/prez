@@ -14,6 +14,7 @@ from prez.models import (
     VocabMembers,
 )
 from itertools import chain
+from textwrap import dedent
 
 log = logging.getLogger(__name__)
 
@@ -32,47 +33,48 @@ def generate_insert_context(settings, prez: str):
       		          { ?instance_of_main_class skos:member ?member }""",
         "CatPrez": "?instance_of_main_class dcterms:hasPart ?member",
     }
-    insert = f"""PREFIX dcat: <http://www.w3.org/ns/dcat#>
-PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX prez: <https://prez.dev/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-INSERT {{
-    GRAPH prez:{prez.lower()}-system-graph {{
-     ?support_graph_uri prez:hasContextFor ?instance_of_main_class .
-     ?collectionList rdfs:member ?instance_of_top_class .
-     ?instance_of_main_class dcterms:identifier ?prez_id .
-     }}
-    GRAPH ?support_graph_uri {{ ?member dcterms:identifier ?prez_mem_id . }}
-}}
-WHERE {{
-  {{
-    ?instance_of_main_class a ?collection_class .
-        VALUES ?collection_class {{ {(chr(10) + 2 * chr(9)).join('<' + str(uri) + '>' for uri in collection_classes)} }}
-    OPTIONAL {{?instance_of_top_class a ?topmost_class
-        VALUES ?topmost_class {{ {(chr(10) + 2 * chr(9)).join('<' + str(uri) + '>' for uri in topmost_classes)} }}
-    }}
-    MINUS {{ GRAPH prez:{prez.lower()}-system-graph {{?a_context_graph prez:hasContextFor ?instance_of_main_class}}
-    }}
-    OPTIONAL {{?instance_of_main_class dcterms:identifier ?id
-        BIND(DATATYPE(?id) AS ?dtype_id)
-        FILTER(?dtype_id = xsd:token)
+    insert = dedent(
+        f"""PREFIX dcat: <http://www.w3.org/ns/dcat#>
+        PREFIX dcterms: <http://purl.org/dc/terms/>
+        PREFIX prez: <https://prez.dev/>
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+        INSERT {{
+            GRAPH prez:{prez.lower()}-system-graph {{
+                ?support_graph_uri prez:hasContextFor ?instance_of_main_class .
+                ?collectionList rdfs:member ?instance_of_top_class .
+                ?instance_of_main_class dcterms:identifier ?prez_id .
+            }}
+            GRAPH ?support_graph_uri {{ ?member dcterms:identifier ?prez_mem_id . }}
         }}
-    OPTIONAL {{ {member_relation[prez]}
-        OPTIONAL {{?member dcterms:identifier ?mem_id
-            BIND(DATATYPE(?mem_id) AS ?dtype_mem_id)
-            FILTER(?dtype_mem_id = xsd:token) }} }}
-    }}
-    BIND(
-        IF(?topmost_class=dcat:Dataset, prez:DatasetList,
-          IF(?topmost_class=dcat:Catalog,prez:CatalogList,
-            IF(?topmost_class=skos:ConceptScheme,prez:SchemesList,
-              IF(?topmost_class=skos:Collection,prez:VocPrezCollectionList,"")))) AS ?collectionList)
-    BIND(STRDT(COALESCE(?id,MD5(STR(?instance_of_main_class))), prez:slug) AS ?prez_id)
-    BIND(STRDT(COALESCE(?mem_id,MD5(STR(?member))), prez:slug) AS ?prez_mem_id)
-    BIND(URI(CONCAT(STR(?instance_of_main_class),"/support-graph")) AS ?support_graph_uri)
-}}"""
+        WHERE {{
+          {{
+            ?instance_of_main_class a ?collection_class .
+                VALUES ?collection_class {{ {(chr(10) + 2 * chr(9)).join('<' + str(uri) + '>' for uri in collection_classes)} }}
+            OPTIONAL {{?instance_of_top_class a ?topmost_class
+                VALUES ?topmost_class {{ {(chr(10) + 2 * chr(9)).join('<' + str(uri) + '>' for uri in topmost_classes)} }}
+            }}
+            MINUS {{ GRAPH prez:{prez.lower()}-system-graph {{?a_context_graph prez:hasContextFor ?instance_of_main_class}}
+            }}
+            OPTIONAL {{?instance_of_main_class dcterms:identifier ?id
+                BIND(DATATYPE(?id) AS ?dtype_id)
+                FILTER(?dtype_id = xsd:token)
+                }}
+            OPTIONAL {{ {member_relation[prez]}
+                OPTIONAL {{?member dcterms:identifier ?mem_id
+                    BIND(DATATYPE(?mem_id) AS ?dtype_mem_id)
+                    FILTER(?dtype_mem_id = xsd:token) }} }}
+            }}
+            BIND(
+                IF(?topmost_class=dcat:Dataset, prez:DatasetList,
+                  IF(?topmost_class=dcat:Catalog,prez:CatalogList,
+                    IF(?topmost_class=skos:ConceptScheme,prez:SchemesList,
+                      IF(?topmost_class=skos:Collection,prez:VocPrezCollectionList,"")))) AS ?collectionList)
+            BIND(STRDT(COALESCE(?id,MD5(STR(?instance_of_main_class))), prez:slug) AS ?prez_id)
+            BIND(STRDT(COALESCE(?mem_id,MD5(STR(?member))), prez:slug) AS ?prez_mem_id)
+            BIND(URI(CONCAT(STR(?instance_of_main_class),"/support-graph")) AS ?support_graph_uri)
+        }}""")
     return insert
 
 
@@ -135,33 +137,36 @@ def generate_listing_construct_from_uri(
             f" define any listing relations for this for this class, for example outbound children."
         )
         return ""
-    construct_query = f"""PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX prez: <https://prez.dev/>
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-
-CONSTRUCT {{
-    {f'<{parent_item.uri}> ?outbound_children ?item .{chr(10)}'
-     f'?item prez:link ?outbound_children_link .{chr(10)}' if outbound_children else ""}\
-    {f'<{parent_item.uri}> ?outbound_parents ?item .{chr(10)}'
-     f'?item prez:link ?outbound_parents_link .{chr(10)}' if outbound_parents else ""}\
-    {f'?inbound_child_s ?inbound_child <{parent_item.uri}> ;{chr(10)}'
-     f'prez:link ?inbound_children_link .{chr(10)}' if inbound_children else ""}\
-    {f'?inbound_parent_s ?inbound_parent <{parent_item.uri}> ;{chr(10)}'
-     f'prez:link ?inbound_parent_link .{chr(10)}' if inbound_parents else ""}\
-    {f'''prez:memberList a rdf:Bag ;
+    query = dedent(f"""
+        PREFIX dcterms: <http://purl.org/dc/terms/>
+        PREFIX prez: <https://prez.dev/>
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+        
+        CONSTRUCT {{
+            {f'<{parent_item.uri}> ?outbound_children ?item .{chr(10)}'
+             f'            ?item prez:link ?outbound_children_link .{chr(10)}' if outbound_children else ""}\
+            {f'<{parent_item.uri}> ?outbound_parents ?item .{chr(10)}'
+             f'            ?item prez:link ?outbound_parents_link .{chr(10)}' if outbound_parents else ""}\
+            {f'?inbound_child_s ?inbound_child <{parent_item.uri}> ;{chr(10)}'
+             f'            prez:link ?inbound_children_link .{chr(10)}' if inbound_children else ""}\
+            {f'?inbound_parent_s ?inbound_parent <{parent_item.uri}> ;{chr(10)}'
+             f'            prez:link ?inbound_parent_link .{chr(10)}' if inbound_parents else ""}\
+            {f'''            prez:memberList a rdf:Bag ;
                 rdfs:member ?item .
-    ?item prez:link ?outbound_general_link''' if not parent_item.uri else ""} \
-    }}
-WHERE {{
-{generate_outbound_predicates(parent_item, outbound_children, outbound_parents)} \
-{generate_inbound_predicates(parent_item, inbound_children, inbound_parents)} \
-{generate_id_listing_binds(parent_item, inbound_children, inbound_parents, outbound_children, outbound_parents)}
-    }} {f"LIMIT {per_page} OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
-    """
-    return construct_query
+            ?item prez:link ?outbound_general_link''' if not parent_item.uri else ""} \
+        }}
+        WHERE {{
+            {generate_outbound_predicates(parent_item, outbound_children, outbound_parents)} \
+            {generate_inbound_predicates(parent_item, inbound_children, inbound_parents)} {chr(10)} \
+            {generate_id_listing_binds(parent_item, inbound_children, inbound_parents, outbound_children, outbound_parents)}
+        }} 
+        {f"LIMIT {per_page}{chr(10)}"
+         f"        OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
+    """).strip()
+    return query
 
 
 @lru_cache(maxsize=128)
