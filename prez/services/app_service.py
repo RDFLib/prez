@@ -6,7 +6,7 @@ from rdflib import Namespace
 from rdflib.namespace import SKOS, DCTERMS, XSD
 
 from prez.cache import counts_graph
-from prez.services.sparql_new import startup_count_objects
+from prez.services.sparql_queries import startup_count_objects
 from prez.services.sparql_utils import sparql_construct
 
 ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")

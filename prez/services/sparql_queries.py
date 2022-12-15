@@ -74,39 +74,9 @@ def generate_insert_context(settings, prez: str):
             BIND(STRDT(COALESCE(?id,MD5(STR(?instance_of_main_class))), prez:slug) AS ?prez_id)
             BIND(STRDT(COALESCE(?mem_id,MD5(STR(?member))), prez:slug) AS ?prez_mem_id)
             BIND(URI(CONCAT(STR(?instance_of_main_class),"/support-graph")) AS ?support_graph_uri)
-        }}""")
+        }}"""
+    )
     return insert
-
-
-# def generate_listing_construct_from_general_class(
-#         parent_item,
-#         profile,
-#         page: Optional[int] = 1,
-#         per_page: Optional[int] = 20,
-#         ):
-#     """
-#     For a given general class, find instances of this class.
-#     Generates a SPARQL construct query for a listing of items
-#     """
-#     construct_query = f"""PREFIX dcterms: <http://purl.org/dc/terms/>
-# PREFIX prez: <https://prez.dev/>
-# PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-# PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-# PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-# PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-#
-# CONSTRUCT {{
-# <{parent_item.uri}> rdfs:member ?item .'
-# ?item a <{parent_item.general_class}> ;
-#     dcterms:identifier ?id }}
-# WHERE {{
-# <{parent_item.uri}> rdfs:member ?item .'
-# ?item a <{parent_item.general_class}> ;
-#     dcterms:identifier ?id }}
-#
-#     }} {f"LIMIT {per_page} OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
-#     """
-#     return construct_query
 
 
 def generate_listing_construct_from_uri(
@@ -137,14 +107,15 @@ def generate_listing_construct_from_uri(
             f" define any listing relations for this for this class, for example outbound children."
         )
         return ""
-    query = dedent(f"""
+    query = dedent(
+        f"""
         PREFIX dcterms: <http://purl.org/dc/terms/>
         PREFIX prez: <https://prez.dev/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
         PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
         PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-        
+
         CONSTRUCT {{
             {f'<{parent_item.uri}> ?outbound_children ?item .{chr(10)}'
              f'            ?item prez:link ?outbound_children_link .{chr(10)}' if outbound_children else ""}\
@@ -158,14 +129,15 @@ def generate_listing_construct_from_uri(
                 rdfs:member ?item .
             ?item prez:link ?outbound_general_link''' if not parent_item.uri else ""} \
         }}
-        WHERE {{
+        WHERE {{ GRAPH ?g {{
             {generate_outbound_predicates(parent_item, outbound_children, outbound_parents)} \
             {generate_inbound_predicates(parent_item, inbound_children, inbound_parents)} {chr(10)} \
             {generate_id_listing_binds(parent_item, inbound_children, inbound_parents, outbound_children, outbound_parents)}
-        }} 
+        }} }}
         {f"LIMIT {per_page}{chr(10)}"
          f"        OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
-    """).strip()
+    """
+    ).strip()
     return query
 
 

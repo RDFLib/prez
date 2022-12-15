@@ -45,8 +45,10 @@ class Settings(BaseSettings):
         },
     }
     prez_title: Optional[str] = "Prez"
-    prez_desc: Optional[str] = "A web framework API for delivering Linked Data. It provides read-only access to " \
-                               "Knowledge Graph data which can be subset according to information profiles."
+    prez_desc: Optional[str] = (
+        "A web framework API for delivering Linked Data. It provides read-only access to "
+        "Knowledge Graph data which can be subset according to information profiles."
+    )
     prez_version: str = "3.0.0"
 
     @root_validator()

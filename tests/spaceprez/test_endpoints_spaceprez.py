@@ -38,7 +38,7 @@ def a_dataset_link(sp_test_client):
         # get link for first dataset
         r = client.get("/s/datasets")
         g = Graph().parse(data=r.text)
-        member_uri = g.value(URIRef("https://prez.dev/memberList"), RDFS.member, None)
+        member_uri = g.value(URIRef("https://prez.dev/DatasetList"), RDFS.member, None)
         link = g.value(member_uri, URIRef(f"https://prez.dev/link", None))
         return link
 
