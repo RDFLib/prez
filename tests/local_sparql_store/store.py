@@ -128,9 +128,9 @@ class SparqlServer(BaseHTTPRequestHandler):
 
         # get query from POST body
         query = self.rfile.read(int(self.headers["Content-Length"])).decode("utf-8")
-        if query.startswith("update="):
-            update = query.split("update=")[1]
-            self.apply_sparql_update(update)
+        content_type = self.headers["Content-Type"]
+        if content_type == "application/sparql-update":
+            self.apply_sparql_update(query)
         else:
             self.apply_sparql_query(query)
 
