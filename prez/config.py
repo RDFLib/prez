@@ -76,21 +76,6 @@ class Settings(BaseSettings):
         return values
 
     @root_validator()
-    def populate_sparql_creds(cls, values):
-        values["sparql_creds"] = {
-            "CatPrez": {},
-            "VocPrez": {},
-            "SpacePrez": {},
-        }
-        for prez in values["enabled_prezs"]:
-            for attr in ["endpoint", "username", "password", "update"]:
-                key = f"{prez.lower()}_sparql_{attr}"
-                value = values[key]
-                if value:
-                    values["sparql_creds"][prez][attr] = value
-        return values
-
-    @root_validator()
     def populate_top_level_classes(cls, values):
         top_level_classes = {
             "SpacePrez": [DCAT.Dataset],
@@ -134,20 +119,42 @@ class Settings(BaseSettings):
     def set_sparql_update_endpoints(cls, values):
         cp_sparql = values.get("catprez_sparql_endpoint")
         if cp_sparql is not None:
-            cp_update = values.get("catprez_update_endpoint")
+            cp_update = values.get("catprez_sparql_update")
             if cp_update is None:
-                values["catprez_update_endpoint"] = cp_sparql
+                values["catprez_sparql_update"] = cp_sparql
+        # protect future calls to values["catprez_sparql_update"] even when no values
+        if values.get("catprez_sparql_update") is None:
+            values["catprez_sparql_update"] = None
 
         sp_sparql = values.get("spaceprez_sparql_endpoint")
         if sp_sparql is not None:
-            sp_update = values.get("spaceprez_update_endpoint")
+            sp_update = values.get("spaceprez_sparql_update")
             if sp_update is None:
-                values["spaceprez_update_endpoint"] = sp_sparql
+                values["spaceprez_sparql_update"] = sp_sparql
+        if values.get("spaceprez_sparql_update") is None:
+            values["spaceprez_sparql_update"] = None
 
         vp_sparql = values.get("vocprez_sparql_endpoint")
         if vp_sparql is not None:
-            vp_update = values.get("vocprez_update_endpoint")
+            vp_update = values.get("vocprez_sparql_update")
             if vp_update is None:
-                values["vocprez_update_endpoint"] = vp_sparql
+                values["vocprez_sparql_update"] = vp_sparql
+        if values.get("vocprez_sparql_update") is None:
+            values["vocprez_sparql_update"] = None
 
+        return values
+
+    @root_validator()
+    def populate_sparql_creds(cls, values):
+        values["sparql_creds"] = {
+            "CatPrez": {},
+            "VocPrez": {},
+            "SpacePrez": {},
+        }
+        for prez in values["enabled_prezs"]:
+            for attr in ["endpoint", "username", "password", "update"]:
+                key = f"{prez.lower()}_sparql_{attr}"
+                value = values[key]
+                if value:
+                    values["sparql_creds"][prez][attr] = value
         return values
