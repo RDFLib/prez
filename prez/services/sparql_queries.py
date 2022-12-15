@@ -416,25 +416,37 @@ def generate_listing_count_construct(
     2. the number of instances of a general class, given a general class.
     """
     if item.uri:
-        query_implicit = f"""PREFIX prez: <https://prez.dev/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-
-CONSTRUCT {{ <{item.uri}> prez:count ?count }}
-WHERE {{
-    SELECT (COUNT(?item) as ?count) {{
-        <{item.uri}> rdfs:member ?item .
-    }}
-}}"""
-        return query_implicit
+        query = dedent(
+            f"""
+            PREFIX prez: <https://prez.dev/>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            
+            CONSTRUCT {{ <{item.uri}> prez:count ?count }}
+            WHERE {{
+                SELECT (COUNT(?item) as ?count)
+                WHERE {{
+                    GRAPH ?g {{    
+                        <{item.uri}> rdfs:member ?item .
+                    }}        
+                }}
+            }}"""
+        ).strip()
+        return query
     else:  # item.selected_class
-        query = f"""PREFIX prez: <https://prez.dev/>
+        query = dedent(
+            f"""
+            PREFIX prez: <https://prez.dev/>
 
-CONSTRUCT {{ <{item.general_class}> prez:count ?count }}
-WHERE {{
-    SELECT (COUNT(?item) as ?count) {{
-        ?item a <{item.general_class}> .
-    }}
-}}"""
+            CONSTRUCT {{ <{item.general_class}> prez:count ?count }}
+            WHERE {{
+                SELECT (COUNT(?item) as ?count) 
+                WHERE {{
+                    GRAPH ?g {{
+                        ?item a <{item.general_class}> .
+                    }}
+                }}
+            }}"""
+        ).strip()
         return query
 
 
