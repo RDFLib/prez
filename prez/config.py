@@ -1,10 +1,12 @@
+from pathlib import Path
 from typing import Optional
 
+import toml
 from pydantic import (
     BaseSettings,
     root_validator,
 )
-from rdflib import DCAT, SKOS
+from rdflib import DCAT, SKOS, URIRef
 from rdflib.namespace import GEO
 
 
@@ -49,14 +51,21 @@ class Settings(BaseSettings):
         "A web framework API for delivering Linked Data. It provides read-only access to "
         "Knowledge Graph data which can be subset according to information profiles."
     )
-    prez_version: str = "3.0.0"
+    prez_version: Optional[str]
+
+    @root_validator()
+    def get_version(cls, values):
+        values["prez_version"] = toml.load(
+            Path(Path(__file__).parent.parent) / "pyproject.toml"
+        )["tool"]["poetry"]["version"]
+        return values
 
     @root_validator()
     def set_system_uri(cls, values):
         if not values.get("system_uri"):
-            values[
-                "system_uri"
-            ] = f"{values['protocol']}://{values['host']}:{values['port']}"
+            values["system_uri"] = URIRef(
+                f"{values['protocol']}://{values['host']}:{values['port']}"
+            )
         return values
 
     @root_validator()

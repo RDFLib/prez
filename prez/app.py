@@ -7,7 +7,7 @@ from fastapi import FastAPI, Request
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import AnyUrl
-from rdflib import Graph
+from rdflib import Graph, Literal, Namespace, URIRef
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import PlainTextResponse
 
@@ -24,6 +24,9 @@ from prez.routers.spaceprez import router as spaceprez_router
 from prez.routers.vocprez import router as vocprez_router
 from prez.services.app_service import healthcheck_sparql_endpoints, count_objects
 from prez.utils.prez_logging import setup_logger
+
+
+PREZ = Namespace("https://prez.dev/")
 
 
 async def catch_400(request: Request, exc):
@@ -66,12 +69,12 @@ if settings.spaceprez_sparql_endpoint:
 
 
 def prez_open_api_metadata():
-   return get_openapi(
-       title=settings.prez_title,
-       version=settings.prez_version,
-       description=settings.prez_desc,
-       routes=app.routes,
-   )
+    return get_openapi(
+        title=settings.prez_title,
+        version=settings.prez_version,
+        description=settings.prez_desc,
+        routes=app.routes,
+    )
 
 
 app.openapi = prez_open_api_metadata
@@ -111,10 +114,18 @@ async def index(request: Request):
     # TODO connegp on request. don't need profiles for this
     from prez.cache import (
         prez_system_graph,
+        tbox_cache,
     )  # importing at module level will get the empty graph before it's populated
 
+    prez_system_graph.add(
+        (
+            URIRef(settings.system_uri),
+            PREZ.currentTBOXCacheSize,
+            Literal(len(tbox_cache)),
+        )
+    )
     return await return_rdf(
-        prez_system_graph, mediatype="text/turtle", profile_headers=None
+        prez_system_graph, mediatype="text/anot+turtle", profile_headers=None
     )
 
 
@@ -284,7 +295,9 @@ async def profiles(request: Request):
     # return await return_from_graph(profiles_graph_cache, mediatype, profile, profile_headers, None)
 
 
-@app.get("/object", summary="Get object", response_class=RedirectResponse, tags=["Prez"])
+@app.get(
+    "/object", summary="Get object", response_class=RedirectResponse, tags=["Prez"]
+)
 async def object(
     request: Request,
     uri: AnyUrl,

@@ -15,7 +15,7 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
     dcterms:identifier "prez" ;
     dcterms:description "A profile for the Prez Linked Data API" ;
     skos:prefLabel "Prez profile" ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
+    altr-ext:hasDefaultResourceFormat "text/turtle" ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
         sh:targetClass prez:SchemesList ;
@@ -46,10 +46,10 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
     dcterms:description "List of profiles" ;
     dcterms:identifier "profiles" ;
     altr-ext:constrainsClass prez:Profiles ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
+    altr-ext:hasDefaultResourceFormat "text/turtle" ;
     altr-ext:hasResourceFormat
         "application/json" ,
-        "text/html" ;
+        "text/anot+turtle" ;
 .
 
 altr-ext:alt-profile
@@ -57,11 +57,11 @@ altr-ext:alt-profile
     dcterms:description "The representation of the resource that lists all other representations (profiles and Media Types)" ;
     dcterms:identifier "alt" ;
     dcterms:title "Alternates Profile" ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
+    altr-ext:hasDefaultResourceFormat "text/turtle" ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,
         "application/rdf+xml" ,
-        "text/html" ,
+        "text/anot+turtle" ,
         "text/turtle" ;
 .
 
@@ -77,12 +77,12 @@ altr-ext:hasResourceFormat
     dcterms:description "A very basic data model that lists the members of container objects only, i.e. not their other properties" ;
     dcterms:identifier "mem" ;
     dcterms:title "Members" ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
+    altr-ext:hasDefaultResourceFormat "text/turtle" ;
     altr-ext:hasResourceFormat
         "application/json" ,
         "application/ld+json" ,
         "application/rdf+xml" ,
-        "text/html" ,
+        "text/anot+turtle" ,
         "text/turtle" ;
 .
 
@@ -97,11 +97,11 @@ altr-ext:hasResourceFormat
         prez:VocPrezHome,
         prez:SchemesList ,
         prez:VocPrezCollectionList ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
+    altr-ext:hasDefaultResourceFormat "text/turtle" ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,
         "application/rdf+xml" ,
-        "text/html" ,
+        "text/anot+turtle" ,
         "text/turtle" ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
@@ -120,11 +120,11 @@ altr-ext:hasResourceFormat
         skos:ConceptScheme ,
         skos:Concept ,
         skos:Collection ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
+    altr-ext:hasDefaultResourceFormat "text/turtle" ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,
         "application/rdf+xml" ,
-        "text/html" ,
+        "text/anot+turtle" ,
         "text/turtle" ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
@@ -157,11 +157,11 @@ altr-ext:hasResourceFormat
         skos:Dataset ,
         skos:ConceptScheme ,
         skos:Collection ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
+    altr-ext:hasDefaultResourceFormat "text/turtle" ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,
         "application/rdf+xml" ,
-        "text/html" ,
+        "text/anot+turtle" ,
         "text/turtle" ;
 .
 

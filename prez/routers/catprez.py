@@ -14,6 +14,11 @@ from prez.services.sparql_queries import (
 router = APIRouter(tags=["CatPrez"])
 
 
+@router.get("/c", summary="CatPrez Home")
+async def catprez_home(request: Request):
+    return await prez_profiles(request, "CatPrez")
+
+
 @router.get("/c/catalogs", summary="List Catalogs")
 async def catalogs_endpoint(
     request: Request,

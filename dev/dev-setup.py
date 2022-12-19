@@ -3,6 +3,7 @@ import time
 
 import requests
 
+os.system("docker context use default")
 response = os.system(
     "docker run -d -v ${PWD}/dev/dev-config.ttl:/fuseki/config.ttl -p 3030:3030 ghcr.io/zazuko/fuseki-geosparql"
 )

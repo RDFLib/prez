@@ -71,8 +71,8 @@ def generate_insert_context(settings, prez: str):
                   IF(?topmost_class=dcat:Catalog,prez:CatalogList,
                     IF(?topmost_class=skos:ConceptScheme,prez:SchemesList,
                       IF(?topmost_class=skos:Collection,prez:VocPrezCollectionList,"")))) AS ?collectionList)
-            BIND(STRDT(COALESCE(?id,MD5(STR(?instance_of_main_class))), prez:slug) AS ?prez_id)
-            BIND(STRDT(COALESCE(?mem_id,MD5(STR(?member))), prez:slug) AS ?prez_mem_id)
+            BIND(STRDT(COALESCE(STR(?id),MD5(STR(?instance_of_main_class))), prez:slug) AS ?prez_id)
+            BIND(STRDT(COALESCE(STR(?mem_id),MD5(STR(?member))), prez:slug) AS ?prez_mem_id)
             BIND(URI(CONCAT(STR(?instance_of_main_class),"/support-graph")) AS ?support_graph_uri)
         }}"""
     )
@@ -120,7 +120,7 @@ def generate_listing_construct_from_uri(
             {f'<{parent_item.uri}> ?outbound_children ?item .{chr(10)}'
              f'            ?item prez:link ?outbound_children_link .{chr(10)}' if outbound_children else ""}\
             {f'<{parent_item.uri}> ?outbound_parents ?item .{chr(10)}'
-             f'            ?item prez:link ?outbound_parents_link .{chr(10)}' if outbound_parents else ""}\
+             f'            ?item prez:link ?outbound_parent_link .{chr(10)}' if outbound_parents else ""}\
             {f'?inbound_child_s ?inbound_child <{parent_item.uri}> ;{chr(10)}'
              f'            prez:link ?inbound_children_link .{chr(10)}' if inbound_children else ""}\
             {f'?inbound_parent_s ?inbound_parent <{parent_item.uri}> ;{chr(10)}'
@@ -129,15 +129,16 @@ def generate_listing_construct_from_uri(
                 rdfs:member ?item .
             ?item prez:link ?outbound_general_link''' if not parent_item.uri else ""} \
         }}
-        WHERE {{ GRAPH ?g {{
+        WHERE {{
             {generate_outbound_predicates(parent_item, outbound_children, outbound_parents)} \
             {generate_inbound_predicates(parent_item, inbound_children, inbound_parents)} {chr(10)} \
             {generate_id_listing_binds(parent_item, inbound_children, inbound_parents, outbound_children, outbound_parents)}
-        }} }}
+        }}
         {f"LIMIT {per_page}{chr(10)}"
          f"        OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
     """
     ).strip()
+    log.debug(f"Listing construct query for {parent_item} is:\n{query}")
     return query
 
 
@@ -156,24 +157,31 @@ def generate_item_construct(item, profile: URIRef):
         None,
         default=2,
     )
-    construct_query = f"""PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n
-CONSTRUCT {{
-\t<{object_uri}> ?p ?o1 .
-{generate_sequence_construct(object_uri, sequence_predicates) if sequence_predicates else ""}
-{f'{chr(9)}?s ?inbound_p <{object_uri}> .' if inverse_predicates else ""}
-{generate_bnode_construct(bnode_depth)} \
-\n}}
-WHERE {{
-    {{
-    <{object_uri}> ?p ?o1 . {chr(10)} \
-{generate_sequence_construct(object_uri, sequence_predicates) if sequence_predicates else chr(10)} \
-    {f'?s ?inbound_p <{object_uri}>{chr(10)}' if inverse_predicates else chr(10)} \
-    {generate_include_predicates(include_predicates)} \
-    {generate_inverse_predicates(inverse_predicates)} \
-    {generate_bnode_select(bnode_depth)} \
-    }} \
-}}
-"""
+    construct_query = dedent(
+        f"""PREFIX dcterms: <http://purl.org/dc/terms/>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX prez: <https://prez.dev/>
+    CONSTRUCT {{
+    \t<{object_uri}> ?p ?o1 .
+    {generate_sequence_construct(object_uri, sequence_predicates) if sequence_predicates else ""}
+    {f'{chr(9)}?s ?inbound_p <{object_uri}> .' if inverse_predicates else ""}
+    {generate_bnode_construct(bnode_depth)} \
+    \n}}
+    WHERE {{
+        {{
+        <{object_uri}> ?p ?o1 . {chr(10)} \
+    {generate_sequence_construct(object_uri, sequence_predicates) if sequence_predicates else chr(10)} \
+        {f'?s ?inbound_p <{object_uri}>{chr(10)}' if inverse_predicates else chr(10)} \
+        {generate_include_predicates(include_predicates)} \
+        {generate_inverse_predicates(inverse_predicates)} \
+        {generate_bnode_select(bnode_depth)} \
+        }} \
+        MINUS {{ <{object_uri}> dcterms:identifier ?o1 .
+                FILTER(DATATYPE(?o1)=prez:slug) }} \
+    }}
+    """
+    )
+    log.debug(f"Item Construct query for {object_uri} is:\n{construct_query}")
     return construct_query
 
 
@@ -315,20 +323,20 @@ def generate_bnode_select(depth):
 
 async def get_annotation_properties(
     item_graph: Graph,
-    label_prop: URIRef = RDFS.label,
-    description_prop: URIRef = DCTERMS.description,
-    explanation_prop: URIRef = DCTERMS.provenance,
+    label_predicates: List[URIRef],
+    description_predicates: List[URIRef],
+    explanation_predicates: List[URIRef],
 ):
     """
     Gets annotation data used for HTML display.
     This includes the label, description, and provenance, if available.
+    Note the following three default predicates are always included. This allows context, i.e. background ontologies,
+    which are often diverse in the predicates they use, to be aligned with the default predicates used by Prez. The full
+    range of predicates used can be manually included via profiles.
     """
-    if not label_prop:
-        label_prop = RDFS.label
-    if not description_prop:
-        description_prop = DCTERMS.description
-    if not explanation_prop:
-        explanation_prop = DCTERMS.provenance
+    label_predicates += [RDFS.label]
+    description_predicates += [DCTERMS.description]
+    explanation_predicates += [DCTERMS.provenance]
     terms = (
         set(i for i in item_graph.predicates() if isinstance(i, URIRef))
         | set(i for i in item_graph.objects() if isinstance(i, URIRef))
@@ -340,7 +348,7 @@ async def get_annotation_properties(
         return None, Graph()
     # read labels from the tbox cache, this should be the majority of labels
     uncached_terms, labels_g = get_annotations_from_tbox_cache(
-        terms, label_prop, description_prop, explanation_prop
+        terms, label_predicates, description_predicates, explanation_predicates
     )
     queries_for_uncached = f"""CONSTRUCT {{
     ?unlabeled_term ?label_prop ?label .
@@ -349,21 +357,21 @@ async def get_annotation_properties(
         WHERE {{
             {{
                 ?unlabeled_term ?label_prop ?label .
-                VALUES ?label_prop {{ <{str(label_prop)}> }}
+                VALUES ?label_prop {{ {" ".join('<' + str(pred) + '>' for pred in label_predicates)} }}
                 VALUES ?unlabeled_term {{ {" ".join('<' + str(term) + '>' for term in uncached_terms["labels"])} }}
                 FILTER(lang(?label) = "" || lang(?label) = "en" || lang(?label) = "en-AU")
             }}
             UNION
             {{
                 ?undescribed_term ?desc_prop ?description .
-                VALUES ?desc_prop {{ <{str(description_prop)}> }}
+                VALUES ?desc_prop {{ {" ".join('<' + str(pred) + '>' for pred in description_predicates)} }}
                 VALUES ?undescribed_term {{ {" ".join('<' + str(term) + '>' for term in uncached_terms["descriptions"])}
                 }}
             }}
             UNION
             {{
                 ?unexplained_term ?expl_prop ?explanation .
-                VALUES ?expl_prop {{ <{str(explanation_prop)}> }}
+                VALUES ?expl_prop {{ {" ".join('<' + str(pred) + '>' for pred in explanation_predicates)} }}
                 VALUES ?unexplained_term {{ {" ".join('<' + str(term) + '>' for term in uncached_terms["provenance"])}
                 }}
             }}
@@ -372,7 +380,7 @@ async def get_annotation_properties(
 
 
 def get_annotations_from_tbox_cache(
-    terms: List[URIRef], label_prop, description_prop, explanation_prop
+    terms: List[URIRef], label_props, description_props, explanation_props
 ):
     """
     Gets labels from the TBox cache, returns a list of terms that were not found in the cache, and a graph of labels,
@@ -380,13 +388,32 @@ def get_annotations_from_tbox_cache(
     """
     labels_from_cache = Graph(bind_namespaces="rdflib")
     terms_list = list(terms)
+    # triples = []
+    # triples = list(chain(*(tbox_cache.triples_choices((terms_list, predicate, None)) for predicate in predicates)))
     props_from_cache = {
-        "labels": list(tbox_cache.triples_choices((terms_list, label_prop, None))),
+        "labels": list(
+            chain(
+                *(
+                    tbox_cache.triples_choices((terms_list, prop, None))
+                    for prop in label_props
+                )
+            )
+        ),
         "descriptions": list(
-            tbox_cache.triples_choices((terms_list, description_prop, None))
+            chain(
+                *(
+                    tbox_cache.triples_choices((terms_list, prop, None))
+                    for prop in description_props
+                )
+            )
         ),
         "provenance": list(
-            tbox_cache.triples_choices((terms_list, explanation_prop, None))
+            chain(
+                *(
+                    tbox_cache.triples_choices((terms_list, prop, None))
+                    for prop in explanation_props
+                )
+            )
         ),
     }
     all = list(chain(*props_from_cache.values()))
@@ -420,14 +447,14 @@ def generate_listing_count_construct(
             f"""
             PREFIX prez: <https://prez.dev/>
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-            
+
             CONSTRUCT {{ <{item.uri}> prez:count ?count }}
             WHERE {{
                 SELECT (COUNT(?item) as ?count)
                 WHERE {{
-                    GRAPH ?g {{    
+                    GRAPH ?g {{
                         <{item.uri}> rdfs:member ?item .
-                    }}        
+                    }}
                 }}
             }}"""
         ).strip()
@@ -439,7 +466,7 @@ def generate_listing_count_construct(
 
             CONSTRUCT {{ <{item.general_class}> prez:count ?count }}
             WHERE {{
-                SELECT (COUNT(?item) as ?count) 
+                SELECT (COUNT(?item) as ?count)
                 WHERE {{
                     GRAPH ?g {{
                         ?item a <{item.general_class}> .
@@ -482,18 +509,35 @@ def get_annotation_predicates(profile):
     Gets the annotation predicates from the profiles graph for a given profile.
     If no predicates are found, "None" is returned by RDFLib
     """
+    preds = {
+        "label_predicates": [],
+        "description_predicates": [],
+        "explanation_predicates": [],
+    }
     if not profile:
-        return None, None, None
-    label_predicate = profiles_graph_cache.value(
-        subject=profile, predicate=ALTREXT.hasLabelPredicate
+        return preds
+    preds["label_predicates"].extend(
+        list(
+            profiles_graph_cache.objects(
+                subject=profile, predicate=ALTREXT.hasLabelPredicate
+            )
+        )
     )
-    description_predicate = profiles_graph_cache.value(
-        subject=profile, predicate=ALTREXT.hasDescriptionPredicate
+    preds["description_predicates"].extend(
+        list(
+            profiles_graph_cache.objects(
+                subject=profile, predicate=ALTREXT.hasDescriptionPredicate
+            )
+        )
     )
-    explanation_predicate = profiles_graph_cache.value(
-        subject=profile, predicate=ALTREXT.hasExplanationPredicate
+    preds["explanation_predicates"].extend(
+        list(
+            profiles_graph_cache.objects(
+                subject=profile, predicate=ALTREXT.hasExplanationPredicate
+            )
+        )
     )
-    return label_predicate, description_predicate, explanation_predicate
+    return preds
 
 
 def get_listing_predicates(profile, selected_class):
@@ -568,6 +612,9 @@ def get_item_predicates(profile, selected_class):
     """
     shape_bns = get_relevant_shape_bns_for_profile(selected_class, profile)
     if not shape_bns:
+        log.info(
+            f"No predicates found for class {selected_class} in profile {profile}."
+        )
         return None, None, None, None
     includes = [
         i[2]

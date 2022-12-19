@@ -100,7 +100,7 @@ def generate_profiles_headers(selected_class, response, profile, mediatype):
     headers = {
         "Access-Control-Allow-Origin": "*",
     }
-    if str(mediatype) == "text/html":
+    if str(mediatype) == "text/anot+turtle":
         headers["Content-Type"] = "text/turtle"
         # TODO does something else need to be returned? the front end knows what it requested - if HTML was requested,
         #  and RDF is returned, it will know to render it as HTML

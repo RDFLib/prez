@@ -1,6 +1,6 @@
 import logging
 
-from rdflib import Namespace, URIRef, DCTERMS, RDF, XSD, SKOS
+from rdflib import Namespace, URIRef, DCTERMS, RDF, XSD, SKOS, Literal
 
 from prez.cache import prez_system_graph
 from prez.services.sparql_queries import generate_insert_context, ask_system_graph
@@ -17,6 +17,15 @@ async def populate_api_info(settings):
         prez_system_graph.add(
             (URIRef(settings.system_uri), PREZ.enabledPrezFlavour, PREZ[prez])
         )
+        # add links to prez subsystems
+        prez_system_graph.add(
+            (URIRef(settings.system_uri), PREZ.link, Literal(f"/{prez[0].lower()}"))
+        )
+        # add prez version
+        prez_system_graph.add(
+            (URIRef(settings.system_uri), PREZ.version, Literal(settings.prez_version))
+        )
+
         log.debug(f"Populated API info for {prez}")
 
 
@@ -39,7 +48,5 @@ async def generate_support_graphs(settings):
         elif settings.generate_support_graphs:
             log.info(f"Generating Support Graphs for {prez}")
             insert_context = generate_insert_context(settings, prez)
-            response = await sparql_update(insert_context, prez)
+            await sparql_update(insert_context, prez)
             log.info(f"Completed generating Support Graphs for {prez}")
-            if not response[0]:
-                raise Exception(response[1])

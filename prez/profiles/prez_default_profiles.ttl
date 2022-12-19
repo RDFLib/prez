@@ -16,7 +16,7 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
     dcterms:identifier "prez" ;
     dcterms:description "A profile for the Prez Linked Data API" ;
     skos:prefLabel "Prez profile" ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
 .
 
 <http://www.opengis.net/spec/ogcapi-features-1/1.0/req/oas30>
@@ -26,8 +26,8 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
     dcterms:title "OGC API Features" ;
     altr-ext:constrainsClass
         prez:Home ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
-        "text/html" ,
+        "text/anot+turtle" ,
         "application/geo+json" ;
 .

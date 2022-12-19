@@ -14,6 +14,11 @@ from prez.services.sparql_queries import (
 router = APIRouter(tags=["VocPrez"])
 
 
+@router.get("/v", summary="VocPrez Home")
+async def vocprez_home(request: Request):
+    return await prez_profiles(request, "VocPrez")
+
+
 @router.get("/v/collection", summary="List Collections")
 @router.get("/v/scheme", summary="List ConceptSchemes")
 @router.get("/v/vocab", summary="List Vocabularies")
@@ -54,10 +59,11 @@ async def vocprez_collection(request: Request, collection_id: str):
     return await item_endpoint(request)
 
 
+@router.get("/v/collection/{collection_id}/{concept_id}", summary="Get Concept")
 @router.get("/v/scheme/{scheme_id}/{concept_id}", summary="Get Concept")
 @router.get("/v/vocab/{scheme_id}/{concept_id}", summary="Get Concept")
 async def item_endpoint(
-    request: Request, scheme_id: str = None, concept_id: str = None
+    request: Request, scheme_or_collection_id: str = None, concept_id: str = None
 ):
     """Returns a VocPrez skos:Concept, Collection, Vocabulary, or ConceptScheme in the requested profile & mediatype"""
     vp_item = VocabItem(**request.path_params, url_path=str(request.url.path))

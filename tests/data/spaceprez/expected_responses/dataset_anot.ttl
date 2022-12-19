@@ -1,4 +1,5 @@
 @prefix ns1: <https://prez.dev/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
 @prefix ns2: <http://www.opengis.net/ont/geosparql#> .
 @prefix ns3: <http://purl.org/dc/terms/> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -17,20 +18,20 @@
 
 ns3:identifier rdfs:label "Identifier" .
 
-<http://example.com/datasets/sandgate/catchments> rdfs:label "Geofabric Contracted Catchments"@en ;
+<http://www.w3.org/ns/dcat#Dataset> rdfs:label "Dataset" .
+
+<http://example.com/datasets/sandgate/catchments> dcterms:title "Geofabric Contracted Catchments"@en ;
     ns3:description "Hydrological catchments that are 'contracted', that is, guarenteed, to appear on multiple Geofabric surface hydrology data products"@en ;
     ns1:link "/s/datasets/sandgate/collections/catchments" .
 
-<http://example.com/datasets/sandgate/facilities> rdfs:label "Sandgate are demo Facilities"@en ;
+<http://example.com/datasets/sandgate/facilities> dcterms:title "Sandgate are demo Facilities"@en ;
     ns3:description "Sandgate area demo Facilities"@en ;
     ns1:link "/s/datasets/sandgate/collections/facilities" .
 
-<http://example.com/datasets/sandgate/floods> rdfs:label "Sandgate flooded areas"@en ;
+<http://example.com/datasets/sandgate/floods> dcterms:title "Sandgate flooded areas"@en ;
     ns3:description "Sandgate flooded areas"@en ;
     ns1:link "/s/datasets/sandgate/collections/floods" .
 
-<http://example.com/datasets/sandgate/roads> rdfs:label "Sandgate main roads"@en ;
+<http://example.com/datasets/sandgate/roads> dcterms:title "Sandgate main roads"@en ;
     ns3:description "Sandgate main roads"@en ;
     ns1:link "/s/datasets/sandgate/collections/roads" .
-
-<http://www.w3.org/ns/dcat#Dataset> rdfs:label "Dataset" .

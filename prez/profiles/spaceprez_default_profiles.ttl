@@ -18,7 +18,7 @@ altr-ext:hasResourceFormat owl:propertyChainAxiom ( dcterms:conformsTo dcterms:f
     dcterms:identifier "prez" ;
     dcterms:description "A profile for the Prez Linked Data API" ;
     skos:prefLabel "Prez profile" ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
         sh:targetClass dcat:Dataset ;
@@ -57,10 +57,10 @@ altr-ext:hasResourceFormat owl:propertyChainAxiom ( dcterms:conformsTo dcterms:f
     dcterms:description "List of profiles" ;
     dcterms:identifier "profiles" ;
     altr-ext:constrainsClass prez:Profiles ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
         "application/json" ,
-        "text/html" ;
+        "text/anot+turtle" ;
 .
 
 <http://www.opengis.net/def/geosparql>
@@ -69,11 +69,11 @@ altr-ext:hasResourceFormat owl:propertyChainAxiom ( dcterms:conformsTo dcterms:f
     dcterms:identifier "geo" ;
     dcterms:title "GeoSPARQL" ;
     altr-ext:constrainsClass geo:Feature ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,
         "application/rdf+xml" ,
-        "text/html" ,
+        "text/anot+turtle" ,
         "text/turtle" ;
 .
 
@@ -88,9 +88,9 @@ altr-ext:hasResourceFormat owl:propertyChainAxiom ( dcterms:conformsTo dcterms:f
         geo:Feature ,
         prez:FeatureCollectionList ,
         prez:FeatureList ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
-        "text/html" ,
+        "text/anot+turtle" ,
         "application/geo+json" ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
@@ -114,11 +114,11 @@ altr-ext:alt-profile
     dcterms:description "The representation of the resource that lists all other representations (profiles and Media Types)" ;
     dcterms:identifier "alt" ;
     dcterms:title "Alternates Profile" ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,
         "application/rdf+xml" ,
-        "text/html" ,
+        "text/anot+turtle" ,
         "text/turtle" ,
         "application/json" ;
 .
@@ -136,11 +136,11 @@ altr-ext:hasResourceFormat
     dcterms:identifier "dcat" ;
     dcterms:title "DCAT" ;
     altr-ext:constrainsClass dcat:Dataset ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,
         "application/rdf+xml" ,
-        "text/html" ,
+        "text/anot+turtle" ,
         "text/turtle" ;
 .
 
@@ -152,12 +152,12 @@ altr-ext:hasResourceFormat
     altr-ext:constrainsClass prez:DatasetList ,
                              prez:FeatureCollectionList ,
                              prez:FeatureList ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
         "application/json" ,
         "application/ld+json" ,
         "application/rdf+xml" ,
-        "text/html" ,
+        "text/anot+turtle" ,
         "text/turtle" ;
 .
 
@@ -167,12 +167,12 @@ altr-ext:hasResourceFormat
 #     skos:definition "This profile specifies rules that RDF data must adhere to, to be fit for use with instances of the OGC LD API tool. It also provides machine-readable data validators." ;
 #     skos:prefLabel "OGC LD API Profile"@en ;
 #     altr-ext:constrainsClass geo:Feature ;
-#     altr-ext:hasDefaultResourceFormat "text/html" ;
+#     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
 #     altr-ext:hasResourceFormat
 #         "application/ld+json" ,
 #         "application/rdf+xml" ,
 #         "application/geo+json" ,
-#         "text/html" ,
+#         "text/anot+turtle" ,
 #         "text/turtle" ;
 # .
 
@@ -181,15 +181,16 @@ altr-ext:hasResourceFormat
     dcterms:description "Dataset Catalog Vocabulary (DCAT) is a W3C-authored RDF vocabulary designed to facilitate interoperability between data catalogs" ;
     dcterms:identifier "dcat" ;
     dcterms:title "DCAT" ;
+    altr-ext:hasLabelPredicate dcterms:title ;
     altr-ext:constrainsClass
         dcat:Catalog ,
         dcat:Dataset ,
         prez:DatasetList ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,
         "application/rdf+xml" ,
-        "text/html" ,
+        "text/anot+turtle" ,
         "text/turtle" ;
     altr-ext:hasNodeShape [
       a sh:NodeShape ;

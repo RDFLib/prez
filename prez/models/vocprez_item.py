@@ -26,18 +26,24 @@ class VocabItem(BaseModel):
         url_path = values.get("url_path")
         uri = values.get("uri")
         url_parts = url_path.split("/")
-        if len(url_parts) == 3:
+        if len(url_parts) == 2:  # /v "home"
+            return values
+        elif len(url_parts) == 3:
             id = None  # /v/profiles
         elif len(url_parts) == 5:
             values["general_class"] = SKOS.Concept
             id = values.get("concept_id")
             scheme_id = values.get("scheme_id")
-            values["link_constructor"] = f"/v/vocab/{scheme_id}"
+            collection_id = values.get("collection_id")
+            if scheme_id:
+                values["link_constructor"] = f"/v/vocab/{scheme_id}"
+            elif collection_id:
+                values["link_constructor"] = f"/v/collection/{collection_id}"
         elif url_parts[2] == "collection":
             values["general_class"] = SKOS.Collection
             id = values.get("collection_id")
             # TODO probably requires a /object?uri=xyz as the members of a collection can be Concepts or ConceptSchemes
-            values["link_constructor"] = f"/v/vocab/{id}"
+            values["link_constructor"] = f"/v/collection/{id}"
         elif url_parts[2] == "scheme":
             values["general_class"] = SKOS.ConceptScheme
             id = values.get("scheme_id")

@@ -21,7 +21,6 @@ router = APIRouter(tags=["SpacePrez"])
 
 @router.get("/s", summary="SpacePrez Home")
 async def spaceprez_home(request: Request):
-
     return await prez_profiles(request, "SpacePrez")
 
 
