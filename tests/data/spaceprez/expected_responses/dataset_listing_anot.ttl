@@ -1,21 +1,21 @@
-@prefix ns1: <http://purl.org/dc/terms/> .
-@prefix ns2: <https://prez.dev/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix prez: <https://prez.dev/> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-ns2:DatasetList rdfs:member <http://example.com/datasets/sandgate>,
+prez:DatasetList rdfs:member <http://example.com/datasets/sandgate>,
         <https://linked.data.gov.au/datasets/geofabric>,
         <https://linked.data.gov.au/datasets/gnaf> ;
-    ns2:count 3 .
+    prez:count 3 .
 
-<http://example.com/datasets/sandgate> rdfs:label "Sandgate example dataset"@en ;
-    ns1:description "Example floods, roads, catchment and facilities in the Sandgate are"@en ;
-    ns2:link "/s/datasets/sandgate" .
+<http://example.com/datasets/sandgate> dcterms:title "Sandgate example dataset"@en ;
+    dcterms:description "Example floods, roads, catchment and facilities in the Sandgate are"@en ;
+    prez:link "/s/datasets/sandgate" .
 
-<https://linked.data.gov.au/datasets/geofabric> rdfs:label "Australian Hydrological Geospatial Fabric"@en ;
-    ns1:description "The Australian national dataset of important hydrological features such as rivers, water bodies, aquifers and monitoring points"@en ;
-    ns2:link "/s/datasets/geofabric" .
+<https://linked.data.gov.au/datasets/geofabric> dcterms:title "Australian Hydrological Geospatial Fabric"@en ;
+    dcterms:description "The Australian national dataset of important hydrological features such as rivers, water bodies, aquifers and monitoring points"@en ;
+    prez:link "/s/datasets/geofabric" .
 
-<https://linked.data.gov.au/datasets/gnaf> rdfs:label "Geocoded National Address File"@en ;
-    ns1:description "The Australian Geocoded National Address File (G-NAF) is Australiaâs authoritative, geocoded address file. It is built and maintained by Geoscape Australia using authoritative government data.."@en ;
-    ns2:link "/s/datasets/gnaf" .
+<https://linked.data.gov.au/datasets/gnaf> dcterms:title "Geocoded National Address File"@en ;
+    dcterms:description "The Australian Geocoded National Address File (G-NAF) is Australiaâs authoritative, geocoded address file. It is built and maintained by Geoscape Australia using authoritative government data.."@en ;
+    prez:link "/s/datasets/gnaf" .

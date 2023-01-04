@@ -106,7 +106,7 @@ def generate_listing_construct_from_uri(
             f"Requested listing of objects related to {parent_item.uri}, however the profile {profile} does not"
             f" define any listing relations for this for this class, for example outbound children."
         )
-        return ""
+        return None
     query = dedent(
         f"""
         PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -537,6 +537,16 @@ def get_annotation_predicates(profile):
             )
         )
     )
+    if not bool(
+        list(chain(*preds.values()))
+    ):  # check whether any predicates were found
+        log.info(
+            f"No annotation predicates found for profile {profile}, defaults will be used:\n"
+            f"Label: rdfs:label; Description: dcterms:description; Explanation: dcterms:provenance.\n"
+            f"To specify annotation predicates (to be used in *addition* to the defaults), use the following "
+            f"predicates in a profile definition: altrext:hasLabelPredicate, altrext:hasDescriptionPredicate, "
+            f"altrext:hasExplanationPredicate"
+        )
     return preds
 
 

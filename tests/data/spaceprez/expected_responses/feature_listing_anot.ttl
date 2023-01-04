@@ -1,16 +1,17 @@
-@prefix ns1: <https://prez.dev/> .
-@prefix ns2: <http://purl.org/dc/terms/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix prez: <https://prez.dev/> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <http://example.com/datasets/sandgate/catchments> rdfs:member <http://example.com/datasets/sandgate/cc12109444>,
-        <http://example.com/datasets/sandgate/cc12109445> .
+        <http://example.com/datasets/sandgate/cc12109445> ;
+    dcterms:description "Hydrological catchments that are 'contracted', that is, guarenteed, to appear on multiple Geofabric surface hydrology data products"@en .
 
 <http://example.com/datasets/sandgate/cc12109444> rdfs:label "Contracted Catchment 12109444" ;
-    ns1:link "/s/datasets/sandgate/collections/catchments/items/cc12109444" .
+    prez:link "/s/datasets/sandgate/collections/catchments/items/cc12109444" .
 
 <http://example.com/datasets/sandgate/cc12109445> rdfs:label "Contracted Catchment 12109445" ;
-    ns1:link "/s/datasets/sandgate/collections/catchments/items/cc12109445" .
+    prez:link "/s/datasets/sandgate/collections/catchments/items/cc12109445" .
 
-<http://example.com/datasets/sandgate/catchments> ns1:count 2 .
+<http://example.com/datasets/sandgate/catchments> prez:count 2 .

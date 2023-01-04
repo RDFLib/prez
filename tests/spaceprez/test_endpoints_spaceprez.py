@@ -93,7 +93,7 @@ def test_dataset_anot(sp_test_client, a_dataset_link):
 
 def test_feature_collection_anot(sp_test_client, an_fc_link):
     with sp_test_client as client:
-        r = client.get(f"{an_fc_link}")
+        r = client.get(f"{an_fc_link}?_mediatype=text/anot+turtle")
         response_graph = Graph().parse(data=r.text)
         expected_graph = Graph().parse(
             Path(__file__).parent
@@ -106,7 +106,7 @@ def test_feature_collection_anot(sp_test_client, an_fc_link):
 
 def test_feature_anot(sp_test_client, a_feature_link):
     with sp_test_client as client:
-        r = client.get(f"{a_feature_link}")
+        r = client.get(f"{a_feature_link}?_mediatype=text/anot+turtle")
         response_graph = Graph().parse(data=r.text)
         expected_graph = Graph().parse(
             Path(__file__).parent
@@ -119,7 +119,7 @@ def test_feature_anot(sp_test_client, a_feature_link):
 
 def test_dataset_listing_anot(sp_test_client):
     with sp_test_client as client:
-        r = client.get(f"/s/datasets")
+        r = client.get("/s/datasets?_mediatype=text/anot+turtle")
         response_graph = Graph().parse(data=r.text)
         expected_graph = Graph().parse(
             Path(__file__).parent
@@ -132,7 +132,7 @@ def test_dataset_listing_anot(sp_test_client):
 
 def test_feature_collection_listing_anot(sp_test_client, a_dataset_link):
     with sp_test_client as client:
-        r = client.get(f"{a_dataset_link}/collections")
+        r = client.get(f"{a_dataset_link}/collections?_mediatype=text/anot+turtle")
         response_graph = Graph().parse(data=r.text)
         expected_graph = Graph().parse(
             Path(__file__).parent
@@ -145,7 +145,7 @@ def test_feature_collection_listing_anot(sp_test_client, a_dataset_link):
 
 def test_feature_listing_anot(sp_test_client, an_fc_link):
     with sp_test_client as client:
-        r = client.get(f"{an_fc_link}/items")
+        r = client.get(f"{an_fc_link}/items?_mediatype=text/anot+turtle")
         response_graph = Graph().parse(data=r.text)
         expected_graph = Graph().parse(
             Path(__file__).parent

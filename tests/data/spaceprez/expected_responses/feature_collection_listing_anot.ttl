@@ -1,5 +1,5 @@
-@prefix ns1: <https://prez.dev/> .
-@prefix ns2: <http://purl.org/dc/terms/> .
+@prefix prez: <https://prez.dev/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
@@ -7,20 +7,21 @@
         <http://example.com/datasets/sandgate/facilities>,
         <http://example.com/datasets/sandgate/floods>,
         <http://example.com/datasets/sandgate/roads> ;
-    ns1:count 4 .
+    dcterms:description "Example floods, roads, catchment and facilities in the Sandgate are"@en ;
+    prez:count 4 .
 
-<http://example.com/datasets/sandgate/catchments> rdfs:label "Geofabric Contracted Catchments"@en ;
-    ns2:description "Hydrological catchments that are 'contracted', that is, guarenteed, to appear on multiple Geofabric surface hydrology data products"@en ;
-    ns1:link "/s/datasets/sandgate/collections/catchments" .
+<http://example.com/datasets/sandgate/catchments>
+    dcterms:description "Hydrological catchments that are 'contracted', that is, guarenteed, to appear on multiple Geofabric surface hydrology data products"@en ;
+    prez:link "/s/datasets/sandgate/collections/catchments" .
 
-<http://example.com/datasets/sandgate/facilities> rdfs:label "Sandgate are demo Facilities"@en ;
-    ns2:description "Sandgate area demo Facilities"@en ;
-    ns1:link "/s/datasets/sandgate/collections/facilities" .
+<http://example.com/datasets/sandgate/facilities>
+    dcterms:description "Sandgate area demo Facilities"@en ;
+    prez:link "/s/datasets/sandgate/collections/facilities" .
 
-<http://example.com/datasets/sandgate/floods> rdfs:label "Sandgate flooded areas"@en ;
-    ns2:description "Sandgate flooded areas"@en ;
-    ns1:link "/s/datasets/sandgate/collections/floods" .
+<http://example.com/datasets/sandgate/floods>
+    dcterms:description "Sandgate flooded areas"@en ;
+    prez:link "/s/datasets/sandgate/collections/floods" .
 
-<http://example.com/datasets/sandgate/roads> rdfs:label "Sandgate main roads"@en ;
-    ns2:description "Sandgate main roads"@en ;
-    ns1:link "/s/datasets/sandgate/collections/roads" .
+<http://example.com/datasets/sandgate/roads>
+    dcterms:description "Sandgate main roads"@en ;
+    prez:link "/s/datasets/sandgate/collections/roads" .

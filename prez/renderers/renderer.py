@@ -24,10 +24,11 @@ async def return_from_queries(
     results = await asyncio.gather(
         *[sparql_construct(query, prez) for query in queries]
     )
-    graph = results[0][1]
-    if len(results) > 1:
-        for result in results[1:]:
-            graph.__iadd__(result[1])
+    graphs = [result[1] for result in results if result[0]]
+    graph = graphs[0]
+    if len(graphs) > 1:
+        for g in graphs[1:]:
+            graph.__iadd__(g)
     return await return_from_graph(graph, mediatype, profile, profile_headers, prez)
 
 
