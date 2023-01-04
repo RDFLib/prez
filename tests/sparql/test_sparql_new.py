@@ -6,8 +6,8 @@ from time import sleep
 import pytest
 from rdflib import Graph, URIRef, RDFS, SKOS
 
-from models import SpatialItem
-from services.sparql_queries import (
+from prez.models import SpatialItem
+from prez.services.sparql_queries import (
     generate_bnode_construct,
     generate_bnode_select,
     generate_item_construct,
