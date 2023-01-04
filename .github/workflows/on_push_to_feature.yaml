@@ -57,4 +57,5 @@ jobs:
       - name: Run tests
         run: |
           echo $PWD
-          cd ../tests/spaceprez && poetry run pytest
+          ls
+          poetry run pytest tests/spaceprez
