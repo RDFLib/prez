@@ -56,6 +56,7 @@ jobs:
       #----------------------------------------------
       - name: Run tests
         run: |
-          echo $PWD
-          ls
           poetry run pytest tests/spaceprez
+          poetry run pytest tests/vocprez
+          poetry run pytest tests/catprez
+          poetry run pytest tests/local_sparql_store
