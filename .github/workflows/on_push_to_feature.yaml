@@ -20,7 +20,7 @@ jobs:
         id: setup-python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10.4'
+          python-version: '3.11'
       #----------------------------------------------
       #  -----  install & configure poetry  -----
       #----------------------------------------------
@@ -58,5 +58,5 @@ jobs:
         run: |
           cd tests/spaceprez && poetry run pytest
           cd ../vocprez && poetry run pytest
-          cd ../catprez && poetry run pytest
+          cd ../catprez && pytest
           cd ../local_sparql_store && poetry run pytest

@@ -7,7 +7,6 @@ from time import sleep
 import pytest
 from rdflib import Graph, URIRef, RDFS, DCTERMS
 
-
 PREZ_DIR = os.getenv("PREZ_DIR")
 LOCAL_SPARQL_STORE = os.getenv("LOCAL_SPARQL_STORE")
 from fastapi.testclient import TestClient
