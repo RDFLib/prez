@@ -1,6 +1,6 @@
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
 os.environ["SPACEPREZ_SPARQL_ENDPOINT"] = "http://localhost:3032/spaceprez"
 PREZ_DIR = Path(__file__).parent.parent.parent.parent.absolute() / "prez"
