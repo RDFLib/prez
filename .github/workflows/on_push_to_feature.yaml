@@ -54,9 +54,10 @@ jobs:
       #----------------------------------------------
       #              run test suite
       #----------------------------------------------
-      - name: Run tests
+      - name: Run spaceprez tests
+        run: poetry run pytest tests/spaceprez
+      - name: Run other tests
         run: |
-          poetry run pytest tests/spaceprez
           poetry run pytest tests/vocprez
           poetry run pytest tests/catprez
           poetry run pytest tests/local_sparql_store
