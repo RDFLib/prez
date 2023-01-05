@@ -1,12 +1,10 @@
 import os
-import shutil
 import subprocess
-import sys
 from pathlib import Path
-import pytest
 from time import sleep
 
-from rdflib import Graph, URIRef, RDFS, DCTERMS, SKOS
+import pytest
+from rdflib import Graph, URIRef, RDFS
 
 PREZ_DIR = os.getenv("PREZ_DIR")
 LOCAL_SPARQL_STORE = os.getenv("LOCAL_SPARQL_STORE")

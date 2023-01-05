@@ -1,15 +1,19 @@
+import os
 import re
 import subprocess
-import sys
 from pathlib import Path
 from time import sleep
 
 import pytest
 from rdflib import Graph, URIRef, RDFS, DCTERMS
 
-PREZ_DIR = Path(__file__).parent.parent.parent.absolute() / "prez"
-LOCAL_SPARQL_STORE = Path(Path(__file__).parent.parent / "local_sparql_store/store.py")
-sys.path.insert(0, str(PREZ_DIR.parent.absolute()))
+# PREZ_DIR = Path(__file__).parent.parent.parent.absolute() / "prez"
+# LOCAL_SPARQL_STORE = Path(Path(__file__).parent.parent / "local_sparql_store/store.py")
+# sys.path.insert(0, str(PREZ_DIR.parent.absolute()))
+# from fastapi.testclient import TestClient
+
+PREZ_DIR = os.getenv("PREZ_DIR")
+LOCAL_SPARQL_STORE = os.getenv("LOCAL_SPARQL_STORE")
 from fastapi.testclient import TestClient
 
 
