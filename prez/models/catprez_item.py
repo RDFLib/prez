@@ -3,9 +3,11 @@ from typing import Set
 
 from pydantic import BaseModel, root_validator
 from rdflib import URIRef
-from rdflib.namespace import DCTERMS, XSD, DCAT
+from rdflib.namespace import DCTERMS, XSD, DCAT, Namespace
 
 from prez.services.sparql_utils import sparql_query_non_async
+
+PREZ = Namespace("https://prez.dev/")
 
 
 class CatalogItem(BaseModel):
@@ -40,6 +42,7 @@ class CatalogItem(BaseModel):
         if id:  # get the URI
             q = f"""
                 PREFIX dcterms: <{DCTERMS}>
+                PREFIX prez: <{PREZ}>
                 PREFIX xsd: <{XSD}>
 
                 SELECT ?uri ?class {{

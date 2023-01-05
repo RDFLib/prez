@@ -98,6 +98,10 @@ altr-ext:hasResourceFormat
         a sh:NodeShape ;
         sh:targetClass dcat:Catalog ;
         altr-ext:outboundChildren dcterms:hasPart
+    ] , [
+        a sh:NodeShape ;
+        sh:targetClass prez:CatalogList ;
+        altr-ext:outboundChildren rdfs:member
     ]
 .
 

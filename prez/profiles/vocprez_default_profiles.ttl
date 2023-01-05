@@ -19,11 +19,11 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
         sh:targetClass prez:SchemesList ;
-        altr-ext:hasDefaultProfile <https://www.w3.org/TR/vocab-dcat/>
+        altr-ext:hasDefaultProfile <https://w3id.org/profile/vocpub>
     ] , [
         a sh:NodeShape ;
         sh:targetClass prez:VocPrezCollectionList ;
-        altr-ext:hasDefaultProfile <https://www.w3.org/TR/vocab-dcat/>
+        altr-ext:hasDefaultProfile <https://w3id.org/profile/vocpub>
     ] , [
         a sh:NodeShape ;
         sh:targetClass skos:Collection ;
@@ -94,20 +94,13 @@ altr-ext:hasResourceFormat
     altr-ext:constrainsClass
         dcat:Catalog ,
         dcat:Dataset ,
-        prez:VocPrezHome,
-        prez:SchemesList ,
-        prez:VocPrezCollectionList ;
+        prez:VocPrezHome ;
     altr-ext:hasDefaultResourceFormat "text/turtle" ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,
         "application/rdf+xml" ,
         "text/anot+turtle" ,
         "text/turtle" ;
-    altr-ext:hasNodeShape [
-        a sh:NodeShape ;
-        sh:targetClass prez:SchemesList , prez:VocPrezCollectionList ;
-        altr-ext:outboundChildren rdfs:member ;
-    ] ;
 .
 
 <https://w3id.org/profile/vocpub>
@@ -119,7 +112,9 @@ altr-ext:hasResourceFormat
     altr-ext:constrainsClass
         skos:ConceptScheme ,
         skos:Concept ,
-        skos:Collection ;
+        skos:Collection ,
+        prez:SchemesList ,
+        prez:VocPrezCollectionList ;
     altr-ext:hasDefaultResourceFormat "text/turtle" ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,
@@ -145,6 +140,11 @@ altr-ext:hasResourceFormat
         a sh:NodeShape ;
         sh:targetClass skos:Concept ;
         altr-ext:outboundParents skos:inScheme ;
+    ] ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass prez:SchemesList , prez:VocPrezCollectionList ;
+        altr-ext:outboundChildren rdfs:member ;
     ] ;
 .
 

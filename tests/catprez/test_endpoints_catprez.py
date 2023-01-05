@@ -39,7 +39,7 @@ def a_catalog_link(cp_test_client):
         # get link for first catalog
         r = client.get("/c/catalogs")
         g = Graph().parse(data=r.text)
-        member_uri = g.value(URIRef("https://prez.dev/memberList"), RDFS.member, None)
+        member_uri = g.value(URIRef("https://prez.dev/CatalogList"), RDFS.member, None)
         link = g.value(member_uri, URIRef(f"https://prez.dev/link", None))
         return link
 
@@ -53,26 +53,26 @@ def a_resource_link(cp_test_client, a_catalog_link):
         return link
 
 
-def test_catalog_html(cp_test_client, a_catalog_link):
+def test_catalog_anot(cp_test_client, a_catalog_link):
     with cp_test_client as client:
         r = client.get(f"{a_catalog_link}")
         response_graph = Graph().parse(data=r.text)
         expected_graph = Graph().parse(
             Path(__file__).parent
-            / "../data/catprez/expected_responses/catalog_html.ttl"
+            / "../data/catprez/expected_responses/catalog_anot.ttl"
         )
         assert response_graph.isomorphic(expected_graph), print(
             f"Graph delta:{(expected_graph - response_graph).serialize()}"
         )
 
 
-def test_resource_html(cp_test_client, a_resource_link):
+def test_resource_anot(cp_test_client, a_resource_link):
     with cp_test_client as client:
         r = client.get(f"{a_resource_link}")
         response_graph = Graph().parse(data=r.text)
         expected_graph = Graph().parse(
             Path(__file__).parent
-            / "../data/catprez/expected_responses/resource_html.ttl"
+            / "../data/catprez/expected_responses/resource_anot.ttl"
         )
         assert response_graph.isomorphic(expected_graph), print(
             f"Graph delta:{(expected_graph - response_graph).serialize()}"

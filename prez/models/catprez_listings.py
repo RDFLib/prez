@@ -22,4 +22,5 @@ class CatalogMembers(BaseModel):
             values["general_class"] = DCAT.Catalog
             values["link_constructor"] = "/c/catalogs"
             values["classes"] = frozenset([PREZ.CatalogList])
+            values["uri"] = PREZ.CatalogList
         return values

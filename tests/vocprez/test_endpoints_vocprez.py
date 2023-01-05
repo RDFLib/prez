@@ -67,11 +67,11 @@ def a_collection_id(vp_test_client):
 def test_vocab_item(vp_test_client, a_vocab_id_and_a_concept_id):
     with vp_test_client as client:
         r = client.get(
-            f"/v/vocab/{a_vocab_id_and_a_concept_id[0]}"
+            f"/v/vocab/{a_vocab_id_and_a_concept_id[0]}?_mediatype=text/anot+turtle"
         )  # hardcoded to a smaller vocabulary - sparql store has poor performance w/ CONSTRUCT
         response_graph = Graph().parse(data=r.text)
         expected_graph = Graph().parse(
-            Path(__file__).parent / "../data/vocprez/expected_responses/vocab_html.ttl"
+            Path(__file__).parent / "../data/vocprez/expected_responses/vocab_anot.ttl"
         )
         assert response_graph.isomorphic(expected_graph), print(
             f"Graph delta:{(expected_graph - response_graph).serialize()}"
@@ -80,11 +80,11 @@ def test_vocab_item(vp_test_client, a_vocab_id_and_a_concept_id):
 
 def test_vocab_listing(vp_test_client):
     with vp_test_client as client:
-        r = client.get(f"/v/vocab")
+        r = client.get(f"/v/vocab?_mediatype=text/anot+turtle")
         response_graph = Graph().parse(data=r.text)
         expected_graph = Graph().parse(
             Path(__file__).parent
-            / "../data/vocprez/expected_responses/vocab_listing_html.ttl"
+            / "../data/vocprez/expected_responses/vocab_listing_anot.ttl"
         )
         assert response_graph.isomorphic(expected_graph), print(
             f"Graph delta:{(expected_graph - response_graph).serialize()}"
@@ -94,12 +94,12 @@ def test_vocab_listing(vp_test_client):
 def test_concept(vp_test_client, a_vocab_id_and_a_concept_id):
     with vp_test_client as client:
         r = client.get(
-            f"/v/vocab/{a_vocab_id_and_a_concept_id[0]}/{a_vocab_id_and_a_concept_id[1]}"
+            f"/v/vocab/{a_vocab_id_and_a_concept_id[0]}/{a_vocab_id_and_a_concept_id[1]}?_mediatype=text/anot+turtle"
         )
         response_graph = Graph().parse(data=r.text)
         expected_graph = Graph().parse(
             Path(__file__).parent
-            / "../data/vocprez/expected_responses/concept_html.ttl"
+            / "../data/vocprez/expected_responses/concept_anot.ttl"
         )
         assert response_graph.isomorphic(expected_graph), print(
             f"Graph delta:{(expected_graph - response_graph).serialize()}"
@@ -108,11 +108,11 @@ def test_concept(vp_test_client, a_vocab_id_and_a_concept_id):
 
 def test_collection_listing(vp_test_client):
     with vp_test_client as client:
-        r = client.get(f"/v/collection")
+        r = client.get(f"/v/collection?_mediatype=text/anot+turtle")
         response_graph = Graph().parse(data=r.text)
         expected_graph = Graph().parse(
             Path(__file__).parent
-            / "../data/vocprez/expected_responses/collection_listing_html.ttl"
+            / "../data/vocprez/expected_responses/collection_listing_anot.ttl"
         )
         assert response_graph.isomorphic(expected_graph), print(
             f"Graph delta:{(expected_graph - response_graph).serialize()}"
