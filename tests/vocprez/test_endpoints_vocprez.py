@@ -7,10 +7,6 @@ from time import sleep
 import pytest
 from rdflib import Graph, URIRef, RDFS, DCTERMS
 
-# PREZ_DIR = Path(__file__).parent.parent.parent.absolute() / "prez"
-# LOCAL_SPARQL_STORE = Path(Path(__file__).parent.parent / "local_sparql_store/store.py")
-# sys.path.insert(0, str(PREZ_DIR.parent.absolute()))
-# from fastapi.testclient import TestClient
 
 PREZ_DIR = os.getenv("PREZ_DIR")
 LOCAL_SPARQL_STORE = os.getenv("LOCAL_SPARQL_STORE")
@@ -113,7 +109,7 @@ def test_concept(vp_test_client, a_vocab_id_and_a_concept_id):
 def test_collection_listing(vp_test_client):
     with vp_test_client as client:
         r = client.get(f"/v/collection?_mediatype=text/anot+turtle")
-        response_graph = Graph().parse(data=r.text)
+        response_graph = Graph().parse(data=r.text, format="turtle")
         expected_graph = Graph().parse(
             Path(__file__).parent
             / "../data/vocprez/expected_responses/collection_listing_anot.ttl"

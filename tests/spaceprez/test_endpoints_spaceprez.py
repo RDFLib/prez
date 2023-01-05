@@ -26,7 +26,6 @@ def sp_test_client(request):
     request.addfinalizer(teardown)
 
     # must only import app after config.py has been altered above so config is retained
-
     from prez.app import app
 
     return TestClient(app)

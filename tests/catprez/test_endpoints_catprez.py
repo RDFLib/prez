@@ -53,7 +53,7 @@ def a_resource_link(cp_test_client, a_catalog_link):
 
 def test_catalog_anot(cp_test_client, a_catalog_link):
     with cp_test_client as client:
-        r = client.get(f"{a_catalog_link}")
+        r = client.get(f"{a_catalog_link}?_mediatype=text/anot+turtle")
         response_graph = Graph().parse(data=r.text)
         expected_graph = Graph().parse(
             Path(__file__).parent
@@ -66,7 +66,7 @@ def test_catalog_anot(cp_test_client, a_catalog_link):
 
 def test_resource_anot(cp_test_client, a_resource_link):
     with cp_test_client as client:
-        r = client.get(f"{a_resource_link}")
+        r = client.get(f"{a_resource_link}?_mediatype=text/anot+turtle")
         response_graph = Graph().parse(data=r.text)
         expected_graph = Graph().parse(
             Path(__file__).parent
