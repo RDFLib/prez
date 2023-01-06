@@ -74,15 +74,15 @@ The following logic is used to determine the profile and mediatype to be returne
 3. If a mediatype only is requested, the default profile for the most specific class is returned, and if the requested mediatype is available for that profile, it is returned, otherwise the default mediatype for that profile is returned.
 4. If neither a profile nor mediatype is requested, the default profile for the most specific class is returned, with the default mediatype for that profile.
 
-The SPARQL query used to select the profile is given in [Appendix B]().
+The SPARQL query used to select the profile is given in [Appendix D](appendix-d---example-profile-and-mediatype-selection-sparql-query).
 
 ## Startup Routine
 1. Check the SPARQL endpoints can be reached. A blank query (`ASK {}`) is used to test this. The SPARQL endpoints are not health checked post startup.
 2. Create an in memory profile graph, containing all profiles in the `prez/profiles` directory, and any additional profiles available in the triplestore (declared as a `http://www.w3.org/ns/dx/prof/Profile`)
 3. Count the number of objects in each _Collection Class_
-4. Check for the required support graphs, and if the required support graphs are not present, create them. The SPARQL INSERT query used to create the support graphs is detailed in [Appendix A](#appendix-a---sparql-insert-queries-for-support-graphs). The required support graphs are:
-   1. A system support graph (e.g. `https://prez.dev/vocprez-system-graph` for VocPrez)
-   2. A support graph per _Collection Class_ (see the [Glossary](#Glossary) for definition)
+4. Check for the required support graphs, and if the required support graphs are not present, create them. The SPARQL INSERT query used to create the support graphs is detailed in [Appendix C](#appendix-c---sparql-insert-queries-for-support-graphs). The required support graphs are:
+   1. A system support graph (e.g. `https://prez.dev/vocprez-system-graph` for VocPrez). See example in [Appendix F](appendix-f---example-system-support-graph).
+   2. A support graph per _Collection Class_ (see the [Glossary](#Glossary) for definition). See example in [Appendix G](appendix-g---example-system-support-graph-for-a-feature-collection).
 
 
 ## Scaled instances of Prez
@@ -162,7 +162,7 @@ LIMIT 20
 OFFSET 0
 ```
 ## Appendix C - SPARQL INSERT queries for support graphs
-### C.1 - SpacePrez
+### C.1 - SpacePrez Insert Support Graphs
 ```sparql
 PREFIX dcat: <http://www.w3.org/ns/dcat#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -207,7 +207,7 @@ WHERE {
   BIND(URI(CONCAT(STR(?instance_of_main_class),"/support-graph")) AS ?support_graph_uri)
 }
 ```
-### C.2 - CatPrez
+### C.2 - CatPrez Insert Support Graphs
 ```sparql
 PREFIX dcat: <http://www.w3.org/ns/dcat#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -252,7 +252,7 @@ WHERE {
   BIND(URI(CONCAT(STR(?instance_of_main_class),"/support-graph")) AS ?support_graph_uri)
 }
 ```
-### C.3 - VocPrez
+### C.3 - VocPrez Insert Support Graphs
 ```sparql
 PREFIX dcat: <http://www.w3.org/ns/dcat#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -466,4 +466,101 @@ The following VocPrez VocPub profile shows how to use a number of declarations:
         altr-ext:outboundChildren rdfs:member ;
     ] ;
 .
+```
+Appendix F - Example system support graph
+```turtle
+@prefix addr:    <http://w3id.org/profile/anz-address/> .
+@prefix ahgf:    <https://linked.data.gov.au/def/geofabric/> .
+@prefix dcat:    <http://www.w3.org/ns/dcat#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix geo:     <http://www.opengis.net/ont/geosparql#> .
+@prefix geofab:  <https://linked.data.gov.au/def/geofabric#> .
+@prefix gnaf:    <https://linked.data.gov.au/datasets/gnaf/> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix prov:    <http://www.w3.org/ns/prov#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sand:    <http://example.com/datasets/sandgate/> .
+@prefix sdo:     <https://schema.org/> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix vcard:   <http://www.w3.org/2006/vcard/ns#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+
+<https://prez.dev/DatasetList>
+        rdfs:member  <http://example.com/datasets/sandgate> , <https://linked.data.gov.au/datasets/gnaf> , <https://linked.data.gov.au/datasets/geofabric> .
+
+<http://example.com/datasets/sandgate/roads/support-graph>
+        <https://prez.dev/hasContextFor>
+                sand:roads .
+
+<https://linked.data.gov.au/datasets/geofabric/fc/catchments/support-graph>
+        <https://prez.dev/hasContextFor>
+                <https://linked.data.gov.au/datasets/geofabric/fc/catchments> .
+
+sand:catchments  dcterms:identifier  "catchments"^^<https://prez.dev/slug> .
+
+<https://linked.data.gov.au/datasets/gnaf>
+        dcterms:identifier  "gnaf"^^<https://prez.dev/slug> .
+
+sand:facilities  dcterms:identifier  "facilities"^^<https://prez.dev/slug> .
+
+sand:roads  dcterms:identifier  "roads"^^<https://prez.dev/slug> .
+
+<http://example.com/datasets/sandgate/facilities/support-graph>
+        <https://prez.dev/hasContextFor>
+                sand:facilities .
+
+<https://linked.data.gov.au/datasets/geofabric/fc/catchments>
+        dcterms:identifier  "catchments"^^<https://prez.dev/slug> .
+
+sand:support-graph  <https://prez.dev/hasContextFor>
+                <http://example.com/datasets/sandgate> .
+
+<https://linked.data.gov.au/datasets/geofabric/support-graph>
+        <https://prez.dev/hasContextFor>
+                <https://linked.data.gov.au/datasets/geofabric> .
+
+gnaf:address  dcterms:identifier  "address"^^<https://prez.dev/slug> .
+
+<https://linked.data.gov.au/datasets/gnaf/address/support-graph>
+        <https://prez.dev/hasContextFor>
+                gnaf:address .
+
+gnaf:support-graph  <https://prez.dev/hasContextFor>
+                <https://linked.data.gov.au/datasets/gnaf> .
+
+<https://linked.data.gov.au/datasets/geofabric>
+        dcterms:identifier  "geofabric"^^<https://prez.dev/slug> .
+
+<http://example.com/datasets/sandgate/floods/support-graph>
+        <https://prez.dev/hasContextFor>
+                sand:floods .
+
+<http://example.com/datasets/sandgate/catchments/support-graph>
+        <https://prez.dev/hasContextFor>
+                sand:catchments .
+
+<http://example.com/datasets/sandgate>
+        dcterms:identifier  "sandgate"^^<https://prez.dev/slug> .
+
+sand:floods  dcterms:identifier  "floods"^^<https://prez.dev/slug> .
+```
+### Appendix G - Example system support graph for a Feature Collection
+```turtle
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+<https://example.com/catchment/cabbage-tree-creek>
+        dcterms:identifier  "cabbage-tree"^^<https://prez.dev/slug> .
+
+<https://linked.data.gov.au/datasets/geofabric/hydroid/102208961>
+        dcterms:identifier  "102208961"^^<https://prez.dev/slug> .
+
+<https://example.com/catchment/cabbage-tree-creek-geojson>
+        dcterms:identifier  "cabbage-tree-geojson"^^<https://prez.dev/slug> .
+
+<https://example.com/catchment/kedron-brook>
+        dcterms:identifier  "kedron"^^<https://prez.dev/slug> .
+
+<https://linked.data.gov.au/datasets/geofabric/hydroid/102208962>
+        dcterms:identifier  "102208962"^^<https://prez.dev/slug> .
 ```
