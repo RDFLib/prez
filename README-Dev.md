@@ -32,7 +32,7 @@ Prez follows the following logic to determine what information to return, based 
 
 - For listings:
   - Determine the URI of the parent class which contains the listed objects.
-    - For the most top level objects (see _Top Level Class_ in the [Glossary](#Glossary)) in each Prez instance a Prez specific object contains the top level objects. For example, the a prez:DatasetList has rdfs:member the dcat:Dataset objects. This data is generated on startup if not supplied, as detailed in section x.
+    - For the most top level objects (see _Top Level Class_ in the [Glossary](#Glossary)) in each Prez instance a Prez specific object contains the top level objects. For example, the a prez:DatasetList has rdfs:member the dcat:Dataset objects. This data is generated on startup if not supplied, as detailed in [Appendix A](#appendix-a---sparql-insert-queries-for-support-graphs).
     - For non top level objects, the URI is determined using a SPARQL query
 
 2. Get all classes for the object or object listing
@@ -48,13 +48,13 @@ The logic used to determine the profile and mediatype is detailed in section x.
    - For objects
       1. A SPARQL CONSTRUCT query is used, roughly equivalent to a DESCRIBE query, but with configurable blank node depth, and relations to other objects. The following properties can be specified in profiles to configure which information is returned for an object:
 
-		| Description                                                                     | Property                                    |
+		| Description                                                                    | Property                                    |
 		|---------------------------------------------------------------------------------|---------------------------------------------|
-		| The depth of blank nodes to return. Blank nodes are returned as nested objects. | `prez:blankNodeDepth`                       |
-		| predicates to include                                                           | `sh:path`                                   |
-		| predicates to exclude                                                           | `sh:path` in conjunction with `dash:hidden` |
-		| inverse path predicates to include                                              | `sh:inversePath`                            |
-		| sequence path predicates to include, expressed as an RDF list.                  | `sh:sequencePath`                           |
+		| The depth of blank nodes to return. | `prez:blankNodeDepth`                       |
+		| predicates to include                                                          | `sh:path`                                   |
+		| predicates to exclude                                                          | `sh:path` in conjunction with `dash:hidden` |
+		| inverse path predicates to include                                             | `sh:inversePath`                            |
+		| sequence path predicates to include, expressed as an RDF list.                 | `sh:sequencePath`                           |
 
       2. Where 'relation' properties are specified in the profile (i.e. inboundChildren, outboundChildren, inboundParents, outboundParents), a second SPARQL CONSTRUCT query is used, as detailed in object listings:
    - For object listings:
@@ -66,11 +66,21 @@ The logic used to determine the profile and mediatype is detailed in section x.
    3. Cache any annotations returned from the triplestore
    4. Return the annotations merged with the results of the SPARQL query in step 5.
 
+## Profile and mediatype selection logic
+The following logic is used to determine the profile and mediatype to be returned:
+
+1. If a profile and mediatype are requested, they are returned if a matching profile which has the requested mediatype is found, otherwise the default profile for the most specific class is returned, with its default mediatype.
+2. If a profile only is requested, if it can be found it is returned, otherwise the default profile for the most specific class is returned. In both cases the default mediatype is returned.
+3. If a mediatype only is requested, the default profile for the most specific class is returned, and if the requested mediatype is available for that profile, it is returned, otherwise the default mediatype for that profile is returned.
+4. If neither a profile nor mediatype is requested, the default profile for the most specific class is returned, with the default mediatype for that profile.
+
+The SPARQL query used to select the profile is given in [Appendix B]().
+
 ## Startup Routine
 1. Check the SPARQL endpoints can be reached. A blank query (`ASK {}`) is used to test this. The SPARQL endpoints are not health checked post startup.
 2. Create an in memory profile graph, containing all profiles in the `prez/profiles` directory, and any additional profiles available in the triplestore (declared as a `http://www.w3.org/ns/dx/prof/Profile`)
 3. Count the number of objects in each _Collection Class_
-4. Check for the required support graphs, and if the required support graphs are not present, create them. The SPARQL INSERT query used to create the support graphs is detailed in [Appendix A](#Appendix A). The required support graphs are:
+4. Check for the required support graphs, and if the required support graphs are not present, create them. The SPARQL INSERT query used to create the support graphs is detailed in [Appendix A](#appendix-a---sparql-insert-queries-for-support-graphs). The required support graphs are:
    1. A system support graph (e.g. `https://prez.dev/vocprez-system-graph` for VocPrez)
    2. A support graph per _Collection Class_ (see the [Glossary](#Glossary) for definition)
 
@@ -103,7 +113,7 @@ TODO altr-ext - this may be merged with altr
 
 ## Appendix A - SPARQL INSERT queries for support graphs
 ### A.1 - SpacePrez
-```
+```sparql
 PREFIX dcat: <http://www.w3.org/ns/dcat#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX prez: <https://prez.dev/>
@@ -148,7 +158,7 @@ WHERE {
 }
 ```
 ### A.2 - CatPrez
-```
+```sparql
 PREFIX dcat: <http://www.w3.org/ns/dcat#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX prez: <https://prez.dev/>
@@ -193,7 +203,7 @@ WHERE {
 }
 ```
 ### A.3 - VocPrez
-```
+```sparql
 PREFIX dcat: <http://www.w3.org/ns/dcat#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX prez: <https://prez.dev/>
@@ -240,4 +250,45 @@ WHERE {
   BIND(URI(CONCAT(STR(?instance_of_main_class),"/support-graph")) AS ?support_graph_uri)
 }
 ```
-## Appendix B
+## Appendix B - Example Profile and Mediatype Selection SPARQL query
+This is an example query for SpacePrez requesting the Datasets listing from a web browser:
+```sparql
+PREFIX dcat: <http://www.w3.org/ns/dcat#>
+PREFIX sh: <http://www.w3.org/ns/shacl#>
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prez: <https://prez.dev/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+SELECT ?profile ?title ?class (count(?mid) as ?distance) ?req_profile ?def_profile ?format ?req_format ?def_format ?token
+
+WHERE {
+  VALUES ?class {<https://prez.dev/DatasetList>}
+  ?class rdfs:subClassOf* ?mid .
+  ?mid rdfs:subClassOf* ?general_class .
+  VALUES ?general_class { dcat:Dataset geo:FeatureCollection prez:FeatureCollectionList prez:FeatureList geo:Feature
+    skos:ConceptScheme skos:Concept skos:Collection prez:DatasetList prez:VocPrezCollectionList prez:SchemesList
+    prez:CatalogList dcat:Catalog dcat:Resource }
+  ?profile altr-ext:constrainsClass ?class ;
+           altr-ext:hasResourceFormat ?format ;
+           dcterms:identifier ?token ;
+           dcterms:title ?title .
+
+  BIND(EXISTS { ?shape sh:targetClass ?class ;
+                       altr-ext:hasDefaultProfile ?profile } AS ?def_profile)
+  BIND(
+    IF(?format="image/webp", "1",
+      IF(?format="application/xml", "0.9",
+        IF(?format="text/html", "1",
+          IF(?format="*/*", "0.8",
+            IF(?format="image/avif", "1",
+              IF(?format="application/xhtml+xml", "1", ""))))))
+    AS ?req_format)
+  BIND(EXISTS { ?profile altr-ext:hasDefaultResourceFormat ?format } AS ?def_format)
+}
+
+GROUP BY ?class ?profile ?req_profile ?def_profile ?format ?req_format ?def_format
+ORDER BY DESC(?req_profile) DESC(?distance) DESC(?def_profile) DESC(?req_format) DESC(?def_format)
+```
