@@ -665,9 +665,26 @@ def select_profile_mediatype(
     Returns a SPARQL SELECT query which will determine the profile and mediatype to return based on user requests,
     defaults, and the availability of these in profiles.
 
-    The following logic is used:
     NB: Most specific class refers to the rdfs:Class of an object which has the most specific rdfs:subClassOf links to
     the general class delivered by that API endpoint. The general classes delivered by each API endpoint are:
+
+    SpacePrez:
+    /s/datasets -> prez:DatasetList
+    /s/datasets/{ds_id} -> dcat:Dataset
+    /s/datasets/{ds_id}/collections/{fc_id} -> geo:FeatureCollection
+    /s/datasets/{ds_id}/collections -> prez:FeatureCollectionList
+    /s/datasets/{ds_id}/collections/{fc_id}/features -> geo:Feature
+
+    VocPrez:
+    /v/schemes -> skos:ConceptScheme
+    /v/collections -> skos:Collection
+    /v/schemes/{cs_id}/concepts -> skos:Concept
+
+    CatPrez:
+    /c/catalogs -> dcat:Catalog
+    /c/catalogs/{cat_id}/datasets -> dcat:Dataset
+
+    The following logic is used to determine the profile and mediatype to be returned:
 
     1. If a profile and mediatype are requested, they are returned if a matching profile which has the requested
     mediatype is found, otherwise the default profile for the most specific class is returned, with its default
