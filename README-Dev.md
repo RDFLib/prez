@@ -301,6 +301,27 @@ WHERE {
 }
 ```
 ## Appendix D - Example Profile and Mediatype Selection SPARQL query
+This SPARQL query determines the profile and mediatype to return based on user requests,
+defaults, and the availability of these in profiles.
+
+NB: Most specific class refers to the rdfs:Class of an object which has the most specific rdfs:subClassOf links to the general class delivered by that API endpoint. The general classes delivered by each API endpoint are:
+
+SpacePrez:
+/s/datasets -> prez:DatasetList
+/s/datasets/{ds_id} -> dcat:Dataset
+/s/datasets/{ds_id}/collections/{fc_id} -> geo:FeatureCollection
+/s/datasets/{ds_id}/collections -> prez:FeatureCollectionList
+/s/datasets/{ds_id}/collections/{fc_id}/features -> geo:Feature
+
+VocPrez:
+/v/schemes -> skos:ConceptScheme
+/v/collections -> skos:Collection
+/v/schemes/{cs_id}/concepts -> skos:Concept
+
+CatPrez:
+/c/catalogs -> dcat:Catalog
+/c/catalogs/{cat_id}/datasets -> dcat:Dataset
+
 This is an example query for SpacePrez requesting the Datasets listing from a web browser. Note the following components of the query are populated in Python:
 1. The `?class` VALUES
 2. A `?req_profile` value (not present in this query as no profile was requested)
