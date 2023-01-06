@@ -56,7 +56,7 @@ The logic used to determine the profile and mediatype is detailed in section x.
 		| inverse path predicates to include                                             | `sh:inversePath`                            |
 		| sequence path predicates to include, expressed as an RDF list.                 | `sh:sequencePath`                           |
 
-      2. Where 'relation' properties are specified in the profile (i.e. inboundChildren, outboundChildren, inboundParents, outboundParents), a second SPARQL CONSTRUCT query is used, as detailed in object listings:
+      2. Where _Relation Properties_ (see the [Glossary](#Glossary) for definition) are specified in the profile, a second SPARQL CONSTRUCT query is used, as detailed in object listings:
    - For object listings:
      1. A SPARQL CONSTRUCT query is used, with a LIMIT and OFFSET, and `prez:link` internal API URL paths are generated for each member object returned.
 5. Execute the SPARQL query
@@ -111,8 +111,58 @@ TODO altr-ext - this may be merged with altr
 | Collection Class | `skos:Collection`, `skos:ConceptScheme`, `dcat:Dataset`, `geo:FeatureCollection`, `dcat:Catalog` |
 | Top Level Class | `skos:Collection`, `skos:ConceptScheme`, `dcat:Dataset`, `dcat:Catalog` |
 
-## Appendix A - SPARQL INSERT queries for support graphs
-### A.1 - SpacePrez
+## Appendix A - Example SPARQL query for an object
+```sparql
+CONSTRUCT {
+  <https://linked.data.gov.au/datasets/gnaf> ?p ?o1.
+  ?o1 ?p2 ?o2.
+  ?o2 ?p3 ?o3.
+}
+WHERE {
+  {
+    <https://linked.data.gov.au/datasets/gnaf> ?p ?o1.
+    OPTIONAL {
+      FILTER(ISBLANK(?o1))
+      ?o1 ?p2 ?o2.
+      OPTIONAL {
+        FILTER(ISBLANK(?o2))
+        ?o2 ?p3 ?o3.
+      }
+    }
+  }
+  MINUS {
+    <https://linked.data.gov.au/datasets/gnaf> dct:identifier ?o1.
+    FILTER((DATATYPE(?o1)) = prez:slug)
+  }
+}
+```
+## Appendix B - Example SPARQL query for an object listing
+```sparql
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prez: <https://prez.dev/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+CONSTRUCT {
+  <https://prez.dev/DatasetList> ?outbound_children ?item .
+  ?item prez:link ?outbound_children_link .
+}
+WHERE {
+  <https://prez.dev/DatasetList> ?outbound_children ?item .
+  ?item dcterms:identifier ?outbound_children_id .
+  FILTER(DATATYPE(?outbound_children_id) = prez:slug)
+  VALUES ?outbound_children { <http://www.w3.org/2000/01/rdf-schema#member> }
+
+  BIND(CONCAT("/s/datasets", "/", STR(?outbound_children_id))AS ?outbound_children_link)
+
+}
+LIMIT 20
+OFFSET 0
+```
+## Appendix C - SPARQL INSERT queries for support graphs
+### C.1 - SpacePrez
 ```sparql
 PREFIX dcat: <http://www.w3.org/ns/dcat#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -157,7 +207,7 @@ WHERE {
   BIND(URI(CONCAT(STR(?instance_of_main_class),"/support-graph")) AS ?support_graph_uri)
 }
 ```
-### A.2 - CatPrez
+### C.2 - CatPrez
 ```sparql
 PREFIX dcat: <http://www.w3.org/ns/dcat#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -202,7 +252,7 @@ WHERE {
   BIND(URI(CONCAT(STR(?instance_of_main_class),"/support-graph")) AS ?support_graph_uri)
 }
 ```
-### A.3 - VocPrez
+### C.3 - VocPrez
 ```sparql
 PREFIX dcat: <http://www.w3.org/ns/dcat#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -250,8 +300,11 @@ WHERE {
   BIND(URI(CONCAT(STR(?instance_of_main_class),"/support-graph")) AS ?support_graph_uri)
 }
 ```
-## Appendix B - Example Profile and Mediatype Selection SPARQL query
-This is an example query for SpacePrez requesting the Datasets listing from a web browser:
+## Appendix D - Example Profile and Mediatype Selection SPARQL query
+This is an example query for SpacePrez requesting the Datasets listing from a web browser. Note the following components of the query are populated in Python:
+1. The `?class` VALUES
+2. A `?req_profile` value (not present in this query as no profile was requested)
+3. Nested IF statements, based on the mediatypes in the HTTP request.
 ```sparql
 PREFIX dcat: <http://www.w3.org/ns/dcat#>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
@@ -291,4 +344,126 @@ WHERE {
 
 GROUP BY ?class ?profile ?req_profile ?def_profile ?format ?req_format ?def_format
 ORDER BY DESC(?req_profile) DESC(?distance) DESC(?def_profile) DESC(?req_format) DESC(?def_format)
+```
+## Appendix E - Example profiles
+### Appendix E.1 - Example system profile
+The following snippet shows a system profile for Prez which declares the default profile to be used for objects with a class of `dcat:Dataset`.
+```turtle
+<http://kurrawong.net/profile/prez>
+    a prof:Profile ;
+    dcterms:identifier "prez" ;
+    dcterms:description "A profile for the Prez Linked Data API" ;
+    skos:prefLabel "Prez profile" ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass dcat:Dataset ;
+        altr-ext:hasDefaultProfile <https://www.w3.org/TR/vocab-dcat/>
+    ] .
+```
+### Appendix E.2 - Example mediatype declarations
+The following snippet shows how to define which mediatypes a resource constrained by that profile should be available in, via the `altr-ext:hasResourceFormat` property. It also shows how default mediatypes can be declared, via the `altr-ext:hasDefaultResourceFormat` property.
+```turtle
+<http://www.opengis.net/def/geosparql>
+    a prof:Profile ;
+    dcterms:description "An RDF/OWL vocabulary for representing spatial information" ;
+    dcterms:identifier "geo" ;
+    dcterms:title "GeoSPARQL" ;
+    altr-ext:constrainsClass geo:Feature ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
+    altr-ext:hasResourceFormat
+        "application/ld+json" ,
+        "application/rdf+xml" ,
+        "text/anot+turtle" ,
+        "text/turtle" ;
+.
+```
+### Appendix E.3 - Example mediatype declarations
+The following snippet shows a profile which constrains a number of classes, and declares two NodeShapes which state the following:
+1. For a `geo:FeatureCollection`, only include properties where the predicate is one of those listed under `sh:path`. In this case, `rdfs:member` has been deliberately omitted as instances of `geo:FeatureCollection` can have significant numbers of `rdfs:member` relations which can create query performance issues. A sample of the Feature Collections members can still be included, using the method described in (2.) below
+2. Instances of `geo:FeatureCollection`, `prez:FeatureCollectionList`, and `prez:FeatureList`, have a number of member objects (related via the `rdfs:member` relation) which are delivered via Prez. With this information Prez:
+   1. Creates internal links when returning annotated RDF, such that HTML views can include internal links
+   2. Uses a LIMIT/OFFSET query to ensure that only a sample of the members are returned, to avoid query performance issues
+```turtle
+<http://www.opengis.net/spec/ogcapi-features-1/1.0/req/oas30>
+    a prof:Profile ;
+    dcterms:description "The OGC API Features specifies the behavior of Web APIs that provide access to features in a dataset in a manner independent of the underlying data store." ;
+    dcterms:identifier "oai" ;
+    dcterms:title "OGC API Features" ;
+    altr-ext:constrainsClass
+        dcat:Dataset ,
+        geo:FeatureCollection ,
+        geo:Feature ,
+        prez:FeatureCollectionList ,
+        prez:FeatureList ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
+    altr-ext:hasResourceFormat
+        "text/anot+turtle" ,
+        "application/geo+json" ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass geo:FeatureCollection ;
+        sh:path rdf:type,
+                dcterms:identifier,
+                dcterms:title,
+                geo:hasBoundingBox,
+                dcterms:provenance,
+                rdfs:label,
+                dcterms:description ;
+    ] ,
+    [  a sh:NodeShape ;
+        sh:targetClass geo:FeatureCollection , prez:FeatureCollectionList , prez:FeatureList ;
+        altr-ext:outboundChildren rdfs:member ;
+    ]
+.
+```
+### Appendix E.4 - Example inbound links
+The following VocPrez VocPub profile shows how to use a number of declarations:
+1. Inbound Children: for Concept Schemes, include concepts delivered via Prez that are skos:inScheme the Concept Scheme. NB sh:inversePath could also be used but this will not create internal links in the HTML view, nor limit the number of results returned.
+2. Outbound Parents: for Concepts, include the objects the Concept is skos:inScheme of. NB an 'open' profile declaring no constraints would return these triples by default - by declaring the predicate in a profile, an internal link will be created in the HTML view (and the number of linked results limited).
+```turtle
+<https://w3id.org/profile/vocpub>
+    a prof:Profile ;
+    dcterms:description "This is a profile of the taxonomy data model SKOS - i.e. SKOS with additional constraints." ;
+    dcterms:identifier "vocpub" ;
+    dcterms:title "VocPub" ;
+    altr-ext:hasLabelPredicate skos:prefLabel ;
+    altr-ext:constrainsClass
+        skos:ConceptScheme ,
+        skos:Concept ,
+        skos:Collection ,
+        prez:SchemesList ,
+        prez:VocPrezCollectionList ;
+    altr-ext:hasDefaultResourceFormat "text/turtle" ;
+    altr-ext:hasResourceFormat
+        "application/ld+json" ,
+        "application/rdf+xml" ,
+        "text/anot+turtle" ,
+        "text/turtle" ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass skos:ConceptScheme ;
+        altr-ext:outboundChildren skos:hasTopConcept ;
+    ] ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass skos:Collection ;
+        altr-ext:outboundChildren skos:member ;
+    ] ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass skos:ConceptScheme ;
+        altr-ext:inboundChildren skos:inScheme ;
+    ] ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass skos:Concept ;
+        altr-ext:outboundParents skos:inScheme ;
+    ] ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass prez:SchemesList , prez:VocPrezCollectionList ;
+        altr-ext:outboundChildren rdfs:member ;
+    ] ;
+.
 ```
