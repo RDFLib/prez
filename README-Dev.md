@@ -32,7 +32,7 @@ Prez follows the following logic to determine what information to return, based 
 
 - For listings:
   - Determine the URI of the parent class which contains the listed objects.
-    - For the most top level objects (see _Top Level Class_ in the [Glossary](#Glossary)) in each Prez instance a Prez specific object contains the top level objects. For example, the a prez:DatasetList has rdfs:member the dcat:Dataset objects. This data is generated on startup if not supplied, as detailed in [Appendix A](#appendix-a---sparql-insert-queries-for-support-graphs).
+    - For the most top level objects (see _Top Level Class_ in the [Glossary](#Glossary)) in each Prez instance a Prez specific object contains the top level objects. For example, the a prez:DatasetList has rdfs:member the dcat:Dataset objects. This data is generated on startup if not supplied, as detailed in [Appendix C](#appendix-c---sparql-insert-queries-for-support-graphs).
     - For non top level objects, the URI is determined using a SPARQL query
 
 2. Get all classes for the object or object listing
