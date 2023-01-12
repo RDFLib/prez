@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Request
+from rdflib import SKOS, URIRef
 
+from models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.models.vocprez_item import VocabItem
 from prez.models.vocprez_listings import VocabMembers
-from prez.profiles.generate_profiles import get_profiles_and_mediatypes, prez_profiles
-from prez.renderers.renderer import return_from_queries
-from prez.services.connegp_service import get_requested_profile_and_mediatype
+from prez.renderers.renderer import return_from_queries, return_profiles
 from prez.services.sparql_queries import (
     generate_listing_construct_from_uri,
     generate_listing_count_construct,
@@ -15,8 +15,11 @@ router = APIRouter(tags=["VocPrez"])
 
 
 @router.get("/v", summary="VocPrez Home")
-async def vocprez_home(request: Request):
-    return await prez_profiles(request, "VocPrez")
+@router.get("/v/profiles", summary="VocPrez Profiles")
+async def vocprez_profiles(request: Request):
+    """Returns a JSON list of the profiles accepted by VocPrez"""
+    vocprez_classes = frozenset([SKOS.Concept, SKOS.ConceptScheme, SKOS.Collection])
+    return await return_profiles(request, "VocPrez", vocprez_classes)
 
 
 @router.get("/v/collection", summary="List Collections")
@@ -29,22 +32,28 @@ async def schemes_endpoint(
 ):
     """Returns a list of VocPrez skos:ConceptSchemes in the necessary profile & mediatype"""
     vocprez_members = VocabMembers(url_path=str(request.url.path))
-    req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
-    (
-        profile,
-        mediatype,
-        vocprez_members.selected_class,
-        profile_headers,
-        _,
-    ) = get_profiles_and_mediatypes(
-        vocprez_members.classes, req_profiles, req_mediatypes
+    prof_and_mt_info = ProfilesMediatypesInfo(
+        request=request, classes=vocprez_members.classes
     )
+    vocprez_members.selected_class = prof_and_mt_info.selected_class
+    if prof_and_mt_info.profile == URIRef(
+        "http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"
+    ):
+        return await return_profiles(
+            classes=frozenset(vocprez_members.selected_class),
+            prez_type="SpacePrez",
+            prof_and_mt_info=prof_and_mt_info,
+        )
     list_query = generate_listing_construct_from_uri(
-        vocprez_members, profile, page, per_page
+        vocprez_members, prof_and_mt_info.profile, page, per_page
     )
     count_query = generate_listing_count_construct(vocprez_members)
     return await return_from_queries(
-        [list_query, count_query], mediatype, profile, profile_headers, "VocPrez"
+        [list_query, count_query],
+        prof_and_mt_info.mediatype,
+        prof_and_mt_info.profile,
+        prof_and_mt_info.profile_headers,
+        "VocPrez",
     )
 
 
@@ -67,25 +76,24 @@ async def item_endpoint(
 ):
     """Returns a VocPrez skos:Concept, Collection, Vocabulary, or ConceptScheme in the requested profile & mediatype"""
     vp_item = VocabItem(**request.path_params, url_path=str(request.url.path))
-    req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
-    (
-        profile,
-        mediatype,
-        vp_item.selected_class,
-        profile_headers,
-        _,
-    ) = get_profiles_and_mediatypes(vp_item.classes, req_profiles, req_mediatypes)
-    item_query = generate_item_construct(vp_item, profile)
-    item_members_query = generate_listing_construct_from_uri(vp_item, profile, 1, 100)
-    return await return_from_queries(
-        [item_query, item_members_query], mediatype, profile, profile_headers, "VocPrez"
+    prof_and_mt_info = ProfilesMediatypesInfo(request=request, classes=vp_item.classes)
+    vp_item.selected_class = prof_and_mt_info.selected_class
+    if prof_and_mt_info.profile == URIRef(
+        "http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"
+    ):
+        return await return_profiles(
+            classes=frozenset(vp_item.selected_class),
+            prez_type="SpacePrez",
+            prof_and_mt_info=prof_and_mt_info,
+        )
+    item_query = generate_item_construct(vp_item, prof_and_mt_info.profile)
+    item_members_query = generate_listing_construct_from_uri(
+        vp_item, prof_and_mt_info.profile, 1, 5000
     )
-
-
-@router.get(
-    "/v/profiles",
-    summary="VocPrez Profiles",
-)
-async def vocprez_profiles(request: Request):
-    """Returns a JSON list of the profiles accepted by VocPrez"""
-    return await prez_profiles(request, "VocPrez")
+    return await return_from_queries(
+        [item_query, item_members_query],
+        prof_and_mt_info.mediatype,
+        prof_and_mt_info.profile,
+        prof_and_mt_info.profile_headers,
+        "VocPrez",
+    )

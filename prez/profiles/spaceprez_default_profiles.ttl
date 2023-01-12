@@ -105,20 +105,6 @@ altr-ext:hasResourceFormat owl:propertyChainAxiom ( dcterms:conformsTo dcterms:f
     ]
 .
 
-altr-ext:alt-profile
-    a prof:Profile ;
-    dcterms:description "The representation of the resource that lists all other representations (profiles and Media Types)" ;
-    dcterms:identifier "alt" ;
-    dcterms:title "Alternates Profile" ;
-    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
-    altr-ext:hasResourceFormat
-        "application/ld+json" ,
-        "application/rdf+xml" ,
-        "text/anot+turtle" ,
-        "text/turtle" ,
-        "application/json" ;
-.
-
 altr-ext:hasResourceFormat
     owl:propertyChainAxiom (
             dcterms:conformsTo

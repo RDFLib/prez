@@ -14,8 +14,6 @@ httpx = "^0.20.0"
 rdflib = "^6.1.1"
 python-multipart = "^0.0.5"
 connegp = { file = "connegp-0.1.4-py3-none-any.whl" }
-fedsearch = { git = "https://github.com/surroundaustralia/vocprez-fedsearch.git" }
-starlette-core = { git = "https://github.com/accent-starlette/starlette-core.git" }
 async-lru = "^1.0.3"
 Shapely = "^1.8.2"
 pytest = "^7.1.2"

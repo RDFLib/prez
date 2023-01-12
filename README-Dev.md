@@ -488,7 +488,7 @@ The following VocPrez VocPub profile shows how to use a number of declarations:
     ] ;
 .
 ```
-Appendix F - Example system support graph
+## Appendix F - Example system support graph
 ```turtle
 @prefix addr:    <http://w3id.org/profile/anz-address/> .
 @prefix ahgf:    <https://linked.data.gov.au/def/geofabric/> .

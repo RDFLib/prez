@@ -3,22 +3,15 @@ from functools import lru_cache
 from pathlib import Path
 from typing import FrozenSet
 
-from rdflib import Graph, URIRef, Namespace
-from rdflib.namespace import GEO, DCAT, SKOS
-from starlette.requests import Request
-from starlette.responses import Response
+from rdflib import Graph, URIRef
 
-from prez.models import SpatialItem, VocabItem, CatalogItem
 from prez.cache import profiles_graph_cache
 from prez.services.sparql_queries import (
     select_profile_mediatype,
-    generate_item_construct,
 )
 from prez.services.sparql_utils import (
     sparql_construct_non_async,
 )
-from prez.renderers.renderer import return_from_graph
-from prez.services.connegp_service import get_requested_profile_and_mediatype
 
 
 def create_profiles_graph(ENABLED_PREZS) -> Graph:
@@ -75,9 +68,12 @@ def create_profiles_graph(ENABLED_PREZS) -> Graph:
 def get_profiles_and_mediatypes(
     classes: FrozenSet[URIRef],
     requested_profile: URIRef = None,
+    requested_profile_token: str = None,
     requested_mediatype: URIRef = None,
 ):
-    query = select_profile_mediatype(classes, requested_profile, requested_mediatype)
+    query = select_profile_mediatype(
+        classes, requested_profile, requested_profile_token, requested_mediatype
+    )
     response = profiles_graph_cache.query(query)
     if len(response.bindings[0]) == 0:
         raise ValueError(
@@ -99,13 +95,8 @@ def get_profiles_and_mediatypes(
 def generate_profiles_headers(selected_class, response, profile, mediatype):
     headers = {
         "Access-Control-Allow-Origin": "*",
+        "Content-Type": mediatype,
     }
-    if str(mediatype) == "text/anot+turtle":
-        headers["Content-Type"] = "text/turtle"
-        # TODO does something else need to be returned? the front end knows what it requested - if HTML was requested,
-        #  and RDF is returned, it will know to render it as HTML
-    else:
-        headers["Content-Type"] = mediatype
     avail_profiles = set(
         (i["token"], i["profile"], i["title"]) for i in response.bindings
     )
@@ -118,7 +109,8 @@ def generate_profiles_headers(selected_class, response, profile, mediatype):
     avail_mediatypes_headers = ", ".join(
         [
             f"""<{selected_class}?_profile={i["token"]}&_mediatype={i["format"]}>; \
-rel="{"self" if i["def_profile"] and i["def_format"] else "alternate"}"; type="{i["format"]}"; profile="{i["profile"]}"\
+rel="{"self" if i["profile"] == profile and i["format"] == mediatype else "alternate"}"; \
+type="{i["format"]}"; profile="{i["profile"]}"\
 """
             for i in response.bindings
         ]
@@ -132,39 +124,3 @@ rel="{"self" if i["def_profile"] and i["def_format"] else "alternate"}"; type="{
     )
     avail_profile_uris = [i[1] for i in avail_profiles]
     return headers, avail_profile_uris
-
-
-async def prez_profiles(request: Request, prez_type) -> Response:
-    prez_classes = {
-        "SpacePrez": frozenset([GEO.Feature, GEO.FeatureCollection, DCAT.Dataset]),
-        "VocPrez": frozenset([SKOS.Concept, SKOS.ConceptScheme, SKOS.Collection]),
-        "CatPrez": frozenset([DCAT.Catalog, DCAT.Resource]),
-    }
-    prez_items = {
-        "SpacePrez": SpatialItem,
-        "VocPrez": VocabItem,
-        "CatPrez": CatalogItem,
-    }
-    req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
-    (
-        profile,
-        mediatype,
-        selected_class,
-        profile_headers,
-        avail_profile_uris,
-    ) = get_profiles_and_mediatypes(
-        prez_classes[prez_type], req_profiles, req_mediatypes
-    )
-    items = [
-        prez_items[prez_type](uri=uri, url_path=str(request.url.path))
-        for uri in avail_profile_uris
-    ]
-    queries = [
-        generate_item_construct(profile, URIRef("http://kurrawong.net/profile/prez"))
-        for profile in items
-    ]
-    g = Graph(bind_namespaces="rdflib")
-    g.bind("altr-ext", Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#"))
-    for q in queries:
-        g += profiles_graph_cache.query(q)
-    return await return_from_graph(g, mediatype, profile, profile_headers, prez_type)

@@ -16,7 +16,7 @@ class SpatialMembers(BaseModel):
     collection_id: Optional[URIRef]
     general_class: Optional[URIRef]
     classes: Optional[FrozenSet[URIRef]]
-    selected_class: Optional[URIRef] = None
+    selected_class: Optional[FrozenSet[URIRef]] = None
     link_constructor: Optional[str]
 
     @root_validator

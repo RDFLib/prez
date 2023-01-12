@@ -1,13 +1,13 @@
 from typing import Optional
 
 from fastapi import APIRouter, Request
-from rdflib import Namespace
+from rdflib import Namespace, URIRef
+from rdflib.namespace import GEO, DCAT
 
+from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.models.spaceprez_item import SpatialItem
 from prez.models.spaceprez_listings import SpatialMembers
-from prez.profiles.generate_profiles import get_profiles_and_mediatypes, prez_profiles
-from prez.renderers.renderer import return_from_queries
-from prez.services.connegp_service import get_requested_profile_and_mediatype
+from prez.renderers.renderer import return_from_queries, return_profiles
 from prez.services.sparql_queries import (
     generate_item_construct,
     generate_listing_construct_from_uri,
@@ -20,14 +20,11 @@ router = APIRouter(tags=["SpacePrez"])
 
 
 @router.get("/s", summary="SpacePrez Home")
-async def spaceprez_home(request: Request):
-    return await prez_profiles(request, "SpacePrez")
-
-
 @router.get("/s/profiles", summary="SpacePrez Profiles")
 async def spaceprez_profiles(request: Request):
     """Returns list of the profiles which constrain SpacePrez classes"""
-    return await prez_profiles(request, "SpacePrez")
+    spaceprez_classes = frozenset([GEO.Feature, GEO.FeatureCollection, DCAT.Dataset])
+    return await return_profiles(request, "SpacePrez", spaceprez_classes)
 
 
 @router.get("/s/datasets", summary="List Datasets")
@@ -36,20 +33,28 @@ async def list_items(
 ):
     """Returns a list of SpacePrez datasets in the requested profile & mediatype"""
     spatial_item = SpatialMembers(**request.path_params, url_path=str(request.url.path))
-    req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
-    (
-        profile,
-        mediatype,
-        spatial_item.selected_class,
-        profile_headers,
-        _,
-    ) = get_profiles_and_mediatypes(spatial_item.classes, req_profiles, req_mediatypes)
+    prof_and_mt_info = ProfilesMediatypesInfo(
+        request=request, classes=spatial_item.classes
+    )
+    spatial_item.selected_class = prof_and_mt_info.selected_class
+    if prof_and_mt_info.profile == URIRef(
+        "http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"
+    ):
+        return await return_profiles(
+            classes=frozenset(spatial_item.selected_class),
+            prez_type="SpacePrez",
+            prof_and_mt_info=prof_and_mt_info,
+        )
     list_query = generate_listing_construct_from_uri(
-        spatial_item, profile, page, per_page
+        spatial_item, prof_and_mt_info.profile, page, per_page
     )
     count_query = generate_listing_count_construct(spatial_item)
     return await return_from_queries(
-        [list_query, count_query], mediatype, profile, profile_headers, "SpacePrez"
+        [list_query, count_query],
+        prof_and_mt_info.mediatype,
+        prof_and_mt_info.profile,
+        prof_and_mt_info.profile_headers,
+        "SpacePrez",
     )
 
 
@@ -104,23 +109,29 @@ async def feature_item(
 
 @router.get("/s/object")
 async def item_endpoint(request: Request):
-    item = SpatialItem(
+    spatial_item = SpatialItem(
         **request.path_params, **request.query_params, url_path=str(request.url.path)
     )
-    req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
-    (
-        profile,
-        mediatype,
-        item.selected_class,
-        profile_headers,
-        _,
-    ) = get_profiles_and_mediatypes(item.classes, req_profiles, req_mediatypes)
-    item_query = generate_item_construct(item, profile)
-    item_members_query = generate_listing_construct_from_uri(item, profile, 1, 10)
+    prof_and_mt_info = ProfilesMediatypesInfo(
+        request=request, classes=spatial_item.classes
+    )
+    spatial_item.selected_class = prof_and_mt_info.selected_class
+    if prof_and_mt_info.profile == URIRef(
+        "http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"
+    ):
+        return await return_profiles(
+            classes=frozenset(spatial_item.selected_class),
+            prez_type="SpacePrez",
+            prof_and_mt_info=prof_and_mt_info,
+        )
+    item_query = generate_item_construct(spatial_item, prof_and_mt_info.profile)
+    item_members_query = generate_listing_construct_from_uri(
+        spatial_item, prof_and_mt_info.profile, 1, 20
+    )
     return await return_from_queries(
         [item_query, item_members_query],
-        mediatype,
-        profile,
-        profile_headers,
+        prof_and_mt_info.mediatype,
+        prof_and_mt_info.profile,
+        prof_and_mt_info.profile_headers,
         "SpacePrez",
     )

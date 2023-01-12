@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from textwrap import dedent
 from typing import Optional
@@ -6,6 +7,7 @@ import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse, RedirectResponse
+from fedsearch import SkosSearch
 from pydantic import AnyUrl
 from rdflib import Graph, Literal, Namespace, URIRef
 from starlette.middleware.cors import CORSMiddleware
@@ -24,7 +26,8 @@ from prez.routers.spaceprez import router as spaceprez_router
 from prez.routers.vocprez import router as vocprez_router
 from prez.services.app_service import healthcheck_sparql_endpoints, count_objects
 from prez.utils.prez_logging import setup_logger
-
+from prez.services.sparql_queries import weighted_search
+from prez.services.sparql_utils import sparql_construct
 
 PREZ = Namespace("https://prez.dev/")
 
@@ -192,91 +195,95 @@ async def sparql_get(request: Request, query: Optional[str] = None):
     )
 
 
-# @app.get("/search", summary="Search page")
-# async def search(
-#     request: Request,
-#     search: Optional[str] = None,
-#     endpoints: List[str] = Query(["self"]),
-# ):
-#     """Displays the search page of Prez"""
-#     # Concept search
-#     if search is not None and search != "":
-#         self_sparql_endpoint = str(request.base_url)[:-1] + "/sparql"
-#         endpoint_details = []
-#         for endpoint in endpoints:
-#             if endpoint in [
-#                 e["url"] for e in SEARCH_ENDPOINTS
-#             ]:  # only use valid endpoints
-#                 if endpoint == "self":
-#                     endpoint_details.append(
-#                         EndpointDetails(self_sparql_endpoint, None, None)
-#                     )
-#                 else:
-#                     endpoint_details.append(EndpointDetails(endpoint, None, None))
-#         s = []
-#         retries = 0
-#         while retries < 3:
-#             try:
-#                 s = await SkosSearch.federated_search(
-#                     search, "preflabel", endpoint_details
-#                 )
-#                 break
-#             except Exception:
-#                 retries += 1
-#                 continue
-#         if retries == 3:
-#             raise Exception("Max retries reached")
-#         results = SkosSearch.combine_search_results(s, "preflabel")
-#     else:
-#         results = []
-#
-#     # CQL search
-#     if "SpacePrez" in settings.ENABLED_PREZS:
-#         dataset_sparql_result, collection_sparql_result = await asyncio.gather(
-#             list_datasets(),
-#             list_collections(),
-#         )
-#         datasets = [
-#             {"id": result["id"]["value"], "title": result["label"]["value"]}
-#             for result in dataset_sparql_result
-#         ]
-#         collections = [
-#             {"id": result["id"]["value"], "title": result["label"]["value"]}
-#             for result in collection_sparql_result
-#         ]
-#
-#         template_context = {
-#             "request": request,
-#             "endpoint_options": SEARCH_ENDPOINTS,
-#             "results": results,
-#             "last_search_term": search,
-#             "last_endpoints": endpoints,
-#             "datasets": datasets,
-#             "collections": collections,
-#         }
-#     else:
-#         template_context = {
-#             "request": request,
-#             "endpoint_options": SEARCH_ENDPOINTS,
-#             "results": results,
-#             "last_search_term": search,
-#             "last_endpoints": endpoints,
-#         }
-#     return templates.TemplateResponse("search.html", context=template_context)
-
-
-@app.get("/prezs", summary="Enabled Prezs", tags=["Prez"])
-async def prezs(request: Request):
-    """Returns a list of the enabled *Prez 'modules'"""
-    uri = str(request.base_url)
-    return JSONResponse(
-        content={
-            "uri": uri,
-            "prezs": [f"{uri}{prez.lower()}" for prez in settings.ENABLED_PREZS],
-        },
-        media_type="application/json",
-        headers=request.headers,
+@app.get("/search", summary="Global Search")
+@app.get("/v/search", summary="VocPrez Search")
+@app.get("/c/search", summary="CatPrez Search")
+@app.get("/s/search", summary="SpacePrez Search")
+async def search(
+    request: Request,
+):
+    term = request.query_params.get("term")
+    if not term:
+        return PlainTextResponse("A search term must be provided as a query parameter")
+    start_of_path = request.url.path[:3]
+    pathmap = {
+        "/v/": "VocPrez",
+        "/c/": "CatPrez",
+        "/s/": "SpacePrez",
+    }
+    prez = pathmap.get(start_of_path, "all")
+    search_methods = determine_search_method(request, prez)
+    search_functions = {
+        "weighted": weighted_search,
+    }
+    search_queries = {
+        p: search_functions[method](term, p) for p, method in search_methods.items()
+    }
+    results = await asyncio.gather(
+        *[sparql_construct(query, p) for p, query in search_queries.items()]
     )
+    # TODO update "return from queries function"
+    graph = Graph(bind_namespaces="rdflib")
+    for res in results:
+        g = res[1]
+        graph.__iadd__(g)
+    return await return_rdf(graph, mediatype="text/anot+turtle", profile_headers=None)
+
+
+def determine_search_method(request, prez):
+    """Returns the search method to use based on the request headers"""
+    specified_method = request.query_params.get("method")
+    if specified_method:
+        if prez != "all":
+            return {prez: specified_method}
+        else:
+            return {
+                prez: specified_method for prez in settings.enabled_prezs
+            }  # specified method applies to all prezs
+    else:
+        return get_default_search_methods()
+
+
+def get_default_search_methods():
+    # TODO return from profiles
+    methods = {}
+    for prez in settings.enabled_prezs:
+        methods[prez] = "weighted"
+    return methods
+
+    # # Concept search
+    # retries = 0
+    # ep_details = EndpointDetails()
+    # while retries < 3:
+    #     try:
+    #         s = await SkosSearch.federated_search(
+    #             search, "preflabel", endpoint_details
+    #         )
+    #         break
+    #     except Exception:
+    #         retries += 1
+    #         continue
+    # if retries == 3:
+    #     raise Exception("Max retries reached")
+    # results = SkosSearch.combine_search_results(s, "preflabel")
+    # else:
+    #     results = []
+    #
+    # # CQL search
+    # if "SpacePrez" in settings.ENABLED_PREZS:
+    #     dataset_sparql_result, collection_sparql_result = await asyncio.gather(
+    #         list_datasets(),
+    #         list_collections(),
+    #     )
+    #     datasets = [
+    #         {"id": result["id"]["value"], "title": result["label"]["value"]}
+    #         for result in dataset_sparql_result
+    #     ]
+    #     collections = [
+    #         {"id": result["id"]["value"], "title": result["label"]["value"]}
+    #         for result in collection_sparql_result
+    #     ]
+    # return
 
 
 @app.get("/profiles", summary="Profiles", tags=["Prez"])
@@ -284,7 +291,7 @@ async def profiles(request: Request):
     """Returns a list of profiles recognised by Prez"""
     return PlainTextResponse("Not yet implemented - requires a profile model")
     # from prez.cache import profiles_graph_cache
-    # req_profiles, req_mediatypes = get_requested_profile_and_mediatype(request)
+    # req_profiles, req_profiles_tokens, req_mediatypes = get_requested_profile_and_mediatype(request)
     # (
     #     profile,
     #     mediatype,
@@ -295,15 +302,17 @@ async def profiles(request: Request):
     # return await return_from_graph(profiles_graph_cache, mediatype, profile, profile_headers, None)
 
 
-@app.get(
-    "/object", summary="Get object", response_class=RedirectResponse, tags=["Prez"]
-)
+@app.get("/object", summary="Get object", tags=["Prez"])
 async def object(
     request: Request,
-    uri: AnyUrl,
     _profile: Optional[str] = None,
     _mediatype: Optional[str] = None,
 ):
+    """
+    1. check which SPARQL endpoints have information for the object.
+    2. query is along the lines of ?uri dcterms:identifier ?x FILTER(DATATYPE ...
+            OR get list of graphs which contain support data "?g <https://prez.dev/hasContextFor> <ds or fc>" VALUES ?graph { ?g }
+    """
     """Generic endpoint to get any object. Returns the appropriate endpoint based on type"""
     pass
     # query to get basic info for object

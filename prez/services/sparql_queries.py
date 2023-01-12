@@ -658,7 +658,8 @@ def get_item_predicates(profile, selected_class):
 
 def select_profile_mediatype(
     classes: List[URIRef],
-    requested_profile: URIRef = None,
+    requested_profile_uri: URIRef = None,
+    requested_profile_token: str = None,
     requested_mediatypes: List[Tuple] = None,
 ):
     """
@@ -697,38 +698,39 @@ def select_profile_mediatype(
     4. If neither a profile nor mediatype is requested, the default profile for the most specific class is returned,
     with the default mediatype for that profile.
     """
-    query = f"""
-PREFIX dcat: <http://www.w3.org/ns/dcat#>
-PREFIX sh: <http://www.w3.org/ns/shacl#>
-PREFIX geo: <http://www.opengis.net/ont/geosparql#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
-PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX prez: <https://prez.dev/>
+    query = dedent(
+        f"""    PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
+    PREFIX dcat: <http://www.w3.org/ns/dcat#>
+    PREFIX dcterms: <http://purl.org/dc/terms/>
+    PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+    PREFIX prez: <https://prez.dev/>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    PREFIX sh: <http://www.w3.org/ns/shacl#>
 
-SELECT ?profile ?title ?class (count(?mid) as ?distance) ?req_profile ?def_profile ?format ?req_format ?def_format ?token
+    SELECT ?profile ?title ?class (count(?mid) as ?distance) ?req_profile ?def_profile ?format ?req_format ?def_format ?token
 
-WHERE {{
-  VALUES ?class {{{" ".join('<' + str(klass) + '>' for klass in classes)}}}
-  ?class rdfs:subClassOf* ?mid .
-  ?mid rdfs:subClassOf* ?general_class .
-  VALUES ?general_class {{ dcat:Dataset geo:FeatureCollection prez:FeatureCollectionList prez:FeatureList geo:Feature
-  skos:ConceptScheme skos:Concept skos:Collection prez:DatasetList prez:VocPrezCollectionList prez:SchemesList
-  prez:CatalogList dcat:Catalog dcat:Resource }}
-  ?profile altr-ext:constrainsClass ?class ;
-           altr-ext:hasResourceFormat ?format ;
-           dcterms:identifier ?token ;
-           dcterms:title ?title .
-  {f'BIND(?profile=<{requested_profile}> as ?req_profile)' if requested_profile else ''}
-  BIND(EXISTS {{ ?shape sh:targetClass ?class ;
-                       altr-ext:hasDefaultProfile ?profile }} AS ?def_profile)
-  {generate_mediatype_if_statements(requested_mediatypes) if requested_mediatypes else ''}
-  BIND(EXISTS {{ ?profile altr-ext:hasDefaultResourceFormat ?format }} AS ?def_format)
-}}
-
-GROUP BY ?class ?profile ?req_profile ?def_profile ?format ?req_format ?def_format
-ORDER BY DESC(?req_profile) DESC(?distance) DESC(?def_profile) DESC(?req_format) DESC(?def_format)
-        """
+    WHERE {{
+      VALUES ?class {{{" ".join('<' + str(klass) + '>' for klass in classes)}}}
+      ?class rdfs:subClassOf* ?mid .
+      ?mid rdfs:subClassOf* ?general_class .
+      VALUES ?general_class {{ dcat:Dataset geo:FeatureCollection prez:FeatureCollectionList prez:FeatureList geo:Feature
+      skos:ConceptScheme skos:Concept skos:Collection prez:DatasetList prez:VocPrezCollectionList prez:SchemesList
+      prez:CatalogList dcat:Catalog dcat:Resource }}
+      ?profile altr-ext:constrainsClass ?class ;
+               altr-ext:hasResourceFormat ?format ;
+               dcterms:identifier ?token ;
+               dcterms:title ?title .\
+      {f'BIND(?profile=<{requested_profile_uri}> as ?req_profile)' if requested_profile_uri else ''}
+      {f'BIND(?token="{requested_profile_token}" as ?req_profile)' if requested_profile_token else ''}
+      BIND(EXISTS {{ ?shape sh:targetClass ?class ;
+                           altr-ext:hasDefaultProfile ?profile }} AS ?def_profile)
+      {generate_mediatype_if_statements(requested_mediatypes) if requested_mediatypes else ''}
+      BIND(EXISTS {{ ?profile altr-ext:hasDefaultResourceFormat ?format }} AS ?def_format)
+    }}
+    GROUP BY ?class ?profile ?req_profile ?def_profile ?format ?req_format ?def_format ?title ?token
+    ORDER BY DESC(?req_profile) DESC(?distance) DESC(?def_profile) DESC(?req_format) DESC(?def_format)"""
+    )
     return query
 
 
@@ -750,9 +752,9 @@ def generate_mediatype_if_statements(requested_mediatypes: list):
     line_join = "," + "\n"
     ifs = (
         f"BIND(\n"
-        f"""{line_join.join({'IF(?format="' + tup[1] + '", "' + str(tup[0]) + '"' for tup in requested_mediatypes})}"""
+        f"""{line_join.join({chr(9) + 'IF(?format="' + tup[1] + '", "' + str(tup[0]) + '"' for tup in requested_mediatypes})}"""
         f""", ""{')' * len(requested_mediatypes)}\n"""
-        f"AS ?req_format)"
+        f"\tAS ?req_format)"
     )
     return ifs
 
@@ -771,3 +773,64 @@ def ask_system_graph(prez_flavour: str):
     Checks if the system graph exists in the triple store.
     """
     return f"ASK {{ GRAPH <{PREZ[prez_flavour.lower() + '-system-graph']}> {{ ?s ?p ?o }} }} LIMIT 1"
+
+
+def weighted_search(term, prez):
+    """
+    Searches a given SPARQL Endpoint for the given term in Concept prefLabels, altLabels, hiddenLabels, and
+    definitions, weighted to preference matches in that order.
+    """
+    q = f"""
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    PREFIX prez: <https://prez.dev/>
+
+    CONSTRUCT {{ ?uri skos:prefLabel ?pl ;
+                      prez:searchResultWeight ?weight ;
+                      prez:searchResultSource prez:{prez} }}
+    {{
+        SELECT DISTINCT ?g ?uri ?pl (SUM(?w) AS ?weight)
+        WHERE {{
+            GRAPH ?g {{
+                        {{  # exact match on a prefLabel always wins
+                            ?uri a skos:Concept ;
+                                 skos:prefLabel ?pl .
+                            BIND (50 AS ?w)
+                            FILTER REGEX(?pl, "^{term}$", "i")
+                        }}
+                        UNION
+                        {{
+                            ?uri a skos:Concept ;
+                                 skos:prefLabel ?pl .
+                            BIND (10 AS ?w)
+                            FILTER REGEX(?pl, "{term}", "i")
+                        }}
+                        UNION
+                        {{
+                            ?uri a skos:Concept ;
+                                 skos:altLabel ?al ;
+                                 skos:prefLabel ?pl .
+                            BIND (5 AS ?w)
+                            FILTER REGEX(?al, "{term}", "i")
+                        }}
+                        UNION
+                        {{
+                            ?uri a skos:Concept ;
+                                 skos:hiddenLabel ?hl ;
+                                 skos:prefLabel ?pl .
+                            BIND (5 AS ?w)
+                            FILTER REGEX(?hl, "{term}", "i")
+                        }}
+                        UNION
+                        {{
+                            ?uri a skos:Concept ;
+                                 skos:definition ?d ;
+                                 skos:prefLabel ?pl .
+                            BIND (1 AS ?w)
+                            FILTER REGEX(?d, "{term}", "i")
+                        }}
+                    }}
+                }}
+        GROUP BY ?g ?uri ?pl
+    }}
+    """
+    return q
