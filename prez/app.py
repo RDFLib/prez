@@ -7,8 +7,6 @@ import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse, RedirectResponse
-from fedsearch import SkosSearch
-from pydantic import AnyUrl
 from rdflib import Graph, Literal, Namespace, URIRef
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import PlainTextResponse
@@ -25,9 +23,9 @@ from prez.routers.cql import router as cql_router
 from prez.routers.spaceprez import router as spaceprez_router
 from prez.routers.vocprez import router as vocprez_router
 from prez.services.app_service import healthcheck_sparql_endpoints, count_objects
-from prez.utils.prez_logging import setup_logger
 from prez.services.sparql_queries import weighted_search
 from prez.services.sparql_utils import sparql_construct
+from prez.utils.prez_logging import setup_logger
 
 PREZ = Namespace("https://prez.dev/")
 
@@ -204,7 +202,9 @@ async def search(
 ):
     term = request.query_params.get("term")
     if not term:
-        return PlainTextResponse("A search term must be provided as a query parameter")
+        return PlainTextResponse(
+            "A search term must be provided as a query string argument (?term=<search term>)"
+        )
     start_of_path = request.url.path[:3]
     pathmap = {
         "/v/": "VocPrez",

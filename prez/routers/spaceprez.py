@@ -24,7 +24,7 @@ router = APIRouter(tags=["SpacePrez"])
 async def spaceprez_profiles(request: Request):
     """Returns list of the profiles which constrain SpacePrez classes"""
     spaceprez_classes = frozenset([GEO.Feature, GEO.FeatureCollection, DCAT.Dataset])
-    return await return_profiles(request, "SpacePrez", spaceprez_classes)
+    return await return_profiles(spaceprez_classes, "SpacePrez", request)
 
 
 @router.get("/s/datasets", summary="List Datasets")

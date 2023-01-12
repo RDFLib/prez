@@ -19,7 +19,7 @@ router = APIRouter(tags=["VocPrez"])
 async def vocprez_profiles(request: Request):
     """Returns a JSON list of the profiles accepted by VocPrez"""
     vocprez_classes = frozenset([SKOS.Concept, SKOS.ConceptScheme, SKOS.Collection])
-    return await return_profiles(request, "VocPrez", vocprez_classes)
+    return await return_profiles(vocprez_classes, "VocPrez", request)
 
 
 @router.get("/v/collection", summary="List Collections")

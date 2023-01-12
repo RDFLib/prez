@@ -90,7 +90,7 @@ async def return_profiles(
         "CatPrez": CatalogItem,
     }
     if not prof_and_mt_info:
-        prof_and_mt_info = ProfilesMediatypesInfo(request, classes)
+        prof_and_mt_info = ProfilesMediatypesInfo(request=request, classes=classes)
     if not request:
         request = prof_and_mt_info.request
     items = [

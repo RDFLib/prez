@@ -19,7 +19,7 @@ router = APIRouter(tags=["CatPrez"])
 async def catprez_profiles(request: Request):
     """Returns a JSON list of the profiles accepted by CatPrez"""
     catprez_classes = (frozenset([DCAT.Catalog, DCAT.Resource]),)
-    return await return_profiles(request, "CatPrez", catprez_classes)
+    return await return_profiles(catprez_classes, "CatPrez", request)
 
 
 @router.get("/c/catalogs", summary="List Catalogs")
