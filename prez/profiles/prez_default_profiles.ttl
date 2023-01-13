@@ -44,6 +44,18 @@ altr-ext:alt-profile
         "text/anot+turtle" ,
         "text/turtle" ;
     altr-ext:constrainsClass
+        geo:Feature ,
+        prez:FeatureList ,
+        geo:FeatureCollection ,
+        prez:FeatureCollectionList ,
         dcat:Dataset ,
-        prez:DatasetList ;
+        prez:DatasetList ,
+        dcat:Catalog ,
+        dcat:Resource ,
+        prez:CatalogList ,
+        skos:ConceptScheme ,
+        skos:Concept ,
+        skos:Collection ,
+        prez:SchemesList ,
+        prez:VocPrezCollectionList ;
 .
