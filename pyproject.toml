@@ -13,7 +13,7 @@ aiofiles = "^0.7.0"
 httpx = "^0.20.0"
 rdflib = "^6.1.1"
 python-multipart = "^0.0.5"
-connegp = { file = "connegp-0.1.4-py3-none-any.whl" }
+connegp = { file = "connegp-0.1.5-py3-none-any.whl" }
 async-lru = "^1.0.3"
 Shapely = "^1.8.2"
 pytest = "^7.1.2"
