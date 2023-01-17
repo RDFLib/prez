@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request
 from rdflib import SKOS, URIRef
 
-from models.profiles_and_mediatypes import ProfilesMediatypesInfo
+from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.models.vocprez_item import VocabItem
 from prez.models.vocprez_listings import VocabMembers
 from prez.renderers.renderer import return_from_queries, return_profiles

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request
 from rdflib import DCAT, URIRef
 
-from models.profiles_and_mediatypes import ProfilesMediatypesInfo
+from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.models.catprez_item import CatalogItem
 from prez.models.catprez_listings import CatalogMembers
 from prez.renderers.renderer import return_from_queries, return_profiles
