@@ -98,6 +98,11 @@ async def sparql_construct(query: str, prez: str):
     """Returns an rdflib Graph from a CONSTRUCT query for a single SPARQL endpoint"""
     from prez.app import settings
 
+    if prez == "GenericPrez":
+        from cache import profiles_graph_cache
+
+        results = profiles_graph_cache.query(query)
+        return True, results
     if not query:
         return False, None
     try:

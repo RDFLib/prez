@@ -42,6 +42,7 @@ async def get_object(uri: str):
 
 async def healthcheck_sparql_endpoints(settings):
     ENABLED_PREZS = settings.enabled_prezs
+    log.info(f"Enabled Prezs: {', '.join(ENABLED_PREZS)}")
     if len(ENABLED_PREZS) > 0:
         for prez in ENABLED_PREZS:
             connected_to_prez_flavour = False

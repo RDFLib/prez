@@ -1,10 +1,10 @@
 import logging
 
-from rdflib import Namespace, URIRef, DCTERMS, RDF, XSD, SKOS, Literal
+from rdflib import Namespace, URIRef, Literal
 
-from prez.cache import prez_system_graph
+from prez.cache import prez_system_graph, profiles_graph_cache
 from prez.services.sparql_queries import generate_insert_context, ask_system_graph
-from prez.services.sparql_utils import sparql_construct, sparql_update, sparql_ask
+from prez.services.sparql_utils import sparql_update, sparql_ask
 
 log = logging.getLogger(__name__)
 
@@ -50,3 +50,12 @@ async def generate_support_graphs(settings):
             insert_context = generate_insert_context(settings, prez)
             await sparql_update(insert_context, prez)
             log.info(f"Completed generating Support Graphs for {prez}")
+
+
+async def generate_profiles_support_graph(settings):
+    """
+    Generates a support graph for the prez profiles
+    """
+    insert_context = generate_insert_context(settings, "Profiles")
+    profiles_graph_cache.update(insert_context)
+    log.info(f"Completed generating Support Graphs for Profiles")

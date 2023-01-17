@@ -6,7 +6,7 @@ from pydantic import (
     BaseSettings,
     root_validator,
 )
-from rdflib import DCAT, SKOS, URIRef
+from rdflib import DCAT, SKOS, URIRef, PROF
 from rdflib.namespace import GEO
 
 
@@ -69,7 +69,7 @@ class Settings(BaseSettings):
         return values
 
     @root_validator()
-    def check_endpoints(cls, values):
+    def set_enabled_prezs(cls, values):
         sp_ep = values.get("spaceprez_sparql_endpoint")
         cp_ep = values.get("catprez_sparql_endpoint")
         vp_ep = values.get("vocprez_sparql_endpoint")
@@ -89,24 +89,26 @@ class Settings(BaseSettings):
     @root_validator()
     def populate_top_level_classes(cls, values):
         top_level_classes = {
+            "Profiles": [PROF.Profile],
             "SpacePrez": [DCAT.Dataset],
             "VocPrez": [SKOS.ConceptScheme, SKOS.Collection],
             "CatPrez": [DCAT.Catalog],
         }
         values["top_level_classes"] = {}
-        for prez in values["enabled_prezs"]:
+        for prez in values["enabled_prezs"] + ["Profiles"]:
             values["top_level_classes"][prez] = top_level_classes[prez]
         return values
 
     @root_validator()
     def populate_collection_classes(cls, values):
         additional_classes = {
+            "Profiles": [],
             "SpacePrez": [GEO.FeatureCollection],
             "VocPrez": [],
             "CatPrez": [DCAT.Resource],
         }
         values["collection_classes"] = {}
-        for prez in values["enabled_prezs"]:
+        for prez in values["enabled_prezs"] + ["Profiles"]:
             values["collection_classes"][prez] = (
                 values["top_level_classes"].get(prez) + additional_classes[prez]
             )
@@ -118,9 +120,10 @@ class Settings(BaseSettings):
             "SpacePrez": [GEO.Feature],
             "VocPrez": [SKOS.Concept],
             "CatPrez": [DCAT.Dataset],
+            "Profiles": [PROF.Profile],
         }
         values["general_classes"] = {}
-        for prez in values["enabled_prezs"]:
+        for prez in values["enabled_prezs"] + ["Profiles"]:
             values["general_classes"][prez] = (
                 values["collection_classes"].get(prez) + additional_classes[prez]
             )

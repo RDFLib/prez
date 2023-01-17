@@ -9,6 +9,7 @@ from rdflib import Graph, URIRef, Namespace, Literal
 from starlette.requests import Request
 from starlette.responses import Response
 
+from prez.models.profiles_item import ProfileItem
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.cache import profiles_graph_cache, tbox_cache
 from prez.models import SpatialItem, VocabItem, CatalogItem
@@ -88,6 +89,7 @@ async def return_profiles(
         "SpacePrez": SpatialItem,
         "VocPrez": VocabItem,
         "CatPrez": CatalogItem,
+        "ProfilesPrez": ProfileItem,
     }
     if not prof_and_mt_info:
         prof_and_mt_info = ProfilesMediatypesInfo(request=request, classes=classes)
@@ -112,3 +114,10 @@ async def return_profiles(
         prof_and_mt_info.profile_headers,
         prez_type,
     )
+
+
+async def return_all__profiles():
+    """
+    returns all profiles the API knows about
+    """
+    pass

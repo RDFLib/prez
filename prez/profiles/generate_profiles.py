@@ -77,7 +77,7 @@ def get_profiles_and_mediatypes(
     response = profiles_graph_cache.query(query)
     if len(response.bindings[0]) == 0:
         raise ValueError(
-            f"No profiles and or mediatypes could be found to render the resource. The resource class(es) searched for "
+            f"No profiles and/or mediatypes could be found to render the resource. The resource class(es) searched for "
             f"were: {', '.join(klass for klass in classes)}"
         )
     top_result = response.bindings[0]

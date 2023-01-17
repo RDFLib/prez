@@ -59,3 +59,20 @@ altr-ext:alt-profile
         prez:SchemesList ,
         prez:VocPrezCollectionList ;
 .
+
+prez:profiles
+    a prof:Profile ;
+    dcterms:title "Profiles" ;
+    dcterms:description "List of profiles" ;
+    dcterms:identifier "profiles" ;
+    altr-ext:constrainsClass prez:ProfilesList ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
+    altr-ext:hasResourceFormat
+        "application/json" ,
+        "text/anot+turtle" ;
+    altr-ext:hasNodeShape [
+      a sh:NodeShape ;
+        sh:targetClass prez:ProfilesList ;
+        altr-ext:outboundChildren rdfs:member ;
+    ]
+.

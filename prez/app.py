@@ -13,11 +13,16 @@ from starlette.responses import PlainTextResponse
 
 from prez.cache import tbox_cache
 from prez.config import Settings
-from prez.models.api_model import populate_api_info, generate_support_graphs
+from prez.models.api_model import (
+    populate_api_info,
+    generate_support_graphs,
+    generate_profiles_support_graph,
+)
 from prez.profiles.generate_profiles import (
     create_profiles_graph,
 )
 from prez.renderers.renderer import return_rdf
+from prez.routers.profiles import router as profiles_router
 from prez.routers.catprez import router as catprez_router
 from prez.routers.cql import router as cql_router
 from prez.routers.spaceprez import router as spaceprez_router
@@ -61,6 +66,7 @@ app.add_middleware(
 )
 
 app.include_router(cql_router)
+app.include_router(profiles_router)
 if settings.catprez_sparql_endpoint:
     app.include_router(catprez_router)
 if settings.vocprez_sparql_endpoint:
@@ -96,6 +102,7 @@ async def app_startup():
     await count_objects(settings)
     await populate_api_info(settings)
     await generate_support_graphs(settings)
+    await generate_profiles_support_graph(settings)
 
 
 @app.on_event("shutdown")
@@ -286,20 +293,16 @@ def get_default_search_methods():
     # return
 
 
-@app.get("/profiles", summary="Profiles", tags=["Prez"])
-async def profiles(request: Request):
-    """Returns a list of profiles recognised by Prez"""
-    return PlainTextResponse("Not yet implemented - requires a profile model")
-    # from prez.cache import profiles_graph_cache
-    # req_profiles, req_profiles_tokens, req_mediatypes = get_requested_profile_and_mediatype(request)
-    # (
-    #     profile,
-    #     mediatype,
-    #     item.selected_class,
-    #     profile_headers,
-    #     _,
-    # ) = get_profiles_and_mediatypes(item.classes, req_profiles, req_mediatypes)
-    # return await return_from_graph(profiles_graph_cache, mediatype, profile, profile_headers, None)
+# @app.get("/profiles", summary="Profiles", tags=["Prez"])
+# async def profiles(request: Request):
+#     """Returns a list of all profiles AVAILABLE to this instance of Prez"""
+#     return PlainTextResponse("Not yet implemented - requires a profile model")
+#     from prez.cache import profiles_graph_cache
+#     return await return_rdf(
+#         profiles_graph_cache,
+#         mediatype="text/anot+turtle",
+#         profile_headers=None,
+#     )
 
 
 @app.get("/object", summary="Get object", tags=["Prez"])

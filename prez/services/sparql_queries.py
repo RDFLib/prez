@@ -32,11 +32,13 @@ def generate_insert_context(settings, prez: str):
                         UNION
       		          { ?instance_of_main_class skos:member ?member }""",
         "CatPrez": "?instance_of_main_class dcterms:hasPart ?member",
+        "Profiles": "?instance_of_main_class rdfs:member ?member",
     }
     insert = dedent(
         f"""PREFIX dcat: <http://www.w3.org/ns/dcat#>
         PREFIX dcterms: <http://purl.org/dc/terms/>
         PREFIX prez: <https://prez.dev/>
+        PREFIX prof: <http://www.w3.org/ns/dx/prof/>
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
         PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
         PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
@@ -67,10 +69,11 @@ def generate_insert_context(settings, prez: str):
                     FILTER(?dtype_mem_id = xsd:token) }} }}
             }}
             BIND(
-                IF(?topmost_class=dcat:Dataset, prez:DatasetList,
-                  IF(?topmost_class=dcat:Catalog,prez:CatalogList,
-                    IF(?topmost_class=skos:ConceptScheme,prez:SchemesList,
-                      IF(?topmost_class=skos:Collection,prez:VocPrezCollectionList,"")))) AS ?collectionList)
+                IF(?topmost_class=prof:Profile, prez:ProfilesList,
+                    IF(?topmost_class=dcat:Dataset, prez:DatasetList,
+                      IF(?topmost_class=dcat:Catalog,prez:CatalogList,
+                        IF(?topmost_class=skos:ConceptScheme,prez:SchemesList,
+                          IF(?topmost_class=skos:Collection,prez:VocPrezCollectionList,""))))) AS ?collectionList)
             BIND(STRDT(COALESCE(STR(?id),MD5(STR(?instance_of_main_class))), prez:slug) AS ?prez_id)
             BIND(STRDT(COALESCE(STR(?mem_id),MD5(STR(?member))), prez:slug) AS ?prez_mem_id)
             BIND(URI(CONCAT(STR(?instance_of_main_class),"/support-graph")) AS ?support_graph_uri)
@@ -716,7 +719,7 @@ def select_profile_mediatype(
       ?mid rdfs:subClassOf* ?general_class .
       VALUES ?general_class {{ dcat:Dataset geo:FeatureCollection prez:FeatureCollectionList prez:FeatureList geo:Feature
       skos:ConceptScheme skos:Concept skos:Collection prez:DatasetList prez:VocPrezCollectionList prez:SchemesList
-      prez:CatalogList dcat:Catalog dcat:Resource }}
+      prez:CatalogList dcat:Catalog dcat:Resource prez:ProfilesList }}
       ?profile altr-ext:constrainsClass ?class ;
                altr-ext:hasResourceFormat ?format ;
                dcterms:identifier ?token ;
