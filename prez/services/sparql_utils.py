@@ -15,6 +15,32 @@ log = logging.getLogger(__name__)
 TIMEOUT = 30.0
 
 
+# from starlette.requests import Request
+# from starlette.responses import StreamingResponse
+# from starlette.background import BackgroundTask
+#
+# import httpx
+#
+# client = httpx.AsyncClient(base_url="http://containername:7800/")
+#
+# async def _reverse_proxy(request: Request):
+#     url = httpx.URL(path=request.url.path,
+#                     query=request.url.query.encode("utf-8"))
+#     rp_req = client.build_request(request.method, url,
+#                                   headers=request.headers.raw,
+#                                   content=request.stream())
+#     rp_resp = await client.send(rp_req, stream=True)
+#     return StreamingResponse(
+#         rp_resp.aiter_raw(),
+#         status_code=rp_resp.status_code,
+#         headers=rp_resp.headers,
+#         background=BackgroundTask(rp_resp.aclose),
+#     )
+#
+# app.add_route("/titles/{path:path}",
+#               _reverse_proxy, ["GET", "POST"])
+
+
 @lru_cache(maxsize=128)
 def sparql_query_non_async(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
     """Executes a SPARQL SELECT query for a single SPARQL endpoint"""
@@ -54,17 +80,23 @@ async def sparql_query(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
             settings.sparql_creds[prez]["endpoint"],
             data=query,
             headers={
-                "Accept": "application/json",
+                "Accept": "text/turtle, application/json",
                 "Content-Type": "application/sparql-query",
             },
             auth=(
-                settings.sparql_creds[prez]["username"],
-                settings.sparql_creds[prez]["password"],
+                settings.sparql_creds[prez].get("username", ""),
+                settings.sparql_creds[prez].get("password", ""),
             ),
             timeout=TIMEOUT,
         )
     if 200 <= response.status_code < 300:
-        return True, response.json()["results"]["bindings"]
+        response_mt = response.headers["content-type"]
+        if response_mt.startswith("application/json"):
+            return response_mt, response.json()
+        elif response_mt.startswith("text/turtle"):
+            return response_mt, Graph(bind_namespaces="rdflib").parse(
+                data=response.text
+            )
     else:
         return False, {
             "code": response.status_code,

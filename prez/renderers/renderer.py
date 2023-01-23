@@ -9,10 +9,9 @@ from rdflib import Graph, URIRef, Namespace, Literal
 from starlette.requests import Request
 from starlette.responses import Response
 
-from prez.models.profiles_item import ProfileItem
-from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
-from prez.cache import profiles_graph_cache, tbox_cache
 from prez.models import SpatialItem, VocabItem, CatalogItem
+from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
+from prez.models.profiles_item import ProfileItem
 from prez.services.sparql_queries import (
     generate_item_construct,
     get_annotation_properties,
@@ -51,7 +50,7 @@ async def return_from_graph(graph, mediatype, profile, profile_headers, prez):
             return await return_annotated_rdf(graph, prez, profile_headers, profile)
 
 
-async def return_rdf(graph, mediatype, profile_headers):
+async def return_rdf(graph, mediatype, profile_headers=None):
     RDF_SERIALIZER_TYPES_MAP["text/anot+turtle"] = "turtle"
     obj = io.BytesIO(
         graph.serialize(
@@ -62,6 +61,8 @@ async def return_rdf(graph, mediatype, profile_headers):
 
 
 async def return_annotated_rdf(graph, prez, profile_headers, profile):
+    from prez.cache import tbox_cache
+
     cache = tbox_cache
     profile_annotation_props = get_annotation_predicates(profile)
     queries_for_uncached, annotations_graph = await get_annotation_properties(
@@ -85,6 +86,8 @@ async def return_profiles(
     request: Optional[Request] = None,
     prof_and_mt_info: Optional = None,
 ) -> Response:
+    from prez.cache import profiles_graph_cache
+
     prez_items = {
         "SpacePrez": SpatialItem,
         "VocPrez": VocabItem,
@@ -96,7 +99,7 @@ async def return_profiles(
     if not request:
         request = prof_and_mt_info.request
     items = [
-        prez_items[prez_type](uri=uri, url_path=str(request.url.path))
+        prez_items[prez_type](uri=str(uri), url_path=str(request.url.path))
         for uri in prof_and_mt_info.avail_profile_uris
     ]
     queries = [

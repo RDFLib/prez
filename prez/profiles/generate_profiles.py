@@ -23,6 +23,9 @@ def create_profiles_graph(ENABLED_PREZS) -> Graph:
     for f in Path(__file__).parent.glob("*.ttl"):
         profiles_graph_cache.parse(f)
     logging.info("Loaded local profiles")
+    profiles_graph_cache.add(
+        (URIRef("http://test"), URIRef("http://test"), URIRef("http://test"))
+    )
 
     remote_profiles_query = """
         PREFIX dcat: <http://www.w3.org/ns/dcat#>

@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from textwrap import dedent
 from typing import Optional
@@ -6,10 +5,9 @@ from typing import Optional
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse
 from rdflib import Graph, Literal, Namespace, URIRef
 from starlette.middleware.cors import CORSMiddleware
-from starlette.responses import PlainTextResponse
 
 from prez.cache import tbox_cache
 from prez.config import Settings
@@ -22,14 +20,13 @@ from prez.profiles.generate_profiles import (
     create_profiles_graph,
 )
 from prez.renderers.renderer import return_rdf
-from prez.routers.profiles import router as profiles_router
 from prez.routers.catprez import router as catprez_router
 from prez.routers.cql import router as cql_router
+from prez.routers.profiles import router as profiles_router
 from prez.routers.spaceprez import router as spaceprez_router
+from prez.routers.sparql import router as sparql_router
 from prez.routers.vocprez import router as vocprez_router
 from prez.services.app_service import healthcheck_sparql_endpoints, count_objects
-from prez.services.sparql_queries import weighted_search
-from prez.services.sparql_utils import sparql_construct
 from prez.utils.prez_logging import setup_logger
 
 PREZ = Namespace("https://prez.dev/")
@@ -66,6 +63,7 @@ app.add_middleware(
 )
 
 app.include_router(cql_router)
+app.include_router(sparql_router)
 app.include_router(profiles_router)
 if settings.catprez_sparql_endpoint:
     app.include_router(catprez_router)
@@ -171,138 +169,68 @@ def _get_sparql_service_description(request, format):
         return Graph(bind_namespaces="rdflib").parse(data=ttl).serialize(format=format)
 
 
-# see: https://github.com/tiangolo/fastapi/issues/1788 for how to restructure this.
-# TODO DRY fix 3x SPARQL endpoints below
-@app.get("/s/sparql", summary="SpacePrez SPARQL Endpoint", tags=["Prez"])
-async def sparql_get(request: Request, query: Optional[str] = None):
-    if not request.query_params:
-        return PlainTextResponse("A SPARQL query must be provided as a query parameter")
-    return RedirectResponse(
-        url=settings.spaceprez_sparql_endpoint + "?" + str(request.query_params)
-    )
-
-
-@app.get("/v/sparql", summary="VocPrez SPARQL Endpoint", tags=["Prez"])
-async def sparql_get(request: Request, query: Optional[str] = None):
-    if not request.query_params:
-        return PlainTextResponse("A SPARQL query must be provided as a query parameter")
-    return RedirectResponse(
-        url=settings.vocprez_sparql_endpoint + "?" + str(request.query_params)
-    )
-
-
-@app.get("/c/sparql", summary="CatPrez SPARQL Endpoint", tags=["Prez"])
-async def sparql_get(request: Request, query: Optional[str] = None):
-    if not request.query_params:
-        return PlainTextResponse("A SPARQL query must be provided as a query parameter")
-    return RedirectResponse(
-        url=settings.catprez_sparql_endpoint + "?" + str(request.query_params)
-    )
-
-
-@app.get("/search", summary="Global Search")
-@app.get("/v/search", summary="VocPrez Search")
-@app.get("/c/search", summary="CatPrez Search")
-@app.get("/s/search", summary="SpacePrez Search")
-async def search(
-    request: Request,
-):
-    term = request.query_params.get("term")
-    if not term:
-        return PlainTextResponse(
-            "A search term must be provided as a query string argument (?term=<search term>)"
-        )
-    start_of_path = request.url.path[:3]
-    pathmap = {
-        "/v/": "VocPrez",
-        "/c/": "CatPrez",
-        "/s/": "SpacePrez",
-    }
-    prez = pathmap.get(start_of_path, "all")
-    search_methods = determine_search_method(request, prez)
-    search_functions = {
-        "weighted": weighted_search,
-    }
-    search_queries = {
-        p: search_functions[method](term, p) for p, method in search_methods.items()
-    }
-    results = await asyncio.gather(
-        *[sparql_construct(query, p) for p, query in search_queries.items()]
-    )
-    # TODO update "return from queries function"
-    graph = Graph(bind_namespaces="rdflib")
-    for res in results:
-        g = res[1]
-        graph.__iadd__(g)
-    return await return_rdf(graph, mediatype="text/anot+turtle", profile_headers=None)
-
-
-def determine_search_method(request, prez):
-    """Returns the search method to use based on the request headers"""
-    specified_method = request.query_params.get("method")
-    if specified_method:
-        if prez != "all":
-            return {prez: specified_method}
-        else:
-            return {
-                prez: specified_method for prez in settings.enabled_prezs
-            }  # specified method applies to all prezs
-    else:
-        return get_default_search_methods()
-
-
-def get_default_search_methods():
-    # TODO return from profiles
-    methods = {}
-    for prez in settings.enabled_prezs:
-        methods[prez] = "weighted"
-    return methods
-
-    # # Concept search
-    # retries = 0
-    # ep_details = EndpointDetails()
-    # while retries < 3:
-    #     try:
-    #         s = await SkosSearch.federated_search(
-    #             search, "preflabel", endpoint_details
-    #         )
-    #         break
-    #     except Exception:
-    #         retries += 1
-    #         continue
-    # if retries == 3:
-    #     raise Exception("Max retries reached")
-    # results = SkosSearch.combine_search_results(s, "preflabel")
-    # else:
-    #     results = []
-    #
-    # # CQL search
-    # if "SpacePrez" in settings.ENABLED_PREZS:
-    #     dataset_sparql_result, collection_sparql_result = await asyncio.gather(
-    #         list_datasets(),
-    #         list_collections(),
-    #     )
-    #     datasets = [
-    #         {"id": result["id"]["value"], "title": result["label"]["value"]}
-    #         for result in dataset_sparql_result
-    #     ]
-    #     collections = [
-    #         {"id": result["id"]["value"], "title": result["label"]["value"]}
-    #         for result in collection_sparql_result
-    #     ]
-    # return
-
-
-# @app.get("/profiles", summary="Profiles", tags=["Prez"])
-# async def profiles(request: Request):
-#     """Returns a list of all profiles AVAILABLE to this instance of Prez"""
-#     return PlainTextResponse("Not yet implemented - requires a profile model")
-#     from prez.cache import profiles_graph_cache
-#     return await return_rdf(
-#         profiles_graph_cache,
-#         mediatype="text/anot+turtle",
-#         profile_headers=None,
+# # see: https://github.com/tiangolo/fastapi/issues/1788 for how to restructure this.
+# # TODO DRY fix 3x SPARQL endpoints below
+# @app.get("/s/sparql", summary="SpacePrez SPARQL Endpoint", tags=["Prez"])
+# async def sparql_get(request: Request, query: Optional[str] = None):
+#     if not request.query_params:
+#         return PlainTextResponse("A SPARQL query must be provided as a query parameter")
+#     return RedirectResponse(
+#         url=settings.spaceprez_sparql_endpoint + "?" + str(request.query_params)
 #     )
+#
+#
+# @app.get("/v/sparql", summary="VocPrez SPARQL Endpoint", tags=["Prez"])
+# async def sparql_get(request: Request, query: Optional[str] = None):
+#     if not request.query_params:
+#         return PlainTextResponse("A SPARQL query must be provided as a query parameter")
+#     return RedirectResponse(
+#         url=settings.vocprez_sparql_endpoint + "?" + str(request.query_params)
+#     )
+#
+#
+# @app.get("/c/sparql", summary="CatPrez SPARQL Endpoint", tags=["Prez"])
+# async def sparql_get(request: Request, query: Optional[str] = None):
+#     if not request.query_params:
+#         return PlainTextResponse("A SPARQL query must be provided as a query parameter")
+#     return RedirectResponse(
+#         url=settings.catprez_sparql_endpoint + "?" + str(request.query_params)
+#     )
+
+
+# # Concept search
+# retries = 0
+# ep_details = EndpointDetails()
+# while retries < 3:
+#     try:
+#         s = await SkosSearch.federated_search(
+#             search, "preflabel", endpoint_details
+#         )
+#         break
+#     except Exception:
+#         retries += 1
+#         continue
+# if retries == 3:
+#     raise Exception("Max retries reached")
+# results = SkosSearch.combine_search_results(s, "preflabel")
+# else:
+#     results = []
+#
+# # CQL search
+# if "SpacePrez" in settings.ENABLED_PREZS:
+#     dataset_sparql_result, collection_sparql_result = await asyncio.gather(
+#         list_datasets(),
+#         list_collections(),
+#     )
+#     datasets = [
+#         {"id": result["id"]["value"], "title": result["label"]["value"]}
+#         for result in dataset_sparql_result
+#     ]
+#     collections = [
+#         {"id": result["id"]["value"], "title": result["label"]["value"]}
+#         for result in collection_sparql_result
+#     ]
+# return
 
 
 @app.get("/object", summary="Get object", tags=["Prez"])

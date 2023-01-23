@@ -1,23 +1,25 @@
 from typing import Optional
 from typing import Set
 
-
 from pydantic import BaseModel, root_validator
-from rdflib import URIRef, SKOS, DCTERMS, XSD, PROF
+from rdflib import URIRef, SKOS, DCTERMS, XSD, PROF, Namespace
 
 from prez.cache import profiles_graph_cache
 
 from prez.services.sparql_utils import sparql_query_non_async
 
+PREZ = Namespace("https://prez.dev/")
+
 
 class ProfileItem(BaseModel):
     uri: Optional[URIRef] = None
-    # classes: Optional[Set[URIRef]]
+    classes: Optional[Set[URIRef]] = frozenset([PROF.Profile])
     id: Optional[str] = None
     link_constructor: str = "/profiles"
+
     # general_class: Optional[URIRef] = None
     # url_path: Optional[str] = None
-    # selected_class: Optional[URIRef] = None
+    selected_class: Optional[URIRef] = None
 
     def __hash__(self):
         return hash(self.uri)
@@ -31,16 +33,18 @@ class ProfileItem(BaseModel):
             q = f"""
                 PREFIX dcterms: <http://purl.org/dc/terms/>
                 PREFIX prof: <http://www.w3.org/ns/dx/prof/>
+                PREFIX prez: <{PREZ}>
+
 
                 SELECT ?uri {{
-                    ?uri dcterms:identifier "{id}" ;
+                    ?uri dcterms:identifier "{id}"^^prez:slug ;
                         a prof:Profile .
                 }}
                 """
             r = profiles_graph_cache.query(q)
-            if r[0]:
+            if len(r) > 0:
                 # set the uri of the item
-                uri = r[1][0].get("uri")["value"]
+                uri = r.bindings[0]["uri"]
                 if uri:
                     values["uri"] = uri
         else:  # uri provided, get the ID

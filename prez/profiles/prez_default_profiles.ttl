@@ -74,5 +74,8 @@ prez:profiles
       a sh:NodeShape ;
         sh:targetClass prez:ProfilesList ;
         altr-ext:outboundChildren rdfs:member ;
-    ]
+    ] ;
+    altr-ext:constrainsClass
+        prof:Profile ,
+        prez:ProfilesList ;
 .

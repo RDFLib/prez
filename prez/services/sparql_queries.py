@@ -707,6 +707,7 @@ def select_profile_mediatype(
     PREFIX dcterms: <http://purl.org/dc/terms/>
     PREFIX geo: <http://www.opengis.net/ont/geosparql#>
     PREFIX prez: <https://prez.dev/>
+    PREFIX prof: <http://www.w3.org/ns/dx/prof/>
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
     PREFIX sh: <http://www.w3.org/ns/shacl#>
@@ -719,7 +720,7 @@ def select_profile_mediatype(
       ?mid rdfs:subClassOf* ?general_class .
       VALUES ?general_class {{ dcat:Dataset geo:FeatureCollection prez:FeatureCollectionList prez:FeatureList geo:Feature
       skos:ConceptScheme skos:Concept skos:Collection prez:DatasetList prez:VocPrezCollectionList prez:SchemesList
-      prez:CatalogList dcat:Catalog dcat:Resource prez:ProfilesList }}
+      prez:CatalogList dcat:Catalog dcat:Resource prez:ProfilesList prof:Profile }}
       ?profile altr-ext:constrainsClass ?class ;
                altr-ext:hasResourceFormat ?format ;
                dcterms:identifier ?token ;
