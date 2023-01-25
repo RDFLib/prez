@@ -48,6 +48,14 @@ def setup_sp():
                 "application/octet-stream",
             ),
         ),
+        (
+            "myfile5",
+            (
+                "multiple_object.ttl",
+                open("tests/data/spaceprez/input/multiple_object.ttl", "rb"),
+                "application/octet-stream",
+            ),
+        ),
     ]
     headers = {}
 

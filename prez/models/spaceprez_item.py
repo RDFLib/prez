@@ -39,9 +39,13 @@ class SpatialItem(BaseModel):
         if uri:
             q = f"""SELECT ?class {{ <{uri}> a ?class }}"""
             r = sparql_query_non_async(q, "SpacePrez")
-            if r[0]:
+            if r[0] and r[1]:
                 # set the uri of the item
                 values["classes"] = frozenset([c["class"]["value"] for c in r[1]])
+            else:
+                raise ValueError(
+                    f"Could not find a class for {uri}, or URI does not exist in SpacePrez"
+                )
             return values
         elif dataset_id:
             q = f"""

@@ -108,10 +108,13 @@ async def feature_item(
 
 
 @router.get("/s/object")
-async def item_endpoint(request: Request):
-    spatial_item = SpatialItem(
-        **request.path_params, **request.query_params, url_path=str(request.url.path)
-    )
+async def item_endpoint(request: Request, spatial_item: Optional[SpatialItem] = None):
+    if not spatial_item:
+        spatial_item = SpatialItem(
+            **request.path_params,
+            **request.query_params,
+            url_path=str(request.url.path)
+        )
     prof_and_mt_info = ProfilesMediatypesInfo(
         request=request, classes=spatial_item.classes
     )

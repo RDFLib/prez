@@ -60,7 +60,11 @@ class CatalogItem(BaseModel):
         else:  # uri provided, get the ID
             q = f"""SELECT ?class {{ <{uri}> a ?class }}"""
             r = sparql_query_non_async(q, "CatPrez")
-            if r[0]:
+            if r[0] and r[1]:
                 # set the uri of the item
                 values["classes"] = frozenset([c["class"]["value"] for c in r[1]])
+            else:
+                raise ValueError(
+                    f"Could not find a class for {uri}, or URI does not exist in CatPrez"
+                )
         return values

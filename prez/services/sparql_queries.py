@@ -626,7 +626,8 @@ def get_item_predicates(profile, selected_class):
     shape_bns = get_relevant_shape_bns_for_profile(selected_class, profile)
     if not shape_bns:
         log.info(
-            f"No predicates found for class {selected_class} in profile {profile}."
+            f"No special predicates (include/exclude/inverse/sequence) found for class {selected_class} in profile "
+            f"{profile}. Default behaviour is to include all predicates, and blank nodes to a depth of two."
         )
         return None, None, None, None
     includes = [

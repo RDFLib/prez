@@ -25,9 +25,12 @@ class VocabItem(BaseModel):
     def populate(cls, values):
         url_path = values.get("url_path")
         uri = values.get("uri")
+        id = values.get("id")
         url_parts = url_path.split("/")
-        if len(url_parts) == 2:  # /v "home"
+        if url_path == "/v":
             return values
+        elif url_path == "/object":
+            pass
         elif len(url_parts) == 3:
             id = None  # /v/profiles
         elif len(url_parts) == 5:
@@ -73,10 +76,17 @@ class VocabItem(BaseModel):
                 if uri:
                     values["uri"] = uri
                 values["classes"] = frozenset([c["class"]["value"] for c in r[1]])
+                return values
+            else:
+                raise ValueError(f"Could not find an ID for {uri} in VocPrez")
         else:  # uri provided, get the ID
             q = f"""SELECT ?class {{ <{uri}> a ?class }}"""
             r = sparql_query_non_async(q, "VocPrez")
-            if r[0]:
+            if r[0] and r[1]:
                 # set the uri of the item
                 values["classes"] = frozenset([c["class"]["value"] for c in r[1]])
-        return values
+                return values
+            else:
+                raise ValueError(
+                    f"Could not find a class for {uri}, or URI does not exist in VocPrez"
+                )

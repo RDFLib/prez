@@ -6,9 +6,10 @@ from typing import Dict, List, Tuple, Union
 
 from async_lru import alru_cache
 from connegp import RDF_MEDIATYPES
-from httpx import AsyncClient, Client, HTTPError
+from httpx import AsyncClient, Client, HTTPError, HTTPStatusError
 from httpx import Response as httpxResponse
 from rdflib import Graph, RDF
+from starlette.responses import PlainTextResponse
 
 log = logging.getLogger(__name__)
 
@@ -74,21 +75,25 @@ async def sparql_query(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
     logging.info(
         msg=f"Executing query {query} against {settings.sparql_creds[prez]['endpoint']}"
     )
-
-    async with AsyncClient() as client:
-        response: httpxResponse = await client.post(
-            settings.sparql_creds[prez]["endpoint"],
-            data=query,
-            headers={
-                "Accept": "text/turtle, application/json",
-                "Content-Type": "application/sparql-query",
-            },
-            auth=(
-                settings.sparql_creds[prez].get("username", ""),
-                settings.sparql_creds[prez].get("password", ""),
-            ),
-            timeout=TIMEOUT,
-        )
+    try:
+        async with AsyncClient() as client:
+            response: httpxResponse = await client.post(
+                settings.sparql_creds[prez]["endpoint"],
+                data=query,
+                headers={
+                    "Accept": "text/turtle, application/json",
+                    "Content-Type": "application/sparql-query",
+                },
+                auth=(
+                    settings.sparql_creds[prez].get("username", ""),
+                    settings.sparql_creds[prez].get("password", ""),
+                ),
+                timeout=TIMEOUT,
+            )
+            response.raise_for_status()
+    except HTTPStatusError:
+        log.error(f"HTTPStatusError text: {response.text}")
+        raise
     if 200 <= response.status_code < 300:
         response_mt = response.headers["content-type"]
         if response_mt.startswith("application/json"):
@@ -98,7 +103,7 @@ async def sparql_query(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
                 data=response.text
             )
     else:
-        return False, {
+        return "text/plain", {
             "code": response.status_code,
             "message": response.text,
             "prez": prez,

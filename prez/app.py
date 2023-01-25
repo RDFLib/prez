@@ -24,6 +24,7 @@ from prez.routers.catprez import router as catprez_router
 from prez.routers.cql import router as cql_router
 from prez.routers.profiles import router as profiles_router
 from prez.routers.spaceprez import router as spaceprez_router
+from prez.routers.object import router as object_router
 from prez.routers.sparql import router as sparql_router
 from prez.routers.vocprez import router as vocprez_router
 from prez.services.app_service import healthcheck_sparql_endpoints, count_objects
@@ -62,6 +63,7 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
+app.include_router(object_router)
 app.include_router(cql_router)
 app.include_router(sparql_router)
 app.include_router(profiles_router)
@@ -167,70 +169,6 @@ def _get_sparql_service_description(request, format):
         return dedent(ttl)
     else:
         return Graph(bind_namespaces="rdflib").parse(data=ttl).serialize(format=format)
-
-
-# # see: https://github.com/tiangolo/fastapi/issues/1788 for how to restructure this.
-# # TODO DRY fix 3x SPARQL endpoints below
-# @app.get("/s/sparql", summary="SpacePrez SPARQL Endpoint", tags=["Prez"])
-# async def sparql_get(request: Request, query: Optional[str] = None):
-#     if not request.query_params:
-#         return PlainTextResponse("A SPARQL query must be provided as a query parameter")
-#     return RedirectResponse(
-#         url=settings.spaceprez_sparql_endpoint + "?" + str(request.query_params)
-#     )
-#
-#
-# @app.get("/v/sparql", summary="VocPrez SPARQL Endpoint", tags=["Prez"])
-# async def sparql_get(request: Request, query: Optional[str] = None):
-#     if not request.query_params:
-#         return PlainTextResponse("A SPARQL query must be provided as a query parameter")
-#     return RedirectResponse(
-#         url=settings.vocprez_sparql_endpoint + "?" + str(request.query_params)
-#     )
-#
-#
-# @app.get("/c/sparql", summary="CatPrez SPARQL Endpoint", tags=["Prez"])
-# async def sparql_get(request: Request, query: Optional[str] = None):
-#     if not request.query_params:
-#         return PlainTextResponse("A SPARQL query must be provided as a query parameter")
-#     return RedirectResponse(
-#         url=settings.catprez_sparql_endpoint + "?" + str(request.query_params)
-#     )
-
-
-# # Concept search
-# retries = 0
-# ep_details = EndpointDetails()
-# while retries < 3:
-#     try:
-#         s = await SkosSearch.federated_search(
-#             search, "preflabel", endpoint_details
-#         )
-#         break
-#     except Exception:
-#         retries += 1
-#         continue
-# if retries == 3:
-#     raise Exception("Max retries reached")
-# results = SkosSearch.combine_search_results(s, "preflabel")
-# else:
-#     results = []
-#
-# # CQL search
-# if "SpacePrez" in settings.ENABLED_PREZS:
-#     dataset_sparql_result, collection_sparql_result = await asyncio.gather(
-#         list_datasets(),
-#         list_collections(),
-#     )
-#     datasets = [
-#         {"id": result["id"]["value"], "title": result["label"]["value"]}
-#         for result in dataset_sparql_result
-#     ]
-#     collections = [
-#         {"id": result["id"]["value"], "title": result["label"]["value"]}
-#         for result in collection_sparql_result
-#     ]
-# return
 
 
 @app.get("/object", summary="Get object", tags=["Prez"])

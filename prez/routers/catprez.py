@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Request
 from rdflib import DCAT, URIRef
 
@@ -56,12 +58,25 @@ async def catalogs_endpoint(
 
 
 @router.get("/c/catalogs/{catalog_id}/{resource_id}", summary="Get Resource")
-@router.get("/c/catalogs/{catalog_id}", summary="Get Catalog")
-async def item_endpoint(
+async def resource_endpoint(
     request: Request, catalog_id: str = None, resource_id: str = None
 ):
+    return await item_endpoint(request)
+
+
+@router.get("/c/catalogs/{catalog_id}", summary="Get Catalog")
+async def catalog_endpoint(request: Request, catalog_id: str = None):
+    return await item_endpoint(request)
+
+
+async def item_endpoint(request: Request, cp_item: Optional[CatalogItem] = None):
     """Returns a CatPrez Catalog or Resource"""
-    cp_item = CatalogItem(**request.path_params, url_path=str(request.url.path))
+    if not cp_item:
+        cp_item = CatalogItem(
+            **request.path_params,
+            **request.query_params,
+            url_path=str(request.url.path)
+        )
     prof_and_mt_info = ProfilesMediatypesInfo(request=request, classes=cp_item.classes)
     cp_item.selected_class = prof_and_mt_info.selected_class
     if prof_and_mt_info.profile == URIRef(

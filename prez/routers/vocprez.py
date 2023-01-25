@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Request
 from rdflib import SKOS, URIRef
 
@@ -69,13 +71,27 @@ async def vocprez_collection(request: Request, collection_id: str):
 
 
 @router.get("/v/collection/{collection_id}/{concept_id}", summary="Get Concept")
+async def vocprez_collection_concept(
+    request: Request, collection_id: str, concept_id: str
+):
+    return await item_endpoint(request)
+
+
 @router.get("/v/scheme/{scheme_id}/{concept_id}", summary="Get Concept")
 @router.get("/v/vocab/{scheme_id}/{concept_id}", summary="Get Concept")
-async def item_endpoint(
-    request: Request, scheme_or_collection_id: str = None, concept_id: str = None
-):
+async def vocprez_scheme_concept(request: Request, scheme_id: str, concept_id: str):
+    return await item_endpoint(request)
+
+
+@router.get("/v/object", summary="Get VocPrez Object")
+async def item_endpoint(request: Request, vp_item: Optional[VocabItem] = None):
     """Returns a VocPrez skos:Concept, Collection, Vocabulary, or ConceptScheme in the requested profile & mediatype"""
-    vp_item = VocabItem(**request.path_params, url_path=str(request.url.path))
+    if not vp_item:
+        vp_item = VocabItem(
+            **request.path_params,
+            **request.query_params,
+            url_path=str(request.url.path)
+        )
     prof_and_mt_info = ProfilesMediatypesInfo(request=request, classes=vp_item.classes)
     vp_item.selected_class = prof_and_mt_info.selected_class
     if prof_and_mt_info.profile == URIRef(

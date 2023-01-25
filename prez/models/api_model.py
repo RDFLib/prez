@@ -1,6 +1,6 @@
 import logging
 
-from rdflib import Namespace, URIRef, Literal
+from rdflib import Namespace, URIRef, Literal, BNode, RDF
 
 from prez.cache import prez_system_graph, profiles_graph_cache
 from prez.services.sparql_queries import generate_insert_context, ask_system_graph
@@ -14,19 +14,19 @@ PREZ = Namespace("https://prez.dev/")
 
 async def populate_api_info(settings):
     for prez in settings.enabled_prezs:
+        bnode = BNode()
         prez_system_graph.add(
-            (URIRef(settings.system_uri), PREZ.enabledPrezFlavour, PREZ[prez])
+            (URIRef(settings.system_uri), PREZ.enabledPrezFlavour, bnode)
         )
+        prez_system_graph.add((bnode, RDF.type, PREZ[prez]))
         # add links to prez subsystems
-        prez_system_graph.add(
-            (URIRef(settings.system_uri), PREZ.link, Literal(f"/{prez[0].lower()}"))
-        )
-        # add prez version
-        prez_system_graph.add(
-            (URIRef(settings.system_uri), PREZ.version, Literal(settings.prez_version))
-        )
+        prez_system_graph.add((bnode, PREZ.link, Literal(f"/{prez[0].lower()}")))
+    # add prez version
+    prez_system_graph.add(
+        (URIRef(settings.system_uri), PREZ.version, Literal(settings.prez_version))
+    )
 
-        log.debug(f"Populated API info for {prez}")
+    log.debug(f"Populated API info for {prez}")
 
 
 async def generate_support_graphs(settings):

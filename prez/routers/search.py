@@ -49,7 +49,7 @@ async def search(
 
 
 def determine_search_method(request, prez):
-    from app import settings
+    from prez.app import settings
 
     """Returns the search method to use based on the request headers"""
     specified_method = request.query_params.get("method")
@@ -65,7 +65,7 @@ def determine_search_method(request, prez):
 
 
 def get_default_search_methods():
-    from app import settings
+    from prez.app import settings
 
     # TODO return from profiles
     methods = {}
