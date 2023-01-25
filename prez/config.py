@@ -11,6 +11,46 @@ from rdflib.namespace import GEO
 
 
 class Settings(BaseSettings):
+    """
+    spaceprez_sparql_endpoint: Read-only SPARQL endpoint for SpacePrez
+    spaceprez_sparql_update: Read/write SPARQL endpoint for SpacePrez
+    catprez_sparql_endpoint: Read-only SPARQL endpoint for CatPrez
+    catprez_sparql_update: Read/write SPARQL endpoint for CatPrez
+    vocprez_sparql_endpoint: Read-only SPARQL endpoint for VocPrez
+    vocprez_sparql_update: Read/write SPARQL endpoint for VocPrez
+    spaceprez_sparql_username: A username for the SpacePrez SPARQL endpoints, if required by the RDF DB
+    catprez_sparql_username: A username for the CatPrez SPARQL endpoints, if required by the RDF DB
+    vocprez_sparql_username: A username for the VocPrez SPARQL endpoints, if required by the RDF DB
+    spaceprez_sparql_password:  A password for the SpacePrez SPARQL endpoints, if required by the RDF DB
+    catprez_sparql_password: A password for the CatPrez SPARQL endpoints, if required by the RDF DB
+    vocprez_sparql_password: A password for the VocPrez SPARQL endpoints, if required by the RDF DB
+    protocol: The protocol used to deliver Prez. Usually 'http', could be 'https'.
+    host: Prez' host domain name. Usually 'localhost' but could be anything
+    port: The port Prez is made accissible on. Default is 8000, could be 80 or anything else that your system has permission to use
+    system_uri: Documentation property. An IRI for the Prez system as a whole. This value appears in the landing page RDF delivered by Prez ('/')
+    top_level_classes:
+    collection_classes:
+    general_classes:
+    enabled_prezs:
+    generate_support_graphs:
+    log_level:
+    log_output:
+    cql_props: dict = {
+        "title": {
+            "title": "Title",
+            "description": "The title of a geo:Feature",
+            "type": "string",
+        },
+        "desc": {
+            "title": "Description",
+            "description": "The description of a geo:Feature",
+            "type": "string",
+        },
+    }
+    prez_title:
+    prez_desc:
+    prez_version:
+    """
     spaceprez_sparql_endpoint: Optional[str]
     spaceprez_sparql_update: Optional[str]
     catprez_sparql_endpoint: Optional[str]
