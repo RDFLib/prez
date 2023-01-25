@@ -98,7 +98,7 @@ async def app_startup():
     log = logging.getLogger("prez")
     log.info("Starting up")
     await healthcheck_sparql_endpoints(settings)
-    create_profiles_graph(settings.enabled_prezs)
+    await create_profiles_graph(settings.enabled_prezs)
     await count_objects(settings)
     await populate_api_info(settings)
     await generate_support_graphs(settings)

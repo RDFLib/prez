@@ -2,28 +2,34 @@
 @prefix ns1: <http://www.w3.org/2004/02/skos/core#> .
 @prefix ns2: <https://prez.dev/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 
 <https://linked.data.gov.au/def/warox-alteration-types/argillic-advanced> dcterms:provenance "From WAROX"@en ;
+    skos:broader <https://linked.data.gov.au/def/warox-alteration-types/argillic> ;
     ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
     ns1:prefLabel "argillic - advanced"@en ;
     ns2:link "/v/vocab/warox-alteration-type/argillic-advanced" .
 
 <https://linked.data.gov.au/def/warox-alteration-types/argillic-intermediate> dcterms:provenance "From WAROX"@en ;
+    skos:broader <https://linked.data.gov.au/def/warox-alteration-types/argillic> ;
     ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
     ns1:prefLabel "argillic - intermediate"@en ;
     ns2:link "/v/vocab/warox-alteration-type/argillic-intermediate" .
 
 <https://linked.data.gov.au/def/warox-alteration-types/skarn-magnesian> dcterms:provenance "From WAROX"@en ;
+    skos:broader <https://linked.data.gov.au/def/warox-alteration-types/skarn> ;
     ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
     ns1:prefLabel "skarn - magnesian"@en ;
     ns2:link "/v/vocab/warox-alteration-type/skarn-magnesian" .
 
 <https://linked.data.gov.au/def/warox-alteration-types/skarn-prograde-stage> dcterms:provenance "From WAROX"@en ;
+    skos:broader <https://linked.data.gov.au/def/warox-alteration-types/skarn> ;
     ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
     ns1:prefLabel "skarn - prograde stage"@en ;
     ns2:link "/v/vocab/warox-alteration-type/skarn-prograde-stage" .
 
 <https://linked.data.gov.au/def/warox-alteration-types/skarn-retrograde-stage> dcterms:provenance "From WAROX"@en ;
+    skos:broader <https://linked.data.gov.au/def/warox-alteration-types/skarn> ;
     ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
     ns1:prefLabel "skarn - retrograde stage"@en ;
     ns2:link "/v/vocab/warox-alteration-type/skarn-retrograde-stage" .

@@ -25,8 +25,7 @@ async def populate_api_info(settings):
     prez_system_graph.add(
         (URIRef(settings.system_uri), PREZ.version, Literal(settings.prez_version))
     )
-
-    log.debug(f"Populated API info for {prez}")
+    log.info(f"Populated API info for {prez}")
 
 
 async def generate_support_graphs(settings):

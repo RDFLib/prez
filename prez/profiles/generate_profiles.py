@@ -10,11 +10,13 @@ from prez.services.sparql_queries import (
     select_profile_mediatype,
 )
 from prez.services.sparql_utils import (
-    sparql_construct_non_async,
+    sparql_construct,
 )
 
+log = logging.getLogger(__name__)
 
-def create_profiles_graph(ENABLED_PREZS) -> Graph:
+
+async def create_profiles_graph(ENABLED_PREZS) -> Graph:
     if (
         len(profiles_graph_cache) > 0
     ):  # pytest imports app.py multiple times, so this is needed. Not sure why cache is
@@ -22,7 +24,7 @@ def create_profiles_graph(ENABLED_PREZS) -> Graph:
         return
     for f in Path(__file__).parent.glob("*.ttl"):
         profiles_graph_cache.parse(f)
-    logging.info("Loaded local profiles")
+    log.info("Prez default profiles loaded")
     profiles_graph_cache.add(
         (URIRef("http://test"), URIRef("http://test"), URIRef("http://test"))
     )
@@ -59,12 +61,15 @@ def create_profiles_graph(ENABLED_PREZS) -> Graph:
           }
         }
         """
-
+    any_remote_profiles = False
     for p in ENABLED_PREZS:
-        r = sparql_construct_non_async(remote_profiles_query, p)
-        if r[0]:
+        r = await sparql_construct(remote_profiles_query, p)
+        if r[0] and r[1]:
+            any_remote_profiles = True
             profiles_graph_cache.__add__(r[1])
-            logging.info(f"Also using remote profiles for {p}")
+            log.info(f"Remote profiles found and added for {p}")
+    if not any_remote_profiles:
+        log.info("No remote profiles found")
 
 
 @lru_cache(maxsize=128)

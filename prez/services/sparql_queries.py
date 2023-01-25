@@ -83,7 +83,7 @@ def generate_insert_context(settings, prez: str):
 
 
 def generate_listing_construct_from_uri(
-    parent_item,
+    focus_item,
     profile,
     page: Optional[int] = 1,
     per_page: Optional[int] = 20,
@@ -97,16 +97,19 @@ def generate_listing_construct_from_uri(
         inbound_parents,
         outbound_children,
         outbound_parents,
-    ) = get_listing_predicates(profile, parent_item.selected_class)
+        relative_properties,
+    ) = get_listing_predicates(profile, focus_item.selected_class)
     if (
-        parent_item.uri
+        focus_item.uri
         and not inbound_children
         and not inbound_parents
         and not outbound_children
         and not outbound_parents
+        # do not need to check relative properties - they will only be used if one of the inbound/outbound parent/child
+        # relations are defined
     ):
         log.warning(
-            f"Requested listing of objects related to {parent_item.uri}, however the profile {profile} does not"
+            f"Requested listing of objects related to {focus_item.uri}, however the profile {profile} does not"
             f" define any listing relations for this for this class, for example outbound children."
         )
         return None
@@ -120,28 +123,29 @@ def generate_listing_construct_from_uri(
         PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
         CONSTRUCT {{
-            {f'<{parent_item.uri}> ?outbound_children ?item .{chr(10)}'
-             f'            ?item prez:link ?outbound_children_link .{chr(10)}' if outbound_children else ""}\
-            {f'<{parent_item.uri}> ?outbound_parents ?item .{chr(10)}'
-             f'            ?item prez:link ?outbound_parent_link .{chr(10)}' if outbound_parents else ""}\
-            {f'?inbound_child_s ?inbound_child <{parent_item.uri}> ;{chr(10)}'
+            {f'<{focus_item.uri}> ?outbound_children ?child_item .{chr(10)}'
+             f'            ?child_item prez:link ?outbound_children_link .{chr(10)}' if outbound_children else ""}\
+            {f'<{focus_item.uri}> ?outbound_parents ?parent_item .{chr(10)}'
+             f'            ?parent_item prez:link ?outbound_parent_link .{chr(10)}' if outbound_parents else ""}\
+            {f'?inbound_child_s ?inbound_child <{focus_item.uri}> ;{chr(10)}'
              f'            prez:link ?inbound_children_link .{chr(10)}' if inbound_children else ""}\
-            {f'?inbound_parent_s ?inbound_parent <{parent_item.uri}> ;{chr(10)}'
+            {f'?inbound_parent_s ?inbound_parent <{focus_item.uri}> ;{chr(10)}'
              f'            prez:link ?inbound_parent_link .{chr(10)}' if inbound_parents else ""}\
-            {f'''            prez:memberList a rdf:Bag ;
-                rdfs:member ?item .
-            ?item prez:link ?outbound_general_link''' if not parent_item.uri else ""} \
+            {generate_relative_properties("construct", relative_properties, inbound_children, inbound_parents, outbound_children,
+                                          outbound_parents)}\
         }}
         WHERE {{
-            {generate_outbound_predicates(parent_item, outbound_children, outbound_parents)} \
-            {generate_inbound_predicates(parent_item, inbound_children, inbound_parents)} {chr(10)} \
-            {generate_id_listing_binds(parent_item, inbound_children, inbound_parents, outbound_children, outbound_parents)}
+            {generate_outbound_predicates(focus_item, outbound_children, outbound_parents)} \
+            {generate_inbound_predicates(focus_item, inbound_children, inbound_parents)} {chr(10)} \
+            {generate_relative_properties("select", relative_properties, inbound_children, inbound_parents, outbound_children,
+                                          outbound_parents)}\
+            {generate_id_listing_binds(focus_item, inbound_children, inbound_parents, outbound_children, outbound_parents)}
         }}
         {f"LIMIT {per_page}{chr(10)}"
          f"        OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
     """
     ).strip()
-    log.debug(f"Listing construct query for {parent_item} is:\n{query}")
+    log.debug(f"Listing construct query for {focus_item} is:\n{query}")
     return query
 
 
@@ -188,17 +192,53 @@ def generate_item_construct(item, profile: URIRef):
     return construct_query
 
 
+def generate_relative_properties(
+    construct_select,
+    relative_properties,
+    in_children,
+    in_parents,
+    out_children,
+    out_parents,
+):
+    """
+    Generate the relative properties construct or select for a listing query.
+    """
+    if not relative_properties:
+        return ""
+    rel_string = ""
+    kvs = {
+        "ic": in_children,
+        "ip": in_parents,
+        "oc": out_children,
+        "op": out_parents,
+    }
+    other_kvs = {
+        "ic": "inbound_child_s",
+        "ip": "inbound_parent_s",
+        "oc": "child_item",
+        "op": "parent_item",
+    }
+    for k, v in kvs.items():
+        if v:
+            if construct_select == "select":
+                rel_string += f"""OPTIONAL {{ """
+            rel_string += f"""?{other_kvs[k]} ?rel_{k}_props ?rel_{k}_val .\n"""
+            if construct_select == "select":
+                rel_string += f"""VALUES ?rel_{k}_props {{ {" ".join('<' + str(pred) + '>' for pred in relative_properties)} }} }}\n"""
+    return rel_string
+
+
 def generate_outbound_predicates(item, outbound_children, outbound_parents):
     where = ""
     if item.uri:
         if outbound_children:
-            where += f"""<{item.uri}> ?outbound_children ?item .
-            ?item dcterms:identifier ?outbound_children_id .
+            where += f"""<{item.uri}> ?outbound_children ?child_item .
+            ?child_item dcterms:identifier ?outbound_children_id .
             FILTER(DATATYPE(?outbound_children_id) = prez:slug)
             VALUES ?outbound_children {{ {" ".join('<' + str(pred) + '>' for pred in outbound_children)} }}\n"""
         if outbound_parents:
-            where += f"""<{item.uri}> ?outbound_parents ?item .
-            ?item dcterms:identifier ?outbound_parents_id .
+            where += f"""<{item.uri}> ?outbound_parents ?parent_item .
+            ?parent_item dcterms:identifier ?outbound_parents_id .
             FILTER(DATATYPE(?outbound_parents_id) = prez:slug)
             VALUES ?outbound_parents {{ {" ".join('<' + str(pred) + '>' for pred in outbound_parents)} }}\n"""
         if not outbound_children and not outbound_parents:
@@ -568,10 +608,14 @@ def get_listing_predicates(profile, selected_class):
         the predicate dcterms:hasPart
     - outbound parents, for example where the object of interest is a Concept, and is linked to Concept Scheme(s) via
     the predicate skos:inScheme
+    - relative properties, properties of the parent/child objects that should also be returned. For example, if the
+        focus object is a Concept Scheme, and the predicate skos:inScheme is used to link from Concept(s) (using
+        altr-ext:inboundChildren) then specifying skos:broader as a relative property will cause the broader concepts to
+        be returned for each concept
     """
     shape_bns = get_relevant_shape_bns_for_profile(selected_class, profile)
     if not shape_bns:
-        return [], [], [], []
+        return [], [], [], [], []
     inbound_children = [
         i[2]
         for i in profiles_graph_cache.triples_choices(
@@ -612,7 +656,23 @@ def get_listing_predicates(profile, selected_class):
             )
         )
     ]
-    return inbound_children, inbound_parents, outbound_children, outbound_parents
+    relative_properties = [
+        i[2]
+        for i in profiles_graph_cache.triples_choices(
+            (
+                shape_bns,
+                ALTREXT.relativeProperties,
+                None,
+            )
+        )
+    ]
+    return (
+        inbound_children,
+        inbound_parents,
+        outbound_children,
+        outbound_parents,
+        relative_properties,
+    )
 
 
 def get_item_predicates(profile, selected_class):
