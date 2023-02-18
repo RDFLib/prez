@@ -1,10 +1,10 @@
 from typing import FrozenSet, Optional
 
-from pydantic import BaseConfig, BaseModel, root_validator
+from pydantic import BaseModel, root_validator
 from rdflib import Namespace, URIRef
 from starlette.requests import Request
 
-from prez.profiles.generate_profiles import get_profiles_and_mediatypes
+from prez.utils.generate_profiles import get_profiles_and_mediatypes
 from prez.services.connegp_service import get_requested_profile_and_mediatype
 
 PREZ = Namespace("https://prez.dev/")

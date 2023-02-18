@@ -6,7 +6,7 @@ import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
-from rdflib import Graph, Literal, Namespace, URIRef
+from rdflib import Graph, Literal, URIRef
 from starlette.middleware.cors import CORSMiddleware
 
 from prez.cache import tbox_cache
@@ -16,21 +16,18 @@ from prez.models.api_model import (
     generate_support_graphs,
     generate_profiles_support_graph,
 )
-from prez.profiles.generate_profiles import (
-    create_profiles_graph,
-)
 from prez.renderers.renderer import return_rdf
 from prez.routers.catprez import router as catprez_router
 from prez.routers.cql import router as cql_router
+from prez.routers.object import router as object_router
 from prez.routers.profiles import router as profiles_router
 from prez.routers.spaceprez import router as spaceprez_router
-from prez.routers.object import router as object_router
 from prez.routers.sparql import router as sparql_router
 from prez.routers.vocprez import router as vocprez_router
 from prez.services.app_service import healthcheck_sparql_endpoints, count_objects
+from prez.utils.generate_profiles import create_profiles_graph
 from prez.utils.prez_logging import setup_logger
-
-PREZ = Namespace("https://prez.dev/")
+from prez.utils.prez_ns import PREZ
 
 
 async def catch_400(request: Request, exc):
@@ -171,60 +168,60 @@ def _get_sparql_service_description(request, format):
         return Graph(bind_namespaces="rdflib").parse(data=ttl).serialize(format=format)
 
 
-@app.get("/object", summary="Get object", tags=["Prez"])
-async def object(
-    request: Request,
-    _profile: Optional[str] = None,
-    _mediatype: Optional[str] = None,
-):
-    """
-    1. check which SPARQL endpoints have information for the object.
-    2. query is along the lines of ?uri dcterms:identifier ?x FILTER(DATATYPE ...
-            OR get list of graphs which contain support data "?g <https://prez.dev/hasContextFor> <ds or fc>" VALUES ?graph { ?g }
-    """
-    """Generic endpoint to get any object. Returns the appropriate endpoint based on type"""
-    pass
-    # query to get basic info for object
-    # sparql_response = await get_object(uri)
-    # if len(sparql_response) == 0:
-    #     raise HTTPException(status_code=404, detail="Not Found")
-    # params = (
-    #     str(request.query_params)
-    #     .replace(f"&uri={quote_plus(uri)}", "")
-    #     .replace(f"uri={quote_plus(uri)}", "")  # if uri param at start of query string
-    # )
-    # # removes the leftover "?" if no other params than uri
-    # if params != "":
-    #     params = "?" + params[1:]  # will start with & instead of ?
-    # object_types = [URIRef(item["type"]["value"]) for item in sparql_response]
-    # # object_type = URIRef(sparql_response[0]["type"]["value"])
-    #
-    # # return according to type (IF appropriate prez module is enabled)
-    # for object_type in object_types:
-    #     if object_type == SKOS.ConceptScheme:
-    #         if "VocPrez" not in settings.ENABLED_PREZS:
-    #             raise HTTPException(status_code=404, detail="Not Found")
-    #         return await vocprez_router.item_endpoint(request)
-    #     elif object_type == SKOS.Collection:
-    #         if "VocPrez" not in settings.ENABLED_PREZS:
-    #             raise HTTPException(status_code=404, detail="Not Found")
-    #         return await vocprez_router.collection(request)
-    #     elif object_type == SKOS.Concept:
-    #         if "VocPrez" not in settings.ENABLED_PREZS:
-    #             raise HTTPException(status_code=404, detail="Not Found")
-    #         return await vocprez_router.concept(request)
-    #     elif object_type in [
-    #         GEO.Feature,
-    #         GEO.FeatureCollection,
-    #         DCAT.Dataset,
-    #     ]:  # TODO DCAT.Dataset will need some more thought
-    #         if "SpacePrez" not in settings.ENABLED_PREZS:
-    #             raise HTTPException(status_code=404, detail="Not Found")
-    #         return RedirectResponse(
-    #             f"/s/object?{request.url.components.query}", headers=request.headers
-    #         )
-    #     # else:
-    # raise HTTPException(status_code=404, detail="Not Found")
+# @app.get("/object", summary="Get object", tags=["Prez"])
+# async def object(
+#     request: Request,
+#     _profile: Optional[str] = None,
+#     _mediatype: Optional[str] = None,
+# ):
+#     """
+#     1. check which SPARQL endpoints have information for the object.
+#     2. query is along the lines of ?uri dcterms:identifier ?x FILTER(DATATYPE ...
+#             OR get list of graphs which contain support data "?g <https://prez.dev/hasContextFor> <ds or fc>" VALUES ?graph { ?g }
+#     """
+#     """Generic endpoint to get any object. Returns the appropriate endpoint based on type"""
+#     pass
+# query to get basic info for object
+# sparql_response = await get_object(uri)
+# if len(sparql_response) == 0:
+#     raise HTTPException(status_code=404, detail="Not Found")
+# params = (
+#     str(request.query_params)
+#     .replace(f"&uri={quote_plus(uri)}", "")
+#     .replace(f"uri={quote_plus(uri)}", "")  # if uri param at start of query string
+# )
+# # removes the leftover "?" if no other params than uri
+# if params != "":
+#     params = "?" + params[1:]  # will start with & instead of ?
+# object_types = [URIRef(item["type"]["value"]) for item in sparql_response]
+# # object_type = URIRef(sparql_response[0]["type"]["value"])
+#
+# # return according to type (IF appropriate prez module is enabled)
+# for object_type in object_types:
+#     if object_type == SKOS.ConceptScheme:
+#         if "VocPrez" not in settings.ENABLED_PREZS:
+#             raise HTTPException(status_code=404, detail="Not Found")
+#         return await vocprez_router.item_endpoint(request)
+#     elif object_type == SKOS.Collection:
+#         if "VocPrez" not in settings.ENABLED_PREZS:
+#             raise HTTPException(status_code=404, detail="Not Found")
+#         return await vocprez_router.collection(request)
+#     elif object_type == SKOS.Concept:
+#         if "VocPrez" not in settings.ENABLED_PREZS:
+#             raise HTTPException(status_code=404, detail="Not Found")
+#         return await vocprez_router.concept(request)
+#     elif object_type in [
+#         GEO.Feature,
+#         GEO.FeatureCollection,
+#         DCAT.Dataset,
+#     ]:  # TODO DCAT.Dataset will need some more thought
+#         if "SpacePrez" not in settings.ENABLED_PREZS:
+#             raise HTTPException(status_code=404, detail="Not Found")
+#         return RedirectResponse(
+#             f"/s/object?{request.url.components.query}", headers=request.headers
+#         )
+#     # else:
+# raise HTTPException(status_code=404, detail="Not Found")
 
 
 if __name__ == "__main__":

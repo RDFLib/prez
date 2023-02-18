@@ -48,11 +48,10 @@ class ProfileItem(BaseModel):
                 if uri:
                     values["uri"] = uri
         else:  # uri provided, get the ID
-            q = f"""SELECT ?class {{ <{uri}> dcterms:identifier ?id }}"""
+            q = f"""SELECT ?class {{ <{uri}> a ?class }}"""
             r = profiles_graph_cache.query(q)
-            if r[0]:
-                # set the uri of the item
-                id = r[1][0].get("id")["value"]
-                if id:
-                    values["id"] = id
+            if len(r.bindings) > 0:
+                values["classes"] = frozenset(
+                    [prof.get("class") for prof in r.bindings]
+                )
         return values

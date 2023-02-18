@@ -5,7 +5,7 @@ import requests
 
 os.system("docker context use default")
 response = os.system(
-    "docker run -d -v ${PWD}/dev/dev-config.ttl:/fuseki/config.ttl -p 3030:3030 ghcr.io/zazuko/fuseki-geosparql"
+    "docker run -d -v ${PWD}/dev/dev-config.ttl:/fuseki/config.ttl -p 3030:3030 ghcr.io/zazuko/fuseki-geosparql:4.7.0"
 )
 
 time.sleep(15)
@@ -56,6 +56,14 @@ def setup_sp():
                 "application/octet-stream",
             ),
         ),
+        (
+            "myfile6",
+            (
+                "dublin_core_terms.ttl",
+                open("tests/data/vocprez/input/dublin_core_terms.ttl", "rb"),
+                "application/octet-stream",
+            ),
+        ),
     ]
     headers = {}
 
@@ -89,6 +97,14 @@ def setup_vp():
             (
                 "contacttype.ttl",
                 open("tests/data/vocprez/input/contacttype.ttl", "rb"),
+                "application/octet-stream",
+            ),
+        ),
+        (
+            "myfile6",
+            (
+                "dublin_core_terms.ttl",
+                open("tests/data/vocprez/input/dublin_core_terms.ttl", "rb"),
                 "application/octet-stream",
             ),
         ),
@@ -149,6 +165,14 @@ def setup_cp():
             (
                 "agents.ttl",
                 open("tests/data/catprez/input/agents.ttl", "rb"),
+                "application/octet-stream",
+            ),
+        ),
+        (
+            "myfile6",
+            (
+                "dublin_core_terms.ttl",
+                open("tests/data/vocprez/input/dublin_core_terms.ttl", "rb"),
                 "application/octet-stream",
             ),
         ),

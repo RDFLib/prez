@@ -88,18 +88,12 @@ async def return_profiles(
 ) -> Response:
     from prez.cache import profiles_graph_cache
 
-    prez_items = {
-        "SpacePrez": SpatialItem,
-        "VocPrez": VocabItem,
-        "CatPrez": CatalogItem,
-        "ProfilesPrez": ProfileItem,
-    }
     if not prof_and_mt_info:
         prof_and_mt_info = ProfilesMediatypesInfo(request=request, classes=classes)
     if not request:
         request = prof_and_mt_info.request
     items = [
-        prez_items[prez_type](uri=str(uri), url_path=str(request.url.path))
+        ProfileItem(uri=str(uri), url_path=str(request.url.path))
         for uri in prof_and_mt_info.avail_profile_uris
     ]
     queries = [
@@ -119,7 +113,7 @@ async def return_profiles(
     )
 
 
-async def return_all__profiles():
+async def return_all_profiles():
     """
     returns all profiles the API knows about
     """

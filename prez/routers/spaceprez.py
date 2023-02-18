@@ -1,8 +1,8 @@
 from typing import Optional
 
 from fastapi import APIRouter, Request
-from rdflib import Namespace, URIRef
-from rdflib.namespace import GEO, DCAT
+from rdflib import URIRef
+from starlette.responses import PlainTextResponse
 
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.models.spaceprez_item import SpatialItem
@@ -14,17 +14,12 @@ from prez.services.sparql_queries import (
     generate_listing_count_construct,
 )
 
-PREZ = Namespace("https://prez.dev/")
-
 router = APIRouter(tags=["SpacePrez"])
 
 
 @router.get("/s", summary="SpacePrez Home")
-@router.get("/s/profiles", summary="SpacePrez Profiles")
-async def spaceprez_profiles(request: Request):
-    """Returns list of the profiles which constrain SpacePrez classes"""
-    spaceprez_classes = frozenset([GEO.Feature, GEO.FeatureCollection, DCAT.Dataset])
-    return await return_profiles(spaceprez_classes, "SpacePrez", request)
+async def spaceprez_profiles():
+    return PlainTextResponse("SpacePrez Home")
 
 
 @router.get("/s/datasets", summary="List Datasets")

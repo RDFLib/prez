@@ -69,11 +69,15 @@ def generate_insert_context(settings, prez: str):
                     FILTER(?dtype_mem_id = xsd:token) }} }}
             }}
             BIND(
-                IF(?topmost_class=prof:Profile, prez:ProfilesList,
-                    IF(?topmost_class=dcat:Dataset, prez:DatasetList,
-                      IF(?topmost_class=dcat:Catalog,prez:CatalogList,
-                        IF(?topmost_class=skos:ConceptScheme,prez:SchemesList,
-                          IF(?topmost_class=skos:Collection,prez:VocPrezCollectionList,""))))) AS ?collectionList)
+                IF(?topmost_class=prez:SpacePrezProfile, prez:SpacePrezProfileList,
+                    IF(?topmost_class=prez:VocPrezProfile, prez:VocPrezProfileList,
+                        IF(?topmost_class=prez:CatPrezProfile, prez:CatPrezProfileList,
+                            IF(?topmost_class=prof:Profile, prez:ProfilesList,
+                                IF(?topmost_class=dcat:Dataset, prez:DatasetList,
+                                    IF(?topmost_class=dcat:Catalog,prez:CatalogList,
+                                        IF(?topmost_class=skos:ConceptScheme,prez:SchemesList,
+                                            IF(?topmost_class=skos:Collection,prez:VocPrezCollectionList,""))))))))
+                                            AS ?collectionList)
             BIND(STRDT(COALESCE(STR(?id),MD5(STR(?instance_of_main_class))), prez:slug) AS ?prez_id)
             BIND(STRDT(COALESCE(STR(?mem_id),MD5(STR(?member))), prez:slug) AS ?prez_mem_id)
             BIND(URI(CONCAT(STR(?instance_of_main_class),"/support-graph")) AS ?support_graph_uri)
@@ -90,7 +94,7 @@ def generate_listing_construct_from_uri(
 ):
     """
     For a given URI, finds items with the specified relation(s).
-    Generates a SPARQL construct query for a listing of items, including labels
+    Generates a SPARQL construct query for a listing of items
     """
     (
         inbound_children,
@@ -781,7 +785,8 @@ def select_profile_mediatype(
       ?mid rdfs:subClassOf* ?general_class .
       VALUES ?general_class {{ dcat:Dataset geo:FeatureCollection prez:FeatureCollectionList prez:FeatureList geo:Feature
       skos:ConceptScheme skos:Concept skos:Collection prez:DatasetList prez:VocPrezCollectionList prez:SchemesList
-      prez:CatalogList dcat:Catalog dcat:Resource prez:ProfilesList prof:Profile }}
+      prez:CatalogList dcat:Catalog dcat:Resource prez:ProfilesList prof:Profile prez:SpacePrezProfileList
+      prez:VocPrezProfileList prez:CatPrezProfileList }}
       ?profile altr-ext:constrainsClass ?class ;
                altr-ext:hasResourceFormat ?format ;
                dcterms:identifier ?token ;
@@ -792,6 +797,7 @@ def select_profile_mediatype(
                            altr-ext:hasDefaultProfile ?profile }} AS ?def_profile)
       {generate_mediatype_if_statements(requested_mediatypes) if requested_mediatypes else ''}
       BIND(EXISTS {{ ?profile altr-ext:hasDefaultResourceFormat ?format }} AS ?def_format)
+      FILTER(DATATYPE(?token)=prez:slug)
     }}
     GROUP BY ?class ?profile ?req_profile ?def_profile ?format ?req_format ?def_format ?title ?token
     ORDER BY DESC(?req_profile) DESC(?distance) DESC(?def_profile) DESC(?req_format) DESC(?def_format)"""

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request
 from starlette.responses import PlainTextResponse
 
-from models import SpatialItem, VocabItem, CatalogItem
+from prez.models import SpatialItem, VocabItem, CatalogItem
 
 router = APIRouter(tags=["Object"])
 

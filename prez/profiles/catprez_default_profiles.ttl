@@ -10,11 +10,12 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
-<http://kurrawong.net/profile/prez>
+
+prez:CatPrezProfile
     a prof:Profile ;
-    dcterms:identifier "prez" ;
-    dcterms:description "A profile for the Prez Linked Data API" ;
-    skos:prefLabel "Prez profile" ;
+    dcterms:identifier "catprez" ;
+    dcterms:description "A system profile for CatPrez" ;
+    skos:prefLabel "CatPrez profile" ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
@@ -31,35 +32,8 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
     ]
     .
 
-
-<http://example.com/profile/profiles>
-    a prof:Profile ;
-    rdfs:label "Profiles" ;
-    dcterms:description "List of profiles" ;
-    dcterms:identifier "profiles" ;
-    altr-ext:constrainsClass prez:Profiles ;
-    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
-    altr-ext:hasResourceFormat
-        "application/json" ,
-        "text/anot+turtle" ;
-.
-
-<https://w3id.org/profile/mem>
-    a prof:Profile ;
-    dcterms:description "A very basic data model that lists the members of container objects only, i.e. not their other properties" ;
-    dcterms:identifier "mem" ;
-    dcterms:title "Members" ;
-    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
-    altr-ext:hasResourceFormat
-        "application/json" ,
-        "application/ld+json" ,
-        "application/rdf+xml" ,
-        "text/anot+turtle" ,
-        "text/turtle" ;
-.
-
 <https://www.w3.org/TR/vocab-dcat/>
-    a prof:Profile ;
+    a prof:Profile , prez:CatPrezProfile ;
     dcterms:description "Dataset Catalog Vocabulary (DCAT) is a W3C-authored RDF vocabulary designed to facilitate interoperability between data catalogs" ;
     dcterms:identifier "dcat" ;
     dcterms:title "DCAT" ;
@@ -86,7 +60,7 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 .
 
 <https://schema.org>
-    a prof:Profile ;
+    a prof:Profile , prez:CatPrezProfile ;
     dcterms:description "Schema.org is a collaborative, community activity with a mission to create, maintain, and promote schemas for structured data on the Internet, on web pages, in email messages, and beyond. " ;
     dcterms:identifier "sdo" ;
     dcterms:title "schema.org" ;

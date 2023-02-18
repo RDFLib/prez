@@ -2,12 +2,10 @@ from pathlib import Path
 from typing import Optional
 
 import toml
-from pydantic import (
-    BaseSettings,
-    root_validator,
-)
-from rdflib import DCAT, SKOS, URIRef, PROF
-from rdflib.namespace import GEO
+from pydantic import BaseSettings, root_validator
+from rdflib import URIRef
+from rdflib.namespace import GEO, DCAT, SKOS, PROF
+from prez.utils.prez_ns import PREZ
 
 
 class Settings(BaseSettings):
@@ -51,6 +49,7 @@ class Settings(BaseSettings):
     prez_desc:
     prez_version:
     """
+
     spaceprez_sparql_endpoint: Optional[str]
     spaceprez_sparql_update: Optional[str]
     catprez_sparql_endpoint: Optional[str]
@@ -129,7 +128,12 @@ class Settings(BaseSettings):
     @root_validator()
     def populate_top_level_classes(cls, values):
         top_level_classes = {
-            "Profiles": [PROF.Profile],
+            "Profiles": [
+                PROF.Profile,
+                PREZ.SpacePrezProfile,
+                PREZ.VocPrezProfile,
+                PREZ.CatPrezProfile,
+            ],
             "SpacePrez": [DCAT.Dataset],
             "VocPrez": [SKOS.ConceptScheme, SKOS.Collection],
             "CatPrez": [DCAT.Catalog],

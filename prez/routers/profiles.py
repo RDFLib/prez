@@ -1,13 +1,12 @@
 from fastapi import APIRouter, Request
 from rdflib import URIRef
-from rdflib.namespace import GEO
 
-from models.profiles_and_mediatypes import ProfilesMediatypesInfo
-from models.profiles_item import ProfileItem
-from models.profiles_listings import ProfilesMembers
+from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
+from prez.models.profiles_item import ProfileItem
+from prez.models.profiles_listings import ProfilesMembers
 from prez.cache import profiles_graph_cache
-from renderers.renderer import return_profiles, return_from_graph, return_from_queries
-from services.sparql_queries import (
+from prez.renderers.renderer import return_profiles, return_from_graph
+from prez.services.sparql_queries import (
     generate_listing_construct_from_uri,
     generate_listing_count_construct,
     generate_item_construct,
@@ -17,6 +16,9 @@ router = APIRouter(tags=["Profiles"])
 
 
 @router.get("/profiles", summary="Prez Profiles")
+@router.get("/s/profiles", summary="SpacePrez Profiles")
+@router.get("/v/profiles", summary="SpacePrez Profiles")
+@router.get("/c/profiles", summary="SpacePrez Profiles")
 async def profiles(
     request: Request,
     page: int = 1,

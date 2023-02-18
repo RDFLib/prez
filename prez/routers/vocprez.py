@@ -2,6 +2,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Request
 from rdflib import SKOS, URIRef
+from starlette.responses import PlainTextResponse
 
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.models.vocprez_item import VocabItem
@@ -17,11 +18,8 @@ router = APIRouter(tags=["VocPrez"])
 
 
 @router.get("/v", summary="VocPrez Home")
-@router.get("/v/profiles", summary="VocPrez Profiles")
-async def vocprez_profiles(request: Request):
-    """Returns a JSON list of the profiles accepted by VocPrez"""
-    vocprez_classes = frozenset([SKOS.Concept, SKOS.ConceptScheme, SKOS.Collection])
-    return await return_profiles(vocprez_classes, "VocPrez", request)
+async def vocprez_home():
+    return PlainTextResponse("VocPrez Home")
 
 
 @router.get("/v/collection", summary="List Collections")
@@ -43,7 +41,7 @@ async def schemes_endpoint(
     ):
         return await return_profiles(
             classes=frozenset(vocprez_members.selected_class),
-            prez_type="SpacePrez",
+            prez_type="VocPrez",
             prof_and_mt_info=prof_and_mt_info,
         )
     list_query = generate_listing_construct_from_uri(

@@ -22,13 +22,9 @@ async def create_profiles_graph(ENABLED_PREZS) -> Graph:
     ):  # pytest imports app.py multiple times, so this is needed. Not sure why cache is
         # not cleared between calls
         return
-    for f in Path(__file__).parent.glob("*.ttl"):
+    for f in (Path(__file__).parent.parent / "profiles").glob("*.ttl"):
         profiles_graph_cache.parse(f)
     log.info("Prez default profiles loaded")
-    profiles_graph_cache.add(
-        (URIRef("http://test"), URIRef("http://test"), URIRef("http://test"))
-    )
-
     remote_profiles_query = """
         PREFIX dcat: <http://www.w3.org/ns/dcat#>
         PREFIX geo: <http://www.opengis.net/ont/geosparql#>

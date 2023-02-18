@@ -1,11 +1,12 @@
 from typing import Optional
 
 from fastapi import APIRouter, Request
-from rdflib import DCAT, URIRef
+from rdflib import URIRef
+from starlette.responses import PlainTextResponse
 
-from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.models.catprez_item import CatalogItem
 from prez.models.catprez_listings import CatalogMembers
+from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.renderers.renderer import return_from_queries, return_profiles
 from prez.services.sparql_queries import (
     generate_listing_construct_from_uri,
@@ -17,11 +18,8 @@ router = APIRouter(tags=["CatPrez"])
 
 
 @router.get("/c", summary="CatPrez Home")
-@router.get("/c/profiles", summary="CatPrez Profiles")
-async def catprez_profiles(request: Request):
-    """Returns a JSON list of the profiles accepted by CatPrez"""
-    catprez_classes = (frozenset([DCAT.Catalog, DCAT.Resource]),)
-    return await return_profiles(catprez_classes, "CatPrez", request)
+async def catprez_profiles():
+    return PlainTextResponse("CatPrez Home")
 
 
 @router.get("/c/catalogs", summary="List Catalogs")
