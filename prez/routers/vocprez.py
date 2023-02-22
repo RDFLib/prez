@@ -1,3 +1,5 @@
+import logging
+import time
 from typing import Optional
 
 from fastapi import APIRouter, Request
@@ -15,6 +17,8 @@ from prez.services.sparql_queries import (
 )
 
 router = APIRouter(tags=["VocPrez"])
+
+log = logging.getLogger(__name__)
 
 
 @router.get("/v", summary="VocPrez Home")
@@ -84,6 +88,7 @@ async def vocprez_scheme_concept(request: Request, scheme_id: str, concept_id: s
 @router.get("/v/object", summary="Get VocPrez Object")
 async def item_endpoint(request: Request, vp_item: Optional[VocabItem] = None):
     """Returns a VocPrez skos:Concept, Collection, Vocabulary, or ConceptScheme in the requested profile & mediatype"""
+
     if not vp_item:
         vp_item = VocabItem(
             **request.path_params,

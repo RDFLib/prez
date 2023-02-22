@@ -10,7 +10,7 @@ router = APIRouter(tags=["Object"])
 async def object(
     request: Request,
 ):
-    from prez.app import settings
+    from prez.config import settings
 
     uri = request.query_params.get("uri")
     if not uri:

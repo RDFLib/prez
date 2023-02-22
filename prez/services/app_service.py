@@ -52,7 +52,7 @@ async def healthcheck_sparql_endpoints(settings):
             username = settings.sparql_creds[prez].get("username")
             password = settings.sparql_creds[prez].get("password")
             if username or password:
-                auth = {"username": username, "password": password}
+                auth = (username, password)
             else:
                 auth = None
             while not connected_to_prez_flavour:

@@ -1,14 +1,20 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="development" type="PythonConfigurationType" factoryName="Python">
+  <configuration default="false" name="demo instance" type="PythonConfigurationType" factoryName="Python">
     <module name="Prez" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <envs>
-      <env name="PYTHONUNBUFFERED" value="1" />
-      <env name="CATPREZ_SPARQL_ENDPOINT" value="http://localhost:3030/cp" />
+      <env name="CATPREZ_SPARQL_ENDPOINT" value="http://prez-demo-fuseki-lb-597318139.ap-southeast-2.elb.amazonaws.com:3030/cp" />
+      <env name="CATPREZ_SPARQL_PASSWORD" value="improvementneeded" />
+      <env name="CATPREZ_SPARQL_USERNAME" value="admin" />
       <env name="LOG_LEVEL" value="DEBUG" />
-      <env name="SPACEPREZ_SPARQL_ENDPOINT" value="http://localhost:3030/sp" />
-      <env name="VOCPREZ_SPARQL_ENDPOINT" value="http://localhost:3030/vp" />
+      <env name="PYTHONUNBUFFERED" value="1" />
+      <env name="SPACEPREZ_SPARQL_ENDPOINT" value="http://prez-demo-fuseki-lb-597318139.ap-southeast-2.elb.amazonaws.com:3030/sp" />
+      <env name="SPACEPREZ_SPARQL_PASSWORD" value="improvementneeded" />
+      <env name="SPACEPREZ_SPARQL_USERNAME" value="admin" />
+      <env name="VOCPREZ_SPARQL_ENDPOINT" value="http://prez-demo-fuseki-lb-597318139.ap-southeast-2.elb.amazonaws.com:3030/vp" />
+      <env name="VOCPREZ_SPARQL_PASSWORD" value="improvementneeded" />
+      <env name="VOCPREZ_SPARQL_USERNAME" value="admin" />
     </envs>
     <option name="SDK_HOME" value="" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/prez" />

@@ -7,6 +7,16 @@ from rdflib import URIRef
 from rdflib.namespace import GEO, DCAT, SKOS, PROF
 from prez.utils.prez_ns import PREZ
 
+from httpx import AsyncClient
+
+
+class SPARQLAsyncClient:
+    def __init__(self, auth, base_url):
+        self.client = AsyncClient(auth=auth, base_url=base_url, timeout=9999)
+
+    async def close(self):
+        await self.client.aclose()
+
 
 class Settings(BaseSettings):
     """
@@ -216,3 +226,6 @@ class Settings(BaseSettings):
                 if value:
                     values["sparql_creds"][prez][attr] = value
         return values
+
+
+settings = Settings()

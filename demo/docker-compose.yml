@@ -1,0 +1,25 @@
+version: "3"
+services:
+
+  fuseki:
+    image: "ghcr.io/zazuko/fuseki-geosparql:4.7.0"
+    ports:
+      - "3030:3030"
+    volumes:
+      - type: bind
+        source: ${PWD}/../dev/dev-config.ttl
+        target: /fuseki/config.ttl
+    environment:
+      ADMIN_PASSWORD: pw
+
+  prez:
+    image: "prez:0.4.1"
+    ports:
+      - "8000:8000"
+    environment:
+      SPACEPREZ_SPARQL_ENDPOINT: 'http://fuseki:3030/sp'
+      VOCPREZ_SPARQL_ENDPOINT: 'http://fuseki:3030/vp'
+      CATPREZ_SPARQL_ENDPOINT: 'http://fuseki:3030/cp'
+    depends_on:
+      fuseki:
+        condition: service_started

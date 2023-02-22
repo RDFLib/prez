@@ -19,7 +19,7 @@ router = APIRouter(tags=["SPARQL"])
 async def sparql(
     request: Request,
 ):
-    from prez.app import settings
+    from prez.config import settings
 
     query = request.query_params.get("query")
     if not query:

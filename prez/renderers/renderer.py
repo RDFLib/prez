@@ -1,5 +1,7 @@
 import asyncio
 import io
+import logging
+import time
 from typing import Optional
 
 from connegp import RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
@@ -18,6 +20,9 @@ from prez.services.sparql_queries import (
     get_annotation_predicates,
 )
 from prez.services.sparql_utils import sparql_construct
+
+
+log = logging.getLogger(__name__)
 
 
 async def return_from_queries(

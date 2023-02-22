@@ -10,7 +10,7 @@ from rdflib import Graph, Literal, URIRef
 from starlette.middleware.cors import CORSMiddleware
 
 from prez.cache import tbox_cache
-from prez.config import Settings
+from prez.config import settings
 from prez.models.api_model import (
     populate_api_info,
     generate_support_graphs,
@@ -49,7 +49,8 @@ app = FastAPI(
         500: catch_500,
     }
 )
-settings = Settings()
+# TODO try move singleton to app.utils.config
+# settings = Settings()
 
 app.add_middleware(
     CORSMiddleware,

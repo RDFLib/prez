@@ -5,7 +5,7 @@ from fastapi import HTTPException
 
 
 class CQLSearch(object):
-    from app import settings
+    from prez.config import settings
 
     def __init__(self, cql_query: str, sparql_query: str) -> None:
         self.cql_query = cql_query
