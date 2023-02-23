@@ -56,7 +56,10 @@ def sparql_query_non_async(query: str, prez: str) -> Tuple[bool, Union[List, Dic
                 "Accept": "application/json",
                 "Content-Type": "application/sparql-query",
             },
-            # auth=(settings.sparql_creds[prez]["username"], settings.sparql_creds[prez]["password"]),
+            auth=(
+                settings.sparql_creds[prez]["username"],
+                settings.sparql_creds[prez]["password"],
+            ),
             timeout=TIMEOUT,
         )
     if 200 <= response.status_code < 300:
@@ -248,7 +251,10 @@ def sparql_construct_non_async(query: str, prez: str):
                 "Accept": "text/turtle",
                 "Content-Type": "application/sparql-query",
             },
-            # auth=(creds[prez]["username"], creds[prez]["password"]),
+            auth=(
+                settings.sparql_creds[prez]["username"],
+                settings.sparql_creds[prez]["password"],
+            ),
             timeout=TIMEOUT,
         )
     if 200 <= response.status_code < 300:

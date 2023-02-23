@@ -107,11 +107,17 @@ async def app_startup():
 async def app_shutdown():
     """
     persists caches
+    close async SPARQL clients
     """
     log = logging.getLogger("prez")
     log.info("Shutting down...")
     if len(tbox_cache) > 0:
         tbox_cache.serialize(destination="tbox_cache.nt", format="nt")
+    # close all SPARQL async clients
+    from services.triplestore_client import sparql_clients
+
+    for client in sparql_clients:
+        await client.close()
 
 
 @app.get("/", summary="Home page", tags=["Prez"])
