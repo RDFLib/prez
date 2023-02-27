@@ -1,4 +1,4 @@
-![](https://github.com/RDFLib/prez/raw/main/prez/static/img/prez-logo.png)
+![](https://raw.githubusercontent.com/RDFLib/prez/main/prez-logo.png)
 
 # Prez
 Prez is a data-configurable Linked Data API framework that delivers _profiles_ of Knowledge Graph data according to the [Content Negotiation by Profile](https://w3c.github.io/dx-connegp/connegp/) standard.
@@ -8,6 +8,19 @@ Prez is a data-configurable Linked Data API framework that delivers _profiles_ o
 > Prez delivers data only - usually [RDF](https://en.wikipedia.org/wiki/Resource_Description_Framework) but could be GeoJSON, XML etc. - and it delivers a special form of RDF which includes labels for all objects and predicates Prez can find in its database.   
 > 
 > If you want a UI that can render Prez' labelled RDF as HTML and other fancy graphical widgets, see the [Prez UI](https://github.com/RDFLib/prez-ui).
+
+## Contents
+
+* [Subsystems](#subsystems)
+* [Installation](#installation)
+* [Running](#running)
+* [Data Validation](#data-validation)
+* [Contact](#contact)
+* [Contributing](#contributing)
+* [License](#license)
+
+
+## Subsystems
 
 Prez comes with several pre-configures subsystems:
 
@@ -22,6 +35,7 @@ It expects "high quality" data to work well: Prez itself won't patch up bad or m
 > **NOTE**: There are a number of data quality assessment tools and processes you can run to ensure that the data you want Prez to access is fit for purpose. See [Data Validation](#data-validation) below.
 
 Prez accesses data stored in an RDF database - a 'triplestore' - and uses the SPARQL Protocol to do so. Any SPARQL Protocol-compliant DB may be used.
+
 
 ## Installation
 
@@ -38,6 +52,7 @@ Prez is developed with [Poetry](https://python-poetry.org/) which is a Python pa
 We also provide a standard `requirements.txt` file for use with the common [PIP](https://pypi.org/project/pip/) package installer. We build this file using Poetry too.
 
 > Executing `pip install -r requirements.txt` within a Python virtual environment will probably be all you need to do!
+
 
 ## Running
 
@@ -95,6 +110,7 @@ docker run -p 8000:8000 \
 
 The above command will run a Docker container with Prez in it on Port 8000 with SpacePrez & VocPrez subsystems enabled and different SPARQL endpoints given for each.
 
+
 ## Data Validation
 
 For Prez to deliver data via its various subsystems, the data needs to conform to some minimum requirements: you can't, for instance, run VocPrez without an SKOS ConceptSchemes defined!
@@ -120,13 +136,18 @@ The profiles' validators are all available from the profiles themselves (navigat
 
 Look for the _VocPrez Compounded_ and similar validators. The 'compounded' bit means that validator will validate data against all VocPrez and inherited requirements. 
 
+
 ## Contact
 
-This tool is actively developed and supported by [KurrawongAI](https://kurrawong.net), a small Australian Knowledge Graph company, and supported by open source contributors too. Please contact KurrawongAI either by creating issues in the [Issue Tracker](https://github.com/RDFLib/prez/issues) or directly via their website.
+> **NOTE**: This open source tool is actively developed and supported by [KurrawongAI](https://kurrawong.net), a small Australian Knowledge Graph company, developers at the [University of Melbourne](https://www.unimelb.edu.au) and by open source contributors too.
+> 
+> To flag problems or raise questions, please create issues in the [Issue Tracker](https://github.com/RDFLib/prez/issues) or you can contact developers using their details below.
 
 Here are the lead developers:
 
 **KurrawongAI**  
+<https://kurrawong.net>
+
 _David Habgood_  
 <dcchabgood@gmail.com>  
 
@@ -139,7 +160,7 @@ _Jamie Feiss_
 
 ## Contributing
 
-We love contributions to this tool and encourage you to create Issues in this repositories Issue Tracker as well as submitting Pull Requests with your own updates.
+We love contributions to this tool and encourage you to create Issues in this repository's Issue Tracker or to submit a Pull Requests!
 
 ## License
 
