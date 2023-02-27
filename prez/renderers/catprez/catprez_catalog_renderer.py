@@ -1,9 +1,8 @@
-import csv
-from io import StringIO
+from operator import itemgetter
+from typing import Dict, Optional, Union
 
 from connegp import MEDIATYPE_NAMES
 from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from typing import Dict, Optional, Union
 
 from prez.config import *
 from prez.models.catprez import CatPrezCatalog
@@ -99,7 +98,7 @@ class CatPrezCatalogRenderer(Renderer):
             "profiles": self.profile_details.available_profiles_dict,
             "default_profile": self.profile_details.default_profile,
             "mediatype_names": MEDIATYPE_NAMES,
-            "parts": parts,
+            "parts": sorted(parts, key=itemgetter(1))
         }
         if template_context is not None:
             _template_context.update(template_context)
