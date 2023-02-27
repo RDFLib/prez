@@ -1,4 +1,4 @@
-![](https://raw.githubusercontent.com/RDFLib/prez/main/prez-logo.png)
+![](https://github.com/RDFLib/prez/raw/main/prez-logo.png)
 
 # Prez
 Prez is a data-configurable Linked Data API framework that delivers _profiles_ of Knowledge Graph data according to the [Content Negotiation by Profile](https://w3c.github.io/dx-connegp/connegp/) standard.
