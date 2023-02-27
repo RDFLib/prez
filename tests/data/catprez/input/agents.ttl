@@ -1,0 +1,133 @@
+PREFIX aarr: <https://w3id.org/idn/def/aarr/>
+PREFIX dcat: <http://www.w3.org/ns/dcat#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX democat: <https://w3id.org/idn/def/democat/>
+PREFIX idncp: <https://w3id.org/idn/def/idncp/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX sdo: <https://schema.org>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+<https://linked.data.gov.au/org/idn>
+    a sdo:Organization ;
+    sdo:name "Indigenous Data Network" ;
+    rdfs:label "Indigenous Data Network" ;
+    sdo:description "The IDN is within the University of Melbourne. It was established in 2018 to support and coordinate the governance of Indigenous data for Aboriginal and Torres Strait Islander peoples and empower Aboriginal and Torres Strait Islander communities to decide their own local data priorities." ;
+    sdo:url "https://mspgh.unimelb.edu.au/centres-institutes/centre-for-health-equity/research-group/indigenous-data-network"^^xsd:anyURI ;
+    dcterms:type <https://w3id.org/idn/def/org-indigeneity/non-indigenous> ;
+.
+
+<https://orcid.org/0000-0002-8742-7730>
+    a sdo:Person ;
+    dcterms:type sdo:Person ;
+    sdo:name "Nicholas J. Car"@en ;
+    rdfs:label "Nicholas J. Car"@en ;
+    sdo:email "nick@kurrawong.net"^^xsd:anyURI ;
+    dcat:relation [
+        dcat:hadRole aarr:affiliateOf ;
+        prov:agent <https://kurrawong.net> ;
+    ] ;
+    dcterms:type <https://w3id.org/idn/def/org-indigeneity/non-indigenous> ;
+.
+
+<https://orcid.org/0000-0003-1983-6687>
+    a sdo:Person ;
+    sdo:name "Sandra Silcot"@en ;
+    rdfs:label "Sandra Silcot"@en ;
+    sdo:email "ssilcot@gmail.com"^^xsd:anyURI ;
+    dcat:relation [
+        dcat:hadRole aarr:affiliateOf ;
+        prov:agent <https://linked.data.gov.au/org/idn>;
+    ] ;
+.
+
+<https://kurrawong.net>
+    a sdo:Organization ;
+    sdo:name "KurrawongAI" ;
+    rdfs:label "KurrawongAI" ;
+    sdo:description "Kurrawong AI is a small, Artificial Intelligence, company in Australia specialising in Knowledge Graphs." ;
+    sdo:url "https://kurrawong.net"^^xsd:anyURI ;
+    sdo:identifier "31 353 542 036"^^idncp:abnId ;
+    dcterms:type <https://w3id.org/idn/def/org-indigeneity/non-indigenous> ;
+.
+
+<https://linked.data.gov.au/org/au>
+    a sdo:Organization ;
+    sdo:name "Australian Federal Government" ;
+    rdfs:label "Australian Federal Government" ;
+    sdo:url "https://www.australia.gov.au"^^xsd:anyURI ;
+    dcterms:type <https://w3id.org/idn/def/org-indigeneity/non-indigenous> ;
+.
+
+<https://linked.data.gov.au/org/abs>
+    a sdo:Organization ;
+    sdo:name "Australian Bureau of Statistics" ;
+    rdfs:label "Australian Bureau of Statistics" ;
+    sdo:url "https://www.abs.gov.au"^^xsd:anyURI ;
+    dcterms:type <https://w3id.org/idn/def/org-indigeneity/non-indigenous> ;
+.
+
+<https://linked.data.gov.au/org/sa>
+    a sdo:Organization ;
+    dcat:relation [
+        dcat:hadRole aarr:precursorOrganisation ;
+        prov:agent <https://linked.data.gov.au/org/dhs> ;
+    ] ;
+    sdo:name "Services Australia" ;
+    rdfs:label "Services Australia" ;
+    sdo:url "https://www.servicesaustralia.gov.au"^^xsd:anyURI ;
+    dcterms:type <https://w3id.org/idn/def/org-indigeneity/non-indigenous> ;
+.
+
+<https://linked.data.gov.au/org/dhs>
+    a sdo:Organization ;
+    sdo:identifier
+        "O-000880"^^idncp:agorId ,
+        "CA-7853"^^idncp:crsId ;
+    dcat:relation [
+        dcat:hadRole aarr:descendantOrganisation ;
+        prov:agent <https://linked.data.gov.au/org/sa> ;
+    ] ;
+    sdo:name "Department of Human Services" ;
+    rdfs:label "Department of Human Services" ;
+    sdo:url "https://www.humanservices.gov.au"^^xsd:anyURI ;
+    dcterms:type <https://w3id.org/idn/def/org-indigeneity/non-indigenous> ;
+.
+
+<https://w3id.org/idn/agent/agilwg>
+    a sdo:Organization ;
+    sdo:name "Australian Government Indigenous Locations Working Group 2007-2012" ;
+    rdfs:label "Australian Government Indigenous Locations Working Group 2007-2012" ;
+    dcat:relation [
+        dcat:hadRole aarr:partOf ;
+        prov:agent <https://linked.data.gov.au/org/au> ; # TODO: Find a better parent
+    ] ;
+    dcterms:type <https://w3id.org/idn/def/org-indigeneity/non-indigenous> ;
+.
+
+<https://w3id.org/idn/agent/abs-coatsis>
+  a sdo:Organization ;
+  sdo:name "Australian Bureau of Statistics Centre of Aboriginal and Torres Strait Islander Statistics" ;
+  rdfs:label "Australian Bureau of Statistics Centre of Aboriginal and Torres Strait Islander Statistics" ;
+  dcat:relation [
+    dcat:hadRole aarr:partOf ;
+    prov:agent <https://linked.data.gov.au/org/abs> ;
+  ] ;
+  dcterms:type <https://w3id.org/idn/def/org-indigeneity/indigeneity-unknown> ;
+  sdo:url "https://www.abs.gov.au/about/aboriginal-and-torres-strait-islander-peoples/aboriginal-and-torres-strait-islander-engagement"^^xsd:anyURI ;
+.
+
+<https://linked.data.gov.au/org/uts>
+    a sdo:Organization ;
+    sdo:name "University of Technology Sydney" ;
+    rdfs:label "University of Technology Sydney" ;
+    sdo:url "https://www.uts.edu.au"^^xsd:anyURI ;
+    dcterms:type <https://w3id.org/idn/def/org-indigeneity/non-indigenous> ;
+.
+
+<http://linked.data.gov.au/org/nla>
+    a sdo:Organisation ;
+    sdo:name "National Library of Australia" ;
+    rdfs:label "National Library of Australia" ;
+    sdo:url "https://www.nla.gov.au/"^^xsd:anyURI ;
+.

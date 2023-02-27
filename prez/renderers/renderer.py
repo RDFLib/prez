@@ -1,202 +1,125 @@
-from abc import ABCMeta, abstractmethod
-from typing import Dict, Optional, Union
+import asyncio
+import io
+import logging
+import time
+from typing import Optional
 
-from connegp import Connegp, RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
-from fastapi.responses import Response, JSONResponse, PlainTextResponse
-from rdflib import URIRef
+from connegp import RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
+from fastapi.responses import StreamingResponse
+from pydantic.types import List
+from rdflib import Graph, URIRef, Namespace, Literal
+from starlette.requests import Request
+from starlette.responses import Response
 
-from prez.config import *
-from prez.profiles.generate_profiles import ProfileDetails
-from prez.utils import templates
+from prez.models import SpatialItem, VocabItem, CatalogItem
+from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
+from prez.models.profiles_item import ProfileItem
+from prez.services.sparql_queries import (
+    generate_item_construct,
+    get_annotation_properties,
+    get_annotation_predicates,
+)
+from prez.services.sparql_utils import sparql_construct
 
 
-class Renderer(object, metaclass=ABCMeta):
-    """Abstract class containing base logic for conditionally rendering based on profile & mediatype"""
+log = logging.getLogger(__name__)
 
-    def __init__(
-        self,
-        request: object,
-        instance_uri: str,
-        instance_classes,
-        general_class: URIRef = OWL.Class,
-    ) -> None:
-        self.error = None
-        self.request = request
-        self.instance_uri = instance_uri
-        self.instance_classes = instance_classes
-        self.general_class = general_class
-        self.profile_details = ProfileDetails(
-            self.instance_uri, self.instance_classes, self.general_class
+
+async def return_from_queries(
+    queries: List[str], mediatype, profile, profile_headers, prez
+):
+    """
+    Executes SPARQL queries, loads these to RDFLib Graphs, and calls the "return_from_graph" function to return the
+    content
+    """
+    results = await asyncio.gather(
+        *[sparql_construct(query, prez) for query in queries]
+    )
+    graphs = [result[1] for result in results if result[0]]
+    graph = graphs[0]
+    if len(graphs) > 1:
+        for g in graphs[1:]:
+            graph.__iadd__(g)
+    return await return_from_graph(graph, mediatype, profile, profile_headers, prez)
+
+
+async def return_from_graph(graph, mediatype, profile, profile_headers, prez):
+    if str(mediatype) in RDF_MEDIATYPES:
+        return await return_rdf(graph, mediatype, profile_headers)
+
+    # elif mediatype == "xml":
+    #     ...
+
+    else:
+        if mediatype == Literal("text/anot+turtle"):
+            return await return_annotated_rdf(graph, prez, profile_headers, profile)
+
+
+async def return_rdf(graph, mediatype, profile_headers=None):
+    RDF_SERIALIZER_TYPES_MAP["text/anot+turtle"] = "turtle"
+    obj = io.BytesIO(
+        graph.serialize(
+            format=RDF_SERIALIZER_TYPES_MAP[str(mediatype)], encoding="utf-8"
         )
+    )
+    return StreamingResponse(content=obj, media_type=mediatype, headers=profile_headers)
 
-        connegp = Connegp(
-            request,
-            self.profile_details.available_profiles_dict,
-            self.profile_details.default_profile,
-        )
-        self.profile = connegp.profile
-        self.mediatype = connegp.mediatype
-        self.profiles_requested = connegp.profiles_requested
-        self.mediatypes_requested = connegp.mediatypes_requested
 
-        # make headers
-        if self.error is None:
-            self.headers = {
-                "Link": f'<{self.profile_details.profiles_dict[self.profile].uri}>; rel="profile"',
-                "Content-Type": self.mediatype,
-                "Access-Control-Allow-Origin": "*",
-            }
-            self.headers["Link"] += ", " + self._make_header_link_tokens()
-            self.headers["Link"] += ", " + self._make_header_link_list_profiles()
+async def return_annotated_rdf(graph, prez, profile_headers, profile):
+    from prez.cache import tbox_cache
 
-    def _make_header_link_tokens(self) -> str:
-        """Creates the Link header tokens for the supported profiles"""
-        individual_links = []
-        link_header_template = '<http://www.w3.org/ns/dx/prof/Profile>; rel="type"; token="{}"; anchor=<{}>, '
+    cache = tbox_cache
+    profile_annotation_props = get_annotation_predicates(profile)
+    queries_for_uncached, annotations_graph = await get_annotation_properties(
+        graph, **profile_annotation_props
+    )
+    results = await sparql_construct(queries_for_uncached, prez)
+    if results[1]:
+        annotations_graph += results[1]
+        cache += results[1]
+    obj = io.BytesIO(
+        (graph + annotations_graph).serialize(format="longturtle", encoding="utf-8")
+    )
+    return StreamingResponse(
+        content=obj, media_type="text/turtle", headers=profile_headers
+    )
 
-        for token, profile in self.profile_details.profiles_dict.items():
-            individual_links.append(link_header_template.format(token, profile.uri))
 
-        return "".join(individual_links).rstrip(", ")
+async def return_profiles(
+    classes: frozenset,
+    prez_type: str,
+    request: Optional[Request] = None,
+    prof_and_mt_info: Optional = None,
+) -> Response:
+    from prez.cache import profiles_graph_cache
 
-    def _make_header_link_list_profiles(self) -> str:
-        """Creates the Link header URIs for each possible profile representation"""
-        individual_links = []
-        for token, profile in self.profile_details.profiles_dict.items():
-            # create an individual Link statement per Media Type
-            for mediatype in profile.mediatypes:
-                # set the rel="self" just for this profile & mediatype
-                if mediatype != "_internal":
-                    if (
-                        token == self.profile_details.default_profile
-                        and mediatype
-                        == self.profile_details.profiles_dict[
-                            self.profile
-                        ].default_mediatype
-                    ):
-                        rel = "self"
-                    else:
-                        rel = "alternate"
+    if not prof_and_mt_info:
+        prof_and_mt_info = ProfilesMediatypesInfo(request=request, classes=classes)
+    if not request:
+        request = prof_and_mt_info.request
+    items = [
+        ProfileItem(uri=str(uri), url_path=str(request.url.path))
+        for uri in prof_and_mt_info.avail_profile_uris
+    ]
+    queries = [
+        generate_item_construct(profile, URIRef("http://kurrawong.net/profile/prez"))
+        for profile in items
+    ]
+    g = Graph(bind_namespaces="rdflib")
+    g.bind("altr-ext", Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#"))
+    for q in queries:
+        g += profiles_graph_cache.query(q)
+    return await return_from_graph(
+        g,
+        prof_and_mt_info.mediatype,
+        prof_and_mt_info.profile,
+        prof_and_mt_info.profile_headers,
+        prez_type,
+    )
 
-                    individual_links.append(
-                        '<{}?_profile={}&_mediatype={}>; rel="{}"; type="{}"; profile="{}", '.format(
-                            self.instance_uri,
-                            token,
-                            mediatype,
-                            rel,
-                            mediatype,
-                            profile.uri,
-                        )
-                    )
 
-        # append to, or create, Link header
-        return "".join(individual_links).rstrip(", ")
-
-    def _make_rdf_response(self, item_uri, graph: Graph) -> Response:
-        """Creates an RDF response from a Graph"""
-        serial_mediatype = RDF_SERIALIZER_TYPES_MAP[self.mediatype]
-
-        # remove labels from the graph
-        query = f"""
-        PREFIX skos: <{SKOS}>
-        CONSTRUCT {{
-            <{str(item_uri)}> ?p ?o .
-            ?o ?p2 ?o2 .
-            ?coll skos:member <{str(item_uri)}> .
-
-            ?x rdfs:member <{str(item_uri)}> .
-            ?y rdfs:member ?x .
-        }}
-        WHERE {{
-            <{str(item_uri)}> ?p ?o .
-            # Blank Nodes
-
-            OPTIONAL {{
-                ?o ?p2 ?o2 .
-                FILTER(ISBLANK(?o))
-            }}
-
-            # VocPrez
-            OPTIONAL {{
-                ?coll skos:member <{str(item_uri)}> .
-            }}
-
-            # SpacePrez
-            OPTIONAL {{
-                ?x rdfs:member <{str(item_uri)}> .
-
-                OPTIONAL {{
-                    ?y rdfs:member ?x .
-                }}
-            }}
-        }}
-        """
-        filtered_g = Graph(namespace_manager=graph.namespace_manager)
-        filtered_g += graph.query(query).graph
-
-        filtered_g = graph
-        response_text = filtered_g.serialize(format=serial_mediatype, encoding="utf-8")
-
-        # destroy the triples in the triplestore, then delete the triplestore
-        # this helps to prevent a memory leak in rdflib
-        graph.store.remove((None, None, None))
-        graph.destroy({})
-        del graph
-        return Response(response_text, media_type=self.mediatype)
-
-    def _render_alt_html(
-        self, template_context: Union[Dict, None]
-    ) -> templates.TemplateResponse:
-        """Renders the HTML representation of the alternate profiles using the 'alt.html' template"""
-        _template_context = {
-            "request": self.request,
-            "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
-            "profiles": self.profile_details.available_profiles_dict,
-            "default_profile": self.profile_details.default_profile,
-        }
-        if template_context is not None:
-            _template_context.update(template_context)
-        return templates.TemplateResponse(
-            "alt.html", context=_template_context, headers=self.headers
-        )
-
-    def _render_alt_json(self) -> JSONResponse:
-        """Renders the JSON representation of the alternate profiles"""
-        return JSONResponse(
-            content={
-                "uri": self.instance_uri if USE_PID_LINKS else str(self.request.url),
-                "profiles": list(self.profile_details.available_profiles_dict.keys()),
-                "default_profile": self.profile_details.default_profile,
-            },
-            media_type="application/json",
-            headers=self.headers,
-        )
-
-    def _render_alt(
-        self, template_context: Union[Dict, None], alt_profiles_graph: Graph
-    ) -> Union[templates.TemplateResponse, Response, JSONResponse]:
-        """Renders the alternate profiles based on mediatype"""
-        if self.mediatype == "text/html":
-            return self._render_alt_html(template_context)
-        elif self.mediatype in RDF_MEDIATYPES:
-            response_text = alt_profiles_graph.serialize(format=self.mediatype)
-            return Response(response_text, media_type=self.mediatype)
-        else:  # application/json
-            return self._render_alt_json()
-
-    @abstractmethod
-    def render(
-        self,
-        template_context: Optional[Dict] = None,
-        alt_profiles_graph: Optional[Graph] = None,
-    ) -> Union[
-        PlainTextResponse, templates.TemplateResponse, Response, JSONResponse, None
-    ]:
-        """Renders this object based on a requested profile & mediatype"""
-        if self.error is not None:
-            return PlainTextResponse(self.error, status_code=400)
-        elif self.profile == "alt":
-            return self._render_alt(template_context, alt_profiles_graph)
-        # extra profiles go here
-        else:
-            return None
+async def return_all_profiles():
+    """
+    returns all profiles the API knows about
+    """
+    pass

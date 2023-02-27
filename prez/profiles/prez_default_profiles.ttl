@@ -3,7 +3,7 @@ PREFIX dcat: <http://www.w3.org/ns/dcat#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX geo: <http://www.opengis.net/ont/geosparql#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
-PREFIX prez: <https://surroundaustralia.com/prez/>
+PREFIX prez: <https://prez.dev/>
 PREFIX prof: <http://www.w3.org/ns/dx/prof/>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -11,12 +11,12 @@ PREFIX sh: <http://www.w3.org/ns/shacl#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
 
-<http://surroundaustralia.com/profile/prez>
+<http://kurrawong.net/profile/prez>
     a prof:Profile ;
     dcterms:identifier "prez" ;
     dcterms:description "A profile for the Prez Linked Data API" ;
     skos:prefLabel "Prez profile" ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
 .
 
 <http://www.opengis.net/spec/ogcapi-features-1/1.0/req/oas30>
@@ -26,8 +26,79 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
     dcterms:title "OGC API Features" ;
     altr-ext:constrainsClass
         prez:Home ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
-        "text/html" ,
+        "text/anot+turtle" ,
         "application/geo+json" ;
+.
+
+altr-ext:alt-profile
+    a prof:Profile ;
+    dcterms:description "The representation of the resource that lists all other representations (profiles and Media Types)" ;
+    dcterms:identifier "alt" ;
+    dcterms:title "Alternates Profile" ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
+    altr-ext:hasResourceFormat
+        "application/ld+json" ,
+        "application/rdf+xml" ,
+        "text/anot+turtle" ,
+        "text/turtle" ;
+    altr-ext:constrainsClass
+        geo:Feature ,
+        prez:FeatureList ,
+        geo:FeatureCollection ,
+        prez:FeatureCollectionList ,
+        dcat:Dataset ,
+        prez:DatasetList ,
+        dcat:Catalog ,
+        dcat:Resource ,
+        prez:CatalogList ,
+        skos:ConceptScheme ,
+        skos:Concept ,
+        skos:Collection ,
+        prez:SchemesList ,
+        prez:VocPrezCollectionList ;
+.
+
+prez:profiles
+    a prof:Profile ;
+    dcterms:title "Profiles" ;
+    dcterms:description "List of profiles" ;
+    dcterms:identifier "profiles" ;
+    altr-ext:constrainsClass prez:ProfilesList ,
+                             prez:SpacePrezProfileList ,
+                             prez:VocPrezProfileList ,
+                             prez:CatPrezProfileList ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
+    altr-ext:hasResourceFormat
+        "application/json" ,
+        "text/anot+turtle" ;
+    altr-ext:hasNodeShape [
+      a sh:NodeShape ;
+        sh:targetClass prez:ProfilesList ,
+                       prez:SpacePrezProfileList ,
+                       prez:VocPrezProfileList ,
+                       prez:CatPrezProfileList ;
+        altr-ext:outboundChildren rdfs:member ;
+    ] ;
+    altr-ext:constrainsClass
+        prof:Profile ,
+        prez:ProfilesList ;
+.
+
+<https://w3id.org/profile/mem>
+    a prof:Profile ;
+    dcterms:description "A very basic data model that lists the members of container objects only, i.e. not their other properties" ;
+    dcterms:identifier "mem" ;
+    dcterms:title "Members" ;
+    altr-ext:constrainsClass prez:DatasetList ,
+                             prez:FeatureCollectionList ,
+                             prez:FeatureList ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
+    altr-ext:hasResourceFormat
+        "application/json" ,
+        "application/ld+json" ,
+        "application/rdf+xml" ,
+        "text/anot+turtle" ,
+        "text/turtle" ;
 .

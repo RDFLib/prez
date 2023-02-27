@@ -1,175 +1,141 @@
 ![](https://github.com/RDFLib/prez/raw/main/prez/static/img/prez-logo.png)
 
 # Prez
-Prez is a web framework API for delivering Linked Data. It provides read-only access to Knowledge Graph data which can be subset according to information _profiles_.
+Prez is a data-configurable Linked Data API framework that delivers _profiles_ of Knowledge Graph data according to the [Content Negotiation by Profile](https://w3c.github.io/dx-connegp/connegp/) standard.
 
-Prez comes in three main flavours:
+> **Where's the UI?**
+> 
+> Prez delivers data only - usually [RDF](https://en.wikipedia.org/wiki/Resource_Description_Framework) but could be GeoJSON, XML etc. - and it delivers a special form of RDF which includes labels for all objects and predicates Prez can find in its database.   
+> 
+> If you want a UI that can render Prez' labelled RDF as HTML and other fancy graphical widgets, see the [Prez UI](https://github.com/RDFLib/prez-ui).
 
-- _VocPrez_ - for vocabularies, based on the [SKOS](https://www.w3.org/TR/skos-reference/) data model
-- _SpacePrez_ - for spatial data, based on [OGC API](https://docs.ogc.org/is/17-069r3/17-069r3.html) specification and the [GeoSPARQL](https://opengeospatial.github.io/ogc-geosparql/geosparql11/spec.html) data model
-- _CatPrez_ - for [DCAT](https://www.w3.org/TR/vocab-dcat/) data catalogs
+Prez comes with several pre-configures subsystems:
 
-## Outline
+* _VocPrez_ - for vocabularies, based on the [SKOS](https://www.w3.org/TR/skos-reference/) data model
+* _SpacePrez_ - for spatial data, based on [OGC API](https://docs.ogc.org/is/17-069r3/17-069r3.html) specification and the [GeoSPARQL](https://opengeospatial.github.io/ogc-geosparql/geosparql11/spec.html) data model
+* _CatPrez_ - for [DCAT](https://www.w3.org/TR/vocab-dcat/) data catalogs
 
-* [Installation & Use]()
-  * [Installation](#installation)
-    * [As a Python application](#as-a-python-application)
-    * [As a Docker container](#as-a-docker-container)
-  * [Use](#use) 
-    * [Environment Variables](#environment-variables)
-    * [Running](#running)
-      * [As a Python Application](#run-as-a-python-application)
-      * [As a Docker container](#run-as-a-docker-container)
-* [Data](#data)
-  * [Catalogue Data](#catalogue-data)
-  * [Spatial Data](#spatial-data)
-  * [Vocabulary Data](#vocabulary-data)
-* [Contact](#contact)
-* [Contributing](#contributing)
-* [License](#license)
+Prez uses the modern [FastAPI](https://fastapi.tiangolo.com/) Python web framework, so it's fast! It also has few requirements beyond FastAPI so should be pretty easy to install and run in most cases.
 
-## Installation & Use
+It expects "high quality" data to work well: Prez itself won't patch up bad or missing data. In this way it remains relatively simple and this ensures value is retained in the data and not in hidden code.
 
-Prez is pretty straight-forward to install and operate and all while being high-performance. It is implemented as a [Python](https://www.python.org/) s [FastAPI](https://fastapi.tiangolo.com/) web framework and uses Python's [RDFLib](https://pypi.org/project/rdflib/) to access RDF data.
+> **NOTE**: There are a number of data quality assessment tools and processes you can run to ensure that the data you want Prez to access is fit for purpose. See [Data Validation](#data-validation) below.
+
+Prez accesses data stored in an RDF database - a 'triplestore' - and uses the SPARQL Protocol to do so. Any SPARQL Protocol-compliant DB may be used.
 
 ## Installation
 
-To install Prez, you need to either install Python and run Prez as a Python application or as a Docker container.
+_You don't have to 'install' Prez to use it, see the [Running](#running) options below. You may want to install Prez to develop with it._
 
-In either case, you will need to provide access to an RDF database (a "triplestore") via a [SPARQL Protocol](https://www.w3.org/TR/sparql11-protocol/) endpoint for Prez to lodge SPARQL queries with.
+### Poetry 
 
-### As a Python application
+Prez is developed with [Poetry](https://python-poetry.org/) which is a Python packaging and dependency tool. Poetry presents all of Prez' dependencies (other Python packages) in the `pyproject.toml` file in this directory which can be used by Poetry to establish the environment you need to run Prez.
 
-1. Clone this Git repository to your local system
-    * A good guide: <https://devconnected.com/how-to-clone-a-git-repository/>
-2. Follow the main steps for installation of a generic FastAPI application
-    * <https://realpython.com/fastapi-python-web-apis/>
+> Executing `poetry update` within this directory within a Python virtual environment will probably be all you need to do!
 
-Python's [PIP](https://pypi.org/project/pip/) or the more modern [Poetry](https://python-poetry.org/) can be used for installation of FastAPI and its dependencies.
+### PIP
 
-Once you have this repository cloned locally, and Python, FastAPI and its dependencies are installed, you are ready to use, see _Use --> As a Python Application_ below.
+We also provide a standard `requirements.txt` file for use with the common [PIP](https://pypi.org/project/pip/) package installer. We build this file using Poetry too.
 
-### As a Docker container
+> Executing `pip install -r requirements.txt` within a Python virtual environment will probably be all you need to do!
 
-This repository, set up with dependencies, is available on GitHub's public Docker Hub, via this repository:
+## Running
 
-* <https://github.com/RDFLib/prez/pkgs/container/prez>
+Prez runs as a standard FastAPI application so for all the normal HOW TO running questions, see FastAPI's documentation:
 
-Follow normal public Docker container steps for use.
-
-## Use
-
-Use of Prez requires Prez either installed as a Python application or as a Docker image.
-
-Once Prez is available, it needs to be configured for use with environment variables. 
+* <https://fastapi.tiangolo.com>
 
 ### Environment Variables
 
-The full set of Environment Variables that can be set are given as variables in the file `config.py`. Prez will overwrite the default values in the file with any set as Environment Variables.
+You do need to configure at least a couple of environment variables for Prez to run. The full set of available variables are found in `prez/config.py`.
 
-A minimal set of Environment Variables, set using [BASH shell](https://www.educba.com/bash-shell-in-linux/) commands, to configure Prez to run just the VocPrez subsystem for vocabularies could be:
+#### Minimal
 
+A minimal set of environment variables with example values to run prez is listed below:
+
+`ENABLED_PREZS=["SpacePrez"]`  
+`SPACEPREZ_SPARQL_ENDPOINT=http://localhost:3030/spaceprez`
+
+Yes, you really only need to tell Prez which subsystems to enable - here it's SpacePrez for spatial data - and point Prez at a SPARQL endpoint for it to get data from!
+
+#### Details
+
+Of course, there are many other variables you may want to set. Here are some details.
+
+See the `Settings` class within prez/config.py. You don't need to worry about the functions, just the variables there.
+
+Have a look at the `Settings` class documentation for information about each variable.
+
+Variable types (string, int etc.) are all indicated using Python type hinting, e.g.:
+
+```python
+port: int = 8000
 ```
-ENABLED_PREZS='["VocPrez"]'
-VOCPREZ_SPARQL_ENDPOINT=http://some-sparql-endpoint.com/sparql
-```
 
-To title the Prez system overall, to enable VocPrez & SpacePrez, to give each different titles but the same SPARQL endpoints:
+So the `port` variable must be an `int` and its default value is 8000.
 
-```
-PREZ_TITLE="A Great Prez Instance"
-ENABLED_PREZS='["SpacePrez","VocPrez"]'
-SPACEPREZ_SPARQL_ENDPOINT=http://some-sparql-endpoint.com/sparql
-VOCPREZ_SPARQL_ENDPOINT=http://some-sparql-endpoint.com/sparql
-VOCPREZ_TITLE="A VocPrez Instance"
-SPACEPREZ_TITLE="A SpacePrez Instance"
-```
+### Using Docker
 
-### Running 
+To run Prez within a Docker container, first build the Docker image using the Dockerfile in this repo, or pull from Dockerhub:
 
-#### Run as a Python Application
+build: `docker build -t prez .`
 
-Prez can be run directly using python by running:
-`python run prez/app.py`, NB though, Prez won't start unless the specified SPARQL endpoint(s) is/are found.
-To run a mock SPARQL endpoint, with some example data, you can run the following command:
-`python tests/local_sparql_store/store.py`
-You can then run prez against the local mock SPARQL endpoint by setting the SPACEPREZ_SPARQL_ENDPOINT environment variable to `http://localhost:3030/spaceprez`.
+or
 
-#### run as a Docker container
+pull: `docker pull surroundaustralia/prez`
 
-With the public Prez Docker image, Prez can be run with Docker commands like this:
-
+Then run the image:
 ```
 docker run -p 8000:8000 \
     -e ENABLED_PREZS=["SpacePrez", "VocPrez"] \
-    -e VOCPREZ_SPARQL_ENDPOINT=http://some-sparql-endpoint.com/sparql \
-    ghcr.io/rdflib/prez:latest
+    -e SPACEPREZ_SPARQL_ENDPOINT=http://localhost:3030/spatial \
+    -e VOCPREZ_SPARQL_ENDPOINT=http://localhost:3030/other \
+    rdflib/prez
 ```
 
-Alternatively, you can build your own image from the Dockerfile that is also included in this repo like this, within the `prez/` folder:
+The above command will run a Docker container with Prez in it on Port 8000 with SpacePrez & VocPrez subsystems enabled and different SPARQL endpoints given for each.
 
-```
-docker build -t prez .
-```
+## Data Validation
 
-...and then run the resultant image. 
+For Prez to deliver data via its various subsystems, the data needs to conform to some minimum requirements: you can't, for instance, run VocPrez without an SKOS ConceptSchemes defined!
 
+### Profiles
 
-## Data
+Formal RDF data profiles - standards that constrain other standards - are specified for Space, Voc & CatPrez. See:
 
-Prez reads [RDF](https://www.w3.org/RDF/) from an RDF database, often called a "triplestore" which it accesses through a [SPARQL Protocol](https://www.w3.org/TR/sparql11-protocol/) endpoint with [SPARQL queries](https://www.w3.org/TR/sparql11-query/).
+* [SpacePrez Profile Specification](https://w3id.org/profile/spaceprez/spec)
+* [VocPrez Profile Specification](https://w3id.org/profile/vocprez/spec)
+* [CatPrez Profile Specification](https://w3id.org/profile/catprez/spec)
+  * _yes yes, we know this one is offline for the moment. To be fixed shortly!_
 
-Even though it can handle all kinds of data variability - as per RDF graphs in general - there are minimal requirements.
-
-The minimum requirements are _per type_ where the _types_ are catalogue, spatial & vocabulary (for the moment!).
+The specifications of the various profiles _should_ be straightforward to read. Just be aware that they profile - inherit from and further constrain - other profiles so that there are quite a few 'background' data rules that must be met.
 
 ### Validation
 
-Data can be assessed as to whether it meets the minimal catalogue, spatial & vocabulary requirements or not by using [SHACL](https://www.w3.org/TR/shacl/) validation techniques outside of Prez. 
+All of the profiles listed above provide validators that can be used with RDF data to test to see if it's valid. If it is, Prez will be just fine with it.
 
-* [RDFTools](http://rdftools.kurrawong.net/validate)
+The profiles' validators are all available from the profiles themselves (navigate to the listings of other profile resources via the specification links above) and they are also loaded into the _RDFTools_ online tool which you can use without downloading or installing anything:
 
-We suggest use of the online [RDFTools](http://rdftools.kurrawong.net/validate) system which uses SHACL validators via the RDFLib [pySHACL](https://github.com/RDFLib/pySHACL) SHACL engine. It also includes all the relevant validators for Prez data (see subsections below), pre-loaded.
+* <http://rdftools.kurrawong.net/validate>
 
-### Catalogue Data
-
-Catalogue data for Prez' CatPrez must conform to the [CatPrez Profile of DCAT](https://w3id.org/profile/catprez).
-
-Mandates the use of a DCAT [`Catalog`](https://www.w3.org/TR/vocab-dcat/#Class:Catalog), with basic metadata, to contain [`Resource`](https://www.w3.org/TR/vocab-dcat/#Class:Resource) instances which maybe subtypes to indicate "dataset", rather than the use of [`Dataset`](https://www.w3.org/TR/vocab-dcat/#Class:Dataset) directly.
-
-### Spatial Data
-
-Spatial data for Prez' SpacePrez must conform to the [SpacePrez Profile of GeoSPARQL & DCAT](https://w3id.org/profile/spaceprez).
-
-Mandates data objects to meet the [OGC API: Features Core](http://www.opengis.net/doc/IS/ogcapi-features-1/1.0) standard's data model. This includes:
-
-* Dataset
-  * instances of DCAT's [`Dataset`](https://www.w3.org/TR/vocab-dcat/#Class:Dataset)
-    * top-level container
-    * basic metadata required
-* Feature Collection
-  * instances of GeoSPARQL's [`FeatureCollection`](https://opengeospatial.github.io/ogc-geosparql/geosparql11/spec.html#_class_geofeaturecollection)
-
-### Vocabulary Data
-
-Vocabulary data for Prez' VocPrez must conform to the [VocPrez Profile of SKOS](https://w3id.org/profile/vocprez).
-
-Mandates use of `dcterms:identifier` properties, basic labelling and vocabulary links per `skos:Concept`. Really only ensures `skos:Concept` instances are uniquely identified & linked to their vocabulary(ies).
-
-Mandates basic metadata for `skos:ConceptScheme` instances, similar to `dcat:Resource` for CatPrez, such as who, what, where, when.
+Look for the _VocPrez Compounded_ and similar validators. The 'compounded' bit means that validator will validate data against all VocPrez and inherited requirements. 
 
 ## Contact
 
-This tool is actively developed and supported by [KurrawongAI](https://kurrawong.net) and the [Indigenous Data Network](https://idnau.org/) but it is a community-led, open source project. Please contact the maintainers either by creating issues in the [Issue Tracker](https://github.com/RDFLib/prez/issues) or directly emailing the lead developers:
+This tool is actively developed and supported by [KurrawongAI](https://kurrawong.net), a small Australian Knowledge Graph company, and supported by open source contributors too. Please contact KurrawongAI either by creating issues in the [Issue Tracker](https://github.com/RDFLib/prez/issues) or directly via their website.
 
-**Nicholas Car**  
+Here are the lead developers:
+
+**KurrawongAI**  
+_David Habgood_  
+<dcchabgood@gmail.com>  
+
+_Nicholas Car_  
 <nick@kurrawong.net>  
 
-**Jamie Feiss**  
+**University of Melbourne** - Prez UI mainly  
+_Jamie Feiss_  
 <jamie.feiss@unimelb.edu.au>
-
-**David Habgood**  
-<dcchabgood@gmail.com>
 
 ## Contributing
 

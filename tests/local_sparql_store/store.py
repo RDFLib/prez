@@ -1,10 +1,9 @@
+import argparse
 import urllib.parse
-from functools import lru_cache
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
-import argparse
-from rdflib import Graph
 
+from rdflib import Graph, Dataset, ConjunctiveGraph
 
 KEEP_RUNNING = True
 
@@ -15,26 +14,32 @@ def keep_running():
 
 def load_catprez_graph():
     print("loading CatPrez graph")
-    g = Graph()
-    for f in Path("/Users/nick/Work/idn/catalogue-data/data").rglob("*.ttl"):
+    g = ConjunctiveGraph()
+    for f in Path(Path(__file__).parent.parent / "data" / "catprez" / "input").glob(
+        "*.ttl"
+    ):
         g.parse(f)
     return g
 
 
 def load_spaceprez_graph():
     print("loading SpacePrez graph")
-    g = Graph()
-    for f in Path(Path(__file__).parent / "data" / "spaceprez").glob("*.ttl"):
+    g = ConjunctiveGraph()
+    for f in Path(Path(__file__).parent.parent / "data" / "spaceprez" / "input").glob(
+        "*.ttl"
+    ):
         g.parse(f)
     return g
 
 
 def load_vocprez_graph():
-        print("loading VocPrez graph")
-        g = Graph()
-        for f in Path(Path(__file__).parent / "data" / "vocprez").glob("*.ttl"):
-            g.parse(f)
-        return g
+    print("loading VocPrez graph")
+    g = ConjunctiveGraph()
+    for f in Path(Path(__file__).parent.parent / "data" / "vocprez" / "input").glob(
+        "*.ttl"
+    ):
+        g.parse(f)
+    return g
 
 
 catprez_graph = load_catprez_graph()
@@ -123,8 +128,11 @@ class SparqlServer(BaseHTTPRequestHandler):
 
         # get query from POST body
         query = self.rfile.read(int(self.headers["Content-Length"])).decode("utf-8")
-
-        self.apply_sparql_query(query)
+        content_type = self.headers["Content-Type"]
+        if content_type == "application/sparql-update":
+            self.apply_sparql_update(query)
+        else:
+            self.apply_sparql_query(query)
 
     def do_HEAD(self):
         return self.http_response(200, "text/plain", "")
@@ -146,7 +154,7 @@ class SparqlServer(BaseHTTPRequestHandler):
         return status, content_type, content
 
     def apply_sparql_query(self, query):
-        print(f"query: {query}")
+        # print(f"query: {query}")
         try:
             if "catprez" in self.path:
                 result = catprez_graph.query(query)
@@ -168,6 +176,26 @@ class SparqlServer(BaseHTTPRequestHandler):
                 400, "text.plain", f"Your SPARQL query could not be interpreted: {e}"
             )
 
+    def apply_sparql_update(self, update):
+
+        update = urllib.parse.unquote_plus(update)
+
+        try:
+            if "catprez" in self.path:
+                result = catprez_graph.update(update)
+            elif "vocprez" in self.path:
+                result = vocprez_graph.update(update)
+            else:  # "spaceprez" in self.path:
+                result = spaceprez_graph.update(update)
+
+            content_type = "text/plain"
+
+            return self.http_response(200, content_type, "Update succeeded")
+        except Exception as e:
+            return self.http_response(
+                400, "text.plain", f"Your SPARQL query could not be interpreted: {e}"
+            )
+
     def http_response(self, status, content_type, content):
         self.send_response(status)
         self.send_header("Content-type", content_type)
@@ -178,12 +206,12 @@ class SparqlServer(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--server',
-                        default="localhost",
-                        help='Optionally a server location')
-    parser.add_argument('-p', '--port',
-                        default=3030,
-                        help='Optionally a port to run on')
+    parser.add_argument(
+        "-s", "--server", default="localhost", help="Optionally a server location"
+    )
+    parser.add_argument(
+        "-p", "--port", default=3030, help="Optionally a port to run on"
+    )
     args = parser.parse_args()
 
     srv = HTTPServer((args.server, int(args.port)), SparqlServer)

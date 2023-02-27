@@ -1,31 +1,21 @@
 import re
-from typing import Optional, Tuple
+from typing import Tuple
 
 from fastapi import HTTPException
 
-from prez.config import CQL_PROPS
-
 
 class CQLSearch(object):
-    def __init__(
-        self,
-        filter: str,
-        datasets: str,
-        collections: str,
-        filter_lang: Optional[str] = None,
-        filter_crs: Optional[str] = None,
-    ) -> None:
-        self.filter = filter
-        self.datasets = datasets
-        self.collections = collections
-        self.filter_lang = filter_lang
-        self.filter_crs = filter_crs
+    from prez.config import settings
+
+    def __init__(self, cql_query: str, sparql_query: str) -> None:
+        self.cql_query = cql_query
+        self.sparql_query = sparql_query
 
     def _check_prop_exists(self, prop: str) -> bool:
-        return prop in CQL_PROPS.keys()
+        return prop in settings.cql_props.keys()
 
     def _check_type(self, prop: str, val: str) -> bool:
-        prop_type = CQL_PROPS[prop].get("type")
+        prop_type = settings.cql_props[prop].get("type")
         if prop_type is not None:
             correct_type = False
             match prop_type:
@@ -58,7 +48,7 @@ class CQLSearch(object):
             if not self._check_type(prop, val):
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Invalid type for the property {prop}, which is of type {CQL_PROPS[prop].get('type')}",
+                    detail=f"Invalid type for the property {prop}, which is of type {settings.cql_props[prop].get('type')}",
                 )
 
         # string replace
@@ -85,7 +75,7 @@ class CQLSearch(object):
             if not self._check_type(prop, val1) or not self._check_type(prop, val2):
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Invalid type for the property {prop}, which is of type {CQL_PROPS[prop].get('type')}",
+                    detail=f"Invalid type for the property {prop}, which is of type {settings.cql_props[prop].get('type')}",
                 )
 
         # string replace
@@ -114,7 +104,7 @@ class CQLSearch(object):
             if not self._check_type(prop, val):
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Invalid type for the property {prop}, which is of type {CQL_PROPS[prop].get('type')}",
+                    detail=f"Invalid type for the property {prop}, which is of type {settings.cql_props[prop].get('type')}",
                 )
 
         # string replace
@@ -148,7 +138,7 @@ class CQLSearch(object):
                 if not self._check_type(prop, element.strip()):
                     raise HTTPException(
                         status_code=400,
-                        detail=f"Invalid type for the property {prop}, which is of type {CQL_PROPS[prop].get('type')}",
+                        detail=f"Invalid type for the property {prop}, which is of type {settings.cql_props[prop].get('type')}",
                     )
 
         # string replace
@@ -164,16 +154,17 @@ class CQLSearch(object):
 
         if self.datasets != "":
             self.dataset_query = f"""
-                VALUES ?d_id {{{" ".join([f'"{d.strip()}"^^xsd:token' for d in self.datasets.split(',')])}}}
+                VALUES ?d_id {{{" ".join([f'"{d.strip()}"^^prez:slug' for d in self.datasets.split(',')])}}}
             """
 
         self.collection_query = ""
 
         if self.collections != "":
             self.collection_query = f"""
-                VALUES ?coll_id {{{" ".join([f'"{coll.strip()}"^^xsd:token' for coll in self.collections.split(',')])}}}
+                VALUES ?coll_id {{{" ".join([f'"{coll.strip()}"^^prez:slug' for coll in self.collections.split(',')])}}}
             """
 
+        # TODO run regex at once, then separately parse components
         if self.filter != "":
             self.filter = self._parse_eq_ops(self.filter)
             self.filter = self._parse_between(self.filter)
@@ -184,4 +175,4 @@ class CQLSearch(object):
             self.filter = self._parse_in(self.filter)
 
             self.filter = f"FILTER({self.filter})"
-        return self.dataset_query, self.collection_query, self.filter
+        return self.filter

@@ -1,5 +1,5 @@
 # Creating a python base with shared environment variables
-FROM python:3.10.5-slim-buster as builder-base
+FROM python:3.11-slim-buster as builder-base
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=off \
@@ -23,16 +23,16 @@ RUN buildDeps="build-essential" \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Poetry - respects $POETRY_VERSION & $POETRY_HOME
-ENV POETRY_VERSION=1.2.0
+ENV POETRY_VERSION=1.3.1
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN curl -sSL https://install.python-poetry.org | python && \
     chmod a+x /opt/poetry/bin/poetry
 
 WORKDIR /app
-COPY poetry.lock pyproject.toml ./
+COPY poetry.lock pyproject.toml connegp-0.1.5-py3-none-any.whl ./
 RUN poetry install --only main --no-root --no-ansi
 
-FROM python:3.10.5-slim-buster
+FROM python:3.11-slim-buster
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH="/app/.venv/bin:$PATH"

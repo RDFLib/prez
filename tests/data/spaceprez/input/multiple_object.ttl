@@ -1,0 +1,19 @@
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX reg: <http://purl.org/linked-data/registry#>
+PREFIX status: <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/alteration_facies_contact>
+    a geo:Feature ;
+    dcterms:identifier "alteration_facies_contact"^^xsd:token ;
+    dcterms:provenance "this vocabulary"@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact> ;
+    skos:definition "A metasomatic facies contact separating rocks that have undergone alteration of a particular facies from those that have undergone metasomatism of another facies. Alteration is a kind of metasomatism that does not introduce economically important minerals."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "alteration facies contact"@en ;
+.

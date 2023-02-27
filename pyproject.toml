@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "prez"
-version = "0.4.0"
-description = ""
-authors = ["Jamie Feiss <jamie.feiss@gmail.com>", "Nicholas Car <nick@kurrawong.net>", "David Habgood <david.habgood@surroundaustralia.com>"]
+version = "0.4.2"
+description = "A python application for displaying linked data on the web"
+authors = ["Jamie Feiss <jamie.feiss@gmail.com>", "Nicholas Car <nick@kurrawong.net>", "David Habgood <dcchabgood@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -13,19 +13,20 @@ aiofiles = "^0.7.0"
 httpx = "^0.20.0"
 rdflib = "^6.1.1"
 python-multipart = "^0.0.5"
-connegp = { git = "https://github.com/surroundaustralia/Connegp2.git", branch = "main" }
-fedsearch = { git = "https://github.com/surroundaustralia/vocprez-fedsearch.git" }
-starlette-core = { git = "https://github.com/accent-starlette/starlette-core.git" }
+connegp = { file = "connegp-0.1.5-py3-none-any.whl" }
 async-lru = "^1.0.3"
 Shapely = "^1.8.2"
 pytest = "^7.1.2"
 geojson-rewind = "^1.0.3"
+toml = "^0.10.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"
 pre-commit = "^2.15.0"
-tavern = "^1.16.3"
 black = "^22.3.0"
+pytest-asyncio = "^0.19.0"
+requests = "^2.28.1"
+scalene = "^1.5.18"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

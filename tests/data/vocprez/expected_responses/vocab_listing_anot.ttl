@@ -1,0 +1,18 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix prez: <https://prez.dev/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+prez:SchemesList prez:count 2 ;
+     rdfs:member <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype>,
+        <https://linked.data.gov.au/def/warox-alteration-types> .
+
+<http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> skos:prefLabel "Contact Type"@en ;
+    dcterms:provenance "Original set of terms from the GeosciML standard" ;
+    prez:link "/v/vocab/contacttype" .
+
+<https://linked.data.gov.au/def/warox-alteration-types> skos:prefLabel "WAROX Alteration Type"@en ;
+    dcterms:provenance "This vocabulary was built on an extract of the WAROX system's lookup table"@en ;
+    prez:link "/v/vocab/warox-alteration-type" .

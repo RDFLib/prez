@@ -3,121 +3,73 @@ PREFIX dcat: <http://www.w3.org/ns/dcat#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX geo: <http://www.opengis.net/ont/geosparql#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
-PREFIX prez: <https://surroundaustralia.com/prez/>
+PREFIX prez: <https://prez.dev/>
 PREFIX prof: <http://www.w3.org/ns/dx/prof/>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
-<http://surroundaustralia.com/profile/prez>
+
+prez:CatPrezProfile
     a prof:Profile ;
-    dcterms:identifier "prez" ;
-    dcterms:description "A profile for the Prez Linked Data API" ;
-    skos:prefLabel "Prez profile" ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
+    dcterms:identifier "catprez" ;
+    dcterms:description "A system profile for CatPrez" ;
+    skos:prefLabel "CatPrez profile" ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
-        sh:targetClass prez:Schemes ;
+        sh:targetClass prez:CatalogList ;
         altr-ext:hasDefaultProfile <https://www.w3.org/TR/vocab-dcat/>
     ] , [
         a sh:NodeShape ;
-        sh:targetClass prez:CatPrezCollectionList ;
+        sh:targetClass dcat:Catalog ;
         altr-ext:hasDefaultProfile <https://www.w3.org/TR/vocab-dcat/>
     ] , [
         a sh:NodeShape ;
-        sh:targetClass skos:Collection ;
-        altr-ext:hasDefaultProfile <https://w3id.org/profile/vocpub>
-    ] , [
-        a sh:NodeShape ;
-        sh:targetClass skos:Concept ;
-        altr-ext:hasDefaultProfile <https://w3id.org/profile/vocpub>
-    ] , [
-        a sh:NodeShape ;
-        sh:targetClass skos:ConceptScheme ;
-        altr-ext:hasDefaultProfile <https://w3id.org/profile/vocpub>
+        sh:targetClass dcat:Resource ;
+        altr-ext:hasDefaultProfile <https://www.w3.org/TR/vocab-dcat/>
     ]
     .
 
-
-<http://example.com/profile/profiles>
-    a prof:Profile ;
-    rdfs:label "Profiles" ;
-    dcterms:description "List of profiles" ;
-    dcterms:identifier "profiles" ;
-    altr-ext:constrainsClass prez:Profiles ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
-    altr-ext:hasResourceFormat
-        "application/json" ,
-        "text/html" ;
-.
-
-altr-ext:alt-profile
-    a prof:Profile ;
-    dcterms:description "The representation of the resource that lists all other representations (profiles and Media Types)" ;
-    dcterms:identifier "alt" ;
-    dcterms:title "Alternates Profile" ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
-    altr-ext:hasResourceFormat
-        "application/ld+json" ,
-        "application/rdf+xml" ,
-        "text/html" ,
-        "text/turtle" ;
-.
-
-altr-ext:hasResourceFormat
-    owl:propertyChainAxiom (
-            dcterms:conformsTo
-            dcterms:format
-        ) ;
-.
-
-<https://w3id.org/profile/mem>
-    a prof:Profile ;
-    dcterms:description "A very basic data model that lists the members of container objects only, i.e. not their other properties" ;
-    dcterms:identifier "mem" ;
-    dcterms:title "Members" ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
-    altr-ext:hasResourceFormat
-        "application/json" ,
-        "application/ld+json" ,
-        "application/rdf+xml" ,
-        "text/html" ,
-        "text/turtle" ;
-.
-
 <https://www.w3.org/TR/vocab-dcat/>
-    a prof:Profile ;
+    a prof:Profile , prez:CatPrezProfile ;
     dcterms:description "Dataset Catalog Vocabulary (DCAT) is a W3C-authored RDF vocabulary designed to facilitate interoperability between data catalogs" ;
     dcterms:identifier "dcat" ;
     dcterms:title "DCAT" ;
     altr-ext:constrainsClass
         dcat:Catalog ,
         dcat:Dataset ,
-        prez:CatPrezHome,
-        prez:Schemes ,
-        prez:CatPrezCollectionList ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
+        dcat:Resource ,
+        prez:CatalogList ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,
         "application/rdf+xml" ,
-        "text/html" ,
+        "text/anot+turtle" ,
         "text/turtle" ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass dcat:Catalog ;
+        altr-ext:outboundChildren dcterms:hasPart
+    ] , [
+        a sh:NodeShape ;
+        sh:targetClass prez:CatalogList ;
+        altr-ext:outboundChildren rdfs:member
+    ]
 .
 
 <https://schema.org>
-    a prof:Profile ;
+    a prof:Profile , prez:CatPrezProfile ;
     dcterms:description "Schema.org is a collaborative, community activity with a mission to create, maintain, and promote schemas for structured data on the Internet, on web pages, in email messages, and beyond. " ;
     dcterms:identifier "sdo" ;
     dcterms:title "schema.org" ;
     altr-ext:constrainsClass
-        skos:Dataset ,
-        skos:ConceptScheme ,
-        skos:Collection ;
-    altr-ext:hasDefaultResourceFormat "text/html" ;
+        skos:Dataset ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,
         "application/rdf+xml" ,
-        "text/html" ,
+        "text/anot+turtle" ,
         "text/turtle" ;
 .

@@ -1,0 +1,565 @@
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX reg: <http://purl.org/linked-data/registry#>
+PREFIX sdo: <https://schema.org/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX status: <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+<http://resource.geosciml.org/classifier/cgi/contacttype>
+    a skos:Collection ;
+    dcterms:identifier "contacttype"^^xsd:token ;
+    dcterms:provenance "this vocabulary" ;
+    skos:definition "All Concepts in this vocabulary" ;
+    skos:member
+        <http://resource.geosciml.org/classifier/cgi/contacttype/alteration_facies_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/angular_unconformable_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/buttress_unconformity> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/chronostratigraphic_zone_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/conductivity_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/conformable_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/deformation_zone_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/density_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/depositional_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/disconformable_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/faulted_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/geologic_province_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/geophysical_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/glacial_stationary_line> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/igneous_intrusive_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/igneous_phase_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/impact_structure_boundary> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_polarity_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_susceptiblity_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/magnetization_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_facies_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/metasomatic_facies_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/mineralisation_assemblage_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/nonconformable_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/paraconformable_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/radiometric_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/sedimentary_facies_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/sedimentary_intrusive_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/seismic_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/unconformable_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/volcanic_subsidence_zone_boundary> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/weathering_contact> ;
+    skos:prefLabel "Contact Type - All Concepts"@en ;
+.
+
+<https://linked.data.gov.au/org/cgi-gtwg>
+    a sdo:Organization ;
+    sdo:affiliation <https://linked.data.gov.au/org/cgi> ;
+    sdo:name "CGI Geoscience Terminology Working Group" ;
+    sdo:url "http://www.cgi-iugs.org/tech_collaboration/geoscience_terminology_working_group.html"^^xsd:anyURI ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/alteration_facies_contact>
+    a skos:Concept ;
+    dcterms:identifier "alteration_facies_contact"^^xsd:token ;
+    dcterms:provenance "this vocabulary"@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact> ;
+    skos:definition "A metasomatic facies contact separating rocks that have undergone alteration of a particular facies from those that have undergone metasomatism of another facies. Alteration is a kind of metasomatism that does not introduce economically important minerals."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "alteration facies contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/angular_unconformable_contact>
+    a skos:Concept ;
+    dcterms:identifier "angular_unconformable_contact"^^xsd:token ;
+    dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/unconformable_contact> ;
+    skos:definition "An unconformable contact between two geological units in which the older, underlying rocks dip at an angle different from the younger, overlying strata, usually in which younger sediments rest upon the eroded surface of tilted or folded older rocks."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "angular unconformable contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/buttress_unconformity>
+    a skos:Concept ;
+    dcterms:identifier "buttress_unconformity"^^xsd:token ;
+    dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/unconformable_contact> ;
+    skos:definition "An unconformity in which onlapping strata are truncated against a steep topographic scarp."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "buttress unconformity"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/chronostratigraphic_zone_contact>
+    a skos:Concept ;
+    dcterms:identifier "chronostratigraphic_zone_contact"^^xsd:token ;
+    dcterms:provenance "FGDC"@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/contact> ;
+    skos:definition "A contact between bodies of material having different ages of origin."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "chronostratigraphic-zone contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/conductivity_contact>
+    a skos:Concept ;
+    dcterms:identifier "conductivity_contact"^^xsd:token ;
+    dcterms:provenance "this vocabulary"@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/geophysical_contact> ;
+    skos:definition "A geophysical contact between bodies of material distinguished based on electrical conductivity characteristics"@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "conductivity contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/conformable_contact>
+    a skos:Concept ;
+    dcterms:identifier "conformable_contact"^^xsd:token ;
+    dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/depositional_contact> ;
+    skos:definition "A contact separating two geological units in which the layers are formed one above the other in order by regular, uninterrupted deposition under the same general conditions."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "conformable contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/deformation_zone_contact>
+    a skos:Concept ;
+    dcterms:identifier "deformation_zone_contact"^^xsd:token ;
+    dcterms:provenance "this vocabulary"@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact> ;
+    skos:definition "A lithogenetic bundary separating rock masses that have different deformation structure, e.g. sheared rock against non sheared rock, brecciated rock against non-brecciated rock."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "deformation zone contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/density_contact>
+    a skos:Concept ;
+    dcterms:identifier "density_contact"^^xsd:token ;
+    dcterms:provenance "this vocabulary"@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/geophysical_contact> ;
+    skos:definition "A geophysical contact separating bodies of material with different density characteristics, generally determined through measurement and modelling of gravity variations."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "density contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/disconformable_contact>
+    a skos:Concept ;
+    dcterms:identifier "disconformable_contact"^^xsd:token ;
+    dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/unconformable_contact> ;
+    skos:definition "An unconformable contact between two geological units in which the bedding of the older, underlying unit is parallel to the bedding of the younger, overlying unit, but in which the contact between the two units is marked by an irregular or uneven surface of appreciable relief."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "disconformable contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/faulted_contact>
+    a skos:Concept ;
+    dcterms:identifier "faulted_contact"^^xsd:token ;
+    dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/contact> ;
+    skos:definition "A contact separating two bodies of material across which one body has slid past the other."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "faulted contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/geologic_province_contact>
+    a skos:Concept ;
+    dcterms:identifier "geologic_province_contact"^^xsd:token ;
+    dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/contact> ;
+    skos:definition "A contact between regions characterised by their geological history or by similar structural, petrographic or stratigraphic features"@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "geologic province contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/glacial_stationary_line>
+    a skos:Concept ;
+    dcterms:identifier "glacial_stationary_line"^^xsd:token ;
+    dcterms:provenance "this vocabulary"@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/contact> ;
+    skos:definition "A boundary between a subglacial geomorphic unit and a periglacial geomorphic unit, marking the maximum extent of glacial cover. This can be thought of as the outcrop of the contact between a glacier and its substrate at some time at each point along the boundary. This contact type is included as an interim concept, assuming that in the future, there will be extensions to account better for geomorphic units and line types."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "glacial stationary line"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/igneous_intrusive_contact>
+    a skos:Concept ;
+    dcterms:identifier "igneous_intrusive_contact"^^xsd:token ;
+    dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact> ;
+    skos:definition "An intrusive contact between a younger igneous rock and an older, pre-existing geological unit into which it has been intruded."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "igneous intrusive contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/igneous_phase_contact>
+    a skos:Concept ;
+    dcterms:identifier "igneous_phase_contact"^^xsd:token ;
+    dcterms:provenance "this vocabulary"@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact> ;
+    skos:definition "A lithogenetic contact separating lithologically distinct phases of a single intrusive body. Does not denote nature of contact (intrusive or gradation)."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "igneous phase contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/impact_structure_boundary>
+    a skos:Concept ;
+    dcterms:identifier "impact_structure_boundary"^^xsd:token ;
+    dcterms:provenance "this vocabulary"@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact> ;
+    skos:definition "surface that bounds a body of rock affected by an extraterrestrial impact event"@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "impact structure boundary"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_polarity_contact>
+    a skos:Concept ;
+    dcterms:identifier "magnetic_polarity_contact"^^xsd:token ;
+    dcterms:provenance "this vocabulary"@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_contact> ;
+    skos:definition "A magentic contact between bodies of material with different polarity of remnant magnetization, e.g. between sections of ocean floor with different polarity."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "magnetic polarity contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_susceptiblity_contact>
+    a skos:Concept ;
+    dcterms:identifier "magnetic_susceptiblity_contact"^^xsd:token ;
+    dcterms:provenance "this vocabulary"@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_contact> ;
+    skos:definition "A magnetic contact between bodies of material distinguished based on magnetic susceptibility characteristics."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "magnetic susceptiblity contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/magnetization_contact>
+    a skos:Concept ;
+    dcterms:identifier "magnetization_contact"^^xsd:token ;
+    dcterms:provenance "this vocabulary"@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_contact> ;
+    skos:definition "A magnetic contact between bodies of material distinguished based on any aspect of magnetization of material in the units."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "magnetization contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_facies_contact>
+    a skos:Concept ;
+    dcterms:identifier "metamorphic_facies_contact"^^xsd:token ;
+    dcterms:provenance "this vocabulary"@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact> ;
+    skos:definition "A metamorphic contact separating rocks that have undergone metamorphism of a particular facies from those that have undergone metamorphism of another facies."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "metamorphic facies contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/metasomatic_facies_contact>
+    a skos:Concept ;
+    dcterms:identifier "metasomatic_facies_contact"^^xsd:token ;
+    dcterms:provenance "this vocabulary"@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact> ;
+    skos:definition "A metamorphic contact separating rocks that have undergone metasomatism of a particular facies from those that have undergone metasomatism of another facies. Metasomatism is distinguished from metamorphism by significant changes in bulk chemistry of the affected rock."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "metasomatic facies contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/mineralisation_assemblage_contact>
+    a skos:Concept ;
+    dcterms:identifier "mineralisation_assemblage_contact"^^xsd:token ;
+    dcterms:provenance "this vocabulary"@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact> ;
+    skos:definition "A metasomatic facies contact separating rocks which have been mineralised and contain a particular mineral assemblage from those which contain a different assemblage. Mineralization is a kind of metasomatism that introduces ecomomically important minerals."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "mineralisation assemblage contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/nonconformable_contact>
+    a skos:Concept ;
+    dcterms:identifier "nonconformable_contact"^^xsd:token ;
+    dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/unconformable_contact> ;
+    skos:definition "An unconformable contact between an underlying, older nonstratified geological unit (usually intrusive igneous rocks or metamorphics) and an overlying, younger stratified geological unit."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "nonconformable contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/paraconformable_contact>
+    a skos:Concept ;
+    dcterms:identifier "paraconformable_contact"^^xsd:token ;
+    dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader
+        <http://resource.geosciml.org/classifier/cgi/contacttype/unconformable_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/igneous_intrusive_contact> ;
+    skos:definition "An unconformable contact between two geological units in which the bedding of the older, underlying unit is parallel to the bedding of the younger, overlying unit, in which the contact between the two units is planar, and may be coincident with a bedding plane."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "paraconformable contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/radiometric_contact>
+    a skos:Concept ;
+    dcterms:identifier "radiometric_contact"^^xsd:token ;
+    dcterms:provenance "this vocabulary"@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/geophysical_contact> ;
+    skos:definition "A geophysical contact separating bodies of material distinguished based on the characteristics of emitted of radiant energy related to radioactivity (e.g. gamma rays)."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "radiometric contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/sedimentary_facies_contact>
+    a skos:Concept ;
+    dcterms:identifier "sedimentary_facies_contact"^^xsd:token ;
+    dcterms:provenance "base on Nichols, Gary, 1999, Sedimentology and stratigraphy, Blackwell, p. 62-63."@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact> ;
+    skos:definition "A lithogenetic contact separating essentially coeval sedimentary material bodies distinguished by characteristics reflecting different physical or chemical processes active at the time of deposition of the sediment."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "sedimentary facies contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/sedimentary_intrusive_contact>
+    a skos:Concept ;
+    dcterms:identifier "sedimentary_intrusive_contact"^^xsd:token ;
+    dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact> ;
+    skos:definition "An intrusive contact between a sedimentary rock unit and plastic sediment (e.g., clay, chalk, salt, gypsum, etc.), forced upward into it from underlying sediment"@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "sedimentary intrusive contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/seismic_contact>
+    a skos:Concept ;
+    dcterms:identifier "seismic_contact"^^xsd:token ;
+    dcterms:provenance "this vocabulary"@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/geophysical_contact> ;
+    skos:definition "A geophysical contact separating bodies of material defined based on their seismic character. Seismic character is based on transmission of vibrations (seismic waves) through a rock body, and relates to the velocity of transmission, and the nature of reflection, refraction, or transformation of seismic waves by inhomogeneities in the rock body."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "seismic contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/volcanic_subsidence_zone_boundary>
+    a skos:Concept ;
+    dcterms:identifier "volcanic_subsidence_zone_boundary"^^xsd:token ;
+    dcterms:provenance "this vocabulary, concept to encompass boundary of caldron, caldera, or crater."@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact> ;
+    skos:definition "boundary around a body of rock that is within a zone of subsidence or cratering produced by volcanic activity."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "volcanic subsidence zone boundary"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/weathering_contact>
+    a skos:Concept ;
+    dcterms:identifier "weathering_contact"^^xsd:token ;
+    dcterms:provenance "this vocabulary"@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact> ;
+    skos:definition "A lithogenetic contact separating bodies of material differentiated based on lithologic properties related to weathering."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "weathering contact"@en ;
+.
+
+<https://linked.data.gov.au/org/cgi>
+    a sdo:Organization ;
+    sdo:name "Commission for the Management and Application of Geoscience Information" ;
+    sdo:url "http://www.cgi-iugs.org"^^xsd:anyURI ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/depositional_contact>
+    a skos:Concept ;
+    dcterms:identifier "depositional_contact"^^xsd:token ;
+    dcterms:provenance "this vocabulary"@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact> ;
+    skos:definition "Lithogenetic contact at which a sedimentary or volcanic rock has been deposited on (or against) another rock body. The relationship between the older underlying rocks and younger overlying rocks is unknown or not specfied."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:narrower
+        <http://resource.geosciml.org/classifier/cgi/contacttype/conformable_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/unconformable_contact> ;
+    skos:prefLabel "depositional contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_contact>
+    a skos:Concept ;
+    dcterms:identifier "magnetic_contact"^^xsd:token ;
+    dcterms:provenance "this vocabulary"@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/geophysical_contact> ;
+    skos:definition "A geophysical contact separating bodies of material distinguished based on properties related to magnetic fields."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:narrower
+        <http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_polarity_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_susceptiblity_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/magnetization_contact> ;
+    skos:prefLabel "magnetic contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact>
+    a skos:Concept ;
+    dcterms:identifier "metamorphic_contact"^^xsd:token ;
+    dcterms:provenance "this vocabulary"@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact> ;
+    skos:definition "Lithogenetic contact separating rocks that have different lithologic properties related to metamorphism, metasomatism, alteration, or mineralization. Generally separates metamorphic rock bodies, but may separate metamorphosed (broadly speaking) and non-metamorphosed rock."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:narrower
+        <http://resource.geosciml.org/classifier/cgi/contacttype/alteration_facies_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_facies_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/metasomatic_facies_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/mineralisation_assemblage_contact> ;
+    skos:prefLabel "metamorphic contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/geophysical_contact>
+    a skos:Concept ;
+    dcterms:identifier "geophysical_contact"^^xsd:token ;
+    dcterms:provenance "this vocabulary"@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/contact> ;
+    skos:definition "A contact separating bodies of material in the earth that have different geophysical properties. Use for boundaries that are detected by geophysical sensor techniques as opposed to direct lithologic observation."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:narrower
+        <http://resource.geosciml.org/classifier/cgi/contacttype/conductivity_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/density_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/radiometric_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/seismic_contact> ;
+    skos:prefLabel "geophysical contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/unconformable_contact>
+    a skos:Concept ;
+    dcterms:identifier "unconformable_contact"^^xsd:token ;
+    dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/depositional_contact> ;
+    skos:definition "A contact separating two geological units in which the younger unit succeeds the older after a substantial hiatus in deposition."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:narrower
+        <http://resource.geosciml.org/classifier/cgi/contacttype/angular_unconformable_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/buttress_unconformity> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/disconformable_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/nonconformable_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/paraconformable_contact> ;
+    skos:prefLabel "unconformable contact"@en ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/contact>
+    a skos:Concept ;
+    dcterms:identifier "contact"^^xsd:token ;
+    dcterms:provenance "adapted from Jackson, 1997, page 137, NADM C1 2004"@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:definition "A surface that separates geologic units. Very general concept representing any kind of surface separating two geologic units, including primary boundaries such as depositional contacts, all kinds of unconformities, intrusive contacts, and gradational contacts, as well as faults that separate geologic units."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:narrower
+        <http://resource.geosciml.org/classifier/cgi/contacttype/chronostratigraphic_zone_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/faulted_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/geologic_province_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/geophysical_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/glacial_stationary_line> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact> ;
+    skos:prefLabel "contact"@en ;
+    skos:topConceptOf <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+.
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact>
+    a skos:Concept ;
+    dcterms:identifier "lithogenetic_contact"^^xsd:token ;
+    dcterms:provenance "this vocabulary"@en ;
+    reg:status status:submitted ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/contact> ;
+    skos:definition "A non-faulted contact separating bodies of material in the earth that have different lithologic character or geologic history."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:narrower
+        <http://resource.geosciml.org/classifier/cgi/contacttype/deformation_zone_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/depositional_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/igneous_intrusive_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/igneous_phase_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/impact_structure_boundary> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/sedimentary_facies_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/sedimentary_intrusive_contact> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/volcanic_subsidence_zone_boundary> ,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/weathering_contact> ;
+    skos:prefLabel "lithogenetic contact"@en ;
+.
+
+<http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype>
+    a skos:ConceptScheme ;
+    dcterms:identifier "contacttype"^^xsd:token ;
+    dcterms:created "2009-07-14"^^xsd:date ;
+    dcterms:creator <https://linked.data.gov.au/org/cgi-gtwg> ;
+    dcterms:modified "2020-06-23"^^xsd:date ;
+    dcterms:provenance "Original set of terms from the GeosciML standard" ;
+    dcterms:publisher <https://linked.data.gov.au/org/cgi> ;
+    dcterms:source "http://www.opengis.net/doc/geosciml/4.1"^^xsd:anyURI ;
+    skos:changeNote
+        "2009 Revised from ContactType200811 with addition of impact_structure_boundary and volcanic_subsidence_zone_boundary, and addition of more metadata annotation"@en ,
+        "2009-12-07 SMR Update metadata properties for version, creator, title, and format. Change skos:HistoryNote to dc:source for information on origin of terms and definitions."@en ,
+        "2011-02-16 SMR replace URN with cgi http URI's. Last changes to fix URN for conceptScheme that was not updated in original updates."@en ,
+        "2012-02-07 SMR update URI to replace numeric final token with English-language string as in original URN scheme."@en ,
+        "2012-02-27 SMR add skos:exactMatch triples to map URIs for concepts in this vocabulary to number-token URIs in 201012 version of same concepts."@en ,
+        "2012-11-24 SMR Update to 201211 version; add collection entity, check all pref labels are lower case, remove owl:NamedIndividual and Owl:Thing rdf:types."@en ,
+        "2016-06-15 OLR - redo Excel spreadsheet to work with XSLT, to make consistent SKOS-RDF with all CGI vocabularies. Generate new SKOS-RDF file."@en ,
+        "2020-06-23 NJC Added properties to ensure vocab matched Geoscience Australia's vocab profile (http://linked.data.gov.au/def/ga-skos-profile). Just annotation properties, no new content. Agents (creator/publisher) now not text but RDF resource. Dates (create/modified) derived from editorial notes & existing date properties."@en ;
+    skos:definition "This scheme describes the concept space for Contact Type concepts, as defined by the IUGS Commission for Geoscience Information (CGI) Geoscience Terminology Working Group. By extension, it includes all concepts in this conceptScheme, as well as concepts in any previous versions of the scheme. Designed for use in the contactType property in GeoSciML Contact elements."@en ;
+    skos:editorialNote "This file contains the 2016 SKOS-RDF version of the CGI Contact Type vocabulary. Compilation and review in MS Excel spreadsheet, converted to MS Excel for SKOS generation using GSML_SKOS_fromXLS_2016.01.xslt."@en ;
+    skos:hasTopConcept <http://resource.geosciml.org/classifier/cgi/contacttype/contact> ;
+    skos:prefLabel "Contact Type"@en ;
+.
