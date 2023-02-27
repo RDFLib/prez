@@ -162,6 +162,8 @@ _Jamie Feiss_
 
 We love contributions to this tool and encourage you to create Issues in this repository's Issue Tracker or to submit a Pull Requests!
 
+There is documentation on contributing to Prez, see [README-Dev.md](README-Dev.md).
+
 ## License
 
 This version of Prez and the contents of this repository are also available under the [BSD-3-Clause License](https://opensource.org/licenses/BSD-3-Clause). See [this repository's LICENSE](LICENSE) file for details.

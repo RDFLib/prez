@@ -1,17 +1,19 @@
-# Developer Readme
+# Developer README
+
+This documentation is to assist developers of Prez, not users or installers.
 
 ## Content delivered by Prez
 
 Prez returns:
 - RDF data for specified objects
 - RDF data for lists of objects
-- Annotated* RDF for specified objects
-- Annotated* RDF for lists of objects
+- Annotated RDF* for specified objects
+- Annotated RDF* for lists of objects
 - Available Profiles
 - An alternates profile for every object or listing, listing all available profiles and mediatypes
 - OpenAPI documentation for the API
 
-\* Annotated RDF is RDF which includes labels, descriptions, and explanatory properties for all RDF terms. The predicates Prez looks for are rdfs:label, dcterms:description, and dcterms:provenance. The list of predicates Prez looks for can be extended in the profiles.
+\* Annotated RDF is RDF which includes labels, descriptions, and explanatory properties for all RDF terms. The predicates Prez looks for are rdfs:label, `dcterms:description`, and `dcterms:provenance`. The list of predicates Prez looks for can be extended in the profiles.
 
 ## Internal links
 The objects Prez delivers RDF for have URIs that uniquely identify them. Prez delivers RDF for these objects at URLs on the web. These URLs and URIs are not required to be the same, and frequently are not. For objects that Prez holds information for, it is helpful if Prez tells users the URL of these when they are referenced elsewhere in the API. This is in two places:
@@ -101,7 +103,7 @@ The following terms are in the Prez namespace:
 | `prez:count`                                                        | The number of objects in an instance of a _Collection Class_                                                         |
 | `prez:DatasetList`, `prez:FeatureCollectionList`, `prez:FeatureList` | Classes used to describe lists of `dcat:Dataset`, `geo:FeatureCollection`, and `geo:Feature` instances respectively  |
 | `prez:CatalogList`                                                  | Class used to describe a list of `dcat:Catalog` instances                                                            |
-| `prez:SchemesList`, `prez:VocPrezCollectionList`                    | Class used to describe a list of `skos:ConceptScheme` and `skos:Collection` instances resprectively                  |
+| `prez:SchemesList`, `prez:VocPrezCollectionList`                    | Class used to describe a list of `skos:ConceptScheme` and `skos:Collection` instances respectively                  |
 TODO altr-ext - this may be merged with altr
 
 
@@ -306,21 +308,21 @@ defaults, and the availability of these in profiles.
 
 NB: Most specific class refers to the rdfs:Class of an object which has the most specific rdfs:subClassOf links to the general class delivered by that API endpoint. The general classes delivered by each API endpoint are:
 
-SpacePrez:
-/s/datasets -> prez:DatasetList
-/s/datasets/{ds_id} -> dcat:Dataset
-/s/datasets/{ds_id}/collections/{fc_id} -> geo:FeatureCollection
-/s/datasets/{ds_id}/collections -> prez:FeatureCollectionList
-/s/datasets/{ds_id}/collections/{fc_id}/features -> geo:Feature
+**SpacePrez**:  
+/s/datasets -> `prez:DatasetList`  
+/s/datasets/{ds_id} -> `dcat:Dataset`  
+/s/datasets/{ds_id}/collections/{fc_id} -> `geo:FeatureCollection`  
+/s/datasets/{ds_id}/collections -> `prez:FeatureCollectionList`  
+/s/datasets/{ds_id}/collections/{fc_id}/features -> `geo:Feature`  
 
-VocPrez:
-/v/schemes -> skos:ConceptScheme
-/v/collections -> skos:Collection
-/v/schemes/{cs_id}/concepts -> skos:Concept
+**VocPrez**:  
+/v/schemes -> `skos:ConceptScheme`  
+/v/collections -> `skos:Collection`  
+/v/schemes/{cs_id}/concepts -> `skos:Concept`  
 
-CatPrez:
-/c/catalogs -> dcat:Catalog
-/c/catalogs/{cat_id}/datasets -> dcat:Dataset
+**CatPrez**:  
+/c/catalogs -> `dcat:Catalog`  
+/c/catalogs/{cat_id}/datasets -> `dcat:Dataset`  
 
 This is an example query for SpacePrez requesting the Datasets listing from a web browser. Note the following components of the query are populated in Python:
 1. The `?class` VALUES
@@ -508,7 +510,10 @@ The following VocPrez VocPub profile shows how to use a number of declarations:
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
 
 <https://prez.dev/DatasetList>
-        rdfs:member  <http://example.com/datasets/sandgate> , <https://linked.data.gov.au/datasets/gnaf> , <https://linked.data.gov.au/datasets/geofabric> .
+        rdfs:member  
+                <http://example.com/datasets/sandgate> , 
+                <https://linked.data.gov.au/datasets/gnaf> , 
+                <https://linked.data.gov.au/datasets/geofabric> .
 
 <http://example.com/datasets/sandgate/roads/support-graph>
         <https://prez.dev/hasContextFor>
