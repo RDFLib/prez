@@ -10,11 +10,7 @@ class SPARQLAsyncClient:
         await self.client.aclose()
 
 
-sparql_clients = {
-    "CatPrez": {},
-    "VocPrez": {},
-    "SpacePrez": {},
-}
+sparql_clients = {}
 for prez in settings.enabled_prezs:
     sparql_clients[prez] = AsyncClient(
         auth=(

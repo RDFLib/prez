@@ -9,11 +9,12 @@ PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 
 prez:SpacePrezProfile
     a prof:Profile ;
-    dcterms:identifier "spaceprez" ;
+    dcterms:identifier "spaceprez"^^xsd:token ;
     dcterms:description "A system profile for SpacePrez" ;
     skos:prefLabel "SpacePrez profile" ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
@@ -47,7 +48,7 @@ prez:SpacePrezProfile
 <http://www.opengis.net/def/geosparql>
     a prof:Profile , prez:SpacePrezProfile ;
     dcterms:description "An RDF/OWL vocabulary for representing spatial information" ;
-    dcterms:identifier "geo" ;
+    dcterms:identifier "geo"^^xsd:token ;
     dcterms:title "GeoSPARQL" ;
     altr-ext:constrainsClass geo:Feature ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
@@ -61,7 +62,7 @@ prez:SpacePrezProfile
 <http://www.opengis.net/spec/ogcapi-features-1/1.0/req/oas30>
     a prof:Profile , prez:SpacePrezProfile ;
     dcterms:description "The OGC API Features specifies the behavior of Web APIs that provide access to features in a dataset in a manner independent of the underlying data store." ;
-    dcterms:identifier "oai" ;
+    dcterms:identifier "oai"^^xsd:token ;
     dcterms:title "OGC API Features" ;
     altr-ext:constrainsClass
         dcat:Dataset ,
@@ -93,7 +94,7 @@ prez:SpacePrezProfile
 <https://w3id.org/profile/dcat2null>
     a prof:Profile , prez:SpacePrezProfile ;
     dcterms:description "A null profile of the Data Catalog Vocabulary (DCAT)" ;
-    dcterms:identifier "dcat" ;
+    dcterms:identifier "dcat"^^xsd:token ;
     dcterms:title "DCAT" ;
     altr-ext:constrainsClass dcat:Dataset ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
@@ -107,7 +108,7 @@ prez:SpacePrezProfile
 <https://www.w3.org/TR/vocab-dcat/>
     a prof:Profile , prez:SpacePrezProfile ;
     dcterms:description "Dataset Catalog Vocabulary (DCAT) is a W3C-authored RDF vocabulary designed to facilitate interoperability between data catalogs" ;
-    dcterms:identifier "dcat" ;
+    dcterms:identifier "dcat"^^xsd:token ;
     dcterms:title "DCAT" ;
     altr-ext:hasLabelPredicate dcterms:title ;
     altr-ext:constrainsClass

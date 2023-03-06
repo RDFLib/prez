@@ -57,8 +57,8 @@ def sparql_query_non_async(query: str, prez: str) -> Tuple[bool, Union[List, Dic
                 "Content-Type": "application/sparql-query",
             },
             auth=(
-                settings.sparql_creds[prez]["username"],
-                settings.sparql_creds[prez]["password"],
+                settings.sparql_creds[prez].get("username", ""),
+                settings.sparql_creds[prez].get("password", ""),
             ),
             timeout=TIMEOUT,
         )
@@ -78,8 +78,6 @@ async def sparql_query(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
     logging.info(
         msg=f"Executing query {query} against {settings.sparql_creds[prez]['endpoint']}"
     )
-    with open("client.txt", "a") as checking_singleton:
-        checking_singleton.write(str(id(sparql_clients[prez])) + "\n")
     try:
         response: httpxResponse = await sparql_clients[prez].post(
             url="",
@@ -145,13 +143,15 @@ async def sparql_construct(query: str, prez: str):
         return True, results
     if not query:
         return False, None
-    with open("client.txt", "a") as checking_singleton:
-        checking_singleton.write(str(id(sparql_clients[prez])) + "\n")
     try:
 
         response: httpxResponse = await sparql_clients[prez].post(
             url="",
             data=query,
+            auth=(
+                settings.sparql_creds[prez].get("username", ""),
+                settings.sparql_creds[prez].get("password", ""),
+            ),
             headers={
                 "Accept": "text/turtle",
                 "Content-Type": "application/sparql-query",
@@ -185,6 +185,10 @@ async def sparql_update(query: str, prez: str):
         response: httpxResponse = await sparql_clients[prez].post(
             settings.sparql_creds[prez]["update"],
             data=query,
+            auth=(
+                settings.sparql_creds[prez].get("username", ""),
+                settings.sparql_creds[prez].get("password", ""),
+            ),
             headers={
                 "Content-Type": "application/sparql-update",
             },
@@ -210,12 +214,14 @@ async def sparql_ask(query: str, prez: str):
     """Returns an rdflib Graph from a CONSTRUCT query for a single SPARQL endpoint"""
     if not query:
         return False, None
-    with open("client.txt", "a") as checking_singleton:
-        checking_singleton.write(str(id(sparql_clients[prez])) + "\n")
     try:
         response: httpxResponse = await sparql_clients[prez].post(
             settings.sparql_creds[prez]["endpoint"],
             data={"query": query},
+            auth=(
+                settings.sparql_creds[prez].get("username", ""),
+                settings.sparql_creds[prez].get("password", ""),
+            ),
             headers={
                 "Accept": "*/*",
                 "Content-Type": "application/x-www-form-urlencoded",
@@ -252,8 +258,8 @@ def sparql_construct_non_async(query: str, prez: str):
                 "Content-Type": "application/sparql-query",
             },
             auth=(
-                settings.sparql_creds[prez]["username"],
-                settings.sparql_creds[prez]["password"],
+                settings.sparql_creds[prez].get("username", ""),
+                settings.sparql_creds[prez].get("password", ""),
             ),
             timeout=TIMEOUT,
         )

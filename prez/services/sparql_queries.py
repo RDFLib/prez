@@ -206,6 +206,7 @@ def generate_relative_properties(
 ):
     """
     Generate the relative properties construct or select for a listing query.
+    i.e. properties on nodes related to the focus item NOT the focus item itself
     """
     if not relative_properties:
         return ""
@@ -797,7 +798,7 @@ def select_profile_mediatype(
                            altr-ext:hasDefaultProfile ?profile }} AS ?def_profile)
       {generate_mediatype_if_statements(requested_mediatypes) if requested_mediatypes else ''}
       BIND(EXISTS {{ ?profile altr-ext:hasDefaultResourceFormat ?format }} AS ?def_format)
-      FILTER(DATATYPE(?token)=prez:slug)
+      # FILTER(DATATYPE(?token)=prez:slug)
     }}
     GROUP BY ?class ?profile ?req_profile ?def_profile ?format ?req_format ?def_format ?title ?token
     ORDER BY DESC(?req_profile) DESC(?distance) DESC(?def_profile) DESC(?req_format) DESC(?def_format)"""

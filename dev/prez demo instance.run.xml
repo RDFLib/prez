@@ -2,7 +2,7 @@
   <configuration default="false" name="prez demo instance" type="docker-deploy" factoryName="docker-image" server-name="Docker">
     <deployment type="docker-image">
       <settings>
-        <option name="imageTag" value="090403239536.dkr.ecr.ap-southeast-2.amazonaws.com/prez:0.4.2" />
+        <option name="imageTag" value="090403239536.dkr.ecr.ap-southeast-2.amazonaws.com/prez:3.0.1" />
         <option name="containerName" value="prezdemo" />
         <option name="envVars">
           <list>

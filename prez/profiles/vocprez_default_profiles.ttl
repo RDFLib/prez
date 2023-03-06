@@ -10,10 +10,12 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX reg: <http://purl.org/linked-data/registry#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
 
 prez:VocPrezProfile
     a prof:Profile ;
-    dcterms:identifier "vocprez" ;
+    dcterms:identifier "vocprez"^^xsd:token ;
     dcterms:description "A system profile for VocPrez" ;
     skos:prefLabel "VocPrez profile" ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
@@ -43,7 +45,7 @@ prez:VocPrezProfile
 <https://www.w3.org/TR/vocab-dcat/>
     a prof:Profile , prez:VocPrezProfile ;
     dcterms:description "Dataset Catalog Vocabulary (DCAT) is a W3C-authored RDF vocabulary designed to facilitate interoperability between data catalogs" ;
-    dcterms:identifier "dcat" ;
+    dcterms:identifier "dcat"^^xsd:token ;
     dcterms:title "DCAT" ;
     altr-ext:constrainsClass
         dcat:Catalog ,
@@ -60,7 +62,7 @@ prez:VocPrezProfile
 <https://w3id.org/profile/vocpub>
     a prof:Profile , prez:VocPrezProfile ;
     dcterms:description "This is a profile of the taxonomy data model SKOS - i.e. SKOS with additional constraints." ;
-    dcterms:identifier "vocpub" ;
+    dcterms:identifier "vocpub"^^xsd:token ;
     dcterms:title "VocPub" ;
     altr-ext:hasLabelPredicate skos:prefLabel ;
     altr-ext:constrainsClass
@@ -110,7 +112,7 @@ prez:VocPrezProfile
 <https://schema.org>
     a prof:Profile ;
     dcterms:description "Schema.org is a collaborative, community activity with a mission to create, maintain, and promote schemas for structured data on the Internet, on web pages, in email messages, and beyond. " ;
-    dcterms:identifier "sdo" ;
+    dcterms:identifier "sdo"^^xsd:token ;
     dcterms:title "schema.org" ;
     altr-ext:constrainsClass
         skos:Dataset ,
@@ -127,7 +129,7 @@ prez:VocPrezProfile
 <https://w3id.org/profile/dd>
     a prof:Profile ;
     dcterms:description "A simple data model to provide items for form drop-down lists. The basic information is an ID & name tuple and the optional extra value is an item's parent. For vocabularies, this is then URI, prefLabel or URI, prefLabel & broader Concept" ;
-    dcterms:identifier "dd" ;
+    dcterms:identifier "dd"^^xsd:token ;
     dcterms:title "Drop-Down List" ;
     altr-ext:constrainsClass
         prez:SchemesList ,
