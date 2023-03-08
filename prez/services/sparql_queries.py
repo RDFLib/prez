@@ -1,5 +1,7 @@
 import logging
 from functools import lru_cache
+from itertools import chain
+from textwrap import dedent
 from typing import List, Optional, Tuple, Union
 
 from rdflib import Graph, URIRef, RDFS, DCTERMS, Namespace
@@ -13,77 +15,11 @@ from prez.models import (
     VocabItem,
     VocabMembers,
 )
-from itertools import chain
-from textwrap import dedent
 
 log = logging.getLogger(__name__)
 
 ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
 PREZ = Namespace("https://prez.dev/")
-
-
-def generate_insert_context(settings, prez: str):
-    """ """
-    topmost_classes = settings.top_level_classes[prez]
-    collection_classes = settings.collection_classes[prez]
-    member_relation = {
-        "SpacePrez": "?instance_of_main_class rdfs:member ?member",
-        "VocPrez": """{?instance_of_main_class ^skos:inScheme ?member }
-                        UNION
-      		          { ?instance_of_main_class skos:member ?member }""",
-        "CatPrez": "?instance_of_main_class dcterms:hasPart ?member",
-        "Profiles": "?instance_of_main_class rdfs:member ?member",
-    }
-    insert = dedent(
-        f"""PREFIX dcat: <http://www.w3.org/ns/dcat#>
-        PREFIX dcterms: <http://purl.org/dc/terms/>
-        PREFIX prez: <https://prez.dev/>
-        PREFIX prof: <http://www.w3.org/ns/dx/prof/>
-        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-        INSERT {{
-            GRAPH prez:{prez.lower()}-system-graph {{
-                ?support_graph_uri prez:hasContextFor ?instance_of_main_class .
-                ?collectionList rdfs:member ?instance_of_top_class .
-                ?instance_of_main_class dcterms:identifier ?prez_id .
-            }}
-            GRAPH ?support_graph_uri {{ ?member dcterms:identifier ?prez_mem_id . }}
-        }}
-        WHERE {{
-          {{
-            ?instance_of_main_class a ?collection_class .
-                VALUES ?collection_class {{ {(chr(10) + 2 * chr(9)).join('<' + str(uri) + '>' for uri in collection_classes)} }}
-            OPTIONAL {{?instance_of_top_class a ?topmost_class
-                VALUES ?topmost_class {{ {(chr(10) + 2 * chr(9)).join('<' + str(uri) + '>' for uri in topmost_classes)} }}
-            }}
-            MINUS {{ GRAPH prez:{prez.lower()}-system-graph {{?a_context_graph prez:hasContextFor ?instance_of_main_class}}
-            }}
-            OPTIONAL {{?instance_of_main_class dcterms:identifier ?id
-                BIND(DATATYPE(?id) AS ?dtype_id)
-                FILTER(?dtype_id = xsd:token)
-                }}
-            OPTIONAL {{ {member_relation[prez]}
-                OPTIONAL {{?member dcterms:identifier ?mem_id
-                    BIND(DATATYPE(?mem_id) AS ?dtype_mem_id)
-                    FILTER(?dtype_mem_id = xsd:token) }} }}
-            }}
-            BIND(
-                IF(?topmost_class=prez:SpacePrezProfile, prez:SpacePrezProfileList,
-                    IF(?topmost_class=prez:VocPrezProfile, prez:VocPrezProfileList,
-                        IF(?topmost_class=prez:CatPrezProfile, prez:CatPrezProfileList,
-                            IF(?topmost_class=prof:Profile, prez:ProfilesList,
-                                IF(?topmost_class=dcat:Dataset, prez:DatasetList,
-                                    IF(?topmost_class=dcat:Catalog,prez:CatalogList,
-                                        IF(?topmost_class=skos:ConceptScheme,prez:SchemesList,
-                                            IF(?topmost_class=skos:Collection,prez:VocPrezCollectionList,""))))))))
-                                            AS ?collectionList)
-            BIND(STRDT(COALESCE(STR(?id),MD5(STR(?instance_of_main_class))), prez:slug) AS ?prez_id)
-            BIND(STRDT(COALESCE(STR(?mem_id),MD5(STR(?member))), prez:slug) AS ?prez_mem_id)
-            BIND(URI(CONCAT(STR(?instance_of_main_class),"/support-graph")) AS ?support_graph_uri)
-        }}"""
-    )
-    return insert
 
 
 def generate_listing_construct_from_uri(
@@ -95,6 +31,7 @@ def generate_listing_construct_from_uri(
     """
     For a given URI, finds items with the specified relation(s).
     Generates a SPARQL construct query for a listing of items
+    #TODO update to use either URI or class, as specified in the function signature. Class will be used for alternate profiles - although the URI is known in this case, profiles constrain the class.
     """
     (
         inbound_children,
@@ -838,71 +775,3 @@ def startup_count_objects():
     return f"""PREFIX prez: <https://prez.dev/>
 CONSTRUCT {{ ?collection prez:count ?count }}
 WHERE {{ ?collection prez:count ?count }}"""
-
-
-def ask_system_graph(prez_flavour: str):
-    """
-    Checks if the system graph exists in the triple store.
-    """
-    return f"ASK {{ GRAPH <{PREZ[prez_flavour.lower() + '-system-graph']}> {{ ?s ?p ?o }} }} LIMIT 1"
-
-
-def weighted_search(term, prez):
-    """
-    Searches a given SPARQL Endpoint for the given term in Concept prefLabels, altLabels, hiddenLabels, and
-    definitions, weighted to preference matches in that order.
-    """
-    q = f"""
-    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-    PREFIX prez: <https://prez.dev/>
-
-    CONSTRUCT {{ ?uri skos:prefLabel ?pl ;
-                      prez:searchResultWeight ?weight ;
-                      prez:searchResultSource prez:{prez} }}
-    {{
-        SELECT DISTINCT ?g ?uri ?pl (SUM(?w) AS ?weight)
-        WHERE {{
-            GRAPH ?g {{
-                        {{  # exact match on a prefLabel always wins
-                            ?uri a skos:Concept ;
-                                 skos:prefLabel ?pl .
-                            BIND (50 AS ?w)
-                            FILTER REGEX(?pl, "^{term}$", "i")
-                        }}
-                        UNION
-                        {{
-                            ?uri a skos:Concept ;
-                                 skos:prefLabel ?pl .
-                            BIND (10 AS ?w)
-                            FILTER REGEX(?pl, "{term}", "i")
-                        }}
-                        UNION
-                        {{
-                            ?uri a skos:Concept ;
-                                 skos:altLabel ?al ;
-                                 skos:prefLabel ?pl .
-                            BIND (5 AS ?w)
-                            FILTER REGEX(?al, "{term}", "i")
-                        }}
-                        UNION
-                        {{
-                            ?uri a skos:Concept ;
-                                 skos:hiddenLabel ?hl ;
-                                 skos:prefLabel ?pl .
-                            BIND (5 AS ?w)
-                            FILTER REGEX(?hl, "{term}", "i")
-                        }}
-                        UNION
-                        {{
-                            ?uri a skos:Concept ;
-                                 skos:definition ?d ;
-                                 skos:prefLabel ?pl .
-                            BIND (1 AS ?w)
-                            FILTER REGEX(?d, "{term}", "i")
-                        }}
-                    }}
-                }}
-        GROUP BY ?g ?uri ?pl
-    }}
-    """
-    return q

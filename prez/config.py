@@ -2,12 +2,12 @@ from pathlib import Path
 from typing import Optional
 
 import toml
+from httpx import AsyncClient
 from pydantic import BaseSettings, root_validator
 from rdflib import URIRef
 from rdflib.namespace import GEO, DCAT, SKOS, PROF
-from prez.utils.prez_ns import PREZ
 
-from httpx import AsyncClient
+from prez.reference_data.prez_ns import PREZ
 
 
 class SPARQLAsyncClient:

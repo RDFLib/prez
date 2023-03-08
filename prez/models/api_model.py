@@ -2,8 +2,12 @@ import logging
 
 from rdflib import Namespace, URIRef, Literal, BNode, RDF
 
-from prez.cache import prez_system_graph, profiles_graph_cache
-from prez.services.sparql_queries import generate_insert_context, ask_system_graph
+from prez.cache import prez_system_graph, profiles_graph_cache, search_methods
+from prez.config import settings
+from prez.services.manage_support_graphs import (
+    generate_insert_context,
+    ask_system_graph,
+)
 from prez.services.sparql_utils import sparql_update, sparql_ask
 
 log = logging.getLogger(__name__)
@@ -12,7 +16,7 @@ log = logging.getLogger(__name__)
 PREZ = Namespace("https://prez.dev/")
 
 
-async def populate_api_info(settings):
+async def populate_api_info():
     for prez in settings.enabled_prezs:
         bnode = BNode()
         prez_system_graph.add(
@@ -21,14 +25,18 @@ async def populate_api_info(settings):
         prez_system_graph.add((bnode, RDF.type, PREZ[prez]))
         # add links to prez subsystems
         prez_system_graph.add((bnode, PREZ.link, Literal(f"/{prez[0].lower()}")))
+
+        for method in search_methods:
+            prez_system_graph.add((bnode, PREZ.searchMethod, method))
+
     # add prez version
     prez_system_graph.add(
         (URIRef(settings.system_uri), PREZ.version, Literal(settings.prez_version))
     )
-    log.info(f"Populated API info for {prez}")
+    log.info(f"Populated API info")
 
 
-async def generate_support_graphs(settings):
+async def generate_support_graphs():
     """
     Generates the support graphs needed for the Prez API.
     Although supporting triples are placed in specific graphs, Prez itself is graph agnostic: it is assumed backend
@@ -51,7 +59,7 @@ async def generate_support_graphs(settings):
             log.info(f"Completed generating Support Graphs for {prez}")
 
 
-async def generate_profiles_support_graph(settings):
+async def generate_profiles_support_graph():
     """
     Generates a support graph for the prez profiles
     """

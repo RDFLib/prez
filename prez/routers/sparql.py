@@ -46,6 +46,6 @@ async def sparql(
     if mt.startswith("application/json"):
         return JSONResponse(result)
     if len(result) > 0:
-        return await return_rdf(result, mediatype=mt, profile_headers=None)
+        return await return_rdf(result, mediatype=mt, profile_headers={})
     else:
         return PlainTextResponse(f"No results returned from {prez} SPARQL endpoint.")

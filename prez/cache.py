@@ -14,3 +14,5 @@ prez_system_graph.bind("prez", "https://prez.dev/")
 
 # TODO can probably merge counts graph
 counts_graph = Graph()
+
+search_methods = {}

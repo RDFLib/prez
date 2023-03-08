@@ -3,9 +3,9 @@ import time
 
 import httpx
 from rdflib import Namespace
-from rdflib.namespace import SKOS, DCTERMS, XSD
 
 from prez.cache import counts_graph
+from prez.config import settings
 from prez.services.sparql_queries import startup_count_objects
 from prez.services.sparql_utils import sparql_construct
 
@@ -14,33 +14,7 @@ ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
 log = logging.getLogger(__name__)
 
 
-async def get_object(uri: str):
-    q = f"""
-        PREFIX dcterms: <{DCTERMS}>
-        PREFIX skos: <{SKOS}>
-        PREFIX xsd: <{XSD}>
-        SELECT ?type ?id ?cs_id
-        WHERE {{
-            <{uri}> a ?type ;
-                dcterms:identifier ?id .
-            FILTER(DATATYPE(?id) = prez:slug)
-            OPTIONAL {{
-                <{uri}> skos:inScheme|skos:topConceptOf ?cs .
-                ?cs dcterms:identifier ?cs_id .
-            }}
-        }}
-    """
-    r = await sparql_query_multiple(q)
-    if len(r[1]) > 0 and not ALLOW_PARTIAL_RESULTS:
-        error_list = [
-            f"Error code {e['code']} in {e['prez']}: {e['message']}\n" for e in r[1]
-        ]
-        raise Exception(f"SPARQL query error:\n{[e for e in error_list]}")
-    else:
-        return r[0]
-
-
-async def healthcheck_sparql_endpoints(settings):
+async def healthcheck_sparql_endpoints():
     ENABLED_PREZS = settings.enabled_prezs
     log.info(f"Enabled Prezs: {', '.join(ENABLED_PREZS)}")
     if len(ENABLED_PREZS) > 0:
@@ -80,7 +54,7 @@ async def healthcheck_sparql_endpoints(settings):
         )
 
 
-async def count_objects(settings):
+async def count_objects():
     query = startup_count_objects()
     for prez in settings.enabled_prezs:
         results = await sparql_construct(query, prez)

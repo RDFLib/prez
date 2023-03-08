@@ -1,7 +1,6 @@
 import logging
 import os
 from textwrap import dedent
-from typing import Optional
 
 import uvicorn
 from fastapi import FastAPI, Request
@@ -23,12 +22,14 @@ from prez.routers.cql import router as cql_router
 from prez.routers.object import router as object_router
 from prez.routers.profiles import router as profiles_router
 from prez.routers.spaceprez import router as spaceprez_router
+from prez.routers.search import router as search_router
 from prez.routers.sparql import router as sparql_router
 from prez.routers.vocprez import router as vocprez_router
 from prez.services.app_service import healthcheck_sparql_endpoints, count_objects
-from prez.utils.generate_profiles import create_profiles_graph
-from prez.utils.prez_logging import setup_logger
-from prez.utils.prez_ns import PREZ
+from prez.services.generate_profiles import create_profiles_graph
+from prez.services.prez_logging import setup_logger
+from prez.reference_data.prez_ns import PREZ
+from prez.services.search_methods import generate_search_methods
 
 
 async def catch_400(request: Request, exc):
@@ -63,6 +64,7 @@ app.add_middleware(
 app.include_router(object_router)
 app.include_router(cql_router)
 app.include_router(sparql_router)
+app.include_router(search_router)
 app.include_router(profiles_router)
 if settings.catprez_sparql_endpoint:
     app.include_router(catprez_router)
@@ -94,12 +96,13 @@ async def app_startup():
     setup_logger(settings)
     log = logging.getLogger("prez")
     log.info("Starting up")
-    await healthcheck_sparql_endpoints(settings)
-    await create_profiles_graph(settings.enabled_prezs)
-    await count_objects(settings)
-    await populate_api_info(settings)
-    await generate_support_graphs(settings)
-    await generate_profiles_support_graph(settings)
+    await healthcheck_sparql_endpoints()
+    await generate_search_methods()
+    await create_profiles_graph()
+    await count_objects()
+    await populate_api_info()
+    await generate_support_graphs()
+    await generate_profiles_support_graph()
 
 
 @app.on_event("shutdown")
@@ -137,7 +140,7 @@ async def index(request: Request):
         )
     )
     return await return_rdf(
-        prez_system_graph, mediatype="text/anot+turtle", profile_headers=None
+        prez_system_graph, mediatype="text/anot+turtle", profile_headers={}
     )
 
 

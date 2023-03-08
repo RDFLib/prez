@@ -1,12 +1,13 @@
 import asyncio
 
 from fastapi import APIRouter, Request
-from rdflib import Graph
+from rdflib import Graph, Literal
 from starlette.responses import PlainTextResponse
 
-from renderers.renderer import return_rdf
-from services.sparql_queries import weighted_search
-from services.sparql_utils import sparql_construct
+from prez.cache import search_methods
+from prez.config import settings
+from prez.renderers.renderer import return_rdf
+from prez.services.sparql_utils import sparql_construct
 
 router = APIRouter(tags=["Search"])
 
@@ -21,7 +22,7 @@ async def search(
     term = request.query_params.get("term")
     if not term:
         return PlainTextResponse(
-            "A search term must be provided as a query string argument (?term=<search term>)"
+            "A search_methods term must be provided as a query string argument (?term=<search_methods term>)"
         )
     start_of_path = request.url.path[:3]
     pathmap = {
@@ -30,28 +31,36 @@ async def search(
         "/s/": "SpacePrez",
     }
     prez = pathmap.get(start_of_path, "all")
-    search_methods = determine_search_method(request, prez)
-    search_functions = {
-        "weighted": weighted_search,
-    }
+    selected_methods = determine_search_method(request, prez)
+    # check the methods exist
+    for method in selected_methods.values():
+        if Literal(method) not in search_methods.keys():
+            return PlainTextResponse(
+                f'Search method "{method}" not found. Available methods are: '
+                f"{', '.join([str(m) for m in search_methods.keys()])}"
+            )
     search_queries = {
-        p: search_functions[method](term, p) for p, method in search_methods.items()
+        prez: search_methods[Literal(method)].template_query.substitute(
+            {"PREZ": prez, "TERM": term}
+        )
+        for prez, method in selected_methods.items()
     }
     results = await asyncio.gather(
         *[sparql_construct(query, p) for p, query in search_queries.items()]
     )
     # TODO update "return from queries function"
     graph = Graph(bind_namespaces="rdflib")
+    graph.bind("prez", "https://prez.dev/")
     for res in results:
         g = res[1]
         graph.__iadd__(g)
-    return await return_rdf(graph, mediatype="text/anot+turtle", profile_headers=None)
+    if len(graph) == 0:
+        return PlainTextResponse("No results found")
+    return await return_rdf(graph, mediatype="text/anot+turtle", profile_headers={})
 
 
 def determine_search_method(request, prez):
-    from prez.config import settings
-
-    """Returns the search method to use based on the request headers"""
+    """Returns the search_methods method to use based on the request headers"""
     specified_method = request.query_params.get("method")
     if specified_method:
         if prez != "all":
@@ -65,10 +74,8 @@ def determine_search_method(request, prez):
 
 
 def get_default_search_methods():
-    from prez.config import settings
-
     # TODO return from profiles
     methods = {}
     for prez in settings.enabled_prezs:
-        methods[prez] = "weighted"
+        methods[prez] = "skosWeighted"
     return methods

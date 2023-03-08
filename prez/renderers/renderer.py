@@ -44,6 +44,7 @@ async def return_from_queries(
 
 
 async def return_from_graph(graph, mediatype, profile, profile_headers, prez):
+    profile_headers["Content-Disposition"] = "inline"
     if str(mediatype) in RDF_MEDIATYPES:
         return await return_rdf(graph, mediatype, profile_headers)
 
@@ -55,13 +56,14 @@ async def return_from_graph(graph, mediatype, profile, profile_headers, prez):
             return await return_annotated_rdf(graph, prez, profile_headers, profile)
 
 
-async def return_rdf(graph, mediatype, profile_headers=None):
+async def return_rdf(graph, mediatype, profile_headers):
     RDF_SERIALIZER_TYPES_MAP["text/anot+turtle"] = "turtle"
     obj = io.BytesIO(
         graph.serialize(
             format=RDF_SERIALIZER_TYPES_MAP[str(mediatype)], encoding="utf-8"
         )
     )
+    profile_headers["Content-Disposition"] = "inline"
     return StreamingResponse(content=obj, media_type=mediatype, headers=profile_headers)
 
 
@@ -116,10 +118,3 @@ async def return_profiles(
         prof_and_mt_info.profile_headers,
         prez_type,
     )
-
-
-async def return_all_profiles():
-    """
-    returns all profiles the API knows about
-    """
-    pass

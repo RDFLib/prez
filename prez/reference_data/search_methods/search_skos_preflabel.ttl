@@ -1,0 +1,40 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix prez: <https://prez.dev/> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+prez:skosWeighted a prez:SearchMethod ;
+                        dcterms:identifier "skosPrefLabel" ;
+    rdfs:label "SKOS PrefLabel Search"@en ;
+    rdf:value """
+        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+        PREFIX prez: <https://prez.dev/>
+
+        CONSTRUCT {{
+                    ?uri skos:prefLabel ?pl ;
+                      prez:searchResultWeight ?weight ;
+                      prez:searchResultSource prez:$PREZ ;
+                      prez:usingSearchMethod prez:skosPrefLabel .
+        }}
+        {{
+        SELECT DISTINCT ?sys ?cs ?uri ?pl (SUM(?w) AS ?weight)
+        WHERE {{
+            {{  # exact match on a prefLabel always wins
+                ?uri a skos:Concept ;
+                    skos:prefLabel ?pl ;
+                    skos:inScheme|skos:topConceptOf|^skos:hasTopConcept ?cs .
+                BIND (50 AS ?w)
+                FILTER REGEX(?pl, "^$TERM$$", "i")
+            }}
+            UNION
+            {{
+                ?uri a skos:Concept ;
+                    skos:prefLabel ?pl ;
+                    skos:inScheme|skos:topConceptOf|^skos:hasTopConcept ?cs .
+                BIND (10 AS ?w)
+                FILTER REGEX(?pl, "$TERM", "i")
+            }}
+        }}
+        GROUP BY ?cs ?uri ?pl ?sys
+        }}
+        """.
