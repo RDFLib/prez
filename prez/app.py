@@ -19,6 +19,7 @@ from prez.models.api_model import (
 from prez.renderers.renderer import return_rdf
 from prez.routers.catprez import router as catprez_router
 from prez.routers.cql import router as cql_router
+from prez.routers.management import router as management_router
 from prez.routers.object import router as object_router
 from prez.routers.profiles import router as profiles_router
 from prez.routers.spaceprez import router as spaceprez_router
@@ -61,8 +62,9 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
-app.include_router(object_router)
 app.include_router(cql_router)
+app.include_router(management_router)
+app.include_router(object_router)
 app.include_router(sparql_router)
 app.include_router(search_router)
 app.include_router(profiles_router)
