@@ -2,14 +2,22 @@ import logging
 import time
 
 import httpx
-from rdflib import Namespace
+from rdflib import URIRef, Literal, BNode, RDF
 
-from prez.cache import counts_graph
+from prez.cache import (
+    prez_system_graph,
+    profiles_graph_cache,
+    search_methods,
+    counts_graph,
+)
 from prez.config import settings
-from prez.services.sparql_queries import startup_count_objects
-from prez.services.sparql_utils import sparql_construct
-
-ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
+from prez.reference_data.prez_ns import PREZ, ALTREXT
+from prez.sparql.methods import sparql_construct, sparql_update, sparql_ask
+from prez.sparql.objects_listings import startup_count_objects
+from prez.sparql.support_graphs import (
+    generate_insert_context,
+    ask_system_graph,
+)
 
 log = logging.getLogger(__name__)
 
@@ -60,3 +68,63 @@ async def count_objects():
         results = await sparql_construct(query, prez)
         if results[0]:
             counts_graph.__add__(results[1])
+
+
+async def populate_api_info():
+    for prez in settings.enabled_prezs:
+        bnode = BNode()
+        prez_system_graph.add(
+            (URIRef(settings.system_uri), PREZ.enabledPrezFlavour, bnode)
+        )
+        prez_system_graph.add((bnode, RDF.type, PREZ[prez]))
+        # add links to prez subsystems
+        prez_system_graph.add((bnode, PREZ.link, Literal(f"/{prez[0].lower()}")))
+
+        # add links to search methods
+        sys_prof = profiles_graph_cache.value(None, ALTREXT.constrainsClass, PREZ[prez])
+        if sys_prof:
+            search_methods = [
+                sm
+                for sm in profiles_graph_cache.objects(
+                    sys_prof, PREZ.supportedSearchMethod
+                )
+            ]
+            for method in search_methods:
+                prez_system_graph.add((bnode, PREZ.availableSearchMethod, method))
+
+    prez_system_graph.add(
+        (URIRef(settings.system_uri), PREZ.version, Literal(settings.prez_version))
+    )
+    log.info(f"Populated API info")
+
+
+async def generate_support_graphs():
+    """
+    Generates the support graphs needed for the Prez API.
+    Although supporting triples are placed in specific graphs, Prez itself is graph agnostic: it is assumed backend
+    triplestores have a default union graph that covers all data intended to be delivered by the API.
+    """
+    for prez in settings.enabled_prezs:
+        # if running on startup, there may already be a system graph, in which case we don't need to generate it
+        # if the user wishes to regenerate the system graph, they can do so by using the /regenerate-context endpoint
+        ask = ask_system_graph(prez)
+        sys_g_exists = await sparql_ask(ask, prez)
+        if sys_g_exists[0] and sys_g_exists[1]:
+            log.info(
+                f"System graph for {prez} already exists, skipping generation of support graphs"
+            )
+        # select instances which do not have support graphs, log these instances
+        elif settings.generate_support_graphs:
+            log.info(f"Generating Support Graphs for {prez}")
+            insert_context = generate_insert_context(settings, prez)
+            await sparql_update(insert_context, prez)
+            log.info(f"Completed generating Support Graphs for {prez}")
+
+
+async def generate_profiles_support_graph():
+    """
+    Generates a support graph for the prez profiles
+    """
+    insert_context = generate_insert_context(settings, "Profiles")
+    profiles_graph_cache.update(insert_context)
+    log.info(f"Completed generating Support Graphs for Profiles")

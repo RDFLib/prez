@@ -1,7 +1,6 @@
 import asyncio
 import io
 import logging
-import time
 from typing import Optional
 
 from connegp import RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
@@ -11,15 +10,14 @@ from rdflib import Graph, URIRef, Namespace, Literal
 from starlette.requests import Request
 from starlette.responses import Response
 
-from prez.models import SpatialItem, VocabItem, CatalogItem
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.models.profiles_item import ProfileItem
-from prez.services.sparql_queries import (
+from prez.sparql.objects_listings import (
     generate_item_construct,
     get_annotation_properties,
     get_annotation_predicates,
 )
-from prez.services.sparql_utils import sparql_construct
+from prez.sparql.methods import sparql_construct
 
 
 log = logging.getLogger(__name__)

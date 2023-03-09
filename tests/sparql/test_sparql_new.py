@@ -1,13 +1,12 @@
 import os
 import subprocess
-from pathlib import Path
 from time import sleep
 
 import pytest
-from rdflib import Graph, URIRef, RDFS, SKOS
+from rdflib import URIRef, SKOS
 
 from prez.models import SpatialItem
-from prez.services.sparql_queries import (
+from prez.sparql.objects_listings import (
     generate_bnode_construct,
     generate_bnode_select,
     generate_item_construct,

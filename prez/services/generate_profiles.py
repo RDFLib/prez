@@ -7,12 +7,8 @@ from rdflib import Graph, URIRef
 
 from prez.cache import profiles_graph_cache
 from prez.config import settings
-from prez.services.sparql_queries import (
-    select_profile_mediatype,
-)
-from prez.services.sparql_utils import (
-    sparql_construct,
-)
+from prez.sparql.methods import sparql_construct
+from prez.sparql.objects_listings import select_profile_mediatype
 
 log = logging.getLogger(__name__)
 

@@ -15,9 +15,11 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 prez:VocPrezProfile
     a prof:Profile ;
+    prez:supportedSearchMethod prez:exactMatch , prez:skosPrefLabel , prez:skosWeighted ;
     dcterms:identifier "vocprez"^^xsd:token ;
     dcterms:description "A system profile for VocPrez" ;
     skos:prefLabel "VocPrez profile" ;
+    altr-ext:constrainsClass prez:VocPrez ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;

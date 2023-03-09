@@ -7,7 +7,7 @@ from starlette.responses import PlainTextResponse
 from prez.cache import search_methods
 from prez.config import settings
 from prez.renderers.renderer import return_rdf
-from prez.services.sparql_utils import sparql_construct
+from prez.sparql.methods import sparql_construct
 
 router = APIRouter(tags=["Search"])
 
@@ -77,5 +77,5 @@ def get_default_search_methods():
     # TODO return from profiles
     methods = {}
     for prez in settings.enabled_prezs:
-        methods[prez] = "skosWeighted"
+        methods[prez] = "exactMatch"
     return methods

@@ -1,0 +1,23 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix prez: <https://prez.dev/> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+prez:exactMatch a prez:SearchMethod ;
+                        dcterms:identifier "exactMatch" ;
+    rdfs:label "Exact Object Match Search"@en ;
+    rdf:value """
+        PREFIX prez: <https://prez.dev/>
+
+        CONSTRUCT {
+                    ?s ?p ?o ;
+                      prez:searchResultSource prez:$PREZ ;
+                      prez:usingSearchMethod prez:exactMatch .
+        }
+        {
+        SELECT DISTINCT ?s ?p ?o
+        WHERE { ?s ?p ?o .
+              FILTER REGEX(?o, "^$TERM$$", "i")
+            }
+        }
+        """.

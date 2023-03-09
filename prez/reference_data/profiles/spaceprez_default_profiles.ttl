@@ -14,10 +14,12 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 prez:SpacePrezProfile
     a prof:Profile ;
+    prez:supportedSearchMethod prez:exactMatch ;
     dcterms:identifier "spaceprez"^^xsd:token ;
     dcterms:description "A system profile for SpacePrez" ;
     skos:prefLabel "SpacePrez profile" ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
+    altr-ext:constrainsClass prez:SpacePrez ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
         sh:targetClass dcat:Dataset ;

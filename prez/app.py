@@ -11,7 +11,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from prez.cache import tbox_cache
 from prez.config import settings
-from prez.models.api_model import (
+from prez.services.app_service import (
     populate_api_info,
     generate_support_graphs,
     generate_profiles_support_graph,
@@ -102,9 +102,9 @@ async def app_startup():
     await generate_search_methods()
     await create_profiles_graph()
     await count_objects()
+    await generate_profiles_support_graph()
     await populate_api_info()
     await generate_support_graphs()
-    await generate_profiles_support_graph()
 
 
 @app.on_event("shutdown")

@@ -14,9 +14,11 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 prez:CatPrezProfile
     a prof:Profile ;
+    prez:supportedSearchMethod prez:exactMatch ;
     dcterms:identifier "catprez"^^xsd:token ;
     dcterms:description "A system profile for CatPrez" ;
     skos:prefLabel "CatPrez profile" ;
+    altr-ext:constrainsClass prez:CatPrez ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;

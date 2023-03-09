@@ -6,7 +6,7 @@ from prez.models.profiles_item import ProfileItem
 from prez.models.profiles_listings import ProfilesMembers
 from prez.cache import profiles_graph_cache
 from prez.renderers.renderer import return_profiles, return_from_graph
-from prez.services.sparql_queries import (
+from prez.sparql.objects_listings import (
     generate_listing_construct_from_uri,
     generate_listing_count_construct,
     generate_item_construct,

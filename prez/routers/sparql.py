@@ -3,7 +3,7 @@ from rdflib import Namespace
 from starlette.responses import PlainTextResponse, JSONResponse
 
 from prez.renderers.renderer import return_rdf
-from prez.services.sparql_utils import sparql_construct, sparql_query
+from prez.sparql.methods import sparql_query
 
 PREZ = Namespace("https://prez.dev/")
 
