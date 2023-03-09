@@ -60,7 +60,7 @@ jobs:
         run: |
           source .venv/bin/activate
           echo $PWD
-          cd tests/catprez && pytest
+          cd ../tests/catprez && pytest
           echo $PWD
           cd ../tests/vocprez && pytest
           echo $PWD

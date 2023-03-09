@@ -5,7 +5,7 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-ns3:identifier rdfs:label "Identifier" .
+ns3:identifier rdfs:label "Identifier"@en .
 
 <https://www.atsida.edu.au/archive/datasets/au.edu.anu.ada.ddi.20002-sa> a ns4:Resource ;
     ns3:accessRights <https://linked.data.gov.au/def/data-access-rights/metadata-only> ;
@@ -16,7 +16,7 @@ Aboriginal and Torres Strait Islander people, researchers and other users should
     ns3:identifier "AAC-SA"^^xsd:token ;
     ns3:issued "2011-07-22"^^xsd:date ;
     ns3:license "All Rights Reserved" ;
-    ns3:rights "Copyright Â© 2011, The Australian National University. All rights reserved." ;
+    ns3:rights "Copyright © 2011, The Australian National University. All rights reserved." ;
     ns3:spatial <https://linked.data.gov.au/dataset/asgsed3/STE/4>,
         <https://linked.data.gov.au/dataset/asgsed3/STE/7> ;
     ns3:temporal "1921-1944" ;

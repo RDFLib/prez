@@ -5,7 +5,7 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-dcterms:identifier rdfs:label "Identifier" .
+dcterms:identifier rdfs:label "Identifier"@en .
 
 <https://w3id.org/idn/dataset/agents> a dcat:Catalog ;
     dcterms:created "2022-08-15"^^xsd:date ;

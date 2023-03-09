@@ -16,7 +16,7 @@
         <http://example.com/datasets/sandgate/floods>,
         <http://example.com/datasets/sandgate/roads> .
 
-ns3:identifier rdfs:label "Identifier" .
+ns3:identifier rdfs:label "Identifier"@en .
 
 <http://www.w3.org/ns/dcat#Dataset> rdfs:label "Dataset" .
 

@@ -1,182 +1,268 @@
-@prefix dcterms: <http://purl.org/dc/terms/> .
-@prefix ns1: <http://www.w3.org/2004/02/skos/core#> .
-@prefix ns2: <https://prez.dev/> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+PREFIX : <https://linked.data.gov.au/def/warox-alteration-types/>
+PREFIX cdterms: <http://purl.org/dc/terms/>
+PREFIX cs: <https://linked.data.gov.au/def/warox-alteration-types>
+PREFIX prez: <https://prez.dev/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
-<https://linked.data.gov.au/def/warox-alteration-types/argillic-advanced> dcterms:provenance "From WAROX"@en ;
-    skos:broader <https://linked.data.gov.au/def/warox-alteration-types/argillic> ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "argillic - advanced"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/argillic-advanced" .
+cdterms:created
+    rdfs:label "Date Created"@en ;
+    cdterms:description "Recommended practice is to describe the date, date/time, or period of time as recommended for the property Date, of which this is a subproperty."@en ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types/argillic-intermediate> dcterms:provenance "From WAROX"@en ;
-    skos:broader <https://linked.data.gov.au/def/warox-alteration-types/argillic> ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "argillic - intermediate"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/argillic-intermediate" .
+cdterms:creator
+    rdfs:label "Creator"@en ;
+    cdterms:description "Recommended practice is to identify the creator with a URI.  If this is not possible or feasible, a literal value that identifies the creator may be provided."@en ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types/skarn-magnesian> dcterms:provenance "From WAROX"@en ;
-    skos:broader <https://linked.data.gov.au/def/warox-alteration-types/skarn> ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "skarn - magnesian"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/skarn-magnesian" .
+cdterms:identifier
+    rdfs:label "Identifier"@en ;
+    cdterms:description "Recommended practice is to identify the resource by means of a string conforming to an identification system. Examples include International Standard Book Number (ISBN), Digital Object Identifier (DOI), and Uniform Resource Name (URN).  Persistent identifiers should be provided as HTTP URIs."@en ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types/skarn-prograde-stage> dcterms:provenance "From WAROX"@en ;
-    skos:broader <https://linked.data.gov.au/def/warox-alteration-types/skarn> ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "skarn - prograde stage"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/skarn-prograde-stage" .
+cdterms:modified
+    rdfs:label "Date Modified"@en ;
+    cdterms:description "Recommended practice is to describe the date, date/time, or period of time as recommended for the property Date, of which this is a subproperty."@en ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types/skarn-retrograde-stage> dcterms:provenance "From WAROX"@en ;
-    skos:broader <https://linked.data.gov.au/def/warox-alteration-types/skarn> ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "skarn - retrograde stage"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/skarn-retrograde-stage" .
+cdterms:provenance
+    rdfs:label "Provenance"@en ;
+    cdterms:description "The statement may include a description of any changes successive custodians made to the resource."@en ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types/albitic> dcterms:provenance "From WAROX"@en ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "albitic"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/albitic" .
+:argillic-advanced
+    cdterms:provenance "From WAROX"@en ;
+    skos:broader :argillic ;
+    skos:inScheme cs: ;
+    skos:prefLabel "argillic - advanced"@en ;
+    prez:link "/v/vocab/warox-alteration-type/argillic-advanced" ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types/alkali-metasomatism> dcterms:provenance "From WAROX"@en ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "alkali metasomatism"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/alkali-metasomatism" .
+:argillic-intermediate
+    cdterms:provenance "From WAROX"@en ;
+    skos:broader :argillic ;
+    skos:inScheme cs: ;
+    skos:prefLabel "argillic - intermediate"@en ;
+    prez:link "/v/vocab/warox-alteration-type/argillic-intermediate" ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types/argillic> dcterms:provenance "From WAROX"@en ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "argillic"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/argillic" .
+:skarn-magnesian
+    cdterms:provenance "From WAROX"@en ;
+    skos:broader :skarn ;
+    skos:inScheme cs: ;
+    skos:prefLabel "skarn - magnesian"@en ;
+    prez:link "/v/vocab/warox-alteration-type/skarn-magnesian" ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types/carbonate> dcterms:provenance "From WAROX"@en ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "carbonate"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/carbonate" .
+:skarn-prograde-stage
+    cdterms:provenance "From WAROX"@en ;
+    skos:broader :skarn ;
+    skos:inScheme cs: ;
+    skos:prefLabel "skarn - prograde stage"@en ;
+    prez:link "/v/vocab/warox-alteration-type/skarn-prograde-stage" ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types/chloritic> dcterms:provenance "From WAROX"@en ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "chloritic"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/chloritic" .
+:skarn-retrograde-stage
+    cdterms:provenance "From WAROX"@en ;
+    skos:broader :skarn ;
+    skos:inScheme cs: ;
+    skos:prefLabel "skarn - retrograde stage"@en ;
+    prez:link "/v/vocab/warox-alteration-type/skarn-retrograde-stage" ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types/deuteric> dcterms:provenance "From WAROX"@en ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "deuteric"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/deuteric" .
+:albitic
+    cdterms:provenance "From WAROX"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "albitic"@en ;
+    prez:link "/v/vocab/warox-alteration-type/albitic" ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types/fenitization> dcterms:provenance "From WAROX"@en ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "fenitization"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/fenitization" .
+:alkali-metasomatism
+    cdterms:provenance "From WAROX"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "alkali metasomatism"@en ;
+    prez:link "/v/vocab/warox-alteration-type/alkali-metasomatism" ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types/fluorite-and-topaz> dcterms:provenance "From WAROX"@en ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "fluorite and topaz"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/fluorite-and-topaz" .
+:carbonate
+    cdterms:provenance "From WAROX"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "carbonate"@en ;
+    prez:link "/v/vocab/warox-alteration-type/carbonate" ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types/greisen> dcterms:provenance "From WAROX"@en ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "greisen"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/greisen" .
+:chloritic
+    cdterms:provenance "From WAROX"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "chloritic"@en ;
+    prez:link "/v/vocab/warox-alteration-type/chloritic" ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types/hematitic> dcterms:provenance "From WAROX"@en ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "hematitic"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/hematitic" .
+:deuteric
+    cdterms:provenance "From WAROX"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "deuteric"@en ;
+    prez:link "/v/vocab/warox-alteration-type/deuteric" ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types/jasperoid> dcterms:provenance "From WAROX"@en ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "jasperoid"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/jasperoid" .
+:fenitization
+    cdterms:provenance "From WAROX"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "fenitization"@en ;
+    prez:link "/v/vocab/warox-alteration-type/fenitization" ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types/listvenitization> dcterms:provenance "From WAROX"@en ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "listvenitization"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/listvenitization" .
+:fluorite-and-topaz
+    cdterms:provenance "From WAROX"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "fluorite and topaz"@en ;
+    prez:link "/v/vocab/warox-alteration-type/fluorite-and-topaz" ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types/phyllic-qsp> dcterms:provenance "From WAROX"@en ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "phyllic (QSP)"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/phyllic-qsp" .
+:greisen
+    cdterms:provenance "From WAROX"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "greisen"@en ;
+    prez:link "/v/vocab/warox-alteration-type/greisen" ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types/potassic> dcterms:provenance "From WAROX"@en ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "potassic"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/potassic" .
+:hematitic
+    cdterms:provenance "From WAROX"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "hematitic"@en ;
+    prez:link "/v/vocab/warox-alteration-type/hematitic" ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types/propylitic> dcterms:provenance "From WAROX"@en ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "propylitic"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/propylitic" .
+:jasperoid
+    cdterms:provenance "From WAROX"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "jasperoid"@en ;
+    prez:link "/v/vocab/warox-alteration-type/jasperoid" ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types/pyritic> dcterms:provenance "From WAROX"@en ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "pyritic"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/pyritic" .
+:listvenitization
+    cdterms:provenance "From WAROX"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "listvenitization"@en ;
+    prez:link "/v/vocab/warox-alteration-type/listvenitization" ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types/rodingitization> dcterms:provenance "From WAROX"@en ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "rodingitization"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/rodingitization" .
+:phyllic-qsp
+    cdterms:provenance "From WAROX"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "phyllic (QSP)"@en ;
+    prez:link "/v/vocab/warox-alteration-type/phyllic-qsp" ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types/sericitic> dcterms:provenance "From WAROX"@en ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "sericitic"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/sericitic" .
+:potassic
+    cdterms:provenance "From WAROX"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "potassic"@en ;
+    prez:link "/v/vocab/warox-alteration-type/potassic" ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types/serpentinization> dcterms:provenance "From WAROX"@en ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "serpentinization"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/serpentinization" .
+:propylitic
+    cdterms:provenance "From WAROX"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "propylitic"@en ;
+    prez:link "/v/vocab/warox-alteration-type/propylitic" ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types/silicification> dcterms:provenance "From WAROX"@en ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "silicification"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/silicification" .
+:pyritic
+    cdterms:provenance "From WAROX"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "pyritic"@en ;
+    prez:link "/v/vocab/warox-alteration-type/pyritic" ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types/skarn> dcterms:provenance "From WAROX"@en ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "skarn"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/skarn" .
+:rodingitization
+    cdterms:provenance "From WAROX"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "rodingitization"@en ;
+    prez:link "/v/vocab/warox-alteration-type/rodingitization" ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types/tourmalinization> dcterms:provenance "From WAROX"@en ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "tourmalinization"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/tourmalinization" .
+:sericitic
+    cdterms:provenance "From WAROX"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "sericitic"@en ;
+    prez:link "/v/vocab/warox-alteration-type/sericitic" ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types/zeolitic> dcterms:provenance "From WAROX"@en ;
-    ns1:inScheme <https://linked.data.gov.au/def/warox-alteration-types> ;
-    ns1:prefLabel "zeolitic"@en ;
-    ns2:link "/v/vocab/warox-alteration-type/zeolitic" .
+:serpentinization
+    cdterms:provenance "From WAROX"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "serpentinization"@en ;
+    prez:link "/v/vocab/warox-alteration-type/serpentinization" ;
+.
 
-<https://linked.data.gov.au/def/warox-alteration-types> a ns1:ConceptScheme ;
-    dcterms:created "2021-09-26"^^xsd:date ;
-    dcterms:creator <https://linked.data.gov.au/org/gswa> ;
-    dcterms:identifier "warox-alteration-type"^^xsd:token ;
-    dcterms:modified "2021-09-29"^^xsd:date ;
-    dcterms:provenance "This vocabulary was built on an extract of the WAROX system's lookup table"@en ;
-    ns1:definition "This vocabulary give Alteration Type concepts, listed in the Geologicla Survey of Western Australia's WAROX database."@en ;
-    ns1:hasTopConcept <https://linked.data.gov.au/def/warox-alteration-types/albitic>,
-        <https://linked.data.gov.au/def/warox-alteration-types/alkali-metasomatism>,
-        <https://linked.data.gov.au/def/warox-alteration-types/argillic>,
-        <https://linked.data.gov.au/def/warox-alteration-types/carbonate>,
-        <https://linked.data.gov.au/def/warox-alteration-types/chloritic>,
-        <https://linked.data.gov.au/def/warox-alteration-types/deuteric>,
-        <https://linked.data.gov.au/def/warox-alteration-types/fenitization>,
-        <https://linked.data.gov.au/def/warox-alteration-types/fluorite-and-topaz>,
-        <https://linked.data.gov.au/def/warox-alteration-types/greisen>,
-        <https://linked.data.gov.au/def/warox-alteration-types/hematitic>,
-        <https://linked.data.gov.au/def/warox-alteration-types/jasperoid>,
-        <https://linked.data.gov.au/def/warox-alteration-types/listvenitization>,
-        <https://linked.data.gov.au/def/warox-alteration-types/phyllic-qsp>,
-        <https://linked.data.gov.au/def/warox-alteration-types/potassic>,
-        <https://linked.data.gov.au/def/warox-alteration-types/propylitic>,
-        <https://linked.data.gov.au/def/warox-alteration-types/pyritic>,
-        <https://linked.data.gov.au/def/warox-alteration-types/rodingitization>,
-        <https://linked.data.gov.au/def/warox-alteration-types/sericitic>,
-        <https://linked.data.gov.au/def/warox-alteration-types/serpentinization>,
-        <https://linked.data.gov.au/def/warox-alteration-types/silicification>,
-        <https://linked.data.gov.au/def/warox-alteration-types/skarn>,
-        <https://linked.data.gov.au/def/warox-alteration-types/tourmalinization>,
-        <https://linked.data.gov.au/def/warox-alteration-types/zeolitic> ;
-    ns1:prefLabel "WAROX Alteration Type"@en .
+:silicification
+    cdterms:provenance "From WAROX"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "silicification"@en ;
+    prez:link "/v/vocab/warox-alteration-type/silicification" ;
+.
+
+:tourmalinization
+    cdterms:provenance "From WAROX"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "tourmalinization"@en ;
+    prez:link "/v/vocab/warox-alteration-type/tourmalinization" ;
+.
+
+:zeolitic
+    cdterms:provenance "From WAROX"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "zeolitic"@en ;
+    prez:link "/v/vocab/warox-alteration-type/zeolitic" ;
+.
+
+:argillic
+    cdterms:provenance "From WAROX"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "argillic"@en ;
+    prez:link "/v/vocab/warox-alteration-type/argillic" ;
+.
+
+:skarn
+    cdterms:provenance "From WAROX"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "skarn"@en ;
+    prez:link "/v/vocab/warox-alteration-type/skarn" ;
+.
+
+cs:
+    a skos:ConceptScheme ;
+    cdterms:created "2021-09-26"^^xsd:date ;
+    cdterms:creator <https://linked.data.gov.au/org/gswa> ;
+    cdterms:identifier "warox-alteration-type"^^xsd:token ;
+    cdterms:modified "2021-09-29"^^xsd:date ;
+    cdterms:provenance "This vocabulary was built on an extract of the WAROX system's lookup table"@en ;
+    skos:definition "This vocabulary give Alteration Type concepts, listed in the Geologicla Survey of Western Australia's WAROX database."@en ;
+    skos:hasTopConcept
+        :albitic ,
+        :alkali-metasomatism ,
+        :argillic ,
+        :carbonate ,
+        :chloritic ,
+        :deuteric ,
+        :fenitization ,
+        :fluorite-and-topaz ,
+        :greisen ,
+        :hematitic ,
+        :jasperoid ,
+        :listvenitization ,
+        :phyllic-qsp ,
+        :potassic ,
+        :propylitic ,
+        :pyritic ,
+        :rodingitization ,
+        :sericitic ,
+        :serpentinization ,
+        :silicification ,
+        :skarn ,
+        :tourmalinization ,
+        :zeolitic ;
+    skos:prefLabel "WAROX Alteration Type"@en ;
+.
