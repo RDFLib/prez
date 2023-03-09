@@ -1,5 +1,8 @@
+import asyncio
+from collections import ChainMap
+
 from fastapi import APIRouter, Request
-from rdflib import Namespace
+from rdflib import Namespace, Graph
 from starlette.responses import PlainTextResponse, JSONResponse
 
 from prez.renderers.renderer import return_rdf
@@ -36,13 +39,32 @@ async def sparql(
         if len(settings.enabled_prezs) == 1:
             prez = settings.enabled_prezs[0]
         else:
-            return PlainTextResponse(
-                "Federated SPARQL endpoint not yet implemented. Use the individual SPARQL "
-                "endpoints: /v/sparql, /s/sparql, and /c/sparql"
+            results = await asyncio.gather(
+                *[sparql_query(query, p) for p in settings.enabled_prezs]
             )
+            if results[0][1] == ("application/json"):
+                combined_bindings = []
+                for result in results:
+                    for binding in result[2]["results"]["bindings"]:
+                        binding["endpoint"] = {"type": "uri", "value": result[0]}
+                        combined_bindings.append(binding)
+                results[0][2]["results"]["bindings"] = combined_bindings
+                return JSONResponse(results[0][2])
+            # warning: the following is not a sensible way to return results.
+            # the user cannot know which endpoint each result came from.
+            # no current ideas for a better solution.
+            elif results[0][1] == ("text/turtle"):
+                graph = Graph(bind_namespaces="rdflib")
+                graph.bind("prez", "https://prez.dev/")
+                for res in results:
+                    g = res[2]
+                    graph.__iadd__(g)
+                return await return_rdf(
+                    graph, mediatype="text/anot+turtle", profile_headers={}
+                )
     else:
         prez = pathmap.get(start_of_path)
-    mt, result = await sparql_query(query, prez)
+    _, mt, result = await sparql_query(query, prez)
     if mt.startswith("application/json"):
         return JSONResponse(result)
     if len(result) > 0:

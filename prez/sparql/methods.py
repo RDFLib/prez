@@ -75,9 +75,9 @@ def sparql_query_non_async(query: str, prez: str) -> Tuple[bool, Union[List, Dic
 @alru_cache(maxsize=128)
 async def sparql_query(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
     """Executes a SPARQL SELECT query for a single SPARQL endpoint"""
-    logging.info(
-        msg=f"Executing query {query} against {settings.sparql_creds[prez]['endpoint']}"
-    )
+    be_endpoint = settings.sparql_creds[prez]["endpoint"]
+    fe_endpoint = f"{settings.protocol}://{settings.host}:{settings.port}/{prez[0].lower()}/sparql"
+    logging.info(msg=f"Executing query {query} against {be_endpoint}")
     try:
         response: httpxResponse = await sparql_clients[prez].post(
             url="",
@@ -99,10 +99,12 @@ async def sparql_query(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
     if 200 <= response.status_code < 300:
         response_mt = response.headers["content-type"]
         if response_mt.startswith("application/json"):
-            return response_mt, response.json()
+            return fe_endpoint, response_mt, response.json()
         elif response_mt.startswith("text/turtle"):
-            return response_mt, Graph(bind_namespaces="rdflib").parse(
-                data=response.text
+            return (
+                fe_endpoint,
+                response_mt,
+                Graph(bind_namespaces="rdflib").parse(data=response.text),
             )
     else:
         return "text/plain", {
