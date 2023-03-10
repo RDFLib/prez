@@ -3,7 +3,7 @@ from typing import Set
 
 from pydantic import BaseConfig
 from pydantic import BaseModel, root_validator
-from rdflib import Namespace, URIRef
+from rdflib import Namespace, URIRef, RDF
 from rdflib.namespace import DCTERMS, XSD, DCAT, GEO, RDFS
 
 from prez.sparql.methods import sparql_query_non_async
@@ -37,11 +37,37 @@ class SpatialItem(BaseModel):
         feature_id = values.get("feature_id")
         uri = values.get("uri")
         if uri:
-            q = f"""SELECT ?class {{ <{uri}> a ?class }}"""
+            q = f"""
+            PREFIX dcat: <{DCAT}>
+            PREFIX dcterms: <{DCTERMS}>
+            PREFIX geo: <{GEO}>
+            PREFIX prez: <{PREZ}>
+            PREFIX rdf: <{RDF}>
+            PREFIX rdfs: <{RDFS}>
+            SELECT ?item ?id ?class
+            {{<{uri}> ^rdfs:member* ?item .
+                {{ GRAPH prez:spaceprez-system-graph {{ ?item dcterms:identifier ?id }} }}
+                ?item a ?class .
+            VALUES ?class {{geo:Feature geo:FeatureCollection dcat:Dataset}}
+            }}"""
             r = sparql_query_non_async(q, "SpacePrez")
             if r[0] and r[1]:
-                # set the uri of the item
-                values["classes"] = frozenset([c["class"]["value"] for c in r[1]])
+                for res in r[1]:
+                    if res["item"]["value"] == uri:
+                        values["id"] = res["id"]["value"]
+                        values["classes"] = frozenset(
+                            [c["class"]["value"] for c in r[1]]
+                        )
+                    if res["class"]["value"] == str(DCAT.Dataset):
+                        values["dataset_id"] = res["id"]["value"]
+                        values[
+                            "link_constructor"
+                        ] = f"/s/datasets/{values['dataset_id']}/collections"
+                    elif res["class"]["value"] == str(GEO.FeatureCollection):
+                        values["collection_id"] = res["id"]["value"]
+                        f"/s/datasets/{values['dataset_id']}/collections/{values['collection_id']}/items"
+                    elif res["class"]["value"] == str(GEO.Feature):
+                        values["feature_id"] = res["id"]["value"]
             else:
                 raise ValueError(
                     f"Could not find a class for {uri}, or URI does not exist in SpacePrez"

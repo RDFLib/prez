@@ -7,6 +7,7 @@ from async_lru import alru_cache
 from httpx import Client, HTTPError, HTTPStatusError
 from httpx import Response as httpxResponse
 from rdflib import Graph
+from starlette.responses import PlainTextResponse
 
 from prez.config import settings
 from prez.services.triplestore_client import sparql_clients
@@ -95,7 +96,9 @@ async def sparql_query(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
         response.raise_for_status()
     except HTTPStatusError:
         log.error(f"HTTPStatusError text: {response.text}")
-        raise
+        return PlainTextResponse(
+            content=response.text, status_code=response.status_code
+        )
     if 200 <= response.status_code < 300:
         response_mt = response.headers["content-type"]
         if response_mt.startswith("application/json"):

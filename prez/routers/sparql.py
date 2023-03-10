@@ -42,7 +42,10 @@ async def sparql(
             results = await asyncio.gather(
                 *[sparql_query(query, p) for p in settings.enabled_prezs]
             )
-            if results[0][1] == ("application/json"):
+            for result in results:
+                if isinstance(result, PlainTextResponse):
+                    return result
+            if results[0][1].startswith("application/json"):
                 combined_bindings = []
                 for result in results:
                     for binding in result[2]["results"]["bindings"]:
