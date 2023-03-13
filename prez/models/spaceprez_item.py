@@ -46,14 +46,14 @@ class SpatialItem(BaseModel):
             PREFIX rdfs: <{RDFS}>
             SELECT ?item ?id ?class
             {{<{uri}> ^rdfs:member* ?item .
-                {{ GRAPH prez:spaceprez-system-graph {{ ?item dcterms:identifier ?id }} }}
+                {{ ?item dcterms:identifier ?id }}
                 ?item a ?class .
             VALUES ?class {{geo:Feature geo:FeatureCollection dcat:Dataset}}
             }}"""
             r = sparql_query_non_async(q, "SpacePrez")
             if r[0] and r[1]:
                 for res in r[1]:
-                    if res["item"]["value"] == uri:
+                    if res["item"]["value"] == str(uri):
                         values["id"] = res["id"]["value"]
                         values["classes"] = frozenset(
                             [c["class"]["value"] for c in r[1]]
