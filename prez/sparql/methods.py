@@ -101,8 +101,11 @@ async def sparql_query(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
         )
     if 200 <= response.status_code < 300:
         response_mt = response.headers["content-type"]
+        # TODO remove below after testing
+        response = response.json()
+        response["head"]["link"] = query
         if response_mt.startswith("application/json"):
-            return fe_endpoint, response_mt, response.json()
+            return fe_endpoint, response_mt, response
         elif response_mt.startswith("text/turtle"):
             return (
                 fe_endpoint,
