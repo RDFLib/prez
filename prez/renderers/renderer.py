@@ -78,7 +78,7 @@ async def return_annotated_rdf(graph, prez, profile_headers, profile):
         annotations_graph += results[1]
         cache += results[1]
     obj = io.BytesIO(
-        (graph + annotations_graph).serialize(format="longturtle", encoding="utf-8")
+        (graph + annotations_graph).serialize(format="nt", encoding="utf-8")
     )
     return StreamingResponse(
         content=obj, media_type="text/turtle", headers=profile_headers
