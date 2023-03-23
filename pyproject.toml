@@ -1,19 +1,19 @@
 [tool.poetry]
 name = "prez"
-version = "3.0.4"
+version = "3.0.5"
 description = "A python application for displaying linked data on the web"
 authors = ["Jamie Feiss <jamie.feiss@gmail.com>", "Nicholas Car <nick@kurrawong.net>", "David Habgood <dcchabgood@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-uvicorn = "^0.15.0"
+uvicorn = "^0.21.1"
 httpx = "*"
-rdflib = "^6.2.0"
+rdflib = "^6.3.1"
 connegp = { file = "connegp-0.1.5-py3-none-any.whl" }
 async-lru = "^1.0.3"
 geojson-rewind = "^1.0.3"
 toml = "^0.10.2"
-fastapi = "^0.92.0"
+fastapi = "^0.95.0"
 python-multipart = "^0.0.6"
 
 [tool.poetry.dev-dependencies]
