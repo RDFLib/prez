@@ -2,6 +2,7 @@ import os
 import sys
 from pathlib import Path
 
+os.environ["TEST_MODE"] = "true"
 os.environ["SPACEPREZ_SPARQL_ENDPOINT"] = "http://localhost:3032/spaceprez"
 PREZ_DIR = Path(__file__).parent.parent.parent.parent.absolute() / "prez"
 os.environ["PREZ_DIR"] = str(PREZ_DIR)

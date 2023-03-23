@@ -11,7 +11,7 @@ PREZ = Namespace("https://prez.dev/")
 router = APIRouter(tags=["CQL"])
 
 
-# # CQL search
+# # CQL search_methods
 # if "SpacePrez" in settings.ENABLED_PREZS:
 #     dataset_sparql_result, collection_sparql_result = await asyncio.gather(
 #         list_datasets(),
@@ -30,14 +30,14 @@ router = APIRouter(tags=["CQL"])
 # top-level queryables
 @router.get(
     "/queryables",
-    summary="List available query parameters for CQL search globally",
+    summary="List available query parameters for CQL search_methods globally",
 )
 async def queryables(
     request: Request,
 ):
     settings = Settings()
 
-    """Returns a list of available properties to query against using CQL search globally"""
+    """Returns a list of available properties to query against using CQL search_methods globally"""
     content = {
         "$schema": "https://json-schema.org/draft/2019-09/schema",
         "$id": f"{request.url.remove_query_params(keys=request.query_params.keys())}",
@@ -57,10 +57,10 @@ async def queryables(
     return JSONResponse(content=content)
 
 
-# top-level CQL search form
+# top-level CQL search_methods form
 @router.get(
     "/cql",
-    summary="Endpoint to POST CQL search form data to",
+    summary="Endpoint to POST CQL search_methods form data to",
 )
 async def cql(
     request: Request,
@@ -70,7 +70,7 @@ async def cql(
     datasets: Optional[List[str]] = Form(None),
     collections: Optional[List[str]] = Form(None),
 ):
-    """Handles form data from a CQL search form & redirects to /items containing the filter param"""
+    """Handles form data from a CQL search_methods form & redirects to /items containing the filter param"""
     filter_params = []
     if title is not None:
         filter_params.append(f'title LIKE "{title}"')

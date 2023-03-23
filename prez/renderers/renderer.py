@@ -1,7 +1,6 @@
 import asyncio
 import io
 import logging
-import time
 from typing import Optional
 
 from connegp import RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
@@ -11,15 +10,14 @@ from rdflib import Graph, URIRef, Namespace, Literal
 from starlette.requests import Request
 from starlette.responses import Response
 
-from prez.models import SpatialItem, VocabItem, CatalogItem
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.models.profiles_item import ProfileItem
-from prez.services.sparql_queries import (
+from prez.sparql.objects_listings import (
     generate_item_construct,
     get_annotation_properties,
     get_annotation_predicates,
 )
-from prez.services.sparql_utils import sparql_construct
+from prez.sparql.methods import sparql_construct
 
 
 log = logging.getLogger(__name__)
@@ -44,6 +42,7 @@ async def return_from_queries(
 
 
 async def return_from_graph(graph, mediatype, profile, profile_headers, prez):
+    profile_headers["Content-Disposition"] = "inline"
     if str(mediatype) in RDF_MEDIATYPES:
         return await return_rdf(graph, mediatype, profile_headers)
 
@@ -55,13 +54,14 @@ async def return_from_graph(graph, mediatype, profile, profile_headers, prez):
             return await return_annotated_rdf(graph, prez, profile_headers, profile)
 
 
-async def return_rdf(graph, mediatype, profile_headers=None):
+async def return_rdf(graph, mediatype, profile_headers):
     RDF_SERIALIZER_TYPES_MAP["text/anot+turtle"] = "turtle"
     obj = io.BytesIO(
         graph.serialize(
             format=RDF_SERIALIZER_TYPES_MAP[str(mediatype)], encoding="utf-8"
         )
     )
+    profile_headers["Content-Disposition"] = "inline"
     return StreamingResponse(content=obj, media_type=mediatype, headers=profile_headers)
 
 
@@ -78,7 +78,7 @@ async def return_annotated_rdf(graph, prez, profile_headers, profile):
         annotations_graph += results[1]
         cache += results[1]
     obj = io.BytesIO(
-        (graph + annotations_graph).serialize(format="longturtle", encoding="utf-8")
+        (graph + annotations_graph).serialize(format="nt", encoding="utf-8")
     )
     return StreamingResponse(
         content=obj, media_type="text/turtle", headers=profile_headers
@@ -116,10 +116,3 @@ async def return_profiles(
         prof_and_mt_info.profile_headers,
         prez_type,
     )
-
-
-async def return_all_profiles():
-    """
-    returns all profiles the API knows about
-    """
-    pass

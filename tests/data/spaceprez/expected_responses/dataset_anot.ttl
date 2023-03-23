@@ -16,9 +16,9 @@
         <http://example.com/datasets/sandgate/floods>,
         <http://example.com/datasets/sandgate/roads> .
 
-ns3:identifier rdfs:label "Identifier" .
+ns3:identifier rdfs:label "Identifier"@en .
 
-<http://www.w3.org/ns/dcat#Dataset> rdfs:label "Dataset" .
+<http://www.w3.org/ns/dcat#Dataset> rdfs:label "Dataset"@en .
 
 <http://example.com/datasets/sandgate/catchments> dcterms:title "Geofabric Contracted Catchments"@en ;
     ns3:description "Hydrological catchments that are 'contracted', that is, guarenteed, to appear on multiple Geofabric surface hydrology data products"@en ;

@@ -1,19 +1,19 @@
 import os
 import subprocess
-from pathlib import Path
 from time import sleep
 
 import pytest
-from rdflib import Graph, URIRef, RDFS, SKOS
+from rdflib import URIRef, SKOS
 
-from prez.models import SpatialItem
-from prez.services.sparql_queries import (
+from prez.models import SpatialItem, VocabItem
+from prez.sparql.objects_listings import (
     generate_bnode_construct,
     generate_bnode_select,
     generate_item_construct,
     generate_include_predicates,
     get_annotations_from_tbox_cache,
     get_item_predicates,
+    generate_listing_construct_from_uri,
 )
 
 PREZ_DIR = os.getenv("PREZ_DIR")
@@ -74,8 +74,8 @@ def test_generate_bnode_select():
     assert returned == expected
 
 
-def test_generate_construct_open():
-    item = SpatialItem(uri=URIRef("http://example.com"))
+def test_generate_construct_open(sp_test_client):
+    item = SpatialItem(uri=URIRef("https://linked.data.gov.au/datasets/geofabric"))
     returned = generate_item_construct(item, None)
     expected = """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
@@ -134,13 +134,16 @@ def test_get_labels_from_tbox_cache():
         URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
         URIRef("http://purl.org/dc/terms/type"),
     }
-    uncached_terms, labels_from_cache = get_annotations_from_tbox_cache(terms)
-    assert len(uncached_terms) == 7
-    assert len(labels_from_cache) == 2
+    uncached_terms, labels_from_cache = get_annotations_from_tbox_cache(
+        terms, [], [], []
+    )
+    assert len(uncached_terms) == 3
+    assert len(labels_from_cache) == 0
 
 
 def test_generate_listing_construct_datasets():
-    returned = generate_listing_construct(item, profile, page=1, per_page=20)
+    item = SpatialItem(uri=URIRef("http://example.com"))
+    returned = generate_listing_construct_from_uri(item, profile, page=1, per_page=20)
     expected = """PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>

@@ -4,7 +4,7 @@ from pydantic import BaseModel, root_validator
 from rdflib import Namespace, DCAT, XSD, RDFS, DCTERMS
 from rdflib.namespace import URIRef, GEO
 
-from prez.services.sparql_utils import sparql_query_non_async
+from prez.sparql.methods import sparql_query_non_async
 
 PREZ = Namespace("https://prez.dev/")
 

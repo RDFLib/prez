@@ -1,7 +1,6 @@
 import logging
 import os
 from textwrap import dedent
-from typing import Optional
 
 import uvicorn
 from fastapi import FastAPI, Request
@@ -10,9 +9,10 @@ from fastapi.responses import JSONResponse
 from rdflib import Graph, Literal, URIRef
 from starlette.middleware.cors import CORSMiddleware
 
+
 from prez.cache import tbox_cache
 from prez.config import settings
-from prez.models.api_model import (
+from prez.services.app_service import (
     populate_api_info,
     generate_support_graphs,
     generate_profiles_support_graph,
@@ -20,15 +20,18 @@ from prez.models.api_model import (
 from prez.renderers.renderer import return_rdf
 from prez.routers.catprez import router as catprez_router
 from prez.routers.cql import router as cql_router
+from prez.routers.management import router as management_router
 from prez.routers.object import router as object_router
 from prez.routers.profiles import router as profiles_router
 from prez.routers.spaceprez import router as spaceprez_router
+from prez.routers.search import router as search_router
 from prez.routers.sparql import router as sparql_router
 from prez.routers.vocprez import router as vocprez_router
 from prez.services.app_service import healthcheck_sparql_endpoints, count_objects
-from prez.utils.generate_profiles import create_profiles_graph
-from prez.utils.prez_logging import setup_logger
-from prez.utils.prez_ns import PREZ
+from prez.services.generate_profiles import create_profiles_graph
+from prez.services.prez_logging import setup_logger
+from prez.reference_data.prez_ns import PREZ
+from prez.services.search_methods import generate_search_methods
 
 
 async def catch_400(request: Request, exc):
@@ -51,6 +54,30 @@ app = FastAPI(
     }
 )
 
+app.include_router(cql_router)
+app.include_router(management_router)
+app.include_router(object_router)
+app.include_router(sparql_router)
+app.include_router(search_router)
+app.include_router(profiles_router)
+if settings.catprez_sparql_endpoint:
+    app.include_router(catprez_router)
+if settings.vocprez_sparql_endpoint:
+    app.include_router(vocprez_router)
+if settings.spaceprez_sparql_endpoint:
+    app.include_router(spaceprez_router)
+
+
+@app.middleware("http")
+async def add_cors_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+    return response
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -59,17 +86,6 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["*"],
 )
-
-app.include_router(object_router)
-app.include_router(cql_router)
-app.include_router(sparql_router)
-app.include_router(profiles_router)
-if settings.catprez_sparql_endpoint:
-    app.include_router(catprez_router)
-if settings.vocprez_sparql_endpoint:
-    app.include_router(vocprez_router)
-if settings.spaceprez_sparql_endpoint:
-    app.include_router(spaceprez_router)
 
 
 def prez_open_api_metadata():
@@ -94,12 +110,13 @@ async def app_startup():
     setup_logger(settings)
     log = logging.getLogger("prez")
     log.info("Starting up")
-    await healthcheck_sparql_endpoints(settings)
-    await create_profiles_graph(settings.enabled_prezs)
-    await count_objects(settings)
-    await populate_api_info(settings)
-    await generate_support_graphs(settings)
-    await generate_profiles_support_graph(settings)
+    await healthcheck_sparql_endpoints()
+    await generate_search_methods()
+    await create_profiles_graph()
+    await count_objects()
+    await generate_profiles_support_graph()
+    await populate_api_info()
+    await generate_support_graphs()
 
 
 @app.on_event("shutdown")
@@ -137,7 +154,7 @@ async def index(request: Request):
         )
     )
     return await return_rdf(
-        prez_system_graph, mediatype="text/anot+turtle", profile_headers=None
+        prez_system_graph, mediatype="text/anot+turtle", profile_headers={}
     )
 
 

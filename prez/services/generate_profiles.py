@@ -6,23 +6,20 @@ from typing import FrozenSet
 from rdflib import Graph, URIRef
 
 from prez.cache import profiles_graph_cache
-from prez.services.sparql_queries import (
-    select_profile_mediatype,
-)
-from prez.services.sparql_utils import (
-    sparql_construct,
-)
+from prez.config import settings
+from prez.sparql.methods import sparql_construct
+from prez.sparql.objects_listings import select_profile_mediatype
 
 log = logging.getLogger(__name__)
 
 
-async def create_profiles_graph(ENABLED_PREZS) -> Graph:
+async def create_profiles_graph() -> Graph:
     if (
         len(profiles_graph_cache) > 0
     ):  # pytest imports app.py multiple times, so this is needed. Not sure why cache is
         # not cleared between calls
         return
-    for f in (Path(__file__).parent.parent / "profiles").glob("*.ttl"):
+    for f in (Path(__file__).parent.parent / "reference_data/profiles").glob("*.ttl"):
         profiles_graph_cache.parse(f)
     log.info("Prez default profiles loaded")
     remote_profiles_query = """
@@ -58,7 +55,7 @@ async def create_profiles_graph(ENABLED_PREZS) -> Graph:
         }
         """
     any_remote_profiles = False
-    for p in ENABLED_PREZS:
+    for p in settings.enabled_prezs:
         r = await sparql_construct(remote_profiles_query, p)
         if r[0] and r[1]:
             any_remote_profiles = True

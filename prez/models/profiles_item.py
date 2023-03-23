@@ -2,11 +2,9 @@ from typing import Optional
 from typing import Set
 
 from pydantic import BaseModel, root_validator
-from rdflib import URIRef, SKOS, DCTERMS, XSD, PROF, Namespace
+from rdflib import URIRef, PROF, Namespace
 
 from prez.cache import profiles_graph_cache
-
-from prez.services.sparql_utils import sparql_query_non_async
 
 PREZ = Namespace("https://prez.dev/")
 

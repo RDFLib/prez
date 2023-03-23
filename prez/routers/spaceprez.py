@@ -8,7 +8,7 @@ from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.models.spaceprez_item import SpatialItem
 from prez.models.spaceprez_listings import SpatialMembers
 from prez.renderers.renderer import return_from_queries, return_profiles
-from prez.services.sparql_queries import (
+from prez.sparql.objects_listings import (
     generate_item_construct,
     generate_listing_construct_from_uri,
     generate_listing_count_construct,

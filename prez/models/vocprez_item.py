@@ -2,9 +2,9 @@ from typing import Optional
 from typing import Set
 
 from pydantic import BaseModel, root_validator
-from rdflib import URIRef, SKOS, DCTERMS, XSD
+from rdflib import URIRef, SKOS
 
-from prez.services.sparql_utils import sparql_query_non_async
+from prez.sparql.methods import sparql_query_non_async
 
 
 class VocabItem(BaseModel):

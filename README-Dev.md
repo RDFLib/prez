@@ -80,12 +80,19 @@ The SPARQL query used to select the profile is given in [Appendix D](appendix-d-
 
 ## Startup Routine
 1. Check the SPARQL endpoints can be reached. A blank query (`ASK {}`) is used to test this. The SPARQL endpoints are not health checked post startup.
-2. Create an in memory profile graph, containing all profiles in the `prez/profiles` directory, and any additional profiles available in the triplestore (declared as a `http://www.w3.org/ns/dx/prof/Profile`)
-3. Count the number of objects in each _Collection Class_
-4. Check for the required support graphs, and if the required support graphs are not present, create them. The SPARQL INSERT query used to create the support graphs is detailed in [Appendix C](#appendix-c---sparql-insert-queries-for-support-graphs). The required support graphs are:
+2. Find search methods, add these to an in memory dictionary with pydantic models, and add a reference to the available search methods in the system graph (available at the root endpoint)
+3. Create an in memory profile graph, containing all profiles in the `prez/profiles` directory, and any additional profiles available in the triplestore (declared as a `http://www.w3.org/ns/dx/prof/Profile`)
+4. Count the number of objects in each _Collection Class_
+5. Check for the required support graphs, and if the required support graphs are not present, create them. The SPARQL INSERT query used to create the support graphs is detailed in [Appendix C](#appendix-c---sparql-insert-queries-for-support-graphs). The required support graphs are:
    1. A system support graph (e.g. `https://prez.dev/vocprez-system-graph` for VocPrez). See example in [Appendix F](appendix-f---example-system-support-graph).
    2. A support graph per _Collection Class_ (see the [Glossary](#Glossary) for definition). See example in [Appendix G](appendix-g---example-system-support-graph-for-a-feature-collection).
 
+
+## Search
+Search methods can be defined as RDF. See the examples in `prez/reference_data/search_methods`.
+At present the parameterised SPARQL queries accept the following parameters: PREZ and TERM (for a search term).
+These parameters are substituted into the SPARQL query using the `string.Template` module. This module substitutes where $PREZ and $TERM are found in the query.
+You must also escape any $ characters in the query using a second $.
 
 ## Scaled instances of Prez
 When using Prez for large volumes of data, it is recommended the support graph data is created offline. This includes:
@@ -308,21 +315,21 @@ defaults, and the availability of these in profiles.
 
 NB: Most specific class refers to the rdfs:Class of an object which has the most specific rdfs:subClassOf links to the general class delivered by that API endpoint. The general classes delivered by each API endpoint are:
 
-**SpacePrez**:  
-/s/datasets -> `prez:DatasetList`  
-/s/datasets/{ds_id} -> `dcat:Dataset`  
-/s/datasets/{ds_id}/collections/{fc_id} -> `geo:FeatureCollection`  
-/s/datasets/{ds_id}/collections -> `prez:FeatureCollectionList`  
-/s/datasets/{ds_id}/collections/{fc_id}/features -> `geo:Feature`  
+**SpacePrez**:
+/s/datasets -> `prez:DatasetList`
+/s/datasets/{ds_id} -> `dcat:Dataset`
+/s/datasets/{ds_id}/collections/{fc_id} -> `geo:FeatureCollection`
+/s/datasets/{ds_id}/collections -> `prez:FeatureCollectionList`
+/s/datasets/{ds_id}/collections/{fc_id}/features -> `geo:Feature`
 
-**VocPrez**:  
-/v/schemes -> `skos:ConceptScheme`  
-/v/collections -> `skos:Collection`  
-/v/schemes/{cs_id}/concepts -> `skos:Concept`  
+**VocPrez**:
+/v/schemes -> `skos:ConceptScheme`
+/v/collections -> `skos:Collection`
+/v/schemes/{cs_id}/concepts -> `skos:Concept`
 
-**CatPrez**:  
-/c/catalogs -> `dcat:Catalog`  
-/c/catalogs/{cat_id}/datasets -> `dcat:Dataset`  
+**CatPrez**:
+/c/catalogs -> `dcat:Catalog`
+/c/catalogs/{cat_id}/datasets -> `dcat:Dataset`
 
 This is an example query for SpacePrez requesting the Datasets listing from a web browser. Note the following components of the query are populated in Python:
 1. The `?class` VALUES
@@ -510,9 +517,9 @@ The following VocPrez VocPub profile shows how to use a number of declarations:
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
 
 <https://prez.dev/DatasetList>
-        rdfs:member  
-                <http://example.com/datasets/sandgate> , 
-                <https://linked.data.gov.au/datasets/gnaf> , 
+        rdfs:member
+                <http://example.com/datasets/sandgate> ,
+                <https://linked.data.gov.au/datasets/gnaf> ,
                 <https://linked.data.gov.au/datasets/geofabric> .
 
 <http://example.com/datasets/sandgate/roads/support-graph>

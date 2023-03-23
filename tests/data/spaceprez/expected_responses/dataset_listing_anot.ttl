@@ -17,5 +17,5 @@ prez:DatasetList rdfs:member <http://example.com/datasets/sandgate>,
     prez:link "/s/datasets/geofabric" .
 
 <https://linked.data.gov.au/datasets/gnaf> dcterms:title "Geocoded National Address File"@en ;
-    dcterms:description "The Australian Geocoded National Address File (G-NAF) is Australiaâs authoritative, geocoded address file. It is built and maintained by Geoscape Australia using authoritative government data.."@en ;
+    dcterms:description "The Australian Geocoded National Address File (G-NAF) is Australia’s authoritative, geocoded address file. It is built and maintained by Geoscape Australia using authoritative government data.."@en ;
     prez:link "/s/datasets/gnaf" .
