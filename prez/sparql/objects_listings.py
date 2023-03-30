@@ -23,10 +23,10 @@ PREZ = Namespace("https://prez.dev/")
 
 
 def generate_listing_construct_from_uri(
-    focus_item,
-    profile,
-    page: Optional[int] = 1,
-    per_page: Optional[int] = 20,
+        focus_item,
+        profile,
+        page: Optional[int] = 1,
+        per_page: Optional[int] = 20,
 ):
     """
     For a given URI, finds items with the specified relation(s).
@@ -41,13 +41,13 @@ def generate_listing_construct_from_uri(
         relative_properties,
     ) = get_listing_predicates(profile, focus_item.selected_class)
     if (
-        focus_item.uri
-        and not inbound_children
-        and not inbound_parents
-        and not outbound_children
-        and not outbound_parents
-        # do not need to check relative properties - they will only be used if one of the inbound/outbound parent/child
-        # relations are defined
+            focus_item.uri
+            and not inbound_children
+            and not inbound_parents
+            and not outbound_children
+            and not outbound_parents
+            # do not need to check relative properties - they will only be used if one of the inbound/outbound parent/child
+            # relations are defined
     ):
         log.warning(
             f"Requested listing of objects related to {focus_item.uri}, however the profile {profile} does not"
@@ -64,14 +64,10 @@ def generate_listing_construct_from_uri(
         PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
         CONSTRUCT {{
-            {f'<{focus_item.uri}> ?outbound_children ?child_item .{chr(10)}'
-             f'            ?child_item prez:link ?outbound_children_link .{chr(10)}' if outbound_children else ""}\
-            {f'<{focus_item.uri}> ?outbound_parents ?parent_item .{chr(10)}'
-             f'            ?parent_item prez:link ?outbound_parent_link .{chr(10)}' if outbound_parents else ""}\
-            {f'?inbound_child_s ?inbound_child <{focus_item.uri}> ;{chr(10)}'
-             f'            prez:link ?inbound_children_link .{chr(10)}' if inbound_children else ""}\
-            {f'?inbound_parent_s ?inbound_parent <{focus_item.uri}> ;{chr(10)}'
-             f'            prez:link ?inbound_parent_link .{chr(10)}' if inbound_parents else ""}\
+            {f'<{focus_item.uri}> ?outbound_children ?child_item .{chr(10)}' if outbound_children else ""}\
+            {f'<{focus_item.uri}> ?outbound_parents ?parent_item .{chr(10)}' if outbound_parents else ""}\
+            {f'?inbound_child_s ?inbound_child <{focus_item.uri}> ;{chr(10)}' if inbound_children else ""}\
+            {f'?inbound_parent_s ?inbound_parent <{focus_item.uri}> ;{chr(10)}' if inbound_parents else ""}\
             {generate_relative_properties("construct", relative_properties, inbound_children, inbound_parents, outbound_children,
                                           outbound_parents)}\
         }}
@@ -80,14 +76,16 @@ def generate_listing_construct_from_uri(
             {generate_inbound_predicates(focus_item, inbound_children, inbound_parents)} {chr(10)} \
             {generate_relative_properties("select", relative_properties, inbound_children, inbound_parents, outbound_children,
                                           outbound_parents)}\
-            {generate_id_listing_binds(focus_item, inbound_children, inbound_parents, outbound_children, outbound_parents)}
         }}
         {f"LIMIT {per_page}{chr(10)}"
          f"        OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
     """
     ).strip()
     log.debug(f"Listing construct query for {focus_item} is:\n{query}")
-    return query
+    predicates_for_link_addition = {"link_constructor": focus_item.link_constructor,
+                                    "parent": inbound_parents + outbound_parents,
+                                    "child": outbound_children + inbound_children}
+    return query, predicates_for_link_addition
 
 
 @lru_cache(maxsize=128)
@@ -134,12 +132,12 @@ def generate_item_construct(item, profile: URIRef):
 
 
 def generate_relative_properties(
-    construct_select,
-    relative_properties,
-    in_children,
-    in_parents,
-    out_children,
-    out_parents,
+        construct_select,
+        relative_properties,
+        in_children,
+        in_parents,
+        out_children,
+        out_parents,
 ):
     """
     Generate the relative properties construct or select for a listing query.
@@ -175,13 +173,9 @@ def generate_outbound_predicates(item, outbound_children, outbound_parents):
     if item.uri:
         if outbound_children:
             where += f"""<{item.uri}> ?outbound_children ?child_item .
-            ?child_item dcterms:identifier ?outbound_children_id .
-            FILTER(DATATYPE(?outbound_children_id) = prez:slug)
             VALUES ?outbound_children {{ {" ".join('<' + str(pred) + '>' for pred in outbound_children)} }}\n"""
         if outbound_parents:
             where += f"""<{item.uri}> ?outbound_parents ?parent_item .
-            ?parent_item dcterms:identifier ?outbound_parents_id .
-            FILTER(DATATYPE(?outbound_parents_id) = prez:slug)
             VALUES ?outbound_parents {{ {" ".join('<' + str(pred) + '>' for pred in outbound_parents)} }}\n"""
         if not outbound_children and not outbound_parents:
             where += "VALUES ?outbound_children {}\nVALUES ?outbound_parents {}"
@@ -195,38 +189,13 @@ def generate_inbound_predicates(item, inbound_children, inbound_parents):
     where = ""
     if inbound_children:
         where += f"""?inbound_child_s ?inbound_child <{item.uri}> ;
-        dcterms:identifier ?inbound_children_id .
-        FILTER(DATATYPE(?inbound_children_id) = prez:slug)
         VALUES ?inbound_child {{ {" ".join('<' + str(pred) + '>' for pred in inbound_children)} }}\n"""
     if inbound_parents:
         where += f"""?inbound_parent_s ?inbound_parent <{item.uri}> ;
-        dcterms:identifier ?inbound_parent_id .
-        FILTER(DATATYPE(?inbound_parent_id) = prez:slug)
         VALUES ?inbound_parent {{ {" ".join('<' + str(pred) + '>' for pred in inbound_parents)} }}\n"""
     # if not inbound_children and not inbound_parents:
     #     where += "VALUES ?inbound_child {}\nVALUES ?inbound_parent {}"
     return where
-
-
-def generate_id_listing_binds(item, ic, ip, oc, op):
-    """
-    Generate the BIND statements for the inbound and outbound predicates
-    """
-    binds = ""
-    if ic:
-        binds += f"""BIND(CONCAT("{item.link_constructor}", "/", STR(?inbound_children_id))\
-AS ?inbound_children_link)\n"""
-    if oc:
-        binds += f"""BIND(CONCAT("{item.link_constructor}", "/", STR(?outbound_children_id))\
-AS ?outbound_children_link)\n"""
-    if ip:
-        binds += f"""BIND("{item.link_constructor}" AS ?inbound_parent_link)\n"""
-    if op:
-        binds += f"""BIND("{item.link_constructor}" AS ?outbound_parent_link)\n"""
-    if not binds:  # for general listings of objects
-        binds += f"""BIND(CONCAT("{item.link_constructor}", "/", STR(?outbound_id))\
-AS ?outbound_general_link)\n"""
-    return binds
 
 
 def generate_include_predicates(include_predicates):
@@ -307,10 +276,10 @@ def generate_bnode_select(depth):
 
 
 async def get_annotation_properties(
-    item_graph: Graph,
-    label_predicates: List[URIRef],
-    description_predicates: List[URIRef],
-    explanation_predicates: List[URIRef],
+        item_graph: Graph,
+        label_predicates: List[URIRef],
+        description_predicates: List[URIRef],
+        explanation_predicates: List[URIRef],
 ):
     """
     Gets annotation data used for HTML display.
@@ -323,9 +292,9 @@ async def get_annotation_properties(
     description_predicates += [DCTERMS.description]
     explanation_predicates += [DCTERMS.provenance]
     terms = (
-        set(i for i in item_graph.predicates() if isinstance(i, URIRef))
-        | set(i for i in item_graph.objects() if isinstance(i, URIRef))
-        | set(i for i in item_graph.subjects() if isinstance(i, URIRef))
+            set(i for i in item_graph.predicates() if isinstance(i, URIRef))
+            | set(i for i in item_graph.objects() if isinstance(i, URIRef))
+            | set(i for i in item_graph.subjects() if isinstance(i, URIRef))
     )
     # TODO confirm caching of SUBJECT labels does not cause issues! this could be a lot of labels. Perhaps these are
     # better separated and put in an LRU cache. Or it may not be worth the effort.
@@ -365,7 +334,7 @@ async def get_annotation_properties(
 
 
 def get_annotations_from_tbox_cache(
-    terms: List[URIRef], label_props, description_props, explanation_props
+        terms: List[URIRef], label_props, description_props, explanation_props
 ):
     """
     Gets labels from the TBox cache, returns a list of terms that were not found in the cache, and a graph of labels,
@@ -413,14 +382,14 @@ def get_annotations_from_tbox_cache(
 
 # hit the count cache first, if it's not there, hit the SPARQL endpoint
 def generate_listing_count_construct(
-    item: Union[
-        SpatialItem,
-        SpatialMembers,
-        VocabMembers,
-        VocabItem,
-        CatalogItem,
-        CatalogMembers,
-    ]
+        item: Union[
+            SpatialItem,
+            SpatialMembers,
+            VocabMembers,
+            VocabItem,
+            CatalogItem,
+            CatalogMembers,
+        ]
 ):
     """
     Generates a SPARQL construct query to count either:
@@ -523,7 +492,7 @@ def get_annotation_predicates(profile):
         )
     )
     if not bool(
-        list(chain(*preds.values()))
+            list(chain(*preds.values()))
     ):  # check whether any predicates were found
         log.info(
             f"No annotation predicates found for profile {profile}, defaults will be used:\n"
@@ -663,10 +632,10 @@ def get_item_predicates(profile, selected_class):
 
 
 def select_profile_mediatype(
-    classes: List[URIRef],
-    requested_profile_uri: URIRef = None,
-    requested_profile_token: str = None,
-    requested_mediatypes: List[Tuple] = None,
+        classes: List[URIRef],
+        requested_profile_uri: URIRef = None,
+        requested_profile_token: str = None,
+        requested_mediatypes: List[Tuple] = None,
 ):
     """
     Returns a SPARQL SELECT query which will determine the profile and mediatype to return based on user requests,

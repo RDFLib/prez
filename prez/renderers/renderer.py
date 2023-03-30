@@ -1,7 +1,7 @@
 import asyncio
 import io
 import logging
-from typing import Optional
+from typing import Optional, Dict
 
 from connegp import RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
 from fastapi.responses import StreamingResponse
@@ -12,6 +12,8 @@ from starlette.responses import Response
 
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.models.profiles_item import ProfileItem
+from prez.reference_data.prez_ns import PREZ
+from prez.services.curie_functions import get_curie_id_for_uri
 from prez.sparql.objects_listings import (
     generate_item_construct,
     get_annotation_properties,
@@ -24,7 +26,7 @@ log = logging.getLogger(__name__)
 
 
 async def return_from_queries(
-    queries: List[str], mediatype, profile, profile_headers, prez
+    queries: List[str], mediatype, profile, profile_headers, prez, predicates_for_link_addition: Dict = {}
 ):
     """
     Executes SPARQL queries, loads these to RDFLib Graphs, and calls the "return_from_graph" function to return the
@@ -38,10 +40,10 @@ async def return_from_queries(
     if len(graphs) > 1:
         for g in graphs[1:]:
             graph.__iadd__(g)
-    return await return_from_graph(graph, mediatype, profile, profile_headers, prez)
+    return await return_from_graph(graph, mediatype, profile, profile_headers, prez, predicates_for_link_addition)
 
 
-async def return_from_graph(graph, mediatype, profile, profile_headers, prez):
+async def return_from_graph(graph, mediatype, profile, profile_headers, prez, predicates_for_link_addition: Dict = {}):
     profile_headers["Content-Disposition"] = "inline"
     if str(mediatype) in RDF_MEDIATYPES:
         return await return_rdf(graph, mediatype, profile_headers)
@@ -51,7 +53,7 @@ async def return_from_graph(graph, mediatype, profile, profile_headers, prez):
 
     else:
         if mediatype == Literal("text/anot+turtle"):
-            return await return_annotated_rdf(graph, prez, profile_headers, profile)
+            return await return_annotated_rdf(graph, prez, profile_headers, profile, predicates_for_link_addition)
 
 
 async def return_rdf(graph, mediatype, profile_headers):
@@ -65,7 +67,7 @@ async def return_rdf(graph, mediatype, profile_headers):
     return StreamingResponse(content=obj, media_type=mediatype, headers=profile_headers)
 
 
-async def return_annotated_rdf(graph, prez, profile_headers, profile):
+async def return_annotated_rdf(graph, prez, profile_headers, profile, predicates_for_link_addition):
     from prez.cache import tbox_cache
 
     cache = tbox_cache
@@ -77,12 +79,22 @@ async def return_annotated_rdf(graph, prez, profile_headers, profile):
     if results[1]:
         annotations_graph += results[1]
         cache += results[1]
+
+    generate_prez_links(graph, predicates_for_link_addition)
+
     obj = io.BytesIO(
-        (graph + annotations_graph).serialize(format="nt", encoding="utf-8")
+        (graph + annotations_graph).serialize(format="text/turtle", encoding="utf-8")
     )
     return StreamingResponse(
         content=obj, media_type="text/turtle", headers=profile_headers
     )
+
+
+def generate_prez_links(graph, predicates_for_link_addition):
+    objects_for_links = graph.triples_choices((None, predicates_for_link_addition["child"], None))
+    for o in objects_for_links:
+        graph.add((o[2], PREZ.link, Literal(predicates_for_link_addition["link_constructor"] + f"/{get_curie_id_for_uri(o[2])}")))
+
 
 
 async def return_profiles(

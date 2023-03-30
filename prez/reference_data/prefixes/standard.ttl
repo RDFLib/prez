@@ -1,0 +1,6 @@
+PREFIX vann: <http://purl.org/vocab/vann/>
+PREFIX prez: <https://prez.dev/>
+PREFIX exds: <http://example.com/datasets/>
+
+prez: vann:preferredNamespacePrefix "prez" .
+exds: vann:preferredNamespacePrefix "exds" .
