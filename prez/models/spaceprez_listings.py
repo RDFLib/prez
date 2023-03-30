@@ -4,6 +4,7 @@ from pydantic import BaseModel, root_validator
 from rdflib import Namespace, DCAT, XSD, RDFS, DCTERMS
 from rdflib.namespace import URIRef, GEO
 
+from prez.services.curie_functions import get_uri_for_curie_id
 from prez.sparql.methods import sparql_query_non_async
 
 PREZ = Namespace("https://prez.dev/")
@@ -12,8 +13,8 @@ PREZ = Namespace("https://prez.dev/")
 class SpatialMembers(BaseModel):
     url_path: str
     uri: Optional[URIRef] = None
-    dataset_id: Optional[URIRef]
-    collection_id: Optional[URIRef]
+    dataset_curie: Optional[URIRef]
+    collection_curie: Optional[URIRef]
     general_class: Optional[URIRef]
     classes: Optional[FrozenSet[URIRef]]
     selected_class: Optional[FrozenSet[URIRef]] = None
@@ -26,28 +27,29 @@ class SpatialMembers(BaseModel):
             values["general_class"] = DCAT.Dataset
             values["link_constructor"] = "/s/datasets"
             values["classes"] = frozenset([PREZ.DatasetList])
-            values["uri"] = PREZ.DatasetList
-        elif n_url_path_components == 5:  # /s/datasets/{dataset_id}/collections
-            dataset_id = values.get("dataset_id")
+            values["uri"] = PREZ.DatasetList  # Prez construct which contains (via rdfs:member) all dcat:Datasets in the
+            # graph
+        elif n_url_path_components == 5:  # /s/datasets/{dataset_curie}/collections
+            dataset_curie = values.get("dataset_curie")
             values["general_class"] = GEO.FeatureCollection
-            values["link_constructor"] = f"/s/datasets/{dataset_id}/collections"
+            values["link_constructor"] = f"/s/datasets/{dataset_curie}/collections"
             values["classes"] = frozenset([PREZ.FeatureCollectionList])
-            _, values["uri"] = get_uri(dataset_id)
+            values["uri"] = get_uri_for_curie_id(dataset_curie)
         elif (
             n_url_path_components == 7
-        ):  # /s/datasets/{dataset_id}/collections/{collection_id}/items
-            dataset_id = values.get("dataset_id")
-            collection_id = values.get("collection_id")
+        ):  # /s/datasets/{dataset_curie}/collections/{collection_curie}/items
+            dataset_curie = values.get("dataset_curie")
+            collection_curie = values.get("collection_curie")
             values["general_class"] = GEO.Feature
             values[
                 "link_constructor"
-            ] = f"/s/datasets/{dataset_id}/collections/{collection_id}/items"
+            ] = f"/s/datasets/{dataset_curie}/collections/{collection_curie}/items"
             values["classes"] = frozenset([PREZ.FeatureList])
-            values["uri"], _ = get_uri(dataset_id, collection_id)
+            values["uri"] = get_uri_for_curie_id(collection_curie)
         return values
 
 
-def get_uri(dataset_id, collection_id=None):
+def get_uri(dataset_curie, collection_curie=None):
     q = f"""
         PREFIX dcat: <{DCAT}>
         PREFIX dcterms: <{DCTERMS}>
@@ -57,11 +59,11 @@ def get_uri(dataset_id, collection_id=None):
         PREFIX xsd: <{XSD}>
 
         SELECT ?fc ?d {{
-            ?d dcterms:identifier "{dataset_id}"^^prez:slug ;
+            ?d dcterms:identifier "{dataset_curie}"^^prez:slug ;
                     a dcat:Dataset .
-            {f'''?fc dcterms:identifier "{collection_id}"^^prez:slug ;
+            {f'''?fc dcterms:identifier "{collection_curie}"^^prez:slug ;
                     a geo:FeatureCollection .
-                ?d rdfs:member ?fc .''' if collection_id else ""}
+                ?d rdfs:member ?fc .''' if collection_curie else ""}
                 }}
         """
     r = sparql_query_non_async(q, "SpacePrez")
