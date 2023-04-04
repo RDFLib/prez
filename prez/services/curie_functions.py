@@ -5,6 +5,7 @@ from rdflib import URIRef
 from prez.cache import (
     prefix_graph
 )
+from prez.config import settings
 
 
 def prefix_registered(prefix):
@@ -50,13 +51,15 @@ def generate_new_prefix(uri):
         prefix_graph.bind(proposed_prefix, ns)
         return
     else:
-        raise ValueError(f"Unable to generate a prefix for {uri} - implement additional functions to try and get "
-                         f"something")
+        # use RDFLib's default ns0, ns1 etc.
+        prefix_graph.compute_qname(uri, generate=True)
 
-def get_curie_id_for_uri(uri: URIRef, separator="-"):
+
+def get_curie_id_for_uri(uri: URIRef):
     """
     Returns a CURIE with ":" replaced by a given separator, for a given URI
     """
+    separator = settings.curie_separator
     try:
         qname = prefix_graph.compute_qname(uri, generate=False)
     except KeyError:
@@ -65,9 +68,10 @@ def get_curie_id_for_uri(uri: URIRef, separator="-"):
     return f"{qname[0]}{separator}{qname[2]}"
 
 
-def get_uri_for_curie_id(curie_id: str, separator="-"):
+def get_uri_for_curie_id(curie_id: str):
     """
-    Returns a URI for a given CURIE id with the specified separator, defaulted to "-"
+    Returns a URI for a given CURIE id with the specified separator
     """
+    separator = settings.curie_separator
     curie = curie_id.replace(separator, ":")
     return prefix_graph.namespace_manager.expand_curie(curie)

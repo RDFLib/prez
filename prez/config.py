@@ -75,6 +75,7 @@ class Settings(BaseSettings):
     protocol: str = "http"
     host: str = "localhost"
     port: int = 8000
+    curie_separator: str = ":"
     system_uri: Optional[str]
     top_level_classes: Optional[dict]
     collection_classes: Optional[dict]

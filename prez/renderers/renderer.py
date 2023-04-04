@@ -43,7 +43,7 @@ async def return_from_queries(
     return await return_from_graph(graph, mediatype, profile, profile_headers, prez, predicates_for_link_addition)
 
 
-async def return_from_graph(graph, mediatype, profile, profile_headers, prez, predicates_for_link_addition: Dict = {}):
+async def return_from_graph(graph, mediatype, profile, profile_headers, prez, predicates_for_link_addition: dict = {}):
     profile_headers["Content-Disposition"] = "inline"
     if str(mediatype) in RDF_MEDIATYPES:
         return await return_rdf(graph, mediatype, profile_headers)
@@ -91,10 +91,17 @@ async def return_annotated_rdf(graph, prez, profile_headers, profile, predicates
 
 
 def generate_prez_links(graph, predicates_for_link_addition):
-    objects_for_links = graph.triples_choices((None, predicates_for_link_addition["child"], None))
-    for o in objects_for_links:
-        graph.add((o[2], PREZ.link, Literal(predicates_for_link_addition["link_constructor"] + f"/{get_curie_id_for_uri(o[2])}")))
-
+    if not predicates_for_link_addition:
+        return
+    if predicates_for_link_addition["child"]:
+        objects_for_links = graph.triples_choices((None, predicates_for_link_addition["child"], None))
+        for o in objects_for_links:
+            graph.add((o[2], PREZ.link, Literal(predicates_for_link_addition["link_constructor"] + f"/{get_curie_id_for_uri(o[2])}")))
+    if predicates_for_link_addition["parent"]:
+        objects_for_links = graph.triples_choices((None, predicates_for_link_addition["parent"], None))
+        new_link_constructor = '/'.join(predicates_for_link_addition["link_constructor"].split('/')[:-1])
+        for o in objects_for_links:
+            graph.add((o[2], PREZ.link, Literal(new_link_constructor + f"/{get_curie_id_for_uri(o[2])}")))
 
 
 async def return_profiles(

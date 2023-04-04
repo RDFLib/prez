@@ -42,7 +42,7 @@ async def catalogs_endpoint(
             prez_type="SpacePrez",
             prof_and_mt_info=prof_and_mt_info,
         )
-    list_query = generate_listing_construct_from_uri(
+    list_query, predicates_for_link_addition = generate_listing_construct_from_uri(
         catprez_members, prof_and_mt_info.profile, page, per_page
     )
     count_query = generate_listing_count_construct(catprez_members)
@@ -52,18 +52,19 @@ async def catalogs_endpoint(
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
         "CatPrez",
+        predicates_for_link_addition
     )
 
 
-@router.get("/c/catalogs/{catalog_id}/{resource_id}", summary="Get Resource")
+@router.get("/c/catalogs/{catalog_curie}/{resource_curie}", summary="Get Resource")
 async def resource_endpoint(
-    request: Request, catalog_id: str = None, resource_id: str = None
+    request: Request, catalog_curie: str = None, resource_curie: str = None
 ):
     return await item_endpoint(request)
 
 
-@router.get("/c/catalogs/{catalog_id}", summary="Get Catalog")
-async def catalog_endpoint(request: Request, catalog_id: str = None):
+@router.get("/c/catalogs/{catalog_curie}", summary="Get Catalog")
+async def catalog_endpoint(request: Request, catalog_curie: str = None):
     return await item_endpoint(request)
 
 
@@ -86,7 +87,7 @@ async def item_endpoint(request: Request, cp_item: Optional[CatalogItem] = None)
             prof_and_mt_info=prof_and_mt_info,
         )
     item_query = generate_item_construct(cp_item, prof_and_mt_info.profile)
-    item_members_query = generate_listing_construct_from_uri(
+    item_members_query, predicates_for_link_addition = generate_listing_construct_from_uri(
         cp_item, prof_and_mt_info.profile, 1, 20
     )
     return await return_from_queries(
@@ -95,6 +96,7 @@ async def item_endpoint(request: Request, cp_item: Optional[CatalogItem] = None)
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
         "CatPrez",
+        predicates_for_link_addition
     )
 
 
