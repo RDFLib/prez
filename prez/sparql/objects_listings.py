@@ -53,7 +53,7 @@ def generate_listing_construct_from_uri(
             f"Requested listing of objects related to {focus_item.uri}, however the profile {profile} does not"
             f" define any listing relations for this for this class, for example outbound children."
         )
-        return None
+        return None, {}
     query = dedent(
         f"""
         PREFIX dcterms: <http://purl.org/dc/terms/>

@@ -124,7 +124,7 @@ async def item_endpoint(request: Request, spatial_item: Optional[SpatialItem] = 
             prof_and_mt_info=prof_and_mt_info,
         )
     item_query = generate_item_construct(spatial_item, prof_and_mt_info.profile)
-    item_members_query = generate_listing_construct_from_uri(
+    item_members_query, predicates_for_link_addition = generate_listing_construct_from_uri(
         spatial_item, prof_and_mt_info.profile, 1, 20
     )
     return await return_from_queries(
@@ -133,4 +133,5 @@ async def item_endpoint(request: Request, spatial_item: Optional[SpatialItem] = 
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
         "SpacePrez",
+        predicates_for_link_addition
     )
