@@ -59,7 +59,8 @@ async def create_profiles_graph() -> Graph:
         r = await sparql_construct(remote_profiles_query, p)
         if r[0] and r[1]:
             any_remote_profiles = True
-            profiles_graph_cache.__add__(r[1])
+            for triple in r[1]:
+                profiles_graph_cache.add(triple)
             log.info(f"Remote profiles found and added for {p}")
     if not any_remote_profiles:
         log.info("No remote profiles found")
