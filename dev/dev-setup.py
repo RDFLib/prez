@@ -5,7 +5,7 @@ import requests
 
 os.system("docker context use default")
 response = os.system(
-    "docker run -d -v ${PWD}/dev/dev-config.ttl:/fuseki/config.ttl -p 3030:3030 ghcr.io/zazuko/fuseki-geosparql:4.7.0"
+    "docker run -d -v ${PWD}/dev/dev-config.ttl:/fuseki/config.ttl -p 3030:3030 ghcr.io/zazuko/fuseki-geosparql"
 )
 
 time.sleep(15)
@@ -61,6 +61,14 @@ def setup_sp():
             (
                 "dublin_core_terms.ttl",
                 open("tests/data/vocprez/input/dublin_core_terms.ttl", "rb"),
+                "application/octet-stream",
+            ),
+        ),
+        (
+            "myfile7",
+            (
+                "remote_profile.ttl",
+                open("tests/data/profiles/remote_profile.ttl", "rb"),
                 "application/octet-stream",
             ),
         ),
