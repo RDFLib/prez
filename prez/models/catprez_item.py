@@ -32,6 +32,8 @@ class CatalogItem(BaseModel):
         uri = values.get("uri")
         curie_id = values.get("curie_id")
         url_parts = url_path.split("/")
+        if url_path in ["/object", "/c/object"]:
+            values["link_constructor"] = f"/c/object?uri="
         if len(url_parts) == 4:
             values["general_class"] = DCAT.Catalog
             curie_id = values.get("catalog_curie")

@@ -37,7 +37,7 @@ async def profiles(
             prez_type="GenericPrez",
             prof_and_mt_info=prof_and_mt_info,
         )
-    list_query = generate_listing_construct_from_uri(
+    list_query, predicates_for_link_addition = generate_listing_construct_from_uri(
         profiles_members, prof_and_mt_info.profile, page, per_page
     )
     count_query = generate_listing_count_construct(profiles_members)
