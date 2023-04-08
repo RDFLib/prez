@@ -3,14 +3,11 @@ from typing import Set
 
 from pydantic import BaseConfig
 from pydantic import BaseModel, root_validator
-from rdflib import Namespace, URIRef
+from rdflib import URIRef
 from rdflib.namespace import DCAT, GEO
 
 from prez.services.curie_functions import get_uri_for_curie_id
 from prez.services.model_methods import get_classes
-from prez.sparql.methods import sparql_query_non_async
-
-PREZ = Namespace("https://prez.dev/")
 
 BaseConfig.arbitrary_types_allowed = True
 
@@ -37,7 +34,9 @@ class SpatialItem(BaseModel):
         dataset_curie = values.get("dataset_curie")
         collection_curie = values.get("collection_curie")
         feature_curie = values.get("feature_curie")
-
+        url_path = values.get("url_path")
+        if url_path in ["/object", "/s/object"]:
+            values["link_constructor"] = f"/s/object?uri="
         if feature_curie:
             values["id"] = feature_curie
             values["uri"] = get_uri_for_curie_id(feature_curie)

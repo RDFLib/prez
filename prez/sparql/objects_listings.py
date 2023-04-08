@@ -66,8 +66,8 @@ def generate_listing_construct_from_uri(
         CONSTRUCT {{
             {f'<{focus_item.uri}> ?outbound_children ?child_item .{chr(10)}' if outbound_children else ""}\
             {f'<{focus_item.uri}> ?outbound_parents ?parent_item .{chr(10)}' if outbound_parents else ""}\
-            {f'?inbound_child_s ?inbound_child <{focus_item.uri}> ;{chr(10)}' if inbound_children else ""}\
-            {f'?inbound_parent_s ?inbound_parent <{focus_item.uri}> ;{chr(10)}' if inbound_parents else ""}\
+            {f'?inbound_child_s ?inbound_child <{focus_item.uri}> .{chr(10)}' if inbound_children else ""}\
+            {f'?inbound_parent_s ?inbound_parent <{focus_item.uri}> .{chr(10)}' if inbound_parents else ""}\
             {generate_relative_properties("construct", relative_properties, inbound_children, inbound_parents, outbound_children,
                                           outbound_parents)}\
         }}
@@ -83,8 +83,11 @@ def generate_listing_construct_from_uri(
     ).strip()
     log.debug(f"Listing construct query for {focus_item} is:\n{query}")
     predicates_for_link_addition = {"link_constructor": focus_item.link_constructor,
-                                    "parent": inbound_parents + outbound_parents,
-                                    "child": outbound_children + inbound_children}
+                                    "ib_par": inbound_parents,
+                                    "ob_par": outbound_parents,
+                                    "ib_chi": inbound_children,
+                                    "ob_chi": outbound_children,
+                                    }
     return query, predicates_for_link_addition
 
 
@@ -122,8 +125,6 @@ def generate_item_construct(item, profile: URIRef):
         {generate_inverse_predicates(inverse_predicates)} \
         {generate_bnode_select(bnode_depth)} \
         }} \
-        MINUS {{ <{object_uri}> dcterms:identifier ?o1 .
-                FILTER(DATATYPE(?o1)=prez:slug) }} \
     }}
     """
     )

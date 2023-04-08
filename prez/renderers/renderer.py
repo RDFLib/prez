@@ -93,15 +93,33 @@ async def return_annotated_rdf(graph, prez, profile_headers, profile, predicates
 def generate_prez_links(graph, predicates_for_link_addition):
     if not predicates_for_link_addition:
         return
-    if predicates_for_link_addition["child"]:
-        objects_for_links = graph.triples_choices((None, predicates_for_link_addition["child"], None))
-        for o in objects_for_links:
-            graph.add((o[2], PREZ.link, Literal(predicates_for_link_addition["link_constructor"] + f"/{get_curie_id_for_uri(o[2])}")))
-    if predicates_for_link_addition["parent"]:
-        objects_for_links = graph.triples_choices((None, predicates_for_link_addition["parent"], None))
-        new_link_constructor = '/'.join(predicates_for_link_addition["link_constructor"].split('/')[:-1])
-        for o in objects_for_links:
-            graph.add((o[2], PREZ.link, Literal(new_link_constructor + f"/{get_curie_id_for_uri(o[2])}")))
+    if predicates_for_link_addition["link_constructor"].endswith("/object?uri="):
+        generate_object_endpoint_link(graph, predicates_for_link_addition)
+    else:
+        if predicates_for_link_addition["ob_chi"]:
+            triples_for_links = graph.triples_choices((None, predicates_for_link_addition["ob_chi"], None))
+            for triple in triples_for_links:
+                graph.add((triple[2], PREZ.link, Literal(predicates_for_link_addition["link_constructor"] + f"/{get_curie_id_for_uri(triple[2])}")))
+        if predicates_for_link_addition["ib_chi"]:
+            for triple in graph.triples_choices((None, predicates_for_link_addition["ib_chi"], None)):
+                graph.add((triple[2], PREZ.link, Literal(predicates_for_link_addition["link_constructor"])))
+        if predicates_for_link_addition["ob_par"]:
+            triples_for_links = graph.triples_choices((None, predicates_for_link_addition["ob_par"], None))
+            new_link_constructor = '/'.join(predicates_for_link_addition["link_constructor"].split('/')[:-1])
+            for triple in triples_for_links:
+                graph.add((triple[2], PREZ.link, Literal(new_link_constructor + f"/{get_curie_id_for_uri(triple[2])}")))
+        if predicates_for_link_addition["ib_par"]:
+            triples_for_links = graph.triples_choices((None, predicates_for_link_addition["ib_par"], None))
+            new_link_constructor = '/'.join(predicates_for_link_addition["link_constructor"].split('/')[:-1])
+            for triple in triples_for_links:
+                graph.add((triple[2], PREZ.link, Literal(new_link_constructor + f"/{get_curie_id_for_uri(triple[2])}")))
+
+
+def generate_object_endpoint_link(graph, predicates_for_link_addition):
+    all_preds = predicates_for_link_addition["child"] + predicates_for_link_addition["parent"]
+    objects_for_links = graph.triples_choices((None, all_preds, None))
+    for o in objects_for_links:
+        graph.add((o[2], PREZ.link, Literal(f"{predicates_for_link_addition['link_constructor']}{o[2]}")))
 
 
 async def return_profiles(

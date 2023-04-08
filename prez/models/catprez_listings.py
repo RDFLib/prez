@@ -18,6 +18,8 @@ class CatalogMembers(BaseModel):
     @root_validator
     def populate(cls, values):
         url_path = values.get("url_path")
+        if url_path in ["/object", "/c/object"]:
+            values["link_constructor"] = f"/c/object?uri="
         if url_path == "/c/catalogs":
             values["general_class"] = DCAT.Catalog
             values["link_constructor"] = "/c/catalogs"

@@ -128,5 +128,5 @@ async def generate_support_graphs():
     # profiles
     insert_context = generate_insert_context(settings, "Profiles")
     results = profiles_graph_cache.query(insert_context)
-    top_level_graph.__iadd__(results.graph)
+    profiles_graph_cache.__iadd__(results.graph)
     log.info(f"Completed generating Support Graphs for Profiles")
