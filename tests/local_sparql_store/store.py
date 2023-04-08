@@ -19,6 +19,7 @@ def load_catprez_graph():
         "*.ttl"
     ):
         g.parse(f)
+    load_profiles_graph(g)
     return g
 
 
@@ -29,6 +30,7 @@ def load_spaceprez_graph():
         "*.ttl"
     ):
         g.parse(f)
+    load_profiles_graph(g)
     return g
 
 
@@ -39,13 +41,19 @@ def load_vocprez_graph():
         "*.ttl"
     ):
         g.parse(f)
+    load_profiles_graph(g)
     return g
 
+def load_profiles_graph(g):
+    print("loading Profiles graph")
+    for f in Path(Path(__file__).parent.parent / "data" / "profiles").glob(
+        "*.ttl"
+    ):
+        g.parse(f)
 
 catprez_graph = load_catprez_graph()
 vocprez_graph = load_vocprez_graph()
 spaceprez_graph = load_spaceprez_graph()
-
 
 class SparqlServer(BaseHTTPRequestHandler):
     """A small SPARQL Protocol server for Prez testing.
