@@ -58,11 +58,8 @@ jobs:
       #----------------------------------------------
       - name: Run tests
         run: |
-          source .venv/bin/activate
-          echo $PWD
-          cd ../tests/catprez && pytest
-          echo $PWD
-          cd ../tests/vocprez && pytest
-          echo $PWD
-          cd ../tests/spaceprez && pytest
-          coverage report
+          cd tests/spaceprez && poetry run pytest
+          cd ../vocprez && poetry run pytest
+          cd ../catprez && poetry run pytest
+          cd ../profiles && poetry run pytest
+          cd ../services && poetry run pytest
