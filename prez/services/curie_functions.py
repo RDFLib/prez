@@ -33,7 +33,6 @@ def generate_new_prefix(uri):
     Generates a new prefix for a uri
     """
     parsed_url = urlparse(uri)
-    to_generate_prefix_from = None
     if bool(parsed_url.fragment):
         ns = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}#"
         to_generate_prefix_from = parsed_url.fragment.lower()
@@ -68,12 +67,9 @@ def get_curie_id_for_uri(uri: URIRef):
     separator = settings.curie_separator
     try:
         qname = prefix_graph.compute_qname(uri, generate=False)
-    except Exception:
+    except KeyError:
         generate_new_prefix(uri)
-        try:
-            qname = prefix_graph.compute_qname(uri, generate=False)
-        except Exception as e:
-            print(e)
+        qname = prefix_graph.compute_qname(uri, generate=False)
     return f"{qname[0]}{separator}{qname[2]}"
 
 
