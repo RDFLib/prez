@@ -67,8 +67,8 @@ def get_curie_id_for_uri(uri: URIRef):
     separator = settings.curie_separator
     try:
         qname = prefix_graph.compute_qname(uri, generate=False)
-    except KeyError:
-        generate_new_prefix(uri)
+    except Exception:
+        generate_new_prefix(uri)  # this should always manage to generate a prefix.
         qname = prefix_graph.compute_qname(uri, generate=False)
     return f"{qname[0]}{separator}{qname[2]}"
 
