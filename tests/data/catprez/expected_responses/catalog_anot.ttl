@@ -1,31 +1,32 @@
-@prefix prov: <http://www.w3.org/ns/prov#> .
-@prefix dcterms: <http://purl.org/dc/terms/> .
-@prefix prez: <https://prez.dev/> .
 @prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix ns1: <https://prez.dev/> .
+@prefix ns2: <http://www.w3.org/ns/prov#> .
+@prefix ns3: <http://purl.org/dc/terms/> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-dcterms:identifier rdfs:label "Identifier"@en .
+ns3:identifier rdfs:label "Identifier"@en .
 
 <https://w3id.org/idn/dataset/agents> a dcat:Catalog ;
-    dcterms:created "2022-08-15"^^xsd:date ;
-    dcterms:description """The Indigenous Data Network's catalogue of Agents. This catalogue contains instances of Agents - People and Organisations - related to the holding of indigenous data. This includes non-indigenous Agents
+    ns3:created "2022-08-15"^^xsd:date ;
+    ns3:description """The Indigenous Data Network's catalogue of Agents. This catalogue contains instances of Agents - People and Organisations - related to the holding of indigenous data. This includes non-indigenous Agents
 
 This catalogue extends on standard Agent information to include properties useful to understand the indigeneity of Agents: whether they are or not, or how much they are, indigenous"""@en ;
-    dcterms:hasPart <https://www.atsida.edu.au/archive/datasets/au.edu.anu.ada.ddi.20002-sa> ;
-    dcterms:identifier "idnac"^^xsd:token ;
-    dcterms:modified "2022-08-15"^^xsd:date ;
-    dcterms:title "IDN Agents Catalogue" ;
-    prov:qualifiedAttribution [ dcat:hadRole <http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/author>,
+    ns3:hasPart <https://www.atsida.edu.au/archive/datasets/au.edu.anu.ada.ddi.20002-sa> ;
+    ns3:identifier "idnac"^^xsd:token ;
+    ns3:modified "2022-08-15"^^xsd:date ;
+    ns3:title "IDN Agents Catalogue" ;
+    ns2:qualifiedAttribution [ dcat:hadRole <http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/author>,
                 <http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/custodian>,
                 <http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/owner> ;
-            prov:agent <https://linked.data.gov.au/org/idn> ] .
+            ns2:agent <https://linked.data.gov.au/org/idn> ] .
 
 <https://linked.data.gov.au/org/idn> rdfs:label "Indigenous Data Network" .
 
-<https://www.atsida.edu.au/archive/datasets/au.edu.anu.ada.ddi.20002-sa> dcterms:title "Annual Aboriginal Census,1921-1944 - South Australia" ;
-    dcterms:description """This study contains time series of data of the Annual Aboriginal Census for Australia, Australian Capital Territory, New South Wales, Northern Territory, Queensland, South Australia, Tasmania, Victoria and Western Australia from 1921 to 1944.
+<https://www.atsida.edu.au/archive/datasets/au.edu.anu.ada.ddi.20002-sa> ns3:description """This study contains time series of data of the Annual Aboriginal Census for Australia, Australian Capital Territory, New South Wales, Northern Territory, Queensland, South Australia, Tasmania, Victoria and Western Australia from 1921 to 1944.
 
 Special care notice:
 Aboriginal and Torres Strait Islander people, researchers and other users should be aware that material in this dataset may contain material that is considered offensive. The data has been retained in its original format because it represents an evidential record of language, beliefs or other cultural situations at a point in time.""" ;
-    prez:link "/c/catalogs/idnac/AAC-SA" .
+    ns3:title "Annual Aboriginal Census,1921-1944 - South Australia" ;
+    ns1:link "/c/catalogs/dtst:agents/dtsts:au.edu.anu.ada.ddi.20002-sa" .
+

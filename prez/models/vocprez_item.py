@@ -18,6 +18,7 @@ class VocabItem(BaseModel):
     concept_curie: Optional[str] = None
     url_path: Optional[str] = None
     selected_class: Optional[URIRef] = None
+    top_level_listing: Optional[bool] = False
 
     def __hash__(self):
         return hash(self.uri)

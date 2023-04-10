@@ -10,33 +10,34 @@ from prez.reference_data.prez_ns import PREZ
 
 
 class SpatialMembers(BaseModel):
-    url_path: str
     uri: Optional[URIRef] = None
+    url_path: str
+    parent_uri: Optional[URIRef] = None
     dataset_curie: Optional[URIRef]
     collection_curie: Optional[URIRef]
     general_class: Optional[URIRef]
     classes: Optional[FrozenSet[URIRef]]
     selected_class: Optional[FrozenSet[URIRef]] = None
+    top_level_listing: Optional[bool] = False
     link_constructor: Optional[str]
 
     @root_validator
     def populate(cls, values):
         url_path = values["url_path"]
-        if url_path in ["/object", "/s/object"]:
-            values["link_constructor"] = f"/s/object?uri="
         if url_path.endswith("/datasets"):  # /s/datasets
             values["general_class"] = DCAT.Dataset
             values["link_constructor"] = "/s/datasets"
             values["classes"] = frozenset([PREZ.DatasetList])
-            values["uri"] = PREZ.DatasetList  # Prez construct which contains (via rdfs:member) all dcat:Datasets in the
             # graph
+            values["top_level_listing"] = True  # used in the construct query
+            values["uri"] = None
         elif url_path.endswith("/collections"):  # /s/datasets/{dataset_curie}/collections
             dataset_curie = values.get("dataset_curie")
             values["general_class"] = GEO.FeatureCollection
             values["link_constructor"] = f"/s/datasets/{dataset_curie}/collections"
             values["classes"] = frozenset([PREZ.FeatureCollectionList])
             values["uri"] = get_uri_for_curie_id(dataset_curie)
-        elif url_path.endswith("/items"): # /s/datasets/{dataset_curie}/collections/{collection_curie}/items
+        elif url_path.endswith("/items"):  # /s/datasets/{dataset_curie}/collections/{collection_curie}/items
             dataset_curie = values.get("dataset_curie")
             collection_curie = values.get("collection_curie")
             values["general_class"] = GEO.Feature

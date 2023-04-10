@@ -1,12 +1,12 @@
+import logging
 from urllib.parse import urlparse
 
 from rdflib import URIRef
 
-from prez.cache import (
-    prefix_graph
-)
+from prez.cache import prefix_graph
 from prez.config import settings
 
+log = logging.getLogger(__name__)
 
 def prefix_registered(prefix):
     """
@@ -33,12 +33,18 @@ def generate_new_prefix(uri):
     Generates a new prefix for a uri
     """
     parsed_url = urlparse(uri)
+    to_generate_prefix_from = None
     if bool(parsed_url.fragment):
         ns = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}#"
         to_generate_prefix_from = parsed_url.fragment.lower()
     else:
         ns = f'{parsed_url.scheme}://{parsed_url.netloc}{"/".join(parsed_url.path.split("/")[:-1])}/'
-        to_generate_prefix_from = parsed_url.path.split("/")[-2].lower()
+        try:
+            to_generate_prefix_from = parsed_url.path.split("/")[-2].lower()
+        except Exception:
+            log.error(msg=f"Cannot generate a prefix for the URI {uri}, please specify a prefix in any of the "
+                          f"prez/reference_data/prefixes turtle files")
+            raise
     # attempt to just use the last part of the path prior to the fragment or "identifier"
     if len(to_generate_prefix_from) <= 6:
         proposed_prefix = to_generate_prefix_from
@@ -62,9 +68,12 @@ def get_curie_id_for_uri(uri: URIRef):
     separator = settings.curie_separator
     try:
         qname = prefix_graph.compute_qname(uri, generate=False)
-    except KeyError:
+    except Exception:
         generate_new_prefix(uri)
-        qname = prefix_graph.compute_qname(uri, generate=False)
+        try:
+            qname = prefix_graph.compute_qname(uri, generate=False)
+        except Exception as e:
+            print(e)
     return f"{qname[0]}{separator}{qname[2]}"
 
 

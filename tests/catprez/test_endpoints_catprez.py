@@ -4,7 +4,7 @@ from pathlib import Path
 from time import sleep
 
 import pytest
-from rdflib import Graph, URIRef, RDFS
+from rdflib import Graph, URIRef, RDFS, RDF, DCAT
 
 PREZ_DIR = os.getenv("PREZ_DIR")
 LOCAL_SPARQL_STORE = os.getenv("LOCAL_SPARQL_STORE")
@@ -37,7 +37,7 @@ def a_catalog_link(cp_test_client):
         # get link for first catalog
         r = client.get("/c/catalogs")
         g = Graph().parse(data=r.text)
-        member_uri = g.value(URIRef("https://prez.dev/CatalogList"), RDFS.member, None)
+        member_uri = g.value(None, RDF.type, DCAT.Catalog)
         link = g.value(member_uri, URIRef(f"https://prez.dev/link", None))
         return link
 
@@ -45,9 +45,9 @@ def a_catalog_link(cp_test_client):
 @pytest.fixture(scope="module")
 def a_resource_link(cp_test_client, a_catalog_link):
     with cp_test_client as client:
-        r = client.get("/c/catalogs/idnac")
+        r = client.get(a_catalog_link)
         g = Graph().parse(data=r.text)
-        link = [i for i in g.objects(None, URIRef(f"https://prez.dev/link", None))][0]
+        link = next(g.objects(subject=None, predicate=URIRef(f"https://prez.dev/link")))
         return link
 
 

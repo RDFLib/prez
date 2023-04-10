@@ -22,6 +22,7 @@ class CatalogItem(BaseModel):
     url_path: Optional[str] = None
     selected_class: Optional[URIRef] = None
     link_constructor: Optional[str] = None
+    top_level_listing: Optional[bool] = False
 
     def __hash__(self):
         return hash(self.uri)

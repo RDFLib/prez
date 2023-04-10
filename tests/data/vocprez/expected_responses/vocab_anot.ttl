@@ -1,268 +1,298 @@
-PREFIX : <https://linked.data.gov.au/def/warox-alteration-types/>
-PREFIX cdterms: <http://purl.org/dc/terms/>
-PREFIX cs: <https://linked.data.gov.au/def/warox-alteration-types>
-PREFIX prez: <https://prez.dev/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+@prefix ns1: <http://purl.org/dc/terms/> .
+@prefix ns2: <http://www.w3.org/2004/02/skos/core#> .
+@prefix ns3: <https://prez.dev/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-cdterms:created
-    rdfs:label "Date Created"@en ;
-    cdterms:description "Recommended practice is to describe the date, date/time, or period of time as recommended for the property Date, of which this is a subproperty."@en ;
-.
+ns1:created rdfs:label "Date Created"@en ;
+    ns1:description "Recommended practice is to describe the date, date/time, or period of time as recommended for the property Date, of which this is a subproperty."@en .
 
-cdterms:creator
-    rdfs:label "Creator"@en ;
-    cdterms:description "Recommended practice is to identify the creator with a URI.  If this is not possible or feasible, a literal value that identifies the creator may be provided."@en ;
-.
+ns1:creator rdfs:label "Creator"@en ;
+    ns1:description "Recommended practice is to identify the creator with a URI.  If this is not possible or feasible, a literal value that identifies the creator may be provided."@en .
 
-cdterms:identifier
-    rdfs:label "Identifier"@en ;
-    cdterms:description "Recommended practice is to identify the resource by means of a string conforming to an identification system. Examples include International Standard Book Number (ISBN), Digital Object Identifier (DOI), and Uniform Resource Name (URN).  Persistent identifiers should be provided as HTTP URIs."@en ;
-.
+ns1:identifier rdfs:label "Identifier"@en ;
+    ns1:description "Recommended practice is to identify the resource by means of a string conforming to an identification system. Examples include International Standard Book Number (ISBN), Digital Object Identifier (DOI), and Uniform Resource Name (URN).  Persistent identifiers should be provided as HTTP URIs."@en .
 
-cdterms:modified
-    rdfs:label "Date Modified"@en ;
-    cdterms:description "Recommended practice is to describe the date, date/time, or period of time as recommended for the property Date, of which this is a subproperty."@en ;
-.
+ns1:modified rdfs:label "Date Modified"@en ;
+    ns1:description "Recommended practice is to describe the date, date/time, or period of time as recommended for the property Date, of which this is a subproperty."@en .
 
-cdterms:provenance
-    rdfs:label "Provenance"@en ;
-    cdterms:description "The statement may include a description of any changes successive custodians made to the resource."@en ;
-.
+ns1:provenance rdfs:label "Provenance"@en ;
+    ns1:description "The statement may include a description of any changes successive custodians made to the resource."@en .
 
-:argillic-advanced
-    cdterms:provenance "From WAROX"@en ;
-    skos:broader :argillic ;
-    skos:inScheme cs: ;
-    skos:prefLabel "argillic - advanced"@en ;
-    prez:link "/v/vocab/warox-alteration-type/argillic-advanced" ;
-.
+ns1:publisher rdfs:label "Publisher"@en .
 
-:argillic-intermediate
-    cdterms:provenance "From WAROX"@en ;
-    skos:broader :argillic ;
-    skos:inScheme cs: ;
-    skos:prefLabel "argillic - intermediate"@en ;
-    prez:link "/v/vocab/warox-alteration-type/argillic-intermediate" ;
-.
+ns1:source rdfs:label "Source"@en ;
+    ns1:description "This property is intended to be used with non-literal values. The described resource may be derived from the related resource in whole or in part. Best practice is to identify the related resource by means of a URI or a string conforming to a formal identification system."@en .
 
-:skarn-magnesian
-    cdterms:provenance "From WAROX"@en ;
-    skos:broader :skarn ;
-    skos:inScheme cs: ;
-    skos:prefLabel "skarn - magnesian"@en ;
-    prez:link "/v/vocab/warox-alteration-type/skarn-magnesian" ;
-.
+<http://resource.geosciml.org/classifier/cgi/contacttype/alteration_facies_contact> ns1:provenance "this vocabulary"@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "alteration facies contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:alteration_facies_contact" .
 
-:skarn-prograde-stage
-    cdterms:provenance "From WAROX"@en ;
-    skos:broader :skarn ;
-    skos:inScheme cs: ;
-    skos:prefLabel "skarn - prograde stage"@en ;
-    prez:link "/v/vocab/warox-alteration-type/skarn-prograde-stage" ;
-.
+<http://resource.geosciml.org/classifier/cgi/contacttype/angular_unconformable_contact> ns1:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/unconformable_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "angular unconformable contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:angular_unconformable_contact" .
 
-:skarn-retrograde-stage
-    cdterms:provenance "From WAROX"@en ;
-    skos:broader :skarn ;
-    skos:inScheme cs: ;
-    skos:prefLabel "skarn - retrograde stage"@en ;
-    prez:link "/v/vocab/warox-alteration-type/skarn-retrograde-stage" ;
-.
+<http://resource.geosciml.org/classifier/cgi/contacttype/buttress_unconformity> ns1:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/unconformable_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "buttress unconformity"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:buttress_unconformity" .
 
-:albitic
-    cdterms:provenance "From WAROX"@en ;
-    skos:inScheme cs: ;
-    skos:prefLabel "albitic"@en ;
-    prez:link "/v/vocab/warox-alteration-type/albitic" ;
-.
+<http://resource.geosciml.org/classifier/cgi/contacttype/chronostratigraphic_zone_contact> ns1:provenance "FGDC"@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "chronostratigraphic-zone contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:chronostratigraphic_zone_contact" .
 
-:alkali-metasomatism
-    cdterms:provenance "From WAROX"@en ;
-    skos:inScheme cs: ;
-    skos:prefLabel "alkali metasomatism"@en ;
-    prez:link "/v/vocab/warox-alteration-type/alkali-metasomatism" ;
-.
+<http://resource.geosciml.org/classifier/cgi/contacttype/conductivity_contact> ns1:provenance "this vocabulary"@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/geophysical_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "conductivity contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:conductivity_contact" .
 
-:carbonate
-    cdterms:provenance "From WAROX"@en ;
-    skos:inScheme cs: ;
-    skos:prefLabel "carbonate"@en ;
-    prez:link "/v/vocab/warox-alteration-type/carbonate" ;
-.
+<http://resource.geosciml.org/classifier/cgi/contacttype/conformable_contact> ns1:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/depositional_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "conformable contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:conformable_contact" .
 
-:chloritic
-    cdterms:provenance "From WAROX"@en ;
-    skos:inScheme cs: ;
-    skos:prefLabel "chloritic"@en ;
-    prez:link "/v/vocab/warox-alteration-type/chloritic" ;
-.
+<http://resource.geosciml.org/classifier/cgi/contacttype/deformation_zone_contact> ns1:provenance "this vocabulary"@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "deformation zone contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:deformation_zone_contact" .
 
-:deuteric
-    cdterms:provenance "From WAROX"@en ;
-    skos:inScheme cs: ;
-    skos:prefLabel "deuteric"@en ;
-    prez:link "/v/vocab/warox-alteration-type/deuteric" ;
-.
+<http://resource.geosciml.org/classifier/cgi/contacttype/density_contact> ns1:provenance "this vocabulary"@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/geophysical_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "density contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:density_contact" .
 
-:fenitization
-    cdterms:provenance "From WAROX"@en ;
-    skos:inScheme cs: ;
-    skos:prefLabel "fenitization"@en ;
-    prez:link "/v/vocab/warox-alteration-type/fenitization" ;
-.
+<http://resource.geosciml.org/classifier/cgi/contacttype/disconformable_contact> ns1:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/unconformable_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "disconformable contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:disconformable_contact" .
 
-:fluorite-and-topaz
-    cdterms:provenance "From WAROX"@en ;
-    skos:inScheme cs: ;
-    skos:prefLabel "fluorite and topaz"@en ;
-    prez:link "/v/vocab/warox-alteration-type/fluorite-and-topaz" ;
-.
+<http://resource.geosciml.org/classifier/cgi/contacttype/faulted_contact> ns1:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "faulted contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:faulted_contact" .
 
-:greisen
-    cdterms:provenance "From WAROX"@en ;
-    skos:inScheme cs: ;
-    skos:prefLabel "greisen"@en ;
-    prez:link "/v/vocab/warox-alteration-type/greisen" ;
-.
+<http://resource.geosciml.org/classifier/cgi/contacttype/geologic_province_contact> ns1:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "geologic province contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:geologic_province_contact" .
 
-:hematitic
-    cdterms:provenance "From WAROX"@en ;
-    skos:inScheme cs: ;
-    skos:prefLabel "hematitic"@en ;
-    prez:link "/v/vocab/warox-alteration-type/hematitic" ;
-.
+<http://resource.geosciml.org/classifier/cgi/contacttype/glacial_stationary_line> ns1:provenance "this vocabulary"@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "glacial stationary line"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:glacial_stationary_line" .
 
-:jasperoid
-    cdterms:provenance "From WAROX"@en ;
-    skos:inScheme cs: ;
-    skos:prefLabel "jasperoid"@en ;
-    prez:link "/v/vocab/warox-alteration-type/jasperoid" ;
-.
+<http://resource.geosciml.org/classifier/cgi/contacttype/igneous_phase_contact> ns1:provenance "this vocabulary"@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "igneous phase contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:igneous_phase_contact" .
 
-:listvenitization
-    cdterms:provenance "From WAROX"@en ;
-    skos:inScheme cs: ;
-    skos:prefLabel "listvenitization"@en ;
-    prez:link "/v/vocab/warox-alteration-type/listvenitization" ;
-.
+<http://resource.geosciml.org/classifier/cgi/contacttype/impact_structure_boundary> ns1:provenance "this vocabulary"@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "impact structure boundary"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:impact_structure_boundary" .
 
-:phyllic-qsp
-    cdterms:provenance "From WAROX"@en ;
-    skos:inScheme cs: ;
-    skos:prefLabel "phyllic (QSP)"@en ;
-    prez:link "/v/vocab/warox-alteration-type/phyllic-qsp" ;
-.
+<http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_polarity_contact> ns1:provenance "this vocabulary"@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "magnetic polarity contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:magnetic_polarity_contact" .
 
-:potassic
-    cdterms:provenance "From WAROX"@en ;
-    skos:inScheme cs: ;
-    skos:prefLabel "potassic"@en ;
-    prez:link "/v/vocab/warox-alteration-type/potassic" ;
-.
+<http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_susceptiblity_contact> ns1:provenance "this vocabulary"@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "magnetic susceptiblity contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:magnetic_susceptiblity_contact" .
 
-:propylitic
-    cdterms:provenance "From WAROX"@en ;
-    skos:inScheme cs: ;
-    skos:prefLabel "propylitic"@en ;
-    prez:link "/v/vocab/warox-alteration-type/propylitic" ;
-.
+<http://resource.geosciml.org/classifier/cgi/contacttype/magnetization_contact> ns1:provenance "this vocabulary"@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "magnetization contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:magnetization_contact" .
 
-:pyritic
-    cdterms:provenance "From WAROX"@en ;
-    skos:inScheme cs: ;
-    skos:prefLabel "pyritic"@en ;
-    prez:link "/v/vocab/warox-alteration-type/pyritic" ;
-.
+<http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_facies_contact> ns1:provenance "this vocabulary"@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "metamorphic facies contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:metamorphic_facies_contact" .
 
-:rodingitization
-    cdterms:provenance "From WAROX"@en ;
-    skos:inScheme cs: ;
-    skos:prefLabel "rodingitization"@en ;
-    prez:link "/v/vocab/warox-alteration-type/rodingitization" ;
-.
+<http://resource.geosciml.org/classifier/cgi/contacttype/metasomatic_facies_contact> ns1:provenance "this vocabulary"@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "metasomatic facies contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:metasomatic_facies_contact" .
 
-:sericitic
-    cdterms:provenance "From WAROX"@en ;
-    skos:inScheme cs: ;
-    skos:prefLabel "sericitic"@en ;
-    prez:link "/v/vocab/warox-alteration-type/sericitic" ;
-.
+<http://resource.geosciml.org/classifier/cgi/contacttype/mineralisation_assemblage_contact> ns1:provenance "this vocabulary"@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "mineralisation assemblage contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:mineralisation_assemblage_contact" .
 
-:serpentinization
-    cdterms:provenance "From WAROX"@en ;
-    skos:inScheme cs: ;
-    skos:prefLabel "serpentinization"@en ;
-    prez:link "/v/vocab/warox-alteration-type/serpentinization" ;
-.
+<http://resource.geosciml.org/classifier/cgi/contacttype/nonconformable_contact> ns1:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/unconformable_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "nonconformable contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:nonconformable_contact" .
 
-:silicification
-    cdterms:provenance "From WAROX"@en ;
-    skos:inScheme cs: ;
-    skos:prefLabel "silicification"@en ;
-    prez:link "/v/vocab/warox-alteration-type/silicification" ;
-.
+<http://resource.geosciml.org/classifier/cgi/contacttype/paraconformable_contact> ns1:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/igneous_intrusive_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/unconformable_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "paraconformable contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:paraconformable_contact" .
 
-:tourmalinization
-    cdterms:provenance "From WAROX"@en ;
-    skos:inScheme cs: ;
-    skos:prefLabel "tourmalinization"@en ;
-    prez:link "/v/vocab/warox-alteration-type/tourmalinization" ;
-.
+<http://resource.geosciml.org/classifier/cgi/contacttype/radiometric_contact> ns1:provenance "this vocabulary"@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/geophysical_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "radiometric contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:radiometric_contact" .
 
-:zeolitic
-    cdterms:provenance "From WAROX"@en ;
-    skos:inScheme cs: ;
-    skos:prefLabel "zeolitic"@en ;
-    prez:link "/v/vocab/warox-alteration-type/zeolitic" ;
-.
+<http://resource.geosciml.org/classifier/cgi/contacttype/sedimentary_facies_contact> ns1:provenance "base on Nichols, Gary, 1999, Sedimentology and stratigraphy, Blackwell, p. 62-63."@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "sedimentary facies contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:sedimentary_facies_contact" .
 
-:argillic
-    cdterms:provenance "From WAROX"@en ;
-    skos:inScheme cs: ;
-    skos:prefLabel "argillic"@en ;
-    prez:link "/v/vocab/warox-alteration-type/argillic" ;
-.
+<http://resource.geosciml.org/classifier/cgi/contacttype/sedimentary_intrusive_contact> ns1:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "sedimentary intrusive contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:sedimentary_intrusive_contact" .
 
-:skarn
-    cdterms:provenance "From WAROX"@en ;
-    skos:inScheme cs: ;
-    skos:prefLabel "skarn"@en ;
-    prez:link "/v/vocab/warox-alteration-type/skarn" ;
-.
+<http://resource.geosciml.org/classifier/cgi/contacttype/seismic_contact> ns1:provenance "this vocabulary"@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/geophysical_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "seismic contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:seismic_contact" .
 
-cs:
-    a skos:ConceptScheme ;
-    cdterms:created "2021-09-26"^^xsd:date ;
-    cdterms:creator <https://linked.data.gov.au/org/gswa> ;
-    cdterms:identifier "warox-alteration-type"^^xsd:token ;
-    cdterms:modified "2021-09-29"^^xsd:date ;
-    cdterms:provenance "This vocabulary was built on an extract of the WAROX system's lookup table"@en ;
-    skos:definition "This vocabulary give Alteration Type concepts, listed in the Geologicla Survey of Western Australia's WAROX database."@en ;
-    skos:hasTopConcept
-        :albitic ,
-        :alkali-metasomatism ,
-        :argillic ,
-        :carbonate ,
-        :chloritic ,
-        :deuteric ,
-        :fenitization ,
-        :fluorite-and-topaz ,
-        :greisen ,
-        :hematitic ,
-        :jasperoid ,
-        :listvenitization ,
-        :phyllic-qsp ,
-        :potassic ,
-        :propylitic ,
-        :pyritic ,
-        :rodingitization ,
-        :sericitic ,
-        :serpentinization ,
-        :silicification ,
-        :skarn ,
-        :tourmalinization ,
-        :zeolitic ;
-    skos:prefLabel "WAROX Alteration Type"@en ;
-.
+<http://resource.geosciml.org/classifier/cgi/contacttype/volcanic_subsidence_zone_boundary> ns1:provenance "this vocabulary, concept to encompass boundary of caldron, caldera, or crater."@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "volcanic subsidence zone boundary"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:volcanic_subsidence_zone_boundary" .
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/weathering_contact> ns1:provenance "this vocabulary"@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "weathering contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:weathering_contact" .
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/igneous_intrusive_contact> ns1:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:prefLabel "igneous intrusive contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:igneous_intrusive_contact" .
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/depositional_contact> ns1:provenance "this vocabulary"@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:narrower <http://resource.geosciml.org/classifier/cgi/contacttype/conformable_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/unconformable_contact> ;
+    ns2:prefLabel "depositional contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:depositional_contact" .
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_contact> ns1:provenance "this vocabulary"@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/geophysical_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:narrower <http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_polarity_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_susceptiblity_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/magnetization_contact> ;
+    ns2:prefLabel "magnetic contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:magnetic_contact" .
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact> ns1:provenance "this vocabulary"@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:narrower <http://resource.geosciml.org/classifier/cgi/contacttype/alteration_facies_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_facies_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/metasomatic_facies_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/mineralisation_assemblage_contact> ;
+    ns2:prefLabel "metamorphic contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:metamorphic_contact" .
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/geophysical_contact> ns1:provenance "this vocabulary"@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:narrower <http://resource.geosciml.org/classifier/cgi/contacttype/conductivity_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/density_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/radiometric_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/seismic_contact> ;
+    ns2:prefLabel "geophysical contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:geophysical_contact" .
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/unconformable_contact> ns1:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/depositional_contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:narrower <http://resource.geosciml.org/classifier/cgi/contacttype/angular_unconformable_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/buttress_unconformity>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/disconformable_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/nonconformable_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/paraconformable_contact> ;
+    ns2:prefLabel "unconformable contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:unconformable_contact" .
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/contact> ns1:provenance "adapted from Jackson, 1997, page 137, NADM C1 2004"@en ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:narrower <http://resource.geosciml.org/classifier/cgi/contacttype/chronostratigraphic_zone_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/faulted_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/geologic_province_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/geophysical_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/glacial_stationary_line>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact> ;
+    ns2:prefLabel "contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:contact" .
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact> ns1:provenance "this vocabulary"@en ;
+    ns2:broader <http://resource.geosciml.org/classifier/cgi/contacttype/contact> ;
+    ns2:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    ns2:narrower <http://resource.geosciml.org/classifier/cgi/contacttype/deformation_zone_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/depositional_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/igneous_intrusive_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/igneous_phase_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/impact_structure_boundary>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/sedimentary_facies_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/sedimentary_intrusive_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/volcanic_subsidence_zone_boundary>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/weathering_contact> ;
+    ns2:prefLabel "lithogenetic contact"@en ;
+    ns3:link "/v/scheme/2016.01:contacttype/cntcttyp:lithogenetic_contact" .
+
+<http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> a ns2:ConceptScheme ;
+    ns1:created "2009-07-14"^^xsd:date ;
+    ns1:creator <https://linked.data.gov.au/org/cgi-gtwg> ;
+    ns1:identifier "contacttype"^^xsd:token ;
+    ns1:modified "2020-06-23"^^xsd:date ;
+    ns1:provenance "Original set of terms from the GeosciML standard" ;
+    ns1:publisher <https://linked.data.gov.au/org/cgi> ;
+    ns1:source "http://www.opengis.net/doc/geosciml/4.1"^^xsd:anyURI ;
+    ns2:changeNote "2009 Revised from ContactType200811 with addition of impact_structure_boundary and volcanic_subsidence_zone_boundary, and addition of more metadata annotation"@en,
+        "2009-12-07 SMR Update metadata properties for version, creator, title, and format. Change skos:HistoryNote to dc:source for information on origin of terms and definitions."@en,
+        "2011-02-16 SMR replace URN with cgi http URI's. Last changes to fix URN for conceptScheme that was not updated in original updates."@en,
+        "2012-02-07 SMR update URI to replace numeric final token with English-language string as in original URN scheme."@en,
+        "2012-02-27 SMR add skos:exactMatch triples to map URIs for concepts in this vocabulary to number-token URIs in 201012 version of same concepts."@en,
+        "2012-11-24 SMR Update to 201211 version; add collection entity, check all pref labels are lower case, remove owl:NamedIndividual and Owl:Thing rdf:types."@en,
+        "2016-06-15 OLR - redo Excel spreadsheet to work with XSLT, to make consistent SKOS-RDF with all CGI vocabularies. Generate new SKOS-RDF file."@en,
+        "2020-06-23 NJC Added properties to ensure vocab matched Geoscience Australia's vocab profile (http://linked.data.gov.au/def/ga-skos-profile). Just annotation properties, no new content. Agents (creator/publisher) now not text but RDF resource. Dates (create/modified) derived from editorial notes & existing date properties."@en ;
+    ns2:definition "This scheme describes the concept space for Contact Type concepts, as defined by the IUGS Commission for Geoscience Information (CGI) Geoscience Terminology Working Group. By extension, it includes all concepts in this conceptScheme, as well as concepts in any previous versions of the scheme. Designed for use in the contactType property in GeoSciML Contact elements."@en ;
+    ns2:editorialNote "This file contains the 2016 SKOS-RDF version of the CGI Contact Type vocabulary. Compilation and review in MS Excel spreadsheet, converted to MS Excel for SKOS generation using GSML_SKOS_fromXLS_2016.01.xslt."@en ;
+    ns2:hasTopConcept <http://resource.geosciml.org/classifier/cgi/contacttype/contact> ;
+    ns2:prefLabel "Contact Type"@en .
+

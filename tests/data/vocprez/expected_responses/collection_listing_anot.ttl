@@ -1,13 +1,12 @@
-@prefix prez: <https://prez.dev/> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
-@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ns1: <https://prez.dev/> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-prez:VocPrezCollectionList rdfs:member <http://resource.geosciml.org/classifier/cgi/contacttype> ;
-    prez:count 1 .
-
-<http://resource.geosciml.org/classifier/cgi/contacttype> skos:prefLabel "Contact Type - All Concepts"@en ;
+<http://resource.geosciml.org/classifier/cgi/contacttype> a skos:Collection ;
     dcterms:provenance "this vocabulary" ;
-    prez:link "/v/collection/contacttype" .
+    skos:prefLabel "Contact Type - All Concepts"@en ;
+    ns1:link "/v/collection/cgi:contacttype" .
+
+skos:Collection ns1:count 1 .
+

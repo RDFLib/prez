@@ -103,12 +103,7 @@ prez:VocPrezProfile
         a sh:NodeShape ;
         sh:targetClass skos:Concept ;
         altr-ext:outboundParents skos:inScheme ;
-    ] ;
-    altr-ext:hasNodeShape [
-        a sh:NodeShape ;
-        sh:targetClass prez:SchemesList , prez:VocPrezCollectionList ;
-        altr-ext:outboundChildren rdfs:member ;
-    ] ;
+    ]
 .
 
 <https://schema.org>

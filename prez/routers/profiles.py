@@ -51,6 +51,7 @@ async def profiles(
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
         "GenericPrez",
+        predicates_for_link_addition,
     )
 
 

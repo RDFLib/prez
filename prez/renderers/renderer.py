@@ -6,7 +6,7 @@ from typing import Optional, Dict
 from connegp import RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
 from fastapi.responses import StreamingResponse
 from pydantic.types import List
-from rdflib import Graph, URIRef, Namespace, Literal
+from rdflib import Graph, URIRef, Namespace, Literal, RDF
 from starlette.requests import Request
 from starlette.responses import Response
 
@@ -21,12 +21,11 @@ from prez.sparql.objects_listings import (
 )
 from prez.sparql.methods import sparql_construct
 
-
 log = logging.getLogger(__name__)
 
 
 async def return_from_queries(
-    queries: List[str], mediatype, profile, profile_headers, prez, predicates_for_link_addition: Dict = {}
+        queries: List[str], mediatype, profile, profile_headers, prez, predicates_for_link_addition: Dict = {}
 ):
     """
     Executes SPARQL queries, loads these to RDFLib Graphs, and calls the "return_from_graph" function to return the
@@ -99,10 +98,12 @@ def generate_prez_links(graph, predicates_for_link_addition):
         if predicates_for_link_addition["ob_chi"]:
             triples_for_links = graph.triples_choices((None, predicates_for_link_addition["ob_chi"], None))
             for triple in triples_for_links:
-                graph.add((triple[2], PREZ.link, Literal(predicates_for_link_addition["link_constructor"] + f"/{get_curie_id_for_uri(triple[2])}")))
+                graph.add((triple[2], PREZ.link, Literal(
+                    predicates_for_link_addition["link_constructor"] + f"/{get_curie_id_for_uri(triple[2])}")))
         if predicates_for_link_addition["ib_chi"]:
             for triple in graph.triples_choices((None, predicates_for_link_addition["ib_chi"], None)):
-                graph.add((triple[2], PREZ.link, Literal(predicates_for_link_addition["link_constructor"])))
+                graph.add((triple[0], PREZ.link, Literal(
+                    predicates_for_link_addition["link_constructor"] + f"/{get_curie_id_for_uri(triple[0])}")))
         if predicates_for_link_addition["ob_par"]:
             triples_for_links = graph.triples_choices((None, predicates_for_link_addition["ob_par"], None))
             new_link_constructor = '/'.join(predicates_for_link_addition["link_constructor"].split('/')[:-1])
@@ -113,6 +114,12 @@ def generate_prez_links(graph, predicates_for_link_addition):
             new_link_constructor = '/'.join(predicates_for_link_addition["link_constructor"].split('/')[:-1])
             for triple in triples_for_links:
                 graph.add((triple[2], PREZ.link, Literal(new_link_constructor + f"/{get_curie_id_for_uri(triple[2])}")))
+        if predicates_for_link_addition["top_level_gen_class"]:
+            instances = graph.subjects(predicate=RDF.type,
+                                       object=predicates_for_link_addition["top_level_gen_class"])
+            for instance in instances:
+                graph.add((instance, PREZ.link, Literal(predicates_for_link_addition["link_constructor"] +
+                                                        f"/{get_curie_id_for_uri(instance)}")))
 
 
 def generate_object_endpoint_link(graph, predicates_for_link_addition):
@@ -123,10 +130,10 @@ def generate_object_endpoint_link(graph, predicates_for_link_addition):
 
 
 async def return_profiles(
-    classes: frozenset,
-    prez_type: str,
-    request: Optional[Request] = None,
-    prof_and_mt_info: Optional = None,
+        classes: frozenset,
+        prez_type: str,
+        request: Optional[Request] = None,
+        prof_and_mt_info: Optional = None,
 ) -> Response:
     from prez.cache import profiles_graph_cache
 

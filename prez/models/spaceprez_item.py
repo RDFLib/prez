@@ -25,6 +25,7 @@ class SpatialItem(BaseModel):
     classes: Optional[Set[URIRef]]
     link_constructor: Optional[str]
     selected_class: Optional[URIRef] = None
+    top_level_listing: Optional[bool] = False
 
     def __hash__(self):
         return hash(self.uri)
