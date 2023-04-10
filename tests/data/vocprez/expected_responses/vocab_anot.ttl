@@ -295,4 +295,3 @@ ns1:source rdfs:label "Source"@en ;
     ns2:editorialNote "This file contains the 2016 SKOS-RDF version of the CGI Contact Type vocabulary. Compilation and review in MS Excel spreadsheet, converted to MS Excel for SKOS generation using GSML_SKOS_fromXLS_2016.01.xslt."@en ;
     ns2:hasTopConcept <http://resource.geosciml.org/classifier/cgi/contacttype/contact> ;
     ns2:prefLabel "Contact Type"@en .
-

@@ -35,4 +35,3 @@ dcterms:identifier rdfs:label "Identifier"@en .
     ns1:link "/s/datasets/exds:sandgate/collections/sndgt:roads" .
 
 dcat:Dataset rdfs:label "Dataset"@en .
-

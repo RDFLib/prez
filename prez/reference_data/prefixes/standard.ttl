@@ -8,4 +8,3 @@ prez: vann:preferredNamespacePrefix "prez" .
 exds: vann:preferredNamespacePrefix "exds" .
 dcat: vann:preferredNamespacePrefix "dcat" .
 sdoprof: vann:preferredNamespacePrefix "sdoprof" .
-

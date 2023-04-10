@@ -25,7 +25,12 @@ log = logging.getLogger(__name__)
 
 
 async def return_from_queries(
-        queries: List[str], mediatype, profile, profile_headers, prez, predicates_for_link_addition: Dict = {}
+    queries: List[str],
+    mediatype,
+    profile,
+    profile_headers,
+    prez,
+    predicates_for_link_addition: Dict = {},
 ):
     """
     Executes SPARQL queries, loads these to RDFLib Graphs, and calls the "return_from_graph" function to return the
@@ -39,10 +44,19 @@ async def return_from_queries(
     if len(graphs) > 1:
         for g in graphs[1:]:
             graph.__iadd__(g)
-    return await return_from_graph(graph, mediatype, profile, profile_headers, prez, predicates_for_link_addition)
+    return await return_from_graph(
+        graph, mediatype, profile, profile_headers, prez, predicates_for_link_addition
+    )
 
 
-async def return_from_graph(graph, mediatype, profile, profile_headers, prez, predicates_for_link_addition: dict = {}):
+async def return_from_graph(
+    graph,
+    mediatype,
+    profile,
+    profile_headers,
+    prez,
+    predicates_for_link_addition: dict = {},
+):
     profile_headers["Content-Disposition"] = "inline"
     if str(mediatype) in RDF_MEDIATYPES:
         return await return_rdf(graph, mediatype, profile_headers)
@@ -52,7 +66,9 @@ async def return_from_graph(graph, mediatype, profile, profile_headers, prez, pr
 
     else:
         if mediatype == Literal("text/anot+turtle"):
-            return await return_annotated_rdf(graph, prez, profile_headers, profile, predicates_for_link_addition)
+            return await return_annotated_rdf(
+                graph, prez, profile_headers, profile, predicates_for_link_addition
+            )
 
 
 async def return_rdf(graph, mediatype, profile_headers):
@@ -66,7 +82,9 @@ async def return_rdf(graph, mediatype, profile_headers):
     return StreamingResponse(content=obj, media_type=mediatype, headers=profile_headers)
 
 
-async def return_annotated_rdf(graph, prez, profile_headers, profile, predicates_for_link_addition):
+async def return_annotated_rdf(
+    graph, prez, profile_headers, profile, predicates_for_link_addition
+):
     from prez.cache import tbox_cache
 
     cache = tbox_cache
@@ -96,44 +114,106 @@ def generate_prez_links(graph, predicates_for_link_addition):
         generate_object_endpoint_link(graph, predicates_for_link_addition)
     else:
         if predicates_for_link_addition["ob_chi"]:
-            triples_for_links = graph.triples_choices((None, predicates_for_link_addition["ob_chi"], None))
+            triples_for_links = graph.triples_choices(
+                (None, predicates_for_link_addition["ob_chi"], None)
+            )
             for triple in triples_for_links:
-                graph.add((triple[2], PREZ.link, Literal(
-                    predicates_for_link_addition["link_constructor"] + f"/{get_curie_id_for_uri(triple[2])}")))
+                graph.add(
+                    (
+                        triple[2],
+                        PREZ.link,
+                        Literal(
+                            predicates_for_link_addition["link_constructor"]
+                            + f"/{get_curie_id_for_uri(triple[2])}"
+                        ),
+                    )
+                )
         if predicates_for_link_addition["ib_chi"]:
-            for triple in graph.triples_choices((None, predicates_for_link_addition["ib_chi"], None)):
-                graph.add((triple[0], PREZ.link, Literal(
-                    predicates_for_link_addition["link_constructor"] + f"/{get_curie_id_for_uri(triple[0])}")))
+            for triple in graph.triples_choices(
+                (None, predicates_for_link_addition["ib_chi"], None)
+            ):
+                graph.add(
+                    (
+                        triple[0],
+                        PREZ.link,
+                        Literal(
+                            predicates_for_link_addition["link_constructor"]
+                            + f"/{get_curie_id_for_uri(triple[0])}"
+                        ),
+                    )
+                )
         if predicates_for_link_addition["ob_par"]:
-            triples_for_links = graph.triples_choices((None, predicates_for_link_addition["ob_par"], None))
-            new_link_constructor = '/'.join(predicates_for_link_addition["link_constructor"].split('/')[:-1])
+            triples_for_links = graph.triples_choices(
+                (None, predicates_for_link_addition["ob_par"], None)
+            )
+            new_link_constructor = "/".join(
+                predicates_for_link_addition["link_constructor"].split("/")[:-1]
+            )
             for triple in triples_for_links:
-                graph.add((triple[2], PREZ.link, Literal(new_link_constructor + f"/{get_curie_id_for_uri(triple[2])}")))
+                graph.add(
+                    (
+                        triple[2],
+                        PREZ.link,
+                        Literal(
+                            new_link_constructor + f"/{get_curie_id_for_uri(triple[2])}"
+                        ),
+                    )
+                )
         if predicates_for_link_addition["ib_par"]:
-            triples_for_links = graph.triples_choices((None, predicates_for_link_addition["ib_par"], None))
-            new_link_constructor = '/'.join(predicates_for_link_addition["link_constructor"].split('/')[:-1])
+            triples_for_links = graph.triples_choices(
+                (None, predicates_for_link_addition["ib_par"], None)
+            )
+            new_link_constructor = "/".join(
+                predicates_for_link_addition["link_constructor"].split("/")[:-1]
+            )
             for triple in triples_for_links:
-                graph.add((triple[2], PREZ.link, Literal(new_link_constructor + f"/{get_curie_id_for_uri(triple[2])}")))
+                graph.add(
+                    (
+                        triple[2],
+                        PREZ.link,
+                        Literal(
+                            new_link_constructor + f"/{get_curie_id_for_uri(triple[2])}"
+                        ),
+                    )
+                )
         if predicates_for_link_addition["top_level_gen_class"]:
-            instances = graph.subjects(predicate=RDF.type,
-                                       object=predicates_for_link_addition["top_level_gen_class"])
+            instances = graph.subjects(
+                predicate=RDF.type,
+                object=predicates_for_link_addition["top_level_gen_class"],
+            )
             for instance in instances:
-                graph.add((instance, PREZ.link, Literal(predicates_for_link_addition["link_constructor"] +
-                                                        f"/{get_curie_id_for_uri(instance)}")))
+                graph.add(
+                    (
+                        instance,
+                        PREZ.link,
+                        Literal(
+                            predicates_for_link_addition["link_constructor"]
+                            + f"/{get_curie_id_for_uri(instance)}"
+                        ),
+                    )
+                )
 
 
 def generate_object_endpoint_link(graph, predicates_for_link_addition):
-    all_preds = predicates_for_link_addition["child"] + predicates_for_link_addition["parent"]
+    all_preds = (
+        predicates_for_link_addition["child"] + predicates_for_link_addition["parent"]
+    )
     objects_for_links = graph.triples_choices((None, all_preds, None))
     for o in objects_for_links:
-        graph.add((o[2], PREZ.link, Literal(f"{predicates_for_link_addition['link_constructor']}{o[2]}")))
+        graph.add(
+            (
+                o[2],
+                PREZ.link,
+                Literal(f"{predicates_for_link_addition['link_constructor']}{o[2]}"),
+            )
+        )
 
 
 async def return_profiles(
-        classes: frozenset,
-        prez_type: str,
-        request: Optional[Request] = None,
-        prof_and_mt_info: Optional = None,
+    classes: frozenset,
+    prez_type: str,
+    request: Optional[Request] = None,
+    prof_and_mt_info: Optional = None,
 ) -> Response:
     from prez.cache import profiles_graph_cache
 

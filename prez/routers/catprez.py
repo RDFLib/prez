@@ -52,7 +52,7 @@ async def catalogs_endpoint(
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
         "CatPrez",
-        predicates_for_link_addition
+        predicates_for_link_addition,
     )
 
 
@@ -87,23 +87,15 @@ async def item_endpoint(request: Request, cp_item: Optional[CatalogItem] = None)
             prof_and_mt_info=prof_and_mt_info,
         )
     item_query = generate_item_construct(cp_item, prof_and_mt_info.profile)
-    item_members_query, predicates_for_link_addition = generate_listing_construct_from_uri(
-        cp_item, prof_and_mt_info.profile, 1, 20
-    )
+    (
+        item_members_query,
+        predicates_for_link_addition,
+    ) = generate_listing_construct_from_uri(cp_item, prof_and_mt_info.profile, 1, 20)
     return await return_from_queries(
         [item_query, item_members_query],
         prof_and_mt_info.mediatype,
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
         "CatPrez",
-        predicates_for_link_addition
+        predicates_for_link_addition,
     )
-
-
-#
-#
-# @router.get("/conformance", summary="Conformance")
-# async def conformance(request: Request):
-#     """Returns the SpacePrez conformance page in the necessary profile & mediatype"""
-#     conformance_renderer = CatPrezConformanceRenderer(request)
-#     return conformance_renderer.render()

@@ -36,6 +36,4 @@ def test_profile(sp_test_client):
         # check the example remote profile is loaded
         r = client.get("/profiles")
         g = Graph().parse(data=r.text)
-        assert (URIRef("https://example.com/profile"),
-                RDF.type,
-                PROF.Profile) in g
+        assert (URIRef("https://example.com/profile"), RDF.type, PROF.Profile) in g

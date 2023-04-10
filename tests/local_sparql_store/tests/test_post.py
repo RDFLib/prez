@@ -31,10 +31,10 @@ def test_home(store_instance):
 def test_vocprez_query(store_instance):
     q = """
         PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-        
+
         SELECT (COUNT(?cs) AS ?c)
         WHERE {
-            ?cs a skos:ConceptScheme 
+            ?cs a skos:ConceptScheme
         }
         """
     r = httpx.post(f"http://localhost:{store_instance}/vocprez", data=q)

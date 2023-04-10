@@ -27,4 +27,3 @@ dcterms:provenance rdfs:label "Provenance"@en ;
 <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> dcterms:provenance "Original set of terms from the GeosciML standard" ;
     ns3:prefLabel "Contact Type"@en ;
     ns1:link "/v/vocab/2016.01:contacttype" .
-

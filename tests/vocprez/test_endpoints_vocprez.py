@@ -79,9 +79,7 @@ def test_vocab_listing(vp_test_client):
 
 def test_concept(vp_test_client, a_concept_link):
     with vp_test_client as client:
-        r = client.get(
-            f"{a_concept_link}?_mediatype=text/anot+turtle"
-        )
+        r = client.get(f"{a_concept_link}?_mediatype=text/anot+turtle")
         response_graph = Graph().parse(data=r.text)
         expected_graph = Graph().parse(
             Path(__file__).parent

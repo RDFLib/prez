@@ -23,10 +23,10 @@ PREZ = Namespace("https://prez.dev/")
 
 
 def generate_listing_construct_from_uri(
-        focus_item,
-        profile,
-        page: Optional[int] = 1,
-        per_page: Optional[int] = 20,
+    focus_item,
+    profile,
+    page: Optional[int] = 1,
+    per_page: Optional[int] = 20,
 ):
     """
     For a given URI, finds items with the specified relation(s).
@@ -41,15 +41,15 @@ def generate_listing_construct_from_uri(
         relative_properties,
     ) = get_listing_predicates(profile, focus_item.selected_class)
     if (
-            focus_item.uri
-            # and not focus_item.top_level_listing  # if it's a top level class we don't need a listing relation - we're
-            # # searching by class
-            and not inbound_children
-            and not inbound_parents
-            and not outbound_children
-            and not outbound_parents
-            # do not need to check relative properties - they will only be used if one of the inbound/outbound parent/child
-            # relations are defined
+        focus_item.uri
+        # and not focus_item.top_level_listing  # if it's a top level class we don't need a listing relation - we're
+        # # searching by class
+        and not inbound_children
+        and not inbound_parents
+        and not outbound_children
+        and not outbound_parents
+        # do not need to check relative properties - they will only be used if one of the inbound/outbound parent/child
+        # relations are defined
     ):
         log.warning(
             f"Requested listing of objects related to {focus_item.uri}, however the profile {profile} does not"
@@ -75,14 +75,14 @@ def generate_listing_construct_from_uri(
             {f'{uri_or_tl_item} ?outbound_parents ?parent_item .{chr(10)}' if outbound_parents else ""}\
             {f'?inbound_child_s ?inbound_child {uri_or_tl_item} .{chr(10)}' if inbound_children else ""}\
             {f'?inbound_parent_s ?inbound_parent {uri_or_tl_item} .{chr(10)}' if inbound_parents else ""}\
-            {generate_relative_properties("construct", relative_properties, inbound_children, inbound_parents, 
+            {generate_relative_properties("construct", relative_properties, inbound_children, inbound_parents,
                                           outbound_children, outbound_parents)}\
         }}
         WHERE {{
             {f'{uri_or_tl_item} a <{focus_item.general_class}> .{chr(10)}' if focus_item.top_level_listing else ""}\
             {generate_outbound_predicates(uri_or_tl_item, outbound_children, outbound_parents)} \
             {generate_inbound_predicates(uri_or_tl_item, inbound_children, inbound_parents)} {chr(10)} \
-            {generate_relative_properties("select", relative_properties, inbound_children, inbound_parents, 
+            {generate_relative_properties("select", relative_properties, inbound_children, inbound_parents,
                                           outbound_children, outbound_parents)}\
         }}
         {f"LIMIT {per_page}{chr(10)}"
@@ -90,15 +90,18 @@ def generate_listing_construct_from_uri(
     """
     ).strip()
     log.debug(f"Listing construct query for {focus_item} is:\n{query}")
-    predicates_for_link_addition = {"link_constructor": focus_item.link_constructor,
-                                    "ib_par": inbound_parents,
-                                    "ob_par": outbound_parents,
-                                    "ib_chi": inbound_children,
-                                    "ob_chi": outbound_children,
-                                    "top_level_gen_class": focus_item.general_class if focus_item.top_level_listing else None,
-                                    # if this is a top level class, include it's general class here so we can create
-                                    # links to instances of the top level class,
-                                    }
+    predicates_for_link_addition = {
+        "link_constructor": focus_item.link_constructor,
+        "ib_par": inbound_parents,
+        "ob_par": outbound_parents,
+        "ib_chi": inbound_children,
+        "ob_chi": outbound_children,
+        "top_level_gen_class": focus_item.general_class
+        if focus_item.top_level_listing
+        else None,
+        # if this is a top level class, include it's general class here so we can create
+        # links to instances of the top level class,
+    }
     return query, predicates_for_link_addition
 
 
@@ -144,12 +147,12 @@ def generate_item_construct(item, profile: URIRef):
 
 
 def generate_relative_properties(
-        construct_select,
-        relative_properties,
-        in_children,
-        in_parents,
-        out_children,
-        out_parents,
+    construct_select,
+    relative_properties,
+    in_children,
+    in_parents,
+    out_children,
+    out_parents,
 ):
     """
     Generate the relative properties construct or select for a listing query.
@@ -286,10 +289,10 @@ def generate_bnode_select(depth):
 
 
 async def get_annotation_properties(
-        item_graph: Graph,
-        label_predicates: List[URIRef],
-        description_predicates: List[URIRef],
-        explanation_predicates: List[URIRef],
+    item_graph: Graph,
+    label_predicates: List[URIRef],
+    description_predicates: List[URIRef],
+    explanation_predicates: List[URIRef],
 ):
     """
     Gets annotation data used for HTML display.
@@ -302,9 +305,9 @@ async def get_annotation_properties(
     description_predicates += [DCTERMS.description]
     explanation_predicates += [DCTERMS.provenance]
     terms = (
-            set(i for i in item_graph.predicates() if isinstance(i, URIRef))
-            | set(i for i in item_graph.objects() if isinstance(i, URIRef))
-            | set(i for i in item_graph.subjects() if isinstance(i, URIRef))
+        set(i for i in item_graph.predicates() if isinstance(i, URIRef))
+        | set(i for i in item_graph.objects() if isinstance(i, URIRef))
+        | set(i for i in item_graph.subjects() if isinstance(i, URIRef))
     )
     # TODO confirm caching of SUBJECT labels does not cause issues! this could be a lot of labels. Perhaps these are
     # better separated and put in an LRU cache. Or it may not be worth the effort.
@@ -344,7 +347,7 @@ async def get_annotation_properties(
 
 
 def get_annotations_from_tbox_cache(
-        terms: List[URIRef], label_props, description_props, explanation_props
+    terms: List[URIRef], label_props, description_props, explanation_props
 ):
     """
     Gets labels from the TBox cache, returns a list of terms that were not found in the cache, and a graph of labels,
@@ -392,14 +395,14 @@ def get_annotations_from_tbox_cache(
 
 # hit the count cache first, if it's not there, hit the SPARQL endpoint
 def generate_listing_count_construct(
-        item: Union[
-            SpatialItem,
-            SpatialMembers,
-            VocabMembers,
-            VocabItem,
-            CatalogItem,
-            CatalogMembers,
-        ]
+    item: Union[
+        SpatialItem,
+        SpatialMembers,
+        VocabMembers,
+        VocabItem,
+        CatalogItem,
+        CatalogMembers,
+    ]
 ):
     """
     Generates a SPARQL construct query to count either:
@@ -502,7 +505,7 @@ def get_annotation_predicates(profile):
         )
     )
     if not bool(
-            list(chain(*preds.values()))
+        list(chain(*preds.values()))
     ):  # check whether any predicates were found
         log.info(
             f"No annotation predicates found for profile {profile}, defaults will be used:\n"
@@ -642,10 +645,10 @@ def get_item_predicates(profile, selected_class):
 
 
 def select_profile_mediatype(
-        classes: List[URIRef],
-        requested_profile_uri: URIRef = None,
-        requested_profile_token: str = None,
-        requested_mediatypes: List[Tuple] = None,
+    classes: List[URIRef],
+    requested_profile_uri: URIRef = None,
+    requested_profile_token: str = None,
+    requested_mediatypes: List[Tuple] = None,
 ):
     """
     Returns a SPARQL SELECT query which will determine the profile and mediatype to return based on user requests,

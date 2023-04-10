@@ -31,13 +31,17 @@ class SpatialMembers(BaseModel):
             # graph
             values["top_level_listing"] = True  # used in the construct query
             values["uri"] = None
-        elif url_path.endswith("/collections"):  # /s/datasets/{dataset_curie}/collections
+        elif url_path.endswith(
+            "/collections"
+        ):  # /s/datasets/{dataset_curie}/collections
             dataset_curie = values.get("dataset_curie")
             values["general_class"] = GEO.FeatureCollection
             values["link_constructor"] = f"/s/datasets/{dataset_curie}/collections"
             values["classes"] = frozenset([PREZ.FeatureCollectionList])
             values["uri"] = get_uri_for_curie_id(dataset_curie)
-        elif url_path.endswith("/items"):  # /s/datasets/{dataset_curie}/collections/{collection_curie}/items
+        elif url_path.endswith(
+            "/items"
+        ):  # /s/datasets/{dataset_curie}/collections/{collection_curie}/items
             dataset_curie = values.get("dataset_curie")
             collection_curie = values.get("collection_curie")
             values["general_class"] = GEO.Feature

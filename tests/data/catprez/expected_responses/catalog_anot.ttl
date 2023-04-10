@@ -29,4 +29,3 @@ Special care notice:
 Aboriginal and Torres Strait Islander people, researchers and other users should be aware that material in this dataset may contain material that is considered offensive. The data has been retained in its original format because it represents an evidential record of language, beliefs or other cultural situations at a point in time.""" ;
     ns3:title "Annual Aboriginal Census,1921-1944 - South Australia" ;
     ns1:link "/c/catalogs/dtst:agents/dtsts:au.edu.anu.ada.ddi.20002-sa" .
-

@@ -9,4 +9,3 @@
     ns1:link "/v/collection/cgi:contacttype" .
 
 skos:Collection ns1:count 1 .
-

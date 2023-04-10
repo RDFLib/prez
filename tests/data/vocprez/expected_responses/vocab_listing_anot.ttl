@@ -14,4 +14,3 @@
     ns1:link "/v/vocab/def:warox-alteration-types" .
 
 skos:ConceptScheme ns1:count 2 .
-

@@ -57,7 +57,7 @@ async def schemes_endpoint(
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
         "VocPrez",
-        predicates_for_link_addition
+        predicates_for_link_addition,
     )
 
 
@@ -81,7 +81,9 @@ async def vocprez_collection_concept(
 
 @router.get("/v/scheme/{scheme_curie}/{concept_curie}", summary="Get Concept")
 @router.get("/v/vocab/{scheme_curie}/{concept_curie}", summary="Get Concept")
-async def vocprez_scheme_concept(request: Request, scheme_curie: str, concept_curie: str):
+async def vocprez_scheme_concept(
+    request: Request, scheme_curie: str, concept_curie: str
+):
     return await item_endpoint(request)
 
 
@@ -106,14 +108,15 @@ async def item_endpoint(request: Request, vp_item: Optional[VocabItem] = None):
             prof_and_mt_info=prof_and_mt_info,
         )
     item_query = generate_item_construct(vp_item, prof_and_mt_info.profile)
-    item_members_query, predicates_for_link_addition = generate_listing_construct_from_uri(
-        vp_item, prof_and_mt_info.profile, 1, 5000
-    )
+    (
+        item_members_query,
+        predicates_for_link_addition,
+    ) = generate_listing_construct_from_uri(vp_item, prof_and_mt_info.profile, 1, 5000)
     return await return_from_queries(
         [item_query, item_members_query],
         prof_and_mt_info.mediatype,
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
         "VocPrez",
-        predicates_for_link_addition
+        predicates_for_link_addition,
     )

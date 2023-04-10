@@ -21,4 +21,3 @@
 
 <http://example.com/datasets/sandgate/roads> dcterms:description "Sandgate main roads"@en ;
     ns1:link "/s/datasets/exds:sandgate/collections/sndgt:roads" .
-

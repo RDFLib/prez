@@ -8,6 +8,7 @@ from prez.config import settings
 
 log = logging.getLogger(__name__)
 
+
 def prefix_registered(prefix):
     """
     Checks if a prefix is available for use
@@ -28,6 +29,7 @@ def namespace_registered(namespace):
     except KeyError:
         return False
 
+
 def generate_new_prefix(uri):
     """
     Generates a new prefix for a uri
@@ -41,8 +43,10 @@ def generate_new_prefix(uri):
         try:
             to_generate_prefix_from = parsed_url.path.split("/")[-2].lower()
         except Exception:
-            log.error(msg=f"Cannot generate a prefix for the URI {uri}, please specify a prefix in any of the "
-                          f"prez/reference_data/prefixes turtle files")
+            log.error(
+                msg=f"Cannot generate a prefix for the URI {uri}, please specify a prefix in any of the "
+                f"prez/reference_data/prefixes turtle files"
+            )
             raise
     # attempt to just use the last part of the path prior to the fragment or "identifier"
     if len(to_generate_prefix_from) <= 6:

@@ -37,7 +37,5 @@ class ProfileItem(BaseModel):
         q = f"""SELECT ?class {{ <{values["uri"]}> a ?class }}"""
         r = profiles_graph_cache.query(q)
         if len(r.bindings) > 0:
-            values["classes"] = frozenset(
-                [prof.get("class") for prof in r.bindings]
-            )
+            values["classes"] = frozenset([prof.get("class") for prof in r.bindings])
         return values

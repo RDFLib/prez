@@ -10,7 +10,7 @@ from prez.cache import (
     profiles_graph_cache,
     counts_graph,
     top_level_graph,
-    prefix_graph
+    prefix_graph,
 )
 from prez.config import settings
 from prez.reference_data.prez_ns import PREZ, ALTREXT
@@ -106,11 +106,15 @@ async def add_prefixes_to_prefix_graph():
     for f in (Path(__file__).parent.parent / "reference_data/prefixes").glob("*.ttl"):
         g = Graph().parse(f, format="turtle")
         for subject_objects in g.subject_objects(
-                predicate=URIRef("http://purl.org/vocab/vann/preferredNamespacePrefix")):
+            predicate=URIRef("http://purl.org/vocab/vann/preferredNamespacePrefix")
+        ):
             prefix_graph.bind(str(subject_objects[1]), subject_objects[0])
-            log.info(f"Prefix \"{str(subject_objects[1])}\" bound to namespace {str(subject_objects[0])} from file "
-                     f"\"{f.name}\"")
+            log.info(
+                f'Prefix "{str(subject_objects[1])}" bound to namespace {str(subject_objects[0])} from file '
+                f'"{f.name}"'
+            )
     log.info("Prefixes from local files added to prefix graph")
+
 
 async def generate_support_graphs():
     """
