@@ -23,6 +23,20 @@ In these cases, in the annotated RDF mediatype (`text/anot+turtle`) URL paths ar
 
 For cases where URIs and URLs for a given object differ slightly, URL redirection can be used to send users to the Prez URL instance which displays information for the object.
 
+### Link generation
+Internal links use [CURIEs](https://en.wikipedia.org/wiki/CURIE). Prez uses the default RDFLib prefixes, covering common namespaces.
+Additional prefixes can be specified using the Vann ontology property "vann:preferredNamespacePrefix". These can be added to turtle files in the prez/reference_data/prefixes directory.
+Any turtle files in this directory will be loaded on startup.
+
+When Prez encounters a URI which is required for an internal link but is not in the current known prefixes, it will generate a prefix using the following logic:
+1. Get the "second to last part" of the URI; either the part before a fragment if it exists, or the second to last path segment otherwise.
+2. If this second to last part is less than six characters, use it as is, else:
+3. Remove vowels from the second to last part and use this as the prefix.
+4. If this prefix fails to bind for any reason, use RDFLib's default "ns1", "ns2" etc. prefixes.
+
+To get "sensible" or "nice" prefixes, it is recommended to add all prefixes which will be required to turtle files in prez/reference_data/prefixes.
+A future change could allow the prefixes to be specified alongside data in the backend, as profiles currently can be.
+
 ## High Level Sequence
 
 Prez follows the following logic to determine what information to return, based on a profile, and in what mediatype to return it.
@@ -30,12 +44,13 @@ Prez follows the following logic to determine what information to return, based 
 1. Determine the URI for an object or listing of objects:
 - For objects:
    - Directly supplied through the /{x}/object?uri=<abc> query string argument where x is the Prez subsystem (v, s, or c)
-   - From the object's identifier with a datatype of `prez:slug`. These identifiers are used in the URL path; Prez reads them from the path when it receives a request at that URL.
+   - From the URL path the object is requested from, for example /s/dataset/<abc>. abc is a curie, which is expanded to a URI.
 
 - For listings:
-  - Determine the URI of the parent class which contains the listed objects.
-    - For the most top level objects (see _Top Level Class_ in the [Glossary](#Glossary)) in each Prez instance a Prez specific object contains the top level objects. For example, the a prez:DatasetList has rdfs:member the dcat:Dataset objects. This data is generated on startup if not supplied, as detailed in [Appendix C](#appendix-c---sparql-insert-queries-for-support-graphs).
-    - For non top level objects, the URI is determined using a SPARQL query
+  - If the listing is for a "top level object", objects are listed based on their class. For example, in VocPrez, at the /v/vocab endpoint, vocabularies are listed based on a triple stating they are of class skos:ConceptScheme.
+    - Top level objects are currently hard-coded in the configuration. They could be modified by environment variables at present. We will consider moving configuration of top level objects to the system profiles. This is a low priority as top level objects are unlikely to change.
+  - If the listing is not for a "top level object", the listing is based on a member relation from a parent object. For example, if a listing of concepts is requested, these will be listed based on their declaration of being skos:inScheme to a specified Vocabulary.
+      - For the list of current top level objects (see _Top Level Class_ in the [Glossary](#Glossary)) in each Prez instance a Prez specific object contains the top level objects. For example, the a prez:DatasetList has rdfs:member the dcat:Dataset objects. This data is generated on startup if not supplied, as detailed in [Appendix C](#appendix-c---sparql-insert-queries-for-support-graphs).
 
 2. Get all classes for the object or object listing
    _Steps 1 and 2 are implemented in the `prez/models/*` modules using Pydantic classes_
@@ -106,7 +121,6 @@ The following terms are in the Prez namespace:
 
 | Term                                                                | Description                                                                                                          |
 |---------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------|
-| `prez:slug`                                                         | A slug is a unique identifier for an object. In Prez they must be unique **among all members of a _Collection Class_** |
 | `prez:count`                                                        | The number of objects in an instance of a _Collection Class_                                                         |
 | `prez:DatasetList`, `prez:FeatureCollectionList`, `prez:FeatureList` | Classes used to describe lists of `dcat:Dataset`, `geo:FeatureCollection`, and `geo:Feature` instances respectively  |
 | `prez:CatalogList`                                                  | Class used to describe a list of `dcat:Catalog` instances                                                            |
@@ -139,36 +153,11 @@ WHERE {
       }
     }
   }
-  MINUS {
-    <https://linked.data.gov.au/datasets/gnaf> dct:identifier ?o1.
-    FILTER((DATATYPE(?o1)) = prez:slug)
-  }
 }
 ```
 ## Appendix B - Example SPARQL query for an object listing
 ```sparql
-PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX prez: <https://prez.dev/>
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-
-CONSTRUCT {
-  <https://prez.dev/DatasetList> ?outbound_children ?item .
-  ?item prez:link ?outbound_children_link .
-}
-WHERE {
-  <https://prez.dev/DatasetList> ?outbound_children ?item .
-  ?item dcterms:identifier ?outbound_children_id .
-  FILTER(DATATYPE(?outbound_children_id) = prez:slug)
-  VALUES ?outbound_children { <http://www.w3.org/2000/01/rdf-schema#member> }
-
-  BIND(CONCAT("/s/datasets", "/", STR(?outbound_children_id))AS ?outbound_children_link)
-
-}
-LIMIT 20
-OFFSET 0
+to update - need one for membership object listing and class based
 ```
 ## Appendix C - SPARQL INSERT queries for support graphs
 ### C.1 - SpacePrez Insert Support Graphs
@@ -491,104 +480,4 @@ The following VocPrez VocPub profile shows how to use a number of declarations:
         altr-ext:outboundParents skos:inScheme ;
     ]
 .
-```
-## Appendix F - Example system support graph
-```turtle
-@prefix addr:    <http://w3id.org/profile/anz-address/> .
-@prefix ahgf:    <https://linked.data.gov.au/def/geofabric/> .
-@prefix dcat:    <http://www.w3.org/ns/dcat#> .
-@prefix dcterms: <http://purl.org/dc/terms/> .
-@prefix geo:     <http://www.opengis.net/ont/geosparql#> .
-@prefix geofab:  <https://linked.data.gov.au/def/geofabric#> .
-@prefix gnaf:    <https://linked.data.gov.au/datasets/gnaf/> .
-@prefix owl:     <http://www.w3.org/2002/07/owl#> .
-@prefix prov:    <http://www.w3.org/ns/prov#> .
-@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix sand:    <http://example.com/datasets/sandgate/> .
-@prefix sdo:     <https://schema.org/> .
-@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
-@prefix vcard:   <http://www.w3.org/2006/vcard/ns#> .
-@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
-
-<https://prez.dev/DatasetList>
-        rdfs:member
-                <http://example.com/datasets/sandgate> ,
-                <https://linked.data.gov.au/datasets/gnaf> ,
-                <https://linked.data.gov.au/datasets/geofabric> .
-
-<http://example.com/datasets/sandgate/roads/support-graph>
-        <https://prez.dev/hasContextFor>
-                sand:roads .
-
-<https://linked.data.gov.au/datasets/geofabric/fc/catchments/support-graph>
-        <https://prez.dev/hasContextFor>
-                <https://linked.data.gov.au/datasets/geofabric/fc/catchments> .
-
-sand:catchments  dcterms:identifier  "catchments"^^<https://prez.dev/slug> .
-
-<https://linked.data.gov.au/datasets/gnaf>
-        dcterms:identifier  "gnaf"^^<https://prez.dev/slug> .
-
-sand:facilities  dcterms:identifier  "facilities"^^<https://prez.dev/slug> .
-
-sand:roads  dcterms:identifier  "roads"^^<https://prez.dev/slug> .
-
-<http://example.com/datasets/sandgate/facilities/support-graph>
-        <https://prez.dev/hasContextFor>
-                sand:facilities .
-
-<https://linked.data.gov.au/datasets/geofabric/fc/catchments>
-        dcterms:identifier  "catchments"^^<https://prez.dev/slug> .
-
-sand:support-graph  <https://prez.dev/hasContextFor>
-                <http://example.com/datasets/sandgate> .
-
-<https://linked.data.gov.au/datasets/geofabric/support-graph>
-        <https://prez.dev/hasContextFor>
-                <https://linked.data.gov.au/datasets/geofabric> .
-
-gnaf:address  dcterms:identifier  "address"^^<https://prez.dev/slug> .
-
-<https://linked.data.gov.au/datasets/gnaf/address/support-graph>
-        <https://prez.dev/hasContextFor>
-                gnaf:address .
-
-gnaf:support-graph  <https://prez.dev/hasContextFor>
-                <https://linked.data.gov.au/datasets/gnaf> .
-
-<https://linked.data.gov.au/datasets/geofabric>
-        dcterms:identifier  "geofabric"^^<https://prez.dev/slug> .
-
-<http://example.com/datasets/sandgate/floods/support-graph>
-        <https://prez.dev/hasContextFor>
-                sand:floods .
-
-<http://example.com/datasets/sandgate/catchments/support-graph>
-        <https://prez.dev/hasContextFor>
-                sand:catchments .
-
-<http://example.com/datasets/sandgate>
-        dcterms:identifier  "sandgate"^^<https://prez.dev/slug> .
-
-sand:floods  dcterms:identifier  "floods"^^<https://prez.dev/slug> .
-```
-### Appendix G - Example system support graph for a Feature Collection
-```turtle
-@prefix dcterms: <http://purl.org/dc/terms/> .
-
-<https://example.com/catchment/cabbage-tree-creek>
-        dcterms:identifier  "cabbage-tree"^^<https://prez.dev/slug> .
-
-<https://linked.data.gov.au/datasets/geofabric/hydroid/102208961>
-        dcterms:identifier  "102208961"^^<https://prez.dev/slug> .
-
-<https://example.com/catchment/cabbage-tree-creek-geojson>
-        dcterms:identifier  "cabbage-tree-geojson"^^<https://prez.dev/slug> .
-
-<https://example.com/catchment/kedron-brook>
-        dcterms:identifier  "kedron"^^<https://prez.dev/slug> .
-
-<https://linked.data.gov.au/datasets/geofabric/hydroid/102208962>
-        dcterms:identifier  "102208962"^^<https://prez.dev/slug> .
 ```
