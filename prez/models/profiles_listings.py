@@ -22,18 +22,13 @@ class ProfilesMembers(BaseModel):
         if url_path.startswith("/v/"):
             values["general_class"] = PREZ.VocPrezProfile
             values["link_constructor"] = "/v/profiles"
-            values["classes"] = frozenset([PREZ.VocPrezProfileList])
         elif url_path.startswith("/c/"):
             values["general_class"] = PREZ.CatPrezProfile
             values["link_constructor"] = "/c/profiles"
-            values["classes"] = frozenset([PREZ.CatPrezProfileList])
         elif url_path.startswith("/s/"):
             values["general_class"] = PREZ.SpacePrezProfile
             values["link_constructor"] = "/s/profiles"
-            values["classes"] = frozenset([PREZ.SpacePrezProfileList])
         else:
             values["general_class"] = PROF.Profile
-            values["link_constructor"] = "/profiles"
-            values["classes"] = frozenset([PREZ.ProfilesList])
             values["link_constructor"] = "/profiles"
         return values

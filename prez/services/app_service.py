@@ -16,9 +16,6 @@ from prez.config import settings
 from prez.reference_data.prez_ns import PREZ, ALTREXT
 from prez.sparql.methods import sparql_construct
 from prez.sparql.objects_listings import startup_count_objects
-from prez.sparql.support_graphs import (
-    generate_insert_context,
-)
 
 log = logging.getLogger(__name__)
 
@@ -114,23 +111,3 @@ async def add_prefixes_to_prefix_graph():
                 f'"{f.name}"'
             )
     log.info("Prefixes from local files added to prefix graph")
-
-
-async def generate_support_graphs():
-    """
-    Generates the support graphs needed for the Prez API, populating the local "top_level_graph" graph, stored in
-    prez.cache.
-    """
-    for prez in settings.enabled_prezs:
-        log.info(f"Adding Top Level Classes for {prez} to top level graph")
-        insert_context = generate_insert_context(settings, prez)
-        results = await sparql_construct(insert_context, prez)
-        if results[0]:
-            top_level_graph.__iadd__(results[1])
-            log.info(f"Completed generating Support Graphs for {prez}")
-
-    # profiles
-    insert_context = generate_insert_context(settings, "Profiles")
-    results = profiles_graph_cache.query(insert_context)
-    profiles_graph_cache.__iadd__(results.graph)
-    log.info(f"Completed generating Support Graphs for Profiles")
