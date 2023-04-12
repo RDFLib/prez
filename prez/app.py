@@ -15,7 +15,7 @@ from prez.config import settings
 from prez.services.app_service import (
     populate_api_info,
     generate_support_graphs,
-    generate_profiles_support_graph,
+    add_prefixes_to_prefix_graph,
 )
 from prez.renderers.renderer import return_rdf
 from prez.routers.catprez import router as catprez_router
@@ -114,8 +114,8 @@ async def app_startup():
     await generate_search_methods()
     await create_profiles_graph()
     await count_objects()
-    await generate_profiles_support_graph()
     await populate_api_info()
+    await add_prefixes_to_prefix_graph()
     await generate_support_graphs()
 
 

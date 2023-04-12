@@ -40,7 +40,7 @@ async def list_items(
             prez_type="SpacePrez",
             prof_and_mt_info=prof_and_mt_info,
         )
-    list_query = generate_listing_construct_from_uri(
+    list_query, predicates_for_link_addition = generate_listing_construct_from_uri(
         spatial_item, prof_and_mt_info.profile, page, per_page
     )
     count_query = generate_listing_count_construct(spatial_item)
@@ -50,54 +50,55 @@ async def list_items(
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
         "SpacePrez",
+        predicates_for_link_addition,
     )
 
 
 @router.get(
-    "/s/datasets/{dataset_id}/collections",
+    "/s/datasets/{dataset_curie}/collections",
     summary="List Feature Collections",
 )
 async def list_items_feature_collections(
-    request: Request, dataset_id: str, page: int = 1, per_page: int = 20
+    request: Request, dataset_curie: str, page: int = 1, per_page: int = 20
 ):
     return await list_items(request, page, per_page)
 
 
 @router.get(
-    "/s/datasets/{dataset_id}/collections/{collection_id}/items",
+    "/s/datasets/{dataset_curie}/collections/{collection_curie}/items",
     summary="List Features",
 )
 async def list_items_features(
     request: Request,
-    dataset_id: str,
-    collection_id: str,
+    dataset_curie: str,
+    collection_curie: str,
     page: int = 1,
     per_page: int = 20,
 ):
     return await list_items(request, page, per_page)
 
 
-@router.get("/s/datasets/{dataset_id}", summary="Get Dataset")
-async def dataset_item(request: Request, dataset_id: str):
+@router.get("/s/datasets/{dataset_curie}", summary="Get Dataset")
+async def dataset_item(request: Request, dataset_curie: str):
     return await item_endpoint(request)
 
 
 @router.get(
-    "/s/datasets/{dataset_id}/collections/{collection_id}",
+    "/s/datasets/{dataset_curie}/collections/{collection_curie}",
     summary="Get Feature Collection",
 )
 async def feature_collection_item(
-    request: Request, dataset_id: str, collection_id: str
+    request: Request, dataset_curie: str, collection_curie: str
 ):
     return await item_endpoint(request)
 
 
 @router.get(
-    "/s/datasets/{dataset_id}/collections/{collection_id}/items/{feature_id}",
+    "/s/datasets/{dataset_curie}/collections/{collection_curie}/items/{feature_curie}",
     summary="Get Feature",
 )
 async def feature_item(
-    request: Request, dataset_id: str, collection_id: str, feature_id: str
+    request: Request, dataset_curie: str, collection_curie: str, feature_curie: str
 ):
     return await item_endpoint(request)
 
@@ -123,7 +124,10 @@ async def item_endpoint(request: Request, spatial_item: Optional[SpatialItem] = 
             prof_and_mt_info=prof_and_mt_info,
         )
     item_query = generate_item_construct(spatial_item, prof_and_mt_info.profile)
-    item_members_query = generate_listing_construct_from_uri(
+    (
+        item_members_query,
+        predicates_for_link_addition,
+    ) = generate_listing_construct_from_uri(
         spatial_item, prof_and_mt_info.profile, 1, 20
     )
     return await return_from_queries(
@@ -132,4 +136,5 @@ async def item_endpoint(request: Request, spatial_item: Optional[SpatialItem] = 
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
         "SpacePrez",
+        predicates_for_link_addition,
     )

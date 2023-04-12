@@ -47,7 +47,7 @@ async def schemes_endpoint(
             prez_type="VocPrez",
             prof_and_mt_info=prof_and_mt_info,
         )
-    list_query = generate_listing_construct_from_uri(
+    list_query, predicates_for_link_addition = generate_listing_construct_from_uri(
         vocprez_members, prof_and_mt_info.profile, page, per_page
     )
     count_query = generate_listing_count_construct(vocprez_members)
@@ -57,30 +57,33 @@ async def schemes_endpoint(
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
         "VocPrez",
+        predicates_for_link_addition,
     )
 
 
-@router.get("/v/vocab/{scheme_id}", summary="Get ConceptScheme")
-@router.get("/v/scheme/{scheme_id}", summary="Get ConceptScheme")
-async def vocprez_scheme(request: Request, scheme_id: str):
+@router.get("/v/vocab/{scheme_curie}", summary="Get ConceptScheme")
+@router.get("/v/scheme/{scheme_curie}", summary="Get ConceptScheme")
+async def vocprez_scheme(request: Request, scheme_curie: str):
     return await item_endpoint(request)
 
 
-@router.get("/v/collection/{collection_id}", summary="Get Collection")
-async def vocprez_collection(request: Request, collection_id: str):
+@router.get("/v/collection/{collection_curie}", summary="Get Collection")
+async def vocprez_collection(request: Request, collection_curie: str):
     return await item_endpoint(request)
 
 
-@router.get("/v/collection/{collection_id}/{concept_id}", summary="Get Concept")
+@router.get("/v/collection/{collection_curie}/{concept_curie}", summary="Get Concept")
 async def vocprez_collection_concept(
-    request: Request, collection_id: str, concept_id: str
+    request: Request, collection_curie: str, concept_curie: str
 ):
     return await item_endpoint(request)
 
 
-@router.get("/v/scheme/{scheme_id}/{concept_id}", summary="Get Concept")
-@router.get("/v/vocab/{scheme_id}/{concept_id}", summary="Get Concept")
-async def vocprez_scheme_concept(request: Request, scheme_id: str, concept_id: str):
+@router.get("/v/scheme/{scheme_curie}/{concept_curie}", summary="Get Concept")
+@router.get("/v/vocab/{scheme_curie}/{concept_curie}", summary="Get Concept")
+async def vocprez_scheme_concept(
+    request: Request, scheme_curie: str, concept_curie: str
+):
     return await item_endpoint(request)
 
 
@@ -101,17 +104,19 @@ async def item_endpoint(request: Request, vp_item: Optional[VocabItem] = None):
     ):
         return await return_profiles(
             classes=frozenset(vp_item.selected_class),
-            prez_type="SpacePrez",
+            prez_type="VocPrez",
             prof_and_mt_info=prof_and_mt_info,
         )
     item_query = generate_item_construct(vp_item, prof_and_mt_info.profile)
-    item_members_query = generate_listing_construct_from_uri(
-        vp_item, prof_and_mt_info.profile, 1, 5000
-    )
+    (
+        item_members_query,
+        predicates_for_link_addition,
+    ) = generate_listing_construct_from_uri(vp_item, prof_and_mt_info.profile, 1, 5000)
     return await return_from_queries(
         [item_query, item_members_query],
         prof_and_mt_info.mediatype,
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
         "VocPrez",
+        predicates_for_link_addition,
     )

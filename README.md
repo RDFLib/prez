@@ -4,9 +4,9 @@
 Prez is a data-configurable Linked Data API framework that delivers _profiles_ of Knowledge Graph data according to the [Content Negotiation by Profile](https://w3c.github.io/dx-connegp/connegp/) standard.
 
 > **Where's the UI?**
-> 
-> Prez delivers data only - usually [RDF](https://en.wikipedia.org/wiki/Resource_Description_Framework) but could be GeoJSON, XML etc. - and it delivers a special form of RDF which includes labels for all objects and predicates Prez can find in its database.   
-> 
+>
+> Prez delivers data only - usually [RDF](https://en.wikipedia.org/wiki/Resource_Description_Framework) but could be GeoJSON, XML etc. - and it delivers a special form of RDF which includes labels for all objects and predicates Prez can find in its database.
+>
 > If you want a UI that can render Prez' labelled RDF as HTML and other fancy graphical widgets, see the [Prez UI](https://github.com/RDFLib/prez-ui).
 
 ## Contents
@@ -41,7 +41,7 @@ Prez accesses data stored in an RDF database - a 'triplestore' - and uses the SP
 
 _You don't have to 'install' Prez to use it, see the [Running](#running) options below. You may want to install Prez to develop with it._
 
-### Poetry 
+### Poetry
 
 Prez is developed with [Poetry](https://python-poetry.org/) which is a Python packaging and dependency tool. Poetry presents all of Prez' dependencies (other Python packages) in the `pyproject.toml` file in this directory which can be used by Poetry to establish the environment you need to run Prez.
 
@@ -68,7 +68,7 @@ You do need to configure at least a couple of environment variables for Prez to 
 
 A minimal set of environment variables with example values to run prez is listed below:
 
-`ENABLED_PREZS=["SpacePrez"]`  
+`ENABLED_PREZS=["SpacePrez"]`
 `SPACEPREZ_SPARQL_ENDPOINT=http://localhost:3030/spaceprez`
 
 Yes, you really only need to tell Prez which subsystems to enable - here it's SpacePrez for spatial data - and point Prez at a SPARQL endpoint for it to get data from!
@@ -134,28 +134,28 @@ The profiles' validators are all available from the profiles themselves (navigat
 
 * <http://rdftools.kurrawong.net/validate>
 
-Look for the _VocPrez Compounded_ and similar validators. The 'compounded' bit means that validator will validate data against all VocPrez and inherited requirements. 
+Look for the _VocPrez Compounded_ and similar validators. The 'compounded' bit means that validator will validate data against all VocPrez and inherited requirements.
 
 
 ## Contact
 
 > **NOTE**: This open source tool is actively developed and supported by [KurrawongAI](https://kurrawong.net), a small Australian Knowledge Graph company, developers at the [University of Melbourne](https://www.unimelb.edu.au) and by open source contributors too.
-> 
+>
 > To flag problems or raise questions, please create issues in the [Issue Tracker](https://github.com/RDFLib/prez/issues) or you can contact developers using their details below.
 
 Here are the lead developers:
 
-**KurrawongAI**  
+**KurrawongAI**
 <https://kurrawong.net>
 
-_David Habgood_  
-<dcchabgood@gmail.com>  
+_David Habgood_
+<dcchabgood@gmail.com>
 
-_Nicholas Car_  
-<nick@kurrawong.net>  
+_Nicholas Car_
+<nick@kurrawong.net>
 
-**University of Melbourne** - Prez UI mainly  
-_Jamie Feiss_  
+**University of Melbourne** - Prez UI mainly
+_Jamie Feiss_
 <jamie.feiss@unimelb.edu.au>
 
 ## Contributing

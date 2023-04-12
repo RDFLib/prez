@@ -5,7 +5,7 @@ from pathlib import Path
 from time import sleep
 
 import pytest
-from rdflib import Graph, URIRef, RDFS, DCTERMS
+from rdflib import Graph, URIRef, RDFS, DCTERMS, RDF, SKOS
 
 PREZ_DIR = os.getenv("PREZ_DIR")
 LOCAL_SPARQL_STORE = os.getenv("LOCAL_SPARQL_STORE")
@@ -31,44 +31,31 @@ def vp_test_client(request):
 
 
 @pytest.fixture(scope="module")
-def a_vocab_id(vp_test_client):
+def a_vocab_link(vp_test_client):
     with vp_test_client as client:
         r = client.get("/v/vocab")
         g = Graph().parse(data=r.text)
-        vocab_uri = g.value(URIRef("https://prez.dev/memberList"), RDFS.member, None)
-        vocab_id = g.value(vocab_uri, DCTERMS.identifier, None)
-        return vocab_id
+        vocab_uri = g.value(None, RDF.type, SKOS.ConceptScheme)
+        vocab_link = g.value(vocab_uri, URIRef(f"https://prez.dev/link", None))
+        return vocab_link
 
 
 @pytest.fixture(scope="module")
-def a_vocab_id_and_a_concept_id(vp_test_client, a_vocab_id):
+def a_concept_link(vp_test_client, a_vocab_link):
     # get the first concept endpoint
-    # r = vp_test_client.get(f"/vocab/{a_vocab_id}")
-    # g = Graph().parse(data=r.text)
-    # concept_uri = g.objects(
-    #     URIRef("https://prez.dev/memberList"), RDFS.member, None
-    #     )
-    # vocab_id = g
-    # patt = f'<a href="http://testserver/vocab/{a_vocab_id}/(.*)">'
-    # TODO this works when not hard coded but the performance with *local* SPARQL store is poor
-    a_vocab_id = "warox-alteration-type"
-    a_concept_id = "deuteric"
-    return a_vocab_id, a_concept_id
+    r = vp_test_client.get(a_vocab_link)
+    g = Graph().parse(data=r.text)
+    concept_uri = next(g.subjects(predicate=SKOS.inScheme, object=None))
+    concept_link = g.value(concept_uri, URIRef(f"https://prez.dev/link", None))
+    return concept_link
 
 
-@pytest.fixture(scope="module")
-def a_collection_id(vp_test_client):
-    with vp_test_client as client:
-        r = client.get("/v/collection")
-        return re.search(r'<a href="/collection/(.*)">', r.text)[1]
-
-
-def test_vocab_item(vp_test_client, a_vocab_id_and_a_concept_id):
+def test_vocab_item(vp_test_client, a_vocab_link):
     with vp_test_client as client:
         r = client.get(
-            f"/v/vocab/{a_vocab_id_and_a_concept_id[0]}?_mediatype=text/anot+turtle"
+            f"{a_vocab_link}?_mediatype=text/anot+turtle"
         )  # hardcoded to a smaller vocabulary - sparql store has poor performance w/ CONSTRUCT
-        response_graph = Graph().parse(data=r.text)
+        response_graph = Graph(bind_namespaces="rdflib").parse(data=r.text)
         expected_graph = Graph().parse(
             Path(__file__).parent / "../data/vocprez/expected_responses/vocab_anot.ttl"
         )
@@ -90,11 +77,9 @@ def test_vocab_listing(vp_test_client):
         )
 
 
-def test_concept(vp_test_client, a_vocab_id_and_a_concept_id):
+def test_concept(vp_test_client, a_concept_link):
     with vp_test_client as client:
-        r = client.get(
-            f"/v/vocab/{a_vocab_id_and_a_concept_id[0]}/{a_vocab_id_and_a_concept_id[1]}?_mediatype=text/anot+turtle"
-        )
+        r = client.get(f"{a_concept_link}?_mediatype=text/anot+turtle")
         response_graph = Graph().parse(data=r.text)
         expected_graph = Graph().parse(
             Path(__file__).parent

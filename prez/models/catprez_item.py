@@ -5,6 +5,8 @@ from pydantic import BaseModel, root_validator
 from rdflib import URIRef
 from rdflib.namespace import DCTERMS, XSD, DCAT, Namespace
 
+from prez.services.curie_functions import get_uri_for_curie_id, get_curie_id_for_uri
+from prez.services.model_methods import get_classes
 from prez.sparql.methods import sparql_query_non_async
 
 PREZ = Namespace("https://prez.dev/")
@@ -13,13 +15,14 @@ PREZ = Namespace("https://prez.dev/")
 class CatalogItem(BaseModel):
     uri: Optional[URIRef] = None
     classes: Optional[Set[URIRef]]
-    id: Optional[str] = None
+    curie_id: Optional[str] = None
     general_class: Optional[URIRef] = None
-    catalog_id: Optional[str] = None
-    resource_id: Optional[str] = None
+    catalog_curie: Optional[str] = None
+    resource_curie: Optional[str] = None
     url_path: Optional[str] = None
     selected_class: Optional[URIRef] = None
     link_constructor: Optional[str] = None
+    top_level_listing: Optional[bool] = False
 
     def __hash__(self):
         return hash(self.uri)
@@ -28,43 +31,21 @@ class CatalogItem(BaseModel):
     def populate(cls, values):
         url_path = values.get("url_path")
         uri = values.get("uri")
-        id = values.get("id")
+        curie_id = values.get("curie_id")
         url_parts = url_path.split("/")
+        if url_path in ["/object", "/c/object"]:
+            values["link_constructor"] = f"/c/object?uri="
         if len(url_parts) == 4:
             values["general_class"] = DCAT.Catalog
-            id = values.get("catalog_id")
-            values["link_constructor"] = f"/c/catalogs/{id}"
+            curie_id = values.get("catalog_curie")
+            values["link_constructor"] = f"/c/catalogs/{curie_id}"
         elif len(url_parts) == 5:
             values["general_class"] = DCAT.Resource
-            id = values.get("resource_id")
-
-        assert id or uri, "Either an id or uri must be provided"
-        if id:  # get the URI
-            q = f"""
-                PREFIX dcterms: <{DCTERMS}>
-                PREFIX prez: <{PREZ}>
-                PREFIX xsd: <{XSD}>
-
-                SELECT ?uri ?class {{
-                    ?uri dcterms:identifier "{id}"^^prez:slug ;
-                        a ?class .
-                }}
-                """
-            r = sparql_query_non_async(q, "CatPrez")
-            if r[0]:
-                # set the uri of the item
-                uri = r[1][0].get("uri")["value"]
-                if uri:
-                    values["uri"] = uri
-                values["classes"] = frozenset([c["class"]["value"] for c in r[1]])
-        else:  # uri provided, get the ID
-            q = f"""SELECT ?class {{ <{uri}> a ?class }}"""
-            r = sparql_query_non_async(q, "CatPrez")
-            if r[0] and r[1]:
-                # set the uri of the item
-                values["classes"] = frozenset([c["class"]["value"] for c in r[1]])
-            else:
-                raise ValueError(
-                    f"Could not find a class for {uri}, or URI does not exist in CatPrez"
-                )
+            curie_id = values.get("resource_curie")
+        assert curie_id or uri, "Either an curie_id or uri must be provided"
+        if curie_id:  # get the URI
+            values["uri"] = get_uri_for_curie_id(curie_id)
+        else:  # uri provided, get the curie_id
+            values["curie_id"] = get_curie_id_for_uri(uri)
+        values["classes"] = get_classes(values["uri"], "CatPrez")
         return values

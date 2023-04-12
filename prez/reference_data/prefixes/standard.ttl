@@ -1,0 +1,10 @@
+PREFIX vann: <http://purl.org/vocab/vann/>
+PREFIX prez: <https://prez.dev/>
+PREFIX exds: <http://example.com/datasets/>
+PREFIX dcat: <http://www.w3.org/ns/dcat#>
+PREFIX sdoprof: <https://schema.org>
+
+prez: vann:preferredNamespacePrefix "prez" .
+exds: vann:preferredNamespacePrefix "exds" .
+dcat: vann:preferredNamespacePrefix "dcat" .
+sdoprof: vann:preferredNamespacePrefix "sdoprof" .

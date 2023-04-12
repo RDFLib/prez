@@ -12,7 +12,7 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 
-<http://kurrawong.net/profile/prez>
+<https://prez.dev/profile/prez>
     a prof:Profile ;
     dcterms:identifier "prez"^^xsd:token ;
     dcterms:description "A profile for the Prez Linked Data API" ;
@@ -74,14 +74,6 @@ prez:profiles
     altr-ext:hasResourceFormat
         "application/json" ,
         "text/anot+turtle" ;
-    altr-ext:hasNodeShape [
-      a sh:NodeShape ;
-        sh:targetClass prez:ProfilesList ,
-                       prez:SpacePrezProfileList ,
-                       prez:VocPrezProfileList ,
-                       prez:CatPrezProfileList ;
-        altr-ext:outboundChildren rdfs:member ;
-    ] ;
     altr-ext:constrainsClass
         prof:Profile ,
         prez:ProfilesList ;

@@ -42,6 +42,8 @@ def generate_listing_construct_from_uri(
     ) = get_listing_predicates(profile, focus_item.selected_class)
     if (
         focus_item.uri
+        # and not focus_item.top_level_listing  # if it's a top level class we don't need a listing relation - we're
+        # # searching by class
         and not inbound_children
         and not inbound_parents
         and not outbound_children
@@ -53,7 +55,11 @@ def generate_listing_construct_from_uri(
             f"Requested listing of objects related to {focus_item.uri}, however the profile {profile} does not"
             f" define any listing relations for this for this class, for example outbound children."
         )
-        return None
+        return None, {}
+    if focus_item.top_level_listing:
+        uri_or_tl_item = "?top_level_item"
+    else:
+        uri_or_tl_item = f"<{focus_item.uri}>"
     query = dedent(
         f"""
         PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -64,30 +70,39 @@ def generate_listing_construct_from_uri(
         PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
         CONSTRUCT {{
-            {f'<{focus_item.uri}> ?outbound_children ?child_item .{chr(10)}'
-             f'            ?child_item prez:link ?outbound_children_link .{chr(10)}' if outbound_children else ""}\
-            {f'<{focus_item.uri}> ?outbound_parents ?parent_item .{chr(10)}'
-             f'            ?parent_item prez:link ?outbound_parent_link .{chr(10)}' if outbound_parents else ""}\
-            {f'?inbound_child_s ?inbound_child <{focus_item.uri}> ;{chr(10)}'
-             f'            prez:link ?inbound_children_link .{chr(10)}' if inbound_children else ""}\
-            {f'?inbound_parent_s ?inbound_parent <{focus_item.uri}> ;{chr(10)}'
-             f'            prez:link ?inbound_parent_link .{chr(10)}' if inbound_parents else ""}\
-            {generate_relative_properties("construct", relative_properties, inbound_children, inbound_parents, outbound_children,
-                                          outbound_parents)}\
+            {f'{uri_or_tl_item} a <{focus_item.general_class}> .{chr(10)}' if focus_item.top_level_listing else ""}\
+            {f'{uri_or_tl_item} ?outbound_children ?child_item .{chr(10)}' if outbound_children else ""}\
+            {f'{uri_or_tl_item} ?outbound_parents ?parent_item .{chr(10)}' if outbound_parents else ""}\
+            {f'?inbound_child_s ?inbound_child {uri_or_tl_item} .{chr(10)}' if inbound_children else ""}\
+            {f'?inbound_parent_s ?inbound_parent {uri_or_tl_item} .{chr(10)}' if inbound_parents else ""}\
+            {generate_relative_properties("construct", relative_properties, inbound_children, inbound_parents,
+                                          outbound_children, outbound_parents)}\
         }}
         WHERE {{
-            {generate_outbound_predicates(focus_item, outbound_children, outbound_parents)} \
-            {generate_inbound_predicates(focus_item, inbound_children, inbound_parents)} {chr(10)} \
-            {generate_relative_properties("select", relative_properties, inbound_children, inbound_parents, outbound_children,
-                                          outbound_parents)}\
-            {generate_id_listing_binds(focus_item, inbound_children, inbound_parents, outbound_children, outbound_parents)}
+            {f'{uri_or_tl_item} a <{focus_item.general_class}> .{chr(10)}' if focus_item.top_level_listing else ""}\
+            {generate_outbound_predicates(uri_or_tl_item, outbound_children, outbound_parents)} \
+            {generate_inbound_predicates(uri_or_tl_item, inbound_children, inbound_parents)} {chr(10)} \
+            {generate_relative_properties("select", relative_properties, inbound_children, inbound_parents,
+                                          outbound_children, outbound_parents)}\
         }}
         {f"LIMIT {per_page}{chr(10)}"
          f"        OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
     """
     ).strip()
     log.debug(f"Listing construct query for {focus_item} is:\n{query}")
-    return query
+    predicates_for_link_addition = {
+        "link_constructor": focus_item.link_constructor,
+        "ib_par": inbound_parents,
+        "ob_par": outbound_parents,
+        "ib_chi": inbound_children,
+        "ob_chi": outbound_children,
+        "top_level_gen_class": focus_item.general_class
+        if focus_item.top_level_listing
+        else None,
+        # if this is a top level class, include it's general class here so we can create
+        # links to instances of the top level class,
+    }
+    return query, predicates_for_link_addition
 
 
 @lru_cache(maxsize=128)
@@ -124,8 +139,6 @@ def generate_item_construct(item, profile: URIRef):
         {generate_inverse_predicates(inverse_predicates)} \
         {generate_bnode_select(bnode_depth)} \
         }} \
-        MINUS {{ <{object_uri}> dcterms:identifier ?o1 .
-                FILTER(DATATYPE(?o1)=prez:slug) }} \
     }}
     """
     )
@@ -170,63 +183,32 @@ def generate_relative_properties(
     return rel_string
 
 
-def generate_outbound_predicates(item, outbound_children, outbound_parents):
+def generate_outbound_predicates(uri_or_tl_item, outbound_children, outbound_parents):
     where = ""
-    if item.uri:
-        if outbound_children:
-            where += f"""<{item.uri}> ?outbound_children ?child_item .
-            ?child_item dcterms:identifier ?outbound_children_id .
-            FILTER(DATATYPE(?outbound_children_id) = prez:slug)
-            VALUES ?outbound_children {{ {" ".join('<' + str(pred) + '>' for pred in outbound_children)} }}\n"""
-        if outbound_parents:
-            where += f"""<{item.uri}> ?outbound_parents ?parent_item .
-            ?parent_item dcterms:identifier ?outbound_parents_id .
-            FILTER(DATATYPE(?outbound_parents_id) = prez:slug)
-            VALUES ?outbound_parents {{ {" ".join('<' + str(pred) + '>' for pred in outbound_parents)} }}\n"""
-        if not outbound_children and not outbound_parents:
-            where += "VALUES ?outbound_children {}\nVALUES ?outbound_parents {}"
-        return where
-    return ""
+    if outbound_children:
+        where += f"""{uri_or_tl_item} ?outbound_children ?child_item .
+        VALUES ?outbound_children {{ {" ".join('<' + str(pred) + '>' for pred in outbound_children)} }}\n"""
+    if outbound_parents:
+        where += f"""{uri_or_tl_item} ?outbound_parents ?parent_item .
+        VALUES ?outbound_parents {{ {" ".join('<' + str(pred) + '>' for pred in outbound_parents)} }}\n"""
+    # if not outbound_children and not outbound_parents:
+    #     where += "VALUES ?outbound_children {}\nVALUES ?outbound_parents {}"
+    return where
 
 
-def generate_inbound_predicates(item, inbound_children, inbound_parents):
+def generate_inbound_predicates(uri_or_tl_item, inbound_children, inbound_parents):
     if not inbound_children and not inbound_parents:
         return ""
     where = ""
     if inbound_children:
-        where += f"""?inbound_child_s ?inbound_child <{item.uri}> ;
-        dcterms:identifier ?inbound_children_id .
-        FILTER(DATATYPE(?inbound_children_id) = prez:slug)
+        where += f"""?inbound_child_s ?inbound_child {uri_or_tl_item} ;
         VALUES ?inbound_child {{ {" ".join('<' + str(pred) + '>' for pred in inbound_children)} }}\n"""
     if inbound_parents:
-        where += f"""?inbound_parent_s ?inbound_parent <{item.uri}> ;
-        dcterms:identifier ?inbound_parent_id .
-        FILTER(DATATYPE(?inbound_parent_id) = prez:slug)
+        where += f"""?inbound_parent_s ?inbound_parent {uri_or_tl_item} ;
         VALUES ?inbound_parent {{ {" ".join('<' + str(pred) + '>' for pred in inbound_parents)} }}\n"""
     # if not inbound_children and not inbound_parents:
     #     where += "VALUES ?inbound_child {}\nVALUES ?inbound_parent {}"
     return where
-
-
-def generate_id_listing_binds(item, ic, ip, oc, op):
-    """
-    Generate the BIND statements for the inbound and outbound predicates
-    """
-    binds = ""
-    if ic:
-        binds += f"""BIND(CONCAT("{item.link_constructor}", "/", STR(?inbound_children_id))\
-AS ?inbound_children_link)\n"""
-    if oc:
-        binds += f"""BIND(CONCAT("{item.link_constructor}", "/", STR(?outbound_children_id))\
-AS ?outbound_children_link)\n"""
-    if ip:
-        binds += f"""BIND("{item.link_constructor}" AS ?inbound_parent_link)\n"""
-    if op:
-        binds += f"""BIND("{item.link_constructor}" AS ?outbound_parent_link)\n"""
-    if not binds:  # for general listings of objects
-        binds += f"""BIND(CONCAT("{item.link_constructor}", "/", STR(?outbound_id))\
-AS ?outbound_general_link)\n"""
-    return binds
 
 
 def generate_include_predicates(include_predicates):
@@ -427,7 +409,7 @@ def generate_listing_count_construct(
     1. the members of a collection, if a URI is given, or;
     2. the number of instances of a general class, given a general class.
     """
-    if item.uri:
+    if not item.top_level_listing:
         query = dedent(
             f"""
             PREFIX prez: <https://prez.dev/>

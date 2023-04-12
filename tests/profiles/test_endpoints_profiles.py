@@ -4,7 +4,7 @@ from pathlib import Path
 from time import sleep
 
 import pytest
-from rdflib import Graph, URIRef, RDFS
+from rdflib import Graph, URIRef, RDFS, RDF, PROF
 
 PREZ_DIR = os.getenv("PREZ_DIR")
 LOCAL_SPARQL_STORE = os.getenv("LOCAL_SPARQL_STORE")
@@ -36,6 +36,4 @@ def test_profile(sp_test_client):
         # check the example remote profile is loaded
         r = client.get("/profiles")
         g = Graph().parse(data=r.text)
-        assert (URIRef("https://prez.dev/ProfilesList"),
-                URIRef("http://www.w3.org/2000/01/rdf-schema#member"),
-                URIRef("https://example.com/profile")) in g
+        assert (URIRef("https://example.com/profile"), RDF.type, PROF.Profile) in g

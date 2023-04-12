@@ -1,23 +1,22 @@
-@prefix ns1: <http://purl.org/dc/terms/> .
-@prefix ns2: <http://www.opengis.net/ont/geosparql#> .
+@prefix ns1: <http://www.opengis.net/ont/geosparql#> .
+@prefix ns2: <http://purl.org/dc/terms/> .
+@prefix ns3: <https://prez.dev/> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix ns3: <https://prez.dev/> .
 
-<http://example.com/datasets/sandgate/catchments> a ns2:FeatureCollection ;
-    ns1:description "Hydrological catchments that are 'contracted', that is, guarenteed, to appear on multiple Geofabric surface hydrology data products"@en ;
-    ns1:identifier "catchments"^^xsd:token ;
-    ns1:title "Geofabric Contracted Catchments"@en ;
-    ns2:hasBoundingBox [ a ns2:Geometry ;
-            ns2:asWKT "POLYGON ((152.9075 -27.42,153.16 -27.42,153.16 -27.2775,152.9075 -27.2775,152.9075 -27.42))"^^ns2:wktLiteral ] ;
+<http://example.com/datasets/sandgate/catchments> a ns1:FeatureCollection ;
+    ns2:description "Hydrological catchments that are 'contracted', that is, guarenteed, to appear on multiple Geofabric surface hydrology data products"@en ;
+    ns2:identifier "catchments"^^xsd:token ;
+    ns2:title "Geofabric Contracted Catchments"@en ;
+    ns1:hasBoundingBox [ a ns1:Geometry ;
+            ns1:asWKT "POLYGON ((152.9075 -27.42,153.16 -27.42,153.16 -27.2775,152.9075 -27.2775,152.9075 -27.42))"^^ns1:wktLiteral ] ;
     rdfs:member <http://example.com/datasets/sandgate/cc12109444>,
         <http://example.com/datasets/sandgate/cc12109445> .
-ns1:identifier rdfs:label "Identifier"@en .
-<http://example.com/datasets/sandgate/cc12109444> rdfs:label "Contracted Catchment 12109444" .
-<http://example.com/datasets/sandgate/cc12109445> rdfs:label "Contracted Catchment 12109445" .
+
+ns2:identifier rdfs:label "Identifier"@en .
 
 <http://example.com/datasets/sandgate/cc12109444> rdfs:label "Contracted Catchment 12109444" ;
-    ns3:link "/s/datasets/sandgate/collections/catchments/items/cc12109444" .
+    ns3:link "/s/datasets/exds:sandgate/collections/sndgt:catchments/items/sndgt:cc12109444" .
 
 <http://example.com/datasets/sandgate/cc12109445> rdfs:label "Contracted Catchment 12109445" ;
-    ns3:link "/s/datasets/sandgate/collections/catchments/items/cc12109445" .
+    ns3:link "/s/datasets/exds:sandgate/collections/sndgt:catchments/items/sndgt:cc12109445" .

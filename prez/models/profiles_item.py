@@ -5,6 +5,8 @@ from pydantic import BaseModel, root_validator
 from rdflib import URIRef, PROF, Namespace
 
 from prez.cache import profiles_graph_cache
+from prez.services.curie_functions import get_uri_for_curie_id, get_curie_id_for_uri
+from prez.services.model_methods import get_classes
 
 PREZ = Namespace("https://prez.dev/")
 
@@ -27,29 +29,13 @@ class ProfileItem(BaseModel):
         uri = values.get("uri")
         id = values.get("id")
         assert uri or id
-        if id:  # get the URI
-            q = f"""
-                PREFIX dcterms: <http://purl.org/dc/terms/>
-                PREFIX prof: <http://www.w3.org/ns/dx/prof/>
-                PREFIX prez: <{PREZ}>
-
-
-                SELECT ?uri {{
-                    ?uri dcterms:identifier "{id}"^^prez:slug ;
-                        a prof:Profile .
-                }}
-                """
-            r = profiles_graph_cache.query(q)
-            if len(r) > 0:
-                # set the uri of the item
-                uri = r.bindings[0]["uri"]
-                if uri:
-                    values["uri"] = uri
-        else:  # uri provided, get the ID
-            q = f"""SELECT ?class {{ <{uri}> a ?class }}"""
-            r = profiles_graph_cache.query(q)
-            if len(r.bindings) > 0:
-                values["classes"] = frozenset(
-                    [prof.get("class") for prof in r.bindings]
-                )
+        if id:
+            values["uri"] = get_uri_for_curie_id(id)
+        elif uri:
+            values["id"] = get_curie_id_for_uri(uri)
+        values["classes"] = get_classes(values["uri"], "VocPrez")
+        q = f"""SELECT ?class {{ <{values["uri"]}> a ?class }}"""
+        r = profiles_graph_cache.query(q)
+        if len(r.bindings) > 0:
+            values["classes"] = frozenset([prof.get("class") for prof in r.bindings])
         return values

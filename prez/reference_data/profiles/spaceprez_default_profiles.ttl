@@ -125,7 +125,7 @@ prez:SpacePrezProfile
         "text/turtle" ;
     altr-ext:hasNodeShape [
       a sh:NodeShape ;
-        sh:targetClass dcat:Dataset , prez:DatasetList ;
+        sh:targetClass dcat:Dataset ;
         altr-ext:outboundChildren rdfs:member ;
     ]
 .

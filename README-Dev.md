@@ -489,12 +489,7 @@ The following VocPrez VocPub profile shows how to use a number of declarations:
         a sh:NodeShape ;
         sh:targetClass skos:Concept ;
         altr-ext:outboundParents skos:inScheme ;
-    ] ;
-    altr-ext:hasNodeShape [
-        a sh:NodeShape ;
-        sh:targetClass prez:SchemesList , prez:VocPrezCollectionList ;
-        altr-ext:outboundChildren rdfs:member ;
-    ] ;
+    ]
 .
 ```
 ## Appendix F - Example system support graph

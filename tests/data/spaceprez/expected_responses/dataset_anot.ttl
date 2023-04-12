@@ -1,37 +1,37 @@
-@prefix ns1: <https://prez.dev/> .
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
-@prefix ns2: <http://www.opengis.net/ont/geosparql#> .
-@prefix ns3: <http://purl.org/dc/terms/> .
+@prefix geo: <http://www.opengis.net/ont/geosparql#> .
+@prefix ns1: <https://prez.dev/> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<http://example.com/datasets/sandgate> a <http://www.w3.org/ns/dcat#Dataset> ;
-    ns3:description "Example floods, roads, catchment and facilities in the Sandgate are"@en ;
-    ns3:identifier "sandgate"^^xsd:token ;
-    ns3:title "Sandgate example dataset"@en ;
-    ns2:hasBoundingBox [ a ns2:Geometry ;
-            ns2:asWKT "POLYGON ((152.9075 -27.42,153.16 -27.42,153.16 -27.2234024,152.9075 -27.2234024,152.9075 -27.42))"^^ns2:wktLiteral ] ;
+<http://example.com/datasets/sandgate> a dcat:Dataset ;
+    dcterms:description "Example floods, roads, catchment and facilities in the Sandgate are"@en ;
+    dcterms:identifier "sandgate"^^xsd:token ;
+    dcterms:title "Sandgate example dataset"@en ;
+    geo:hasBoundingBox [ a geo:Geometry ;
+            geo:asWKT "POLYGON ((152.9075 -27.42,153.16 -27.42,153.16 -27.2234024,152.9075 -27.2234024,152.9075 -27.42))"^^geo:wktLiteral ] ;
     rdfs:member <http://example.com/datasets/sandgate/catchments>,
         <http://example.com/datasets/sandgate/facilities>,
         <http://example.com/datasets/sandgate/floods>,
         <http://example.com/datasets/sandgate/roads> .
 
-ns3:identifier rdfs:label "Identifier"@en .
+dcterms:identifier rdfs:label "Identifier"@en .
 
-<http://www.w3.org/ns/dcat#Dataset> rdfs:label "Dataset"@en .
+<http://example.com/datasets/sandgate/catchments> dcterms:description "Hydrological catchments that are 'contracted', that is, guarenteed, to appear on multiple Geofabric surface hydrology data products"@en ;
+    dcterms:title "Geofabric Contracted Catchments"@en ;
+    ns1:link "/s/datasets/exds:sandgate/collections/sndgt:catchments" .
 
-<http://example.com/datasets/sandgate/catchments> dcterms:title "Geofabric Contracted Catchments"@en ;
-    ns3:description "Hydrological catchments that are 'contracted', that is, guarenteed, to appear on multiple Geofabric surface hydrology data products"@en ;
-    ns1:link "/s/datasets/sandgate/collections/catchments" .
+<http://example.com/datasets/sandgate/facilities> dcterms:description "Sandgate area demo Facilities"@en ;
+    dcterms:title "Sandgate are demo Facilities"@en ;
+    ns1:link "/s/datasets/exds:sandgate/collections/sndgt:facilities" .
 
-<http://example.com/datasets/sandgate/facilities> dcterms:title "Sandgate are demo Facilities"@en ;
-    ns3:description "Sandgate area demo Facilities"@en ;
-    ns1:link "/s/datasets/sandgate/collections/facilities" .
+<http://example.com/datasets/sandgate/floods> dcterms:description "Sandgate flooded areas"@en ;
+    dcterms:title "Sandgate flooded areas"@en ;
+    ns1:link "/s/datasets/exds:sandgate/collections/sndgt:floods" .
 
-<http://example.com/datasets/sandgate/floods> dcterms:title "Sandgate flooded areas"@en ;
-    ns3:description "Sandgate flooded areas"@en ;
-    ns1:link "/s/datasets/sandgate/collections/floods" .
+<http://example.com/datasets/sandgate/roads> dcterms:description "Sandgate main roads"@en ;
+    dcterms:title "Sandgate main roads"@en ;
+    ns1:link "/s/datasets/exds:sandgate/collections/sndgt:roads" .
 
-<http://example.com/datasets/sandgate/roads> dcterms:title "Sandgate main roads"@en ;
-    ns3:description "Sandgate main roads"@en ;
-    ns1:link "/s/datasets/sandgate/collections/roads" .
+dcat:Dataset rdfs:label "Dataset"@en .

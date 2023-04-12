@@ -1,22 +1,23 @@
 import logging
 import time
+from pathlib import Path
 
 import httpx
-from rdflib import URIRef, Literal, BNode, RDF
+from rdflib import URIRef, Literal, BNode, RDF, Graph
 
 from prez.cache import (
     prez_system_graph,
     profiles_graph_cache,
-    search_methods,
     counts_graph,
+    top_level_graph,
+    prefix_graph,
 )
 from prez.config import settings
 from prez.reference_data.prez_ns import PREZ, ALTREXT
-from prez.sparql.methods import sparql_construct, sparql_update, sparql_ask
+from prez.sparql.methods import sparql_construct
 from prez.sparql.objects_listings import startup_count_objects
 from prez.sparql.support_graphs import (
     generate_insert_context,
-    ask_system_graph,
 )
 
 log = logging.getLogger(__name__)
@@ -98,33 +99,38 @@ async def populate_api_info():
     log.info(f"Populated API info")
 
 
+async def add_prefixes_to_prefix_graph():
+    """
+    Adds prefixes to the prefix graph
+    """
+    for f in (Path(__file__).parent.parent / "reference_data/prefixes").glob("*.ttl"):
+        g = Graph().parse(f, format="turtle")
+        for subject_objects in g.subject_objects(
+            predicate=URIRef("http://purl.org/vocab/vann/preferredNamespacePrefix")
+        ):
+            prefix_graph.bind(str(subject_objects[1]), subject_objects[0])
+            log.info(
+                f'Prefix "{str(subject_objects[1])}" bound to namespace {str(subject_objects[0])} from file '
+                f'"{f.name}"'
+            )
+    log.info("Prefixes from local files added to prefix graph")
+
+
 async def generate_support_graphs():
     """
-    Generates the support graphs needed for the Prez API.
-    Although supporting triples are placed in specific graphs, Prez itself is graph agnostic: it is assumed backend
-    triplestores have a default union graph that covers all data intended to be delivered by the API.
+    Generates the support graphs needed for the Prez API, populating the local "top_level_graph" graph, stored in
+    prez.cache.
     """
     for prez in settings.enabled_prezs:
-        # if running on startup, there may already be a system graph, in which case we don't need to generate it
-        # if the user wishes to regenerate the system graph, they can do so by using the /regenerate-context endpoint
-        ask = ask_system_graph(prez)
-        sys_g_exists = await sparql_ask(ask, prez)
-        if sys_g_exists[0] and sys_g_exists[1]:
-            log.info(
-                f"System graph for {prez} already exists, skipping generation of support graphs"
-            )
-        # select instances which do not have support graphs, log these instances
-        elif settings.generate_support_graphs:
-            log.info(f"Generating Support Graphs for {prez}")
-            insert_context = generate_insert_context(settings, prez)
-            await sparql_update(insert_context, prez)
+        log.info(f"Adding Top Level Classes for {prez} to top level graph")
+        insert_context = generate_insert_context(settings, prez)
+        results = await sparql_construct(insert_context, prez)
+        if results[0]:
+            top_level_graph.__iadd__(results[1])
             log.info(f"Completed generating Support Graphs for {prez}")
 
-
-async def generate_profiles_support_graph():
-    """
-    Generates a support graph for the prez profiles
-    """
+    # profiles
     insert_context = generate_insert_context(settings, "Profiles")
-    profiles_graph_cache.update(insert_context)
+    results = profiles_graph_cache.query(insert_context)
+    profiles_graph_cache.__iadd__(results.graph)
     log.info(f"Completed generating Support Graphs for Profiles")
