@@ -114,7 +114,6 @@ async def app_startup():
     await count_objects()
     await populate_api_info()
     await add_prefixes_to_prefix_graph()
-    # await generate_support_graphs()
 
 
 @app.on_event("shutdown")
