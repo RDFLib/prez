@@ -15,6 +15,7 @@ from prez.models import (
     VocabItem,
     VocabMembers,
 )
+from prez.services.curie_functions import get_uri_for_curie_id
 
 log = logging.getLogger(__name__)
 
@@ -686,6 +687,8 @@ def select_profile_mediatype(
     4. If neither a profile nor mediatype is requested, the default profile for the most specific class is returned,
     with the default mediatype for that profile.
     """
+    if requested_profile_token:
+        requested_profile_uri = get_uri_for_curie_id(requested_profile_token)
     query = dedent(
         f"""    PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
     PREFIX dcat: <http://www.w3.org/ns/dcat#>
@@ -697,7 +700,7 @@ def select_profile_mediatype(
     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
     PREFIX sh: <http://www.w3.org/ns/shacl#>
 
-    SELECT ?profile ?title ?class (count(?mid) as ?distance) ?req_profile ?def_profile ?format ?req_format ?def_format ?token
+    SELECT ?profile ?title ?class (count(?mid) as ?distance) ?req_profile ?def_profile ?format ?req_format ?def_format
 
     WHERE {{
       VALUES ?class {{{" ".join('<' + str(klass) + '>' for klass in classes)}}}
@@ -705,21 +708,17 @@ def select_profile_mediatype(
       ?mid rdfs:subClassOf* ?general_class .
       VALUES ?general_class {{ dcat:Dataset geo:FeatureCollection prez:FeatureCollectionList prez:FeatureList geo:Feature
       skos:ConceptScheme skos:Concept skos:Collection prez:DatasetList prez:VocPrezCollectionList prez:SchemesList
-      prez:CatalogList dcat:Catalog dcat:Resource prez:ProfilesList prof:Profile prez:SpacePrezProfileList
-      prez:VocPrezProfileList prez:CatPrezProfileList }}
+      prez:CatalogList prez:ProfilesList dcat:Catalog dcat:Resource prof:Profile }}
       ?profile altr-ext:constrainsClass ?class ;
                altr-ext:hasResourceFormat ?format ;
-               dcterms:identifier ?token ;
                dcterms:title ?title .\
       {f'BIND(?profile=<{requested_profile_uri}> as ?req_profile)' if requested_profile_uri else ''}
-      {f'BIND(?token="{requested_profile_token}" as ?req_profile)' if requested_profile_token else ''}
       BIND(EXISTS {{ ?shape sh:targetClass ?class ;
                            altr-ext:hasDefaultProfile ?profile }} AS ?def_profile)
       {generate_mediatype_if_statements(requested_mediatypes) if requested_mediatypes else ''}
       BIND(EXISTS {{ ?profile altr-ext:hasDefaultResourceFormat ?format }} AS ?def_format)
-      # FILTER(DATATYPE(?token)=prez:slug)
     }}
-    GROUP BY ?class ?profile ?req_profile ?def_profile ?format ?req_format ?def_format ?title ?token
+    GROUP BY ?class ?profile ?req_profile ?def_profile ?format ?req_format ?def_format ?title
     ORDER BY DESC(?req_profile) DESC(?distance) DESC(?def_profile) DESC(?req_format) DESC(?def_format)"""
     )
     return query

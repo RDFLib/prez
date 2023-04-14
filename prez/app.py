@@ -9,28 +9,26 @@ from fastapi.responses import JSONResponse
 from rdflib import Graph, Literal, URIRef
 from starlette.middleware.cors import CORSMiddleware
 
-
 from prez.cache import tbox_cache
 from prez.config import settings
-from prez.services.app_service import (
-    populate_api_info,
-    generate_support_graphs,
-    add_prefixes_to_prefix_graph,
-)
+from prez.reference_data.prez_ns import PREZ
 from prez.renderers.renderer import return_rdf
 from prez.routers.catprez import router as catprez_router
 from prez.routers.cql import router as cql_router
 from prez.routers.management import router as management_router
 from prez.routers.object import router as object_router
 from prez.routers.profiles import router as profiles_router
-from prez.routers.spaceprez import router as spaceprez_router
 from prez.routers.search import router as search_router
+from prez.routers.spaceprez import router as spaceprez_router
 from prez.routers.sparql import router as sparql_router
 from prez.routers.vocprez import router as vocprez_router
 from prez.services.app_service import healthcheck_sparql_endpoints, count_objects
+from prez.services.app_service import (
+    populate_api_info,
+    add_prefixes_to_prefix_graph,
+)
 from prez.services.generate_profiles import create_profiles_graph
 from prez.services.prez_logging import setup_logger
-from prez.reference_data.prez_ns import PREZ
 from prez.services.search_methods import generate_search_methods
 
 
@@ -116,7 +114,6 @@ async def app_startup():
     await count_objects()
     await populate_api_info()
     await add_prefixes_to_prefix_graph()
-    await generate_support_graphs()
 
 
 @app.on_event("shutdown")

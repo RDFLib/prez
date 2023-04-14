@@ -66,17 +66,12 @@ prez:profiles
     dcterms:title "Profiles" ;
     dcterms:description "List of profiles" ;
     dcterms:identifier "profiles"^^xsd:token ;
-    altr-ext:constrainsClass prez:ProfilesList ,
-                             prez:SpacePrezProfileList ,
-                             prez:VocPrezProfileList ,
-                             prez:CatPrezProfileList ;
+    altr-ext:hasLabelPredicate dcterms:title ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
         "application/json" ,
         "text/anot+turtle" ;
-    altr-ext:constrainsClass
-        prof:Profile ,
-        prez:ProfilesList ;
+    altr-ext:constrainsClass prof:Profile ;
 .
 
 <https://w3id.org/profile/mem>
@@ -84,9 +79,14 @@ prez:profiles
     dcterms:description "A very basic data model that lists the members of container objects only, i.e. not their other properties" ;
     dcterms:identifier "mem"^^xsd:token ;
     dcterms:title "Members" ;
+    altr-ext:hasLabelPredicate dcterms:title ;
     altr-ext:constrainsClass prez:DatasetList ,
                              prez:FeatureCollectionList ,
-                             prez:FeatureList ;
+                             prez:FeatureList ,
+                             prez:ProfilesList ,
+                             prez:SchemesList ,
+                             prez:VocPrezCollectionList ,
+                             prez:CatalogList ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
         "application/json" ,

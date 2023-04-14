@@ -7,6 +7,7 @@ from rdflib import Graph, URIRef
 
 from prez.cache import profiles_graph_cache
 from prez.config import settings
+from prez.services.curie_functions import get_curie_id_for_uri
 from prez.sparql.methods import sparql_construct
 from prez.sparql.objects_listings import select_profile_mediatype
 
@@ -99,7 +100,8 @@ def generate_profiles_headers(selected_class, response, profile, mediatype):
         "Content-Type": mediatype,
     }
     avail_profiles = set(
-        (i["token"], i["profile"], i["title"]) for i in response.bindings
+        (get_curie_id_for_uri(i["profile"]), i["profile"], i["title"])
+        for i in response.bindings
     )
     avail_profiles_headers = ", ".join(
         [
@@ -109,7 +111,7 @@ def generate_profiles_headers(selected_class, response, profile, mediatype):
     )
     avail_mediatypes_headers = ", ".join(
         [
-            f"""<{selected_class}?_profile={i["token"]}&_mediatype={i["format"]}>; \
+            f"""<{selected_class}?_profile={get_curie_id_for_uri(i["profile"])}&_mediatype={i["format"]}>; \
 rel="{"self" if i["profile"] == profile and i["format"] == mediatype else "alternate"}"; \
 type="{i["format"]}"; profile="{i["profile"]}"\
 """
