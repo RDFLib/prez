@@ -54,146 +54,144 @@ dcterms:provenance rdfs:label "Provenance"@en ;
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/alteration_facies_contact> dcterms:provenance "this vocabulary"@en ;
     skos:prefLabel "alteration facies contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/alteration_facies_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:alteration_facies_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/angular_unconformable_contact> dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
     skos:prefLabel "angular unconformable contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/angular_unconformable_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:angular_unconformable_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/buttress_unconformity> dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
     skos:prefLabel "buttress unconformity"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/buttress_unconformity" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:buttress_unconformity" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/chronostratigraphic_zone_contact> dcterms:provenance "FGDC"@en ;
     skos:prefLabel "chronostratigraphic-zone contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/chronostratigraphic_zone_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:chronostratigraphic_zone_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/conductivity_contact> dcterms:provenance "this vocabulary"@en ;
     skos:prefLabel "conductivity contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/conductivity_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:conductivity_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/conformable_contact> dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
     skos:prefLabel "conformable contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/conformable_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:conformable_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/contact> dcterms:provenance "adapted from Jackson, 1997, page 137, NADM C1 2004"@en ;
     skos:prefLabel "contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/deformation_zone_contact> dcterms:provenance "this vocabulary"@en ;
     skos:prefLabel "deformation zone contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/deformation_zone_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:deformation_zone_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/density_contact> dcterms:provenance "this vocabulary"@en ;
     skos:prefLabel "density contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/density_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:density_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/depositional_contact> dcterms:provenance "this vocabulary"@en ;
     skos:prefLabel "depositional contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/depositional_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:depositional_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/disconformable_contact> dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
     skos:prefLabel "disconformable contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/disconformable_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:disconformable_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/faulted_contact> dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
     skos:prefLabel "faulted contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/faulted_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:faulted_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/geologic_province_contact> dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
     skos:prefLabel "geologic province contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/geologic_province_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:geologic_province_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/geophysical_contact> dcterms:provenance "this vocabulary"@en ;
     skos:prefLabel "geophysical contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/geophysical_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:geophysical_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/glacial_stationary_line> dcterms:provenance "this vocabulary"@en ;
     skos:prefLabel "glacial stationary line"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/glacial_stationary_line" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:glacial_stationary_line" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/igneous_intrusive_contact> dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
     skos:prefLabel "igneous intrusive contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/igneous_intrusive_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:igneous_intrusive_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/igneous_phase_contact> dcterms:provenance "this vocabulary"@en ;
     skos:prefLabel "igneous phase contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/igneous_phase_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:igneous_phase_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/impact_structure_boundary> dcterms:provenance "this vocabulary"@en ;
     skos:prefLabel "impact structure boundary"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/impact_structure_boundary" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:impact_structure_boundary" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact> dcterms:provenance "this vocabulary"@en ;
     skos:prefLabel "lithogenetic contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:lithogenetic_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_contact> dcterms:provenance "this vocabulary"@en ;
     skos:prefLabel "magnetic contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:magnetic_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_polarity_contact> dcterms:provenance "this vocabulary"@en ;
     skos:prefLabel "magnetic polarity contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_polarity_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:magnetic_polarity_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_susceptiblity_contact> dcterms:provenance "this vocabulary"@en ;
     skos:prefLabel "magnetic susceptiblity contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_susceptiblity_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:magnetic_susceptiblity_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/magnetization_contact> dcterms:provenance "this vocabulary"@en ;
     skos:prefLabel "magnetization contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/magnetization_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:magnetization_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact> dcterms:provenance "this vocabulary"@en ;
     skos:prefLabel "metamorphic contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:metamorphic_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_facies_contact> dcterms:provenance "this vocabulary"@en ;
     skos:prefLabel "metamorphic facies contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_facies_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:metamorphic_facies_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/metasomatic_facies_contact> dcterms:provenance "this vocabulary"@en ;
     skos:prefLabel "metasomatic facies contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/metasomatic_facies_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:metasomatic_facies_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/mineralisation_assemblage_contact> dcterms:provenance "this vocabulary"@en ;
     skos:prefLabel "mineralisation assemblage contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/mineralisation_assemblage_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:mineralisation_assemblage_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/nonconformable_contact> dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
     skos:prefLabel "nonconformable contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/nonconformable_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:nonconformable_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/paraconformable_contact> dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
     skos:prefLabel "paraconformable contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/paraconformable_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:paraconformable_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/radiometric_contact> dcterms:provenance "this vocabulary"@en ;
     skos:prefLabel "radiometric contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/radiometric_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:radiometric_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/sedimentary_facies_contact> dcterms:provenance "base on Nichols, Gary, 1999, Sedimentology and stratigraphy, Blackwell, p. 62-63."@en ;
     skos:prefLabel "sedimentary facies contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/sedimentary_facies_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:sedimentary_facies_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/sedimentary_intrusive_contact> dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
     skos:prefLabel "sedimentary intrusive contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/sedimentary_intrusive_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:sedimentary_intrusive_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/seismic_contact> dcterms:provenance "this vocabulary"@en ;
     skos:prefLabel "seismic contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/seismic_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:seismic_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/unconformable_contact> dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
     skos:prefLabel "unconformable contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/unconformable_contact" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:unconformable_contact" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/volcanic_subsidence_zone_boundary> dcterms:provenance "this vocabulary, concept to encompass boundary of caldron, caldera, or crater."@en ;
     skos:prefLabel "volcanic subsidence zone boundary"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/volcanic_subsidence_zone_boundary" .
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:volcanic_subsidence_zone_boundary" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/weathering_contact> dcterms:provenance "this vocabulary"@en ;
     skos:prefLabel "weathering contact"@en ;
-    ns1:link "/v/object?uri=http://resource.geosciml.org/classifier/cgi/contacttype/weathering_contact" .
-
-
+    ns1:link "/v/vocab/cgi:contacttype/cntcttyp:weathering_contact" .
