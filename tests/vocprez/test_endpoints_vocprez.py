@@ -1,11 +1,11 @@
 import os
-import re
 import subprocess
 from pathlib import Path
 from time import sleep
 
 import pytest
-from rdflib import Graph, URIRef, RDFS, DCTERMS, RDF, SKOS
+from rdflib import Graph, URIRef, RDF, SKOS
+from rdflib.compare import isomorphic
 
 PREZ_DIR = os.getenv("PREZ_DIR")
 LOCAL_SPARQL_STORE = os.getenv("LOCAL_SPARQL_STORE")
@@ -101,3 +101,15 @@ def test_collection_listing(vp_test_client):
         assert response_graph.isomorphic(expected_graph), print(
             f"Graph delta:{(expected_graph - response_graph).serialize()}"
         )
+
+
+def test_collection_listing_item(vp_test_client):
+    with vp_test_client as client:
+        r = client.get("/v/collection/cgi:contacttype")
+        assert r.status_code == 200
+        response_graph = Graph().parse(data=r.text, format="turtle")
+        expected_graph = Graph().parse(
+            Path(__file__).parent
+            / "../data/vocprez/expected_responses/collection_listing_item.ttl"
+        )
+        assert isomorphic(response_graph, expected_graph)

@@ -196,7 +196,7 @@ def generate_prez_links(graph, predicates_for_link_addition):
 
 def generate_object_endpoint_link(graph, predicates_for_link_addition):
     all_preds = (
-        predicates_for_link_addition["child"] + predicates_for_link_addition["parent"]
+        predicates_for_link_addition["ib_par"] + predicates_for_link_addition["ob_par"] + predicates_for_link_addition["ib_chi"] + predicates_for_link_addition["ob_chi"]
     )
     objects_for_links = graph.triples_choices((None, all_preds, None))
     for o in objects_for_links:
@@ -213,7 +213,7 @@ async def return_profiles(
     classes: frozenset,
     prez_type: str,
     request: Optional[Request] = None,
-    prof_and_mt_info: Optional = None,
+    prof_and_mt_info: Optional[ProfilesMediatypesInfo] = None,
 ) -> Response:
     from prez.cache import profiles_graph_cache
 
