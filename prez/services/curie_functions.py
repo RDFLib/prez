@@ -43,11 +43,13 @@ def generate_new_prefix(uri):
         try:
             to_generate_prefix_from = parsed_url.path.split("/")[-2].lower()
         except Exception:
-            log.error(
-                msg=f"Cannot generate a prefix for the URI {uri}, please specify a prefix in any of the "
-                f"prez/reference_data/prefixes turtle files"
-            )
-            raise
+            try:
+                to_generate_prefix_from = parsed_url.netloc.split(".")[1]
+            except Exception:
+                try:
+                    to_generate_prefix_from = parsed_url.netloc.replace(".", "")
+                except Exception:
+                    to_generate_prefix_from = "ns1"
     # attempt to just use the last part of the path prior to the fragment or "identifier"
     if len(to_generate_prefix_from) <= 6:
         proposed_prefix = to_generate_prefix_from
