@@ -253,6 +253,34 @@ async def sparql_ask(query: str, prez: str):
         }
 
 
+@lru_cache(maxsize=128)
+def sparql_ask_non_async(query: str, prez: str):
+    """Returns an rdflib Graph from a CONSTRUCT query for a single SPARQL endpoint"""
+    with Client() as client:
+        response: httpxResponse = client.post(
+            settings.sparql_creds[prez]["endpoint"],
+            data={"query": query},
+            headers={
+                "Accept": "*/*",
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Accept-Encoding": "gzip, deflate",
+            },
+            auth=(
+                settings.sparql_creds[prez].get("username", ""),
+                settings.sparql_creds[prez].get("password", ""),
+            ),
+            timeout=TIMEOUT,
+        )
+    if 200 <= response.status_code < 300:
+        return True, response.json()["boolean"]
+    else:
+        return False, {
+            "code": response.status_code,
+            "message": response.text,
+            "prez": prez,
+        }
+
+
 def sparql_construct_non_async(query: str, prez: str):
     """Returns an rdflib Graph from a CONSTRUCT query for a single SPARQL endpoint"""
 

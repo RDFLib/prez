@@ -1,12 +1,11 @@
 from typing import Optional, FrozenSet
 
 from pydantic import BaseModel, root_validator
-from rdflib import Namespace, DCAT, XSD, RDFS, DCTERMS
+from rdflib import DCAT
 from rdflib.namespace import URIRef, GEO
 
-from prez.services.curie_functions import get_uri_for_curie_id
-from prez.sparql.methods import sparql_query_non_async
 from prez.reference_data.prez_ns import PREZ
+from prez.services.curie_functions import get_uri_for_curie_id
 
 
 class SpatialMembers(BaseModel):
