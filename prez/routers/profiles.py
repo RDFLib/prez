@@ -17,8 +17,8 @@ router = APIRouter(tags=["Profiles"])
 
 @router.get("/profiles", summary="Prez Profiles")
 @router.get("/s/profiles", summary="SpacePrez Profiles")
-@router.get("/v/profiles", summary="SpacePrez Profiles")
-@router.get("/c/profiles", summary="SpacePrez Profiles")
+@router.get("/v/profiles", summary="VocPrez Profiles")
+@router.get("/c/profiles", summary="CatPrez Profiles")
 async def profiles(
     request: Request,
     page: int = 1,
@@ -56,6 +56,9 @@ async def profiles(
 
 
 @router.get("/profiles/{profile_id}", summary="Profile")
+@router.get("/s/profiles/{profile_id}", summary="SpacePrez Profile")
+@router.get("/v/profiles/{profile_id}", summary="VocPrez Profile")
+@router.get("/c/profiles/{profile_id}", summary="CatPrez Profile")
 async def profile(request: Request, profile_id: str):
     """Returns list of the profiles which constrain SpacePrez classes"""
     profiles_item = ProfileItem(id=profile_id)
