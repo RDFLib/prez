@@ -4,7 +4,7 @@ from typing import Set
 from pydantic import BaseModel, root_validator
 from rdflib import URIRef, SKOS
 
-from prez.services.curie_functions import get_uri_for_curie_id, get_curie_id_for_uri
+from prez.services.curie_functions import get_uri_for_curie_id
 from prez.services.model_methods import get_classes
 
 
@@ -41,16 +41,17 @@ class VocabItem(BaseModel):
                 values["curie_id"] = concept_curie
                 values["link_constructor"] = f"/v/vocab/{scheme_curie}"
             elif collection_curie:
+                # TODO: Check if this path is ever reached.
                 values["curie_id"] = concept_curie
                 values["link_constructor"] = f"/v/collection/{collection_curie}"
         elif url_parts[2] == "collection":  # collections
             values["curie_id"] = values.get("collection_curie")
             values["general_class"] = SKOS.Collection
-            values["link_constructor"] = f"/v/object?uri="
+            values["link_constructor"] = f"/v/collection/{collection_curie}"
         elif url_parts[2] in ["scheme", "vocab"]:  # vocabularies
             values["general_class"] = SKOS.ConceptScheme
             values["curie_id"] = values.get("scheme_curie")
-            values["link_constructor"] = f"/v/scheme/{scheme_curie}"
+            values["link_constructor"] = f"/v/vocab/{scheme_curie}"
 
         if not values["uri"]:
             values["uri"] = get_uri_for_curie_id(values["curie_id"])
