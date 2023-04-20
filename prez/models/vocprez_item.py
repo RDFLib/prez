@@ -41,8 +41,8 @@ class VocabItem(BaseModel):
                 values["curie_id"] = concept_curie
                 values["link_constructor"] = f"/v/vocab/{scheme_curie}"
             elif collection_curie:
+                # TODO: Check if this path is ever reached.
                 values["curie_id"] = concept_curie
-                # TODO: Check if this path is eve reached.
                 values["link_constructor"] = f"/v/collection/{collection_curie}"
         elif url_parts[2] == "collection":  # collections
             values["curie_id"] = values.get("collection_curie")
