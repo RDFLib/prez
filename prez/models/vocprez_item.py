@@ -42,11 +42,12 @@ class VocabItem(BaseModel):
                 values["link_constructor"] = f"/v/vocab/{scheme_curie}"
             elif collection_curie:
                 values["curie_id"] = concept_curie
+                # TODO: Check if this path is eve reached.
                 values["link_constructor"] = f"/v/collection/{collection_curie}"
         elif url_parts[2] == "collection":  # collections
             values["curie_id"] = values.get("collection_curie")
             values["general_class"] = SKOS.Collection
-            values["link_constructor"] = f"/v/vocab/{collection_curie}"
+            values["link_constructor"] = f"/v/collection/{collection_curie}"
         elif url_parts[2] in ["scheme", "vocab"]:  # vocabularies
             values["general_class"] = SKOS.ConceptScheme
             values["curie_id"] = values.get("scheme_curie")
