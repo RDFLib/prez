@@ -4,8 +4,9 @@ from rdflib import URIRef
 from prez.services.curie_functions import get_curie_id_for_uri
 
 
-def test_get_curie_id_for_uri_positive():
-    uris = [
+@pytest.mark.parametrize(
+    "input_uri",
+    [
         URIRef("http://purl.org/dc/terms/PeriodOfTime"),
         URIRef("http://purl.org/dc/terms/issued"),
         URIRef("http://purl.org/dc/terms/dateAccepted"),
@@ -5917,9 +5918,12 @@ def test_get_curie_id_for_uri_positive():
         URIRef("http://purl.org/dc/terms/abstract"),
         URIRef("http://www.w3.org/2000/01/rdf-schema#subPropertyOf"),
         URIRef("http://purl.org/dc/terms/description"),
-    ]
-    for uri in uris:
-        get_curie_id_for_uri(uri)
+    ],
+)
+def test_get_curie_id_for_uri_positive(input_uri):
+    curie_id = get_curie_id_for_uri(input_uri)
+    assert isinstance(curie_id, str)
+    assert len(curie_id) > 0
 
 
 def test_get_curie_id_for_uri_negative():

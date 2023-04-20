@@ -64,7 +64,12 @@ def generate_new_prefix(uri):
 
 def get_curie_id_for_uri(uri: URIRef):
     """
-    Returns a CURIE with ":" replaced by a given separator, for a given URI
+    This function gets a curie ID for a given URI.
+    The following process is used:
+    1. Check Prez's in memory prefix graph for an existing prefix for the URI's namespace.
+    2. If not found, attempt to generate a "nice" prefix using prez's "generate_new_prefix" function.
+    3. If unable to generate a "nice" prefix, use the "compute_qname" function to generate a prefix in the series ns0,
+    ns1 etc.
     """
     separator = settings.curie_separator
     try:
