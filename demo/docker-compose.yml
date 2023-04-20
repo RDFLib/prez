@@ -2,7 +2,8 @@ version: "3"
 services:
 
   fuseki:
-    image: "ghcr.io/zazuko/fuseki-geosparql:4.7.0"
+    user: root
+    image: "ghcr.io/zazuko/fuseki-geosparql:4.6.0"  # recommend using the Zazuko repo to build a 4.7.0 image.
     ports:
       - "3030:3030"
     volumes:
@@ -11,9 +12,15 @@ services:
         target: /fuseki/config.ttl
     environment:
       ADMIN_PASSWORD: pw
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://fuseki:3030" ]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
   prez:
-    image: "prez:0.4.1"
+    image: "ghcr.io/rdflib/prez:3.0.6"
     ports:
       - "8000:8000"
     environment:
@@ -22,4 +29,4 @@ services:
       CATPREZ_SPARQL_ENDPOINT: 'http://fuseki:3030/cp'
     depends_on:
       fuseki:
-        condition: service_started
+        condition: service_healthy
