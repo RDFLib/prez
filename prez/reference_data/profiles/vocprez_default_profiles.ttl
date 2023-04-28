@@ -11,6 +11,7 @@ PREFIX sh: <http://www.w3.org/ns/shacl#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX reg: <http://purl.org/linked-data/registry#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
 
 
 prez:VocPrezProfile
@@ -103,7 +104,21 @@ prez:VocPrezProfile
         a sh:NodeShape ;
         sh:targetClass skos:Concept ;
         altr-ext:outboundParents skos:inScheme ;
-    ]
+    ] ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass prez:SchemesList ;
+        sh:path dcterms:publisher, reg:status ;
+        sh:sequencePath (
+            prov:qualifiedDerivation
+            prov:hadRole
+        ) ;
+    ] ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass prez:VocPrezCollectionList ;
+        sh:path skos:definition ;
+    ] ;
 .
 
 <https://schema.org>
