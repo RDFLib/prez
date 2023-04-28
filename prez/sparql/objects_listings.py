@@ -1,4 +1,5 @@
 import logging
+from uuid import uuid4
 from functools import lru_cache
 from itertools import chain
 from textwrap import dedent
@@ -35,6 +36,12 @@ def generate_listing_construct_from_uri(
     #TODO update to use either URI or class, as specified in the function signature. Class will be used for alternate profiles - although the URI is known in this case, profiles constrain the class.
     """
     (
+        include_predicates,
+        exclude_predicates,
+        inverse_predicates,
+        sequence_predicates,
+    ) = get_item_predicates(profile, focus_item.selected_class)
+    (
         inbound_children,
         inbound_parents,
         outbound_children,
@@ -61,6 +68,17 @@ def generate_listing_construct_from_uri(
         uri_or_tl_item = "?top_level_item"
     else:
         uri_or_tl_item = f"<{focus_item.uri}>"
+
+    if include_predicates:
+        include_predicates_statement = f"{uri_or_tl_item} ?p ?o ."
+    else:
+        include_predicates_statement = ""
+
+    sequence_construct = ""
+    if sequence_predicates:
+        for sequence_predicate in sequence_predicates:
+            sequence_construct += generate_sequence_construct(uri_or_tl_item, [sequence_predicate])
+
     query = dedent(
         f"""
         PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -72,22 +90,36 @@ def generate_listing_construct_from_uri(
 
         CONSTRUCT {{
             {f'{uri_or_tl_item} a <{focus_item.general_class}> .{chr(10)}' if focus_item.top_level_listing else ""}\
+            {sequence_construct}
             {f'{uri_or_tl_item} ?outbound_children ?child_item .{chr(10)}' if outbound_children else ""}\
             {f'{uri_or_tl_item} ?outbound_parents ?parent_item .{chr(10)}' if outbound_parents else ""}\
             {f'?inbound_child_s ?inbound_child {uri_or_tl_item} .{chr(10)}' if inbound_children else ""}\
             {f'?inbound_parent_s ?inbound_parent {uri_or_tl_item} .{chr(10)}' if inbound_parents else ""}\
             {generate_relative_properties("construct", relative_properties, inbound_children, inbound_parents,
                                           outbound_children, outbound_parents)}\
+            {include_predicates_statement}
         }}
         WHERE {{
-            {f'{uri_or_tl_item} a <{focus_item.general_class}> .{chr(10)}' if focus_item.top_level_listing else ""}\
+            {generate_include_predicates(include_predicates)} \
+            {include_predicates_statement}
+            OPTIONAL {{
+                {sequence_construct}\
+            }}
             {generate_outbound_predicates(uri_or_tl_item, outbound_children, outbound_parents)} \
             {generate_inbound_predicates(uri_or_tl_item, inbound_children, inbound_parents)} {chr(10)} \
             {generate_relative_properties("select", relative_properties, inbound_children, inbound_parents,
                                           outbound_children, outbound_parents)}\
+                                          
+            {{
+                SELECT ?top_level_item
+                WHERE {{
+                    {f'{uri_or_tl_item} a <{focus_item.general_class}> .{chr(10)}' if focus_item.top_level_listing else ""}\
+                }}
+                {f"LIMIT {per_page}{chr(10)}"
+                f"OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
+            }}
         }}
-        {f"LIMIT {per_page}{chr(10)}"
-         f"        OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
+        
     """
     ).strip()
     log.debug(f"Listing construct query for {focus_item} is:\n{query}")
@@ -127,14 +159,16 @@ def generate_item_construct(item, profile: URIRef):
     PREFIX prez: <https://prez.dev/>
     CONSTRUCT {{
     \t<{object_uri}> ?p ?o1 .
-    {generate_sequence_construct(object_uri, sequence_predicates) if sequence_predicates else ""}
+    {generate_sequence_construct(f"<{object_uri}>", sequence_predicates) if sequence_predicates else ""}
     {f'{chr(9)}?s ?inbound_p <{object_uri}> .' if inverse_predicates else ""}
     {generate_bnode_construct(bnode_depth)} \
     \n}}
     WHERE {{
         {{
         <{object_uri}> ?p ?o1 . {chr(10)} \
-    {generate_sequence_construct(object_uri, sequence_predicates) if sequence_predicates else chr(10)} \
+        OPTIONAL {{
+            {generate_sequence_construct(f"<{object_uri}>", sequence_predicates) if sequence_predicates else chr(10)} \
+        }}
         {f'?s ?inbound_p <{object_uri}>{chr(10)}' if inverse_predicates else chr(10)} \
         {generate_include_predicates(include_predicates)} \
         {generate_inverse_predicates(inverse_predicates)} \
@@ -236,13 +270,14 @@ def generate_sequence_construct(object_uri, sequence_predicates):
     """
     Generates part of a SPARQL CONSTRUCT query for property paths, given a list of lists of property paths.
     """
+    identifier = str(uuid4()).replace("-", "_")
     if sequence_predicates:
         all_sequence_construct = ""
         for predicate_list in sequence_predicates:
-            construct_and_where = f"\t<{object_uri}> <{predicate_list[0]}> ?seq_o1 ."
+            construct_and_where = f"\t{object_uri} <{predicate_list[0]}> ?seq_o1_{identifier} ."
             for i in range(1, len(predicate_list)):
                 construct_and_where += (
-                    f"\n\t?seq_o{i} <{predicate_list[i]}> ?seq_o{i + 1} ."
+                    f"\n\t?seq_o{i}_{identifier} <{predicate_list[i]}> ?seq_o{i + 1}_{identifier} ."
                 )
             all_sequence_construct += construct_and_where
         return all_sequence_construct

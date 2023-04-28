@@ -113,6 +113,10 @@ prez:VocPrezProfile
             prov:qualifiedDerivation
             prov:hadRole
         ) ;
+        sh:sequencePath (
+            prov:qualifiedDerivation
+            prov:entity
+        ) ;
     ] ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
