@@ -41,7 +41,7 @@ from prez.services.exception_catchers import (
 )
 from prez.services.generate_profiles import create_profiles_graph
 from prez.services.prez_logging import setup_logger
-from prez.services.search_methods import generate_search_methods
+from prez.services.search_methods import get_all_search_methods
 
 app = FastAPI(
     exception_handlers={
@@ -112,7 +112,7 @@ async def app_startup():
     log = logging.getLogger("prez")
     log.info("Starting up")
     await healthcheck_sparql_endpoints()
-    await generate_search_methods()
+    await get_all_search_methods()
     await create_profiles_graph()
     await count_objects()
     await populate_api_info()

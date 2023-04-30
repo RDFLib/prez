@@ -10,17 +10,11 @@ from prez.models.model_exceptions import (
 
 
 async def catch_400(request: Request, exc: Exception):
-    return JSONResponse(status_code=400, content={"detail": str(exc)})
+    return JSONResponse(status_code=400, content=exc.__dict__)
 
 
 async def catch_404(request: Request, exc: ValidationError):
-    return JSONResponse(
-        status_code=404,
-        content={
-            "error": "Not Found",
-            "detail": exc.errors(),
-        },
-    )
+    return JSONResponse(status_code=404, content=exc.__dict__)
 
 
 async def catch_500(request: Request, exc: Exception):
