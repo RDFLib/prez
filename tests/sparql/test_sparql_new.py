@@ -13,7 +13,7 @@ from prez.sparql.objects_listings import (
     generate_include_predicates,
     get_annotations_from_tbox_cache,
     get_item_predicates,
-    generate_listing_construct_from_uri,
+    generate_listing_construct,
 )
 
 PREZ_DIR = os.getenv("PREZ_DIR")
@@ -143,7 +143,7 @@ def test_get_labels_from_tbox_cache():
 
 def test_generate_listing_construct_datasets():
     item = SpatialItem(uri=URIRef("http://example.com"))
-    returned = generate_listing_construct_from_uri(item, profile, page=1, per_page=20)
+    returned = generate_listing_construct(item, profile, page=1, per_page=20)
     expected = """PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>

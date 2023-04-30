@@ -7,7 +7,7 @@ from prez.models.profiles_listings import ProfilesMembers
 from prez.cache import profiles_graph_cache
 from prez.renderers.renderer import return_profiles, return_from_graph
 from prez.sparql.objects_listings import (
-    generate_listing_construct_from_uri,
+    generate_listing_construct,
     generate_listing_count_construct,
     generate_item_construct,
 )
@@ -37,7 +37,7 @@ async def profiles(
             prez_type="GenericPrez",
             prof_and_mt_info=prof_and_mt_info,
         )
-    list_query, predicates_for_link_addition = generate_listing_construct_from_uri(
+    list_query, predicates_for_link_addition = generate_listing_construct(
         profiles_members, prof_and_mt_info.profile, page, per_page
     )
     count_query = generate_listing_count_construct(profiles_members)

@@ -1,5 +1,4 @@
 import logging
-from uuid import uuid4
 from functools import lru_cache
 from itertools import chain
 from textwrap import dedent
@@ -16,6 +15,7 @@ from prez.models import (
     VocabItem,
     VocabMembers,
 )
+from prez.models.profiles_listings import ProfilesMembers
 from prez.services.curie_functions import get_uri_for_curie_id
 
 log = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
 PREZ = Namespace("https://prez.dev/")
 
 
-def generate_listing_construct_from_uri(
+def generate_listing_construct(
     focus_item,
     profile,
     page: Optional[int] = 1,
@@ -33,14 +33,22 @@ def generate_listing_construct_from_uri(
     """
     For a given URI, finds items with the specified relation(s).
     Generates a SPARQL construct query for a listing of items
-    #TODO update to use either URI or class, as specified in the function signature. Class will be used for alternate profiles - although the URI is known in this case, profiles constrain the class.
     """
-    (
-        include_predicates,
-        exclude_predicates,
-        inverse_predicates,
-        sequence_predicates,
-    ) = get_item_predicates(profile, focus_item.selected_class)
+    if isinstance(
+        focus_item, (ProfilesMembers, CatalogMembers, SpatialMembers, VocabMembers)
+    ):  # listings can include
+        # "context" in the same way objects can, using include/exclude predicates etc.
+        (
+            include_predicates,
+            exclude_predicates,
+            inverse_predicates,
+            sequence_predicates,
+        ) = get_item_predicates(profile, focus_item.selected_class)
+    else:  # for objects, this context is already included in the separate "generate_item_construct" function, so these
+        # predicates are explicitly set to None here to avoid duplication.
+        include_predicates = (
+            exclude_predicates
+        ) = inverse_predicates = sequence_predicates = None
     (
         inbound_children,
         inbound_parents,
@@ -64,21 +72,18 @@ def generate_listing_construct_from_uri(
             f" define any listing relations for this for this class, for example outbound children."
         )
         return None, {}
-    if focus_item.top_level_listing:
-        uri_or_tl_item = "?top_level_item"
-    else:
-        uri_or_tl_item = f"<{focus_item.uri}>"
-
-    if include_predicates:
-        include_predicates_statement = f"{uri_or_tl_item} ?p ?o ."
-    else:
-        include_predicates_statement = ""
-
+    uri_or_tl_item = (
+        "?top_level_item" if focus_item.top_level_listing else f"<{focus_item.uri}>"
+    )  # set the focus
+    # item to a variable if it's a top level listing (this will utilise "class based" listing, where objects are listed
+    # based on them being an instance of a class), else use the URI of the "parent" off of which members will be listed.
+    # TODO collapse this to an inline expression below; include change in both object and listing queries
     sequence_construct = ""
     if sequence_predicates:
-        for sequence_predicate in sequence_predicates:
-            sequence_construct += generate_sequence_construct(uri_or_tl_item, [sequence_predicate])
-
+        for i, sequence_predicate in enumerate(sequence_predicates):
+            sequence_construct += generate_sequence_construct(
+                uri_or_tl_item, [sequence_predicate], i
+            )
     query = dedent(
         f"""
         PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -97,11 +102,12 @@ def generate_listing_construct_from_uri(
             {f'?inbound_parent_s ?inbound_parent {uri_or_tl_item} .{chr(10)}' if inbound_parents else ""}\
             {generate_relative_properties("construct", relative_properties, inbound_children, inbound_parents,
                                           outbound_children, outbound_parents)}\
-            {include_predicates_statement}
+            {f"{uri_or_tl_item} ?p ?o ." if include_predicates else ""}\
         }}
         WHERE {{
-            {generate_include_predicates(include_predicates)} \
-            {include_predicates_statement}
+            {f'{uri_or_tl_item} a <{focus_item.general_class}> .{chr(10)}' if focus_item.top_level_listing else ""}\
+            {f'OPTIONAL {{ {uri_or_tl_item} ?p ?o .' if include_predicates else ""}\
+            {f'{generate_include_predicates(include_predicates)} }}' if include_predicates else ""} \
             OPTIONAL {{
                 {sequence_construct}\
             }}
@@ -109,7 +115,6 @@ def generate_listing_construct_from_uri(
             {generate_inbound_predicates(uri_or_tl_item, inbound_children, inbound_parents)} {chr(10)} \
             {generate_relative_properties("select", relative_properties, inbound_children, inbound_parents,
                                           outbound_children, outbound_parents)}\
-                                          
             {{
                 SELECT ?top_level_item
                 WHERE {{
@@ -119,9 +124,10 @@ def generate_listing_construct_from_uri(
                 f"OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
             }}
         }}
-        
+
     """
     ).strip()
+
     log.debug(f"Listing construct query for {focus_item} is:\n{query}")
     predicates_for_link_addition = {
         "link_constructor": focus_item.link_constructor,
@@ -266,19 +272,18 @@ def generate_inverse_predicates(inverse_predicates):
     return ""
 
 
-def generate_sequence_construct(object_uri, sequence_predicates):
+def generate_sequence_construct(object_uri, sequence_predicates, path_n=0):
     """
     Generates part of a SPARQL CONSTRUCT query for property paths, given a list of lists of property paths.
     """
-    identifier = str(uuid4()).replace("-", "_")
     if sequence_predicates:
         all_sequence_construct = ""
         for predicate_list in sequence_predicates:
-            construct_and_where = f"\t{object_uri} <{predicate_list[0]}> ?seq_o1_{identifier} ."
+            construct_and_where = (
+                f"\t{object_uri} <{predicate_list[0]}> ?seq_o1_{path_n} ."
+            )
             for i in range(1, len(predicate_list)):
-                construct_and_where += (
-                    f"\n\t?seq_o{i}_{identifier} <{predicate_list[i]}> ?seq_o{i + 1}_{identifier} ."
-                )
+                construct_and_where += f"\n\t?seq_o{i}_{path_n} <{predicate_list[i]}> ?seq_o{i + 1}_{path_n} ."
             all_sequence_construct += construct_and_where
         return all_sequence_construct
     return ""

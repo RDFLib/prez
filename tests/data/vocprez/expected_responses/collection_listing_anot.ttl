@@ -4,6 +4,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype> a skos:Collection ;
+    skos:definition "All Concepts in this vocabulary" ;
     dcterms:provenance "this vocabulary" ;
     skos:prefLabel "Contact Type - All Concepts"@en ;
     ns1:link "/v/collection/cgi:contacttype" .
