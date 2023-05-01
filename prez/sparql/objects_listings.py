@@ -172,19 +172,16 @@ def generate_item_construct(focus_item, profile: URIRef):
     PREFIX prez: <https://prez.dev/>
     CONSTRUCT {{
     {f'{search_query_construct()} {chr(10)}' if search_query else ""}\
-    \t<{uri_or_search_item}> ?p ?o1 .
-    {generate_sequence_construct(f"<{uri_or_search_item}>", sequence_predicates) if sequence_predicates else ""}
-    {f'{chr(9)}?s ?inbound_p <{uri_or_search_item}> .' if inverse_predicates else ""}
+    \t{uri_or_search_item} ?p ?o1 .
+    {generate_sequence_construct(f"{uri_or_search_item}", sequence_predicates) if sequence_predicates else ""}
+    {f'{chr(9)}?s ?inbound_p {uri_or_search_item} .' if inverse_predicates else ""}
     {generate_bnode_construct(bnode_depth)} \
     \n}}
     WHERE {{
-        {{
         {{ {f'{focus_item.populated_query}' if search_query else ""} }}
-        <{uri_or_search_item}> ?p ?o1 . {chr(10)} \
-        OPTIONAL {{
-            {generate_sequence_construct(f"<{uri_or_search_item}>", sequence_predicates) if sequence_predicates else chr(10)} \
-        }}
-        {f'?s ?inbound_p <{uri_or_search_item}>{chr(10)}' if inverse_predicates else chr(10)} \
+        {uri_or_search_item} ?p ?o1 . {chr(10)} \
+        {f'OPTIONAL {{ {generate_sequence_construct(uri_or_search_item, sequence_predicates)} }}' if sequence_predicates else chr(10)} \
+        {f'?s ?inbound_p {uri_or_search_item}{chr(10)}' if inverse_predicates else chr(10)} \
         {generate_include_predicates(include_predicates)} \
         {generate_inverse_predicates(inverse_predicates)} \
         {generate_bnode_select(bnode_depth)}
