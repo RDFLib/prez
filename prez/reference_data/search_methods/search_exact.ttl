@@ -7,17 +7,8 @@ prez:exactMatch a prez:SearchMethod ;
                         dcterms:identifier "exactMatch" ;
     rdfs:label "Exact Object Match Search"@en ;
     rdf:value """
-        PREFIX prez: <https://prez.dev/>
-
-        CONSTRUCT {
-                    ?s ?p ?o ;
-                      prez:searchResultSource prez:$PREZ ;
-                      prez:usingSearchMethod prez:exactMatch .
-        }
-        {
-        SELECT DISTINCT ?s ?p ?o
-        WHERE { ?s ?p ?o .
-              FILTER REGEX(?o, "^$TERM$$", "i")
-            }
-        }
+        SELECT DISTINCT ?search_result_uri ?predicate ?match
+        WHERE { ?search_result_uri ?predicate ?match .
+            FILTER REGEX(?match, "^$TERM$$", "i")
+            } LIMIT $LIMIT
         """.

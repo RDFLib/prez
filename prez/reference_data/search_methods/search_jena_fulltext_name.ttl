@@ -1,0 +1,14 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix prez: <https://prez.dev/> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+prez:jenaFTName a prez:SearchMethod ;
+                        dcterms:identifier "jenaFTName" ;
+    rdfs:label "Exact Object Match Search"@en ;
+    rdf:value """
+        {
+            SELECT * {(?search_result_uri ?weight ?match ?graph ?predicate) <http://jena.apache.org/text#query>
+            (<http://www.example.org/resources#NameProps> "$TERM")} LIMIT $LIMIT
+        }
+        """.

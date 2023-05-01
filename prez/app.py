@@ -5,12 +5,16 @@ from textwrap import dedent
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import JSONResponse
 from rdflib import Graph, Literal, URIRef
 from starlette.middleware.cors import CORSMiddleware
 
 from prez.cache import tbox_cache
 from prez.config import settings
+from prez.models.model_exceptions import (
+    ClassNotFoundException,
+    URINotFoundException,
+    NoProfilesException,
+)
 from prez.reference_data.prez_ns import PREZ
 from prez.renderers.renderer import return_rdf
 from prez.routers.catprez import router as catprez_router
@@ -27,30 +31,29 @@ from prez.services.app_service import (
     populate_api_info,
     add_prefixes_to_prefix_graph,
 )
+from prez.services.exception_catchers import (
+    catch_400,
+    catch_404,
+    catch_500,
+    catch_class_not_found_exception,
+    catch_uri_not_found_exception,
+    catch_no_profiles_exception,
+)
 from prez.services.generate_profiles import create_profiles_graph
 from prez.services.prez_logging import setup_logger
-from prez.services.search_methods import generate_search_methods
-
-
-async def catch_400(request: Request, exc):
-    return JSONResponse(content={"detail": exc}, status_code=400)
-
-
-async def catch_404(request: Request, exc):
-    return JSONResponse(content={"detail": str(exc.detail)}, status_code=404)
-
-
-async def catch_500(request: Request, exc):
-    return JSONResponse(content={"detail": "Internal Server Error"}, status_code=500)
-
+from prez.services.search_methods import get_all_search_methods
 
 app = FastAPI(
     exception_handlers={
         400: catch_400,
         404: catch_404,
         500: catch_500,
+        ClassNotFoundException: catch_class_not_found_exception,
+        URINotFoundException: catch_uri_not_found_exception,
+        NoProfilesException: catch_no_profiles_exception,
     }
 )
+
 
 app.include_router(cql_router)
 app.include_router(management_router)
@@ -109,7 +112,7 @@ async def app_startup():
     log = logging.getLogger("prez")
     log.info("Starting up")
     await healthcheck_sparql_endpoints()
-    await generate_search_methods()
+    await get_all_search_methods()
     await create_profiles_graph()
     await count_objects()
     await populate_api_info()

@@ -16,7 +16,7 @@ PREFIX prov: <http://www.w3.org/ns/prov#>
 
 prez:VocPrezProfile
     a prof:Profile ;
-    prez:supportedSearchMethod prez:exactMatch , prez:skosPrefLabel , prez:skosWeighted ;
+    prez:supportedSearchMethod prez:exactMatch , prez:skosPrefLabel , prez:skosWeighted , prez:jenaFTName ;
     dcterms:identifier "vocprez"^^xsd:token ;
     dcterms:description "A system profile for VocPrez" ;
     skos:prefLabel "VocPrez profile" ;

@@ -31,9 +31,9 @@ async def object(
             pass
     if len(returned_items) == 0:
         return PlainTextResponse(
-            f"No object found for the provided URI in enabled prez flavours: {settings.enabled_prezs}"
+            f"No object found for the provided URI in enabled prez flavours: {', '.join(settings.enabled_prezs)}"
         )
-    elif len(returned_items) == 1:
+    elif len(returned_items):
         prez = list(returned_items.keys())[0]
         if prez == "SpacePrez":
             from prez.routers.spaceprez import item_endpoint
@@ -47,9 +47,10 @@ async def object(
             from prez.routers.catprez import item_endpoint
 
             return await item_endpoint(request, returned_items[prez])
-    elif len(returned_items) > 1:
-        lower_keys = [k.lower() for k in returned_items.keys()]
-        links = "\n".join(
-            ["/" + lower_key + "/object?uri=" + uri for lower_key in lower_keys]
-        )
-        return PlainTextResponse(f"Object found in multiple prez flavours:\n{links}")
+        # TODO reimplement class based logic to select the most relevant .. endpoint?
+    # elif len(returned_items) > 1:
+    #     lower_keys = [k.lower() for k in returned_items.keys()]
+    #     links = "\n".join(
+    #         ["/" + lower_key[0] + "/object?uri=" + uri for lower_key in lower_keys]
+    #     )
+    #     return PlainTextResponse(f"Object found in multiple prez flavours:\n{links}")

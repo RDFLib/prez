@@ -1,13 +1,17 @@
 import asyncio
 
 from fastapi import APIRouter, Request
-from rdflib import Graph, Literal
+from rdflib import Graph, Literal, URIRef
 from starlette.responses import PlainTextResponse
 
 from prez.cache import search_methods
 from prez.config import settings
 from prez.renderers.renderer import return_rdf
 from prez.sparql.methods import sparql_construct
+from prez.sparql.objects_listings import (
+    generate_listing_construct_from_uri,
+    generate_item_construct,
+)
 
 router = APIRouter(tags=["Search"])
 
@@ -20,6 +24,7 @@ async def search(
     request: Request,
 ):
     term = request.query_params.get("term")
+    limit = request.query_params.get("limit", 20)
     if not term:
         return PlainTextResponse(
             "A search_methods term must be provided as a query string argument (?term=<search_methods term>)"
@@ -39,12 +44,16 @@ async def search(
                 f'Search method "{method}" not found. Available methods are: '
                 f"{', '.join([str(m) for m in search_methods.keys()])}"
             )
-    search_queries = {
-        prez: search_methods[Literal(method)].template_query.substitute(
-            {"PREZ": prez, "TERM": term}
-        )
-        for prez, method in selected_methods.items()
+    search_queries = {}
+    for prez, method in selected_methods.items():
+        search_queries[prez] = search_methods[Literal(method)]
+        search_queries[prez].populate_query(prez, term, limit)
+
+    object_queries = {
+        k: generate_item_construct(v, URIRef("https://w3id.org/profile/mem"))
+        for k, v in search_queries.items()
     }
+
     results = await asyncio.gather(
         *[sparql_construct(query, p) for p, query in search_queries.items()]
     )
@@ -77,5 +86,5 @@ def get_default_search_methods():
     # TODO return from profiles
     methods = {}
     for prez in settings.enabled_prezs:
-        methods[prez] = "exactMatch"
+        methods[prez] = "jenaFTName"
     return methods

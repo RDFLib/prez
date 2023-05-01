@@ -10,31 +10,31 @@ prez:skosWeighted a prez:SearchMethod ;
     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
     PREFIX prez: <https://prez.dev/>
 
-    CONSTRUCT {{ ?uri skos:prefLabel ?pl ;
+    CONSTRUCT {{ ?search_result_uri skos:prefLabel ?pl ;
                       prez:searchResultWeight ?weight ;
                       prez:searchResultSource prez:$PREZ ;
                       prez:usingSearchMethod prez:skosWeighted .
     }}
     {{
-        SELECT DISTINCT ?g ?uri ?pl (SUM(?w) AS ?weight)
+        SELECT DISTINCT ?g ?search_result_uri ?pl (SUM(?w) AS ?weight)
         WHERE {{
             GRAPH ?g {{
                         {{  # exact match on a prefLabel always wins
-                            ?uri a skos:Concept ;
+                            ?search_result_uri a skos:Concept ;
                                  skos:prefLabel ?pl .
                             BIND (50 AS ?w)
                             FILTER REGEX(?pl, "^$TERM$$", "i")
                         }}
                         UNION
                         {{
-                            ?uri a skos:Concept ;
+                            ?search_result_uri a skos:Concept ;
                                  skos:prefLabel ?pl .
                             BIND (10 AS ?w)
                             FILTER REGEX(?pl, "$TERM", "i")
                         }}
                         UNION
                         {{
-                            ?uri a skos:Concept ;
+                            ?search_result_uri a skos:Concept ;
                                  skos:altLabel ?al ;
                                  skos:prefLabel ?pl .
                             BIND (5 AS ?w)
@@ -42,7 +42,7 @@ prez:skosWeighted a prez:SearchMethod ;
                         }}
                         UNION
                         {{
-                            ?uri a skos:Concept ;
+                            ?search_result_uri a skos:Concept ;
                                  skos:hiddenLabel ?hl ;
                                  skos:prefLabel ?pl .
                             BIND (5 AS ?w)
@@ -50,7 +50,7 @@ prez:skosWeighted a prez:SearchMethod ;
                         }}
                         UNION
                         {{
-                            ?uri a skos:Concept ;
+                            ?search_result_uri a skos:Concept ;
                                  skos:definition ?d ;
                                  skos:prefLabel ?pl .
                             BIND (1 AS ?w)
@@ -58,6 +58,6 @@ prez:skosWeighted a prez:SearchMethod ;
                         }}
                     }}
                 }}
-        GROUP BY ?g ?uri ?pl
+        GROUP BY ?g ?search_result_uri ?pl
     }}
     """ .
