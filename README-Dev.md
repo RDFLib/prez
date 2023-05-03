@@ -37,6 +37,23 @@ When Prez encounters a URI which is required for an internal link but is not in 
 To get "sensible" or "nice" prefixes, it is recommended to add all prefixes which will be required to turtle files in prez/reference_data/prefixes.
 A future change could allow the prefixes to be specified alongside data in the backend, as profiles currently can be.
 
+### Checking if namespace prefixes are defined
+
+The following SPARQL query can be used as a starting point to check if a namespace prefix is defined for instances of
+the main classes prez delivers. NB this query should NOT be run against SPARQL endpoints for large datasets; offline
+options should instead be used.
+NB. for "short" URIs, i.e. a hostname with no fragments and a "no" path, this query will (correctly, but uselessly)
+return "http://" or "https://". You will need to otherwise identify what these URIs are and provide prefixes for them
+should you wish.
+```sparql
+SELECT DISTINCT ?namespace
+{?uri a ?type
+  BIND (REPLACE(STR(?uri), "(.*[/#])[^#/]*$", "$1") AS ?namespace)
+  VALUES ?type { skos:Collection skos:ConceptScheme skos:Concept dcat:Dataset geo:FeatureCollection geo:Feature dcat:Resource dcat:Catalog }
+  MINUS {?namespace vann:preferredPrefix ?prefix .}
+} LIMIT 100
+```
+
 ## High Level Sequence
 
 Prez follows the following logic to determine what information to return, based on a profile, and in what mediatype to return it.
