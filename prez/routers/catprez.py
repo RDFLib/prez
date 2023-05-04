@@ -9,7 +9,7 @@ from prez.models.catprez_listings import CatalogMembers
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.renderers.renderer import return_from_queries, return_profiles
 from prez.sparql.objects_listings import (
-    generate_listing_construct_from_uri,
+    generate_listing_construct,
     generate_listing_count_construct,
     generate_item_construct,
 )
@@ -42,7 +42,7 @@ async def catalogs_endpoint(
             prez_type="SpacePrez",
             prof_and_mt_info=prof_and_mt_info,
         )
-    list_query, predicates_for_link_addition = generate_listing_construct_from_uri(
+    list_query, predicates_for_link_addition = generate_listing_construct(
         catprez_members, prof_and_mt_info.profile, page, per_page
     )
     count_query = generate_listing_count_construct(catprez_members)
@@ -90,7 +90,7 @@ async def item_endpoint(request: Request, cp_item: Optional[CatalogItem] = None)
     (
         item_members_query,
         predicates_for_link_addition,
-    ) = generate_listing_construct_from_uri(cp_item, prof_and_mt_info.profile, 1, 20)
+    ) = generate_listing_construct(cp_item, prof_and_mt_info.profile, 1, 20)
     return await return_from_queries(
         [item_query, item_members_query],
         prof_and_mt_info.mediatype,

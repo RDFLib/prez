@@ -10,7 +10,7 @@ from prez.models.vocprez_item import VocabItem
 from prez.models.vocprez_listings import VocabMembers
 from prez.renderers.renderer import return_from_queries, return_profiles
 from prez.sparql.objects_listings import (
-    generate_listing_construct_from_uri,
+    generate_listing_construct,
     generate_listing_count_construct,
     generate_item_construct,
 )
@@ -47,7 +47,7 @@ async def schemes_endpoint(
             prez_type="VocPrez",
             prof_and_mt_info=prof_and_mt_info,
         )
-    list_query, predicates_for_link_addition = generate_listing_construct_from_uri(
+    list_query, predicates_for_link_addition = generate_listing_construct(
         vocprez_members, prof_and_mt_info.profile, page, per_page
     )
     count_query = generate_listing_count_construct(vocprez_members)
@@ -111,7 +111,7 @@ async def item_endpoint(request: Request, vp_item: Optional[VocabItem] = None):
     (
         item_members_query,
         predicates_for_link_addition,
-    ) = generate_listing_construct_from_uri(vp_item, prof_and_mt_info.profile, 1, 5000)
+    ) = generate_listing_construct(vp_item, prof_and_mt_info.profile, 1, 5000)
     return await return_from_queries(
         [item_query, item_members_query],
         prof_and_mt_info.mediatype,

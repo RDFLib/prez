@@ -10,7 +10,7 @@ from prez.models.spaceprez_listings import SpatialMembers
 from prez.renderers.renderer import return_from_queries, return_profiles
 from prez.sparql.objects_listings import (
     generate_item_construct,
-    generate_listing_construct_from_uri,
+    generate_listing_construct,
     generate_listing_count_construct,
 )
 
@@ -40,7 +40,7 @@ async def list_items(
             prez_type="SpacePrez",
             prof_and_mt_info=prof_and_mt_info,
         )
-    list_query, predicates_for_link_addition = generate_listing_construct_from_uri(
+    list_query, predicates_for_link_addition = generate_listing_construct(
         spatial_item, prof_and_mt_info.profile, page, per_page
     )
     count_query = generate_listing_count_construct(spatial_item)
@@ -127,9 +127,7 @@ async def item_endpoint(request: Request, spatial_item: Optional[SpatialItem] = 
     (
         item_members_query,
         predicates_for_link_addition,
-    ) = generate_listing_construct_from_uri(
-        spatial_item, prof_and_mt_info.profile, 1, 20
-    )
+    ) = generate_listing_construct(spatial_item, prof_and_mt_info.profile, 1, 20)
     return await return_from_queries(
         [item_query, item_members_query],
         prof_and_mt_info.mediatype,
