@@ -48,7 +48,7 @@ async def search(
             )
     search_queries = {}  # for the inner "search" components of the queries
     for prez, method in deduped_methods.items():
-        search_queries[prez] = search_methods[Literal(method)]
+        search_queries[prez] = search_methods[Literal(method)].copy()
         search_queries[prez].populate_query(prez, term, limit)
 
     search_item_queries = {  # returns context of search results via profiles (as per other object endpoints),
@@ -66,8 +66,6 @@ async def search(
     for res in results:
         g = res[1]
         graph.__iadd__(g)
-    if len(graph) == 0:
-        return PlainTextResponse("No results found")
     return await return_rdf(graph, mediatype="text/anot+turtle", profile_headers={})
 
 
