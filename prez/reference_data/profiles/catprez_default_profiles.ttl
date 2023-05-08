@@ -14,7 +14,7 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 prez:CatPrezProfile
     a prof:Profile ;
-    prez:supportedSearchMethod prez:exactMatch ;
+    prez:supportedSearchMethod prez:exactMatch , prez:jenaFTName ;
     dcterms:identifier "catprez"^^xsd:token ;
     dcterms:description "A system profile for CatPrez" ;
     skos:prefLabel "CatPrez profile" ;

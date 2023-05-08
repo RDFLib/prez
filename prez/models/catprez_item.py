@@ -3,11 +3,10 @@ from typing import Set
 
 from pydantic import BaseModel, root_validator
 from rdflib import URIRef
-from rdflib.namespace import DCTERMS, XSD, DCAT, Namespace
+from rdflib.namespace import DCAT, Namespace
 
 from prez.services.curie_functions import get_uri_for_curie_id, get_curie_id_for_uri
 from prez.services.model_methods import get_classes
-from prez.sparql.methods import sparql_query_non_async
 
 PREZ = Namespace("https://prez.dev/")
 
@@ -25,6 +24,9 @@ class CatalogItem(BaseModel):
     top_level_listing: Optional[bool] = False
 
     def __hash__(self):
+        """
+        Required to make object hashable and in turn cacheable
+        """
         return hash(self.uri)
 
     @root_validator

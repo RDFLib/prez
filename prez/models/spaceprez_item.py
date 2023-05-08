@@ -28,6 +28,9 @@ class SpatialItem(BaseModel):
     top_level_listing: Optional[bool] = False
 
     def __hash__(self):
+        """
+        Required to make object hashable and in turn cacheable
+        """
         return hash(self.uri)
 
     @root_validator

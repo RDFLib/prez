@@ -33,7 +33,6 @@ class ProfileItem(BaseModel):
             values["uri"] = get_uri_for_curie_id(id)
         elif uri:
             values["id"] = get_curie_id_for_uri(uri)
-        values["classes"] = get_classes(values["uri"], "VocPrez")
         q = f"""SELECT ?class {{ <{values["uri"]}> a ?class }}"""
         r = profiles_graph_cache.query(q)
         if len(r.bindings) > 0:

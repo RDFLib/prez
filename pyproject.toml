@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "prez"
-version = "3.0.7"
+version = "3.0.8"
 description = "A python application for displaying linked data on the web"
 authors = ["Jamie Feiss <jamie.feiss@gmail.com>", "Nicholas Car <nick@kurrawong.net>", "David Habgood <dcchabgood@gmail.com>"]
 

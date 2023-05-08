@@ -14,6 +14,7 @@ from prez.models import (
     SpatialMembers,
     VocabItem,
     VocabMembers,
+    SearchMethod,
 )
 from prez.models.profiles_listings import ProfilesMembers
 from prez.services.curie_functions import get_uri_for_curie_id
@@ -145,46 +146,59 @@ def generate_listing_construct(
 
 
 @lru_cache(maxsize=128)
-def generate_item_construct(item, profile: URIRef):
-    object_uri = item.uri
+def generate_item_construct(focus_item, profile: URIRef):
+    search_query = (
+        True if isinstance(focus_item, SearchMethod) else False
+    )  # generates a listing of search results
     (
         include_predicates,
         exclude_predicates,
         inverse_predicates,
         sequence_predicates,
-    ) = get_item_predicates(profile, item.selected_class)
+    ) = get_item_predicates(profile, focus_item.selected_class)
     bnode_depth = profiles_graph_cache.value(
         profile,
         ALTREXT.hasBNodeDepth,
         None,
         default=2,
     )
+    if search_query:
+        uri_or_search_item = "?search_result_uri"
+    else:
+        uri_or_search_item = f"<{focus_item.uri}>"
     construct_query = dedent(
-        f"""PREFIX dcterms: <http://purl.org/dc/terms/>
+        f"""    PREFIX dcterms: <http://purl.org/dc/terms/>
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
     PREFIX prez: <https://prez.dev/>
     CONSTRUCT {{
-    \t<{object_uri}> ?p ?o1 .
-    {generate_sequence_construct(f"<{object_uri}>", sequence_predicates) if sequence_predicates else ""}
-    {f'{chr(9)}?s ?inbound_p <{object_uri}> .' if inverse_predicates else ""}
+    {f'{search_query_construct()} {chr(10)}' if search_query else ""}\
+    \t{uri_or_search_item} ?p ?o1 .
+    {generate_sequence_construct(f"{uri_or_search_item}", sequence_predicates) if sequence_predicates else ""}
+    {f'{chr(9)}?s ?inbound_p {uri_or_search_item} .' if inverse_predicates else ""}
     {generate_bnode_construct(bnode_depth)} \
     \n}}
     WHERE {{
-        {{
-        <{object_uri}> ?p ?o1 . {chr(10)} \
-        OPTIONAL {{
-            {generate_sequence_construct(f"<{object_uri}>", sequence_predicates) if sequence_predicates else chr(10)} \
-        }}
-        {f'?s ?inbound_p <{object_uri}>{chr(10)}' if inverse_predicates else chr(10)} \
+        {{ {f'{focus_item.populated_query}' if search_query else ""} }}
+        {uri_or_search_item} ?p ?o1 . {chr(10)} \
+        {f'OPTIONAL {{ {generate_sequence_construct(uri_or_search_item, sequence_predicates)} }}' if sequence_predicates else chr(10)} \
+        {f'?s ?inbound_p {uri_or_search_item}{chr(10)}' if inverse_predicates else chr(10)} \
         {generate_include_predicates(include_predicates)} \
         {generate_inverse_predicates(inverse_predicates)} \
-        {generate_bnode_select(bnode_depth)} \
-        }} \
+        {generate_bnode_select(bnode_depth)}
     }}
     """
     )
-    log.debug(f"Item Construct query for {object_uri} is:\n{construct_query}")
+    log.debug(f"Item Construct query for {uri_or_search_item} is:\n{construct_query}")
     return construct_query
+
+
+def search_query_construct():
+    return dedent(
+        f"""?search_result_uri a prez:SearchResult ;
+        prez:searchResultWeight ?weight ;
+        prez:searchResultPredicate ?predicate ;
+        prez:searchResultMatch ?match ."""
+    )
 
 
 def generate_relative_properties(

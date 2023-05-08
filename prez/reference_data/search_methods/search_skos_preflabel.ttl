@@ -7,34 +7,25 @@ prez:skosWeighted a prez:SearchMethod ;
                         dcterms:identifier "skosPrefLabel" ;
     rdfs:label "SKOS PrefLabel Search"@en ;
     rdf:value """
-        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-        PREFIX prez: <https://prez.dev/>
-
-        CONSTRUCT {{
-                    ?uri skos:prefLabel ?pl ;
-                      prez:searchResultWeight ?weight ;
-                      prez:searchResultSource prez:$PREZ ;
-                      prez:usingSearchMethod prez:skosPrefLabel .
-        }}
         {{
-        SELECT DISTINCT ?sys ?cs ?uri ?pl (SUM(?w) AS ?weight)
+        SELECT DISTINCT ?search_result_uri ?match (SUM(?w) AS ?weight)
         WHERE {{
             {{  # exact match on a prefLabel always wins
-                ?uri a skos:Concept ;
-                    skos:prefLabel ?pl ;
-                    skos:inScheme|skos:topConceptOf|^skos:hasTopConcept ?cs .
+                ?search_result_uri a <http://www.w3.org/2004/02/skos/core#Concept> ;
+                    <http://www.w3.org/2004/02/skos/core#prefLabel> ?match ;
+                    <http://www.w3.org/2004/02/skos/core#inScheme>|<http://www.w3.org/2004/02/skos/core#topConceptOf>|^<http://www.w3.org/2004/02/skos/core#hasTopConcept> ?cs .
                 BIND (50 AS ?w)
-                FILTER REGEX(?pl, "^$TERM$$", "i")
+                FILTER REGEX(?match, "^$TERM$$", "i")
             }}
             UNION
             {{
-                ?uri a skos:Concept ;
-                    skos:prefLabel ?pl ;
-                    skos:inScheme|skos:topConceptOf|^skos:hasTopConcept ?cs .
+                ?search_result_uri a <http://www.w3.org/2004/02/skos/core#Concept> ;
+                    <http://www.w3.org/2004/02/skos/core#prefLabel> ?match ;
+                    <http://www.w3.org/2004/02/skos/core#inScheme>|<http://www.w3.org/2004/02/skos/core#topConceptOf>|^<http://www.w3.org/2004/02/skos/core#hasTopConcept> ?cs .
                 BIND (10 AS ?w)
-                FILTER REGEX(?pl, "$TERM", "i")
+                FILTER REGEX(?match, "$TERM", "i")
             }}
         }}
-        GROUP BY ?cs ?uri ?pl ?sys
+        GROUP BY ?cs ?search_result_uri ?match ?sys
         }}
         """.

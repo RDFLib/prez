@@ -37,6 +37,28 @@ When Prez encounters a URI which is required for an internal link but is not in 
 To get "sensible" or "nice" prefixes, it is recommended to add all prefixes which will be required to turtle files in prez/reference_data/prefixes.
 A future change could allow the prefixes to be specified alongside data in the backend, as profiles currently can be.
 
+### Checking if namespace prefixes are defined
+
+The following SPARQL query can be used as a starting point to check if a namespace prefix is defined for instances of
+the main classes prez delivers. NB this query should NOT be run against SPARQL endpoints for large datasets; offline
+options should instead be used.
+NB. for "short" URIs, i.e. a hostname with no fragments and a "no" path, this query will (correctly, but uselessly)
+return "http://" or "https://". You will need to otherwise identify what these URIs are and provide prefixes for them
+should you wish.
+```sparql
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX vann: <http://purl.org/vocab/vann/>
+PREFIX dcat: <http://www.w3.org/ns/dcat#>
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+
+SELECT DISTINCT ?namespace
+{?uri a ?type
+  BIND (REPLACE(STR(?uri), "(.*[/#])[^#/]*$", "$1") AS ?namespace)
+  VALUES ?type { skos:Collection skos:ConceptScheme skos:Concept dcat:Dataset geo:FeatureCollection geo:Feature dcat:Resource dcat:Catalog }
+  MINUS {?namespace vann:preferredPrefix ?prefix .}
+} LIMIT 100
+```
+
 ## High Level Sequence
 
 Prez follows the following logic to determine what information to return, based on a profile, and in what mediatype to return it.
@@ -205,99 +227,7 @@ WHERE {
   BIND(URI(CONCAT(STR(?instance_of_main_class),"/support-graph")) AS ?support_graph_uri)
 }
 ```
-### C.2 - CatPrez Insert Support Graphs
-```sparql
-PREFIX dcat: <http://www.w3.org/ns/dcat#>
-PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX prez: <https://prez.dev/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-INSERT {
-  GRAPH prez:catprez-system-graph {
-    ?support_graph_uri prez:hasContextFor ?instance_of_main_class .
-    ?collectionList rdfs:member ?instance_of_top_class .
-    ?instance_of_main_class dcterms:identifier ?prez_id .
-  }
-  GRAPH ?support_graph_uri { ?member dcterms:identifier ?prez_mem_id . }
-}
-WHERE {
-  {
-    ?instance_of_main_class a ?collection_class .
-    VALUES ?collection_class { <http://www.w3.org/ns/dcat#Catalog>
-      <http://www.w3.org/ns/dcat#Resource> }
-    OPTIONAL {?instance_of_top_class a ?topmost_class
-      VALUES ?topmost_class { <http://www.w3.org/ns/dcat#Catalog> }
-    }
-    MINUS { GRAPH prez:catprez-system-graph {?a_context_graph prez:hasContextFor ?instance_of_main_class}
-    }
-    OPTIONAL {?instance_of_main_class dcterms:identifier ?id
-      BIND(DATATYPE(?id) AS ?dtype_id)
-      FILTER(?dtype_id = xsd:token)
-    }
-    OPTIONAL { ?instance_of_main_class dcterms:hasPart ?member
-      OPTIONAL {?member dcterms:identifier ?mem_id
-        BIND(DATATYPE(?mem_id) AS ?dtype_mem_id)
-        FILTER(?dtype_mem_id = xsd:token) } }
-  }
-  BIND(
-    IF(?topmost_class=dcat:Dataset, prez:DatasetList,
-      IF(?topmost_class=dcat:Catalog,prez:CatalogList,
-        IF(?topmost_class=skos:ConceptScheme,prez:SchemesList,
-          IF(?topmost_class=skos:Collection,prez:VocPrezCollectionList,"")))) AS ?collectionList)
-  BIND(STRDT(COALESCE(STR(?id),MD5(STR(?instance_of_main_class))), prez:slug) AS ?prez_id)
-  BIND(STRDT(COALESCE(STR(?mem_id),MD5(STR(?member))), prez:slug) AS ?prez_mem_id)
-  BIND(URI(CONCAT(STR(?instance_of_main_class),"/support-graph")) AS ?support_graph_uri)
-}
-```
-### C.3 - VocPrez Insert Support Graphs
-```sparql
-PREFIX dcat: <http://www.w3.org/ns/dcat#>
-PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX prez: <https://prez.dev/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-INSERT {
-  GRAPH prez:vocprez-system-graph {
-    ?support_graph_uri prez:hasContextFor ?instance_of_main_class .
-    ?collectionList rdfs:member ?instance_of_top_class .
-    ?instance_of_main_class dcterms:identifier ?prez_id .
-  }
-  GRAPH ?support_graph_uri { ?member dcterms:identifier ?prez_mem_id . }
-}
-WHERE {
-  {
-    ?instance_of_main_class a ?collection_class .
-    VALUES ?collection_class { <http://www.w3.org/2004/02/skos/core#ConceptScheme>
-      <http://www.w3.org/2004/02/skos/core#Collection> }
-    OPTIONAL {?instance_of_top_class a ?topmost_class
-      VALUES ?topmost_class { <http://www.w3.org/2004/02/skos/core#ConceptScheme>
-        <http://www.w3.org/2004/02/skos/core#Collection> }
-    }
-    MINUS { GRAPH prez:vocprez-system-graph {?a_context_graph prez:hasContextFor ?instance_of_main_class}
-    }
-    OPTIONAL {?instance_of_main_class dcterms:identifier ?id
-      BIND(DATATYPE(?id) AS ?dtype_id)
-      FILTER(?dtype_id = xsd:token)
-    }
-    OPTIONAL { {?instance_of_main_class ^skos:inScheme ?member }
-      UNION
-      { ?instance_of_main_class skos:member ?member }
-      OPTIONAL {?member dcterms:identifier ?mem_id
-        BIND(DATATYPE(?mem_id) AS ?dtype_mem_id)
-        FILTER(?dtype_mem_id = xsd:token) } }
-  }
-  BIND(
-    IF(?topmost_class=dcat:Dataset, prez:DatasetList,
-      IF(?topmost_class=dcat:Catalog,prez:CatalogList,
-        IF(?topmost_class=skos:ConceptScheme,prez:SchemesList,
-          IF(?topmost_class=skos:Collection,prez:VocPrezCollectionList,"")))) AS ?collectionList)
-  BIND(STRDT(COALESCE(STR(?id),MD5(STR(?instance_of_main_class))), prez:slug) AS ?prez_id)
-  BIND(STRDT(COALESCE(STR(?mem_id),MD5(STR(?member))), prez:slug) AS ?prez_mem_id)
-  BIND(URI(CONCAT(STR(?instance_of_main_class),"/support-graph")) AS ?support_graph_uri)
-}
-```
+## Appendix C - Removed - to updated numbering consistently
 ## Appendix D - Example Profile and Mediatype Selection SPARQL query
 This SPARQL query determines the profile and mediatype to return based on user requests,
 defaults, and the availability of these in profiles.

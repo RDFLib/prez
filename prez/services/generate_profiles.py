@@ -7,6 +7,7 @@ from rdflib import Graph, URIRef
 
 from prez.cache import profiles_graph_cache
 from prez.config import settings
+from prez.models.model_exceptions import NoProfilesException
 from prez.services.curie_functions import get_curie_id_for_uri
 from prez.sparql.methods import sparql_construct
 from prez.sparql.objects_listings import select_profile_mediatype
@@ -78,10 +79,7 @@ def get_profiles_and_mediatypes(
     )
     response = profiles_graph_cache.query(query)
     if len(response.bindings[0]) == 0:
-        raise ValueError(
-            f"No profiles and/or mediatypes could be found to render the resource. The resource class(es) searched for "
-            f"were: {', '.join(klass for klass in classes)}"
-        )
+        raise NoProfilesException(classes)
     top_result = response.bindings[0]
     profile, mediatype, selected_class = (
         top_result["profile"],
