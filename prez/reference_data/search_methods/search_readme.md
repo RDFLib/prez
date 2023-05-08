@@ -24,15 +24,16 @@ be kept separate from system methods.
 ### SPARQL SELECT query format
 Search SPARQL queries MUST:
 
+- **use fully qualified URIs (i.e. no namespace prefixes are allowed). This is because simple string concatenation is used to insert the search query as a subquery in a query which gathers additional context for search results.**
 - return search results bound to the `?search_result_uri` variable. This is because the search method is used as a
 sub-select in an object listing query which expects this variable.
 - accept a search term using `$TERM` in the query. This will be substituted for the search term provided by the user.
+
 
 Search SPARQL queries SHOULD:
 
 - include a LIMIT clause by including `$LIMIT` to limit the number of results returned. Prez will default this limit to
 20 results if a LIMIT is not specified by users.
-Example query snipped:
 
 Search SPARQL queries MAY:
 

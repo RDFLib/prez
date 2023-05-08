@@ -46,6 +46,11 @@ NB. for "short" URIs, i.e. a hostname with no fragments and a "no" path, this qu
 return "http://" or "https://". You will need to otherwise identify what these URIs are and provide prefixes for them
 should you wish.
 ```sparql
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX vann: <http://purl.org/vocab/vann/>
+PREFIX dcat: <http://www.w3.org/ns/dcat#>
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+
 SELECT DISTINCT ?namespace
 {?uri a ?type
   BIND (REPLACE(STR(?uri), "(.*[/#])[^#/]*$", "$1") AS ?namespace)
