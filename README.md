@@ -1,6 +1,7 @@
 ![](https://github.com/RDFLib/prez/raw/main/prez-logo.png)
 
 # Prez
+
 Prez is a data-configurable Linked Data API framework that delivers _profiles_ of Knowledge Graph data according to the [Content Negotiation by Profile](https://w3c.github.io/dx-connegp/connegp/) standard.
 
 > **Where's the UI?**
@@ -11,22 +12,21 @@ Prez is a data-configurable Linked Data API framework that delivers _profiles_ o
 
 ## Contents
 
-* [Subsystems](#subsystems)
-* [Installation](#installation)
-* [Running](#running)
-* [Data Validation](#data-validation)
-* [Contact](#contact)
-* [Contributing](#contributing)
-* [License](#license)
-
+- [Subsystems](#subsystems)
+- [Installation](#installation)
+- [Running](#running)
+- [Data Validation](#data-validation)
+- [Contact](#contact)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Subsystems
 
 Prez comes with several pre-configures subsystems:
 
-* _VocPrez_ - for vocabularies, based on the [SKOS](https://www.w3.org/TR/skos-reference/) data model
-* _SpacePrez_ - for spatial data, based on [OGC API](https://docs.ogc.org/is/17-069r3/17-069r3.html) specification and the [GeoSPARQL](https://opengeospatial.github.io/ogc-geosparql/geosparql11/spec.html) data model
-* _CatPrez_ - for [DCAT](https://www.w3.org/TR/vocab-dcat/) data catalogs
+- _VocPrez_ - for vocabularies, based on the [SKOS](https://www.w3.org/TR/skos-reference/) data model
+- _SpacePrez_ - for spatial data, based on [OGC API](https://docs.ogc.org/is/17-069r3/17-069r3.html) specification and the [GeoSPARQL](https://opengeospatial.github.io/ogc-geosparql/geosparql11/spec.html) data model
+- _CatPrez_ - for [DCAT](https://www.w3.org/TR/vocab-dcat/) data catalogs
 
 Prez uses the modern [FastAPI](https://fastapi.tiangolo.com/) Python web framework, so it's fast! It also has few requirements beyond FastAPI so should be pretty easy to install and run in most cases.
 
@@ -35,7 +35,6 @@ It expects "high quality" data to work well: Prez itself won't patch up bad or m
 > **NOTE**: There are a number of data quality assessment tools and processes you can run to ensure that the data you want Prez to access is fit for purpose. See [Data Validation](#data-validation) below.
 
 Prez accesses data stored in an RDF database - a 'triplestore' - and uses the SPARQL Protocol to do so. Any SPARQL Protocol-compliant DB may be used.
-
 
 ## Installation
 
@@ -53,12 +52,11 @@ We also provide a standard `requirements.txt` file for use with the common [PIP]
 
 > Executing `pip install -r requirements.txt` within a Python virtual environment will probably be all you need to do!
 
-
 ## Running
 
 Prez runs as a standard FastAPI application so for all the normal HOW TO running questions, see FastAPI's documentation:
 
-* <https://fastapi.tiangolo.com>
+- <https://fastapi.tiangolo.com>
 
 ### Environment Variables
 
@@ -89,27 +87,39 @@ port: int = 8000
 
 So the `port` variable must be an `int` and its default value is 8000.
 
-### Using Docker
+### Running in a Container
 
-To run Prez within a Docker container, first build the Docker image using the Dockerfile in this repo, or pull from Dockerhub:
+Prez container images are available [here](https://github.com/RDFLib/prez/pkgs/container/prez).
 
-build: `docker build -t prez .`
+#### Image variants
 
-or
+The image name is `ghcr.io/rdflib/prez`.
 
-pull: `docker pull surroundaustralia/prez`
+The `latest` tag points to the latest stable release of Prez. All latest stable releases have a major, major and minor, and major, minor and patch tag pointing to it.
 
-Then run the image:
+For example, for a release with a git tag of 3.2.4, the following tags will be on the container image:
+
+- `3`
+- `3.2`
+- `3.2.4`
+- `latest`
+
+New commits to the `main` branch creates a rolling dev image with the `dev` tag. The dev builds will also include a tag in the form of major.minor.{patch+1}-dev.{commits-since-last-release}.{short-commit-sha}. This conforms to semantic versioning and will be recognised by orchestration systems to perform automatic releases.
+
+For example, if the latest release is 3.2.4 and there has been 7 new commits since the release and the short commit SHA is fc82562, then the container image tag will be:
+
+- `3.2.5-dev.7.fc82562`
+
+To run an image with Docker:
+
 ```
 docker run -p 8000:8000 \
-    -e ENABLED_PREZS=["SpacePrez", "VocPrez"] \
     -e SPACEPREZ_SPARQL_ENDPOINT=http://localhost:3030/spatial \
     -e VOCPREZ_SPARQL_ENDPOINT=http://localhost:3030/other \
-    rdflib/prez
+    rdflib/prez:3
 ```
 
 The above command will run a Docker container with Prez in it on Port 8000 with SpacePrez & VocPrez subsystems enabled and different SPARQL endpoints given for each.
-
 
 ## Data Validation
 
@@ -119,10 +129,10 @@ For Prez to deliver data via its various subsystems, the data needs to conform t
 
 Formal RDF data profiles - standards that constrain other standards - are specified for Space, Voc & CatPrez. See:
 
-* [SpacePrez Profile Specification](https://w3id.org/profile/spaceprez/spec)
-* [VocPrez Profile Specification](https://w3id.org/profile/vocprez/spec)
-* [CatPrez Profile Specification](https://w3id.org/profile/catprez/spec)
-  * _yes yes, we know this one is offline for the moment. To be fixed shortly!_
+- [SpacePrez Profile Specification](https://w3id.org/profile/spaceprez/spec)
+- [VocPrez Profile Specification](https://w3id.org/profile/vocprez/spec)
+- [CatPrez Profile Specification](https://w3id.org/profile/catprez/spec)
+  - _yes yes, we know this one is offline for the moment. To be fixed shortly!_
 
 The specifications of the various profiles _should_ be straightforward to read. Just be aware that they profile - inherit from and further constrain - other profiles so that there are quite a few 'background' data rules that must be met.
 
@@ -132,10 +142,9 @@ All of the profiles listed above provide validators that can be used with RDF da
 
 The profiles' validators are all available from the profiles themselves (navigate to the listings of other profile resources via the specification links above) and they are also loaded into the _RDFTools_ online tool which you can use without downloading or installing anything:
 
-* <http://rdftools.kurrawong.net/validate>
+- <http://rdftools.kurrawong.net/validate>
 
 Look for the _VocPrez Compounded_ and similar validators. The 'compounded' bit means that validator will validate data against all VocPrez and inherited requirements.
-
 
 ## Contact
 
