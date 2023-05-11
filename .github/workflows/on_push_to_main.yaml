@@ -15,6 +15,9 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+        with:
+          # Required by WyriHaximus/github-action-get-previous-tag
+          fetch-depth: 0
 
       - name: Get latest tag
         id: latest-tag
