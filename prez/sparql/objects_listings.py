@@ -145,7 +145,6 @@ def generate_listing_construct(
         # if this is a top level class, include it's general class here so we can create
         # links to instances of the top level class,
     }
-    print(query)
     return query, predicates_for_link_addition
 
 
