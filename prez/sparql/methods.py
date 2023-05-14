@@ -183,7 +183,6 @@ async def sparql_construct(query: str, prez: str):
         }
 
 
-@alru_cache(maxsize=128)
 async def sparql_update(request, prez):
     headers = {
         "Authorization": request.headers.get("Authorization"),
