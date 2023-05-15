@@ -25,6 +25,7 @@ from prez.routers.profiles import router as profiles_router
 from prez.routers.search import router as search_router
 from prez.routers.spaceprez import router as spaceprez_router
 from prez.routers.sparql import router as sparql_router
+from prez.routers.update import update_router
 from prez.routers.vocprez import router as vocprez_router
 from prez.services.app_service import healthcheck_sparql_endpoints, count_objects
 from prez.services.app_service import (
@@ -60,6 +61,7 @@ app.include_router(management_router)
 app.include_router(object_router)
 app.include_router(sparql_router)
 app.include_router(search_router)
+app.include_router(update_router)
 app.include_router(profiles_router)
 if settings.catprez_sparql_endpoint:
     app.include_router(catprez_router)

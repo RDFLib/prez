@@ -183,22 +183,18 @@ async def sparql_construct(query: str, prez: str):
         }
 
 
-@alru_cache(maxsize=128)
-async def sparql_update(query: str, prez: str):
-    """Returns an rdflib Graph from a CONSTRUCT query for a single SPARQL endpoint"""
-    if not query:
-        return False, None
+async def sparql_update(request, prez):
+    headers = {
+        "Authorization": request.headers.get("Authorization"),
+        "Content-Type": request.headers.get("Content-Type"),
+    }
+    data = await request.body()
+
     try:
         response: httpxResponse = await sparql_clients[prez].post(
             settings.sparql_creds[prez]["update"],
-            data=query,
-            auth=(
-                settings.sparql_creds[prez].get("username", ""),
-                settings.sparql_creds[prez].get("password", ""),
-            ),
-            headers={
-                "Content-Type": "application/sparql-update",
-            },
+            data=data,
+            headers=headers,
             timeout=TIMEOUT,
         )
         response.raise_for_status()
