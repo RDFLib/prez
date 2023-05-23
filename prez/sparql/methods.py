@@ -1,8 +1,7 @@
 import logging
-from functools import lru_cache
+
 from typing import Dict, List, Tuple, Union
 
-from async_lru import alru_cache
 from httpx import Client, HTTPError, HTTPStatusError
 from httpx import Response as httpxResponse
 from rdflib import Graph
@@ -88,7 +87,7 @@ async def sparql_query(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
         }
 
 
-@alru_cache(maxsize=128)
+
 async def sparql_construct(query: str, prez: str):
     """Returns an rdflib Graph from a CONSTRUCT query for a single SPARQL endpoint"""
     if prez == "GenericPrez":
@@ -99,7 +98,6 @@ async def sparql_construct(query: str, prez: str):
     if not query:
         return False, None
     try:
-
         response: httpxResponse = await sparql_clients[prez].post(
             url="",
             data=query,
@@ -160,7 +158,6 @@ async def sparql_update(request, prez):
         )
 
 
-@alru_cache(maxsize=128)
 async def sparql_ask(query: str, prez: str):
     """Returns an rdflib Graph from a CONSTRUCT query for a single SPARQL endpoint"""
     if not query:
@@ -197,7 +194,6 @@ async def sparql_ask(query: str, prez: str):
         }
 
 
-@lru_cache(maxsize=128)
 def sparql_ask_non_async(query: str, prez: str):
     """Returns an rdflib Graph from a CONSTRUCT query for a single SPARQL endpoint"""
     with Client() as client:
@@ -225,7 +221,6 @@ def sparql_ask_non_async(query: str, prez: str):
         }
 
 
-@lru_cache(maxsize=128)
 def sparql_construct_non_async(query: str, prez: str):
     """Returns an rdflib Graph from a CONSTRUCT query for a single SPARQL endpoint"""
 
