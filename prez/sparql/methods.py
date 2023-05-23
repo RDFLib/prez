@@ -1,9 +1,7 @@
 import logging
-import time
-from functools import lru_cache
+
 from typing import Dict, List, Tuple, Union
 
-from async_lru import alru_cache
 from httpx import Client, HTTPError, HTTPStatusError
 from httpx import Response as httpxResponse
 from rdflib import Graph
@@ -17,35 +15,6 @@ log = logging.getLogger(__name__)
 TIMEOUT = 30.0
 
 
-# from starlette.requests import Request
-# from starlette.responses import StreamingResponse
-# from starlette.background import BackgroundTask
-#
-#
-# import httpx
-#
-#
-#
-#
-# async def _reverse_proxy(request: Request):
-#     url = httpx.URL(path=request.url.path,
-#                     query=request.url.query.encode("utf-8"))
-#     rp_req = client.build_request(request.method, url,
-#                                   headers=request.headers.raw,
-#                                   content=await request.body())
-#     rp_resp = await client.send(rp_req, stream=True)
-#     return StreamingResponse(
-#         rp_resp.aiter_raw(),
-#         status_code=rp_resp.status_code,
-#         headers=rp_resp.headers,
-#         background=BackgroundTask(rp_resp.aclose),
-#     )
-#
-# app.add_route("/titles/{path:path}",
-#               _reverse_proxy, ["GET", "POST"])
-
-
-@lru_cache(maxsize=128)
 def sparql_query_non_async(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
     """Executes a SPARQL SELECT query for a single SPARQL endpoint"""
 
@@ -73,7 +42,6 @@ def sparql_query_non_async(query: str, prez: str) -> Tuple[bool, Union[List, Dic
         }
 
 
-@alru_cache(maxsize=128)
 async def sparql_query(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
     """Executes a SPARQL SELECT query for a single SPARQL endpoint"""
     be_endpoint = settings.sparql_creds[prez]["endpoint"]
@@ -119,28 +87,7 @@ async def sparql_query(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
         }
 
 
-# async def sparql_construct(query: str, prez: str):
-#     """Returns an rdflib Graph from a CONSTRUCT query for a single SPARQL endpoint"""
-#
-#
-#     if not query:
-#         return False, None
-#     async with AsyncClient() as client:
-#         response: httpxResponse = await client.post(
-#             url=settings.sparql_creds[prez]["endpoint"],
-#             data=query,
-#             headers={
-#                 "Accept": "text/turtle",
-#                 "Content-Type": "application/sparql-query",
-#             },
-#             # auth=(settings.sparql_creds[prez]["username"], settings.sparql_creds[prez]["password"]),
-#             timeout=TIMEOUT,
-#         )
-#     if 200 <= response.status_code < 300:
-#         return True, Graph().parse(data=response.text)
 
-
-@alru_cache(maxsize=128)
 async def sparql_construct(query: str, prez: str):
     """Returns an rdflib Graph from a CONSTRUCT query for a single SPARQL endpoint"""
     if prez == "GenericPrez":
@@ -151,7 +98,6 @@ async def sparql_construct(query: str, prez: str):
     if not query:
         return False, None
     try:
-
         response: httpxResponse = await sparql_clients[prez].post(
             url="",
             data=query,
@@ -212,7 +158,6 @@ async def sparql_update(request, prez):
         )
 
 
-@alru_cache(maxsize=128)
 async def sparql_ask(query: str, prez: str):
     """Returns an rdflib Graph from a CONSTRUCT query for a single SPARQL endpoint"""
     if not query:
@@ -249,7 +194,6 @@ async def sparql_ask(query: str, prez: str):
         }
 
 
-@lru_cache(maxsize=128)
 def sparql_ask_non_async(query: str, prez: str):
     """Returns an rdflib Graph from a CONSTRUCT query for a single SPARQL endpoint"""
     with Client() as client:
