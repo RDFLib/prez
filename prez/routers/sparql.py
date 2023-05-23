@@ -39,8 +39,13 @@ async def sparql(
         if len(settings.enabled_prezs) == 1:
             prez = settings.enabled_prezs[0]
         else:
+            endpoints = {p: settings.sparql_creds[p]["endpoint"] for p in settings.enabled_prezs}
+            unique_endpoints = {}
+            for p, endpoint in endpoints.items():
+                if endpoint not in unique_endpoints.values():
+                    unique_endpoints[p] = endpoint
             results = await asyncio.gather(
-                *[sparql_query(query, p) for p in settings.enabled_prezs]
+                *[sparql_query(query, p) for p in unique_endpoints.keys()]
             )
             for result in results:
                 if isinstance(result, PlainTextResponse):
@@ -105,8 +110,13 @@ async def sparql(
         if len(settings.enabled_prezs) == 1:
             prez = settings.enabled_prezs[0]
         else:
+            endpoints = {p: settings.sparql_creds[p]["endpoint"] for p in settings.enabled_prezs}
+            unique_endpoints = {}
+            for p, endpoint in endpoints.items():
+                if endpoint not in unique_endpoints.values():
+                    unique_endpoints[p] = endpoint
             results = await asyncio.gather(
-                *[sparql_query(query, p) for p in settings.enabled_prezs]
+                *[sparql_query(query, p) for p in unique_endpoints.keys()]
             )
             for result in results:
                 if isinstance(result, PlainTextResponse):

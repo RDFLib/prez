@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     vocprez_sparql_password: A password for the VocPrez SPARQL endpoints, if required by the RDF DB
     protocol: The protocol used to deliver Prez. Usually 'http', could be 'https'.
     host: Prez' host domain name. Usually 'localhost' but could be anything
-    port: The port Prez is made accissible on. Default is 8000, could be 80 or anything else that your system has permission to use
+    port: The port Prez is made accessible on. Default is 8000, could be 80 or anything else that your system has permission to use
     system_uri: Documentation property. An IRI for the Prez system as a whole. This value appears in the landing page RDF delivered by Prez ('/')
     top_level_classes:
     collection_classes:
