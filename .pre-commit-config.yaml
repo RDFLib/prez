@@ -13,17 +13,8 @@ repos:
     rev: 22.3.0
     hooks:
       - id: black
-  - repo:  https://github.com/codespell-project/codespell
+  - repo: https://github.com/codespell-project/codespell
     rev: v2.1.0
     hooks:
       - id: codespell
         args: [--skip, "*.ttl"]
-  - repo: local
-    hooks:
-      - id: update-requirements-txt
-        name: update-requirements-txt
-        description: 'Generate requirements.txt based on poetry.lock'
-        entry: poetry
-        args: [export, --format, requirements.txt, --output, requirements.txt, --without-hashes]
-        language: system
-        pass_filenames: false
