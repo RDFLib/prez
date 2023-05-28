@@ -36,21 +36,25 @@ It expects "high quality" data to work well: Prez itself won't patch up bad or m
 
 Prez accesses data stored in an RDF database - a 'triplestore' - and uses the SPARQL Protocol to do so. Any SPARQL Protocol-compliant DB may be used.
 
-## Installation
+## Development
 
-_You don't have to 'install' Prez to use it, see the [Running](#running) options below. You may want to install Prez to develop with it._
+This section is for developing Prez locally. See the [Running](#running) options below for running Prez in production.
 
 ### Poetry
 
 Prez is developed with [Poetry](https://python-poetry.org/) which is a Python packaging and dependency tool. Poetry presents all of Prez' dependencies (other Python packages) in the `pyproject.toml` file in this directory which can be used by Poetry to establish the environment you need to run Prez.
 
-> Executing `poetry update` within this directory within a Python virtual environment will probably be all you need to do!
+Install the Python dependencies.
 
-### PIP
+```bash
+poetry install
+```
 
-We also provide a standard `requirements.txt` file for use with the common [PIP](https://pypi.org/project/pip/) package installer. We build this file using Poetry too.
+Running the development server with auto-reload on code changes.
 
-> Executing `pip install -r requirements.txt` within a Python virtual environment will probably be all you need to do!
+```bash
+poetry run python main.py
+```
 
 ## Running
 
