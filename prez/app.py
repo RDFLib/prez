@@ -31,7 +31,8 @@ from prez.services.app_service import healthcheck_sparql_endpoints, count_object
 from prez.services.app_service import (
     populate_api_info,
     add_prefixes_to_prefix_graph,
-    load_reg_status_vocab
+    load_reg_status_vocab,
+    load_vocab_derivation_modes_vocab
 )
 from prez.services.exception_catchers import (
     catch_400,
@@ -121,6 +122,7 @@ async def app_startup():
     await populate_api_info()
     await add_prefixes_to_prefix_graph()
     await load_reg_status_vocab()
+    await load_vocab_derivation_modes_vocab()
 
 
 @app.on_event("shutdown")

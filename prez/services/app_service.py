@@ -114,30 +114,57 @@ async def add_prefixes_to_prefix_graph():
     log.info("Prefixes from local files added to prefix graph")
 
 
+def _load_data_to_sparql_store_graph(graph_name: str, data: str, endpoint, auth) -> None:
+    """Load RDF Turtle to a named graph using SPARQL Store PUT."""
+    try:
+        params = {"graph": graph_name}
+        headers = {"Content-Type": "text/turtle"}
+        response = httpx.put(
+            endpoint, data=data, auth=auth, params=params, headers=headers
+        )
+        response.raise_for_status()
+        log.info(f"Loaded vocabulary to graph {graph_name}")
+    except httpx.HTTPError as exc:
+        log.error(f"HTTP Exception for {exc.request.url} - {exc}")
+
+
+def _get_sparql_details(prez: str) -> tuple[str, tuple[str, str]]:
+    """Get SPARQL details based on Prez subsystem."""
+    if prez not in settings.enabled_prezs:
+        raise ValueError(f"{prez} not in enabled_prezs.")
+
+    username = settings.sparql_creds[prez].get("username")
+    password = settings.sparql_creds[prez].get("password")
+    endpoint = settings.sparql_creds[prez]["endpoint"]
+    if username or password:
+        auth = (username, password)
+    else:
+        auth = None
+
+    return endpoint, auth
+
+
 async def load_reg_status_vocab() -> Iterator[None]:
     """Load the reg:status vocabulary into the SPARQL store"""
-    
+
+    graph_name = "urn:system:reg-status"
     path = Path(__file__).parent.parent / "reference_data/reg-status.ttl"
-    
+    prez = "VocPrez"
+
     with open(path, "r", encoding="utf-8") as file:
         data = file.read()
+        endpoint, auth = _get_sparql_details(prez)
+        _load_data_to_sparql_store_graph(graph_name, data, endpoint, auth)
 
-        vocprez = "VocPrez"
-        if vocprez in settings.enabled_prezs:
-            username = settings.sparql_creds[vocprez].get("username")
-            password = settings.sparql_creds[vocprez].get("password")
-            endpoint = settings.sparql_creds[vocprez]["endpoint"]
-            if username or password:
-                auth = (username, password)
-            else:
-                auth = None
 
-            try:
-                graph_name = "urn:system:reg-status"
-                params = {"graph": graph_name}
-                headers = {"Content-Type": "text/turtle"}
-                response = httpx.put(endpoint, data=data, auth=auth, params=params, headers=headers)
-                response.raise_for_status()
-                log.info(f"Loaded reg-status vocabulary to graph {graph_name}")
-            except httpx.HTTPError as exc:
-                log.error(f"HTTP Exception for {exc.request.url} - {exc}")
+async def load_vocab_derivation_modes_vocab() -> Iterator[None]:
+    """Load the Vocabulary Derivation Modes vocabulary into the SPARQL store"""
+
+    graph_name = "urn:system:vocab-derivation-modes"
+    path = Path(__file__).parent.parent / "reference_data/vocab-derivation-modes.ttl"
+    prez = "VocPrez"
+
+    with open(path, "r", encoding="utf-8") as file:
+        data = file.read()
+        endpoint, auth = _get_sparql_details(prez)
+        _load_data_to_sparql_store_graph(graph_name, data, endpoint, auth)
