@@ -114,7 +114,9 @@ async def add_prefixes_to_prefix_graph():
     log.info("Prefixes from local files added to prefix graph")
 
 
-def _load_data_to_sparql_store_graph(graph_name: str, data: str, endpoint, auth) -> None:
+def _load_data_to_sparql_store_graph(
+    graph_name: str, data: str, endpoint, auth
+) -> None:
     """Load RDF Turtle to a named graph using SPARQL Store PUT."""
     try:
         params = {"graph": graph_name}
@@ -151,10 +153,11 @@ async def load_reg_status_vocab() -> Iterator[None]:
     path = Path(__file__).parent.parent / "reference_data/reg-status.ttl"
     prez = "VocPrez"
 
-    with open(path, "r", encoding="utf-8") as file:
-        data = file.read()
-        endpoint, auth = _get_sparql_details(prez)
-        _load_data_to_sparql_store_graph(graph_name, data, endpoint, auth)
+    if prez in settings.enabled_prezs:
+        with open(path, "r", encoding="utf-8") as file:
+            data = file.read()
+            endpoint, auth = _get_sparql_details(prez)
+            _load_data_to_sparql_store_graph(graph_name, data, endpoint, auth)
 
 
 async def load_vocab_derivation_modes_vocab() -> Iterator[None]:
@@ -164,7 +167,8 @@ async def load_vocab_derivation_modes_vocab() -> Iterator[None]:
     path = Path(__file__).parent.parent / "reference_data/vocab-derivation-modes.ttl"
     prez = "VocPrez"
 
-    with open(path, "r", encoding="utf-8") as file:
-        data = file.read()
-        endpoint, auth = _get_sparql_details(prez)
-        _load_data_to_sparql_store_graph(graph_name, data, endpoint, auth)
+    if prez in settings.enabled_prezs:
+        with open(path, "r", encoding="utf-8") as file:
+            data = file.read()
+            endpoint, auth = _get_sparql_details(prez)
+            _load_data_to_sparql_store_graph(graph_name, data, endpoint, auth)
