@@ -32,7 +32,7 @@ from prez.services.app_service import (
     populate_api_info,
     add_prefixes_to_prefix_graph,
     load_reg_status_vocab,
-    load_vocab_derivation_modes_vocab
+    load_vocab_derivation_modes_vocab,
 )
 from prez.services.exception_catchers import (
     catch_400,
