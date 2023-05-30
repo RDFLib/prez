@@ -19,8 +19,6 @@ dcterms:identifier rdfs:label "Identifier"@en ;
 dcterms:modified rdfs:label "Date Modified"@en ;
     dcterms:description "Recommended practice is to describe the date, date/time, or period of time as recommended for the property Date, of which this is a subproperty."@en .
 
-rdf:type rdfs:label "type" .
-
 <https://w3id.org/idn/dataset/agents> a dcat:Catalog ;
     dcterms:created "2022-08-15"^^xsd:date ;
     dcterms:description """The Indigenous Data Network's catalogue of Agents. This catalogue contains instances of Agents - People and Organisations - related to the holding of indigenous data. This includes non-indigenous Agents
