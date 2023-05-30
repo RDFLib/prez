@@ -1,0 +1,127 @@
+PREFIX : <https://linked.data.gov.au/def/vocdermods/>
+PREFIX agldwgstatus: <https://linked.data.gov.au/def/reg-statuses/>
+PREFIX cs: <https://linked.data.gov.au/def/vocdermods>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX reg: <http://purl.org/linked-data/registry#>
+PREFIX sdo: <https://schema.org/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+:direct
+    a skos:Concept ;
+    dcterms:provenance "Created for the MER catalogue upgrade project, 2022"@en ;
+    reg:status agldwgstatus:original ;
+    rdfs:isDefinedBy cs: ;
+    skos:definition "Derivation without alteration"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Direct"@en ;
+    skos:topConceptOf cs: ;
+.
+
+:extension
+    a skos:Concept ;
+    dcterms:provenance "Created for the MER catalogue upgrade project, 2022"@en ;
+    reg:status agldwgstatus:original ;
+    rdfs:isDefinedBy cs: ;
+    skos:definition "Derivation with extension"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Extension"@en ;
+    skos:scopeNote "Use this Concept if the reusing vocabulary extends the original vocabulary but does not subset it" ;
+    skos:topConceptOf cs: ;
+.
+
+:none
+    a skos:Concept ;
+    dcterms:provenance "Added to this vocabulary for multiple projects in 2023"@en ;
+    reg:status agldwgstatus:original ;
+    rdfs:isDefinedBy cs: ;
+    skos:definition "This vocabulary does not derive from another"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "None"@en ;
+    skos:scopeNote "Use this Concept if the vocabulary is known to not reuse any other vocabularies" ;
+    skos:topConceptOf cs: ;
+.
+
+:not-applicable
+    a skos:Concept ;
+    dcterms:provenance "Created for the MER catalogue upgrade project, 2022"@en ;
+    reg:status agldwgstatus:original ;
+    rdfs:isDefinedBy cs: ;
+    skos:definition "Derivation mode is not applicable to this vocabulary"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Not Applicable"@en ;
+    skos:scopeNote "Use this Concept if the vocabulary is known not to reuse any other vocabularies" ;
+    skos:topConceptOf cs: ;
+.
+
+:relabelling
+    a skos:Concept ;
+    dcterms:provenance "Created for the MER catalogue upgrade project, 2022"@en ;
+    reg:status agldwgstatus:original ;
+    rdfs:isDefinedBy cs: ;
+    skos:definition "Derivation with relabelling"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Relabelling"@en ;
+    skos:scopeNote "Use this Concept if the reusing vocabulary only relabels Concepts in the original vocabulary but does not alter their place in the Concept hierarchy or their definitions" ;
+    skos:topConceptOf cs: ;
+.
+
+:subsetting
+    a skos:Concept ;
+    dcterms:provenance "Created for the MER catalogue upgrade project, 2022"@en ;
+    reg:status agldwgstatus:original ;
+    rdfs:isDefinedBy cs: ;
+    skos:definition "Derivation with subsetting"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Subsetting"@en ;
+    skos:scopeNote "Use this Concept if the reusing vocabulary only subsets the original but does not extend it" ;
+    skos:topConceptOf cs: ;
+.
+
+:subsetting-and-extension
+    a skos:Concept ;
+    dcterms:provenance "Created for the MER catalogue upgrade project, 2022"@en ;
+    reg:status agldwgstatus:original ;
+    rdfs:isDefinedBy cs: ;
+    skos:definition "Derivation with subsetting and extension"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Subset & Extension"@en ;
+    skos:scopeNote "Use this Concept if the reusing vocabulary both extends and subsets the original vocabulary" ;
+    skos:broader
+        :extension ,
+        :subsetting ;
+.
+
+<https://kurrawong.ai>
+    a sdo:Organization ;
+    sdo:name "KurrawongAI" ;
+    sdo:url "https://kurrawong.ai"^^xsd:anyURI ;
+.
+
+<https://linked.data.gov.au/org/mer>
+    a sdo:Organization ;
+    sdo:name "SA Minerals and Energy Resources" ;
+    sdo:url "https://www.energymining.sa.gov.au/industry/geological-survey"^^xsd:anyURI ;
+.
+
+cs:
+    a skos:ConceptScheme ;
+    dcterms:contributor <http://def.isotc211.org/org/tc211> ;
+    dcterms:created "2022-12-05"^^xsd:date ;
+    dcterms:creator <https://kurrawong.ai> ;
+    dcterms:issued "2022-12-05"^^xsd:date ;
+    dcterms:modified "2023-05-22"^^xsd:date ;
+    dcterms:provenance "Created for the MER catalogue upgrade project, 2022"@en ;
+    dcterms:publisher <https://linked.data.gov.au/org/mer> ;
+    reg:status agldwgstatus:stable ;
+    skos:definition "The modes by which one vocabulary may derive from another"@en ;
+    skos:hasTopConcept
+        :direct ,
+        :extension ,
+        :none ,
+        :not-applicable ,
+        :relabelling ,
+        :subsetting ;
+    skos:prefLabel "Vocabulary Derivation Modes"@en ;
+.

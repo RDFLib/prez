@@ -7,6 +7,7 @@ PREFIX prez: <https://prez.dev/>
 PREFIX prof: <http://www.w3.org/ns/dx/prof/>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <https://schema.org/>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX reg: <http://purl.org/linked-data/registry#>
@@ -109,6 +110,10 @@ prez:VocPrezProfile
         a sh:NodeShape ;
         sh:targetClass prez:SchemesList ;
         sh:path dcterms:publisher, reg:status ;
+        sh:sequencePath (
+            reg:status
+            schema:color
+        ) ;
         sh:sequencePath (
             prov:qualifiedDerivation
             prov:hadRole
