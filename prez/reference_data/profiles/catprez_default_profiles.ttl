@@ -5,6 +5,7 @@ PREFIX geo: <http://www.opengis.net/ont/geosparql#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX prez: <https://prez.dev/>
 PREFIX prof: <http://www.w3.org/ns/dx/prof/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
@@ -54,7 +55,15 @@ prez:CatPrezProfile
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
         sh:targetClass dcat:Catalog ;
-        altr-ext:outboundChildren dcterms:hasPart
+        altr-ext:outboundChildren dcterms:hasPart ;
+        sh:sequencePath (
+            dcterms:hasPart
+            dcterms:issued
+        ) ;
+        sh:sequencePath (
+            dcterms:hasPart
+            dcterms:creator
+        ) ;
     ]
 .
 
