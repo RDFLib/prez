@@ -79,12 +79,7 @@ def generate_listing_construct(
     # item to a variable if it's a top level listing (this will utilise "class based" listing, where objects are listed
     # based on them being an instance of a class), else use the URI of the "parent" off of which members will be listed.
     # TODO collapse this to an inline expression below; include change in both object and listing queries
-    sequence_construct = ""
-    if sequence_predicates:
-        for i, sequence_predicate in enumerate(sequence_predicates):
-            sequence_construct += generate_sequence_construct(
-                uri_or_tl_item, [sequence_predicate], i
-            )
+    sequence_construct, sequence_construct_where = generate_sequence_construct(sequence_predicates, uri_or_tl_item)
     query = dedent(
         f"""
         PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -109,9 +104,7 @@ def generate_listing_construct(
             {f'{uri_or_tl_item} a <{focus_item.general_class}> .{chr(10)}' if focus_item.top_level_listing else ""}\
             {f'OPTIONAL {{ {uri_or_tl_item} ?p ?o .' if include_predicates else ""}\
             {f'{generate_include_predicates(include_predicates)} }}' if include_predicates else ""} \
-            OPTIONAL {{
-                {sequence_construct}\
-            }}
+            {sequence_construct_where}\
             {generate_outbound_predicates(uri_or_tl_item, outbound_children, outbound_parents)} \
             {generate_inbound_predicates(uri_or_tl_item, inbound_children, inbound_parents)} {chr(10)} \
             {generate_relative_properties("select", relative_properties, inbound_children, inbound_parents,
@@ -286,7 +279,7 @@ def generate_inverse_predicates(inverse_predicates):
     return ""
 
 
-def generate_sequence_construct(object_uri, sequence_predicates, path_n=0):
+def _generate_sequence_construct(object_uri, sequence_predicates, path_n=0):
     """
     Generates part of a SPARQL CONSTRUCT query for property paths, given a list of lists of property paths.
     """
@@ -301,6 +294,23 @@ def generate_sequence_construct(object_uri, sequence_predicates, path_n=0):
             all_sequence_construct += construct_and_where
         return all_sequence_construct
     return ""
+
+
+def generate_sequence_construct(sequence_predicates: list[list[URIRef]], uri_or_tl_item: str) -> tuple[str, str]:
+    sequence_construct = ""
+    sequence_construct_where = ""
+    if sequence_predicates:
+        for i, sequence_predicate in enumerate(sequence_predicates):
+            seq_partial_str = "OPTIONAL {\n"
+            generate_sequence_construct_result: str = _generate_sequence_construct(
+                uri_or_tl_item, [sequence_predicate], i
+            )
+            seq_partial_str += generate_sequence_construct_result
+            seq_partial_str += "\n}\n"
+            sequence_construct_where += seq_partial_str
+            sequence_construct += generate_sequence_construct_result
+
+    return sequence_construct, sequence_construct_where
 
 
 def generate_bnode_construct(depth):
