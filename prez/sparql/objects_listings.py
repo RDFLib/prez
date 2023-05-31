@@ -79,7 +79,9 @@ def generate_listing_construct(
     # item to a variable if it's a top level listing (this will utilise "class based" listing, where objects are listed
     # based on them being an instance of a class), else use the URI of the "parent" off of which members will be listed.
     # TODO collapse this to an inline expression below; include change in both object and listing queries
-    sequence_construct, sequence_construct_where = generate_sequence_construct(sequence_predicates, uri_or_tl_item)
+    sequence_construct, sequence_construct_where = generate_sequence_construct(
+        sequence_predicates, uri_or_tl_item
+    )
     query = dedent(
         f"""
         PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -160,8 +162,10 @@ def generate_item_construct(focus_item, profile: URIRef):
     else:
         uri_or_search_item = f"<{focus_item.uri}>"
 
-    sequence_construct, sequence_construct_where = generate_sequence_construct(sequence_predicates, uri_or_search_item)
-    
+    sequence_construct, sequence_construct_where = generate_sequence_construct(
+        sequence_predicates, uri_or_search_item
+    )
+
     construct_query = dedent(
         f"""    PREFIX dcterms: <http://purl.org/dc/terms/>
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -175,12 +179,17 @@ def generate_item_construct(focus_item, profile: URIRef):
     \n}}
     WHERE {{
         {{ {f'{focus_item.populated_query}' if search_query else ""} }}
-        {uri_or_search_item} ?p ?o1 . {chr(10)} \
-        {f'?s ?inbound_p {uri_or_search_item}{chr(10)}' if inverse_predicates else chr(10)} \
-        {generate_include_predicates(include_predicates)} \
-        {generate_inverse_predicates(inverse_predicates)} \
-        {generate_bnode_select(bnode_depth)}\
-        {sequence_construct_where}\
+        {{
+            {uri_or_search_item} ?p ?o1 . {chr(10)} \
+            {f'?s ?inbound_p {uri_or_search_item}{chr(10)}' if inverse_predicates else chr(10)} \
+            {generate_include_predicates(include_predicates)} \
+            {generate_inverse_predicates(inverse_predicates)} \
+            {generate_bnode_select(bnode_depth)}\
+        }}
+        
+        UNION {{
+            {sequence_construct_where}\
+        }}
     }}
     """
     )
@@ -299,7 +308,9 @@ def _generate_sequence_construct(object_uri, sequence_predicates, path_n=0):
     return ""
 
 
-def generate_sequence_construct(sequence_predicates: list[list[URIRef]], uri_or_tl_item: str) -> tuple[str, str]:
+def generate_sequence_construct(
+    sequence_predicates: list[list[URIRef]], uri_or_tl_item: str
+) -> tuple[str, str]:
     sequence_construct = ""
     sequence_construct_where = ""
     if sequence_predicates:
