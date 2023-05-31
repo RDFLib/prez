@@ -176,11 +176,11 @@ def generate_item_construct(focus_item, profile: URIRef):
     WHERE {{
         {{ {f'{focus_item.populated_query}' if search_query else ""} }}
         {uri_or_search_item} ?p ?o1 . {chr(10)} \
-        {sequence_construct_where}\
         {f'?s ?inbound_p {uri_or_search_item}{chr(10)}' if inverse_predicates else chr(10)} \
         {generate_include_predicates(include_predicates)} \
         {generate_inverse_predicates(inverse_predicates)} \
-        {generate_bnode_select(bnode_depth)}
+        {generate_bnode_select(bnode_depth)}\
+        {sequence_construct_where}\
     }}
     """
     )
