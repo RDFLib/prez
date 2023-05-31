@@ -6,6 +6,21 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
+dcterms:created rdfs:label "Date Created"@en ;
+    dcterms:description "Recommended practice is to describe the date, date/time, or period of time as recommended for the property Date, of which this is a subproperty."@en .
+
+dcterms:hasPart rdfs:label "Has Part"@en ;
+    dcterms:description "This property is intended to be used with non-literal values. This property is an inverse property of Is Part Of."@en ;
+    dcterms:provenance "Derived from Qualified Relations ISO-19115-DCTERMS and PROV-O" .
+
+dcterms:identifier rdfs:label "Identifier"@en ;
+    dcterms:description "Recommended practice is to identify the resource by means of a string conforming to an identification system. Examples include International Standard Book Number (ISBN), Digital Object Identifier (DOI), and Uniform Resource Name (URN).  Persistent identifiers should be provided as HTTP URIs."@en .
+
+dcterms:modified rdfs:label "Date Modified"@en ;
+    dcterms:description "Recommended practice is to describe the date, date/time, or period of time as recommended for the property Date, of which this is a subproperty."@en .
+
+rdf:type rdfs:label "type" .
+
 <https://w3id.org/idn/dataset/agents> a dcat:Catalog ;
     dcterms:created "2022-08-15"^^xsd:date ;
     dcterms:description """The Indigenous Data Network's catalogue of Agents. This catalogue contains instances of Agents - People and Organisations - related to the holding of indigenous data. This includes non-indigenous Agents
@@ -14,7 +29,11 @@ This catalogue extends on standard Agent information to include properties usefu
     dcterms:hasPart <https://www.atsida.edu.au/archive/datasets/au.edu.anu.ada.ddi.20002-sa> ;
     dcterms:identifier "idnac"^^xsd:token ;
     dcterms:modified "2022-08-15"^^xsd:date ;
-    dcterms:title "IDN Agents Catalogue" .
+    dcterms:title "IDN Agents Catalogue" ;
+    prov:qualifiedAttribution [ dcat:hadRole <http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/author>,
+                <http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/custodian>,
+                <http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/owner> ;
+            prov:agent <https://linked.data.gov.au/org/idn> ] .
 
 <https://linked.data.gov.au/org/idn> rdfs:label "Indigenous Data Network" .
 

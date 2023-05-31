@@ -2,10 +2,14 @@
 @prefix ns2: <http://www.w3.org/ns/prov#> .
 @prefix ns3: <http://purl.org/dc/terms/> .
 @prefix ns4: <http://www.w3.org/ns/dcat#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-ns3:identifier rdfs:label "Identifier"@en .
+ns3:identifier rdfs:label "Identifier"@en ;
+    ns3:description "Recommended practice is to identify the resource by means of a string conforming to an identification system. Examples include International Standard Book Number (ISBN), Digital Object Identifier (DOI), and Uniform Resource Name (URN).  Persistent identifiers should be provided as HTTP URIs."@en .
+
+rdf:type rdfs:label "type" .
 
 <https://www.atsida.edu.au/archive/datasets/au.edu.anu.ada.ddi.20002-sa> a ns4:Resource ;
     ns3:accessRights <https://linked.data.gov.au/def/data-access-rights/metadata-only> ;
