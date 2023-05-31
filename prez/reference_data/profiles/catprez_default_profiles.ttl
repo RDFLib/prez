@@ -64,6 +64,10 @@ prez:CatPrezProfile
             dcterms:hasPart
             dcterms:creator
         ) ;
+        sh:sequencePath (
+            dcterms:hasPart
+            dcterms:publisher
+        ) ;
     ]
 .
 
