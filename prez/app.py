@@ -8,7 +8,6 @@ from fastapi.openapi.utils import get_openapi
 from rdflib import Graph, Literal, URIRef
 from starlette.middleware.cors import CORSMiddleware
 
-from prez.cache import tbox_cache
 from prez.config import settings
 from prez.models.model_exceptions import (
     ClassNotFoundException,
@@ -25,15 +24,9 @@ from prez.routers.profiles import router as profiles_router
 from prez.routers.search import router as search_router
 from prez.routers.spaceprez import router as spaceprez_router
 from prez.routers.sparql import router as sparql_router
-from prez.routers.update import update_router
 from prez.routers.vocprez import router as vocprez_router
 from prez.services.app_service import healthcheck_sparql_endpoints, count_objects
-from prez.services.app_service import (
-    populate_api_info,
-    add_prefixes_to_prefix_graph,
-    load_reg_status_vocab,
-    load_vocab_derivation_modes_vocab,
-)
+from prez.services.app_service import populate_api_info, add_prefixes_to_prefix_graph
 from prez.services.exception_catchers import (
     catch_400,
     catch_404,
@@ -63,14 +56,10 @@ app.include_router(management_router)
 app.include_router(object_router)
 app.include_router(sparql_router)
 app.include_router(search_router)
-app.include_router(update_router)
 app.include_router(profiles_router)
-if settings.catprez_sparql_endpoint:
-    app.include_router(catprez_router)
-if settings.vocprez_sparql_endpoint:
-    app.include_router(vocprez_router)
-if settings.spaceprez_sparql_endpoint:
-    app.include_router(spaceprez_router)
+app.include_router(catprez_router)
+app.include_router(vocprez_router)
+app.include_router(spaceprez_router)
 
 
 @app.middleware("http")
@@ -121,8 +110,6 @@ async def app_startup():
     await count_objects()
     await populate_api_info()
     await add_prefixes_to_prefix_graph()
-    await load_reg_status_vocab()
-    await load_vocab_derivation_modes_vocab()
 
 
 @app.on_event("shutdown")
@@ -133,14 +120,12 @@ async def app_shutdown():
     """
     log = logging.getLogger("prez")
     log.info("Shutting down...")
-    if len(tbox_cache) > 0:
-        tbox_cache.serialize(destination="tbox_cache.nt", format="nt")
+
     # close all SPARQL async clients
     if not os.getenv("TEST_MODE") == "true":
-        from prez.services.triplestore_client import sparql_clients
+        from prez.sparql.methods import async_client
 
-        for k, v in sparql_clients.items():
-            await v.aclose()
+        await async_client.aclose()
 
 
 @app.get("/", summary="Home page", tags=["Prez"])

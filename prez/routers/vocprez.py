@@ -56,7 +56,6 @@ async def schemes_endpoint(
         prof_and_mt_info.mediatype,
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
-        "VocPrez",
         predicates_for_link_addition,
     )
 
@@ -117,6 +116,5 @@ async def item_endpoint(request: Request, vp_item: Optional[VocabItem] = None):
         prof_and_mt_info.mediatype,
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
-        "VocPrez",
         predicates_for_link_addition,
     )

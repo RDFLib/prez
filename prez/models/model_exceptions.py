@@ -1,5 +1,7 @@
 from rdflib import URIRef
 
+from prez.config import settings
+
 
 class ClassNotFoundException(Exception):
     """
@@ -14,11 +16,11 @@ class ClassNotFoundException(Exception):
 
 class URINotFoundException(Exception):
     """
-    Raised when a URI is not found in a given prez backend.
+    Raised when a URI is not found in the triplestore.
     """
 
-    def __init__(self, uri: URIRef, prez):
-        self.message = f"URI {uri} not found in {prez}."
+    def __init__(self, uri: URIRef):
+        self.message = f"URI {uri} not found at endpoint {settings.sparql_endpoint}."
         super().__init__(self.message)
 
 

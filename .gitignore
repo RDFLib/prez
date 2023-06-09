@@ -6,4 +6,3 @@ __pycache__/
 .pytest_cache/
 .env*
 !.env-template
-tbox_cache.nt

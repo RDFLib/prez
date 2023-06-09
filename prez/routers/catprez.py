@@ -51,7 +51,6 @@ async def catalogs_endpoint(
         prof_and_mt_info.mediatype,
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
-        "CatPrez",
         predicates_for_link_addition,
     )
 
@@ -96,6 +95,5 @@ async def item_endpoint(request: Request, cp_item: Optional[CatalogItem] = None)
         prof_and_mt_info.mediatype,
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
-        "CatPrez",
         predicates_for_link_addition,
     )

@@ -26,6 +26,6 @@ prez:skosWeighted a prez:SearchMethod ;
                 FILTER REGEX(?match, "$TERM", "i")
             }}
         }}
-        GROUP BY ?cs ?search_result_uri ?match ?sys
+        GROUP BY ?cs ?search_result_uri ?match
         }}
         """.

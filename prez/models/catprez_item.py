@@ -1,5 +1,4 @@
-from typing import Optional
-from typing import Set
+from typing import Optional, Set
 
 from pydantic import BaseModel, root_validator
 from rdflib import URIRef
@@ -49,5 +48,5 @@ class CatalogItem(BaseModel):
             values["uri"] = get_uri_for_curie_id(curie_id)
         else:  # uri provided, get the curie_id
             values["curie_id"] = get_curie_id_for_uri(uri)
-        values["classes"] = get_classes(values["uri"], "CatPrez")
+        values["classes"] = get_classes(values["uri"])
         return values

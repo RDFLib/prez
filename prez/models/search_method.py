@@ -20,12 +20,7 @@ class SearchMethod(BaseModel):
     def __hash__(self):
         return hash(self.uri)
 
-    def set_populated_query(self, prez, term, limit):
+    def populate_query(self, term, limit):
         self.populated_query = self.template_query.substitute(
-            {"PREZ": prez, "TERM": term, "LIMIT": limit}
-        )
-
-    def populate_query(self, prez, term, limit):
-        self.populated_query = self.template_query.substitute(
-            {"PREZ": prez, "TERM": term, "LIMIT": limit}
+            {"TERM": term, "LIMIT": limit}
         )

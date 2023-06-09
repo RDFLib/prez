@@ -135,7 +135,7 @@ def test_get_labels_from_tbox_cache():
         URIRef("http://purl.org/dc/terms/type"),
     }
     uncached_terms, labels_from_cache = get_annotations_from_tbox_cache(
-        terms, [], [], []
+        terms, [], [], [], []
     )
     assert len(uncached_terms) == 3
     assert len(labels_from_cache) == 0

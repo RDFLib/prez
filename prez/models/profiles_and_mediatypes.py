@@ -9,8 +9,6 @@ from prez.services.connegp_service import get_requested_profile_and_mediatype
 
 PREZ = Namespace("https://prez.dev/")
 
-# BaseConfig.arbitrary_types_allowed = True
-
 
 class ProfilesMediatypesInfo(BaseModel):
     request: Request  # TODO slim down once connegp is refactored so the whole request doesn't need to be passed through

@@ -49,7 +49,6 @@ async def list_items(
         prof_and_mt_info.mediatype,
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
-        "SpacePrez",
         predicates_for_link_addition,
     )
 
@@ -133,6 +132,5 @@ async def item_endpoint(request: Request, spatial_item: Optional[SpatialItem] = 
         prof_and_mt_info.mediatype,
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
-        "SpacePrez",
         predicates_for_link_addition,
     )

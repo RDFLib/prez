@@ -41,8 +41,6 @@ async def profiles(
         profiles_members, prof_and_mt_info.profile, page, per_page
     )
     count_query = generate_listing_count_construct(profiles_members)
-    # TODO len(profiles_graph_cache) = 0 ; handle directing the queries to the local graphs via the `sparql_construct`
-    #  function
     list_graph = profiles_graph_cache.query(list_query).graph
     count_graph = profiles_graph_cache.query(count_query).graph
     return await return_from_graph(
@@ -50,7 +48,6 @@ async def profiles(
         prof_and_mt_info.mediatype,
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
-        "GenericPrez",
         predicates_for_link_addition,
     )
 
