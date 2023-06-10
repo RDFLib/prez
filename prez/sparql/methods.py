@@ -26,10 +26,6 @@ def sparql_query_non_async(query: str, prez: str) -> Tuple[bool, Union[List, Dic
                 "Accept": "application/json",
                 "Content-Type": "application/sparql-query",
             },
-            auth=(
-                settings.sparql_creds[prez].get("username", ""),
-                settings.sparql_creds[prez].get("password", ""),
-            ),
             timeout=TIMEOUT,
         )
     if 200 <= response.status_code < 300:
@@ -49,16 +45,12 @@ async def sparql_query(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
     logging.info(msg=f"Executing query {query} against {be_endpoint}")
     try:
         response: httpxResponse = await sparql_clients[prez].post(
-            url="",
+            settings.sparql_creds[prez]["endpoint"],
             data=query,
             headers={
                 "Accept": "text/turtle, application/json",
                 "Content-Type": "application/sparql-query",
             },
-            auth=(
-                settings.sparql_creds[prez].get("username", ""),
-                settings.sparql_creds[prez].get("password", ""),
-            ),
             timeout=TIMEOUT,
         )
         response.raise_for_status()
@@ -87,7 +79,6 @@ async def sparql_query(query: str, prez: str) -> Tuple[bool, Union[List, Dict]]:
         }
 
 
-
 async def sparql_construct(query: str, prez: str):
     """Returns an rdflib Graph from a CONSTRUCT query for a single SPARQL endpoint"""
     if prez == "GenericPrez":
@@ -99,12 +90,8 @@ async def sparql_construct(query: str, prez: str):
         return False, None
     try:
         response: httpxResponse = await sparql_clients[prez].post(
-            url="",
+            settings.sparql_creds[prez]["endpoint"],
             data=query,
-            auth=(
-                settings.sparql_creds[prez].get("username", ""),
-                settings.sparql_creds[prez].get("password", ""),
-            ),
             headers={
                 "Accept": "text/turtle",
                 "Content-Type": "application/sparql-query",
@@ -166,10 +153,6 @@ async def sparql_ask(query: str, prez: str):
         response: httpxResponse = await sparql_clients[prez].post(
             settings.sparql_creds[prez]["endpoint"],
             data={"query": query},
-            auth=(
-                settings.sparql_creds[prez].get("username", ""),
-                settings.sparql_creds[prez].get("password", ""),
-            ),
             headers={
                 "Accept": "*/*",
                 "Content-Type": "application/x-www-form-urlencoded",
@@ -205,10 +188,6 @@ def sparql_ask_non_async(query: str, prez: str):
                 "Content-Type": "application/x-www-form-urlencoded",
                 "Accept-Encoding": "gzip, deflate",
             },
-            auth=(
-                settings.sparql_creds[prez].get("username", ""),
-                settings.sparql_creds[prez].get("password", ""),
-            ),
             timeout=TIMEOUT,
         )
     if 200 <= response.status_code < 300:
@@ -232,10 +211,6 @@ def sparql_construct_non_async(query: str, prez: str):
                 "Accept": "text/turtle",
                 "Content-Type": "application/sparql-query",
             },
-            auth=(
-                settings.sparql_creds[prez].get("username", ""),
-                settings.sparql_creds[prez].get("password", ""),
-            ),
             timeout=TIMEOUT,
         )
     if 200 <= response.status_code < 300:
