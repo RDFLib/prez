@@ -140,7 +140,7 @@ def _get_sparql_http_store_details(prez: str) -> tuple[str, tuple[str, str]]:
     username = settings.sparql_creds[prez].get("username")
     password = settings.sparql_creds[prez].get("password")
     url = settings.sparql_creds[prez].get("http_store")
-    print(settings.sparql_creds[prez])
+
     if username or password:
         auth = (username, password)
     else:
