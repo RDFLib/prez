@@ -17,5 +17,4 @@ for prez in settings.enabled_prezs:
             settings.sparql_creds[prez].get("username", ""),
             settings.sparql_creds[prez].get("password", ""),
         ),
-        base_url=settings.sparql_creds[prez]["endpoint"],
     )

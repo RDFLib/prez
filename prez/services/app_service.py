@@ -127,23 +127,26 @@ def _load_data_to_sparql_store_graph(
         response.raise_for_status()
         log.info(f"Loaded vocabulary to graph {graph_name}")
     except httpx.HTTPError as exc:
-        log.error(f"HTTP Exception for {exc.request.url} - {exc}")
+        log.error(
+            f"Failed to load vocabulary to graph {graph_name}. HTTP Exception for {exc.request.url} - {exc}"
+        )
 
 
-def _get_sparql_details(prez: str) -> tuple[str, tuple[str, str]]:
+def _get_sparql_http_store_details(prez: str) -> tuple[str, tuple[str, str]]:
     """Get SPARQL details based on Prez subsystem."""
     if prez not in settings.enabled_prezs:
         raise ValueError(f"{prez} not in enabled_prezs.")
 
     username = settings.sparql_creds[prez].get("username")
     password = settings.sparql_creds[prez].get("password")
-    endpoint = settings.sparql_creds[prez]["endpoint"]
+    url = settings.sparql_creds[prez].get("http_store")
+
     if username or password:
         auth = (username, password)
     else:
         auth = None
 
-    return endpoint, auth
+    return url, auth
 
 
 async def load_reg_status_vocab() -> Iterator[None]:
@@ -156,8 +159,8 @@ async def load_reg_status_vocab() -> Iterator[None]:
     if prez in settings.enabled_prezs:
         with open(path, "r", encoding="utf-8") as file:
             data = file.read()
-            endpoint, auth = _get_sparql_details(prez)
-            _load_data_to_sparql_store_graph(graph_name, data, endpoint, auth)
+            http_store_url, auth = _get_sparql_http_store_details(prez)
+            _load_data_to_sparql_store_graph(graph_name, data, http_store_url, auth)
 
 
 async def load_vocab_derivation_modes_vocab() -> Iterator[None]:
@@ -170,5 +173,5 @@ async def load_vocab_derivation_modes_vocab() -> Iterator[None]:
     if prez in settings.enabled_prezs:
         with open(path, "r", encoding="utf-8") as file:
             data = file.read()
-            endpoint, auth = _get_sparql_details(prez)
-            _load_data_to_sparql_store_graph(graph_name, data, endpoint, auth)
+            http_store_url, auth = _get_sparql_http_store_details(prez)
+            _load_data_to_sparql_store_graph(graph_name, data, http_store_url, auth)

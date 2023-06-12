@@ -66,6 +66,9 @@ class Settings(BaseSettings):
     catprez_sparql_update: Optional[str]
     vocprez_sparql_endpoint: Optional[str]
     vocprez_sparql_update: Optional[str]
+    spaceprez_sparql_http_store: Optional[str]
+    catprez_sparql_http_store: Optional[str]
+    vocprez_sparql_http_store: Optional[str]
     spaceprez_sparql_username: Optional[str]
     catprez_sparql_username: Optional[str]
     vocprez_sparql_username: Optional[str]
@@ -221,7 +224,7 @@ class Settings(BaseSettings):
             "SpacePrez": {},
         }
         for prez in values["enabled_prezs"]:
-            for attr in ["endpoint", "username", "password", "update"]:
+            for attr in ["endpoint", "username", "password", "update", "http_store"]:
                 key = f"{prez.lower()}_sparql_{attr}"
                 value = values[key]
                 if value:
