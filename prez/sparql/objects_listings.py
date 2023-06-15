@@ -401,6 +401,16 @@ async def get_annotation_properties(
         explanation_predicates,
         other_predicates,
     )
+
+    def other_predicates_statement(other_predicates, uncached_terms_other):
+        return f"""UNION
+            {{
+                ?unannotated_term ?other_prop ?other .
+                VALUES ?other_prop {{ {" ".join('<' + str(pred) + '>' for pred in other_predicates)} }}
+                VALUES ?unannotated_term {{ {" ".join('<' + str(term) + '>' for term in uncached_terms_other)}
+                }}
+            }}"""
+
     queries_for_uncached = f"""CONSTRUCT {{
     ?unlabeled_term ?label_prop ?label .
     ?undescribed_term ?desc_prop ?description .
@@ -428,13 +438,7 @@ async def get_annotation_properties(
                 VALUES ?unexplained_term {{ {" ".join('<' + str(term) + '>' for term in uncached_terms["provenance"])}
                 }}
             }}
-            UNION
-            {{
-                ?unannotated_term ?other_prop ?other .
-                VALUES ?other_prop {{ {" ".join('<' + str(pred) + '>' for pred in other_predicates)} }}
-                VALUES ?unannotated_term {{ {" ".join('<' + str(term) + '>' for term in uncached_terms["other"])}
-                }}
-            }}
+            { other_predicates_statement(other_predicates, uncached_terms["other"]) if other_predicates else ""}
         }}"""
     return queries_for_uncached, labels_g
 
