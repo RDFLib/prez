@@ -600,7 +600,7 @@ def get_listing_predicates(profile, selected_class):
     """
     shape_bns = get_relevant_shape_bns_for_profile(selected_class, profile)
     if not shape_bns:
-        return [], [], [], [], []
+        return [], [], [], []
     inbound_children = [
         i[2]
         for i in profiles_graph_cache.triples_choices(
