@@ -55,7 +55,6 @@ def generate_listing_construct(
         inbound_parents,
         outbound_children,
         outbound_parents,
-        relative_properties,
     ) = get_listing_predicates(profile, focus_item.selected_class)
     if (
         focus_item.uri
@@ -65,8 +64,6 @@ def generate_listing_construct(
         and not inbound_parents
         and not outbound_children
         and not outbound_parents
-        # do not need to check relative properties - they will only be used if one of the inbound/outbound parent/child
-        # relations are defined
     ):
         log.warning(
             f"Requested listing of objects related to {focus_item.uri}, however the profile {profile} does not"
@@ -98,8 +95,6 @@ def generate_listing_construct(
             {f'{uri_or_tl_item} ?outbound_parents ?parent_item .{chr(10)}' if outbound_parents else ""}\
             {f'?inbound_child_s ?inbound_child {uri_or_tl_item} .{chr(10)}' if inbound_children else ""}\
             {f'?inbound_parent_s ?inbound_parent {uri_or_tl_item} .{chr(10)}' if inbound_parents else ""}\
-            {generate_relative_properties("construct", relative_properties, inbound_children, inbound_parents,
-                                          outbound_children, outbound_parents)}\
             {f"{uri_or_tl_item} ?p ?o ." if include_predicates else ""}\
         }}
         WHERE {{
@@ -109,8 +104,6 @@ def generate_listing_construct(
             {sequence_construct_where}\
             {generate_outbound_predicates(uri_or_tl_item, outbound_children, outbound_parents)} \
             {generate_inbound_predicates(uri_or_tl_item, inbound_children, inbound_parents)} {chr(10)} \
-            {generate_relative_properties("select", relative_properties, inbound_children, inbound_parents,
-                                          outbound_children, outbound_parents)}\
             {{
                 SELECT ?top_level_item
                 WHERE {{
@@ -204,43 +197,6 @@ def search_query_construct():
         prez:searchResultPredicate ?predicate ;
         prez:searchResultMatch ?match ."""
     )
-
-
-def generate_relative_properties(
-    construct_select,
-    relative_properties,
-    in_children,
-    in_parents,
-    out_children,
-    out_parents,
-):
-    """
-    Generate the relative properties construct or select for a listing query.
-    i.e. properties on nodes related to the focus item NOT the focus item itself
-    """
-    if not relative_properties:
-        return ""
-    rel_string = ""
-    kvs = {
-        "ic": in_children,
-        "ip": in_parents,
-        "oc": out_children,
-        "op": out_parents,
-    }
-    other_kvs = {
-        "ic": "inbound_child_s",
-        "ip": "inbound_parent_s",
-        "oc": "child_item",
-        "op": "parent_item",
-    }
-    for k, v in kvs.items():
-        if v:
-            if construct_select == "select":
-                rel_string += f"""OPTIONAL {{ """
-            rel_string += f"""?{other_kvs[k]} ?rel_{k}_props ?rel_{k}_val .\n"""
-            if construct_select == "select":
-                rel_string += f"""VALUES ?rel_{k}_props {{ {" ".join('<' + str(pred) + '>' for pred in relative_properties)} }} }}\n"""
-    return rel_string
 
 
 def generate_outbound_predicates(uri_or_tl_item, outbound_children, outbound_parents):
@@ -641,10 +597,6 @@ def get_listing_predicates(profile, selected_class):
         the predicate dcterms:hasPart
     - outbound parents, for example where the object of interest is a Concept, and is linked to Concept Scheme(s) via
     the predicate skos:inScheme
-    - relative properties, properties of the parent/child objects that should also be returned. For example, if the
-        focus object is a Concept Scheme, and the predicate skos:inScheme is used to link from Concept(s) (using
-        altr-ext:inboundChildren) then specifying skos:broader as a relative property will cause the broader concepts to
-        be returned for each concept
     """
     shape_bns = get_relevant_shape_bns_for_profile(selected_class, profile)
     if not shape_bns:
@@ -689,22 +641,11 @@ def get_listing_predicates(profile, selected_class):
             )
         )
     ]
-    relative_properties = [
-        i[2]
-        for i in profiles_graph_cache.triples_choices(
-            (
-                shape_bns,
-                ALTREXT.relativeProperties,
-                None,
-            )
-        )
-    ]
     return (
         inbound_children,
         inbound_parents,
         outbound_children,
         outbound_parents,
-        relative_properties,
     )
 
 
