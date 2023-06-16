@@ -112,10 +112,6 @@ prez:VocPrezProfile
         sh:targetClass prez:SchemesList ;
         sh:path dcterms:publisher, reg:status ;
         sh:sequencePath (
-            reg:status
-            schema:color
-        ) ;
-        sh:sequencePath (
             prov:qualifiedDerivation
             prov:hadRole
         ) ;

@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import Optional
 
 import toml
-from httpx import AsyncClient
 from pydantic import BaseSettings, root_validator
 from rdflib import URIRef
 from rdflib.namespace import GEO, DCAT, SKOS, PROF
@@ -47,7 +46,6 @@ class Settings(BaseSettings):
     sparql_username: Optional[str]
     sparql_password: Optional[str]
     sparql_auth: Optional[tuple]
-    sparql_http_store: Optional[str]
     protocol: str = "http"
     host: str = "localhost"
     port: int = 8000
