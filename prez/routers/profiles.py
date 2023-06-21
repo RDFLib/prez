@@ -34,7 +34,6 @@ async def profiles(
     ):
         return await return_profiles(
             classes=frozenset(profiles_members.selected_class),
-            prez_type="GenericPrez",
             prof_and_mt_info=prof_and_mt_info,
         )
     list_query, predicates_for_link_addition = generate_listing_construct(

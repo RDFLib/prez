@@ -39,7 +39,6 @@ async def catalogs_endpoint(
     ):
         return await return_profiles(
             classes=frozenset(catprez_members.selected_class),
-            prez_type="SpacePrez",
             prof_and_mt_info=prof_and_mt_info,
         )
     list_query, predicates_for_link_addition = generate_listing_construct(
@@ -82,7 +81,6 @@ async def item_endpoint(request: Request, cp_item: Optional[CatalogItem] = None)
     ):
         return await return_profiles(
             classes=frozenset(cp_item.selected_class),
-            prez_type="SpacePrez",
             prof_and_mt_info=prof_and_mt_info,
         )
     item_query = generate_item_construct(cp_item, prof_and_mt_info.profile)

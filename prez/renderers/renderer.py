@@ -212,7 +212,6 @@ def generate_object_endpoint_link(graph, predicates_for_link_addition):
 
 async def return_profiles(
     classes: frozenset,
-    prez_type: str,
     request: Optional[Request] = None,
     prof_and_mt_info: Optional[ProfilesMediatypesInfo] = None,
 ) -> Response:
@@ -239,5 +238,4 @@ async def return_profiles(
         prof_and_mt_info.mediatype,
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
-        prez_type,
     )

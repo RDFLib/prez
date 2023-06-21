@@ -18,13 +18,15 @@ async def search(
     limit = request.query_params.get("limit", 20)
     if not term:
         return PlainTextResponse(
-            "A search_methods term must be provided as a query string argument (?term=<search_methods term>)"
+            status_code=400,
+            content="A search_methods term must be provided as a query string argument (?term=<search_methods term>)",
         )
     selected_method = determine_search_method(request)
     if Literal(selected_method) not in search_methods.keys():
         return PlainTextResponse(
-            f'Search method "{selected_method}" not found. Available methods are: '
-            f"{', '.join([str(m) for m in search_methods.keys()])}"
+            status_code=400,
+            content=f'Search method "{selected_method}" not found. Available methods are: '
+            f"{', '.join([str(m) for m in search_methods.keys()])}",
         )
     search_query = search_methods[Literal(selected_method)].copy()
     search_query.populate_query(term, limit)

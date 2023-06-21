@@ -12,7 +12,6 @@ from prez.reference_data.prez_ns import PREZ
 class Settings(BaseSettings):
     """
     sparql_endpoint: Read-only SPARQL endpoint for SpacePrez
-    sparql_update: Read/write SPARQL endpoint for SpacePrez
     sparql_username: A username for the SpacePrez SPARQL endpoints, if required by the RDF DB
     sparql_password:  A password for the SpacePrez SPARQL endpoints, if required by the RDF DB
     protocol: The protocol used to deliver Prez. Usually 'http', could be 'https'.
@@ -42,7 +41,6 @@ class Settings(BaseSettings):
     """
 
     sparql_endpoint: str
-    sparql_update: Optional[str]
     sparql_username: Optional[str]
     sparql_password: Optional[str]
     sparql_auth: Optional[tuple]
@@ -142,17 +140,6 @@ class Settings(BaseSettings):
             values["general_classes"][prez] = (
                 values["collection_classes"].get(prez) + additional_classes[prez]
             )
-        return values
-
-    @root_validator()
-    def set_sparql_update_endpoints(cls, values):
-        sparql_ep = values.get("sparql_ep_endpoint")
-        if sparql_ep is not None:
-            update = values.get("sparql_update")
-            if update is None:
-                values["sparql_update"] = sparql_ep
-        if values.get("sparql_update") is None:
-            values["sparql_update"] = None
         return values
 
     @root_validator()
