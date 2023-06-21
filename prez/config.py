@@ -11,9 +11,9 @@ from prez.reference_data.prez_ns import PREZ
 
 class Settings(BaseSettings):
     """
-    sparql_endpoint: Read-only SPARQL endpoint for SpacePrez
-    sparql_username: A username for the SpacePrez SPARQL endpoints, if required by the RDF DB
-    sparql_password:  A password for the SpacePrez SPARQL endpoints, if required by the RDF DB
+    sparql_endpoint: Read-only SPARQL endpoint for Prez
+    sparql_username: A username for the Prez SPARQL endpoint, if required by the RDF DB
+    sparql_password:  A password for the Prez SPARQL endpoint, if required by the RDF DB
     protocol: The protocol used to deliver Prez. Usually 'http', could be 'https'.
     host: Prez' host domain name. Usually 'localhost' but could be anything
     port: The port Prez is made accessible on. Default is 8000, could be 80 or anything else that your system has permission to use
