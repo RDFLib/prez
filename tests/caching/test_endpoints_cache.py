@@ -31,22 +31,18 @@ def prez_test_client(request):
     return TestClient(app)
 
 
-@pytest.fixture(scope="module")
-def populate_cache(prez_test_client):
+def test_purge_cache(prez_test_client):
     with prez_test_client as client:
         client.get("/c/catalogs")
-
-
-def test_purge_cache(prez_test_client, populate_cache):
-    with prez_test_client as client:
         client.get("/purge-tbox-cache")
         r = client.get("/tbox-cache")
         g = Graph().parse(data=r.text)
         assert len(g) == 0
 
 
-def test_cache(prez_test_client, populate_cache):
+def test_cache(prez_test_client):
     with prez_test_client as client:
+        client.get("/c/catalogs")
         r = client.get("/tbox-cache")
         g = Graph().parse(data=r.text)
         assert len(g) == 6

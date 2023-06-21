@@ -65,3 +65,4 @@ jobs:
           cd ../services && poetry run pytest
           cd ../curies && poetry run pytest
           cd ../object && poetry run pytest
+          cd ../caching && poetry run pytest
