@@ -77,5 +77,4 @@ async def profile(request: Request, profile_id: str):
         prof_and_mt_info.mediatype,
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
-        "GenericPrez",
     )
