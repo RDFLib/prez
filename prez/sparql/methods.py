@@ -15,14 +15,12 @@ PREZ = Namespace("https://prez.dev/")
 
 
 async_client = AsyncClient(
-    base_url=settings.sparql_endpoint,
     auth=(settings.sparql_username, settings.sparql_password)
     if settings.sparql_username
     else None,
 )
 
 client = Client(
-    base_url=settings.sparql_endpoint,
     auth=(settings.sparql_username, settings.sparql_password)
     if settings.sparql_username
     else None,
@@ -78,7 +76,9 @@ def sparql_ask_non_async(query: str):
 async def sparql(request: Request):
     """Sends a starlette Request object (containing a SPARQL query in the URL parameters) to a proxied SPARQL
     endpoint."""
-    url = httpx.URL(query=request.url.query.encode("utf-8"))
+    url = httpx.URL(
+        url=settings.sparql_endpoint, query=request.url.query.encode("utf-8")
+    )
     rp_req = async_client.build_request(
         request.method, url, headers=request.headers.raw, content=request.stream()
     )
@@ -91,7 +91,10 @@ async def send_query(query: str, mediatype="text/turtle"):
     Returns: httpx.Response: A httpx.Response object
     """
     query_rq = async_client.build_request(
-        "POST", url="", headers={"Accept": mediatype}, data={"query": query}
+        "POST",
+        url=settings.sparql_endpoint,
+        headers={"Accept": mediatype},
+        data={"query": query},
     )
     return await async_client.send(query_rq, stream=True)
 
@@ -101,7 +104,6 @@ async def send_queries(queries: List[str]):
     Args: queries: List[str]: A list of SPARQL queries to be sent asynchronously.
     Returns: List[httpx.Response]: A list of httpx.Response objects, one for each query
     """
-
     return await asyncio.gather(*[send_query(query) for query in queries])
 
 
@@ -114,8 +116,7 @@ async def query_to_graph(query: str):
     response = await send_query(query)
     g = Graph()
     await response.aread()
-    g.parse(data=response.text, format="turtle")
-    return g
+    return g.parse(data=response.text, format="turtle")
 
 
 async def queries_to_graph(queries: List[str]):
