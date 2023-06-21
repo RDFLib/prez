@@ -13,20 +13,18 @@ services:
     environment:
       ADMIN_PASSWORD: pw
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://fuseki:3030" ]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3030 || exit 1"]
       interval: 5s
       timeout: 10s
       retries: 3
       start_period: 20s
 
   prez:
-    image: "ghcr.io/rdflib/prez:3.0.10-dev.3.440d6ee"
+    image: "ghcr.io/rdflib/prez:latest"
     ports:
       - "8000:8000"
     environment:
-      SPACEPREZ_SPARQL_ENDPOINT: 'http://fuseki:3030/sp'
-      VOCPREZ_SPARQL_ENDPOINT: 'http://fuseki:3030/vp'
-      CATPREZ_SPARQL_ENDPOINT: 'http://fuseki:3030/cp'
+      SPARQL_ENDPOINT: 'http://fuseki:3030/sp'
     depends_on:
       fuseki:
         condition: service_healthy
