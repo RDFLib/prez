@@ -79,8 +79,13 @@ async def sparql(request: Request):
     url = httpx.URL(
         url=settings.sparql_endpoint, query=request.url.query.encode("utf-8")
     )
+    headers = []
+    for header in request.headers.raw:
+        if header[0] != b"host":
+            headers.append(header)
+    headers.append((b"host", str(url.host).encode("utf-8")))
     rp_req = async_client.build_request(
-        request.method, url, headers=request.headers.raw, content=request.stream()
+        request.method, url, headers=headers, content=request.stream()
     )
     return await async_client.send(rp_req, stream=True)
 
