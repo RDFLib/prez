@@ -1,4 +1,3 @@
-import asyncio
 import io
 import logging
 from typing import Optional, Dict
@@ -13,13 +12,13 @@ from starlette.responses import Response
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.models.profiles_item import ProfileItem
 from prez.reference_data.prez_ns import PREZ
+from prez.sparql.methods import queries_to_graph
 from prez.services.curie_functions import get_curie_id_for_uri
 from prez.sparql.objects_listings import (
     generate_item_construct,
     get_annotation_properties,
     get_annotation_predicates,
 )
-from prez.sparql.methods import sparql_construct
 
 log = logging.getLogger(__name__)
 
@@ -29,23 +28,15 @@ async def return_from_queries(
     mediatype,
     profile,
     profile_headers,
-    prez,
     predicates_for_link_addition: Dict = {},
 ):
     """
     Executes SPARQL queries, loads these to RDFLib Graphs, and calls the "return_from_graph" function to return the
     content
     """
-    results = await asyncio.gather(
-        *[sparql_construct(query, prez) for query in queries]
-    )
-    graphs = [result[1] for result in results if result[0]]
-    graph = graphs[0]
-    if len(graphs) > 1:
-        for g in graphs[1:]:
-            graph.__iadd__(g)
+    graph = await queries_to_graph(queries)
     return await return_from_graph(
-        graph, mediatype, profile, profile_headers, prez, predicates_for_link_addition
+        graph, mediatype, profile, profile_headers, predicates_for_link_addition
     )
 
 
@@ -54,7 +45,6 @@ async def return_from_graph(
     mediatype,
     profile,
     profile_headers,
-    prez,
     predicates_for_link_addition: dict = {},
 ):
     profile_headers["Content-Disposition"] = "inline"
@@ -65,9 +55,9 @@ async def return_from_graph(
     #     ...
 
     else:
-        if mediatype == Literal("text/anot+turtle"):
+        if "anot+" in mediatype:
             return await return_annotated_rdf(
-                graph, prez, profile_headers, profile, predicates_for_link_addition
+                graph, profile_headers, profile, predicates_for_link_addition, mediatype
             )
 
 
@@ -83,27 +73,35 @@ async def return_rdf(graph, mediatype, profile_headers):
 
 
 async def return_annotated_rdf(
-    graph, prez, profile_headers, profile, predicates_for_link_addition
+    graph: Graph,
+    profile_headers,
+    profile,
+    predicates_for_link_addition: dict,
+    mediatype="text/anot+turtle",
 ):
     from prez.cache import tbox_cache
+
+    non_anot_mediatype = mediatype.replace("anot+", "")
 
     cache = tbox_cache
     profile_annotation_props = get_annotation_predicates(profile)
     queries_for_uncached, annotations_graph = await get_annotation_properties(
         graph, **profile_annotation_props
     )
-    results = await sparql_construct(queries_for_uncached, prez)
-    if results[1]:
-        annotations_graph += results[1]
-        cache += results[1]
+    anots_from_triplestore = await queries_to_graph([queries_for_uncached])
+    if len(anots_from_triplestore) > 1:
+        annotations_graph += anots_from_triplestore
+        cache += anots_from_triplestore
 
     generate_prez_links(graph, predicates_for_link_addition)
 
     obj = io.BytesIO(
-        (graph + annotations_graph).serialize(format="text/turtle", encoding="utf-8")
+        (graph + annotations_graph).serialize(
+            format=non_anot_mediatype, encoding="utf-8"
+        )
     )
     return StreamingResponse(
-        content=obj, media_type="text/turtle", headers=profile_headers
+        content=obj, media_type=non_anot_mediatype, headers=profile_headers
     )
 
 
@@ -214,7 +212,6 @@ def generate_object_endpoint_link(graph, predicates_for_link_addition):
 
 async def return_profiles(
     classes: frozenset,
-    prez_type: str,
     request: Optional[Request] = None,
     prof_and_mt_info: Optional[ProfilesMediatypesInfo] = None,
 ) -> Response:
@@ -241,5 +238,4 @@ async def return_profiles(
         prof_and_mt_info.mediatype,
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
-        prez_type,
     )

@@ -11,8 +11,8 @@ response = os.system(
 time.sleep(15)
 
 
-def setup_sp():
-    url = "http://localhost:3030/sp/"
+def setup():
+    url = "http://localhost:3030/myds"
 
     payload = {}
     files = [
@@ -72,28 +72,8 @@ def setup_sp():
                 "application/octet-stream",
             ),
         ),
-    ]
-    headers = {}
-
-    response = requests.request(
-        "POST",
-        url,
-        headers=headers,
-        data=payload,
-        files=files,
-        params={"graph": "http://exampledatagraph"},
-    )
-
-    print(response.text)
-
-
-def setup_vp():
-    url = "http://localhost:3030/vp/"
-
-    payload = {}
-    files = [
         (
-            "myfile",
+            "myfile8",
             (
                 "alteration-types.ttl",
                 open("tests/data/vocprez/input/alteration-types.ttl", "rb"),
@@ -101,7 +81,7 @@ def setup_vp():
             ),
         ),
         (
-            "myfile2",
+            "myfile9",
             (
                 "contacttype.ttl",
                 open("tests/data/vocprez/input/contacttype.ttl", "rb"),
@@ -109,35 +89,15 @@ def setup_vp():
             ),
         ),
         (
-            "myfile6",
+            "myfile10",
             (
                 "dublin_core_terms.ttl",
                 open("tests/data/vocprez/input/dublin_core_terms.ttl", "rb"),
                 "application/octet-stream",
             ),
         ),
-    ]
-    headers = {}
-
-    response = requests.request(
-        "POST",
-        url,
-        headers=headers,
-        data=payload,
-        files=files,
-        params={"graph": "http://exampledatagraph"},
-    )
-
-    print(response.text)
-
-
-def setup_cp():
-    url = "http://localhost:3030/cp/"
-
-    payload = {}
-    files = [
         (
-            "myfile",
+            "myfile11",
             (
                 "_idn-ac.ttl",
                 open("tests/data/catprez/input/_idn-ac.ttl", "rb"),
@@ -145,7 +105,7 @@ def setup_cp():
             ),
         ),
         (
-            "myfile2",
+            "myfile12",
             (
                 "_idn-dc.ttl",
                 open("tests/data/catprez/input/_idn-dc.ttl", "rb"),
@@ -153,7 +113,7 @@ def setup_cp():
             ),
         ),
         (
-            "myfile3",
+            "myfile13",
             (
                 "_system-catalog.ttl",
                 open("tests/data/catprez/input/_system-catalog.ttl", "rb"),
@@ -161,7 +121,7 @@ def setup_cp():
             ),
         ),
         (
-            "myfile4",
+            "myfile14",
             (
                 "AAC-SA.ttl",
                 open("tests/data/catprez/input/AAC-SA.ttl", "rb"),
@@ -169,7 +129,7 @@ def setup_cp():
             ),
         ),
         (
-            "myfile5",
+            "myfile15",
             (
                 "agents.ttl",
                 open("tests/data/catprez/input/agents.ttl", "rb"),
@@ -177,7 +137,7 @@ def setup_cp():
             ),
         ),
         (
-            "myfile6",
+            "myfile16",
             (
                 "dublin_core_terms.ttl",
                 open("tests/data/vocprez/input/dublin_core_terms.ttl", "rb"),
@@ -199,6 +159,4 @@ def setup_cp():
     print(response.text)
 
 
-setup_sp()
-setup_vp()
-setup_cp()
+setup()

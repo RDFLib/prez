@@ -165,14 +165,20 @@ class SparqlServer(BaseHTTPRequestHandler):
     def apply_sparql_query(self, query):
         # print(f"query: {query}")
         try:
-            if "catprez" in self.path:
-                result = catprez_graph.query(query)
-            elif "vocprez" in self.path:
-                result = vocprez_graph.query(query)
-            else:  # "spaceprez" in self.path:
-                result = spaceprez_graph.query(query)
+            # strip query= from the query
+            if query.startswith("query="):
+                new_query = urllib.parse.unquote_plus(query.split("query=")[1])
+            else:
+                new_query = query
 
-            if "CONSTRUCT" in query or "DESCRIBE" in query:
+            if "catprez" in self.path:
+                result = catprez_graph.query(new_query)
+            elif "vocprez" in self.path:
+                result = vocprez_graph.query(new_query)
+            else:  # "spaceprez" in self.path:
+                result = spaceprez_graph.query(new_query)
+
+            if "CONSTRUCT" in new_query or "DESCRIBE" in new_query:
                 content_type = "text/turtle"
             else:
                 content_type = "application/sparql-results+json"
@@ -219,7 +225,7 @@ if __name__ == "__main__":
         "-s", "--server", default="localhost", help="Optionally a server location"
     )
     parser.add_argument(
-        "-p", "--port", default=3030, help="Optionally a port to run on"
+        "-p", "--port", default=3031, help="Optionally a port to run on"
     )
     args = parser.parse_args()
 

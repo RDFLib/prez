@@ -18,7 +18,7 @@ PREFIX : <https://linked.data.gov.au/def/reg-statuses/>
 
 Note that just like the original form of this vocabulary, while it is a SKOS vocabulary implemented as a single skos:ConceptScheme, it is also an OWL Ontology and that each *Status* is both a skos:Concept and a reg:Status individual."""@en ;
     owl:versionIRI <https://linked.data.gov.au/def/reg-status/2.1> ;
-    owl:versionInfo 
+    owl:versionInfo
         "2.1 - 2023-05 - added colours" ,
         "2.0 - 2023-01 - addition of Concepts addition & original, as per updated Registry Item status codes" ,
         "1.2 - 2021-11 - changes IRI to reg-statuses; added unstable" ,

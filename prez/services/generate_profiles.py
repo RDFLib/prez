@@ -6,10 +6,9 @@ from typing import FrozenSet
 from rdflib import Graph, URIRef
 
 from prez.cache import profiles_graph_cache
-from prez.config import settings
 from prez.models.model_exceptions import NoProfilesException
+from prez.sparql.methods import query_to_graph
 from prez.services.curie_functions import get_curie_id_for_uri
-from prez.sparql.methods import sparql_construct
 from prez.sparql.objects_listings import select_profile_mediatype
 
 log = logging.getLogger(__name__)
@@ -56,14 +55,11 @@ async def create_profiles_graph() -> Graph:
           }
         }
         """
-    any_remote_profiles = False
-    for p in settings.enabled_prezs:
-        r = await sparql_construct(remote_profiles_query, p)
-        if r[0] and r[1]:
-            any_remote_profiles = True
-            profiles_graph_cache.__iadd__(r[1])
-            log.info(f"Remote profiles found and added for {p}")
-    if not any_remote_profiles:
+    g = await query_to_graph(remote_profiles_query)
+    if len(g) > 0:
+        profiles_graph_cache.__iadd__(g)
+        log.info(f"Remote profile(s) found and added")
+    else:
         log.info("No remote profiles found")
 
 
