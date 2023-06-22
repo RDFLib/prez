@@ -70,12 +70,12 @@ the annotations and return the RDF merge of the original response and the annota
 Additional predicates can be added to the list of predicates Prez looks for in the profiles by adding these predicates
 using the properties listed below.
 
-| Property | Default Predicate   | Examples of other predicates that would commonly be used | Profiles predicate to add *additional* predicates |
-|----------|---------------------|----------------------------------------------------------|---------------------------------------------------|
-| label    | rdfs:label          | skos:prefLabel, dcterms:title                            | altr-ext:hasLabelPredicate                        |
- | description | dcterms:description | skos:definition, dcterms:abstract                        | altr-ext:hasDescriptionPredicate                  |
-    | provenance | dcterms:provenance  | dcterms:source                                           | altr-ext:hasExplanationPredicate                  |
-| other | (None)              | schema:color                                             | altr-ext:otherAnnotationProps |
+| Property    | Default Predicate   | Examples of other predicates that would commonly be used | Profiles predicate to add *additional* predicates |
+|-------------|---------------------|----------------------------------------------------------|---------------------------------------------------|
+| label       | rdfs:label          | skos:prefLabel, dcterms:title                            | altr-ext:hasLabelPredicate                        |
+| description | dcterms:description | skos:definition, dcterms:abstract                        | altr-ext:hasDescriptionPredicate                  |
+| provenance  | dcterms:provenance  | dcterms:source                                           | altr-ext:hasExplanationPredicate                  |
+| other       | (None)              | schema:color                                             | altr-ext:otherAnnotationProps                     |
 
 ## High Level Sequence
 
