@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     system_uri: Documentation property. An IRI for the Prez system as a whole. This value appears in the landing page RDF delivered by Prez ('/')
     top_level_classes:
     collection_classes:
-    general_classes:
+    base_classes:
     log_level:
     log_output:
     cql_props: dict = {
@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     system_uri: Optional[str]
     top_level_classes: Optional[dict]
     collection_classes: Optional[dict]
-    general_classes: Optional[dict]
+    base_classes: Optional[dict]
     prez_flavours: Optional[list] = ["SpacePrez", "VocPrez", "CatPrez", "ProfilesPrez"]
     log_level = "INFO"
     log_output = "stdout"
@@ -128,16 +128,16 @@ class Settings(BaseSettings):
         return values
 
     @root_validator()
-    def populate_general_classes(cls, values):
+    def populate_base_classes(cls, values):
         additional_classes = {
             "SpacePrez": [GEO.Feature],
             "VocPrez": [SKOS.Concept],
             "CatPrez": [DCAT.Dataset],
             "Profiles": [PROF.Profile],
         }
-        values["general_classes"] = {}
+        values["base_classes"] = {}
         for prez in list(additional_classes.keys()) + ["Profiles"]:
-            values["general_classes"][prez] = (
+            values["base_classes"][prez] = (
                 values["collection_classes"].get(prez) + additional_classes[prez]
             )
         return values

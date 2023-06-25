@@ -1,0 +1,59 @@
+PREFIX endpoint: <https://prez.dev/endpoint/vocprez/>
+PREFIX ont: <https://prez.dev/ont/>
+PREFIX prez: <https://prez.dev/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+endpoint:collection-listing a ont:Endpoint ;
+    ont:deliversClasses prez:VocPrezCollectionList ;
+    ont:endpointTemplate "/v/collection" ;
+.
+
+endpoint:collection a ont:Endpoint ;
+    ont:parentEndpoint endpoint:collection ;
+    ont:deliversClasses skos:Collection  ;
+    ont:endpointTemplate "/v/collection/$object" ;
+.
+
+endpoint:collection-concept a ont:Endpoint ;
+    ont:parentEndpoint endpoint:collection ;
+    ont:deliversClasses skos:Concept ;
+    ont:endpointTemplate "/v/collection/$parent_1/$object" ;
+    ont:ParentToFocusRelation skos:member ;
+.
+
+endpoint:schemes-listing a ont:Endpoint ;
+    ont:deliversClasses prez:SchemesList ;
+    ont:endpointTemplate "/v/scheme" ;
+.
+
+ endpoint:vocabs-listing a ont:Endpoint ;
+    ont:deliversClasses prez:SchemesList ;
+    ont:endpointTemplate "/v/vocab" ;
+.
+
+endpoint:vocab a ont:Endpoint ;
+    ont:parentEndpoint endpoint:vocabs-listing ;
+    ont:deliversClasses skos:ConceptScheme ;
+    ont:endpointTemplate "/v/vocab/$object" ;
+.
+
+endpoint:scheme a ont:Endpoint ;
+    ont:parentEndpoint endpoint:schemes-listing ;
+    ont:deliversClasses skos:ConceptScheme ;
+    ont:endpointTemplate "/v/scheme/$object" ;
+.
+
+endpoint:vocab-concept a ont:Endpoint ;
+    ont:parentEndpoint endpoint:vocab ;
+    ont:deliversClasses skos:Concept ;
+    ont:endpointTemplate "/v/vocab/$parent_1/$object" ;
+    ont:FocusToParentRelation skos:inScheme ;
+.
+
+endpoint:scheme-concept a ont:Endpoint ;
+    ont:parentEndpoint endpoint:scheme ;
+    ont:deliversClasses skos:Concept ;
+    ont:endpointTemplate "/v/scheme/$parent_1/$object" ;
+    ont:FocusToParentRelation skos:inScheme ;
+.

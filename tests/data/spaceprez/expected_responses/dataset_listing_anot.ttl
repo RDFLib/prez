@@ -19,5 +19,8 @@
     dcterms:title "Geocoded National Address File"@en ;
     ns1:link "/s/datasets/ldgovau:gnaf" .
 
+<https://test/dataset> a dcat:Dataset ;
+    ns1:link "/s/datasets/ns1:dataset" .
+
 dcat:Dataset rdfs:label "Dataset"@en ;
-    ns1:count 3 .
+    ns1:count 4 .

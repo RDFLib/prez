@@ -89,7 +89,7 @@ prez:SpacePrezProfile
     ] ,
     [  a sh:NodeShape ;
         sh:targetClass geo:FeatureCollection , prez:FeatureCollectionList , prez:FeatureList ;
-        altr-ext:outboundChildren rdfs:member ;
+        altr-ext:focusToChild rdfs:member ;
     ]
 .
 
@@ -126,6 +126,6 @@ prez:SpacePrezProfile
     altr-ext:hasNodeShape [
       a sh:NodeShape ;
         sh:targetClass dcat:Dataset ;
-        altr-ext:outboundChildren rdfs:member ;
+        altr-ext:focusToChild rdfs:member ;
     ]
 .

@@ -4,7 +4,7 @@ from starlette.responses import PlainTextResponse
 
 from prez.cache import search_methods
 from prez.renderers.renderer import return_rdf
-from prez.sparql.methods import query_to_graph
+from prez.sparql.methods import rdf_queries_to_graph
 from prez.sparql.objects_listings import generate_item_construct
 
 router = APIRouter(tags=["Search"])
@@ -35,7 +35,7 @@ async def search(
         search_query, URIRef("https://w3id.org/profile/mem")
     )
 
-    graph = await query_to_graph(full_query)
+    graph = await rdf_queries_to_graph(full_query)
     graph.bind("prez", "https://prez.dev/")
 
     return await return_rdf(graph, mediatype="text/anot+turtle", profile_headers={})

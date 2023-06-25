@@ -287,8 +287,8 @@ SELECT ?profile ?title ?class (count(?mid) as ?distance) ?req_profile ?def_profi
 WHERE {
   VALUES ?class {<https://prez.dev/DatasetList>}
   ?class rdfs:subClassOf* ?mid .
-  ?mid rdfs:subClassOf* ?general_class .
-  VALUES ?general_class { dcat:Dataset geo:FeatureCollection prez:FeatureCollectionList prez:FeatureList geo:Feature
+  ?mid rdfs:subClassOf* ?base_class .
+  VALUES ?base_class { dcat:Dataset geo:FeatureCollection prez:FeatureCollectionList prez:FeatureList geo:Feature
     skos:ConceptScheme skos:Concept skos:Collection prez:DatasetList prez:VocPrezCollectionList prez:SchemesList
     prez:CatalogList dcat:Catalog dcat:Resource }
   ?profile altr-ext:constrainsClass ?class ;

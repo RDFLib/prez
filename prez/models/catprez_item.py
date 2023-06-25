@@ -12,9 +12,10 @@ PREZ = Namespace("https://prez.dev/")
 
 class CatalogItem(BaseModel):
     uri: Optional[URIRef] = None
+    endpoint_uri: Optional[str]
     classes: Optional[Set[URIRef]]
     curie_id: Optional[str] = None
-    general_class: Optional[URIRef] = None
+    base_class: Optional[URIRef] = None
     catalog_curie: Optional[str] = None
     resource_curie: Optional[str] = None
     url_path: Optional[str] = None
@@ -34,19 +35,19 @@ class CatalogItem(BaseModel):
         uri = values.get("uri")
         curie_id = values.get("curie_id")
         url_parts = url_path.split("/")
-        if url_path in ["/object", "/c/object"]:
-            values["link_constructor"] = f"/c/object?uri="
+        endpoint_uri = values.get("endpoint_uri")
+        values["endpoint_uri"] = URIRef(endpoint_uri)
         if len(url_parts) == 4:
-            values["general_class"] = DCAT.Catalog
+            values["base_class"] = DCAT.Catalog
             curie_id = values.get("catalog_curie")
             values["link_constructor"] = f"/c/catalogs/{curie_id}"
         elif len(url_parts) == 5:
-            values["general_class"] = DCAT.Resource
+            values["base_class"] = DCAT.Resource
             curie_id = values.get("resource_curie")
         assert curie_id or uri, "Either an curie_id or uri must be provided"
         if curie_id:  # get the URI
             values["uri"] = get_uri_for_curie_id(curie_id)
         else:  # uri provided, get the curie_id
             values["curie_id"] = get_curie_id_for_uri(uri)
-        values["classes"] = get_classes(values["uri"])
+        values["classes"] = get_classes(values["uri"], values["endpoint_uri"])
         return values

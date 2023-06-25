@@ -10,10 +10,11 @@ from prez.cache import (
     profiles_graph_cache,
     counts_graph,
     prefix_graph,
+    endpoints_graph_cache,
 )
 from prez.config import settings
 from prez.reference_data.prez_ns import PREZ, ALTREXT
-from prez.sparql.methods import query_to_graph
+from prez.sparql.methods import rdf_queries_to_graph
 from prez.sparql.objects_listings import startup_count_objects
 
 log = logging.getLogger(__name__)
@@ -50,7 +51,7 @@ async def healthcheck_sparql_endpoints():
 
 async def count_objects():
     query = startup_count_objects()
-    graph = await query_to_graph(query)
+    graph = await rdf_queries_to_graph(query)
     if len(graph) > 1:
         counts_graph.__iadd__(graph)
 
@@ -98,3 +99,9 @@ async def add_prefixes_to_prefix_graph():
                 f'"{f.name}"'
             )
     log.info("Prefixes from local files added to prefix graph")
+
+
+async def create_endpoints_graph() -> Graph:
+    for f in (Path(__file__).parent.parent / "reference_data/endpoints").glob("*.ttl"):
+        endpoints_graph_cache.parse(f)
+    log.info("Prez endpoints graph loaded")

@@ -22,7 +22,11 @@ async def catprez_profiles():
     return PlainTextResponse("CatPrez Home")
 
 
-@router.get("/c/catalogs", summary="List Catalogs")
+@router.get(
+    "/c/catalogs",
+    summary="List Catalogs",
+    name="https://prez.dev/endpoint/catprez/catalog-listing",
+)
 async def catalogs_endpoint(
     request: Request,
     page: int = 1,
@@ -54,14 +58,22 @@ async def catalogs_endpoint(
     )
 
 
-@router.get("/c/catalogs/{catalog_curie}/{resource_curie}", summary="Get Resource")
+@router.get(
+    "/c/catalogs/{catalog_curie}/{resource_curie}",
+    summary="Get Resource",
+    name="https://prez.dev/endpoint/catprez/resource",
+)
 async def resource_endpoint(
     request: Request, catalog_curie: str = None, resource_curie: str = None
 ):
     return await item_endpoint(request)
 
 
-@router.get("/c/catalogs/{catalog_curie}", summary="Get Catalog")
+@router.get(
+    "/c/catalogs/{catalog_curie}",
+    summary="Get Catalog",
+    name="https://prez.dev/endpoint/catprez/catalog",
+)
 async def catalog_endpoint(request: Request, catalog_curie: str = None):
     return await item_endpoint(request)
 
@@ -72,7 +84,8 @@ async def item_endpoint(request: Request, cp_item: Optional[CatalogItem] = None)
         cp_item = CatalogItem(
             **request.path_params,
             **request.query_params,
-            url_path=str(request.url.path)
+            url_path=str(request.url.path),
+            endpoint_uri=request.scope["route"].name
         )
     prof_and_mt_info = ProfilesMediatypesInfo(request=request, classes=cp_item.classes)
     cp_item.selected_class = prof_and_mt_info.selected_class

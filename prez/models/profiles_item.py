@@ -17,7 +17,7 @@ class ProfileItem(BaseModel):
     id: Optional[str] = None
     link_constructor: str = "/profiles"
 
-    # general_class: Optional[URIRef] = None
+    # base_class: Optional[URIRef] = None
     # url_path: Optional[str] = None
     selected_class: Optional[URIRef] = None
 

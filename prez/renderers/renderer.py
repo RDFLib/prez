@@ -12,7 +12,7 @@ from starlette.responses import Response
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.models.profiles_item import ProfileItem
 from prez.reference_data.prez_ns import PREZ
-from prez.sparql.methods import queries_to_graph
+from prez.sparql.methods import send_queries
 from prez.services.curie_functions import get_curie_id_for_uri
 from prez.sparql.objects_listings import (
     generate_item_construct,
@@ -34,7 +34,7 @@ async def return_from_queries(
     Executes SPARQL queries, loads these to RDFLib Graphs, and calls the "return_from_graph" function to return the
     content
     """
-    graph = await queries_to_graph(queries)
+    graph, _ = await send_queries(queries)
     return await return_from_graph(
         graph, mediatype, profile, profile_headers, predicates_for_link_addition
     )
@@ -88,7 +88,7 @@ async def return_annotated_rdf(
     queries_for_uncached, annotations_graph = await get_annotation_properties(
         graph, **profile_annotation_props
     )
-    anots_from_triplestore = await queries_to_graph([queries_for_uncached])
+    anots_from_triplestore, _ = await send_queries([queries_for_uncached])
     if len(anots_from_triplestore) > 1:
         annotations_graph += anots_from_triplestore
         cache += anots_from_triplestore
@@ -111,9 +111,9 @@ def generate_prez_links(graph, predicates_for_link_addition):
     if predicates_for_link_addition["link_constructor"].endswith("/object?uri="):
         generate_object_endpoint_link(graph, predicates_for_link_addition)
     else:
-        if predicates_for_link_addition["ob_chi"]:
+        if predicates_for_link_addition["focus_to_child"]:
             triples_for_links = graph.triples_choices(
-                (None, predicates_for_link_addition["ob_chi"], None)
+                (None, predicates_for_link_addition["focus_to_child"], None)
             )
             for triple in triples_for_links:
                 graph.add(
@@ -126,9 +126,9 @@ def generate_prez_links(graph, predicates_for_link_addition):
                         ),
                     )
                 )
-        if predicates_for_link_addition["ib_chi"]:
+        if predicates_for_link_addition["child_to_focus"]:
             for triple in graph.triples_choices(
-                (None, predicates_for_link_addition["ib_chi"], None)
+                (None, predicates_for_link_addition["child_to_focus"], None)
             ):
                 graph.add(
                     (
@@ -140,9 +140,9 @@ def generate_prez_links(graph, predicates_for_link_addition):
                         ),
                     )
                 )
-        if predicates_for_link_addition["ob_par"]:
+        if predicates_for_link_addition["focus_to_parent"]:
             triples_for_links = graph.triples_choices(
-                (None, predicates_for_link_addition["ob_par"], None)
+                (None, predicates_for_link_addition["focus_to_parent"], None)
             )
             new_link_constructor = "/".join(
                 predicates_for_link_addition["link_constructor"].split("/")[:-1]
@@ -157,9 +157,9 @@ def generate_prez_links(graph, predicates_for_link_addition):
                         ),
                     )
                 )
-        if predicates_for_link_addition["ib_par"]:
+        if predicates_for_link_addition["parent_to_focus"]:
             triples_for_links = graph.triples_choices(
-                (None, predicates_for_link_addition["ib_par"], None)
+                (None, predicates_for_link_addition["parent_to_focus"], None)
             )
             new_link_constructor = "/".join(
                 predicates_for_link_addition["link_constructor"].split("/")[:-1]
@@ -194,10 +194,10 @@ def generate_prez_links(graph, predicates_for_link_addition):
 
 def generate_object_endpoint_link(graph, predicates_for_link_addition):
     all_preds = (
-        predicates_for_link_addition["ib_par"]
-        + predicates_for_link_addition["ob_par"]
-        + predicates_for_link_addition["ib_chi"]
-        + predicates_for_link_addition["ob_chi"]
+        predicates_for_link_addition["parent_to_focus"]
+        + predicates_for_link_addition["focus_to_parent"]
+        + predicates_for_link_addition["child_to_focus"]
+        + predicates_for_link_addition["focus_to_child"]
     )
     objects_for_links = graph.triples_choices((None, all_preds, None))
     for o in objects_for_links:
