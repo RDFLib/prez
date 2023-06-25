@@ -112,16 +112,6 @@ async def object_function(
     )
 
 
-# TODO add to readme:
-# get classes from remote endpoint
-# get endpoints which deliver classes & endpoint templates & parent relations for endpoints (from local prez graph)
-# in parallel:
-#   get parent uris from remote endpoint
-#   get object information using open profile from remote endpoint
-# construct the system links using the parent uris from the remote endpoint.
-# merge the response with the system links
-
-
 def get_endpoint_info_for_classes(classes) -> dict:
     """
     Queries Prez's in memory reference data for endpoints to determine which endpoints are relevant for the classes an

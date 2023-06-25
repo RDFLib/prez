@@ -77,7 +77,21 @@ using the properties listed below.
 | provenance  | dcterms:provenance  | dcterms:source                                           | altr-ext:hasExplanationPredicate                  |
 | other       | (None)              | schema:color                                             | altr-ext:otherAnnotationProps                     |
 
-## High Level Sequence
+## High Level Sequence `/object` endpoint
+
+Prez provides a `/object` endpoint as an endpoint that supplies any information known about a given URI. If an annotated
+mediatype is requested, prez will additionally provide all system links for endpoints which can render the object. The
+high level sequence for this endpoint is as follows:
+
+1. Get the URI for the object from the query string
+2. Get the class(es) of the object from the triplestore
+3. Use prez's reference data for endpoints to determine which endpoints can render this object, and, a template for
+these endpoints, specifying any variables that need to be substituted (such as parent URIs).
+4. Get the object information from the triplestore, using an open profile, and in parallel any system information needed
+to construct the system links.
+5. Return the response
+
+## High Level Sequence listing and individual object endpoints
 
 Prez follows the following logic to determine what information to return, based on a profile, and in what mediatype to return it.
 
