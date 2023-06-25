@@ -41,8 +41,8 @@ async def vocprez_home():
     return PlainTextResponse("VocPrez Home")
 
 
-@router.get("/v/collection", summary="List Collections")
-@router.get("/v/vocab", summary="List Vocabularies")
+@router.get("/v/collection", summary="List Collections", name="https://prez.dev/endpoint/vocprez/collection-listing")
+@router.get("/v/vocab", summary="List Vocabularies", name="https://prez.dev/endpoint/vocprez/vocabs-listing")
 async def schemes_endpoint(
     request: Request,
     page: int = 1,
@@ -75,7 +75,9 @@ async def schemes_endpoint(
 
 
 @router.get(
-    "/v/vocab/{scheme_curie}/all", summary="Get Concept Scheme and all its concepts"
+    "/v/vocab/{scheme_curie}/all", 
+    summary="Get Concept Scheme and all its concepts",
+    name="https://prez.dev/endpoint/vocprez/vocab"
 )
 async def vocprez_scheme(request: Request, scheme_curie: str):
     """Get a SKOS Concept Scheme and all of its concepts.
@@ -88,6 +90,7 @@ async def vocprez_scheme(request: Request, scheme_curie: str):
 @router.get(
     "/v/vocab/{concept_scheme_curie}",
     summary="Get a SKOS Concept Scheme",
+    name="https://prez.dev/endpoint/vocprez/collection",
     response_class=StreamingTurtleAnnotatedResponse,
     responses={
         200: {
@@ -276,22 +279,23 @@ async def vocprez_collection(request: Request, collection_curie: str):
     return await item_endpoint(request)
 
 
-@router.get("/v/collection/{collection_curie}/{concept_curie}", summary="Get Concept")
+@router.get("/v/collection/{collection_curie}/{concept_curie}",
+            summary="Get Concept",
+            name="https://prez.dev/endpoint/vocprez/collection-concept")
 async def vocprez_collection_concept(
     request: Request, collection_curie: str, concept_curie: str
 ):
     return await item_endpoint(request)
 
 
-@router.get("/v/object", summary="Get VocPrez Object")
 async def item_endpoint(request: Request, vp_item: Optional[VocabItem] = None):
     """Returns a VocPrez skos:Concept, Collection, Vocabulary, or ConceptScheme in the requested profile & mediatype"""
-
     if not vp_item:
         vp_item = VocabItem(
             **request.path_params,
             **request.query_params,
             url_path=str(request.url.path),
+            endpoint_uri=request.scope["route"].name
         )
     prof_and_mt_info = ProfilesMediatypesInfo(request=request, classes=vp_item.classes)
     vp_item.selected_class = prof_and_mt_info.selected_class

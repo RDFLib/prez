@@ -14,7 +14,7 @@ class SpatialMembers(BaseModel):
     parent_uri: Optional[URIRef] = None
     dataset_curie: Optional[URIRef]
     collection_curie: Optional[URIRef]
-    general_class: Optional[URIRef]
+    base_class: Optional[URIRef]
     classes: Optional[FrozenSet[URIRef]]
     selected_class: Optional[FrozenSet[URIRef]] = None
     top_level_listing: Optional[bool] = False
@@ -24,7 +24,7 @@ class SpatialMembers(BaseModel):
     def populate(cls, values):
         url_path = values["url_path"]
         if url_path.endswith("/datasets"):  # /s/datasets
-            values["general_class"] = DCAT.Dataset
+            values["base_class"] = DCAT.Dataset
             values["link_constructor"] = "/s/datasets"
             values["classes"] = frozenset([PREZ.DatasetList])
             # graph
@@ -34,7 +34,7 @@ class SpatialMembers(BaseModel):
             "/collections"
         ):  # /s/datasets/{dataset_curie}/collections
             dataset_curie = values.get("dataset_curie")
-            values["general_class"] = GEO.FeatureCollection
+            values["base_class"] = GEO.FeatureCollection
             values["link_constructor"] = f"/s/datasets/{dataset_curie}/collections"
             values["classes"] = frozenset([PREZ.FeatureCollectionList])
             values["uri"] = get_uri_for_curie_id(dataset_curie)
@@ -43,7 +43,7 @@ class SpatialMembers(BaseModel):
         ):  # /s/datasets/{dataset_curie}/collections/{collection_curie}/items
             dataset_curie = values.get("dataset_curie")
             collection_curie = values.get("collection_curie")
-            values["general_class"] = GEO.Feature
+            values["base_class"] = GEO.Feature
             values[
                 "link_constructor"
             ] = f"/s/datasets/{dataset_curie}/collections/{collection_curie}/items"

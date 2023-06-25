@@ -211,8 +211,8 @@ WHERE {
 
 def test_get_profile_predicates_sequence(sp_test_client):
     profile = URIRef("https://w3id.org/profile/vocpub")
-    general_class = SKOS.ConceptScheme
-    preds = get_item_predicates(profile, general_class)
+    base_class = SKOS.ConceptScheme
+    preds = get_item_predicates(profile, base_class)
     assert preds[3] == [
         [
             URIRef("http://www.w3.org/2000/01/rdf-schema#member"),

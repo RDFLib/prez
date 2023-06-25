@@ -28,6 +28,13 @@ from prez.routers.vocprez import router as vocprez_router
 from prez.routers.identifier import router as identifier_router
 from prez.services.app_service import healthcheck_sparql_endpoints, count_objects
 from prez.services.app_service import populate_api_info, add_prefixes_to_prefix_graph
+from prez.services.app_service import (
+    healthcheck_sparql_endpoints,
+    count_objects,
+    create_endpoints_graph,
+    populate_api_info,
+    add_prefixes_to_prefix_graph,
+)
 from prez.services.exception_catchers import (
     catch_400,
     catch_404,
@@ -109,6 +116,7 @@ async def app_startup():
     await healthcheck_sparql_endpoints()
     await get_all_search_methods()
     await create_profiles_graph()
+    await create_endpoints_graph()
     await count_objects()
     await populate_api_info()
     await add_prefixes_to_prefix_graph()

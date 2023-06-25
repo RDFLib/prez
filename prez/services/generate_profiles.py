@@ -7,8 +7,8 @@ from rdflib import Graph, URIRef
 
 from prez.cache import profiles_graph_cache
 from prez.models.model_exceptions import NoProfilesException
-from prez.sparql.methods import query_to_graph
 from prez.services.curie_functions import get_curie_id_for_uri
+from prez.sparql.methods import rdf_queries_to_graph
 from prez.sparql.objects_listings import select_profile_mediatype
 
 log = logging.getLogger(__name__)
@@ -55,7 +55,7 @@ async def create_profiles_graph() -> Graph:
           }
         }
         """
-    g = await query_to_graph(remote_profiles_query)
+    g = await rdf_queries_to_graph(remote_profiles_query)
     if len(g) > 0:
         profiles_graph_cache.__iadd__(g)
         log.info(f"Remote profile(s) found and added")
@@ -63,7 +63,7 @@ async def create_profiles_graph() -> Graph:
         log.info("No remote profiles found")
 
 
-@lru_cache(maxsize=128)
+# @lru_cache(maxsize=128)
 def get_profiles_and_mediatypes(
     classes: FrozenSet[URIRef],
     requested_profile: URIRef = None,

@@ -22,7 +22,11 @@ async def spaceprez_profiles():
     return PlainTextResponse("SpacePrez Home")
 
 
-@router.get("/s/datasets", summary="List Datasets")
+@router.get(
+    "/s/datasets",
+    summary="List Datasets",
+    name="https://prez.dev/endpoint/spaceprez/dataset",
+)
 async def list_items(
     request: Request, page: Optional[int] = 1, per_page: Optional[int] = 20
 ):
@@ -55,6 +59,7 @@ async def list_items(
 @router.get(
     "/s/datasets/{dataset_curie}/collections",
     summary="List Feature Collections",
+    name="https://prez.dev/endpoint/spaceprez/feature-collection-listing",
 )
 async def list_items_feature_collections(
     request: Request, dataset_curie: str, page: int = 1, per_page: int = 20
@@ -65,6 +70,7 @@ async def list_items_feature_collections(
 @router.get(
     "/s/datasets/{dataset_curie}/collections/{collection_curie}/items",
     summary="List Features",
+    name="https://prez.dev/endpoint/spaceprez/feature-listing",
 )
 async def list_items_features(
     request: Request,
@@ -76,7 +82,11 @@ async def list_items_features(
     return await list_items(request, page, per_page)
 
 
-@router.get("/s/datasets/{dataset_curie}", summary="Get Dataset")
+@router.get(
+    "/s/datasets/{dataset_curie}",
+    summary="Get Dataset",
+    name="https://prez.dev/endpoint/spaceprez/dataset",
+)
 async def dataset_item(request: Request, dataset_curie: str):
     return await item_endpoint(request)
 
@@ -84,6 +94,7 @@ async def dataset_item(request: Request, dataset_curie: str):
 @router.get(
     "/s/datasets/{dataset_curie}/collections/{collection_curie}",
     summary="Get Feature Collection",
+    name="https://prez.dev/endpoint/spaceprez/feature-collection",
 )
 async def feature_collection_item(
     request: Request, dataset_curie: str, collection_curie: str
@@ -94,6 +105,7 @@ async def feature_collection_item(
 @router.get(
     "/s/datasets/{dataset_curie}/collections/{collection_curie}/items/{feature_curie}",
     summary="Get Feature",
+    name="https://prez.dev/endpoint/spaceprez/feature",
 )
 async def feature_item(
     request: Request, dataset_curie: str, collection_curie: str, feature_curie: str
@@ -101,13 +113,13 @@ async def feature_item(
     return await item_endpoint(request)
 
 
-@router.get("/s/object")
 async def item_endpoint(request: Request, spatial_item: Optional[SpatialItem] = None):
     if not spatial_item:
         spatial_item = SpatialItem(
             **request.path_params,
             **request.query_params,
-            url_path=str(request.url.path)
+            url_path=str(request.url.path),
+            endpoint_uri=request.scope["route"].name
         )
     prof_and_mt_info = ProfilesMediatypesInfo(
         request=request, classes=spatial_item.classes
