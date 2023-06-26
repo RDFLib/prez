@@ -94,7 +94,6 @@ async def object_function(
     # at present, the behaviour for which should be chosen (or if one should be chosen at all) has not been defined.
     object_item.selected_class = None
     endpoint_to_relations = get_endpoint_info_for_classes(object_item.classes)
-
     relationship_query = generate_relationship_query(
         object_item.uri, endpoint_to_relations
     )
@@ -122,14 +121,15 @@ def get_endpoint_info_for_classes(classes) -> dict:
     endpoint_query = get_endpoint_template_queries(classes)
     results = endpoints_graph_cache.query(endpoint_query)
     endpoint_to_relations = {}
-    for result in results.bindings:
-        endpoint_template = result["endpointTemplate"]
-        relation = result["relation"]
-        direction = result["direction"]
-        if endpoint_template not in endpoint_to_relations:
-            endpoint_to_relations[endpoint_template] = [(relation, direction)]
-        else:
-            endpoint_to_relations[endpoint_template].append((relation, direction))
+    if results.bindings != [{}]:
+        for result in results.bindings:
+            endpoint_template = result["endpointTemplate"]
+            relation = result["relation"]
+            direction = result["direction"]
+            if endpoint_template not in endpoint_to_relations:
+                endpoint_to_relations[endpoint_template] = [(relation, direction)]
+            else:
+                endpoint_to_relations[endpoint_template].append((relation, direction))
     return endpoint_to_relations
 
 

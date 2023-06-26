@@ -868,33 +868,35 @@ def generate_mediatype_if_statements(requested_mediatypes: list):
 def get_endpoint_template_queries(classes: FrozenSet[URIRef]):
     query = f"""PREFIX ont: <https://prez.dev/ont/>
 
-    SELECT ?classes ?parent_endpoint ?endpoint ?relation ?direction ?endpointTemplate
-    (count(?intermediate) as ?distance) WHERE {{
+SELECT ?classes ?parent_endpoint ?endpoint ?relation ?direction ?endpointTemplate
+(count(?intermediate) as ?distance) WHERE {{
       VALUES ?classes {{ {" ".join('<' + klass + '>' for klass in classes)} }}
-      ?endpoint a ont:Endpoint ;
-      ont:endpointTemplate ?endpointTemplate ;
-      ont:deliversClasses ?classes .
-      ?endpoint ont:parentEndpoint* ?intermediate .
-      ?intermediate ont:parentEndpoint* ?parent_endpoint .
-      OPTIONAL {{
-        ?parent_endpoint ont:ParentToFocusRelation ?relation .
-        BIND ("parent_to_focus" AS ?direction)
-      }}
-      OPTIONAL {{
-        ?parent_endpoint ont:FocusToParentRelation ?relation .
-        BIND ("focus_to_parent" AS ?direction)
-      }}
-      FILTER (BOUND(?relation))
-    }} GROUP BY ?endpoint ?parent_endpoint ?relation ?direction ?classes ?endpointTemplate
-    ORDER BY ?endpoint DESC(?distance)"""
+  {{
+    ?endpoint a ont:Endpoint ;
+    ont:endpointTemplate ?endpointTemplate ;
+    ont:deliversClasses ?classes .
+  }}
+  UNION
+  {{
+    ?endpoint a ont:Endpoint ;
+    ont:endpointTemplate ?endpointTemplate ;
+    ont:deliversClasses ?classes .
+    ?endpoint ont:parentEndpoint* ?intermediate .
+    ?intermediate ont:parentEndpoint* ?parent_endpoint .
+    OPTIONAL {{
+      ?parent_endpoint ont:ParentToFocusRelation ?relation .
+      BIND ("parent_to_focus" AS ?direction)
+    }}
+    OPTIONAL {{
+      ?parent_endpoint ont:FocusToParentRelation ?relation .
+      BIND ("focus_to_parent" AS ?direction)
+    }}
+    FILTER (BOUND(?relation))
+  }}
+}} GROUP BY ?endpoint ?parent_endpoint ?relation ?direction ?classes ?endpointTemplate
+ORDER BY ?endpoint DESC(?distance)
+    """
     return query
-
-
-def generate_relationship_query(
-    uri: URIRef, endpoint_to_relations: Dict[URIRef, List[Tuple[URIRef, URIRef]]]
-):
-    for endpoint, relations in endpoint_to_relations.items():
-        construct_subquery = generate_relationship_query(uri, endpoint, relations)
 
 
 def generate_relationship_query(
@@ -908,10 +910,11 @@ def generate_relationship_query(
         for i, relation in enumerate(relations):
             predicate, direction = relation
             parent = "?parent_" + str(i + 1)
-            if direction == Literal("parent_to_focus"):
-                subquery += f"{parent} <{predicate}> {previous_uri} .\n"
-            else:  # assuming the direction is "focus_to_parent"
-                subquery += f"{previous_uri} <{predicate}> {parent} .\n"
+            if predicate:
+                if direction == Literal("parent_to_focus"):
+                    subquery += f"{parent} <{predicate}> {previous_uri} .\n"
+                else:  # assuming the direction is "focus_to_parent"
+                    subquery += f"{previous_uri} <{predicate}> {parent} .\n"
             previous_uri = parent
         subquery += "}}"
         subqueries.append(subquery)

@@ -40,7 +40,29 @@ def dataset_uri(test_client):
     return g.value(None, RDF.type, DCAT.Dataset)
 
 
-def test_object_endpoint(test_client, dataset_uri):
+def test_object_endpoint_sp_dataset(test_client, dataset_uri):
     with test_client as client:
         r = client.get(f"/object?uri={dataset_uri}")
     assert r.status_code == 200
+
+
+def test_feature_collection(test_client):
+    with test_client as client:
+        r = client.get(f"/object?uri=https://test/feature-collection")
+    response_graph = Graph().parse(data=r.text)
+    expected_graph = Graph().parse(
+        Path(__file__).parent / "../data/object/expected_responses/fc.ttl"
+    )
+    assert response_graph.isomorphic(expected_graph)
+
+
+def test_feature(test_client):
+    with test_client as client:
+        r = client.get(
+            f"/object?uri=https://linked.data.gov.au/datasets/geofabric/hydroid/102208962"
+        )
+    response_graph = Graph().parse(data=r.text)
+    expected_graph = Graph().parse(
+        Path(__file__).parent / "../data/object/expected_responses/feature.ttl"
+    )
+    assert response_graph.isomorphic(expected_graph)
