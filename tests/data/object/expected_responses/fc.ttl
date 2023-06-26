@@ -1,0 +1,7 @@
+@prefix geo: <http://www.opengis.net/ont/geosparql#> .
+@prefix ns1: <https://prez.dev/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<https://test/feature-collection> a geo:FeatureCollection ;
+    rdfs:member <http://resource.geosciml.org/classifier/cgi/contacttype/alteration_facies_contact> ;
+    ns1:link "/s/datasets/ns1:dataset/collections/ns1:feature-collection" .
