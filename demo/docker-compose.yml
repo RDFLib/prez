@@ -3,7 +3,7 @@ services:
 
   fuseki:
     user: root
-    image: "ghcr.io/zazuko/fuseki-geosparql:4.8.0"
+    image: "ghcr.io/zazuko/fuseki-geosparql:latest"
     ports:
       - "3030:3030"
     volumes:
@@ -24,7 +24,17 @@ services:
     ports:
       - "8000:8000"
     environment:
-      SPARQL_ENDPOINT: 'http://fuseki:3030/sp'
+      SPARQL_ENDPOINT: 'http://fuseki:3030/myds'
+    depends_on:
+      fuseki:
+        condition: service_healthy
+
+  prez-ui:
+    image: "ghcr.io/rdflib/prez-ui:latest"
+    ports:
+      - "81:80"
+    environment:
+      VITE_API_BASE_URL: 'http://localhost:8000'
     depends_on:
       fuseki:
         condition: service_healthy

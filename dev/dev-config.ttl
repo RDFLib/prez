@@ -61,7 +61,7 @@ ja:DatasetRDFS  rdfs:subClassOf  ja:RDFDataset .
                          ] ;
         fuseki:endpoint  [ fuseki:operation  fuseki:gsp-rw ] ;
         fuseki:endpoint  [ fuseki:operation  fuseki:query ] ;
-        fuseki:name      "sp" .
+        fuseki:name      "myds" .
 
 :dataset_readwrite
         rdf:type       tdb2:DatasetTDB2 ;
