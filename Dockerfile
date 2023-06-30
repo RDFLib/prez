@@ -1,3 +1,5 @@
+ARG PREZ_VERSION
+
 # Creating a python base with shared environment variables
 FROM python:3.11-slim-buster as builder-base
 ENV PYTHONUNBUFFERED=1 \
@@ -33,6 +35,10 @@ COPY poetry.lock pyproject.toml connegp-0.1.5-py3-none-any.whl ./
 RUN poetry install --only main --no-root --no-ansi
 
 FROM python:3.11-slim-buster
+
+ARG PREZ_VERSION
+ENV PREZ_VERSION=${PREZ_VERSION}
+
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH="/app/.venv/bin:$PATH"

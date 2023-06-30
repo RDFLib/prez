@@ -43,6 +43,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           push: true
+          build-args: PREZ_VERSION=${{ steps.metadata.outputs.tags }}
           tags: ${{ steps.metadata.outputs.tags }}
           # Set provenance to false due to issue documented here: https://github.com/docker/build-push-action/issues/778
           provenance: false
