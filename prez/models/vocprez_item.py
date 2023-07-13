@@ -58,5 +58,5 @@ class VocabItem(BaseModel):
 
         if not values["uri"]:
             values["uri"] = get_uri_for_curie_id(values["curie_id"])
-        values["classes"] = get_classes(values["uri"], "VocPrez")
+        values["classes"] = get_classes(values["uri"])
         return values

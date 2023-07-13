@@ -17,13 +17,15 @@ async def object(
         return PlainTextResponse(
             "An object uri must be provided as a query string argument (?uri=<object_uri>)"
         )
+
     prez_items = {
         "SpacePrez": SpatialItem,
         "VocPrez": VocabItem,
         "CatPrez": CatalogItem,
     }
+
     returned_items = {}
-    for prez in settings.enabled_prezs:
+    for prez in prez_items.keys():
         try:
             item = prez_items[prez](uri=uri, url_path="/object")
             returned_items[prez] = item
@@ -47,10 +49,3 @@ async def object(
             from prez.routers.catprez import item_endpoint
 
             return await item_endpoint(request, returned_items[prez])
-        # TODO reimplement class based logic to select the most relevant .. endpoint?
-    # elif len(returned_items) > 1:
-    #     lower_keys = [k.lower() for k in returned_items.keys()]
-    #     links = "\n".join(
-    #         ["/" + lower_key[0] + "/object?uri=" + uri for lower_key in lower_keys]
-    #     )
-    #     return PlainTextResponse(f"Object found in multiple prez flavours:\n{links}")

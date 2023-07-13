@@ -36,21 +36,25 @@ It expects "high quality" data to work well: Prez itself won't patch up bad or m
 
 Prez accesses data stored in an RDF database - a 'triplestore' - and uses the SPARQL Protocol to do so. Any SPARQL Protocol-compliant DB may be used.
 
-## Installation
+## Development
 
-_You don't have to 'install' Prez to use it, see the [Running](#running) options below. You may want to install Prez to develop with it._
+This section is for developing Prez locally. See the [Running](#running) options below for running Prez in production.
 
 ### Poetry
 
 Prez is developed with [Poetry](https://python-poetry.org/) which is a Python packaging and dependency tool. Poetry presents all of Prez' dependencies (other Python packages) in the `pyproject.toml` file in this directory which can be used by Poetry to establish the environment you need to run Prez.
 
-> Executing `poetry update` within this directory within a Python virtual environment will probably be all you need to do!
+Install the Python dependencies.
 
-### PIP
+```bash
+poetry install
+```
 
-We also provide a standard `requirements.txt` file for use with the common [PIP](https://pypi.org/project/pip/) package installer. We build this file using Poetry too.
+Running the development server with auto-reload on code changes.
 
-> Executing `pip install -r requirements.txt` within a Python virtual environment will probably be all you need to do!
+```bash
+poetry run python main.py
+```
 
 ## Running
 
@@ -66,26 +70,33 @@ You do need to configure at least a couple of environment variables for Prez to 
 
 A minimal set of environment variables with example values to run prez is listed below:
 
-`ENABLED_PREZS=["SpacePrez"]`
-`SPACEPREZ_SPARQL_ENDPOINT=http://localhost:3030/spaceprez`
+`SPARQL_ENDPOINT=http://localhost:3030/mydataset`
 
-Yes, you really only need to tell Prez which subsystems to enable - here it's SpacePrez for spatial data - and point Prez at a SPARQL endpoint for it to get data from!
+If the SPARQL endpoint requires authentication, you must also set:
+
+`SPARQL_USERNAME=myusername`, and
+`SPARQL_PASSWORD=mypassword`
 
 #### Details
 
-Of course, there are many other variables you may want to set. Here are some details.
+Further configuration can be done via environment variables. These can be set in a '.env' file which will get read in
+via python-dotenv, or directly in the environment in which Prez is run. The environment variables are used to
+instantiate a Pydantic `Settings` object which is used throughout Prez to configure its behaviour. To see how prez
+interprets/uses these environment variables see the `prez/config.py` file.
 
-See the `Settings` class within prez/config.py. You don't need to worry about the functions, just the variables there.
-
-Have a look at the `Settings` class documentation for information about each variable.
-
-Variable types (string, int etc.) are all indicated using Python type hinting, e.g.:
-
-```python
-port: int = 8000
-```
-
-So the `port` variable must be an `int` and its default value is 8000.
+| Environment Variable | Description                                                                                                                       |
+|-------------------|-----------------------------------------------------------------------------------------------------------------------------------|
+| SPARQL_ENDPOINT   | Read-only SPARQL endpoint for SpacePrez                                                                                           |
+| SPARQL_USERNAME   | A username for Basic Auth against the SPARQL endpoint, if required by the SPARQL endpoint.                                        |
+| SPARQL_PASSWORD   | A password for Basic Auth against the SPARQL endpoint, if required by the SPARQL endpoint.                                        |
+| PROTOCOL          | The protocol used to deliver Prez. Usually 'http'.                                                                                |
+| HOST              | The host on which to server prez, typically 'localhost'.                                                                          |
+| PORT              | The port Prez is made accessible on. Default is 8000, could be 80 or anything else that your system has permission to use         |
+| SYSTEM_URI        | Documentation property. An IRI for the Prez system as a whole. This value appears in the landing page RDF delivered by Prez ('/') |
+| LOG_LEVEL         | One of CRITICAL, ERROR, WARNING, INFO, DEBUG. Defaults to INFO.                                                                   |
+| LOG_OUTPUT        | "file", "stdout", or "both" ("file" and "stdout"). Defaults to stdout.                                                            |
+| PREZ_TITLE        | The title to use for Prez instance                                                                                                |
+| PREZ_DESC         | A description to use for the Prez instance                                                                                        |
 
 ### Running in a Container
 
@@ -158,10 +169,13 @@ Here are the lead developers:
 <https://kurrawong.net>
 
 _David Habgood_
-<dcchabgood@gmail.com>
+<david@kurrawong.ai>
 
 _Nicholas Car_
-<nick@kurrawong.net>
+<nick@kurrawong.ai>
+
+_Edmond Chuc_
+<edmond@kurrawong.ai>
 
 **University of Melbourne** - Prez UI mainly
 _Jamie Feiss_

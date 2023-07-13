@@ -5,10 +5,9 @@ from string import Template
 from rdflib import Graph, RDF, DCTERMS, Literal, RDFS
 
 from prez.cache import search_methods
-from prez.config import settings
 from prez.models import SearchMethod
 from prez.reference_data.prez_ns import PREZ
-from prez.sparql.methods import sparql_construct
+from prez.sparql.methods import query_to_graph
 
 log = logging.getLogger(__name__)
 
@@ -22,18 +21,15 @@ async def get_remote_search_methods():
     remote_search_methods_query = f"""
     PREFIX prez: <{PREZ}>
     CONSTRUCT {{?s ?p ?o}}
-    WHERE {{ GRAPH prez:systemGraph {{ ?s a prez:SearchMethod ;
-               ?p ?o . }} }}
+    WHERE {{ ?s a prez:SearchMethod ;
+               ?p ?o . }}
     """
-    any_remote_search_methods = False
-    for p in settings.enabled_prezs:
-        r = await sparql_construct(remote_search_methods_query, p)
-        if r[0] and r[1]:
-            any_remote_search_methods = True
-            await generate_search_methods(r[1])
-            log.info(f"Remote search methods found and added for {p}")
-    if not any_remote_search_methods:
-        log.info("No remote search methods found")
+    graph = await query_to_graph(remote_search_methods_query)
+    if len(graph) > 1:
+        await generate_search_methods(graph)
+        log.info(f"Remote search methods found and added.")
+    else:
+        log.info("No remote search methods found.")
 
 
 async def get_local_search_methods():

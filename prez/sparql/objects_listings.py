@@ -82,12 +82,9 @@ def generate_listing_construct(
     # item to a variable if it's a top level listing (this will utilise "class based" listing, where objects are listed
     # based on them being an instance of a class), else use the URI of the "parent" off of which members will be listed.
     # TODO collapse this to an inline expression below; include change in both object and listing queries
-    sequence_construct = ""
-    if sequence_predicates:
-        for i, sequence_predicate in enumerate(sequence_predicates):
-            sequence_construct += generate_sequence_construct(
-                uri_or_tl_item, [sequence_predicate], i
-            )
+    sequence_construct, sequence_construct_where = generate_sequence_construct(
+        sequence_predicates, uri_or_tl_item
+    )
     query = dedent(
         f"""
         PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -112,9 +109,7 @@ def generate_listing_construct(
             {f'{uri_or_tl_item} a <{focus_item.general_class}> .{chr(10)}' if focus_item.top_level_listing else ""}\
             {f'OPTIONAL {{ {uri_or_tl_item} ?p ?o .' if include_predicates else ""}\
             {f'{generate_include_predicates(include_predicates)} }}' if include_predicates else ""} \
-            OPTIONAL {{
-                {sequence_construct}\
-            }}
+            {sequence_construct_where}\
             {generate_outbound_predicates(uri_or_tl_item, outbound_children, outbound_parents)} \
             {generate_inbound_predicates(uri_or_tl_item, inbound_children, inbound_parents)} {chr(10)} \
             {generate_relative_properties("select", relative_properties, inbound_children, inbound_parents,
@@ -173,6 +168,11 @@ def generate_item_construct(focus_item, profile: URIRef):
         uri_or_search_item = "?search_result_uri"
     else:
         uri_or_search_item = f"<{focus_item.uri}>"
+
+    sequence_construct, sequence_construct_where = generate_sequence_construct(
+        sequence_predicates, uri_or_search_item
+    )
+
     construct_query = dedent(
         f"""    PREFIX dcterms: <http://purl.org/dc/terms/>
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -180,18 +180,23 @@ def generate_item_construct(focus_item, profile: URIRef):
     CONSTRUCT {{
     {f'{search_query_construct()} {chr(10)}' if search_query else ""}\
     \t{uri_or_search_item} ?p ?o1 .
-    {generate_sequence_construct(f"{uri_or_search_item}", sequence_predicates) if sequence_predicates else ""}
+    {sequence_construct}
     {f'{chr(9)}?s ?inbound_p {uri_or_search_item} .' if inverse_predicates else ""}
     {generate_bnode_construct(bnode_depth)} \
     \n}}
     WHERE {{
         {{ {f'{focus_item.populated_query}' if search_query else ""} }}
-        {uri_or_search_item} ?p ?o1 . {chr(10)} \
-        {f'OPTIONAL {{ {generate_sequence_construct(uri_or_search_item, sequence_predicates)} }}' if sequence_predicates else chr(10)} \
-        {f'?s ?inbound_p {uri_or_search_item}{chr(10)}' if inverse_predicates else chr(10)} \
-        {generate_include_predicates(include_predicates)} \
-        {generate_inverse_predicates(inverse_predicates)} \
-        {generate_bnode_select(bnode_depth)}
+        {{
+            {uri_or_search_item} ?p ?o1 . {chr(10)} \
+            {f'?s ?inbound_p {uri_or_search_item}{chr(10)}' if inverse_predicates else chr(10)} \
+            {generate_include_predicates(include_predicates)} \
+            {generate_inverse_predicates(inverse_predicates)} \
+            {generate_bnode_select(bnode_depth)}\
+        }}
+
+        UNION {{
+            {sequence_construct_where}\
+        }}
     }}
     """
     )
@@ -293,7 +298,7 @@ def generate_inverse_predicates(inverse_predicates):
     return ""
 
 
-def generate_sequence_construct(object_uri, sequence_predicates, path_n=0):
+def _generate_sequence_construct(object_uri, sequence_predicates, path_n=0):
     """
     Generates part of a SPARQL CONSTRUCT query for property paths, given a list of lists of property paths.
     """
@@ -308,6 +313,25 @@ def generate_sequence_construct(object_uri, sequence_predicates, path_n=0):
             all_sequence_construct += construct_and_where
         return all_sequence_construct
     return ""
+
+
+def generate_sequence_construct(
+    sequence_predicates: list[list[URIRef]], uri_or_tl_item: str
+) -> tuple[str, str]:
+    sequence_construct = ""
+    sequence_construct_where = ""
+    if sequence_predicates:
+        for i, sequence_predicate in enumerate(sequence_predicates):
+            seq_partial_str = "OPTIONAL {\n"
+            generate_sequence_construct_result: str = _generate_sequence_construct(
+                uri_or_tl_item, [sequence_predicate], i
+            )
+            seq_partial_str += generate_sequence_construct_result
+            seq_partial_str += "\n}\n"
+            sequence_construct_where += seq_partial_str
+            sequence_construct += generate_sequence_construct_result
+
+    return sequence_construct, sequence_construct_where
 
 
 def generate_bnode_construct(depth):
@@ -355,6 +379,7 @@ async def get_annotation_properties(
     label_predicates: List[URIRef],
     description_predicates: List[URIRef],
     explanation_predicates: List[URIRef],
+    other_predicates: List[URIRef],
 ):
     """
     Gets annotation data used for HTML display.
@@ -377,12 +402,28 @@ async def get_annotation_properties(
         return None, Graph()
     # read labels from the tbox cache, this should be the majority of labels
     uncached_terms, labels_g = get_annotations_from_tbox_cache(
-        terms, label_predicates, description_predicates, explanation_predicates
+        terms,
+        label_predicates,
+        description_predicates,
+        explanation_predicates,
+        other_predicates,
     )
+
+    def other_predicates_statement(other_predicates, uncached_terms_other):
+        return f"""UNION
+            {{
+                ?unannotated_term ?other_prop ?other .
+                VALUES ?other_prop {{ {" ".join('<' + str(pred) + '>' for pred in other_predicates)} }}
+                VALUES ?unannotated_term {{ {" ".join('<' + str(term) + '>' for term in uncached_terms_other)}
+                }}
+            }}"""
+
     queries_for_uncached = f"""CONSTRUCT {{
     ?unlabeled_term ?label_prop ?label .
     ?undescribed_term ?desc_prop ?description .
-    ?unexplained_term ?expl_prop ?explanation . }}
+    ?unexplained_term ?expl_prop ?explanation .
+    ?unannotated_term ?other_prop ?other .
+    }}
         WHERE {{
             {{
                 ?unlabeled_term ?label_prop ?label .
@@ -404,12 +445,13 @@ async def get_annotation_properties(
                 VALUES ?unexplained_term {{ {" ".join('<' + str(term) + '>' for term in uncached_terms["provenance"])}
                 }}
             }}
+            { other_predicates_statement(other_predicates, uncached_terms["other"]) if other_predicates else ""}
         }}"""
     return queries_for_uncached, labels_g
 
 
 def get_annotations_from_tbox_cache(
-    terms: List[URIRef], label_props, description_props, explanation_props
+    terms: List[URIRef], label_props, description_props, explanation_props, other_props
 ):
     """
     Gets labels from the TBox cache, returns a list of terms that were not found in the cache, and a graph of labels,
@@ -417,8 +459,6 @@ def get_annotations_from_tbox_cache(
     """
     labels_from_cache = Graph(bind_namespaces="rdflib")
     terms_list = list(terms)
-    # triples = []
-    # triples = list(chain(*(tbox_cache.triples_choices((terms_list, predicate, None)) for predicate in predicates)))
     props_from_cache = {
         "labels": list(
             chain(
@@ -444,10 +484,20 @@ def get_annotations_from_tbox_cache(
                 )
             )
         ),
+        "other": list(
+            chain(
+                *(
+                    tbox_cache.triples_choices((terms_list, prop, None))
+                    for prop in other_props
+                )
+            )
+        ),
     }
+    # get all the annotations we can from the cache
     all = list(chain(*props_from_cache.values()))
     for triple in all:
         labels_from_cache.add(triple)
+    # the remaining terms are not in the cache; we need to query the SPARQL endpoint to attempt to get them
     uncached_props = {
         k: list(set(terms) - set(triple[0] for triple in v))
         for k, v in props_from_cache.items()
@@ -481,9 +531,7 @@ def generate_listing_count_construct(
             WHERE {{
                 SELECT (COUNT(?item) as ?count)
                 WHERE {{
-                    GRAPH ?g {{
                         <{item.uri}> rdfs:member ?item .
-                    }}
                 }}
             }}"""
         ).strip()
@@ -497,9 +545,7 @@ def generate_listing_count_construct(
             WHERE {{
                 SELECT (COUNT(?item) as ?count)
                 WHERE {{
-                    GRAPH ?g {{
                         ?item a <{item.general_class}> .
-                    }}
                 }}
             }}"""
         ).strip()
@@ -542,9 +588,17 @@ def get_annotation_predicates(profile):
         "label_predicates": [],
         "description_predicates": [],
         "explanation_predicates": [],
+        "other_predicates": [],
     }
     if not profile:
         return preds
+    preds["other_predicates"].extend(
+        list(
+            profiles_graph_cache.objects(
+                subject=profile, predicate=ALTREXT.otherAnnotationProps
+            )
+        )
+    )
     preds["label_predicates"].extend(
         list(
             profiles_graph_cache.objects(
@@ -769,7 +823,7 @@ def select_profile_mediatype(
       ?mid rdfs:subClassOf* ?general_class .
       VALUES ?general_class {{ dcat:Dataset geo:FeatureCollection prez:FeatureCollectionList prez:FeatureList geo:Feature
       skos:ConceptScheme skos:Concept skos:Collection prez:DatasetList prez:VocPrezCollectionList prez:SchemesList
-      prez:CatalogList prez:ProfilesList dcat:Catalog dcat:Resource prof:Profile }}
+      prez:CatalogList prez:ProfilesList dcat:Catalog dcat:Resource prof:Profile prez:SPARQLQuery }}
       ?profile altr-ext:constrainsClass ?class ;
                altr-ext:hasResourceFormat ?format ;
                dcterms:title ?title .\

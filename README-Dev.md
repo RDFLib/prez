@@ -13,7 +13,7 @@ Prez returns:
 - An alternates profile for every object or listing, listing all available profiles and mediatypes
 - OpenAPI documentation for the API
 
-\* Annotated RDF is RDF which includes labels, descriptions, and explanatory properties for all RDF terms. The predicates Prez looks for are rdfs:label, `dcterms:description`, and `dcterms:provenance`. The list of predicates Prez looks for can be extended in the profiles.
+\* Annotated RDF is RDF which includes labels, descriptions, explanatory, and other properties for all RDF terms. The predicates Prez looks for are rdfs:label, `dcterms:description`, and `dcterms:provenance`. The list of predicates Prez looks for can be extended in the profiles.
 
 ## Internal links
 The objects Prez delivers RDF for have URIs that uniquely identify them. Prez delivers RDF for these objects at URLs on the web. These URLs and URIs are not required to be the same, and frequently are not. For objects that Prez holds information for, it is helpful if Prez tells users the URL of these when they are referenced elsewhere in the API. This is in two places:
@@ -58,6 +58,24 @@ SELECT DISTINCT ?namespace
   MINUS {?namespace vann:preferredPrefix ?prefix .}
 } LIMIT 100
 ```
+
+## Annotation properties
+Prez recognises the following kinds of annotation properties, and can return RDF, either via SPARQL queries, or the
+endpoints as annotated RDF.
+
+When an annotated mediatype is requested (e.g. `text/anot+turtle`), Prez will look for the following predicates for
+*every* RDF term in the (initial) response returned by the triplestore. That is it will expand the response to include
+the annotations and return the RDF merge of the original response and the annotations.
+
+Additional predicates can be added to the list of predicates Prez looks for in the profiles by adding these predicates
+using the properties listed below.
+
+| Property    | Default Predicate   | Examples of other predicates that would commonly be used | Profiles predicate to add *additional* predicates |
+|-------------|---------------------|----------------------------------------------------------|---------------------------------------------------|
+| label       | rdfs:label          | skos:prefLabel, dcterms:title                            | altr-ext:hasLabelPredicate                        |
+| description | dcterms:description | skos:definition, dcterms:abstract                        | altr-ext:hasDescriptionPredicate                  |
+| provenance  | dcterms:provenance  | dcterms:source                                           | altr-ext:hasExplanationPredicate                  |
+| other       | (None)              | schema:color                                             | altr-ext:otherAnnotationProps                     |
 
 ## High Level Sequence
 

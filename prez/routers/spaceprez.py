@@ -37,7 +37,6 @@ async def list_items(
     ):
         return await return_profiles(
             classes=frozenset(spatial_item.selected_class),
-            prez_type="SpacePrez",
             prof_and_mt_info=prof_and_mt_info,
         )
     list_query, predicates_for_link_addition = generate_listing_construct(
@@ -49,7 +48,6 @@ async def list_items(
         prof_and_mt_info.mediatype,
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
-        "SpacePrez",
         predicates_for_link_addition,
     )
 
@@ -120,7 +118,6 @@ async def item_endpoint(request: Request, spatial_item: Optional[SpatialItem] = 
     ):
         return await return_profiles(
             classes=frozenset(spatial_item.selected_class),
-            prez_type="SpacePrez",
             prof_and_mt_info=prof_and_mt_info,
         )
     item_query = generate_item_construct(spatial_item, prof_and_mt_info.profile)
@@ -133,6 +130,5 @@ async def item_endpoint(request: Request, spatial_item: Optional[SpatialItem] = 
         prof_and_mt_info.mediatype,
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
-        "SpacePrez",
         predicates_for_link_addition,
     )

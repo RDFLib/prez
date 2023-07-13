@@ -1,6 +1,8 @@
 @prefix dcterms: <http://purl.org/dc/terms/> .
-@prefix ns1: <https://prez.dev/> .
+@prefix ns1: <http://purl.org/linked-data/registry#> .
+@prefix ns2: <https://prez.dev/> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
@@ -10,11 +12,26 @@ dcterms:publisher rdfs:label "Publisher"@en .
     dcterms:provenance "Original set of terms from the GeosciML standard" ;
     dcterms:publisher <https://linked.data.gov.au/org/cgi> ;
     skos:prefLabel "Contact Type"@en ;
-    ns1:link "/v/vocab/2016.01:contacttype" .
+    ns2:link "/v/vocab/2016.01:contacttype" .
+
+<https://linked.data.gov.au/def/reg-statuses> a skos:ConceptScheme ;
+    dcterms:publisher <https://linked.data.gov.au/org/agldwg> ;
+    skos:prefLabel "Registry Status Vocabulary"@en ;
+    ns2:link "/v/vocab/def:reg-statuses" .
+
+<https://linked.data.gov.au/def/vocdermods> a skos:ConceptScheme ;
+    dcterms:provenance "Created for the MER catalogue upgrade project, 2022"@en ;
+    dcterms:publisher <https://linked.data.gov.au/org/mer> ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/stable> ;
+    skos:prefLabel "Vocabulary Derivation Modes"@en ;
+    ns2:link "/v/vocab/def:vocdermods" .
 
 <https://linked.data.gov.au/def/warox-alteration-types> a skos:ConceptScheme ;
     dcterms:provenance "This vocabulary was built on an extract of the WAROX system's lookup table"@en ;
     skos:prefLabel "WAROX Alteration Type"@en ;
-    ns1:link "/v/vocab/def:warox-alteration-types" .
+    ns2:link "/v/vocab/def:warox-alteration-types" .
 
-skos:ConceptScheme ns1:count 2 .
+<https://linked.data.gov.au/def/reg-statuses/stable> skos:prefLabel "stable"@en ;
+    schema:color "#2e8c09" .
+
+skos:ConceptScheme ns2:count 4 .

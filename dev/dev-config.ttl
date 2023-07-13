@@ -40,9 +40,9 @@ ja:MemoryDataset  rdfs:subClassOf  ja:RDFDataset .
 
 ja:DatasetRDFS  rdfs:subClassOf  ja:RDFDataset .
 
-:service_sp  rdf:type  fuseki:Service ;
-        rdfs:label       "sp" ;
-        fuseki:dataset   :sp_dataset_readwrite ;
+:service  rdf:type  fuseki:Service ;
+        rdfs:label       "myds" ;
+        fuseki:dataset   :dataset_readwrite ;
         fuseki:endpoint  [ fuseki:operation  fuseki:update ] ;
         fuseki:endpoint  [ fuseki:name       "update" ;
                            fuseki:operation  fuseki:update
@@ -61,65 +61,9 @@ ja:DatasetRDFS  rdfs:subClassOf  ja:RDFDataset .
                          ] ;
         fuseki:endpoint  [ fuseki:operation  fuseki:gsp-rw ] ;
         fuseki:endpoint  [ fuseki:operation  fuseki:query ] ;
-        fuseki:name      "sp" .
+        fuseki:name      "myds" .
 
-:service_cp  rdf:type  fuseki:Service ;
-        rdfs:label       "cp" ;
-        fuseki:dataset   :cp_dataset_readwrite ;
-        fuseki:endpoint  [ fuseki:operation  fuseki:update ] ;
-        fuseki:endpoint  [ fuseki:name       "update" ;
-                           fuseki:operation  fuseki:update
-                         ] ;
-        fuseki:endpoint  [ fuseki:name       "sparql" ;
-                           fuseki:operation  fuseki:query
-                         ] ;
-        fuseki:endpoint  [ fuseki:name       "get" ;
-                           fuseki:operation  fuseki:gsp-r
-                         ] ;
-        fuseki:endpoint  [ fuseki:name       "query" ;
-                           fuseki:operation  fuseki:query
-                         ] ;
-        fuseki:endpoint  [ fuseki:name       "data" ;
-                           fuseki:operation  fuseki:gsp-rw
-                         ] ;
-        fuseki:endpoint  [ fuseki:operation  fuseki:gsp-rw ] ;
-        fuseki:endpoint  [ fuseki:operation  fuseki:query ] ;
-        fuseki:name      "cp" .
-
-:service_vp  rdf:type  fuseki:Service ;
-        rdfs:label       "vp" ;
-        fuseki:dataset   :vp_dataset_readwrite ;
-        fuseki:endpoint  [ fuseki:operation  fuseki:update ] ;
-        fuseki:endpoint  [ fuseki:name       "update" ;
-                           fuseki:operation  fuseki:update
-                         ] ;
-        fuseki:endpoint  [ fuseki:name       "sparql" ;
-                           fuseki:operation  fuseki:query
-                         ] ;
-        fuseki:endpoint  [ fuseki:name       "get" ;
-                           fuseki:operation  fuseki:gsp-r
-                         ] ;
-        fuseki:endpoint  [ fuseki:name       "query" ;
-                           fuseki:operation  fuseki:query
-                         ] ;
-        fuseki:endpoint  [ fuseki:name       "data" ;
-                           fuseki:operation  fuseki:gsp-rw
-                         ] ;
-        fuseki:endpoint  [ fuseki:operation  fuseki:gsp-rw ] ;
-        fuseki:endpoint  [ fuseki:operation  fuseki:query ] ;
-        fuseki:name      "vp" .
-
-:sp_dataset_readwrite
+:dataset_readwrite
         rdf:type       tdb2:DatasetTDB2 ;
         tdb2:unionDefaultGraph true ;
-        tdb2:location  "/fuseki/databases/sp" .
-
-:cp_dataset_readwrite
-        rdf:type       tdb2:DatasetTDB2 ;
-        tdb2:unionDefaultGraph true ;
-        tdb2:location  "/fuseki/databases/cp" .
-
-:vp_dataset_readwrite
-        rdf:type       tdb2:DatasetTDB2 ;
-        tdb2:unionDefaultGraph true ;
-        tdb2:location  "/fuseki/databases/vp" .
+        tdb2:location  "/fuseki/databases/myds" .

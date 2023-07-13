@@ -44,7 +44,6 @@ async def schemes_endpoint(
     ):
         return await return_profiles(
             classes=frozenset(vocprez_members.selected_class),
-            prez_type="VocPrez",
             prof_and_mt_info=prof_and_mt_info,
         )
     list_query, predicates_for_link_addition = generate_listing_construct(
@@ -56,7 +55,6 @@ async def schemes_endpoint(
         prof_and_mt_info.mediatype,
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
-        "VocPrez",
         predicates_for_link_addition,
     )
 
@@ -104,7 +102,6 @@ async def item_endpoint(request: Request, vp_item: Optional[VocabItem] = None):
     ):
         return await return_profiles(
             classes=frozenset(vp_item.selected_class),
-            prez_type="VocPrez",
             prof_and_mt_info=prof_and_mt_info,
         )
     item_query = generate_item_construct(vp_item, prof_and_mt_info.profile)
@@ -117,6 +114,5 @@ async def item_endpoint(request: Request, vp_item: Optional[VocabItem] = None):
         prof_and_mt_info.mediatype,
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
-        "VocPrez",
         predicates_for_link_addition,
     )

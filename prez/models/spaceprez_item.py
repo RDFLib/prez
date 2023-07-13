@@ -61,5 +61,5 @@ class SpatialItem(BaseModel):
             values["uri"] = get_uri_for_curie_id(dataset_curie)
             values["general_class"] = DCAT.Dataset
             values["link_constructor"] = f"/s/datasets/{dataset_curie}/collections"
-        values["classes"] = get_classes(values["uri"], "SpacePrez")
+        values["classes"] = get_classes(values["uri"])
         return values

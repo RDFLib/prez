@@ -18,7 +18,28 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     dcterms:description "A profile for the Prez Linked Data API" ;
     skos:prefLabel "Prez profile" ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass prez:SPARQLQuery ;
+        altr-ext:hasDefaultProfile <https://prez.dev/profile/open>
+    ]
 .
+
+<https://prez.dev/profile/open>
+    a prof:Profile ;
+    dcterms:identifier "open" ;
+    dcterms:description "An open profile which will return all direct properties for a resource." ;
+    dcterms:title "Open profile" ;
+    altr-ext:constrainsClass prez:SPARQLQuery ;
+    altr-ext:hasDefaultResourceFormat "text/turtle" ;
+    altr-ext:hasResourceFormat "application/json" ,
+        "application/ld+json" ,
+        "application/rdf+xml" ,
+        "text/anot+turtle" ,
+        "text/turtle" ;
+    .
+
+
 
 <http://www.opengis.net/spec/ogcapi-features-1/1.0/req/oas30>
     a prof:Profile ;
