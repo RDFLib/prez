@@ -115,9 +115,10 @@ def generate_listing_construct(
             {generate_relative_properties("select", relative_properties, inbound_children, inbound_parents,
                                           outbound_children, outbound_parents)}\
             {{
-                SELECT ?top_level_item
+                SELECT ?top_level_item ?child_item
                 WHERE {{
-                    {f'{uri_or_tl_item} a <{focus_item.general_class}> .{chr(10)}' if focus_item.top_level_listing else ""}\
+                    {f'{uri_or_tl_item} a <{focus_item.general_class}> .{chr(10)}' if focus_item.top_level_listing else generate_outbound_predicates(uri_or_tl_item, outbound_children, outbound_parents)}\
+                    
                     OPTIONAL {{
                         {f'{uri_or_tl_item} <{profile_item.label}> ?label .' if focus_item.top_level_listing else ""}\
                     }}
