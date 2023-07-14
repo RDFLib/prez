@@ -84,6 +84,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           push: true
+          build-args: PREZ_VERSION=${{ env.IMAGE_NAME }}:${{ steps.patch.outputs.patch }}-${{ steps.hash.outputs.value }}
           tags: |
             ${{ env.IMAGE_NAME }}:${{ steps.patch.outputs.patch }}-${{ steps.hash.outputs.value }}
             ${{ env.IMAGE_NAME }}:dev
