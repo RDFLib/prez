@@ -1,0 +1,39 @@
+PREFIX dcat: <http://www.w3.org/ns/dcat#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX isoroles: <http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <https://schema.org/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+<urn:ex:1> a schema:Thing .
+
+<https://data.idnau.org/pid/democat>
+    a dcat:Catalog ;
+    dcterms:created "2022-07-31"^^xsd:date ;
+    dcterms:description """The Indigenous Data Network's demonstration catalogue of datasets. This catalogue contains records of datasets in Australia, most of which have some relation to indigenous Australia.
+The purpose of this catalogue is not to act as a master catalogue of indigenous data in Australia to demonstrate improved metadata models and rating systems for data and metadata in order to improve indigenous data governance.
+The content of this catalogue conforms to the Indigenous Data Network's Catalogue Profile which is a profile of the DCAT, SKOS and PROV data models."""@en ;
+    dcterms:identifier "democat"^^xsd:token ;
+    dcterms:modified "2022-08-29"^^xsd:date ;
+    dcterms:title "IDN Demonstration Catalogue" ;
+    prov:qualifiedAttribution [
+        a prov:QualifiedAttribution ;
+        dcat:hadRole
+            isoroles:author ,
+            isoroles:custodian ,
+            isoroles:owner ;
+        prov:agent [
+            a schema:Organization ;
+            schema:name "some org" ;
+            schema:member [
+                a schema:Person ;
+                schema:name "some person" ;
+                schema:memberOf [
+                    schema:name "another some org"
+                ] ;
+            ] ;
+        ] ;
+    ] ;
+.
