@@ -16,6 +16,7 @@ from prez.models import (
     VocabMembers,
     SearchMethod,
 )
+from prez.models.profiles_item import ProfileItem
 from prez.models.profiles_listings import ProfilesMembers
 from prez.services.curie_functions import get_uri_for_curie_id
 
@@ -27,7 +28,7 @@ PREZ = Namespace("https://prez.dev/")
 
 def generate_listing_construct(
     focus_item,
-    profile,
+    profile: URIRef,
     page: Optional[int] = 1,
     per_page: Optional[int] = 20,
 ):
@@ -35,6 +36,8 @@ def generate_listing_construct(
     For a given URI, finds items with the specified relation(s).
     Generates a SPARQL construct query for a listing of items
     """
+    profile_item = ProfileItem(uri=str(profile))
+
     if isinstance(
         focus_item, (ProfilesMembers, CatalogMembers, SpatialMembers, VocabMembers)
     ):  # listings can include
@@ -112,10 +115,15 @@ def generate_listing_construct(
             {generate_relative_properties("select", relative_properties, inbound_children, inbound_parents,
                                           outbound_children, outbound_parents)}\
             {{
-                SELECT ?top_level_item
+                SELECT ?top_level_item ?child_item
                 WHERE {{
-                    {f'{uri_or_tl_item} a <{focus_item.general_class}> .{chr(10)}' if focus_item.top_level_listing else ""}\
+                    {f'{uri_or_tl_item} a <{focus_item.general_class}> .{chr(10)}' if focus_item.top_level_listing else generate_outbound_predicates(uri_or_tl_item, outbound_children, outbound_parents)}\
+                    
+                    OPTIONAL {{
+                        {f'{uri_or_tl_item} <{profile_item.label}> ?label .' if focus_item.top_level_listing else ""}\
+                    }}
                 }}
+                {'ORDER BY ASC(?label)' if profile_item.label else "ORDER BY ?top_level_item"}
                 {f"LIMIT {per_page}{chr(10)}"
                 f"OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
             }}
