@@ -1,3 +1,4 @@
+from os import environ
 from pathlib import Path
 from typing import Optional
 
@@ -84,9 +85,14 @@ class Settings(BaseSettings):
 
     @root_validator()
     def get_version(cls, values):
-        values["prez_version"] = toml.load(
-            Path(Path(__file__).parent.parent) / "pyproject.toml"
-        )["tool"]["poetry"]["version"]
+        version = environ.get("PREZ_VERSION")
+        values["prez_version"] = version
+
+        if version is None or version == "":
+            values["prez_version"] = toml.load(
+                Path(Path(__file__).parent.parent) / "pyproject.toml"
+            )["tool"]["poetry"]["version"]
+
         return values
 
     @root_validator()
