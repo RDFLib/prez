@@ -26,7 +26,6 @@ async def vocprez_home():
 
 
 @router.get("/v/collection", summary="List Collections")
-@router.get("/v/scheme", summary="List ConceptSchemes")
 @router.get("/v/vocab", summary="List Vocabularies")
 async def schemes_endpoint(
     request: Request,
@@ -60,7 +59,6 @@ async def schemes_endpoint(
 
 
 @router.get("/v/vocab/{scheme_curie}", summary="Get ConceptScheme")
-@router.get("/v/scheme/{scheme_curie}", summary="Get ConceptScheme")
 async def vocprez_scheme(request: Request, scheme_curie: str):
     return await item_endpoint(request)
 
@@ -77,7 +75,6 @@ async def vocprez_collection_concept(
     return await item_endpoint(request)
 
 
-@router.get("/v/scheme/{scheme_curie}/{concept_curie}", summary="Get Concept")
 @router.get("/v/vocab/{scheme_curie}/{concept_curie}", summary="Get Concept")
 async def vocprez_scheme_concept(
     request: Request, scheme_curie: str, concept_curie: str
