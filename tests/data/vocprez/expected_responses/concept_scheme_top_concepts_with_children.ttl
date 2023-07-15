@@ -1,0 +1,50 @@
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX ns1: <https://prez.dev/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+<http://linked.data.gov.au/def/borehole-purpose>
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:prefLabel "Borehole Purpose"@en ;
+    ns1:childrenCount 8 ;
+.
+
+<http://linked.data.gov.au/def/borehole-purpose/coal>
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:prefLabel "Coal"@en ;
+.
+
+<http://linked.data.gov.au/def/borehole-purpose/geothermal>
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:prefLabel "Geothermal"@en ;
+.
+
+<http://linked.data.gov.au/def/borehole-purpose/greenhouse-gas-storage>
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:prefLabel "Greenhouse Gas Storage"@en ;
+.
+
+<http://linked.data.gov.au/def/borehole-purpose/mineral>
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:prefLabel "Mineral"@en ;
+.
+
+<http://linked.data.gov.au/def/borehole-purpose/non-industry>
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:prefLabel "Non-Industry"@en ;
+.
+
+<http://linked.data.gov.au/def/borehole-purpose/oil-shale>
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:prefLabel "Oil Shale"@en ;
+.
+
+<http://linked.data.gov.au/def/borehole-purpose/petroleum>
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:prefLabel "Petroleum"@en ;
+.
+
+<http://linked.data.gov.au/def/borehole-purpose/water>
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:prefLabel "Water"@en ;
+.

@@ -142,3 +142,33 @@ def test_concept_scheme(
             / f"../data/vocprez/expected_responses/{expected_result_file}"
         )
         assert isomorphic(expected_graph, response_graph), f"Failed test: {description}"
+
+
+@pytest.mark.parametrize(
+    "iri, expected_result_file, description",
+    [
+        [
+            "http://linked.data.gov.au/def/borehole-purpose",
+            "concept_scheme_top_concepts_with_children.ttl",
+            "Return concept scheme and a prez:childrenCount of 8",
+        ],
+        [
+            "http://linked.data.gov.au/def/borehole-purpose-no-children",
+            "empty.ttl",
+            "Return concept scheme and a prez:childrenCount of 0",
+        ],
+    ],
+)
+def test_concept_scheme_top_concepts(
+    test_client: TestClient, iri: str, expected_result_file: str, description: str
+):
+    prez_link = get_prez_link(test_client, iri)
+
+    with test_client as client:
+        response = client.get(f"{prez_link}/top-concepts?_mediatype=text/anot+turtle")
+        response_graph = Graph(bind_namespaces="rdflib").parse(data=response.text)
+        expected_graph = Graph().parse(
+            Path(__file__).parent
+            / f"../data/vocprez/expected_responses/{expected_result_file}"
+        )
+        assert isomorphic(expected_graph, response_graph), f"Failed test: {description}"
