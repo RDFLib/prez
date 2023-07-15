@@ -6,7 +6,9 @@ from prez.models.model_exceptions import URINotFoundException, ClassNotFoundExce
 from prez.sparql.methods import sparql_query_non_async, sparql_ask_non_async
 
 
-def get_classes(uri: URIRef, parent_predicates: List[URIRef] = None):
+def get_classes(
+    uri: URIRef, parent_predicates: List[URIRef] = None
+) -> frozenset[URIRef]:
     q = f"""
     SELECT ?class
     {{<{uri}> a ?class . }}

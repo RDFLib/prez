@@ -10,7 +10,7 @@ from prez.services.model_methods import get_classes
 
 class VocabItem(BaseModel):
     uri: Optional[URIRef] = None
-    classes: Optional[Set[URIRef]]
+    classes: Optional[frozenset[URIRef]]
     curie_id: Optional[str] = None
     general_class: Optional[URIRef] = None
     scheme_curie: Optional[str] = None
