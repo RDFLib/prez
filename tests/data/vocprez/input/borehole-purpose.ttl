@@ -1,0 +1,238 @@
+PREFIX agldwgstatus: <https://linked.data.gov.au/def/reg-statuses/>
+PREFIX bhpur: <http://linked.data.gov.au/def/borehole-purpose/>
+PREFIX cs: <http://linked.data.gov.au/def/borehole-purpose>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX reg: <http://purl.org/linked-data/registry#>
+PREFIX sdo: <https://schema.org/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+bhpur:carbon-capture-and-storage
+    a skos:Concept ;
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    rdfs:isDefinedBy cs: ;
+    skos:broader bhpur:greenhouse-gas-storage ;
+    skos:definition "Wells that deposit carbon dioxide into an underground geological formation after capture from large point sources, such as a cement factory or biomass power plant."@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Carbon Capture and Storage"@en ;
+.
+
+bhpur:open-cut-coal-mining
+    a skos:Concept ;
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    rdfs:isDefinedBy cs: ;
+    skos:broader bhpur:coal ;
+    skos:definition "Wells drilled for the purpose of assessing coal resources for an open cut coal mine."@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Open-Cut Coal Mining"@en ;
+.
+
+bhpur:pggd
+    a skos:Collection ;
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:definition "Borehole purposes applicable to regulatory notification forms."@en ;
+    skos:member
+        bhpur:coal-seam-gas ,
+        bhpur:conventional-petroleum ,
+        bhpur:geothermal ,
+        bhpur:greenhouse-gas-storage ,
+        bhpur:unconventional-petroleum ,
+        bhpur:water ;
+    skos:prefLabel "PGGD selection"@en ;
+.
+
+bhpur:shale-gas
+    a skos:Concept ;
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    rdfs:isDefinedBy cs: ;
+    skos:broader bhpur:unconventional-petroleum ;
+    skos:definition "Wells targetting shale that produces natural gas. A shale that is thermally mature enough and has sufficient gas content to produce economic quantities of natural gas."@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Shale Gas"@en ;
+.
+
+bhpur:shale-oil
+    a skos:Concept ;
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    rdfs:isDefinedBy cs: ;
+    skos:broader bhpur:unconventional-petroleum ;
+    skos:definition "Wells targetting shale that produces oil. Oil obtained by artificial maturation of oil shale. The process of artificial maturation uses controlled heating, or pyrolysis, of kerogen to release the shale oil."@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Shale Oil"@en ;
+.
+
+bhpur:tight-gas
+    a skos:Concept ;
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    rdfs:isDefinedBy cs: ;
+    skos:broader bhpur:unconventional-petroleum ;
+    skos:definition "Wells targetting gas from relatively impermeable reservoir rock."@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Tight Gas"@en ;
+.
+
+bhpur:tight-oil
+    a skos:Concept ;
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    rdfs:isDefinedBy cs: ;
+    skos:broader bhpur:unconventional-petroleum ;
+    skos:definition "Wells targetting oil from relatively impermeable reservoir rock."@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Tight Oil"@en ;
+.
+
+bhpur:underground-coal-mining
+    a skos:Concept ;
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    rdfs:isDefinedBy cs: ;
+    skos:broader bhpur:coal ;
+    skos:definition "Wells drilled for the purpose of assessing coal resources for an underground coal mine."@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Underground Coal Mining"@en ;
+.
+
+bhpur:coal-seam-gas
+    a skos:Concept ;
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    rdfs:isDefinedBy cs: ;
+    skos:broader bhpur:petroleum ;
+    skos:definition "Wells targetting coal seams where hydrocarbons are kept in place via adsorption to the coal surface and hydrostatic pressure"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Coal Seam Gas"@en ;
+.
+
+bhpur:conventional-petroleum
+    a skos:Concept ;
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    rdfs:isDefinedBy cs: ;
+    skos:broader bhpur:petroleum ;
+    skos:definition "Wells targetting conventional petroleum reservoirs where buoyant forces keep hydrocarbons in place below a sealing caprock."@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Conventional Petroleum"@en ;
+.
+
+bhpur:mineral
+    a skos:Concept ;
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    rdfs:isDefinedBy cs: ;
+    skos:definition "Wells and bores drilled to facilitate the mining of minerals, excluding coal and oil shale, under permits governed by the Queensland Mineral Resources Act (1989)"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Mineral"@en ;
+    skos:topConceptOf cs: ;
+.
+
+bhpur:non-industry
+    a skos:Concept ;
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    rdfs:isDefinedBy cs: ;
+    skos:altLabel "Non-Industry"@en ;
+    skos:definition "Wells and bores drilled by non-industry agents outside of the State Resources Acts"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Non-Industry"@en ;
+    skos:topConceptOf cs: ;
+.
+
+bhpur:oil-shale
+    a skos:Concept ;
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    rdfs:isDefinedBy cs: ;
+    skos:definition "Wells and bores drilled to facilitate the mining of oil shale under permits governed by the Queensland Mineral Resources Act 1989"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Oil Shale"@en ;
+    skos:topConceptOf cs: ;
+.
+
+bhpur:geothermal
+    a skos:Concept ;
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    rdfs:isDefinedBy cs: ;
+    skos:definition "Wells and bores drilled under permits governed by the Queensland Geothermal Energy Act 2010"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Geothermal"@en ;
+    skos:topConceptOf cs: ;
+.
+
+bhpur:water
+    a skos:Concept ;
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    rdfs:isDefinedBy cs: ;
+    skos:definition "Wells and bores drilled under permits governed by the Queensland Water Act 2000. A well or bore is only considered a water well or bore where drilled under the Water Act, e.g. a well or bore drilled to serve a water observation function under the Petroleum Act is considered a Petroleum Well with an Observation function or sub-purpose. Additional rights, obligations, and responsibilities may be conferred by intersecting legislation on wells and bores drilled by mineral and coal permit holders and petroleum and gas permit holders under the Mineral Resources Act 1989 and the Petroleum and Gas (Production and Safety) Act 2004 respectively."@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Water"@en ;
+    skos:topConceptOf cs: ;
+.
+
+<https://linked.data.gov.au/org/gsq>
+    a sdo:Organization ;
+    sdo:name "Geological Survey of Queensland" ;
+    sdo:url "http://www.business.qld.gov.au/industries/mining-energy-water/resources/geoscience-information/gsq"^^xsd:anyURI ;
+.
+
+bhpur:coal
+    a skos:Concept ;
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    rdfs:isDefinedBy cs: ;
+    skos:definition "Wells and bores drilled to facilitate the mining of coal under permits governed by the Queensland Mineral Resources Act 1989"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Coal"@en ;
+    skos:topConceptOf cs: ;
+.
+
+bhpur:greenhouse-gas-storage
+    a skos:Concept ;
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    rdfs:isDefinedBy cs: ;
+    skos:altLabel "GHG"@en ;
+    skos:definition "Wells and bores drilled under permits governed by the Queensland Greenhouse Gas Storage Act 2009"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Greenhouse Gas Storage"@en ;
+    skos:topConceptOf cs: ;
+.
+
+bhpur:petroleum
+    a skos:Concept ;
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    rdfs:isDefinedBy cs: ;
+    skos:definition "Wells and bores drilled under permits governed by the Queensland Petroleum Act 1923 and Petroleum and Gas (Production and Safety) Act 2004. This includes water observation, water disposal, and water supply wells drilled under the relevant Petroleum Acts rather than the Water Act."@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Petroleum"@en ;
+    skos:topConceptOf cs: ;
+.
+
+bhpur:unconventional-petroleum
+    a skos:Concept ;
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    rdfs:isDefinedBy cs: ;
+    skos:broader bhpur:petroleum ;
+    skos:definition "Wells targetting unconventional reservoirs whose properties including porosity, permeability, or trapping mechanism differ from conventional reservoirs"@en ;
+    skos:inScheme cs: ;
+    skos:prefLabel "Unconventional Petroleum"@en ;
+.
+
+cs:
+    a
+        owl:Ontology ,
+        skos:ConceptScheme ;
+    dcterms:created "2020-07-17"^^xsd:date ;
+    dcterms:creator <https://linked.data.gov.au/org/gsq> ;
+    dcterms:modified "2023-03-16"^^xsd:date ;
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    dcterms:publisher <https://linked.data.gov.au/org/gsq> ;
+    reg:status agldwgstatus:stable ;
+    skos:definition "The primary purpose of a borehole based on the legislative State Act and/or the resources industry sector."@en ;
+    skos:hasTopConcept
+        bhpur:coal ,
+        bhpur:geothermal ,
+        bhpur:greenhouse-gas-storage ,
+        bhpur:mineral ,
+        bhpur:non-industry ,
+        bhpur:oil-shale ,
+        bhpur:petroleum ,
+        bhpur:water ;
+    prov:qualifiedDerivation [ prov:entity <http://linked.data.gov.au/def/site-status> ;
+            prov:hadRole <http://linked.data.gov.au/def/vocab-derivation-modes/subsetting-and-extension> ] ;
+    skos:prefLabel "Borehole Purpose"@en ;
+.

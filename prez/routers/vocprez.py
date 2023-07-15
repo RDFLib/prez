@@ -2,18 +2,26 @@ import logging
 from typing import Optional
 
 from fastapi import APIRouter, Request
-from rdflib import URIRef
+from rdflib import URIRef, SKOS
 from starlette.responses import PlainTextResponse
 
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.models.vocprez_item import VocabItem
 from prez.models.vocprez_listings import VocabMembers
 from prez.renderers.renderer import return_from_queries, return_profiles
+from prez.services.curie_functions import get_uri_for_curie_id
 from prez.sparql.objects_listings import (
     generate_listing_construct,
     generate_listing_count_construct,
     generate_item_construct,
 )
+from prez.sparql.resource import get_resource
+from prez.bnode import get_bnode_depth
+from prez.services.vocprez import (
+    get_concept_scheme_query,
+    get_concept_scheme_top_concepts_query,
+)
+from prez.response import StreamingTurtleAnnotatedResponse
 
 router = APIRouter(tags=["VocPrez"])
 
@@ -58,9 +66,73 @@ async def schemes_endpoint(
     )
 
 
-@router.get("/v/vocab/{scheme_curie}", summary="Get ConceptScheme")
-async def vocprez_scheme(request: Request, scheme_curie: str):
-    return await item_endpoint(request)
+@router.get(
+    "/v/vocab/{concept_scheme_curie}",
+    summary="Get Concept Scheme",
+    response_class=StreamingTurtleAnnotatedResponse,
+    responses={
+        200: {
+            "content": {"text/turtle": {}},
+        },
+    },
+)
+async def concept_scheme_route(request: Request, concept_scheme_curie: str):
+    """Return the SKOS Concept Scheme.
+
+    `prez:childrenCount` is an `xsd:integer` count of the number of top concepts in this Concept Scheme.
+    """
+    profiles_mediatypes_info = ProfilesMediatypesInfo(
+        request=request, classes=frozenset([SKOS.ConceptScheme])
+    )
+
+    iri = get_uri_for_curie_id(concept_scheme_curie)
+    resource = await get_resource(iri)
+    bnode_depth = get_bnode_depth(resource, iri)
+    concept_scheme_query = get_concept_scheme_query(iri, bnode_depth)
+
+    return await return_from_queries(
+        [concept_scheme_query],
+        profiles_mediatypes_info.mediatype,
+        profiles_mediatypes_info.profile,
+        profiles_mediatypes_info.profile_headers,
+    )
+
+
+@router.get(
+    "/v/vocab/{concept_scheme_curie}/top-concepts",
+    summary="Get SKOS Concept Scheme's top concepts",
+    response_class=StreamingTurtleAnnotatedResponse,
+    responses={
+        200: {
+            "content": {"text/turtle": {}},
+        },
+    },
+)
+async def concept_scheme_top_concepts_route(
+    request: Request,
+    concept_scheme_curie: str,
+    page: int = 1,
+    per_page: int = 20,
+):
+    """Return the SKOS Concept Scheme's top concepts.
+
+    `prez:childrenCount` is an `xsd:integer` count of the number of top concepts in this Concept Scheme.
+    """
+    profiles_mediatypes_info = ProfilesMediatypesInfo(
+        request=request, classes=frozenset([SKOS.ConceptScheme])
+    )
+
+    iri = get_uri_for_curie_id(concept_scheme_curie)
+    concept_scheme_top_concepts_query = get_concept_scheme_top_concepts_query(
+        iri, page, per_page
+    )
+
+    return await return_from_queries(
+        [concept_scheme_top_concepts_query],
+        profiles_mediatypes_info.mediatype,
+        profiles_mediatypes_info.profile,
+        profiles_mediatypes_info.profile_headers,
+    )
 
 
 @router.get("/v/collection/{collection_curie}", summary="Get Collection")
