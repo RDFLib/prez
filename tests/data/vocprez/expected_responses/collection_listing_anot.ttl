@@ -3,10 +3,17 @@
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
+<http://linked.data.gov.au/def/borehole-purpose/pggd> a skos:Collection ;
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:definition "Borehole purposes applicable to regulatory notification forms."@en ;
+    skos:prefLabel "PGGD selection"@en ;
+    ns1:link "/v/collection/brhl-prps:pggd" .
+
 <http://resource.geosciml.org/classifier/cgi/contacttype> a skos:Collection ;
-    skos:definition "All Concepts in this vocabulary" ;
     dcterms:provenance "this vocabulary" ;
+    skos:definition "All Concepts in this vocabulary" ;
     skos:prefLabel "Contact Type - All Concepts"@en ;
     ns1:link "/v/collection/cgi:contacttype" .
 
-skos:Collection ns1:count 1 .
+skos:Collection ns1:count 2 .
+

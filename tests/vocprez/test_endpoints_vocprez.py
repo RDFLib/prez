@@ -35,17 +35,7 @@ LOCAL_SPARQL_STORE = os.getenv("LOCAL_SPARQL_STORE")
 #         assert isomorphic(expected_graph, response_graph)
 #
 #
-# def test_vocab_listing(vp_test_client):
-#     with vp_test_client as client:
-#         r = client.get(f"/v/vocab?_mediatype=text/anot+turtle")
-#         response_graph = Graph().parse(data=r.text)
-#         expected_graph = Graph().parse(
-#             Path(__file__).parent
-#             / "../data/vocprez/expected_responses/vocab_listing_anot.ttl"
-#         )
-#         assert response_graph.isomorphic(expected_graph), print(
-#             f"Graph delta:{(expected_graph - response_graph).serialize()}"
-#         )
+
 #
 #
 # def test_concept(vp_test_client, a_concept_link):
@@ -61,29 +51,6 @@ LOCAL_SPARQL_STORE = os.getenv("LOCAL_SPARQL_STORE")
 #         )
 #
 #
-# def test_collection_listing(vp_test_client):
-#     with vp_test_client as client:
-#         r = client.get(f"/v/collection?_mediatype=text/anot+turtle")
-#         response_graph = Graph().parse(data=r.text, format="turtle")
-#         expected_graph = Graph().parse(
-#             Path(__file__).parent
-#             / "../data/vocprez/expected_responses/collection_listing_anot.ttl"
-#         )
-#         assert response_graph.isomorphic(expected_graph), print(
-#             f"Graph delta:{(expected_graph - response_graph).serialize()}"
-#         )
-#
-#
-# def test_collection_listing_item(vp_test_client):
-#     with vp_test_client as client:
-#         r = client.get("/v/collection/cgi:contacttype")
-#         assert r.status_code == 200
-#         response_graph = Graph().parse(data=r.text, format="turtle")
-#         expected_graph = Graph().parse(
-#             Path(__file__).parent
-#             / "../data/vocprez/expected_responses/collection_listing_item.ttl"
-#         )
-#         assert isomorphic(response_graph, expected_graph)
 
 
 @pytest.fixture(scope="module")
@@ -112,6 +79,17 @@ def get_prez_link(test_client: TestClient, iri: str) -> str:
         graph = Graph().parse(data=response.text)
         concept_link = graph.value(URIRef(iri), URIRef(f"https://prez.dev/link", None))
         return str(concept_link)
+
+
+def test_vocab_listing(test_client: TestClient):
+    with test_client as client:
+        response = client.get(f"/v/vocab?_mediatype=text/anot+turtle")
+        response_graph = Graph().parse(data=response.text)
+        expected_graph = Graph().parse(
+            Path(__file__).parent
+            / "../data/vocprez/expected_responses/vocab_listing_anot.ttl"
+        )
+        assert isomorphic(expected_graph, response_graph)
 
 
 @pytest.mark.parametrize(
@@ -172,3 +150,26 @@ def test_concept_scheme_top_concepts(
             / f"../data/vocprez/expected_responses/{expected_result_file}"
         )
         assert isomorphic(expected_graph, response_graph), f"Failed test: {description}"
+
+
+def test_collection_listing(test_client: TestClient):
+    with test_client as client:
+        response = client.get(f"/v/collection?_mediatype=text/anot+turtle")
+        response_graph = Graph().parse(data=response.text, format="turtle")
+        expected_graph = Graph().parse(
+            Path(__file__).parent
+            / "../data/vocprez/expected_responses/collection_listing_anot.ttl"
+        )
+        assert isomorphic(expected_graph, response_graph)
+
+
+def test_collection_listing_item(test_client: TestClient):
+    with test_client as client:
+        response = client.get("/v/collection/cgi:contacttype")
+        assert response.status_code == 200
+        response_graph = Graph().parse(data=response.text, format="turtle")
+        expected_graph = Graph().parse(
+            Path(__file__).parent
+            / "../data/vocprez/expected_responses/collection_listing_item.ttl"
+        )
+        assert isomorphic(response_graph, expected_graph)
