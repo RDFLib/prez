@@ -5,52 +5,11 @@ from time import sleep
 
 import pytest
 from fastapi.testclient import TestClient
-from rdflib import Graph, URIRef
+from rdflib import Graph
 from rdflib.compare import isomorphic
 
 PREZ_DIR = os.getenv("PREZ_DIR")
 LOCAL_SPARQL_STORE = os.getenv("LOCAL_SPARQL_STORE")
-
-
-# @pytest.fixture(scope="module")
-# def a_concept_link(vp_test_client, a_vocab_link):
-#     # get the first concept endpoint
-#     r = vp_test_client.get(a_vocab_link)
-#     g = Graph().parse(data=r.text)
-#     concept_uri = next(g.subjects(predicate=SKOS.inScheme, object=None))
-#     concept_link = g.value(concept_uri, URIRef(f"https://prez.dev/link", None))
-#     return concept_link
-#
-#
-# def test_concept_scheme_with_no_children(vp_test_client, a_vocab_link):
-#     with vp_test_client as client:
-#         r = client.get(
-#             f"{a_vocab_link}?_mediatype=text/anot+turtle"
-#         )  # hardcoded to a smaller vocabulary - sparql store has poor performance w/ CONSTRUCT
-#         response_graph = Graph(bind_namespaces="rdflib").parse(data=r.text)
-#         expected_graph = Graph().parse(
-#             Path(__file__).parent
-#             / "../data/vocprez/expected_responses/borehole-purpose-no-children.ttl"
-#         )
-#         assert isomorphic(expected_graph, response_graph)
-#
-#
-
-#
-#
-# def test_concept(vp_test_client, a_concept_link):
-#     with vp_test_client as client:
-#         r = client.get(f"{a_concept_link}?_mediatype=text/anot+turtle")
-#         response_graph = Graph().parse(data=r.text)
-#         expected_graph = Graph().parse(
-#             Path(__file__).parent
-#             / "../data/vocprez/expected_responses/concept_anot.ttl"
-#         )
-#         assert response_graph.isomorphic(expected_graph), print(
-#             f"Graph delta:{(expected_graph - response_graph).serialize()}"
-#         )
-#
-#
 
 
 @pytest.fixture(scope="module")
@@ -153,7 +112,7 @@ def test_concept_scheme_top_concepts(
 
 
 @pytest.mark.parametrize(
-    "concept_scheme_iri, iri, expected_result_file, description",
+    "concept_scheme_iri, concept_iri, expected_result_file, description",
     [
         [
             "http://linked.data.gov.au/def/borehole-purpose",
@@ -172,17 +131,55 @@ def test_concept_scheme_top_concepts(
 def test_concept_narrowers(
     test_client: TestClient,
     concept_scheme_iri: str,
-    iri: str,
+    concept_iri: str,
     expected_result_file: str,
     description: str,
 ):
-
     concept_scheme_curie = get_curie(test_client, concept_scheme_iri)
-    concept_curie = get_curie(test_client, iri)
+    concept_curie = get_curie(test_client, concept_iri)
 
     with test_client as client:
         response = client.get(
             f"/v/vocab/{concept_scheme_curie}/{concept_curie}/narrowers?_mediatype=text/anot+turtle"
+        )
+        response_graph = Graph(bind_namespaces="rdflib").parse(data=response.text)
+        expected_graph = Graph().parse(
+            Path(__file__).parent
+            / f"../data/vocprez/expected_responses/{expected_result_file}"
+        )
+        assert isomorphic(expected_graph, response_graph), f"Failed test: {description}"
+
+
+@pytest.mark.parametrize(
+    "concept_scheme_iri, concept_iri, expected_result_file, description",
+    [
+        [
+            "http://linked.data.gov.au/def/borehole-purpose",
+            "http://linked.data.gov.au/def/borehole-purpose/coal",
+            "concept-coal.ttl",
+            "Return the coal concept and its properties.",
+        ],
+        [
+            "http://linked.data.gov.au/def/borehole-purpose",
+            "http://linked.data.gov.au/def/borehole-purpose/open-cut-coal-mining",
+            "concept-open-cut-coal-mining.ttl",
+            "Return the open-cut-coal-mining concept and its properties.",
+        ],
+    ],
+)
+def test_concept(
+    test_client: TestClient,
+    concept_scheme_iri: str,
+    concept_iri: str,
+    expected_result_file: str,
+    description: str,
+):
+    concept_scheme_curie = get_curie(test_client, concept_scheme_iri)
+    concept_curie = get_curie(test_client, concept_iri)
+
+    with test_client as client:
+        response = client.get(
+            f"/v/vocab/{concept_scheme_curie}/{concept_curie}?_mediatype=text/anot+turtle"
         )
         response_graph = Graph(bind_namespaces="rdflib").parse(data=response.text)
         expected_graph = Graph().parse(

@@ -1,0 +1,38 @@
+PREFIX bhpur: <http://linked.data.gov.au/def/borehole-purpose/>
+PREFIX cs4: <http://linked.data.gov.au/def/borehole-purpose>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX ns1: <https://prez.dev/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+bhpur:open-cut-coal-mining
+    a skos:Concept ;
+    dcterms:identifier "brhl-prps:open-cut-coal-mining"^^ns1:identifier ;
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    rdfs:isDefinedBy cs4: ;
+    skos:broader bhpur:coal ;
+    skos:definition "Wells drilled for the purpose of assessing coal resources for an open cut coal mine."@en ;
+    skos:inScheme cs4: ;
+    skos:prefLabel "Open-Cut Coal Mining"@en ;
+    ns1:link "/v/vocab/df:borehole-purpose/brhl-prps:open-cut-coal-mining" ;
+.
+
+dcterms:identifier
+    rdfs:label "Identifier"@en ;
+    dcterms:description "Recommended practice is to identify the resource by means of a string conforming to an identification system. Examples include International Standard Book Number (ISBN), Digital Object Identifier (DOI), and Uniform Resource Name (URN).  Persistent identifiers should be provided as HTTP URIs."@en ;
+.
+
+dcterms:provenance
+    rdfs:label "Provenance"@en ;
+    dcterms:description "The statement may include a description of any changes successive custodians made to the resource."@en ;
+.
+
+bhpur:coal
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:prefLabel "Coal"@en ;
+.
+
+cs4:
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:prefLabel "Borehole Purpose"@en ;
+.

@@ -216,6 +216,49 @@ async def concept_narrowers_route(
     )
 
 
+@router.get(
+    "/v/vocab/{concept_scheme_curie}/{concept_curie}",
+    summary="Get a SKOS Concept",
+    response_class=StreamingTurtleAnnotatedResponse,
+    responses={
+        200: {
+            "content": {"text/turtle": {}},
+        },
+    },
+)
+async def concept_route(
+    request: Request, concept_scheme_curie: str, concept_curie: str
+):
+    """Get a SKOS Concept."""
+    profiles_mediatypes_info = ProfilesMediatypesInfo(
+        request=request, classes=frozenset([SKOS.Concept])
+    )
+
+    concept_iri = get_uri_for_curie_id(concept_curie)
+    graph = await get_resource(concept_iri)
+    graph.add(
+        (
+            concept_iri,
+            PREZ.link,
+            Literal(f"/v/vocab/{concept_scheme_curie}/{concept_curie}"),
+        )
+    )
+    graph.add(
+        (
+            concept_iri,
+            DCTERMS.identifier,
+            Literal(concept_curie, datatype=PREZ.identifier),
+        )
+    )
+
+    return await return_from_graph(
+        graph,
+        profiles_mediatypes_info.mediatype,
+        profiles_mediatypes_info.profile,
+        profiles_mediatypes_info.profile_headers,
+    )
+
+
 @router.get("/v/collection/{collection_curie}", summary="Get Collection")
 async def vocprez_collection(request: Request, collection_curie: str):
     return await item_endpoint(request)
@@ -224,13 +267,6 @@ async def vocprez_collection(request: Request, collection_curie: str):
 @router.get("/v/collection/{collection_curie}/{concept_curie}", summary="Get Concept")
 async def vocprez_collection_concept(
     request: Request, collection_curie: str, concept_curie: str
-):
-    return await item_endpoint(request)
-
-
-@router.get("/v/vocab/{scheme_curie}/{concept_curie}", summary="Get Concept")
-async def vocprez_scheme_concept(
-    request: Request, scheme_curie: str, concept_curie: str
 ):
     return await item_endpoint(request)
 
