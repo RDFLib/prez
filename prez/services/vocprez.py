@@ -78,7 +78,7 @@ def get_concept_scheme_top_concepts_query(iri: str, page: int, per_page: int) ->
             }
         
             {
-                SELECT ?concept (COUNT(?narrowerConcept) AS ?narrowerChildrenCount)
+                SELECT ?concept ?label (COUNT(?narrowerConcept) AS ?narrowerChildrenCount)
                 WHERE {
                     BIND(<{{ iri }}> as ?iri)
                     ?iri skos:hasTopConcept ?concept .
@@ -88,7 +88,7 @@ def get_concept_scheme_top_concepts_query(iri: str, page: int, per_page: int) ->
                         ?narrowerConcept skos:broader ?concept .
                     }
                 }
-                GROUP BY ?concept
+                GROUP BY ?concept ?label
                 ORDER BY ?label
                 LIMIT {{ limit }}
                 OFFSET {{ offset }}
@@ -110,6 +110,7 @@ def get_concept_narrowers_query(iri: str, page: int, per_page: int) -> str:
         
         CONSTRUCT {
             ?concept skos:prefLabel ?label .
+            ?concept prez:childrenCount ?narrowerChildrenCount .
             ?iri prez:childrenCount ?childrenCount .
             ?iri skos:narrower ?concept .
         }
@@ -127,12 +128,17 @@ def get_concept_narrowers_query(iri: str, page: int, per_page: int) -> str:
             }
         
             {
-                SELECT ?concept ?label
+                SELECT ?concept ?label (COUNT(?narrowerConcept) AS ?narrowerChildrenCount)
                 WHERE {
                     BIND(<{{ iri }}> as ?iri)
                     ?concept skos:broader ?iri .
                     ?concept skos:prefLabel ?label .
+                    
+                    OPTIONAL {
+                        ?narrowerConcept skos:broader ?concept .
+                    }
                 }
+                GROUP BY ?concept ?label
                 ORDER BY ?label
                 LIMIT {{ limit }}
                 OFFSET {{ offset }}
