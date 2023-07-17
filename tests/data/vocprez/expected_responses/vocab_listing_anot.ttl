@@ -17,7 +17,7 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
             prov:entity <http://linked.data.gov.au/def/site-status> ;
             prov:hadRole <http://linked.data.gov.au/def/vocab-derivation-modes/subsetting-and-extension>
         ] ;
-    ns2:link "/v/vocab/def:borehole-purpose" ;
+    ns2:link "/v/vocab/df:borehole-purpose" ;
 .
 
 <http://linked.data.gov.au/def/borehole-purpose-no-children>
@@ -25,12 +25,12 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     dcterms:publisher <https://linked.data.gov.au/org/gsq> ;
     ns1:status <https://linked.data.gov.au/def/reg-statuses/stable> ;
-    skos:prefLabel "Borehole Purpose"@en ;
+    skos:prefLabel "Borehole Purpose no children"@en ;
     prov:qualifiedDerivation [
             prov:entity <http://linked.data.gov.au/def/site-status> ;
             prov:hadRole <http://linked.data.gov.au/def/vocab-derivation-modes/subsetting-and-extension>
         ] ;
-    ns2:link "/v/vocab/def:borehole-purpose-no-children" ;
+    ns2:link "/v/vocab/df:borehole-purpose-no-children" ;
 .
 
 dcterms:publisher
@@ -49,7 +49,7 @@ dcterms:publisher
     a skos:ConceptScheme ;
     dcterms:publisher <https://linked.data.gov.au/org/agldwg> ;
     skos:prefLabel "Registry Status Vocabulary"@en ;
-    ns2:link "/v/vocab/df:reg-statuses" ;
+    ns2:link "/v/vocab/def:reg-statuses" ;
 .
 
 <https://linked.data.gov.au/def/vocdermods>
@@ -58,14 +58,14 @@ dcterms:publisher
     dcterms:publisher <https://linked.data.gov.au/org/mer> ;
     ns1:status <https://linked.data.gov.au/def/reg-statuses/stable> ;
     skos:prefLabel "Vocabulary Derivation Modes"@en ;
-    ns2:link "/v/vocab/df:vocdermods" ;
+    ns2:link "/v/vocab/def:vocdermods" ;
 .
 
 <https://linked.data.gov.au/def/warox-alteration-types>
     a skos:ConceptScheme ;
     dcterms:provenance "This vocabulary was built on an extract of the WAROX system's lookup table"@en ;
     skos:prefLabel "WAROX Alteration Type"@en ;
-    ns2:link "/v/vocab/df:warox-alteration-types" ;
+    ns2:link "/v/vocab/def:warox-alteration-types" ;
 .
 
 <https://linked.data.gov.au/def/reg-statuses/stable>

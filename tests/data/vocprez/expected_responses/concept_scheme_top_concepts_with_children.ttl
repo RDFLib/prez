@@ -1,50 +1,89 @@
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX ns1: <https://prez.dev/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 <http://linked.data.gov.au/def/borehole-purpose>
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:hasTopConcept
+        <http://linked.data.gov.au/def/borehole-purpose/coal> ,
+        <http://linked.data.gov.au/def/borehole-purpose/geothermal> ,
+        <http://linked.data.gov.au/def/borehole-purpose/greenhouse-gas-storage> ,
+        <http://linked.data.gov.au/def/borehole-purpose/mineral> ,
+        <http://linked.data.gov.au/def/borehole-purpose/non-industry> ,
+        <http://linked.data.gov.au/def/borehole-purpose/oil-shale> ,
+        <http://linked.data.gov.au/def/borehole-purpose/petroleum> ,
+        <http://linked.data.gov.au/def/borehole-purpose/water> ;
     skos:prefLabel "Borehole Purpose"@en ;
     ns1:childrenCount 8 ;
 .
 
+dcterms:identifier
+    rdfs:label "Identifier"@en ;
+    dcterms:description "Recommended practice is to identify the resource by means of a string conforming to an identification system. Examples include International Standard Book Number (ISBN), Digital Object Identifier (DOI), and Uniform Resource Name (URN).  Persistent identifiers should be provided as HTTP URIs."@en ;
+.
+
 <http://linked.data.gov.au/def/borehole-purpose/coal>
+    dcterms:identifier "brhl-prps:coal"^^ns1:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     skos:prefLabel "Coal"@en ;
+    ns1:childrenCount 2 ;
+    ns1:link "/v/vocab/df:borehole-purpose/brhl-prps:coal" ;
 .
 
 <http://linked.data.gov.au/def/borehole-purpose/geothermal>
+    dcterms:identifier "brhl-prps:geothermal"^^ns1:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     skos:prefLabel "Geothermal"@en ;
+    ns1:childrenCount 0 ;
+    ns1:link "/v/vocab/df:borehole-purpose/brhl-prps:geothermal" ;
 .
 
 <http://linked.data.gov.au/def/borehole-purpose/greenhouse-gas-storage>
+    dcterms:identifier "brhl-prps:greenhouse-gas-storage"^^ns1:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     skos:prefLabel "Greenhouse Gas Storage"@en ;
+    ns1:childrenCount 1 ;
+    ns1:link "/v/vocab/df:borehole-purpose/brhl-prps:greenhouse-gas-storage" ;
 .
 
 <http://linked.data.gov.au/def/borehole-purpose/mineral>
+    dcterms:identifier "brhl-prps:mineral"^^ns1:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     skos:prefLabel "Mineral"@en ;
+    ns1:childrenCount 0 ;
+    ns1:link "/v/vocab/df:borehole-purpose/brhl-prps:mineral" ;
 .
 
 <http://linked.data.gov.au/def/borehole-purpose/non-industry>
+    dcterms:identifier "brhl-prps:non-industry"^^ns1:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     skos:prefLabel "Non-Industry"@en ;
+    ns1:childrenCount 0 ;
+    ns1:link "/v/vocab/df:borehole-purpose/brhl-prps:non-industry" ;
 .
 
 <http://linked.data.gov.au/def/borehole-purpose/oil-shale>
+    dcterms:identifier "brhl-prps:oil-shale"^^ns1:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     skos:prefLabel "Oil Shale"@en ;
+    ns1:childrenCount 0 ;
+    ns1:link "/v/vocab/df:borehole-purpose/brhl-prps:oil-shale" ;
 .
 
 <http://linked.data.gov.au/def/borehole-purpose/petroleum>
+    dcterms:identifier "brhl-prps:petroleum"^^ns1:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     skos:prefLabel "Petroleum"@en ;
+    ns1:childrenCount 3 ;
+    ns1:link "/v/vocab/df:borehole-purpose/brhl-prps:petroleum" ;
 .
 
 <http://linked.data.gov.au/def/borehole-purpose/water>
+    dcterms:identifier "brhl-prps:water"^^ns1:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     skos:prefLabel "Water"@en ;
+    ns1:childrenCount 0 ;
+    ns1:link "/v/vocab/df:borehole-purpose/brhl-prps:water" ;
 .

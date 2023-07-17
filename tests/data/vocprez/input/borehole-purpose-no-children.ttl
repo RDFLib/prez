@@ -1,5 +1,4 @@
 PREFIX agldwgstatus: <https://linked.data.gov.au/def/reg-statuses/>
-PREFIX bhpur: <http://linked.data.gov.au/def/borehole-purpose/>
 PREFIX cs: <http://linked.data.gov.au/def/borehole-purpose-no-children>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
@@ -23,5 +22,5 @@ cs:
     skos:definition "The primary purpose of a borehole based on the legislative State Act and/or the resources industry sector."@en ;
     prov:qualifiedDerivation [ prov:entity <http://linked.data.gov.au/def/site-status> ;
             prov:hadRole <http://linked.data.gov.au/def/vocab-derivation-modes/subsetting-and-extension> ] ;
-    skos:prefLabel "Borehole Purpose"@en ;
+    skos:prefLabel "Borehole Purpose no children"@en ;
 .

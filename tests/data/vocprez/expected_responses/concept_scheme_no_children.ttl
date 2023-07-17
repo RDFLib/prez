@@ -1,6 +1,6 @@
 PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX ns1: <http://purl.org/linked-data/registry#>
-PREFIX ns2: <https://prez.dev/>
+PREFIX ns1: <https://prez.dev/>
+PREFIX ns2: <http://purl.org/linked-data/registry#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX prov: <http://www.w3.org/ns/prov#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -17,14 +17,14 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     dcterms:modified "2023-03-16"^^xsd:date ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     dcterms:publisher <https://linked.data.gov.au/org/gsq> ;
-    ns1:status <https://linked.data.gov.au/def/reg-statuses/stable> ;
+    ns2:status <https://linked.data.gov.au/def/reg-statuses/stable> ;
     skos:definition "The primary purpose of a borehole based on the legislative State Act and/or the resources industry sector."@en ;
-    skos:prefLabel "Borehole Purpose"@en ;
+    skos:prefLabel "Borehole Purpose no children"@en ;
     prov:qualifiedDerivation [
             prov:entity <http://linked.data.gov.au/def/site-status> ;
             prov:hadRole <http://linked.data.gov.au/def/vocab-derivation-modes/subsetting-and-extension>
         ] ;
-    ns2:childrenCount 0 ;
+    ns1:childrenCount 0 ;
 .
 
 dcterms:created
