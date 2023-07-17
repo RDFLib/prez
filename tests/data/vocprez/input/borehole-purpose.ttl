@@ -1,6 +1,6 @@
 PREFIX agldwgstatus: <https://linked.data.gov.au/def/reg-statuses/>
 PREFIX bhpur: <http://linked.data.gov.au/def/borehole-purpose/>
-PREFIX cs: <http://linked.data.gov.au/def/borehole-purpose>
+PREFIX cs: <http://linked.data.gov.au/def2/borehole-purpose>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX prov: <http://www.w3.org/ns/prov#>

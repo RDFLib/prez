@@ -7,7 +7,7 @@ PREFIX schema: <https://schema.org/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
-<http://linked.data.gov.au/def/borehole-purpose>
+<http://linked.data.gov.au/def2/borehole-purpose>
     a skos:ConceptScheme ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     dcterms:publisher <https://linked.data.gov.au/org/gsq> ;
@@ -17,10 +17,10 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
             prov:entity <http://linked.data.gov.au/def/site-status> ;
             prov:hadRole <http://linked.data.gov.au/def/vocab-derivation-modes/subsetting-and-extension>
         ] ;
-    ns2:link "/v/vocab/df:borehole-purpose" ;
+    ns2:link "/v/vocab/def2:borehole-purpose" ;
 .
 
-<http://linked.data.gov.au/def/borehole-purpose-no-children>
+<http://linked.data.gov.au/def2/borehole-purpose-no-children>
     a skos:ConceptScheme ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     dcterms:publisher <https://linked.data.gov.au/org/gsq> ;
@@ -30,7 +30,7 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
             prov:entity <http://linked.data.gov.au/def/site-status> ;
             prov:hadRole <http://linked.data.gov.au/def/vocab-derivation-modes/subsetting-and-extension>
         ] ;
-    ns2:link "/v/vocab/df:borehole-purpose-no-children" ;
+    ns2:link "/v/vocab/def2:borehole-purpose-no-children" ;
 .
 
 dcterms:publisher

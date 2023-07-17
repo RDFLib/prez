@@ -53,12 +53,12 @@ def test_vocab_listing(test_client: TestClient):
     "iri, expected_result_file, description",
     [
         [
-            "http://linked.data.gov.au/def/borehole-purpose",
+            "http://linked.data.gov.au/def2/borehole-purpose",
             "concept_scheme_with_children.ttl",
             "Return concept scheme and a prez:childrenCount of 8",
         ],
         [
-            "http://linked.data.gov.au/def/borehole-purpose-no-children",
+            "http://linked.data.gov.au/def2/borehole-purpose-no-children",
             "concept_scheme_no_children.ttl",
             "Return concept scheme and a prez:childrenCount of 0",
         ],
@@ -83,12 +83,12 @@ def test_concept_scheme(
     "iri, expected_result_file, description",
     [
         [
-            "http://linked.data.gov.au/def/borehole-purpose",
+            "http://linked.data.gov.au/def2/borehole-purpose",
             "concept_scheme_top_concepts_with_children.ttl",
             "Return concept scheme and a prez:childrenCount of 8",
         ],
         [
-            "http://linked.data.gov.au/def/borehole-purpose-no-children",
+            "http://linked.data.gov.au/def2/borehole-purpose-no-children",
             "empty.ttl",
             "Return concept scheme and a prez:childrenCount of 0",
         ],
@@ -115,14 +115,14 @@ def test_concept_scheme_top_concepts(
     "concept_scheme_iri, concept_iri, expected_result_file, description",
     [
         [
-            "http://linked.data.gov.au/def/borehole-purpose",
+            "http://linked.data.gov.au/def2/borehole-purpose",
             "http://linked.data.gov.au/def/borehole-purpose/coal",
             "concept-with-2-narrower-concepts.ttl",
             "Return concept with 2 narrower concepts.",
         ],
         [
-            "http://linked.data.gov.au/def/borehole-purpose",
-            "http://linked.data.gov.au/def/borehole-purpose/open-cut-coal-mining",
+            "http://linked.data.gov.au/def2/borehole-purpose",
+            "http://linked.data.gov.au/def2/borehole-purpose/open-cut-coal-mining",
             "empty.ttl",
             "Return nothing, no children.",
         ],
@@ -186,7 +186,7 @@ def test_concept(
             Path(__file__).parent
             / f"../data/vocprez/expected_responses/{expected_result_file}"
         )
-        assert isomorphic(expected_graph, response_graph), f"Failed test: {description}"
+        assert isomorphic(expected_graph, response_graph)
 
 
 def test_collection_listing(test_client: TestClient):

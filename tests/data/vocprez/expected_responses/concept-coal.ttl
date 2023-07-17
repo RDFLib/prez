@@ -1,5 +1,5 @@
 PREFIX bhpur: <http://linked.data.gov.au/def/borehole-purpose/>
-PREFIX cs4: <http://linked.data.gov.au/def/borehole-purpose>
+PREFIX cs4: <http://linked.data.gov.au/def2/borehole-purpose>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX ns1: <https://prez.dev/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -14,7 +14,7 @@ bhpur:coal
     skos:inScheme cs4: ;
     skos:prefLabel "Coal"@en ;
     skos:topConceptOf cs4: ;
-    ns1:link "/v/vocab/def:borehole-purpose/brhl-prps:coal" ;
+    ns1:link "/v/vocab/df:borehole-purpose/brhl-prps:coal" ;
 .
 
 dcterms:identifier

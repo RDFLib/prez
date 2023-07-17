@@ -23,7 +23,7 @@ dcterms:identifier
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     skos:prefLabel "Open-Cut Coal Mining"@en ;
     ns1:childrenCount 0 ;
-    ns1:link "/v/vocab/def:borehole-purpose/brhl-prps:open-cut-coal-mining" ;
+    ns1:link "/v/vocab/def2:borehole-purpose/brhl-prps:open-cut-coal-mining" ;
 .
 
 <http://linked.data.gov.au/def/borehole-purpose/underground-coal-mining>
@@ -31,5 +31,5 @@ dcterms:identifier
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     skos:prefLabel "Underground Coal Mining"@en ;
     ns1:childrenCount 0 ;
-    ns1:link "/v/vocab/def:borehole-purpose/brhl-prps:underground-coal-mining" ;
+    ns1:link "/v/vocab/def2:borehole-purpose/brhl-prps:underground-coal-mining" ;
 .

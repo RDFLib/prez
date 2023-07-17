@@ -1,5 +1,5 @@
 PREFIX agldwgstatus: <https://linked.data.gov.au/def/reg-statuses/>
-PREFIX cs: <http://linked.data.gov.au/def/borehole-purpose-no-children>
+PREFIX cs: <http://linked.data.gov.au/def2/borehole-purpose-no-children>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX prov: <http://www.w3.org/ns/prov#>
