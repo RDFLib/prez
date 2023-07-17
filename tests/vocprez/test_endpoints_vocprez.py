@@ -71,14 +71,12 @@ def test_client(request):
     return TestClient(app)
 
 
-def get_prez_link(test_client: TestClient, iri: str) -> str:
+def get_curie(test_client: TestClient, iri: str) -> str:
     with test_client as client:
-        response = client.get("/v/vocab")
+        response = client.get(f"/identifier/curie/{iri}")
         if response.status_code != 200:
-            raise ValueError("Failed to retrieve vocab list")
-        graph = Graph().parse(data=response.text)
-        concept_link = graph.value(URIRef(iri), URIRef(f"https://prez.dev/link", None))
-        return str(concept_link)
+            raise ValueError(f"Failed to retrieve curie for {iri}. {response.text}")
+        return response.text
 
 
 def test_vocab_listing(test_client: TestClient):
@@ -110,10 +108,10 @@ def test_vocab_listing(test_client: TestClient):
 def test_concept_scheme(
     test_client: TestClient, iri: str, expected_result_file: str, description: str
 ):
-    prez_link = get_prez_link(test_client, iri)
+    curie = get_curie(test_client, iri)
 
     with test_client as client:
-        response = client.get(f"{prez_link}?_mediatype=text/anot+turtle")
+        response = client.get(f"/v/vocab/{curie}?_mediatype=text/anot+turtle")
         response_graph = Graph(bind_namespaces="rdflib").parse(data=response.text)
         expected_graph = Graph().parse(
             Path(__file__).parent
@@ -140,10 +138,52 @@ def test_concept_scheme(
 def test_concept_scheme_top_concepts(
     test_client: TestClient, iri: str, expected_result_file: str, description: str
 ):
-    prez_link = get_prez_link(test_client, iri)
+    curie = get_curie(test_client, iri)
 
     with test_client as client:
-        response = client.get(f"{prez_link}/top-concepts?_mediatype=text/anot+turtle")
+        response = client.get(
+            f"/v/vocab/{curie}/top-concepts?_mediatype=text/anot+turtle"
+        )
+        response_graph = Graph(bind_namespaces="rdflib").parse(data=response.text)
+        expected_graph = Graph().parse(
+            Path(__file__).parent
+            / f"../data/vocprez/expected_responses/{expected_result_file}"
+        )
+        assert isomorphic(expected_graph, response_graph), f"Failed test: {description}"
+
+
+@pytest.mark.parametrize(
+    "concept_scheme_iri, iri, expected_result_file, description",
+    [
+        [
+            "http://linked.data.gov.au/def/borehole-purpose",
+            "http://linked.data.gov.au/def/borehole-purpose/coal",
+            "concept-with-2-narrower-concepts.ttl",
+            "Return concept with 2 narrower concepts.",
+        ],
+        [
+            "http://linked.data.gov.au/def/borehole-purpose",
+            "http://linked.data.gov.au/def/borehole-purpose/open-cut-coal-mining",
+            "empty.ttl",
+            "Return nothing, no children.",
+        ],
+    ],
+)
+def test_concept_narrowers(
+    test_client: TestClient,
+    concept_scheme_iri: str,
+    iri: str,
+    expected_result_file: str,
+    description: str,
+):
+
+    concept_scheme_curie = get_curie(test_client, concept_scheme_iri)
+    concept_curie = get_curie(test_client, iri)
+
+    with test_client as client:
+        response = client.get(
+            f"/v/vocab/{concept_scheme_curie}/{concept_curie}/narrowers?_mediatype=text/anot+turtle"
+        )
         response_graph = Graph(bind_namespaces="rdflib").parse(data=response.text)
         expected_graph = Graph().parse(
             Path(__file__).parent
