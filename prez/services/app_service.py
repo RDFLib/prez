@@ -13,8 +13,9 @@ from prez.cache import (
 )
 from prez.config import settings
 from prez.reference_data.prez_ns import PREZ, ALTREXT
-from prez.sparql.methods import query_to_graph
+from prez.sparql.methods import query_to_graph, sparql_query_non_async
 from prez.sparql.objects_listings import startup_count_objects
+from prez.services.curie_functions import get_curie_id_for_uri
 
 log = logging.getLogger(__name__)
 
@@ -98,3 +99,31 @@ async def add_prefixes_to_prefix_graph():
                 f'"{f.name}"'
             )
     log.info("Prefixes from local files added to prefix graph")
+
+    if settings.disable_prefix_generation:
+        log.info("DISABLE_PREFIX_GENERATION set to false. Skipping prefix generation.")
+    else:
+        query = """
+            SELECT DISTINCT ?iri
+            WHERE {
+              ?iri ?p ?o .
+              FILTER(isIRI(?iri)) 
+            }
+        """
+
+        success, results = sparql_query_non_async(query)
+        iris = [iri["iri"]["value"] for iri in results]
+        skipped_count = 0
+        skipped = []
+        for iri in iris:
+            try:
+                get_curie_id_for_uri(iri)
+            except ValueError:
+                skipped_count += 1
+                skipped.append(iri)
+
+        log.info(
+            f"Generated prefixes for {len(iris)} IRIs. Skipped {skipped_count} IRIs."
+        )
+        for skipped_iri in skipped:
+            log.info(f"Skipped IRI {skipped_iri}")
