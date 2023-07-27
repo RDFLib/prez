@@ -14,7 +14,7 @@ from prez.renderers.renderer import (
     return_profiles,
     return_from_graph,
 )
-from prez.services.curie_functions import get_uri_for_curie_id, get_curie_id_for_uri
+from prez.services.curie_functions import get_curie_id_for_uri
 from prez.sparql.methods import queries_to_graph
 from prez.sparql.objects_listings import (
     generate_listing_construct,
@@ -29,6 +29,7 @@ from prez.services.vocprez import (
     get_concept_narrowers_query,
 )
 from prez.response import StreamingTurtleAnnotatedResponse
+from prez.routers.curie import get_iri_route
 
 router = APIRouter(tags=["VocPrez"])
 
@@ -92,7 +93,7 @@ async def concept_scheme_route(request: Request, concept_scheme_curie: str):
         request=request, classes=frozenset([SKOS.ConceptScheme])
     )
 
-    iri = get_uri_for_curie_id(concept_scheme_curie)
+    iri = get_iri_route(concept_scheme_curie)
     resource = await get_resource(iri)
     bnode_depth = get_bnode_depth(resource, iri)
     concept_scheme_query = get_concept_scheme_query(iri, bnode_depth)
@@ -129,7 +130,7 @@ async def concept_scheme_top_concepts_route(
         request=request, classes=frozenset([SKOS.ConceptScheme])
     )
 
-    iri = get_uri_for_curie_id(concept_scheme_curie)
+    iri = get_iri_route(concept_scheme_curie)
     concept_scheme_top_concepts_query = get_concept_scheme_top_concepts_query(
         iri, page, per_page
     )
@@ -186,7 +187,7 @@ async def concept_narrowers_route(
         request=request, classes=frozenset([SKOS.Concept])
     )
 
-    iri = get_uri_for_curie_id(concept_curie)
+    iri = get_iri_route(concept_curie)
     concept_narrowers_query = get_concept_narrowers_query(iri, page, per_page)
 
     graph = await queries_to_graph([concept_narrowers_query])
@@ -234,7 +235,7 @@ async def concept_route(
         request=request, classes=frozenset([SKOS.Concept])
     )
 
-    concept_iri = get_uri_for_curie_id(concept_curie)
+    concept_iri = get_iri_route(concept_curie)
     graph = await get_resource(concept_iri)
     graph.add(
         (

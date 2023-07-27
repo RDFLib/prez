@@ -46,7 +46,9 @@ def get_iri_route(curie: str):
     try:
         return get_uri_for_curie_id(curie)
     except ValueError as err:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(err)) from err
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, f"Invalid input '{curie}'. {err}"
+        ) from err
     except Exception as err:
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
