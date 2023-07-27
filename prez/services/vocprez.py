@@ -89,7 +89,7 @@ def get_concept_scheme_top_concepts_query(iri: str, page: int, per_page: int) ->
                     }
                 }
                 GROUP BY ?concept ?label
-                ORDER BY ?label
+                ORDER BY str(?label)
                 LIMIT {{ limit }}
                 OFFSET {{ offset }}
             }
@@ -139,7 +139,7 @@ def get_concept_narrowers_query(iri: str, page: int, per_page: int) -> str:
                     }
                 }
                 GROUP BY ?concept ?label
-                ORDER BY ?label
+                ORDER BY str(?label)
                 LIMIT {{ limit }}
                 OFFSET {{ offset }}
             }
