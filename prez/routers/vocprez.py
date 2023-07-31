@@ -23,7 +23,7 @@ from prez.sparql.objects_listings import (
 )
 from prez.sparql.resource import get_resource
 from prez.bnode import get_bnode_depth
-from prez.services.vocprez import (
+from prez.queries.vocprez import (
     get_concept_scheme_query,
     get_concept_scheme_top_concepts_query,
     get_concept_narrowers_query,
