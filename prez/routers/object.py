@@ -1,9 +1,45 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, HTTPException, status, Query
 from starlette.responses import PlainTextResponse
 
 from prez.models import SpatialItem, VocabItem, CatalogItem
 
 router = APIRouter(tags=["Object"])
+
+
+@router.get("/count", summary="Get object's statement count")
+def count_route(
+    curie: str,
+    inbound: str = Query(
+        None,
+        examples={
+            "skos:inScheme": {
+                "summary": "skos:inScheme",
+                "value": "http://www.w3.org/2004/02/skos/core#inScheme",
+            },
+            "skos:topConceptOf": {
+                "summary": "skos:topConceptOf",
+                "value": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            },
+        },
+    ),
+    outbound: str = Query(
+        None,
+        examples={
+            "skos:inScheme": {
+                "summary": "skos:hasTopConcept",
+                "value": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            },
+        },
+    ),
+):
+    """Get an Object's statements count based on the inbound or outbound predicate"""
+    if inbound is None and outbound is None:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "At least 'inbound' or 'outbound' is supplied a valid IRI.",
+        )
+
+    return f"{curie} {inbound} {outbound}"
 
 
 @router.get("/object", summary="Object")
@@ -29,7 +65,9 @@ async def object(
         try:
             item = prez_items[prez](uri=uri, url_path="/object")
             returned_items[prez] = item
-        except Exception:  # will get exception if URI does not exist with classes in prez flavour's SPARQL endpoint
+        except (
+            Exception
+        ):  # will get exception if URI does not exist with classes in prez flavour's SPARQL endpoint
             pass
     if len(returned_items) == 0:
         return PlainTextResponse(
