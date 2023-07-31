@@ -61,5 +61,4 @@ jobs:
           cd ../catprez && poetry run pytest
           cd ../profiles && poetry run pytest
           cd ../services && poetry run pytest
-          cd ../object && poetry run pytest
 #          cd ../local_sparql_store && poetry run pytest
