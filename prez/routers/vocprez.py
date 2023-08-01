@@ -74,6 +74,11 @@ async def schemes_endpoint(
     )
 
 
+@router.get("/v/vocab/{scheme_curie}/all", summary="Get ConceptScheme")
+async def vocprez_scheme(request: Request, scheme_curie: str):
+    return await item_endpoint(request)
+
+
 @router.get(
     "/v/vocab/{concept_scheme_curie}",
     summary="Get a SKOS Concept Scheme",

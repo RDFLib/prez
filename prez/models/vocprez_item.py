@@ -29,7 +29,6 @@ class VocabItem(BaseModel):
     @root_validator
     def populate(cls, values):
         url_path = values.get("url_path")
-        uri = values.get("uri")
         concept_curie = values.get("concept_curie")
         scheme_curie = values.get("scheme_curie")
         collection_curie = values.get("collection_curie")
@@ -38,7 +37,7 @@ class VocabItem(BaseModel):
             return values
         if url_path in ["/object", "/v/object"]:
             values["link_constructor"] = f"/v/object?uri="
-        elif len(url_parts) == 5:  # concepts
+        elif len(url_parts) == 5 and "/all" not in url_path:  # concepts
             values["general_class"] = SKOS.Concept
             if scheme_curie:
                 values["curie_id"] = concept_curie
