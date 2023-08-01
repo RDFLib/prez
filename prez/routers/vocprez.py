@@ -74,8 +74,14 @@ async def schemes_endpoint(
     )
 
 
-@router.get("/v/vocab/{scheme_curie}/all", summary="Get ConceptScheme")
+@router.get(
+    "/v/vocab/{scheme_curie}/all", summary="Get Concept Scheme and all its concepts"
+)
 async def vocprez_scheme(request: Request, scheme_curie: str):
+    """Get a SKOS Concept Scheme and all of its concepts.
+
+    Note: This may be a very expensive operation depending on the size of the concept scheme.
+    """
     return await item_endpoint(request)
 
 
