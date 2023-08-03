@@ -9,7 +9,9 @@ from prez.queries.object import object_inbound_query, object_outbound_query
 router = APIRouter(tags=["Object"])
 
 
-@router.get("/count", summary="Get object's statement count")
+@router.get(
+    "/count", summary="Get object's statement count", response_class=PlainTextResponse
+)
 def count_route(
     curie: str,
     inbound: str = Query(
