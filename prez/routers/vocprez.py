@@ -2,18 +2,34 @@ import logging
 from typing import Optional
 
 from fastapi import APIRouter, Request
-from rdflib import URIRef
+from rdflib import URIRef, SKOS, Literal, DCTERMS
 from starlette.responses import PlainTextResponse
 
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.models.vocprez_item import VocabItem
 from prez.models.vocprez_listings import VocabMembers
-from prez.renderers.renderer import return_from_queries, return_profiles
+from prez.reference_data.prez_ns import PREZ
+from prez.renderers.renderer import (
+    return_from_queries,
+    return_profiles,
+    return_from_graph,
+)
+from prez.services.curie_functions import get_curie_id_for_uri
+from prez.sparql.methods import queries_to_graph
 from prez.sparql.objects_listings import (
     generate_listing_construct,
     generate_listing_count_construct,
     generate_item_construct,
 )
+from prez.sparql.resource import get_resource
+from prez.bnode import get_bnode_depth
+from prez.queries.vocprez import (
+    get_concept_scheme_query,
+    get_concept_scheme_top_concepts_query,
+    get_concept_narrowers_query,
+)
+from prez.response import StreamingTurtleAnnotatedResponse
+from prez.routers.curie import get_iri_route
 
 router = APIRouter(tags=["VocPrez"])
 
@@ -26,7 +42,6 @@ async def vocprez_home():
 
 
 @router.get("/v/collection", summary="List Collections")
-@router.get("/v/scheme", summary="List ConceptSchemes")
 @router.get("/v/vocab", summary="List Vocabularies")
 async def schemes_endpoint(
     request: Request,
@@ -59,10 +74,201 @@ async def schemes_endpoint(
     )
 
 
-@router.get("/v/vocab/{scheme_curie}", summary="Get ConceptScheme")
-@router.get("/v/scheme/{scheme_curie}", summary="Get ConceptScheme")
+@router.get(
+    "/v/vocab/{scheme_curie}/all", summary="Get Concept Scheme and all its concepts"
+)
 async def vocprez_scheme(request: Request, scheme_curie: str):
+    """Get a SKOS Concept Scheme and all of its concepts.
+
+    Note: This may be a very expensive operation depending on the size of the concept scheme.
+    """
     return await item_endpoint(request)
+
+
+@router.get(
+    "/v/vocab/{concept_scheme_curie}",
+    summary="Get a SKOS Concept Scheme",
+    response_class=StreamingTurtleAnnotatedResponse,
+    responses={
+        200: {
+            "content": {"text/turtle": {}},
+        },
+    },
+)
+async def concept_scheme_route(request: Request, concept_scheme_curie: str):
+    """Get a SKOS Concept Scheme.
+
+    `prez:childrenCount` is an `xsd:integer` count of the number of top concepts for this Concept Scheme.
+    """
+    profiles_mediatypes_info = ProfilesMediatypesInfo(
+        request=request, classes=frozenset([SKOS.ConceptScheme])
+    )
+
+    iri = get_iri_route(concept_scheme_curie)
+    resource = await get_resource(iri)
+    bnode_depth = get_bnode_depth(resource, iri)
+    concept_scheme_query = get_concept_scheme_query(iri, bnode_depth)
+
+    return await return_from_queries(
+        [concept_scheme_query],
+        profiles_mediatypes_info.mediatype,
+        profiles_mediatypes_info.profile,
+        profiles_mediatypes_info.profile_headers,
+    )
+
+
+@router.get(
+    "/v/vocab/{concept_scheme_curie}/top-concepts",
+    summary="Get a SKOS Concept Scheme's top concepts",
+    response_class=StreamingTurtleAnnotatedResponse,
+    responses={
+        200: {
+            "content": {"text/turtle": {}},
+        },
+    },
+)
+async def concept_scheme_top_concepts_route(
+    request: Request,
+    concept_scheme_curie: str,
+    page: int = 1,
+    per_page: int = 20,
+):
+    """Get a SKOS Concept Scheme's top concepts.
+
+    `prez:childrenCount` is an `xsd:integer` count of the number of top concepts for this Concept Scheme.
+    """
+    profiles_mediatypes_info = ProfilesMediatypesInfo(
+        request=request, classes=frozenset([SKOS.ConceptScheme])
+    )
+
+    iri = get_iri_route(concept_scheme_curie)
+    concept_scheme_top_concepts_query = get_concept_scheme_top_concepts_query(
+        iri, page, per_page
+    )
+
+    graph = await queries_to_graph([concept_scheme_top_concepts_query])
+    for concept in graph.objects(iri, SKOS.hasTopConcept):
+        if isinstance(concept, URIRef):
+            concept_curie = get_curie_id_for_uri(concept)
+            graph.add(
+                (
+                    concept,
+                    PREZ.link,
+                    Literal(f"/v/vocab/{concept_scheme_curie}/{concept_curie}"),
+                )
+            )
+            graph.add(
+                (
+                    concept,
+                    DCTERMS.identifier,
+                    Literal(concept_curie, datatype=PREZ.identifier),
+                )
+            )
+
+    return await return_from_graph(
+        graph,
+        profiles_mediatypes_info.mediatype,
+        profiles_mediatypes_info.profile,
+        profiles_mediatypes_info.profile_headers,
+    )
+
+
+@router.get(
+    "/v/vocab/{concept_scheme_curie}/{concept_curie}/narrowers",
+    summary="Get a SKOS Concept's narrower concepts",
+    response_class=StreamingTurtleAnnotatedResponse,
+    responses={
+        200: {
+            "content": {"text/turtle": {}},
+        },
+    },
+)
+async def concept_narrowers_route(
+    request: Request,
+    concept_scheme_curie: str,
+    concept_curie: str,
+    page: int = 1,
+    per_page: int = 20,
+):
+    """Get a SKOS Concept's narrower concepts.
+
+    `prez:childrenCount` is an `xsd:integer` count of the number of narrower concepts for this concept.
+    """
+    profiles_mediatypes_info = ProfilesMediatypesInfo(
+        request=request, classes=frozenset([SKOS.Concept])
+    )
+
+    iri = get_iri_route(concept_curie)
+    concept_narrowers_query = get_concept_narrowers_query(iri, page, per_page)
+
+    graph = await queries_to_graph([concept_narrowers_query])
+    for concept in graph.objects(iri, SKOS.narrower):
+        if isinstance(concept, URIRef):
+            concept_curie = get_curie_id_for_uri(concept)
+            graph.add(
+                (
+                    concept,
+                    PREZ.link,
+                    Literal(f"/v/vocab/{concept_scheme_curie}/{concept_curie}"),
+                )
+            )
+            graph.add(
+                (
+                    concept,
+                    DCTERMS.identifier,
+                    Literal(concept_curie, datatype=PREZ.identifier),
+                )
+            )
+
+    return await return_from_graph(
+        graph,
+        profiles_mediatypes_info.mediatype,
+        profiles_mediatypes_info.profile,
+        profiles_mediatypes_info.profile_headers,
+    )
+
+
+@router.get(
+    "/v/vocab/{concept_scheme_curie}/{concept_curie}",
+    summary="Get a SKOS Concept",
+    response_class=StreamingTurtleAnnotatedResponse,
+    responses={
+        200: {
+            "content": {"text/turtle": {}},
+        },
+    },
+)
+async def concept_route(
+    request: Request, concept_scheme_curie: str, concept_curie: str
+):
+    """Get a SKOS Concept."""
+    profiles_mediatypes_info = ProfilesMediatypesInfo(
+        request=request, classes=frozenset([SKOS.Concept])
+    )
+
+    concept_iri = get_iri_route(concept_curie)
+    graph = await get_resource(concept_iri)
+    graph.add(
+        (
+            concept_iri,
+            PREZ.link,
+            Literal(f"/v/vocab/{concept_scheme_curie}/{concept_curie}"),
+        )
+    )
+    graph.add(
+        (
+            concept_iri,
+            DCTERMS.identifier,
+            Literal(concept_curie, datatype=PREZ.identifier),
+        )
+    )
+
+    return await return_from_graph(
+        graph,
+        profiles_mediatypes_info.mediatype,
+        profiles_mediatypes_info.profile,
+        profiles_mediatypes_info.profile_headers,
+    )
 
 
 @router.get("/v/collection/{collection_curie}", summary="Get Collection")
@@ -77,14 +283,6 @@ async def vocprez_collection_concept(
     return await item_endpoint(request)
 
 
-@router.get("/v/scheme/{scheme_curie}/{concept_curie}", summary="Get Concept")
-@router.get("/v/vocab/{scheme_curie}/{concept_curie}", summary="Get Concept")
-async def vocprez_scheme_concept(
-    request: Request, scheme_curie: str, concept_curie: str
-):
-    return await item_endpoint(request)
-
-
 @router.get("/v/object", summary="Get VocPrez Object")
 async def item_endpoint(request: Request, vp_item: Optional[VocabItem] = None):
     """Returns a VocPrez skos:Concept, Collection, Vocabulary, or ConceptScheme in the requested profile & mediatype"""
@@ -93,7 +291,7 @@ async def item_endpoint(request: Request, vp_item: Optional[VocabItem] = None):
         vp_item = VocabItem(
             **request.path_params,
             **request.query_params,
-            url_path=str(request.url.path)
+            url_path=str(request.url.path),
         )
     prof_and_mt_info = ProfilesMediatypesInfo(request=request, classes=vp_item.classes)
     vp_item.selected_class = prof_and_mt_info.selected_class

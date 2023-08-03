@@ -39,5 +39,8 @@ class ProfileItem(BaseModel):
         if len(r.bindings) > 0:
             values["classes"] = frozenset([prof.get("class") for prof in r.bindings])
 
-        values["label"] = profiles_graph_cache.value(URIRef(values["uri"]), URIRef("http://www.w3.org/ns/dx/conneg/altr-ext#hasLabelPredicate"))
+        values["label"] = profiles_graph_cache.value(
+            URIRef(values["uri"]),
+            URIRef("http://www.w3.org/ns/dx/conneg/altr-ext#hasLabelPredicate"),
+        )
         return values

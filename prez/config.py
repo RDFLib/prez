@@ -74,6 +74,7 @@ class Settings(BaseSettings):
         "Knowledge Graph data which can be subset according to information profiles."
     )
     prez_version: Optional[str]
+    disable_prefix_generation: bool = False
 
     @root_validator()
     def check_endpoint_enabled(cls, values):

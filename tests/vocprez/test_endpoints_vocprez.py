@@ -4,16 +4,16 @@ from pathlib import Path
 from time import sleep
 
 import pytest
-from rdflib import Graph, URIRef, RDF, SKOS
+from fastapi.testclient import TestClient
+from rdflib import Graph
 from rdflib.compare import isomorphic
 
 PREZ_DIR = os.getenv("PREZ_DIR")
 LOCAL_SPARQL_STORE = os.getenv("LOCAL_SPARQL_STORE")
-from fastapi.testclient import TestClient
 
 
 @pytest.fixture(scope="module")
-def vp_test_client(request):
+def test_client(request):
     print("Run Local SPARQL Store")
     p1 = subprocess.Popen(["python", str(LOCAL_SPARQL_STORE), "-p", "3031"])
     sleep(1)
@@ -30,84 +30,181 @@ def vp_test_client(request):
     return TestClient(app)
 
 
-@pytest.fixture(scope="module")
-def a_vocab_link(vp_test_client):
-    with vp_test_client as client:
-        r = client.get("/v/vocab")
-        g = Graph().parse(data=r.text)
-        vocab_uri = g.value(None, RDF.type, SKOS.ConceptScheme)
-        vocab_link = g.value(vocab_uri, URIRef(f"https://prez.dev/link", None))
-        return vocab_link
+def get_curie(test_client: TestClient, iri: str) -> str:
+    with test_client as client:
+        response = client.get(f"/identifier/curie/{iri}")
+        if response.status_code != 200:
+            raise ValueError(f"Failed to retrieve curie for {iri}. {response.text}")
+        return response.text
 
 
-@pytest.fixture(scope="module")
-def a_concept_link(vp_test_client, a_vocab_link):
-    # get the first concept endpoint
-    r = vp_test_client.get(a_vocab_link)
-    g = Graph().parse(data=r.text)
-    concept_uri = next(g.subjects(predicate=SKOS.inScheme, object=None))
-    concept_link = g.value(concept_uri, URIRef(f"https://prez.dev/link", None))
-    return concept_link
-
-
-def test_vocab_item(vp_test_client, a_vocab_link):
-    with vp_test_client as client:
-        r = client.get(
-            f"{a_vocab_link}?_mediatype=text/anot+turtle"
-        )  # hardcoded to a smaller vocabulary - sparql store has poor performance w/ CONSTRUCT
-        response_graph = Graph(bind_namespaces="rdflib").parse(data=r.text)
-        expected_graph = Graph().parse(
-            Path(__file__).parent / "../data/vocprez/expected_responses/vocab_anot.ttl"
-        )
-        assert response_graph.isomorphic(expected_graph), print(
-            f"Graph delta:{(expected_graph - response_graph).serialize()}"
-        )
-
-
-def test_vocab_listing(vp_test_client):
-    with vp_test_client as client:
-        r = client.get(f"/v/vocab?_mediatype=text/anot+turtle")
-        response_graph = Graph().parse(data=r.text)
+def test_vocab_listing(test_client: TestClient):
+    with test_client as client:
+        response = client.get(f"/v/vocab?_mediatype=text/anot+turtle")
+        response_graph = Graph().parse(data=response.text)
         expected_graph = Graph().parse(
             Path(__file__).parent
             / "../data/vocprez/expected_responses/vocab_listing_anot.ttl"
         )
-        assert response_graph.isomorphic(expected_graph), print(
-            f"Graph delta:{(expected_graph - response_graph).serialize()}"
-        )
+        assert isomorphic(expected_graph, response_graph)
 
 
-def test_concept(vp_test_client, a_concept_link):
-    with vp_test_client as client:
-        r = client.get(f"{a_concept_link}?_mediatype=text/anot+turtle")
-        response_graph = Graph().parse(data=r.text)
+@pytest.mark.parametrize(
+    "iri, expected_result_file, description",
+    [
+        [
+            "http://linked.data.gov.au/def2/borehole-purpose",
+            "concept_scheme_with_children.ttl",
+            "Return concept scheme and a prez:childrenCount of 8",
+        ],
+        [
+            "http://linked.data.gov.au/def2/borehole-purpose-no-children",
+            "concept_scheme_no_children.ttl",
+            "Return concept scheme and a prez:childrenCount of 0",
+        ],
+    ],
+)
+def test_concept_scheme(
+    test_client: TestClient, iri: str, expected_result_file: str, description: str
+):
+    curie = get_curie(test_client, iri)
+
+    with test_client as client:
+        response = client.get(f"/v/vocab/{curie}?_mediatype=text/anot+turtle")
+        response_graph = Graph(bind_namespaces="rdflib").parse(data=response.text)
         expected_graph = Graph().parse(
             Path(__file__).parent
-            / "../data/vocprez/expected_responses/concept_anot.ttl"
+            / f"../data/vocprez/expected_responses/{expected_result_file}"
         )
-        assert response_graph.isomorphic(expected_graph), print(
-            f"Graph delta:{(expected_graph - response_graph).serialize()}"
-        )
+        assert isomorphic(expected_graph, response_graph), f"Failed test: {description}"
 
 
-def test_collection_listing(vp_test_client):
-    with vp_test_client as client:
-        r = client.get(f"/v/collection?_mediatype=text/anot+turtle")
-        response_graph = Graph().parse(data=r.text, format="turtle")
+@pytest.mark.parametrize(
+    "iri, expected_result_file, description",
+    [
+        [
+            "http://linked.data.gov.au/def2/borehole-purpose",
+            "concept_scheme_top_concepts_with_children.ttl",
+            "Return concept scheme and a prez:childrenCount of 8",
+        ],
+        [
+            "http://linked.data.gov.au/def2/borehole-purpose-no-children",
+            "empty.ttl",
+            "Return concept scheme and a prez:childrenCount of 0",
+        ],
+    ],
+)
+def test_concept_scheme_top_concepts(
+    test_client: TestClient, iri: str, expected_result_file: str, description: str
+):
+    curie = get_curie(test_client, iri)
+
+    with test_client as client:
+        response = client.get(
+            f"/v/vocab/{curie}/top-concepts?_mediatype=text/anot+turtle"
+        )
+        response_graph = Graph(bind_namespaces="rdflib").parse(data=response.text)
+        expected_graph = Graph().parse(
+            Path(__file__).parent
+            / f"../data/vocprez/expected_responses/{expected_result_file}"
+        )
+        assert isomorphic(expected_graph, response_graph), f"Failed test: {description}"
+
+
+@pytest.mark.parametrize(
+    "concept_scheme_iri, concept_iri, expected_result_file, description",
+    [
+        [
+            "http://linked.data.gov.au/def2/borehole-purpose",
+            "http://linked.data.gov.au/def/borehole-purpose/coal",
+            "concept-with-2-narrower-concepts.ttl",
+            "Return concept with 2 narrower concepts.",
+        ],
+        [
+            "http://linked.data.gov.au/def2/borehole-purpose",
+            "http://linked.data.gov.au/def2/borehole-purpose/open-cut-coal-mining",
+            "empty.ttl",
+            "Return nothing, no children.",
+        ],
+    ],
+)
+def test_concept_narrowers(
+    test_client: TestClient,
+    concept_scheme_iri: str,
+    concept_iri: str,
+    expected_result_file: str,
+    description: str,
+):
+    concept_scheme_curie = get_curie(test_client, concept_scheme_iri)
+    concept_curie = get_curie(test_client, concept_iri)
+
+    with test_client as client:
+        response = client.get(
+            f"/v/vocab/{concept_scheme_curie}/{concept_curie}/narrowers?_mediatype=text/anot+turtle"
+        )
+        response_graph = Graph(bind_namespaces="rdflib").parse(data=response.text)
+        expected_graph = Graph().parse(
+            Path(__file__).parent
+            / f"../data/vocprez/expected_responses/{expected_result_file}"
+        )
+        assert isomorphic(expected_graph, response_graph), f"Failed test: {description}"
+
+
+@pytest.mark.parametrize(
+    "concept_scheme_iri, concept_iri, expected_result_file, description",
+    [
+        [
+            "http://linked.data.gov.au/def/borehole-purpose",
+            "http://linked.data.gov.au/def/borehole-purpose/coal",
+            "concept-coal.ttl",
+            "Return the coal concept and its properties.",
+        ],
+        [
+            "http://linked.data.gov.au/def/borehole-purpose",
+            "http://linked.data.gov.au/def/borehole-purpose/open-cut-coal-mining",
+            "concept-open-cut-coal-mining.ttl",
+            "Return the open-cut-coal-mining concept and its properties.",
+        ],
+    ],
+)
+def test_concept(
+    test_client: TestClient,
+    concept_scheme_iri: str,
+    concept_iri: str,
+    expected_result_file: str,
+    description: str,
+):
+    concept_scheme_curie = get_curie(test_client, concept_scheme_iri)
+    concept_curie = get_curie(test_client, concept_iri)
+
+    with test_client as client:
+        response = client.get(
+            f"/v/vocab/{concept_scheme_curie}/{concept_curie}?_mediatype=text/anot+turtle"
+        )
+        response_graph = Graph(bind_namespaces="rdflib").parse(data=response.text)
+        expected_graph = Graph().parse(
+            Path(__file__).parent
+            / f"../data/vocprez/expected_responses/{expected_result_file}"
+        )
+        assert isomorphic(expected_graph, response_graph)
+
+
+def test_collection_listing(test_client: TestClient):
+    with test_client as client:
+        response = client.get(f"/v/collection?_mediatype=text/anot+turtle")
+        response_graph = Graph().parse(data=response.text, format="turtle")
         expected_graph = Graph().parse(
             Path(__file__).parent
             / "../data/vocprez/expected_responses/collection_listing_anot.ttl"
         )
-        assert response_graph.isomorphic(expected_graph), print(
-            f"Graph delta:{(expected_graph - response_graph).serialize()}"
-        )
+        assert isomorphic(expected_graph, response_graph)
 
 
-def test_collection_listing_item(vp_test_client):
-    with vp_test_client as client:
-        r = client.get("/v/collection/cgi:contacttype")
-        assert r.status_code == 200
-        response_graph = Graph().parse(data=r.text, format="turtle")
+def test_collection_listing_item(test_client: TestClient):
+    with test_client as client:
+        response = client.get("/v/collection/cgi:contacttype")
+        assert response.status_code == 200
+        response_graph = Graph().parse(data=response.text, format="turtle")
         expected_graph = Graph().parse(
             Path(__file__).parent
             / "../data/vocprez/expected_responses/collection_listing_item.ttl"

@@ -124,7 +124,7 @@ async def query_to_graph(query: str):
     return g.parse(data=response.text, format="turtle")
 
 
-async def queries_to_graph(queries: List[str]):
+async def queries_to_graph(queries: List[str]) -> Graph:
     """
     Sends multiple SPARQL queries asynchronously and parses the responses into an RDFLib Graph.
     Args: queries: List[str]: A list of SPARQL queries to be sent asynchronously.

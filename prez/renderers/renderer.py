@@ -1,6 +1,6 @@
 import io
 import logging
-from typing import Optional, Dict
+from typing import Optional
 
 from connegp import RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
 from fastapi.responses import StreamingResponse
@@ -28,7 +28,7 @@ async def return_from_queries(
     mediatype,
     profile,
     profile_headers,
-    predicates_for_link_addition: Dict = {},
+    predicates_for_link_addition: dict = None,
 ):
     """
     Executes SPARQL queries, loads these to RDFLib Graphs, and calls the "return_from_graph" function to return the
@@ -45,7 +45,7 @@ async def return_from_graph(
     mediatype,
     profile,
     profile_headers,
-    predicates_for_link_addition: dict = {},
+    predicates_for_link_addition: dict = None,
 ):
     profile_headers["Content-Disposition"] = "inline"
     if str(mediatype) in RDF_MEDIATYPES:
@@ -88,7 +88,12 @@ async def return_annotated_rdf(
     queries_for_uncached, annotations_graph = await get_annotation_properties(
         graph, **profile_annotation_props
     )
-    anots_from_triplestore = await queries_to_graph([queries_for_uncached])
+
+    if queries_for_uncached is None:
+        anots_from_triplestore = Graph()
+    else:
+        anots_from_triplestore = await queries_to_graph([queries_for_uncached])
+
     if len(anots_from_triplestore) > 1:
         annotations_graph += anots_from_triplestore
         cache += anots_from_triplestore
