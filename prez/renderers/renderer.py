@@ -98,6 +98,29 @@ async def return_annotated_rdf(
         annotations_graph += anots_from_triplestore
         cache += anots_from_triplestore
 
+    # TODO: this portion of the code requires refactoring.
+    # Duplicated fragment code below is required to ensure new predicates and values
+    # defined in the profiles get added to the `graph` and the labels of those
+    # values also get added to the `graph`.
+
+    # start of duplicated code fragment
+    graph += annotations_graph
+
+    profile_annotation_props = get_annotation_predicates(profile)
+    queries_for_uncached, annotations_graph = await get_annotation_properties(
+        graph, **profile_annotation_props
+    )
+
+    if queries_for_uncached is None:
+        anots_from_triplestore = Graph()
+    else:
+        anots_from_triplestore = await queries_to_graph([queries_for_uncached])
+
+    if len(anots_from_triplestore) > 1:
+        annotations_graph += anots_from_triplestore
+        cache += anots_from_triplestore
+    # end duplicated code fragment
+
     generate_prez_links(graph, predicates_for_link_addition)
 
     obj = io.BytesIO(
