@@ -69,7 +69,7 @@ prez:VocPrezProfile
     dcterms:identifier "vocpub"^^xsd:token ;
     dcterms:title "VocPub" ;
     altr-ext:hasLabelPredicate skos:prefLabel ;
-    altr-ext:otherAnnotationProps schema:color ;
+    altr-ext:otherAnnotationProps schema:color, reg:status ;
     altr-ext:constrainsClass
         skos:ConceptScheme ,
         skos:Concept ,
