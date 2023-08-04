@@ -63,11 +63,15 @@ def get_concept_scheme_top_concepts_query(iri: str, page: int, per_page: int) ->
             ?concept prez:childrenCount ?narrowerChildrenCount .
             ?iri prez:childrenCount ?childrenCount .
             ?iri skos:hasTopConcept ?concept .
+            ?iri rdf:type ?type .
+            ?concept rdf:type ?conceptType .
         }
         WHERE {
             BIND(<{{ iri }}> as ?iri)
             ?iri skos:hasTopConcept ?concept .
             ?concept skos:prefLabel ?label .
+            ?iri rdf:type ?type .
+            ?concept rdf:type ?conceptType .
         
             {
                 SELECT (COUNT(?childConcept) AS ?childrenCount)
@@ -113,11 +117,15 @@ def get_concept_narrowers_query(iri: str, page: int, per_page: int) -> str:
             ?concept prez:childrenCount ?narrowerChildrenCount .
             ?iri prez:childrenCount ?childrenCount .
             ?iri skos:narrower ?concept .
+            ?iri rdf:type ?type .
+            ?concept rdf:type ?conceptType .
         }
         WHERE {
             BIND(<{{ iri }}> as ?iri)
             ?concept skos:broader ?iri .
             ?concept skos:prefLabel ?label .
+            ?iri rdf:type ?type .
+            ?concept rdf:type ?conceptType .
             
             {
                 SELECT (COUNT(?childConcept) AS ?childrenCount)
