@@ -92,6 +92,11 @@ def test_concept_scheme(
             "empty.ttl",
             "Return concept scheme and a prez:childrenCount of 0",
         ],
+        [
+            "http://data.bgs.ac.uk/ref/BeddingSurfaceStructure",
+            "beddingsurfacestructure_top_concepts.ttl",
+            "Top concepts have the correct annotation values for reg:status and color",
+        ],
     ],
 )
 def test_concept_scheme_top_concepts(
