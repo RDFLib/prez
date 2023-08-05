@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request, HTTPException, status, Query
 from starlette.responses import PlainTextResponse
 
 from prez.models import SpatialItem, VocabItem, CatalogItem
-from prez.routers.curie import get_iri_route
+from prez.routers.identifier import get_iri_route
 from prez.sparql.methods import sparql_query_non_async
 from prez.queries.object import object_inbound_query, object_outbound_query
 
