@@ -4,7 +4,7 @@ from rdflib import URIRef
 from rdflib.term import _is_valid_uri
 
 from prez.services.curie_functions import get_uri_for_curie_id, get_curie_id_for_uri
-from prez.queries.identifier import get_foaf_homepage
+from prez.queries.identifier import get_foaf_homepage_query
 from prez.sparql.methods import sparql_query_non_async
 
 router = APIRouter(tags=["Identifier Resolution"])
@@ -23,7 +23,7 @@ def get_identifier_redirect_route(iri: str):
     The `iri` query parameter is used to return a redirect response with the value from the `foaf:homepage` lookup.
     If no value is found, a 404 HTTP response is returned.
     """
-    query = get_foaf_homepage(iri)
+    query = get_foaf_homepage_query(iri)
     _, result = sparql_query_non_async(query)
     url = None
     for row in result:
