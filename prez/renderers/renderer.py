@@ -72,6 +72,24 @@ async def return_rdf(graph, mediatype, profile_headers):
     return StreamingResponse(content=obj, media_type=mediatype, headers=profile_headers)
 
 
+async def get_annotations_graph(profile, graph, cache):
+    profile_annotation_props = get_annotation_predicates(profile)
+    queries_for_uncached, annotations_graph = await get_annotation_properties(
+        graph, **profile_annotation_props
+    )
+
+    if queries_for_uncached is None:
+        anots_from_triplestore = Graph()
+    else:
+        anots_from_triplestore = await queries_to_graph([queries_for_uncached])
+
+    if len(anots_from_triplestore) > 1:
+        annotations_graph += anots_from_triplestore
+        cache += anots_from_triplestore
+
+    return annotations_graph
+
+
 async def return_annotated_rdf(
     graph: Graph,
     profile_headers,
@@ -84,50 +102,18 @@ async def return_annotated_rdf(
     non_anot_mediatype = mediatype.replace("anot+", "")
 
     cache = tbox_cache
-    profile_annotation_props = get_annotation_predicates(profile)
-    queries_for_uncached, annotations_graph = await get_annotation_properties(
-        graph, **profile_annotation_props
-    )
 
-    if queries_for_uncached is None:
-        anots_from_triplestore = Graph()
-    else:
-        anots_from_triplestore = await queries_to_graph([queries_for_uncached])
+    previous_triples_count = len(graph)
 
-    if len(anots_from_triplestore) > 1:
-        annotations_graph += anots_from_triplestore
-        cache += anots_from_triplestore
-
-    # TODO: this portion of the code requires refactoring.
-    # Duplicated fragment code below is required to ensure new predicates and values
-    # defined in the profiles get added to the `graph` and the labels of those
-    # values also get added to the `graph`.
-
-    # start of duplicated code fragment
-    graph += annotations_graph
-
-    profile_annotation_props = get_annotation_predicates(profile)
-    queries_for_uncached, annotations_graph = await get_annotation_properties(
-        graph, **profile_annotation_props
-    )
-
-    if queries_for_uncached is None:
-        anots_from_triplestore = Graph()
-    else:
-        anots_from_triplestore = await queries_to_graph([queries_for_uncached])
-
-    if len(anots_from_triplestore) > 1:
-        annotations_graph += anots_from_triplestore
-        cache += anots_from_triplestore
-    # end duplicated code fragment
+    while True:
+        graph += await get_annotations_graph(profile, graph, cache)
+        if len(graph) == previous_triples_count:
+            break
+        previous_triples_count = len(graph)
 
     generate_prez_links(graph, predicates_for_link_addition)
 
-    obj = io.BytesIO(
-        (graph + annotations_graph).serialize(
-            format=non_anot_mediatype, encoding="utf-8"
-        )
-    )
+    obj = io.BytesIO(graph.serialize(format=non_anot_mediatype, encoding="utf-8"))
     return StreamingResponse(
         content=obj, media_type=non_anot_mediatype, headers=profile_headers
     )
