@@ -105,6 +105,7 @@ async def return_annotated_rdf(
 
     previous_triples_count = len(graph)
 
+    # Expand the graph with annotations specified in the profile until no new statements are added.
     while True:
         graph += await get_annotations_graph(profile, graph, cache)
         if len(graph) == previous_triples_count:
