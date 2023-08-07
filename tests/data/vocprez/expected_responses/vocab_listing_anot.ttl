@@ -40,6 +40,11 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     ns2:link "/v/vocab/def2:borehole-purpose-no-children" ;
 .
 
+dcterms:description
+    rdfs:label "Description"@en ;
+    dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en ;
+.
+
 dcterms:provenance
     rdfs:label "Provenance"@en ;
     dcterms:description "The statement may include a description of any changes successive custodians made to the resource."@en ;
