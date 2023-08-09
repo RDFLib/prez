@@ -15,7 +15,7 @@ from prez.renderers.renderer import (
     return_from_graph,
 )
 from prez.services.curie_functions import get_curie_id_for_uri
-from prez.sparql.methods import queries_to_graph
+from prez.sparql.methods import rdf_queries_to_graph
 from prez.sparql.objects_listings import (
     generate_listing_construct,
     generate_listing_count_construct,
@@ -41,8 +41,16 @@ async def vocprez_home():
     return PlainTextResponse("VocPrez Home")
 
 
-@router.get("/v/collection", summary="List Collections", name="https://prez.dev/endpoint/vocprez/collection-listing")
-@router.get("/v/vocab", summary="List Vocabularies", name="https://prez.dev/endpoint/vocprez/vocabs-listing")
+@router.get(
+    "/v/collection",
+    summary="List Collections",
+    name="https://prez.dev/endpoint/vocprez/collection-listing",
+)
+@router.get(
+    "/v/vocab",
+    summary="List Vocabularies",
+    name="https://prez.dev/endpoint/vocprez/vocabs-listing",
+)
 async def schemes_endpoint(
     request: Request,
     page: int = 1,
@@ -75,9 +83,9 @@ async def schemes_endpoint(
 
 
 @router.get(
-    "/v/vocab/{scheme_curie}/all", 
+    "/v/vocab/{scheme_curie}/all",
     summary="Get Concept Scheme and all its concepts",
-    name="https://prez.dev/endpoint/vocprez/vocab"
+    name="https://prez.dev/endpoint/vocprez/vocab",
 )
 async def vocprez_scheme(request: Request, scheme_curie: str):
     """Get a SKOS Concept Scheme and all of its concepts.
@@ -149,7 +157,7 @@ async def concept_scheme_top_concepts_route(
         iri, page, per_page
     )
 
-    graph = await queries_to_graph([concept_scheme_top_concepts_query])
+    graph = await rdf_queries_to_graph(concept_scheme_top_concepts_query)
     for concept in graph.objects(iri, SKOS.hasTopConcept):
         if isinstance(concept, URIRef):
             concept_curie = get_curie_id_for_uri(concept)
@@ -204,7 +212,7 @@ async def concept_narrowers_route(
     iri = get_iri_route(concept_curie)
     concept_narrowers_query = get_concept_narrowers_query(iri, page, per_page)
 
-    graph = await queries_to_graph([concept_narrowers_query])
+    graph = await rdf_queries_to_graph(concept_narrowers_query)
     for concept in graph.objects(iri, SKOS.narrower):
         if isinstance(concept, URIRef):
             concept_curie = get_curie_id_for_uri(concept)
@@ -279,9 +287,11 @@ async def vocprez_collection(request: Request, collection_curie: str):
     return await item_endpoint(request)
 
 
-@router.get("/v/collection/{collection_curie}/{concept_curie}",
-            summary="Get Concept",
-            name="https://prez.dev/endpoint/vocprez/collection-concept")
+@router.get(
+    "/v/collection/{collection_curie}/{concept_curie}",
+    summary="Get Concept",
+    name="https://prez.dev/endpoint/vocprez/collection-concept",
+)
 async def vocprez_collection_concept(
     request: Request, collection_curie: str, concept_curie: str
 ):
@@ -295,7 +305,7 @@ async def item_endpoint(request: Request, vp_item: Optional[VocabItem] = None):
             **request.path_params,
             **request.query_params,
             url_path=str(request.url.path),
-            endpoint_uri=request.scope["route"].name
+            endpoint_uri=request.scope["route"].name,
         )
     prof_and_mt_info = ProfilesMediatypesInfo(request=request, classes=vp_item.classes)
     vp_item.selected_class = prof_and_mt_info.selected_class

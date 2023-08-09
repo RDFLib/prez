@@ -35,6 +35,13 @@ from prez.services.app_service import (
     populate_api_info,
     add_prefixes_to_prefix_graph,
 )
+from prez.services.app_service import (
+    healthcheck_sparql_endpoints,
+    count_objects,
+    create_endpoints_graph,
+    populate_api_info,
+    add_prefixes_to_prefix_graph,
+)
 from prez.services.exception_catchers import (
     catch_400,
     catch_404,

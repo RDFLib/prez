@@ -102,7 +102,7 @@ async def send_query(query: str, mediatype="text/turtle"):
     return await async_client.send(query_rq, stream=True)
 
 
-async def rdf_queries_to_graph(query: str):
+async def rdf_queries_to_graph(query: str) -> Graph:
     """
     Sends a SPARQL query asynchronously and parses the response into an RDFLib Graph.
     Args: query: str: A SPARQL query to be sent asynchronously.

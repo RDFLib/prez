@@ -117,8 +117,8 @@ def generate_listing_construct(
             {{
                 SELECT ?top_level_item ?child_item
                 WHERE {{
-                    {f'{uri_or_tl_item} a <{focus_item.general_class}> .{chr(10)}' if focus_item.top_level_listing else generate_outbound_predicates(uri_or_tl_item, outbound_children, outbound_parents)}\
-                    
+                    {f'{uri_or_tl_item} a <{focus_item.base_class}> .{chr(10)}' if focus_item.top_level_listing else generate_focus_to_x_predicates(uri_or_tl_item, focus_to_child, focus_to_parent)}\
+
                     OPTIONAL {{
                         {f'{uri_or_tl_item} <{profile_item.label}> ?label .' if focus_item.top_level_listing else ""}\
                     }}
@@ -142,7 +142,7 @@ def generate_listing_construct(
         "top_level_gen_class": focus_item.base_class
         if focus_item.top_level_listing
         else None,
-        # if this is a top level class, include it's general class here so we can create
+        # if this is a top level class, include it's base class here so we can create
         # links to instances of the top level class,
     }
     return query, predicates_for_link_addition
@@ -520,7 +520,7 @@ def generate_listing_count_construct(
     """
     Generates a SPARQL construct query to count either:
     1. the members of a collection, if a URI is given, or;
-    2. the number of instances of a general class, given a general class.
+    2. the number of instances of a base class, given a base class.
     """
     if not item.top_level_listing:
         query = dedent(
@@ -772,7 +772,7 @@ def select_profile_mediatype(
     defaults, and the availability of these in profiles.
 
     NB: Most specific class refers to the rdfs:Class of an object which has the most specific rdfs:subClassOf links to
-    the general class delivered by that API endpoint. The general classes delivered by each API endpoint are:
+    the base class delivered by that API endpoint. The base classes delivered by each API endpoint are:
 
     SpacePrez:
     /s/datasets -> prez:DatasetList

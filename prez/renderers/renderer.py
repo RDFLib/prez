@@ -12,7 +12,7 @@ from starlette.responses import Response
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.models.profiles_item import ProfileItem
 from prez.reference_data.prez_ns import PREZ
-from prez.sparql.methods import send_queries
+from prez.sparql.methods import send_queries, rdf_queries_to_graph
 from prez.services.curie_functions import get_curie_id_for_uri
 from prez.sparql.objects_listings import (
     generate_item_construct,
@@ -81,7 +81,7 @@ async def get_annotations_graph(profile, graph, cache):
     if queries_for_uncached is None:
         anots_from_triplestore = Graph()
     else:
-        anots_from_triplestore = await queries_to_graph([queries_for_uncached])
+        anots_from_triplestore = await rdf_queries_to_graph(queries_for_uncached)
 
     if len(anots_from_triplestore) > 1:
         annotations_graph += anots_from_triplestore
