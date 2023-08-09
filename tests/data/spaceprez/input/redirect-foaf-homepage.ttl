@@ -1,0 +1,3 @@
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+
+<http://data.bgs.ac.uk/id/dataHolding/13603129> foaf:homepage <http://metadata.bgs.ac.uk/geonetwork/srv/eng/catalog.search#/metadata/9df8df53-2a1d-37a8-e044-0003ba9b0d98> .

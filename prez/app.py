@@ -25,7 +25,7 @@ from prez.routers.search import router as search_router
 from prez.routers.spaceprez import router as spaceprez_router
 from prez.routers.sparql import router as sparql_router
 from prez.routers.vocprez import router as vocprez_router
-from prez.routers.curie import router as curie_router
+from prez.routers.identifier import router as identifier_router
 from prez.services.app_service import healthcheck_sparql_endpoints, count_objects
 from prez.services.app_service import populate_api_info, add_prefixes_to_prefix_graph
 from prez.services.exception_catchers import (
@@ -61,7 +61,7 @@ app.include_router(profiles_router)
 app.include_router(catprez_router)
 app.include_router(vocprez_router)
 app.include_router(spaceprez_router)
-app.include_router(curie_router)
+app.include_router(identifier_router)
 
 
 @app.middleware("http")
