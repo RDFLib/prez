@@ -1,20 +1,27 @@
 PREFIX bhpur: <http://linked.data.gov.au/def/borehole-purpose/>
 PREFIX cs4: <http://linked.data.gov.au/def2/borehole-purpose>
 PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX ns1: <https://prez.dev/>
+PREFIX ns1: <http://purl.org/linked-data/registry#>
+PREFIX ns2: <https://prez.dev/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <https://schema.org/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
 bhpur:coal
     a skos:Concept ;
-    dcterms:identifier "brhl-prps:coal"^^ns1:identifier ;
+    dcterms:identifier "brhl-prps:coal"^^ns2:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     rdfs:isDefinedBy cs4: ;
     skos:definition "Wells and bores drilled to facilitate the mining of coal under permits governed by the Queensland Mineral Resources Act 1989"@en ;
     skos:inScheme cs4: ;
     skos:prefLabel "Coal"@en ;
     skos:topConceptOf cs4: ;
-    ns1:link "/v/vocab/df:borehole-purpose/brhl-prps:coal" ;
+    ns2:link "/v/vocab/df:borehole-purpose/brhl-prps:coal" ;
+.
+
+dcterms:description
+    rdfs:label "Description"@en ;
+    dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en ;
 .
 
 dcterms:identifier
@@ -27,7 +34,13 @@ dcterms:provenance
     dcterms:description "The statement may include a description of any changes successive custodians made to the resource."@en ;
 .
 
+<https://linked.data.gov.au/def/reg-statuses/stable>
+    skos:prefLabel "stable"@en ;
+    schema:color "#2e8c09" ;
+.
+
 cs4:
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/stable> ;
     skos:prefLabel "Borehole Purpose"@en ;
 .

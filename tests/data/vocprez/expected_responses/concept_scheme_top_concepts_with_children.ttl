@@ -1,11 +1,18 @@
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX ns1: <https://prez.dev/>
+PREFIX ns2: <http://purl.org/linked-data/registry#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <https://schema.org/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 <http://linked.data.gov.au/def2/borehole-purpose>
+    a
+        owl:Ontology ,
+        skos:ConceptScheme ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    ns2:status <https://linked.data.gov.au/def/reg-statuses/stable> ;
     skos:hasTopConcept
         <http://linked.data.gov.au/def/borehole-purpose/coal> ,
         <http://linked.data.gov.au/def/borehole-purpose/geothermal> ,
@@ -19,12 +26,23 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     ns1:childrenCount 8 ;
 .
 
+dcterms:description
+    rdfs:label "Description"@en ;
+    dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en ;
+.
+
 dcterms:identifier
     rdfs:label "Identifier"@en ;
     dcterms:description "Recommended practice is to identify the resource by means of a string conforming to an identification system. Examples include International Standard Book Number (ISBN), Digital Object Identifier (DOI), and Uniform Resource Name (URN).  Persistent identifiers should be provided as HTTP URIs."@en ;
 .
 
+dcterms:provenance
+    rdfs:label "Provenance"@en ;
+    dcterms:description "The statement may include a description of any changes successive custodians made to the resource."@en ;
+.
+
 <http://linked.data.gov.au/def/borehole-purpose/coal>
+    a skos:Concept ;
     dcterms:identifier "brhl-prps:coal"^^ns1:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     skos:prefLabel "Coal"@en ;
@@ -33,6 +51,7 @@ dcterms:identifier
 .
 
 <http://linked.data.gov.au/def/borehole-purpose/geothermal>
+    a skos:Concept ;
     dcterms:identifier "brhl-prps:geothermal"^^ns1:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     skos:prefLabel "Geothermal"@en ;
@@ -41,6 +60,7 @@ dcterms:identifier
 .
 
 <http://linked.data.gov.au/def/borehole-purpose/greenhouse-gas-storage>
+    a skos:Concept ;
     dcterms:identifier "brhl-prps:greenhouse-gas-storage"^^ns1:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     skos:prefLabel "Greenhouse Gas Storage"@en ;
@@ -49,6 +69,7 @@ dcterms:identifier
 .
 
 <http://linked.data.gov.au/def/borehole-purpose/mineral>
+    a skos:Concept ;
     dcterms:identifier "brhl-prps:mineral"^^ns1:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     skos:prefLabel "Mineral"@en ;
@@ -57,6 +78,7 @@ dcterms:identifier
 .
 
 <http://linked.data.gov.au/def/borehole-purpose/non-industry>
+    a skos:Concept ;
     dcterms:identifier "brhl-prps:non-industry"^^ns1:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     skos:prefLabel "Non-Industry"@en ;
@@ -65,6 +87,7 @@ dcterms:identifier
 .
 
 <http://linked.data.gov.au/def/borehole-purpose/oil-shale>
+    a skos:Concept ;
     dcterms:identifier "brhl-prps:oil-shale"^^ns1:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     skos:prefLabel "Oil Shale"@en ;
@@ -73,6 +96,7 @@ dcterms:identifier
 .
 
 <http://linked.data.gov.au/def/borehole-purpose/petroleum>
+    a skos:Concept ;
     dcterms:identifier "brhl-prps:petroleum"^^ns1:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     skos:prefLabel "Petroleum"@en ;
@@ -81,9 +105,15 @@ dcterms:identifier
 .
 
 <http://linked.data.gov.au/def/borehole-purpose/water>
+    a skos:Concept ;
     dcterms:identifier "brhl-prps:water"^^ns1:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     skos:prefLabel "Water"@en ;
     ns1:childrenCount 0 ;
     ns1:link "/v/vocab/def2:borehole-purpose/brhl-prps:water" ;
+.
+
+<https://linked.data.gov.au/def/reg-statuses/stable>
+    skos:prefLabel "stable"@en ;
+    schema:color "#2e8c09" ;
 .

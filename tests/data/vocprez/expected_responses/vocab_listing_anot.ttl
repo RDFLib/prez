@@ -7,6 +7,13 @@ PREFIX schema: <https://schema.org/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
+<http://data.bgs.ac.uk/ref/BeddingSurfaceStructure>
+    a skos:ConceptScheme ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/experimental> ;
+    skos:prefLabel "BeddingSurfaceStructure"@en ;
+    ns2:link "/v/vocab/ref:BeddingSurfaceStructure" ;
+.
+
 <http://linked.data.gov.au/def2/borehole-purpose>
     a skos:ConceptScheme ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
@@ -31,6 +38,16 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
             prov:hadRole <http://linked.data.gov.au/def/vocab-derivation-modes/subsetting-and-extension>
         ] ;
     ns2:link "/v/vocab/def2:borehole-purpose-no-children" ;
+.
+
+dcterms:description
+    rdfs:label "Description"@en ;
+    dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en ;
+.
+
+dcterms:provenance
+    rdfs:label "Provenance"@en ;
+    dcterms:description "The statement may include a description of any changes successive custodians made to the resource."@en ;
 .
 
 dcterms:publisher
@@ -68,11 +85,16 @@ dcterms:publisher
     ns2:link "/v/vocab/def:warox-alteration-types" ;
 .
 
+<https://linked.data.gov.au/def/reg-statuses/experimental>
+    skos:prefLabel "experimental"@en ;
+    schema:color "#eae72c" ;
+.
+
 <https://linked.data.gov.au/def/reg-statuses/stable>
     skos:prefLabel "stable"@en ;
     schema:color "#2e8c09" ;
 .
 
 skos:ConceptScheme
-    ns2:count 6 ;
+    ns2:count 7 ;
 .

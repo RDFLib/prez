@@ -36,6 +36,14 @@ It expects "high quality" data to work well: Prez itself won't patch up bad or m
 
 Prez accesses data stored in an RDF database - a 'triplestore' - and uses the SPARQL Protocol to do so. Any SPARQL Protocol-compliant DB may be used.
 
+## Redirect Service
+
+As a Linked Data server, Prez provides a redirect service at `/identifier/redirect` that accepts a query parameter `iri`, looks up the `iri` in the database for a `foaf:homepage` predicate with a value, and if it exists, return a redirect response to the value.
+
+This functionality is useful for institutions who issue their own persistent identifiers under a domain name that they control. The mapping from the persistent identifier to the target web resource is stored in the backend SPARQL store.
+
+This is an alternative solution to persistent identifier services such as the [w3id.org](https://w3id.org/). In some cases, it can be used together with such persistent identifier services to avoid the need to provide the redirect mapping in webserver config (NGINX, Apache HTTP, etc.) and instead, define the config as RDF data.
+
 ## Development
 
 This section is for developing Prez locally. See the [Running](#running) options below for running Prez in production.
@@ -84,20 +92,20 @@ via python-dotenv, or directly in the environment in which Prez is run. The envi
 instantiate a Pydantic `Settings` object which is used throughout Prez to configure its behaviour. To see how prez
 interprets/uses these environment variables see the `prez/config.py` file.
 
-| Environment Variable      | Description                                                                                                                                                                                               |
-|---------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| SPARQL_ENDPOINT           | Read-only SPARQL endpoint for SpacePrez                                                                                                                                                                   |
-| SPARQL_USERNAME           | A username for Basic Auth against the SPARQL endpoint, if required by the SPARQL endpoint.                                                                                                                |
-| SPARQL_PASSWORD           | A password for Basic Auth against the SPARQL endpoint, if required by the SPARQL endpoint.                                                                                                                |
-| PROTOCOL                  | The protocol used to deliver Prez. Usually 'http'.                                                                                                                                                        |
-| HOST                      | The host on which to server prez, typically 'localhost'.                                                                                                                                                  |
-| PORT                      | The port Prez is made accessible on. Default is 8000, could be 80 or anything else that your system has permission to use                                                                                 |
-| SYSTEM_URI                | Documentation property. An IRI for the Prez system as a whole. This value appears in the landing page RDF delivered by Prez ('/')                                                                         |
-| LOG_LEVEL                 | One of CRITICAL, ERROR, WARNING, INFO, DEBUG. Defaults to INFO.                                                                                                                                           |
-| LOG_OUTPUT                | "file", "stdout", or "both" ("file" and "stdout"). Defaults to stdout.                                                                                                                                    |
-| PREZ_TITLE                | The title to use for Prez instance                                                                                                                                                                        |
-| PREZ_DESC                 | A description to use for the Prez instance                                                                                                                                                                |
-| DISABLE_PREFIX_GENERATION | Default value is `false`. Very large datasets may want to disable this setting and provide a predefined set of prefixes for namespaces as described in [Link Generation](README-Dev.md#link-generation).  |
+| Environment Variable      | Description                                                                                                                                                                                              |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SPARQL_ENDPOINT           | Read-only SPARQL endpoint for SpacePrez                                                                                                                                                                  |
+| SPARQL_USERNAME           | A username for Basic Auth against the SPARQL endpoint, if required by the SPARQL endpoint.                                                                                                               |
+| SPARQL_PASSWORD           | A password for Basic Auth against the SPARQL endpoint, if required by the SPARQL endpoint.                                                                                                               |
+| PROTOCOL                  | The protocol used to deliver Prez. Usually 'http'.                                                                                                                                                       |
+| HOST                      | The host on which to server prez, typically 'localhost'.                                                                                                                                                 |
+| PORT                      | The port Prez is made accessible on. Default is 8000, could be 80 or anything else that your system has permission to use                                                                                |
+| SYSTEM_URI                | Documentation property. An IRI for the Prez system as a whole. This value appears in the landing page RDF delivered by Prez ('/')                                                                        |
+| LOG_LEVEL                 | One of CRITICAL, ERROR, WARNING, INFO, DEBUG. Defaults to INFO.                                                                                                                                          |
+| LOG_OUTPUT                | "file", "stdout", or "both" ("file" and "stdout"). Defaults to stdout.                                                                                                                                   |
+| PREZ_TITLE                | The title to use for Prez instance                                                                                                                                                                       |
+| PREZ_DESC                 | A description to use for the Prez instance                                                                                                                                                               |
+| DISABLE_PREFIX_GENERATION | Default value is `false`. Very large datasets may want to disable this setting and provide a predefined set of prefixes for namespaces as described in [Link Generation](README-Dev.md#link-generation). |
 
 ### Running in a Container
 

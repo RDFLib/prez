@@ -29,7 +29,7 @@ from prez.queries.vocprez import (
     get_concept_narrowers_query,
 )
 from prez.response import StreamingTurtleAnnotatedResponse
-from prez.routers.curie import get_iri_route
+from prez.routers.identifier import get_iri_route
 
 router = APIRouter(tags=["VocPrez"])
 

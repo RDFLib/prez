@@ -72,18 +72,7 @@ async def return_rdf(graph, mediatype, profile_headers):
     return StreamingResponse(content=obj, media_type=mediatype, headers=profile_headers)
 
 
-async def return_annotated_rdf(
-    graph: Graph,
-    profile_headers,
-    profile,
-    predicates_for_link_addition: dict,
-    mediatype="text/anot+turtle",
-):
-    from prez.cache import tbox_cache
-
-    non_anot_mediatype = mediatype.replace("anot+", "")
-
-    cache = tbox_cache
+async def get_annotations_graph(profile, graph, cache):
     profile_annotation_props = get_annotation_predicates(profile)
     queries_for_uncached, annotations_graph = await get_annotation_properties(
         graph, **profile_annotation_props
@@ -98,13 +87,34 @@ async def return_annotated_rdf(
         annotations_graph += anots_from_triplestore
         cache += anots_from_triplestore
 
+    return annotations_graph
+
+
+async def return_annotated_rdf(
+    graph: Graph,
+    profile_headers,
+    profile,
+    predicates_for_link_addition: dict,
+    mediatype="text/anot+turtle",
+):
+    from prez.cache import tbox_cache
+
+    non_anot_mediatype = mediatype.replace("anot+", "")
+
+    cache = tbox_cache
+
+    previous_triples_count = len(graph)
+
+    # Expand the graph with annotations specified in the profile until no new statements are added.
+    while True:
+        graph += await get_annotations_graph(profile, graph, cache)
+        if len(graph) == previous_triples_count:
+            break
+        previous_triples_count = len(graph)
+
     generate_prez_links(graph, predicates_for_link_addition)
 
-    obj = io.BytesIO(
-        (graph + annotations_graph).serialize(
-            format=non_anot_mediatype, encoding="utf-8"
-        )
-    )
+    obj = io.BytesIO(graph.serialize(format=non_anot_mediatype, encoding="utf-8"))
     return StreamingResponse(
         content=obj, media_type=non_anot_mediatype, headers=profile_headers
     )

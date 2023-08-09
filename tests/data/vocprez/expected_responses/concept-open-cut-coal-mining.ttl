@@ -1,20 +1,27 @@
 PREFIX bhpur: <http://linked.data.gov.au/def/borehole-purpose/>
 PREFIX cs4: <http://linked.data.gov.au/def2/borehole-purpose>
 PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX ns1: <https://prez.dev/>
+PREFIX ns1: <http://purl.org/linked-data/registry#>
+PREFIX ns2: <https://prez.dev/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <https://schema.org/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
 bhpur:open-cut-coal-mining
     a skos:Concept ;
-    dcterms:identifier "brhl-prps:open-cut-coal-mining"^^ns1:identifier ;
+    dcterms:identifier "brhl-prps:open-cut-coal-mining"^^ns2:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     rdfs:isDefinedBy cs4: ;
     skos:broader bhpur:coal ;
     skos:definition "Wells drilled for the purpose of assessing coal resources for an open cut coal mine."@en ;
     skos:inScheme cs4: ;
     skos:prefLabel "Open-Cut Coal Mining"@en ;
-    ns1:link "/v/vocab/df:borehole-purpose/brhl-prps:open-cut-coal-mining" ;
+    ns2:link "/v/vocab/df:borehole-purpose/brhl-prps:open-cut-coal-mining" ;
+.
+
+dcterms:description
+    rdfs:label "Description"@en ;
+    dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en ;
 .
 
 dcterms:identifier
@@ -32,7 +39,13 @@ bhpur:coal
     skos:prefLabel "Coal"@en ;
 .
 
+<https://linked.data.gov.au/def/reg-statuses/stable>
+    skos:prefLabel "stable"@en ;
+    schema:color "#2e8c09" ;
+.
+
 cs4:
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/stable> ;
     skos:prefLabel "Borehole Purpose"@en ;
 .
