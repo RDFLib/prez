@@ -47,7 +47,6 @@ async def profiles(
         prof_and_mt_info.mediatype,
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
-        predicates_for_link_addition,
     )
 
 
