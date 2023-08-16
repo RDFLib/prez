@@ -26,6 +26,7 @@ This catalogue extends on standard Agent information to include properties usefu
                 <http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/owner> ;
             prov:agent <https://linked.data.gov.au/org/idn>
         ] ;
+        ns1:link "/c/catalogs/dtst:agents" ;
 .
 
 <https://linked.data.gov.au/org/idn>
@@ -39,5 +40,6 @@ Special care notice:
 Aboriginal and Torres Strait Islander people, researchers and other users should be aware that material in this dataset may contain material that is considered offensive. The data has been retained in its original format because it represents an evidential record of language, beliefs or other cultural situations at a point in time.""" ;
     dcterms:issued "2011-07-22"^^xsd:date ;
     dcterms:title "Annual Aboriginal Census,1921-1944 - South Australia" ;
-    ns1:link "/c/catalogs/dtst:agents/dtsts:au.edu.anu.ada.ddi.20002-sa" ;
+    ns1:link "/c/catalogs/dtst:agents/dtsts:au.edu.anu.ada.ddi.20002-sa" ,
+    "/c/catalogs/dtst:democat/dtsts:au.edu.anu.ada.ddi.20002-sa" ;
 .

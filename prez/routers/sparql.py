@@ -20,8 +20,8 @@ async def sparql_endpoint(request: Request):
         0
     ]  # can't default the MT where not provided as it could be
     # graph (CONSTRUCT like queries) or tabular (SELECT queries)
-    # Intercept "+anot" mediatypes
 
+    # Intercept "+anot" mediatypes
     if "anot+" in request_mediatype:
         prof_and_mt_info = ProfilesMediatypesInfo(
             request=request, classes=frozenset([PREZ.SPARQLQuery])

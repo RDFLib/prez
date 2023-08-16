@@ -6,9 +6,9 @@ from typing import List
 import httpx
 from httpx import Client, AsyncClient
 from httpx import Response as httpxResponse
-from rdflib import Namespace, Graph
+from rdflib import Namespace, Graph, URIRef
 from starlette.requests import Request
-
+from async_lru import alru_cache
 from prez.config import settings
 
 PREZ = Namespace("https://prez.dev/")
@@ -88,6 +88,7 @@ async def sparql(request: Request):
     return await async_client.send(rp_req, stream=True)
 
 
+# @alru_cache(maxsize=1000)
 async def send_query(query: str, mediatype="text/turtle"):
     """Sends a SPARQL query asynchronously.
     Args: query: str: A SPARQL query to be sent asynchronously.
@@ -102,7 +103,7 @@ async def send_query(query: str, mediatype="text/turtle"):
     return await async_client.send(query_rq, stream=True)
 
 
-async def rdf_queries_to_graph(query: str) -> Graph:
+async def rdf_query_to_graph(query: str) -> Graph:
     """
     Sends a SPARQL query asynchronously and parses the response into an RDFLib Graph.
     Args: query: str: A SPARQL query to be sent asynchronously.
@@ -115,7 +116,7 @@ async def rdf_queries_to_graph(query: str) -> Graph:
 
 
 async def send_queries(
-    rdf_queries: List[str], tabular_queries: List[str] = []
+    rdf_queries: List[str], tabular_queries: List[Tuple[URIRef, str]] = None
 ) -> Tuple[Graph, List[Any]]:
     """
     Sends multiple SPARQL queries asynchronously and parses the responses into an RDFLib Graph for RDF queries
@@ -128,9 +129,15 @@ async def send_queries(
     Returns:
         Tuple[rdflib.Graph, List[Any]]: An RDFLib Graph object for RDF queries and a list of tables for table queries.
     """
+    if tabular_queries is None:
+        tabular_queries = []
     results = await asyncio.gather(
-        *[rdf_queries_to_graph(query) for query in rdf_queries if query],
-        *[tabular_queries_to_table(query) for query in tabular_queries if query]
+        *[rdf_query_to_graph(query) for query in rdf_queries if query],
+        *[
+            tabular_query_to_table(query, context)
+            for context, query in tabular_queries
+            if query
+        ]
     )
     g = Graph()
     tabular_results = []
@@ -142,10 +149,12 @@ async def send_queries(
     return g, tabular_results
 
 
-async def tabular_queries_to_table(query: str):
+async def tabular_query_to_table(query: str, context: URIRef = None):
     """
     Sends a SPARQL query asynchronously and parses the response into a table format.
+    The optional context parameter allows an identifier to be supplied with the query, such that multiple results can be
+    distinguished from each other.
     """
     response = await send_query(query, "application/sparql-results+json")
     await response.aread()
-    return response.json()["results"]["bindings"]
+    return context, response.json()["results"]["bindings"]

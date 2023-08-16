@@ -36,7 +36,7 @@ async def profiles(
             classes=frozenset(profiles_members.selected_class),
             prof_and_mt_info=prof_and_mt_info,
         )
-    list_query, predicates_for_link_addition = generate_listing_construct(
+    list_query = generate_listing_construct(
         profiles_members, prof_and_mt_info.profile, page, per_page
     )
     count_query = generate_listing_count_construct(profiles_members)

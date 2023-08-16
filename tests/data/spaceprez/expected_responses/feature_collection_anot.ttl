@@ -5,6 +5,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <http://example.com/datasets/sandgate/catchments> a ns1:FeatureCollection ;
+    ns3:link "/s/datasets/exds:sandgate/collections/sndgt:catchments" ;
     ns2:description "Hydrological catchments that are 'contracted', that is, guarenteed, to appear on multiple Geofabric surface hydrology data products"@en ;
     ns2:identifier "catchments"^^xsd:token ;
     ns2:title "Geofabric Contracted Catchments"@en ;

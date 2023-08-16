@@ -1,6 +1,7 @@
 PREFIX dcat: <http://www.w3.org/ns/dcat#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX ns1: <https://example.com/>
+PREFIX ns2: <https://prez.dev/>
 PREFIX prov: <http://www.w3.org/ns/prov#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
@@ -10,6 +11,8 @@ dcterms:identifier
 .
 
 <https://www.atsida.edu.au/archive/datasets/au.edu.anu.ada.ddi.20002-sa>
+    ns2:link "/c/catalogs/dtst:agents/dtsts:au.edu.anu.ada.ddi.20002-sa",
+    "/c/catalogs/dtst:democat/dtsts:au.edu.anu.ada.ddi.20002-sa" ;
     a dcat:Resource ;
     dcterms:accessRights <https://linked.data.gov.au/def/data-access-rights/metadata-only> ;
     dcterms:description """This study contains time series of data of the Annual Aboriginal Census for Australia, Australian Capital Territory, New South Wales, Northern Territory, Queensland, South Australia, Tasmania, Victoria and Western Australia from 1921 to 1944.

@@ -20,7 +20,7 @@
     ns1:link "/s/datasets/ldgovau:gnaf" .
 
 <https://test/dataset> a dcat:Dataset ;
-    ns1:link "/s/datasets/ns1:dataset" .
+    ns1:link "/s/datasets/ns2:dataset" .
 
 dcat:Dataset rdfs:label "Dataset"@en ;
     ns1:count 4 .

@@ -7,15 +7,9 @@ from typing import List, Optional, Tuple, Union, Dict, FrozenSet
 from rdflib import Graph, URIRef, RDFS, DCTERMS, Namespace, Literal
 
 from prez.cache import tbox_cache, profiles_graph_cache
-from prez.models import (
-    CatalogItem,
-    CatalogMembers,
-    SpatialItem,
-    SpatialMembers,
-    VocabItem,
-    VocabMembers,
-    SearchMethod,
-)
+from prez.models import SearchMethod
+from prez.models.listing import ListingModel
+from prez.models.object_item import ObjectItem
 from prez.models.profiles_item import ProfileItem
 from prez.models.profiles_listings import ProfilesMembers
 from prez.services.curie_functions import get_uri_for_curie_id
@@ -38,9 +32,7 @@ def generate_listing_construct(
     """
     profile_item = ProfileItem(uri=str(profile))
 
-    if isinstance(
-        focus_item, (ProfilesMembers, CatalogMembers, SpatialMembers, VocabMembers)
-    ):  # listings can include
+    if isinstance(focus_item, (ProfilesMembers, ListingModel)):  # listings can include
         # "context" in the same way objects can, using include/exclude predicates etc.
         (
             include_predicates,
@@ -75,10 +67,11 @@ def generate_listing_construct(
             f"Requested listing of objects related to {focus_item.uri}, however the profile {profile} does not"
             f" define any listing relations for this for this class, for example focus to child."
         )
-        return None, {}
+        return None
     uri_or_tl_item = (
         "?top_level_item" if focus_item.top_level_listing else f"<{focus_item.uri}>"
     )  # set the focus
+
     # item to a variable if it's a top level listing (this will utilise "class based" listing, where objects are listed
     # based on them being an instance of a class), else use the URI of the "parent" off of which members will be listed.
     # TODO collapse this to an inline expression below; include change in both object and listing queries
@@ -133,19 +126,7 @@ def generate_listing_construct(
     ).strip()
 
     log.debug(f"Listing construct query for {focus_item} is:\n{query}")
-    predicates_for_link_addition = {
-        "link_constructor": focus_item.link_constructor,
-        "parent_to_focus": parent_to_focus,
-        "focus_to_parent": focus_to_parent,
-        "child_to_focus": child_to_focus,
-        "focus_to_child": focus_to_child,
-        "top_level_gen_class": focus_item.base_class
-        if focus_item.top_level_listing
-        else None,
-        # if this is a top level class, include it's base class here so we can create
-        # links to instances of the top level class,
-    }
-    return query, predicates_for_link_addition
+    return query
 
 
 @lru_cache(maxsize=128)
@@ -507,16 +488,7 @@ def get_annotations_from_tbox_cache(
 
 
 # hit the count cache first, if it's not there, hit the SPARQL endpoint
-def generate_listing_count_construct(
-    item: Union[
-        SpatialItem,
-        SpatialMembers,
-        VocabMembers,
-        VocabItem,
-        CatalogItem,
-        CatalogMembers,
-    ]
-):
+def generate_listing_count_construct(item: ListingModel):
     """
     Generates a SPARQL construct query to count either:
     1. the members of a collection, if a URI is given, or;
@@ -902,6 +874,16 @@ ORDER BY ?endpoint DESC(?distance)
 def generate_relationship_query(
     uri: URIRef, endpoint_to_relations: Dict[URIRef, List[Tuple[URIRef, Literal]]]
 ):
+    """
+    Generates a SPARQL query of the form:
+    SELECT * {{ SELECT ?endpoint ?parent_1 ?parent_2
+        WHERE {
+    BIND("/s/datasets/$parent_1/collections/$object" as ?endpoint)
+    ?parent_1 <http://www.w3.org/2000/01/rdf-schema#member> <https://test/feature-collection> .
+    }}}
+    """
+    if not endpoint_to_relations:
+        return None
     subqueries = []
     for endpoint, relations in endpoint_to_relations.items():
         subquery = f"""{{ SELECT ?endpoint {" ".join(["?parent_" + str(i+1) for i, _ in enumerate(relations)])}

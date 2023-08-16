@@ -4,9 +4,12 @@ PREFIX geo: <http://www.opengis.net/ont/geosparql#>
 PREFIX ont: <https://prez.dev/ont/>
 PREFIX prez: <https://prez.dev/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 endpoint:dataset-listing a ont:Endpoint ;
     ont:deliversClasses prez:DatasetList ;
+    ont:baseClass dcat:Dataset ;
+    ont:isTopLevelEndpoint "true"^^xsd:boolean ;
     ont:endpointTemplate "/s/datasets" ;
 .
 
@@ -19,6 +22,7 @@ endpoint:dataset a ont:Endpoint ;
 
 endpoint:feature-collection-listing a ont:Endpoint ;
     ont:parentEndpoint endpoint:dataset ;
+    ont:baseClass geo:FeatureCollection ;
     ont:deliversClasses prez:FeatureCollectionList ;
     ont:endpointTemplate "/s/datasets/$parent_1/collections" ;
 .
@@ -32,6 +36,7 @@ endpoint:feature-collection a ont:Endpoint ;
 
 endpoint:feature-listing a ont:Endpoint ;
     ont:parentEndpoint endpoint:feature-collection ;
+    ont:baseClass geo:Feature ;
     ont:deliversClasses prez:FeatureList ;
     ont:endpointTemplate "/s/datasets/$parent_2/collections/$parent_1/items" ;
 .

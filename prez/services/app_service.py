@@ -14,7 +14,7 @@ from prez.cache import (
 )
 from prez.config import settings
 from prez.reference_data.prez_ns import PREZ, ALTREXT
-from prez.sparql.methods import rdf_queries_to_graph, sparql_query_non_async
+from prez.sparql.methods import rdf_query_to_graph, sparql_query_non_async
 from prez.sparql.objects_listings import startup_count_objects
 from prez.services.curie_functions import get_curie_id_for_uri
 
@@ -52,7 +52,7 @@ async def healthcheck_sparql_endpoints():
 
 async def count_objects():
     query = startup_count_objects()
-    graph = await rdf_queries_to_graph(query)
+    graph = await rdf_query_to_graph(query)
     if len(graph) > 1:
         counts_graph.__iadd__(graph)
 

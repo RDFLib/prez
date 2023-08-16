@@ -98,3 +98,7 @@ dcterms:publisher
 skos:ConceptScheme
     ns2:count 7 ;
 .
+
+<https://linked.data.gov.au/def/reg-statuses/experimental> ns2:link "/v/vocab/def:reg-statuses/rg-sttss:experimental" .
+
+<https://linked.data.gov.au/def/reg-statuses/stable> ns2:link "/v/vocab/def:reg-statuses/rg-sttss:stable" .
