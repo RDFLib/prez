@@ -888,16 +888,16 @@ def generate_relationship_query(
     for endpoint, relations in endpoint_to_relations.items():
         subquery = f"""{{ SELECT ?endpoint {" ".join(["?parent_" + str(i+1) for i, _ in enumerate(relations)])}
         WHERE {{\n BIND("{endpoint}" as ?endpoint)\n"""
-        previous_uri = f"<{uri}>"
+        uri_str = f"<{uri}>"
         for i, relation in enumerate(relations):
             predicate, direction = relation
             parent = "?parent_" + str(i + 1)
             if predicate:
                 if direction == Literal("parent_to_focus"):
-                    subquery += f"{parent} <{predicate}> {previous_uri} .\n"
+                    subquery += f"{parent} <{predicate}> {uri_str} .\n"
                 else:  # assuming the direction is "focus_to_parent"
-                    subquery += f"{previous_uri} <{predicate}> {parent} .\n"
-            previous_uri = parent
+                    subquery += f"{uri_str} <{predicate}> {parent} .\n"
+            uri_str = parent
         subquery += "}}"
         subqueries.append(subquery)
 

@@ -260,6 +260,17 @@ def generate_system_links_object(
                 Literal(endpoint),
             )
         )
+    # TODO include the actual relationships between the object and the parent objects in the graph
+    for ep_result in relationship_results:
+        for k, v in ep_result.items():
+            if k != "endpoint":
+                internal_links_graph.add(
+                    (
+                        URIRef(object_uri),
+                        PREZ["endpointComponentURI"],
+                        URIRef(v["value"]),
+                    )
+                )
 
 
 # def generate_system_links_non_object(
