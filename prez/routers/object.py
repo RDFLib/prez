@@ -122,7 +122,12 @@ async def object_function(
 
 
 async def item_function(request: Request, object_curie: str):
-    object_item = ObjectItem(
+    # TODO pull object item functions out to here and pass results in as params
+
+    # curie -> uri
+    # get_classes func
+
+    object_item = ObjectItem(  # object item now does not need request
         object_curie=object_curie,
         **request.path_params,
         **request.query_params,

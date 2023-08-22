@@ -3,7 +3,7 @@ from functools import lru_cache
 from itertools import chain
 from textwrap import dedent
 from typing import List, Optional, Tuple, Union, Dict, FrozenSet
-
+from prez.config import settings
 from rdflib import Graph, URIRef, RDFS, DCTERMS, Namespace, Literal
 
 from prez.cache import tbox_cache, profiles_graph_cache
@@ -112,11 +112,15 @@ def generate_listing_construct(
                 WHERE {{
                     {f'{uri_or_tl_item} a <{focus_item.base_class}> .{chr(10)}' if focus_item.top_level_listing else generate_focus_to_x_predicates(uri_or_tl_item, focus_to_child, focus_to_parent)}\
 
+                {f'''
                     OPTIONAL {{
-                        {f'{uri_or_tl_item} <{profile_item.label}> ?label .' if focus_item.top_level_listing else ""}\
+                        {f'{uri_or_tl_item} <{profile_item.label}> ?label .' if focus_item.top_level_listing else ""}
                     }}
+                ''' if settings.order_lists_by_label else ""}
                 }}
+                {f'''
                 {'ORDER BY ASC(?label)' if profile_item.label else "ORDER BY ?top_level_item"}
+                ''' if settings.order_lists_by_label else ""}
                 {f"LIMIT {per_page}{chr(10)}"
                  f"OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
             }}

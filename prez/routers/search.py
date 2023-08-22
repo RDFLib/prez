@@ -52,4 +52,4 @@ def determine_search_method(request):
 
 def get_default_search_methods():
     # TODO return from profiles
-    return "jenaFTName"
+    return "exactMatch"

@@ -52,6 +52,7 @@ class Settings(BaseSettings):
     system_uri: Optional[str]
     top_level_classes: Optional[dict]
     collection_classes: Optional[dict]
+    order_lists_by_label: bool = True
     base_classes: Optional[dict]
     prez_flavours: Optional[list] = ["SpacePrez", "VocPrez", "CatPrez", "ProfilesPrez"]
     log_level = "INFO"

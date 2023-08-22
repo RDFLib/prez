@@ -30,11 +30,11 @@ def get_classes(uris: List[URIRef], endpoint: URIRef = None) -> frozenset[URIRef
         classes = frozenset(object_classes_delivered_by_endpoint)
     else:
         classes = frozenset([(c["uri"]["value"], c["class"]["value"]) for c in r[1]])
-    if not classes:
-        #  does the URI exist?
-        r = sparql_ask_non_async(f"ASK {{<{uris}> ?p ?o}}")
-        if not r[1]:  # uri not found
-            raise URINotFoundException(uris)
-        else:  # we found the URI but it has no classes
-            raise ClassNotFoundException(uris)
+    # if not classes:
+    #     #  does the URI exist?
+    #     r = sparql_ask_non_async(f"ASK {{<{uris}> ?p ?o}}")
+    #     if not r[1]:  # uri not found
+    #         raise URINotFoundException(uris)
+    #     else:  # we found the URI but it has no classes
+    #         raise ClassNotFoundException(uris)
     return classes

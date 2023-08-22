@@ -116,6 +116,7 @@ async def return_annotated_rdf(
         previous_triples_count = len(graph)
 
     obj = io.BytesIO(graph.serialize(format=non_anot_mediatype, encoding="utf-8"))
+    # TODO move responses to router and return graph here
     return StreamingResponse(
         content=obj, media_type=non_anot_mediatype, headers=profile_headers
     )
