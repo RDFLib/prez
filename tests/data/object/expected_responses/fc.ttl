@@ -8,3 +8,5 @@
     ns1:link "/s/datasets/ns2:dataset/collections/ns2:feature-collection" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/alteration_facies_contact> dcterms:provenance "this vocabulary"@en .
+
+<https://test/feature-collection> ns1:endpointComponentURI <https://test/dataset> .

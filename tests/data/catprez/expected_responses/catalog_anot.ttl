@@ -43,3 +43,13 @@ Aboriginal and Torres Strait Islander people, researchers and other users should
     ns1:link "/c/catalogs/dtst:agents/dtsts:au.edu.anu.ada.ddi.20002-sa" ,
     "/c/catalogs/dtst:democat/dtsts:au.edu.anu.ada.ddi.20002-sa" ;
 .
+
+<https://www.atsida.edu.au/archive/datasets/au.edu.anu.ada.ddi.20002-sa> ns1:endpointComponentURI <https://w3id.org/idn/dataset/agents>,
+        <https://w3id.org/idn/dataset/democat> .
+
+<https://w3id.org/idn/dataset/democat> dcterms:description """The Indigenous Data Network's catalogue of datasets. This catalogue contains records of datasets in Australia, most of which have some relation to indigenous Australia.
+
+The purpose of this catalogue is not to act as a master catalogue of indigenous data in Australia to demonstrate improved metadata models and rating systems for data and metadata in order to improve indigenous data governance.
+
+The content of this catalogue conforms to the Indigenous Data Network's Catalogue Profile which is a profile of the DCAT, SKOS and PROV data models."""@en ;
+    dcterms:title "IDN Datasets Catalogue" .

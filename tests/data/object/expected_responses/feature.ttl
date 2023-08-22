@@ -5,7 +5,9 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
 <https://linked.data.gov.au/datasets/geofabric/hydroid/102208962> a geo:Feature,
-        <https://linked.data.gov.au/def/geofabric/ContractedCatchment> ;
+    <https://linked.data.gov.au/def/geofabric/ContractedCatchment> ;
+    ns1:endpointComponentURI <https://linked.data.gov.au/datasets/geofabric>,
+        <https://linked.data.gov.au/datasets/geofabric/fc/catchments> ;
     dcterms:identifier "102208962"^^xsd:token ;
     dcterms:title "Contracted Catchment 102208962" ;
     dcterms:type <https://linked.data.gov.au/def/geofabric/NonContractedArea> ;
@@ -14,3 +16,7 @@
     ns1:link "/s/datasets/ldgovau:geofabric/collections/fc:catchments/items/hydrd:102208962" .
 
 dcterms:identifier rdfs:label "Identifier"@en .
+
+<https://linked.data.gov.au/datasets/geofabric> dcterms:description "The Australian national dataset of important hydrological features such as rivers, water bodies, aquifers and monitoring points"@en .
+
+<https://linked.data.gov.au/datasets/geofabric/fc/catchments> dcterms:description "Contracted Catchments hydrological catchments designed to build stable reporting regions"@en .

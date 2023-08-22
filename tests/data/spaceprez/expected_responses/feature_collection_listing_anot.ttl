@@ -22,3 +22,17 @@
 
 <http://example.com/datasets/sandgate/roads> dcterms:description "Sandgate main roads"@en ;
     ns1:link "/s/datasets/exds:sandgate/collections/sndgt:roads" .
+
+<http://example.com/datasets/sandgate/catchments> dcterms:title "Geofabric Contracted Catchments"@en ;
+    ns1:endpointComponentURI <http://example.com/datasets/sandgate> .
+
+<http://example.com/datasets/sandgate/facilities> dcterms:title "Sandgate are demo Facilities"@en ;
+    ns1:endpointComponentURI <http://example.com/datasets/sandgate> .
+
+<http://example.com/datasets/sandgate/floods> dcterms:title "Sandgate flooded areas"@en ;
+    ns1:endpointComponentURI <http://example.com/datasets/sandgate> .
+
+<http://example.com/datasets/sandgate/roads> dcterms:title "Sandgate main roads"@en ;
+    ns1:endpointComponentURI <http://example.com/datasets/sandgate> .
+
+<http://example.com/datasets/sandgate> dcterms:title "Sandgate example dataset"@en .

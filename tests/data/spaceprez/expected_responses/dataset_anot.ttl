@@ -36,3 +36,11 @@ dcterms:identifier rdfs:label "Identifier"@en .
     ns1:link "/s/datasets/exds:sandgate/collections/sndgt:roads" .
 
 dcat:Dataset rdfs:label "Dataset"@en .
+
+<http://example.com/datasets/sandgate/catchments> ns1:endpointComponentURI <http://example.com/datasets/sandgate> .
+
+<http://example.com/datasets/sandgate/facilities> ns1:endpointComponentURI <http://example.com/datasets/sandgate> .
+
+<http://example.com/datasets/sandgate/floods> ns1:endpointComponentURI <http://example.com/datasets/sandgate> .
+
+<http://example.com/datasets/sandgate/roads> ns1:endpointComponentURI <http://example.com/datasets/sandgate> .

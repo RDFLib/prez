@@ -102,3 +102,7 @@ skos:ConceptScheme
 <https://linked.data.gov.au/def/reg-statuses/experimental> ns2:link "/v/vocab/def:reg-statuses/rg-sttss:experimental" .
 
 <https://linked.data.gov.au/def/reg-statuses/stable> ns2:link "/v/vocab/def:reg-statuses/rg-sttss:stable" .
+
+<https://linked.data.gov.au/def/reg-statuses/experimental> ns2:endpointComponentURI <https://linked.data.gov.au/def/reg-statuses> .
+
+<https://linked.data.gov.au/def/reg-statuses/stable> ns2:endpointComponentURI <https://linked.data.gov.au/def/reg-statuses> .

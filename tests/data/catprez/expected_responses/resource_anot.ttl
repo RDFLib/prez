@@ -11,6 +11,8 @@ dcterms:identifier
 .
 
 <https://www.atsida.edu.au/archive/datasets/au.edu.anu.ada.ddi.20002-sa>
+    ns2:endpointComponentURI <https://w3id.org/idn/dataset/agents>,
+    <https://w3id.org/idn/dataset/democat> ;
     ns2:link "/c/catalogs/dtst:agents/dtsts:au.edu.anu.ada.ddi.20002-sa",
     "/c/catalogs/dtst:democat/dtsts:au.edu.anu.ada.ddi.20002-sa" ;
     a dcat:Resource ;
@@ -48,3 +50,15 @@ Aboriginal and Torres Strait Islander people, researchers and other users should
     ns1:home "https://www.atsida.edu.au/" ;
     ns1:notes "The Annual Aboriginal Census is considered as a significant official source of Aboriginal population statistics. It was conducted annually in June from 1921 to 1944, exempting the war years between 1941 and 1944 in each State and Territory. The 1944 census was incomplete with New South Wales not taking part at all. Enumeration of Aboriginal populations was poor and difficulties in classification occurred. The Census was a collaboration of the Commonwealth Bureau of Census and Statistics who initiated the study, State and Territory Statisticians, the Protector of Aborigines, and local police officers who conducted the enumeration. The Annual Aboriginal Census is also referred to as the Annual Census of Aborigines and Police Census." ;
 .
+
+<https://w3id.org/idn/dataset/agents> dcterms:description """The Indigenous Data Network's catalogue of Agents. This catalogue contains instances of Agents - People and Organisations - related to the holding of indigenous data. This includes non-indigenous Agents
+
+This catalogue extends on standard Agent information to include properties useful to understand the indigeneity of Agents: whether they are or not, or how much they are, indigenous"""@en ;
+    dcterms:title "IDN Agents Catalogue" .
+
+<https://w3id.org/idn/dataset/democat> dcterms:description """The Indigenous Data Network's catalogue of datasets. This catalogue contains records of datasets in Australia, most of which have some relation to indigenous Australia.
+
+The purpose of this catalogue is not to act as a master catalogue of indigenous data in Australia to demonstrate improved metadata models and rating systems for data and metadata in order to improve indigenous data governance.
+
+The content of this catalogue conforms to the Indigenous Data Network's Catalogue Profile which is a profile of the DCAT, SKOS and PROV data models."""@en ;
+    dcterms:title "IDN Datasets Catalogue" .
