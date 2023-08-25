@@ -11,6 +11,7 @@ class ListingModel(BaseModel):
     uri: Optional[
         URIRef
     ] = None  # this is the URI of the focus object (if listing by membership)
+    classes: Optional[FrozenSet[URIRef]] = None
     endpoint_uri: Optional[URIRef] = None
     selected_class: Optional[FrozenSet[URIRef]] = None
     profile: Optional[URIRef] = None

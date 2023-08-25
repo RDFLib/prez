@@ -846,7 +846,7 @@ def get_endpoint_template_queries(classes: FrozenSet[URIRef]):
 
 SELECT ?classes ?parent_endpoint ?endpoint ?relation ?direction ?endpointTemplate
 (count(?intermediate) as ?distance) WHERE {{
-      VALUES ?classes {{ {" ".join('<' + klass + '>' for klass in classes)} }}
+      VALUES ?classes {{ {" ".join('<' + str(klass) + '>' for klass in classes)} }}
   {{
     ?endpoint a ont:Endpoint ;
     ont:endpointTemplate ?endpointTemplate ;

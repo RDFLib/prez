@@ -115,6 +115,7 @@ async def return_annotated_rdf(
             break
         previous_triples_count = len(graph)
 
+    graph.bind("prez", "https://prez.dev/")
     obj = io.BytesIO(graph.serialize(format=non_anot_mediatype, encoding="utf-8"))
     # TODO move responses to router and return graph here
     return StreamingResponse(

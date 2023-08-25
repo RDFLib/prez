@@ -4,7 +4,50 @@ PREFIX exds: <http://example.com/datasets/>
 PREFIX dcat: <http://www.w3.org/ns/dcat#>
 PREFIX sdoprof: <https://schema.org>
 
-prez: vann:preferredNamespacePrefix "prez" .
-exds: vann:preferredNamespacePrefix "exds" .
-dcat: vann:preferredNamespacePrefix "dcat" .
-sdoprof: vann:preferredNamespacePrefix "sdoprof" .
+[ vann:preferredNamespacePrefix "prez" ;
+ vann:preferredNamespaceUri <https://prez.dev/>
+] .
+
+[ vann:preferredNamespacePrefix "altr-ext" ;
+ vann:preferredNamespaceUri <http://www.w3.org/ns/dx/conneg/altr-ext#>
+] .
+
+[ vann:preferredNamespacePrefix "exds" ;
+ vann:preferredNamespaceUri <http://example.com/datasets/>
+] .
+
+[ vann:preferredNamespacePrefix "sdoprof" ;
+ vann:preferredNamespaceUri <https://schema.org>
+] .
+
+[ vann:preferredNamespacePrefix "vc" ;
+ vann:preferredNamespaceUri <http://www.w3.org/1999/xhtml/vocab#>
+] .
+
+[ vann:preferredNamespacePrefix "vid" ;
+ vann:preferredNamespaceUri <http://ogp.me/ns#video:>
+] .
+
+[ vann:preferredNamespacePrefix "geofab" ;
+ vann:preferredNamespaceUri <https://linked.data.gov.au/datasets/geofabric/fc/>
+] .
+
+[ vann:preferredNamespacePrefix "meshblock" ;
+ vann:preferredNamespaceUri <https://linked.data.gov.au/datasets/asgsed3/MB/>
+] .
+
+[ vann:preferredNamespacePrefix "ldgov" ;
+ vann:preferredNamespaceUri <http://linked.data.gov.au/org/>
+] .
+
+[ vann:preferredNamespacePrefix "orc" ;
+ vann:preferredNamespaceUri <https://orcid.org/>
+] .
+
+[ vann:preferredNamespacePrefix "prezprof" ;
+ vann:preferredNamespaceUri <https://prez.dev/profile/>
+] .
+
+[ vann:preferredNamespacePrefix "exm" ;
+ vann:preferredNamespaceUri <https://example.com/>
+] .

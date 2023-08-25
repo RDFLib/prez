@@ -5,7 +5,7 @@
 
 <https://test/feature-collection> a geo:FeatureCollection ;
     rdfs:member <http://resource.geosciml.org/classifier/cgi/contacttype/alteration_facies_contact> ;
-    ns1:link "/s/datasets/ns2:dataset/collections/ns2:feature-collection" .
+    ns1:link "/s/datasets/ns3:dataset/collections/ns3:feature-collection" .
 
 <http://resource.geosciml.org/classifier/cgi/contacttype/alteration_facies_contact> dcterms:provenance "this vocabulary"@en .
 

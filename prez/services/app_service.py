@@ -91,14 +91,18 @@ async def add_prefixes_to_prefix_graph():
     """
     for f in (Path(__file__).parent.parent / "reference_data/prefixes").glob("*.ttl"):
         g = Graph().parse(f, format="turtle")
-        for subject_objects in g.subject_objects(
-            predicate=URIRef("http://purl.org/vocab/vann/preferredNamespacePrefix")
-        ):
-            prefix_graph.bind(str(subject_objects[1]), subject_objects[0])
-            log.info(
-                f'Prefix "{str(subject_objects[1])}" bound to namespace {str(subject_objects[0])} from file '
-                f'"{f.name}"'
+        for i, (s, prefix) in enumerate(
+            g.subject_objects(
+                predicate=URIRef("http://purl.org/vocab/vann/preferredNamespacePrefix")
             )
+        ):
+            namespace = g.value(
+                s, URIRef("http://purl.org/vocab/vann/preferredNamespaceUri")
+            )
+            prefix_graph.bind(str(prefix), namespace)
+
+            # prefix_graph.bind(str(subject_objects[1]), subject_objects[0])
+        log.info(f"{i+1} prefixes bound from file {f.name}")
     log.info("Prefixes from local files added to prefix graph")
 
     if settings.disable_prefix_generation:
@@ -131,6 +135,41 @@ async def add_prefixes_to_prefix_graph():
 
 
 async def create_endpoints_graph() -> Graph:
+    flavours = ["CatPrez", "SpacePrez", "VocPrez", "OGCPrez"]
+    added_anything = False
     for f in (Path(__file__).parent.parent / "reference_data/endpoints").glob("*.ttl"):
-        endpoints_graph_cache.parse(f)
-    log.info("Prez endpoints graph loaded")
+        # Check if file starts with any of the flavour prefixes
+        matching_flavour = next(
+            (flavour for flavour in flavours if f.name.startswith(flavour.lower())),
+            None,
+        )
+        # If the file doesn't start with any specific flavour or the matching flavour is in settings.prez_flavours, parse it.
+        if not matching_flavour or (
+            matching_flavour and matching_flavour in settings.prez_flavours
+        ):
+            endpoints_graph_cache.parse(f)
+            added_anything = True
+    if added_anything:
+        log.info("Local endpoint definitions loaded")
+    else:
+        log.info("No local endpoint definitions found")
+    await get_remote_endpoint_definitions()
+
+
+async def get_remote_endpoint_definitions():
+    remote_endpoints_query = f"""
+PREFIX ont: <https://prez.dev/ont/>
+CONSTRUCT {{
+    ?endpoint ?p ?o.
+}}
+WHERE {{
+    ?endpoint a ont:Endpoint;
+              ?p ?o.
+}}
+    """
+    g = await rdf_query_to_graph(remote_endpoints_query)
+    if len(g) > 0:
+        endpoints_graph_cache.__iadd__(g)
+        log.info(f"Remote endpoint definition(s) found and added")
+    else:
+        log.info("No remote endpoint definitions found")

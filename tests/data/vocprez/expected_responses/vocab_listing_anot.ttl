@@ -11,7 +11,7 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     a skos:ConceptScheme ;
     ns1:status <https://linked.data.gov.au/def/reg-statuses/experimental> ;
     skos:prefLabel "BeddingSurfaceStructure"@en ;
-    ns2:link "/v/vocab/ref:BeddingSurfaceStructure" ;
+    ns2:link "/v/vocab/rf:BeddingSurfaceStructure" ;
 .
 
 <http://linked.data.gov.au/def2/borehole-purpose>

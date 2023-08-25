@@ -2,10 +2,10 @@ from string import Template
 from typing import FrozenSet
 
 from fastapi import APIRouter, Request, HTTPException, status, Query
-from rdflib import Graph, Literal, URIRef
+from rdflib import Graph, Literal, URIRef, PROF, RDF
 from starlette.responses import PlainTextResponse
 
-from prez.cache import endpoints_graph_cache
+from prez.cache import endpoints_graph_cache, profiles_graph_cache
 from prez.models.listing import ListingModel
 from prez.models.object_item import ObjectItem
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
@@ -131,6 +131,7 @@ async def item_function(request: Request, object_curie: str):
         object_curie=object_curie,
         **request.path_params,
         **request.query_params,
+        endpoint_uri=request.scope["route"].name,
     )
     prof_and_mt_info = ProfilesMediatypesInfo(
         request=request, classes=object_item.classes
@@ -150,7 +151,13 @@ async def item_function(request: Request, object_curie: str):
     item_members_query = generate_listing_construct(
         object_item, prof_and_mt_info.profile, 1, 20
     )
-    item_graph, _ = await send_queries(rdf_queries=[item_query, item_members_query])
+    if object_item.selected_class == URIRef("http://www.w3.org/ns/dx/prof/Profile"):
+        item_graph = profiles_graph_cache.query(item_query).graph
+        if item_members_query:
+            list_graph = profiles_graph_cache.query(item_members_query).graph
+            item_graph += list_graph
+    else:
+        item_graph, _ = await send_queries(rdf_queries=[item_query, item_members_query])
     if "anot+" in prof_and_mt_info.mediatype:
         await _add_prez_links(item_graph)
     return await return_from_graph(
@@ -188,7 +195,17 @@ async def listing_function(
         listing_item, prof_and_mt_info.profile, page=page, per_page=per_page
     )
     count_query = generate_listing_count_construct(listing_item)
-    item_graph, _ = await send_queries(rdf_queries=[count_query, item_members_query])
+    if listing_item.selected_class in [
+        URIRef("https://prez.dev/ProfilesList"),
+        PROF.Profile,
+    ]:
+        list_graph = profiles_graph_cache.query(item_members_query).graph
+        count_graph = profiles_graph_cache.query(count_query).graph
+        item_graph = list_graph + count_graph
+    else:
+        item_graph, _ = await send_queries(
+            rdf_queries=[count_query, item_members_query]
+        )
     if "anot+" in prof_and_mt_info.mediatype:
         await _add_prez_links(item_graph)
     return await return_from_graph(
