@@ -25,7 +25,6 @@ from prez.routers.profiles import router as profiles_router
 from prez.routers.search import router as search_router
 from prez.routers.spaceprez import router as spaceprez_router
 from prez.routers.sparql import router as sparql_router
-from prez.routers.ogc import router as ogc_router
 from prez.routers.vocprez import router as vocprez_router
 from prez.services.app_service import (
     healthcheck_sparql_endpoints,
@@ -70,8 +69,6 @@ if "VocPrez" in settings.prez_flavours:
     app.include_router(vocprez_router)
 if "SpacePrez" in settings.prez_flavours:
     app.include_router(spaceprez_router)
-if "OGCPrez" in settings.prez_flavours:
-    app.include_router(ogc_router)
 app.include_router(identifier_router)
 
 

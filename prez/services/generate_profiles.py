@@ -22,7 +22,7 @@ async def create_profiles_graph() -> Graph:
     ):  # pytest imports app.py multiple times, so this is needed. Not sure why cache is
         # not cleared between calls
         return
-    flavours = ["CatPrez", "SpacePrez", "VocPrez", "OGCPrez"]
+    flavours = ["CatPrez", "SpacePrez", "VocPrez"]
     for f in (Path(__file__).parent.parent / "reference_data/profiles").glob("*.ttl"):
         # Check if file starts with any of the flavour prefixes
         matching_flavour = next(

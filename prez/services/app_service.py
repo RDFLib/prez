@@ -135,7 +135,7 @@ async def add_prefixes_to_prefix_graph():
 
 
 async def create_endpoints_graph() -> Graph:
-    flavours = ["CatPrez", "SpacePrez", "VocPrez", "OGCPrez"]
+    flavours = ["CatPrez", "SpacePrez", "VocPrez"]
     added_anything = False
     for f in (Path(__file__).parent.parent / "reference_data/endpoints").glob("*.ttl"):
         # Check if file starts with any of the flavour prefixes
