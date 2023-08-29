@@ -213,6 +213,7 @@ async def concept_narrowers_route(
 @router.get(
     "/v/vocab/{concept_scheme_curie}/{concept_curie}",
     summary="Get a SKOS Concept",
+    name="https://prez.dev/endpoint/vocprez/vocab-concept",
     response_class=StreamingTurtleAnnotatedResponse,
     responses={
         200: {
@@ -253,7 +254,11 @@ async def concept_route(
     )
 
 
-@router.get("/v/collection/{collection_curie}", summary="Get Collection")
+@router.get(
+    "/v/collection/{collection_curie}",
+    summary="Get Collection",
+    name="https://prez.dev/endpoint/vocprez/collection",
+)
 async def vocprez_collection(request: Request, collection_curie: str):
     return await item_function(request, object_curie=collection_curie)
 

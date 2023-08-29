@@ -2,7 +2,7 @@ from string import Template
 from typing import FrozenSet
 
 from fastapi import APIRouter, Request, HTTPException, status, Query
-from rdflib import Graph, Literal, URIRef, PROF, RDF
+from rdflib import Graph, Literal, URIRef, PROF, RDF, DCTERMS
 from starlette.responses import PlainTextResponse
 
 from prez.cache import endpoints_graph_cache, profiles_graph_cache
@@ -286,11 +286,13 @@ def generate_system_links_object(
     for ep_result in relationship_results:
         for k, v in ep_result.items():
             if k != "endpoint":
+                uri = URIRef(v["value"])
+                curie = get_curie_id_for_uri(uri)
                 internal_links_graph.add(
                     (
-                        URIRef(object_uri),
-                        PREZ["endpointComponentURI"],
-                        URIRef(v["value"]),
+                        uri,
+                        DCTERMS.identifier,
+                        Literal(curie, datatype=PREZ.identifier),
                     )
                 )
 
