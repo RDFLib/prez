@@ -16,6 +16,7 @@ async def search(
 ):
     term = request.query_params.get("term")
     limit = request.query_params.get("limit", 20)
+    # await get_filter_qsas = request.query_params.get("filter_qsas", False)
     if not term:
         return PlainTextResponse(
             status_code=400,
@@ -39,6 +40,10 @@ async def search(
     graph.bind("prez", "https://prez.dev/")
 
     return await return_rdf(graph, mediatype="text/anot+turtle", profile_headers={})
+
+
+# async def get_filter_qsas(query_params):
+#     for param in
 
 
 def determine_search_method(request):

@@ -1,7 +1,7 @@
 import logging
 
 from fastapi import APIRouter, Request
-from rdflib import URIRef, SKOS, Literal, DCTERMS
+from rdflib import URIRef, SKOS
 from starlette.responses import PlainTextResponse
 
 from prez.bnode import get_bnode_depth
@@ -11,7 +11,6 @@ from prez.queries.vocprez import (
     get_concept_scheme_top_concepts_query,
     get_concept_narrowers_query,
 )
-from prez.reference_data.prez_ns import PREZ
 from prez.renderers.renderer import (
     return_from_queries,
     return_from_graph,
@@ -130,21 +129,8 @@ async def concept_scheme_top_concepts_route(
     for concept in graph.objects(iri, SKOS.hasTopConcept):
         if isinstance(concept, URIRef):
             concept_curie = get_curie_id_for_uri(concept)
-            graph.add(
-                (
-                    concept,
-                    PREZ.link,
-                    Literal(f"/v/vocab/{concept_scheme_curie}/{concept_curie}"),
-                )
-            )
-            graph.add(
-                (
-                    concept,
-                    DCTERMS.identifier,
-                    Literal(concept_curie, datatype=PREZ.identifier),
-                )
-            )
-
+    if "anot+" in profiles_mediatypes_info.mediatype:
+        await _add_prez_links(graph)
     return await return_from_graph(
         graph,
         profiles_mediatypes_info.mediatype,
@@ -184,24 +170,6 @@ async def concept_narrowers_route(
     graph = await rdf_query_to_graph(concept_narrowers_query)
     if "anot+" in profiles_mediatypes_info.mediatype:
         await _add_prez_links(graph)
-    # for concept in graph.objects(iri, SKOS.narrower):
-    #     if isinstance(concept, URIRef):
-    #         concept_curie = get_curie_id_for_uri(concept)
-    #         graph.add(
-    #             (
-    #                 concept,
-    #                 PREZ.link,
-    #                 Literal(f"/v/vocab/{concept_scheme_curie}/{concept_curie}"),
-    #             )
-    #         )
-    #         graph.add(
-    #             (
-    #                 concept,
-    #                 DCTERMS.identifier,
-    #                 Literal(concept_curie, datatype=PREZ.identifier),
-    #             )
-    #         )
-
     return await return_from_graph(
         graph,
         profiles_mediatypes_info.mediatype,
@@ -231,21 +199,8 @@ async def concept_route(
 
     concept_iri = get_iri_route(concept_curie)
     graph = await get_resource(concept_iri)
-    graph.add(
-        (
-            concept_iri,
-            PREZ.link,
-            Literal(f"/v/vocab/{concept_scheme_curie}/{concept_curie}"),
-        )
-    )
-    graph.add(
-        (
-            concept_iri,
-            DCTERMS.identifier,
-            Literal(concept_curie, datatype=PREZ.identifier),
-        )
-    )
-
+    if "anot+" in profiles_mediatypes_info.mediatype:
+        await _add_prez_links(graph)
     return await return_from_graph(
         graph,
         profiles_mediatypes_info.mediatype,
