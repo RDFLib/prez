@@ -10,6 +10,8 @@ def get_classes(uris: List[URIRef], endpoint: URIRef = None) -> frozenset[URIRef
     """
     if endpoint is specified, only classes that the endpoint can deliver will be returned.
     """
+    if len(uris) == 0:
+        return frozenset()
     q = f"""
     SELECT ?uri ?class
     {{ ?uri a ?class .
