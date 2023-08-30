@@ -6,7 +6,7 @@ profiles_graph_cache = ConjunctiveGraph()
 profiles_graph_cache.bind("prez", "https://prez.dev/")
 
 endpoints_graph_cache = ConjunctiveGraph()
-profiles_graph_cache.bind("prez", "https://prez.dev/")
+endpoints_graph_cache.bind("prez", "https://prez.dev/")
 
 prez_system_graph = Graph()
 prez_system_graph.bind("prez", "https://prez.dev/")
