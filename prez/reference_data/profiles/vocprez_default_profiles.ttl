@@ -154,6 +154,31 @@ prez:VocPrezProfile
         prez:VocPrezCollectionList ,
         skos:ConceptScheme ,
         skos:Collection ;
+    altr-ext:hasLabelPredicate skos:prefLabel ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass skos:ConceptScheme ;
+        altr-ext:inboundChildren skos:inScheme ;
+        altr-ext:relativeProperties skos:broader , skos:narrower, skos:definition ;
+    ] ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass skos:Collection ;
+        altr-ext:outboundChildren skos:member ;
+        altr-ext:relativeProperties skos:definition ;
+    ] ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass prez:SchemesList ;
+        altr-ext:containerClass skos:ConceptScheme ;
+        altr-ext:relativeProperties skos:definition, dcterms:publisher, reg:status ;
+    ] ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass prez:VocPrezCollectionList ;
+        altr-ext:containerClass skos:ConceptScheme ;
+        altr-ext:relativeProperties skos:definition, dcterms:publisher, reg:status ;
+    ] ;
     altr-ext:hasDefaultResourceFormat "application/json" ;
     altr-ext:hasResourceFormat
         "application/json" ,

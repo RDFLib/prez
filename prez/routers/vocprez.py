@@ -2,6 +2,7 @@ import logging
 from typing import Optional
 
 from fastapi import APIRouter, Request
+from fastapi.responses import RedirectResponse
 from rdflib import URIRef, SKOS, Literal, DCTERMS
 from starlette.responses import PlainTextResponse
 
@@ -70,6 +71,8 @@ async def schemes_endpoint(
         prof_and_mt_info.mediatype,
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
+        prof_and_mt_info.selected_class,
+        vocprez_members.general_class,
         predicates_for_link_addition,
     )
 
@@ -104,6 +107,15 @@ async def concept_scheme_route(request: Request, concept_scheme_curie: str):
         request=request, classes=frozenset([SKOS.ConceptScheme])
     )
 
+    if (
+        str(profiles_mediatypes_info.mediatype) != "text/anot+turtle"
+        or str(profiles_mediatypes_info.mediatype) == "text/anot+turtle"
+        and str(profiles_mediatypes_info.profile) != "https://w3id.org/profile/vocpub"
+    ):
+        return RedirectResponse(
+            f"{request.url.path}/all{'?' if request.url.query else ''}{request.url.query}"
+        )
+
     iri = get_iri_route(concept_scheme_curie)
     resource = await get_resource(iri)
     bnode_depth = get_bnode_depth(resource, iri)
@@ -114,6 +126,8 @@ async def concept_scheme_route(request: Request, concept_scheme_curie: str):
         profiles_mediatypes_info.mediatype,
         profiles_mediatypes_info.profile,
         profiles_mediatypes_info.profile_headers,
+        profiles_mediatypes_info.selected_class,
+        None,
     )
 
 
@@ -170,6 +184,7 @@ async def concept_scheme_top_concepts_route(
         profiles_mediatypes_info.mediatype,
         profiles_mediatypes_info.profile,
         profiles_mediatypes_info.profile_headers,
+        profiles_mediatypes_info.selected_class,
     )
 
 
@@ -225,6 +240,7 @@ async def concept_narrowers_route(
         profiles_mediatypes_info.mediatype,
         profiles_mediatypes_info.profile,
         profiles_mediatypes_info.profile_headers,
+        profiles_mediatypes_info.selected_class,
     )
 
 
@@ -268,6 +284,7 @@ async def concept_route(
         profiles_mediatypes_info.mediatype,
         profiles_mediatypes_info.profile,
         profiles_mediatypes_info.profile_headers,
+        profiles_mediatypes_info.selected_class,
     )
 
 
@@ -312,5 +329,7 @@ async def item_endpoint(request: Request, vp_item: Optional[VocabItem] = None):
         prof_and_mt_info.mediatype,
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
+        prof_and_mt_info.selected_class,
+        vp_item.general_class,
         predicates_for_link_addition,
     )

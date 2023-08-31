@@ -3,6 +3,8 @@ import logging
 from typing import Optional
 
 from connegp import RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
+from fastapi import status
+from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic.types import List
 from rdflib import Graph, URIRef, Namespace, Literal, RDF
@@ -19,6 +21,7 @@ from prez.sparql.objects_listings import (
     get_annotation_properties,
     get_annotation_predicates,
 )
+from prez.renderers.json_renderer import render_json, NotFoundError
 
 log = logging.getLogger(__name__)
 
@@ -28,6 +31,8 @@ async def return_from_queries(
     mediatype,
     profile,
     profile_headers,
+    selected_class: URIRef,
+    base_class: URIRef,
     predicates_for_link_addition: dict = None,
 ):
     """
@@ -36,7 +41,13 @@ async def return_from_queries(
     """
     graph = await queries_to_graph(queries)
     return await return_from_graph(
-        graph, mediatype, profile, profile_headers, predicates_for_link_addition
+        graph,
+        mediatype,
+        profile,
+        profile_headers,
+        selected_class,
+        base_class,
+        predicates_for_link_addition,
     )
 
 
@@ -45,20 +56,50 @@ async def return_from_graph(
     mediatype,
     profile,
     profile_headers,
+    selected_class: URIRef,
+    base_class: URIRef,
     predicates_for_link_addition: dict = None,
 ):
     profile_headers["Content-Disposition"] = "inline"
+
+    # A listing view is any of the views that are like /v/vocab or /v/collection.
+    listing_view = False
+    if selected_class != base_class:
+        listing_view = True
+
     if str(mediatype) in RDF_MEDIATYPES:
         return await return_rdf(graph, mediatype, profile_headers)
 
-    # elif mediatype == "xml":
-    #     ...
+    elif str(mediatype) == "application/json":
+        graph = await return_annotated_rdf(
+            graph,
+            URIRef("https://w3id.org/profile/vocpub"),
+            predicates_for_link_addition,
+        )
+
+        try:
+            return await render_json(
+                graph, profile, base_class if listing_view else selected_class
+            )
+        except NotFoundError as err:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, str(err))
 
     else:
         if "anot+" in mediatype:
-            return await return_annotated_rdf(
-                graph, profile_headers, profile, predicates_for_link_addition, mediatype
+            non_anot_mediatype = mediatype.replace("anot+", "")
+            graph = await return_annotated_rdf(
+                graph, profile, predicates_for_link_addition
             )
+            content = io.BytesIO(
+                graph.serialize(format=non_anot_mediatype, encoding="utf-8")
+            )
+            return StreamingResponse(
+                content=content, media_type=non_anot_mediatype, headers=profile_headers
+            )
+
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, f"Unsupported mediatype: {mediatype}."
+        )
 
 
 async def return_rdf(graph, mediatype, profile_headers):
@@ -92,14 +133,10 @@ async def get_annotations_graph(profile, graph, cache):
 
 async def return_annotated_rdf(
     graph: Graph,
-    profile_headers,
     profile,
     predicates_for_link_addition: dict,
-    mediatype="text/anot+turtle",
-):
+) -> Graph:
     from prez.cache import tbox_cache
-
-    non_anot_mediatype = mediatype.replace("anot+", "")
 
     cache = tbox_cache
 
@@ -114,10 +151,7 @@ async def return_annotated_rdf(
 
     generate_prez_links(graph, predicates_for_link_addition)
 
-    obj = io.BytesIO(graph.serialize(format=non_anot_mediatype, encoding="utf-8"))
-    return StreamingResponse(
-        content=obj, media_type=non_anot_mediatype, headers=profile_headers
-    )
+    return graph
 
 
 def generate_prez_links(graph, predicates_for_link_addition):
