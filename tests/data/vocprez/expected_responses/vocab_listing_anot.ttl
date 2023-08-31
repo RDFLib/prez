@@ -1,100 +1,76 @@
-PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX ns1: <http://purl.org/linked-data/registry#>
-PREFIX ns2: <https://prez.dev/>
-PREFIX prov: <http://www.w3.org/ns/prov#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX schema: <https://schema.org/>
-PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ns1: <http://purl.org/linked-data/registry#> .
+@prefix prez: <https://prez.dev/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<http://data.bgs.ac.uk/ref/BeddingSurfaceStructure>
-    a skos:ConceptScheme ;
+<http://data.bgs.ac.uk/ref/BeddingSurfaceStructure> a skos:ConceptScheme ;
     ns1:status <https://linked.data.gov.au/def/reg-statuses/experimental> ;
     skos:prefLabel "BeddingSurfaceStructure"@en ;
-    ns2:link "/v/vocab/ref:BeddingSurfaceStructure" ;
-.
+    prez:link "/v/vocab/rf:BeddingSurfaceStructure" .
 
-<http://linked.data.gov.au/def2/borehole-purpose>
-    a skos:ConceptScheme ;
+<http://linked.data.gov.au/def2/borehole-purpose> a skos:ConceptScheme ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     dcterms:publisher <https://linked.data.gov.au/org/gsq> ;
     ns1:status <https://linked.data.gov.au/def/reg-statuses/stable> ;
     skos:prefLabel "Borehole Purpose"@en ;
-    prov:qualifiedDerivation [
-            prov:entity <http://linked.data.gov.au/def/site-status> ;
-            prov:hadRole <http://linked.data.gov.au/def/vocab-derivation-modes/subsetting-and-extension>
-        ] ;
-    ns2:link "/v/vocab/def2:borehole-purpose" ;
-.
+    prov:qualifiedDerivation [ prov:entity <http://linked.data.gov.au/def/site-status> ;
+            prov:hadRole <http://linked.data.gov.au/def/vocab-derivation-modes/subsetting-and-extension> ] ;
+    prez:link "/v/vocab/def2:borehole-purpose" .
 
-<http://linked.data.gov.au/def2/borehole-purpose-no-children>
-    a skos:ConceptScheme ;
+<http://linked.data.gov.au/def2/borehole-purpose-no-children> a skos:ConceptScheme ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     dcterms:publisher <https://linked.data.gov.au/org/gsq> ;
     ns1:status <https://linked.data.gov.au/def/reg-statuses/stable> ;
     skos:prefLabel "Borehole Purpose no children"@en ;
-    prov:qualifiedDerivation [
-            prov:entity <http://linked.data.gov.au/def/site-status> ;
-            prov:hadRole <http://linked.data.gov.au/def/vocab-derivation-modes/subsetting-and-extension>
-        ] ;
-    ns2:link "/v/vocab/def2:borehole-purpose-no-children" ;
-.
+    prov:qualifiedDerivation [ prov:entity <http://linked.data.gov.au/def/site-status> ;
+            prov:hadRole <http://linked.data.gov.au/def/vocab-derivation-modes/subsetting-and-extension> ] ;
+    prez:link "/v/vocab/def2:borehole-purpose-no-children" .
 
-dcterms:description
-    rdfs:label "Description"@en ;
-    dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en ;
-.
+dcterms:description rdfs:label "Description"@en ;
+    dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en .
 
-dcterms:provenance
-    rdfs:label "Provenance"@en ;
-    dcterms:description "The statement may include a description of any changes successive custodians made to the resource."@en ;
-.
+dcterms:identifier rdfs:label "Identifier"@en ;
+    dcterms:description "Recommended practice is to identify the resource by means of a string conforming to an identification system. Examples include International Standard Book Number (ISBN), Digital Object Identifier (DOI), and Uniform Resource Name (URN).  Persistent identifiers should be provided as HTTP URIs."@en .
 
-dcterms:publisher
-    rdfs:label "Publisher"@en ;
-.
+dcterms:provenance rdfs:label "Provenance"@en ;
+    dcterms:description "The statement may include a description of any changes successive custodians made to the resource."@en .
 
-<http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype>
-    a skos:ConceptScheme ;
+dcterms:publisher rdfs:label "Publisher"@en .
+
+<http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> a skos:ConceptScheme ;
     dcterms:provenance "Original set of terms from the GeosciML standard" ;
     dcterms:publisher <https://linked.data.gov.au/org/cgi> ;
     skos:prefLabel "Contact Type"@en ;
-    ns2:link "/v/vocab/2016.01:contacttype" ;
-.
+    prez:link "/v/vocab/2016.01:contacttype" .
 
-<https://linked.data.gov.au/def/reg-statuses>
-    a skos:ConceptScheme ;
+<https://linked.data.gov.au/def/reg-statuses> a skos:ConceptScheme ;
+    dcterms:identifier "def:reg-statuses"^^prez:identifier ;
     dcterms:publisher <https://linked.data.gov.au/org/agldwg> ;
     skos:prefLabel "Registry Status Vocabulary"@en ;
-    ns2:link "/v/vocab/def:reg-statuses" ;
-.
+    prez:link "/v/vocab/def:reg-statuses" .
 
-<https://linked.data.gov.au/def/vocdermods>
-    a skos:ConceptScheme ;
+<https://linked.data.gov.au/def/vocdermods> a skos:ConceptScheme ;
     dcterms:provenance "Created for the MER catalogue upgrade project, 2022"@en ;
     dcterms:publisher <https://linked.data.gov.au/org/mer> ;
     ns1:status <https://linked.data.gov.au/def/reg-statuses/stable> ;
     skos:prefLabel "Vocabulary Derivation Modes"@en ;
-    ns2:link "/v/vocab/def:vocdermods" ;
-.
+    prez:link "/v/vocab/def:vocdermods" .
 
-<https://linked.data.gov.au/def/warox-alteration-types>
-    a skos:ConceptScheme ;
+<https://linked.data.gov.au/def/warox-alteration-types> a skos:ConceptScheme ;
     dcterms:provenance "This vocabulary was built on an extract of the WAROX system's lookup table"@en ;
     skos:prefLabel "WAROX Alteration Type"@en ;
-    ns2:link "/v/vocab/def:warox-alteration-types" ;
-.
+    prez:link "/v/vocab/def:warox-alteration-types" .
 
-<https://linked.data.gov.au/def/reg-statuses/experimental>
-    skos:prefLabel "experimental"@en ;
-    schema:color "#eae72c" ;
-.
+<https://linked.data.gov.au/def/reg-statuses/experimental> skos:prefLabel "experimental"@en ;
+    prez:link "/v/vocab/def:reg-statuses/rg-sttss:experimental" ;
+    schema:color "#eae72c" .
 
-<https://linked.data.gov.au/def/reg-statuses/stable>
-    skos:prefLabel "stable"@en ;
-    schema:color "#2e8c09" ;
-.
+<https://linked.data.gov.au/def/reg-statuses/stable> skos:prefLabel "stable"@en ;
+    prez:link "/v/vocab/def:reg-statuses/rg-sttss:stable" ;
+    schema:color "#2e8c09" .
 
-skos:ConceptScheme
-    ns2:count 7 ;
-.
+skos:ConceptScheme prez:count 7 .

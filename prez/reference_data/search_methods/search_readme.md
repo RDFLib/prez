@@ -52,3 +52,16 @@ SELECT DISTINCT ?search_result_uri ?predicate ?match
             }
         } LIMIT $LIMIT
 ```
+
+## Search Result Responses
+Search results are of the form:
+
+```turtle
+PREFIX prez: <https://prez.zazuko.com/vocab#>
+<search_result_uri> a prez:SearchResult ;
+    prez:weight <weight> ;
+    prez:predicate <predicate> ;
+    prez:match <match> ;
+    <predicate_1> <object_1> ;
+    ...
+```

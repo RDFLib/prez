@@ -1,0 +1,43 @@
+PREFIX dcat: <http://www.w3.org/ns/dcat#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX endpoint: <https://prez.dev/endpoint/>
+PREFIX ont: <https://prez.dev/ont/>
+PREFIX prez: <https://prez.dev/>
+PREFIX prof: <http://www.w3.org/ns/dx/prof/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+endpoint:profiles-listing a ont:Endpoint ;
+    ont:deliversClasses prez:ProfilesList ;
+    ont:isTopLevelEndpoint "true"^^xsd:boolean ;
+    ont:baseClass prof:Profile ;
+    ont:endpointTemplate "/profiles" ;
+.
+
+endpoint:profile a ont:Endpoint ;
+    ont:parentEndpoint endpoint:profiles-listing ;
+    ont:deliversClasses prof:Profile  ;
+    ont:endpointTemplate "/profiles/$object" ;
+.
+
+endpoint:catprez-profiles-listing a ont:Endpoint ;
+    ont:deliversClasses prez:ProfilesList ;
+    ont:isTopLevelEndpoint "true"^^xsd:boolean ;
+    ont:baseClass prez:CatPrezProfile ;
+    ont:endpointTemplate "/c/profiles" ;
+.
+
+endpoint:spaceprez-profiles-listing a ont:Endpoint ;
+    ont:deliversClasses prez:ProfilesList ;
+    ont:isTopLevelEndpoint "true"^^xsd:boolean ;
+    ont:baseClass prez:SpacePrezProfile ;
+    ont:endpointTemplate "/s/profiles" ;
+.
+
+endpoint:vocprez-profiles-listing a ont:Endpoint ;
+    ont:deliversClasses prez:ProfilesList ;
+    ont:isTopLevelEndpoint "true"^^xsd:boolean ;
+    ont:baseClass prez:VocPrezProfile ;
+    ont:endpointTemplate "/s/profiles" ;
+.

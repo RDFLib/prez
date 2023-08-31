@@ -1,9 +1,17 @@
-PREFIX vann: <http://purl.org/vocab/vann/>
-PREFIX prez: <https://prez.dev/>
+PREFIX vann:    <http://purl.org/vocab/vann/>
 PREFIX ldgovau: <https://linked.data.gov.au/datasets/>
-PREFIX gnaf: <https://linked.data.gov.au/datasets/gnaf/>
-PREFIX addr: <https://linked.data.gov.au/datasets/gnaf/address/>
+PREFIX gnaf:    <https://linked.data.gov.au/datasets/gnaf/>
+PREFIX addr:    <https://linked.data.gov.au/datasets/gnaf/address/>
 
-ldgovau: vann:preferredNamespacePrefix "ldgovau" .
-gnaf: vann:preferredNamespacePrefix "gnaf" .
-addr: vann:preferredNamespacePrefix "addr" .
+
+[ vann:preferredNamespacePrefix "ldgovau" ;
+vann:preferredNamespaceUri <https://linked.data.gov.au/datasets/> ;
+] .
+
+[ vann:preferredNamespacePrefix "gnaf" ;
+vann:preferredNamespaceUri <https://linked.data.gov.au/datasets/gnaf/> ;
+] .
+
+[ vann:preferredNamespacePrefix "addr" ;
+vann:preferredNamespaceUri <https://linked.data.gov.au/datasets/gnaf/address/> ;
+] .

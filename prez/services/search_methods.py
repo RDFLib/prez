@@ -7,7 +7,7 @@ from rdflib import Graph, RDF, DCTERMS, Literal, RDFS
 from prez.cache import search_methods
 from prez.models import SearchMethod
 from prez.reference_data.prez_ns import PREZ
-from prez.sparql.methods import query_to_graph
+from prez.sparql.methods import rdf_query_to_graph
 
 log = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ async def get_remote_search_methods():
     WHERE {{ ?s a prez:SearchMethod ;
                ?p ?o . }}
     """
-    graph = await query_to_graph(remote_search_methods_query)
+    graph = await rdf_query_to_graph(remote_search_methods_query)
     if len(graph) > 1:
         await generate_search_methods(graph)
         log.info(f"Remote search methods found and added.")

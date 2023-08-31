@@ -4,7 +4,7 @@ from starlette.responses import PlainTextResponse
 
 from prez.cache import search_methods
 from prez.renderers.renderer import return_rdf
-from prez.sparql.methods import query_to_graph
+from prez.sparql.methods import rdf_query_to_graph
 from prez.sparql.objects_listings import generate_item_construct
 
 router = APIRouter(tags=["Search"])
@@ -16,6 +16,7 @@ async def search(
 ):
     term = request.query_params.get("term")
     limit = request.query_params.get("limit", 20)
+    # await get_filter_qsas = request.query_params.get("filter_qsas", False)
     if not term:
         return PlainTextResponse(
             status_code=400,
@@ -35,10 +36,14 @@ async def search(
         search_query, URIRef("https://w3id.org/profile/mem")
     )
 
-    graph = await query_to_graph(full_query)
+    graph = await rdf_query_to_graph(full_query)
     graph.bind("prez", "https://prez.dev/")
 
     return await return_rdf(graph, mediatype="text/anot+turtle", profile_headers={})
+
+
+# async def get_filter_qsas(query_params):
+#     for param in
 
 
 def determine_search_method(request):
@@ -52,4 +57,4 @@ def determine_search_method(request):
 
 def get_default_search_methods():
     # TODO return from profiles
-    return "jenaFTName"
+    return "exactMatch"

@@ -21,21 +21,9 @@ class Settings(BaseSettings):
     system_uri: Documentation property. An IRI for the Prez system as a whole. This value appears in the landing page RDF delivered by Prez ('/')
     top_level_classes:
     collection_classes:
-    general_classes:
+    base_classes:
     log_level:
     log_output:
-    cql_props: dict = {
-        "title": {
-            "title": "Title",
-            "description": "The title of a geo:Feature",
-            "type": "string",
-        },
-        "desc": {
-            "title": "Description",
-            "description": "The description of a geo:Feature",
-            "type": "string",
-        },
-    }
     prez_title:
     prez_desc:
     prez_version:
@@ -52,22 +40,11 @@ class Settings(BaseSettings):
     system_uri: Optional[str]
     top_level_classes: Optional[dict]
     collection_classes: Optional[dict]
-    general_classes: Optional[dict]
+    order_lists_by_label: bool = True
+    base_classes: Optional[dict]
     prez_flavours: Optional[list] = ["SpacePrez", "VocPrez", "CatPrez", "ProfilesPrez"]
     log_level = "INFO"
     log_output = "stdout"
-    cql_props: dict = {
-        "title": {
-            "title": "Title",
-            "description": "The title of a geo:Feature",
-            "type": "string",
-        },
-        "desc": {
-            "title": "Description",
-            "description": "The description of a geo:Feature",
-            "type": "string",
-        },
-    }
     prez_title: Optional[str] = "Prez"
     prez_desc: Optional[str] = (
         "A web framework API for delivering Linked Data. It provides read-only access to "
@@ -104,58 +81,58 @@ class Settings(BaseSettings):
             )
         return values
 
-    @root_validator()
-    def populate_top_level_classes(cls, values):
-        values["top_level_classes"] = {
-            "Profiles": [
-                PROF.Profile,
-                PREZ.SpacePrezProfile,
-                PREZ.VocPrezProfile,
-                PREZ.CatPrezProfile,
-            ],
-            "SpacePrez": [DCAT.Dataset],
-            "VocPrez": [SKOS.ConceptScheme, SKOS.Collection],
-            "CatPrez": [DCAT.Catalog],
-        }
-        return values
-
-    @root_validator()
-    def populate_collection_classes(cls, values):
-        additional_classes = {
-            "Profiles": [],
-            "SpacePrez": [GEO.FeatureCollection],
-            "VocPrez": [],
-            "CatPrez": [DCAT.Resource],
-        }
-        values["collection_classes"] = {}
-        for prez in list(additional_classes.keys()) + ["Profiles"]:
-            values["collection_classes"][prez] = (
-                values["top_level_classes"].get(prez) + additional_classes[prez]
-            )
-        return values
-
-    @root_validator()
-    def populate_general_classes(cls, values):
-        additional_classes = {
-            "SpacePrez": [GEO.Feature],
-            "VocPrez": [SKOS.Concept],
-            "CatPrez": [DCAT.Dataset],
-            "Profiles": [PROF.Profile],
-        }
-        values["general_classes"] = {}
-        for prez in list(additional_classes.keys()) + ["Profiles"]:
-            values["general_classes"][prez] = (
-                values["collection_classes"].get(prez) + additional_classes[prez]
-            )
-        return values
-
-    @root_validator()
-    def populate_sparql_creds(cls, values):
-        username = values.get("sparql_username")
-        password = values.get("sparql_password")
-        if username is not None and password is not None:
-            values["sparql_auth"] = (username, password)
-        return values
+    # @root_validator()
+    # def populate_top_level_classes(cls, values):
+    #     values["top_level_classes"] = {
+    #         "Profiles": [
+    #             PROF.Profile,
+    #             PREZ.SpacePrezProfile,
+    #             PREZ.VocPrezProfile,
+    #             PREZ.CatPrezProfile,
+    #         ],
+    #         "SpacePrez": [DCAT.Dataset],
+    #         "VocPrez": [SKOS.ConceptScheme, SKOS.Collection],
+    #         "CatPrez": [DCAT.Catalog],
+    #     }
+    #     return values
+    #
+    # @root_validator()
+    # def populate_collection_classes(cls, values):
+    #     additional_classes = {
+    #         "Profiles": [],
+    #         "SpacePrez": [GEO.FeatureCollection],
+    #         "VocPrez": [],
+    #         "CatPrez": [DCAT.Resource],
+    #     }
+    #     values["collection_classes"] = {}
+    #     for prez in list(additional_classes.keys()) + ["Profiles"]:
+    #         values["collection_classes"][prez] = (
+    #             values["top_level_classes"].get(prez) + additional_classes[prez]
+    #         )
+    #     return values
+    #
+    # @root_validator()
+    # def populate_base_classes(cls, values):
+    #     additional_classes = {
+    #         "SpacePrez": [GEO.Feature],
+    #         "VocPrez": [SKOS.Concept],
+    #         "CatPrez": [DCAT.Dataset],
+    #         "Profiles": [PROF.Profile],
+    #     }
+    #     values["base_classes"] = {}
+    #     for prez in list(additional_classes.keys()) + ["Profiles"]:
+    #         values["base_classes"][prez] = (
+    #             values["collection_classes"].get(prez) + additional_classes[prez]
+    #         )
+    #     return values
+    #
+    # @root_validator()
+    # def populate_sparql_creds(cls, values):
+    #     username = values.get("sparql_username")
+    #     password = values.get("sparql_password")
+    #     if username is not None and password is not None:
+    #         values["sparql_auth"] = (username, password)
+    #     return values
 
 
 settings = Settings()

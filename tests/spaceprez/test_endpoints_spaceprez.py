@@ -114,6 +114,9 @@ def test_dataset_listing_anot(sp_test_client):
             Path(__file__).parent
             / "../data/spaceprez/expected_responses/dataset_listing_anot.ttl"
         )
+        # if not response_graph.isomorphic(expected_graph):
+        #     response_graph.remove((None, URIRef("https://prez.dev/link"), None))
+        #     expected_graph.remove((None, URIRef("https://prez.dev/link"), None))
         assert response_graph.isomorphic(expected_graph), print(
             f"Graph delta:{(expected_graph - response_graph).serialize()}"
         )

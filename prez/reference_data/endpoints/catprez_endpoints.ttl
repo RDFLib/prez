@@ -1,0 +1,28 @@
+PREFIX dcat: <http://www.w3.org/ns/dcat#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX endpoint: <https://prez.dev/endpoint/catprez/>
+PREFIX ont: <https://prez.dev/ont/>
+PREFIX prez: <https://prez.dev/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+endpoint:catalog-listing a ont:Endpoint ;
+    ont:deliversClasses prez:CatalogList ;
+    ont:isTopLevelEndpoint "true"^^xsd:boolean ;
+    ont:baseClass dcat:Catalog ;
+    ont:endpointTemplate "/c/catalogs" ;
+.
+
+endpoint:catalog a ont:Endpoint ;
+    ont:parentEndpoint endpoint:catalog-listing ;
+    ont:deliversClasses dcat:Catalog  ;
+    ont:endpointTemplate "/c/catalogs/$object" ;
+.
+
+endpoint:resource a ont:Endpoint ;
+    ont:parentEndpoint endpoint:catalog ;
+    ont:deliversClasses dcat:Resource ;
+    ont:endpointTemplate "/c/catalogs/$parent_1/$object" ;
+    ont:ParentToFocusRelation dcterms:hasPart ;
+.

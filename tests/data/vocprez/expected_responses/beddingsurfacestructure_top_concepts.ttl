@@ -1,255 +1,186 @@
-PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX ns1: <https://prez.dev/>
-PREFIX ns2: <http://purl.org/linked-data/registry#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX schema: <https://schema.org/>
-PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ns1: <http://purl.org/linked-data/registry#> .
+@prefix prez: <https://prez.dev/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<http://data.bgs.ac.uk/ref/BeddingSurfaceStructure>
-    a skos:ConceptScheme ;
-    ns2:status <https://linked.data.gov.au/def/reg-statuses/experimental> ;
-    skos:hasTopConcept
-        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/CRACKDES> ,
-        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/CRACKSYN> ,
-        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/PART> ,
-        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RAIN> ,
-        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIP> ,
-        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPCUR> ,
-        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPCURLIN> ,
-        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPCURSIN> ,
-        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPCURSTR> ,
-        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPWAV> ,
-        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPWAVINT> ,
-        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPWAVMOD> ,
-        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TF> ,
-        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TFCR> ,
-        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TFCRFOOT> ,
-        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TFGRZ> ,
-        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TFGRZCOIL> ,
-        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TFGRZMEAND> ,
-        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TFGRZRAD> ,
+<http://data.bgs.ac.uk/ref/BeddingSurfaceStructure> a skos:ConceptScheme ;
+    dcterms:identifier "rf:BeddingSurfaceStructure"^^prez:identifier ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/experimental> ;
+    skos:hasTopConcept <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/CRACKDES>,
+        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/CRACKSYN>,
+        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/PART>,
+        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RAIN>,
+        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIP>,
+        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPCUR>,
+        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPCURLIN>,
+        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPCURSIN>,
+        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPCURSTR>,
+        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPWAV>,
+        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPWAVINT>,
+        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPWAVMOD>,
+        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TF>,
+        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TFCR>,
+        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TFCRFOOT>,
+        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TFGRZ>,
+        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TFGRZCOIL>,
+        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TFGRZMEAND>,
+        <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TFGRZRAD>,
         <http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TFREST> ;
     skos:prefLabel "BeddingSurfaceStructure"@en ;
-    ns1:childrenCount 21 ;
-.
+    prez:childrenCount 21 ;
+    prez:link "/v/vocab/rf:BeddingSurfaceStructure" .
 
-dcterms:description
-    rdfs:label "Description"@en ;
-    dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en ;
-.
+dcterms:description rdfs:label "Description"@en ;
+    dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en .
 
-dcterms:identifier
-    rdfs:label "Identifier"@en ;
-    dcterms:description "Recommended practice is to identify the resource by means of a string conforming to an identification system. Examples include International Standard Book Number (ISBN), Digital Object Identifier (DOI), and Uniform Resource Name (URN).  Persistent identifiers should be provided as HTTP URIs."@en ;
-.
+dcterms:identifier rdfs:label "Identifier"@en ;
+    dcterms:description "Recommended practice is to identify the resource by means of a string conforming to an identification system. Examples include International Standard Book Number (ISBN), Digital Object Identifier (DOI), and Uniform Resource Name (URN).  Persistent identifiers should be provided as HTTP URIs."@en .
 
-<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/CRACKDES>
-    a skos:Concept ;
+<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/CRACKDES> a skos:Concept ;
     rdfs:label "Shrinkage (Desiccation) Cracks"@en ;
-    dcterms:identifier "bddngsrfcstrctr:CRACKDES"^^ns1:identifier ;
-    ns2:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
     skos:prefLabel "Shrinkage (Desiccation) Cracks"@en ;
-    ns1:childrenCount 0 ;
-    ns1:link "/v/vocab/ref:BeddingSurfaceStructure/bddngsrfcstrctr:CRACKDES" ;
-.
+    prez:childrenCount 0 ;
+    prez:link "/v/vocab/rf:BeddingSurfaceStructure/bddngsrfcstrctr:CRACKDES" .
 
-<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/CRACKSYN>
-    a skos:Concept ;
+<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/CRACKSYN> a skos:Concept ;
     rdfs:label "Synaeresis Cracks"@en ;
-    dcterms:identifier "bddngsrfcstrctr:CRACKSYN"^^ns1:identifier ;
-    ns2:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
     skos:prefLabel "Synaeresis Cracks"@en ;
-    ns1:childrenCount 0 ;
-    ns1:link "/v/vocab/ref:BeddingSurfaceStructure/bddngsrfcstrctr:CRACKSYN" ;
-.
+    prez:childrenCount 0 ;
+    prez:link "/v/vocab/rf:BeddingSurfaceStructure/bddngsrfcstrctr:CRACKSYN" .
 
-<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/PART>
-    a skos:Concept ;
+<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/PART> a skos:Concept ;
     rdfs:label "Parting Lineation (Primary Current Lineation)"@en ;
-    dcterms:identifier "bddngsrfcstrctr:PART"^^ns1:identifier ;
-    ns2:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
     skos:prefLabel "Parting Lineation (Primary Current Lineation)"@en ;
-    ns1:childrenCount 0 ;
-    ns1:link "/v/vocab/ref:BeddingSurfaceStructure/bddngsrfcstrctr:PART" ;
-.
+    prez:childrenCount 0 ;
+    prez:link "/v/vocab/rf:BeddingSurfaceStructure/bddngsrfcstrctr:PART" .
 
-<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RAIN>
-    a skos:Concept ;
+<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RAIN> a skos:Concept ;
     rdfs:label "Rainspots"@en ;
-    dcterms:identifier "bddngsrfcstrctr:RAIN"^^ns1:identifier ;
-    ns2:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
     skos:prefLabel "Rainspots"@en ;
-    ns1:childrenCount 0 ;
-    ns1:link "/v/vocab/ref:BeddingSurfaceStructure/bddngsrfcstrctr:RAIN" ;
-.
+    prez:childrenCount 0 ;
+    prez:link "/v/vocab/rf:BeddingSurfaceStructure/bddngsrfcstrctr:RAIN" .
 
-<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIP>
-    a skos:Concept ;
+<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIP> a skos:Concept ;
     rdfs:label "Ripples"@en ;
-    dcterms:identifier "bddngsrfcstrctr:RIP"^^ns1:identifier ;
-    ns2:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
     skos:prefLabel "Ripples"@en ;
-    ns1:childrenCount 0 ;
-    ns1:link "/v/vocab/ref:BeddingSurfaceStructure/bddngsrfcstrctr:RIP" ;
-.
+    prez:childrenCount 0 ;
+    prez:link "/v/vocab/rf:BeddingSurfaceStructure/bddngsrfcstrctr:RIP" .
 
-<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPCUR>
-    a skos:Concept ;
+<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPCUR> a skos:Concept ;
     rdfs:label "Current Ripples"@en ;
-    dcterms:identifier "bddngsrfcstrctr:RIPCUR"^^ns1:identifier ;
-    ns2:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
     skos:prefLabel "Current Ripples"@en ;
-    ns1:childrenCount 0 ;
-    ns1:link "/v/vocab/ref:BeddingSurfaceStructure/bddngsrfcstrctr:RIPCUR" ;
-.
+    prez:childrenCount 0 ;
+    prez:link "/v/vocab/rf:BeddingSurfaceStructure/bddngsrfcstrctr:RIPCUR" .
 
-<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPCURLIN>
-    a skos:Concept ;
+<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPCURLIN> a skos:Concept ;
     rdfs:label "Linguoid Current Ripples"@en ;
-    dcterms:identifier "bddngsrfcstrctr:RIPCURLIN"^^ns1:identifier ;
-    ns2:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
     skos:prefLabel "Linguoid Current Ripples"@en ;
-    ns1:childrenCount 0 ;
-    ns1:link "/v/vocab/ref:BeddingSurfaceStructure/bddngsrfcstrctr:RIPCURLIN" ;
-.
+    prez:childrenCount 0 ;
+    prez:link "/v/vocab/rf:BeddingSurfaceStructure/bddngsrfcstrctr:RIPCURLIN" .
 
-<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPCURSIN>
-    a skos:Concept ;
+<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPCURSIN> a skos:Concept ;
     rdfs:label "Sinuous-Crested Current Rippled"@en ;
-    dcterms:identifier "bddngsrfcstrctr:RIPCURSIN"^^ns1:identifier ;
-    ns2:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
     skos:prefLabel "Sinuous-Crested Current Rippled"@en ;
-    ns1:childrenCount 0 ;
-    ns1:link "/v/vocab/ref:BeddingSurfaceStructure/bddngsrfcstrctr:RIPCURSIN" ;
-.
+    prez:childrenCount 0 ;
+    prez:link "/v/vocab/rf:BeddingSurfaceStructure/bddngsrfcstrctr:RIPCURSIN" .
 
-<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPCURSTR>
-    a skos:Concept ;
+<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPCURSTR> a skos:Concept ;
     rdfs:label "Straight-Crested Current Ripples"@en ;
-    dcterms:identifier "bddngsrfcstrctr:RIPCURSTR"^^ns1:identifier ;
-    ns2:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
     skos:prefLabel "Straight-Crested Current Ripples"@en ;
-    ns1:childrenCount 0 ;
-    ns1:link "/v/vocab/ref:BeddingSurfaceStructure/bddngsrfcstrctr:RIPCURSTR" ;
-.
+    prez:childrenCount 0 ;
+    prez:link "/v/vocab/rf:BeddingSurfaceStructure/bddngsrfcstrctr:RIPCURSTR" .
 
-<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPWAV>
-    a skos:Concept ;
+<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPWAV> a skos:Concept ;
     rdfs:label "Wave-Formed Ripples"@en ;
-    dcterms:identifier "bddngsrfcstrctr:RIPWAV"^^ns1:identifier ;
-    ns2:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
     skos:prefLabel "Wave-Formed Ripples"@en ;
-    ns1:childrenCount 0 ;
-    ns1:link "/v/vocab/ref:BeddingSurfaceStructure/bddngsrfcstrctr:RIPWAV" ;
-.
+    prez:childrenCount 0 ;
+    prez:link "/v/vocab/rf:BeddingSurfaceStructure/bddngsrfcstrctr:RIPWAV" .
 
-<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPWAVINT>
-    a skos:Concept ;
+<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPWAVINT> a skos:Concept ;
     rdfs:label "Interference Wave-Formed Ripples"@en ;
-    dcterms:identifier "bddngsrfcstrctr:RIPWAVINT"^^ns1:identifier ;
-    ns2:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
     skos:prefLabel "Interference Wave-Formed Ripples"@en ;
-    ns1:childrenCount 0 ;
-    ns1:link "/v/vocab/ref:BeddingSurfaceStructure/bddngsrfcstrctr:RIPWAVINT" ;
-.
+    prez:childrenCount 0 ;
+    prez:link "/v/vocab/rf:BeddingSurfaceStructure/bddngsrfcstrctr:RIPWAVINT" .
 
-<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPWAVMOD>
-    a skos:Concept ;
+<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/RIPWAVMOD> a skos:Concept ;
     rdfs:label "Modified Wave-Formed Ripples"@en ;
-    dcterms:identifier "bddngsrfcstrctr:RIPWAVMOD"^^ns1:identifier ;
-    ns2:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
     skos:prefLabel "Modified Wave-Formed Ripples"@en ;
-    ns1:childrenCount 0 ;
-    ns1:link "/v/vocab/ref:BeddingSurfaceStructure/bddngsrfcstrctr:RIPWAVMOD" ;
-.
+    prez:childrenCount 0 ;
+    prez:link "/v/vocab/rf:BeddingSurfaceStructure/bddngsrfcstrctr:RIPWAVMOD" .
 
-<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TF>
-    a skos:Concept ;
+<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TF> a skos:Concept ;
     rdfs:label "Trace Fossils"@en ;
-    dcterms:identifier "bddngsrfcstrctr:TF"^^ns1:identifier ;
-    ns2:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
     skos:prefLabel "Trace Fossils"@en ;
-    ns1:childrenCount 0 ;
-    ns1:link "/v/vocab/ref:BeddingSurfaceStructure/bddngsrfcstrctr:TF" ;
-.
+    prez:childrenCount 0 ;
+    prez:link "/v/vocab/rf:BeddingSurfaceStructure/bddngsrfcstrctr:TF" .
 
-<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TFCR>
-    a skos:Concept ;
+<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TFCR> a skos:Concept ;
     rdfs:label "Crawling / Walking Tracks and Trails"@en ;
-    dcterms:identifier "bddngsrfcstrctr:TFCR"^^ns1:identifier ;
-    ns2:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
     skos:prefLabel "Crawling / Walking Tracks and Trails"@en ;
-    ns1:childrenCount 0 ;
-    ns1:link "/v/vocab/ref:BeddingSurfaceStructure/bddngsrfcstrctr:TFCR" ;
-.
+    prez:childrenCount 0 ;
+    prez:link "/v/vocab/rf:BeddingSurfaceStructure/bddngsrfcstrctr:TFCR" .
 
-<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TFCRFOOT>
-    a skos:Concept ;
+<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TFCRFOOT> a skos:Concept ;
     rdfs:label "Foot Prints"@en ;
-    dcterms:identifier "bddngsrfcstrctr:TFCRFOOT"^^ns1:identifier ;
-    ns2:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
     skos:prefLabel "Foot Prints"@en ;
-    ns1:childrenCount 0 ;
-    ns1:link "/v/vocab/ref:BeddingSurfaceStructure/bddngsrfcstrctr:TFCRFOOT" ;
-.
+    prez:childrenCount 0 ;
+    prez:link "/v/vocab/rf:BeddingSurfaceStructure/bddngsrfcstrctr:TFCRFOOT" .
 
-<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TFGRZ>
-    a skos:Concept ;
+<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TFGRZ> a skos:Concept ;
     rdfs:label "Grazing Traces"@en ;
-    dcterms:identifier "bddngsrfcstrctr:TFGRZ"^^ns1:identifier ;
-    ns2:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
     skos:prefLabel "Grazing Traces"@en ;
-    ns1:childrenCount 0 ;
-    ns1:link "/v/vocab/ref:BeddingSurfaceStructure/bddngsrfcstrctr:TFGRZ" ;
-.
+    prez:childrenCount 0 ;
+    prez:link "/v/vocab/rf:BeddingSurfaceStructure/bddngsrfcstrctr:TFGRZ" .
 
-<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TFGRZCOIL>
-    a skos:Concept ;
+<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TFGRZCOIL> a skos:Concept ;
     rdfs:label "Coiled Grazing Traces"@en ;
-    dcterms:identifier "bddngsrfcstrctr:TFGRZCOIL"^^ns1:identifier ;
-    ns2:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
     skos:prefLabel "Coiled Grazing Traces"@en ;
-    ns1:childrenCount 0 ;
-    ns1:link "/v/vocab/ref:BeddingSurfaceStructure/bddngsrfcstrctr:TFGRZCOIL" ;
-.
+    prez:childrenCount 0 ;
+    prez:link "/v/vocab/rf:BeddingSurfaceStructure/bddngsrfcstrctr:TFGRZCOIL" .
 
-<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TFGRZMEAND>
-    a skos:Concept ;
+<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TFGRZMEAND> a skos:Concept ;
     rdfs:label "Meandering Grazing Traces"@en ;
-    dcterms:identifier "bddngsrfcstrctr:TFGRZMEAND"^^ns1:identifier ;
-    ns2:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
     skos:prefLabel "Meandering Grazing Traces"@en ;
-    ns1:childrenCount 0 ;
-    ns1:link "/v/vocab/ref:BeddingSurfaceStructure/bddngsrfcstrctr:TFGRZMEAND" ;
-.
+    prez:childrenCount 0 ;
+    prez:link "/v/vocab/rf:BeddingSurfaceStructure/bddngsrfcstrctr:TFGRZMEAND" .
 
-<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TFGRZRAD>
-    a skos:Concept ;
+<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TFGRZRAD> a skos:Concept ;
     rdfs:label "Radial Grazing Traces"@en ;
-    dcterms:identifier "bddngsrfcstrctr:TFGRZRAD"^^ns1:identifier ;
-    ns2:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
     skos:prefLabel "Radial Grazing Traces"@en ;
-    ns1:childrenCount 0 ;
-    ns1:link "/v/vocab/ref:BeddingSurfaceStructure/bddngsrfcstrctr:TFGRZRAD" ;
-.
+    prez:childrenCount 0 ;
+    prez:link "/v/vocab/rf:BeddingSurfaceStructure/bddngsrfcstrctr:TFGRZRAD" .
 
-<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TFREST>
-    a skos:Concept ;
+<http://data.bgs.ac.uk/id/BeddingSurfaceStructure/TFREST> a skos:Concept ;
     rdfs:label "Resting Traces"@en ;
-    dcterms:identifier "bddngsrfcstrctr:TFREST"^^ns1:identifier ;
-    ns2:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/valid> ;
     skos:prefLabel "Resting Traces"@en ;
-    ns1:childrenCount 0 ;
-    ns1:link "/v/vocab/ref:BeddingSurfaceStructure/bddngsrfcstrctr:TFREST" ;
-.
+    prez:childrenCount 0 ;
+    prez:link "/v/vocab/rf:BeddingSurfaceStructure/bddngsrfcstrctr:TFREST" .
 
-<https://linked.data.gov.au/def/reg-statuses/experimental>
-    skos:prefLabel "experimental"@en ;
-    schema:color "#eae72c" ;
-.
+<https://linked.data.gov.au/def/reg-statuses/experimental> skos:prefLabel "experimental"@en ;
+    schema:color "#eae72c" .
 
-<https://linked.data.gov.au/def/reg-statuses/valid>
-    skos:prefLabel "valid"@en ;
-    schema:color "#36a80d" ;
-.
+<https://linked.data.gov.au/def/reg-statuses/valid> skos:prefLabel "valid"@en ;
+    schema:color "#36a80d" .

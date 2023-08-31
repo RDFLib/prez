@@ -47,8 +47,10 @@ def a_resource_link(cp_test_client, a_catalog_link):
     with cp_test_client as client:
         r = client.get(a_catalog_link)
         g = Graph().parse(data=r.text)
-        link = next(g.objects(subject=None, predicate=URIRef(f"https://prez.dev/link")))
-        return link
+        links = g.objects(subject=None, predicate=URIRef(f"https://prez.dev/link"))
+        for link in links:
+            if link != a_catalog_link:
+                return link
 
 
 def test_catalog_anot(cp_test_client, a_catalog_link):
