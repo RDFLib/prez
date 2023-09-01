@@ -9,7 +9,7 @@ prez:default
     rdfs:label         "Prez Default Match Search"@en ;
     rdfs:comment       "" ;
     rdf:value          """
-    SELECT DISTINCT ?search_result_uri ?predicate ?match ?weight
+    SELECT ?search_result_uri ?predicate ?match ?weight ?hashID
     WHERE {
       ?search_result_uri ?predicate ?match .
         $FOCUS_TO_FILTER
@@ -29,6 +29,7 @@ prez:default
           )
         ) AS ?weight
       )
+    BIND(URI(CONCAT("urn:hash:", SHA256(CONCAT(STR(?search_result_uri), STR(?predicate), STR(?match), STR(?weight))))) AS ?hashID)
     }
     LIMIT $LIMIT
         """ .

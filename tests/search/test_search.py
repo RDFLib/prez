@@ -65,7 +65,7 @@ def test_search_focus_to_filter(test_client: TestClient):
 def test_search_filter_to_focus(test_client: TestClient):
     with test_client as client:
         response = client.get(
-            f"/search?term=exactMatch&method=exactMatch&filter-to-focus[rdfs:member]=2016.01:contacttype"
+            f"/search?term=exactMatch&method=default&filter-to-focus[rdfs:member]=2016.01:contacttype"
         )
         response_graph = Graph().parse(data=response.text, format="turtle")
         expected_graph = Graph().parse(

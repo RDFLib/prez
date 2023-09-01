@@ -192,10 +192,11 @@ def generate_item_construct(focus_item, profile: URIRef):
 
 def search_query_construct():
     return dedent(
-        f"""?search_result_uri a prez:SearchResult ;
+        f"""?hashID a prez:SearchResult ;
         prez:searchResultWeight ?weight ;
         prez:searchResultPredicate ?predicate ;
-        prez:searchResultMatch ?match ."""
+        prez:searchResultMatch ?match ;
+        prez:searchResultURI ?search_result_uri ."""
     )
 
 
@@ -800,7 +801,7 @@ def select_profile_mediatype(
       ?mid rdfs:subClassOf* ?base_class .
       VALUES ?base_class {{ dcat:Dataset geo:FeatureCollection prez:FeatureCollectionList prez:FeatureList geo:Feature
       skos:ConceptScheme skos:Concept skos:Collection prez:DatasetList prez:VocPrezCollectionList prez:SchemesList
-      prez:CatalogList prez:ProfilesList dcat:Catalog dcat:Resource prof:Profile prez:SPARQLQuery }}
+      prez:CatalogList prez:ProfilesList dcat:Catalog dcat:Resource prof:Profile prez:SPARQLQuery prez:SearchResult }}
       ?profile altr-ext:constrainsClass ?class ;
                altr-ext:hasResourceFormat ?format ;
                dcterms:title ?title .\
