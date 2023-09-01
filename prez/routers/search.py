@@ -7,9 +7,8 @@ from starlette.responses import PlainTextResponse
 from prez.cache import search_methods
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.reference_data.prez_ns import PREZ
-from prez.renderers.renderer import return_rdf
+from prez.renderers.renderer import return_from_graph
 from prez.routers.object import _add_prez_links
-from prez.services.connegp_service import get_requested_profile_and_mediatype
 from prez.services.curie_functions import get_uri_for_curie_id
 from prez.sparql.methods import rdf_query_to_graph
 from prez.sparql.objects_listings import generate_item_construct
@@ -64,8 +63,11 @@ async def search(
     if "anot+" in prof_and_mt_info.mediatype:
         await _add_prez_links(graph)
 
-    return await return_rdf(
-        graph, mediatype=prof_and_mt_info.mediatype, profile_headers={}
+    return await return_from_graph(
+        graph,
+        mediatype=prof_and_mt_info.mediatype,
+        profile=URIRef("https://prez.dev/profile/open"),
+        profile_headers=prof_and_mt_info.profile_headers,
     )
 
 
