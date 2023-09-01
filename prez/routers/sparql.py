@@ -36,8 +36,7 @@ async def sparql_endpoint(request: Request):
             g,
             prof_and_mt_info.profile_headers,
             prof_and_mt_info.profile,
-            {},
-            non_anot_mediatype,
+            request_mediatype,
         )
     else:
         response = await sparql(request)

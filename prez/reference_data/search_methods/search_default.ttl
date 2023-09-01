@@ -1,0 +1,34 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix prez:    <https://prez.dev/> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+
+prez:default
+    a                  prez:SearchMethod ;
+    dcterms:identifier "default" ;
+    rdfs:label         "Prez Default Match Search"@en ;
+    rdfs:comment       "" ;
+    rdf:value          """
+    SELECT DISTINCT ?search_result_uri ?predicate ?match ?weight
+    WHERE {
+      ?search_result_uri ?predicate ?match .
+        $FOCUS_TO_FILTER
+        $FILTER_TO_FOCUS
+      FILTER (
+        LCASE(?match) = "$TERM" ||
+        REGEX(?match, "^$TERM", "i") ||
+        REGEX(?match, "\\b$TERM\\b", "i") ||
+        REGEX(?match, "$TERM", "i")
+      )
+      BIND(
+        IF(LCASE(?match) = "$TERM", 10,
+          IF(REGEX(?match, "^$TERM", "i"), 7,
+            IF(REGEX(?match, "\\b$TERM\\b", "i"), 5,
+              IF(REGEX(?match, "$TERM", "i"), 3, 0)
+            )
+          )
+        ) AS ?weight
+      )
+    }
+    LIMIT $LIMIT
+        """ .

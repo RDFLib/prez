@@ -32,6 +32,7 @@ from prez.services.app_service import (
     create_endpoints_graph,
     populate_api_info,
     add_prefixes_to_prefix_graph,
+    add_common_context_ontologies_to_tbox_cache,
 )
 from prez.services.exception_catchers import (
     catch_400,
@@ -121,6 +122,7 @@ async def app_startup():
     await create_endpoints_graph()
     await count_objects()
     await populate_api_info()
+    await add_common_context_ontologies_to_tbox_cache()
 
 
 @app.on_event("shutdown")

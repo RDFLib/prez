@@ -9,6 +9,9 @@ prez:jenaFTName a prez:SearchMethod ;
     rdf:value """
         {
             SELECT * {(?search_result_uri ?weight ?match ?graph ?predicate) <http://jena.apache.org/text#query>
-            (<http://www.example.org/resources#NameProps> "$TERM")} LIMIT $LIMIT
+            (<http://www.example.org/resources#NameProps> "$TERM")
+            $FOCUS_TO_FILTER
+            $FILTER_TO_FOCUS
+            } LIMIT $LIMIT
         }
         """.

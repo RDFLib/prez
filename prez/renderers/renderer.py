@@ -1,19 +1,17 @@
 import io
 import logging
-from typing import Optional, Dict
+from typing import Optional
 
 from connegp import RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
 from fastapi.responses import StreamingResponse
 from pydantic.types import List
-from rdflib import Graph, URIRef, Namespace, Literal, RDF
+from rdflib import Graph, URIRef, Namespace
 from starlette.requests import Request
 from starlette.responses import Response
 
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.models.profiles_item import ProfileItem
-from prez.reference_data.prez_ns import PREZ
 from prez.sparql.methods import send_queries, rdf_query_to_graph
-from prez.services.curie_functions import get_curie_id_for_uri
 from prez.sparql.objects_listings import (
     generate_item_construct,
     get_annotation_properties,
@@ -117,6 +115,7 @@ async def return_annotated_rdf(
 
     graph.bind("prez", "https://prez.dev/")
     obj = io.BytesIO(graph.serialize(format=non_anot_mediatype, encoding="utf-8"))
+
     # TODO move responses to router and return graph here
     return StreamingResponse(
         content=obj, media_type=non_anot_mediatype, headers=profile_headers

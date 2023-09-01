@@ -8,6 +8,7 @@ from rdflib import Literal, URIRef, Graph
 from rdflib.compare import isomorphic
 
 from prez.models.search_method import SearchMethod
+from prez.routers.search import extract_qsa_params
 
 PREZ_DIR = os.getenv("PREZ_DIR")
 LOCAL_SPARQL_STORE = os.getenv("LOCAL_SPARQL_STORE")
@@ -48,10 +49,10 @@ def test_serialisation(test_method_creation):
         g = method.serialize()
 
 
-def test_search_preflabel(test_client: TestClient):
+def test_search_focus_to_filter(test_client: TestClient):
     with test_client as client:
         response = client.get(
-            f"/search?term=Coal&method=skosPrefLabel&filter[skos:inScheme]=2016.01:contacttype"
+            f"/search?term=contact&method=default&focus-to-filter[skos:broader]=http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact"
         )
         response_graph = Graph().parse(data=response.text, format="turtle")
         expected_graph = Graph().parse(
@@ -59,3 +60,57 @@ def test_search_preflabel(test_client: TestClient):
             / "../data/vocprez/expected_responses/collection_listing_anot.ttl"
         )
         assert isomorphic(expected_graph, response_graph)
+
+
+def test_search_filter_to_focus(test_client: TestClient):
+    with test_client as client:
+        response = client.get(
+            f"/search?term=exactMatch&method=exactMatch&filter-to-focus[rdfs:member]=2016.01:contacttype"
+        )
+        response_graph = Graph().parse(data=response.text, format="turtle")
+        expected_graph = Graph().parse(
+            Path(__file__).parent
+            / "../data/vocprez/expected_responses/collection_listing_anot.ttl"
+        )
+        assert isomorphic(expected_graph, response_graph)
+
+
+@pytest.mark.parametrize(
+    "qsas, expected_focus_to_filter, expected_filter_to_focus",
+    [
+        (
+            {
+                "term": "value1",
+                "method": "value2",
+                "filter-to-focus[rdfs:member]": "value3",
+                "focus-to-filter[dcterms:title]": "value4",
+            },
+            [(URIRef("http://purl.org/dc/terms/title"), "value4")],
+            [(URIRef("http://www.w3.org/2000/01/rdf-schema#member"), "value3")],
+        ),
+        (
+            {
+                "term": "value1",
+                "method": "value2",
+                "focus-to-filter[dcterms:title]": "value4",
+            },
+            [(URIRef("http://purl.org/dc/terms/title"), "value4")],
+            [],
+        ),
+        (
+            {
+                "term": "value1",
+                "method": "value2",
+                "filter-to-focus[rdfs:member]": "value3",
+            },
+            [],
+            [(URIRef("http://www.w3.org/2000/01/rdf-schema#member"), "value3")],
+        ),
+        ({"term": "value1", "method": "value2"}, [], []),
+    ],
+)
+def test_extract_qsa_params(qsas, expected_focus_to_filter, expected_filter_to_focus):
+    focus_to_filter_params, filter_to_focus_params = extract_qsa_params(qsas)
+
+    assert focus_to_filter_params == expected_focus_to_filter
+    assert filter_to_focus_params == expected_filter_to_focus
