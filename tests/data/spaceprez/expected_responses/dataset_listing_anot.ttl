@@ -9,6 +9,13 @@
     dcterms:title "Sandgate example dataset"@en ;
     prez:link "/s/datasets/exds:sandgate" .
 
+dcterms:description rdfs:label "Description"@en ;
+    dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en .
+
+dcterms:title rdfs:label "Title"@en .
+
+rdfs:label rdfs:label "label" .
+
 <https://linked.data.gov.au/datasets/geofabric> a dcat:Dataset ;
     dcterms:description "The Australian national dataset of important hydrological features such as rivers, water bodies, aquifers and monitoring points"@en ;
     dcterms:title "Australian Hydrological Geospatial Fabric"@en ;

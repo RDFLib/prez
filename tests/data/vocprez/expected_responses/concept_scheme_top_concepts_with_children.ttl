@@ -37,6 +37,8 @@ dcterms:identifier rdfs:label "Identifier"@en ;
 dcterms:provenance rdfs:label "Provenance"@en ;
     dcterms:description "The statement may include a description of any changes successive custodians made to the resource."@en .
 
+rdfs:label rdfs:label "label" .
+
 <http://linked.data.gov.au/def/borehole-purpose/coal> a skos:Concept ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     skos:prefLabel "Coal"@en ;

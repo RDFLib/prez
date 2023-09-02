@@ -4,7 +4,18 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-dcterms:identifier rdfs:label "Identifier"@en .
+dcterms:description rdfs:label "Description"@en ;
+    dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en .
+
+dcterms:identifier rdfs:label "Identifier"@en ;
+    dcterms:description "Recommended practice is to identify the resource by means of a string conforming to an identification system. Examples include International Standard Book Number (ISBN), Digital Object Identifier (DOI), and Uniform Resource Name (URN).  Persistent identifiers should be provided as HTTP URIs."@en .
+
+dcterms:title rdfs:label "Title"@en .
+
+dcterms:type rdfs:label "Type"@en ;
+    dcterms:description "Recommended practice is to use a controlled vocabulary such as the DCMI Type Vocabulary [[DCMI-TYPE](http://dublincore.org/documents/dcmi-type-vocabulary/)]. To describe the file format, physical medium, or dimensions of the resource, use the property Format."@en .
+
+rdfs:label rdfs:label "label" .
 
 <https://linked.data.gov.au/datasets/geofabric> dcterms:description "The Australian national dataset of important hydrological features such as rivers, water bodies, aquifers and monitoring points"@en ;
     dcterms:identifier "ldgovau:geofabric"^^prez:identifier .

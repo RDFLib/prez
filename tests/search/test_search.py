@@ -2,8 +2,10 @@ import os
 import subprocess
 from pathlib import Path
 from time import sleep
+from urllib.parse import urlencode
 
 import pytest
+from fastapi.testclient import TestClient
 from rdflib import Literal, URIRef, Graph
 from rdflib.compare import isomorphic
 
@@ -12,7 +14,6 @@ from prez.routers.search import extract_qsa_params
 
 PREZ_DIR = os.getenv("PREZ_DIR")
 LOCAL_SPARQL_STORE = os.getenv("LOCAL_SPARQL_STORE")
-from fastapi.testclient import TestClient
 
 
 @pytest.fixture(scope="module")
@@ -44,33 +45,40 @@ def test_method_creation():
     return method
 
 
-def test_serialisation(test_method_creation):
-    with test_method_creation as method:
-        g = method.serialize()
-
-
 def test_search_focus_to_filter(test_client: TestClient):
+    base_url = "/search"
+    params = {
+        "term": "contact",
+        "method": "default",
+        "focus-to-filter[skos:broader]": "http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact",
+    }
+    # Constructing the final URL
+    final_url = f"{base_url}?{urlencode(params)}"
     with test_client as client:
-        response = client.get(
-            f"/search?term=contact&method=default&focus-to-filter[skos:broader]=http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact"
-        )
+        response = client.get(final_url)
         response_graph = Graph().parse(data=response.text, format="turtle")
         expected_graph = Graph().parse(
             Path(__file__).parent
-            / "../data/vocprez/expected_responses/collection_listing_anot.ttl"
+            / "../data/search/expected_responses/focus_to_filter_search.ttl"
         )
         assert isomorphic(expected_graph, response_graph)
 
 
 def test_search_filter_to_focus(test_client: TestClient):
+    base_url = "/search"
+    params = {
+        "term": "storage",
+        "method": "default",
+        "filter-to-focus[skos:broader]": "http://linked.data.gov.au/def/borehole-purpose/carbon-capture-and-storage",
+    }
+    # Constructing the final URL
+    final_url = f"{base_url}?{urlencode(params)}"
     with test_client as client:
-        response = client.get(
-            f"/search?term=exactMatch&method=default&filter-to-focus[rdfs:member]=2016.01:contacttype"
-        )
+        response = client.get(final_url)
         response_graph = Graph().parse(data=response.text, format="turtle")
         expected_graph = Graph().parse(
             Path(__file__).parent
-            / "../data/vocprez/expected_responses/collection_listing_anot.ttl"
+            / "../data/search/expected_responses/filter_to_focus_search.ttl"
         )
         assert isomorphic(expected_graph, response_graph)
 

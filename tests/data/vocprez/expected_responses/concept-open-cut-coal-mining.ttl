@@ -25,6 +25,10 @@ dcterms:identifier rdfs:label "Identifier"@en ;
 dcterms:provenance rdfs:label "Provenance"@en ;
     dcterms:description "The statement may include a description of any changes successive custodians made to the resource."@en .
 
+rdfs:isDefinedBy rdfs:label "isDefinedBy" .
+
+rdfs:label rdfs:label "label" .
+
 bhpur:coal dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     skos:prefLabel "Coal"@en ;
     prez:link "/v/vocab/def2:borehole-purpose/brhl-prps:coal" .

@@ -47,6 +47,8 @@ dcterms:publisher rdfs:label "Publisher"@en .
     skos:prefLabel "Contact Type"@en ;
     prez:link "/v/vocab/2016.01:contacttype" .
 
+rdfs:label rdfs:label "label" .
+
 <https://linked.data.gov.au/def/reg-statuses> a skos:ConceptScheme ;
     dcterms:identifier "def:reg-statuses"^^prez:identifier ;
     dcterms:publisher <https://linked.data.gov.au/org/agldwg> ;

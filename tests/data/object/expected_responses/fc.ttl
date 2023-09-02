@@ -3,7 +3,18 @@
 @prefix prez: <https://prez.dev/> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
-dcterms:identifier rdfs:label "Identifier"@en .
+dcterms:description rdfs:label "Description"@en ;
+    dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en .
+
+dcterms:identifier rdfs:label "Identifier"@en ;
+    dcterms:description "Recommended practice is to identify the resource by means of a string conforming to an identification system. Examples include International Standard Book Number (ISBN), Digital Object Identifier (DOI), and Uniform Resource Name (URN).  Persistent identifiers should be provided as HTTP URIs."@en .
+
+dcterms:provenance rdfs:label "Provenance"@en ;
+    dcterms:description "The statement may include a description of any changes successive custodians made to the resource."@en .
+
+rdfs:label rdfs:label "label" .
+
+rdfs:member rdfs:label "member" .
 
 <https://test/dataset> dcterms:identifier "ns3:dataset"^^prez:identifier .
 
