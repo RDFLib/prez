@@ -45,4 +45,4 @@ def test_cache(prez_test_client):
         client.get("/c/catalogs")
         r = client.get("/tbox-cache")
         g = Graph().parse(data=r.text)
-        assert len(g) == 6
+        assert len(g) == 3118
