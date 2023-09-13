@@ -13,6 +13,7 @@ from prez.models.object_item import ObjectItem
 from prez.models.profiles_item import ProfileItem
 from prez.models.profiles_listings import ProfilesMembers
 from prez.services.curie_functions import get_uri_for_curie_id
+from prez.config import settings
 
 log = logging.getLogger(__name__)
 
@@ -363,10 +364,6 @@ def generate_bnode_select(depth):
 
 async def get_annotation_properties(
     item_graph: Graph,
-    label_predicates: List[URIRef],
-    description_predicates: List[URIRef],
-    explanation_predicates: List[URIRef],
-    other_predicates: List[URIRef],
 ):
     """
     Gets annotation data used for HTML display.
@@ -375,9 +372,10 @@ async def get_annotation_properties(
     which are often diverse in the predicates they use, to be aligned with the default predicates used by Prez. The full
     range of predicates used can be manually included via profiles.
     """
-    label_predicates += [RDFS.label]
-    description_predicates += [DCTERMS.description]
-    explanation_predicates += [DCTERMS.provenance]
+    label_predicates = settings.label_predicates
+    description_predicates = settings.description_predicates
+    explanation_predicates = settings.provenance_predicates
+    other_predicates = settings.other_predicates
     terms = (
         set(i for i in item_graph.predicates() if isinstance(i, URIRef))
         | set(i for i in item_graph.objects() if isinstance(i, URIRef))
@@ -557,58 +555,58 @@ def get_relevant_shape_bns_for_profile(selected_class, profile):
     return relevant_shape_bns
 
 
-def get_annotation_predicates(profile):
-    """
-    Gets the annotation predicates from the profiles graph for a given profile.
-    If no predicates are found, "None" is returned by RDFLib
-    """
-    preds = {
-        "label_predicates": [],
-        "description_predicates": [],
-        "explanation_predicates": [],
-        "other_predicates": [],
-    }
-    if not profile:
-        return preds
-    preds["other_predicates"].extend(
-        list(
-            profiles_graph_cache.objects(
-                subject=profile, predicate=ALTREXT.otherAnnotationProps
-            )
-        )
-    )
-    preds["label_predicates"].extend(
-        list(
-            profiles_graph_cache.objects(
-                subject=profile, predicate=ALTREXT.hasLabelPredicate
-            )
-        )
-    )
-    preds["description_predicates"].extend(
-        list(
-            profiles_graph_cache.objects(
-                subject=profile, predicate=ALTREXT.hasDescriptionPredicate
-            )
-        )
-    )
-    preds["explanation_predicates"].extend(
-        list(
-            profiles_graph_cache.objects(
-                subject=profile, predicate=ALTREXT.hasExplanationPredicate
-            )
-        )
-    )
-    if not bool(
-        list(chain(*preds.values()))
-    ):  # check whether any predicates were found
-        log.info(
-            f"No annotation predicates found for profile {profile}, defaults will be used:\n"
-            f"Label: rdfs:label; Description: dcterms:description; Explanation: dcterms:provenance.\n"
-            f"To specify annotation predicates (to be used in *addition* to the defaults), use the following "
-            f"predicates in a profile definition: altrext:hasLabelPredicate, altrext:hasDescriptionPredicate, "
-            f"altrext:hasExplanationPredicate"
-        )
-    return preds
+# def get_annotation_predicates(profile):
+#     """
+#     Gets the annotation predicates from the profiles graph for a given profile.
+#     If no predicates are found, "None" is returned by RDFLib
+#     """
+#     preds = {
+#         "label_predicates": [],
+#         "description_predicates": [],
+#         "explanation_predicates": [],
+#         "other_predicates": [],
+#     }
+#     if not profile:
+#         return preds
+#     preds["other_predicates"].extend(
+#         list(
+#             profiles_graph_cache.objects(
+#                 subject=profile, predicate=ALTREXT.otherAnnotationProps
+#             )
+#         )
+#     )
+#     preds["label_predicates"].extend(
+#         list(
+#             profiles_graph_cache.objects(
+#                 subject=profile, predicate=ALTREXT.hasLabelPredicate
+#             )
+#         )
+#     )
+#     preds["description_predicates"].extend(
+#         list(
+#             profiles_graph_cache.objects(
+#                 subject=profile, predicate=ALTREXT.hasDescriptionPredicate
+#             )
+#         )
+#     )
+#     preds["explanation_predicates"].extend(
+#         list(
+#             profiles_graph_cache.objects(
+#                 subject=profile, predicate=ALTREXT.hasExplanationPredicate
+#             )
+#         )
+#     )
+#     if not bool(
+#         list(chain(*preds.values()))
+#     ):  # check whether any predicates were found
+#         log.info(
+#             f"No annotation predicates found for profile {profile}, defaults will be used:\n"
+#             f"Label: rdfs:label; Description: dcterms:description; Explanation: dcterms:provenance.\n"
+#             f"To specify annotation predicates (to be used in *addition* to the defaults), use the following "
+#             f"predicates in a profile definition: altrext:hasLabelPredicate, altrext:hasDescriptionPredicate, "
+#             f"altrext:hasExplanationPredicate"
+#         )
+#     return preds
 
 
 def get_listing_predicates(profile, selected_class):

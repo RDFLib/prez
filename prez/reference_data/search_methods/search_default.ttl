@@ -7,29 +7,36 @@ prez:default
     a                  prez:SearchMethod ;
     dcterms:identifier "default" ;
     rdfs:label         "Prez Default Match Search"@en ;
-    rdfs:comment       "" ;
+    rdfs:comment       "A default method to search for objects in Prez" ;
     rdf:value          """
-    SELECT ?search_result_uri ?predicate ?match ?weight ?hashID
+    SELECT ?search_result_uri ?predicate ?match ?weight (URI(CONCAT("urn:hash:", SHA256(CONCAT(STR(?search_result_uri), STR(?predicate), STR(?match), STR(?weight))))) AS ?hashID)
     WHERE {
-      ?search_result_uri ?predicate ?match .
-        $FOCUS_TO_FILTER
-        $FILTER_TO_FOCUS
-      FILTER (
-        LCASE(?match) = "$TERM" ||
-        REGEX(?match, "^$TERM", "i") ||
-        REGEX(?match, "\\b$TERM\\b", "i") ||
-        REGEX(?match, "$TERM", "i")
-      )
-      BIND(
-        IF(LCASE(?match) = "$TERM", 10,
-          IF(REGEX(?match, "^$TERM", "i"), 7,
-            IF(REGEX(?match, "\\b$TERM\\b", "i"), 5,
-              IF(REGEX(?match, "$TERM", "i"), 3, 0)
-            )
-          )
-        ) AS ?weight
-      )
-    BIND(URI(CONCAT("urn:hash:", SHA256(CONCAT(STR(?search_result_uri), STR(?predicate), STR(?match), STR(?weight))))) AS ?hashID)
+        SELECT ?search_result_uri ?predicate ?match (SUM(?w) AS ?weight)
+        WHERE
+        {
+          ?search_result_uri ?predicate ?match .
+            $FOCUS_TO_FILTER
+            $FILTER_TO_FOCUS
+            VALUES ?predicate { $PREDICATES }
+            {
+                ?search_result_uri ?predicate ?match .
+                BIND (100 AS ?w)
+                FILTER (LCASE(?match) = "$TERM")
+            }
+          UNION
+            {
+                ?search_result_uri ?predicate ?match .
+                BIND (20 AS ?w)
+                FILTER (REGEX(?match, "^$TERM", "i"))
+            }
+          UNION
+            {
+                ?search_result_uri ?predicate ?match .
+                BIND (10 AS ?w)
+                FILTER (REGEX(?match, "$TERM", "i"))
+            }
+        }
+        GROUP BY ?search_result_uri ?predicate ?match
+        LIMIT $LIMIT
     }
-    LIMIT $LIMIT
         """ .

@@ -24,12 +24,13 @@ class SearchMethod(BaseModel):
     def __hash__(self):
         return hash(self.uri)
 
-    def populate_query(self, term, limit, focus_to_filter, filter_to_focus):
+    def populate_query(self, term, limit, focus_to_filter, filter_to_focus, predicates):
         self.populated_query = self.template_query.substitute(
             {
                 "TERM": term,
                 "LIMIT": limit,
                 "FOCUS_TO_FILTER": focus_to_filter,
                 "FILTER_TO_FOCUS": filter_to_focus,
+                "PREDICATES": predicates,
             }
         )

@@ -31,13 +31,13 @@ def prez_test_client(request):
     return TestClient(app)
 
 
-def test_purge_cache(prez_test_client):
+def test_reset_cache(prez_test_client):
     with prez_test_client as client:
         client.get("/c/catalogs")
-        client.get("/purge-tbox-cache")
+        client.get("/reset-tbox-cache")
         r = client.get("/tbox-cache")
         g = Graph().parse(data=r.text)
-        assert len(g) == 0
+        assert len(g) == 3127
 
 
 def test_cache(prez_test_client):
@@ -45,4 +45,4 @@ def test_cache(prez_test_client):
         client.get("/c/catalogs")
         r = client.get("/tbox-cache")
         g = Graph().parse(data=r.text)
-        assert len(g) == 3118
+        assert len(g) == 3127

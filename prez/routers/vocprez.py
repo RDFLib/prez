@@ -193,20 +193,7 @@ async def concept_route(
     request: Request, concept_scheme_curie: str, concept_curie: str
 ):
     """Get a SKOS Concept."""
-    profiles_mediatypes_info = ProfilesMediatypesInfo(
-        request=request, classes=frozenset([SKOS.Concept])
-    )
-
-    concept_iri = get_iri_route(concept_curie)
-    graph = await get_resource(concept_iri)
-    if "anot+" in profiles_mediatypes_info.mediatype:
-        await _add_prez_links(graph)
-    return await return_from_graph(
-        graph,
-        profiles_mediatypes_info.mediatype,
-        profiles_mediatypes_info.profile,
-        profiles_mediatypes_info.profile_headers,
-    )
+    return await item_function(request, object_curie=concept_curie)
 
 
 @router.get(

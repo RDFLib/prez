@@ -2,6 +2,7 @@
 @prefix geo: <http://www.opengis.net/ont/geosparql#> .
 @prefix prez: <https://prez.dev/> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <http://example.com/datasets/sandgate> dcterms:description "Example floods, roads, catchment and facilities in the Sandgate are"@en ;
@@ -29,4 +30,20 @@ dcterms:identifier rdfs:label "Identifier"@en ;
 
 dcterms:title rdfs:label "Title"@en .
 
+geo:asGeoJSON skos:definition "The GeoJSON serialization of a Geometry"@en ;
+    skos:prefLabel "as GeoJSON"@en .
+
+geo:asWKT skos:definition "The WKT serialization of a Geometry"@en ;
+    skos:prefLabel "as WKT"@en .
+
+geo:hasGeometry skos:definition "A spatial representation for a given Feature."@en ;
+    skos:prefLabel "has geometry"@en .
+
 rdfs:label rdfs:label "label" .
+
+geo:Feature skos:definition "A discrete spatial phenomenon in a universe of discourse."@en ;
+    skos:prefLabel "Feature"@en .
+
+geo:Geometry skos:definition "A coherent set of direct positions in space. The positions are held within a Spatial Reference System (SRS)."@en ;
+    skos:prefLabel "Geometry"@en .
+

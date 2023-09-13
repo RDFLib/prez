@@ -5,6 +5,7 @@ from rdflib import Literal, URIRef
 from starlette.responses import PlainTextResponse
 
 from prez.cache import search_methods
+from prez.config import settings
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.reference_data.prez_ns import PREZ
 from prez.renderers.renderer import return_from_graph
@@ -38,17 +39,28 @@ async def search(
     search_query = search_methods[Literal(selected_method)].copy()
     filter_to_focus_str = ""
     focus_to_filter_str = ""
+
     if filt_2_foc:
-        for filter_pair in filt_2_foc:
-            filter_to_focus_str += (
-                f"<{filter_pair[1]}> <{filter_pair[0]}> ?search_result_uri.\n"
-            )
+        for idx, filter_pair in enumerate(filt_2_foc, start=1):
+            filter_values = " ".join(f"<{f}>" for f in filter_pair[1].split(","))
+            filter_to_focus_str += f"""?filter_to_focus_{idx} <{filter_pair[0]}> ?search_result_uri.
+                VALUES ?filter_to_focus_{idx} {{ {filter_values} }}"""
+
     if foc_2_filt:
-        for filter_pair in foc_2_filt:
-            focus_to_filter_str += (
-                f"?search_result_uri <{filter_pair[0]}> <{filter_pair[1]}>.\n"
-            )
-    search_query.populate_query(term, limit, filter_to_focus_str, focus_to_filter_str)
+        for idx, filter_pair in enumerate(foc_2_filt, start=1):
+            filter_values = " ".join(f"<{f}>" for f in filter_pair[1].split(","))
+            focus_to_filter_str += f"""?search_result_uri <{filter_pair[0]}> ?focus_to_filter_{idx}.
+                VALUES ?focus_to_filter_{idx} {{ {filter_values} }}"""
+
+    predicates = (
+        settings.label_predicates
+        + settings.description_predicates
+        + settings.provenance_predicates
+    )
+    predicates_sparql_string = " ".join(f"<{p}>" for p in predicates)
+    search_query.populate_query(
+        term, limit, filter_to_focus_str, focus_to_filter_str, predicates_sparql_string
+    )
 
     full_query = generate_item_construct(
         search_query, URIRef("https://prez.dev/profile/open")

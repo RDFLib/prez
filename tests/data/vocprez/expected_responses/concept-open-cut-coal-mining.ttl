@@ -1,5 +1,3 @@
-@prefix bhpur: <http://linked.data.gov.au/def/borehole-purpose/> .
-@prefix cs3: <http://linked.data.gov.au/def2/borehole-purpose> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
 @prefix ns1: <http://purl.org/linked-data/registry#> .
 @prefix prez: <https://prez.dev/> .
@@ -7,12 +5,12 @@
 @prefix schema: <https://schema.org/> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 
-bhpur:open-cut-coal-mining a skos:Concept ;
+<http://linked.data.gov.au/def/borehole-purpose/open-cut-coal-mining> a skos:Concept ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
-    rdfs:isDefinedBy cs3: ;
-    skos:broader bhpur:coal ;
+    rdfs:isDefinedBy <http://linked.data.gov.au/def2/borehole-purpose> ;
+    skos:broader <http://linked.data.gov.au/def/borehole-purpose/coal> ;
     skos:definition "Wells drilled for the purpose of assessing coal resources for an open cut coal mine."@en ;
-    skos:inScheme cs3: ;
+    skos:inScheme <http://linked.data.gov.au/def2/borehole-purpose> ;
     skos:prefLabel "Open-Cut Coal Mining"@en ;
     prez:link "/v/vocab/def2:borehole-purpose/brhl-prps:open-cut-coal-mining" .
 
@@ -29,15 +27,19 @@ rdfs:isDefinedBy rdfs:label "isDefinedBy" .
 
 rdfs:label rdfs:label "label" .
 
-bhpur:coal dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+<http://linked.data.gov.au/def/borehole-purpose/coal> dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:definition "Wells and bores drilled to facilitate the mining of coal under permits governed by the Queensland Mineral Resources Act 1989"@en ;
     skos:prefLabel "Coal"@en ;
     prez:link "/v/vocab/def2:borehole-purpose/brhl-prps:coal" .
 
-<https://linked.data.gov.au/def/reg-statuses/stable> skos:prefLabel "stable"@en ;
+<https://linked.data.gov.au/def/reg-statuses/stable> skos:definition "An entry that is seen as having a reasonable measure of stability, may be used to mark the full adoption of a previously 'experimental' entry."@en ;
+    skos:prefLabel "stable"@en ;
     schema:color "#2e8c09" .
 
-cs3: dcterms:identifier "def2:borehole-purpose"^^prez:identifier ;
+<http://linked.data.gov.au/def2/borehole-purpose> dcterms:identifier "def2:borehole-purpose"^^prez:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     ns1:status <https://linked.data.gov.au/def/reg-statuses/stable> ;
+    skos:definition "The primary purpose of a borehole based on the legislative State Act and/or the resources industry sector."@en ;
     skos:prefLabel "Borehole Purpose"@en ;
     prez:link "/v/vocab/def2:borehole-purpose" .
+

@@ -83,6 +83,50 @@ def test_search_filter_to_focus(test_client: TestClient):
         assert isomorphic(expected_graph, response_graph)
 
 
+@pytest.mark.xfail(
+    reason="This generates a valid query that has been tested in Fuseki, which RDFLib struggles with"
+)
+def test_search_filter_to_focus_multiple(test_client: TestClient):
+    base_url = "/search"
+    params = {
+        "term": "storage",
+        "method": "default",
+        "filter-to-focus[skos:broader]": "http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact,http://linked.data.gov.au/def/borehole-purpose/greenhouse-gas-storage",
+    }
+    # Constructing the final URL
+    final_url = f"{base_url}?{urlencode(params)}"
+    with test_client as client:
+        response = client.get(final_url)
+        response_graph = Graph().parse(data=response.text, format="turtle")
+        expected_graph = Graph().parse(
+            Path(__file__).parent
+            / "../data/search/expected_responses/filter_to_focus_search.ttl"
+        )
+        assert isomorphic(expected_graph, response_graph)
+
+
+@pytest.mark.xfail(
+    reason="This generates a valid query that has been tested in Fuseki, which RDFLib struggles with"
+)
+def test_search_focus_to_filter_multiple(test_client: TestClient):
+    base_url = "/search"
+    params = {
+        "term": "storage",
+        "method": "default",
+        "focus-to-filter[skos:broader]": "http://linked.data.gov.au/def/borehole-purpose/carbon-capture-and-storage,http://linked.data.gov.au/def/borehole-purpose/pggd",
+    }
+    # Constructing the final URL
+    final_url = f"{base_url}?{urlencode(params)}"
+    with test_client as client:
+        response = client.get(final_url)
+        response_graph = Graph().parse(data=response.text, format="turtle")
+        expected_graph = Graph().parse(
+            Path(__file__).parent
+            / "../data/search/expected_responses/filter_to_focus_search.ttl"
+        )
+        assert isomorphic(expected_graph, response_graph)
+
+
 @pytest.mark.parametrize(
     "qsas, expected_focus_to_filter, expected_filter_to_focus",
     [

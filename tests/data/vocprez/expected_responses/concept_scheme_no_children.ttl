@@ -41,5 +41,9 @@ dcterms:publisher rdfs:label "Publisher"@en .
 
 rdfs:label rdfs:label "label" .
 
-<https://linked.data.gov.au/def/reg-statuses/stable> skos:prefLabel "stable"@en ;
+<https://linked.data.gov.au/def/reg-statuses/stable> skos:definition "An entry that is seen as having a reasonable measure of stability, may be used to mark the full adoption of a previously 'experimental' entry."@en ;
+    skos:prefLabel "stable"@en ;
     schema:color "#2e8c09" .
+
+<https://linked.data.gov.au/org/gsq> schema:name "Geological Survey of Queensland" .
+
