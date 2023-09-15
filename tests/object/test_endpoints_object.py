@@ -53,7 +53,10 @@ def test_feature_collection(test_client):
     expected_graph = Graph().parse(
         Path(__file__).parent / "../data/object/expected_responses/fc.ttl"
     )
-    assert response_graph.isomorphic(expected_graph)
+    assert response_graph.isomorphic(expected_graph), print(
+            f"""Expected-Response:{(expected_graph - response_graph).serialize()}
+            Response-Expected:{(expected_graph-response_graph).serialize()}"""
+        )
 
 
 def test_feature(test_client):
