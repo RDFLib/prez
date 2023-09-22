@@ -1,3 +1,4 @@
+PREFIX dcat: <http://www.w3.org/ns/dcat#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX reg: <http://purl.org/linked-data/registry#>
@@ -16,4 +17,14 @@ PREFIX geo: <http://www.opengis.net/ont/geosparql#>
     skos:definition "A metasomatic facies contact separating rocks that have undergone alteration of a particular facies from those that have undergone metasomatism of another facies. Alteration is a kind of metasomatism that does not introduce economically important minerals."@en ;
     skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
     skos:prefLabel "alteration facies contact"@en ;
+.
+
+<https://test/feature-collection>
+    a geo:FeatureCollection ;
+    rdfs:member <http://resource.geosciml.org/classifier/cgi/contacttype/alteration_facies_contact> ;
+.
+
+<https://test/dataset>
+    a dcat:Dataset ;
+    rdfs:member <https://test/feature-collection> ;
 .

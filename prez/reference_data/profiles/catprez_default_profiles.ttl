@@ -55,7 +55,7 @@ prez:CatPrezProfile
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
         sh:targetClass dcat:Catalog ;
-        altr-ext:outboundChildren dcterms:hasPart ;
+        altr-ext:focusToChild dcterms:hasPart ;
         sh:sequencePath (
             dcterms:hasPart
             dcterms:issued

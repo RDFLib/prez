@@ -115,4 +115,11 @@ prez:profiles
         "application/rdf+xml" ,
         "text/anot+turtle" ,
         "text/turtle" ;
+    altr-ext:hasNodeShape [
+      a sh:NodeShape ;
+        sh:targetClass prez:ProfilesList ;
+        sh:path prez:link ,
+                dcterms:title ,
+                dcterms:description ;
+    ]
 .

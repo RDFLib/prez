@@ -66,6 +66,7 @@ prez:SpacePrezProfile
     dcterms:description "The OGC API Features specifies the behavior of Web APIs that provide access to features in a dataset in a manner independent of the underlying data store." ;
     dcterms:identifier "oai"^^xsd:token ;
     dcterms:title "OGC API Features" ;
+    altr-ext:hasLabelPredicate dcterms:title ;
     altr-ext:constrainsClass
         dcat:Dataset ,
         geo:FeatureCollection ,
@@ -89,7 +90,7 @@ prez:SpacePrezProfile
     ] ,
     [  a sh:NodeShape ;
         sh:targetClass geo:FeatureCollection , prez:FeatureCollectionList , prez:FeatureList ;
-        altr-ext:outboundChildren rdfs:member ;
+        altr-ext:focusToChild rdfs:member ;
     ]
 .
 
@@ -126,6 +127,6 @@ prez:SpacePrezProfile
     altr-ext:hasNodeShape [
       a sh:NodeShape ;
         sh:targetClass dcat:Dataset ;
-        altr-ext:outboundChildren rdfs:member ;
+        altr-ext:focusToChild rdfs:member ;
     ]
 .

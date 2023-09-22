@@ -2,20 +2,14 @@ import logging
 from functools import lru_cache
 from itertools import chain
 from textwrap import dedent
-from typing import List, Optional, Tuple, Union
-
-from rdflib import Graph, URIRef, RDFS, DCTERMS, Namespace
+from typing import List, Optional, Tuple, Union, Dict, FrozenSet
+from prez.config import settings
+from rdflib import Graph, URIRef, RDFS, DCTERMS, Namespace, Literal
 
 from prez.cache import tbox_cache, profiles_graph_cache
-from prez.models import (
-    CatalogItem,
-    CatalogMembers,
-    SpatialItem,
-    SpatialMembers,
-    VocabItem,
-    VocabMembers,
-    SearchMethod,
-)
+from prez.models import SearchMethod
+from prez.models.listing import ListingModel
+from prez.models.object_item import ObjectItem
 from prez.models.profiles_item import ProfileItem
 from prez.models.profiles_listings import ProfilesMembers
 from prez.services.curie_functions import get_uri_for_curie_id
@@ -38,9 +32,7 @@ def generate_listing_construct(
     """
     profile_item = ProfileItem(uri=str(profile))
 
-    if isinstance(
-        focus_item, (ProfilesMembers, CatalogMembers, SpatialMembers, VocabMembers)
-    ):  # listings can include
+    if isinstance(focus_item, (ProfilesMembers, ListingModel)):  # listings can include
         # "context" in the same way objects can, using include/exclude predicates etc.
         (
             include_predicates,
@@ -54,31 +46,32 @@ def generate_listing_construct(
             exclude_predicates
         ) = inverse_predicates = sequence_predicates = None
     (
-        inbound_children,
-        inbound_parents,
-        outbound_children,
-        outbound_parents,
+        child_to_focus,
+        parent_to_focus,
+        focus_to_child,
+        focus_to_parent,
         relative_properties,
     ) = get_listing_predicates(profile, focus_item.selected_class)
     if (
         focus_item.uri
         # and not focus_item.top_level_listing  # if it's a top level class we don't need a listing relation - we're
         # # searching by class
-        and not inbound_children
-        and not inbound_parents
-        and not outbound_children
-        and not outbound_parents
-        # do not need to check relative properties - they will only be used if one of the inbound/outbound parent/child
-        # relations are defined
+        and not child_to_focus
+        and not parent_to_focus
+        and not focus_to_child
+        and not focus_to_parent
+        # do not need to check relative properties - they will only be used if one of the other listing relations
+        # are defined
     ):
         log.warning(
             f"Requested listing of objects related to {focus_item.uri}, however the profile {profile} does not"
-            f" define any listing relations for this for this class, for example outbound children."
+            f" define any listing relations for this for this class, for example focus to child."
         )
-        return None, {}
+        return None
     uri_or_tl_item = (
         "?top_level_item" if focus_item.top_level_listing else f"<{focus_item.uri}>"
     )  # set the focus
+
     # item to a variable if it's a top level listing (this will utilise "class based" listing, where objects are listed
     # based on them being an instance of a class), else use the URI of the "parent" off of which members will be listed.
     # TODO collapse this to an inline expression below; include change in both object and listing queries
@@ -95,37 +88,41 @@ def generate_listing_construct(
         PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
         CONSTRUCT {{
-            {f'{uri_or_tl_item} a <{focus_item.general_class}> .{chr(10)}' if focus_item.top_level_listing else ""}\
+            {f'{uri_or_tl_item} a <{focus_item.base_class}> .{chr(10)}' if focus_item.top_level_listing else ""}\
             {sequence_construct}
-            {f'{uri_or_tl_item} ?outbound_children ?child_item .{chr(10)}' if outbound_children else ""}\
-            {f'{uri_or_tl_item} ?outbound_parents ?parent_item .{chr(10)}' if outbound_parents else ""}\
-            {f'?inbound_child_s ?inbound_child {uri_or_tl_item} .{chr(10)}' if inbound_children else ""}\
-            {f'?inbound_parent_s ?inbound_parent {uri_or_tl_item} .{chr(10)}' if inbound_parents else ""}\
-            {generate_relative_properties("construct", relative_properties, inbound_children, inbound_parents,
-                                          outbound_children, outbound_parents)}\
+            {f'{uri_or_tl_item} ?focus_to_child ?child_item .{chr(10)}' if focus_to_child else ""}\
+            {f'{uri_or_tl_item} ?focus_to_parent ?parent_item .{chr(10)}' if focus_to_parent else ""}\
+            {f'?child_to_focus_s ?child_to_focus {uri_or_tl_item} .{chr(10)}' if child_to_focus else ""}\
+            {f'?parent_to_focus_s ?parent_to_focus {uri_or_tl_item} .{chr(10)}' if parent_to_focus else ""}\
+            {generate_relative_properties("construct", relative_properties, child_to_focus, parent_to_focus,
+                                          focus_to_child, focus_to_parent)}\
             {f"{uri_or_tl_item} ?p ?o ." if include_predicates else ""}\
         }}
         WHERE {{
-            {f'{uri_or_tl_item} a <{focus_item.general_class}> .{chr(10)}' if focus_item.top_level_listing else ""}\
+            {f'{uri_or_tl_item} a <{focus_item.base_class}> .{chr(10)}' if focus_item.top_level_listing else ""}\
             {f'OPTIONAL {{ {uri_or_tl_item} ?p ?o .' if include_predicates else ""}\
             {f'{generate_include_predicates(include_predicates)} }}' if include_predicates else ""} \
             {sequence_construct_where}\
-            {generate_outbound_predicates(uri_or_tl_item, outbound_children, outbound_parents)} \
-            {generate_inbound_predicates(uri_or_tl_item, inbound_children, inbound_parents)} {chr(10)} \
-            {generate_relative_properties("select", relative_properties, inbound_children, inbound_parents,
-                                          outbound_children, outbound_parents)}\
+            {generate_focus_to_x_predicates(uri_or_tl_item, focus_to_child, focus_to_parent)} \
+            {generate_x_to_focus_predicates(uri_or_tl_item, child_to_focus, parent_to_focus)} {chr(10)} \
+            {generate_relative_properties("select", relative_properties, child_to_focus, parent_to_focus,
+                                          focus_to_child, focus_to_parent)}\
             {{
                 SELECT ?top_level_item ?child_item
                 WHERE {{
-                    {f'{uri_or_tl_item} a <{focus_item.general_class}> .{chr(10)}' if focus_item.top_level_listing else generate_outbound_predicates(uri_or_tl_item, outbound_children, outbound_parents)}\
-                    
+                    {f'{uri_or_tl_item} a <{focus_item.base_class}> .{chr(10)}' if focus_item.top_level_listing else generate_focus_to_x_predicates(uri_or_tl_item, focus_to_child, focus_to_parent)}\
+
+                {f'''
                     OPTIONAL {{
-                        {f'{uri_or_tl_item} <{profile_item.label}> ?label .' if focus_item.top_level_listing else ""}\
+                        {f'{uri_or_tl_item} <{profile_item.label}> ?label .' if focus_item.top_level_listing else ""}
                     }}
+                ''' if settings.order_lists_by_label else ""}
                 }}
+                {f'''
                 {'ORDER BY ASC(?label)' if profile_item.label else "ORDER BY ?top_level_item"}
+                ''' if settings.order_lists_by_label else ""}
                 {f"LIMIT {per_page}{chr(10)}"
-                f"OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
+                 f"OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
             }}
         }}
 
@@ -133,19 +130,7 @@ def generate_listing_construct(
     ).strip()
 
     log.debug(f"Listing construct query for {focus_item} is:\n{query}")
-    predicates_for_link_addition = {
-        "link_constructor": focus_item.link_constructor,
-        "ib_par": inbound_parents,
-        "ob_par": outbound_parents,
-        "ib_chi": inbound_children,
-        "ob_chi": outbound_children,
-        "top_level_gen_class": focus_item.general_class
-        if focus_item.top_level_listing
-        else None,
-        # if this is a top level class, include it's general class here so we can create
-        # links to instances of the top level class,
-    }
-    return query, predicates_for_link_addition
+    return query
 
 
 @lru_cache(maxsize=128)
@@ -182,14 +167,14 @@ def generate_item_construct(focus_item, profile: URIRef):
     {f'{search_query_construct()} {chr(10)}' if search_query else ""}\
     \t{uri_or_search_item} ?p ?o1 .
     {sequence_construct}
-    {f'{chr(9)}?s ?inbound_p {uri_or_search_item} .' if inverse_predicates else ""}
+    {f'{chr(9)}?s ?inverse_predicate {uri_or_search_item} .' if inverse_predicates else ""}
     {generate_bnode_construct(bnode_depth)} \
     \n}}
     WHERE {{
         {{ {f'{focus_item.populated_query}' if search_query else ""} }}
         {{
             {uri_or_search_item} ?p ?o1 . {chr(10)} \
-            {f'?s ?inbound_p {uri_or_search_item}{chr(10)}' if inverse_predicates else chr(10)} \
+            {f'?s ?inverse_predicate {uri_or_search_item}{chr(10)}' if inverse_predicates else chr(10)} \
             {generate_include_predicates(include_predicates)} \
             {generate_inverse_predicates(inverse_predicates)} \
             {generate_bnode_select(bnode_depth)}\
@@ -236,8 +221,8 @@ def generate_relative_properties(
         "op": out_parents,
     }
     other_kvs = {
-        "ic": "inbound_child_s",
-        "ip": "inbound_parent_s",
+        "ic": "child_to_focus_s",
+        "ip": "parent_to_focus_s",
         "oc": "child_item",
         "op": "parent_item",
     }
@@ -251,31 +236,31 @@ def generate_relative_properties(
     return rel_string
 
 
-def generate_outbound_predicates(uri_or_tl_item, outbound_children, outbound_parents):
+def generate_focus_to_x_predicates(uri_or_tl_item, focus_to_child, focus_to_parent):
     where = ""
-    if outbound_children:
-        where += f"""{uri_or_tl_item} ?outbound_children ?child_item .
-        VALUES ?outbound_children {{ {" ".join('<' + str(pred) + '>' for pred in outbound_children)} }}\n"""
-    if outbound_parents:
-        where += f"""{uri_or_tl_item} ?outbound_parents ?parent_item .
-        VALUES ?outbound_parents {{ {" ".join('<' + str(pred) + '>' for pred in outbound_parents)} }}\n"""
-    # if not outbound_children and not outbound_parents:
-    #     where += "VALUES ?outbound_children {}\nVALUES ?outbound_parents {}"
+    if focus_to_child:
+        where += f"""{uri_or_tl_item} ?focus_to_child ?child_item .
+        VALUES ?focus_to_child {{ {" ".join('<' + str(pred) + '>' for pred in focus_to_child)} }}\n"""
+    if focus_to_parent:
+        where += f"""{uri_or_tl_item} ?focus_to_parent ?parent_item .
+        VALUES ?focus_to_parent {{ {" ".join('<' + str(pred) + '>' for pred in focus_to_parent)} }}\n"""
+    # if not focus_to_child and not focus_to_parent:
+    #     where += "VALUES ?focus_to_child {}\nVALUES ?focus_to_parent {}"
     return where
 
 
-def generate_inbound_predicates(uri_or_tl_item, inbound_children, inbound_parents):
-    if not inbound_children and not inbound_parents:
+def generate_x_to_focus_predicates(uri_or_tl_item, child_to_focus, parent_to_focus):
+    if not child_to_focus and not parent_to_focus:
         return ""
     where = ""
-    if inbound_children:
-        where += f"""?inbound_child_s ?inbound_child {uri_or_tl_item} ;
-        VALUES ?inbound_child {{ {" ".join('<' + str(pred) + '>' for pred in inbound_children)} }}\n"""
-    if inbound_parents:
-        where += f"""?inbound_parent_s ?inbound_parent {uri_or_tl_item} ;
-        VALUES ?inbound_parent {{ {" ".join('<' + str(pred) + '>' for pred in inbound_parents)} }}\n"""
-    # if not inbound_children and not inbound_parents:
-    #     where += "VALUES ?inbound_child {}\nVALUES ?inbound_parent {}"
+    if child_to_focus:
+        where += f"""?child_to_focus_s ?child_to_focus {uri_or_tl_item} ;
+        VALUES ?child_to_focus {{ {" ".join('<' + str(pred) + '>' for pred in child_to_focus)} }}\n"""
+    if parent_to_focus:
+        where += f"""?parent_to_focus_s ?parent_to_focus {uri_or_tl_item} ;
+        VALUES ?parent_to_focus {{ {" ".join('<' + str(pred) + '>' for pred in parent_to_focus)} }}\n"""
+    # if not child_to_focus and not parent_to_focus:
+    #     where += "VALUES ?child_to_focus {}\nVALUES ?parent_to_focus {}"
     return where
 
 
@@ -292,10 +277,10 @@ def generate_include_predicates(include_predicates):
 def generate_inverse_predicates(inverse_predicates):
     """
     Generates a SPARQL VALUES clause for a list of inverse predicates, of the form:
-    VALUES ?inbound_p { <http://example1.com> <http://example2.com> }
+    VALUES ?inverse_predicate { <http://example1.com> <http://example2.com> }
     """
     if inverse_predicates:
-        return f"""VALUES ?inbound_p{{\n{chr(10).join([f"<{p}>" for p in inverse_predicates])}\n}}"""
+        return f"""VALUES ?inverse_predicate{{\n{chr(10).join([f"<{p}>" for p in inverse_predicates])}\n}}"""
     return ""
 
 
@@ -446,7 +431,7 @@ async def get_annotation_properties(
                 VALUES ?unexplained_term {{ {" ".join('<' + str(term) + '>' for term in uncached_terms["provenance"])}
                 }}
             }}
-            { other_predicates_statement(other_predicates, uncached_terms["other"]) if other_predicates else ""}
+            {other_predicates_statement(other_predicates, uncached_terms["other"]) if other_predicates else ""}
         }}"""
     return queries_for_uncached, labels_g
 
@@ -507,20 +492,11 @@ def get_annotations_from_tbox_cache(
 
 
 # hit the count cache first, if it's not there, hit the SPARQL endpoint
-def generate_listing_count_construct(
-    item: Union[
-        SpatialItem,
-        SpatialMembers,
-        VocabMembers,
-        VocabItem,
-        CatalogItem,
-        CatalogMembers,
-    ]
-):
+def generate_listing_count_construct(item: ListingModel):
     """
     Generates a SPARQL construct query to count either:
     1. the members of a collection, if a URI is given, or;
-    2. the number of instances of a general class, given a general class.
+    2. the number of instances of a base class, given a base class.
     """
     if not item.top_level_listing:
         query = dedent(
@@ -542,11 +518,11 @@ def generate_listing_count_construct(
             f"""
             PREFIX prez: <https://prez.dev/>
 
-            CONSTRUCT {{ <{item.general_class}> prez:count ?count }}
+            CONSTRUCT {{ <{item.base_class}> prez:count ?count }}
             WHERE {{
                 SELECT (COUNT(?item) as ?count)
                 WHERE {{
-                        ?item a <{item.general_class}> .
+                        ?item a <{item.base_class}> .
                 }}
             }}"""
         ).strip()
@@ -641,58 +617,58 @@ def get_listing_predicates(profile, selected_class):
     1. "Collection" endpoints, for top level listing of objects of a particular type
     2. For a specific object, where it has members
     The predicates retrieved from profiles are:
-    - inbound children, for example where the object of interest is a Concept Scheme, and is linked to Concept(s) via
+    - child to focus, for example where the object of interest is a Concept Scheme, and is linked to Concept(s) via
         the predicate skos:inScheme
-    - outbound children, for example where the object of interest is a Feature Collection, and is linked to Feature(s)
+    - focus to child, for example where the object of interest is a Feature Collection, and is linked to Feature(s)
         via the predicate rdfs:member
-    - inbound parents, for example where the object of interest is a Feature Collection, and is linked to Dataset(s) via
+    - parent to focus, for example where the object of interest is a Feature Collection, and is linked to Dataset(s) via
         the predicate dcterms:hasPart
-    - outbound parents, for example where the object of interest is a Concept, and is linked to Concept Scheme(s) via
+    - focus to parents, for example where the object of interest is a Concept, and is linked to Concept Scheme(s) via
     the predicate skos:inScheme
     - relative properties, properties of the parent/child objects that should also be returned. For example, if the
         focus object is a Concept Scheme, and the predicate skos:inScheme is used to link from Concept(s) (using
-        altr-ext:inboundChildren) then specifying skos:broader as a relative property will cause the broader concepts to
+        altr-ext:childToFocus) then specifying skos:broader as a relative property will cause the broader concepts to
         be returned for each concept
     """
     shape_bns = get_relevant_shape_bns_for_profile(selected_class, profile)
     if not shape_bns:
         return [], [], [], [], []
-    inbound_children = [
+    child_to_focus = [
         i[2]
         for i in profiles_graph_cache.triples_choices(
             (
                 shape_bns,
-                ALTREXT.inboundChildren,
+                ALTREXT.childToFocus,
                 None,
             )
         )
     ]
-    inbound_parents = [
+    parent_to_focus = [
         i[2]
         for i in profiles_graph_cache.triples_choices(
             (
                 shape_bns,
-                ALTREXT.inboundParents,
+                ALTREXT.parentToFocus,
                 None,
             )
         )
     ]
-    outbound_children = [
+    focus_to_child = [
         i[2]
         for i in profiles_graph_cache.triples_choices(
             (
                 shape_bns,
-                ALTREXT.outboundChildren,
+                ALTREXT.focusToChild,
                 None,
             )
         )
     ]
-    outbound_parents = [
+    focus_to_parent = [
         i[2]
         for i in profiles_graph_cache.triples_choices(
             (
                 shape_bns,
-                ALTREXT.outboundParents,
+                ALTREXT.focusToParent,
                 None,
             )
         )
@@ -708,10 +684,10 @@ def get_listing_predicates(profile, selected_class):
         )
     ]
     return (
-        inbound_children,
-        inbound_parents,
-        outbound_children,
-        outbound_parents,
+        child_to_focus,
+        parent_to_focus,
+        focus_to_child,
+        focus_to_parent,
         relative_properties,
     )
 
@@ -772,7 +748,7 @@ def select_profile_mediatype(
     defaults, and the availability of these in profiles.
 
     NB: Most specific class refers to the rdfs:Class of an object which has the most specific rdfs:subClassOf links to
-    the general class delivered by that API endpoint. The general classes delivered by each API endpoint are:
+    the base class delivered by that API endpoint. The base classes delivered by each API endpoint are:
 
     SpacePrez:
     /s/datasets -> prez:DatasetList
@@ -821,8 +797,8 @@ def select_profile_mediatype(
     WHERE {{
       VALUES ?class {{{" ".join('<' + str(klass) + '>' for klass in classes)}}}
       ?class rdfs:subClassOf* ?mid .
-      ?mid rdfs:subClassOf* ?general_class .
-      VALUES ?general_class {{ dcat:Dataset geo:FeatureCollection prez:FeatureCollectionList prez:FeatureList geo:Feature
+      ?mid rdfs:subClassOf* ?base_class .
+      VALUES ?base_class {{ dcat:Dataset geo:FeatureCollection prez:FeatureCollectionList prez:FeatureList geo:Feature
       skos:ConceptScheme skos:Concept skos:Collection prez:DatasetList prez:VocPrezCollectionList prez:SchemesList
       prez:CatalogList prez:ProfilesList dcat:Catalog dcat:Resource prof:Profile prez:SPARQLQuery }}
       ?profile altr-ext:constrainsClass ?class ;
@@ -863,6 +839,74 @@ def generate_mediatype_if_statements(requested_mediatypes: list):
         f"\tAS ?req_format)"
     )
     return ifs
+
+
+def get_endpoint_template_queries(classes: FrozenSet[URIRef]):
+    query = f"""PREFIX ont: <https://prez.dev/ont/>
+
+SELECT ?classes ?parent_endpoint ?endpoint ?relation ?direction ?endpointTemplate
+(count(?intermediate) as ?distance) WHERE {{
+      VALUES ?classes {{ {" ".join('<' + str(klass) + '>' for klass in classes)} }}
+  {{
+    ?endpoint a ont:Endpoint ;
+    ont:endpointTemplate ?endpointTemplate ;
+    ont:deliversClasses ?classes .
+  }}
+  UNION
+  {{
+    ?endpoint a ont:Endpoint ;
+    ont:endpointTemplate ?endpointTemplate ;
+    ont:deliversClasses ?classes .
+    ?endpoint ont:parentEndpoint* ?intermediate .
+    ?intermediate ont:parentEndpoint* ?parent_endpoint .
+    OPTIONAL {{
+      ?parent_endpoint ont:ParentToFocusRelation ?relation .
+      BIND ("parent_to_focus" AS ?direction)
+    }}
+    OPTIONAL {{
+      ?parent_endpoint ont:FocusToParentRelation ?relation .
+      BIND ("focus_to_parent" AS ?direction)
+    }}
+    FILTER (BOUND(?relation))
+  }}
+}} GROUP BY ?endpoint ?parent_endpoint ?relation ?direction ?classes ?endpointTemplate
+ORDER BY ?endpoint DESC(?distance)
+    """
+    return query
+
+
+def generate_relationship_query(
+    uri: URIRef, endpoint_to_relations: Dict[URIRef, List[Tuple[URIRef, Literal]]]
+):
+    """
+    Generates a SPARQL query of the form:
+    SELECT * {{ SELECT ?endpoint ?parent_1 ?parent_2
+        WHERE {
+    BIND("/s/datasets/$parent_1/collections/$object" as ?endpoint)
+    ?parent_1 <http://www.w3.org/2000/01/rdf-schema#member> <https://test/feature-collection> .
+    }}}
+    """
+    if not endpoint_to_relations:
+        return None
+    subqueries = []
+    for endpoint, relations in endpoint_to_relations.items():
+        subquery = f"""{{ SELECT ?endpoint {" ".join(["?parent_" + str(i+1) for i, _ in enumerate(relations)])}
+        WHERE {{\n BIND("{endpoint}" as ?endpoint)\n"""
+        uri_str = f"<{uri}>"
+        for i, relation in enumerate(relations):
+            predicate, direction = relation
+            parent = "?parent_" + str(i + 1)
+            if predicate:
+                if direction == Literal("parent_to_focus"):
+                    subquery += f"{parent} <{predicate}> {uri_str} .\n"
+                else:  # assuming the direction is "focus_to_parent"
+                    subquery += f"{uri_str} <{predicate}> {parent} .\n"
+            uri_str = parent
+        subquery += "}}"
+        subqueries.append(subquery)
+
+    union_query = "SELECT * {" + " UNION ".join(subqueries) + "}"
+    return union_query
 
 
 def startup_count_objects():

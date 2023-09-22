@@ -3,6 +3,10 @@ from string import Template
 from pydantic import BaseModel
 from rdflib import URIRef, Namespace, Literal
 
+from pydantic import BaseConfig
+
+BaseConfig.arbitrary_types_allowed = True
+
 PREZ = Namespace("https://prez.dev/")
 
 

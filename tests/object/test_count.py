@@ -12,7 +12,7 @@ LOCAL_SPARQL_STORE = os.getenv("LOCAL_SPARQL_STORE")
 @pytest.fixture(scope="module")
 def test_client(request):
     print("Run Local SPARQL Store")
-    p1 = subprocess.Popen(["python", str(LOCAL_SPARQL_STORE), "-p", "3031"])
+    p1 = subprocess.Popen(["python", str(LOCAL_SPARQL_STORE), "-p", "3032"])
     sleep(1)
 
     def teardown():

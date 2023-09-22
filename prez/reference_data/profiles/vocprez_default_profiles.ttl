@@ -85,17 +85,17 @@ prez:VocPrezProfile
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
         sh:targetClass skos:ConceptScheme ;
-        altr-ext:outboundChildren skos:hasTopConcept ;
+        altr-ext:focusToChild skos:hasTopConcept ;
     ] ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
         sh:targetClass skos:Collection ;
-        altr-ext:outboundChildren skos:member ;
+        altr-ext:focusToChild skos:member ;
     ] ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
         sh:targetClass skos:ConceptScheme ;
-        altr-ext:inboundChildren skos:inScheme ;
+        altr-ext:childToFocus skos:inScheme ;
     ] ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
@@ -105,7 +105,7 @@ prez:VocPrezProfile
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
         sh:targetClass skos:Concept ;
-        altr-ext:outboundParents skos:inScheme ;
+        altr-ext:focusToParent skos:inScheme ;
     ] ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;

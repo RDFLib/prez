@@ -1,22 +1,28 @@
-@prefix ns1: <http://www.opengis.net/ont/geosparql#> .
-@prefix ns2: <http://purl.org/dc/terms/> .
-@prefix ns3: <https://prez.dev/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix geo: <http://www.opengis.net/ont/geosparql#> .
+@prefix prez: <https://prez.dev/> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<http://example.com/datasets/sandgate/catchments> a ns1:FeatureCollection ;
-    ns2:description "Hydrological catchments that are 'contracted', that is, guarenteed, to appear on multiple Geofabric surface hydrology data products"@en ;
-    ns2:identifier "catchments"^^xsd:token ;
-    ns2:title "Geofabric Contracted Catchments"@en ;
-    ns1:hasBoundingBox [ a ns1:Geometry ;
-            ns1:asWKT "POLYGON ((152.9075 -27.42,153.16 -27.42,153.16 -27.2775,152.9075 -27.2775,152.9075 -27.42))"^^ns1:wktLiteral ] ;
-    rdfs:member <http://example.com/datasets/sandgate/cc12109444>,
-        <http://example.com/datasets/sandgate/cc12109445> .
+<http://example.com/datasets/sandgate> dcterms:description "Example floods, roads, catchment and facilities in the Sandgate are"@en ;
+    dcterms:identifier "exds:sandgate"^^prez:identifier ;
+    dcterms:title "Sandgate example dataset"@en .
 
-ns2:identifier rdfs:label "Identifier"@en .
+<http://example.com/datasets/sandgate/catchments> a geo:FeatureCollection ;
+    dcterms:description "Hydrological catchments that are 'contracted', that is, guarenteed, to appear on multiple Geofabric surface hydrology data products"@en ;
+    dcterms:identifier "catchments"^^xsd:token,
+        "sndgt:catchments"^^prez:identifier ;
+    dcterms:title "Geofabric Contracted Catchments"@en ;
+    geo:hasBoundingBox [ a geo:Geometry ;
+            geo:asWKT "POLYGON ((152.9075 -27.42,153.16 -27.42,153.16 -27.2775,152.9075 -27.2775,152.9075 -27.42))"^^geo:wktLiteral ] ;
+    rdfs:member <http://example.com/datasets/sandgate/cc12109444>,
+        <http://example.com/datasets/sandgate/cc12109445> ;
+    prez:link "/s/datasets/exds:sandgate/collections/sndgt:catchments" .
+
+dcterms:identifier rdfs:label "Identifier"@en .
 
 <http://example.com/datasets/sandgate/cc12109444> rdfs:label "Contracted Catchment 12109444" ;
-    ns3:link "/s/datasets/exds:sandgate/collections/sndgt:catchments/items/sndgt:cc12109444" .
+    prez:link "/s/datasets/exds:sandgate/collections/sndgt:catchments/items/sndgt:cc12109444" .
 
 <http://example.com/datasets/sandgate/cc12109445> rdfs:label "Contracted Catchment 12109445" ;
-    ns3:link "/s/datasets/exds:sandgate/collections/sndgt:catchments/items/sndgt:cc12109445" .
+    prez:link "/s/datasets/exds:sandgate/collections/sndgt:catchments/items/sndgt:cc12109445" .

@@ -62,7 +62,7 @@ def generate_new_prefix(uri):
         raise ValueError("Couldn't generate a prefix for the URI")
 
 
-def get_curie_id_for_uri(uri: URIRef):
+def get_curie_id_for_uri(uri: URIRef) -> str:
     """
     This function gets a curie ID for a given URI.
     The following process is used:

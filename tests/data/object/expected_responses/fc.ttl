@@ -1,0 +1,14 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix geo: <http://www.opengis.net/ont/geosparql#> .
+@prefix prez: <https://prez.dev/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+dcterms:identifier rdfs:label "Identifier"@en .
+
+<https://test/dataset> dcterms:identifier "ns3:dataset"^^prez:identifier .
+
+<https://test/feature-collection> a geo:FeatureCollection ;
+    rdfs:member <http://resource.geosciml.org/classifier/cgi/contacttype/alteration_facies_contact> ;
+    prez:link "/s/datasets/ns3:dataset/collections/ns3:feature-collection" .
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/alteration_facies_contact> dcterms:provenance "this vocabulary"@en .
