@@ -176,7 +176,7 @@ prez:VocPrezProfile
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
         sh:targetClass prez:VocPrezCollectionList ;
-        altr-ext:containerClass skos:ConceptScheme ;
+        altr-ext:containerClass skos:Collection ;
         altr-ext:relativeProperties skos:definition, dcterms:publisher, reg:status ;
     ] ;
     altr-ext:hasDefaultResourceFormat "application/json" ;

@@ -59,6 +59,24 @@ def _get_focus_to_parent_predicates(
     return focus_to_parent
 
 
+def _get_focus_to_child_predicates(
+    profile_graph: Graph, profile: URIRef, target_class: Node
+) -> list[Node]:
+    node_shapes = profile_graph.objects(profile, ALTREXT.hasNodeShape)
+    focus_to_child = []
+    for node_shape in node_shapes:
+        shape_target_class = profile_graph.value(node_shape, SH.targetClass)
+        if shape_target_class == target_class:
+            focus_to_child_predicate_iris = list(
+                profile_graph.objects(node_shape, ALTREXT.focusToChild)
+            )
+
+            if focus_to_child_predicate_iris:
+                focus_to_child += focus_to_child_predicate_iris
+
+    return focus_to_child
+
+
 def _get_label_predicates(profile_graph: Graph, profile: URIRef) -> list[Node]:
     return list(profile_graph.objects(profile, ALTREXT.hasLabelPredicate))
 
@@ -101,6 +119,7 @@ def _get_child_iris(
     iri: Node,
     child_to_focus_predicates: list[Node],
     parent_to_focus_predicates: list[Node],
+    focus_to_child_predicates: list[Node],
 ) -> list[Node]:
     children = []
     for predicate in child_to_focus_predicates:
@@ -109,6 +128,11 @@ def _get_child_iris(
             children += child_iris
 
     for predicate in parent_to_focus_predicates:
+        child_iris = list(graph.objects(iri, predicate))
+        if child_iris:
+            children += child_iris
+
+    for predicate in focus_to_child_predicates:
         child_iris = list(graph.objects(iri, predicate))
         if child_iris:
             children += child_iris
@@ -136,14 +160,27 @@ async def render_json(
         profile_graph, profile, selected_class
     )
 
+    focus_to_child_predicates = _get_focus_to_child_predicates(
+        profile_graph, profile, selected_class
+    )
+
     items = []
 
-    if not child_to_focus_predicates and not focus_to_parent_predicates:
+    if (
+        not child_to_focus_predicates
+        and not focus_to_parent_predicates
+        and not focus_to_child_predicates
+    ):
         # This is a listing view, e.g. /v/vocab.
         node_shape = profile_graph.value(
             predicate=SH.targetClass, object=selected_class
         )
         container_class = profile_graph.value(node_shape, ALTREXT.containerClass)
+        if container_class is None:
+            raise NotFoundError(
+                f"No container class found for resource {iri} in profile {profile}."
+            )
+
         for resource in graph.subjects(RDF.type, container_class):
             item = {"@id": resource}
 
@@ -166,7 +203,11 @@ async def render_json(
         relative_predicates += [RDF.type]
 
         child_iris = _get_child_iris(
-            graph, iri, child_to_focus_predicates, focus_to_parent_predicates
+            graph,
+            iri,
+            child_to_focus_predicates,
+            focus_to_parent_predicates,
+            focus_to_child_predicates,
         )
         for child_iri in child_iris:
             item = {
