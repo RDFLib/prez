@@ -2,7 +2,7 @@ from string import Template
 from typing import FrozenSet
 
 from fastapi import APIRouter, Request, HTTPException, status, Query
-from rdflib import Graph, Literal, URIRef, PROF, RDF, DCTERMS
+from rdflib import Graph, Literal, URIRef, PROF, DCTERMS
 from starlette.responses import PlainTextResponse
 
 from prez.cache import endpoints_graph_cache, profiles_graph_cache
@@ -165,6 +165,7 @@ async def item_function(request: Request, object_curie: str):
         prof_and_mt_info.mediatype,
         object_item.profile,
         prof_and_mt_info.profile_headers,
+        prof_and_mt_info.selected_class,
     )
 
 
@@ -213,6 +214,7 @@ async def listing_function(
         prof_and_mt_info.mediatype,
         listing_item.profile,
         prof_and_mt_info.profile_headers,
+        prof_and_mt_info.selected_class,
     )
 
 

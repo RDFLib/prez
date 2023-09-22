@@ -31,9 +31,8 @@ def _get_child_to_focus_predicates(
     for node_shape in node_shapes:
         shape_target_class = profile_graph.value(node_shape, SH.targetClass)
         if shape_target_class == target_class:
-            # TODO: change inboundChildren to childToFocus
             child_to_focus_predicate_iris = list(
-                profile_graph.objects(node_shape, ALTREXT.inboundChildren)
+                profile_graph.objects(node_shape, ALTREXT.childToFocus)
             )
 
             if child_to_focus_predicate_iris:
@@ -50,9 +49,8 @@ def _get_focus_to_parent_predicates(
     for node_shape in node_shapes:
         shape_target_class = profile_graph.value(node_shape, SH.targetClass)
         if shape_target_class == target_class:
-            # TODO: change outboundChildren to focusToParent
             focus_to_parent_predicate_iris = list(
-                profile_graph.objects(node_shape, ALTREXT.outboundChildren)
+                profile_graph.objects(node_shape, ALTREXT.focusToParent)
             )
 
             if focus_to_parent_predicate_iris:
@@ -119,7 +117,7 @@ def _get_child_iris(
 
 
 async def render_json(
-    graph,
+    graph: Graph,
     profile: URIRef,
     selected_class: URIRef,
 ) -> list:
@@ -138,29 +136,47 @@ async def render_json(
         profile_graph, profile, selected_class
     )
 
-    if not child_to_focus_predicates and not focus_to_parent_predicates:
-        raise NotFoundError(
-            f"No 'child to focus predicates' or 'focus to parent predicates' found for class {selected_class} in profile {profile}.",
-        )
-
-    relative_predicates = _get_relative_predicates(
-        profile_graph, profile, selected_class
-    )
-    relative_predicates += _get_label_predicates(profile_graph, profile)
-
     items = []
-    child_iris = _get_child_iris(
-        graph, iri, child_to_focus_predicates, focus_to_parent_predicates
-    )
-    for child_iri in child_iris:
-        item = {
-            "@id": child_iri,
-        }
 
-        for relative_predicate in relative_predicates:
-            values = list(graph.objects(child_iri, relative_predicate))
-            item[relative_predicate] = values
+    if not child_to_focus_predicates and not focus_to_parent_predicates:
+        # This is a listing view, e.g. /v/vocab.
+        node_shape = profile_graph.value(
+            predicate=SH.targetClass, object=selected_class
+        )
+        container_class = profile_graph.value(node_shape, ALTREXT.containerClass)
+        for resource in graph.subjects(RDF.type, container_class):
+            item = {"@id": resource}
 
-        items.append(item)
+            relative_predicates = _get_relative_predicates(
+                profile_graph, profile, selected_class
+            )
+            relative_predicates += _get_label_predicates(profile_graph, profile)
+            relative_predicates += [RDF.type]
+
+            for relative_predicate in relative_predicates:
+                values = list(graph.objects(resource, relative_predicate))
+                item[relative_predicate] = values
+
+            items.append(item)
+    else:
+        relative_predicates = _get_relative_predicates(
+            profile_graph, profile, selected_class
+        )
+        relative_predicates += _get_label_predicates(profile_graph, profile)
+        relative_predicates += [RDF.type]
+
+        child_iris = _get_child_iris(
+            graph, iri, child_to_focus_predicates, focus_to_parent_predicates
+        )
+        for child_iri in child_iris:
+            item = {
+                "@id": child_iri,
+            }
+
+            for relative_predicate in relative_predicates:
+                values = list(graph.objects(child_iri, relative_predicate))
+                item[relative_predicate] = values
+
+            items.append(item)
 
     return sorted(items, key=lambda x: x["@id"])

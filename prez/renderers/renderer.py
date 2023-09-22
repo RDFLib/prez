@@ -1,21 +1,19 @@
 import io
 import logging
-from typing import Optional, Dict
+from typing import Optional
 
 from connegp import RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
 from fastapi import status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic.types import List
-from rdflib import Graph, URIRef, Namespace, Literal, RDF
+from rdflib import Graph, URIRef, Namespace
 from starlette.requests import Request
 from starlette.responses import Response
 
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.models.profiles_item import ProfileItem
-from prez.reference_data.prez_ns import PREZ
 from prez.sparql.methods import send_queries, rdf_query_to_graph
-from prez.services.curie_functions import get_curie_id_for_uri
 from prez.sparql.objects_listings import (
     generate_item_construct,
     get_annotation_properties,
@@ -32,7 +30,6 @@ async def return_from_queries(
     profile,
     profile_headers,
     selected_class: URIRef,
-    base_class: URIRef,
     predicates_for_link_addition: dict = None,
 ):
     """
@@ -46,7 +43,6 @@ async def return_from_queries(
         profile,
         profile_headers,
         selected_class,
-        base_class,
         predicates_for_link_addition,
     )
 
@@ -57,15 +53,9 @@ async def return_from_graph(
     profile,
     profile_headers,
     selected_class: URIRef,
-    base_class: URIRef,
     predicates_for_link_addition: dict = None,
 ):
     profile_headers["Content-Disposition"] = "inline"
-
-    # A listing view is any of the views that are like /v/vocab or /v/collection.
-    listing_view = False
-    if selected_class != base_class:
-        listing_view = True
 
     if str(mediatype) in RDF_MEDIATYPES:
         return await return_rdf(graph, mediatype, profile_headers)
@@ -74,22 +64,17 @@ async def return_from_graph(
         graph = await return_annotated_rdf(
             graph,
             URIRef("https://w3id.org/profile/vocpub"),
-            predicates_for_link_addition,
         )
 
         try:
-            return await render_json(
-                graph, profile, base_class if listing_view else selected_class
-            )
+            return await render_json(graph, profile, selected_class)
         except NotFoundError as err:
             raise HTTPException(status.HTTP_404_NOT_FOUND, str(err))
 
     else:
         if "anot+" in mediatype:
             non_anot_mediatype = mediatype.replace("anot+", "")
-            graph = await return_annotated_rdf(
-                graph, profile, predicates_for_link_addition
-            )
+            graph = await return_annotated_rdf(graph, profile)
             content = io.BytesIO(
                 graph.serialize(format=non_anot_mediatype, encoding="utf-8")
             )
@@ -134,7 +119,6 @@ async def get_annotations_graph(profile, graph, cache):
 async def return_annotated_rdf(
     graph: Graph,
     profile,
-    predicates_for_link_addition: dict,
 ) -> Graph:
     from prez.cache import tbox_cache
 

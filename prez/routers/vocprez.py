@@ -104,7 +104,6 @@ async def concept_scheme_route(request: Request, concept_scheme_curie: str):
         profiles_mediatypes_info.profile,
         profiles_mediatypes_info.profile_headers,
         profiles_mediatypes_info.selected_class,
-        None,
     )
 
 

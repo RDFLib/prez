@@ -158,13 +158,13 @@ prez:VocPrezProfile
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
         sh:targetClass skos:ConceptScheme ;
-        altr-ext:inboundChildren skos:inScheme ;
+        altr-ext:childToFocus skos:inScheme ;
         altr-ext:relativeProperties skos:broader , skos:narrower, skos:definition ;
     ] ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
         sh:targetClass skos:Collection ;
-        altr-ext:outboundChildren skos:member ;
+        altr-ext:focusToChild skos:member ;
         altr-ext:relativeProperties skos:definition ;
     ] ;
     altr-ext:hasNodeShape [
