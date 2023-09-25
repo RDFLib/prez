@@ -24,5 +24,5 @@ def test_bnode_depth(input_file: str, iri: str, expected_depth: int) -> None:
     graph = Graph()
     graph.parse(file)
 
-    depth = get_bnode_depth(graph, URIRef(iri))
+    depth = get_bnode_depth(URIRef(iri), graph)
     assert depth == expected_depth

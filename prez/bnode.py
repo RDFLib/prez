@@ -22,14 +22,14 @@ def dfs(node: Node, graph: Graph, depth: int = 0):
     return max_depth
 
 
-def get_bnode_depth(graph: Graph, node: URIRef) -> int:
+def get_bnode_depth(node: URIRef, graph: Graph) -> int:
     """Get the max blank node depth of the node in the graph.
 
     :param node: The starting resource node.
     :param graph: The resource's concise bounded description graph.
 
     >>> graph = Graph().parse(...)
-    >>> depth = get_bnode_depth(graph, URIRef("node-name"))
+    >>> depth = get_bnode_depth(URIRef("node-name"), graph)
     """
     max_depth = 0
     for obj in graph.objects(node, None):
