@@ -28,8 +28,10 @@ def get_bnode_depth(node: URIRef, graph: Graph) -> int:
     :param node: The starting resource node.
     :param graph: The resource's concise bounded description graph.
 
-    >>> graph = Graph().parse(...)
-    >>> depth = get_bnode_depth(URIRef("node-name"), graph)
+    >>> graph = Graph().parse("example-data.ttl")
+    >>> resource = URIRef("node-name")
+    >>> cbd = graph.cbd(resource)
+    >>> depth = get_bnode_depth(resource, cbd)
     """
     max_depth = 0
     for obj in graph.objects(node, None):
