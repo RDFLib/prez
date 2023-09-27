@@ -10,12 +10,13 @@ from prez.services.app_service import add_common_context_ontologies_to_tbox_cach
 router = APIRouter(tags=["Management"])
 
 
-@router.get("/reset-tbox-cache", summary="Reset Tbox Cache")
-async def reset_tbox_cache():
-    """Resets the Tbox cache to startup state - included ontologies only."""
+@router.get("/purge-tbox-cache", summary="Reset Tbox Cache")
+async def purge_tbox_cache():
+    """Purges the tbox cache, then re-adds annotations from common ontologies Prez has a copy of
+    (reference_data/context_ontologies)."""
     tbox_cache.remove((None, None, None))
     await add_common_context_ontologies_to_tbox_cache()
-    return PlainTextResponse("Tbox cache reset")
+    return PlainTextResponse("Tbox cache purged and reset to startup state")
 
 
 @router.get("/tbox-cache", summary="Show the Tbox Cache")
