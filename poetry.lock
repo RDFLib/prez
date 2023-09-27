@@ -709,8 +709,8 @@ files = [
 name = "pyoxigraph"
 version = "0.3.19"
 description = "Python bindings of Oxigraph, a SPARQL database and RDF toolkit"
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = ">=3.7"
 files = [
     {file = "pyoxigraph-0.3.19-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:334d2e8f39745a29536485aa7534bcc0e0bd500f541d7b04fdc95d84e5dffa84"},
@@ -1126,4 +1126,4 @@ test = ["pytest (>=6.0.0)", "setuptools (>=65)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "c4f448620590c7e8bb2664b09a894ad315c41f632ffe0239d6befabd4b9632d1"
+content-hash = "13f63ff915fa2ce7d26057388c8dd7e3552a6eb703fe01df61c053529a2dc2d7"
