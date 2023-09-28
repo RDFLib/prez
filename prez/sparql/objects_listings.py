@@ -800,7 +800,7 @@ def select_profile_mediatype(
       ?mid rdfs:subClassOf* ?base_class .
       VALUES ?base_class {{ dcat:Dataset geo:FeatureCollection prez:FeatureCollectionList prez:FeatureList geo:Feature
       skos:ConceptScheme skos:Concept skos:Collection prez:DatasetList prez:VocPrezCollectionList prez:SchemesList
-      prez:CatalogList prez:ProfilesList dcat:Catalog dcat:Resource prof:Profile prez:SPARQLQuery }}
+      prez:CatalogList prez:ProfilesList dcat:Catalog dcat:Resource prez:ResourceList prof:Profile prez:SPARQLQuery }}
       ?profile altr-ext:constrainsClass ?class ;
                altr-ext:hasResourceFormat ?format ;
                dcterms:title ?title .\
