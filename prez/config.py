@@ -4,10 +4,10 @@ from typing import Optional
 
 import toml
 from pydantic import BaseSettings, root_validator
-from rdflib import URIRef
-from rdflib.namespace import GEO, DCAT, SKOS, PROF
+from rdflib import URIRef, DCTERMS, RDFS, SDO
+from rdflib.namespace import SKOS
 
-from prez.reference_data.prez_ns import PREZ
+from prez.reference_data.prez_ns import REG
 
 
 class Settings(BaseSettings):
@@ -43,6 +43,12 @@ class Settings(BaseSettings):
     order_lists_by_label: bool = True
     base_classes: Optional[dict]
     prez_flavours: Optional[list] = ["SpacePrez", "VocPrez", "CatPrez", "ProfilesPrez"]
+    label_predicates = [SKOS.prefLabel, DCTERMS.title, RDFS.label, SDO.name]
+    description_predicates = [SKOS.definition, DCTERMS.description, SDO.description]
+    provenance_predicates = [DCTERMS.provenance]
+    other_predicates = [SDO.color, REG.status]
+    sparql_timeout = 30.0
+
     log_level = "INFO"
     log_output = "stdout"
     prez_title: Optional[str] = "Prez"
@@ -80,59 +86,6 @@ class Settings(BaseSettings):
                 f"{values['protocol']}://{values['host']}:{values['port']}"
             )
         return values
-
-    # @root_validator()
-    # def populate_top_level_classes(cls, values):
-    #     values["top_level_classes"] = {
-    #         "Profiles": [
-    #             PROF.Profile,
-    #             PREZ.SpacePrezProfile,
-    #             PREZ.VocPrezProfile,
-    #             PREZ.CatPrezProfile,
-    #         ],
-    #         "SpacePrez": [DCAT.Dataset],
-    #         "VocPrez": [SKOS.ConceptScheme, SKOS.Collection],
-    #         "CatPrez": [DCAT.Catalog],
-    #     }
-    #     return values
-    #
-    # @root_validator()
-    # def populate_collection_classes(cls, values):
-    #     additional_classes = {
-    #         "Profiles": [],
-    #         "SpacePrez": [GEO.FeatureCollection],
-    #         "VocPrez": [],
-    #         "CatPrez": [DCAT.Resource],
-    #     }
-    #     values["collection_classes"] = {}
-    #     for prez in list(additional_classes.keys()) + ["Profiles"]:
-    #         values["collection_classes"][prez] = (
-    #             values["top_level_classes"].get(prez) + additional_classes[prez]
-    #         )
-    #     return values
-    #
-    # @root_validator()
-    # def populate_base_classes(cls, values):
-    #     additional_classes = {
-    #         "SpacePrez": [GEO.Feature],
-    #         "VocPrez": [SKOS.Concept],
-    #         "CatPrez": [DCAT.Dataset],
-    #         "Profiles": [PROF.Profile],
-    #     }
-    #     values["base_classes"] = {}
-    #     for prez in list(additional_classes.keys()) + ["Profiles"]:
-    #         values["base_classes"][prez] = (
-    #             values["collection_classes"].get(prez) + additional_classes[prez]
-    #         )
-    #     return values
-    #
-    # @root_validator()
-    # def populate_sparql_creds(cls, values):
-    #     username = values.get("sparql_username")
-    #     password = values.get("sparql_password")
-    #     if username is not None and password is not None:
-    #         values["sparql_auth"] = (username, password)
-    #     return values
 
 
 settings = Settings()

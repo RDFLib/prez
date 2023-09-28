@@ -9,6 +9,8 @@ prez:exactMatch a prez:SearchMethod ;
     rdf:value """
         SELECT DISTINCT ?search_result_uri ?predicate ?match
         WHERE { ?search_result_uri ?predicate ?match .
+            $FOCUS_TO_FILTER
+            $FILTER_TO_FOCUS
             FILTER REGEX(?match, "^$TERM$$", "i")
             } LIMIT $LIMIT
         """.

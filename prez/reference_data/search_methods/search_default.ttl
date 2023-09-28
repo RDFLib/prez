@@ -1,0 +1,42 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix prez:    <https://prez.dev/> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+
+prez:default
+    a                  prez:SearchMethod ;
+    dcterms:identifier "default" ;
+    rdfs:label         "Prez Default Match Search"@en ;
+    rdfs:comment       "A default method to search for objects in Prez" ;
+    rdf:value          """
+    SELECT ?search_result_uri ?predicate ?match ?weight (URI(CONCAT("urn:hash:", SHA256(CONCAT(STR(?search_result_uri), STR(?predicate), STR(?match), STR(?weight))))) AS ?hashID)
+    WHERE {
+        SELECT ?search_result_uri ?predicate ?match (SUM(?w) AS ?weight)
+        WHERE
+        {
+          ?search_result_uri ?predicate ?match .
+            $FOCUS_TO_FILTER
+            $FILTER_TO_FOCUS
+            VALUES ?predicate { $PREDICATES }
+            {
+                ?search_result_uri ?predicate ?match .
+                BIND (100 AS ?w)
+                FILTER (LCASE(?match) = "$TERM")
+            }
+          UNION
+            {
+                ?search_result_uri ?predicate ?match .
+                BIND (20 AS ?w)
+                FILTER (REGEX(?match, "^$TERM", "i"))
+            }
+          UNION
+            {
+                ?search_result_uri ?predicate ?match .
+                BIND (10 AS ?w)
+                FILTER (REGEX(?match, "$TERM", "i"))
+            }
+        }
+        GROUP BY ?search_result_uri ?predicate ?match
+        LIMIT $LIMIT
+    }
+        """ .

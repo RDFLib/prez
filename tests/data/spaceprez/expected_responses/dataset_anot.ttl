@@ -3,6 +3,7 @@
 @prefix geo: <http://www.opengis.net/ont/geosparql#> .
 @prefix prez: <https://prez.dev/> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <http://example.com/datasets/sandgate> a dcat:Dataset ;
@@ -18,7 +19,23 @@
         <http://example.com/datasets/sandgate/roads> ;
     prez:link "/s/datasets/exds:sandgate" .
 
-dcterms:identifier rdfs:label "Identifier"@en .
+dcterms:description rdfs:label "Description"@en ;
+    dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en .
+
+dcterms:identifier rdfs:label "Identifier"@en ;
+    dcterms:description "Recommended practice is to identify the resource by means of a string conforming to an identification system. Examples include International Standard Book Number (ISBN), Digital Object Identifier (DOI), and Uniform Resource Name (URN).  Persistent identifiers should be provided as HTTP URIs."@en .
+
+dcterms:title rdfs:label "Title"@en .
+
+geo:asWKT skos:definition "The WKT serialization of a Geometry"@en ;
+    skos:prefLabel "as WKT"@en .
+
+geo:hasBoundingBox skos:definition "The minimum or smallest bounding or enclosing box of a given Feature."@en ;
+    skos:prefLabel "has bounding box"@en .
+
+rdfs:label rdfs:label "label" .
+
+rdfs:member rdfs:label "member" .
 
 <http://example.com/datasets/sandgate/catchments> dcterms:description "Hydrological catchments that are 'contracted', that is, guarenteed, to appear on multiple Geofabric surface hydrology data products"@en ;
     dcterms:title "Geofabric Contracted Catchments"@en ;
@@ -36,4 +53,8 @@ dcterms:identifier rdfs:label "Identifier"@en .
     dcterms:title "Sandgate main roads"@en ;
     prez:link "/s/datasets/exds:sandgate/collections/sndgt:roads" .
 
+geo:Geometry skos:definition "A coherent set of direct positions in space. The positions are held within a Spatial Reference System (SRS)."@en ;
+    skos:prefLabel "Geometry"@en .
+
 dcat:Dataset rdfs:label "Dataset"@en .
+

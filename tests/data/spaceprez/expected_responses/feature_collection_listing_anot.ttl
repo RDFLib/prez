@@ -13,7 +13,17 @@
     prez:count 4 ;
     prez:link "/s/datasets/exds:sandgate" .
 
-dcterms:identifier rdfs:label "Identifier"@en .
+dcterms:description rdfs:label "Description"@en ;
+    dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en .
+
+dcterms:identifier rdfs:label "Identifier"@en ;
+    dcterms:description "Recommended practice is to identify the resource by means of a string conforming to an identification system. Examples include International Standard Book Number (ISBN), Digital Object Identifier (DOI), and Uniform Resource Name (URN).  Persistent identifiers should be provided as HTTP URIs."@en .
+
+dcterms:title rdfs:label "Title"@en .
+
+rdfs:label rdfs:label "label" .
+
+rdfs:member rdfs:label "member" .
 
 <http://example.com/datasets/sandgate/catchments> dcterms:description "Hydrological catchments that are 'contracted', that is, guarenteed, to appear on multiple Geofabric surface hydrology data products"@en ;
     dcterms:title "Geofabric Contracted Catchments"@en ;

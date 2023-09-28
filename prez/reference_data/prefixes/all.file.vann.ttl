@@ -7235,9 +7235,6 @@
             vann:preferredNamespacePrefix "ideotalex" ;
             vann:preferredNamespaceUri "http://www.ideotalex.eu/datos/recurso/" ],
         [ a owl:Ontology ;
-            vann:preferredNamespacePrefix "terms" ;
-            vann:preferredNamespaceUri "http://purl.org/dc/terms/" ],
-        [ a owl:Ontology ;
             vann:preferredNamespacePrefix "rbdoc" ;
             vann:preferredNamespaceUri "https://w3id.org/riverbench/schema/documentation#" ],
         [ a owl:Ontology ;
@@ -8081,9 +8078,6 @@
             vann:preferredNamespacePrefix "sf" ;
             vann:preferredNamespaceUri "http://www.opengis.net/ont/sf#" ],
         [ a owl:Ontology ;
-            vann:preferredNamespacePrefix "dcterm" ;
-            vann:preferredNamespaceUri "http://purl.org/dc/terms/" ],
-        [ a owl:Ontology ;
             vann:preferredNamespacePrefix "genre" ;
             vann:preferredNamespaceUri "http://sparql.cwrc.ca/ontologies/genre#" ],
         [ a owl:Ontology ;
@@ -8512,9 +8506,6 @@
         [ a owl:Ontology ;
             vann:preferredNamespacePrefix "owl2xml" ;
             vann:preferredNamespaceUri "http://www.w3.org/2006/12/owl2-xml#" ],
-        [ a owl:Ontology ;
-            vann:preferredNamespacePrefix "dct" ;
-            vann:preferredNamespaceUri "http://purl.org/dc/terms/" ],
         [ a owl:Ontology ;
             vann:preferredNamespacePrefix "rdano" ;
             vann:preferredNamespaceUri "http://rdaregistry.info/Elements/n/object/" ],

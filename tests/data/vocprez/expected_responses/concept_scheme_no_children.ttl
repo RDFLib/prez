@@ -1,16 +1,14 @@
-PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX ns1: <http://purl.org/linked-data/registry#>
-PREFIX ns2: <https://prez.dev/>
-PREFIX owl: <http://www.w3.org/2002/07/owl#>
-PREFIX prov: <http://www.w3.org/ns/prov#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX schema: <https://schema.org/>
-PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ns1: <http://purl.org/linked-data/registry#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix prez: <https://prez.dev/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<http://linked.data.gov.au/def2/borehole-purpose-no-children>
-    a
-        owl:Ontology ,
+<http://linked.data.gov.au/def2/borehole-purpose-no-children> a owl:Ontology,
         skos:ConceptScheme ;
     dcterms:created "2020-07-17"^^xsd:date ;
     dcterms:creator <https://linked.data.gov.au/org/gsq> ;
@@ -20,43 +18,32 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     ns1:status <https://linked.data.gov.au/def/reg-statuses/stable> ;
     skos:definition "The primary purpose of a borehole based on the legislative State Act and/or the resources industry sector."@en ;
     skos:prefLabel "Borehole Purpose no children"@en ;
-    prov:qualifiedDerivation [
-            prov:entity <http://linked.data.gov.au/def/site-status> ;
-            prov:hadRole <http://linked.data.gov.au/def/vocab-derivation-modes/subsetting-and-extension>
-        ] ;
-    ns2:childrenCount 0 ;
-.
+    prov:qualifiedDerivation [ prov:entity <http://linked.data.gov.au/def/site-status> ;
+            prov:hadRole <http://linked.data.gov.au/def/vocab-derivation-modes/subsetting-and-extension> ] ;
+    prez:childrenCount 0 .
 
-dcterms:created
-    rdfs:label "Date Created"@en ;
-    dcterms:description "Recommended practice is to describe the date, date/time, or period of time as recommended for the property Date, of which this is a subproperty."@en ;
-.
+dcterms:created rdfs:label "Date Created"@en ;
+    dcterms:description "Recommended practice is to describe the date, date/time, or period of time as recommended for the property Date, of which this is a subproperty."@en .
 
-dcterms:creator
-    rdfs:label "Creator"@en ;
-    dcterms:description "Recommended practice is to identify the creator with a URI.  If this is not possible or feasible, a literal value that identifies the creator may be provided."@en ;
-.
+dcterms:creator rdfs:label "Creator"@en ;
+    dcterms:description "Recommended practice is to identify the creator with a URI.  If this is not possible or feasible, a literal value that identifies the creator may be provided."@en .
 
-dcterms:description
-    rdfs:label "Description"@en ;
-    dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en ;
-.
+dcterms:description rdfs:label "Description"@en ;
+    dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en .
 
-dcterms:modified
-    rdfs:label "Date Modified"@en ;
-    dcterms:description "Recommended practice is to describe the date, date/time, or period of time as recommended for the property Date, of which this is a subproperty."@en ;
-.
+dcterms:modified rdfs:label "Date Modified"@en ;
+    dcterms:description "Recommended practice is to describe the date, date/time, or period of time as recommended for the property Date, of which this is a subproperty."@en .
 
-dcterms:provenance
-    rdfs:label "Provenance"@en ;
-    dcterms:description "The statement may include a description of any changes successive custodians made to the resource."@en ;
-.
+dcterms:provenance rdfs:label "Provenance"@en ;
+    dcterms:description "The statement may include a description of any changes successive custodians made to the resource."@en .
 
-dcterms:publisher
-    rdfs:label "Publisher"@en ;
-.
+dcterms:publisher rdfs:label "Publisher"@en .
 
-<https://linked.data.gov.au/def/reg-statuses/stable>
+rdfs:label rdfs:label "label" .
+
+<https://linked.data.gov.au/def/reg-statuses/stable> skos:definition "An entry that is seen as having a reasonable measure of stability, may be used to mark the full adoption of a previously 'experimental' entry."@en ;
     skos:prefLabel "stable"@en ;
-    schema:color "#2e8c09" ;
-.
+    schema:color "#2e8c09" .
+
+<https://linked.data.gov.au/org/gsq> schema:name "Geological Survey of Queensland" .
+

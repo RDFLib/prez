@@ -30,8 +30,8 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     dcterms:identifier "open" ;
     dcterms:description "An open profile which will return all direct properties for a resource." ;
     dcterms:title "Open profile" ;
-    altr-ext:constrainsClass prez:SPARQLQuery ;
-    altr-ext:hasDefaultResourceFormat "text/turtle" ;
+    altr-ext:constrainsClass prez:SPARQLQuery , prez:SearchResult ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat "application/json" ,
         "application/ld+json" ,
         "application/rdf+xml" ,
