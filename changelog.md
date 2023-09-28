@@ -10,7 +10,7 @@
   
   More detail on adding filters to search is provided in the readme.
 - Timeout for httpx AsyncClient and Client instances is set on the shared instance to 30s. Previously this was set in some individual calls resulting in inconsistent behaviour, as the default is otherwise 5s.
-- Updated `reset-tbox-cache` endpoint functionality. This reflects that prez now
+- Updated `purge-tbox-cache` endpoint functionality. This reflects that prez now
   includes a number of common ontologies by default (prez/reference_data/context_ontologies), and on startup will load
   annotation triples (e.g. x rdfs:label y) from these. As such, the tbox or annotation cache is no longer completely
   purged but can be reset to this default state instead.
