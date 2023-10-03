@@ -85,7 +85,7 @@ async def concept_scheme_route(request: Request, concept_scheme_curie: str):
 
     iri = get_iri_route(concept_scheme_curie)
     resource = await get_resource(iri)
-    bnode_depth = get_bnode_depth(resource, iri)
+    bnode_depth = get_bnode_depth(iri, resource)
     concept_scheme_query = get_concept_scheme_query(iri, bnode_depth)
 
     return await return_from_queries(
