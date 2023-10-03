@@ -4,15 +4,12 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix schema: <https://schema.org/> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<http://linked.data.gov.au/def/borehole-purpose/open-cut-coal-mining> a skos:Concept ;
+<http://linked.data.gov.au/def/borehole-purpose/pggd> dcterms:identifier "brhl-prps:pggd"^^prez:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
-    rdfs:isDefinedBy <http://linked.data.gov.au/def2/borehole-purpose> ;
-    skos:broader <http://linked.data.gov.au/def/borehole-purpose/coal> ;
-    skos:definition "Wells drilled for the purpose of assessing coal resources for an open cut coal mine."@en ;
-    skos:inScheme <http://linked.data.gov.au/def2/borehole-purpose> ;
-    skos:prefLabel "Open-Cut Coal Mining"@en ;
-    prez:link "/v/vocab/def2:borehole-purpose/brhl-prps:open-cut-coal-mining" .
+    skos:definition "Borehole purposes applicable to regulatory notification forms."@en ;
+    skos:prefLabel "PGGD selection"@en .
 
 dcterms:description rdfs:label "Description"@en ;
     dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en .
@@ -27,14 +24,32 @@ rdfs:isDefinedBy rdfs:label "isDefinedBy" .
 
 rdfs:label rdfs:label "label" .
 
-<http://linked.data.gov.au/def/borehole-purpose/coal> dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
-    skos:definition "Wells and bores drilled to facilitate the mining of coal under permits governed by the Queensland Mineral Resources Act 1989"@en ;
-    skos:prefLabel "Coal"@en ;
-    prez:link "/v/vocab/def2:borehole-purpose/brhl-prps:coal" .
+<urn:hash:1785691d4754e68b771db8d471feb675353d23fb5e4e7a2902e924045881e8b8> a prez:SearchResult ;
+    prez:searchResultMatch "Greenhouse Gas Storage"@en ;
+    prez:searchResultPredicate skos:prefLabel ;
+    prez:searchResultURI <http://linked.data.gov.au/def/borehole-purpose/greenhouse-gas-storage> ;
+    prez:searchResultWeight 10 .
+
+<urn:hash:b180c3a36710a0e28edfa2e7136b8347fa52b946edc0431031931d2003c1cb6c> a prez:SearchResult ;
+    prez:searchResultMatch "Wells and bores drilled under permits governed by the Queensland Greenhouse Gas Storage Act 2009"@en ;
+    prez:searchResultPredicate skos:definition ;
+    prez:searchResultURI <http://linked.data.gov.au/def/borehole-purpose/greenhouse-gas-storage> ;
+    prez:searchResultWeight 10 .
 
 <https://linked.data.gov.au/def/reg-statuses/stable> skos:definition "An entry that is seen as having a reasonable measure of stability, may be used to mark the full adoption of a previously 'experimental' entry."@en ;
     skos:prefLabel "stable"@en ;
     schema:color "#2e8c09" .
+
+<http://linked.data.gov.au/def/borehole-purpose/greenhouse-gas-storage> a skos:Concept ;
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    rdfs:isDefinedBy <http://linked.data.gov.au/def2/borehole-purpose> ;
+    skos:altLabel "GHG"@en ;
+    skos:definition "Wells and bores drilled under permits governed by the Queensland Greenhouse Gas Storage Act 2009"@en ;
+    skos:inScheme <http://linked.data.gov.au/def2/borehole-purpose> ;
+    skos:prefLabel "Greenhouse Gas Storage"@en ;
+    skos:topConceptOf <http://linked.data.gov.au/def2/borehole-purpose> ;
+    prez:link "/v/collection/brhl-prps:pggd/brhl-prps:greenhouse-gas-storage",
+        "/v/vocab/def2:borehole-purpose/brhl-prps:greenhouse-gas-storage" .
 
 <http://linked.data.gov.au/def2/borehole-purpose> dcterms:identifier "def2:borehole-purpose"^^prez:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;

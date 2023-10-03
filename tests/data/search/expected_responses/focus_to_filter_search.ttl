@@ -1,0 +1,134 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ns2: <http://purl.org/linked-data/registry#> .
+@prefix prez: <https://prez.dev/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+dcterms:description rdfs:label "Description"@en ;
+    dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en .
+
+dcterms:identifier rdfs:label "Identifier"@en ;
+    dcterms:description "Recommended practice is to identify the resource by means of a string conforming to an identification system. Examples include International Standard Book Number (ISBN), Digital Object Identifier (DOI), and Uniform Resource Name (URN).  Persistent identifiers should be provided as HTTP URIs."@en .
+
+dcterms:provenance rdfs:label "Provenance"@en ;
+    dcterms:description "The statement may include a description of any changes successive custodians made to the resource."@en .
+
+<http://resource.geosciml.org/classifier/cgi/contacttype> dcterms:identifier "cgi:contacttype"^^prez:identifier ;
+    dcterms:provenance "this vocabulary" ;
+    skos:definition "All Concepts in this vocabulary" ;
+    skos:prefLabel "Contact Type - All Concepts"@en .
+
+rdfs:isDefinedBy rdfs:label "isDefinedBy" .
+
+rdfs:label rdfs:label "label" .
+
+<urn:hash:02639b99e5774d48695d02abb1e30309769cff606e73f6158416c61b64c0fbda> a prez:SearchResult ;
+    prez:searchResultMatch "metasomatic facies contact"@en ;
+    prez:searchResultPredicate skos:prefLabel ;
+    prez:searchResultURI <http://resource.geosciml.org/classifier/cgi/contacttype/metasomatic_facies_contact> ;
+    prez:searchResultWeight 10 .
+
+<urn:hash:0afe73ca518ccc2d883038ca55935b2e51f8124b0a38343131b208cb7b466731> a prez:SearchResult ;
+    prez:searchResultMatch "A metasomatic facies contact separating rocks that have undergone alteration of a particular facies from those that have undergone metasomatism of another facies. Alteration is a kind of metasomatism that does not introduce economically important minerals."@en ;
+    prez:searchResultPredicate skos:definition ;
+    prez:searchResultURI <http://resource.geosciml.org/classifier/cgi/contacttype/alteration_facies_contact> ;
+    prez:searchResultWeight 10 .
+
+<urn:hash:20cba38088fc2db3e08583c83fd2adcbf4d108457f522ac66157edfc901a18a1> a prez:SearchResult ;
+    prez:searchResultMatch "A metasomatic facies contact separating rocks which have been mineralised and contain a particular mineral assemblage from those which contain a different assemblage. Mineralization is a kind of metasomatism that introduces ecomomically important minerals."@en ;
+    prez:searchResultPredicate skos:definition ;
+    prez:searchResultURI <http://resource.geosciml.org/classifier/cgi/contacttype/mineralisation_assemblage_contact> ;
+    prez:searchResultWeight 10 .
+
+<urn:hash:28dc959a26149a6eaf627f1e6e959333683f02f7d2a8248ff3e57997fa4a1d8a> a prez:SearchResult ;
+    prez:searchResultMatch "A metamorphic contact separating rocks that have undergone metasomatism of a particular facies from those that have undergone metasomatism of another facies. Metasomatism is distinguished from metamorphism by significant changes in bulk chemistry of the affected rock."@en ;
+    prez:searchResultPredicate skos:definition ;
+    prez:searchResultURI <http://resource.geosciml.org/classifier/cgi/contacttype/metasomatic_facies_contact> ;
+    prez:searchResultWeight 10 .
+
+<urn:hash:9558103e3cf3d8b5b9c763003527cb689ef200bce855fab82cc10f681c26340a> a prez:SearchResult ;
+    prez:searchResultMatch "metamorphic facies contact"@en ;
+    prez:searchResultPredicate skos:prefLabel ;
+    prez:searchResultURI <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_facies_contact> ;
+    prez:searchResultWeight 10 .
+
+<urn:hash:f433baa4f8c4d19f73385f8196cdc857755a18b3039d2de6dd6666c1f2a4b10c> a prez:SearchResult ;
+    prez:searchResultMatch "mineralisation assemblage contact"@en ;
+    prez:searchResultPredicate skos:prefLabel ;
+    prez:searchResultURI <http://resource.geosciml.org/classifier/cgi/contacttype/mineralisation_assemblage_contact> ;
+    prez:searchResultWeight 10 .
+
+<urn:hash:f8bc4ab64df4589ff6ab977a57ab35601604b62ea513d56c798d7f54b75ece64> a prez:SearchResult ;
+    prez:searchResultMatch "A metamorphic contact separating rocks that have undergone metamorphism of a particular facies from those that have undergone metamorphism of another facies."@en ;
+    prez:searchResultPredicate skos:definition ;
+    prez:searchResultURI <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_facies_contact> ;
+    prez:searchResultWeight 10 .
+
+<urn:hash:f9373b6f83c391c69882d5261d0abca2165b45e5be7db5398291b2ce5a7c1fac> a prez:SearchResult ;
+    prez:searchResultMatch "alteration facies contact"@en ;
+    prez:searchResultPredicate skos:prefLabel ;
+    prez:searchResultURI <http://resource.geosciml.org/classifier/cgi/contacttype/alteration_facies_contact> ;
+    prez:searchResultWeight 10 .
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/alteration_facies_contact> a skos:Concept ;
+    dcterms:identifier "alteration_facies_contact"^^xsd:token ;
+    dcterms:provenance "this vocabulary"@en ;
+    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact> ;
+    skos:definition "A metasomatic facies contact separating rocks that have undergone alteration of a particular facies from those that have undergone metasomatism of another facies. Alteration is a kind of metasomatism that does not introduce economically important minerals."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "alteration facies contact"@en ;
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:alteration_facies_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:alteration_facies_contact" .
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_facies_contact> a skos:Concept ;
+    dcterms:identifier "metamorphic_facies_contact"^^xsd:token ;
+    dcterms:provenance "this vocabulary"@en ;
+    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact> ;
+    skos:definition "A metamorphic contact separating rocks that have undergone metamorphism of a particular facies from those that have undergone metamorphism of another facies."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "metamorphic facies contact"@en ;
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:metamorphic_facies_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:metamorphic_facies_contact" .
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/metasomatic_facies_contact> a skos:Concept ;
+    dcterms:identifier "metasomatic_facies_contact"^^xsd:token ;
+    dcterms:provenance "this vocabulary"@en ;
+    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact> ;
+    skos:definition "A metamorphic contact separating rocks that have undergone metasomatism of a particular facies from those that have undergone metasomatism of another facies. Metasomatism is distinguished from metamorphism by significant changes in bulk chemistry of the affected rock."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "metasomatic facies contact"@en ;
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:metasomatic_facies_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:metasomatic_facies_contact" .
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/mineralisation_assemblage_contact> a skos:Concept ;
+    dcterms:identifier "mineralisation_assemblage_contact"^^xsd:token ;
+    dcterms:provenance "this vocabulary"@en ;
+    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    rdfs:isDefinedBy <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact> ;
+    skos:definition "A metasomatic facies contact separating rocks which have been mineralised and contain a particular mineral assemblage from those which contain a different assemblage. Mineralization is a kind of metasomatism that introduces ecomomically important minerals."@en ;
+    skos:inScheme <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ;
+    skos:prefLabel "mineralisation assemblage contact"@en ;
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:mineralisation_assemblage_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:mineralisation_assemblage_contact" .
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact> dcterms:provenance "this vocabulary"@en ;
+    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "Lithogenetic contact separating rocks that have different lithologic properties related to metamorphism, metasomatism, alteration, or mineralization. Generally separates metamorphic rock bodies, but may separate metamorphosed (broadly speaking) and non-metamorphosed rock."@en ;
+    skos:prefLabel "metamorphic contact"@en ;
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:metamorphic_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:metamorphic_contact" .
+
+<http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> dcterms:identifier "2016.01:contacttype"^^prez:identifier ;
+    dcterms:provenance "Original set of terms from the GeosciML standard" ;
+    skos:definition "This scheme describes the concept space for Contact Type concepts, as defined by the IUGS Commission for Geoscience Information (CGI) Geoscience Terminology Working Group. By extension, it includes all concepts in this conceptScheme, as well as concepts in any previous versions of the scheme. Designed for use in the contactType property in GeoSciML Contact elements."@en ;
+    skos:prefLabel "Contact Type"@en ;
+    prez:link "/v/vocab/2016.01:contacttype" .
+

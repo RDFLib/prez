@@ -163,6 +163,22 @@ At present the parameterised SPARQL queries accept the following parameters: PRE
 These parameters are substituted into the SPARQL query using the `string.Template` module. This module substitutes where $PREZ and $TERM are found in the query.
 You must also escape any $ characters in the query using a second $.
 
+To configure filters on search the following patterns can be used:
+- Specification of `filter-to-focus` and `focus-to-filter` filters as Query String Arguments on the search route. Examples:
+
+1. `/search?term=contact&method=default&
+/&_format=text/anot+turtle`
+_adds a triple to the search query of the form `?search_result_uri skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact>`_
+
+2. `/search?term=address&method=default&filter-to-focus[rdfs:member]=https://linked.data.gov.au/datasets/gnaf`
+ _adds a triple to the search query of the form `<https://linked.data.gov.au/datasets/gnaf> rdfs:member ?search_result_uri`_
+
+3. Search with a filter on multiple objects (the list of objects is treated as an OR)`/search?term=address&method=default&filter-to-focus[rdfs:member]=https://linked.data.gov.au/datasets/gnaf,https://linked.data.gov.au/datasets/defg`
+ _adds a triple to the search query of the form `<https://linked.data.gov.au/datasets/gnaf> rdfs:member ?o . VALUES ?o { <https://linked.data.gov.au/datasets/gnaf> <https://linked.data.gov.au/datasets/defg>}`_
+
+- URIs and CURIEs can be used to specify filters.
+_If CURIEs are used, they should only be CURIEs returned as `dcterms:identifier "{identifier}"^^prez:identifier` or in prez:links. There is no guarantee prefix declarations in turtle or other RDF serialisations returned by prez are consistent with the prefixes used internally by prez for links and identifiers._
+
 ## Scaled instances of Prez
 When using Prez for large volumes of data, it is recommended the support graph data is created offline. This includes:
 - Identifiers for all objects (a `dcterms:identifier`)

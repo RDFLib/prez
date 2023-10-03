@@ -3,7 +3,7 @@ import time
 from pathlib import Path
 
 import httpx
-from rdflib import URIRef, Literal, BNode, RDF, Graph
+from rdflib import URIRef, Literal, BNode, RDF, Graph, RDFS, DCTERMS, SDO, SKOS, Dataset
 
 from prez.cache import (
     prez_system_graph,
@@ -11,6 +11,7 @@ from prez.cache import (
     counts_graph,
     prefix_graph,
     endpoints_graph_cache,
+    tbox_cache,
 )
 from prez.config import settings
 from prez.reference_data.prez_ns import PREZ, ALTREXT
@@ -102,7 +103,7 @@ async def add_prefixes_to_prefix_graph():
             prefix_graph.bind(str(prefix), namespace)
 
             # prefix_graph.bind(str(subject_objects[1]), subject_objects[0])
-        log.info(f"{i+1} prefixes bound from file {f.name}")
+        log.info(f"{i+1:,} prefixes bound from file {f.name}")
     log.info("Prefixes from local files added to prefix graph")
 
     if settings.disable_prefix_generation:
@@ -173,3 +174,23 @@ WHERE {{
         log.info(f"Remote endpoint definition(s) found and added")
     else:
         log.info("No remote endpoint definitions found")
+
+
+async def add_common_context_ontologies_to_tbox_cache():
+    g = Dataset(default_union=True)
+    for file in (
+        Path(__file__).parent.parent / "reference_data/context_ontologies"
+    ).glob("*.nq"):
+        g.parse(file, format="nquads")
+    relevant_predicates = [
+        RDFS.label,
+        DCTERMS.title,
+        DCTERMS.description,
+        SDO.name,
+        SKOS.prefLabel,
+        SKOS.definition,
+    ]
+    triples = g.triples_choices((None, relevant_predicates, None))
+    for triple in triples:
+        tbox_cache.add(triple)
+    log.info(f"Added {len(tbox_cache):,} triples from context ontologies to TBox cache")

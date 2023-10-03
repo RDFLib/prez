@@ -5,7 +5,27 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-dcterms:identifier rdfs:label "Identifier"@en .
+dcterms:created rdfs:label "Date Created"@en ;
+    dcterms:description "Recommended practice is to describe the date, date/time, or period of time as recommended for the property Date, of which this is a subproperty."@en .
+
+dcterms:description rdfs:label "Description"@en ;
+    dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en .
+
+dcterms:hasPart rdfs:label "Has Part"@en ;
+    dcterms:description "This property is intended to be used with non-literal values. This property is an inverse property of Is Part Of."@en .
+
+dcterms:identifier rdfs:label "Identifier"@en ;
+    dcterms:description "Recommended practice is to identify the resource by means of a string conforming to an identification system. Examples include International Standard Book Number (ISBN), Digital Object Identifier (DOI), and Uniform Resource Name (URN).  Persistent identifiers should be provided as HTTP URIs."@en .
+
+dcterms:issued rdfs:label "Date Issued"@en ;
+    dcterms:description "Recommended practice is to describe the date, date/time, or period of time as recommended for the property Date, of which this is a subproperty."@en .
+
+dcterms:modified rdfs:label "Date Modified"@en ;
+    dcterms:description "Recommended practice is to describe the date, date/time, or period of time as recommended for the property Date, of which this is a subproperty."@en .
+
+dcterms:title rdfs:label "Title"@en .
+
+rdfs:label rdfs:label "label" .
 
 <https://w3id.org/idn/dataset/agents> a dcat:Catalog ;
     dcterms:created "2022-08-15"^^xsd:date ;
