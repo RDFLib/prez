@@ -17,7 +17,6 @@ from prez.sparql.methods import send_queries, rdf_query_to_graph
 from prez.sparql.objects_listings import (
     generate_item_construct,
     get_annotation_properties,
-    get_annotation_predicates,
 )
 from prez.renderers.json_renderer import render_json, NotFoundError
 
@@ -99,10 +98,8 @@ async def return_rdf(graph, mediatype, profile_headers):
 
 
 async def get_annotations_graph(profile, graph, cache):
-    profile_annotation_props = get_annotation_predicates(profile)
-    queries_for_uncached, annotations_graph = await get_annotation_properties(
-        graph, **profile_annotation_props
-    )
+    # profile_annotation_props = get_annotation_predicates(profile)
+    queries_for_uncached, annotations_graph = await get_annotation_properties(graph)
 
     if queries_for_uncached is None:
         anots_from_triplestore = Graph()
@@ -123,10 +120,7 @@ async def return_annotated_rdf(
     from prez.cache import tbox_cache
 
     cache = tbox_cache
-    profile_annotation_props = get_annotation_predicates(profile)
-    queries_for_uncached, annotations_graph = await get_annotation_properties(
-        graph, **profile_annotation_props
-    )
+    queries_for_uncached, annotations_graph = await get_annotation_properties(graph)
     anots_from_triplestore, _ = await send_queries([queries_for_uncached])
     if len(anots_from_triplestore) > 0:
         annotations_graph += anots_from_triplestore

@@ -14,6 +14,8 @@ prez:skosWeighted a prez:SearchMethod ;
                 ?search_result_uri a <http://www.w3.org/2004/02/skos/core#Concept> ;
                     <http://www.w3.org/2004/02/skos/core#prefLabel> ?match ;
                     <http://www.w3.org/2004/02/skos/core#inScheme>|<http://www.w3.org/2004/02/skos/core#topConceptOf>|^<http://www.w3.org/2004/02/skos/core#hasTopConcept> ?cs .
+            $FOCUS_TO_FILTER
+            $FILTER_TO_FOCUS
                 BIND (50 AS ?w)
                 FILTER REGEX(?match, "^$TERM$$", "i")
             }}
@@ -22,6 +24,8 @@ prez:skosWeighted a prez:SearchMethod ;
                 ?search_result_uri a <http://www.w3.org/2004/02/skos/core#Concept> ;
                     <http://www.w3.org/2004/02/skos/core#prefLabel> ?match ;
                     <http://www.w3.org/2004/02/skos/core#inScheme>|<http://www.w3.org/2004/02/skos/core#topConceptOf>|^<http://www.w3.org/2004/02/skos/core#hasTopConcept> ?cs .
+                $FOCUS_TO_FILTER
+                $FILTER_TO_FOCUS
                 BIND (10 AS ?w)
                 FILTER REGEX(?match, "$TERM", "i")
             }}

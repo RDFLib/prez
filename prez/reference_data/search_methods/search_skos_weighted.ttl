@@ -14,6 +14,8 @@ prez:skosWeighted a prez:SearchMethod ;
                         ?search_result_uri a <http://www.w3.org/2004/02/skos/core#Concept> ;
                              <http://www.w3.org/2004/02/skos/core#prefLabel> ?pl .
                         BIND (50 AS ?w)
+                        $FOCUS_TO_FILTER
+                        $FILTER_TO_FOCUS
                         FILTER REGEX(?pl, "^$TERM$$", "i")
                     }}
                     UNION
@@ -21,6 +23,8 @@ prez:skosWeighted a prez:SearchMethod ;
                         ?search_result_uri a <http://www.w3.org/2004/02/skos/core#Concept> ;
                              <http://www.w3.org/2004/02/skos/core#prefLabel> ?pl .
                         BIND (10 AS ?w)
+                        $FOCUS_TO_FILTER
+                        $FILTER_TO_FOCUS
                         FILTER REGEX(?pl, "$TERM", "i")
                     }}
                     UNION
@@ -29,6 +33,8 @@ prez:skosWeighted a prez:SearchMethod ;
                              <http://www.w3.org/2004/02/skos/core#altLabel> ?al ;
                              <http://www.w3.org/2004/02/skos/core#prefLabel> ?pl .
                         BIND (5 AS ?w)
+                        $FOCUS_TO_FILTER
+                        $FILTER_TO_FOCUS
                         FILTER REGEX(?al, "$TERM", "i")
                     }}
                     UNION
@@ -37,6 +43,8 @@ prez:skosWeighted a prez:SearchMethod ;
                              <http://www.w3.org/2004/02/skos/core#hiddenLabel> ?hl ;
                              <http://www.w3.org/2004/02/skos/core#prefLabel> ?pl .
                         BIND (5 AS ?w)
+                        $FOCUS_TO_FILTER
+                        $FILTER_TO_FOCUS
                         FILTER REGEX(?hl, "$TERM", "i")
                     }}
                     UNION
@@ -45,6 +53,8 @@ prez:skosWeighted a prez:SearchMethod ;
                              <http://www.w3.org/2004/02/skos/core#definition> ?d ;
                              <http://www.w3.org/2004/02/skos/core#prefLabel> ?pl .
                         BIND (1 AS ?w)
+                        $FOCUS_TO_FILTER
+                        $FILTER_TO_FOCUS
                         FILTER REGEX(?d, "$TERM", "i")
                     }}
                 }}

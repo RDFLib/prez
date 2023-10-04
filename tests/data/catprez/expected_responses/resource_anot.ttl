@@ -6,7 +6,31 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-dcterms:identifier rdfs:label "Identifier"@en .
+dcterms:accessRights rdfs:label "Access Rights"@en ;
+    dcterms:description "Access Rights may include information regarding access or restrictions based on privacy, security, or other policies."@en .
+
+dcterms:description rdfs:label "Description"@en ;
+    dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en .
+
+dcterms:identifier rdfs:label "Identifier"@en ;
+    dcterms:description "Recommended practice is to identify the resource by means of a string conforming to an identification system. Examples include International Standard Book Number (ISBN), Digital Object Identifier (DOI), and Uniform Resource Name (URN).  Persistent identifiers should be provided as HTTP URIs."@en .
+
+dcterms:issued rdfs:label "Date Issued"@en ;
+    dcterms:description "Recommended practice is to describe the date, date/time, or period of time as recommended for the property Date, of which this is a subproperty."@en .
+
+dcterms:license rdfs:label "License"@en ;
+    dcterms:description "Recommended practice is to identify the license document with a URI. If this is not possible or feasible, a literal value that identifies the license may be provided."@en .
+
+dcterms:rights rdfs:label "Rights"@en ;
+    dcterms:description "Typically, rights information includes a statement about various property rights associated with the resource, including intellectual property rights.  Recommended practice is to refer to a rights statement with a URI.  If this is not possible or feasible, a literal value (name, label, or short text) may be provided."@en .
+
+dcterms:spatial rdfs:label "Spatial Coverage"@en .
+
+dcterms:temporal rdfs:label "Temporal Coverage"@en .
+
+dcterms:title rdfs:label "Title"@en .
+
+rdfs:label rdfs:label "label" .
 
 <https://w3id.org/idn/dataset/agents> dcterms:description """The Indigenous Data Network's catalogue of Agents. This catalogue contains instances of Agents - People and Organisations - related to the holding of indigenous data. This includes non-indigenous Agents
 

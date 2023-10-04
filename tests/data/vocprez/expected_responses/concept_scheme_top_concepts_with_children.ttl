@@ -9,6 +9,7 @@
 
 <http://linked.data.gov.au/def/borehole-purpose/pggd> dcterms:identifier "brhl-prps:pggd"^^prez:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:definition "Borehole purposes applicable to regulatory notification forms."@en ;
     skos:prefLabel "PGGD selection"@en .
 
 <http://linked.data.gov.au/def2/borehole-purpose> a owl:Ontology,
@@ -16,6 +17,7 @@
     dcterms:identifier "def2:borehole-purpose"^^prez:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     ns1:status <https://linked.data.gov.au/def/reg-statuses/stable> ;
+    skos:definition "The primary purpose of a borehole based on the legislative State Act and/or the resources industry sector."@en ;
     skos:hasTopConcept <http://linked.data.gov.au/def/borehole-purpose/coal>,
         <http://linked.data.gov.au/def/borehole-purpose/geothermal>,
         <http://linked.data.gov.au/def/borehole-purpose/greenhouse-gas-storage>,
@@ -37,14 +39,18 @@ dcterms:identifier rdfs:label "Identifier"@en ;
 dcterms:provenance rdfs:label "Provenance"@en ;
     dcterms:description "The statement may include a description of any changes successive custodians made to the resource."@en .
 
+rdfs:label rdfs:label "label" .
+
 <http://linked.data.gov.au/def/borehole-purpose/coal> a skos:Concept ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:definition "Wells and bores drilled to facilitate the mining of coal under permits governed by the Queensland Mineral Resources Act 1989"@en ;
     skos:prefLabel "Coal"@en ;
     prez:childrenCount 2 ;
     prez:link "/v/vocab/def2:borehole-purpose/brhl-prps:coal" .
 
 <http://linked.data.gov.au/def/borehole-purpose/geothermal> a skos:Concept ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:definition "Wells and bores drilled under permits governed by the Queensland Geothermal Energy Act 2010"@en ;
     skos:prefLabel "Geothermal"@en ;
     prez:childrenCount 0 ;
     prez:link "/v/collection/brhl-prps:pggd/brhl-prps:geothermal",
@@ -52,6 +58,7 @@ dcterms:provenance rdfs:label "Provenance"@en ;
 
 <http://linked.data.gov.au/def/borehole-purpose/greenhouse-gas-storage> a skos:Concept ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:definition "Wells and bores drilled under permits governed by the Queensland Greenhouse Gas Storage Act 2009"@en ;
     skos:prefLabel "Greenhouse Gas Storage"@en ;
     prez:childrenCount 1 ;
     prez:link "/v/collection/brhl-prps:pggd/brhl-prps:greenhouse-gas-storage",
@@ -59,34 +66,41 @@ dcterms:provenance rdfs:label "Provenance"@en ;
 
 <http://linked.data.gov.au/def/borehole-purpose/mineral> a skos:Concept ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:definition "Wells and bores drilled to facilitate the mining of minerals, excluding coal and oil shale, under permits governed by the Queensland Mineral Resources Act (1989)"@en ;
     skos:prefLabel "Mineral"@en ;
     prez:childrenCount 0 ;
     prez:link "/v/vocab/def2:borehole-purpose/brhl-prps:mineral" .
 
 <http://linked.data.gov.au/def/borehole-purpose/non-industry> a skos:Concept ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:definition "Wells and bores drilled by non-industry agents outside of the State Resources Acts"@en ;
     skos:prefLabel "Non-Industry"@en ;
     prez:childrenCount 0 ;
     prez:link "/v/vocab/def2:borehole-purpose/brhl-prps:non-industry" .
 
 <http://linked.data.gov.au/def/borehole-purpose/oil-shale> a skos:Concept ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:definition "Wells and bores drilled to facilitate the mining of oil shale under permits governed by the Queensland Mineral Resources Act 1989"@en ;
     skos:prefLabel "Oil Shale"@en ;
     prez:childrenCount 0 ;
     prez:link "/v/vocab/def2:borehole-purpose/brhl-prps:oil-shale" .
 
 <http://linked.data.gov.au/def/borehole-purpose/petroleum> a skos:Concept ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:definition "Wells and bores drilled under permits governed by the Queensland Petroleum Act 1923 and Petroleum and Gas (Production and Safety) Act 2004. This includes water observation, water disposal, and water supply wells drilled under the relevant Petroleum Acts rather than the Water Act."@en ;
     skos:prefLabel "Petroleum"@en ;
     prez:childrenCount 3 ;
     prez:link "/v/vocab/def2:borehole-purpose/brhl-prps:petroleum" .
 
 <http://linked.data.gov.au/def/borehole-purpose/water> a skos:Concept ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:definition "Wells and bores drilled under permits governed by the Queensland Water Act 2000. A well or bore is only considered a water well or bore where drilled under the Water Act, e.g. a well or bore drilled to serve a water observation function under the Petroleum Act is considered a Petroleum Well with an Observation function or sub-purpose. Additional rights, obligations, and responsibilities may be conferred by intersecting legislation on wells and bores drilled by mineral and coal permit holders and petroleum and gas permit holders under the Mineral Resources Act 1989 and the Petroleum and Gas (Production and Safety) Act 2004 respectively."@en ;
     skos:prefLabel "Water"@en ;
     prez:childrenCount 0 ;
     prez:link "/v/collection/brhl-prps:pggd/brhl-prps:water",
         "/v/vocab/def2:borehole-purpose/brhl-prps:water" .
 
-<https://linked.data.gov.au/def/reg-statuses/stable> skos:prefLabel "stable"@en ;
+<https://linked.data.gov.au/def/reg-statuses/stable> skos:definition "An entry that is seen as having a reasonable measure of stability, may be used to mark the full adoption of a previously 'experimental' entry."@en ;
+    skos:prefLabel "stable"@en ;
     schema:color "#2e8c09" .
+

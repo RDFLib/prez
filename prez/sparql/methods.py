@@ -4,7 +4,7 @@ from typing import Dict, Tuple, Union, Any
 from typing import List
 
 import httpx
-from httpx import Client, AsyncClient
+from httpx import Client, AsyncClient, HTTPError
 from httpx import Response as httpxResponse
 from rdflib import Namespace, Graph, URIRef
 from starlette.requests import Request
@@ -17,17 +17,17 @@ async_client = AsyncClient(
     auth=(settings.sparql_username, settings.sparql_password)
     if settings.sparql_username
     else None,
+    timeout=settings.sparql_timeout,
 )
 
 client = Client(
     auth=(settings.sparql_username, settings.sparql_password)
     if settings.sparql_username
     else None,
+    timeout=settings.sparql_timeout,
 )
 
 log = logging.getLogger(__name__)
-
-TIMEOUT = 30.0
 
 
 def sparql_query_non_async(query: str) -> Tuple[bool, Union[List, Dict]]:
@@ -39,7 +39,6 @@ def sparql_query_non_async(query: str) -> Tuple[bool, Union[List, Dict]]:
             "Accept": "application/json",
             "Content-Type": "application/sparql-query",
         },
-        timeout=TIMEOUT,
     )
     if 200 <= response.status_code < 300:
         return True, response.json()["results"]["bindings"]
@@ -60,7 +59,6 @@ def sparql_ask_non_async(query: str):
             "Content-Type": "application/x-www-form-urlencoded",
             "Accept-Encoding": "gzip, deflate",
         },
-        timeout=TIMEOUT,
     )
     if 200 <= response.status_code < 300:
         return True, response.json()["boolean"]
@@ -100,7 +98,8 @@ async def send_query(query: str, mediatype="text/turtle"):
         headers={"Accept": mediatype},
         data={"query": query},
     )
-    return await async_client.send(query_rq, stream=True)
+    response = await async_client.send(query_rq, stream=True)
+    return response
 
 
 async def rdf_query_to_graph(query: str) -> Graph:
