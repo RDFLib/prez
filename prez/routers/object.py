@@ -2,6 +2,7 @@ from string import Template
 from typing import FrozenSet
 
 from fastapi import APIRouter, Request, HTTPException, status, Query
+from fastapi.responses import RedirectResponse
 from rdflib import Graph, Literal, URIRef, PROF, DCTERMS
 from starlette.responses import PlainTextResponse
 
@@ -113,13 +114,13 @@ async def object_function(
     generate_system_links_object(
         internal_links_graph, tabular_results[0][1], object_item.uri
     )
-    return await return_from_graph(
-        item_graph + internal_links_graph,
-        prof_and_mt_info.mediatype,
-        PREZ["profile/open"],
-        prof_and_mt_info.profile_headers,
-        prof_and_mt_info.selected_class
-    )
+
+    link = internal_links_graph.value(URIRef(object_item.uri), PREZ.link)
+
+    if request.query_params:
+        return RedirectResponse(f"{link}?{request.query_params}")
+
+    return RedirectResponse(str(link))
 
 
 async def item_function(request: Request, object_curie: str):
