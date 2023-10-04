@@ -140,11 +140,40 @@ def test_client(request):
             ],
         ],
         [
-            "/v/vocab/"
-        ]
+            "/v/collection?_profile=prfl:dd&_mediatype=application/json",
+            [
+                {
+                    "@id": "http://linked.data.gov.au/def/borehole-purpose/pggd",
+                    "http://www.w3.org/2004/02/skos/core#definition": [
+                        "Borehole purposes applicable to regulatory notification forms."
+                    ],
+                    "http://purl.org/dc/terms/publisher": [],
+                    "http://purl.org/linked-data/registry#status": [],
+                    "http://www.w3.org/2004/02/skos/core#prefLabel": ["PGGD selection"],
+                    "http://www.w3.org/1999/02/22-rdf-syntax-ns#type": [
+                        "http://www.w3.org/2004/02/skos/core#Collection"
+                    ],
+                },
+                {
+                    "@id": "http://resource.geosciml.org/classifier/cgi/contacttype",
+                    "http://www.w3.org/2004/02/skos/core#definition": [
+                        "All Concepts in this vocabulary"
+                    ],
+                    "http://purl.org/dc/terms/publisher": [],
+                    "http://purl.org/linked-data/registry#status": [],
+                    "http://www.w3.org/2004/02/skos/core#prefLabel": [
+                        "Contact Type - All Concepts"
+                    ],
+                    "http://www.w3.org/1999/02/22-rdf-syntax-ns#type": [
+                        "http://www.w3.org/2004/02/skos/core#Collection"
+                    ],
+                },
+            ],
+        ],
     ],
 )
 def test_vocab_listing(test_client: TestClient, url: str, expected_data: dict):
     with test_client as client:
         response = client.get(url)
+        print(response.json())
         assert response.json() == expected_data
