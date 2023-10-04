@@ -22,6 +22,12 @@ dcterms:provenance rdfs:label "Provenance"@en ;
     skos:prefLabel "Contact Type - All Concepts"@en ;
     prez:link "/v/collection/cgi:contacttype" .
 
+<http://linked.data.gov.au/def/depth-reference/absolute> a skos:Collection ;
+    dcterms:provenance "Defined here" ;
+    skos:definition "A fixed plane or point that describes an absolute reference for depth observations."@en ;
+    skos:prefLabel "Absolute"@en ;
+    prez:link "/v/collection/dpth-rfrnc:absolute" .
+
 rdfs:label rdfs:label "label" .
 
-skos:Collection prez:count 2 .
+skos:Collection prez:count 3 .
