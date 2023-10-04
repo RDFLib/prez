@@ -60,7 +60,7 @@ async def return_from_graph(
     elif str(mediatype) == "application/json":
         graph = await return_annotated_rdf(
             graph,
-            URIRef("https://w3id.org/profile/vocpub"),
+            profile,
         )
 
         try:
