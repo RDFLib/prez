@@ -115,7 +115,7 @@ async def object_function(
         internal_links_graph, tabular_results[0][1], object_item.uri
     )
 
-    if request.headers.get("Prez-UI-Request"):
+    if prof_and_mt_info.mediatype == "text/anot+turtle":
         return await return_from_graph(
             item_graph + internal_links_graph,
             prof_and_mt_info.mediatype,
