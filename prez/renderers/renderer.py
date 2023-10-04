@@ -165,5 +165,5 @@ async def return_profiles(
         prof_and_mt_info.mediatype,
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
-        prof_and_mt_info.selected_class
+        prof_and_mt_info.selected_class,
     )

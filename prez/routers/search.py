@@ -80,7 +80,7 @@ async def search(
         mediatype=prof_and_mt_info.mediatype,
         profile=URIRef("https://prez.dev/profile/open"),
         profile_headers=prof_and_mt_info.profile_headers,
-        selected_class=prof_and_mt_info.selected_class
+        selected_class=prof_and_mt_info.selected_class,
     )
 
 

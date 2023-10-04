@@ -121,7 +121,7 @@ async def object_function(
             prof_and_mt_info.mediatype,
             PREZ["profile/open"],
             prof_and_mt_info.profile_headers,
-            prof_and_mt_info.selected_class
+            prof_and_mt_info.selected_class,
         )
 
     # TODO: What to do if there are more than one links?
