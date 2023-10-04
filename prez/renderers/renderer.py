@@ -42,7 +42,6 @@ async def return_from_queries(
         profile,
         profile_headers,
         selected_class,
-        predicates_for_link_addition,
     )
 
 
@@ -52,7 +51,6 @@ async def return_from_graph(
     profile,
     profile_headers,
     selected_class: URIRef,
-    predicates_for_link_addition: dict = None,
 ):
     profile_headers["Content-Disposition"] = "inline"
 
@@ -167,4 +165,5 @@ async def return_profiles(
         prof_and_mt_info.mediatype,
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
+        prof_and_mt_info.selected_class
     )

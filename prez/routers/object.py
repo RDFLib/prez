@@ -118,6 +118,7 @@ async def object_function(
         prof_and_mt_info.mediatype,
         PREZ["profile/open"],
         prof_and_mt_info.profile_headers,
+        prof_and_mt_info.selected_class
     )
 
 
@@ -274,7 +275,7 @@ def generate_system_links_object(
             k: get_curie_id_for_uri(v["value"])
             for k, v in endpoint_results.items()
             if k != "endpoint"
-        } | {"object": get_curie_id_for_uri(object_uri)}
+        } | {"object": get_curie_id_for_uri(URIRef(object_uri))}
         endpoints.append(endpoint_template.substitute(template_args))
     for endpoint in endpoints:
         internal_links_graph.add(
