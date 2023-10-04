@@ -23,6 +23,7 @@ async def search(
 ):
     term = request.query_params.get("term")
     limit = request.query_params.get("limit", 20)
+    offset = request.query_params.get("offset", 0)
     foc_2_filt, filt_2_foc = extract_qsa_params(request.query_params)
     if not term:
         return PlainTextResponse(
@@ -59,7 +60,7 @@ async def search(
     )
     predicates_sparql_string = " ".join(f"<{p}>" for p in predicates)
     search_query.populate_query(
-        term, limit, filter_to_focus_str, focus_to_filter_str, predicates_sparql_string
+        term, limit, offset, filter_to_focus_str, focus_to_filter_str, predicates_sparql_string
     )
 
     full_query = generate_item_construct(
