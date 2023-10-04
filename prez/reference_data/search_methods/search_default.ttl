@@ -37,6 +37,7 @@ prez:default
             }
         }
         GROUP BY ?search_result_uri ?predicate ?match
-        LIMIT $LIMIT
+        ORDER BY DESC(?weight)
+        LIMIT $LIMIT OFFSET $OFFSET
     }
         """ .
