@@ -1,4 +1,5 @@
 import io
+import json
 import logging
 from typing import Optional
 
@@ -13,12 +14,13 @@ from starlette.responses import Response
 
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.models.profiles_item import ProfileItem
+from prez.renderers.csv_renderer import render_csv_dropdown
 from prez.sparql.methods import send_queries, rdf_query_to_graph
 from prez.sparql.objects_listings import (
     generate_item_construct,
     get_annotation_properties,
 )
-from prez.renderers.json_renderer import render_json, NotFoundError
+from prez.renderers.json_renderer import render_json_dropdown, NotFoundError
 
 log = logging.getLogger(__name__)
 
@@ -57,14 +59,27 @@ async def return_from_graph(
     if str(mediatype) in RDF_MEDIATYPES:
         return await return_rdf(graph, mediatype, profile_headers)
 
-    elif str(mediatype) == "application/json":
+    elif profile == URIRef("https://w3id.org/profile/dd"):
         graph = await return_annotated_rdf(
             graph,
             profile,
         )
 
         try:
-            return await render_json(graph, profile, selected_class)
+            jsonld_data = await render_json_dropdown(graph, profile, selected_class)
+
+            if str(mediatype) == "text/csv":
+                stream = render_csv_dropdown(jsonld_data["@graph"])
+                response = StreamingResponse(stream, media_type=mediatype)
+                response.headers[
+                    "Content-Disposition"
+                ] = "attachment;filename=prez-dd.csv"
+                return response
+
+            # application/json
+            stream = io.StringIO(json.dumps(jsonld_data))
+            return StreamingResponse(stream, media_type=mediatype)
+
         except NotFoundError as err:
             raise HTTPException(status.HTTP_404_NOT_FOUND, str(err))
 

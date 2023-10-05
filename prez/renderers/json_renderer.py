@@ -140,11 +140,24 @@ def _get_child_iris(
     return children
 
 
-async def render_json(
+def create_graph_item(
+    iri: str, predicates: list[Node], graph: Graph, context: dict
+) -> tuple[dict, dict]:
+    item = {"iri": iri}
+    for predicate in predicates:
+        values = list(graph.objects(URIRef(iri), predicate))
+        predicate_localname = str(predicate).split("#")[-1].split("/")[-1]
+        item[str(predicate_localname)] = str(values[0]) if values else None
+        context[predicate_localname] = str(predicate)
+
+    return item, context
+
+
+async def render_json_dropdown(
     graph: Graph,
     profile: URIRef,
     selected_class: URIRef,
-) -> list:
+) -> dict:
     # TODO: This currently doesn't take literals with different lang tags into consideration.
     #       E.g., labels always just return the first value found.
     #       Will need to consider lang tags for literal values of relative predicates, etc.
@@ -165,6 +178,9 @@ async def render_json(
     )
 
     items = []
+    context = {
+        "iri": "@id",
+    }
 
     if (
         not child_to_focus_predicates
@@ -182,25 +198,19 @@ async def render_json(
             )
 
         for resource in graph.subjects(RDF.type, container_class):
-            item = {"@id": resource}
-
             relative_predicates = _get_relative_predicates(
                 profile_graph, profile, selected_class
             )
             relative_predicates += _get_label_predicates(profile_graph, profile)
-            relative_predicates += [RDF.type]
-
-            for relative_predicate in relative_predicates:
-                values = list(graph.objects(resource, relative_predicate))
-                item[relative_predicate] = values
-
+            item, context = create_graph_item(
+                str(resource), relative_predicates, graph, context
+            )
             items.append(item)
     else:
         relative_predicates = _get_relative_predicates(
             profile_graph, profile, selected_class
         )
         relative_predicates += _get_label_predicates(profile_graph, profile)
-        relative_predicates += [RDF.type]
 
         child_iris = _get_child_iris(
             graph,
@@ -210,14 +220,9 @@ async def render_json(
             focus_to_child_predicates,
         )
         for child_iri in child_iris:
-            item = {
-                "@id": child_iri,
-            }
-
-            for relative_predicate in relative_predicates:
-                values = list(graph.objects(child_iri, relative_predicate))
-                item[relative_predicate] = values
-
+            item, context = create_graph_item(
+                str(child_iri), relative_predicates, graph, context
+            )
             items.append(item)
 
-    return sorted(items, key=lambda x: x["@id"])
+    return {"@context": context, "@graph": sorted(items, key=lambda x: x["iri"])}

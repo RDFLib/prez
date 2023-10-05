@@ -124,7 +124,7 @@ async def object_function(
             prof_and_mt_info.selected_class,
         )
 
-    # TODO: What to do if there are more than one links?
+    # TODO: Set default subsystem precedence and allow it to be overridable via config.
     link = internal_links_graph.value(URIRef(object_item.uri), PREZ.link)
 
     if request.query_params:

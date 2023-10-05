@@ -159,7 +159,7 @@ prez:VocPrezProfile
         a sh:NodeShape ;
         sh:targetClass skos:ConceptScheme ;
         altr-ext:childToFocus skos:inScheme ;
-        altr-ext:relativeProperties skos:broader , skos:narrower, skos:definition ;
+        altr-ext:relativeProperties skos:broader ;
     ] ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
