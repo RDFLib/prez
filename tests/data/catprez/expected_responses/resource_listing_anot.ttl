@@ -1,12 +1,7 @@
-@prefix dcat: <http://www.w3.org/ns/dcat#> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
 @prefix prez: <https://prez.dev/> .
-@prefix prov: <http://www.w3.org/ns/prov#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-
-dcterms:created rdfs:label "Date Created"@en ;
-    dcterms:description "Recommended practice is to describe the date, date/time, or period of time as recommended for the property Date, of which this is a subproperty."@en .
 
 dcterms:description rdfs:label "Description"@en ;
     dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en .
@@ -17,30 +12,17 @@ dcterms:hasPart rdfs:label "Has Part"@en ;
 dcterms:identifier rdfs:label "Identifier"@en ;
     dcterms:description "Recommended practice is to identify the resource by means of a string conforming to an identification system. Examples include International Standard Book Number (ISBN), Digital Object Identifier (DOI), and Uniform Resource Name (URN).  Persistent identifiers should be provided as HTTP URIs."@en .
 
-dcterms:issued rdfs:label "Date Issued"@en ;
-    dcterms:description "Recommended practice is to describe the date, date/time, or period of time as recommended for the property Date, of which this is a subproperty."@en .
-
-dcterms:modified rdfs:label "Date Modified"@en ;
-    dcterms:description "Recommended practice is to describe the date, date/time, or period of time as recommended for the property Date, of which this is a subproperty."@en .
-
 dcterms:title rdfs:label "Title"@en .
 
 rdfs:label rdfs:label "label" .
 
-<https://w3id.org/idn/dataset/agents> a dcat:Catalog ;
-    dcterms:created "2022-08-15"^^xsd:date ;
-    dcterms:description """The Indigenous Data Network's catalogue of Agents. This catalogue contains instances of Agents - People and Organisations - related to the holding of indigenous data. This includes non-indigenous Agents
+<https://w3id.org/idn/dataset/agents> dcterms:description """The Indigenous Data Network's catalogue of Agents. This catalogue contains instances of Agents - People and Organisations - related to the holding of indigenous data. This includes non-indigenous Agents
 
 This catalogue extends on standard Agent information to include properties useful to understand the indigeneity of Agents: whether they are or not, or how much they are, indigenous"""@en ;
     dcterms:hasPart <https://www.atsida.edu.au/archive/datasets/au.edu.anu.ada.ddi.20002-sa> ;
-    dcterms:identifier "idnac"^^xsd:token,
-        "dtst:agents"^^prez:identifier ;
-    dcterms:modified "2022-08-15"^^xsd:date ;
+    dcterms:identifier "dtst:agents"^^prez:identifier ;
     dcterms:title "IDN Agents Catalogue" ;
-    prov:qualifiedAttribution [ dcat:hadRole <http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/author>,
-                <http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/custodian>,
-                <http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/owner> ;
-            prov:agent <https://linked.data.gov.au/org/idn> ] ;
+    prez:count 0 ;
     prez:link "/c/catalogs/dtst:agents" .
 
 <https://w3id.org/idn/dataset/democat> dcterms:description """The Indigenous Data Network's catalogue of datasets. This catalogue contains records of datasets in Australia, most of which have some relation to indigenous Australia.
@@ -51,13 +33,11 @@ The content of this catalogue conforms to the Indigenous Data Network's Catalogu
     dcterms:identifier "dtst:democat"^^prez:identifier ;
     dcterms:title "IDN Datasets Catalogue" .
 
-<https://linked.data.gov.au/org/idn> rdfs:label "Indigenous Data Network" .
-
 <https://www.atsida.edu.au/archive/datasets/au.edu.anu.ada.ddi.20002-sa> dcterms:description """This study contains time series of data of the Annual Aboriginal Census for Australia, Australian Capital Territory, New South Wales, Northern Territory, Queensland, South Australia, Tasmania, Victoria and Western Australia from 1921 to 1944.
 
 Special care notice:
 Aboriginal and Torres Strait Islander people, researchers and other users should be aware that material in this dataset may contain material that is considered offensive. The data has been retained in its original format because it represents an evidential record of language, beliefs or other cultural situations at a point in time.""" ;
-    dcterms:issued "2011-07-22"^^xsd:date ;
     dcterms:title "Annual Aboriginal Census,1921-1944 - South Australia" ;
     prez:link "/c/catalogs/dtst:agents/resources/dtsts:au.edu.anu.ada.ddi.20002-sa",
         "/c/catalogs/dtst:democat/resources/dtsts:au.edu.anu.ada.ddi.20002-sa" .
+
