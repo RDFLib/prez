@@ -329,7 +329,7 @@ http://linked.data.gov.au/def/borehole-purpose/tight-oil,http://linked.data.gov.
 http://linked.data.gov.au/def/borehole-purpose/unconventional-petroleum,http://linked.data.gov.au/def/borehole-purpose/petroleum,Unconventional Petroleum
 http://linked.data.gov.au/def/borehole-purpose/underground-coal-mining,http://linked.data.gov.au/def/borehole-purpose/coal,Underground Coal Mining
 http://linked.data.gov.au/def/borehole-purpose/water,,Water
-"""
+""",
         ],
         [
             "http://linked.data.gov.au/def/depth-reference/absolute",
@@ -338,7 +338,7 @@ http://linked.data.gov.au/def/borehole-purpose/water,,Water
 http://linked.data.gov.au/def/depth-reference/australian-height-datum,The Australian Height Datum is a vertical datum in Australia.In 1971 the mean sea level for 1966-1968 was assigned the value of 0.000m on the Australian Height Datum at thirty tide gauges around the coast of the Australian continent.,Australian Height Datum
 http://linked.data.gov.au/def/depth-reference/mean-sea-level,"The elevation (on the ground) or altitude (in the air) of an object, relative to the average sea level.",Mean Sea Level
 http://linked.data.gov.au/def/depth-reference/metres-sub-sea,"The distance below mean sea level, the inverse of measurements to Mean Sea Level.",Metres Sub-Sea
-"""
+""",
         ],
     ],
 )
