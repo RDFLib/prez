@@ -71,5 +71,5 @@ Aboriginal and Torres Strait Islander people, researchers and other users should
             prov:agent "ATSIDA.1" ] ;
     ns1:home "https://www.atsida.edu.au/" ;
     ns1:notes "The Annual Aboriginal Census is considered as a significant official source of Aboriginal population statistics. It was conducted annually in June from 1921 to 1944, exempting the war years between 1941 and 1944 in each State and Territory. The 1944 census was incomplete with New South Wales not taking part at all. Enumeration of Aboriginal populations was poor and difficulties in classification occurred. The Census was a collaboration of the Commonwealth Bureau of Census and Statistics who initiated the study, State and Territory Statisticians, the Protector of Aborigines, and local police officers who conducted the enumeration. The Annual Aboriginal Census is also referred to as the Annual Census of Aborigines and Police Census." ;
-    prez:link "/c/catalogs/dtst:agents/dtsts:au.edu.anu.ada.ddi.20002-sa",
-        "/c/catalogs/dtst:democat/dtsts:au.edu.anu.ada.ddi.20002-sa" .
+    prez:link "/c/catalogs/dtst:agents/resources/dtsts:au.edu.anu.ada.ddi.20002-sa",
+        "/c/catalogs/dtst:democat/resources/dtsts:au.edu.anu.ada.ddi.20002-sa" .
