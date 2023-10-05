@@ -158,9 +158,6 @@ async def render_json_dropdown(
     profile: URIRef,
     selected_class: URIRef,
 ) -> dict:
-    # TODO: This currently doesn't take literals with different lang tags into consideration.
-    #       E.g., labels always just return the first value found.
-    #       Will need to consider lang tags for literal values of relative predicates, etc.
     profile_graph = profiles_graph_cache.cbd(profile)
 
     iri = _get_resource_iri(graph, profile_graph, profile)
