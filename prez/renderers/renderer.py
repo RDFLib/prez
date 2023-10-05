@@ -74,12 +74,15 @@ async def return_from_graph(
 
             if str(mediatype) == "text/csv":
                 iri = graph.value(None, RDF.type, selected_class)
-                curie = get_curie_id_for_uri(URIRef(str(iri)))
+                if iri:
+                    filename = get_curie_id_for_uri(URIRef(str(iri)))
+                else:
+                    filename = selected_class.split("#")[-1].split("/")[-1]
                 stream = render_csv_dropdown(jsonld_data["@graph"])
                 response = StreamingResponse(stream, media_type=mediatype)
                 response.headers[
                     "Content-Disposition"
-                ] = f"attachment;filename={curie}.csv"
+                ] = f"attachment;filename={filename}.csv"
                 return response
 
             # application/json
