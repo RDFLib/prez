@@ -7,6 +7,7 @@ from rdflib import Graph, Literal, URIRef, PROF, DCTERMS
 from starlette.responses import PlainTextResponse
 
 from prez.cache import endpoints_graph_cache, profiles_graph_cache
+from prez.config import settings
 from prez.models.listing import ListingModel
 from prez.models.object_item import ObjectItem
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
@@ -138,7 +139,7 @@ async def object_function(
         )
 
     # Define the order in which you want to sort the URLs
-    order = ["/v/vocab", "/v/collection", "/s/datasets", "/c/catalogs"]
+    order = settings.subsystem_url_preferred_order
     links = order_urls(order, links)
     link = links[0]
 

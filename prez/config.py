@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     order_lists_by_label: bool = True
     base_classes: Optional[dict]
     prez_flavours: Optional[list] = ["SpacePrez", "VocPrez", "CatPrez", "ProfilesPrez"]
+    subsystem_url_preferred_order: Optional[list] = ["/v/vocab", "/v/collection", "/s/datasets", "/c/catalogs"]
     label_predicates = [SKOS.prefLabel, DCTERMS.title, RDFS.label, SDO.name]
     description_predicates = [SKOS.definition, DCTERMS.description, SDO.description]
     provenance_predicates = [DCTERMS.provenance]
