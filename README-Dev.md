@@ -79,6 +79,8 @@ using the properties listed below.
 
 ## High Level Sequence `/object` endpoint
 
+### Prez UI or similar human-actionable client
+
 Prez provides a `/object` endpoint as an endpoint that supplies any information known about a given URI. If an annotated
 mediatype is requested, prez will additionally provide all system links for endpoints which can render the object. The
 high level sequence for this endpoint is as follows:
@@ -90,6 +92,10 @@ these endpoints, specifying any variables that need to be substituted (such as p
 4. Get the object information from the triplestore, using an open profile, and in parallel any system information needed
 to construct the system links.
 5. Return the response
+
+### Machine requests
+
+Machine requests made to `/object` will use the provided media type and profile to return an appropriate response in one of the subsystems. In some cases, the resource associated with the supplied IRI may be associated with more than one subsystem. To decide which subsystem to use, a preferred ordering of the subsystem URLs are set in the config under `subsystem_url_preferred_order`. After the system URLs are sorted to their preferred order, the first system URL will be used to process the request.
 
 ## High Level Sequence listing and individual object endpoints
 
