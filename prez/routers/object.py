@@ -25,6 +25,7 @@ from prez.sparql.objects_listings import (
     generate_listing_construct,
     generate_listing_count_construct,
 )
+from prez.url import order_urls
 
 router = APIRouter(tags=["Object"])
 
@@ -116,6 +117,8 @@ async def object_function(
     )
 
     if prof_and_mt_info.mediatype == "text/anot+turtle":
+        # Assumes this is a request made by Prez UI or a similar client.
+        # Returns a response based on the open profile.
         return await return_from_graph(
             item_graph + internal_links_graph,
             prof_and_mt_info.mediatype,
@@ -124,8 +127,20 @@ async def object_function(
             prof_and_mt_info.selected_class,
         )
 
-    # TODO: Set default subsystem precedence and allow it to be overridable via config.
-    link = internal_links_graph.value(URIRef(object_item.uri), PREZ.link)
+    links = [
+        str(v) for v in internal_links_graph.objects(URIRef(object_item.uri), PREZ.link)
+    ]
+
+    if not links:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            f"No system links found for object with IRI {object_item.uri}.",
+        )
+
+    # Define the order in which you want to sort the URLs
+    order = ["/v/vocab", "/v/collection", "/s/datasets", "/c/catalogs"]
+    links = order_urls(order, links)
+    link = links[0]
 
     if request.query_params:
         return RedirectResponse(f"{link}?{request.query_params}")
