@@ -8,13 +8,14 @@ from fastapi import status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic.types import List
-from rdflib import Graph, URIRef, Namespace
+from rdflib import Graph, URIRef, Namespace, RDF
 from starlette.requests import Request
 from starlette.responses import Response
 
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.models.profiles_item import ProfileItem
 from prez.renderers.csv_renderer import render_csv_dropdown
+from prez.services.curie_functions import get_curie_id_for_uri
 from prez.sparql.methods import send_queries, rdf_query_to_graph
 from prez.sparql.objects_listings import (
     generate_item_construct,
@@ -66,14 +67,19 @@ async def return_from_graph(
         )
 
         try:
+            # TODO: Currently, data is generated in memory, instead of in a streaming manner.
+            #       Not possible to do a streaming response yet since we are reading the RDF
+            #       data into an in-memory graph.
             jsonld_data = await render_json_dropdown(graph, profile, selected_class)
 
             if str(mediatype) == "text/csv":
+                iri = graph.value(None, RDF.type, selected_class)
+                curie = get_curie_id_for_uri(URIRef(str(iri)))
                 stream = render_csv_dropdown(jsonld_data["@graph"])
                 response = StreamingResponse(stream, media_type=mediatype)
                 response.headers[
                     "Content-Disposition"
-                ] = "attachment;filename=prez-dd.csv"
+                ] = f"attachment;filename={curie}.csv"
                 return response
 
             # application/json
