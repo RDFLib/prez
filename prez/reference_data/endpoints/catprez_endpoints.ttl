@@ -20,9 +20,16 @@ endpoint:catalog a ont:Endpoint ;
     ont:endpointTemplate "/c/catalogs/$object" ;
 .
 
-endpoint:resource a ont:Endpoint ;
+endpoint:resource-listing a ont:Endpoint ;
     ont:parentEndpoint endpoint:catalog ;
+    ont:deliversClasses prez:ResourceList ;
+    ont:baseClass dcat:Resource ;
+    ont:endpointTemplate "/c/catalogs/$parent_1/resources" ;
+.
+
+endpoint:resource a ont:Endpoint ;
+    ont:parentEndpoint endpoint:resource-listing ;
     ont:deliversClasses dcat:Resource ;
-    ont:endpointTemplate "/c/catalogs/$parent_1/$object" ;
+    ont:endpointTemplate "/c/catalogs/$parent_1/resources/$object" ;
     ont:ParentToFocusRelation dcterms:hasPart ;
 .

@@ -33,6 +33,10 @@ prez:CatPrezProfile
         a sh:NodeShape ;
         sh:targetClass dcat:Resource ;
         altr-ext:hasDefaultProfile <https://www.w3.org/TR/vocab-dcat/>
+    ] , [
+        a sh:NodeShape ;
+        sh:targetClass prez:ResourceList ;
+        altr-ext:hasDefaultProfile <https://www.w3.org/TR/vocab-dcat/>
     ]
     .
 
@@ -45,7 +49,8 @@ prez:CatPrezProfile
         dcat:Catalog ,
         dcat:Dataset ,
         dcat:Resource ,
-        prez:CatalogList ;
+        prez:CatalogList ,
+        prez:ResourceList ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,
@@ -68,6 +73,10 @@ prez:CatPrezProfile
             dcterms:hasPart
             dcterms:publisher
         ) ;
+    ] ,
+    [  a sh:NodeShape ;
+        sh:targetClass prez:ResourceList ;
+        altr-ext:focusToChild dcterms:hasPart ;
     ]
 .
 
