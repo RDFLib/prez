@@ -60,23 +60,14 @@ prez:CatPrezProfile
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
         sh:targetClass dcat:Catalog ;
+        altr-ext:exclude dcterms:hasPart ;
         altr-ext:focusToChild dcterms:hasPart ;
-        sh:sequencePath (
-            dcterms:hasPart
-            dcterms:issued
-        ) ;
-        sh:sequencePath (
-            dcterms:hasPart
-            dcterms:creator
-        ) ;
-        sh:sequencePath (
-            dcterms:hasPart
-            dcterms:publisher
-        ) ;
     ] ,
-    [  a sh:NodeShape ;
+      [
+        a sh:NodeShape ;
         sh:targetClass prez:ResourceList ;
         altr-ext:focusToChild dcterms:hasPart ;
+        altr-ext:relativeProperties dcterms:issued , dcterms:creator , dcterms:publisher ;
     ]
 .
 
