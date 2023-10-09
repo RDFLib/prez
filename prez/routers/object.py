@@ -193,10 +193,11 @@ async def item_function(request: Request, object_curie: str, object_item: Object
 async def listing_function(
     request: Request, page: int = 1, per_page: int = 20, uri: str = None
 ):
+    endpoint_uri = request.scope["route"].name
     listing_item = ListingModel(
         **request.path_params,
         **request.query_params,
-        endpoint_uri=request.scope["route"].name,
+        endpoint_uri=endpoint_uri,
         uri=uri,
     )
     prof_and_mt_info = ProfilesMediatypesInfo(
@@ -216,7 +217,7 @@ async def listing_function(
     item_members_query = generate_listing_construct(
         listing_item, prof_and_mt_info.profile, page=page, per_page=per_page
     )
-    count_query = generate_listing_count_construct(listing_item)
+    count_query = generate_listing_count_construct(listing_item, endpoint_uri)
     if listing_item.selected_class in [
         URIRef("https://prez.dev/ProfilesList"),
         PROF.Profile,

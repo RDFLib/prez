@@ -1,0 +1,715 @@
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ns1: <http://purl.org/linked-data/registry#> .
+@prefix prez: <https://prez.dev/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+dcterms:created rdfs:label "Date Created"@en ;
+    dcterms:description "Recommended practice is to describe the date, date/time, or period of time as recommended for the property Date, of which this is a subproperty."@en .
+
+dcterms:creator rdfs:label "Creator"@en ;
+    dcterms:description "Recommended practice is to identify the creator with a URI.  If this is not possible or feasible, a literal value that identifies the creator may be provided."@en .
+
+dcterms:description rdfs:label "Description"@en ;
+    dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en .
+
+dcterms:hasPart rdfs:label "Has Part"@en ;
+    dcterms:description "This property is intended to be used with non-literal values. This property is an inverse property of Is Part Of."@en .
+
+dcterms:identifier rdfs:label "Identifier"@en ;
+    dcterms:description "Recommended practice is to identify the resource by means of a string conforming to an identification system. Examples include International Standard Book Number (ISBN), Digital Object Identifier (DOI), and Uniform Resource Name (URN).  Persistent identifiers should be provided as HTTP URIs."@en .
+
+dcterms:issued rdfs:label "Date Issued"@en ;
+    dcterms:description "Recommended practice is to describe the date, date/time, or period of time as recommended for the property Date, of which this is a subproperty."@en .
+
+dcterms:modified rdfs:label "Date Modified"@en ;
+    dcterms:description "Recommended practice is to describe the date, date/time, or period of time as recommended for the property Date, of which this is a subproperty."@en .
+
+dcterms:provenance rdfs:label "Provenance"@en ;
+    dcterms:description "The statement may include a description of any changes successive custodians made to the resource."@en .
+
+dcterms:publisher rdfs:label "Publisher"@en .
+
+dcterms:title rdfs:label "Title"@en .
+
+rdf:type rdfs:label "type" .
+
+rdfs:label rdfs:label "label" .
+
+skos:definition rdfs:label "definition"@en ;
+    skos:definition "A statement or formal explanation of the meaning of a concept."@en .
+
+skos:prefLabel rdfs:label "preferred label"@en ;
+    skos:definition "The preferred lexical label for a resource, in a given language."@en .
+
+dcat:hadRole rdfs:label "hadRole"@en .
+
+prov:agent rdfs:label "agent" .
+
+prov:qualifiedAttribution rdfs:label "qualified attribution" .
+
+<https://data.idnau.org/pid/democat> a dcat:Catalog ;
+    rdfs:label "IDN Demonstration Catalogue" ;
+    dcterms:created "2022-07-31"^^xsd:date ;
+    dcterms:description """The Indigenous Data Network's demonstration catalogue of datasets. This catalogue contains records of datasets in Australia, most of which have some relation to indigenous Australia.
+
+The purpose of this catalogue is not to act as a master catalogue of indigenous data in Australia to demonstrate improved metadata models and rating systems for data and metadata in order to improve indigenous data governance.
+
+The content of this catalogue conforms to the Indigenous Data Network's Catalogue Profile which is a profile of the DCAT, SKOS and PROV data models."""@en ;
+    dcterms:hasPart <http://search.slv.vic.gov.au/permalink/f/1fe7t3h/SLV_VOYAGER1641200>,
+        <https://data.gov.au/data/dataset/34b1c164-fbe8-44a0-84fd-467dba645aa7>,
+        <https://data.idnau.org/pid/AAC>,
+        <https://data.idnau.org/pid/AAC-SA>,
+        <https://data.idnau.org/pid/ADB>,
+        <https://data.idnau.org/pid/AGENTSDB>,
+        <https://data.idnau.org/pid/AIATSISIG>,
+        <https://data.idnau.org/pid/ANUARC>,
+        <https://data.idnau.org/pid/ANUCOL>,
+        <https://data.idnau.org/pid/ANUORC>,
+        <https://data.idnau.org/pid/ANUTHES>,
+        <https://data.idnau.org/pid/ARIES>,
+        <https://data.idnau.org/pid/ATNS>,
+        <https://data.idnau.org/pid/ATSICAC>,
+        <https://data.idnau.org/pid/ATSICR>,
+        <https://data.idnau.org/pid/ATSICZ>,
+        <https://data.idnau.org/pid/ATSIDA>,
+        <https://data.idnau.org/pid/ATSIDA2>,
+        <https://data.idnau.org/pid/AUSLANG>,
+        <https://data.idnau.org/pid/BMKKI>,
+        <https://data.idnau.org/pid/BSA>,
+        <https://data.idnau.org/pid/CGA>,
+        <https://data.idnau.org/pid/CHPBQ>,
+        <https://data.idnau.org/pid/CTGIR>,
+        <https://data.idnau.org/pid/DATA40>,
+        <https://data.idnau.org/pid/DECUTS>,
+        <https://data.idnau.org/pid/EXIA>,
+        <https://data.idnau.org/pid/GDPGPI>,
+        <https://data.idnau.org/pid/IBLADE>,
+        <https://data.idnau.org/pid/ILSI>,
+        <https://data.idnau.org/pid/ILUAB>,
+        <https://data.idnau.org/pid/IRC18>,
+        <https://data.idnau.org/pid/IREKEP>,
+        <https://data.idnau.org/pid/KHRD>,
+        <https://data.idnau.org/pid/MAYIK>,
+        <https://data.idnau.org/pid/MOLGEN>,
+        <https://data.idnau.org/pid/MP6WRS>,
+        <https://data.idnau.org/pid/NBPA>,
+        <https://data.idnau.org/pid/NCIG>,
+        <https://data.idnau.org/pid/NCS>,
+        <https://data.idnau.org/pid/NLPA>,
+        <https://data.idnau.org/pid/NNTT>,
+        <https://data.idnau.org/pid/NTEHP>,
+        <https://data.idnau.org/pid/PBCS>,
+        <https://data.idnau.org/pid/PCGSIC>,
+        <https://data.idnau.org/pid/POLOFFWA>,
+        <https://data.idnau.org/pid/RIIC>,
+        <https://data.idnau.org/pid/SHAA>,
+        <https://data.idnau.org/pid/SMMG>,
+        <https://data.idnau.org/pid/SRIMIPA>,
+        <https://data.idnau.org/pid/SSA>,
+        <https://data.idnau.org/pid/TINDALE>,
+        <https://data.idnau.org/pid/TLCMap>,
+        <https://data.idnau.org/pid/VPND>,
+        <https://data.idnau.org/pid/WALD>,
+        <https://data.idnau.org/pid/WASC18democat>,
+        <https://data.idnau.org/pid/WPPFER>,
+        <https://data.idnau.org/pid/YKC>,
+        <https://data.idnau.org/pid/YUMI>,
+        <https://data.idnau.org/pid/cfm3-db86>,
+        <https://data.sa.gov.au/data/dataset/tandanya-annual-reporting-regulatory-data>,
+        <https://linked.data.gov.au/dataset/asgsed3/IARE>,
+        <https://linked.data.gov.au/dataset/asgsed3/ILOC>,
+        <https://linked.data.gov.au/dataset/asgsed3/IREG>,
+        <https://www.catalog.slsa.sa.gov.au/record=b2187904~S10>,
+        <https://www.data.qld.gov.au/dataset/correspondence-relating-to-aboriginal-and-torres-strait-islander-people-deebing-creek>,
+        <https://www.environment.gov.au/fed/catalog/search/resource/downloadData.page?uuid=%7BC64658F0-95AD-4209-8D1E-F94BD0A4E827%7D> ;
+    dcterms:identifier "democat"^^xsd:token,
+        "pd:democat"^^prez:identifier ;
+    dcterms:modified "2022-08-29"^^xsd:date ;
+    dcterms:title "IDN Demonstration Catalogue" ;
+    prov:qualifiedAttribution [ dcat:hadRole <http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/author>,
+                <http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/custodian>,
+                <http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/owner> ;
+            prov:agent <https://linked.data.gov.au/org/idn> ] ;
+     .
+
+<https://data.idnau.org/pid/vocab/idn-role-codes> rdfs:label "IDN Role Codes"@en ;
+    dcterms:identifier "vcb:idn-role-codes"^^prez:identifier ;
+    dcterms:provenance "Derived from the ISO 19115's CI Role Code vocabulary"@en ;
+    skos:definition "The Indigenous Data Network's vocabulary of the types of roles Agents - People and Organisations - play in relation to data."@en ;
+    skos:prefLabel "IDN Role Codes"@en .
+
+<https://data.idnau.org/pid/vocab/idn-role-codes/iso-roles> rdfs:label "ISO CI Role Code codes"@en ;
+    dcterms:identifier "dn-rl-cds:iso-roles"^^prez:identifier ;
+    dcterms:provenance "The list of Concepts from the original ISO CI Role Code vocabulary"@en ;
+    skos:definition "Codes from the original ISO CI Role Code codelist"@en ;
+    skos:prefLabel "ISO CI Role Code codes"@en .
+
+schema:name rdfs:label "name" .
+
+<http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/author> rdfs:label "author"@en ;
+    dcterms:provenance "Presented in the original standard's codelist"@en ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/stable> ;
+    skos:definition "party who authored the resource" ;
+    skos:prefLabel "author"@en ;
+ .
+
+<http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/custodian> rdfs:label "custodian"@en ;
+    dcterms:provenance "Presented in the original standard's codelist"@en ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/stable> ;
+    skos:definition "party that accepts accountability and responsibility for the resource and ensures appropriate care and maintenance of the resource" ;
+    skos:prefLabel "custodian"@en ;
+ .
+
+<http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/owner> rdfs:label "owner"@en ;
+    dcterms:provenance "Presented in the original standard's codelist"@en ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/stable> ;
+    skos:definition "party that owns the resource" ;
+    skos:prefLabel "owner"@en ;
+ .
+
+<http://search.slv.vic.gov.au/permalink/f/1fe7t3h/SLV_VOYAGER1641200>
+    a dcat:Resource ;
+    dcterms:creator <https://data.idnau.org/pid/adb/org/73-190-237-854> ;
+    dcterms:description """Needs to be integrated with KHRD. Negotiation required with State Library.
+
+Comprises Barwick's publications and conference papers; Barwick's PhD.; work with the Australian Institute of Aboriginal Studies and the Aboriginal History journal; work on major research projects; incoming and outgoing correspondence; reference material, and collected genealogies of Aboriginal Victorian families.""" ;
+    dcterms:issued "2007-01-10"^^xsd:date ;
+    dcterms:publisher <https://data.idnau.org/pid/adb/org/73-190-237-854> ;
+    dcterms:title "The Diane Barwick Archive" ;
+.
+
+dcat:Catalog rdfs:label "Catalog"@en .
+
+<https://data.gov.au/data/dataset/34b1c164-fbe8-44a0-84fd-467dba645aa7> dcterms:creator <https://linked.data.gov.au/org/au> ;
+    dcterms:description """This dataset has been developed by the Australian Government as an authoritative source of indigenous location names across Australia. It is sponsored by the Spatial Policy Branch within the Department of Communications and managed solely by the Department of Human Services.
+The dataset is designed to support the accurate positioning, consistent reporting, and effective delivery of Australian Government programs and services to indigenous locations.
+The dataset contains Preferred and Alternate names for indigenous locations where Australian Government programs and services have been, are being, or may be provided. The Preferred name will always default to a State or Territory jurisdiction's gazetted name so the term 'preferred' does not infer that this is the locally known name for the location. Similarly, locational details are aligned, where possible, with those published in State and Territory registers.
+This dataset is NOT a complete listing of all locations at which indigenous people reside. Town and city names are not included in the dataset. The dataset contains names that represent indigenous communities, outstations, defined indigenous areas within a town or city or locations where services have been provided.""" ;
+    dcterms:issued "2013-12-02"^^xsd:date ;
+    dcterms:publisher <https://linked.data.gov.au/org/sa> ;
+    dcterms:title "Australian Government Indigenous Programs & Policy Locations (AGIL) dataset" ;
+ .
+
+<https://data.idnau.org/pid/AAC> dcterms:creator <https://linked.data.gov.au/org/anu> ;
+    dcterms:description """This study contains time series of data of the Annual Aboriginal Census for Australia, Australian Capital Territory, New South Wales, Northern Territory, Queensland, South Australia, Tasmania, Victoria and Western Australia from 1921 to 1944.
+
+Special care notice:
+Aboriginal and Torres Strait Islander people, researchers and other users should be aware that material in this dataset may contain material that is considered offensive. The data has been retained in its original format because it represents an evidential record of language, beliefs or other cultural situations at a point in time.""" ;
+    dcterms:issued "2011-07-22"^^xsd:date ;
+    dcterms:publisher <https://data.idnau.org/pid/org/atsida> ;
+    dcterms:title "Annual Aboriginal Census,1921-1944 - Australia" ;
+ .
+
+<https://data.idnau.org/pid/AAC-SA> dcterms:creator <https://linked.data.gov.au/org/anu> ;
+    dcterms:description """This study contains time series of data of the Annual Aboriginal Census for Australia, Australian Capital Territory, New South Wales, Northern Territory, Queensland, South Australia, Tasmania, Victoria and Western Australia from 1921 to 1944.
+
+Special care notice:
+Aboriginal and Torres Strait Islander people, researchers and other users should be aware that material in this dataset may contain material that is considered offensive. The data has been retained in its original format because it represents an evidential record of language, beliefs or other cultural situations at a point in time.""" ;
+    dcterms:issued "2011-07-22"^^xsd:date ;
+    dcterms:publisher <https://data.idnau.org/pid/adb/org/atsida> ;
+    dcterms:title "Annual Aboriginal Census,1921-1944 - South Australia" ;
+ .
+
+<https://data.idnau.org/pid/ADB> dcterms:description "Existing database at ANU" ;
+    dcterms:publisher <https://linked.data.gov.au/org/anu> ;
+    dcterms:title "The Australian Dictionary of Biography" ;
+.
+
+<https://data.idnau.org/pid/AGENTSDB> dcterms:description "A database of Agents - Organisations & People - with roles relating to indigenous data" ;
+    dcterms:publisher <https://linked.data.gov.au/org/idn> ;
+    dcterms:title "Indigenous Data Network's Agents DB" ;
+.
+
+<https://data.idnau.org/pid/AIATSISIG> dcterms:description "An Indigenous geography and gazetteer, including a Loc-I framework for tribal, language and community data. Requires developmental work in collaboration with Universities, ABS, AIHW, Geoscience Australia, AURIN etc etc." ;
+    dcterms:publisher <https://data.idnau.org/pid/adb/org/aiatsis>,
+        <https://linked.data.gov.au/org/abs>,
+        <https://linked.data.gov.au/org/ga> ;
+    dcterms:title "Indigenous Gazetteer" ;
+ .
+
+<https://data.idnau.org/pid/ANUARC> dcterms:creator <https://linked.data.gov.au/org/anu> ;
+    dcterms:description "The Australian National University is home to many research collections of national and international significance. Material from the ANU Archives, ANU Classics Museum, ANU Library, Asia Pacific Map Collection and the Noel Butlin Archives Centre are being progressivley digitised and made available through this repository." ;
+    dcterms:publisher <https://data.idnau.org/pid/adb/org/anu-archives> ;
+    dcterms:title "ANU Archive and Library Collections - \"Indigenous\" Search" ;
+ .
+
+<https://data.idnau.org/pid/ANUCOL> dcterms:description "A 2020 review of First Nations Identified physical collections held by the ANU. Not published." ;
+    dcterms:publisher <https://data.idnau.org/pid/adb/org/anu-collections> ;
+    dcterms:title "2020 ANU First Nations Collections Review" ;
+ .
+
+<https://data.idnau.org/pid/ANUORC> dcterms:description "The University's Open Research digital repository ecompasses a number of research collections which the wider community is free to browse." ;
+    dcterms:title "ANU Open Research Collections" ;
+ .
+
+<https://data.idnau.org/pid/ANUTHES> dcterms:creator <https://linked.data.gov.au/org/anu> ;
+    dcterms:description """The Australian National University, through its Open Research repository collects, maintains, preserves, promotes and disseminates its open access scholarly materials.
+
+Open Research holds a variety of scholarly publications including journal articles; books and book chapters; conference papers, posters and presentations; theses; creative works; photographs and much more in a number of collections and formats. The wider community is free to browse this material and all members of the ANU community (past and present) are encouraged to contribute their research.""" ;
+    dcterms:issued "2016-05-19"^^xsd:date ;
+    dcterms:publisher <https://data.idnau.org/pid/adb/org/anu-library> ;
+    dcterms:title "ANU Open Research Library - \"Indigenous\" Search (Thesis Library)" ;
+.
+
+<https://data.idnau.org/pid/ARIES> dcterms:description "Publications, Ethics, Grants" ;
+    dcterms:publisher <https://data.idnau.org/pid/adb/org/anu-rsd> ;
+    dcterms:title "ANU Research Information Enterprise System" ;
+ .
+
+<https://data.idnau.org/pid/ATNS> dcterms:creator <https://data.idnau.org/pid/org/atns> ;
+    dcterms:description """Needs to be made fully maintainable, sustainable interoperable and web-accessible
+
+ATNS provides an online portal for people seeking information on agreements with Indigenous peoples. We aim to promote knowledge and transparency by capturing the range and variety of agreement making occurring in Australia and other parts of the world.
+
+We gather and review information from publicly available academic sources, online materials and documents provided by the organisations and agencies involved in agreement-making processes. No confidential material is published. """ ;
+    dcterms:issued "1905-07-11"^^xsd:date ;
+    dcterms:publisher <https://data.idnau.org/pid/org/isu> ;
+    dcterms:title "The Agreements, Treaties and Negotiated Settlements Database" ;
+ .
+
+<https://data.idnau.org/pid/ATSICAC> dcterms:creator <https://linked.data.gov.au/org/anu> ;
+    dcterms:description """The Aboriginal and Torres Strait Islander Community Profiles (ACPs) are tabulations giving key census characteristics of Aboriginal and Torres Strait Islander persons, families and dwellings, covering most topics on the 1991 Census of Population and Housing form. This profile is presented at the Aboriginal Community level.
+The ACP consists of 29 tables which crosstabulate characteristics including gender, age, place of birth, religion, marital status, education, income, occupation and employment status.""" ;
+    dcterms:issued "2005-01-01"^^xsd:date ;
+    dcterms:publisher <https://linked.data.gov.au/org/ada> ;
+    dcterms:title "1991 Census of Population and Housing: Aboriginal and Torres Strait Islander Community Profile: Aboriginal Community, ACT" ;
+ .
+
+<https://data.idnau.org/pid/ATSICR> dcterms:creator <https://linked.data.gov.au/org/anu> ;
+    dcterms:description """The Aboriginal and Torres Strait Islander Community Profiles (ACPs) are tabulations giving key census characteristics of Aboriginal and Torres Strait Islander persons, families and dwellings, covering most topics on the 1991 Census of Population and Housing form. This profile is presented at the ATSIC Region level.
+
+The ACP consists of 29 tables which crosstabulate characteristics including gender, age, place of birth, religion, marital status, education, income, occupation and employment status.""" ;
+    dcterms:issued "2007-03-16"^^xsd:date ;
+    dcterms:publisher <https://linked.data.gov.au/org/ada> ;
+    dcterms:title "1991 Census of Population and Housing: Aboriginal and Torres Strait Islander Community Profile: ATSIC Regions" ;
+.
+
+<https://data.idnau.org/pid/ATSICZ> dcterms:creator <https://linked.data.gov.au/org/anu> ;
+    dcterms:description """The Aboriginal and Torres Strait Islander Community Profiles (ACPs) are tabulations giving key census characteristics of Aboriginal and Torres Strait Islander persons, families and dwellings, covering most topics on the 1991 Census of Population and Housing form. This profile is presented at the ATSIC Zone level.
+The ACP consists of 29 tables which crosstabulate characteristics including gender, age, place of birth, religion, marital status, education, income, occupation and employment status.""" ;
+    dcterms:issued "2005-01-01"^^xsd:date ;
+    dcterms:publisher <https://linked.data.gov.au/org/ada> ;
+    dcterms:title "1991 Census of Population and Housing: Aboriginal and Torres Strait Islander Community Profile: ATSIC Zones" ;
+.
+
+<https://data.idnau.org/pid/ATSIDA> dcterms:creator <https://data.idnau.org/pid/adb/org/77-257-686-961> ;
+    dcterms:description "ATSIDA is a specialised trusted research data management facility, and thematic archive within the Australian Data Archive for Australian Aboriginal and Torres Strait Islander research data managed by the UTS Library. ATSIDA provides a transformational research platform working at the nexus of researchers, communities and other stakeholders in preserving and ensuring ethical access to research data related to Indigenous communities. ATSIDA works with universities, government and other organisations to increase Indigenous student and staff research capacity, support Indigenous researchers and those working with Indigenous research data. It engages with communities to manage appropriate access and return of digital materials.",
+        "The Aboriginal and Torres Strait Islander Data Archive at the Australian Data Archive and ANU Archives. This was specifically mentioned in the NCRIS Roadmap as an existing strength to be built on. It needs staff at the Data Archive to fully curate and digitise these collections and make them web-accessible." ;
+    dcterms:issued "2008-01-01"^^xsd:date ;
+    dcterms:publisher <https://data.idnau.org/pid/adb/org/77-257-686-961>,
+        <https://linked.data.gov.au/org/ada> ;
+    dcterms:title "ABORIGINAL & TORRES STRAIT ISLANDER DATA ARCHIVE",
+        "The Aboriginal and Torres Strait Islander Data Archive at ADA, ANU" ;
+.
+
+<https://data.idnau.org/pid/ATSIDA2> dcterms:description "This looks like a mirror of the ADA archive. Many links are broken." ;
+    dcterms:publisher <hhttps://data.idnau.org/pid/adb/org/77-257-686-961> ;
+    dcterms:title "The Aboriginal and Torres Strait Islander Data Archive at Jumbunna, UTS" ;
+.
+
+<https://data.idnau.org/pid/AUSLANG> dcterms:creator <https://linked.data.gov.au/org/aiatsis> ;
+    dcterms:description """Austlang provides information about Indigenous Australian languages which has been assembled from referenced sources.
+The dataset provided here includes the language names, each with a unique alpha-numeric code which functions as a stable identifier, alternative/variant names and spellings and the approximate location of each language variety.""" ;
+    dcterms:publisher <https://linked.data.gov.au/org/aiatsis> ;
+    dcterms:title "Austlang database." ;
+.
+
+<https://data.idnau.org/pid/BMKKI> dcterms:creator <https://data.idnau.org/pid/adb/org/94-100-487-572> ;
+    dcterms:description """The Indigenous Protected Areas (IPA) programme has demonstrated successes across a broad range of outcome areas, effectively overcoming barriers to addressing Indigenous disadvantage and engaging Indigenous Australians in meaningful employment to achieve large scale conservation outcomes, thus aligning the interests of Indigenous Australians and the broader community.
+
+The Birriliburu & Matuwa Kurrara Kurrara (MKK) IPAs have provided an opportunity for Martu people to reconnect with and actively manage their traditional country.
+
+The two IPAs have proved a useful tool with which to leverage third party investment, through a joint management arrangement with the Western Australia (WA) Government, project specific funding from environmental NGOs and mutually beneficial partnerships with the private sector.
+
+Increased and diversified investment from a range of funding sources would meet the high demand for Ranger jobs and could deliver a more expansive programme of works, which would, in turn, increase the social, economic and cultural outcomes for Martu Rangers and Community Members.""" ;
+    dcterms:issued "0601-01-01"^^xsd:date ;
+    dcterms:publisher <https://linked.data.gov.au/org/niaa> ;
+    dcterms:title "SRI Investment Analysis of the Birriliburu and Matuwa Kurrara Kurrara Indigenous Protected Areas (2016)" ;
+.
+
+<https://data.idnau.org/pid/BSA> dcterms:description "Historical population data and biographical records" ;
+    dcterms:publisher <https://linked.data.gov.au/org/ada> ;
+    dcterms:title "Briscoe-Smith Archive" ;
+.
+
+<https://data.idnau.org/pid/CGA> dcterms:creator <https://linked.data.gov.au/org/icsm> ;
+    dcterms:description """The Composite Gazetteer of Australia is a cloud-based system allowing users to easily discover, interrogate and download place names information from Australia and its external territories. It is developed as a partnership between contributing agencies of the Intergovernmental Committee on Surveying and Mapping (ICSM) and is built on modern infrastructure providing automated ingestion and validation, producing a composite dataset from the individual jurisdictional gazetteers.
+
+The place names database is a collection of jurisdictional data that is combined to create the Composite Gazetteer of Australia. Place name information is managed at a local level by jurisdictions. The place name database and the Composite Gazetteer of Australia are maintained by ICSM.""" ;
+    dcterms:issued "2018-01-02"^^xsd:date ;
+    dcterms:publisher <https://linked.data.gov.au/org/icsm> ;
+    dcterms:title "Compound Gazetteer of Australia" ;
+.
+
+<https://data.idnau.org/pid/CHPBQ> dcterms:creator <https://data.idnau.org/pid/adb/org/75-818-456-675> ;
+    dcterms:description "The Cultural Heritage Parties dataset is the spatial representation of state-wide Aboriginal and Torres Strait Islander Native Title Party boundaries within Queensland as described under the Aboriginal Cultural Heritage Act 2003 and the Torres Strait Islander Cultural Heritage Act 2003 (the Acts)." ;
+    dcterms:issued "2022-08-08"^^xsd:date ;
+    dcterms:publisher <https://data.idnau.org/pid/adb/org/qld-dsdsatsip> ;
+    dcterms:title "Cultural Heritage Party boundaries - Queensland" ;
+.
+
+<https://data.idnau.org/pid/CTGIR> dcterms:description "Productivity Commissions data dashboard arising from the National Agreement on Closing the Gap." ;
+    dcterms:issued "2022-03-31"^^xsd:date ;
+    dcterms:publisher <https://data.idnau.org/pid/adb/org/78-094-372-050> ;
+    dcterms:title "Closing the gap information repository" ;
+.
+
+<https://data.idnau.org/pid/DATA40> dcterms:creator <https://data.idnau.org/pid/adb/org/lant> ;
+    dcterms:description "Norman B. Tindale ; tribal boundaries drawn by Winifred Mumford on a base map produced by the Division of National Mapping, Department of National Development, Canberra, Australia." ;
+    dcterms:issued "1974-01-01"^^xsd:date ;
+    dcterms:publisher <https://data.idnau.org/pid/adb/org/lant> ;
+    dcterms:title "Distribution of the Aboriginal Tribes of Australia (1940)" ;
+.
+
+<https://data.idnau.org/pid/DECUTS> dcterms:description "UTS has taken over this data, but needs help to turn it into an ongoing public database" ;
+    dcterms:publisher <https://data.idnau.org/pid/adb/org/77-257-686-961>,
+        <https://data.idnau.org/pid/adb/org/jumbunna> ;
+    dcterms:title "Aboriginal Deaths and Injuries in Custody" ;
+.
+
+<https://data.idnau.org/pid/EXIA> dcterms:description "Barry Hansen and Yothu Yindi Foundation have done extensive work on where the money goes in the NT. Needs to be a national database." ;
+    dcterms:publisher <https://data.idnau.org/pid/adb/org/28-221-722-606> ;
+    dcterms:title "Expenditure on Indigenous Advancement" ;
+.
+
+<https://data.idnau.org/pid/GDPGPI> dcterms:description "(Torrens University). An earlier application with Marcia for AIATSIS funding was never considered." ;
+    dcterms:publisher <https://data.idnau.org/pid/adb/org/99-154-937-005> ;
+    dcterms:title "GDP and Genuine Progress Indicator" ;
+.
+
+<https://data.idnau.org/pid/IBLADE> dcterms:creator <https://linked.data.gov.au/org/uom> ;
+    dcterms:description "The Snapshot is an ongoing research project that links enterprises on Indigenous business registries to data held by the Australian Bureau of Statistics. It will enable us to track the industries, revenue, employment outcome and growth of Indigenous businesses. This report provides an unprecedented snapshot of the Indigenous business sector to help dismantle the many stereotypes and myths that have led to lost opportunities for Indigenous business growth. There is mention of an I-BLADE dataset." ;
+    dcterms:issued "2021-05-01"^^xsd:date ;
+    dcterms:publisher <https://data.idnau.org/pid/org/um-ddcibl> ;
+    dcterms:title "Indigenous Business Sector Snapshot 1.1 Indigenous Businesses Sector Snapshot Study, Insights from I-BLADE 1.0" ;
+.
+
+<https://data.idnau.org/pid/ILSI> dcterms:creator <https://linked.data.gov.au/org/au> ;
+    dcterms:description "Land that is owned or managed by Australia’s Indigenous communities, or over which Indigenous people have use and rights, was compiled from information supplied by Australian, state and territory governments and other statutory authorities with Indigenous land and sea management interests." ;
+    dcterms:issued "2019-04-03"^^xsd:date ;
+    dcterms:publisher <https://linked.data.gov.au/org/csiro> ;
+    dcterms:title "Indigenous Land and Sea Interests " ;
+.
+
+<https://data.idnau.org/pid/ILUAB> dcterms:creator <https://linked.data.gov.au/org/nntt> ;
+    dcterms:description "Registered & Notified Indigenous Land Use Agreements – (as per s. 24BH(1)(a), s. 24CH and s. 24DI(1)(a)) across Australia, The Central Resource for Sharing and Enabling Environmental Data in NSW" ;
+    dcterms:issued "2013-12-05"^^xsd:date ;
+    dcterms:publisher <https://linked.data.gov.au/org/nntt> ;
+    dcterms:title "Indigenous Land Use Agreement Boundaries with basic metadata and status" ;
+.
+
+<https://data.idnau.org/pid/IRC18> dcterms:description "Printed catalog highlighting ANU Indigenous Research activities at the time of publication" ;
+    dcterms:publisher <https://linked.data.gov.au/org/anu> ;
+    dcterms:title "Indigenous Research Compendium 2018" ;
+.
+
+<https://data.idnau.org/pid/IREKEP> dcterms:description """Various projects from $10 million Indigenous Research Fund administered by AIATSIS.
+A number of projects are described p13-15 here.
+One might expect a number of these would give rise to relevant data collections and information on methods.
+Each of these projects should be catalogued? Or not?""" ;
+    dcterms:publisher <https://linked.data.gov.au/org/aiatsis> ;
+    dcterms:title "Indigenous Research Exchange/Knowledge Exchange Platform" ;
+.
+
+<https://data.idnau.org/pid/KHRD> dcterms:creator <https://linked.data.gov.au/org/idn> ;
+    dcterms:description """Sandra Silcot has identified the steps required to make this fully maintainable and sustainable.
+Koori Health Research Database (Janet McCalman) traces BDM of 7,800 Aboriginals in Victoria & New South Wales Australia from 19th Century to the present. It is built from Yggdrasil, an existing open-source web database application designed for large population studies of family history https://rdxx.org/notes.sandra/khrd/slides/khrd-apa2012-talk.pdf.html""" ;
+    dcterms:publisher <https://linked.data.gov.au/org/idn> ;
+    dcterms:title "The Koori Health Research Database" ;
+.
+
+<https://data.idnau.org/pid/MAYIK> dcterms:creator <https://data.idnau.org/pid/adb/org/mayi-kuwayu-study> ;
+    dcterms:description """The Mayi Kuwayu Study looks at how Aboriginal and Torres Strait Islander wellbeing is linked to things like connection to country, cultural practices, spirituality and language use.
+Our research team follows a large number of Aboriginal and Torres Strait Islander people and asks about their culture and wellbeing. As a longitudinal study, we are surveying people and then ask them to take the same survey every few years, so that we can understand what influences changes over time.
+This is the first time a national study of this type has been done and will provide an evidence base to allow for the creation of better policies and programs.
+This study has been created by and for Aboriginal and Torres Strait Islander people. It is an Aboriginal and Torres Strait Islander controlled research resource.
+The Mayi Kuwayu team are experienced at working closely with communities across Australia, and the study has majority Aboriginal and Torres Strait Islander staffing and study governance (decision making) structure.""" ;
+    dcterms:issued "2018-01-01"^^xsd:date ;
+    dcterms:publisher <https://data.idnau.org/pid/adb/org/anu-nceph> ;
+    dcterms:title "The National Study of Aboriginal and Torres Strait Islander Wellbeing" ;
+.
+
+<https://data.idnau.org/pid/MOLGEN> dcterms:description "These are extensive paper records which Ian Anderson has proposed incorporating in a database. Negotiation is still needed." ;
+    dcterms:publisher <https://data.idnau.org/pid/adb/org/17-334-217-592> ;
+    dcterms:title "Tasmanian Aboriginal genealogies" ;
+.
+
+<https://data.idnau.org/pid/MP6WRS> dcterms:creator <https://linked.data.gov.au/org/ada> ;
+    dcterms:description "The Historical Census and Colonial Data Archive (HCCDA) is an archive of Australian colonial census publications and reports covering the period from 1833 to 1901, the year of Australia's federation. The corpus includes 18,638 pages of text, and approximately 15000 tables, all with full digital images, text conversion and individually identified pages and tables. Please note that the archive contains colonial census reports, but not individual census returns." ;
+    dcterms:issued "1833-07-09"^^xsd:date ;
+    dcterms:publisher <https://linked.data.gov.au/org/ada> ;
+    dcterms:title "The Historical Census and Colonial Data Archive" ;
+.
+
+<https://data.idnau.org/pid/NBPA> dcterms:creator <https://data.idnau.org/pid/adb/org/39-719-813-963> ;
+    dcterms:description "Noongar Boodjar Language Centre (NBLC) in Perth have partnered with the Atlas of Living Australia to link Noongar-Wudjari language and knowledge for plants and animals to western science knowledge to create the Noongar-Wudjari Plant and Animal online Encyclopedia. This project focused on the Noongar-Wudjari clan, from the South coast of WA, and worked specifically with Wudjari knowledge holders - Lynette Knapp and Gail Yorkshire to record, preserve and share their ancestral language and knowledge about plants and animals. Knowledge and language for 90 plants and animals were collected and are now ready for publication through the Atlas of Living Australia (ala.org.au)." ;
+    dcterms:publisher <https://data.idnau.org/pid/adb/org/39-719-813-963> ;
+    dcterms:title "Noongar Boodjar Plants and Animals" ;
+.
+
+<https://data.idnau.org/pid/NCIG> dcterms:creator <https://data.idnau.org/pid/adb/org/ncig> ;
+    dcterms:description """We are making a national resource for Indigenous health and heritage, which is based on our collection of biological samples, genome data and documents from Indigenous communities in many parts of Australia. You can find out more about NCIG and its collections at ncig.anu.edu.au.
+
+Information in these collections tells two kinds of stories.
+
+We are working with Indigenous communities to decide how to tell the stories of the people who are represented in the collection. We do not make personal information available, but the website lets you know what collections we have and how to contact us if you want to know more.
+
+There is also the story about how the collection was made and how it can be useful to researchers and other people.
+
+This website helps to tell this second story by making some records and documents from the collection openly available. There is information about the people who collected the samples and made the records, why they carried out their studies, the places they visited and some of the results of their studies.""" ;
+    dcterms:issued "2015-01-01"^^xsd:date ;
+    dcterms:publisher <https://data.idnau.org/pid/adb/org/ncig> ;
+    dcterms:title "National Centre for Indigenous Genomics data" ;
+.
+
+<https://data.idnau.org/pid/NCS> dcterms:creator <https://linked.data.gov.au/org/nsw> ;
+    dcterms:description "NSW prison population data and quarterly custody reports" ;
+    dcterms:issued "2022-08-01"^^xsd:date ;
+    dcterms:publisher <https://data.idnau.org/pid/adb/org/nsw-bcsar> ;
+    dcterms:title "NSW Custody Statistics" ;
+.
+
+<https://data.idnau.org/pid/NLPA> dcterms:description "Existing database at the National Library" ;
+    dcterms:publisher <https://linked.data.gov.au/org/nla> ;
+    dcterms:title "People Australia" ;
+.
+
+<https://data.idnau.org/pid/NNTT> dcterms:description "Databases held by the NNTT" ;
+    dcterms:publisher <https://data.idnau.org/pid/org/nntt> ;
+    dcterms:title "Native Title Databases at the National Native Title Tribunal" ;
+.
+
+<https://data.idnau.org/pid/NTEHP> dcterms:description "This comprises records of about 70,000 Indigenous and 30,000 non-Indigenous people surveyed in the 1970s and 1980s. Some paper records are held at AIATSIS. Microfilms of others are at UNSW Archives. There have been preliminary discussions with AIATSIS, the National Library and former members of the Hollows team about a program to digitise the records. IDN staff/resources would be needed." ;
+    dcterms:publisher <https://data.idnau.org/pid/adb/org/aiatsis>,
+        <https://data.idnau.org/pid/adb/org/unsw-archive> ;
+    dcterms:title "The Fred Hollows Archive (National Trachoma and Eye Health Program)" ;
+.
+
+<https://data.idnau.org/pid/PBCS> dcterms:creator <https://linked.data.gov.au/org/aiatsis> ;
+    dcterms:description """Conference powerpoint presentation
+
+Case study in exemplary IDG.
+- Survey of native title prescribed bodies corporate (PBCs)
+- Collect data on PBCs’ capacity, capabilities, needs and aspirations to better inform policies that affect PBCs
+- Started data collection May 2019, to finish in 3rd quarter 2019""" ;
+    dcterms:issued "2019-07-03"^^xsd:date ;
+    dcterms:publisher <https://linked.data.gov.au/org/aiatsis> ;
+    dcterms:title "Prescribed bodies corporate (PBCs) Survey 2019" ;
+.
+
+<https://data.idnau.org/pid/PCGSIC> dcterms:publisher <https://data.idnau.org/pid/adb/org/78-094-372-050> ;
+    dcterms:title "AG Productivity Commission - Report on Government Services: Indigenous Compendium reports 2005-2015" ;
+.
+
+<https://data.idnau.org/pid/POLOFFWA> dcterms:description "This dataset is of police offences by Aboriginals in Western Australia" ;
+    dcterms:publisher <https://orcid.org/0000-0002-1398-7524> ;
+    dcterms:title "Police Offenses WA (Erin Mathews)" ;
+.
+
+<https://data.idnau.org/pid/RIIC> dcterms:creator <https://linked.data.gov.au/org/aihw> ;
+    dcterms:description """Aboriginal and Torres Strait Islander people are the Indigenous people of Australia. They are not one group, but comprise hundreds of groups that have their own distinct set of languages, histories and cultural traditions.
+
+AIHW reports and other products include information about Indigenous Australians, where data quality permits. Thus, information and statistics about Indigenous Australians can be found in most AIHW products.
+
+In December 2021, AIHW released the Regional Insights for Indigenous Communities (RIFIC). The aim of this website is to provide access to data at a regional level, to help communities set their priorities and participate in joint planning with government and service providers.
+
+AIHW products that focus specifically on Indigenous Australians are captured on this page.""" ;
+    dcterms:issued "1101-01-01"^^xsd:date ;
+    dcterms:publisher <https://linked.data.gov.au/org/aihw> ;
+    dcterms:title "Regional Insights for Indigenous Communities" ;
+.
+
+<https://data.idnau.org/pid/SHAA> dcterms:creator <https://data.idnau.org/pid/adb/org/phidu> ;
+    dcterms:description """Data workbooks presenting the latest Social Health Atlases of Australia are available for the whole of Australia by Population Health Area, Local Government Area, and Primary Health Network, and by Indigenous Area for the Aboriginal & Torres Strait Islander population. Data are also available by Quintile of Socioeconomic Disadvantage of Area (current period and time series), and Remoteness Area (current period and time series), for both the whole population, and the Aboriginal & Torres Strait Islander population (current period only).
+
+These workbooks are derived from ABS Census data releases.""" ;
+    dcterms:issued "2022-06"^^xsd:gYearMonth ;
+    dcterms:publisher <https://data.idnau.org/pid/adb/org/99-154-937-005> ;
+    dcterms:title "Social Health Atlases of Australia" ;
+.
+
+<https://data.idnau.org/pid/SMMG> dcterms:creator <https://linked.data.gov.au/org/csiro> ;
+    dcterms:description "Summarises all available aerial survey data and metadata used to characterise the long-term distribution and abundance of magpie geese in the Northern Territory undertaken by different institutions and publically available in several journals (Appendix A). Summarised also are results from a PhD study (E. Ligtermoet) documenting the cultural harvesting values of magpie geese ascertained by interviews with Kakadu Traditional Owners (2011-2015)." ;
+    dcterms:issued "2016-12-15"^^xsd:date ;
+    dcterms:publisher <https://linked.data.gov.au/org/csiro> ;
+    dcterms:title "Supplementary Material used to characterise the spatial and temporal dynamics of magpie goose populations in the Kakadu Region NT and their cultural harvesting values" ;
+.
+
+<https://data.idnau.org/pid/SRIMIPA> dcterms:creator <https://data.idnau.org/pid/adb/org/94-100-487-572> ;
+    dcterms:description "The Minyumai Indigenous Protected Areas (IPA) has provided an opportunity for the Bandjalang clan to re-engage with culture and language through country. Through land and fire management work, Bandjalang traditional owners have seen the restoration of native plants and animals that were thought to have been lost. Their return serves as a powerful reminder of the resilience of the Bandjalang people and enables them to better understand themselves, their culture, and their place in the world. The IPA programme has demonstrated successes across a broad range of outcome areas, effectively overcoming barriers to addressing Indigenous disadvantage and engaging Indigenous Australians in meaningful employment to achieve large scale conservation outcomes, thus aligning the interests of Indigenous Australians and the broader community." ;
+    dcterms:issued "0601-01-01"^^xsd:date ;
+    dcterms:publisher <https://linked.data.gov.au/org/niaa> ;
+    dcterms:title "Social Return on Investment analysis of the Minyumai Indigenous Protected Area" ;
+.
+
+<https://data.idnau.org/pid/SSA> dcterms:description "Access still to be negotiated with the Museum." ;
+    dcterms:publisher <https://data.idnau.org/person/sandra-smith> ;
+    dcterms:title "The Sandra Smith Archive" ;
+.
+
+<https://data.idnau.org/pid/TINDALE> dcterms:description "Strong demand but controversial." ;
+    dcterms:publisher <https://linked.data.gov.au/org/aiatsis> ;
+    dcterms:title "Tindale/Horton map" ;
+.
+
+<https://data.idnau.org/pid/TLCMap> dcterms:description """TLCMap is a set of tools that work together for mapping Australian history and culture.
+
+Note that historical placenames in TLCmap is a HASS-I integration activity.""" ;
+    dcterms:publisher <https://linked.data.gov.au/org/unewcastle> ;
+    dcterms:title "Time Layered Cultural Map of Australia" ;
+.
+
+<https://data.idnau.org/pid/VPND> dcterms:creator <https://data.idnau.org/pid/adb/org/vic-health> ;
+    dcterms:description """The Victorian Perinatal Data Collection (VPDC) is a population-based surveillance system that collects for analysis comprehensive information on the health of mothers and babies, in order to contribute to improvements in their health.
+
+The VPDC contains information on obstetric conditions, procedures and outcomes, neonatal morbidity and congenital anomalies relating to every birth in Victoria.
+
+This data is reported annually to the AIHW as part of the National Perinatal Data Collection managed by the AIHW. The AIHW produces the annual report Australia’s mothers and babies, using the National Perinatal Data Collection and other data.""" ;
+    dcterms:issued "2022-01-07"^^xsd:date ;
+    dcterms:publisher <https://data.idnau.org/pid/adb/org/vic-health> ;
+    dcterms:title "The Victorian Perinatal database" ;
+.
+
+<https://data.idnau.org/pid/WALD> dcterms:description """This was nominated by Sandra Eades. Investigation, documentation and negotiation needed.
+
+https://www.datalinkage-wa.org.au/dlb-services/derived-indigenous-status-flag/ ?""" ;
+    dcterms:title "Western Australia Linked Data" ;
+.
+
+<https://data.idnau.org/pid/WPPFER> dcterms:creator <https://linked.data.gov.au/org/une> ;
+    dcterms:description "In 2012, the remote Aboriginal community of Wilcannia in western NSW hosted the first Australian pilot of a Cuban mass adult literacy campaign model known as Yes I Can. The aim was to investigate the appropriateness of this model in Aboriginal Australia. Building on an intensive community development process of ‘socialisation and mobilisation’, sixteen community members with very low literacy graduated from the basic literacy course, with the majority continuing on into post-literacy activities, further training and/or employment." ;
+    dcterms:issued "2013-06-01"^^xsd:date ;
+    dcterms:publisher <https://linked.data.gov.au/org/une> ;
+    dcterms:title "Aboriginal adult literacy campaign - Wilcannia Pilot Project Final Evaluation Report" ;
+.
+
+<https://data.idnau.org/pid/YKC> dcterms:creator <https://data.idnau.org/pid/org/nby> ;
+    dcterms:description """The Yawuru Knowing Our Community (YKC) Household Survey was commissioned by the Nyamba Buru Yawuru Board of Directors in December 2010. This report and associated data base are the property of the NBY Board. The report was designed and produced by The Kimberley Institute, Centre for Aboriginal Economic Policy Research at The Australian National University, and the Broome Aboriginal community.
+In September 2010, the NBY Board resolved to undertake a comprehensive population survey of Broome to inform the Board’s investment strategy, particularly on social housing.""" ;
+    dcterms:issued "2011-01-01"^^xsd:date ;
+    dcterms:publisher <https://data.idnau.org/pid/org/nby> ;
+    dcterms:title "Yawuru Knowing Our Community Household Survey" ;
+.
+
+<https://data.idnau.org/pid/YUMI> dcterms:creator <https://linked.data.gov.au/org/aiatsis> ;
+    dcterms:description """Yumi Sabe is an Australian Kriol term that translates to 'we know', or, 'we have the knowledge'.
+
+Yumi Sabe is an Indigenous Knowledge Exchange that helps Indigenous communities, researchers and policy makers to access and use data to inform and improve policies and programs and demonstrate the complexity and diversity of Aboriginal and Torres Strait Islander peoples', research and culture.
+
+This is a beta product that is still being refined and developed. Please contact us if you have any issues or feedback.""" ;
+    dcterms:issued "2022-07-04"^^xsd:date ;
+    dcterms:publisher <https://linked.data.gov.au/org/aiatsis> ;
+    dcterms:title "Indigenous Research Exchange Platform" ;
+.
+
+<https://data.idnau.org/pid/cfm3-db86> dcterms:creator <https://linked.data.gov.au/org/au> ;
+    dcterms:description "The Australia's Indigenous land and forest estate (2020) is a continental spatial dataset that identifies and reports separately the individual attributes of Australia's Indigenous estate, namely the extent of land and forest over which Indigenous peoples and communities have ownership, management and co-management, or other special rights." ;
+    dcterms:issued "0301-01-01"^^xsd:date ;
+    dcterms:publisher <https://linked.data.gov.au/org/abares> ;
+    dcterms:title "Australia's Indigenous land and forest estate (2020)" ;
+.
+
+<https://data.idnau.org/pid/org/atns> rdfs:label "Agreements Treaties and Negotiated Settlements" .
+
+<https://data.idnau.org/pid/org/atsida> rdfs:label "ATSIDA" ;
+    schema:name "ATSIDA.1" .
+
+<https://data.idnau.org/pid/org/isu> rdfs:label "Indigenous Studies Unit" .
+
+<https://data.sa.gov.au/data/dataset/tandanya-annual-reporting-regulatory-data> dcterms:creator <https://linked.data.gov.au/org/south-australia> ;
+    dcterms:description """Tandana is owned and managed by the National Aboriginal Cultural Institute Inc. It is Australia’s oldest Aboriginal-owned and managed multi-arts centre.
+As Tandana is government funded it reports annually on the funding supplied and its distribution.""" ;
+    dcterms:issued "2018-01-10"^^xsd:date ;
+    dcterms:publisher <https://data.idnau.org/pid/adb/org/tandanya> ;
+    dcterms:title "Tandanya Annual Reporting Regulatory Data" ;
+.
+
+<https://linked.data.gov.au/dataset/asgsed3/IARE> dcterms:creator <https://linked.data.gov.au/org/abs> ;
+    dcterms:description "Indigenous Areas (IAREs) are medium sized geographic areas built from whole Indigenous Locations. They are designed for the release and analysis of more detailed statistics for Aboriginal and Torres Strait Islander people. Whole Indigenous Areas aggregate to form Indigenous Regions."@en ;
+    dcterms:issued "2021-10-06"^^xsd:date ;
+    dcterms:publisher <https://linked.data.gov.au/org/abs> ;
+    dcterms:title "Indigenous Areas within the ASGS" ;
+.
+
+<https://linked.data.gov.au/dataset/asgsed3/ILOC> dcterms:creator <https://linked.data.gov.au/org/abs> ;
+    dcterms:description """This is a reference geospatial dataset developed by the Australian Bureau of Statistics which provides the most granular form of Indigenous Structure represented in the Australian Statistical Geography Standard (ASGS), currently at Edition 3 (2021).  Indigenous Locations (ILOCs) are designed to allow the production and analysis of statistics relating to Aboriginal and Torres Strait Islander people with a high level of spatial accuracy, while also maintaining the confidentiality of individuals. It has been designed in consultation with the ABS Centre for Aboriginal and Torres Strait Islander Statistics to incorporate statistical and community requirements wherever possible.
+
+ILOCs are geographic areas built from whole Statistical Areas Level 1 (SA1s). They are designed to represent small Aboriginal and Torres Strait Islander communities (urban and rural) that are near each other or that share language, traditional borders or Native Title. They usually have a minimum population of about 90 people. In some cases, Indigenous Locations have a smaller Aboriginal and Torres Strait Islander population to meet statistical requirements or to better represent the local community. 
+
+Where a community is too small for confidentiality requirements, it is combined with another, related population. Remaining Statistical Areas Level 1 are combined into larger areas, which will include a more dispersed Aboriginal and Torres Strait Islander population.
+
+In some cases, Aboriginal and Torres Strait Islander communities that are too small to be identified separately have been combined with other nearby and associated communities. This has resulted in some multi-part Indigenous Locations where related communities are represented as a single Indigenous Location but are geographically separate. This enables the release of Census of Population and Housing data and other data for Aboriginal and Torres Strait Islander communities in a meaningful way, while balancing confidentiality and statistical requirements.
+
+There are 1,139 ILOCs covering the whole of Australia without gaps or overlaps. Whole ILOCs aggregate to form Indigenous Areas (IAREs). Whole Indigenous Areas aggregate to form Indigenous Regions (IREGs).  
+
+Indigenous Locations are identified by eight-digit hierarchical codes consisting of a one-digit State or Territory identifier, followed by a two-digit Indigenous Region identifier, a three-digit Indigenous Area identifier and finally a two-digit Indigenous Location identifier. Within each Indigenous Area, Indigenous Location identifiers are unique. When change occurs, old codes are retired and the next available identifier is assigned.  
+
+Shapefiles for Indigenous Locations and other components of the ABS's Indigenous Structure are available: https://www.abs.gov.au/statistics/standards/australian-statistical-geography-standard-asgs-edition-3/jul2021-jun2026/access-and-downloads/digital-boundary-files 
+
+This catalog entry refers to the latest ASGS release. For all releases refer to the ABS: https://www.abs.gov.au/statistics/standards/australian-statistical-geography-standard-asgs-edition-3"""@en ;
+    dcterms:issued "2021-10-06"^^xsd:date ;
+    dcterms:publisher <https://linked.data.gov.au/org/abs> ;
+    dcterms:title "Indigenous Locations within the Australian Statistical Geography Standard (ASGS) Edition 3" ;
+.
+
+<https://linked.data.gov.au/dataset/asgsed3/IREG> dcterms:creator <https://linked.data.gov.au/org/abs> ;
+    dcterms:description "Indigenous Regions (IREGs) are large geographic areas built from whole Indigenous Areas and are based on historical boundaries. The larger population of Indigenous Regions enables highly detailed analysis."@en ;
+    dcterms:issued "2021-10-06"^^xsd:date ;
+    dcterms:publisher <https://linked.data.gov.au/org/abs> ;
+    dcterms:title "Indigenous Regions within the ASGS" ;
+.
+
+<https://linked.data.gov.au/org/sa> schema:name "Services Australia" .
+
+<https://linked.data.gov.au/org/uom> rdfs:label "University of Melbourne" ;
+    schema:description "The University of Melbourne is a public research university located in Melbourne, Australia. Founded in 1853, it is Australia's second oldest university and the oldest in Victoria." ;
+    schema:name "The University of Melbourne" .
+
+<https://orcid.org/0000-0002-1398-7524> schema:name "Marcia Langton" .
+
+<https://www.catalog.slsa.sa.gov.au/record=b2187904~S10> dcterms:description """Aboriginal and Torres Strait Islander collections, including the Mountford-Sheard Collection INDIGENOUS COLLECTIONS
+The State Library has a significant and developing amount of specialist material relating to Aboriginal and Torres Strait Islander people including the Mountford-Sheard Collection.
+The papers of the Mountford-Sheard Collection which comprise an extensive collection of Charles P. Mountford's expedition journals, photographs, film, sound recordings, artworks, objects and research. The papers were compiled with the assistance and encouragement of friend and colleague Harold L Sheard. Mountford developed his appreciation of Australian Aboriginal people and their customs, beliefs and art over many years of expeditions, making it his life's work.""" ;
+    dcterms:title "Mountford-Sheard Collection" ;
+.
+
+<https://www.data.qld.gov.au/dataset/correspondence-relating-to-aboriginal-and-torres-strait-islander-people-deebing-creek> dcterms:creator <https://data.idnau.org/pid/adb/org/75-818-456-675> ;
+    dcterms:description "The Deebing Creek mission was founded by the Aboriginal Protection Society of Ipswich. Work started on the establishment of an Aboriginal mission at Deebing Creek around 1887. The correspondence records of the Home Secretary’s Office, Chief Protector of Aboriginals and the Southern Protector of Aboriginals Offices are a valuable source of information relating to Deebing Creek." ;
+    dcterms:issued "2501-01-01"^^xsd:date ;
+    dcterms:publisher <https://data.idnau.org/pid/adb/org/qld-dsdsatsip> ;
+    dcterms:title "Correspondence relating to Aboriginal and Torres Strait Islander people - Deebing Creek explanatory notes" ;
+.
+
+<https://www.environment.gov.au/fed/catalog/search/resource/downloadData.page?uuid=%7BC64658F0-95AD-4209-8D1E-F94BD0A4E827%7D> dcterms:creator <https://linked.data.gov.au/org/au> ;
+    dcterms:description """This dataset details the Dedicated Indigenous Protected Areas (IPA) across Australia through the implementation of the Indigenous Protected Areas Programme. These boundaries are not legally binding.
+An Indigenous Protected Area (IPA) is an area of Indigenous-owned land or sea where traditional Indigenous owners have entered into an agreement with the Australian Government to promote biodiversity and cultural resource conservation- making up over over half of Australia's National Reserve System.
+
+Further information can be found at the website below.
+
+https://www.awe.gov.au/agriculture-land/land/indigenous-protected-areas""" ;
+    dcterms:issued "2201-01-01"^^xsd:date ;
+    dcterms:publisher <https://linked.data.gov.au/org/dcceew> ;
+    dcterms:title "Indigenous Protected Areas (IPA) - Dedicated" ;
+.
+
+<https://linked.data.gov.au/org/au> schema:name "Australian Government" .
+
+<https://linked.data.gov.au/org/idn> rdfs:label "Indigenous Data Network" ;
+    schema:description "The IDN is within the University of Melbourne. It was established in 2018 to support and coordinate the governance of Indigenous data for Aboriginal and Torres Strait Islander peoples and empower Aboriginal and Torres Strait Islander communities to decide their own local data priorities.",
+        "The Indigenous Data Network (IDN) was established in 2018 to support and coordinate the governance of Indigenous data for Aboriginal and Torres Strait Islander peoples and empower Aboriginal and Torres Strait Islander communities to decide their own local data priorities."@en ;
+    schema:name "Indigenous Data Network" .
+
+<https://linked.data.gov.au/org/abs> schema:name "Australian Bureau of Statistics" .
+
+<https://linked.data.gov.au/org/aiatsis> rdfs:label "AIATSIS" .
+
+<https://linked.data.gov.au/org/anu> rdfs:label "Australian National University" ;
+    schema:description "ANU is a world-leading university in Australia’s capital. Excellence is embedded in our approach to research and education." ;
+    schema:name "Australian National University" .
+
