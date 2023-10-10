@@ -68,8 +68,14 @@ def get_concept_scheme_top_concepts_query(iri: str, page: int, per_page: int) ->
         }
         WHERE {
             BIND(<{{ iri }}> as ?iri)
-            ?iri skos:hasTopConcept ?concept .
-            ?concept skos:prefLabel ?label .
+            OPTIONAL {
+                ?iri skos:hasTopConcept ?concept .
+                ?concept skos:prefLabel ?label .
+            }
+            OPTIONAL {
+                ?concept skos:topConceptOf ?iri .
+                ?concept skos:prefLabel ?label .
+            }
             ?iri rdf:type ?type .
             ?concept rdf:type ?conceptType .
         
@@ -85,11 +91,20 @@ def get_concept_scheme_top_concepts_query(iri: str, page: int, per_page: int) ->
                 SELECT ?concept ?label (COUNT(?narrowerConcept) AS ?narrowerChildrenCount)
                 WHERE {
                     BIND(<{{ iri }}> as ?iri)
-                    ?iri skos:hasTopConcept ?concept .
-                    ?concept skos:prefLabel ?label .
+                    OPTIONAL {
+                        ?iri skos:hasTopConcept ?concept .
+                        ?concept skos:prefLabel ?label .
+                    }
+                    OPTIONAL {
+                        ?concept skos:topConceptOf ?iri .
+                        ?concept skos:prefLabel ?label .
+                    }
                     
                     OPTIONAL {
                         ?narrowerConcept skos:broader ?concept .
+                    }
+                    OPTIONAL {
+                        ?concept skos:narrower ?narrowerConcept .
                     }
                 }
                 GROUP BY ?concept ?label
@@ -122,8 +137,14 @@ def get_concept_narrowers_query(iri: str, page: int, per_page: int) -> str:
         }
         WHERE {
             BIND(<{{ iri }}> as ?iri)
-            ?concept skos:broader ?iri .
-            ?concept skos:prefLabel ?label .
+            OPTIONAL {
+                ?concept skos:broader ?iri .
+                ?concept skos:prefLabel ?label .
+            }
+            OPTIONAL {
+                ?iri skos:narrower ?concept .
+                ?concept skos:prefLabel ?label .
+            }
             ?iri rdf:type ?type .
             ?concept rdf:type ?conceptType .
             
@@ -139,11 +160,21 @@ def get_concept_narrowers_query(iri: str, page: int, per_page: int) -> str:
                 SELECT ?concept ?label (COUNT(?narrowerConcept) AS ?narrowerChildrenCount)
                 WHERE {
                     BIND(<{{ iri }}> as ?iri)
-                    ?concept skos:broader ?iri .
-                    ?concept skos:prefLabel ?label .
+                    
+                    OPTIONAL {
+                        ?concept skos:broader ?iri .
+                        ?concept skos:prefLabel ?label .
+                    }
+                    OPTIONAL {
+                        ?iri skos:narrower ?concept .
+                        ?concept skos:prefLabel ?label .
+                    }
                     
                     OPTIONAL {
                         ?narrowerConcept skos:broader ?concept .
+                    }
+                    OPTIONAL {
+                        ?concept skos:narrower ?narrowerConcept .
                     }
                 }
                 GROUP BY ?concept ?label
