@@ -91,6 +91,7 @@ def get_concept_scheme_top_concepts_query(iri: str, page: int, per_page: int) ->
                 SELECT ?concept ?label (COUNT(?narrowerConcept) AS ?narrowerChildrenCount)
                 WHERE {
                     BIND(<{{ iri }}> as ?iri)
+                    
                     OPTIONAL {
                         ?iri skos:hasTopConcept ?concept .
                         ?concept skos:prefLabel ?label .
