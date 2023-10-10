@@ -5,6 +5,7 @@ from pydantic import BaseModel, root_validator
 from rdflib import URIRef, PROF, Namespace
 
 from prez.cache import profiles_graph_cache
+from prez.config import settings
 from prez.services.curie_functions import get_uri_for_curie_id, get_curie_id_for_uri
 from prez.services.model_methods import get_classes
 
@@ -38,9 +39,7 @@ class ProfileItem(BaseModel):
         r = profiles_graph_cache.query(q)
         if len(r.bindings) > 0:
             values["classes"] = frozenset([prof.get("class") for prof in r.bindings])
-
-        values["label"] = profiles_graph_cache.value(
-            URIRef(values["uri"]),
-            URIRef("http://www.w3.org/ns/dx/conneg/altr-ext#hasLabelPredicate"),
-        )
+        label = values.get("label")
+        if not label:
+            values["label"] = settings.label_predicates[0]
         return values

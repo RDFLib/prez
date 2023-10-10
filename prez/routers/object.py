@@ -269,9 +269,9 @@ def get_endpoint_info_for_classes(classes: FrozenSet[URIRef]) -> dict:
     endpoint_to_relations = {}
     if results.bindings != [{}]:
         for result in results.bindings:
-            endpoint_template = result["endpointTemplate"]
-            relation = result["relation"]
-            direction = result["direction"]
+            endpoint_template = result["endpoint_template"]
+            relation = result.get("relation_predicate")
+            direction = result.get("relation_direction")
             if endpoint_template not in endpoint_to_relations:
                 endpoint_to_relations[endpoint_template] = [(relation, direction)]
             else:

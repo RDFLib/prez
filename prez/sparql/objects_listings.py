@@ -572,60 +572,6 @@ def get_relevant_shape_bns_for_profile(selected_class, profile):
     return relevant_shape_bns
 
 
-# def get_annotation_predicates(profile):
-#     """
-#     Gets the annotation predicates from the profiles graph for a given profile.
-#     If no predicates are found, "None" is returned by RDFLib
-#     """
-#     preds = {
-#         "label_predicates": [],
-#         "description_predicates": [],
-#         "explanation_predicates": [],
-#         "other_predicates": [],
-#     }
-#     if not profile:
-#         return preds
-#     preds["other_predicates"].extend(
-#         list(
-#             profiles_graph_cache.objects(
-#                 subject=profile, predicate=ALTREXT.otherAnnotationProps
-#             )
-#         )
-#     )
-#     preds["label_predicates"].extend(
-#         list(
-#             profiles_graph_cache.objects(
-#                 subject=profile, predicate=ALTREXT.hasLabelPredicate
-#             )
-#         )
-#     )
-#     preds["description_predicates"].extend(
-#         list(
-#             profiles_graph_cache.objects(
-#                 subject=profile, predicate=ALTREXT.hasDescriptionPredicate
-#             )
-#         )
-#     )
-#     preds["explanation_predicates"].extend(
-#         list(
-#             profiles_graph_cache.objects(
-#                 subject=profile, predicate=ALTREXT.hasExplanationPredicate
-#             )
-#         )
-#     )
-#     if not bool(
-#         list(chain(*preds.values()))
-#     ):  # check whether any predicates were found
-#         log.info(
-#             f"No annotation predicates found for profile {profile}, defaults will be used:\n"
-#             f"Label: rdfs:label; Description: dcterms:description; Explanation: dcterms:provenance.\n"
-#             f"To specify annotation predicates (to be used in *addition* to the defaults), use the following "
-#             f"predicates in a profile definition: altrext:hasLabelPredicate, altrext:hasDescriptionPredicate, "
-#             f"altrext:hasExplanationPredicate"
-#         )
-#     return preds
-
-
 def get_listing_predicates(profile, selected_class):
     """
     Gets predicates relevant to listings of objects as specified in the profile.
@@ -863,40 +809,83 @@ def generate_mediatype_if_statements(requested_mediatypes: list):
     return ifs
 
 
-def get_endpoint_template_queries(classes: FrozenSet[URIRef]):
-    query = f"""PREFIX ont: <https://prez.dev/ont/>
+# def get_endpoint_template_queries(classes: FrozenSet[URIRef]):
+#     query = f"""PREFIX ont: <https://prez.dev/ont/>
+#
+# SELECT DISTINCT ?classes ?endpoint ?relation ?direction ?endpointTemplate
+# (count(?intermediate) as ?distance) WHERE {{
+#       VALUES ?classes {{ {" ".join('<' + str(klass) + '>' for klass in classes)} }}
+#   {{
+#     ?endpoint a ont:ObjectEndpoint ;
+#     ont:endpointTemplate ?endpointTemplate ;
+#     ont:deliversClasses ?classes .
+#   }}
+#   UNION
+#   {{
+#     ?endpoint a ont:ObjectEndpoint ;
+#     ont:endpointTemplate ?endpointTemplate ;
+#     ont:deliversClasses ?classes .
+#     ?endpoint ont:parentEndpoint* ?intermediate .
+#     ?intermediate ont:parentEndpoint* ?parent_endpoint .
+#     ?intermediate a ont:ListingEndpoint .
+#     OPTIONAL {{
+#       ?parent_endpoint ont:ParentToFocusRelation ?relation .
+#       BIND ("parent_to_focus" AS ?direction)
+#     }}
+#     OPTIONAL {{
+#       ?parent_endpoint ont:FocusToParentRelation ?relation .
+#       BIND ("focus_to_parent" AS ?direction)
+#     }}
+#     FILTER (BOUND(?relation))
+#   }}
+# }} GROUP BY ?endpoint ?parent_endpoint ?relation ?direction ?classes ?endpointTemplate
+# ORDER BY ?endpoint DESC(?distance)
+#     """
+#     return query
 
-SELECT DISTINCT ?classes ?endpoint ?relation ?direction ?endpointTemplate
-(count(?intermediate) as ?distance) WHERE {{
-      VALUES ?classes {{ {" ".join('<' + str(klass) + '>' for klass in classes)} }}
-  {{
-    ?endpoint a ont:ObjectEndpoint ;
-    ont:endpointTemplate ?endpointTemplate ;
-    ont:deliversClasses ?classes .
-  }}
-  UNION
-  {{
-    ?endpoint a ont:ObjectEndpoint ;
-    ont:endpointTemplate ?endpointTemplate ;
-    ont:deliversClasses ?classes .
-    ?endpoint ont:parentEndpoint* ?intermediate .
-    ?intermediate ont:parentEndpoint* ?parent_endpoint .
-    ?intermediate a ont:ListingEndpoint .
-    OPTIONAL {{
-      ?parent_endpoint ont:ParentToFocusRelation ?relation .
-      BIND ("parent_to_focus" AS ?direction)
-    }}
-    OPTIONAL {{
-      ?parent_endpoint ont:FocusToParentRelation ?relation .
-      BIND ("focus_to_parent" AS ?direction)
-    }}
-    FILTER (BOUND(?relation))
-  }}
-}} GROUP BY ?endpoint ?parent_endpoint ?relation ?direction ?classes ?endpointTemplate
-ORDER BY ?endpoint DESC(?distance)
+def get_endpoint_template_queries(classes: FrozenSet[URIRef]):
+    """
+    NB the FILTER clause here should NOT be required but RDFLib has a bug (perhaps related to the +/* operators -
+    requires further investigation). Removing the FILTER clause will return too many results in instances where there
+    should be NO results - as if the VALUES ?classes clause is not used.
+    """
+    query = f"""
+    PREFIX ont: <https://prez.dev/ont/>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    
+    SELECT ?endpoint ?parent_endpoint ?relation_direction ?relation_predicate ?endpoint_template ?distance
+    {{
+    VALUES ?classes {{ {" ".join('<' + str(klass) + '>' for klass in classes)} }}
+      {{
+      ?endpoint a ont:ObjectEndpoint ;
+      ont:endpointTemplate ?endpoint_template ;
+      ont:deliversClasses ?classes .
+      BIND("0"^^xsd:integer AS ?distance)
+      }}
+        UNION
+      {{
+      ?endpoint ?relation_direction ?relation_predicate ;
+        ont:endpointTemplate ?endpoint_template ;
+        ont:deliversClasses ?classes .
+  		FILTER(?classes IN ({" ".join('<' + str(klass) + '>' for klass in classes)}))
+        VALUES ?relation_direction {{ont:FocusToParentRelation ont:ParentToFocusRelation}}
+          {{ SELECT ?parent_endpoint ?endpoint (count(?intermediate) as ?distance)
+            {{
+              ?endpoint ont:parentEndpoint+ ?intermediate ;
+                  ont:deliversClasses ?classes .
+              ?intermediate ont:parentEndpoint* ?parent_endpoint .
+              ?intermediate a ?intermediateEPClass .
+              ?parent_endpoint a ?parentEPClass .
+              VALUES ?intermediateEPClass {{ont:ObjectEndpoint}}
+              VALUES ?parentEPClass {{ont:ObjectEndpoint}}
+            }}
+            GROUP BY ?parent_endpoint ?endpoint
+            
+          }}
+      }}
+    }} ORDER BY DESC(?distance)
     """
     return query
-
 
 def generate_relationship_query(
         uri: URIRef, endpoint_to_relations: Dict[URIRef, List[Tuple[URIRef, Literal]]]
@@ -920,7 +909,7 @@ def generate_relationship_query(
             predicate, direction = relation
             parent = "?parent_" + str(i + 1)
             if predicate:
-                if direction == Literal("parent_to_focus"):
+                if direction == URIRef("https://prez.dev/ont/ParentToFocusRelation"):
                     subquery += f"{parent} <{predicate}> {uri_str} .\n"
                 else:  # assuming the direction is "focus_to_parent"
                     subquery += f"{uri_str} <{predicate}> {parent} .\n"

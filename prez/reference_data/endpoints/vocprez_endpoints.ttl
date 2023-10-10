@@ -14,14 +14,12 @@ endpoint:collection-listing a ont:ListingEndpoint ;
     ont:baseClass skos:Collection ;
     ont:isTopLevelEndpoint "true"^^xsd:boolean ;
     ont:endpointTemplate "/v/collection" ;
-    ont:ParentToFocusRelation skos:member ;
 .
 
 endpoint:collection a ont:ObjectEndpoint ;
-    ont:parentEndpoint endpoint:collection ;
+    ont:parentEndpoint endpoint:collection-listing ;
     ont:deliversClasses skos:Collection  ;
     ont:endpointTemplate "/v/collection/$object" ;
-    ont:ParentToFocusRelation skos:member ;
 .
 
 endpoint:collection-concept a ont:ObjectEndpoint ;
@@ -36,14 +34,12 @@ endpoint:collection-concept a ont:ObjectEndpoint ;
     ont:baseClass skos:ConceptScheme ;
     ont:isTopLevelEndpoint "true"^^xsd:boolean ;
     ont:endpointTemplate "/v/vocab" ;
-    ont:FocusToParentRelation skos:inScheme ;
 .
 
 endpoint:vocab a ont:ObjectEndpoint ;
     ont:parentEndpoint endpoint:vocabs-listing ;
     ont:deliversClasses skos:ConceptScheme ;
     ont:endpointTemplate "/v/vocab/$object" ;
-    ont:FocusToParentRelation skos:inScheme ;
 .
 
 endpoint:vocab-concept a ont:ObjectEndpoint ;

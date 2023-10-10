@@ -21,7 +21,6 @@ endpoint:dataset a ont:ObjectEndpoint ;
     ont:parentEndpoint endpoint:dataset-listing ;
     ont:deliversClasses dcat:Dataset ;
     ont:endpointTemplate "/s/datasets/$object" ;
-    ont:FocustoChildRelation rdfs:member ;
 .
 
 endpoint:feature-collection-listing a ont:ListingEndpoint ;
