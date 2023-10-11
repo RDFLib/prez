@@ -138,29 +138,22 @@ async def object_function(
             f"No system links found for object with IRI {object_item.uri}.",
         )
 
-    # Define the order in which you want to sort the URLs
-    order = settings.subsystem_url_preferred_order
-    links = order_urls(order, links)
-    link = links[0]
-
-    if request.query_params:
-        return RedirectResponse(f"{link}?{request.query_params}")
-
-    return RedirectResponse(str(link))
+    return await item_function(request, object_curie=get_curie_id_for_uri(object_item.uri), object_item=object_item)
 
 
-async def item_function(request: Request, object_curie: str):
+async def item_function(request: Request, object_curie: str, object_item: ObjectItem = None):
     # TODO pull object item functions out to here and pass results in as params
 
     # curie -> uri
     # get_classes func
 
-    object_item = ObjectItem(  # object item now does not need request
-        object_curie=object_curie,
-        **request.path_params,
-        **request.query_params,
-        endpoint_uri=request.scope["route"].name,
-    )
+    if object_item is None:
+        object_item = ObjectItem(  # object item now does not need request
+            object_curie=object_curie,
+            **request.path_params,
+            **request.query_params,
+            endpoint_uri=request.scope["route"].name,
+        )
     prof_and_mt_info = ProfilesMediatypesInfo(
         request=request, classes=object_item.classes
     )

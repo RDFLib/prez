@@ -95,7 +95,7 @@ to construct the system links.
 
 ### Machine requests
 
-Machine requests made to `/object` will use the provided media type and profile to return an appropriate response in one of the subsystems. In some cases, the resource associated with the supplied IRI may be associated with more than one subsystem. To decide which subsystem to use, a preferred ordering of the subsystem URLs are set in the config under `subsystem_url_preferred_order`. After the system URLs are sorted to their preferred order, the first system URL will be used to process the request.
+Machine requests made to `/object` will use the provided media type and profile to return an appropriate response in one of the subsystems.
 
 ## High Level Sequence listing and individual object endpoints
 
