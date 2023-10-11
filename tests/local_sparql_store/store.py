@@ -1,3 +1,4 @@
+import traceback
 import argparse
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -187,6 +188,7 @@ class SparqlServer(BaseHTTPRequestHandler):
                 200, content_type, result.serialize(format=content_type).decode()
             )
         except Exception as e:
+            print(traceback.format_exc())
             return self.http_response(
                 400, "text.plain", f"Your SPARQL query could not be interpreted: {e}"
             )
@@ -207,6 +209,7 @@ class SparqlServer(BaseHTTPRequestHandler):
 
             return self.http_response(200, content_type, "Update succeeded")
         except Exception as e:
+            print(traceback.format_exc())
             return self.http_response(
                 400, "text.plain", f"Your SPARQL query could not be interpreted: {e}"
             )
