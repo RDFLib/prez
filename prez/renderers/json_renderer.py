@@ -81,7 +81,13 @@ async def render_json_dropdown(
         "iri": "@id",
     }
 
-    child_to_focus_predicates,parent_to_focus,focus_to_child_predicates,focus_to_parent_predicates,relative_predicates = get_listing_predicates(profile, selected_class)
+    (
+        child_to_focus_predicates,
+        parent_to_focus,
+        focus_to_child_predicates,
+        focus_to_parent_predicates,
+        relative_predicates,
+    ) = get_listing_predicates(profile, selected_class)
 
     if (
         not child_to_focus_predicates
