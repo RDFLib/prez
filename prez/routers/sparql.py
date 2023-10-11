@@ -1,3 +1,5 @@
+import io
+
 from fastapi import APIRouter
 from rdflib import Namespace, Graph
 from starlette.background import BackgroundTask
@@ -32,11 +34,14 @@ async def sparql_endpoint(request: Request):
         await response.aread()
         g = Graph()
         g.parse(data=response.text, format=non_anot_mediatype)
-        return await return_annotated_rdf(
-            g,
-            prof_and_mt_info.profile_headers,
-            prof_and_mt_info.profile,
-            request_mediatype,
+        graph = await return_annotated_rdf(g, prof_and_mt_info.profile)
+        content = io.BytesIO(
+            graph.serialize(format=non_anot_mediatype, encoding="utf-8")
+        )
+        return StreamingResponse(
+            content=content,
+            media_type=non_anot_mediatype,
+            headers=prof_and_mt_info.profile_headers,
         )
     else:
         response = await sparql(request)

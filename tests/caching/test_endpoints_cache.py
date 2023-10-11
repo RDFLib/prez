@@ -39,7 +39,9 @@ def test_reset_cache(prez_test_client):
         assert len(g) == 3112
 
 
-@pytest.mark.xfail(reason="quirk in testing framework - manually tested and cache/reset match = 3112")
+@pytest.mark.xfail(
+    reason="quirk in testing framework - manually tested and cache/reset match = 3112"
+)
 def test_cache(prez_test_client):
     with prez_test_client as client:
         r = client.get("/tbox-cache")

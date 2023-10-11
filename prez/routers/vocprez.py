@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import APIRouter, Request
+from fastapi.responses import RedirectResponse
 from rdflib import URIRef, SKOS
 from starlette.responses import PlainTextResponse
 
@@ -83,6 +84,15 @@ async def concept_scheme_route(request: Request, concept_scheme_curie: str):
         request=request, classes=frozenset([SKOS.ConceptScheme])
     )
 
+    if (
+        str(profiles_mediatypes_info.mediatype) != "text/anot+turtle"
+        or str(profiles_mediatypes_info.mediatype) == "text/anot+turtle"
+        and str(profiles_mediatypes_info.profile) != "https://w3id.org/profile/vocpub"
+    ):
+        return RedirectResponse(
+            f"{request.url.path}/all{'?' if request.url.query else ''}{request.url.query}"
+        )
+
     iri = get_iri_route(concept_scheme_curie)
     resource = await get_resource(iri)
     bnode_depth = get_bnode_depth(iri, resource)
@@ -93,6 +103,7 @@ async def concept_scheme_route(request: Request, concept_scheme_curie: str):
         profiles_mediatypes_info.mediatype,
         profiles_mediatypes_info.profile,
         profiles_mediatypes_info.profile_headers,
+        profiles_mediatypes_info.selected_class,
     )
 
 
@@ -136,6 +147,7 @@ async def concept_scheme_top_concepts_route(
         profiles_mediatypes_info.mediatype,
         profiles_mediatypes_info.profile,
         profiles_mediatypes_info.profile_headers,
+        profiles_mediatypes_info.selected_class,
     )
 
 
@@ -175,6 +187,7 @@ async def concept_narrowers_route(
         profiles_mediatypes_info.mediatype,
         profiles_mediatypes_info.profile,
         profiles_mediatypes_info.profile_headers,
+        profiles_mediatypes_info.selected_class,
     )
 
 

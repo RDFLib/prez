@@ -2,10 +2,12 @@ from string import Template
 from typing import FrozenSet
 
 from fastapi import APIRouter, Request, HTTPException, status, Query
-from rdflib import Graph, Literal, URIRef, PROF, RDF, DCTERMS
+from fastapi.responses import RedirectResponse
+from rdflib import Graph, Literal, URIRef, PROF, DCTERMS
 from starlette.responses import PlainTextResponse
 
 from prez.cache import endpoints_graph_cache, profiles_graph_cache
+from prez.config import settings
 from prez.models.listing import ListingModel
 from prez.models.object_item import ObjectItem
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
@@ -24,6 +26,7 @@ from prez.sparql.objects_listings import (
     generate_listing_construct,
     generate_listing_count_construct,
 )
+from prez.url import order_urls
 
 router = APIRouter(tags=["Object"])
 
@@ -113,26 +116,44 @@ async def object_function(
     generate_system_links_object(
         internal_links_graph, tabular_results[0][1], object_item.uri
     )
-    return await return_from_graph(
-        item_graph + internal_links_graph,
-        prof_and_mt_info.mediatype,
-        PREZ["profile/open"],
-        prof_and_mt_info.profile_headers,
-    )
+
+    if prof_and_mt_info.mediatype == "text/anot+turtle":
+        # Assumes this is a request made by Prez UI or a similar client.
+        # Returns a response based on the open profile.
+        return await return_from_graph(
+            item_graph + internal_links_graph,
+            prof_and_mt_info.mediatype,
+            PREZ["profile/open"],
+            prof_and_mt_info.profile_headers,
+            prof_and_mt_info.selected_class,
+        )
+
+    links = [
+        str(v) for v in internal_links_graph.objects(URIRef(object_item.uri), PREZ.link)
+    ]
+
+    if not links:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            f"No system links found for object with IRI {object_item.uri}.",
+        )
+
+    return await item_function(request, object_curie=get_curie_id_for_uri(object_item.uri), object_item=object_item)
 
 
-async def item_function(request: Request, object_curie: str):
+async def item_function(request: Request, object_curie: str, object_item: ObjectItem = None):
     # TODO pull object item functions out to here and pass results in as params
 
     # curie -> uri
     # get_classes func
 
-    object_item = ObjectItem(  # object item now does not need request
-        object_curie=object_curie,
-        **request.path_params,
-        **request.query_params,
-        endpoint_uri=request.scope["route"].name,
-    )
+    if object_item is None:
+        object_item = ObjectItem(  # object item now does not need request
+            object_curie=object_curie,
+            **request.path_params,
+            **request.query_params,
+            endpoint_uri=request.scope["route"].name,
+        )
     prof_and_mt_info = ProfilesMediatypesInfo(
         request=request, classes=object_item.classes
     )
@@ -165,6 +186,7 @@ async def item_function(request: Request, object_curie: str):
         prof_and_mt_info.mediatype,
         object_item.profile,
         prof_and_mt_info.profile_headers,
+        prof_and_mt_info.selected_class,
     )
 
 
@@ -213,6 +235,7 @@ async def listing_function(
         prof_and_mt_info.mediatype,
         listing_item.profile,
         prof_and_mt_info.profile_headers,
+        prof_and_mt_info.selected_class,
     )
 
 
@@ -272,7 +295,7 @@ def generate_system_links_object(
             k: get_curie_id_for_uri(v["value"])
             for k, v in endpoint_results.items()
             if k != "endpoint"
-        } | {"object": get_curie_id_for_uri(object_uri)}
+        } | {"object": get_curie_id_for_uri(URIRef(object_uri))}
         endpoints.append(endpoint_template.substitute(template_args))
     for endpoint in endpoints:
         internal_links_graph.add(

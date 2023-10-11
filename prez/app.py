@@ -115,8 +115,9 @@ async def app_startup():
     setup_logger(settings)
     log = logging.getLogger("prez")
     log.info("Starting up")
-    await add_prefixes_to_prefix_graph()
+
     await healthcheck_sparql_endpoints()
+    await add_prefixes_to_prefix_graph()
     await get_all_search_methods()
     await create_profiles_graph()
     await create_endpoints_graph()

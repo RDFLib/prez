@@ -1,21 +1,27 @@
 import io
+import json
 import logging
 from typing import Optional
 
 from connegp import RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
+from fastapi import status
+from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic.types import List
-from rdflib import Graph, URIRef, Namespace
+from rdflib import Graph, URIRef, Namespace, RDF
 from starlette.requests import Request
 from starlette.responses import Response
 
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.models.profiles_item import ProfileItem
+from prez.renderers.csv_renderer import render_csv_dropdown
+from prez.services.curie_functions import get_curie_id_for_uri
 from prez.sparql.methods import send_queries, rdf_query_to_graph
 from prez.sparql.objects_listings import (
     generate_item_construct,
     get_annotation_properties,
 )
+from prez.renderers.json_renderer import render_json_dropdown, NotFoundError
 
 log = logging.getLogger(__name__)
 
@@ -25,13 +31,21 @@ async def return_from_queries(
     mediatype,
     profile,
     profile_headers,
+    selected_class: URIRef,
+    predicates_for_link_addition: dict = None,
 ):
     """
     Executes SPARQL queries, loads these to RDFLib Graphs, and calls the "return_from_graph" function to return the
     content
     """
     graph, _ = await send_queries(queries)
-    return await return_from_graph(graph, mediatype, profile, profile_headers)
+    return await return_from_graph(
+        graph,
+        mediatype,
+        profile,
+        profile_headers,
+        selected_class,
+    )
 
 
 async def return_from_graph(
@@ -39,19 +53,59 @@ async def return_from_graph(
     mediatype,
     profile,
     profile_headers,
+    selected_class: URIRef,
 ):
     profile_headers["Content-Disposition"] = "inline"
+
     if str(mediatype) in RDF_MEDIATYPES:
         return await return_rdf(graph, mediatype, profile_headers)
 
-    # elif mediatype == "xml":
-    #     ...
+    elif profile == URIRef("https://w3id.org/profile/dd"):
+        graph = await return_annotated_rdf(
+            graph,
+            profile,
+        )
+
+        try:
+            # TODO: Currently, data is generated in memory, instead of in a streaming manner.
+            #       Not possible to do a streaming response yet since we are reading the RDF
+            #       data into an in-memory graph.
+            jsonld_data = await render_json_dropdown(graph, profile, selected_class)
+
+            if str(mediatype) == "text/csv":
+                iri = graph.value(None, RDF.type, selected_class)
+                if iri:
+                    filename = get_curie_id_for_uri(URIRef(str(iri)))
+                else:
+                    filename = selected_class.split("#")[-1].split("/")[-1]
+                stream = render_csv_dropdown(jsonld_data["@graph"])
+                response = StreamingResponse(stream, media_type=mediatype)
+                response.headers[
+                    "Content-Disposition"
+                ] = f"attachment;filename={filename}.csv"
+                return response
+
+            # application/json
+            stream = io.StringIO(json.dumps(jsonld_data))
+            return StreamingResponse(stream, media_type=mediatype)
+
+        except NotFoundError as err:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, str(err))
 
     else:
         if "anot+" in mediatype:
-            return await return_annotated_rdf(
-                graph, profile_headers, profile, mediatype
+            non_anot_mediatype = mediatype.replace("anot+", "")
+            graph = await return_annotated_rdf(graph, profile)
+            content = io.BytesIO(
+                graph.serialize(format=non_anot_mediatype, encoding="utf-8")
             )
+            return StreamingResponse(
+                content=content, media_type=non_anot_mediatype, headers=profile_headers
+            )
+
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, f"Unsupported mediatype: {mediatype}."
+        )
 
 
 async def return_rdf(graph, mediatype, profile_headers):
@@ -83,13 +137,9 @@ async def get_annotations_graph(profile, graph, cache):
 
 async def return_annotated_rdf(
     graph: Graph,
-    profile_headers,
     profile,
-    mediatype="text/anot+turtle",
-):
+) -> Graph:
     from prez.cache import tbox_cache
-
-    non_anot_mediatype = mediatype.replace("anot+", "")
 
     cache = tbox_cache
     queries_for_uncached, annotations_graph = await get_annotation_properties(graph)
@@ -108,12 +158,7 @@ async def return_annotated_rdf(
         previous_triples_count = len(graph)
 
     graph.bind("prez", "https://prez.dev/")
-    obj = io.BytesIO(graph.serialize(format=non_anot_mediatype, encoding="utf-8"))
-
-    # TODO move responses to router and return graph here
-    return StreamingResponse(
-        content=obj, media_type=non_anot_mediatype, headers=profile_headers
-    )
+    return graph
 
 
 async def return_profiles(
@@ -144,4 +189,5 @@ async def return_profiles(
         prof_and_mt_info.mediatype,
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
+        prof_and_mt_info.selected_class,
     )

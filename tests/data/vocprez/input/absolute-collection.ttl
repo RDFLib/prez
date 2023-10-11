@@ -1,0 +1,42 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ns1: <http://purl.org/linked-data/registry#> .
+@prefix prez: <https://prez.dev/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+<http://linked.data.gov.au/def/depth-reference> dcterms:identifier "df:depth-reference"^^prez:identifier ;
+    dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/stable> ;
+    skos:definition "The point or level from which all depths are measured and referenced to for an entity or activity. Typically relative to a common global or regional reference datum such as the Australian Height Datum (AHD)."@en ;
+    skos:prefLabel "Depth Reference"@en .
+
+<http://linked.data.gov.au/def/depth-reference/absolute> a skos:Collection ;
+    dcterms:identifier "dpth-rfrnc:absolute"^^prez:identifier,
+        "depth-reference:absolute"^^prez:slug ;
+    dcterms:provenance "Defined here" ;
+    skos:definition "A fixed plane or point that describes an absolute reference for depth observations."@en ;
+    skos:member <http://linked.data.gov.au/def/depth-reference/australian-height-datum>,
+        <http://linked.data.gov.au/def/depth-reference/mean-sea-level>,
+        <http://linked.data.gov.au/def/depth-reference/metres-sub-sea> ;
+    skos:prefLabel "Absolute"@en ;
+    prez:link "/v/collection/dpth-rfrnc:absolute" .
+
+<http://linked.data.gov.au/def/depth-reference/australian-height-datum> dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:definition "The Australian Height Datum is a vertical datum in Australia.In 1971 the mean sea level for 1966-1968 was assigned the value of 0.000m on the Australian Height Datum at thirty tide gauges around the coast of the Australian continent."@en ;
+    skos:prefLabel "Australian Height Datum"@en ;
+    prez:link "/v/collection/dpth-rfrnc:absolute/dpth-rfrnc:australian-height-datum",
+        "/v/vocab/df:depth-reference/dpth-rfrnc:australian-height-datum" .
+
+<http://linked.data.gov.au/def/depth-reference/mean-sea-level> dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:definition "The elevation (on the ground) or altitude (in the air) of an object, relative to the average sea level."@en ;
+    skos:prefLabel "Mean Sea Level"@en ;
+    prez:link "/v/collection/dpth-rfrnc:absolute/dpth-rfrnc:mean-sea-level",
+        "/v/vocab/df:depth-reference/dpth-rfrnc:mean-sea-level" .
+
+<http://linked.data.gov.au/def/depth-reference/metres-sub-sea> dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:definition "The distance below mean sea level, the inverse of measurements to Mean Sea Level."@en ;
+    skos:prefLabel "Metres Sub-Sea"@en ;
+    prez:link "/v/collection/dpth-rfrnc:absolute/dpth-rfrnc:metres-sub-sea",
+        "/v/vocab/df:depth-reference/dpth-rfrnc:metres-sub-sea" .
