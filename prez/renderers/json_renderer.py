@@ -5,6 +5,7 @@ from rdflib.term import Node
 
 from prez.cache import profiles_graph_cache
 from prez.reference_data.prez_ns import ALTREXT
+from prez.sparql.objects_listings import get_listing_predicates
 
 
 class NotFoundError(Exception):
@@ -162,22 +163,12 @@ async def render_json_dropdown(
 
     iri = _get_resource_iri(graph, profile_graph, profile)
 
-    child_to_focus_predicates = _get_child_to_focus_predicates(
-        profile_graph, profile, selected_class
-    )
-
-    focus_to_parent_predicates = _get_focus_to_parent_predicates(
-        profile_graph, profile, selected_class
-    )
-
-    focus_to_child_predicates = _get_focus_to_child_predicates(
-        profile_graph, profile, selected_class
-    )
-
     items = []
     context = {
         "iri": "@id",
     }
+
+    child_to_focus_predicates,parent_to_focus,focus_to_child_predicates,focus_to_parent_predicates,relative_predicates = get_listing_predicates(profile, selected_class)
 
     if (
         not child_to_focus_predicates
@@ -195,18 +186,12 @@ async def render_json_dropdown(
             )
 
         for resource in graph.subjects(RDF.type, container_class):
-            relative_predicates = _get_relative_predicates(
-                profile_graph, profile, selected_class
-            )
             relative_predicates += _get_label_predicates(profile_graph, profile)
             item, context = create_graph_item(
                 str(resource), relative_predicates, graph, context
             )
             items.append(item)
     else:
-        relative_predicates = _get_relative_predicates(
-            profile_graph, profile, selected_class
-        )
         relative_predicates += _get_label_predicates(profile_graph, profile)
 
         child_iris = _get_child_iris(
