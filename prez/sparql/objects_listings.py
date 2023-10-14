@@ -867,7 +867,7 @@ def get_endpoint_template_queries(classes: FrozenSet[URIRef]):
       ?endpoint ?relation_direction ?relation_predicate ;
         ont:endpointTemplate ?endpoint_template ;
         ont:deliversClasses ?classes .
-  		FILTER(?classes IN ({" ".join('<' + str(klass) + '>' for klass in classes)}))
+  		FILTER(?classes IN ({", ".join('<' + str(klass) + '>' for klass in classes)}))
         VALUES ?relation_direction {{ont:FocusToParentRelation ont:ParentToFocusRelation}}
           {{ SELECT ?parent_endpoint ?endpoint (count(?intermediate) as ?distance)
             {{
