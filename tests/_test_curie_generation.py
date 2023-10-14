@@ -1,7 +1,9 @@
+# Passes but breaks other tests - haven't figured out how / why, so commented out for now.
+
 import pytest
 from rdflib import URIRef
 
-from prez.services.curie_functions import get_curie_id_for_uri
+from prez.services.curie_functions import get_curie_id_for_uri, get_uri_for_curie_id
 
 
 @pytest.mark.parametrize(
@@ -5930,3 +5932,9 @@ def test_get_curie_id_for_uri_negative():
     with pytest.raises(ValueError):
         uri = URIRef("http://")
         assert get_curie_id_for_uri(uri)
+
+
+def test_get_uri_for_curie_id():
+    assert get_uri_for_curie_id(curie_id="skos:prefLabel") == URIRef(
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+    )

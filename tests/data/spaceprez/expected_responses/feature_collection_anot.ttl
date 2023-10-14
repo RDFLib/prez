@@ -1,6 +1,7 @@
 @prefix dcterms: <http://purl.org/dc/terms/> .
 @prefix geo: <http://www.opengis.net/ont/geosparql#> .
 @prefix prez: <https://prez.dev/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
@@ -34,14 +35,24 @@ geo:asWKT skos:definition "The WKT serialization of a Geometry"@en ;
 geo:hasBoundingBox skos:definition "The minimum or smallest bounding or enclosing box of a given Feature."@en ;
     skos:prefLabel "has bounding box"@en .
 
+rdf:type rdfs:label "type" .
+
 rdfs:label rdfs:label "label" .
 
 rdfs:member rdfs:label "member" .
 
+skos:definition rdfs:label "definition"@en ;
+    skos:definition "A statement or formal explanation of the meaning of a concept."@en .
+
+skos:prefLabel rdfs:label "preferred label"@en ;
+    skos:definition "The preferred lexical label for a resource, in a given language."@en .
+
 <http://example.com/datasets/sandgate/cc12109444> rdfs:label "Contracted Catchment 12109444" ;
+    dcterms:identifier "sndgt:cc12109444"^^prez:identifier ;
     prez:link "/s/datasets/exds:sandgate/collections/sndgt:catchments/items/sndgt:cc12109444" .
 
 <http://example.com/datasets/sandgate/cc12109445> rdfs:label "Contracted Catchment 12109445" ;
+    dcterms:identifier "sndgt:cc12109445"^^prez:identifier ;
     prez:link "/s/datasets/exds:sandgate/collections/sndgt:catchments/items/sndgt:cc12109445" .
 
 geo:FeatureCollection skos:definition "A collection of individual Features."@en ;

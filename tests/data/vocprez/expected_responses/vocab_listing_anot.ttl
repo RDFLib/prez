@@ -2,18 +2,21 @@
 @prefix ns1: <http://purl.org/linked-data/registry#> .
 @prefix prez: <https://prez.dev/> .
 @prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix schema: <https://schema.org/> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <http://data.bgs.ac.uk/ref/BeddingSurfaceStructure> a skos:ConceptScheme ;
+    dcterms:identifier "rf:BeddingSurfaceStructure"^^prez:identifier ;
     ns1:status <https://linked.data.gov.au/def/reg-statuses/experimental> ;
     skos:definition "A dictionary of bed surface structures, eg. ripples, dessication cracks."@en ;
     skos:prefLabel "BeddingSurfaceStructure"@en ;
     prez:link "/v/vocab/rf:BeddingSurfaceStructure" .
 
 <http://linked.data.gov.au/def2/borehole-purpose> a skos:ConceptScheme ;
+    dcterms:identifier "def2:borehole-purpose"^^prez:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     dcterms:publisher <https://linked.data.gov.au/org/gsq> ;
     ns1:status <https://linked.data.gov.au/def/reg-statuses/stable> ;
@@ -24,6 +27,7 @@
     prez:link "/v/vocab/def2:borehole-purpose" .
 
 <http://linked.data.gov.au/def2/borehole-purpose-no-children> a skos:ConceptScheme ;
+    dcterms:identifier "def2:borehole-purpose-no-children"^^prez:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     dcterms:publisher <https://linked.data.gov.au/org/gsq> ;
     ns1:status <https://linked.data.gov.au/def/reg-statuses/stable> ;
@@ -45,40 +49,56 @@ dcterms:provenance rdfs:label "Provenance"@en ;
 dcterms:publisher rdfs:label "Publisher"@en .
 
 <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> a skos:ConceptScheme ;
+    dcterms:identifier "2016.01:contacttype"^^prez:identifier ;
     dcterms:provenance "Original set of terms from the GeosciML standard" ;
     dcterms:publisher <https://linked.data.gov.au/org/cgi> ;
     skos:definition "This scheme describes the concept space for Contact Type concepts, as defined by the IUGS Commission for Geoscience Information (CGI) Geoscience Terminology Working Group. By extension, it includes all concepts in this conceptScheme, as well as concepts in any previous versions of the scheme. Designed for use in the contactType property in GeoSciML Contact elements."@en ;
     skos:prefLabel "Contact Type"@en ;
     prez:link "/v/vocab/2016.01:contacttype" .
 
+rdf:type rdfs:label "type" .
+
 rdfs:label rdfs:label "label" .
 
+skos:definition rdfs:label "definition"@en ;
+    skos:definition "A statement or formal explanation of the meaning of a concept."@en .
+
+skos:prefLabel rdfs:label "preferred label"@en ;
+    skos:definition "The preferred lexical label for a resource, in a given language."@en .
+
 <https://linked.data.gov.au/def/reg-statuses> a skos:ConceptScheme ;
-    dcterms:identifier "def:reg-statuses"^^prez:identifier ;
+    dcterms:identifier "defn:reg-statuses"^^prez:identifier ;
     dcterms:publisher <https://linked.data.gov.au/org/agldwg> ;
     skos:definition """This vocabulary is a re-published and only marginally changed version of the Registry Ontology's (http://epimorphics.com/public/vocabulary/Registry.html) *Status* vocabulary (online in RDF: http://purl.org/linked-data/registry). The only real change to content has been the addition of the term `unstable`. This re-publication has been performed to allow the IRIs of each vocab term (skos:Concept) to resolve to both human-readable and machine-readable forms of content (HTML and RDF), using HTTP content negotiation.
 
 Note that just like the original form of this vocabulary, while it is a SKOS vocabulary implemented as a single skos:ConceptScheme, it is also an OWL Ontology and that each *Status* is both a skos:Concept and a reg:Status individual."""@en ;
     skos:prefLabel "Registry Status Vocabulary"@en ;
-    prez:link "/v/vocab/def:reg-statuses" .
+    prez:link "/v/vocab/defn:reg-statuses" .
 
 <https://linked.data.gov.au/def/vocdermods> a skos:ConceptScheme ;
+    dcterms:identifier "defn:vocdermods"^^prez:identifier ;
     dcterms:provenance "Created for the MER catalogue upgrade project, 2022"@en ;
     dcterms:publisher <https://linked.data.gov.au/org/mer> ;
     ns1:status <https://linked.data.gov.au/def/reg-statuses/stable> ;
     skos:definition "The modes by which one vocabulary may derive from another"@en ;
     skos:prefLabel "Vocabulary Derivation Modes"@en ;
-    prez:link "/v/vocab/def:vocdermods" .
+    prez:link "/v/vocab/defn:vocdermods" .
 
 <https://linked.data.gov.au/def/warox-alteration-types> a skos:ConceptScheme ;
+    dcterms:identifier "defn:warox-alteration-types"^^prez:identifier ;
     dcterms:provenance "This vocabulary was built on an extract of the WAROX system's lookup table"@en ;
     skos:definition "This vocabulary give Alteration Type concepts, listed in the Geologicla Survey of Western Australia's WAROX database."@en ;
     skos:prefLabel "WAROX Alteration Type"@en ;
-    prez:link "/v/vocab/def:warox-alteration-types" .
+    prez:link "/v/vocab/defn:warox-alteration-types" .
 
-<https://linked.data.gov.au/def/reg-statuses/experimental> skos:definition "An entry that has been accepted into the register temporarily and may be subject to change or withdrawal."@en ;
+schema:color rdfs:label "color" .
+
+schema:name rdfs:label "name" .
+
+<https://linked.data.gov.au/def/reg-statuses/experimental> dcterms:identifier "rg-sttss:experimental"^^prez:identifier ;
+    skos:definition "An entry that has been accepted into the register temporarily and may be subject to change or withdrawal."@en ;
     skos:prefLabel "experimental"@en ;
-    prez:link "/v/vocab/def:reg-statuses/rg-sttss:experimental" ;
+    prez:link "/v/vocab/defn:reg-statuses/rg-sttss:experimental" ;
     schema:color "#eae72c" .
 
 <https://linked.data.gov.au/org/cgi> schema:name "Commission for the Management and Application of Geoscience Information" .
@@ -87,10 +107,13 @@ Note that just like the original form of this vocabulary, while it is a SKOS voc
 
 <https://linked.data.gov.au/org/gsq> schema:name "Geological Survey of Queensland" .
 
-<https://linked.data.gov.au/def/reg-statuses/stable> skos:definition "An entry that is seen as having a reasonable measure of stability, may be used to mark the full adoption of a previously 'experimental' entry."@en ;
+<https://linked.data.gov.au/def/reg-statuses/stable> dcterms:identifier "rg-sttss:stable"^^prez:identifier ;
+    skos:definition "An entry that is seen as having a reasonable measure of stability, may be used to mark the full adoption of a previously 'experimental' entry."@en ;
     skos:prefLabel "stable"@en ;
-    prez:link "/v/vocab/def:reg-statuses/rg-sttss:stable" ;
+    prez:link "/v/vocab/defn:reg-statuses/rg-sttss:stable" ;
     schema:color "#2e8c09" .
 
-skos:ConceptScheme prez:count 7 .
+skos:ConceptScheme rdfs:label "Concept Scheme"@en ;
+    skos:definition "A set of concepts, optionally including statements about semantic relationships between those concepts."@en ;
+    prez:count 7 .
 
