@@ -31,14 +31,10 @@ async def catalog_list(
     name="https://prez.dev/endpoint/catprez/resource-listing",
 )
 async def resource_list(
-    request: Request,
-    catalog_curie: str,
-    page: Optional[int] = 1,
-    per_page: Optional[int] = 20,
+    request: Request, catalog_curie: str, page: Optional[int] = 1, per_page: Optional[int] = 20
 ):
     catalog_uri = get_uri_for_curie_id(catalog_curie)
     return await listing_function(request, page, per_page, uri=catalog_uri)
-
 
 @router.get(
     "/c/catalogs/{catalog_curie}/resources/{resource_curie}",

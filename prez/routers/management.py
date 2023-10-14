@@ -28,7 +28,9 @@ async def index():
     g = Graph()
     g.bind("prez", "https://prez.dev/")
     g.bind("ont", "https://prez.dev/ont/")
-    g.add((URIRef(settings.system_uri), PREZ.version, Literal(settings.prez_version)))
+    g.add(
+        (URIRef(settings.system_uri), PREZ.version, Literal(settings.prez_version))
+    )
     g += endpoints_graph_cache
     g += await return_annotation_predicates()
     log.info(f"Populated API info")

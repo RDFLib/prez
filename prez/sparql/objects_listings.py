@@ -22,10 +22,10 @@ PREZ = Namespace("https://prez.dev/")
 
 
 def generate_listing_construct(
-    focus_item,
-    profile: URIRef,
-    page: Optional[int] = 1,
-    per_page: Optional[int] = 20,
+        focus_item,
+        profile: URIRef,
+        page: Optional[int] = 1,
+        per_page: Optional[int] = 20,
 ):
     """
     For a given URI, finds items with the specified relation(s).
@@ -54,15 +54,15 @@ def generate_listing_construct(
         relative_properties,
     ) = get_listing_predicates(profile, focus_item.selected_class)
     if (
-        focus_item.uri
-        # and not focus_item.top_level_listing  # if it's a top level class we don't need a listing relation - we're
-        # # searching by class
-        and not child_to_focus
-        and not parent_to_focus
-        and not focus_to_child
-        and not focus_to_parent
-        # do not need to check relative properties - they will only be used if one of the other listing relations
-        # are defined
+            focus_item.uri
+            # and not focus_item.top_level_listing  # if it's a top level class we don't need a listing relation - we're
+            # # searching by class
+            and not child_to_focus
+            and not parent_to_focus
+            and not focus_to_child
+            and not focus_to_parent
+            # do not need to check relative properties - they will only be used if one of the other listing relations
+            # are defined
     ):
         log.warning(
             f"Requested listing of objects related to {focus_item.uri}, however the profile {profile} does not"
@@ -203,12 +203,12 @@ def search_query_construct():
 
 
 def generate_relative_properties(
-    construct_select,
-    relative_properties,
-    in_children,
-    in_parents,
-    out_children,
-    out_parents,
+        construct_select,
+        relative_properties,
+        in_children,
+        in_parents,
+        out_children,
+        out_parents,
 ):
     """
     Generate the relative properties construct or select for a listing query.
@@ -311,7 +311,7 @@ def _generate_sequence_construct(object_uri, sequence_predicates, path_n=0):
 
 
 def generate_sequence_construct(
-    sequence_predicates: list[list[URIRef]], uri_or_tl_item: str
+        sequence_predicates: list[list[URIRef]], uri_or_tl_item: str
 ) -> tuple[str, str]:
     sequence_construct = ""
     sequence_construct_where = ""
@@ -370,7 +370,7 @@ def generate_bnode_select(depth):
 
 
 async def get_annotation_properties(
-    item_graph: Graph,
+        item_graph: Graph,
 ):
     """
     Gets annotation data used for HTML display.
@@ -384,9 +384,9 @@ async def get_annotation_properties(
     explanation_predicates = settings.provenance_predicates
     other_predicates = settings.other_predicates
     terms = (
-        set(i for i in item_graph.predicates() if isinstance(i, URIRef))
-        | set(i for i in item_graph.objects() if isinstance(i, URIRef))
-        | set(i for i in item_graph.subjects() if isinstance(i, URIRef))
+            set(i for i in item_graph.predicates() if isinstance(i, URIRef))
+            | set(i for i in item_graph.objects() if isinstance(i, URIRef))
+            | set(i for i in item_graph.subjects() if isinstance(i, URIRef))
     )
     # TODO confirm caching of SUBJECT labels does not cause issues! this could be a lot of labels. Perhaps these are
     # better separated and put in an LRU cache. Or it may not be worth the effort.
@@ -443,7 +443,7 @@ async def get_annotation_properties(
 
 
 def get_annotations_from_tbox_cache(
-    terms: List[URIRef], label_props, description_props, explanation_props, other_props
+        terms: List[URIRef], label_props, description_props, explanation_props, other_props
 ):
     """
     Gets labels from the TBox cache, returns a list of terms that were not found in the cache, and a graph of labels,
@@ -507,16 +507,10 @@ def generate_listing_count_construct(item: ListingModel, endpoint_uri: str):
     if not item.top_level_listing:
         # count based on relation to a parent object - first find the relevant parent->child or child->parent relation
         # from the endpoint definition.
-        p2f_relation = endpoints_graph_cache.value(
-            subject=URIRef(endpoint_uri), predicate=ONT.ParentToFocusRelation
-        )
-        f2p_relation = endpoints_graph_cache.value(
-            subject=URIRef(endpoint_uri), predicate=ONT.FocusToParentRelation
-        )
-        assert p2f_relation or f2p_relation, (
-            f"Endpoint {endpoint_uri} does not have a parent to focus or focus to "
-            f"parent relation defined."
-        )
+        p2f_relation = endpoints_graph_cache.value(subject=URIRef(endpoint_uri), predicate=ONT.ParentToFocusRelation)
+        f2p_relation = endpoints_graph_cache.value(subject=URIRef(endpoint_uri), predicate=ONT.FocusToParentRelation)
+        assert p2f_relation or f2p_relation, f"Endpoint {endpoint_uri} does not have a parent to focus or focus to " \
+                                             f"parent relation defined."
         p2f_statement = f"<{item.uri}> <{p2f_relation}> ?item ." if p2f_relation else ""
         f2p_statement = f"?item <{f2p_relation}> <{item.uri}> ." if f2p_relation else ""
         query = dedent(
@@ -710,10 +704,10 @@ def get_item_predicates(profile, selected_class):
 
 
 def select_profile_mediatype(
-    classes: List[URIRef],
-    requested_profile_uri: URIRef = None,
-    requested_profile_token: str = None,
-    requested_mediatypes: List[Tuple] = None,
+        classes: List[URIRef],
+        requested_profile_uri: URIRef = None,
+        requested_profile_token: str = None,
+        requested_mediatypes: List[Tuple] = None,
 ):
     """
     Returns a SPARQL SELECT query which will determine the profile and mediatype to return based on user requests,
@@ -858,9 +852,8 @@ def get_endpoint_template_queries(classes: FrozenSet[URIRef]):
     """
     return query
 
-
 def generate_relationship_query(
-    uri: URIRef, endpoint_to_relations: Dict[URIRef, List[Tuple[URIRef, Literal]]]
+        uri: URIRef, endpoint_to_relations: Dict[URIRef, List[Tuple[URIRef, Literal]]]
 ):
     """
     Generates a SPARQL query of the form:
