@@ -15,3 +15,19 @@ vann:preferredNamespaceUri <https://linked.data.gov.au/datasets/gnaf/> ;
 [ vann:preferredNamespacePrefix "addr" ;
 vann:preferredNamespaceUri <https://linked.data.gov.au/datasets/gnaf/address/> ;
 ] .
+
+[ vann:preferredNamespacePrefix "preztest" ;
+vann:preferredNamespaceUri <https://test/> ;
+] .
+
+[ vann:preferredNamespacePrefix "sys" ;
+vann:preferredNamespaceUri <https://w3id.org/idn/system/> ;
+] .
+
+[ vann:preferredNamespacePrefix "sys" ;
+vann:preferredNamespaceUri <https://w3id.org/idn/system/> ;
+] .
+
+[ vann:preferredNamespacePrefix "defn" ;
+vann:preferredNamespaceUri <https://linked.data.gov.au/def/> ;
+] .

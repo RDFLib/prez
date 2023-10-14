@@ -1,6 +1,7 @@
 @prefix dcterms: <http://purl.org/dc/terms/> .
 @prefix ns1: <http://purl.org/linked-data/registry#> .
 @prefix prez: <https://prez.dev/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix schema: <https://schema.org/> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
@@ -20,9 +21,22 @@ dcterms:identifier rdfs:label "Identifier"@en ;
 dcterms:provenance rdfs:label "Provenance"@en ;
     dcterms:description "The statement may include a description of any changes successive custodians made to the resource."@en .
 
+rdf:type rdfs:label "type" .
+
 rdfs:isDefinedBy rdfs:label "isDefinedBy" .
 
 rdfs:label rdfs:label "label" .
+
+skos:altLabel rdfs:label "alternative label"@en ;
+    skos:definition "An alternative lexical label for a resource."@en .
+
+skos:inScheme rdfs:label "is in scheme"@en ;
+    skos:definition "Relates a resource (for example a concept) to a concept scheme in which it is included."@en .
+
+skos:topConceptOf rdfs:label "is top concept in scheme"@en ;
+    skos:definition "Relates a concept to the concept scheme that it is a top level concept of."@en .
+
+schema:color rdfs:label "color" .
 
 <urn:hash:1785691d4754e68b771db8d471feb675353d23fb5e4e7a2902e924045881e8b8> a prez:SearchResult ;
     prez:searchResultMatch "Greenhouse Gas Storage"@en ;
@@ -36,11 +50,21 @@ rdfs:label rdfs:label "label" .
     prez:searchResultURI <http://linked.data.gov.au/def/borehole-purpose/greenhouse-gas-storage> ;
     prez:searchResultWeight 10 .
 
+skos:Concept rdfs:label "Concept"@en ;
+    skos:definition "An idea or notion; a unit of thought."@en .
+
+skos:definition rdfs:label "definition"@en ;
+    skos:definition "A statement or formal explanation of the meaning of a concept."@en .
+
+skos:prefLabel rdfs:label "preferred label"@en ;
+    skos:definition "The preferred lexical label for a resource, in a given language."@en .
+
 <https://linked.data.gov.au/def/reg-statuses/stable> skos:definition "An entry that is seen as having a reasonable measure of stability, may be used to mark the full adoption of a previously 'experimental' entry."@en ;
     skos:prefLabel "stable"@en ;
     schema:color "#2e8c09" .
 
 <http://linked.data.gov.au/def/borehole-purpose/greenhouse-gas-storage> a skos:Concept ;
+    dcterms:identifier "brhl-prps:greenhouse-gas-storage"^^prez:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     rdfs:isDefinedBy <http://linked.data.gov.au/def2/borehole-purpose> ;
     skos:altLabel "GHG"@en ;

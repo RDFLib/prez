@@ -1,10 +1,13 @@
 from typing import Optional
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends
 from starlette.responses import PlainTextResponse
 
-from prez.routers.object import item_function, listing_function
+from prez.dependencies import get_query_sender
+from prez.services.objects import object_function
+from prez.services.listings import listing_function
 from prez.services.curie_functions import get_uri_for_curie_id
+from prez.sparql.methods import Repo
 
 router = APIRouter(tags=["SpacePrez"])
 
@@ -20,9 +23,14 @@ async def spaceprez_profiles():
     name="https://prez.dev/endpoint/spaceprez/dataset-listing",
 )
 async def list_datasets(
-    request: Request, page: Optional[int] = 1, per_page: Optional[int] = 20
+    request: Request,
+    query_sender: Repo = Depends(get_query_sender),
+    page: Optional[int] = 1,
+    per_page: Optional[int] = 20,
 ):
-    return await listing_function(request, page, per_page)
+    return await listing_function(
+        request=request, page=page, per_page=per_page, query_sender=query_sender
+    )
 
 
 @router.get(
@@ -33,11 +41,18 @@ async def list_datasets(
 async def list_feature_collections(
     request: Request,
     dataset_curie: str,
+    query_sender: Repo = Depends(get_query_sender),
     page: Optional[int] = 1,
     per_page: Optional[int] = 20,
 ):
     dataset_uri = get_uri_for_curie_id(dataset_curie)
-    return await listing_function(request, page, per_page, uri=dataset_uri)
+    return await listing_function(
+        request=request,
+        page=page,
+        per_page=per_page,
+        uri=dataset_uri,
+        query_sender=query_sender,
+    )
 
 
 @router.get(
@@ -49,11 +64,18 @@ async def list_features(
     request: Request,
     dataset_curie: str,
     collection_curie: str,
+    query_sender: Repo = Depends(get_query_sender),
     page: Optional[int] = 1,
     per_page: Optional[int] = 20,
 ):
     collection_uri = get_uri_for_curie_id(collection_curie)
-    return await listing_function(request, page, per_page, uri=collection_uri)
+    return await listing_function(
+        request=request,
+        page=page,
+        per_page=per_page,
+        uri=collection_uri,
+        query_sender=query_sender,
+    )
 
 
 @router.get(
@@ -61,8 +83,14 @@ async def list_features(
     summary="Get Dataset",
     name="https://prez.dev/endpoint/spaceprez/dataset",
 )
-async def dataset_item(request: Request, dataset_curie: str):
-    return await item_function(request, object_curie=dataset_curie)
+async def dataset_item(
+    request: Request,
+    dataset_curie: str,
+    query_sender: Repo = Depends(get_query_sender),
+):
+    return await object_function(
+        request, object_curie=dataset_curie, query_sender=query_sender
+    )
 
 
 @router.get(
@@ -71,9 +99,14 @@ async def dataset_item(request: Request, dataset_curie: str):
     name="https://prez.dev/endpoint/spaceprez/feature-collection",
 )
 async def feature_collection_item(
-    request: Request, dataset_curie: str, collection_curie: str
+    request: Request,
+    dataset_curie: str,
+    collection_curie: str,
+    query_sender: Repo = Depends(get_query_sender),
 ):
-    return await item_function(request, object_curie=collection_curie)
+    return await object_function(
+        request, object_curie=collection_curie, query_sender=query_sender
+    )
 
 
 @router.get(
@@ -82,6 +115,12 @@ async def feature_collection_item(
     name="https://prez.dev/endpoint/spaceprez/feature",
 )
 async def feature_item(
-    request: Request, dataset_curie: str, collection_curie: str, feature_curie: str
+    request: Request,
+    dataset_curie: str,
+    collection_curie: str,
+    feature_curie: str,
+    query_sender: Repo = Depends(get_query_sender),
 ):
-    return await item_function(request, object_curie=feature_curie)
+    return await object_function(
+        request=request, object_curie=feature_curie, query_sender=query_sender
+    )

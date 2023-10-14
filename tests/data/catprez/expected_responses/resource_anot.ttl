@@ -3,6 +3,7 @@
 @prefix prez: <https://prez.dev/> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 dcterms:creator rdfs:label "Creator"@en ;
@@ -21,19 +22,21 @@ dcterms:publisher rdfs:label "Publisher"@en .
 
 dcterms:title rdfs:label "Title"@en .
 
-<http://search.slv.vic.gov.au/permalink/f/1fe7t3h/SLV_VOYAGER1641200> a dcat:Resource ;
-    dcterms:creator <https://data.idnau.org/pid/adb/org/73-190-237-854> ;
-    dcterms:description """Needs to be integrated with KHRD. Negotiation required with State Library.
-
-Comprises Barwick's publications and conference papers; Barwick's PhD.; work with the Australian Institute of Aboriginal Studies and the Aboriginal History journal; work on major research projects; incoming and outgoing correspondence; reference material, and collected genealogies of Aboriginal Victorian families.""" ;
-    dcterms:issued "2007-01-10"^^xsd:date ;
-    dcterms:publisher <https://data.idnau.org/pid/adb/org/73-190-237-854> ;
-    dcterms:title "The Diane Barwick Archive" ;
-    prez:link "/c/catalogs/pd:democat/resources/1f7t3h:SLV_VOYAGER1641200" .
-
 rdf:type rdfs:label "type" .
 
 rdfs:label rdfs:label "label" .
+
+<https://data.idnau.org/pid/AAC-SA> a dcat:Resource ;
+    dcterms:creator <https://linked.data.gov.au/org/anu> ;
+    dcterms:description """This study contains time series of data of the Annual Aboriginal Census for Australia, Australian Capital Territory, New South Wales, Northern Territory, Queensland, South Australia, Tasmania, Victoria and Western Australia from 1921 to 1944.
+
+Special care notice:
+Aboriginal and Torres Strait Islander people, researchers and other users should be aware that material in this dataset may contain material that is considered offensive. The data has been retained in its original format because it represents an evidential record of language, beliefs or other cultural situations at a point in time.""" ;
+    dcterms:identifier "pd:AAC-SA"^^prez:identifier ;
+    dcterms:issued "2011-07-22"^^xsd:date ;
+    dcterms:publisher <https://data.idnau.org/pid/adb/org/atsida> ;
+    dcterms:title "Annual Aboriginal Census,1921-1944 - South Australia" ;
+    prez:link "/c/catalogs/pd:democat/resources/pd:AAC-SA" .
 
 <https://data.idnau.org/pid/democat> rdfs:label "IDN Demonstration Catalogue" ;
     dcterms:description """The Indigenous Data Network's demonstration catalogue of datasets. This catalogue contains records of datasets in Australia, most of which have some relation to indigenous Australia.
@@ -43,4 +46,12 @@ The purpose of this catalogue is not to act as a master catalogue of indigenous 
 The content of this catalogue conforms to the Indigenous Data Network's Catalogue Profile which is a profile of the DCAT, SKOS and PROV data models."""@en ;
     dcterms:identifier "pd:democat"^^prez:identifier ;
     dcterms:title "IDN Demonstration Catalogue" .
+
+schema:description rdfs:label "description" .
+
+schema:name rdfs:label "name" .
+
+<https://linked.data.gov.au/org/anu> rdfs:label "Australian National University" ;
+    schema:description "ANU is a world-leading university in Australia’s capital. Excellence is embedded in our approach to research and education." ;
+    schema:name "Australian National University" .
 
