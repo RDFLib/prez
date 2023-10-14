@@ -142,27 +142,6 @@ async def app_shutdown():
         await async_client.aclose()
 
 
-@app.get("/", summary="Home page", tags=["Prez"])
-async def index(request: Request):
-    """Returns the following information about the API"""
-    # TODO connegp on request. don't need profiles for this
-    from prez.cache import (
-        prez_system_graph,
-        tbox_cache,
-    )  # importing at module level will get the empty graph before it's populated
-
-    prez_system_graph.add(
-        (
-            URIRef(settings.system_uri),
-            PREZ.currentTBOXCacheSize,
-            Literal(len(tbox_cache)),
-        )
-    )
-    return await return_rdf(
-        prez_system_graph, mediatype="text/anot+turtle", profile_headers={}
-    )
-
-
 def _get_sparql_service_description(request, format):
     """Return an RDF description of PROMS' read only SPARQL endpoint in a requested format
     :param rdf_fmt: 'turtle', 'n3', 'xml', 'json-ld'

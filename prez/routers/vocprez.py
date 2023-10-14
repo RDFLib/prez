@@ -34,16 +34,24 @@ async def vocprez_home():
 
 
 @router.get(
-    "/v/collection",
-    summary="List Collections",
-    name="https://prez.dev/endpoint/vocprez/collection-listing",
-)
-@router.get(
     "/v/vocab",
     summary="List Vocabularies",
     name="https://prez.dev/endpoint/vocprez/vocabs-listing",
 )
-async def collection_vocab_endpoint(
+async def vocab_endpoint(
+    request: Request,
+    page: int = 1,
+    per_page: int = 20,
+):
+    return await listing_function(request, page, per_page)
+
+
+@router.get(
+    "/v/collection",
+    summary="List Collections",
+    name="https://prez.dev/endpoint/vocprez/collection-listing",
+)
+async def collection_endpoint(
     request: Request,
     page: int = 1,
     per_page: int = 20,

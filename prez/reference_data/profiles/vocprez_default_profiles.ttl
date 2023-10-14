@@ -68,7 +68,6 @@ prez:VocPrezProfile
     dcterms:description "This is a profile of the taxonomy data model SKOS - i.e. SKOS with additional constraints." ;
     dcterms:identifier "vocpub"^^xsd:token ;
     dcterms:title "VocPub" ;
-    altr-ext:hasLabelPredicate skos:prefLabel ;
     altr-ext:otherAnnotationProps schema:color, reg:status ;
     altr-ext:constrainsClass
         skos:ConceptScheme ,

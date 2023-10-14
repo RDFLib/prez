@@ -1,0 +1,50 @@
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix prez: <https://prez.dev/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+dcterms:description rdfs:label "Description"@en ;
+    dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en .
+
+dcterms:title rdfs:label "Title"@en .
+
+rdf:type rdfs:label "type" .
+
+rdfs:label rdfs:label "label" .
+
+<https://data.idnau.org/pid/democat> a dcat:Catalog ;
+    rdfs:label "IDN Demonstration Catalogue" ;
+    dcterms:description """The Indigenous Data Network's demonstration catalogue of datasets. This catalogue contains records of datasets in Australia, most of which have some relation to indigenous Australia.
+
+The purpose of this catalogue is not to act as a master catalogue of indigenous data in Australia to demonstrate improved metadata models and rating systems for data and metadata in order to improve indigenous data governance.
+
+The content of this catalogue conforms to the Indigenous Data Network's Catalogue Profile which is a profile of the DCAT, SKOS and PROV data models."""@en ;
+    dcterms:title "IDN Demonstration Catalogue" ;
+    prez:link "/c/catalogs/pd:democat" .
+
+<https://w3id.org/idn/dataset/agents> a dcat:Catalog ;
+    dcterms:description """The Indigenous Data Network's catalogue of Agents. This catalogue contains instances of Agents - People and Organisations - related to the holding of indigenous data. This includes non-indigenous Agents
+
+This catalogue extends on standard Agent information to include properties useful to understand the indigeneity of Agents: whether they are or not, or how much they are, indigenous"""@en ;
+    dcterms:title "IDN Agents Catalogue" ;
+    prez:link "/c/catalogs/dtst:agents" .
+
+<https://w3id.org/idn/dataset/democat> a dcat:Catalog ;
+    dcterms:description """The Indigenous Data Network's catalogue of datasets. This catalogue contains records of datasets in Australia, most of which have some relation to indigenous Australia.
+
+The purpose of this catalogue is not to act as a master catalogue of indigenous data in Australia to demonstrate improved metadata models and rating systems for data and metadata in order to improve indigenous data governance.
+
+The content of this catalogue conforms to the Indigenous Data Network's Catalogue Profile which is a profile of the DCAT, SKOS and PROV data models."""@en ;
+    dcterms:title "IDN Datasets Catalogue" ;
+    prez:link "/c/catalogs/dtst:democat" .
+
+<https://w3id.org/idn/system/catprez> a dcat:Catalog ;
+    dcterms:description "This is the system catalogue implemented by this instance of CatPrez that lists all its other Catalog instances"@en ;
+    dcterms:title "CatPrez System Catalogue" ;
+    prez:link "/c/catalogs/systm:catprez" .
+
+dcat:Catalog rdfs:label "Catalog"@en ;
+    prez:count 4 .
+

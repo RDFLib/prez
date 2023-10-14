@@ -2,18 +2,18 @@ import logging
 from functools import lru_cache
 from itertools import chain
 from textwrap import dedent
-from typing import List, Optional, Tuple, Union, Dict, FrozenSet
-from prez.config import settings
-from rdflib import Graph, URIRef, RDFS, DCTERMS, Namespace, Literal
+from typing import List, Optional, Tuple, Dict, FrozenSet
 
-from prez.cache import tbox_cache, profiles_graph_cache
+from rdflib import Graph, URIRef, Namespace, Literal
+
+from prez.cache import endpoints_graph_cache, tbox_cache, profiles_graph_cache
+from prez.config import settings
 from prez.models import SearchMethod
 from prez.models.listing import ListingModel
-from prez.models.object_item import ObjectItem
 from prez.models.profiles_item import ProfileItem
 from prez.models.profiles_listings import ProfilesMembers
+from prez.reference_data.prez_ns import ONT
 from prez.services.curie_functions import get_uri_for_curie_id
-from prez.config import settings
 
 log = logging.getLogger(__name__)
 
@@ -22,10 +22,10 @@ PREZ = Namespace("https://prez.dev/")
 
 
 def generate_listing_construct(
-    focus_item,
-    profile: URIRef,
-    page: Optional[int] = 1,
-    per_page: Optional[int] = 20,
+        focus_item,
+        profile: URIRef,
+        page: Optional[int] = 1,
+        per_page: Optional[int] = 20,
 ):
     """
     For a given URI, finds items with the specified relation(s).
@@ -54,15 +54,15 @@ def generate_listing_construct(
         relative_properties,
     ) = get_listing_predicates(profile, focus_item.selected_class)
     if (
-        focus_item.uri
-        # and not focus_item.top_level_listing  # if it's a top level class we don't need a listing relation - we're
-        # # searching by class
-        and not child_to_focus
-        and not parent_to_focus
-        and not focus_to_child
-        and not focus_to_parent
-        # do not need to check relative properties - they will only be used if one of the other listing relations
-        # are defined
+            focus_item.uri
+            # and not focus_item.top_level_listing  # if it's a top level class we don't need a listing relation - we're
+            # # searching by class
+            and not child_to_focus
+            and not parent_to_focus
+            and not focus_to_child
+            and not focus_to_parent
+            # do not need to check relative properties - they will only be used if one of the other listing relations
+            # are defined
     ):
         log.warning(
             f"Requested listing of objects related to {focus_item.uri}, however the profile {profile} does not"
@@ -176,6 +176,7 @@ def generate_item_construct(focus_item, profile: URIRef):
         {{
             {uri_or_search_item} ?p ?o1 . {chr(10)} \
             {f'?s ?inverse_predicate {uri_or_search_item}{chr(10)}' if inverse_predicates else chr(10)} \
+            {generate_exclude_predicates(exclude_predicates)} \
             {generate_include_predicates(include_predicates)} \
             {generate_inverse_predicates(inverse_predicates)} \
             {generate_bnode_select(bnode_depth)}\
@@ -202,12 +203,12 @@ def search_query_construct():
 
 
 def generate_relative_properties(
-    construct_select,
-    relative_properties,
-    in_children,
-    in_parents,
-    out_children,
-    out_parents,
+        construct_select,
+        relative_properties,
+        in_children,
+        in_parents,
+        out_children,
+        out_parents,
 ):
     """
     Generate the relative properties construct or select for a listing query.
@@ -276,6 +277,12 @@ def generate_include_predicates(include_predicates):
     return ""
 
 
+def generate_exclude_predicates(exclude_predicates):
+    if exclude_predicates:
+        return f"""FILTER(?p NOT IN ({chr(10).join([f"<{p}>" for p in exclude_predicates])}))"""
+    return ""
+
+
 def generate_inverse_predicates(inverse_predicates):
     """
     Generates a SPARQL VALUES clause for a list of inverse predicates, of the form:
@@ -304,7 +311,7 @@ def _generate_sequence_construct(object_uri, sequence_predicates, path_n=0):
 
 
 def generate_sequence_construct(
-    sequence_predicates: list[list[URIRef]], uri_or_tl_item: str
+        sequence_predicates: list[list[URIRef]], uri_or_tl_item: str
 ) -> tuple[str, str]:
     sequence_construct = ""
     sequence_construct_where = ""
@@ -363,7 +370,7 @@ def generate_bnode_select(depth):
 
 
 async def get_annotation_properties(
-    item_graph: Graph,
+        item_graph: Graph,
 ):
     """
     Gets annotation data used for HTML display.
@@ -377,9 +384,9 @@ async def get_annotation_properties(
     explanation_predicates = settings.provenance_predicates
     other_predicates = settings.other_predicates
     terms = (
-        set(i for i in item_graph.predicates() if isinstance(i, URIRef))
-        | set(i for i in item_graph.objects() if isinstance(i, URIRef))
-        | set(i for i in item_graph.subjects() if isinstance(i, URIRef))
+            set(i for i in item_graph.predicates() if isinstance(i, URIRef))
+            | set(i for i in item_graph.objects() if isinstance(i, URIRef))
+            | set(i for i in item_graph.subjects() if isinstance(i, URIRef))
     )
     # TODO confirm caching of SUBJECT labels does not cause issues! this could be a lot of labels. Perhaps these are
     # better separated and put in an LRU cache. Or it may not be worth the effort.
@@ -436,7 +443,7 @@ async def get_annotation_properties(
 
 
 def get_annotations_from_tbox_cache(
-    terms: List[URIRef], label_props, description_props, explanation_props, other_props
+        terms: List[URIRef], label_props, description_props, explanation_props, other_props
 ):
     """
     Gets labels from the TBox cache, returns a list of terms that were not found in the cache, and a graph of labels,
@@ -491,13 +498,21 @@ def get_annotations_from_tbox_cache(
 
 
 # hit the count cache first, if it's not there, hit the SPARQL endpoint
-def generate_listing_count_construct(item: ListingModel):
+def generate_listing_count_construct(item: ListingModel, endpoint_uri: str):
     """
     Generates a SPARQL construct query to count either:
     1. the members of a collection, if a URI is given, or;
     2. the number of instances of a base class, given a base class.
     """
     if not item.top_level_listing:
+        # count based on relation to a parent object - first find the relevant parent->child or child->parent relation
+        # from the endpoint definition.
+        p2f_relation = endpoints_graph_cache.value(subject=URIRef(endpoint_uri), predicate=ONT.ParentToFocusRelation)
+        f2p_relation = endpoints_graph_cache.value(subject=URIRef(endpoint_uri), predicate=ONT.FocusToParentRelation)
+        assert p2f_relation or f2p_relation, f"Endpoint {endpoint_uri} does not have a parent to focus or focus to " \
+                                             f"parent relation defined."
+        p2f_statement = f"<{item.uri}> <{p2f_relation}> ?item ." if p2f_relation else ""
+        f2p_statement = f"?item <{f2p_relation}> <{item.uri}> ." if f2p_relation else ""
         query = dedent(
             f"""
             PREFIX prez: <https://prez.dev/>
@@ -507,7 +522,8 @@ def generate_listing_count_construct(item: ListingModel):
             WHERE {{
                 SELECT (COUNT(?item) as ?count)
                 WHERE {{
-                        <{item.uri}> rdfs:member ?item .
+                        {p2f_statement}
+                        {f2p_statement}
                 }}
             }}"""
         ).strip()
@@ -553,60 +569,6 @@ def get_relevant_shape_bns_for_profile(selected_class, profile):
         )
     ]
     return relevant_shape_bns
-
-
-# def get_annotation_predicates(profile):
-#     """
-#     Gets the annotation predicates from the profiles graph for a given profile.
-#     If no predicates are found, "None" is returned by RDFLib
-#     """
-#     preds = {
-#         "label_predicates": [],
-#         "description_predicates": [],
-#         "explanation_predicates": [],
-#         "other_predicates": [],
-#     }
-#     if not profile:
-#         return preds
-#     preds["other_predicates"].extend(
-#         list(
-#             profiles_graph_cache.objects(
-#                 subject=profile, predicate=ALTREXT.otherAnnotationProps
-#             )
-#         )
-#     )
-#     preds["label_predicates"].extend(
-#         list(
-#             profiles_graph_cache.objects(
-#                 subject=profile, predicate=ALTREXT.hasLabelPredicate
-#             )
-#         )
-#     )
-#     preds["description_predicates"].extend(
-#         list(
-#             profiles_graph_cache.objects(
-#                 subject=profile, predicate=ALTREXT.hasDescriptionPredicate
-#             )
-#         )
-#     )
-#     preds["explanation_predicates"].extend(
-#         list(
-#             profiles_graph_cache.objects(
-#                 subject=profile, predicate=ALTREXT.hasExplanationPredicate
-#             )
-#         )
-#     )
-#     if not bool(
-#         list(chain(*preds.values()))
-#     ):  # check whether any predicates were found
-#         log.info(
-#             f"No annotation predicates found for profile {profile}, defaults will be used:\n"
-#             f"Label: rdfs:label; Description: dcterms:description; Explanation: dcterms:provenance.\n"
-#             f"To specify annotation predicates (to be used in *addition* to the defaults), use the following "
-#             f"predicates in a profile definition: altrext:hasLabelPredicate, altrext:hasDescriptionPredicate, "
-#             f"altrext:hasExplanationPredicate"
-#         )
-#     return preds
 
 
 def get_listing_predicates(profile, selected_class):
@@ -712,7 +674,12 @@ def get_item_predicates(profile, selected_class):
             (shape_bns, URIRef("http://www.w3.org/ns/shacl#path"), None)
         )
     ]
-    excludes = ...
+    excludes = [
+        i[2]
+        for i in profiles_graph_cache.triples_choices(
+            (shape_bns, ALTREXT.exclude, None)
+        )
+    ]
     inverses = [
         i[2]
         for i in profiles_graph_cache.triples_choices(
@@ -737,10 +704,10 @@ def get_item_predicates(profile, selected_class):
 
 
 def select_profile_mediatype(
-    classes: List[URIRef],
-    requested_profile_uri: URIRef = None,
-    requested_profile_token: str = None,
-    requested_mediatypes: List[Tuple] = None,
+        classes: List[URIRef],
+        requested_profile_uri: URIRef = None,
+        requested_profile_token: str = None,
+        requested_mediatypes: List[Tuple] = None,
 ):
     """
     Returns a SPARQL SELECT query which will determine the profile and mediatype to return based on user requests,
@@ -799,7 +766,8 @@ def select_profile_mediatype(
       ?mid rdfs:subClassOf* ?base_class .
       VALUES ?base_class {{ dcat:Dataset geo:FeatureCollection prez:FeatureCollectionList prez:FeatureList geo:Feature
       skos:ConceptScheme skos:Concept skos:Collection prez:DatasetList prez:VocPrezCollectionList prez:SchemesList
-      prez:CatalogList prez:ProfilesList dcat:Catalog dcat:Resource prof:Profile prez:SPARQLQuery prez:SearchResult }}
+      prez:CatalogList prez:ResourceList prez:ProfilesList dcat:Catalog dcat:Resource prof:Profile prez:SPARQLQuery 
+      prez:SearchResult }}
       ?profile altr-ext:constrainsClass ?class ;
                altr-ext:hasResourceFormat ?format ;
                dcterms:title ?title .\
@@ -841,41 +809,51 @@ def generate_mediatype_if_statements(requested_mediatypes: list):
 
 
 def get_endpoint_template_queries(classes: FrozenSet[URIRef]):
-    query = f"""PREFIX ont: <https://prez.dev/ont/>
-
-SELECT ?classes ?parent_endpoint ?endpoint ?relation ?direction ?endpointTemplate
-(count(?intermediate) as ?distance) WHERE {{
-      VALUES ?classes {{ {" ".join('<' + str(klass) + '>' for klass in classes)} }}
-  {{
-    ?endpoint a ont:Endpoint ;
-    ont:endpointTemplate ?endpointTemplate ;
-    ont:deliversClasses ?classes .
-  }}
-  UNION
-  {{
-    ?endpoint a ont:Endpoint ;
-    ont:endpointTemplate ?endpointTemplate ;
-    ont:deliversClasses ?classes .
-    ?endpoint ont:parentEndpoint* ?intermediate .
-    ?intermediate ont:parentEndpoint* ?parent_endpoint .
-    OPTIONAL {{
-      ?parent_endpoint ont:ParentToFocusRelation ?relation .
-      BIND ("parent_to_focus" AS ?direction)
-    }}
-    OPTIONAL {{
-      ?parent_endpoint ont:FocusToParentRelation ?relation .
-      BIND ("focus_to_parent" AS ?direction)
-    }}
-    FILTER (BOUND(?relation))
-  }}
-}} GROUP BY ?endpoint ?parent_endpoint ?relation ?direction ?classes ?endpointTemplate
-ORDER BY ?endpoint DESC(?distance)
+    """
+    NB the FILTER clause here should NOT be required but RDFLib has a bug (perhaps related to the +/* operators -
+    requires further investigation). Removing the FILTER clause will return too many results in instances where there
+    should be NO results - as if the VALUES ?classes clause is not used.
+    """
+    query = f"""
+    PREFIX ont: <https://prez.dev/ont/>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    
+    SELECT ?endpoint ?parent_endpoint ?relation_direction ?relation_predicate ?endpoint_template ?distance
+    {{
+    VALUES ?classes {{ {" ".join('<' + str(klass) + '>' for klass in classes)} }}
+      {{
+      ?endpoint a ont:ObjectEndpoint ;
+      ont:endpointTemplate ?endpoint_template ;
+      ont:deliversClasses ?classes .
+      BIND("0"^^xsd:integer AS ?distance)
+      }}
+        UNION
+      {{
+      ?endpoint ?relation_direction ?relation_predicate ;
+        ont:endpointTemplate ?endpoint_template ;
+        ont:deliversClasses ?classes .
+  		FILTER(?classes IN ({", ".join('<' + str(klass) + '>' for klass in classes)}))
+        VALUES ?relation_direction {{ont:FocusToParentRelation ont:ParentToFocusRelation}}
+          {{ SELECT ?parent_endpoint ?endpoint (count(?intermediate) as ?distance)
+            {{
+              ?endpoint ont:parentEndpoint+ ?intermediate ;
+                  ont:deliversClasses ?classes .
+              ?intermediate ont:parentEndpoint* ?parent_endpoint .
+              ?intermediate a ?intermediateEPClass .
+              ?parent_endpoint a ?parentEPClass .
+              VALUES ?intermediateEPClass {{ont:ObjectEndpoint}}
+              VALUES ?parentEPClass {{ont:ObjectEndpoint}}
+            }}
+            GROUP BY ?parent_endpoint ?endpoint
+            
+          }}
+      }}
+    }} ORDER BY DESC(?distance)
     """
     return query
 
-
 def generate_relationship_query(
-    uri: URIRef, endpoint_to_relations: Dict[URIRef, List[Tuple[URIRef, Literal]]]
+        uri: URIRef, endpoint_to_relations: Dict[URIRef, List[Tuple[URIRef, Literal]]]
 ):
     """
     Generates a SPARQL query of the form:
@@ -889,14 +867,14 @@ def generate_relationship_query(
         return None
     subqueries = []
     for endpoint, relations in endpoint_to_relations.items():
-        subquery = f"""{{ SELECT ?endpoint {" ".join(["?parent_" + str(i+1) for i, _ in enumerate(relations)])}
+        subquery = f"""{{ SELECT ?endpoint {" ".join(["?parent_" + str(i + 1) for i, _ in enumerate(relations)])}
         WHERE {{\n BIND("{endpoint}" as ?endpoint)\n"""
         uri_str = f"<{uri}>"
         for i, relation in enumerate(relations):
             predicate, direction = relation
             parent = "?parent_" + str(i + 1)
             if predicate:
-                if direction == Literal("parent_to_focus"):
+                if direction == URIRef("https://prez.dev/ont/ParentToFocusRelation"):
                     subquery += f"{parent} <{predicate}> {uri_str} .\n"
                 else:  # assuming the direction is "focus_to_parent"
                     subquery += f"{uri_str} <{predicate}> {parent} .\n"
