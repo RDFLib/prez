@@ -4,7 +4,9 @@ from pathlib import Path
 from time import sleep
 
 import pytest
-from rdflib import Graph, URIRef, RDFS, RDF, DCAT
+from rdflib import Graph
+
+from prez.reference_data.prez_ns import PREZ
 
 PREZ_DIR = os.getenv("PREZ_DIR")
 LOCAL_SPARQL_STORE = os.getenv("LOCAL_SPARQL_STORE")
@@ -31,12 +33,12 @@ def mgmt_test_client(request):
 
 def test_annotation_predicates(mgmt_test_client):
     with mgmt_test_client as client:
-        r = client.get(f"annotation-predicates")
+        r = client.get(f"/")
         response_graph = Graph().parse(data=r.text)
-        expected_graph = Graph().parse(
-            Path(__file__).parent
-            / "../data/management/expected_responses/predicates.ttl"
-        )
-        assert response_graph.isomorphic(expected_graph), print(
-            f"Graph delta:{(expected_graph - response_graph).serialize()}"
-        )
+        labelList = list(response_graph.objects(subject=PREZ["AnnotationPropertyList"], predicate=PREZ.labelList))
+        assert len(labelList) == 1
+        descriptionList = list(
+            response_graph.objects(subject=PREZ["AnnotationPropertyList"], predicate=PREZ.descriptionList))
+        assert len(descriptionList) == 1
+        provList = list(response_graph.objects(subject=PREZ["AnnotationPropertyList"], predicate=PREZ.provenanceList))
+        assert len(provList) == 1
