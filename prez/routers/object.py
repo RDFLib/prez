@@ -138,10 +138,16 @@ async def object_function(
             f"No system links found for object with IRI {object_item.uri}.",
         )
 
-    return await item_function(request, object_curie=get_curie_id_for_uri(object_item.uri), object_item=object_item)
+    return await item_function(
+        request,
+        object_curie=get_curie_id_for_uri(object_item.uri),
+        object_item=object_item,
+    )
 
 
-async def item_function(request: Request, object_curie: str, object_item: ObjectItem = None):
+async def item_function(
+    request: Request, object_curie: str, object_item: ObjectItem = None
+):
     # TODO pull object item functions out to here and pass results in as params
 
     # curie -> uri
