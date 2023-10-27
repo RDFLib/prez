@@ -7,7 +7,7 @@ from rdflib import URIRef, SKOS
 from starlette.responses import PlainTextResponse
 
 from prez.bnode import get_bnode_depth
-from prez.dependencies import get_query_sender
+from prez.dependencies import get_repo
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.queries.vocprez import (
     get_concept_scheme_query,
@@ -43,12 +43,12 @@ async def vocprez_home():
 )
 async def vocab_endpoint(
     request: Request,
-    query_sender: Repo = Depends(get_query_sender),
+    repo: Repo = Depends(get_repo),
     page: int = 1,
     per_page: int = 20,
 ):
     return await listing_function(
-        request=request, page=page, per_page=per_page, query_sender=query_sender
+        request=request, page=page, per_page=per_page, repo=repo
     )
 
 
@@ -59,12 +59,12 @@ async def vocab_endpoint(
 )
 async def collection_endpoint(
     request: Request,
-    query_sender: Repo = Depends(get_query_sender),
+    repo: Repo = Depends(get_repo),
     page: int = 1,
     per_page: int = 20,
 ):
     return await listing_function(
-        request=request, page=page, per_page=per_page, query_sender=query_sender
+        request=request, page=page, per_page=per_page, repo=repo
     )
 
 
@@ -74,14 +74,14 @@ async def collection_endpoint(
     name="https://prez.dev/endpoint/vocprez/vocab",
 )
 async def vocprez_scheme(
-    request: Request, scheme_curie: str, query_sender: Repo = Depends(get_query_sender)
+    request: Request, scheme_curie: str, repo: Repo = Depends(get_repo)
 ):
     """Get a SKOS Concept Scheme and all of its concepts.
 
     Note: This may be a very expensive operation depending on the size of the concept scheme.
     """
     return await object_function(
-        request, object_curie=scheme_curie, query_sender=query_sender
+        request, object_curie=scheme_curie, repo=repo
     )
 
 
@@ -99,7 +99,7 @@ async def vocprez_scheme(
 async def concept_scheme_route(
     request: Request,
     concept_scheme_curie: str,
-    query_sender: Repo = Depends(get_query_sender),
+    repo: Repo = Depends(get_repo),
 ):
     """Get a SKOS Concept Scheme.
 
@@ -119,17 +119,17 @@ async def concept_scheme_route(
         )
 
     iri = get_iri_route(concept_scheme_curie)
-    resource = await get_resource(iri, query_sender)
+    resource = await get_resource(iri, repo)
     bnode_depth = get_bnode_depth(iri, resource)
     concept_scheme_query = get_concept_scheme_query(iri, bnode_depth)
-    item_graph, _ = await query_sender.send_queries([concept_scheme_query], [])
+    item_graph, _ = await repo.send_queries([concept_scheme_query], [])
     return await return_from_graph(
         item_graph,
         profiles_mediatypes_info.mediatype,
         profiles_mediatypes_info.profile,
         profiles_mediatypes_info.profile_headers,
         profiles_mediatypes_info.selected_class,
-        query_sender,
+        repo,
     )
 
 
@@ -148,7 +148,7 @@ async def concept_scheme_top_concepts_route(
     concept_scheme_curie: str,
     page: int = 1,
     per_page: int = 20,
-    query_sender: Repo = Depends(get_query_sender),
+    repo: Repo = Depends(get_repo),
 ):
     """Get a SKOS Concept Scheme's top concepts.
 
@@ -163,19 +163,19 @@ async def concept_scheme_top_concepts_route(
         iri, page, per_page
     )
 
-    graph, _ = await query_sender.send_queries([concept_scheme_top_concepts_query], [])
+    graph, _ = await repo.send_queries([concept_scheme_top_concepts_query], [])
     for concept in graph.objects(iri, SKOS.hasTopConcept):
         if isinstance(concept, URIRef):
             concept_curie = get_curie_id_for_uri(concept)
     if "anot+" in profiles_mediatypes_info.mediatype:
-        await _add_prez_links(graph, query_sender)
+        await _add_prez_links(graph, repo)
     return await return_from_graph(
         graph,
         profiles_mediatypes_info.mediatype,
         profiles_mediatypes_info.profile,
         profiles_mediatypes_info.profile_headers,
         profiles_mediatypes_info.selected_class,
-        query_sender,
+        repo,
     )
 
 
@@ -193,7 +193,7 @@ async def concept_narrowers_route(
     request: Request,
     concept_scheme_curie: str,
     concept_curie: str,
-    query_sender: Repo = Depends(get_query_sender),
+    repo: Repo = Depends(get_repo),
     page: int = 1,
     per_page: int = 20,
 ):
@@ -208,16 +208,16 @@ async def concept_narrowers_route(
     iri = get_iri_route(concept_curie)
     concept_narrowers_query = get_concept_narrowers_query(iri, page, per_page)
 
-    graph, _ = await query_sender.send_queries([concept_narrowers_query], [])
+    graph, _ = await repo.send_queries([concept_narrowers_query], [])
     if "anot+" in profiles_mediatypes_info.mediatype:
-        await _add_prez_links(graph, query_sender)
+        await _add_prez_links(graph, repo)
     return await return_from_graph(
         graph,
         profiles_mediatypes_info.mediatype,
         profiles_mediatypes_info.profile,
         profiles_mediatypes_info.profile_headers,
         profiles_mediatypes_info.selected_class,
-        query_sender,
+        repo,
     )
 
 
@@ -236,11 +236,11 @@ async def concept_route(
     request: Request,
     concept_scheme_curie: str,
     concept_curie: str,
-    query_sender: Repo = Depends(get_query_sender),
+    repo: Repo = Depends(get_repo),
 ):
     """Get a SKOS Concept."""
     return await object_function(
-        request, object_curie=concept_curie, query_sender=query_sender
+        request, object_curie=concept_curie, repo=repo
     )
 
 
@@ -252,10 +252,10 @@ async def concept_route(
 async def vocprez_collection(
     request: Request,
     collection_curie: str,
-    query_sender: Repo = Depends(get_query_sender),
+    repo: Repo = Depends(get_repo),
 ):
     return await object_function(
-        request, object_curie=collection_curie, query_sender=query_sender
+        request, object_curie=collection_curie, repo=repo
     )
 
 
@@ -268,8 +268,8 @@ async def vocprez_collection_concept(
     request: Request,
     collection_curie: str,
     concept_curie: str,
-    query_sender: Repo = Depends(get_query_sender),
+    repo: Repo = Depends(get_repo),
 ):
     return await object_function(
-        request, object_curie=concept_curie, query_sender=query_sender
+        request, object_curie=concept_curie, repo=repo
     )

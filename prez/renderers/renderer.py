@@ -31,7 +31,7 @@ async def return_from_graph(
     profile,
     profile_headers,
     selected_class: URIRef,
-    query_sender: Repo,
+    repo: Repo,
 ):
     profile_headers["Content-Disposition"] = "inline"
 
@@ -39,7 +39,7 @@ async def return_from_graph(
         return await return_rdf(graph, mediatype, profile_headers)
 
     elif profile == URIRef("https://w3id.org/profile/dd"):
-        graph = await return_annotated_rdf(graph, profile, query_sender)
+        graph = await return_annotated_rdf(graph, profile, repo)
 
         try:
             # TODO: Currently, data is generated in memory, instead of in a streaming manner.
@@ -70,7 +70,7 @@ async def return_from_graph(
     else:
         if "anot+" in mediatype:
             non_anot_mediatype = mediatype.replace("anot+", "")
-            graph = await return_annotated_rdf(graph, profile, query_sender)
+            graph = await return_annotated_rdf(graph, profile, repo)
             content = io.BytesIO(
                 graph.serialize(format=non_anot_mediatype, encoding="utf-8")
             )
@@ -94,13 +94,13 @@ async def return_rdf(graph, mediatype, profile_headers):
     return StreamingResponse(content=obj, media_type=mediatype, headers=profile_headers)
 
 
-async def get_annotations_graph(graph, cache, query_sender):
+async def get_annotations_graph(graph, cache, repo):
     queries_for_uncached, annotations_graph = await get_annotation_properties(graph)
 
     if queries_for_uncached is None:
         anots_from_triplestore = Graph()
     else:
-        anots_from_triplestore, _ = await query_sender.send_queries(
+        anots_from_triplestore, _ = await repo.send_queries(
             [queries_for_uncached], []
         )
 
@@ -114,13 +114,13 @@ async def get_annotations_graph(graph, cache, query_sender):
 async def return_annotated_rdf(
     graph: Graph,
     profile,
-    query_sender,
+    repo,
 ) -> Graph:
     from prez.cache import tbox_cache
 
     cache = tbox_cache
     queries_for_uncached, annotations_graph = await get_annotation_properties(graph)
-    anots_from_triplestore, _ = await query_sender.send_queries(
+    anots_from_triplestore, _ = await repo.send_queries(
         [queries_for_uncached], []
     )
     if len(anots_from_triplestore) > 0:
@@ -131,7 +131,7 @@ async def return_annotated_rdf(
 
     # Expand the graph with annotations specified in the profile until no new statements are added.
     while True:
-        graph += await get_annotations_graph(graph, cache, query_sender)
+        graph += await get_annotations_graph(graph, cache, repo)
         if len(graph) == previous_triples_count:
             break
         previous_triples_count = len(graph)
@@ -142,7 +142,7 @@ async def return_annotated_rdf(
 
 async def return_profiles(
     classes: frozenset,
-    query_sender: Repo,
+    repo: Repo,
     request: Optional[Request] = None,
     prof_and_mt_info: Optional[ProfilesMediatypesInfo] = None,
 ) -> Response:
@@ -170,5 +170,5 @@ async def return_profiles(
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
         prof_and_mt_info.selected_class,
-        query_sender,
+        repo,
     )

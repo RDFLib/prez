@@ -6,7 +6,7 @@ from rdflib import URIRef
 
 from prez.cache import profiles_graph_cache
 from prez.config import settings
-from prez.dependencies import get_query_sender
+from prez.dependencies import get_repo
 from prez.models.object_item import ObjectItem
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.reference_data.prez_ns import PREZ
@@ -22,7 +22,7 @@ from prez.sparql.objects_listings import (
 
 async def object_function(
     request: Request,
-    query_sender=Depends(get_query_sender),
+    repo=Depends(get_repo),
     object_curie: Optional[str] = None,
 ):
     endpoint_uri = URIRef(request.scope["route"].name)
@@ -43,7 +43,7 @@ async def object_function(
         )
 
     klasses = await get_classes(
-        uri=uri, query_sender=query_sender, endpoint=endpoint_uri
+        uri=uri, repo=repo, endpoint=endpoint_uri
     )
     # ConnegP - needs improvement
     prof_and_mt_info = ProfilesMediatypesInfo(request=request, classes=klasses)
@@ -66,7 +66,7 @@ async def object_function(
         return await return_profiles(
             classes=frozenset(object_item.selected_class),
             prof_and_mt_info=prof_and_mt_info,
-            query_sender=query_sender,
+            repo=repo,
         )
 
     item_query = generate_item_construct(object_item, object_item.profile)
@@ -81,16 +81,16 @@ async def object_function(
             list_graph = profiles_graph_cache.query(item_members_query).graph
             item_graph += list_graph
     else:
-        item_graph, _ = await query_sender.send_queries(
+        item_graph, _ = await repo.send_queries(
             [item_query, item_members_query], []
         )
     if "anot+" in prof_and_mt_info.mediatype:
-        await _add_prez_links(item_graph, query_sender)
+        await _add_prez_links(item_graph, repo)
     return await return_from_graph(
         item_graph,
         prof_and_mt_info.mediatype,
         object_item.profile,
         prof_and_mt_info.profile_headers,
         prof_and_mt_info.selected_class,
-        query_sender,
+        repo,
     )

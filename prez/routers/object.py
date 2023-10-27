@@ -11,7 +11,7 @@ from prez.cache import (
     profiles_graph_cache,
     links_ids_graph_cache,
 )
-from prez.dependencies import get_query_sender
+from prez.dependencies import get_repo
 from prez.models.listing import ListingModel
 from prez.models.object_item import ObjectItem
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
@@ -63,7 +63,7 @@ async def count_route(
             },
         },
     ),
-    query_sender=Depends(get_query_sender),
+    repo=Depends(get_repo),
 ):
     """Get an Object's statements count based on the inbound or outbound predicate"""
     iri = get_iri_route(curie)
@@ -82,16 +82,16 @@ async def count_route(
 
     if inbound:
         query = object_inbound_query(iri, inbound)
-        _, rows = await query_sender.send_queries([], [(None, query)])
+        _, rows = await repo.send_queries([], [(None, query)])
         for row in rows[0][1]:
             return row["count"]["value"]
 
     query = object_outbound_query(iri, outbound)
-    _, rows = await query_sender.send_queries([], [(None, query)])
+    _, rows = await repo.send_queries([], [(None, query)])
     for row in rows[0][1]:
         return row["count"]["value"]
 
 
 @router.get("/object", summary="Object", name="https://prez.dev/endpoint/object")
-async def object_route(request: Request, query_sender=Depends(get_query_sender)):
-    return await object_function(request, query_sender=query_sender)
+async def object_route(request: Request, repo=Depends(get_repo)):
+    return await object_function(request, repo=repo)

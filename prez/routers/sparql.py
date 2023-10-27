@@ -7,7 +7,7 @@ from starlette.datastructures import Headers
 from starlette.requests import Request
 from starlette.responses import StreamingResponse
 
-from prez.dependencies import get_query_sender
+from prez.dependencies import get_repo
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.renderers.renderer import return_annotated_rdf
 from prez.sparql.methods import Repo
@@ -20,7 +20,7 @@ router = APIRouter(tags=["SPARQL"])
 @router.api_route("/sparql", methods=["GET"])
 async def sparql_endpoint(
     request: Request,
-    query_sender: Repo = Depends(get_query_sender),
+    repo: Repo = Depends(get_repo),
 ):
     request_mediatype = request.headers.get("accept").split(",")[
         0
@@ -34,7 +34,7 @@ async def sparql_endpoint(
         )
         non_anot_mediatype = request_mediatype.replace("anot+", "")
         request._headers = Headers({**request.headers, "accept": non_anot_mediatype})
-        response = await query_sender.sparql(request)
+        response = await repo.sparql(request)
         await response.aread()
         g = Graph()
         g.parse(data=response.text, format=non_anot_mediatype)
@@ -48,7 +48,7 @@ async def sparql_endpoint(
             headers=prof_and_mt_info.profile_headers,
         )
     else:
-        response = await query_sender.sparql(request)
+        response = await repo.sparql(request)
         return StreamingResponse(
             response.aiter_raw(),
             status_code=response.status_code,

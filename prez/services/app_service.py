@@ -51,9 +51,9 @@ async def healthcheck_sparql_endpoints():
             time.sleep(3)
 
 
-async def count_objects(query_sender):
+async def count_objects(repo):
     query = startup_count_objects()
-    graph, _ = await query_sender.send_queries([query], [])
+    graph, _ = await repo.send_queries([query], [])
     if len(graph) > 1:
         counts_graph.__iadd__(graph)
 
@@ -86,7 +86,7 @@ async def populate_api_info():
     log.info(f"Populated API info")
 
 
-async def add_prefixes_to_prefix_graph(query_sender: Repo):
+async def add_prefixes_to_prefix_graph(repo: Repo):
     """
     Adds prefixes to the prefix graph
     """
@@ -117,7 +117,7 @@ async def add_prefixes_to_prefix_graph(query_sender: Repo):
             }
         """
 
-        _, rows = await query_sender.send_queries([], [(None, query)])
+        _, rows = await repo.send_queries([], [(None, query)])
         iris = [tup["iri"]["value"] for tup in rows[0][1]]
         skipped_count = 0
         skipped = []
@@ -135,7 +135,7 @@ async def add_prefixes_to_prefix_graph(query_sender: Repo):
             log.info(f"Skipped IRI {skipped_iri}")
 
 
-async def create_endpoints_graph(query_sender) -> Graph:
+async def create_endpoints_graph(repo) -> Graph:
     flavours = ["CatPrez", "SpacePrez", "VocPrez"]
     added_anything = False
     for f in (Path(__file__).parent.parent / "reference_data/endpoints").glob("*.ttl"):
@@ -154,10 +154,10 @@ async def create_endpoints_graph(query_sender) -> Graph:
         log.info("Local endpoint definitions loaded")
     else:
         log.info("No local endpoint definitions found")
-    await get_remote_endpoint_definitions(query_sender)
+    await get_remote_endpoint_definitions(repo)
 
 
-async def get_remote_endpoint_definitions(query_sender):
+async def get_remote_endpoint_definitions(repo):
     remote_endpoints_query = f"""
 PREFIX ont: <https://prez.dev/ont/>
 CONSTRUCT {{
@@ -168,7 +168,7 @@ WHERE {{
               ?p ?o.
 }}
     """
-    g, _ = await query_sender.send_queries([remote_endpoints_query], [])
+    g, _ = await repo.send_queries([remote_endpoints_query], [])
     if len(g) > 0:
         endpoints_graph_cache.__iadd__(g)
         log.info(f"Remote endpoint definition(s) found and added")

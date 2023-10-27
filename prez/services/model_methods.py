@@ -5,7 +5,7 @@ from prez.sparql.methods import Repo
 
 
 async def get_classes(
-    uri: URIRef, query_sender: Repo, endpoint: URIRef = None
+    uri: URIRef, repo: Repo, endpoint: URIRef = None
 ) -> frozenset[URIRef]:
     """
     if endpoint is specified, only classes that the endpoint can deliver will be returned.
@@ -14,7 +14,7 @@ async def get_classes(
     SELECT ?class
     {{ <{uri}> a ?class }}
     """
-    _, r = await query_sender.send_queries([], [(uri, q)])
+    _, r = await repo.send_queries([], [(uri, q)])
     tabular_result = r[0]  # should only be one result - only one query sent
     if endpoint != URIRef("https://prez.dev/endpoint/object"):
         endpoint_classes = endpoints_graph_cache.objects(

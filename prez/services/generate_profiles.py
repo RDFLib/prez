@@ -14,7 +14,7 @@ from prez.sparql.objects_listings import select_profile_mediatype
 log = logging.getLogger(__name__)
 
 
-async def create_profiles_graph(query_sender) -> Graph:
+async def create_profiles_graph(repo) -> Graph:
     if (
         len(profiles_graph_cache) > 0
     ):  # pytest imports app.py multiple times, so this is needed. Not sure why cache is
@@ -65,7 +65,7 @@ async def create_profiles_graph(query_sender) -> Graph:
           }
         }
         """
-    g, _ = await query_sender.send_queries([remote_profiles_query], [])
+    g, _ = await repo.send_queries([remote_profiles_query], [])
     if len(g) > 0:
         profiles_graph_cache.__iadd__(g)
         log.info(f"Remote profile(s) found and added")
