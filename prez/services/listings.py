@@ -15,7 +15,7 @@ from prez.sparql.objects_listings import (
 
 async def listing_function(
     request: Request,
-    query_sender: Repo,
+    repo: Repo,
     page: int = 1,
     per_page: int = 20,
     uri: str = None,
@@ -39,7 +39,7 @@ async def listing_function(
         return await return_profiles(
             classes=frozenset(listing_item.selected_class),
             prof_and_mt_info=prof_and_mt_info,
-            query_sender=query_sender,
+            repo=repo,
         )
 
     ordering_predicate = request.query_params.get("ordering-pred", None)
@@ -59,16 +59,16 @@ async def listing_function(
         count_graph = profiles_graph_cache.query(count_query).graph
         item_graph = list_graph + count_graph
     else:
-        item_graph, _ = await query_sender.send_queries(
+        item_graph, _ = await repo.send_queries(
             [count_query, item_members_query], []
         )
     if "anot+" in prof_and_mt_info.mediatype:
-        await _add_prez_links(item_graph, query_sender)
+        await _add_prez_links(item_graph, repo)
     return await return_from_graph(
         item_graph,
         prof_and_mt_info.mediatype,
         listing_item.profile,
         prof_and_mt_info.profile_headers,
         prof_and_mt_info.selected_class,
-        query_sender,
+        repo,
     )

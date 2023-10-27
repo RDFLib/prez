@@ -123,25 +123,25 @@ async def app_startup():
 
     if settings.sparql_repo_type == "pyoxigraph":
         app.state.pyoxi_store = get_pyoxi_store()
-        app.state.query_sender = PyoxigraphRepo(app.state.pyoxi_store)
+        app.state.repo = PyoxigraphRepo(app.state.pyoxi_store)
         await load_local_data_to_oxigraph(app.state.pyoxi_store)
     elif settings.sparql_repo_type == "oxrdflib":
         app.state.oxrdflib_store = get_oxrdflib_store()
-        app.state.query_sender = OxrdflibRepo(app.state.oxrdflib_store)
+        app.state.repo = OxrdflibRepo(app.state.oxrdflib_store)
     elif settings.sparql_repo_type == "remote":
         app.state.http_async_client = await get_async_http_client()
-        app.state.query_sender = RemoteSparqlRepo(app.state.http_async_client)
+        app.state.repo = RemoteSparqlRepo(app.state.http_async_client)
         await healthcheck_sparql_endpoints()
     else:
         raise ValueError(
             "SPARQL_REPO_TYPE must be one of 'pyoxigraph', 'oxrdflib' or 'remote'"
         )
 
-    await add_prefixes_to_prefix_graph(app.state.query_sender)
-    await get_all_search_methods(app.state.query_sender)
-    await create_profiles_graph(app.state.query_sender)
-    await create_endpoints_graph(app.state.query_sender)
-    await count_objects(app.state.query_sender)
+    await add_prefixes_to_prefix_graph(app.state.repo)
+    await get_all_search_methods(app.state.repo)
+    await create_profiles_graph(app.state.repo)
+    await create_endpoints_graph(app.state.repo)
+    await count_objects(app.state.repo)
     await populate_api_info()
     await add_common_context_ontologies_to_tbox_cache()
 

@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, Request, Depends
 from starlette.responses import PlainTextResponse
 
-from prez.dependencies import get_query_sender
+from prez.dependencies import get_repo
 from prez.services.objects import object_function
 from prez.services.listings import listing_function
 from prez.services.curie_functions import get_uri_for_curie_id
@@ -26,10 +26,10 @@ async def catalog_list(
     request: Request,
     page: Optional[int] = 1,
     per_page: Optional[int] = 20,
-    query_sender: Repo = Depends(get_query_sender),
+    repo: Repo = Depends(get_repo),
 ):
     return await listing_function(
-        request=request, page=page, per_page=per_page, query_sender=query_sender
+        request=request, page=page, per_page=per_page, repo=repo
     )
 
 
@@ -41,7 +41,7 @@ async def catalog_list(
 async def resource_list(
     request: Request,
     catalog_curie: str,
-    query_sender: Repo = Depends(get_query_sender),
+    repo: Repo = Depends(get_repo),
     page: Optional[int] = 1,
     per_page: Optional[int] = 20,
 ):
@@ -50,7 +50,7 @@ async def resource_list(
         request=request,
         page=page,
         per_page=per_page,
-        query_sender=query_sender,
+        repo=repo,
         uri=catalog_uri,
     )
 
@@ -64,10 +64,10 @@ async def resource_item(
     request: Request,
     catalog_curie: str,
     resource_curie: str,
-    query_sender: Repo = Depends(get_query_sender),
+    repo: Repo = Depends(get_repo),
 ):
     return await object_function(
-        request=request, object_curie=resource_curie, query_sender=query_sender
+        request=request, object_curie=resource_curie, repo=repo
     )
 
 
@@ -79,8 +79,8 @@ async def resource_item(
 async def catalog_item(
     request: Request,
     catalog_curie: str,
-    query_sender: Repo = Depends(get_query_sender),
+    repo: Repo = Depends(get_repo),
 ):
     return await object_function(
-        request=request, object_curie=catalog_curie, query_sender=query_sender
+        request=request, object_curie=catalog_curie, repo=repo
     )

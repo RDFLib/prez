@@ -14,14 +14,14 @@ from prez.sparql.objects_listings import (
 )
 
 
-async def _add_prez_links(graph: Graph, query_sender):
+async def _add_prez_links(graph: Graph, repo):
     # get all URIRefs - if Prez can find a class and endpoint for them, an internal link will be generated.
     uris = [uri for uri in graph.all_nodes() if isinstance(uri, URIRef)]
     for uri in uris:
-        await _create_internal_links_graph(uri, graph, query_sender)
+        await _create_internal_links_graph(uri, graph, repo)
 
 
-async def _create_internal_links_graph(uri, graph, query_sender: Repo):
+async def _create_internal_links_graph(uri, graph, repo: Repo):
     quads = list(
         links_ids_graph_cache.quads((None, None, None, uri))
     )  # context required as not all triples that relate to links or identifiers for a particular object have that object's URI as the subject
@@ -29,12 +29,12 @@ async def _create_internal_links_graph(uri, graph, query_sender: Repo):
         for quad in quads:
             graph.add(quad[:3])
     else:
-        klasses = await get_classes(uri, query_sender)
+        klasses = await get_classes(uri, repo)
         for klass in klasses:
             endpoint_to_relations = get_endpoint_info_for_classes(frozenset([klass]))
             relationship_query = generate_relationship_query(uri, endpoint_to_relations)
             if relationship_query:
-                _, tabular_results = await query_sender.send_queries(
+                _, tabular_results = await repo.send_queries(
                     [], [(uri, relationship_query)]
                 )
                 for _, result in tabular_results:

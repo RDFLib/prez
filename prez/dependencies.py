@@ -26,7 +26,7 @@ def get_oxrdflib_store():
     return oxrdflib_store
 
 
-async def get_query_sender(
+async def get_repo(
     http_async_client: httpx.AsyncClient = Depends(get_async_http_client),
     pyoxi_store: Store = Depends(get_pyoxi_store),
 ):

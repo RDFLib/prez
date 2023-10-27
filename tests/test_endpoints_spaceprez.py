@@ -7,7 +7,7 @@ from rdflib import Graph, URIRef
 from rdflib.namespace import RDF, DCAT, RDFS
 
 from prez.app import app
-from prez.dependencies import get_query_sender
+from prez.dependencies import get_repo
 from prez.sparql.methods import Repo, PyoxigraphRepo
 
 
@@ -23,18 +23,18 @@ def test_store() -> Store:
 
 
 @pytest.fixture(scope="session")
-def test_query_sender(test_store: Store) -> Repo:
+def test_repo(test_store: Store) -> Repo:
     # Create a PyoxigraphQuerySender using the test_store
     return PyoxigraphRepo(test_store)
 
 
 @pytest.fixture(scope="session")
-def client(test_query_sender: Repo) -> TestClient:
-    # Override the dependency to use the test_query_sender
-    def override_get_query_sender():
-        return test_query_sender
+def client(test_repo: Repo) -> TestClient:
+    # Override the dependency to use the test_repo
+    def override_get_repo():
+        return test_repo
 
-    app.dependency_overrides[get_query_sender] = override_get_query_sender
+    app.dependency_overrides[get_repo] = override_get_repo
 
     with TestClient(app) as c:
         yield c
