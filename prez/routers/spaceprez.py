@@ -88,9 +88,7 @@ async def dataset_item(
     dataset_curie: str,
     repo: Repo = Depends(get_repo),
 ):
-    return await object_function(
-        request, object_curie=dataset_curie, repo=repo
-    )
+    return await object_function(request, object_curie=dataset_curie, repo=repo)
 
 
 @router.get(
@@ -104,9 +102,7 @@ async def feature_collection_item(
     collection_curie: str,
     repo: Repo = Depends(get_repo),
 ):
-    return await object_function(
-        request, object_curie=collection_curie, repo=repo
-    )
+    return await object_function(request, object_curie=collection_curie, repo=repo)
 
 
 @router.get(
@@ -121,6 +117,4 @@ async def feature_item(
     feature_curie: str,
     repo: Repo = Depends(get_repo),
 ):
-    return await object_function(
-        request=request, object_curie=feature_curie, repo=repo
-    )
+    return await object_function(request=request, object_curie=feature_curie, repo=repo)

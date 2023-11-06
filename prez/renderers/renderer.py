@@ -100,9 +100,7 @@ async def get_annotations_graph(graph, cache, repo):
     if queries_for_uncached is None:
         anots_from_triplestore = Graph()
     else:
-        anots_from_triplestore, _ = await repo.send_queries(
-            [queries_for_uncached], []
-        )
+        anots_from_triplestore, _ = await repo.send_queries([queries_for_uncached], [])
 
     if len(anots_from_triplestore) > 1:
         annotations_graph += anots_from_triplestore
@@ -120,9 +118,7 @@ async def return_annotated_rdf(
 
     cache = tbox_cache
     queries_for_uncached, annotations_graph = await get_annotation_properties(graph)
-    anots_from_triplestore, _ = await repo.send_queries(
-        [queries_for_uncached], []
-    )
+    anots_from_triplestore, _ = await repo.send_queries([queries_for_uncached], [])
     if len(anots_from_triplestore) > 0:
         annotations_graph += anots_from_triplestore
         cache += anots_from_triplestore

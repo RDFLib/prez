@@ -80,9 +80,7 @@ async def vocprez_scheme(
 
     Note: This may be a very expensive operation depending on the size of the concept scheme.
     """
-    return await object_function(
-        request, object_curie=scheme_curie, repo=repo
-    )
+    return await object_function(request, object_curie=scheme_curie, repo=repo)
 
 
 @router.get(
@@ -239,9 +237,7 @@ async def concept_route(
     repo: Repo = Depends(get_repo),
 ):
     """Get a SKOS Concept."""
-    return await object_function(
-        request, object_curie=concept_curie, repo=repo
-    )
+    return await object_function(request, object_curie=concept_curie, repo=repo)
 
 
 @router.get(
@@ -254,9 +250,7 @@ async def vocprez_collection(
     collection_curie: str,
     repo: Repo = Depends(get_repo),
 ):
-    return await object_function(
-        request, object_curie=collection_curie, repo=repo
-    )
+    return await object_function(request, object_curie=collection_curie, repo=repo)
 
 
 @router.get(
@@ -270,6 +264,4 @@ async def vocprez_collection_concept(
     concept_curie: str,
     repo: Repo = Depends(get_repo),
 ):
-    return await object_function(
-        request, object_curie=concept_curie, repo=repo
-    )
+    return await object_function(request, object_curie=concept_curie, repo=repo)
