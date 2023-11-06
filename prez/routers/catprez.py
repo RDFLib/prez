@@ -81,6 +81,4 @@ async def catalog_item(
     catalog_curie: str,
     repo: Repo = Depends(get_repo),
 ):
-    return await object_function(
-        request=request, object_curie=catalog_curie, repo=repo
-    )
+    return await object_function(request=request, object_curie=catalog_curie, repo=repo)

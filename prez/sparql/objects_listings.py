@@ -120,12 +120,12 @@ def generate_listing_construct(
                         {f'{uri_or_tl_item} <{ordering_predicate}> ?label .' if focus_item.top_level_listing else ""}
                     }}
                 ''' if settings.order_lists_by_label else ""}
-                }}
-                {f'''
-                {'ORDER BY ASC(?label)' if ordering_predicate else "ORDER BY ?top_level_item"}
-                ''' if settings.order_lists_by_label else ""}
-                {f"LIMIT {per_page}{chr(10)}"
-                 f"OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
+            }}
+            {f'''
+            {'ORDER BY ASC(?label)' if ordering_predicate else "ORDER BY ?top_level_item"}
+            ''' if settings.order_lists_by_label else ""}
+            {f"LIMIT {per_page}{chr(10)}"
+             f"OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
             }}
         }}
 

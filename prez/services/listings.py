@@ -59,9 +59,7 @@ async def listing_function(
         count_graph = profiles_graph_cache.query(count_query).graph
         item_graph = list_graph + count_graph
     else:
-        item_graph, _ = await repo.send_queries(
-            [count_query, item_members_query], []
-        )
+        item_graph, _ = await repo.send_queries([count_query, item_members_query], [])
     if "anot+" in prof_and_mt_info.mediatype:
         await _add_prez_links(item_graph, repo)
     return await return_from_graph(

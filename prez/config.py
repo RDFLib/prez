@@ -60,14 +60,6 @@ class Settings(BaseSettings):
     prez_version: Optional[str]
     disable_prefix_generation: bool = False
 
-    # @root_validator()
-    # def check_endpoint_enabled(cls, values):
-    #     if not values.get("sparql_endpoint"):
-    #         raise ValueError(
-    #             'A SPARQL endpoint must be specified using the "SPARQL_ENDPOINT" environment variable'
-    #         )
-    #     return values
-
     @root_validator()
     def get_version(cls, values):
         version = environ.get("PREZ_VERSION")

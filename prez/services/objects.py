@@ -42,9 +42,7 @@ async def object_function(
             detail="The 'object_curie' is required for non-object endpoints",
         )
 
-    klasses = await get_classes(
-        uri=uri, repo=repo, endpoint=endpoint_uri
-    )
+    klasses = await get_classes(uri=uri, repo=repo, endpoint=endpoint_uri)
     # ConnegP - needs improvement
     prof_and_mt_info = ProfilesMediatypesInfo(request=request, classes=klasses)
     # if we're on the object endpoint and a profile hasn't been requested, use the open profile
@@ -81,9 +79,7 @@ async def object_function(
             list_graph = profiles_graph_cache.query(item_members_query).graph
             item_graph += list_graph
     else:
-        item_graph, _ = await repo.send_queries(
-            [item_query, item_members_query], []
-        )
+        item_graph, _ = await repo.send_queries([item_query, item_members_query], [])
     if "anot+" in prof_and_mt_info.mediatype:
         await _add_prez_links(item_graph, repo)
     return await return_from_graph(

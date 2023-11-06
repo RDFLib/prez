@@ -43,9 +43,5 @@ async def profiles(
     summary="Profile",
     name="https://prez.dev/endpoint/profile",
 )
-async def profile(
-    request: Request, profile_curie: str, repo=Depends(get_repo)
-):
-    return await object_function(
-        request, object_curie=profile_curie, repo=repo
-    )
+async def profile(request: Request, profile_curie: str, repo=Depends(get_repo)):
+    return await object_function(request, object_curie=profile_curie, repo=repo)
