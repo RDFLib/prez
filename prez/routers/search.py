@@ -60,7 +60,12 @@ async def search(
     )
     predicates_sparql_string = " ".join(f"<{p}>" for p in predicates)
     search_query.populate_query(
-        term, limit, offset, filter_to_focus_str, focus_to_filter_str, predicates_sparql_string
+        term,
+        limit,
+        offset,
+        filter_to_focus_str,
+        focus_to_filter_str,
+        predicates_sparql_string,
     )
 
     full_query = generate_item_construct(

@@ -7,22 +7,34 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
-endpoint:catalog-listing a ont:Endpoint ;
+endpoint:catprez-home a ont:Endpoint ;
+    ont:endpointTemplate "/c" ;
+.
+
+endpoint:catalog-listing a ont:ListingEndpoint ;
     ont:deliversClasses prez:CatalogList ;
     ont:isTopLevelEndpoint "true"^^xsd:boolean ;
     ont:baseClass dcat:Catalog ;
     ont:endpointTemplate "/c/catalogs" ;
 .
 
-endpoint:catalog a ont:Endpoint ;
+endpoint:catalog a ont:ObjectEndpoint ;
     ont:parentEndpoint endpoint:catalog-listing ;
     ont:deliversClasses dcat:Catalog  ;
     ont:endpointTemplate "/c/catalogs/$object" ;
 .
 
-endpoint:resource a ont:Endpoint ;
+endpoint:resource-listing a ont:ListingEndpoint ;
     ont:parentEndpoint endpoint:catalog ;
+    ont:deliversClasses prez:ResourceList ;
+    ont:baseClass dcat:Resource ;
+    ont:endpointTemplate "/c/catalogs/$parent_1/resources" ;
+    ont:ParentToFocusRelation dcterms:hasPart ;
+.
+
+endpoint:resource a ont:ObjectEndpoint ;
+    ont:parentEndpoint endpoint:resource-listing ;
     ont:deliversClasses dcat:Resource ;
-    ont:endpointTemplate "/c/catalogs/$parent_1/$object" ;
+    ont:endpointTemplate "/c/catalogs/$parent_1/resources/$object" ;
     ont:ParentToFocusRelation dcterms:hasPart ;
 .

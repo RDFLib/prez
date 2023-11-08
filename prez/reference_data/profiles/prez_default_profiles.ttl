@@ -87,7 +87,6 @@ prez:profiles
     dcterms:title "Profiles" ;
     dcterms:description "List of profiles" ;
     dcterms:identifier "profiles"^^xsd:token ;
-    altr-ext:hasLabelPredicate dcterms:title ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
         "application/json" ,
@@ -100,7 +99,6 @@ prez:profiles
     dcterms:description "A very basic data model that lists the members of container objects only, i.e. not their other properties" ;
     dcterms:identifier "mem"^^xsd:token ;
     dcterms:title "Members" ;
-    altr-ext:hasLabelPredicate dcterms:title ;
     altr-ext:constrainsClass prez:DatasetList ,
                              prez:FeatureCollectionList ,
                              prez:FeatureList ,

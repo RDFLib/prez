@@ -1,13 +1,12 @@
 @prefix dcat: <http://www.w3.org/ns/dcat#> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
-@prefix ns1: <https://example.com/> .
 @prefix prez: <https://prez.dev/> .
-@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-dcterms:accessRights rdfs:label "Access Rights"@en ;
-    dcterms:description "Access Rights may include information regarding access or restrictions based on privacy, security, or other policies."@en .
+dcterms:creator rdfs:label "Creator"@en ;
+    dcterms:description "Recommended practice is to identify the creator with a URI.  If this is not possible or feasible, a literal value that identifies the creator may be provided."@en .
 
 dcterms:description rdfs:label "Description"@en ;
     dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en .
@@ -18,58 +17,30 @@ dcterms:identifier rdfs:label "Identifier"@en ;
 dcterms:issued rdfs:label "Date Issued"@en ;
     dcterms:description "Recommended practice is to describe the date, date/time, or period of time as recommended for the property Date, of which this is a subproperty."@en .
 
-dcterms:license rdfs:label "License"@en ;
-    dcterms:description "Recommended practice is to identify the license document with a URI. If this is not possible or feasible, a literal value that identifies the license may be provided."@en .
-
-dcterms:rights rdfs:label "Rights"@en ;
-    dcterms:description "Typically, rights information includes a statement about various property rights associated with the resource, including intellectual property rights.  Recommended practice is to refer to a rights statement with a URI.  If this is not possible or feasible, a literal value (name, label, or short text) may be provided."@en .
-
-dcterms:spatial rdfs:label "Spatial Coverage"@en .
-
-dcterms:temporal rdfs:label "Temporal Coverage"@en .
+dcterms:publisher rdfs:label "Publisher"@en .
 
 dcterms:title rdfs:label "Title"@en .
 
+<http://search.slv.vic.gov.au/permalink/f/1fe7t3h/SLV_VOYAGER1641200> a dcat:Resource ;
+    dcterms:creator <https://data.idnau.org/pid/adb/org/73-190-237-854> ;
+    dcterms:description """Needs to be integrated with KHRD. Negotiation required with State Library.
+
+Comprises Barwick's publications and conference papers; Barwick's PhD.; work with the Australian Institute of Aboriginal Studies and the Aboriginal History journal; work on major research projects; incoming and outgoing correspondence; reference material, and collected genealogies of Aboriginal Victorian families.""" ;
+    dcterms:issued "2007-01-10"^^xsd:date ;
+    dcterms:publisher <https://data.idnau.org/pid/adb/org/73-190-237-854> ;
+    dcterms:title "The Diane Barwick Archive" ;
+    prez:link "/c/catalogs/pd:democat/resources/1f7t3h:SLV_VOYAGER1641200" .
+
+rdf:type rdfs:label "type" .
+
 rdfs:label rdfs:label "label" .
 
-<https://w3id.org/idn/dataset/agents> dcterms:description """The Indigenous Data Network's catalogue of Agents. This catalogue contains instances of Agents - People and Organisations - related to the holding of indigenous data. This includes non-indigenous Agents
-
-This catalogue extends on standard Agent information to include properties useful to understand the indigeneity of Agents: whether they are or not, or how much they are, indigenous"""@en ;
-    dcterms:identifier "dtst:agents"^^prez:identifier ;
-    dcterms:title "IDN Agents Catalogue" .
-
-<https://w3id.org/idn/dataset/democat> dcterms:description """The Indigenous Data Network's catalogue of datasets. This catalogue contains records of datasets in Australia, most of which have some relation to indigenous Australia.
+<https://data.idnau.org/pid/democat> rdfs:label "IDN Demonstration Catalogue" ;
+    dcterms:description """The Indigenous Data Network's demonstration catalogue of datasets. This catalogue contains records of datasets in Australia, most of which have some relation to indigenous Australia.
 
 The purpose of this catalogue is not to act as a master catalogue of indigenous data in Australia to demonstrate improved metadata models and rating systems for data and metadata in order to improve indigenous data governance.
 
 The content of this catalogue conforms to the Indigenous Data Network's Catalogue Profile which is a profile of the DCAT, SKOS and PROV data models."""@en ;
-    dcterms:identifier "dtst:democat"^^prez:identifier ;
-    dcterms:title "IDN Datasets Catalogue" .
+    dcterms:identifier "pd:democat"^^prez:identifier ;
+    dcterms:title "IDN Demonstration Catalogue" .
 
-<https://www.atsida.edu.au/archive/datasets/au.edu.anu.ada.ddi.20002-sa> a dcat:Resource ;
-    dcterms:accessRights <https://linked.data.gov.au/def/data-access-rights/metadata-only> ;
-    dcterms:description """This study contains time series of data of the Annual Aboriginal Census for Australia, Australian Capital Territory, New South Wales, Northern Territory, Queensland, South Australia, Tasmania, Victoria and Western Australia from 1921 to 1944.
-
-Special care notice:
-Aboriginal and Torres Strait Islander people, researchers and other users should be aware that material in this dataset may contain material that is considered offensive. The data has been retained in its original format because it represents an evidential record of language, beliefs or other cultural situations at a point in time.""" ;
-    dcterms:identifier "AAC-SA"^^xsd:token ;
-    dcterms:issued "2011-07-22"^^xsd:date ;
-    dcterms:license "All Rights Reserved" ;
-    dcterms:rights "Copyright © 2011, The Australian National University. All rights reserved." ;
-    dcterms:spatial <https://linked.data.gov.au/dataset/asgsed3/STE/4>,
-        <https://linked.data.gov.au/dataset/asgsed3/STE/7> ;
-    dcterms:temporal "1921-1944" ;
-    dcterms:title "Annual Aboriginal Census,1921-1944 - South Australia" ;
-    dcat:accessURL "https://www.atsida.edu.au/archive/datasets/au.edu.anu.ada.ddi.20002-sa"^^xsd:anyURI ;
-    dcat:theme <https://w3id.org/idn/def/idn-th/subject>,
-        <https://w3id.org/idn/def/indigeneity/about-indigenous-people> ;
-    prov:qualifiedAttribution [ dcat:hadRole <http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/originator> ;
-            prov:agent "Gordon Briscoe, Len Smith" ],
-        [ dcat:hadRole <http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/rightsHolder> ;
-            prov:agent <https://linked.data.gov.au/org/anu> ],
-        [ dcat:hadRole <http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/custodian> ;
-            prov:agent "ATSIDA.1" ] ;
-    ns1:home "https://www.atsida.edu.au/" ;
-    ns1:notes "The Annual Aboriginal Census is considered as a significant official source of Aboriginal population statistics. It was conducted annually in June from 1921 to 1944, exempting the war years between 1941 and 1944 in each State and Territory. The 1944 census was incomplete with New South Wales not taking part at all. Enumeration of Aboriginal populations was poor and difficulties in classification occurred. The Census was a collaboration of the Commonwealth Bureau of Census and Statistics who initiated the study, State and Territory Statisticians, the Protector of Aborigines, and local police officers who conducted the enumeration. The Annual Aboriginal Census is also referred to as the Annual Census of Aborigines and Police Census." ;
-    prez:link "/c/catalogs/dtst:agents/dtsts:au.edu.anu.ada.ddi.20002-sa",
-        "/c/catalogs/dtst:democat/dtsts:au.edu.anu.ada.ddi.20002-sa" .

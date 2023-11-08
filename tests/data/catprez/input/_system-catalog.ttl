@@ -25,3 +25,8 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
         <https://linked.data.gov.au/dataset/idndc> ,
         <https://linked.data.gov.au/dataset/idnac> ;
 .
+
+<https://linked.data.gov.au/dataset/idndc> a dcat:Resource .
+
+<https://linked.data.gov.au/dataset/idnac> a dcat:Resource .
+

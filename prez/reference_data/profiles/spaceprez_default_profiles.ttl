@@ -66,7 +66,6 @@ prez:SpacePrezProfile
     dcterms:description "The OGC API Features specifies the behavior of Web APIs that provide access to features in a dataset in a manner independent of the underlying data store." ;
     dcterms:identifier "oai"^^xsd:token ;
     dcterms:title "OGC API Features" ;
-    altr-ext:hasLabelPredicate dcterms:title ;
     altr-ext:constrainsClass
         dcat:Dataset ,
         geo:FeatureCollection ,
@@ -113,7 +112,6 @@ prez:SpacePrezProfile
     dcterms:description "Dataset Catalog Vocabulary (DCAT) is a W3C-authored RDF vocabulary designed to facilitate interoperability between data catalogs" ;
     dcterms:identifier "dcat"^^xsd:token ;
     dcterms:title "DCAT" ;
-    altr-ext:hasLabelPredicate dcterms:title ;
     altr-ext:constrainsClass
         dcat:Catalog ,
         dcat:Dataset ,

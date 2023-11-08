@@ -137,6 +137,14 @@ def setup():
             ),
         ),
         (
+            "myfile17",
+            (
+                "agents.ttl",
+                open("tests/data/catprez/input/pd_democat.ttl", "rb"),
+                "application/octet-stream",
+            ),
+        ),
+        (
             "myfile16",
             (
                 "dublin_core_terms.ttl",

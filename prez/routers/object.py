@@ -138,10 +138,16 @@ async def object_function(
             f"No system links found for object with IRI {object_item.uri}.",
         )
 
-    return await item_function(request, object_curie=get_curie_id_for_uri(object_item.uri), object_item=object_item)
+    return await item_function(
+        request,
+        object_curie=get_curie_id_for_uri(object_item.uri),
+        object_item=object_item,
+    )
 
 
-async def item_function(request: Request, object_curie: str, object_item: ObjectItem = None):
+async def item_function(
+    request: Request, object_curie: str, object_item: ObjectItem = None
+):
     # TODO pull object item functions out to here and pass results in as params
 
     # curie -> uri
@@ -193,10 +199,11 @@ async def item_function(request: Request, object_curie: str, object_item: Object
 async def listing_function(
     request: Request, page: int = 1, per_page: int = 20, uri: str = None
 ):
+    endpoint_uri = request.scope["route"].name
     listing_item = ListingModel(
         **request.path_params,
         **request.query_params,
-        endpoint_uri=request.scope["route"].name,
+        endpoint_uri=endpoint_uri,
         uri=uri,
     )
     prof_and_mt_info = ProfilesMediatypesInfo(
@@ -216,7 +223,7 @@ async def listing_function(
     item_members_query = generate_listing_construct(
         listing_item, prof_and_mt_info.profile, page=page, per_page=per_page
     )
-    count_query = generate_listing_count_construct(listing_item)
+    count_query = generate_listing_count_construct(listing_item, endpoint_uri)
     if listing_item.selected_class in [
         URIRef("https://prez.dev/ProfilesList"),
         PROF.Profile,
@@ -268,9 +275,9 @@ def get_endpoint_info_for_classes(classes: FrozenSet[URIRef]) -> dict:
     endpoint_to_relations = {}
     if results.bindings != [{}]:
         for result in results.bindings:
-            endpoint_template = result["endpointTemplate"]
-            relation = result["relation"]
-            direction = result["direction"]
+            endpoint_template = result["endpoint_template"]
+            relation = result.get("relation_predicate")
+            direction = result.get("relation_direction")
             if endpoint_template not in endpoint_to_relations:
                 endpoint_to_relations[endpoint_template] = [(relation, direction)]
             else:
