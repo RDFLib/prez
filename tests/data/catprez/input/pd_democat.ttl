@@ -206,7 +206,8 @@ Aboriginal and Torres Strait Islander people, researchers and other users should
     dcterms:title "Annual Aboriginal Census,1921-1944 - Australia" ;
  .
 
-<https://data.idnau.org/pid/AAC-SA> dcterms:creator <https://linked.data.gov.au/org/anu> ;
+<https://data.idnau.org/pid/AAC-SA> a dcat:Resource ;
+                                    dcterms:creator <https://linked.data.gov.au/org/anu> ;
     dcterms:description """This study contains time series of data of the Annual Aboriginal Census for Australia, Australian Capital Territory, New South Wales, Northern Territory, Queensland, South Australia, Tasmania, Victoria and Western Australia from 1921 to 1944.
 
 Special care notice:

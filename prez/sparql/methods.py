@@ -1,159 +1,188 @@
 import asyncio
 import logging
-from typing import Dict, Tuple, Union, Any
+from abc import ABC, abstractmethod
 from typing import List
+from typing import Tuple
 
 import httpx
-from httpx import Client, AsyncClient, HTTPError
-from httpx import Response as httpxResponse
-from rdflib import Namespace, Graph, URIRef
+import pyoxigraph
+from fastapi.concurrency import run_in_threadpool
+from rdflib import Namespace, Graph, URIRef, Literal, BNode
 from starlette.requests import Request
-from async_lru import alru_cache
+
 from prez.config import settings
 
 PREZ = Namespace("https://prez.dev/")
 
-async_client = AsyncClient(
-    auth=(settings.sparql_username, settings.sparql_password)
-    if settings.sparql_username
-    else None,
-    timeout=settings.sparql_timeout,
-)
-
-client = Client(
-    auth=(settings.sparql_username, settings.sparql_password)
-    if settings.sparql_username
-    else None,
-    timeout=settings.sparql_timeout,
-)
-
 log = logging.getLogger(__name__)
 
 
-def sparql_query_non_async(query: str) -> Tuple[bool, Union[List, Dict]]:
-    """Executes a SPARQL SELECT query for a single SPARQL endpoint"""
-    response: httpxResponse = client.post(
-        settings.sparql_endpoint,
-        data=query,
-        headers={
-            "Accept": "application/json",
-            "Content-Type": "application/sparql-query",
-        },
-    )
-    if 200 <= response.status_code < 300:
-        return True, response.json()["results"]["bindings"]
-    else:
-        return False, {
-            "code": response.status_code,
-            "message": response.text,
-        }
+class Repo(ABC):
+    @abstractmethod
+    async def rdf_query_to_graph(self, query: str):
+        pass
+
+    @abstractmethod
+    async def tabular_query_to_table(self, query: str, context: URIRef = None):
+        pass
+
+    async def send_queries(
+        self, rdf_queries: List[str], tabular_queries: List[Tuple[URIRef, str]] = None
+    ):
+        # Common logic to send both query types in parallel
+        results = await asyncio.gather(
+            *[self.rdf_query_to_graph(query) for query in rdf_queries if query],
+            *[
+                self.tabular_query_to_table(query, context)
+                for context, query in tabular_queries
+                if query
+            ],
+        )
+        g = Graph()
+        tabular_results = []
+        for result in results:
+            if isinstance(result, Graph):
+                g += result
+            else:
+                tabular_results.append(result)
+        return g, tabular_results
 
 
-def sparql_ask_non_async(query: str):
-    """Returns True if the provided triple pattern exists in the graph, otherwise False"""
-    response: httpxResponse = client.post(
-        settings.sparql_endpoint,
-        data={"query": query},
-        headers={
-            "Accept": "*/*",
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Accept-Encoding": "gzip, deflate",
-        },
-    )
-    if 200 <= response.status_code < 300:
-        return True, response.json()["boolean"]
-    else:
-        return False, {
-            "code": response.status_code,
-            "message": response.text,
-        }
+class RemoteSparqlRepo(Repo):
+    def __init__(self, async_client: httpx.AsyncClient):
+        self.async_client = async_client
+
+    async def _send_query(self, query: str, mediatype="text/turtle"):
+        """Sends a SPARQL query asynchronously.
+        Args: query: str: A SPARQL query to be sent asynchronously.
+        Returns: httpx.Response: A httpx.Response object
+        """
+        query_rq = self.async_client.build_request(
+            "POST",
+            url=settings.sparql_endpoint,
+            headers={"Accept": mediatype},
+            data={"query": query},
+        )
+        response = await self.async_client.send(query_rq, stream=True)
+        return response
+
+    async def rdf_query_to_graph(self, query: str) -> Graph:
+        """
+        Sends a SPARQL query asynchronously and parses the response into an RDFLib Graph.
+        Args: query: str: A SPARQL query to be sent asynchronously.
+        Returns: rdflib.Graph: An RDFLib Graph object
+        """
+        response = await self._send_query(query)
+        g = Graph()
+        await response.aread()
+        return g.parse(data=response.text, format="turtle")
+
+    async def tabular_query_to_table(self, query: str, context: URIRef = None):
+        """
+        Sends a SPARQL query asynchronously and parses the response into a table format.
+        The optional context parameter allows an identifier to be supplied with the query, such that multiple results can be
+        distinguished from each other.
+        """
+        response = await self._send_query(query, "application/sparql-results+json")
+        await response.aread()
+        return context, response.json()["results"]["bindings"]
+
+    async def sparql(self, request: Request):
+        """Sends a starlette Request object (containing a SPARQL query in the URL parameters) to a proxied SPARQL
+        endpoint."""
+        url = httpx.URL(
+            url=settings.sparql_endpoint, query=request.url.query.encode("utf-8")
+        )
+        headers = []
+        for header in request.headers.raw:
+            if header[0] != b"host":
+                headers.append(header)
+        headers.append((b"host", str(url.host).encode("utf-8")))
+        rp_req = self.async_client.build_request(
+            request.method, url, headers=headers, content=request.stream()
+        )
+        return await self.async_client.send(rp_req, stream=True)
 
 
-async def sparql(request: Request):
-    """Sends a starlette Request object (containing a SPARQL query in the URL parameters) to a proxied SPARQL
-    endpoint."""
-    url = httpx.URL(
-        url=settings.sparql_endpoint, query=request.url.query.encode("utf-8")
-    )
-    headers = []
-    for header in request.headers.raw:
-        if header[0] != b"host":
-            headers.append(header)
-    headers.append((b"host", str(url.host).encode("utf-8")))
-    rp_req = async_client.build_request(
-        request.method, url, headers=headers, content=request.stream()
-    )
-    return await async_client.send(rp_req, stream=True)
+class PyoxigraphRepo(Repo):
+    def __init__(self, pyoxi_store: pyoxigraph.Store):
+        self.pyoxi_store = pyoxi_store
 
+    def _sync_rdf_query_to_graph(self, query: str) -> Graph:
+        results = self.pyoxi_store.query(query)
+        ntriples = " .\n".join([str(r) for r in list(results)]) + " ."
+        g = Graph()
+        g.bind("prez", URIRef("https://prez.dev/"))
+        if ntriples == " .":
+            return g
+        return g.parse(data=ntriples, format="ntriples")
 
-# @alru_cache(maxsize=1000)
-async def send_query(query: str, mediatype="text/turtle"):
-    """Sends a SPARQL query asynchronously.
-    Args: query: str: A SPARQL query to be sent asynchronously.
-    Returns: httpx.Response: A httpx.Response object
-    """
-    query_rq = async_client.build_request(
-        "POST",
-        url=settings.sparql_endpoint,
-        headers={"Accept": mediatype},
-        data={"query": query},
-    )
-    response = await async_client.send(query_rq, stream=True)
-    return response
+    def _sync_tabular_query_to_table(self, query: str, context: URIRef = None):
+        results = self.pyoxi_store.query(query)
+        variables = results.variables
+        results_list = []
+        for result in results:
+            results_dict = {}
+            for var in variables:
+                binding = result[var]
+                if binding:
+                    binding_type = self._pyoxi_result_type(binding)
+                    results_dict[str(var)[1:]] = {
+                        "type": binding_type,
+                        "value": binding.value,
+                    }
+            results_list.append(results_dict)
+        return context, results_list
 
+    async def rdf_query_to_graph(self, query: str) -> Graph:
+        return await run_in_threadpool(self._sync_rdf_query_to_graph, query)
 
-async def rdf_query_to_graph(query: str) -> Graph:
-    """
-    Sends a SPARQL query asynchronously and parses the response into an RDFLib Graph.
-    Args: query: str: A SPARQL query to be sent asynchronously.
-    Returns: rdflib.Graph: An RDFLib Graph object
-    """
-    response = await send_query(query)
-    g = Graph()
-    await response.aread()
-    return g.parse(data=response.text, format="turtle")
+    async def tabular_query_to_table(self, query: str, context: URIRef = None):
+        return await run_in_threadpool(
+            self._sync_tabular_query_to_table, query, context
+        )
 
-
-async def send_queries(
-    rdf_queries: List[str], tabular_queries: List[Tuple[URIRef, str]] = None
-) -> Tuple[Graph, List[Any]]:
-    """
-    Sends multiple SPARQL queries asynchronously and parses the responses into an RDFLib Graph for RDF queries
-    and a table format for table queries.
-
-    Args:
-        rdf_queries: List[str]: A list of SPARQL queries for RDF graphs to be sent asynchronously.
-        tabular_queries: List[str]: A list of SPARQL queries for tables to be sent asynchronously.
-
-    Returns:
-        Tuple[rdflib.Graph, List[Any]]: An RDFLib Graph object for RDF queries and a list of tables for table queries.
-    """
-    if tabular_queries is None:
-        tabular_queries = []
-    results = await asyncio.gather(
-        *[rdf_query_to_graph(query) for query in rdf_queries if query],
-        *[
-            tabular_query_to_table(query, context)
-            for context, query in tabular_queries
-            if query
-        ]
-    )
-    g = Graph()
-    tabular_results = []
-    for result in results:
-        if isinstance(result, Graph):
-            g += result
+    @staticmethod
+    def _pyoxi_result_type(term) -> str:
+        if isinstance(term, pyoxigraph.Literal):
+            return "literal"
+        elif isinstance(term, pyoxigraph.NamedNode):
+            return "uri"
+        elif isinstance(term, pyoxigraph.BlankNode):
+            return "bnode"
         else:
-            tabular_results.append(result)
-    return g, tabular_results
+            raise ValueError(f"Unknown type: {type(term)}")
 
 
-async def tabular_query_to_table(query: str, context: URIRef = None):
-    """
-    Sends a SPARQL query asynchronously and parses the response into a table format.
-    The optional context parameter allows an identifier to be supplied with the query, such that multiple results can be
-    distinguished from each other.
-    """
-    response = await send_query(query, "application/sparql-results+json")
-    await response.aread()
-    return context, response.json()["results"]["bindings"]
+class OxrdflibRepo(Repo):
+    def __init__(self, oxrdflib_graph: Graph):
+        self.oxrdflib_graph = oxrdflib_graph
+
+    def _sync_rdf_query_to_graph(self, query: str) -> Graph:
+        results = self.oxrdflib_graph.query(query)
+        return results.graph
+
+    def _sync_tabular_query_to_table(self, query: str, context: URIRef = None):
+        results = self.oxrdflib_graph.query(query)
+        reformatted_results = []
+        for result in results:
+            reformatted_result = {}
+            for var in results.vars:
+                binding = result[var]
+                if binding:
+                    str_type = self._str_type_for_rdflib_type(binding)
+                    reformatted_result[str(var)] = {"type": str_type, "value": binding}
+            reformatted_results.append(reformatted_result)
+        return context, reformatted_results
+
+    async def rdf_query_to_graph(self, query: str) -> Graph:
+        return await run_in_threadpool(self._sync_rdf_query_to_graph, query)
+
+    async def tabular_query_to_table(self, query: str, context: URIRef = None):
+        return await run_in_threadpool(
+            self._sync_tabular_query_to_table, query, context
+        )
+
+    def _str_type_for_rdflib_type(self, instance):
+        map = {URIRef: "uri", BNode: "bnode", Literal: "literal"}
+        return map[type(instance)]

@@ -7,7 +7,6 @@ from connegp import RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
 from fastapi import status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
-from pydantic.types import List
 from rdflib import Graph, URIRef, Namespace, RDF
 from starlette.requests import Request
 from starlette.responses import Response
@@ -15,37 +14,15 @@ from starlette.responses import Response
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.models.profiles_item import ProfileItem
 from prez.renderers.csv_renderer import render_csv_dropdown
+from prez.renderers.json_renderer import render_json_dropdown, NotFoundError
 from prez.services.curie_functions import get_curie_id_for_uri
-from prez.sparql.methods import send_queries, rdf_query_to_graph
+from prez.sparql.methods import Repo
 from prez.sparql.objects_listings import (
     generate_item_construct,
     get_annotation_properties,
 )
-from prez.renderers.json_renderer import render_json_dropdown, NotFoundError
 
 log = logging.getLogger(__name__)
-
-
-async def return_from_queries(
-    queries: List[str],
-    mediatype,
-    profile,
-    profile_headers,
-    selected_class: URIRef,
-    predicates_for_link_addition: dict = None,
-):
-    """
-    Executes SPARQL queries, loads these to RDFLib Graphs, and calls the "return_from_graph" function to return the
-    content
-    """
-    graph, _ = await send_queries(queries)
-    return await return_from_graph(
-        graph,
-        mediatype,
-        profile,
-        profile_headers,
-        selected_class,
-    )
 
 
 async def return_from_graph(
@@ -54,6 +31,7 @@ async def return_from_graph(
     profile,
     profile_headers,
     selected_class: URIRef,
+    repo: Repo,
 ):
     profile_headers["Content-Disposition"] = "inline"
 
@@ -61,10 +39,7 @@ async def return_from_graph(
         return await return_rdf(graph, mediatype, profile_headers)
 
     elif profile == URIRef("https://w3id.org/profile/dd"):
-        graph = await return_annotated_rdf(
-            graph,
-            profile,
-        )
+        graph = await return_annotated_rdf(graph, profile, repo)
 
         try:
             # TODO: Currently, data is generated in memory, instead of in a streaming manner.
@@ -95,7 +70,7 @@ async def return_from_graph(
     else:
         if "anot+" in mediatype:
             non_anot_mediatype = mediatype.replace("anot+", "")
-            graph = await return_annotated_rdf(graph, profile)
+            graph = await return_annotated_rdf(graph, profile, repo)
             content = io.BytesIO(
                 graph.serialize(format=non_anot_mediatype, encoding="utf-8")
             )
@@ -119,14 +94,13 @@ async def return_rdf(graph, mediatype, profile_headers):
     return StreamingResponse(content=obj, media_type=mediatype, headers=profile_headers)
 
 
-async def get_annotations_graph(profile, graph, cache):
-    # profile_annotation_props = get_annotation_predicates(profile)
+async def get_annotations_graph(graph, cache, repo):
     queries_for_uncached, annotations_graph = await get_annotation_properties(graph)
 
     if queries_for_uncached is None:
         anots_from_triplestore = Graph()
     else:
-        anots_from_triplestore = await rdf_query_to_graph(queries_for_uncached)
+        anots_from_triplestore, _ = await repo.send_queries([queries_for_uncached], [])
 
     if len(anots_from_triplestore) > 1:
         annotations_graph += anots_from_triplestore
@@ -138,12 +112,13 @@ async def get_annotations_graph(profile, graph, cache):
 async def return_annotated_rdf(
     graph: Graph,
     profile,
+    repo,
 ) -> Graph:
     from prez.cache import tbox_cache
 
     cache = tbox_cache
     queries_for_uncached, annotations_graph = await get_annotation_properties(graph)
-    anots_from_triplestore, _ = await send_queries([queries_for_uncached])
+    anots_from_triplestore, _ = await repo.send_queries([queries_for_uncached], [])
     if len(anots_from_triplestore) > 0:
         annotations_graph += anots_from_triplestore
         cache += anots_from_triplestore
@@ -152,7 +127,7 @@ async def return_annotated_rdf(
 
     # Expand the graph with annotations specified in the profile until no new statements are added.
     while True:
-        graph += await get_annotations_graph(profile, graph, cache)
+        graph += await get_annotations_graph(graph, cache, repo)
         if len(graph) == previous_triples_count:
             break
         previous_triples_count = len(graph)
@@ -163,6 +138,7 @@ async def return_annotated_rdf(
 
 async def return_profiles(
     classes: frozenset,
+    repo: Repo,
     request: Optional[Request] = None,
     prof_and_mt_info: Optional[ProfilesMediatypesInfo] = None,
 ) -> Response:
@@ -190,4 +166,5 @@ async def return_profiles(
         prof_and_mt_info.profile,
         prof_and_mt_info.profile_headers,
         prof_and_mt_info.selected_class,
+        repo,
     )

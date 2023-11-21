@@ -1,318 +1,375 @@
-PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX ns1: <https://prez.dev/>
-PREFIX ns2: <http://purl.org/linked-data/registry#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ns1: <http://purl.org/linked-data/registry#> .
+@prefix prez: <https://prez.dev/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-dcterms:description
-    rdfs:label "Description"@en ;
-    dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en ;
-.
+dcterms:description rdfs:label "Description"@en ;
+    dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en .
 
-dcterms:identifier
-    rdfs:label "Identifier"@en ;
-    dcterms:description "Recommended practice is to identify the resource by means of a string conforming to an identification system. Examples include International Standard Book Number (ISBN), Digital Object Identifier (DOI), and Uniform Resource Name (URN).  Persistent identifiers should be provided as HTTP URIs."@en ;
-.
+dcterms:identifier rdfs:label "Identifier"@en ;
+    dcterms:description "Recommended practice is to identify the resource by means of a string conforming to an identification system. Examples include International Standard Book Number (ISBN), Digital Object Identifier (DOI), and Uniform Resource Name (URN).  Persistent identifiers should be provided as HTTP URIs."@en .
 
-dcterms:provenance
-    rdfs:label "Provenance"@en ;
-    dcterms:description "The statement may include a description of any changes successive custodians made to the resource."@en ;
-.
+dcterms:provenance rdfs:label "Provenance"@en ;
+    dcterms:description "The statement may include a description of any changes successive custodians made to the resource."@en .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype>
-    a skos:Collection ;
-    dcterms:identifier "contacttype"^^xsd:token ;
+<http://resource.geosciml.org/classifier/cgi/contacttype> a skos:Collection ;
+    dcterms:identifier "contacttype"^^xsd:token,
+        "cgi:contacttype"^^prez:identifier ;
     dcterms:provenance "this vocabulary" ;
     skos:definition "All Concepts in this vocabulary" ;
-    skos:member
-        <http://resource.geosciml.org/classifier/cgi/contacttype/alteration_facies_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/angular_unconformable_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/buttress_unconformity> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/chronostratigraphic_zone_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/conductivity_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/conformable_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/deformation_zone_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/density_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/depositional_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/disconformable_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/faulted_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/geologic_province_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/geophysical_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/glacial_stationary_line> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/igneous_intrusive_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/igneous_phase_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/impact_structure_boundary> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_polarity_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_susceptiblity_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/magnetization_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_facies_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/metasomatic_facies_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/mineralisation_assemblage_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/nonconformable_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/paraconformable_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/radiometric_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/sedimentary_facies_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/sedimentary_intrusive_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/seismic_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/unconformable_contact> ,
-        <http://resource.geosciml.org/classifier/cgi/contacttype/volcanic_subsidence_zone_boundary> ,
+    skos:member <http://resource.geosciml.org/classifier/cgi/contacttype/alteration_facies_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/angular_unconformable_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/buttress_unconformity>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/chronostratigraphic_zone_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/conductivity_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/conformable_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/deformation_zone_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/density_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/depositional_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/disconformable_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/faulted_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/geologic_province_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/geophysical_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/glacial_stationary_line>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/igneous_intrusive_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/igneous_phase_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/impact_structure_boundary>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_polarity_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_susceptiblity_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/magnetization_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_facies_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/metasomatic_facies_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/mineralisation_assemblage_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/nonconformable_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/paraconformable_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/radiometric_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/sedimentary_facies_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/sedimentary_intrusive_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/seismic_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/unconformable_contact>,
+        <http://resource.geosciml.org/classifier/cgi/contacttype/volcanic_subsidence_zone_boundary>,
         <http://resource.geosciml.org/classifier/cgi/contacttype/weathering_contact> ;
     skos:prefLabel "Contact Type - All Concepts"@en ;
-.
+    prez:link "/v/collection/cgi:contacttype" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/alteration_facies_contact>
+<http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> dcterms:identifier "2016.01:contacttype"^^prez:identifier ;
+    dcterms:provenance "Original set of terms from the GeosciML standard" ;
+    skos:definition "This scheme describes the concept space for Contact Type concepts, as defined by the IUGS Commission for Geoscience Information (CGI) Geoscience Terminology Working Group. By extension, it includes all concepts in this conceptScheme, as well as concepts in any previous versions of the scheme. Designed for use in the contactType property in GeoSciML Contact elements."@en ;
+    skos:prefLabel "Contact Type"@en .
+
+rdf:type rdfs:label "type" .
+
+rdfs:label rdfs:label "label" .
+
+skos:definition rdfs:label "definition"@en ;
+    skos:definition "A statement or formal explanation of the meaning of a concept."@en .
+
+skos:member rdfs:label "has member"@en ;
+    skos:definition "Relates a collection to one of its members."@en .
+
+skos:prefLabel rdfs:label "preferred label"@en ;
+    skos:definition "The preferred lexical label for a resource, in a given language."@en .
+
+<https://test/dataset> dcterms:identifier "preztest:dataset"^^prez:identifier .
+
+<https://test/feature-collection> dcterms:identifier "preztest:feature-collection"^^prez:identifier .
+
+<http://resource.geosciml.org/classifier/cgi/contacttype/alteration_facies_contact> dcterms:identifier "cntcttyp:alteration_facies_contact"^^prez:identifier ;
     dcterms:provenance "this vocabulary"@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "A metasomatic facies contact separating rocks that have undergone alteration of a particular facies from those that have undergone metasomatism of another facies. Alteration is a kind of metasomatism that does not introduce economically important minerals."@en ;
     skos:prefLabel "alteration facies contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:alteration_facies_contact" ;
-.
+    prez:link "/s/datasets/preztest:dataset/collections/preztest:feature-collection/items/cntcttyp:alteration_facies_contact",
+        "/v/collection/cgi:contacttype/cntcttyp:alteration_facies_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:alteration_facies_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/angular_unconformable_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/angular_unconformable_contact> dcterms:identifier "cntcttyp:angular_unconformable_contact"^^prez:identifier ;
     dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "An unconformable contact between two geological units in which the older, underlying rocks dip at an angle different from the younger, overlying strata, usually in which younger sediments rest upon the eroded surface of tilted or folded older rocks."@en ;
     skos:prefLabel "angular unconformable contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:angular_unconformable_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:angular_unconformable_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:angular_unconformable_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/buttress_unconformity>
+<http://resource.geosciml.org/classifier/cgi/contacttype/buttress_unconformity> dcterms:identifier "cntcttyp:buttress_unconformity"^^prez:identifier ;
     dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "An unconformity in which onlapping strata are truncated against a steep topographic scarp."@en ;
     skos:prefLabel "buttress unconformity"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:buttress_unconformity" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:buttress_unconformity",
+        "/v/vocab/2016.01:contacttype/cntcttyp:buttress_unconformity" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/chronostratigraphic_zone_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/chronostratigraphic_zone_contact> dcterms:identifier "cntcttyp:chronostratigraphic_zone_contact"^^prez:identifier ;
     dcterms:provenance "FGDC"@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "A contact between bodies of material having different ages of origin."@en ;
     skos:prefLabel "chronostratigraphic-zone contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:chronostratigraphic_zone_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:chronostratigraphic_zone_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:chronostratigraphic_zone_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/conductivity_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/conductivity_contact> dcterms:identifier "cntcttyp:conductivity_contact"^^prez:identifier ;
     dcterms:provenance "this vocabulary"@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "A geophysical contact between bodies of material distinguished based on electrical conductivity characteristics"@en ;
     skos:prefLabel "conductivity contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:conductivity_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:conductivity_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:conductivity_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/conformable_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/conformable_contact> dcterms:identifier "cntcttyp:conformable_contact"^^prez:identifier ;
     dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "A contact separating two geological units in which the layers are formed one above the other in order by regular, uninterrupted deposition under the same general conditions."@en ;
     skos:prefLabel "conformable contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:conformable_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:conformable_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:conformable_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/contact> dcterms:identifier "cntcttyp:contact"^^prez:identifier ;
     dcterms:provenance "adapted from Jackson, 1997, page 137, NADM C1 2004"@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "A surface that separates geologic units. Very general concept representing any kind of surface separating two geologic units, including primary boundaries such as depositional contacts, all kinds of unconformities, intrusive contacts, and gradational contacts, as well as faults that separate geologic units."@en ;
     skos:prefLabel "contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/deformation_zone_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/deformation_zone_contact> dcterms:identifier "cntcttyp:deformation_zone_contact"^^prez:identifier ;
     dcterms:provenance "this vocabulary"@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "A lithogenetic bundary separating rock masses that have different deformation structure, e.g. sheared rock against non sheared rock, brecciated rock against non-brecciated rock."@en ;
     skos:prefLabel "deformation zone contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:deformation_zone_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:deformation_zone_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:deformation_zone_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/density_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/density_contact> dcterms:identifier "cntcttyp:density_contact"^^prez:identifier ;
     dcterms:provenance "this vocabulary"@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "A geophysical contact separating bodies of material with different density characteristics, generally determined through measurement and modelling of gravity variations."@en ;
     skos:prefLabel "density contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:density_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:density_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:density_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/depositional_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/depositional_contact> dcterms:identifier "cntcttyp:depositional_contact"^^prez:identifier ;
     dcterms:provenance "this vocabulary"@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "Lithogenetic contact at which a sedimentary or volcanic rock has been deposited on (or against) another rock body. The relationship between the older underlying rocks and younger overlying rocks is unknown or not specfied."@en ;
     skos:prefLabel "depositional contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:depositional_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:depositional_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:depositional_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/disconformable_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/disconformable_contact> dcterms:identifier "cntcttyp:disconformable_contact"^^prez:identifier ;
     dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "An unconformable contact between two geological units in which the bedding of the older, underlying unit is parallel to the bedding of the younger, overlying unit, but in which the contact between the two units is marked by an irregular or uneven surface of appreciable relief."@en ;
     skos:prefLabel "disconformable contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:disconformable_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:disconformable_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:disconformable_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/faulted_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/faulted_contact> dcterms:identifier "cntcttyp:faulted_contact"^^prez:identifier ;
     dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "A contact separating two bodies of material across which one body has slid past the other."@en ;
     skos:prefLabel "faulted contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:faulted_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:faulted_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:faulted_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/geologic_province_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/geologic_province_contact> dcterms:identifier "cntcttyp:geologic_province_contact"^^prez:identifier ;
     dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "A contact between regions characterised by their geological history or by similar structural, petrographic or stratigraphic features"@en ;
     skos:prefLabel "geologic province contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:geologic_province_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:geologic_province_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:geologic_province_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/geophysical_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/geophysical_contact> dcterms:identifier "cntcttyp:geophysical_contact"^^prez:identifier ;
     dcterms:provenance "this vocabulary"@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "A contact separating bodies of material in the earth that have different geophysical properties. Use for boundaries that are detected by geophysical sensor techniques as opposed to direct lithologic observation."@en ;
     skos:prefLabel "geophysical contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:geophysical_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:geophysical_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:geophysical_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/glacial_stationary_line>
+<http://resource.geosciml.org/classifier/cgi/contacttype/glacial_stationary_line> dcterms:identifier "cntcttyp:glacial_stationary_line"^^prez:identifier ;
     dcterms:provenance "this vocabulary"@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "A boundary between a subglacial geomorphic unit and a periglacial geomorphic unit, marking the maximum extent of glacial cover. This can be thought of as the outcrop of the contact between a glacier and its substrate at some time at each point along the boundary. This contact type is included as an interim concept, assuming that in the future, there will be extensions to account better for geomorphic units and line types."@en ;
     skos:prefLabel "glacial stationary line"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:glacial_stationary_line" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:glacial_stationary_line",
+        "/v/vocab/2016.01:contacttype/cntcttyp:glacial_stationary_line" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/igneous_intrusive_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/igneous_intrusive_contact> dcterms:identifier "cntcttyp:igneous_intrusive_contact"^^prez:identifier ;
     dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "An intrusive contact between a younger igneous rock and an older, pre-existing geological unit into which it has been intruded."@en ;
     skos:prefLabel "igneous intrusive contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:igneous_intrusive_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:igneous_intrusive_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:igneous_intrusive_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/igneous_phase_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/igneous_phase_contact> dcterms:identifier "cntcttyp:igneous_phase_contact"^^prez:identifier ;
     dcterms:provenance "this vocabulary"@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "A lithogenetic contact separating lithologically distinct phases of a single intrusive body. Does not denote nature of contact (intrusive or gradation)."@en ;
     skos:prefLabel "igneous phase contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:igneous_phase_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:igneous_phase_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:igneous_phase_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/impact_structure_boundary>
+<http://resource.geosciml.org/classifier/cgi/contacttype/impact_structure_boundary> dcterms:identifier "cntcttyp:impact_structure_boundary"^^prez:identifier ;
     dcterms:provenance "this vocabulary"@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "surface that bounds a body of rock affected by an extraterrestrial impact event"@en ;
     skos:prefLabel "impact structure boundary"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:impact_structure_boundary" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:impact_structure_boundary",
+        "/v/vocab/2016.01:contacttype/cntcttyp:impact_structure_boundary" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/lithogenetic_contact> dcterms:identifier "cntcttyp:lithogenetic_contact"^^prez:identifier ;
     dcterms:provenance "this vocabulary"@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "A non-faulted contact separating bodies of material in the earth that have different lithologic character or geologic history."@en ;
     skos:prefLabel "lithogenetic contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:lithogenetic_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:lithogenetic_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:lithogenetic_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_contact> dcterms:identifier "cntcttyp:magnetic_contact"^^prez:identifier ;
     dcterms:provenance "this vocabulary"@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "A geophysical contact separating bodies of material distinguished based on properties related to magnetic fields."@en ;
     skos:prefLabel "magnetic contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:magnetic_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:magnetic_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:magnetic_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_polarity_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_polarity_contact> dcterms:identifier "cntcttyp:magnetic_polarity_contact"^^prez:identifier ;
     dcterms:provenance "this vocabulary"@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "A magentic contact between bodies of material with different polarity of remnant magnetization, e.g. between sections of ocean floor with different polarity."@en ;
     skos:prefLabel "magnetic polarity contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:magnetic_polarity_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:magnetic_polarity_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:magnetic_polarity_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_susceptiblity_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/magnetic_susceptiblity_contact> dcterms:identifier "cntcttyp:magnetic_susceptiblity_contact"^^prez:identifier ;
     dcterms:provenance "this vocabulary"@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "A magnetic contact between bodies of material distinguished based on magnetic susceptibility characteristics."@en ;
     skos:prefLabel "magnetic susceptiblity contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:magnetic_susceptiblity_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:magnetic_susceptiblity_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:magnetic_susceptiblity_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/magnetization_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/magnetization_contact> dcterms:identifier "cntcttyp:magnetization_contact"^^prez:identifier ;
     dcterms:provenance "this vocabulary"@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "A magnetic contact between bodies of material distinguished based on any aspect of magnetization of material in the units."@en ;
     skos:prefLabel "magnetization contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:magnetization_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:magnetization_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:magnetization_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact> dcterms:identifier "cntcttyp:metamorphic_contact"^^prez:identifier ;
     dcterms:provenance "this vocabulary"@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "Lithogenetic contact separating rocks that have different lithologic properties related to metamorphism, metasomatism, alteration, or mineralization. Generally separates metamorphic rock bodies, but may separate metamorphosed (broadly speaking) and non-metamorphosed rock."@en ;
     skos:prefLabel "metamorphic contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:metamorphic_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:metamorphic_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:metamorphic_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_facies_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_facies_contact> dcterms:identifier "cntcttyp:metamorphic_facies_contact"^^prez:identifier ;
     dcterms:provenance "this vocabulary"@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "A metamorphic contact separating rocks that have undergone metamorphism of a particular facies from those that have undergone metamorphism of another facies."@en ;
     skos:prefLabel "metamorphic facies contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:metamorphic_facies_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:metamorphic_facies_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:metamorphic_facies_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/metasomatic_facies_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/metasomatic_facies_contact> dcterms:identifier "cntcttyp:metasomatic_facies_contact"^^prez:identifier ;
     dcterms:provenance "this vocabulary"@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "A metamorphic contact separating rocks that have undergone metasomatism of a particular facies from those that have undergone metasomatism of another facies. Metasomatism is distinguished from metamorphism by significant changes in bulk chemistry of the affected rock."@en ;
     skos:prefLabel "metasomatic facies contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:metasomatic_facies_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:metasomatic_facies_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:metasomatic_facies_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/mineralisation_assemblage_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/mineralisation_assemblage_contact> dcterms:identifier "cntcttyp:mineralisation_assemblage_contact"^^prez:identifier ;
     dcterms:provenance "this vocabulary"@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "A metasomatic facies contact separating rocks which have been mineralised and contain a particular mineral assemblage from those which contain a different assemblage. Mineralization is a kind of metasomatism that introduces ecomomically important minerals."@en ;
     skos:prefLabel "mineralisation assemblage contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:mineralisation_assemblage_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:mineralisation_assemblage_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:mineralisation_assemblage_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/nonconformable_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/nonconformable_contact> dcterms:identifier "cntcttyp:nonconformable_contact"^^prez:identifier ;
     dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "An unconformable contact between an underlying, older nonstratified geological unit (usually intrusive igneous rocks or metamorphics) and an overlying, younger stratified geological unit."@en ;
     skos:prefLabel "nonconformable contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:nonconformable_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:nonconformable_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:nonconformable_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/paraconformable_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/paraconformable_contact> dcterms:identifier "cntcttyp:paraconformable_contact"^^prez:identifier ;
     dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "An unconformable contact between two geological units in which the bedding of the older, underlying unit is parallel to the bedding of the younger, overlying unit, in which the contact between the two units is planar, and may be coincident with a bedding plane."@en ;
     skos:prefLabel "paraconformable contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:paraconformable_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:paraconformable_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:paraconformable_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/radiometric_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/radiometric_contact> dcterms:identifier "cntcttyp:radiometric_contact"^^prez:identifier ;
     dcterms:provenance "this vocabulary"@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "A geophysical contact separating bodies of material distinguished based on the characteristics of emitted of radiant energy related to radioactivity (e.g. gamma rays)."@en ;
     skos:prefLabel "radiometric contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:radiometric_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:radiometric_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:radiometric_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/sedimentary_facies_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/sedimentary_facies_contact> dcterms:identifier "cntcttyp:sedimentary_facies_contact"^^prez:identifier ;
     dcterms:provenance "base on Nichols, Gary, 1999, Sedimentology and stratigraphy, Blackwell, p. 62-63."@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "A lithogenetic contact separating essentially coeval sedimentary material bodies distinguished by characteristics reflecting different physical or chemical processes active at the time of deposition of the sediment."@en ;
     skos:prefLabel "sedimentary facies contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:sedimentary_facies_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:sedimentary_facies_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:sedimentary_facies_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/sedimentary_intrusive_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/sedimentary_intrusive_contact> dcterms:identifier "cntcttyp:sedimentary_intrusive_contact"^^prez:identifier ;
     dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "An intrusive contact between a sedimentary rock unit and plastic sediment (e.g., clay, chalk, salt, gypsum, etc.), forced upward into it from underlying sediment"@en ;
     skos:prefLabel "sedimentary intrusive contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:sedimentary_intrusive_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:sedimentary_intrusive_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:sedimentary_intrusive_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/seismic_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/seismic_contact> dcterms:identifier "cntcttyp:seismic_contact"^^prez:identifier ;
     dcterms:provenance "this vocabulary"@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "A geophysical contact separating bodies of material defined based on their seismic character. Seismic character is based on transmission of vibrations (seismic waves) through a rock body, and relates to the velocity of transmission, and the nature of reflection, refraction, or transformation of seismic waves by inhomogeneities in the rock body."@en ;
     skos:prefLabel "seismic contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:seismic_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:seismic_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:seismic_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/unconformable_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/unconformable_contact> dcterms:identifier "cntcttyp:unconformable_contact"^^prez:identifier ;
     dcterms:provenance "Neuendorf, K.K.E, Mehl, J.P. & Jackson, J.A. (eds), 2005. Glossary of geology, 5th Edition. American Geological Institute, Alexandria, 779 p."@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "A contact separating two geological units in which the younger unit succeeds the older after a substantial hiatus in deposition."@en ;
     skos:prefLabel "unconformable contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:unconformable_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:unconformable_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:unconformable_contact" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/volcanic_subsidence_zone_boundary>
+<http://resource.geosciml.org/classifier/cgi/contacttype/volcanic_subsidence_zone_boundary> dcterms:identifier "cntcttyp:volcanic_subsidence_zone_boundary"^^prez:identifier ;
     dcterms:provenance "this vocabulary, concept to encompass boundary of caldron, caldera, or crater."@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "boundary around a body of rock that is within a zone of subsidence or cratering produced by volcanic activity."@en ;
     skos:prefLabel "volcanic subsidence zone boundary"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:volcanic_subsidence_zone_boundary" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:volcanic_subsidence_zone_boundary",
+        "/v/vocab/2016.01:contacttype/cntcttyp:volcanic_subsidence_zone_boundary" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/weathering_contact>
+<http://resource.geosciml.org/classifier/cgi/contacttype/weathering_contact> dcterms:identifier "cntcttyp:weathering_contact"^^prez:identifier ;
     dcterms:provenance "this vocabulary"@en ;
-    ns2:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
+    skos:definition "A lithogenetic contact separating bodies of material differentiated based on lithologic properties related to weathering."@en ;
     skos:prefLabel "weathering contact"@en ;
-    ns1:link "/v/collection/cgi:contacttype/cntcttyp:weathering_contact" ;
-.
+    prez:link "/v/collection/cgi:contacttype/cntcttyp:weathering_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:weathering_contact" .
+
+skos:Collection rdfs:label "Collection"@en ;
+    skos:definition "A meaningful collection of concepts."@en .
+

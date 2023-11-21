@@ -1,13 +1,16 @@
 @prefix dcterms: <http://purl.org/dc/terms/> .
 @prefix ns1: <http://purl.org/linked-data/registry#> .
 @prefix prez: <https://prez.dev/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix schema: <https://schema.org/> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <http://linked.data.gov.au/def/borehole-purpose/coal> a skos:Concept ;
+    dcterms:identifier "brhl-prps:coal"^^prez:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:definition "Wells and bores drilled to facilitate the mining of coal under permits governed by the Queensland Mineral Resources Act 1989"@en ;
     skos:narrower <http://linked.data.gov.au/def/borehole-purpose/open-cut-coal-mining>,
         <http://linked.data.gov.au/def/borehole-purpose/underground-coal-mining> ;
     skos:prefLabel "Coal"@en ;
@@ -17,6 +20,7 @@
 <http://linked.data.gov.au/def2/borehole-purpose> dcterms:identifier "def2:borehole-purpose"^^prez:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
     ns1:status <https://linked.data.gov.au/def/reg-statuses/stable> ;
+    skos:definition "The primary purpose of a borehole based on the legislative State Act and/or the resources industry sector."@en ;
     skos:prefLabel "Borehole Purpose"@en .
 
 dcterms:description rdfs:label "Description"@en ;
@@ -28,19 +32,33 @@ dcterms:identifier rdfs:label "Identifier"@en ;
 dcterms:provenance rdfs:label "Provenance"@en ;
     dcterms:description "The statement may include a description of any changes successive custodians made to the resource."@en .
 
+rdf:type rdfs:label "type" .
+
 rdfs:label rdfs:label "label" .
 
+skos:definition rdfs:label "definition"@en ;
+    skos:definition "A statement or formal explanation of the meaning of a concept."@en .
+
+skos:prefLabel rdfs:label "preferred label"@en ;
+    skos:definition "The preferred lexical label for a resource, in a given language."@en .
+
 <http://linked.data.gov.au/def/borehole-purpose/open-cut-coal-mining> a skos:Concept ;
+    dcterms:identifier "brhl-prps:open-cut-coal-mining"^^prez:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:definition "Wells drilled for the purpose of assessing coal resources for an open cut coal mine."@en ;
     skos:prefLabel "Open-Cut Coal Mining"@en ;
     prez:childrenCount 0 ;
     prez:link "/v/vocab/def2:borehole-purpose/brhl-prps:open-cut-coal-mining" .
 
 <http://linked.data.gov.au/def/borehole-purpose/underground-coal-mining> a skos:Concept ;
+    dcterms:identifier "brhl-prps:underground-coal-mining"^^prez:identifier ;
     dcterms:provenance "Compiled by the Geological Survey of Queensland" ;
+    skos:definition "Wells drilled for the purpose of assessing coal resources for an underground coal mine."@en ;
     skos:prefLabel "Underground Coal Mining"@en ;
-    prez:childrenCount 0 ;
+    prez:childrenCount 1 ;
     prez:link "/v/vocab/def2:borehole-purpose/brhl-prps:underground-coal-mining" .
 
-<https://linked.data.gov.au/def/reg-statuses/stable> skos:prefLabel "stable"@en ;
+<https://linked.data.gov.au/def/reg-statuses/stable> skos:definition "An entry that is seen as having a reasonable measure of stability, may be used to mark the full adoption of a previously 'experimental' entry."@en ;
+    skos:prefLabel "stable"@en ;
     schema:color "#2e8c09" .
+

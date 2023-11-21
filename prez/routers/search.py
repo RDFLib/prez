@@ -1,17 +1,18 @@
 import re
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends
 from rdflib import Literal, URIRef
 from starlette.responses import PlainTextResponse
 
 from prez.cache import search_methods
 from prez.config import settings
+from prez.dependencies import get_repo
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.reference_data.prez_ns import PREZ
 from prez.renderers.renderer import return_from_graph
-from prez.routers.object import _add_prez_links
+from prez.services.link_generation import _add_prez_links
 from prez.services.curie_functions import get_uri_for_curie_id
-from prez.sparql.methods import rdf_query_to_graph
+from prez.sparql.methods import Repo
 from prez.sparql.objects_listings import generate_item_construct
 
 router = APIRouter(tags=["Search"])
@@ -20,6 +21,7 @@ router = APIRouter(tags=["Search"])
 @router.get("/search", summary="Global Search")
 async def search(
     request: Request,
+    repo: Repo = Depends(get_repo),
 ):
     term = request.query_params.get("term")
     limit = request.query_params.get("limit", 20)
@@ -72,14 +74,14 @@ async def search(
         search_query, URIRef("https://prez.dev/profile/open")
     )
 
-    graph = await rdf_query_to_graph(full_query)
+    graph, _ = await repo.send_queries([full_query], [])
     graph.bind("prez", "https://prez.dev/")
 
     prof_and_mt_info = ProfilesMediatypesInfo(
         request=request, classes=frozenset([PREZ.SearchResult])
     )
     if "anot+" in prof_and_mt_info.mediatype:
-        await _add_prez_links(graph)
+        await _add_prez_links(graph, repo)
 
     return await return_from_graph(
         graph,
@@ -87,6 +89,7 @@ async def search(
         profile=URIRef("https://prez.dev/profile/open"),
         profile_headers=prof_and_mt_info.profile_headers,
         selected_class=prof_and_mt_info.selected_class,
+        repo=repo,
     )
 
 

@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     prez_version:
     """
 
-    sparql_endpoint: str
+    sparql_endpoint: Optional[str]
     sparql_username: Optional[str]
     sparql_password: Optional[str]
     sparql_auth: Optional[tuple]
@@ -48,6 +48,7 @@ class Settings(BaseSettings):
     provenance_predicates = [DCTERMS.provenance]
     other_predicates = [SDO.color, REG.status]
     sparql_timeout = 30.0
+    sparql_repo_type: str = "remote"
 
     log_level = "INFO"
     log_output = "stdout"
@@ -58,14 +59,6 @@ class Settings(BaseSettings):
     )
     prez_version: Optional[str]
     disable_prefix_generation: bool = False
-
-    @root_validator()
-    def check_endpoint_enabled(cls, values):
-        if not values.get("sparql_endpoint"):
-            raise ValueError(
-                'A SPARQL endpoint must be specified using the "SPARQL_ENDPOINT" environment variable'
-            )
-        return values
 
     @root_validator()
     def get_version(cls, values):

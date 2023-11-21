@@ -1,11 +1,11 @@
-from fastapi import APIRouter, HTTPException, status, Request
+from fastapi import APIRouter, HTTPException, status, Request, Depends
 from fastapi.responses import PlainTextResponse, RedirectResponse
 from rdflib import URIRef
 from rdflib.term import _is_valid_uri
 
+from prez.dependencies import get_repo
 from prez.services.curie_functions import get_uri_for_curie_id, get_curie_id_for_uri
 from prez.queries.identifier import get_foaf_homepage_query
-from prez.sparql.methods import sparql_query_non_async
 
 router = APIRouter(tags=["Identifier Resolution"])
 
@@ -18,15 +18,17 @@ router = APIRouter(tags=["Identifier Resolution"])
         status.HTTP_404_NOT_FOUND: {"content": {"application/json": {}}},
     },
 )
-def get_identifier_redirect_route(iri: str, request: Request):
+async def get_identifier_redirect_route(
+    iri: str, request: Request, repo=Depends(get_repo)
+):
     """
     The `iri` query parameter is used to return a redirect response with the value from the `foaf:homepage` lookup.
     If no value is found, a 404 HTTP response is returned.
     """
     query = get_foaf_homepage_query(iri)
-    _, result = sparql_query_non_async(query)
+    _, rows = await repo.send_queries([], [(None, query)])
     url = None
-    for row in result:
+    for row in rows[0][1]:
         url = row["url"]["value"]
 
     if url is None:

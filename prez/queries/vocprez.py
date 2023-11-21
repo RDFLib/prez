@@ -50,6 +50,8 @@ def get_concept_scheme_query(iri: str, bnode_depth: int) -> str:
     return dedent(query)
 
 
+# TODO query appears to erroneously create TopConcepts where they don't exist - perhaps from the optional statements
+#  see test_concept_scheme_top_concepts test w/ borehole-purpose-no-children
 def get_concept_scheme_top_concepts_query(iri: str, page: int, per_page: int) -> str:
     query = Template(
         """

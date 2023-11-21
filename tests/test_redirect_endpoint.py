@@ -1,30 +1,44 @@
-import os
-import subprocess
-from time import sleep
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from pyoxigraph.pyoxigraph import Store
 
-PREZ_DIR = os.getenv("PREZ_DIR")
-LOCAL_SPARQL_STORE = os.getenv("LOCAL_SPARQL_STORE")
+from prez.app import app
+from prez.dependencies import get_repo
+from prez.sparql.methods import Repo, PyoxigraphRepo
 
 
-@pytest.fixture(scope="module")
-def test_client(request):
-    print("Run Local SPARQL Store")
-    p1 = subprocess.Popen(["python", str(LOCAL_SPARQL_STORE), "-p", "3032"])
-    sleep(1)
+@pytest.fixture(scope="session")
+def test_store() -> Store:
+    # Create a new pyoxigraph Store
+    store = Store()
 
-    def teardown():
-        print("\nDoing teardown")
-        p1.kill()
+    for file in Path(__file__).parent.glob("../tests/data/*/input/*.ttl"):
+        store.load(file.read_bytes(), "text/turtle")
 
-    request.addfinalizer(teardown)
+    return store
 
-    # must only import app after config.py has been altered above so config is retained
-    from prez.app import app
 
-    return TestClient(app)
+@pytest.fixture(scope="session")
+def test_repo(test_store: Store) -> Repo:
+    # Create a PyoxigraphQuerySender using the test_store
+    return PyoxigraphRepo(test_store)
+
+
+@pytest.fixture(scope="session")
+def test_client(test_repo: Repo) -> TestClient:
+    # Override the dependency to use the test_repo
+    def override_get_repo():
+        return test_repo
+
+    app.dependency_overrides[get_repo] = override_get_repo
+
+    with TestClient(app) as c:
+        yield c
+
+    # Remove the override to ensure subsequent tests are unaffected
+    app.dependency_overrides.clear()
 
 
 @pytest.mark.parametrize(

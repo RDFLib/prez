@@ -1,37 +1,49 @@
-import os
-import subprocess
 from pathlib import Path
-from time import sleep
 from urllib.parse import urlencode
 
 import pytest
 from fastapi.testclient import TestClient
+from pyoxigraph.pyoxigraph import Store
 from rdflib import Literal, URIRef, Graph
 from rdflib.compare import isomorphic
 
+from prez.app import app
+from prez.dependencies import get_repo
 from prez.models.search_method import SearchMethod
 from prez.routers.search import extract_qsa_params
-
-PREZ_DIR = os.getenv("PREZ_DIR")
-LOCAL_SPARQL_STORE = os.getenv("LOCAL_SPARQL_STORE")
+from prez.sparql.methods import Repo, PyoxigraphRepo
 
 
-@pytest.fixture(scope="module")
-def test_client(request):
-    print("Run Local SPARQL Store")
-    p1 = subprocess.Popen(["python", str(LOCAL_SPARQL_STORE), "-p", "3031"])
-    sleep(1)
+@pytest.fixture(scope="session")
+def test_store() -> Store:
+    # Create a new pyoxigraph Store
+    store = Store()
 
-    def teardown():
-        print("\nDoing teardown")
-        p1.kill()
+    for file in Path(__file__).parent.glob("../tests/data/*/input/*.ttl"):
+        store.load(file.read_bytes(), "text/turtle")
 
-    request.addfinalizer(teardown)
+    return store
 
-    # must only import app after config.py has been altered above so config is retained
-    from prez.app import app
 
-    return TestClient(app)
+@pytest.fixture(scope="session")
+def test_repo(test_store: Store) -> Repo:
+    # Create a PyoxigraphQuerySender using the test_store
+    return PyoxigraphRepo(test_store)
+
+
+@pytest.fixture(scope="session")
+def client(test_repo: Repo) -> TestClient:
+    # Override the dependency to use the test_repo
+    def override_get_repo():
+        return test_repo
+
+    app.dependency_overrides[get_repo] = override_get_repo
+
+    with TestClient(app) as c:
+        yield c
+
+    # Remove the override to ensure subsequent tests are unaffected
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture(scope="module")
@@ -45,7 +57,7 @@ def test_method_creation():
     return method
 
 
-def test_search_focus_to_filter(test_client: TestClient):
+def test_search_focus_to_filter(client: TestClient):
     base_url = "/search"
     params = {
         "term": "contact",
@@ -54,17 +66,16 @@ def test_search_focus_to_filter(test_client: TestClient):
     }
     # Constructing the final URL
     final_url = f"{base_url}?{urlencode(params)}"
-    with test_client as client:
-        response = client.get(final_url)
-        response_graph = Graph().parse(data=response.text, format="turtle")
-        expected_graph = Graph().parse(
-            Path(__file__).parent
-            / "../data/search/expected_responses/focus_to_filter_search.ttl"
-        )
-        assert isomorphic(expected_graph, response_graph)
+    response = client.get(final_url)
+    response_graph = Graph().parse(data=response.text, format="turtle")
+    expected_graph = Graph().parse(
+        Path(__file__).parent
+        / "../tests/data/search/expected_responses/focus_to_filter_search.ttl"
+    )
+    assert isomorphic(expected_graph, response_graph)
 
 
-def test_search_filter_to_focus(test_client: TestClient):
+def test_search_filter_to_focus(client: TestClient):
     base_url = "/search"
     params = {
         "term": "storage",
@@ -73,20 +84,19 @@ def test_search_filter_to_focus(test_client: TestClient):
     }
     # Constructing the final URL
     final_url = f"{base_url}?{urlencode(params)}"
-    with test_client as client:
-        response = client.get(final_url)
-        response_graph = Graph().parse(data=response.text, format="turtle")
-        expected_graph = Graph().parse(
-            Path(__file__).parent
-            / "../data/search/expected_responses/filter_to_focus_search.ttl"
-        )
-        assert isomorphic(expected_graph, response_graph)
+    response = client.get(final_url)
+    response_graph = Graph().parse(data=response.text, format="turtle")
+    expected_graph = Graph().parse(
+        Path(__file__).parent
+        / "../tests/data/search/expected_responses/filter_to_focus_search.ttl"
+    )
+    assert isomorphic(expected_graph, response_graph)
 
 
 @pytest.mark.xfail(
-    reason="This generates a valid query that has been tested in Fuseki, which RDFLib struggles with"
+    reason="This generates a valid query that has been tested in Fuseki, which RDFLib and Pyoxigraph cannot run(!)"
 )
-def test_search_filter_to_focus_multiple(test_client: TestClient):
+def test_search_filter_to_focus_multiple(client: TestClient):
     base_url = "/search"
     params = {
         "term": "storage",
@@ -95,20 +105,19 @@ def test_search_filter_to_focus_multiple(test_client: TestClient):
     }
     # Constructing the final URL
     final_url = f"{base_url}?{urlencode(params)}"
-    with test_client as client:
-        response = client.get(final_url)
-        response_graph = Graph().parse(data=response.text, format="turtle")
-        expected_graph = Graph().parse(
-            Path(__file__).parent
-            / "../data/search/expected_responses/filter_to_focus_search.ttl"
-        )
-        assert isomorphic(expected_graph, response_graph)
+    response = client.get(final_url)
+    response_graph = Graph().parse(data=response.text, format="turtle")
+    expected_graph = Graph().parse(
+        Path(__file__).parent
+        / "../tests/data/search/expected_responses/filter_to_focus_search.ttl"
+    )
+    assert isomorphic(expected_graph, response_graph)
 
 
 @pytest.mark.xfail(
     reason="This generates a valid query that has been tested in Fuseki, which RDFLib struggles with"
 )
-def test_search_focus_to_filter_multiple(test_client: TestClient):
+def test_search_focus_to_filter_multiple(client: TestClient):
     base_url = "/search"
     params = {
         "term": "storage",
@@ -117,14 +126,13 @@ def test_search_focus_to_filter_multiple(test_client: TestClient):
     }
     # Constructing the final URL
     final_url = f"{base_url}?{urlencode(params)}"
-    with test_client as client:
-        response = client.get(final_url)
-        response_graph = Graph().parse(data=response.text, format="turtle")
-        expected_graph = Graph().parse(
-            Path(__file__).parent
-            / "../data/search/expected_responses/filter_to_focus_search.ttl"
-        )
-        assert isomorphic(expected_graph, response_graph)
+    response = client.get(final_url)
+    response_graph = Graph().parse(data=response.text, format="turtle")
+    expected_graph = Graph().parse(
+        Path(__file__).parent
+        / "../tests/data/search/expected_responses/filter_to_focus_search.ttl"
+    )
+    assert isomorphic(expected_graph, response_graph)
 
 
 @pytest.mark.parametrize(

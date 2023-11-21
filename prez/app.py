@@ -3,19 +3,23 @@ import os
 from textwrap import dedent
 
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
-from rdflib import Graph, Literal, URIRef
+from rdflib import Graph
 from starlette.middleware.cors import CORSMiddleware
 
 from prez.config import settings
+from prez.dependencies import (
+    get_async_http_client,
+    get_pyoxi_store,
+    load_local_data_to_oxigraph,
+    get_oxrdflib_store,
+)
 from prez.models.model_exceptions import (
     ClassNotFoundException,
     URINotFoundException,
     NoProfilesException,
 )
-from prez.reference_data.prez_ns import PREZ
-from prez.renderers.renderer import return_rdf
 from prez.routers.catprez import router as catprez_router
 from prez.routers.cql import router as cql_router
 from prez.routers.identifier import router as identifier_router
@@ -45,6 +49,7 @@ from prez.services.exception_catchers import (
 from prez.services.generate_profiles import create_profiles_graph
 from prez.services.prez_logging import setup_logger
 from prez.services.search_methods import get_all_search_methods
+from prez.sparql.methods import RemoteSparqlRepo, PyoxigraphRepo, OxrdflibRepo
 
 app = FastAPI(
     exception_handlers={
@@ -116,12 +121,27 @@ async def app_startup():
     log = logging.getLogger("prez")
     log.info("Starting up")
 
-    await healthcheck_sparql_endpoints()
-    await add_prefixes_to_prefix_graph()
-    await get_all_search_methods()
-    await create_profiles_graph()
-    await create_endpoints_graph()
-    await count_objects()
+    if settings.sparql_repo_type == "pyoxigraph":
+        app.state.pyoxi_store = get_pyoxi_store()
+        app.state.repo = PyoxigraphRepo(app.state.pyoxi_store)
+        await load_local_data_to_oxigraph(app.state.pyoxi_store)
+    elif settings.sparql_repo_type == "oxrdflib":
+        app.state.oxrdflib_store = get_oxrdflib_store()
+        app.state.repo = OxrdflibRepo(app.state.oxrdflib_store)
+    elif settings.sparql_repo_type == "remote":
+        app.state.http_async_client = await get_async_http_client()
+        app.state.repo = RemoteSparqlRepo(app.state.http_async_client)
+        await healthcheck_sparql_endpoints()
+    else:
+        raise ValueError(
+            "SPARQL_REPO_TYPE must be one of 'pyoxigraph', 'oxrdflib' or 'remote'"
+        )
+
+    await add_prefixes_to_prefix_graph(app.state.repo)
+    await get_all_search_methods(app.state.repo)
+    await create_profiles_graph(app.state.repo)
+    await create_endpoints_graph(app.state.repo)
+    await count_objects(app.state.repo)
     await populate_api_info()
     await add_common_context_ontologies_to_tbox_cache()
 
@@ -136,10 +156,8 @@ async def app_shutdown():
     log.info("Shutting down...")
 
     # close all SPARQL async clients
-    if not os.getenv("TEST_MODE") == "true":
-        from prez.sparql.methods import async_client
-
-        await async_client.aclose()
+    if not settings.sparql_repo_type:
+        await app.state.http_async_client.aclose()
 
 
 def _get_sparql_service_description(request, format):

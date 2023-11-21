@@ -1,8 +1,9 @@
 from rdflib import Graph
 
-from prez.sparql.methods import rdf_query_to_graph
+from prez.sparql.methods import Repo
 
 
-async def get_resource(iri: str) -> Graph:
+async def get_resource(iri: str, repo: Repo) -> Graph:
     query = f"""DESCRIBE <{iri}>"""
-    return await rdf_query_to_graph(query)
+    graph, _ = await repo.send_queries([query], [])
+    return graph

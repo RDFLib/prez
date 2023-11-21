@@ -26,12 +26,14 @@ def generate_listing_construct(
     profile: URIRef,
     page: Optional[int] = 1,
     per_page: Optional[int] = 20,
+    ordering_predicate: URIRef = None,
 ):
     """
     For a given URI, finds items with the specified relation(s).
     Generates a SPARQL construct query for a listing of items
     """
-    profile_item = ProfileItem(uri=str(profile))
+    if not ordering_predicate:
+        ordering_predicate = settings.label_predicates[0]
 
     if isinstance(focus_item, (ProfilesMembers, ListingModel)):  # listings can include
         # "context" in the same way objects can, using include/exclude predicates etc.
@@ -115,15 +117,15 @@ def generate_listing_construct(
 
                 {f'''
                     OPTIONAL {{
-                        {f'{uri_or_tl_item} <{profile_item.label}> ?label .' if focus_item.top_level_listing else ""}
+                        {f'{uri_or_tl_item} <{ordering_predicate}> ?label .' if focus_item.top_level_listing else ""}
                     }}
                 ''' if settings.order_lists_by_label else ""}
-                }}
-                {f'''
-                {'ORDER BY ASC(?label)' if profile_item.label else "ORDER BY ?top_level_item"}
-                ''' if settings.order_lists_by_label else ""}
-                {f"LIMIT {per_page}{chr(10)}"
-                 f"OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
+            }}
+            {f'''
+            {'ORDER BY ASC(?label)' if ordering_predicate else "ORDER BY ?top_level_item"}
+            ''' if settings.order_lists_by_label else ""}
+            {f"LIMIT {per_page}{chr(10)}"
+             f"OFFSET {(page - 1) * per_page}" if page is not None and per_page is not None else ""}
             }}
         }}
 

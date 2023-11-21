@@ -8,6 +8,9 @@
 dcterms:description rdfs:label "Description"@en ;
     dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en .
 
+dcterms:identifier rdfs:label "Identifier"@en ;
+    dcterms:description "Recommended practice is to identify the resource by means of a string conforming to an identification system. Examples include International Standard Book Number (ISBN), Digital Object Identifier (DOI), and Uniform Resource Name (URN).  Persistent identifiers should be provided as HTTP URIs."@en .
+
 dcterms:title rdfs:label "Title"@en .
 
 rdf:type rdfs:label "type" .
@@ -21,6 +24,7 @@ rdfs:label rdfs:label "label" .
 The purpose of this catalogue is not to act as a master catalogue of indigenous data in Australia to demonstrate improved metadata models and rating systems for data and metadata in order to improve indigenous data governance.
 
 The content of this catalogue conforms to the Indigenous Data Network's Catalogue Profile which is a profile of the DCAT, SKOS and PROV data models."""@en ;
+    dcterms:identifier "pd:democat"^^prez:identifier ;
     dcterms:title "IDN Demonstration Catalogue" ;
     prez:link "/c/catalogs/pd:democat" .
 
@@ -28,6 +32,7 @@ The content of this catalogue conforms to the Indigenous Data Network's Catalogu
     dcterms:description """The Indigenous Data Network's catalogue of Agents. This catalogue contains instances of Agents - People and Organisations - related to the holding of indigenous data. This includes non-indigenous Agents
 
 This catalogue extends on standard Agent information to include properties useful to understand the indigeneity of Agents: whether they are or not, or how much they are, indigenous"""@en ;
+    dcterms:identifier "dtst:agents"^^prez:identifier ;
     dcterms:title "IDN Agents Catalogue" ;
     prez:link "/c/catalogs/dtst:agents" .
 
@@ -37,13 +42,15 @@ This catalogue extends on standard Agent information to include properties usefu
 The purpose of this catalogue is not to act as a master catalogue of indigenous data in Australia to demonstrate improved metadata models and rating systems for data and metadata in order to improve indigenous data governance.
 
 The content of this catalogue conforms to the Indigenous Data Network's Catalogue Profile which is a profile of the DCAT, SKOS and PROV data models."""@en ;
+    dcterms:identifier "dtst:democat"^^prez:identifier ;
     dcterms:title "IDN Datasets Catalogue" ;
     prez:link "/c/catalogs/dtst:democat" .
 
 <https://w3id.org/idn/system/catprez> a dcat:Catalog ;
     dcterms:description "This is the system catalogue implemented by this instance of CatPrez that lists all its other Catalog instances"@en ;
+    dcterms:identifier "sys:catprez"^^prez:identifier ;
     dcterms:title "CatPrez System Catalogue" ;
-    prez:link "/c/catalogs/systm:catprez" .
+    prez:link "/c/catalogs/sys:catprez" .
 
 dcat:Catalog rdfs:label "Catalog"@en ;
     prez:count 4 .

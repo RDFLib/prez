@@ -1,11 +1,13 @@
 import logging
 
 from fastapi import APIRouter, Request
+from fastapi import Depends
 from fastapi.responses import RedirectResponse
 from rdflib import URIRef, SKOS
 from starlette.responses import PlainTextResponse
 
 from prez.bnode import get_bnode_depth
+from prez.dependencies import get_repo
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.queries.vocprez import (
     get_concept_scheme_query,
@@ -13,14 +15,15 @@ from prez.queries.vocprez import (
     get_concept_narrowers_query,
 )
 from prez.renderers.renderer import (
-    return_from_queries,
     return_from_graph,
 )
 from prez.response import StreamingTurtleAnnotatedResponse
 from prez.routers.identifier import get_iri_route
-from prez.routers.object import item_function, listing_function, _add_prez_links
+from prez.services.objects import object_function
+from prez.services.listings import listing_function
+from prez.services.link_generation import _add_prez_links
 from prez.services.curie_functions import get_curie_id_for_uri
-from prez.sparql.methods import rdf_query_to_graph
+from prez.sparql.methods import Repo
 from prez.sparql.resource import get_resource
 
 router = APIRouter(tags=["VocPrez"])
@@ -40,10 +43,13 @@ async def vocprez_home():
 )
 async def vocab_endpoint(
     request: Request,
+    repo: Repo = Depends(get_repo),
     page: int = 1,
     per_page: int = 20,
 ):
-    return await listing_function(request, page, per_page)
+    return await listing_function(
+        request=request, page=page, per_page=per_page, repo=repo
+    )
 
 
 @router.get(
@@ -53,10 +59,13 @@ async def vocab_endpoint(
 )
 async def collection_endpoint(
     request: Request,
+    repo: Repo = Depends(get_repo),
     page: int = 1,
     per_page: int = 20,
 ):
-    return await listing_function(request, page, per_page)
+    return await listing_function(
+        request=request, page=page, per_page=per_page, repo=repo
+    )
 
 
 @router.get(
@@ -64,12 +73,14 @@ async def collection_endpoint(
     summary="Get Concept Scheme and all its concepts",
     name="https://prez.dev/endpoint/vocprez/vocab",
 )
-async def vocprez_scheme(request: Request, scheme_curie: str):
+async def vocprez_scheme(
+    request: Request, scheme_curie: str, repo: Repo = Depends(get_repo)
+):
     """Get a SKOS Concept Scheme and all of its concepts.
 
     Note: This may be a very expensive operation depending on the size of the concept scheme.
     """
-    return await item_function(request, object_curie=scheme_curie)
+    return await object_function(request, object_curie=scheme_curie, repo=repo)
 
 
 @router.get(
@@ -83,7 +94,11 @@ async def vocprez_scheme(request: Request, scheme_curie: str):
         },
     },
 )
-async def concept_scheme_route(request: Request, concept_scheme_curie: str):
+async def concept_scheme_route(
+    request: Request,
+    concept_scheme_curie: str,
+    repo: Repo = Depends(get_repo),
+):
     """Get a SKOS Concept Scheme.
 
     `prez:childrenCount` is an `xsd:integer` count of the number of top concepts for this Concept Scheme.
@@ -102,16 +117,17 @@ async def concept_scheme_route(request: Request, concept_scheme_curie: str):
         )
 
     iri = get_iri_route(concept_scheme_curie)
-    resource = await get_resource(iri)
+    resource = await get_resource(iri, repo)
     bnode_depth = get_bnode_depth(iri, resource)
     concept_scheme_query = get_concept_scheme_query(iri, bnode_depth)
-
-    return await return_from_queries(
-        [concept_scheme_query],
+    item_graph, _ = await repo.send_queries([concept_scheme_query], [])
+    return await return_from_graph(
+        item_graph,
         profiles_mediatypes_info.mediatype,
         profiles_mediatypes_info.profile,
         profiles_mediatypes_info.profile_headers,
         profiles_mediatypes_info.selected_class,
+        repo,
     )
 
 
@@ -130,6 +146,7 @@ async def concept_scheme_top_concepts_route(
     concept_scheme_curie: str,
     page: int = 1,
     per_page: int = 20,
+    repo: Repo = Depends(get_repo),
 ):
     """Get a SKOS Concept Scheme's top concepts.
 
@@ -144,18 +161,19 @@ async def concept_scheme_top_concepts_route(
         iri, page, per_page
     )
 
-    graph = await rdf_query_to_graph(concept_scheme_top_concepts_query)
+    graph, _ = await repo.send_queries([concept_scheme_top_concepts_query], [])
     for concept in graph.objects(iri, SKOS.hasTopConcept):
         if isinstance(concept, URIRef):
             concept_curie = get_curie_id_for_uri(concept)
     if "anot+" in profiles_mediatypes_info.mediatype:
-        await _add_prez_links(graph)
+        await _add_prez_links(graph, repo)
     return await return_from_graph(
         graph,
         profiles_mediatypes_info.mediatype,
         profiles_mediatypes_info.profile,
         profiles_mediatypes_info.profile_headers,
         profiles_mediatypes_info.selected_class,
+        repo,
     )
 
 
@@ -173,6 +191,7 @@ async def concept_narrowers_route(
     request: Request,
     concept_scheme_curie: str,
     concept_curie: str,
+    repo: Repo = Depends(get_repo),
     page: int = 1,
     per_page: int = 20,
 ):
@@ -187,15 +206,16 @@ async def concept_narrowers_route(
     iri = get_iri_route(concept_curie)
     concept_narrowers_query = get_concept_narrowers_query(iri, page, per_page)
 
-    graph = await rdf_query_to_graph(concept_narrowers_query)
+    graph, _ = await repo.send_queries([concept_narrowers_query], [])
     if "anot+" in profiles_mediatypes_info.mediatype:
-        await _add_prez_links(graph)
+        await _add_prez_links(graph, repo)
     return await return_from_graph(
         graph,
         profiles_mediatypes_info.mediatype,
         profiles_mediatypes_info.profile,
         profiles_mediatypes_info.profile_headers,
         profiles_mediatypes_info.selected_class,
+        repo,
     )
 
 
@@ -211,10 +231,13 @@ async def concept_narrowers_route(
     },
 )
 async def concept_route(
-    request: Request, concept_scheme_curie: str, concept_curie: str
+    request: Request,
+    concept_scheme_curie: str,
+    concept_curie: str,
+    repo: Repo = Depends(get_repo),
 ):
     """Get a SKOS Concept."""
-    return await item_function(request, object_curie=concept_curie)
+    return await object_function(request, object_curie=concept_curie, repo=repo)
 
 
 @router.get(
@@ -222,8 +245,12 @@ async def concept_route(
     summary="Get Collection",
     name="https://prez.dev/endpoint/vocprez/collection",
 )
-async def vocprez_collection(request: Request, collection_curie: str):
-    return await item_function(request, object_curie=collection_curie)
+async def vocprez_collection(
+    request: Request,
+    collection_curie: str,
+    repo: Repo = Depends(get_repo),
+):
+    return await object_function(request, object_curie=collection_curie, repo=repo)
 
 
 @router.get(
@@ -232,6 +259,9 @@ async def vocprez_collection(request: Request, collection_curie: str):
     name="https://prez.dev/endpoint/vocprez/collection-concept",
 )
 async def vocprez_collection_concept(
-    request: Request, collection_curie: str, concept_curie: str
+    request: Request,
+    collection_curie: str,
+    concept_curie: str,
+    repo: Repo = Depends(get_repo),
 ):
-    return await item_function(request, object_curie=concept_curie)
+    return await object_function(request, object_curie=concept_curie, repo=repo)

@@ -1,5 +1,4 @@
 import logging
-from functools import lru_cache
 from pathlib import Path
 from typing import FrozenSet
 
@@ -10,13 +9,12 @@ from prez.config import settings
 from prez.models.model_exceptions import NoProfilesException
 from prez.reference_data.prez_ns import PREZ
 from prez.services.curie_functions import get_curie_id_for_uri
-from prez.sparql.methods import rdf_query_to_graph
 from prez.sparql.objects_listings import select_profile_mediatype
 
 log = logging.getLogger(__name__)
 
 
-async def create_profiles_graph() -> Graph:
+async def create_profiles_graph(repo) -> Graph:
     if (
         len(profiles_graph_cache) > 0
     ):  # pytest imports app.py multiple times, so this is needed. Not sure why cache is
@@ -67,7 +65,7 @@ async def create_profiles_graph() -> Graph:
           }
         }
         """
-    g = await rdf_query_to_graph(remote_profiles_query)
+    g, _ = await repo.send_queries([remote_profiles_query], [])
     if len(g) > 0:
         profiles_graph_cache.__iadd__(g)
         log.info(f"Remote profile(s) found and added")

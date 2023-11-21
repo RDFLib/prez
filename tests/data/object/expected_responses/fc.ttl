@@ -2,6 +2,7 @@
 @prefix geo: <http://www.opengis.net/ont/geosparql#> .
 @prefix ns1: <http://purl.org/linked-data/registry#> .
 @prefix prez: <https://prez.dev/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 
@@ -14,20 +15,43 @@ dcterms:identifier rdfs:label "Identifier"@en ;
 dcterms:provenance rdfs:label "Provenance"@en ;
     dcterms:description "The statement may include a description of any changes successive custodians made to the resource."@en .
 
+<http://resource.geosciml.org/classifier/cgi/contacttype> dcterms:identifier "cgi:contacttype"^^prez:identifier ;
+    dcterms:provenance "this vocabulary" ;
+    skos:definition "All Concepts in this vocabulary" ;
+    skos:prefLabel "Contact Type - All Concepts"@en .
+
+<http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> dcterms:identifier "2016.01:contacttype"^^prez:identifier ;
+    dcterms:provenance "Original set of terms from the GeosciML standard" ;
+    skos:definition "This scheme describes the concept space for Contact Type concepts, as defined by the IUGS Commission for Geoscience Information (CGI) Geoscience Terminology Working Group. By extension, it includes all concepts in this conceptScheme, as well as concepts in any previous versions of the scheme. Designed for use in the contactType property in GeoSciML Contact elements."@en ;
+    skos:prefLabel "Contact Type"@en .
+
+rdf:type rdfs:label "type" .
+
 rdfs:label rdfs:label "label" .
 
 rdfs:member rdfs:label "member" .
 
-<https://test/dataset> dcterms:identifier "ns3:dataset"^^prez:identifier .
+skos:definition rdfs:label "definition"@en ;
+    skos:definition "A statement or formal explanation of the meaning of a concept."@en .
+
+skos:prefLabel rdfs:label "preferred label"@en ;
+    skos:definition "The preferred lexical label for a resource, in a given language."@en .
+
+<https://test/dataset> dcterms:identifier "preztest:dataset"^^prez:identifier .
 
 <https://test/feature-collection> a geo:FeatureCollection ;
+    dcterms:identifier "preztest:feature-collection"^^prez:identifier ;
     rdfs:member <http://resource.geosciml.org/classifier/cgi/contacttype/alteration_facies_contact> ;
-    prez:link "/s/datasets/ns3:dataset/collections/ns3:feature-collection" .
+    prez:link "/s/datasets/preztest:dataset/collections/preztest:feature-collection" .
 
-<http://resource.geosciml.org/classifier/cgi/contacttype/alteration_facies_contact> dcterms:provenance "this vocabulary"@en ;
+<http://resource.geosciml.org/classifier/cgi/contacttype/alteration_facies_contact> dcterms:identifier "cntcttyp:alteration_facies_contact"^^prez:identifier ;
+    dcterms:provenance "this vocabulary"@en ;
     ns1:status <http://def.isotc211.org/iso19135/-1/2015/CoreModel/code/RE_ItemStatus/submitted> ;
     skos:definition "A metasomatic facies contact separating rocks that have undergone alteration of a particular facies from those that have undergone metasomatism of another facies. Alteration is a kind of metasomatism that does not introduce economically important minerals."@en ;
-    skos:prefLabel "alteration facies contact"@en .
+    skos:prefLabel "alteration facies contact"@en ;
+    prez:link "/s/datasets/preztest:dataset/collections/preztest:feature-collection/items/cntcttyp:alteration_facies_contact",
+        "/v/collection/cgi:contacttype/cntcttyp:alteration_facies_contact",
+        "/v/vocab/2016.01:contacttype/cntcttyp:alteration_facies_contact" .
 
 geo:FeatureCollection skos:definition "A collection of individual Features."@en ;
     skos:prefLabel "Feature Collection"@en .

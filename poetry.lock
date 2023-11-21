@@ -551,6 +551,22 @@ files = [
 setuptools = "*"
 
 [[package]]
+name = "oxrdflib"
+version = "0.3.6"
+description = "rdflib stores based on pyoxigraph"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "oxrdflib-0.3.6-py3-none-any.whl", hash = "sha256:a645a3e5ba86e0c8ff33f6429ca623fe01d93d30234c8f2ad1f553636b4b756a"},
+    {file = "oxrdflib-0.3.6.tar.gz", hash = "sha256:50f675773b87dd656f1753e24bf3b92fde06ad9ae7e8c95629a7593521d0aa06"},
+]
+
+[package.dependencies]
+pyoxigraph = ">=0.3.14,<0.4.0"
+rdflib = ">=6.3,<8.0"
+
+[[package]]
 name = "packaging"
 version = "23.1"
 description = "Core utilities for Python packages"
@@ -709,7 +725,7 @@ files = [
 name = "pyoxigraph"
 version = "0.3.19"
 description = "Python bindings of Oxigraph, a SPARQL database and RDF toolkit"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -1126,4 +1142,4 @@ test = ["pytest (>=6.0.0)", "setuptools (>=65)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "13f63ff915fa2ce7d26057388c8dd7e3552a6eb703fe01df61c053529a2dc2d7"
+content-hash = "a7ac7d8118a228076c9cc4f3eef9ccad97b780c232866c17e1f462589d57c41f"

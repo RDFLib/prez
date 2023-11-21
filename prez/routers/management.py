@@ -2,20 +2,17 @@ import logging
 
 from connegp import RDF_MEDIATYPES
 from fastapi import APIRouter
-from rdflib import Graph, BNode, Literal
+from rdflib import BNode
+from rdflib import Graph, URIRef, Literal
 from rdflib.collection import Collection
 from starlette.requests import Request
 from starlette.responses import PlainTextResponse
-from prez.cache import endpoints_graph_cache
-from rdflib import Graph, URIRef, Literal
 
-from prez.reference_data.prez_ns import PREZ
-from prez.config import settings
+from prez.cache import endpoints_graph_cache
 from prez.cache import tbox_cache
 from prez.config import settings
 from prez.reference_data.prez_ns import PREZ
 from prez.renderers.renderer import return_rdf
-from prez.renderers.renderer import return_rdf, return_from_graph
 from prez.services.app_service import add_common_context_ontologies_to_tbox_cache
 
 router = APIRouter(tags=["Management"])

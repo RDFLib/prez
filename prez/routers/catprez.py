@@ -1,10 +1,13 @@
 from typing import Optional
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends
 from starlette.responses import PlainTextResponse
 
-from prez.routers.object import listing_function, item_function
+from prez.dependencies import get_repo
+from prez.services.objects import object_function
+from prez.services.listings import listing_function
 from prez.services.curie_functions import get_uri_for_curie_id
+from prez.sparql.methods import Repo
 
 router = APIRouter(tags=["CatPrez"])
 
@@ -20,9 +23,14 @@ async def catprez_profiles():
     name="https://prez.dev/endpoint/catprez/catalog-listing",
 )
 async def catalog_list(
-    request: Request, page: Optional[int] = 1, per_page: Optional[int] = 20
+    request: Request,
+    page: Optional[int] = 1,
+    per_page: Optional[int] = 20,
+    repo: Repo = Depends(get_repo),
 ):
-    return await listing_function(request, page, per_page)
+    return await listing_function(
+        request=request, page=page, per_page=per_page, repo=repo
+    )
 
 
 @router.get(
@@ -33,11 +41,18 @@ async def catalog_list(
 async def resource_list(
     request: Request,
     catalog_curie: str,
+    repo: Repo = Depends(get_repo),
     page: Optional[int] = 1,
     per_page: Optional[int] = 20,
 ):
     catalog_uri = get_uri_for_curie_id(catalog_curie)
-    return await listing_function(request, page, per_page, uri=catalog_uri)
+    return await listing_function(
+        request=request,
+        page=page,
+        per_page=per_page,
+        repo=repo,
+        uri=catalog_uri,
+    )
 
 
 @router.get(
@@ -45,8 +60,15 @@ async def resource_list(
     summary="Get Resource",
     name="https://prez.dev/endpoint/catprez/resource",
 )
-async def resource_item(request: Request, catalog_curie: str, resource_curie: str):
-    return await item_function(request, object_curie=resource_curie)
+async def resource_item(
+    request: Request,
+    catalog_curie: str,
+    resource_curie: str,
+    repo: Repo = Depends(get_repo),
+):
+    return await object_function(
+        request=request, object_curie=resource_curie, repo=repo
+    )
 
 
 @router.get(
@@ -54,5 +76,9 @@ async def resource_item(request: Request, catalog_curie: str, resource_curie: st
     summary="Get Catalog",
     name="https://prez.dev/endpoint/catprez/catalog",
 )
-async def catalog_item(request: Request, catalog_curie: str):
-    return await item_function(request, object_curie=catalog_curie)
+async def catalog_item(
+    request: Request,
+    catalog_curie: str,
+    repo: Repo = Depends(get_repo),
+):
+    return await object_function(request=request, object_curie=catalog_curie, repo=repo)

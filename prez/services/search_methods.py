@@ -7,24 +7,23 @@ from rdflib import Graph, RDF, DCTERMS, Literal, RDFS
 from prez.cache import search_methods
 from prez.models import SearchMethod
 from prez.reference_data.prez_ns import PREZ
-from prez.sparql.methods import rdf_query_to_graph
 
 log = logging.getLogger(__name__)
 
 
-async def get_all_search_methods():
+async def get_all_search_methods(repo):
     await get_local_search_methods()
-    await get_remote_search_methods()
+    await get_remote_search_methods(repo)
 
 
-async def get_remote_search_methods():
+async def get_remote_search_methods(repo):
     remote_search_methods_query = f"""
     PREFIX prez: <{PREZ}>
     CONSTRUCT {{?s ?p ?o}}
     WHERE {{ ?s a prez:SearchMethod ;
                ?p ?o . }}
     """
-    graph = await rdf_query_to_graph(remote_search_methods_query)
+    graph, _ = await repo.send_queries([remote_search_methods_query], [])
     if len(graph) > 1:
         await generate_search_methods(graph)
         log.info(f"Remote search methods found and added.")
