@@ -29,9 +29,9 @@ class Settings(BaseSettings):
     prez_version:
     """
 
-    sparql_endpoint: Optional[str]
-    sparql_username: Optional[str]
-    sparql_password: Optional[str]
+    sparql_endpoint: Optional[str] = None
+    sparql_username: Optional[str] = None
+    sparql_password: Optional[str] = None
     sparql_auth: Optional[tuple]
     protocol: str = "http"
     host: str = "localhost"
