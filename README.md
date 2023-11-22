@@ -22,7 +22,7 @@ Prez is a data-configurable Linked Data API framework that delivers _profiles_ o
 
 ## Subsystems
 
-Prez comes with several pre-configures subsystems:
+Prez comes with several pre-configured subsystems:
 
 - _VocPrez_ - for vocabularies, based on the [SKOS](https://www.w3.org/TR/skos-reference/) data model
 - _SpacePrez_ - for spatial data, based on [OGC API](https://docs.ogc.org/is/17-069r3/17-069r3.html) specification and the [GeoSPARQL](https://opengeospatial.github.io/ogc-geosparql/geosparql11/spec.html) data model
@@ -44,39 +44,50 @@ This functionality is useful for institutions who issue their own persistent ide
 
 This is an alternative solution to persistent identifier services such as the [w3id.org](https://w3id.org/). In some cases, it can be used together with such persistent identifier services to avoid the need to provide the redirect mapping in webserver config (NGINX, Apache HTTP, etc.) and instead, define the config as RDF data.
 
-## Development
+## Installation
 
-This section is for developing Prez locally. See the [Running](#running) options below for running Prez in production.
+To get a copy of Prez on your computer, run:
 
-### Poetry
+```bash
+git clone https://github.com/RDFLib/prez
+```
 
-Prez is developed with [Poetry](https://python-poetry.org/) which is a Python packaging and dependency tool. Poetry presents all of Prez' dependencies (other Python packages) in the `pyproject.toml` file in this directory which can be used by Poetry to establish the environment you need to run Prez.
+Prez is developed with [Poetry](https://python-poetry.org/), a Python packaging and dependency tool.
+Poetry presents all of Prez's
+dependencies (other Python packages)
+in the `pyproject.toml` file located in the project root directory.
 
-Install the Python dependencies.
+To install the Python dependencies run:
 
 ```bash
 poetry install
 ```
 
-Running the development server with auto-reload on code changes.
+> **Note:** Poetry must be installed on the system. To check if you have Poetry installed run `poetry --version`. For tips on installing and managing specific dependency groups check the [documentation](https://python-poetry.org/docs/managing-dependencies/).
+
+## Running
+
+This section is for developing Prez locally. See the [Running](#running) options below for running Prez in production.
+
+To run the development server (with auto-reload on code changes):
 
 ```bash
 poetry run python main.py
 ```
 
-## Running
 
-Prez runs as a standard FastAPI application so for all the normal HOW TO running questions, see FastAPI's documentation:
+
+Prez runs as a standard FastAPI application, so for all the normal HOW TO running questions, see FastAPI's documentation:
 
 - <https://fastapi.tiangolo.com>
 
 ### Environment Variables
 
-You do need to configure at least a couple of environment variables for Prez to run. The full set of available variables are found in `prez/config.py`.
+You need to configure at least 1 environment variable for Prez to run. The full set of available variables are found in `prez/config.py`.
 
 #### Minimal
 
-A minimal set of environment variables with example values to run prez is listed below:
+The minimal set of environment variables with example values to run prez is listed below:
 
 `SPARQL_ENDPOINT=http://localhost:3030/mydataset`
 
@@ -85,12 +96,20 @@ If the SPARQL endpoint requires authentication, you must also set:
 `SPARQL_USERNAME=myusername`, and
 `SPARQL_PASSWORD=mypassword`
 
+To run Prez using [Pyoxigraph](https://pypi.org/project/pyoxigraph/) as the sparql store (useful for testing and development) set:
+
+`SPARQL_REPO_TYPE=pyoxigraph`
+
+In this case, you do not need to set the SPARQL_ENDPOINT
+
 #### Details
 
 Further configuration can be done via environment variables. These can be set in a '.env' file which will get read in
-via python-dotenv, or directly in the environment in which Prez is run. The environment variables are used to
-instantiate a Pydantic `Settings` object which is used throughout Prez to configure its behaviour. To see how prez
-interprets/uses these environment variables see the `prez/config.py` file.
+via python-dotenv.
+Alternatively, set them directly in the environment from which Prez is run.
+The environment variables are used to
+instantiate a Pydantic `Settings` object which is used throughout Prez to configure its behavior. To see how prez
+interprets/uses these environment variables check the `prez/config.py` file.
 
 | Environment Variable      | Description                                                                                                                                                                                              |
 | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -109,7 +128,7 @@ interprets/uses these environment variables see the `prez/config.py` file.
 
 ### Running in a Container
 
-Prez container images are available [here](https://github.com/RDFLib/prez/pkgs/container/prez).
+Prez container images are available as github packages [here](https://github.com/RDFLib/prez/pkgs/container/prez).
 
 #### Image variants
 
@@ -124,7 +143,7 @@ For example, for a release with a git tag of 3.2.4, the following tags will be o
 - `3.2.4`
 - `latest`
 
-New commits to the `main` branch creates a rolling dev image with the `dev` tag. The dev builds will also include a tag in the form of major.minor.{patch+1}-dev.{commits-since-last-release}.{short-commit-sha}. This conforms to semantic versioning and will be recognised by orchestration systems to perform automatic releases.
+New commits to the `main` branch creates a rolling dev image with the `dev` tag. The dev builds will also include a tag in the form of major.minor.{patch+1}-dev.{commits-since-last-release}.{short-commit-sha}. This conforms to semantic versioning and will be recognized by orchestration systems to perform automatic releases.
 
 For example, if the latest release is 3.2.4 and there has been 7 new commits since the release and the short commit SHA is fc82562, then the container image tag will be:
 
@@ -134,12 +153,11 @@ To run an image with Docker:
 
 ```
 docker run -p 8000:8000 \
-    -e SPACEPREZ_SPARQL_ENDPOINT=http://localhost:3030/spatial \
-    -e VOCPREZ_SPARQL_ENDPOINT=http://localhost:3030/other \
+    -e SPARQL_ENDPOINT=http://localhost:3030/spatial \
     rdflib/prez:3
 ```
 
-The above command will run a Docker container with Prez in it on Port 8000 with SpacePrez & VocPrez subsystems enabled and different SPARQL endpoints given for each.
+The above command starts a Docker container running Prez on port 8000.
 
 ## Data Validation
 
@@ -158,7 +176,7 @@ The specifications of the various profiles _should_ be straightforward to read. 
 
 ### Validation
 
-All of the profiles listed above provide validators that can be used with RDF data to test to see if it's valid. If it is, Prez will be just fine with it.
+All the profiles listed above provide validators that can be used with RDF data to test to see if it's valid. If it is, Prez will be just fine with it.
 
 The profiles' validators are all available from the profiles themselves (navigate to the listings of other profile resources via the specification links above) and they are also loaded into the _RDFTools_ online tool which you can use without downloading or installing anything:
 
