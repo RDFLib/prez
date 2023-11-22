@@ -145,19 +145,19 @@ For example, for a release with a git tag of 3.2.4, the following tags will be o
 
 New commits to the `main` branch creates a rolling dev image with the `dev` tag. The dev builds will also include a tag in the form of major.minor.{patch+1}-dev.{commits-since-last-release}.{short-commit-sha}. This conforms to semantic versioning and will be recognized by orchestration systems to perform automatic releases.
 
-For example, if the latest release is 3.2.4 and there has been 7 new commits since the release and the short commit SHA is fc82562, then the container image tag will be:
+For example, if the latest release is 3.2.4 and there have been 7 new commits since the release and the short commit SHA is fc82562, then the container image tag will be:
 
 - `3.2.5-dev.7.fc82562`
 
-To run an image with Docker:
+To run the pulled docker image:
 
 ```
 docker run -p 8000:8000 \
-    -e SPARQL_ENDPOINT=http://localhost:3030/spatial \
-    rdflib/prez:3
+    -e SPARQL_ENDPOINT=<your_sparql_endpoint> \
+    <your_image_id>
 ```
 
-The above command starts a Docker container running Prez on port 8000.
+The above command starts a Docker container running Prez on port 8000, connected to the specified sparql endpoint.
 
 ## Data Validation
 
