@@ -159,6 +159,29 @@ docker run -p 8000:8000 \
 
 The above command starts a Docker container running Prez on port 8000, connected to the specified sparql endpoint.
 
+### Testing
+
+Prez uses [PyTest](https://pypi.org/project/pytest/) and [Coverage](https://pypi.org/project/coverage/) for testing and test coverage reports.
+
+To run all available tests:
+
+```bash
+poetry run pytest tests
+```
+
+To run all available tests for coverage analysis:
+
+```bash
+poetry run coverage run -m pytest tests
+```
+
+To generate a coverage report:
+
+```bash
+poetry run coverage report
+```
+
+
 ## Data Validation
 
 For Prez to deliver data via its various subsystems, the data needs to conform to some minimum requirements: you can't, for instance, run VocPrez without an SKOS ConceptSchemes defined!
