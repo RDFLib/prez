@@ -3,12 +3,12 @@ import logging
 from abc import ABC, abstractmethod
 from typing import List
 from typing import Tuple
+from urllib.parse import quote_plus
 
 import httpx
 import pyoxigraph
 from fastapi.concurrency import run_in_threadpool
 from rdflib import Namespace, Graph, URIRef, Literal, BNode
-from starlette.requests import Request
 
 from prez.config import settings
 
@@ -87,20 +87,23 @@ class RemoteSparqlRepo(Repo):
         await response.aread()
         return context, response.json()["results"]["bindings"]
 
-    async def sparql(self, request: Request):
+    async def sparql(
+        self, query: str, raw_headers: list[tuple[bytes, bytes]], method: str = "GET"
+    ):
         """Sends a starlette Request object (containing a SPARQL query in the URL parameters) to a proxied SPARQL
         endpoint."""
-        url = httpx.URL(
-            url=settings.sparql_endpoint, query=request.url.query.encode("utf-8")
-        )
+        # TODO: This only supports SPARQL GET requests because the query is sent as a query parameter.
+
+        query_escaped_as_bytes = f"query={quote_plus(query)}".encode("utf-8")
+
+        # TODO: Global app settings should be passed in as a function argument.
+        url = httpx.URL(url=settings.sparql_endpoint, query=query_escaped_as_bytes)
         headers = []
-        for header in request.headers.raw:
+        for header in raw_headers:
             if header[0] != b"host":
                 headers.append(header)
         headers.append((b"host", str(url.host).encode("utf-8")))
-        rp_req = self.async_client.build_request(
-            request.method, url, headers=headers, content=request.stream()
-        )
+        rp_req = self.async_client.build_request(method, url, headers=headers)
         return await self.async_client.send(rp_req, stream=True)
 
 

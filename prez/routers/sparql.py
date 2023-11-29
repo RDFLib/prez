@@ -16,9 +16,13 @@ PREZ = Namespace("https://prez.dev/")
 
 router = APIRouter(tags=["SPARQL"])
 
+# TODO: Split this into two routes on the same /sparql path.
+#  One to handle SPARQL GET requests, the other for SPARQL POST requests.
 
-@router.api_route("/sparql", methods=["GET"])
+
+@router.get("/sparql")
 async def sparql_endpoint(
+    query: str,
     request: Request,
     repo: Repo = Depends(get_repo),
 ):
@@ -48,7 +52,7 @@ async def sparql_endpoint(
             headers=prof_and_mt_info.profile_headers,
         )
     else:
-        response = await repo.sparql(request)
+        response = await repo.sparql(query, request.headers.raw)
         return StreamingResponse(
             response.aiter_raw(),
             status_code=response.status_code,
