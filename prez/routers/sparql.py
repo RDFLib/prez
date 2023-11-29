@@ -1,6 +1,10 @@
 import io
+import logging
+from pprint import pprint
 
+import httpx
 from fastapi import APIRouter, Depends
+from fastapi.responses import JSONResponse, Response
 from rdflib import Namespace, Graph
 from starlette.background import BackgroundTask
 from starlette.datastructures import Headers
@@ -16,6 +20,7 @@ PREZ = Namespace("https://prez.dev/")
 
 router = APIRouter(tags=["SPARQL"])
 
+log = logging.getLogger(__name__)
 
 @router.api_route("/sparql", methods=["GET"])
 async def sparql_endpoint(
@@ -48,10 +53,19 @@ async def sparql_endpoint(
             headers=prof_and_mt_info.profile_headers,
         )
     else:
-        response = await repo.sparql(request)
-        return StreamingResponse(
-            response.aiter_raw(),
-            status_code=response.status_code,
-            headers=dict(response.headers),
-            background=BackgroundTask(response.aclose),
-        )
+        query_result = await repo.sparql(request)
+        if isinstance(query_result, dict):
+            return JSONResponse(content=query_result)
+        elif isinstance(query_result, Graph):
+            return Response(
+                content=query_result.serialize(format="text/turtle"),
+                status_code=200
+            )
+        else:
+            return StreamingResponse(
+                query_result.aiter_raw(),
+                status_code=query_result.status_code,
+                headers=dict(query_result.headers),
+                background=BackgroundTask(query_result.aclose),
+            )
+
