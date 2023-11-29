@@ -24,4 +24,6 @@ search_methods = {}
 
 store = Store()
 
+system_store = Store()
+
 oxrdflib_store = Graph(store="Oxigraph")

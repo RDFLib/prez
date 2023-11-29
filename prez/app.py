@@ -14,6 +14,8 @@ from prez.dependencies import (
     get_pyoxi_store,
     load_local_data_to_oxigraph,
     get_oxrdflib_store,
+    get_system_store,
+    load_profile_data_to_oxigraph,
 )
 from prez.models.model_exceptions import (
     ClassNotFoundException,
@@ -144,6 +146,9 @@ async def app_startup():
     await count_objects(app.state.repo)
     await populate_api_info()
     await add_common_context_ontologies_to_tbox_cache()
+
+    app.state.pyoxi_system_store = get_system_store()
+    await load_profile_data_to_oxigraph(app.state.pyoxi_system_store)
 
 
 @app.on_event("shutdown")
