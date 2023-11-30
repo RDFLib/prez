@@ -48,3 +48,31 @@ def test_profile(client):
     r = client.get("/profiles")
     g = Graph().parse(data=r.text)
     assert (URIRef("https://prez.dev/profile/prez"), RDF.type, PROF.Profile) in g
+
+
+def test_cp_profile(client):
+    # check the example remote profile is loaded
+    r = client.get("/profiles/prez:CatPrezProfile")
+    g = Graph().parse(data=r.text)
+    assert (URIRef("https://prez.dev/CatPrezProfile"), RDF.type, PROF.Profile) in g
+
+
+def test_sp_profile(client):
+    # check the example remote profile is loaded
+    r = client.get("/profiles/prez:SpacePrezProfile")
+    g = Graph().parse(data=r.text)
+    assert (URIRef("https://prez.dev/SpacePrezProfile"), RDF.type, PROF.Profile) in g
+
+
+def test_vp_profile(client):
+    # check the example remote profile is loaded
+    r = client.get("/profiles/prez:VocPrezProfile")
+    g = Graph().parse(data=r.text)
+    assert (URIRef("https://prez.dev/VocPrezProfile"), RDF.type, PROF.Profile) in g
+
+
+def test_pp_profile(client):
+    # check the example remote profile is loaded
+    r = client.get("/profiles/prez:profiles")
+    g = Graph().parse(data=r.text)
+    assert (URIRef("https://prez.dev/profiles"), RDF.type, PROF.Profile) in g
