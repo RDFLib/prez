@@ -48,7 +48,7 @@ class Repo(ABC):
         return g, tabular_results
 
     @abstractmethod
-    def sparql(self, request):
+    def sparql(self, query: str, raw_headers: list[tuple[bytes, bytes]], method: str = "GET"):
         pass
 
 

@@ -53,13 +53,6 @@ async def sparql_endpoint(
             headers=prof_and_mt_info.profile_headers,
         )
     else:
-        # response = await repo.sparql(query, request.headers.raw)
-        # return StreamingResponse(
-        #     response.aiter_raw(),
-        #     status_code=response.status_code,
-        #     headers=dict(response.headers),
-        #     background=BackgroundTask(response.aclose),
-        # )
         query_result = await repo.sparql(query, request.headers.raw)
         if isinstance(query_result, dict):
             return JSONResponse(content=query_result)
