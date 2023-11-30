@@ -155,11 +155,8 @@ class PyoxigraphRepo(Repo):
         # only return the bindings from the results.
         return context, results_dict["results"]["bindings"]
 
-    def _sparql(self, request: Request) -> dict | Graph:
-        try:
-            query = request.query_params["query"]
-        except KeyError:
-            raise KeyError(f"No query was provided in the request parameters.")
+    def _sparql(self, query: str) -> dict | Graph | bool:
+        """Submit a sparql query to the pyoxigraph store and return the formatted results."""
         results = self.pyoxi_store.query(query)
         if isinstance(results, pyoxigraph.QuerySolutions):  # a SELECT query result
             results_dict = self._handle_query_solution_results(results)
@@ -181,8 +178,8 @@ class PyoxigraphRepo(Repo):
             self._sync_tabular_query_to_table, query, context
         )
 
-    async def sparql(self, request: Request) -> list | Graph:
-        return self._sparql(request)
+    async def sparql(self, query: str, raw_headers: list[tuple[bytes, bytes]], method: str = "") -> list | Graph | bool:
+        return self._sparql(query)
 
     @staticmethod
     def _pyoxi_result_type(term) -> str:
