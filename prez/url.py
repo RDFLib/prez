@@ -10,11 +10,11 @@ def order_urls(order: list[str], values: list[str]):
     >>> preferred_order = [
     >>>     "/v/vocab",
     >>>     "/v/collection",
-    >>>     "/s/datasets",
+    >>>     "/s/catalogs",
     >>>     "/c/catalogs"
     >>> ]
     >>> urls = [
-    >>>     "/s/datasets/blah",
+    >>>     "/s/catalogs/blah",
     >>>     "/object/blah",
     >>>     "/v/collection/123",
     >>>     "/c/catalogs/321",
@@ -24,7 +24,7 @@ def order_urls(order: list[str], values: list[str]):
     >>> assert sorted_urls == [
     >>>     "/v/vocab/some-scheme",
     >>>     "/v/collection/123",
-    >>>     "/s/datasets/blah",
+    >>>     "/s/catalogs/blah",
     >>>     "/c/catalogs/321",
     >>>     "/object/blah"
     >>> ]

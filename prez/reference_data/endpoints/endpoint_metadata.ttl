@@ -1,0 +1,75 @@
+@prefix ex: <http://example.org/ns#> .
+@prefix ogce: <https://prez.dev/endpoint/extended-ogc-records/> .
+@prefix ont: <https://prez.dev/ont/> .
+@prefix prez: <https://prez.dev/> .
+@prefix sys: <https://prez.dev/endpoint/system/> .
+
+sys:profile-listing
+    a ont:ListingEndpoint , ont:SystemEndpoint ;
+    ont:relevantShapes ex:Profiles ;
+    .
+
+sys:profile-object
+    a ont:ObjectEndpoint , ont:SystemEndpoint ;
+    ont:relevantShapes ex:Profiles ;
+    .
+
+sys:object
+    a ont:ObjectEndpoint , ont:SystemEndpoint ;
+    ont:relevantShapes ex:Profiles ;
+    .
+
+ogce:cql-get
+    a ont:ListingEndpoint ;
+    ont:relevantShapes ex:CQL ;
+    .
+
+ogce:catalog-listing
+    a ont:ListingEndpoint ;
+    ont:relevantShapes ex:Catalogs ;
+.
+
+ogce:catalog-object
+    a ont:ObjectEndpoint ;
+    ont:relevantShapes ex:Catalogs ;
+.
+
+ogce:collection-listing
+    a ont:ListingEndpoint ;
+    ont:relevantShapes ex:Collections ;
+.
+
+ogce:collection-object
+    a ont:ObjectEndpoint ;
+    ont:relevantShapes ex:Collections ;
+.
+
+ogce:item-listing
+    a ont:ListingEndpoint ;
+    ont:relevantShapes ex:Feature , ex:ConceptSchemeConcept , ex:CollectionConcept , ex:Resource ;
+.
+
+ogce:item-object
+    a ont:ObjectEndpoint ;
+    ont:relevantShapes ex:Feature , ex:ConceptSchemeConcept , ex:CollectionConcept , ex:Resource ;
+.
+
+ogce:cql-queryables
+    a ont:ListingEndpoint ;
+    ont:relevantShapes ex:queryables ;
+.
+
+ogce:search
+    a ont:ListingEndpoint ;
+    ont:relevantShapes ex:search ;
+.
+
+ogce:top-concepts
+    a ont:ListingEndpoint ;
+    ont:relevantShapes ex:TopConcepts ;
+.
+
+ogce:narrowers
+    a ont:ListingEndpoint ;
+    ont:relevantShapes ex:Narrowers ;
+.

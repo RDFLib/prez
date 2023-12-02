@@ -1,10 +1,9 @@
 import logging
-import os
+import time
 from textwrap import dedent
 
 import uvicorn
 from fastapi import FastAPI
-from fastapi.openapi.utils import get_openapi
 from rdflib import Graph
 from starlette.middleware.cors import CORSMiddleware
 
@@ -15,30 +14,27 @@ from prez.dependencies import (
     load_local_data_to_oxigraph,
     get_oxrdflib_store,
     get_system_store,
-    load_profile_data_to_oxigraph,
+    load_system_data_to_oxigraph,
+    get_annotations_store,
+    load_annotations_data_to_oxigraph,
 )
 from prez.models.model_exceptions import (
     ClassNotFoundException,
     URINotFoundException,
     NoProfilesException,
 )
-from prez.routers.catprez import router as catprez_router
-from prez.routers.cql import router as cql_router
+from prez.repositories import RemoteSparqlRepo, PyoxigraphRepo, OxrdflibRepo
 from prez.routers.identifier import router as identifier_router
 from prez.routers.management import router as management_router
-from prez.routers.object import router as object_router
-from prez.routers.profiles import router as profiles_router
+from prez.routers.ogc_router import router as ogc_records_router
 from prez.routers.search import router as search_router
-from prez.routers.spaceprez import router as spaceprez_router
 from prez.routers.sparql import router as sparql_router
-from prez.routers.vocprez import router as vocprez_router
 from prez.services.app_service import (
     healthcheck_sparql_endpoints,
     count_objects,
     create_endpoints_graph,
     populate_api_info,
-    add_prefixes_to_prefix_graph,
-    add_common_context_ontologies_to_tbox_cache,
+    prefix_initialisation,
 )
 from prez.services.exception_catchers import (
     catch_400,
@@ -50,8 +46,6 @@ from prez.services.exception_catchers import (
 )
 from prez.services.generate_profiles import create_profiles_graph
 from prez.services.prez_logging import setup_logger
-from prez.services.search_methods import get_all_search_methods
-from prez.sparql.methods import RemoteSparqlRepo, PyoxigraphRepo, OxrdflibRepo
 
 app = FastAPI(
     exception_handlers={
@@ -64,19 +58,10 @@ app = FastAPI(
     }
 )
 
-
-app.include_router(cql_router)
 app.include_router(management_router)
-app.include_router(object_router)
 app.include_router(sparql_router)
 app.include_router(search_router)
-app.include_router(profiles_router)
-if "CatPrez" in settings.prez_flavours:
-    app.include_router(catprez_router)
-if "VocPrez" in settings.prez_flavours:
-    app.include_router(vocprez_router)
-if "SpacePrez" in settings.prez_flavours:
-    app.include_router(spaceprez_router)
+app.include_router(ogc_records_router)
 app.include_router(identifier_router)
 
 
@@ -100,18 +85,6 @@ app.add_middleware(
 )
 
 
-def prez_open_api_metadata():
-    return get_openapi(
-        title=settings.prez_title,
-        version=settings.prez_version,
-        description=settings.prez_desc,
-        routes=app.routes,
-    )
-
-
-app.openapi = prez_open_api_metadata
-
-
 @app.on_event("startup")
 async def app_startup():
     """
@@ -119,6 +92,7 @@ async def app_startup():
     are available. Initial caching can be triggered within the try block. NB this function does not check that data is
     appropriately configured at the SPARQL endpoint(s), only that the SPARQL endpoint(s) are reachable.
     """
+    a = time.time()
     setup_logger(settings)
     log = logging.getLogger("prez")
     log.info("Starting up")
@@ -139,16 +113,19 @@ async def app_startup():
             "SPARQL_REPO_TYPE must be one of 'pyoxigraph', 'oxrdflib' or 'remote'"
         )
 
-    await add_prefixes_to_prefix_graph(app.state.repo)
-    await get_all_search_methods(app.state.repo)
+    await prefix_initialisation(app.state.repo)
     await create_profiles_graph(app.state.repo)
     await create_endpoints_graph(app.state.repo)
     await count_objects(app.state.repo)
     await populate_api_info()
-    await add_common_context_ontologies_to_tbox_cache()
 
     app.state.pyoxi_system_store = get_system_store()
-    await load_profile_data_to_oxigraph(app.state.pyoxi_system_store)
+    await load_system_data_to_oxigraph(app.state.pyoxi_system_store)
+
+    app.state.pyoxi_annotations_store = get_annotations_store()
+    await load_annotations_data_to_oxigraph(app.state.pyoxi_annotations_store)
+
+    log.info(f"Startup took {time.time() - a:.1f} seconds")
 
 
 @app.on_event("shutdown")

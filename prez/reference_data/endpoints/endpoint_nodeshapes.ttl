@@ -1,0 +1,157 @@
+@prefix ont: <https://prez.dev/ont/> .
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <http://example.org/ns#> .
+@prefix geo: <http://www.opengis.net/ont/geosparql#> .
+@prefix prez: <https://prez.dev/> .
+@prefix prof: <http://www.w3.org/ns/dx/prof/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix shext: <http://example.com/shacl-extension#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#> .
+
+ex:Catalogs
+    a sh:NodeShape ;
+    ont:hierarchyLevel 1 ;
+    sh:targetClass dcat:Catalog ;
+    sh:property [
+        sh:path dcterms:hasPart ;
+        sh:or (
+            [ sh:class dcat:Resource ]
+            [ sh:class geo:FeatureCollection ]
+            [ sh:class skos:ConceptScheme ]
+            [ sh:class skos:Collection ]
+        ) ;
+    ] .
+
+ex:Collections
+    a sh:NodeShape ;
+    ont:hierarchyLevel 2 ;
+    sh:targetClass geo:FeatureCollection , skos:ConceptScheme , skos:Collection , dcat:Resource ;
+    sh:property [
+        sh:path [ sh:inversePath dcterms:hasPart ] ;
+        sh:class dcat:Catalog ;
+    ] .
+
+ex:Feature
+    a sh:NodeShape ;
+    ont:hierarchyLevel 3 ;
+    sh:targetClass geo:Feature ;
+    sh:property [
+        sh:path [ sh:inversePath rdfs:member ] ;
+        sh:class geo:FeatureCollection ;
+    ] , [
+        sh:path ( [sh:inversePath rdfs:member ] [ sh:inversePath dcterms:hasPart ] );
+        sh:class dcat:Catalog ;
+    ] .
+
+ex:ConceptSchemeConcept
+    a sh:NodeShape ;
+    ont:hierarchyLevel 3 ;
+    sh:targetClass skos:Concept ;
+    sh:property [
+        sh:path skos:inScheme ;
+        sh:class skos:ConceptScheme ;
+    ] , [
+        sh:path ( skos:inScheme [ sh:inversePath dcterms:hasPart ] );
+        sh:class dcat:Catalog ;
+    ] .
+
+ex:CollectionConcept
+    a sh:NodeShape ;
+    ont:hierarchyLevel 3 ;
+    sh:targetClass skos:Concept ;
+    sh:property [
+        sh:path [ sh:inversePath skos:member ] ;
+        sh:class skos:Collection ;
+    ] , [
+        sh:path ( [ sh:inversePath skos:member ] [ sh:inversePath dcterms:hasPart ] );
+        sh:class dcat:Catalog ;
+    ] .
+
+ex:Resource
+    a sh:NodeShape ;
+    ont:hierarchyLevel 3 ;
+    sh:targetClass rdf:Resource ;
+    sh:property [
+        sh:path [ sh:inversePath dcterms:hasPart ] ;
+        sh:class dcat:Resource ;
+    ] , [
+        sh:path ( [ sh:inversePath dcterms:hasPart ] [ sh:inversePath dcterms:hasPart ] );
+        sh:class dcat:Catalog ;
+    ] .
+
+ex:Profiles
+    a sh:NodeShape ;
+    ont:hierarchyLevel 1 ;
+    sh:targetClass prof:Profile ;
+.
+
+ex:queryables a sh:NodeShape ;
+    ont:hierarchyLevel 1 ;
+    sh:rule [ sh:subject "?focus_node" ;
+          sh:predicate <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ;
+          sh:object <https://prez.dev/Queryable> ] ;
+    ont:deliversClasses prez:QueryablesList ;
+    sh:target [ sh:select """SELECT DISTINCT ?focus_node
+             WHERE {
+             ?s a ?class ;
+                  ?focus_node ?o .
+              VALUES ?class {
+              dcat:Catalog
+              dcat:Dataset
+              dcat:Resource
+              skos:ConceptScheme
+              skos:Collection
+              skos:Concept
+              geo:FeatureCollection
+              geo:Feature
+              rdf:Resource
+              }
+                    }""" ] ;
+    shext:limit 100 ;
+    shext:offset 0 ;
+.
+
+ex:AltProfilesForListing
+    a sh:NodeShape ;
+    ont:hierarchyLevel 1 ;
+    sh:targetClass prez:ListingProfile ;
+    sh:property [
+        sh:path altr-ext:constrainsClass ;
+    ]
+.
+
+ex:AltProfilesForObject
+    a sh:NodeShape ;
+    ont:hierarchyLevel 1 ;
+    sh:targetClass prez:ObjectProfile ;
+    sh:property [
+        sh:path altr-ext:constrainsClass ;
+    ]
+.
+
+ex:Object
+    a sh:NodeShape ;
+    ont:hierarchyLevel 1 ;
+    .
+
+ex:TopConcepts
+    a sh:NodeShape ;
+    sh:targetClass skos:Concept ;
+    ont:hierarchyLevel 1 ;
+.
+
+ex:Narrowers
+    a sh:NodeShape ;
+    sh:targetClass skos:Concept ;
+    ont:hierarchyLevel 1 ;
+.
+
+ex:CQL
+    a sh:NodeShape ;
+    sh:targetClass rdfs:Resource ;
+    ont:hierarchyLevel 1 ;
+    .

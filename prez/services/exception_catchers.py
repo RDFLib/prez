@@ -8,7 +8,6 @@ from prez.models.model_exceptions import (
     NoProfilesException,
 )
 
-
 async def catch_400(request: Request, exc: Exception):
     return JSONResponse(status_code=400, content=exc.__dict__)
 
@@ -27,8 +26,8 @@ async def catch_class_not_found_exception(
     return JSONResponse(
         status_code=404,
         content={
-            "error": "Not Found",
-            "detail": exc.message,
+            "error": "NO_CLASS",
+            "message": exc.message,
         },
     )
 
@@ -37,8 +36,8 @@ async def catch_uri_not_found_exception(request: Request, exc: URINotFoundExcept
     return JSONResponse(
         status_code=404,
         content={
-            "error": "Not Found",
-            "detail": exc.message,
+            "error": "NO_URI",
+            "message": exc.message,
         },
     )
 
@@ -47,7 +46,7 @@ async def catch_no_profiles_exception(request: Request, exc: NoProfilesException
     return JSONResponse(
         status_code=404,
         content={
-            "error": "Not Found",
-            "detail": exc.message,
+            "error": "NO_PROFILES",
+            "message": exc.message,
         },
     )

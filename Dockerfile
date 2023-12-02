@@ -31,7 +31,7 @@ RUN curl -sSL https://install.python-poetry.org | python && \
     chmod a+x /opt/poetry/bin/poetry
 
 WORKDIR /app
-COPY poetry.lock pyproject.toml connegp-0.1.5-py3-none-any.whl ./
+COPY poetry.lock pyproject.toml ./
 RUN poetry install --only main --no-root --no-ansi
 
 FROM python:3.11-slim-buster
@@ -44,6 +44,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PATH="/app/.venv/bin:$PATH"
 WORKDIR /app
 COPY ./prez /app/prez
+COPY ./temp /app/temp
+COPY ./test_data /app/test_data
 # copy the pyproject.toml as the application reads the version from here
 COPY pyproject.toml .
 
