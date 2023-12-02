@@ -75,6 +75,8 @@ To run the development server (with auto-reload on code changes):
 poetry run python main.py
 ```
 
+In order for Prez to work, a triple store such as [Apache Jena](https://jena.apache.org/) or [GraphDB](https://www.ontotext.com/products/graphdb/) must be available for Prez to interface with.
+Connection to the triple store is done via [environment variables](#environment-variables).
 
 
 Prez runs as a standard FastAPI application, so for all the normal HOW TO running questions, see FastAPI's documentation:
@@ -83,7 +85,8 @@ Prez runs as a standard FastAPI application, so for all the normal HOW TO runnin
 
 ### Environment Variables
 
-You need to configure at least 1 environment variable for Prez to run. The full set of available variables are found in `prez/config.py`.
+You need to configure at least one environment variable for Prez to run.
+The full set of available variables are found in `prez/config.py`.
 
 #### Minimal
 
