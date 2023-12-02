@@ -4,7 +4,7 @@ from typing import FrozenSet
 
 from rdflib import Graph, URIRef, RDF, PROF, Literal
 
-from prez.cache import profiles_graph_cache
+from prez.cache import profiles_graph_cache, prefix_graph
 from prez.config import settings
 from prez.models.model_exceptions import NoProfilesException
 from prez.reference_data.prez_ns import PREZ
@@ -85,7 +85,9 @@ def get_profiles_and_mediatypes(
     query = select_profile_mediatype(
         classes, requested_profile, requested_profile_token, requested_mediatype
     )
+    log.debug(f"ConnegP query: {query}")
     response = profiles_graph_cache.query(query)
+    log.debug(f"ConnegP response:{results_pretty_printer(response)}")
     if len(response.bindings[0]) == 0:
         raise NoProfilesException(classes)
     top_result = response.bindings[0]
@@ -98,6 +100,53 @@ def get_profiles_and_mediatypes(
         selected_class, response, profile, mediatype
     )
     return profile, mediatype, selected_class, profile_headers, avail_profile_uris
+
+
+def results_pretty_printer(response):
+    # Calculate max width for each column, including the new "#" column
+    max_widths = [
+        len(str(len(response.bindings)))
+    ]  # length of the highest row number as a string
+    for header in response.vars:
+        max_width = max(
+            len(header.n3(prefix_graph.namespace_manager)),
+            max(
+                len(
+                    row[header].n3(prefix_graph.namespace_manager)
+                    if row[header]
+                    else ""
+                )
+                for row in response.bindings
+            ),
+        )
+        max_widths.append(max_width)
+
+    # Header row
+    header_row = "\n" + " | ".join(
+        ["#".ljust(max_widths[0])]
+        + [
+            str(header).ljust(max_widths[i + 1])
+            for i, header in enumerate(response.vars)
+        ]
+    )
+    pp_string = header_row + "\n"
+    pp_string += ("-" * len(header_row)) + "\n"  # Divider
+
+    # Data rows
+    row_number = 1
+    for row in response.bindings:
+        row_data = [str(row_number).ljust(max_widths[0])]
+        row_data += [
+            (
+                row[header].n3(prefix_graph.namespace_manager) if row[header] else ""
+            ).ljust(max_widths[i + 1])
+            for i, header in enumerate(response.vars)
+        ]
+        formatted_row = " | ".join(row_data)
+        pp_string += formatted_row + "\n"
+        row_number += 1
+
+    return pp_string
 
 
 def generate_profiles_headers(selected_class, response, profile, mediatype):

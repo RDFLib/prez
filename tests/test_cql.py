@@ -1,0 +1,54 @@
+import json
+from pathlib import Path
+
+import pytest
+from fastapi.testclient import TestClient
+from pyoxigraph.pyoxigraph import Store
+
+from prez.app import app
+from prez.dependencies import get_repo
+from prez.sparql.methods import Repo, PyoxigraphRepo
+
+
+@pytest.fixture(scope="session")
+def test_store() -> Store:
+    # Create a new pyoxigraph Store
+    store = Store()
+
+    for file in Path(__file__).parent.glob("../tests/data/*/input/*.ttl"):
+        store.load(file.read_bytes(), "text/turtle")
+
+    return store
+
+
+@pytest.fixture(scope="session")
+def test_repo(test_store: Store) -> Repo:
+    # Create a PyoxigraphQuerySender using the test_store
+    return PyoxigraphRepo(test_store)
+
+
+@pytest.fixture(scope="session")
+def client(test_repo: Repo) -> TestClient:
+    # Override the dependency to use the test_repo
+    def override_get_repo():
+        return test_repo
+
+    app.dependency_overrides[get_repo] = override_get_repo
+
+    with TestClient(app) as c:
+        yield c
+
+    # Remove the override to ensure subsequent tests are unaffected
+    app.dependency_overrides.clear()
+
+
+@pytest.mark.parametrize(
+    "cql_json_filename",
+    ["example01.json", "example02.json", "example03.json"],
+)
+def test_simple(client, cql_json_filename):
+    cql_json = Path(__file__).parent / f"data/cql/input/{cql_json_filename}"
+    cql_json_as_json = json.loads(cql_json.read_text())
+    headers = {"content-type": "application/json"}
+    response = client.post("/cql", json=cql_json_as_json, headers=headers)
+    assert response.status_code == 200

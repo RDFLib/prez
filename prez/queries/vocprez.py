@@ -41,7 +41,7 @@ def get_concept_scheme_query(iri: str, bnode_depth: int) -> str:
             
             {% for i in range(bnode_depth) %}
             ?o{{ i }} ?p{{ i + 1 }} ?o{{ i + 1 }} .
-            FILTER (isBlank(?o0))
+            FILTER (isBlank(?0o))
             {% endfor %}
         }
     """

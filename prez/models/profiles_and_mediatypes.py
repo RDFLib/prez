@@ -1,6 +1,6 @@
 from typing import FrozenSet, Optional
 
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel, model_validator
 from rdflib import Namespace, URIRef
 from starlette.requests import Request
 
@@ -11,6 +11,9 @@ PREZ = Namespace("https://prez.dev/")
 
 
 class ProfilesMediatypesInfo(BaseModel):
+    class Config:
+        arbitrary_types_allowed = True
+
     request: Request  # TODO slim down once connegp is refactored so the whole request doesn't need to be passed through
     classes: FrozenSet[URIRef]
     req_profiles: Optional[str] = None
@@ -22,29 +25,29 @@ class ProfilesMediatypesInfo(BaseModel):
     profile_headers: Optional[str] = None
     avail_profile_uris: Optional[str] = None
 
-    @root_validator
-    def populate_requested_types(cls, values):
-        request = values.get("request")
+    @model_validator(mode="after")
+    def populate_requested_types(self):
+        request = self.request
         (
-            values["req_profiles"],
-            values["req_profiles_token"],
-            values["req_mediatypes"],
+            self.req_profiles,
+            self.req_profiles_token,
+            self.req_mediatypes,
         ) = get_requested_profile_and_mediatype(request)
-        return values
+        return self
 
-    @root_validator
-    def populate_profile_and_mediatype(cls, values):
-        req_profiles = values.get("req_profiles")
-        req_profiles_token = values.get("req_profiles_token")
-        req_mediatypes = values.get("req_mediatypes")
-        classes = values.get("classes")
+    @model_validator(mode="after")
+    def populate_profile_and_mediatype(self):
+        req_profiles = self.req_profiles
+        req_profiles_token = self.req_profiles_token
+        req_mediatypes = self.req_mediatypes
+        classes = self.classes
         (
-            values["profile"],
-            values["mediatype"],
-            values["selected_class"],
-            values["profile_headers"],
-            values["avail_profile_uris"],
+            self.profile,
+            self.mediatype,
+            self.selected_class,
+            self.profile_headers,
+            self.avail_profile_uris,
         ) = get_profiles_and_mediatypes(
             classes, req_profiles, req_profiles_token, req_mediatypes
         )
-        return values
+        return self

@@ -1,0 +1,17 @@
+PREFIX dcat: <http://www.w3.org/ns/dcat#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX endpoint: <https://prez.dev/endpoint/>
+PREFIX prez: <https://prez.dev/>
+PREFIX ont: <https://prez.dev/ont/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX sh: <http://www.w3.org/ns/shacl#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+
+endpoint:cql a ont:ListingEndpoint ;
+    ont:endpointTemplate "/cql" ;
+    ont:deliversClasses prez:CQLObjectList ;  # required to determine the correct profile for ConnegP
+    sh:targetClass rdfs:Class ;  # required for query construction
+.
+
+endpoint:cql ont:defaultLimit 20 ; ont:defaultOffset 0 .

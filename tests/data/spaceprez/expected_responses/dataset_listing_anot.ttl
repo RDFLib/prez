@@ -48,5 +48,6 @@ skos:prefLabel rdfs:label "preferred label"@en ;
     prez:link "/s/datasets/preztest:dataset" .
 
 dcat:Dataset rdfs:label "Dataset"@en ;
+    skos:definition "A collection of data, published or curated by a single source, and available for access or download in one or more represenations."@en ;
     prez:count 4 .
 

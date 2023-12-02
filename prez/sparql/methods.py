@@ -51,6 +51,9 @@ class Repo(ABC):
     def sparql(self, query: str, raw_headers: list[tuple[bytes, bytes]], method: str = "GET"):
         pass
 
+    @abstractmethod
+    async def tabular_query_to_table(self, query: str, context: URIRef = None):
+        pass
 
 class RemoteSparqlRepo(Repo):
     def __init__(self, async_client: httpx.AsyncClient):

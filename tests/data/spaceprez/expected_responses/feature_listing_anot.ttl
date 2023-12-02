@@ -1,18 +1,21 @@
 @prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix geo: <http://www.opengis.net/ont/geosparql#> .
 @prefix prez: <https://prez.dev/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <http://example.com/datasets/sandgate> dcterms:description "Example floods, roads, catchment and facilities in the Sandgate are"@en ;
     dcterms:identifier "exds:sandgate"^^prez:identifier ;
     dcterms:title "Sandgate example dataset"@en .
 
-<http://example.com/datasets/sandgate/catchments> dcterms:description "Hydrological catchments that are 'contracted', that is, guarenteed, to appear on multiple Geofabric surface hydrology data products"@en ;
+<http://example.com/datasets/sandgate/catchments> rdfs:label "Geofabric Contracted Catchments"@en ;
+    dcterms:description "Hydrological catchments that are 'contracted', that is, guarenteed, to appear on multiple Geofabric surface hydrology data products"@en ;
     dcterms:identifier "sndgt:catchments"^^prez:identifier ;
     dcterms:title "Geofabric Contracted Catchments"@en ;
     rdfs:member <http://example.com/datasets/sandgate/cc12109444>,
         <http://example.com/datasets/sandgate/cc12109445> ;
-    prez:count 2 ;
     prez:link "/s/datasets/exds:sandgate/collections/sndgt:catchments" .
 
 dcterms:description rdfs:label "Description"@en ;
@@ -23,15 +26,27 @@ dcterms:identifier rdfs:label "Identifier"@en ;
 
 dcterms:title rdfs:label "Title"@en .
 
+rdf:type rdfs:label "type" .
+
 rdfs:label rdfs:label "label" .
 
 rdfs:member rdfs:label "member" .
 
-<http://example.com/datasets/sandgate/cc12109444> rdfs:label "Contracted Catchment 12109444" ;
+skos:definition rdfs:label "definition"@en ;
+    skos:definition "A statement or formal explanation of the meaning of a concept."@en .
+
+skos:prefLabel rdfs:label "preferred label"@en ;
+    skos:definition "The preferred lexical label for a resource, in a given language."@en .
+
+<http://example.com/datasets/sandgate/cc12109444> a geo:Feature ;
+    rdfs:label "Contracted Catchment 12109444" ;
+    dcterms:identifier "sndgt:cc12109444"^^prez:identifier ;
     dcterms:identifier "sndgt:cc12109444"^^prez:identifier ;
     prez:link "/s/datasets/exds:sandgate/collections/sndgt:catchments/items/sndgt:cc12109444" .
 
-<http://example.com/datasets/sandgate/cc12109445> rdfs:label "Contracted Catchment 12109445" ;
+<http://example.com/datasets/sandgate/cc12109445> a geo:Feature ;
+    rdfs:label "Contracted Catchment 12109445" ;
+    dcterms:identifier "sndgt:cc12109445"^^prez:identifier ;
     dcterms:identifier "sndgt:cc12109445"^^prez:identifier ;
     prez:link "/s/datasets/exds:sandgate/collections/sndgt:catchments/items/sndgt:cc12109445" .
 

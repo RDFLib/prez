@@ -12,6 +12,9 @@ from prez.services.model_methods import get_classes
 
 
 class ObjectItem(BaseModel):
+    class Config:
+        arbitrary_types_allowed = True
+
     uri: Optional[URIRef] = None
     classes: Optional[FrozenSet[URIRef]] = frozenset([PROF.Profile])
     selected_class: Optional[URIRef] = None

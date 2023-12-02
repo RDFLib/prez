@@ -1,12 +1,17 @@
+import json
+import urllib
 from pathlib import Path
+from typing import Optional
 
+from pydantic import BaseModel
 import httpx
-from fastapi import Depends
+from fastapi import Depends, Request, HTTPException
 from pyoxigraph import Store
 
-from prez.cache import store, oxrdflib_store, system_store, profiles_graph_cache
+from prez.cache import store, oxrdflib_store
 from prez.config import settings
 from prez.sparql.methods import PyoxigraphRepo, RemoteSparqlRepo, OxrdflibRepo
+from temp.cql2sparql import CQLParser
 
 
 async def get_async_http_client():
@@ -20,10 +25,6 @@ async def get_async_http_client():
 
 def get_pyoxi_store():
     return store
-
-
-def get_system_store():
-    return system_store
 
 
 def get_oxrdflib_store():
@@ -42,17 +43,6 @@ async def get_repo(
         return RemoteSparqlRepo(http_async_client)
 
 
-async def get_system_repo(
-    pyoxi_store: Store = Depends(get_system_store),
-):
-    """
-    A pyoxigraph Store with Prez system data including:
-    - Profiles
-    # TODO add and test other system data (endpoints etc.)
-    """
-    return PyoxigraphRepo(pyoxi_store)
-
-
 async def load_local_data_to_oxigraph(store: Store):
     """
     Loads all the data from the local data directory into the local SPARQL endpoint
@@ -61,10 +51,22 @@ async def load_local_data_to_oxigraph(store: Store):
         store.load(file.read_bytes(), "text/turtle")
 
 
-async def load_profile_data_to_oxigraph(store: Store):
-    """
-    Loads all the data from the local data directory into the local SPARQL endpoint
-    """
-    # TODO refactor to use the local files directly
-    graph_bytes = profiles_graph_cache.serialize(format="nt", encoding="utf-8")
-    store.load(graph_bytes, "application/n-triples")
+class CQLRequest(BaseModel):
+    cql: Optional[dict]
+
+
+async def cql_parser_dependency(request: Request):
+    try:
+        body = await request.json()
+        context = json.load(
+            (Path(__file__).parent.parent / "temp" / "default_cql_context.json").open()
+        )
+        cql_parser = CQLParser(cql=body, context=context)
+        cql_parser.generate_jsonld()
+        return cql_parser.cql_json
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON format.")
+    except Exception as e:  # Replace with your specific parsing exception
+        raise HTTPException(
+            status_code=400, detail="Invalid CQL format: Parsing failed."
+        )

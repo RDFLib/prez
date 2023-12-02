@@ -5,18 +5,20 @@ from rdflib import URIRef, Namespace, Literal
 
 from pydantic import BaseConfig
 
-BaseConfig.arbitrary_types_allowed = True
 
 PREZ = Namespace("https://prez.dev/")
 
 
 class SearchMethod(BaseModel):
+    class Config:
+        arbitrary_types_allowed = True
+
     uri: URIRef = None
     identifier: Literal = None
     title: Literal = None
     template_query: Template = None
-    top_level_listing = False
-    search_query = True
+    top_level_listing: bool = False
+    search_query: bool = True
     selected_class: URIRef = None
     populated_query: str = None
     link_constructor: str = "/object?uri="

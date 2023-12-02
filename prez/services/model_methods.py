@@ -3,6 +3,8 @@ from rdflib import URIRef
 from prez.cache import endpoints_graph_cache
 from prez.sparql.methods import Repo
 
+from prez.cache import endpoints_graph_cache
+from prez.sparql.methods import Repo
 
 async def get_classes(
     uri: URIRef, repo: Repo, endpoint: URIRef = None

@@ -138,7 +138,9 @@ async def add_prefixes_to_prefix_graph(repo: Repo):
 async def create_endpoints_graph(repo) -> Graph:
     flavours = ["CatPrez", "SpacePrez", "VocPrez"]
     added_anything = False
-    for f in (Path(__file__).parent.parent / "reference_data/endpoints").glob("*.ttl"):
+    for f in (Path(__file__).parent.parent / "reference_data/new_endpoints").glob(
+        "*.ttl"
+    ):
         # Check if file starts with any of the flavour prefixes
         matching_flavour = next(
             (flavour for flavour in flavours if f.name.startswith(flavour.lower())),

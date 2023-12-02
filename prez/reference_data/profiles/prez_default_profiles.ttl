@@ -8,6 +8,7 @@ PREFIX prof: <http://www.w3.org/ns/dx/prof/>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
+PREFIX shext: <http://example.com/shacl-extension#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
@@ -30,29 +31,19 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     dcterms:identifier "open" ;
     dcterms:description "An open profile which will return all direct properties for a resource." ;
     dcterms:title "Open profile" ;
-    altr-ext:constrainsClass prez:SPARQLQuery , prez:SearchResult ;
+    altr-ext:constrainsClass prez:SPARQLQuery , prez:SearchResult , prez:CQLObjectList ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
-    altr-ext:hasResourceFormat "application/json" ,
+    altr-ext:hasResourceFormat "application/ld+json" ,
         "application/ld+json" ,
+        "application/anot+ld+json" ,
         "application/rdf+xml" ,
         "text/anot+turtle" ,
         "text/turtle" ;
+    sh:property [
+        sh:path shext:allPredicateValues ;
+    ] ;
     .
 
-
-
-<http://www.opengis.net/spec/ogcapi-features-1/1.0/req/oas30>
-    a prof:Profile ;
-    dcterms:description "The OGC API Features specifies the behavior of Web APIs that provide access to features in a dataset in a manner independent of the underlying data store." ;
-    dcterms:identifier "oai"^^xsd:token ;
-    dcterms:title "OGC API Features" ;
-    altr-ext:constrainsClass
-        prez:Home ;
-    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
-    altr-ext:hasResourceFormat
-        "text/anot+turtle" ,
-        "application/geo+json" ;
-.
 
 altr-ext:alt-profile
     a prof:Profile ;
@@ -62,6 +53,7 @@ altr-ext:alt-profile
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,
+        "application/anot+ld+json" ,
         "application/rdf+xml" ,
         "text/anot+turtle" ,
         "text/turtle" ;
@@ -89,8 +81,11 @@ prez:profiles
     dcterms:identifier "profiles"^^xsd:token ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
-        "application/json" ,
-        "text/anot+turtle" ;
+        "application/ld+json" ,
+        "application/anot+ld+json" ,
+        "application/rdf+xml" ,
+        "text/anot+turtle" ,
+        "text/turtle" ;
     altr-ext:constrainsClass prof:Profile ;
 .
 
@@ -113,11 +108,4 @@ prez:profiles
         "application/rdf+xml" ,
         "text/anot+turtle" ,
         "text/turtle" ;
-    altr-ext:hasNodeShape [
-      a sh:NodeShape ;
-        sh:targetClass prez:ProfilesList ;
-        sh:path prez:link ,
-                dcterms:title ,
-                dcterms:description ;
-    ]
 .

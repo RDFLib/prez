@@ -115,7 +115,7 @@ def test_search_filter_to_focus_multiple(client: TestClient):
 
 
 @pytest.mark.xfail(
-    reason="This generates a valid query that has been tested in Fuseki, which RDFLib struggles with"
+    reason="This generates a valid query that has been tested in Fuseki, which RDFLib and Pyoxigraph cannot run(!)"
 )
 def test_search_focus_to_filter_multiple(client: TestClient):
     base_url = "/search"

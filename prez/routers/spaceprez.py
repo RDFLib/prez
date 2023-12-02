@@ -11,6 +11,8 @@ from prez.sparql.methods import Repo
 
 router = APIRouter(tags=["SpacePrez"])
 
+SP_EP = Namespace("https://prez.dev/endpoint/spaceprez/")
+
 
 @router.get("/s", summary="SpacePrez Home")
 async def spaceprez_profiles():
@@ -20,7 +22,7 @@ async def spaceprez_profiles():
 @router.get(
     "/s/datasets",
     summary="List Datasets",
-    name="https://prez.dev/endpoint/spaceprez/dataset-listing",
+    name=SP_EP["dataset-listing"],
 )
 async def list_datasets(
     request: Request,
@@ -36,7 +38,7 @@ async def list_datasets(
 @router.get(
     "/s/datasets/{dataset_curie}/collections",
     summary="List Feature Collections",
-    name="https://prez.dev/endpoint/spaceprez/feature-collection-listing",
+    name=SP_EP["feature-collection-listing"],
 )
 async def list_feature_collections(
     request: Request,
@@ -45,6 +47,7 @@ async def list_feature_collections(
     page: Optional[int] = 1,
     per_page: Optional[int] = 20,
 ):
+    endpoint_uri = SP_EP["feature-collection-listing"]
     dataset_uri = get_uri_for_curie_id(dataset_curie)
     return await listing_function(
         request=request,
@@ -58,7 +61,7 @@ async def list_feature_collections(
 @router.get(
     "/s/datasets/{dataset_curie}/collections/{collection_curie}/items",
     summary="List Features",
-    name="https://prez.dev/endpoint/spaceprez/feature-listing",
+    name=SP_EP["feature-listing"],
 )
 async def list_features(
     request: Request,
@@ -81,7 +84,7 @@ async def list_features(
 @router.get(
     "/s/datasets/{dataset_curie}",
     summary="Get Dataset",
-    name="https://prez.dev/endpoint/spaceprez/dataset",
+    name=SP_EP["dataset-object"]
 )
 async def dataset_item(
     request: Request,
@@ -94,7 +97,7 @@ async def dataset_item(
 @router.get(
     "/s/datasets/{dataset_curie}/collections/{collection_curie}",
     summary="Get Feature Collection",
-    name="https://prez.dev/endpoint/spaceprez/feature-collection",
+    name=SP_EP["feature-collection-object"],
 )
 async def feature_collection_item(
     request: Request,

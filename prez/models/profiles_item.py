@@ -13,6 +13,9 @@ PREZ = Namespace("https://prez.dev/")
 
 
 class ProfileItem(BaseModel):
+    class Config:
+        arbitrary_types_allowed = True
+
     uri: Optional[URIRef] = None
     classes: Optional[Set[URIRef]] = frozenset([PROF.Profile])
     id: Optional[str] = None
@@ -26,16 +29,16 @@ class ProfileItem(BaseModel):
     def __hash__(self):
         return hash(self.uri)
 
-    @root_validator
-    def populate(cls, values):
-        uri = values.get("uri")
-        id = values.get("id")
+    # @root_validator
+    def populate(self):
+        uri = self.uri
+        id = self.id
         assert uri or id
         if id:
-            values["uri"] = get_uri_for_curie_id(id)
+            self.uri = get_uri_for_curie_id(id)
         elif uri:
-            values["id"] = get_curie_id_for_uri(uri)
-        q = f"""SELECT ?class {{ <{values["uri"]}> a ?class }}"""
+            self.id = get_curie_id_for_uri(uri)
+        q = f"""SELECT ?class {{ <{self.uri}> a ?class }}"""
         r = profiles_graph_cache.query(q)
         if len(r.bindings) > 0:
             values["classes"] = frozenset([prof.get("class") for prof in r.bindings])

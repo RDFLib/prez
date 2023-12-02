@@ -1,17 +1,45 @@
+import logging
 from string import Template
 from typing import FrozenSet
 
-from rdflib import Graph, Literal, URIRef, DCTERMS
+from rdflib import Graph, Literal, URIRef, DCTERMS, BNode
 
 from prez.cache import endpoints_graph_cache, links_ids_graph_cache
 from prez.reference_data.prez_ns import PREZ
 from prez.services.curie_functions import get_curie_id_for_uri
+from prez.services.generate_profiles import results_pretty_printer
 from prez.services.model_methods import get_classes
 from prez.sparql.methods import Repo
 from prez.sparql.objects_listings import (
     get_endpoint_template_queries,
     generate_relationship_query,
 )
+from temp.shacl2sparql import ONT
+
+log = logging.getLogger(__name__)
+
+
+async def _add_prez_link_to_collection_page(
+    item_graph: Graph, item_uri: URIRef, request_url: str, endpoint_uri: URIRef
+):
+    """
+    1. get the request's URL; this will be the URL of the current object page
+    2. look up the endpoint that hasParentEndpoint the object endpoint in the endpoints graph cache
+    3. take the fragment (suffix) of the endpoint template for the child endpoint identified in step 2
+    4. append the fragment to the URL from step 1
+    """
+    child_endpoint = endpoints_graph_cache.value(
+        predicate=ONT.parentEndpoint, object=endpoint_uri
+    )
+    child_endpoint_template = endpoints_graph_cache.value(
+        subject=child_endpoint, predicate=ONT.endpointTemplate
+    )
+    if child_endpoint_template:
+        last_part_of_url = child_endpoint_template.split("/")[-1]
+        collections_url = f"{request_url}/{last_part_of_url}"
+        bnode = BNode()
+        item_graph.add((item_uri, PREZ.members, bnode))
+        item_graph.add((bnode, PREZ.link, Literal(collections_url)))
 
 
 async def _add_prez_links(graph: Graph, repo):

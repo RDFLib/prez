@@ -10,11 +10,11 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX shext: <http://example.com/shacl-extension#>
 
 
 prez:SpacePrezProfile
     a prof:Profile ;
-    prez:supportedSearchMethod prez:exactMatch , prez:jenaFTName ;
     dcterms:identifier "spaceprez"^^xsd:token ;
     dcterms:description "A system profile for SpacePrez" ;
     skos:prefLabel "SpacePrez profile" ;
@@ -27,24 +27,90 @@ prez:SpacePrezProfile
     ] , [
         a sh:NodeShape ;
         sh:targetClass geo:FeatureCollection ;
-        altr-ext:hasDefaultProfile <http://www.opengis.net/spec/ogcapi-features-1/1.0/req/oas30>
+        altr-ext:hasDefaultProfile prez:FeatureCollectionProfile
     ] , [
         a sh:NodeShape ;
         sh:targetClass geo:Feature ;
-        altr-ext:hasDefaultProfile <http://www.opengis.net/spec/ogcapi-features-1/1.0/req/oas30>
+        altr-ext:hasDefaultProfile prez:FeatureProfile
     ] , [
         a sh:NodeShape ;
         sh:targetClass prez:DatasetList ;
-        altr-ext:hasDefaultProfile <https://www.w3.org/TR/vocab-dcat/>
+        altr-ext:hasDefaultProfile <https://w3id.org/profile/mem>
     ] , [
         a sh:NodeShape ;
         sh:targetClass prez:FeatureCollectionList ;
-        altr-ext:hasDefaultProfile <http://www.opengis.net/spec/ogcapi-features-1/1.0/req/oas30>
+        altr-ext:hasDefaultProfile prez:GeoListingProfile
     ] , [
         a sh:NodeShape ;
         sh:targetClass prez:FeatureList ;
-        altr-ext:hasDefaultProfile <http://www.opengis.net/spec/ogcapi-features-1/1.0/req/oas30>
+        altr-ext:hasDefaultProfile prez:GeoListingProfile
     ]
+.
+
+prez:FeatureCollectionProfile a prof:Profile ;
+    dcterms:description "A profile for GeoSPARQL FeatureCollections" ;
+    dcterms:identifier "geofc"^^xsd:token ;
+    dcterms:title "Feature Collection Profile" ;
+    altr-ext:constrainsClass geo:FeatureCollection ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
+    altr-ext:hasResourceFormat
+        "application/ld+json" ,
+        "application/anot+ld+json" ,
+        "application/rdf+xml" ,
+        "text/anot+turtle" ,
+        "text/turtle" ;
+        sh:targetClass geo:FeatureCollection ;
+        sh:property
+            [
+                sh:maxCount 0 ;
+                sh:path rdfs:member ;
+            ] ,
+            [
+                sh:path [ sh:inversePath rdfs:member ] ;
+            ] ;
+        shext:bnode-depth 2 ;
+.
+
+prez:FeatureProfile a prof:Profile ;
+    dcterms:description "A profile for GeoSPARQL Features" ;
+    dcterms:identifier "geofeat"^^xsd:token ;
+    dcterms:title "Feature Profile" ;
+    altr-ext:constrainsClass geo:Feature ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
+    altr-ext:hasResourceFormat
+        "application/ld+json" ,
+        "application/anot+ld+json" ,
+        "application/rdf+xml" ,
+        "text/anot+turtle" ,
+        "text/turtle" ;
+        sh:targetClass geo:Feature ;
+        sh:property
+            [
+                sh:path [ sh:inversePath rdfs:member ] ;
+            ] ,
+            [
+                sh:path shext:allPredicateValues ;
+            ] ;
+        shext:bnode-depth 2 ;
+.
+
+
+prez:GeoListingProfile a prof:Profile ;
+    dcterms:description "A profile for listing GeoSPARQL Features and FeatureCollections" ;
+    dcterms:identifier "geolisting"^^xsd:token ;
+    dcterms:title "Geo Listing Profile" ;
+    altr-ext:constrainsClass prez:FeatureCollectionList , prez:FeatureList ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
+    altr-ext:hasResourceFormat
+        "application/ld+json" ,
+        "application/anot+ld+json" ,
+        "application/rdf+xml" ,
+        "text/anot+turtle" ,
+        "text/turtle" ;
+    sh:property
+        [
+            sh:path [ sh:inversePath rdfs:member ] ;
+        ]
 .
 
 <http://www.opengis.net/def/geosparql>
@@ -56,6 +122,7 @@ prez:SpacePrezProfile
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,
+        "application/anot+ld+json" ,
         "application/rdf+xml" ,
         "text/anot+turtle" ,
         "text/turtle" ;
@@ -74,23 +141,12 @@ prez:SpacePrezProfile
         prez:FeatureList ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
+        "application/ld+json" ,
+        "application/anot+ld+json" ,
+        "application/rdf+xml" ,
         "text/anot+turtle" ,
+        "text/turtle" ,
         "application/geo+json" ;
-    altr-ext:hasNodeShape [
-        a sh:NodeShape ;
-        sh:targetClass geo:FeatureCollection ;
-        sh:path rdf:type,
-                dcterms:identifier,
-                dcterms:title,
-                geo:hasBoundingBox,
-                dcterms:provenance,
-                rdfs:label,
-                dcterms:description ;
-    ] ,
-    [  a sh:NodeShape ;
-        sh:targetClass geo:FeatureCollection , prez:FeatureCollectionList , prez:FeatureList ;
-        altr-ext:focusToChild rdfs:member ;
-    ]
 .
 
 <https://w3id.org/profile/dcat2null>
@@ -102,6 +158,7 @@ prez:SpacePrezProfile
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,
+        "application/anot+ld+json" ,
         "application/rdf+xml" ,
         "text/anot+turtle" ,
         "text/turtle" ;
@@ -114,17 +171,18 @@ prez:SpacePrezProfile
     dcterms:title "DCAT" ;
     altr-ext:constrainsClass
         dcat:Catalog ,
-        dcat:Dataset ,
-        prez:DatasetList ;
+        dcat:Dataset ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,
+        "application/anot+ld+json" ,
         "application/rdf+xml" ,
         "text/anot+turtle" ,
         "text/turtle" ;
-    altr-ext:hasNodeShape [
-      a sh:NodeShape ;
-        sh:targetClass dcat:Dataset ;
-        altr-ext:focusToChild rdfs:member ;
-    ]
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
+    sh:property [
+        sh:path shext:allPredicateValues ;
+    ] ;
+    shext:bnode-depth 2 ;
+    altr-ext:constrainsClass dcat:Catalog , dcat:Dataset ;
 .

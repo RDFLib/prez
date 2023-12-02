@@ -16,8 +16,6 @@ from prez.models.listing import ListingModel
 from prez.models.object_item import ObjectItem
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.queries.object import object_inbound_query, object_outbound_query
-from prez.reference_data.prez_ns import PREZ
-from prez.renderers.renderer import return_from_graph, return_profiles
 from prez.routers.identifier import get_iri_route
 from prez.services.curie_functions import get_curie_id_for_uri, get_uri_for_curie_id
 from prez.services.model_methods import get_classes

@@ -1,0 +1,24 @@
+{
+  "@version": 1.1,
+  "@base": "http://example.com/",
+  "@vocab": "http://example.com/vocab/",
+  "cql": "http://www.opengis.net/doc/IS/cql2/1.0/",
+  "sf": "http://www.opengis.net/ont/sf#",
+  "geo": "http://www.opengis.net/ont/geosparql#",
+  "landsat": "http://example.com/landsat/",
+  "ro": "http://example.com/ro/",
+  "args": {
+    "@container": "@set",
+    "@id": "cql:args"
+  },
+  "property": {
+    "@type": "@id",
+    "@id": "cql:property"
+  },
+  "op": {
+    "@id": "cql:operator"
+  },
+  "type": {
+    "@id": "sf:type"
+  }
+}

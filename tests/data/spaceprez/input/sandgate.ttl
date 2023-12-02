@@ -27,6 +27,7 @@ sand:catchments
     dcterms:description "Hydrological catchments that are 'contracted', that is, guarenteed, to appear on multiple Geofabric surface hydrology data products"@en ;
     dcterms:identifier "catchments"^^xsd:token ;
     dcterms:title "Geofabric Contracted Catchments"@en ;
+    rdfs:label "Geofabric Contracted Catchments"@en ;
     rdfs:member
         sand:cc12109444 ,
         sand:cc12109445 ;
@@ -41,6 +42,7 @@ sand:facilities
     dcterms:description "Sandgate area demo Facilities"@en ;
     dcterms:identifier "facilities"^^xsd:token ;
     dcterms:title "Sandgate are demo Facilities"@en ;
+    rdfs:label "Sandgate are demo Facilities"@en ;
     rdfs:member
         sand:bhc ,
         sand:bhca ,
@@ -63,6 +65,7 @@ sand:floods
     dcterms:description "Sandgate flooded areas"@en ;
     dcterms:identifier "floods"^^xsd:token ;
     dcterms:title "Sandgate flooded areas"@en ;
+    rdfs:label "Sandgate flooded areas"@en ;
     rdfs:member
         sand:f001 ,
         sand:f023 ,
@@ -79,6 +82,7 @@ sand:roads
     dcterms:description "Sandgate main roads"@en ;
     dcterms:identifier "roads"^^xsd:token ;
     dcterms:title "Sandgate main roads"@en ;
+    rdfs:label "Sandgate main roads"@en ;
     rdfs:member
         sand:bt ,
         sand:fp ;

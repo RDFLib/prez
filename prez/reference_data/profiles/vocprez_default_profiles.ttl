@@ -13,11 +13,11 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX reg: <http://purl.org/linked-data/registry#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX shext: <http://example.com/shacl-extension#>
 
 
 prez:VocPrezProfile
     a prof:Profile ;
-    prez:supportedSearchMethod prez:exactMatch , prez:skosPrefLabel , prez:skosWeighted , prez:jenaFTName ;
     dcterms:identifier "vocprez"^^xsd:token ;
     dcterms:description "A system profile for VocPrez" ;
     skos:prefLabel "VocPrez profile" ;
@@ -26,7 +26,7 @@ prez:VocPrezProfile
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
         sh:targetClass prez:SchemesList ;
-        altr-ext:hasDefaultProfile <https://w3id.org/profile/vocpub>
+        altr-ext:hasDefaultProfile <https://w3id.org/profile/vocpub/schemes-list>
     ] , [
         a sh:NodeShape ;
         sh:targetClass prez:VocPrezCollectionList ;
@@ -98,33 +98,57 @@ prez:VocPrezProfile
     ] ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
-        sh:targetClass skos:ConceptScheme ;
-        altr-ext:relativeProperties skos:broader , skos:narrower ;
-    ] ;
-    altr-ext:hasNodeShape [
-        a sh:NodeShape ;
         sh:targetClass skos:Concept ;
+            sh:property [
+        sh:path shext:allPredicateValues ;
+    ] ;
         altr-ext:focusToParent skos:inScheme ;
     ] ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
         sh:targetClass prez:SchemesList ;
-        sh:path dcterms:publisher, reg:status ;
-        sh:sequencePath (
-            prov:qualifiedDerivation
-            prov:hadRole
-        ) ;
-        sh:sequencePath (
-            prov:qualifiedDerivation
-            prov:entity
-        ) ;
+        sh:property [
+            sh:minCount 0 ;
+            sh:path (
+                sh:union (
+                  dcterms:publisher
+                  reg:status
+                )
+              )
+            ]
     ] ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
         sh:targetClass prez:VocPrezCollectionList ;
-        sh:path skos:definition ;
+                sh:property [
+            sh:minCount 0 ;
+            sh:path skos:definition ;
+            ] ;
     ] ;
 .
+
+<https://w3id.org/profile/vocpub/schemes-list> a prof:Profile , sh:NodeShape ;
+   dcterms:title "VocPub Schemes Listing Profile" ;
+   altr-ext:constrainsClass prez:SchemesList ;
+   altr-ext:hasResourceFormat "application/ld+json" ,
+        "application/ld+json" ,
+        "application/anot+ld+json" ,
+        "application/rdf+xml" ,
+        "text/anot+turtle" ,
+        "text/turtle" ;
+   sh:property [
+        sh:minCount 0 ;
+        sh:path (
+            sh:union (
+              dcterms:publisher
+              reg:status
+              ( prov:qualifiedDerivation prov:hadRole )
+              ( prov:qualifiedDerivation prov:entity )
+            )
+          )
+        ]
+   .
+
 
 <https://schema.org>
     a prof:Profile ;
@@ -138,6 +162,7 @@ prez:VocPrezProfile
     altr-ext:hasDefaultResourceFormat "text/turtle" ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,
+        "application/anot+ld+json" ,
         "application/rdf+xml" ,
         "text/anot+turtle" ,
         "text/turtle" ;
@@ -153,7 +178,6 @@ prez:VocPrezProfile
         prez:VocPrezCollectionList ,
         skos:ConceptScheme ,
         skos:Collection ;
-    altr-ext:hasLabelPredicate skos:prefLabel ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
         sh:targetClass skos:ConceptScheme ;

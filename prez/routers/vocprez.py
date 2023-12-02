@@ -2,8 +2,8 @@ import logging
 
 from fastapi import APIRouter, Request
 from fastapi import Depends
-from fastapi.responses import RedirectResponse
-from rdflib import URIRef, SKOS
+from fastapi import Depends
+from rdflib import URIRef
 from starlette.responses import PlainTextResponse
 
 from prez.bnode import get_bnode_depth
@@ -30,10 +30,42 @@ router = APIRouter(tags=["VocPrez"])
 
 log = logging.getLogger(__name__)
 
+vp_endpoints = {
+    "vocabs-listing": "https://prez.dev/endpoint/vocprez/vocabs-listing",
+    "collection-listing": "https://prez.dev/endpoint/vocprez/collection-listing",
+    "vocab-object": "https://prez.dev/endpoint/vocprez/vocab-object",
+    "collection-object": "https://prez.dev/endpoint/vocprez/collection-object",
+    "vocab-concept": "https://prez.dev/endpoint/vocprez/vocab-concept",
+    "collection-concept": "https://prez.dev/endpoint/vocprez/collection-concept",
+    "cs-children": "https://prez.dev/endpoint/vocprez/cs-children",
+    "cs-top-concepts": "https://prez.dev/endpoint/vocprez/cs-top-concepts",
+}
+
 
 @router.get("/v", summary="VocPrez Home")
 async def vocprez_home():
     return PlainTextResponse("VocPrez Home")
+
+
+@router.get(
+    "/v/vocab",
+    summary="List Vocabularies",
+    name=vp_endpoints["vocabs-listing"],
+)
+async def vocab_endpoint(
+        request: Request,
+        repo: Repo = Depends(get_repo),
+        page: int = 1,
+        per_page: int = 20,
+):
+    endpoint_uri = URIRef(vp_endpoints["vocabs-listing"])
+    return await listing_function_new(
+        request=request,
+        repo=repo,
+        endpoint_uri=endpoint_uri,
+        page=page,
+        per_page=per_page,
+    )
 
 
 @router.get(
@@ -55,7 +87,7 @@ async def vocab_endpoint(
 @router.get(
     "/v/collection",
     summary="List Collections",
-    name="https://prez.dev/endpoint/vocprez/collection-listing",
+    name=vp_endpoints["collection-listing"],
 )
 async def collection_endpoint(
     request: Request,
@@ -86,7 +118,7 @@ async def vocprez_scheme(
 @router.get(
     "/v/vocab/{concept_scheme_curie}",
     summary="Get a SKOS Concept Scheme",
-    name="https://prez.dev/endpoint/vocprez/collection",
+    name=vp_endpoints["vocab-object"],
     response_class=StreamingTurtleAnnotatedResponse,
     responses={
         200: {
@@ -133,6 +165,7 @@ async def concept_scheme_route(
 
 @router.get(
     "/v/vocab/{concept_scheme_curie}/top-concepts",
+    name=vp_endpoints["cs-top-concepts"],
     summary="Get a SKOS Concept Scheme's top concepts",
     response_class=StreamingTurtleAnnotatedResponse,
     responses={
@@ -141,11 +174,11 @@ async def concept_scheme_route(
         },
     },
 )
-async def concept_scheme_top_concepts_route(
-    request: Request,
-    concept_scheme_curie: str,
-    page: int = 1,
-    per_page: int = 20,
+async def cs_top_concepts_endpoint(
+        request: Request,
+        repo: Repo = Depends(get_repo),
+        page: int = 1,
+        per_page: int = 20,
     repo: Repo = Depends(get_repo),
 ):
     """Get a SKOS Concept Scheme's top concepts.
@@ -179,6 +212,7 @@ async def concept_scheme_top_concepts_route(
 
 @router.get(
     "/v/vocab/{concept_scheme_curie}/{concept_curie}/narrowers",
+    name=vp_endpoints["cs-children"],
     summary="Get a SKOS Concept's narrower concepts",
     response_class=StreamingTurtleAnnotatedResponse,
     responses={
@@ -222,7 +256,7 @@ async def concept_narrowers_route(
 @router.get(
     "/v/vocab/{concept_scheme_curie}/{concept_curie}",
     summary="Get a SKOS Concept",
-    name="https://prez.dev/endpoint/vocprez/vocab-concept",
+    name=vp_endpoints["vocab-concept"],
     response_class=StreamingTurtleAnnotatedResponse,
     responses={
         200: {
@@ -243,7 +277,7 @@ async def concept_route(
 @router.get(
     "/v/collection/{collection_curie}",
     summary="Get Collection",
-    name="https://prez.dev/endpoint/vocprez/collection",
+    name=vp_endpoints["collection-object"],
 )
 async def vocprez_collection(
     request: Request,
@@ -256,7 +290,7 @@ async def vocprez_collection(
 @router.get(
     "/v/collection/{collection_curie}/{concept_curie}",
     summary="Get Concept",
-    name="https://prez.dev/endpoint/vocprez/collection-concept",
+    name=vp_endpoints["collection-concept"],
 )
 async def vocprez_collection_concept(
     request: Request,

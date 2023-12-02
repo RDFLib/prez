@@ -9,11 +9,11 @@ python = "^3.11"
 uvicorn = "^0.21.1"
 httpx = "*"
 rdflib = "^6.3.1"
-connegp = { file = "connegp-0.1.5-py3-none-any.whl" }
+connegp = { file = "connegp-0.1.6-py3-none-any.whl" }
 async-lru = "^1.0.3"
 geojson-rewind = "^1.0.3"
 toml = "^0.10.2"
-fastapi = "^0.95.0"
+fastapi = "^0.104.0"
 python-multipart = "^0.0.6"
 jinja2 = "^3.1.2"
 oxrdflib = "^0.3.6"

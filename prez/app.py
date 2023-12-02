@@ -1,5 +1,4 @@
 import logging
-import os
 from textwrap import dedent
 
 import uvicorn
@@ -24,9 +23,11 @@ from prez.models.model_exceptions import (
 )
 from prez.routers.catprez import router as catprez_router
 from prez.routers.cql import router as cql_router
+from prez.routers.catprez import router as catprez_router
 from prez.routers.identifier import router as identifier_router
 from prez.routers.management import router as management_router
 from prez.routers.object import router as object_router
+from prez.routers.ogc_catprez import router as ogc_router
 from prez.routers.profiles import router as profiles_router
 from prez.routers.search import router as search_router
 from prez.routers.spaceprez import router as spaceprez_router
@@ -64,7 +65,6 @@ app = FastAPI(
     }
 )
 
-
 app.include_router(cql_router)
 app.include_router(management_router)
 app.include_router(object_router)
@@ -77,6 +77,8 @@ if "VocPrez" in settings.prez_flavours:
     app.include_router(vocprez_router)
 if "SpacePrez" in settings.prez_flavours:
     app.include_router(spaceprez_router)
+if "OGCPrez" in settings.prez_flavours:
+    app.include_router(ogc_router)
 app.include_router(identifier_router)
 
 
@@ -100,16 +102,16 @@ app.add_middleware(
 )
 
 
-def prez_open_api_metadata():
-    return get_openapi(
-        title=settings.prez_title,
-        version=settings.prez_version,
-        description=settings.prez_desc,
-        routes=app.routes,
-    )
-
-
-app.openapi = prez_open_api_metadata
+# def prez_open_api_metadata():
+#     return get_openapi(
+#         title=settings.prez_title,
+#         version=settings.prez_version,
+#         description=settings.prez_desc,
+#         routes=app.routes,
+#     )
+#
+#
+# app.openapi = prez_open_api_metadata
 
 
 @app.on_event("startup")

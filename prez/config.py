@@ -1,9 +1,10 @@
 from os import environ
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 import toml
-from pydantic import BaseSettings, root_validator
+from pydantic import root_validator
+from pydantic_settings import BaseSettings
 from rdflib import URIRef, DCTERMS, RDFS, SDO
 from rdflib.namespace import SKOS
 
@@ -19,9 +20,6 @@ class Settings(BaseSettings):
     host: Prez' host domain name. Usually 'localhost' but could be anything
     port: The port Prez is made accessible on. Default is 8000, could be 80 or anything else that your system has permission to use
     system_uri: Documentation property. An IRI for the Prez system as a whole. This value appears in the landing page RDF delivered by Prez ('/')
-    top_level_classes:
-    collection_classes:
-    base_classes:
     log_level:
     log_output:
     prez_title:
@@ -37,11 +35,8 @@ class Settings(BaseSettings):
     host: str = "localhost"
     port: int = 8000
     curie_separator: str = ":"
-    system_uri: Optional[str]
-    top_level_classes: Optional[dict]
-    collection_classes: Optional[dict]
+    system_uri: Optional[str] = f"{protocol}://{host}:{port}"
     order_lists_by_label: bool = True
-    base_classes: Optional[dict]
     prez_flavours: Optional[list] = ["SpacePrez", "VocPrez", "CatPrez", "ProfilesPrez"]
     label_predicates = [SKOS.prefLabel, DCTERMS.title, RDFS.label, SDO.name]
     description_predicates = [SKOS.definition, DCTERMS.description, SDO.description]
@@ -57,7 +52,7 @@ class Settings(BaseSettings):
         "A web framework API for delivering Linked Data. It provides read-only access to "
         "Knowledge Graph data which can be subset according to information profiles."
     )
-    prez_version: Optional[str]
+    prez_version: Optional[str] = None
     disable_prefix_generation: bool = False
 
     @root_validator()
@@ -70,15 +65,33 @@ class Settings(BaseSettings):
                 Path(Path(__file__).parent.parent) / "pyproject.toml"
             )["tool"]["poetry"]["version"]
 
-        return values
-
-    @root_validator()
-    def set_system_uri(cls, values):
-        if not values.get("system_uri"):
-            values["system_uri"] = URIRef(
-                f"{values['protocol']}://{values['host']}:{values['port']}"
-            )
-        return values
+    # @root_validator()
+    # def check_endpoint_enabled(cls, values):
+    #     if not values.get("sparql_endpoint"):
+    #         raise ValueError(
+    #             'A SPARQL endpoint must be specified using the "SPARQL_ENDPOINT" environment variable'
+    #         )
+    #     return values
+    #
+    # @root_validator()
+    # def get_version(cls, values):
+    #     version = environ.get("PREZ_VERSION")
+    #     values["prez_version"] = version
+    #
+    #     if version is None or version == "":
+    #         values["prez_version"] = toml.load(
+    #             Path(Path(__file__).parent.parent) / "pyproject.toml"
+    #         )["tool"]["poetry"]["version"]
+    #
+    #     return values
+    #
+    # @root_validator()
+    # def set_system_uri(cls, values):
+    #     if not values.get("system_uri"):
+    #         values["system_uri"] = URIRef(
+    #             f"{values['protocol']}://{values['host']}:{values['port']}"
+    #         )
+    #     return values
 
 
 settings = Settings()

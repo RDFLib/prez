@@ -285,6 +285,12 @@ def generate_exclude_predicates(exclude_predicates):
     return ""
 
 
+def generate_exclude_predicates(exclude_predicates):
+    if exclude_predicates:
+        return f"""FILTER(?p NOT IN ({chr(10).join([f"<{p}>" for p in exclude_predicates])}))"""
+    return ""
+
+
 def generate_inverse_predicates(inverse_predicates):
     """
     Generates a SPARQL VALUES clause for a list of inverse predicates, of the form:
@@ -489,8 +495,12 @@ def get_annotations_from_tbox_cache(
     }
     # get all the annotations we can from the cache
     all = list(chain(*props_from_cache.values()))
+    default_language = settings.default_language
     for triple in all:
-        labels_from_cache.add(triple)
+        if triple[2].language == default_language:
+            labels_from_cache.add(triple)
+        elif triple[2].language is None:
+            labels_from_cache.add(triple)
     # the remaining terms are not in the cache; we need to query the SPARQL endpoint to attempt to get them
     uncached_props = {
         k: list(set(terms) - set(triple[0] for triple in v))
@@ -550,6 +560,20 @@ def generate_listing_count_construct(item: ListingModel, endpoint_uri: str):
             }}"""
         ).strip()
         return query
+
+
+def temp_listing_count(subquery: SubSelect, klass):
+    """
+    TODO: Implement COUNT and other expressions in SPARQL grammar.
+    """
+    return f"""
+    PREFIX prez: <{PREZ}>
+    CONSTRUCT {{
+     {klass.n3()} prez:count ?count
+    }}
+    WHERE {{
+      SELECT (COUNT(?focus_node) as ?count) {{ {subquery} }}
+    }}"""
 
 
 def get_relevant_shape_bns_for_profile(selected_class, profile):
@@ -881,13 +905,12 @@ def generate_relationship_query(
         uri_str = f"<{uri}>"
         for i, relation in enumerate(relations):
             predicate, direction = relation
-            parent = "?parent_" + str(i + 1)
             if predicate:
                 if direction == URIRef("https://prez.dev/ont/ParentToFocusRelation"):
                     subquery += f"{parent} <{predicate}> {uri_str} .\n"
                 else:  # assuming the direction is "focus_to_parent"
                     subquery += f"{uri_str} <{predicate}> {parent} .\n"
-            uri_str = parent
+                uri_str = parent
         subquery += "}}"
         subqueries.append(subquery)
 

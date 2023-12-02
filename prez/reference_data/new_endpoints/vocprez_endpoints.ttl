@@ -1,0 +1,115 @@
+PREFIX endpoint: <https://prez.dev/endpoint/vocprez/>
+PREFIX ont: <https://prez.dev/ont/>
+PREFIX prez: <https://prez.dev/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX sh: <http://www.w3.org/ns/shacl#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+endpoint:vocprez-home a ont:Endpoint ;
+    ont:endpointTemplate "/v" ;
+.
+
+endpoint:collection-listing a ont:ListingEndpoint ;
+    ont:deliversClasses prez:VocPrezCollectionList ;
+    sh:targetClass skos:Collection ;
+    ont:endpointTemplate "/v/collection" ;
+.
+
+endpoint:collection-object a ont:ObjectEndpoint ;
+    sh:targetNode "$object" ;
+    ont:parentEndpoint endpoint:collection-listing ;
+    ont:deliversClasses skos:Collection  ;
+    ont:endpointTemplate "/v/collection/$object" ;
+.
+
+endpoint:collection-concept a ont:ObjectEndpoint ;
+    sh:targetNode "$object" ;
+    ont:parentEndpoint endpoint:collection-object ;
+    ont:deliversClasses skos:Concept ;
+    ont:endpointTemplate "/v/collection/$parent_1/$object" ;
+    ont:ParentToFocusRelation skos:member ;
+.
+
+ endpoint:vocabs-listing a ont:ListingEndpoint ;
+    ont:deliversClasses prez:SchemesList ;
+    sh:targetClass skos:ConceptScheme ;
+    ont:endpointTemplate "/v/vocab" ;
+.
+
+endpoint:vocab-object a ont:ObjectEndpoint ;
+    sh:targetNode "$object" ;
+    ont:parentEndpoint endpoint:vocabs-listing ;
+    ont:deliversClasses skos:ConceptScheme ;
+    ont:endpointTemplate "/v/vocab/$object" ;
+.
+
+endpoint:vocab-concept a ont:ObjectEndpoint ;
+    sh:targetNode "$object" ;
+    ont:parentEndpoint endpoint:vocab-object ;
+    ont:deliversClasses skos:Concept ;
+    ont:endpointTemplate "/v/vocab/$parent_1/$object" ;
+    ont:FocusToParentRelation skos:inScheme ;
+.
+
+endpoint:cs-top-concepts a ont:ListingEndpoint ;
+    ont:deliversClasses skos:Concept ;
+    sh:rule [ sh:subject sh:this ;
+              sh:predicate prez:hasChildren ;
+              sh:object "?hasChildren" ] ;
+    sh:target [ sh:select """SELECT DISTINCT ?focus_node ?hasChildren
+             WHERE {
+             $parent_1 skos:hasTopConcept|^skos:isTopConceptOf ?focus_node .
+             ?focus_node skos:prefLabel ?label .
+             BIND(EXISTS{?focus_node skos:narrower|^skos:broader ?grandChildren} AS ?hasChildren)
+                }
+            ORDER BY ?label
+            LIMIT $limit
+            OFFSET $offset
+             """ ] ;
+    sh:targetClass skos:Concept ;
+    ont:endpointTemplate "/v/vocab/$parent_1/top-concepts" ;
+.
+
+endpoint:cs-children
+    a ont:ListingEndpoint ;
+    ont:deliversClasses skos:Concept ;
+    rdfs:comment """The concepts one level under top concepts. This query demonstrates how pagination of 2 items at a
+    time could work, the LIMIT is set to 3 such that we can determine if there are further (i.e. >2) objects available.""" ;
+    sh:rule
+        [
+            sh:object "?hasChildren" ;
+            sh:predicate prez:hasChildren ;
+            sh:subject sh:this ;
+        ] ;
+    sh:target
+        [
+            sh:select """SELECT DISTINCT ?focus_node ?hasChildren
+             WHERE {
+             $parent_1 skos:narrower|^skos:broader ?focus_node .
+             ?focus_node skos:prefLabel ?label .
+             BIND(EXISTS{?focus_node skos:narrower|^skos:broader ?grandChildren} AS ?hasChildren)
+                }
+            ORDER BY ?label
+            LIMIT $limit
+            OFFSET $offset
+             """ ;
+        ] ;
+    sh:targetClass skos:Concept ;
+    ont:endpointTemplate "/v/vocabs/$parent_2/$parent_1/narrowers" ;
+.
+
+ont:ListingEndpoint ont:defaultLimit 20 ;
+    ont:defaultOffset 0 .
+
+endpoint:vocabs-listing ont:defaultLimit 20 ;
+    ont:defaultOffset 0 .
+
+endpoint:cs-children ont:defaultLimit 20 ;
+    ont:defaultOffset 0 .
+
+endpoint:cs-top-concepts ont:defaultLimit 20 ;
+    ont:defaultOffset 0 .
+
+endpoint:collection-listing ont:defaultLimit 20 ;
+    ont:defaultOffset 0 .
