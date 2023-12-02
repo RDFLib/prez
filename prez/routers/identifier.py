@@ -3,9 +3,9 @@ from fastapi.responses import PlainTextResponse, RedirectResponse
 from rdflib import URIRef
 from rdflib.term import _is_valid_uri
 
-from prez.dependencies import get_repo
+from prez.dependencies import get_data_repo
+from prez.services.query_generation.identifier import get_foaf_homepage_query
 from prez.services.curie_functions import get_uri_for_curie_id, get_curie_id_for_uri
-from prez.queries.identifier import get_foaf_homepage_query
 
 router = APIRouter(tags=["Identifier Resolution"])
 
@@ -19,7 +19,7 @@ router = APIRouter(tags=["Identifier Resolution"])
     },
 )
 async def get_identifier_redirect_route(
-    iri: str, request: Request, repo=Depends(get_repo)
+    iri: str, request: Request, repo=Depends(get_data_repo)
 ):
     """
     The `iri` query parameter is used to return a redirect response with the value from the `foaf:homepage` lookup.
@@ -74,9 +74,9 @@ def get_curie_route(iri: str):
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"content": {"application/json": {}}},
     },
 )
-def get_iri_route(curie: str):
+async def get_iri_route(curie: str):
     try:
-        return get_uri_for_curie_id(curie)
+        return await get_uri_for_curie_id(curie)
     except ValueError as err:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST, f"Invalid input '{curie}'. {err}"

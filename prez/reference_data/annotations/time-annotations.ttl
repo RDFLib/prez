@@ -1,0 +1,1022 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <https://schema.org/>
+PREFIX time: <http://www.w3.org/2006/time#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+xsd:dateTimeStamp
+    rdfs:label "sello de tiempo"@es ;
+.
+
+<http://www.w3.org/2006/time>
+    rdfs:label
+        "OWL-Time"@en ,
+        "Tiempo en OWL"@es ;
+    rdfs:seeAlso
+        <http://dx.doi.org/10.3233/SW-150187> ,
+        <http://www.semantic-web-journal.net/content/time-ontology-extended-non-gregorian-calendar-applications> ,
+        <http://www.w3.org/TR/owl-time> ;
+.
+
+time:DateTimeDescription
+    rdfs:label
+        "Date-Time description"@en ,
+        "descripción de fecha-tiempo"@es ;
+    schema:description
+        "Description of date and time structured with separate values for the various elements of a calendar-clock system. The temporal reference system is fixed to Gregorian Calendar, and the range of year, month, day properties restricted to corresponding XML Schema types xsd:gYear, xsd:gMonth and xsd:gDay, respectively."@en ,
+        "Descripción de fecha y tiempo estructurada con valores separados para los diferentes elementos de un sistema calendario-reloj. El sistema de referencia temporal está fijado al calendario gregoriano, y el rango de las propiedades año, mes, día restringidas a los correspondientes tipos del XML Schema xsd:gYear, xsd:gMonth y xsd:gDay respectivamente."@es ;
+.
+
+time:DateTimeInterval
+    rdfs:label
+        "Date-time interval"@en ,
+        "intervalo de fecha-hora"@es ;
+    schema:description
+        "DateTimeInterval is a subclass of ProperInterval, defined using the multi-element DateTimeDescription."@en ,
+        "'intervalo de fecha-hora' es una subclase de 'intervalo propio', definida utilizando el multi-elemento 'descripción de fecha-hora'."@es ;
+.
+
+time:DayOfWeek
+    rdfs:label
+        "Day of week"@en ,
+        "día de la semana"@es ;
+    schema:description
+        "The day of week"@en ,
+        "El día de la semana"@es ;
+.
+
+time:Duration
+    rdfs:label
+        "duración de tiempo" ,
+        "Time duration"@en ;
+    schema:description
+        "Duration of a temporal extent expressed as a number scaled by a temporal unit"@en ,
+        "Duración de una extensión temporal expresada como un número escalado por una unidad temporal."@es ;
+.
+
+time:DurationDescription
+    rdfs:label
+        "Duration description"@en ,
+        "descripción de duración"@es ;
+    schema:description
+        "Description of temporal extent structured with separate values for the various elements of a calendar-clock system. The temporal reference system is fixed to Gregorian Calendar, and the range of each of the numeric properties is restricted to xsd:decimal"@en ,
+        "Descripción de extensión temporal estructurada con valores separados para los distintos elementos de un sistema de horario-calendario. El sistema de referencia temporal se fija al calendario gregoriano, y el intervalo de cada una de las propiedades numéricas se restringe a xsd:decimal."@es ;
+.
+
+time:Friday
+    rdfs:label
+        "الجمعة"@ar ,
+        "Freitag"@de ,
+        "Friday"@en ,
+        "Viernes"@es ,
+        "Vendredi"@fr ,
+        "Venerdì"@it ,
+        "金曜日"@ja ,
+        "Vrijdag"@nl ,
+        "Piątek"@pl ,
+        "Sexta-feira"@pt ,
+        "Пятница"@ru ,
+        "星期五"@zh ;
+.
+
+time:GeneralDateTimeDescription
+    rdfs:label
+        "Generalized date-time description"@en ,
+        "descripción de fecha-hora generalizada"@es ;
+    schema:description
+        "Descripción de fecha y hora estructurada con valores separados para los distintos elementos de un sistema calendario-reloj." ,
+        "Description of date and time structured with separate values for the various elements of a calendar-clock system"@en ,
+        "Descripción de fecha y hora estructurada con valores separados para los distintos elementos de un sistema calendario-reloj."@es ;
+.
+
+time:GeneralDurationDescription
+    rdfs:label
+        "Generalized duration description"@en ,
+        "descripción de duración generalizada"@es ;
+    schema:description
+        "Description of temporal extent structured with separate values for the various elements of a calendar-clock system."@en ,
+        "Descripción de extensión temporal estructurada con valores separados para los distintos elementos de un sistema de horario-calendario."@es ;
+.
+
+time:Instant
+    rdfs:label
+        "Time instant"@en ,
+        "instante de tiempo."@es ;
+    schema:description
+        "A temporal entity with zero extent or duration"@en ,
+        "Una entidad temporal con una extensión o duración cero."@es ;
+.
+
+time:Interval
+    rdfs:label
+        "Time interval"@en ,
+        "intervalo de tiempo"@es ;
+    schema:description
+        "A temporal entity with an extent or duration"@en ,
+        "Una entidad temporal con una extensión o duración."@es ;
+.
+
+time:January
+    rdfs:label "January" ;
+.
+
+time:Monday
+    rdfs:label
+        "الاثنين"@ar ,
+        "Montag"@de ,
+        "Monday"@en ,
+        "Lunes"@es ,
+        "Lundi"@fr ,
+        "Lunedì"@it ,
+        "月曜日"@ja ,
+        "Maandag"@nl ,
+        "Poniedziałek"@pl ,
+        "Segunda-feira"@pt ,
+        "Понедельник"@ru ,
+        "星期一"@zh ;
+.
+
+time:MonthOfYear
+    rdfs:label
+        "Month of year"@en ,
+        "mes del año"@es ;
+    schema:description
+        "The month of the year"@en ,
+        "El mes del año."@es ;
+.
+
+time:ProperInterval
+    rdfs:label
+        "Proper interval"@en ,
+        "intervalo propio"@es ;
+    schema:description
+        "A temporal entity with non-zero extent or duration, i.e. for which the value of the beginning and end are different"@en ,
+        "Una entidad temporal con extensión o duración distinta de cero, es decir, para la cual los valores de principio y fin del intervalo son diferentes."@es ;
+.
+
+time:Saturday
+    rdfs:label
+        "السبت"@ar ,
+        "Samstag"@de ,
+        "Saturday"@en ,
+        "Sábado"@es ,
+        "Samedi"@fr ,
+        "Sabato"@it ,
+        "土曜日"@ja ,
+        "Zaterdag"@nl ,
+        "Sobota"@pl ,
+        "Sábado"@pt ,
+        "Суббота"@ru ,
+        "星期六"@zh ;
+.
+
+time:Sunday
+    rdfs:label
+        "الأحد (يوم)"@ar ,
+        "Sonntag"@de ,
+        "Sunday"@en ,
+        "Domingo"@es ,
+        "Dimanche"@fr ,
+        "Domenica"@it ,
+        "日曜日"@ja ,
+        "Zondag"@nl ,
+        "Niedziela"@pl ,
+        "Domingo"@pt ,
+        "Воскресенье"@ru ,
+        "星期日"@zh ;
+.
+
+time:TRS
+    rdfs:label
+        "Temporal Reference System"@en ,
+        "sistema de referencia temporal"@es ;
+    schema:description
+        """A temporal reference system, such as a temporal coordinate system (with an origin, direction, and scale), a calendar-clock combination, or a (possibly hierarchical) ordinal system. 
+
+This is a stub class, representing the set of all temporal reference systems."""@en ,
+        """Un sistema de referencia temporal, tal como un sistema de coordenadas temporales (con un origen, una dirección y una escala), una combinación calendario-reloj, o un sistema ordinal (posiblemente jerárquico).
+        Esta clase comodín representa el conjunto de todos los sistemas de referencia temporal."""@es ,
+        """Un sistema de referencia temporal, tal como un sistema de coordenadas temporales (con un origen, una dirección y una escala), una combinación calendario-reloj, o un sistema ordinal (posiblemente jerárquico).
+    Esta clase comodín representa el conjunto de todos los sistemas de referencia temporal."""@es ;
+.
+
+time:TemporalDuration
+    rdfs:label
+        "Temporal duration"@en ,
+        "duración temporal"@es ;
+    schema:description
+        "Time extent; duration of a time interval separate from its particular start position"@en ,
+        "Extensión de tiempo; duración de un intervalo de tiempo independiente de su posición de inicio particular."@es ;
+.
+
+time:TemporalEntity
+    rdfs:label
+        "Temporal entity"@en ,
+        "entidad temporal"@es ;
+    schema:description
+        "A temporal interval or instant."@en ,
+        "Un intervalo temporal o un instante."@es ;
+.
+
+time:TemporalPosition
+    rdfs:label
+        "Temporal position"@en ,
+        "posición temporal"@es ;
+    schema:description
+        "A position on a time-line"@en ,
+        "Una posición sobre una línea de tiempo."@es ;
+.
+
+time:TemporalUnit
+    rdfs:label
+        "Temporal unit"@en ,
+        "unidad de tiempo"@es ;
+    schema:description
+        "A standard duration, which provides a scale factor for a time extent, or the granularity or precision for a time position."@en ,
+        "Una duración estándar, que proporciona un factor de escala para una extensión de tiempo, o la granularidad o precisión para una posición de tiempo."@es ;
+.
+
+time:Thursday
+    rdfs:label
+        "الخميس"@ar ,
+        "Donnerstag"@de ,
+        "Thursday"@en ,
+        "Jueves"@es ,
+        "Jeudi"@fr ,
+        "Giovedì"@it ,
+        "木曜日"@ja ,
+        "Donderdag"@nl ,
+        "Czwartek"@pl ,
+        "Quinta-feira"@pt ,
+        "Четверг"@ru ,
+        "星期四"@zh ;
+.
+
+time:TimePosition
+    rdfs:label
+        "Time position"@en ,
+        "posición de tiempo"@es ;
+    schema:description
+        "A temporal position described using either a (nominal) value from an ordinal reference system, or a (numeric) value in a temporal coordinate system. "@en ,
+        "Una posición temporal descrita utilizando bien un valor (nominal) de un sistema de referencia ordinal, o un valor (numérico) en un sistema de coordenadas temporales."@es ;
+.
+
+time:TimeZone
+    rdfs:label
+        "Time Zone"@en ,
+        "huso horario"@es ;
+    schema:description
+        """A Time Zone specifies the amount by which the local time is offset from UTC. 
+	A time zone is usually denoted geographically (e.g. Australian Eastern Daylight Time), with a constant value in a given region. 
+The region where it applies and the offset from UTC are specified by a locally recognised governing authority."""@en ,
+        """Un huso horario especifica la cantidad en que la hora local está desplazada con respecto a UTC.
+        Un huso horario normalmente se denota geográficamente (p.ej. el horario de verano del este de Australia), con un valor constante en una región dada.
+        La región donde aplica y el desplazamiento desde UTC las especifica una autoridad gubernamental localmente reconocida."""@es ,
+        """Un huso horario especifica la cantidad en que la hora local está desplazada con respecto a UTC.
+    Un huso horario normalmente se denota geográficamente (p.ej. el horario de verano del este de Australia), con un valor constante en una región dada.
+    La región donde aplica y el desplazamiento desde UTC las especifica una autoridad gubernamental localmente reconocida."""@es ;
+.
+
+time:Tuesday
+    rdfs:label
+        "الثلاثاء"@ar ,
+        "Dienstag"@de ,
+        "Tuesday"@en ,
+        "Martes"@es ,
+        "Mardi"@fr ,
+        "Martedì"@it ,
+        "火曜日"@ja ,
+        "Dinsdag"@nl ,
+        "Wtorek"@pl ,
+        "Terça-feira"@pt ,
+        "Вторник"@ru ,
+        "星期二"@zh ;
+.
+
+time:Wednesday
+    rdfs:label
+        "الأربعاء"@ar ,
+        "Mittwoch"@de ,
+        "Wednesday"@en ,
+        "Miércoles"@es ,
+        "Mercredi"@fr ,
+        "Mercoledì"@it ,
+        "水曜日"@ja ,
+        "Woensdag"@nl ,
+        "Środa"@pl ,
+        "Quarta-feira"@pt ,
+        "Среда"@ru ,
+        "星期三"@zh ;
+.
+
+time:Year
+    rdfs:label
+        "سنة"@ar ,
+        "Jahr"@de ,
+        "Year"@en ,
+        "Año"@es ,
+        "Année (calendrier)"@fr ,
+        "Anno"@it ,
+        "年"@ja ,
+        "Jaar"@nl ,
+        "Rok"@pl ,
+        "Ano"@pt ,
+        "Год"@ru ,
+        "年"@zh ;
+    schema:description "Year duration" ;
+.
+
+time:after
+    rdfs:label
+        "after"@en ,
+        "después"@es ;
+    schema:description
+        "Gives directionality to time. If a temporal entity T1 is after another temporal entity T2, then the beginning of T1 is after the end of T2."@en ,
+        "Asume una dirección en el tiempo. Si una entidad temporal T1 está después de otra entidad temporal T2, entonces el principio de T1 está después del final de T2."@es ;
+.
+
+time:before
+    rdfs:label
+        "before"@en ,
+        "antes"@es ;
+    schema:description
+        "Gives directionality to time. If a temporal entity T1 is before another temporal entity T2, then the end of T1 is before the beginning of T2. Thus, \"before\" can be considered to be basic to instants and derived for intervals."@en ,
+        "Asume una dirección en el tiempo. Si una entidad temporal T1 está antes que otra entidad temporal T2, entonces el final de T1 está antes que el principio de T2. Así, \"antes\" se puede considerar básica para instantes y derivada para intervalos."@es ;
+.
+
+time:day
+    rdfs:label
+        "day"@en ,
+        "día"@es ;
+    schema:description
+        """Day position in a calendar-clock system.
+
+The range of this property is not specified, so can be replaced by any specific representation of a calendar day from any calendar. """@en ,
+        "Posición de día en un sistema calendario-reloj."@es ,
+        """Posición de día en un sistema calendario-reloj.
+
+El rango de esta propiedad no está especificado, por tanto, se puede reemplazar por una representación específica de un día de calendario de cualquier calendario."""@es ;
+.
+
+time:dayOfWeek
+    rdfs:label
+        "day of week"@en ,
+        "día de la semana"@es ;
+    schema:description
+        "El día de la semana, cuyo valor es un miembro de la clase 'día de la semana'." ,
+        "The day of week, whose value is a member of the class time:DayOfWeek"@en ,
+        "El día de la semana, cuyo valor es un miembro de la clase 'día de la semana'."@es ;
+.
+
+time:dayOfYear
+    rdfs:label
+        "day of year"@en ,
+        "día del año"@es ;
+    schema:description
+        "The number of the day within the year"@en ,
+        "El número de día en el año."@es ;
+.
+
+time:days
+    rdfs:label
+        "days duration"@en ,
+        "duración en días"@es ;
+    schema:description
+        "length of, or element of the length of, a temporal extent expressed in days"@en ,
+        "Longitud de, o elemento de la longitud de, una extensión temporal expresada en días."@es ;
+.
+
+time:generalDay
+    rdfs:label
+        "Generalized day"@en ,
+        "Día generalizado"@es ;
+    schema:description
+        """Day of month - formulated as a text string with a pattern constraint to reproduce the same lexical form as gDay, except that values up to 99 are permitted, in order to support calendars with more than 31 days in a month. 
+Note that the value-space is not defined, so a generic OWL2 processor cannot compute ordering relationships of values of this type."""@en ,
+        """Día del mes - formulado como una cadena de texto con una restricción patrón para reproducir la misma forma léxica que gDay, excepto que se permiten valores hasta el 99, con el propósito de proporcionar soporte a calendarios con meses con más de 31 días.
+            Nótese que el espacio de valores no está definido, por tanto, un procesador genérico de OWL2 no puede computar relaciones de orden de valores de este tipo."""@es ;
+.
+
+time:generalMonth
+    rdfs:label
+        "Generalized month"@en ,
+        "Mes generalizado"@es ;
+    schema:description
+        """Month of year - formulated as a text string with a pattern constraint to reproduce the same lexical form as gMonth, except that values up to 20 are permitted, in order to support calendars with more than 12 months in the year. 
+Note that the value-space is not defined, so a generic OWL2 processor cannot compute ordering relationships of values of this type."""@en ,
+        """Mes del año - formulado como una cadena de texto con una restricción patrón para reproducir la misma forma léxica que gMonth, excepto que se permiten valores hasta el 20, con el propósito de proporcionar soporte a calendarios con años con más de 12 meses.
+            Nótese que el espacio de valores no está definido, por tanto, un procesador genérico de OWL2 no puede computar relaciones de orden de valores de este tipo."""@es ;
+.
+
+time:generalYear
+    rdfs:label
+        "Generalized year"@en ,
+        "Año generalizado"@es ;
+    schema:description
+        """Year number - formulated as a text string with a pattern constraint to reproduce the same lexical form as gYear, but not restricted to values from the Gregorian calendar. 
+Note that the value-space is not defined, so a generic OWL2 processor cannot compute ordering relationships of values of this type."""@en ,
+        """Número de año - formulado como una cadena de texto con una restricción patrón para reproducir la misma forma léxica que gYear, aunque no está restringido a valores del calendario gregoriano.
+            Nótese que el espacio de valores no está definido, por tanto, un procesador genérico de OWL2 no puede computar relaciones de orden de valores de este tipo."""@es ;
+.
+
+time:hasBeginning
+    rdfs:label
+        "has beginning"@en ,
+        "tiene principio"@es ;
+    schema:description
+        "Beginning of a temporal entity"@en ,
+        "Beginning of a temporal entity."@en ,
+        "Comienzo de una entidad temporal."@es ;
+.
+
+time:hasDateTimeDescription
+    rdfs:label
+        "has Date-Time description"@en ,
+        "tiene descripción fecha-hora"@es ;
+    schema:description
+        "Value of DateTimeInterval expressed as a structured value. The beginning and end of the interval coincide with the limits of the shortest element in the description."@en ,
+        "Valor de intervalo de fecha-hora expresado como un valor estructurado. El principio y el final del intervalo coincide con los límites del elemento más corto en la descripción."@es ;
+.
+
+time:hasDuration
+    rdfs:label
+        "has duration"@en ,
+        "tiene duración"@es ;
+    schema:description
+        "Duration of a temporal entity, event or activity, or thing, expressed as a scaled value"@en ,
+        "Duration of a temporal entity, expressed as a scaled value or nominal value"@en ,
+        "Duración de una entidad temporal, evento o actividad, o cosa, expresada como un valor escalado."@es ,
+        "Duración de una entidad temporal, expresada como un valor escalado o un valor nominal."@es ;
+.
+
+time:hasDurationDescription
+    rdfs:label
+        "has duration description"@en ,
+        "tiene descripción de duración"@es ;
+    schema:description
+        "Duration of a temporal entity, expressed using a structured description"@en ,
+        "Duración de una entidad temporal, expresada utilizando una descripción estructurada."@es ;
+.
+
+time:hasEnd
+    rdfs:label
+        "has end"@en ,
+        "tiene fin"@es ;
+    schema:description
+        "End of a temporal entity."@en ,
+        "Final de una entidad temporal."@es ;
+.
+
+time:hasTRS
+    rdfs:label
+        "Temporal reference system used"@en ,
+        "sistema de referencia temporal utilizado"@es ;
+    schema:description
+        "The temporal reference system used by a temporal position or extent description. "@en ,
+        "El sistema de referencia temporal utilizado por una posición temporal o descripción de extensión."@es ;
+.
+
+time:hasTemporalDuration
+    rdfs:label
+        "has temporal duration"@en ,
+        "tiene duración temporal"@es ;
+    schema:description
+        "Duration of a temporal entity."@en ,
+        "Duración de una entidad temporal."@es ;
+.
+
+time:hasTime
+    rdfs:label
+        "has time"@en ,
+        "tiene tiempo"@es ;
+    schema:description
+        "Supports the association of a temporal entity (instant or interval) to any thing"@en ,
+        "Proporciona soporte a la asociación de una entidad temporal (instante o intervalo) a cualquier cosa."@es ;
+.
+
+time:hasXSDDuration
+    rdfs:label
+        "has XSD duration"@en ,
+        "tiene duración XSD"@es ;
+    schema:description
+        "Extent of a temporal entity, expressed using xsd:duration"@en ,
+        "Extensión de una entidad temporal, expresada utilizando xsd:duration."@es ;
+.
+
+time:hour
+    rdfs:label
+        "hour"@en ,
+        "hora"@es ;
+    schema:description
+        "Hour position in a calendar-clock system."@en ,
+        "Posición de hora en un sistema calendario-reloj."@es ;
+.
+
+time:hours
+    rdfs:label
+        "hours duration"@en ,
+        "duración en horas"@es ;
+    schema:description
+        "length of, or element of the length of, a temporal extent expressed in hours"@en ,
+        "Longitud de, o elemento de la longitud de, una extensión temporal expresada en horas."@es ;
+.
+
+time:inDateTime
+    rdfs:label
+        "in date-time description"@en ,
+        "en descripción de fecha-hora"@es ;
+    schema:description
+        "Position of an instant, expressed using a structured description"@en ,
+        "Posición de un instante, expresada utilizando una descripción estructurada."@es ;
+.
+
+time:inTemporalPosition
+    rdfs:label
+        "Temporal position"@en ,
+        "posición temporal"@es ;
+    schema:description
+        "Position of a time instant"@en ,
+        "Posición de un instante de tiempo."@es ;
+.
+
+time:inTimePosition
+    rdfs:label
+        "Time position"@en ,
+        "posición de tiempo"@es ;
+    schema:description
+        "Position of a time instant expressed as a TimePosition"@en ,
+        "Position of an instant, expressed as a temporal coordinate or nominal value"@en ,
+        "Posición de un instante, expresada como una coordenada temporal o un valor nominal."@es ;
+.
+
+time:inXSDDate
+    rdfs:label
+        "in XSD date"@en ,
+        "en fecha XSD"@es ;
+    schema:description
+        "Position of an instant, expressed using xsd:date"@en ,
+        "Posición de un instante, expresado utilizando xsd:date."@es ;
+.
+
+time:inXSDDateTime
+    rdfs:label
+        "in XSD Date-Time"@en ,
+        "en fecha-tiempo XSD"@es ;
+    schema:description
+        "Position of an instant, expressed using xsd:dateTime"@en ,
+        "Posición de un instante, expresado utilizando xsd:dateTime."@es ;
+.
+
+time:inXSDDateTimeStamp
+    rdfs:label
+        "in XSD Date-Time-Stamp"@en ,
+        "en fecha-sello de tiempo XSD"@es ;
+    schema:description
+        "Position of an instant, expressed using xsd:dateTimeStamp"@en ,
+        "Posición de un instante, expresado utilizando xsd:dateTimeStamp."@es ;
+.
+
+time:inXSDgYear
+    rdfs:label
+        "in XSD g-Year"@en ,
+        "en año gregoriano XSD"@es ;
+    schema:description
+        "Position of an instant, expressed using xsd:gYear"@en ,
+        "Posición de un instante, expresado utilizando xsd:gYear."@es ;
+.
+
+time:inXSDgYearMonth
+    rdfs:label
+        "in XSD g-YearMonth"@en ,
+        "en año-mes gregoriano XSD"@es ;
+    schema:description
+        "Position of an instant, expressed using xsd:gYearMonth"@en ,
+        "Posición de un instante, expresado utilizando xsd:gYearMonth."@es ;
+.
+
+time:inside
+    rdfs:label
+        "has time instant inside"@en ,
+        "tiene instante de tiempo dentro"@es ;
+    schema:description
+        "An instant that falls inside the interval. It is not intended to include beginnings and ends of intervals."@en ,
+        "Un instante que cae dentro del intervalo. Se asume que no es ni el principio ni el final de ningún intervalo."@es ;
+.
+
+time:intervalAfter
+    rdfs:label
+        "interval after"@en ,
+        "intervalo posterior"@es ;
+    schema:description
+        "Si un intervalo propio T1 es posterior a otro intervalo propio T2, entonces el principio de T1 está después que el final de T2." ,
+        "If a proper interval T1 is intervalAfter another proper interval T2, then the beginning of T1 is after the end of T2."@en ,
+        "Si un intervalo propio T1 es posterior a otro intervalo propio T2, entonces el principio de T1 está después que el final de T2."@es ;
+.
+
+time:intervalBefore
+    rdfs:label
+        "interval before"@en ,
+        "intervalo anterior"@es ;
+    schema:description
+        "If a proper interval T1 is intervalBefore another proper interval T2, then the end of T1 is before the beginning of T2."@en ,
+        "Si un intervalo propio T1 está antes que otro intervalo propio T2, entonces el final de T1 está antes que el principio de T2."@es ;
+.
+
+time:intervalContains
+    rdfs:label
+        "interval contains"@en ,
+        "intervalo contiene"@es ;
+    schema:description
+        "If a proper interval T1 is intervalContains another proper interval T2, then the beginning of T1 is before the beginning of T2, and the end of T1 is after the end of T2."@en ,
+        "Si un intervalo propio T1 contiene otro intervalo propio T2, entonces el principio de T1 está antes que el principio de T2, y el final de T1 está después del final de T2."@es ;
+.
+
+time:intervalDisjoint
+    rdfs:label
+        "interval disjoint"@en ,
+        "intervalo disjunto"@es ;
+    schema:description
+        "If a proper interval T1 is intervalDisjoint another proper interval T2, then the beginning of T1 is after the end of T2, or the end of T1 is before the beginning of T2, i.e. the intervals do not overlap in any way, but their ordering relationship is not known."@en ,
+        "Si un intervalo propio T1 es disjunto con otro intervalo propio T2, entonces el principio de T1 está después del final de T2, o el final de T1 está antes que el principio de T2, es decir, los intervalos no se solapan de ninguna forma, aunque su relación de orden no se conozca."@es ;
+.
+
+time:intervalDuring
+    rdfs:label
+        "interval during"@en ,
+        "intervalo durante"@es ;
+    schema:description
+        "If a proper interval T1 is intervalDuring another proper interval T2, then the beginning of T1 is after the beginning of T2, and the end of T1 is before the end of T2."@en ,
+        "Si un intervalo propio T1 está durante otro intervalo propio T2, entonces del principio de T1 está después del principio de T2, y el final de T1 está antes que el final de T2."@es ;
+.
+
+time:intervalEquals
+    rdfs:label
+        "interval equals"@en ,
+        "intervalo igual"@es ;
+    schema:description
+        "If a proper interval T1 is intervalEquals another proper interval T2, then the beginning of T1 is coincident with the beginning of T2, and the end of T1 is coincident with the end of T2."@en ,
+        "Si un intervalo propio T1 es igual a otro intervalo propio T2, entonces el principio de T1 coincide con el principio de T2, y el final de T1 coincide con el final de T2."@es ;
+.
+
+time:intervalFinishedBy
+    rdfs:label
+        "interval finished by"@en ,
+        "intervalo terminado por"@es ;
+    schema:description
+        "If a proper interval T1 is intervalFinishedBy another proper interval T2, then the beginning of T1 is before the beginning of T2, and the end of T1 is coincident with the end of T2."@en ,
+        "Si un intervalo propio T1 está terminado por otro intervalo propio T2, entonces el principio de T1 está antes que el principio de T2, y el final de T1 coincide con el final de T2."@es ;
+.
+
+time:intervalFinishes
+    rdfs:label
+        "interval finishes"@en ,
+        "intervalo termina"@es ;
+    schema:description
+        "If a proper interval T1 is intervalFinishes another proper interval T2, then the beginning of T1 is after the beginning of T2, and the end of T1 is coincident with the end of T2."@en ,
+        "Si un intervalo propio T1 termina otro intervalo propio T2, entonces del principio de T1 está después del principio de T2, y el final de T1 coincide con el final de T2."@es ;
+.
+
+time:intervalIn
+    rdfs:label
+        "interval in"@en ,
+        "intervalo interior"@es ;
+    schema:description
+        "If a proper interval T1 is intervalIn another proper interval T2, then the beginning of T1 is after the beginning of T2 or is coincident with the beginning of T2, and the end of T1 is before the end of T2, or is coincident with the end of T2, except that end of T1 may not be coincident with the end of T2 if the beginning of T1 is coincident with the beginning of T2."@en ,
+        "Si un intervalo propio T1 es un intervalo interior a otro intervalo propio T2, entonces el principio de T1 está después del principio de T2 o coincide con el principio de T2, y el final de T1 está antes que el final de T2, o coincide con el final de T2, excepto que el final de T1 puede no coincidir con el final de T2 si el principio de T1 coincide con el principio de T2."@es ;
+.
+
+time:intervalMeets
+    rdfs:label
+        "interval meets"@en ,
+        "intervalo se encuentra"@es ;
+    schema:description
+        "If a proper interval T1 is intervalMeets another proper interval T2, then the end of T1 is coincident with the beginning of T2."@en ,
+        "Si un intervalo propio T1 se encuentra con otro intervalo propio T2, entonces el final de T1 coincide con el principio de T2."@es ;
+.
+
+time:intervalMetBy
+    rdfs:label
+        "interval met by"@en ,
+        "intervalo encontrado por"@es ;
+    schema:description
+        "If a proper interval T1 is intervalMetBy another proper interval T2, then the beginning of T1 is coincident with the end of T2."@en ,
+        "Si un intervalo propio T1 es 'intervalo encontrado por' otro intervalo propio T2, entonces el principio de T1 coincide con el final de T2."@es ;
+.
+
+time:intervalOverlappedBy
+    rdfs:label
+        "interval overlapped by"@en ,
+        "intervalo solapado por"@es ;
+    schema:description
+        "If a proper interval T1 is intervalOverlappedBy another proper interval T2, then the beginning of T1 is after the beginning of T2, the beginning of T1 is before the end of T2, and the end of T1 is after the end of T2."@en ,
+        "Si un intervalo propio T1 es 'intervalo solapado por' otro intervalo propio T2, entonces el principio de T1 es posterior al principio de T2, y el principio de T1 es anterior al final de T2, y el final de T1 es posterior al final de T2."@es ;
+.
+
+time:intervalOverlaps
+    rdfs:label
+        "interval overlaps"@en ,
+        "intervalo se solapa"@es ;
+    schema:description
+        "If a proper interval T1 is intervalOverlaps another proper interval T2, then the beginning of T1 is before the beginning of T2, the end of T1 is after the beginning of T2, and the end of T1 is before the end of T2."@en ,
+        "Asume una dirección en el tiempo. Si una entidad temporal T1 está después de otra entidad temporal T2, entonces el principio de T1 está después del final de T2."@es ,
+        "Si un intervalo propio T1 se solapa con otro intervalo propio T2, entonces el principio de T1 es anterior al principio de T2, el final de T1 es posterior al principio de T2, y el final de T1 es anterior al final de T2."@es ;
+.
+
+time:intervalStartedBy
+    rdfs:label "interval started by"@en ;
+    schema:description
+        "If a proper interval T1 is intervalStarted another proper interval T2, then the beginning of T1 is coincident with the beginning of T2, and the end of T1 is after the end of T2."@en ,
+        "Si un intervalo propio T1 es empezado por otro intervalo propio T2, entonces el principio de T1 coincide con el principio de T2, y el final de T1 es posterior al final de T2."@es ;
+.
+
+time:intervalStarts
+    rdfs:label
+        "interval starts"@en ,
+        "intervalo empieza"@es ;
+    schema:description
+        "If a proper interval T1 is intervalStarts another proper interval T2, then the beginning of T1 is coincident with the beginning of T2, and the end of T1 is before the end of T2."@en ,
+        "Si un intervalo propio T1 empieza otro intervalo propio T2, entonces del principio de T1 con el final de T2, y el final de T1 es anterior al final de T2."@es ,
+        "Si un intervalo propio T1 empieza otro intervalo propio T2, entonces del principio de T1 con el principio de T2, y el final de T1 es anterior al final de T2."@es ;
+.
+
+time:minute
+    rdfs:label
+        "minute"@en ,
+        "minuto"@es ;
+    schema:description
+        "Minute position in a calendar-clock system."@en ,
+        "Posición de minuto en un sistema calendario-reloj."@es ;
+.
+
+time:minutes
+    rdfs:label
+        "minutes"@en ,
+        "minutos"@es ;
+    schema:description
+        "length, or element of, a temporal extent expressed in minutes"@en ,
+        "Longitud de, o elemento de la longitud de, una extensión temporal expresada en minutos."@es ;
+.
+
+time:month
+    rdfs:label
+        "month"@en ,
+        "mes"@es ;
+    schema:description
+        """Month position in a calendar-clock system.
+
+The range of this property is not specified, so can be replaced by any specific representation of a calendar month from any calendar. """@en ,
+        """Posición de mes en un sistema calendario-reloj.
+            El rango de esta propiedad no está especificado, por tanto, se puede reemplazar por cualquier representación específica de un mes de calendario de un calendario cualquiera."""@es ,
+        """Posición de mes en un sistema calendario-reloj.
+    El rango de esta propiedad no está especificado, por tanto, se puede reemplazar por cualquier representación específica de un mes de calendario de un calendario cualquiera."""@es ;
+.
+
+time:monthOfYear
+    rdfs:label
+        "month of year"@en ,
+        "mes del año"@es ;
+    schema:description
+        "The month of the year, whose value is a member of the class time:MonthOfYear"@en ,
+        "El mes del año, cuyo valor es un miembro de la clase 'mes del año'."@es ;
+.
+
+time:months
+    rdfs:label
+        "months duration"@en ,
+        "duración en meses"@es ;
+    schema:description
+        "length of, or element of the length of, a temporal extent expressed in months"@en ,
+        "Longitud de, o elemento de la longitud de, una extensión temporal expresada en meses."@es ;
+.
+
+time:nominalPosition
+    rdfs:label
+        "Name of temporal position"@en ,
+        "nombre de posición temporal"@es ;
+    schema:description
+        "The (nominal) value indicating temporal position in an ordinal reference system "@en ,
+        "El valor (nominal) que indica posición temporal en un sistema de referencia ordinal."@es ;
+.
+
+time:numericDuration
+    rdfs:label
+        "Numeric value of temporal duration"@en ,
+        "valor numérico de duración temporal"@es ;
+    schema:description
+        "Value of a temporal extent expressed as a decimal number scaled by a temporal unit"@en ,
+        "Valor de una extensión temporal expresada como un número decimal escalado por una unidad de tiempo."@es ;
+.
+
+time:numericPosition
+    rdfs:label
+        "Numeric value of temporal position"@en ,
+        "valor numérico de posición temporal"@es ;
+    schema:description
+        "The (numeric) value indicating position within a temporal coordinate system "@en ,
+        "El valor (numérico) que indica posición temporal en un sistema de referencia ordinal."@es ;
+.
+
+time:second
+    rdfs:label
+        "second"@en ,
+        "segundo"@es ;
+    schema:description
+        "Second position in a calendar-clock system."@en ,
+        "Posición de segundo en un sistema calendario-reloj."@es ;
+.
+
+time:seconds
+    rdfs:label
+        "seconds duration"@en ,
+        "duración en segundos"@es ;
+    rdfs:seeAlso <http://www.bipm.org/en/publications/si-brochure/second.html> ;
+    schema:description
+        "length of, or element of the length of, a temporal extent expressed in seconds"@en ,
+        "Longitud de, o elemento de la longitud de, una extensión temporal expresada en segundos."@es ;
+.
+
+time:timeZone
+    rdfs:label
+        "in time zone"@en ,
+        "en huso horario"@es ;
+    schema:description "The time zone for clock elements in the temporal position"@en ;
+.
+
+time:unitDay
+    rdfs:label
+        "يوماً ما"@ar ,
+        "Tag"@de ,
+        "Day (unit of temporal duration)"@en ,
+        "day"@en ,
+        "día"@es ,
+        "jour"@fr ,
+        "giorno"@it ,
+        "ある日"@jp ,
+        "언젠가"@kr ,
+        "dag"@nl ,
+        "doba"@pl ,
+        "dia"@pt ,
+        "一天"@zh ;
+.
+
+time:unitHour
+    rdfs:label
+        "один час\"@ru" ,
+        "ساعة واحدة"@ar ,
+        "Stunde"@de ,
+        "Hour (unit of temporal duration)"@en ,
+        "hour"@en ,
+        "hora"@es ,
+        "heure"@fr ,
+        "ora"@it ,
+        "一時間"@jp ,
+        "한 시간"@kr ,
+        "uur"@nl ,
+        "godzina"@pl ,
+        "hora"@pt ,
+        "一小時"@zh ;
+.
+
+time:unitMinute
+    rdfs:label
+        "دقيقة واحدة"@ar ,
+        "Minute"@de ,
+        "Minute (unit of temporal duration)"@en ,
+        "minute"@en ,
+        "minuto"@es ,
+        "minute"@fr ,
+        "minuto"@it ,
+        "一分"@jp ,
+        "분"@kr ,
+        "minuut"@nl ,
+        "minuta"@pl ,
+        "minuto"@pt ,
+        "одна минута"@ru ,
+        "等一下"@zh ;
+.
+
+time:unitMonth
+    rdfs:label
+        "شهر واحد"@ar ,
+        "Monat"@de ,
+        "Month (unit of temporal duration)"@en ,
+        "month"@en ,
+        "mes"@es ,
+        "mois"@fr ,
+        "mese"@it ,
+        "一か月"@jp ,
+        "한달"@kr ,
+        "maand"@nl ,
+        "miesiąc"@pl ,
+        "один месяц"@ru ,
+        "一個月"@zh ;
+.
+
+time:unitSecond
+    rdfs:label
+        "ثانية واحدة"@ar ,
+        "Sekunde"@de ,
+        "Second (unit of temporal duration)"@en ,
+        "second"@en ,
+        "segundo"@es ,
+        "seconde"@fr ,
+        "secondo"@it ,
+        "一秒"@jp ,
+        "일초"@kr ,
+        "seconde"@nl ,
+        "Sekundę"@pl ,
+        "segundo"@pt ,
+        "一秒"@zh ;
+.
+
+time:unitType
+    rdfs:label
+        "temporal unit type"@en ,
+        "tipo de unidad temporal"@es ;
+    schema:description
+        "The temporal unit which provides the precision of a date-time value or scale of a temporal extent"@en ,
+        "La unidad de tiempo que proporciona la precisión de un valor fecha-hora o la escala de una extensión temporal."@es ;
+.
+
+time:unitWeek
+    rdfs:label
+        "سبوع واحد"@ar ,
+        "Woche"@de ,
+        "Week (unit of temporal duration)"@en ,
+        "week"@en ,
+        "semana"@es ,
+        "semaine"@fr ,
+        "settimana"@it ,
+        "一週間"@jp ,
+        "일주일"@kr ,
+        "week"@nl ,
+        "tydzień"@pl ,
+        "semana"@pt ,
+        "одна неделя"@ru ,
+        "一周"@zh ;
+.
+
+time:unitYear
+    rdfs:label
+        "سنة واحدة"@ar ,
+        "Jahr"@de ,
+        "Year (unit of temporal duration)"@en ,
+        "year"@en ,
+        "un año"@es ,
+        "an"@fr ,
+        "anno"@it ,
+        "1年"@jp ,
+        "1 년"@kr ,
+        "jaar"@nl ,
+        "rok"@pl ,
+        "ano"@pt ,
+        "один год"@ru ,
+        "一年"@zh ;
+.
+
+time:week
+    rdfs:label
+        "week"@en ,
+        "semana"@es ;
+    schema:description
+        "Week number within the year."@en ,
+        "Número de semana en el año."@es ;
+.
+
+time:weeks
+    rdfs:label
+        "weeks duration"@en ,
+        "duración en semanas"@es ;
+    schema:description
+        "length of, or element of the length of, a temporal extent expressed in weeks"@en ,
+        "Longitud de, o elemento de la longitud de, una extensión temporal expresada en semanas."@es ;
+.
+
+time:xsdDateTime
+    rdfs:label
+        "has XSD date-time"@en ,
+        "tiene fecha-hora XSD"@es ;
+    schema:description
+        "Value of DateTimeInterval expressed as a compact value."@en ,
+        "Valor de 'intervalo de fecha-hora' expresado como un valor compacto."@es ;
+.
+
+time:year
+    rdfs:label "year"@en ;
+    schema:description
+        """Year position in a calendar-clock system.
+
+The range of this property is not specified, so can be replaced by any specific representation of a calendar year from any calendar. """@en ,
+        """Posición de año en un sistema calendario-reloj.
+
+l rango de esta propiedad no está especificado, por tanto, se puede reemplazar por cualquier representación específica de un año de calendario de un calendario cualquiera."""@es ;
+.
+
+time:years
+    rdfs:label
+        "years duration"@en ,
+        "duración en años"@es ;
+    schema:description
+        "length of, or element of the length of, a temporal extent expressed in years"@en ,
+        "Longitud de, o elemento de la longitud de, una extensión temporal expresada en años."@es ;
+.
+

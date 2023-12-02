@@ -1,0 +1,125 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <https://schema.org/>
+
+rdf:
+    schema:description "This is the RDF Schema for the RDF vocabulary terms in the RDF Namespace, defined in RDF 1.1 Concepts." ;
+.
+
+rdf:Alt
+    rdfs:label "Alternatives" ;
+    schema:description "The class of containers of alternatives." ;
+.
+
+rdf:Bag
+    rdfs:label "Bag" ;
+    schema:description "The class of unordered containers." ;
+.
+
+rdf:CompoundLiteral
+    rdfs:label "Compound Literal" ;
+    rdfs:seeAlso <https://www.w3.org/TR/json-ld11/#the-rdf-compoundliteral-class-and-the-rdf-language-and-rdf-direction-properties> ;
+    schema:description "A class representing a compound literal." ;
+.
+
+rdf:HTML
+    rdfs:label "HTML" ;
+    rdfs:seeAlso <http://www.w3.org/TR/rdf11-concepts/#section-html> ;
+    schema:description "The datatype of RDF literals storing fragments of HTML content" ;
+.
+
+rdf:JSON
+    rdfs:label "JSON" ;
+    rdfs:seeAlso <https://www.w3.org/TR/json-ld11/#the-rdf-json-datatype> ;
+    schema:description "The datatype of RDF literals storing JSON content." ;
+.
+
+rdf:List
+    rdfs:label "List" ;
+    schema:description "The class of RDF Lists." ;
+.
+
+rdf:PlainLiteral
+    rdfs:label "Plain Literal" ;
+    rdfs:seeAlso <http://www.w3.org/TR/rdf-plain-literal/> ;
+    schema:description "The class of plain (i.e. untyped) literal values, as used in RIF and OWL 2" ;
+.
+
+rdf:Property
+    rdfs:label "Property" ;
+    schema:description "The class of RDF properties." ;
+.
+
+rdf:Seq
+    rdfs:label "Sequence" ;
+    schema:description "The class of ordered containers." ;
+.
+
+rdf:Statement
+    rdfs:label "Statement" ;
+    schema:description "The class of RDF statements." ;
+.
+
+rdf:XMLLiteral
+    rdfs:label "XML Literal" ;
+    schema:description "The datatype of XML literal values." ;
+.
+
+rdf:direction
+    rdfs:label "direction" ;
+    rdfs:seeAlso <https://www.w3.org/TR/json-ld11/#the-rdf-compoundliteral-class-and-the-rdf-language-and-rdf-direction-properties> ;
+    schema:description "The base direction component of a CompoundLiteral." ;
+.
+
+rdf:first
+    rdfs:label "first" ;
+    schema:description "The first item in the subject RDF list." ;
+.
+
+rdf:langString
+    rdfs:label "Lang String" ;
+    rdfs:seeAlso <http://www.w3.org/TR/rdf11-concepts/#section-Graph-Literal> ;
+    schema:description "The datatype of language-tagged string values" ;
+.
+
+rdf:language
+    rdfs:label "language" ;
+    rdfs:seeAlso <https://www.w3.org/TR/json-ld11/#the-rdf-compoundliteral-class-and-the-rdf-language-and-rdf-direction-properties> ;
+    schema:description "The language component of a CompoundLiteral." ;
+.
+
+()
+    rdfs:label "nil" ;
+    schema:description "The empty list, with no items in it. If the rest of a list is nil then the list has no more items in it." ;
+.
+
+rdf:object
+    rdfs:label "object" ;
+    schema:description "The object of the subject RDF statement." ;
+.
+
+rdf:predicate
+    rdfs:label "predicate" ;
+    schema:description "The predicate of the subject RDF statement." ;
+.
+
+rdf:rest
+    rdfs:label "rest" ;
+    schema:description "The rest of the subject RDF list after the first item." ;
+.
+
+rdf:subject
+    rdfs:label "subject" ;
+    schema:description "The subject of the subject RDF statement." ;
+.
+
+rdf:type
+    rdfs:label "type" ;
+    schema:description "The subject is an instance of a class." ;
+.
+
+rdf:value
+    rdfs:label "value" ;
+    schema:description "Idiomatic property used for structured values." ;
+.
+

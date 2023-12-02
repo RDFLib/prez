@@ -1,0 +1,926 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <https://schema.org/>
+
+<http://purl.org/NET/rdflicense/APACHE1.0>
+    rdfs:label "Apache License" ;
+    rdfs:seeAlso <https://tldrlegal.com/api/license/559ec47447cdaa075e00023f> ;
+.
+
+<http://purl.org/NET/rdflicense/APACHE2.0>
+    rdfs:label "Apache License" ;
+    rdfs:seeAlso <http://www.apache.org/licenses/LICENSE-2.0.txt> ;
+.
+
+<http://purl.org/NET/rdflicense/ARTISTIC2.0>
+    rdfs:label "Artistic License" ;
+.
+
+<http://purl.org/NET/rdflicense/BOOST1.0>
+    rdfs:label "BOOST Software License" ;
+.
+
+<http://purl.org/NET/rdflicense/BSD2.0>
+    rdfs:label "BSD 2-clause License" ;
+.
+
+<http://purl.org/NET/rdflicense/BSD3.0>
+    rdfs:label "BSD License 3-clause" ;
+.
+
+<http://purl.org/NET/rdflicense/BSD4.0>
+    rdfs:label "BSD License 4-clause" ;
+.
+
+<http://purl.org/NET/rdflicense/CDDL1.0>
+    rdfs:label "Common Development and Distribution License" ;
+.
+
+<http://purl.org/NET/rdflicense/COLORIURIS1.0>
+    rdfs:label "ColorIURIS Copyright" ;
+.
+
+<http://purl.org/NET/rdflicense/COMMON1.0>
+    rdfs:label "Common Public License" ;
+.
+
+<http://purl.org/NET/rdflicense/CRYPTIX1.0>
+    rdfs:label "Cryptix General License" ;
+    rdfs:seeAlso <http://cryptix.org/LICENSE.TXT> ;
+.
+
+<http://purl.org/NET/rdflicense/ECLIPSE1.0>
+    rdfs:label "Eclipse Public License" ;
+.
+
+<http://purl.org/NET/rdflicense/EUC1.0>
+    rdfs:label "European Commission Copyright" ;
+.
+
+<http://purl.org/NET/rdflicense/EUPL1.1>
+    rdfs:label "European Union Public License" ;
+.
+
+<http://purl.org/NET/rdflicense/FREEBSD1.0>
+    rdfs:label "Free BSD Documentation License" ;
+.
+
+<http://purl.org/NET/rdflicense/GOVTRACK1.0>
+    rdfs:label "Govtrack License" ;
+.
+
+<http://purl.org/NET/rdflicense/IBM1.0>
+    rdfs:label "IBM Public License" ;
+.
+
+<http://purl.org/NET/rdflicense/MICROSOFT1.0>
+    rdfs:label "Microsoft Reference Source License" ;
+.
+
+<http://purl.org/NET/rdflicense/MIT1.0>
+    rdfs:label "MIT License" ;
+.
+
+<http://purl.org/NET/rdflicense/MOZILLA2.0>
+    rdfs:label
+        "MPL" ,
+        "Mozilla Public License" ;
+.
+
+<http://purl.org/NET/rdflicense/NDL1.0>
+    rdfs:label "Web NDL Authority License" ;
+.
+
+<http://purl.org/NET/rdflicense/OGCDocument1.0>
+    rdfs:label "Open Geospatial Consortium Document" ;
+.
+
+<http://purl.org/NET/rdflicense/OGCSoftware1.0>
+    rdfs:label "Open Geospatial Consortium Software" ;
+.
+
+<http://purl.org/NET/rdflicense/OGL1.0>
+    rdfs:label "UK NonCommercial Government License" ;
+.
+
+<http://purl.org/NET/rdflicense/OL1.0>
+    rdfs:label
+        "OL" ,
+        "License Ouverte"@fr ;
+    rdfs:seeAlso <http://wiki.data.gouv.fr/images/0/05/Open_Licence.pdf> ;
+.
+
+<http://purl.org/NET/rdflicense/ORACLE1.0>
+    rdfs:label "Oracle Berkely DB License" ;
+.
+
+<http://purl.org/NET/rdflicense/OS3.0>
+    rdfs:label "OS Open Data License" ;
+.
+
+<http://purl.org/NET/rdflicense/PDM1.0>
+    rdfs:label "Public Domain Mark" ;
+.
+
+<http://purl.org/NET/rdflicense/W3C1.0>
+    rdfs:label "W3C Software Notice and License" ;
+.
+
+<http://purl.org/NET/rdflicense/afl3.0>
+    rdfs:label
+        "Academic Free License 3.0" ,
+        "Academic Free License"@en ;
+.
+
+<http://purl.org/NET/rdflicense/againstdrm2.0>
+    rdfs:label "Against DRM" ;
+.
+
+<http://purl.org/NET/rdflicense/agpl3.0>
+    rdfs:label
+        "GNU Affero General Public License 3.0" ,
+        "GNU Affero General Public License"@en ;
+    rdfs:seeAlso <http://www.gnu.org/licenses/agpl-3.0.html> ;
+.
+
+<http://purl.org/NET/rdflicense/allrightsreserved>
+    rdfs:label "All rights reserved"@en ;
+    schema:description "This license does not disclose any of the IPR and database rights.."@en ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nc-nd2.0>
+    rdfs:label "Creative Commons CC-BY-NC-ND" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc-nd/2.0/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nc-nd3.0>
+    rdfs:label "Creative Commons CC-BY-NC-ND" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc-nd/3.0/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nc-nd3.0at>
+    rdfs:label "Creative Commons CC-BY-NC-ND Austria" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc-nd/3.0/at/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nc-nd3.0au>
+    rdfs:label "Creative Commons CC-BY-NC-ND Australia" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc-nd/3.0/au/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nc-nd3.0br>
+    rdfs:label "Creative Commons CC-BY-NC-ND Brazil" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc-nd/3.0/br/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nc-nd3.0ch>
+    rdfs:label "Creative Commons CC-BY-NC-ND Switzerland" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc-nd/3.0/ch/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nc-nd3.0cl>
+    rdfs:label "Creative Commons CC-BY-NC-ND Chile" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc-nd/3.0/cl/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nc-nd3.0cn>
+    rdfs:label "Creative Commons CC-BY-NC-ND China" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc-nd/3.0/cn/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nc-nd3.0de>
+    rdfs:label "Creative Commons CC-BY-NC-ND Germany" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc-nd/3.0/de/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nc-nd3.0ec>
+    rdfs:label "Creative Commons CC-BY-NC-ND Ecuador" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc-nd/3.0/ec/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nc-nd3.0es>
+    rdfs:label "Creative Commons CC-BY-NC-ND Spain" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc-nd/3.0/es/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nc-nd3.0fr>
+    rdfs:label "Creative Commons CC-BY-NC-ND France" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc-nd/3.0/fr/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nc-nd3.0gr>
+    rdfs:label "Creative Commons CC-BY-NC-ND Greece" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc-nd/3.0/gr/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nc-nd3.0ie>
+    rdfs:label "Creative Commons CC-BY-NC-ND Ireland" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc-nd/3.0/ie/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nc-nd3.0it>
+    rdfs:label "Creative Commons CC-BY-NC-ND Italy" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc-nd/3.0/it/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nc-nd3.0nl>
+    rdfs:label "Creative Commons CC-BY-NC-ND Netherlands" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc-nd/3.0/nl/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nc-nd3.0pt>
+    rdfs:label "Creative Commons CC-BY-NC-ND Portugal" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc-nd/3.0/pt/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nc-nd3.0ro>
+    rdfs:label "Creative Commons CC-BY-NC-ND Romania" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc-nd/3.0/ro/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nc-nd3.0ve>
+    rdfs:label "Creative Commons CC-BY-NC-ND Venezuela" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc-nd/3.0/ve/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nc-nd4.0>
+    rdfs:label
+        "Creative Commons CC-BY-NC-ND" ,
+        "Creative Commons - Attribution-NonCommercial-NoDerivatives 4.0 International - CC BY-NC-ND 4.0"@en ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc-nd/4.0/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nc-sa2.0>
+    rdfs:label "Creative Commons CC-BY-NC-SA" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc-sa/2.0/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nc-sa3.0>
+    rdfs:label "Creative Commons CC-BY-NC-SA" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc-sa/3.0/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nc-sa4.0>
+    rdfs:label
+        "Creative Commons CC-BY-NC-SA" ,
+        "Creative Commons - Attribution-NonCommercial-ShareAlike 4.0 International - CC BY-NC-SA 4.0"@en ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc-sa/4.0/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nc2.0>
+    rdfs:label "Creative Commons CC-BY-NC" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc/2.0/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nc3.0>
+    rdfs:label "Creative Commons CC-BY-NC" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc/3.0/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nc4.0>
+    rdfs:label
+        "Creative Commons CC-BY-NC" ,
+        "Creative Commons - Attribution-NonCommercial 4.0 International - CC BY-NC 4.0"@en ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc/4.0/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nd2.0>
+    rdfs:label "Creative Commons CC-BY-ND" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc-nd/2.0/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nd2.0be>
+    rdfs:label "Creative Commons CC-BY-ND Belgium" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nd/2.0/be/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nd2.5dk>
+    rdfs:label "Creative Commons CC-BY-ND Denmark" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nd/2.5/dk/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nd3.0>
+    rdfs:label "Creative Commons CC-BY-ND" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nc-nd/3.0/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nd3.0at>
+    rdfs:label "Creative Commons CC-BY-ND Austria" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nd/3.0/at/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nd3.0au>
+    rdfs:label "Creative Commons CC-BY-ND Australia" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nd/3.0/au/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nd3.0br>
+    rdfs:label "Creative Commons CC-BY-ND Brazil" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nd/3.0/br/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nd3.0ch>
+    rdfs:label "Creative Commons CC-BY-ND Switzerland" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nd/3.0/ch/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nd3.0cl>
+    rdfs:label "Creative Commons CC-BY-ND Chile" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nd/3.0/cl/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nd3.0cn>
+    rdfs:label "Creative Commons CC-BY-ND China" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nd/3.0/cn/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nd3.0de>
+    rdfs:label "Creative Commons CC-BY-ND Germany" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nd/3.0/de/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nd3.0ec>
+    rdfs:label "Creative Commons CC-BY-ND Ecuador" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nd/3.0/ec/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nd3.0es>
+    rdfs:label "Creative Commons CC-BY-ND 3.0 Spain" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nd/3.0/es/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nd3.0fr>
+    rdfs:label "Creative Commons CC-BY-ND 3.0 France" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nd/3.0/fr/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nd3.0gr>
+    rdfs:label "Creative Commons CC-BY-ND 3.0 Greece" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nd/3.0/gr/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nd3.0ie>
+    rdfs:label "Creative Commons CC-BY-ND Ireland" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nd/3.0/ie/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nd3.0it>
+    rdfs:label "Creative Commons CC-BY-ND 3.0 Italy" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nd/3.0/it/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nd3.0nl>
+    rdfs:label "Creative Commons CC-BY-ND 3.0 Netherlands" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nd/3.0/nl/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nd3.0pt>
+    rdfs:label "Creative Commons CC-BY-ND 3.0 Portugal" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nd/3.0/pt/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nd3.0ro>
+    rdfs:label "Creative Commons CC-BY-ND 3.0 Romania" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nd/3.0/ro/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nd3.0ve>
+    rdfs:label "Creative Commons CC-BY-ND 3.0 Venezuela" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nd/3.0/ve/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-nd4.0>
+    rdfs:label
+        "Creative Commons CC-BY-ND" ,
+        "Creative Commons - Attribution-NoDerivatives 4.0 International - CC BY-ND 4.0"@en ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-nd/4.0/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-sa2.0>
+    rdfs:label "Creative Commons CC-BY-SA" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-sa/2.0/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-sa3.0>
+    rdfs:label "Creative Commons CC-BY-SA" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-sa/3.0/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-sa3.0at>
+    rdfs:label "Creative Commons CC-BY-SA 3.0 Austria" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-sa/3.0/at/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-sa3.0au>
+    rdfs:label "Creative Commons CC-BY-SA 3.0 Australia" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-sa/3.0/au/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-sa3.0br>
+    rdfs:label "Creative Commons CC-BY-SA 3.0 Brazil" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-sa/3.0/br/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-sa3.0ch>
+    rdfs:label "Creative Commons CC-BY-SA 3.0 Switzerland" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-sa/3.0/ch/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-sa3.0cl>
+    rdfs:label "Creative Commons CC-BY-SA 3.0 Chile" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-sa/3.0/cl/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-sa3.0cn>
+    rdfs:label "Creative Commons CC-BY-SA 3.0 China" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-sa/3.0/cn/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-sa3.0de>
+    rdfs:label "Creative Commons CC-BY-SA 3.0 Germany" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-sa/3.0/de/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-sa3.0ec>
+    rdfs:label "Creative Commons CC-BY-SA 3.0 Ecuador" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-sa/3.0/ec/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-sa3.0es>
+    rdfs:label "Creative Commons CC-BY-SA 3.0 Spain" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-sa/3.0/es/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-sa3.0fr>
+    rdfs:label "Creative Commons CC-BY-SA 3.0 France" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-sa/3.0/fr/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-sa3.0gr>
+    rdfs:label "Creative Commons CC-BY-SA 3.0 Greece" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-sa/3.0/gr/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-sa3.0ie>
+    rdfs:label "Creative Commons CC-BY-SA Ireland" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-sa/3.0/ie/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-sa3.0it>
+    rdfs:label "Creative Commons CC-BY-SA 3.0 Italy" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-sa/3.0/it/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-sa3.0nl>
+    rdfs:label "Creative Commons CC-BY-SA Netherlands" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-sa/3.0/nl/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-sa3.0pt>
+    rdfs:label "Creative Commons CC-BY-SA Portugal" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-sa/3.0/pt/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-sa3.0ro>
+    rdfs:label "Creative Commons CC-BY-SA Romania" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-sa/3.0/ro/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-sa3.0ve>
+    rdfs:label "Creative Commons CC-BY-SA Venezuela" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-sa/3.0/ve/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by-sa4.0>
+    rdfs:label
+        "Creative Commons CC-BY-SA" ,
+        "Creative Commons - Attribution-ShareAlike 4.0 International - CC BY-SA 4.0"@en ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by-sa/4.0/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by1.0>
+    rdfs:label "Creative Commons CC-BY" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/1.0/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.0>
+    rdfs:label "Creative Commons CC-BY" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.0/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.0at>
+    rdfs:label "Creative Commons CC-BY 2.0 Austria" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.0/at/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.0au>
+    rdfs:label "Creative Commons CC-BY 2.0 Australia" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.0/au/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.0be>
+    rdfs:label "Creative Commons CC-BY Belgium" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.0/be/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.0br>
+    rdfs:label "Creative Commons CC-BY 2.0 Brazil" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.0/br/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.0ca>
+    rdfs:label "Creative Commons CC-BY Canada" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.0/ca/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.0cl>
+    rdfs:label "Creative Commons CC-BY Chile" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.0/cl/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.0de>
+    rdfs:label "Creative Commons CC-BY Germany" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.0/de/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.0es>
+    rdfs:label "Creative Commons CC-BY Spain" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.0/es/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.0fr>
+    rdfs:label "Creative Commons CC-BY France" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.0/fr/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.0it>
+    rdfs:label "Creative Commons CC-BY Italy" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.0/it/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.0jp>
+    rdfs:label "Creative Commons CC-BY Japan" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.0/jp/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.0kr>
+    rdfs:label "Creative Commons CC-BY Korea" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.0/kr/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.0nl>
+    rdfs:label "Creative Commons CC-BY Netherlands" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.0/nl/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.0uk>
+    rdfs:label "Creative Commons CC-BY England & Wales" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.0/uk/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.0za>
+    rdfs:label "Creative Commons CC-BY South Africa" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.0/za/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.5ar>
+    rdfs:label "Creative Commons CC-BY Argentina" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.5/ar/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.5bg>
+    rdfs:label "Creative Commons CC-BY Bulgaria" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.5/bg/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.5ch>
+    rdfs:label "Creative Commons CC-BY Switzerland" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.5/ch/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.5cz>
+    rdfs:label
+        "Creative Commons CC-BY Czech Republic" ,
+        "Uveďte původ Česká republika"@cz ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.5/cz/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.5dk>
+    rdfs:label "Creative Commons CC-BY Denmark" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.5/dk/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.5hu>
+    rdfs:label "Creative Commons CC-BY Hungary" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.5/hu/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.5il>
+    rdfs:label "Creative Commons CC-BY Israel" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.5/il/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.5in>
+    rdfs:label "Creative Commons CC-BY India" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.5/dk/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.5mx>
+    rdfs:label "Creative Commons CC-BY Mexico" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.5/mx/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.5pe>
+    rdfs:label "Creative Commons CC-BY 2.5 Peru" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.5/pe/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.5pt>
+    rdfs:label "Creative Commons CC-BY 2.5 Portugal" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.0/pt/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.5scotland>
+    rdfs:label "Creative Commons CC-BY Scotland" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.5/scotland/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by2.5se>
+    rdfs:label "Creative Commons CC-BY 2.5 Sweden" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/2.5/se/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by3.0>
+    rdfs:label "Creative Commons CC-BY" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/3.0/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by3.0at>
+    rdfs:label "Creative Commons CC-BY 3.0 Austria" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/3.0/at/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by3.0au>
+    rdfs:label "Creative Commons CC-BY 3.0 Australia" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/3.0/au/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by3.0br>
+    rdfs:label "Creative Commons CC-BY 3.0 Brazil" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/3.0/br/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by3.0ch>
+    rdfs:label "Creative Commons CC-BY 3.0 Switzerland" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/3.0/ch/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by3.0cl>
+    rdfs:label "Creative Commons CC-BY 3.0 Chile" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/3.0/cl/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by3.0cn>
+    rdfs:label "Creative Commons CC-BY 3.0 China" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/3.0/cn/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by3.0de>
+    rdfs:label "Creative Commons CC-BY 3.0 Germany" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/3.0/de/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by3.0ec>
+    rdfs:label "Creative Commons CC-BY 3.0 Ecuador" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/3.0/ec/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by3.0eg>
+    rdfs:label "Creative Commons CC-BY Egypt" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/3.0/eg/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by3.0es>
+    rdfs:label "Creative Commons CC-BY 3.0 Spain" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/3.0/es/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by3.0fr>
+    rdfs:label
+        "CC-BY 3.0 France" ,
+        "Creative Commons CC-BY 3.0 France" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/3.0/fr/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by3.0gr>
+    rdfs:label "Creative Commons CC-BY Greece" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/3.0/gr/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by3.0ie>
+    rdfs:label "Creative Commons CC-BY Ireland" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/3.0/ie/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by3.0it>
+    rdfs:label "Creative Commons CC-BY 3.0 Italy" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/3.0/it/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by3.0lu>
+    rdfs:label "Creative Commons CC-BY Luxemburg" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/3.0/lu/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by3.0nl>
+    rdfs:label "Creative Commons CC-BY 3.0 Netherlands" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/3.0/nl/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by3.0nz>
+    rdfs:label "Creative Commons CC-BY New Zealand" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/3.0/nz/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by3.0pl>
+    rdfs:label "Creative Commons CC-BY 3.0 Poland" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/3.0/pl/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by3.0pt>
+    rdfs:label "Creative Commons CC-BY Portugal" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/3.0/pt/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by3.0ro>
+    rdfs:label "Creative Commons CC-BY 3.0 Romania" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/3.0/ro/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by3.0th>
+    rdfs:label "Creative Commons CC-BY Thailand" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/3.0/th/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by3.0us>
+    rdfs:label "Creative Commons CC-BY United States" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/3.0/us/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by3.0ve>
+    rdfs:label "Creative Commons CC-BY Venezuela" ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/3.0/ve/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-by4.0>
+    rdfs:label
+        "Creative Commons CC-BY" ,
+        "Creative Commons - Attribution 4.0 International - CC BY 4.0"@en ;
+    rdfs:seeAlso <http://creativecommons.org/licenses/by/4.0/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/cc-zero1.0>
+    rdfs:label
+        "Creative Commons CC0" ,
+        "CC0 1.0 Universal (CC0 1.0) Public Domain Dedication"@en ;
+    rdfs:seeAlso <http://creativecommons.org/publicdomain/zero/1.0/legalcode> ;
+.
+
+<http://purl.org/NET/rdflicense/clarin_aca_by>
+    rdfs:label "CLARIN ACAdemic BY" ;
+.
+
+<http://purl.org/NET/rdflicense/elra-end-user>
+    rdfs:label "Language Resources End-User Agreement"@en ;
+    rdfs:seeAlso <http://www.elda.org/en/services-around-lrs/distribution/licensing/> ;
+.
+
+<http://purl.org/NET/rdflicense/elra-var>
+    rdfs:label "LANGUAGE RESOURCES VALUE-ADDED-RESELLER AGREEMENT" ;
+    rdfs:seeAlso <http://www.elda.org/en/services-around-lrs/distribution/licensing/> ;
+.
+
+<http://purl.org/NET/rdflicense/fal1.3>
+    rdfs:label
+        "GFDL" ,
+        "Free Art License"@en ;
+.
+
+<http://purl.org/NET/rdflicense/gfdl1.1>
+    rdfs:label
+        "GFDL" ,
+        "GNU Free Documentation License"@en ;
+    rdfs:seeAlso <https://gnu.org/licenses/fdl.html> ;
+.
+
+<http://purl.org/NET/rdflicense/gfdl1.3>
+    rdfs:label
+        "GFDL" ,
+        "GNU Free Documentation License"@en ;
+    rdfs:seeAlso <https://gnu.org/licenses/fdl.html> ;
+.
+
+<http://purl.org/NET/rdflicense/gpl1.0>
+    rdfs:label "GNU General Public License" ;
+    rdfs:seeAlso <http://gnu.org/licenses/gpl-1.0.html> ;
+.
+
+<http://purl.org/NET/rdflicense/gpl2.0>
+    rdfs:label "GNU General Public License" ;
+    rdfs:seeAlso <http://gnu.org/licenses/gpl-2.0.html> ;
+.
+
+<http://purl.org/NET/rdflicense/gpl3.0>
+    rdfs:label "GNU General Public License" ;
+    rdfs:seeAlso <http://gnu.org/licenses/gpl-3.0.html> ;
+.
+
+<http://purl.org/NET/rdflicense/iodl1.0>
+    rdfs:label "Italian Open Data License v1.0" ;
+    rdfs:seeAlso <http://www.formez.it/iodl/> ;
+.
+
+<http://purl.org/NET/rdflicense/lgpl2.0>
+    rdfs:label
+        "LGPL" ,
+        "GNU Library General Public License"@en ;
+    rdfs:seeAlso <https://www.gnu.org/licenses/lgpl.htm> ;
+.
+
+<http://purl.org/NET/rdflicense/lgpl2.1>
+    rdfs:label
+        "LGPL" ,
+        "GNU Lesser General Public License"@en ;
+    rdfs:seeAlso <https://www.gnu.org/licenses/lgpl.htm> ;
+.
+
+<http://purl.org/NET/rdflicense/lgpl3.0>
+    rdfs:label
+        "LGPL" ,
+        "GNU Lesser General Public License"@en ;
+    rdfs:seeAlso <https://www.gnu.org/licenses/lgpl.htm> ;
+.
+
+<http://purl.org/NET/rdflicense/ms-c-nored>
+    rdfs:label "META-SHARE Commercial NoRedistribution" ;
+    rdfs:seeAlso <http://www.meta-net.eu/meta-share/meta-share-licenses/Tabular%20Presentation%20of%20No%20redistribution%20Licences.pdf> ;
+.
+
+<http://purl.org/NET/rdflicense/ms-c-nored-ff>
+    rdfs:label "META-SHARE Commercial NoRedistribution For-A-Fee" ;
+    rdfs:seeAlso <http://www.meta-net.eu/meta-share/meta-share-licenses/Tabular%20Presentation%20of%20No%20redistribution%20Licences.pdf> ;
+.
+
+<http://purl.org/NET/rdflicense/ms-commons-byncnd>
+    rdfs:label "META-SHARE Commons BYNCND" ;
+    rdfs:seeAlso <http://www.meta-net.eu/meta-share/meta-share-licenses/Tabular%20presentation%20of%20MS%20Commons%20Licences.pdf> ;
+.
+
+<http://purl.org/NET/rdflicense/odbc-by1.0>
+    rdfs:label "Open Data Commons Attribution License" ;
+    rdfs:seeAlso <http://www.opendatacommons.org/wp-content/uploads/2010/01/odc_by_1.0_public_text.txt> ;
+.
+
+<http://purl.org/NET/rdflicense/odbc-pddl1.0>
+    rdfs:label "Open Data Commons Public Domain Dedication and License" ;
+    rdfs:seeAlso <http://www.opendatacommons.org/wp-content/uploads/2010/01/odc_pddl_1.0_public_text.txt> ;
+.
+
+<http://purl.org/NET/rdflicense/odbl1.0>
+    rdfs:label "Open Data Commons Open Database License" ;
+    rdfs:seeAlso <http://www.opendatacommons.org/wp-content/uploads/2009/06/odbl-10.txt> ;
+.
+
+<http://purl.org/NET/rdflicense/ogl-nc1.0>
+    rdfs:label "UK NonCommercial Government License" ;
+.
+
+<http://purl.org/NET/rdflicense/publicdomain>
+    rdfs:label "Public domain" ;
+    schema:description "This statement can be applied to material truly in the public domain (because rights have expired, forfeited or are innaplicable). This text cannot be deemed as a license -namely, public domain works do not need to be licensed." ;
+.
+
+<http://purl.org/NET/rdflicense/simple2.0>
+    rdfs:label "Simple Public License" ;
+    rdfs:seeAlso <http://opensource.org/licenses/SimPL-2.0> ;
+.
+
+<http://purl.org/NET/rdflicense/ukogl-nc2.0>
+    rdfs:label "Open Government Licence Non-Commercial" ;
+    rdfs:seeAlso <http://www.nationalarchives.gov.uk/doc/open-government-licence/version/2/> ;
+.
+
+<http://purl.org/NET/rdflicense/ukogl1.0>
+    rdfs:label "Open Government Licence" ;
+    rdfs:seeAlso <http://www.nationalarchives.gov.uk/doc/open-government-licence/version/1/> ;
+.
+
+<http://purl.org/NET/rdflicense/ukogl2.0>
+    rdfs:label "Open Government Licence" ;
+    rdfs:seeAlso <http://www.nationalarchives.gov.uk/doc/open-government-licence/version/1/> ;
+.
+
+<http://purl.org/NET/rdflicense/ukogl3.0>
+    rdfs:label "Open Government Licence" ;
+    rdfs:seeAlso <http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/> ;
+.
+

@@ -2,6 +2,7 @@ import logging
 from functools import partial
 from textwrap import dedent
 from typing import Optional, Dict, Union, Any
+
 import uvicorn
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
@@ -17,28 +18,22 @@ from prez.dependencies import (
     get_system_store,
     load_system_data_to_oxigraph,
 )
-from prez.models.model_exceptions import (
+from prez.exceptions.model_exceptions import (
     ClassNotFoundException,
     URINotFoundException,
     NoProfilesException, InvalidSPARQLQueryException,
 )
-from prez.routers.catprez import router as catprez_router
-from prez.routers.cql import router as cql_router
+from prez.repositories import RemoteSparqlRepo, PyoxigraphRepo, OxrdflibRepo
 from prez.routers.identifier import router as identifier_router
 from prez.routers.management import router as management_router
-from prez.routers.object import router as object_router
-from prez.routers.profiles import router as profiles_router
-from prez.routers.search import router as search_router
-from prez.routers.spaceprez import router as spaceprez_router
+from prez.routers.ogc_router import router as ogc_records_router
 from prez.routers.sparql import router as sparql_router
-from prez.routers.vocprez import router as vocprez_router
 from prez.services.app_service import (
     healthcheck_sparql_endpoints,
     count_objects,
     create_endpoints_graph,
     populate_api_info,
-    add_prefixes_to_prefix_graph,
-    add_common_context_ontologies_to_tbox_cache,
+    prefix_initialisation,
 )
 from prez.services.exception_catchers import (
     catch_400,
@@ -51,8 +46,6 @@ from prez.services.exception_catchers import (
 )
 from prez.services.generate_profiles import create_profiles_graph
 from prez.services.prez_logging import setup_logger
-from prez.services.search_methods import get_all_search_methods
-from prez.sparql.methods import RemoteSparqlRepo, PyoxigraphRepo, OxrdflibRepo
 
 
 def prez_open_api_metadata(
@@ -111,13 +104,11 @@ async def app_startup(_settings: Settings, _app: FastAPI):
             "SPARQL_REPO_TYPE must be one of 'pyoxigraph', 'oxrdflib' or 'remote'"
         )
 
-    await add_prefixes_to_prefix_graph(_repo)
-    await get_all_search_methods(_repo)
+    await prefix_initialisation(_repo)
     await create_profiles_graph(_repo)
     await create_endpoints_graph(_repo)
     await count_objects(_repo)
     await populate_api_info()
-    await add_common_context_ontologies_to_tbox_cache()
 
     _app.state.pyoxi_system_store = get_system_store()
     await load_system_data_to_oxigraph(_app.state.pyoxi_system_store)
@@ -173,18 +164,9 @@ def assemble_app(
         **kwargs
     )
 
-    app.include_router(cql_router)
     app.include_router(management_router)
-    app.include_router(object_router)
+    app.include_router(ogc_records_router)
     app.include_router(sparql_router)
-    app.include_router(search_router)
-    app.include_router(profiles_router)
-    if "CatPrez" in _settings.prez_flavours:
-        app.include_router(catprez_router)
-    if "VocPrez" in _settings.prez_flavours:
-        app.include_router(vocprez_router)
-    if "SpacePrez" in _settings.prez_flavours:
-        app.include_router(spaceprez_router)
     app.include_router(identifier_router)
     app.openapi = partial(
         prez_open_api_metadata,
