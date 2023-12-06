@@ -23,5 +23,10 @@ async def cql_post_endpoint(
 ):
     endpoint_uri = URIRef("https://prez.dev/endpoint/cql")
     return await listing_function_new(
-        request, repo, endpoint_uri, page, per_page, parsed_cql
+        request=request,
+        repo=repo,
+        endpoint_uri=endpoint_uri,
+        page=page,
+        per_page=per_page,
+        cql=parsed_cql,
     )

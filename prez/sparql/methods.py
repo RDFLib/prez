@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import time
 from abc import ABC, abstractmethod
 from typing import List
 from typing import Tuple
@@ -27,7 +28,7 @@ class Repo(ABC):
         pass
 
     async def send_queries(
-            self, rdf_queries: List[str], tabular_queries: List[Tuple[URIRef, str]] = None
+        self, rdf_queries: List[str], tabular_queries: List[Tuple[URIRef, str]] = None
     ):
         # Common logic to send both query types in parallel
         results = await asyncio.gather(
@@ -48,12 +49,11 @@ class Repo(ABC):
         return g, tabular_results
 
     @abstractmethod
-    def sparql(self, query: str, raw_headers: list[tuple[bytes, bytes]], method: str = "GET"):
+    def sparql(
+        self, query: str, raw_headers: list[tuple[bytes, bytes]], method: str = "GET"
+    ):
         pass
 
-    @abstractmethod
-    async def tabular_query_to_table(self, query: str, context: URIRef = None):
-        pass
 
 class RemoteSparqlRepo(Repo):
     def __init__(self, async_client: httpx.AsyncClient):
@@ -90,8 +90,12 @@ class RemoteSparqlRepo(Repo):
         The optional context parameter allows an identifier to be supplied with the query, such that multiple results can be
         distinguished from each other.
         """
+        a = time.time()
+        log.debug(msg=f"query sent:{a} || {context} || {query}")
         response = await self._send_query(query, "application/sparql-results+json")
         await response.aread()
+        log.debug(msg=f"response received || {context} {time.time()}")
+        log.debug(msg=f"time diff: {time.time() -a }")
         return context, response.json()["results"]["bindings"]
 
     async def sparql(
@@ -118,7 +122,9 @@ class PyoxigraphRepo(Repo):
     def __init__(self, pyoxi_store: pyoxigraph.Store):
         self.pyoxi_store = pyoxi_store
 
-    def _handle_query_solution_results(self, results: pyoxigraph.QuerySolutions) -> dict:
+    def _handle_query_solution_results(
+        self, results: pyoxigraph.QuerySolutions
+    ) -> dict:
         """Organise the query results into format serializable by FastAPIs JSONResponse."""
         variables = results.variables
         results_dict = {"head": {"vars": [v.value for v in results.variables]}}
@@ -181,7 +187,9 @@ class PyoxigraphRepo(Repo):
             self._sync_tabular_query_to_table, query, context
         )
 
-    async def sparql(self, query: str, raw_headers: list[tuple[bytes, bytes]], method: str = "") -> list | Graph | bool:
+    async def sparql(
+        self, query: str, raw_headers: list[tuple[bytes, bytes]], method: str = ""
+    ) -> list | Graph | bool:
         return self._sparql(query)
 
     @staticmethod

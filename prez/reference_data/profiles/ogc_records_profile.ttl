@@ -6,6 +6,7 @@ PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX prez: <https://prez.dev/>
 PREFIX prof: <http://www.w3.org/ns/dx/prof/>
 PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX reg: <http://purl.org/linked-data/registry#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
@@ -15,7 +16,7 @@ PREFIX endpoint: <https://prez.dev/endpoint/ogcrecords/>
 PREFIX shext: <http://example.com/shacl-extension#>
 
 
-prez:OGCProfile
+prez:OGCRecordsProfile
     a prof:Profile ;
     dcterms:identifier "ogc"^^xsd:token ;
     dcterms:description "A system profile for OGC Records conformant API" ;
@@ -24,13 +25,17 @@ prez:OGCProfile
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
-        sh:targetClass prez:CatalogList , prez:SchemesList , prez:ConceptsList ;
+        sh:targetClass prez:CatalogList , prez:ConceptsList ;
         altr-ext:hasDefaultProfile prez:OGCListingProfile
+    ] , [
+        a sh:NodeShape ;
+        sh:targetClass prez:SchemesList ;
+        altr-ext:hasDefaultProfile prez:OGCSchemesListProfile
     ] , [
         a sh:NodeShape ;
         sh:targetClass dcat:Catalog , skos:ConceptScheme , skos:Concept ;
         altr-ext:hasDefaultProfile prez:OGCItemProfile
-    ] ;
+    ]
     .
 
 prez:OGCListingProfile
@@ -46,6 +51,30 @@ prez:OGCListingProfile
     altr-ext:constrainsClass prez:CatalogList , prez:SchemesList , prez:ConceptList ;
     .
 
+prez:OGCSchemesListProfile
+    a prof:Profile , sh:NodeShape ;
+    dcterms:title "OGC Concept Scheme Listing Profile" ;
+    altr-ext:hasResourceFormat
+        "application/ld+json" ,
+        "application/anot+ld+json" ,
+        "application/rdf+xml" ,
+        "text/anot+turtle" ,
+        "text/turtle" ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
+    altr-ext:constrainsClass prez:SchemesList ;
+    sh:property [
+        sh:minCount 0 ;
+        sh:path (
+            sh:union (
+              dcterms:publisher
+              reg:status
+              ( prov:qualifiedDerivation prov:hadRole )
+              ( prov:qualifiedDerivation prov:entity )
+            )
+          )
+        ]
+    .
+
 prez:OGCItemProfile
     a prof:Profile , sh:NodeShape ;
     dcterms:title "OGC Item Profile" ;
@@ -58,7 +87,11 @@ prez:OGCItemProfile
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     sh:property [
         sh:path shext:allPredicateValues ;
+    ] ,
+    [
+        sh:minCount 0 ;
+        sh:path [ sh:inversePath dcterms:hasPart ] ;
     ] ;
     shext:bnode-depth 2 ;
-    altr-ext:constrainsClass dcat:Catalog , skos:ConceptScheme, skos:Concept ;
+    altr-ext:constrainsClass dcat:Catalog , dcat:Resource , skos:ConceptScheme, skos:Concept ;
     .

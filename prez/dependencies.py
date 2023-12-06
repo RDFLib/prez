@@ -1,14 +1,19 @@
 import json
-import urllib
 from pathlib import Path
 from typing import Optional
 
-from pydantic import BaseModel
 import httpx
 from fastapi import Depends, Request, HTTPException
+from pydantic import BaseModel
 from pyoxigraph import Store
 
-from prez.cache import store, oxrdflib_store
+from prez.cache import (
+    store,
+    oxrdflib_store,
+    system_store,
+    profiles_graph_cache,
+    endpoints_graph_cache,
+)
 from prez.config import settings
 from prez.sparql.methods import PyoxigraphRepo, RemoteSparqlRepo, OxrdflibRepo
 from temp.cql2sparql import CQLParser
@@ -27,6 +32,10 @@ def get_pyoxi_store():
     return store
 
 
+def get_system_store():
+    return system_store
+
+
 def get_oxrdflib_store():
     return oxrdflib_store
 
@@ -43,12 +52,35 @@ async def get_repo(
         return RemoteSparqlRepo(http_async_client)
 
 
+async def get_system_repo(
+    pyoxi_store: Store = Depends(get_system_store),
+):
+    """
+    A pyoxigraph Store with Prez system data including:
+    - Profiles
+    # TODO add and test other system data (endpoints etc.)
+    """
+    return PyoxigraphRepo(pyoxi_store)
+
+
 async def load_local_data_to_oxigraph(store: Store):
     """
     Loads all the data from the local data directory into the local SPARQL endpoint
     """
-    for file in (Path(__file__).parent.parent / "rdf").glob("*.ttl"):
+    for file in (Path(__file__).parent.parent / settings.local_rdf_dir).glob("*.ttl"):
         store.load(file.read_bytes(), "text/turtle")
+
+
+async def load_system_data_to_oxigraph(store: Store):
+    """
+    Loads all the data from the local data directory into the local SPARQL endpoint
+    """
+    # TODO refactor to use the local files directly
+    profiles_bytes = profiles_graph_cache.serialize(format="nt", encoding="utf-8")
+    store.load(profiles_bytes, "application/n-triples")
+
+    endpoints_bytes = endpoints_graph_cache.serialize(format="nt", encoding="utf-8")
+    store.load(endpoints_bytes, "application/n-triples")
 
 
 class CQLRequest(BaseModel):

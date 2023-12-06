@@ -14,6 +14,7 @@ from prez.models.profiles_item import ProfileItem
 from prez.models.profiles_listings import ProfilesMembers
 from prez.reference_data.prez_ns import ONT
 from prez.services.curie_functions import get_uri_for_curie_id
+from temp.grammar import SubSelect
 
 log = logging.getLogger(__name__)
 
@@ -285,12 +286,6 @@ def generate_exclude_predicates(exclude_predicates):
     return ""
 
 
-def generate_exclude_predicates(exclude_predicates):
-    if exclude_predicates:
-        return f"""FILTER(?p NOT IN ({chr(10).join([f"<{p}>" for p in exclude_predicates])}))"""
-    return ""
-
-
 def generate_inverse_predicates(inverse_predicates):
     """
     Generates a SPARQL VALUES clause for a list of inverse predicates, of the form:
@@ -497,10 +492,11 @@ def get_annotations_from_tbox_cache(
     all = list(chain(*props_from_cache.values()))
     default_language = settings.default_language
     for triple in all:
-        if triple[2].language == default_language:
-            labels_from_cache.add(triple)
-        elif triple[2].language is None:
-            labels_from_cache.add(triple)
+        if isinstance(triple[2], Literal):
+            if triple[2].language == default_language:
+                labels_from_cache.add(triple)
+            elif triple[2].language is None:
+                labels_from_cache.add(triple)
     # the remaining terms are not in the cache; we need to query the SPARQL endpoint to attempt to get them
     uncached_props = {
         k: list(set(terms) - set(triple[0] for triple in v))
@@ -572,7 +568,7 @@ def temp_listing_count(subquery: SubSelect, klass):
      {klass.n3()} prez:count ?count
     }}
     WHERE {{
-      SELECT (COUNT(?focus_node) as ?count) {{ {subquery} }}
+      SELECT (COUNT(DISTINCT ?focus_node) as ?count) {{ {subquery} }}
     }}"""
 
 
@@ -749,11 +745,11 @@ def select_profile_mediatype(
     the base class delivered by that API endpoint. The base classes delivered by each API endpoint are:
 
     SpacePrez:
-    /s/datasets -> prez:DatasetList
-    /s/datasets/{ds_id} -> dcat:Dataset
-    /s/datasets/{ds_id}/collections/{fc_id} -> geo:FeatureCollection
-    /s/datasets/{ds_id}/collections -> prez:FeatureCollectionList
-    /s/datasets/{ds_id}/collections/{fc_id}/features -> geo:Feature
+    /s/catalogs -> prez:DatasetList
+    /s/catalogs/{ds_id} -> dcat:Dataset
+    /s/catalogs/{ds_id}/collections/{fc_id} -> geo:FeatureCollection
+    /s/catalogs/{ds_id}/collections -> prez:FeatureCollectionList
+    /s/catalogs/{ds_id}/collections/{fc_id}/features -> geo:Feature
 
     VocPrez:
     /v/schemes -> skos:ConceptScheme
@@ -797,9 +793,9 @@ def select_profile_mediatype(
       ?class rdfs:subClassOf* ?mid .
       ?mid rdfs:subClassOf* ?base_class .
       VALUES ?base_class {{ dcat:Dataset geo:FeatureCollection prez:FeatureCollectionList prez:FeatureList geo:Feature
-      skos:ConceptScheme skos:Concept skos:Collection prez:DatasetList prez:VocPrezCollectionList prez:SchemesList
+      skos:ConceptScheme skos:Concept prez:ConceptList skos:Collection prez:DatasetList prez:VocPrezCollectionList prez:SchemesList
       prez:CatalogList prez:ResourceList prez:ProfilesList dcat:Catalog dcat:Resource prof:Profile prez:SPARQLQuery 
-      prez:SearchResult }}
+      prez:SearchResult prez:CQLObjectList }}
       ?profile altr-ext:constrainsClass ?class ;
                altr-ext:hasResourceFormat ?format ;
                dcterms:title ?title .\
@@ -861,14 +857,16 @@ def get_endpoint_template_queries(classes: FrozenSet[URIRef]):
       }}
         UNION
       {{
-      ?endpoint ?relation_direction ?relation_predicate ;
+      ?parent_endpoint ?relation_direction ?relation_predicate .
+      ?endpoint ?ep_relation_direction ?ep_relation_predicate ;
         ont:endpointTemplate ?endpoint_template ;
         ont:deliversClasses ?classes .
   		FILTER(?classes IN ({", ".join('<' + str(klass) + '>' for klass in classes)}))
         VALUES ?relation_direction {{ont:FocusToParentRelation ont:ParentToFocusRelation}}
+        VALUES ?ep_relation_direction {{ont:FocusToParentRelation ont:ParentToFocusRelation}}
           {{ SELECT ?parent_endpoint ?endpoint (count(?intermediate) as ?distance)
             {{
-              ?endpoint ont:parentEndpoint+ ?intermediate ;
+              ?endpoint ont:parentEndpoint* ?intermediate ;
                   ont:deliversClasses ?classes .
               ?intermediate ont:parentEndpoint* ?parent_endpoint .
               ?intermediate a ?intermediateEPClass .
@@ -880,7 +878,7 @@ def get_endpoint_template_queries(classes: FrozenSet[URIRef]):
             
           }}
       }}
-    }} ORDER BY DESC(?distance)
+    }} ORDER BY ASC(?distance)
     """
     return query
 
@@ -892,7 +890,7 @@ def generate_relationship_query(
     Generates a SPARQL query of the form:
     SELECT * {{ SELECT ?endpoint ?parent_1 ?parent_2
         WHERE {
-    BIND("/s/datasets/$parent_1/collections/$object" as ?endpoint)
+    BIND("/s/catalogs/$parent_1/collections/$object" as ?endpoint)
     ?parent_1 <http://www.w3.org/2000/01/rdf-schema#member> <https://test/feature-collection> .
     }}}
     """
@@ -900,12 +898,13 @@ def generate_relationship_query(
         return None
     subqueries = []
     for endpoint, relations in endpoint_to_relations.items():
-        subquery = f"""{{ SELECT ?endpoint {" ".join(["?parent_" + str(i + 1) for i, _ in enumerate(relations)])}
+        subquery = f"""{{ SELECT ?endpoint {" ".join(["?parent_" + str(i + 1) for i, pred in enumerate(relations)])}
         WHERE {{\n BIND("{endpoint}" as ?endpoint)\n"""
         uri_str = f"<{uri}>"
         for i, relation in enumerate(relations):
             predicate, direction = relation
             if predicate:
+                parent = "?parent_" + str(i)
                 if direction == URIRef("https://prez.dev/ont/ParentToFocusRelation"):
                     subquery += f"{parent} <{predicate}> {uri_str} .\n"
                 else:  # assuming the direction is "focus_to_parent"

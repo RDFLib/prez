@@ -6,6 +6,7 @@ PREFIX prez: <https://prez.dev/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX shext: <http://example.com/shacl-extension#>
 
 endpoint:spaceprez-home a ont:Endpoint ;
     ont:endpointTemplate "/s" ;
@@ -15,31 +16,32 @@ endpoint:dataset-listing a ont:ListingEndpoint ;
     ont:deliversClasses prez:DatasetList ;
     sh:targetClass dcat:Dataset ;
     ont:isTopLevelEndpoint "true"^^xsd:boolean ;
-    ont:endpointTemplate "/s/datasets" ;
+    ont:endpointTemplate "/s/catalogs" ;
+    shext:limit 20 ;
+    shext:offset 0 ;
 .
 
 endpoint:dataset-object a ont:ObjectEndpoint ;
     sh:targetNode "$object" ;
     ont:parentEndpoint endpoint:dataset-listing ;
     ont:deliversClasses dcat:Dataset ;
-    ont:endpointTemplate "/s/datasets/$object" ;
+    ont:endpointTemplate "/s/catalogs/$object" ;
 .
 
 endpoint:feature-collection-listing a ont:ListingEndpoint ;
-    ont:parentEndpoint endpoint:dataset ;
+    ont:parentEndpoint endpoint:dataset-object ;
     sh:targetClass geo:FeatureCollection ;
     ont:deliversClasses prez:FeatureCollectionList ;
-    ont:endpointTemplate "/s/datasets/$parent_1/collections" ;
+    ont:endpointTemplate "/s/catalogs/$parent_1/collections" ;
     ont:ParentToFocusRelation rdfs:member ;
+    shext:limit 20 ;
+    shext:offset 0 ;
+    shext:orderBy [ sh:path rdfs:label ] ;
     sh:target [
           sh:select """SELECT ?focus_node
              WHERE {
              $parent_1 rdfs:member ?focus_node .
-             ?focus_node rdfs:label ?label .
                 }
-            ORDER BY ?label
-            LIMIT $limit
-            OFFSET $offset
              """ ] ;
 .
 
@@ -47,7 +49,7 @@ endpoint:feature-collection-object a ont:ObjectEndpoint ;
     sh:targetNode "$object" ;
     ont:parentEndpoint endpoint:feature-collection-listing ;
     ont:deliversClasses geo:FeatureCollection ;
-    ont:endpointTemplate "/s/datasets/$parent_1/collections/$object" ;
+    ont:endpointTemplate "/s/catalogs/$parent_1/collections/$object" ;
     ont:ParentToFocusRelation rdfs:member ;
 .
 
@@ -55,33 +57,23 @@ endpoint:feature-listing a ont:ListingEndpoint ;
     ont:parentEndpoint endpoint:feature-collection-object ;
     sh:targetClass geo:Feature ;
     ont:deliversClasses prez:FeatureList ;
-    ont:endpointTemplate "/s/datasets/$parent_2/collections/$parent_1/items" ;
+    ont:endpointTemplate "/s/catalogs/$parent_2/collections/$parent_1/items" ;
     ont:ParentToFocusRelation rdfs:member ;
-        sh:target [
-              sh:select """SELECT ?focus_node
-                 WHERE {
-                 $parent_1 rdfs:member ?focus_node .
-                 ?focus_node rdfs:label ?label .
-                    }
-                ORDER BY ?label
-                LIMIT $limit
-                OFFSET $offset
-                 """ ] ;
+    shext:limit 20 ;
+    shext:offset 0 ;
+    shext:orderBy [ sh:path rdfs:label ] ;
+    sh:target [
+          sh:select """SELECT ?focus_node
+             WHERE {
+             $parent_1 rdfs:member ?focus_node .
+                }
+             """ ] ;
 .
 
 endpoint:feature-object a ont:ObjectEndpoint ;
     sh:targetNode "$object" ;
     ont:parentEndpoint endpoint:feature-listing ;
     ont:deliversClasses geo:Feature ;
-    ont:endpointTemplate "/s/datasets/$parent_2/collections/$parent_1/items/$object" ;
+    ont:endpointTemplate "/s/catalogs/$parent_2/collections/$parent_1/items/$object" ;
     ont:ParentToFocusRelation rdfs:member ;
 .
-
-endpoint:feature-listing ont:defaultLimit 20 ;
-    ont:defaultOffset 0 .
-
-endpoint:feature-collection-listing ont:defaultLimit 20 ;
-    ont:defaultOffset 0 .
-
-endpoint:dataset-listing ont:defaultLimit 20 ;
-    ont:defaultOffset 0 .

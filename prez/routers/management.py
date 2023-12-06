@@ -69,19 +69,3 @@ async def return_annotation_predicates():
     Collection(g, description_list_bn, settings.description_predicates)
     Collection(g, provenance_list_bn, settings.provenance_predicates)
     return g
-
-
-async def return_annotation_predicates():
-    """
-    Returns an RDF linked list of the annotation predicates used for labels, descriptions and provenance.
-    """
-    g = Graph()
-    g.bind("prez", "https://prez.dev/")
-    label_list_bn, description_list_bn, provenance_list_bn = BNode(), BNode(), BNode()
-    g.add((PREZ.AnnotationPropertyList, PREZ.labelList, label_list_bn))
-    g.add((PREZ.AnnotationPropertyList, PREZ.descriptionList, description_list_bn))
-    g.add((PREZ.AnnotationPropertyList, PREZ.provenanceList, provenance_list_bn))
-    Collection(g, label_list_bn, settings.label_predicates)
-    Collection(g, description_list_bn, settings.description_predicates)
-    Collection(g, provenance_list_bn, settings.provenance_predicates)
-    return g

@@ -38,13 +38,16 @@ skos:definition rdfs:label "definition"@en ;
 skos:prefLabel rdfs:label "preferred label"@en ;
     skos:definition "The preferred lexical label for a resource, in a given language."@en .
 
-<http://example.com/datasets/sandgate/cc12109444> rdfs:label "Contracted Catchment 12109444" ;
-    dcterms:identifier "sndgt:cc12109444"^^prez:identifier ;
-    prez:link "/s/datasets/exds:sandgate/collections/sndgt:catchments/items/sndgt:cc12109444" .
-
-<http://example.com/datasets/sandgate/cc12109445> rdfs:label "Contracted Catchment 12109445" ;
-    dcterms:identifier "sndgt:cc12109445"^^prez:identifier ;
-    prez:link "/s/datasets/exds:sandgate/collections/sndgt:catchments/items/sndgt:cc12109445" .
+<http://example.com/datasets/sandgate/catchments> a geo:FeatureCollection ;
+    rdfs:label "Geofabric Contracted Catchments"@en ;
+    dcterms:description "Hydrological catchments that are 'contracted', that is, guarenteed, to appear on multiple Geofabric surface hydrology data products"@en ;
+    dcterms:identifier "catchments"^^xsd:token,
+        "sndgt:catchments"^^prez:identifier ;
+    dcterms:title "Geofabric Contracted Catchments"@en ;
+    geo:hasBoundingBox [ a geo:Geometry ;
+            geo:asWKT "POLYGON ((152.9075 -27.42,153.16 -27.42,153.16 -27.2775,152.9075 -27.2775,152.9075 -27.42))"^^geo:wktLiteral ] ;
+    prez:link "/s/datasets/exds:sandgate/collections/sndgt:catchments" ;
+    prez:members [ prez:link "/s/datasets/exds:sandgate/collections/sndgt:catchments/items" ] .
 
 geo:FeatureCollection skos:definition "A collection of individual Features."@en ;
     skos:prefLabel "Feature Collection"@en .

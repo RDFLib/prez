@@ -30,7 +30,6 @@ class Settings(BaseSettings):
     sparql_endpoint: Optional[str] = None
     sparql_username: Optional[str] = None
     sparql_password: Optional[str] = None
-    sparql_auth: Optional[tuple]
     protocol: str = "http"
     host: str = "localhost"
     port: int = 8000
@@ -38,15 +37,23 @@ class Settings(BaseSettings):
     system_uri: Optional[str] = f"{protocol}://{host}:{port}"
     order_lists_by_label: bool = True
     prez_flavours: Optional[list] = ["SpacePrez", "VocPrez", "CatPrez", "ProfilesPrez"]
-    label_predicates = [SKOS.prefLabel, DCTERMS.title, RDFS.label, SDO.name]
-    description_predicates = [SKOS.definition, DCTERMS.description, SDO.description]
-    provenance_predicates = [DCTERMS.provenance]
-    other_predicates = [SDO.color, REG.status]
-    sparql_timeout = 30.0
+    label_predicates: Optional[List[URIRef]] = [
+        SKOS.prefLabel,
+        DCTERMS.title,
+        RDFS.label,
+        SDO.name,
+    ]
+    description_predicates: Optional[List[URIRef]] = [
+        SKOS.definition,
+        DCTERMS.description,
+        SDO.description,
+    ]
+    provenance_predicates: Optional[List[URIRef]] = [DCTERMS.provenance]
+    other_predicates: Optional[List[URIRef]] = [SDO.color, REG.status]
     sparql_repo_type: str = "remote"
-
-    log_level = "INFO"
-    log_output = "stdout"
+    sparql_timeout: int = 30
+    log_level: str = "INFO"
+    log_output: str = "stdout"
     prez_title: Optional[str] = "Prez"
     prez_desc: Optional[str] = (
         "A web framework API for delivering Linked Data. It provides read-only access to "
@@ -54,16 +61,8 @@ class Settings(BaseSettings):
     )
     prez_version: Optional[str] = None
     disable_prefix_generation: bool = False
-
-    @root_validator()
-    def get_version(cls, values):
-        version = environ.get("PREZ_VERSION")
-        values["prez_version"] = version
-
-        if version is None or version == "":
-            values["prez_version"] = toml.load(
-                Path(Path(__file__).parent.parent) / "pyproject.toml"
-            )["tool"]["poetry"]["version"]
+    default_language: str = "en"
+    local_rdf_dir: str = "rdf"
 
     # @root_validator()
     # def check_endpoint_enabled(cls, values):

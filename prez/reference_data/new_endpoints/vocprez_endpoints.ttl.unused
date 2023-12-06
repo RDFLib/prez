@@ -5,6 +5,7 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX shext: <http://example.com/shacl-extension#>
 
 endpoint:vocprez-home a ont:Endpoint ;
     ont:endpointTemplate "/v" ;
@@ -87,29 +88,13 @@ endpoint:cs-children
             sh:select """SELECT DISTINCT ?focus_node ?hasChildren
              WHERE {
              $parent_1 skos:narrower|^skos:broader ?focus_node .
-             ?focus_node skos:prefLabel ?label .
              BIND(EXISTS{?focus_node skos:narrower|^skos:broader ?grandChildren} AS ?hasChildren)
-                }
-            ORDER BY ?label
-            LIMIT $limit
-            OFFSET $offset
+             }
              """ ;
         ] ;
+    shext:limit 20 ;
+    shext:offset 0 ;
+    shext:orderBy [ sh:path skos:prefLabel ] ;
     sh:targetClass skos:Concept ;
     ont:endpointTemplate "/v/vocabs/$parent_2/$parent_1/narrowers" ;
 .
-
-ont:ListingEndpoint ont:defaultLimit 20 ;
-    ont:defaultOffset 0 .
-
-endpoint:vocabs-listing ont:defaultLimit 20 ;
-    ont:defaultOffset 0 .
-
-endpoint:cs-children ont:defaultLimit 20 ;
-    ont:defaultOffset 0 .
-
-endpoint:cs-top-concepts ont:defaultLimit 20 ;
-    ont:defaultOffset 0 .
-
-endpoint:collection-listing ont:defaultLimit 20 ;
-    ont:defaultOffset 0 .

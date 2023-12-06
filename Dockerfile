@@ -45,7 +45,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 COPY ./prez /app/prez
 COPY ./temp /app/temp
-COPY ./rdf /app/rdf
+COPY ./test_data /app/test_data
 # copy the pyproject.toml as the application reads the version from here
 COPY pyproject.toml .
 

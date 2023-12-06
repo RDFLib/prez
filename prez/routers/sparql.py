@@ -58,8 +58,7 @@ async def sparql_endpoint(
             return JSONResponse(content=query_result)
         elif isinstance(query_result, Graph):
             return Response(
-                content=query_result.serialize(format="text/turtle"),
-                status_code=200
+                content=query_result.serialize(format="text/turtle"), status_code=200
             )
         else:
             return StreamingResponse(

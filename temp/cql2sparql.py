@@ -21,7 +21,10 @@ from temp.grammar import (
     ConstructQuery,
     ConstructTriples,
 )
-from temp.cql_sparql_reference import cql_sparql_spatial_mapping, cql_to_shapely_mapping
+from temp.cql_sparql_reference import (
+    cql_sparql_spatial_mapping,
+    cql_to_shapely_mapping,
+)
 
 CQL = Namespace("http://www.opengis.net/doc/IS/cql2/1.0/")
 

@@ -113,57 +113,6 @@ prez:GeoListingProfile a prof:Profile ;
         ]
 .
 
-<http://www.opengis.net/def/geosparql>
-    a prof:Profile , prez:SpacePrezProfile ;
-    dcterms:description "An RDF/OWL vocabulary for representing spatial information" ;
-    dcterms:identifier "geo"^^xsd:token ;
-    dcterms:title "GeoSPARQL" ;
-    altr-ext:constrainsClass geo:Feature ;
-    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
-    altr-ext:hasResourceFormat
-        "application/ld+json" ,
-        "application/anot+ld+json" ,
-        "application/rdf+xml" ,
-        "text/anot+turtle" ,
-        "text/turtle" ;
-.
-
-<http://www.opengis.net/spec/ogcapi-features-1/1.0/req/oas30>
-    a prof:Profile , prez:SpacePrezProfile ;
-    dcterms:description "The OGC API Features specifies the behavior of Web APIs that provide access to features in a dataset in a manner independent of the underlying data store." ;
-    dcterms:identifier "oai"^^xsd:token ;
-    dcterms:title "OGC API Features" ;
-    altr-ext:constrainsClass
-        dcat:Dataset ,
-        geo:FeatureCollection ,
-        geo:Feature ,
-        prez:FeatureCollectionList ,
-        prez:FeatureList ;
-    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
-    altr-ext:hasResourceFormat
-        "application/ld+json" ,
-        "application/anot+ld+json" ,
-        "application/rdf+xml" ,
-        "text/anot+turtle" ,
-        "text/turtle" ,
-        "application/geo+json" ;
-.
-
-<https://w3id.org/profile/dcat2null>
-    a prof:Profile , prez:SpacePrezProfile ;
-    dcterms:description "A null profile of the Data Catalog Vocabulary (DCAT)" ;
-    dcterms:identifier "dcat"^^xsd:token ;
-    dcterms:title "DCAT" ;
-    altr-ext:constrainsClass dcat:Dataset ;
-    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
-    altr-ext:hasResourceFormat
-        "application/ld+json" ,
-        "application/anot+ld+json" ,
-        "application/rdf+xml" ,
-        "text/anot+turtle" ,
-        "text/turtle" ;
-.
-
 <https://www.w3.org/TR/vocab-dcat/>
     a prof:Profile , prez:SpacePrezProfile ;
     dcterms:description "Dataset Catalog Vocabulary (DCAT) is a W3C-authored RDF vocabulary designed to facilitate interoperability between data catalogs" ;
@@ -186,3 +135,4 @@ prez:GeoListingProfile a prof:Profile ;
     shext:bnode-depth 2 ;
     altr-ext:constrainsClass dcat:Catalog , dcat:Dataset ;
 .
+

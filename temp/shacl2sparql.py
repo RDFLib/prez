@@ -1,7 +1,5 @@
-import json
-from pathlib import Path
 from string import Template
-from typing import Union, Optional
+from typing import Union, Optional, List
 
 from rdflib import URIRef, Variable, Namespace, Graph, SH, RDF, BNode, Literal
 from rdflib.collection import Collection
@@ -29,6 +27,17 @@ from temp.grammar import (
     ConstructTriples,
     ConstructQuery,
     Filter,
+    OrderCondition,
+    OrderClause,
+    IRI,
+    Var,
+    Constraint,
+    BuiltInCall,
+    PrimaryExpression,
+    BrackettedExpression,
+    Expression,
+    RDFLiteral,
+    IRIOrFunction,
 )
 
 ONT = Namespace("https://prez.dev/ont/")
@@ -53,7 +62,7 @@ class SHACLParser:
         self.profile_uri: Optional[URIRef] = profile_uri
         self.additional_ggps: Optional[GroupGraphPatternSub] = additional_ggps
 
-        self.focus_node: Union[URIRef, Variable] = Variable("focus_node")
+        self.focus_node: Union[IRI, Var] = Var(value="focus_node")
 
         self.sparql = None
         self.results = None
@@ -66,6 +75,8 @@ class SHACLParser:
 
         self.default_limit = None
         self.default_offset = None
+        self.default_order_by = None
+        self.default_order_by_desc = None
 
         self.runtime_vals_expanded = None
         self.merged_runtime_and_default_vals = None
@@ -75,13 +86,19 @@ class SHACLParser:
     def _expand_runtime_vars(self):
         self.runtime_vals_expanded = {}
         for k, v in self.runtime_values.items():
-            if k in ["limit", "offset"]:
+            if k in ["limit", "offset", "term"]:
                 self.runtime_vals_expanded[k] = v
             elif v:
-                self.runtime_vals_expanded[k] = URIRef(v).n3()
+                val = "".join(IRI(value=v).render())
+                self.runtime_vals_expanded[k] = val
 
     def _merge_runtime_and_default_vars(self):
-        default_args = {"limit": self.default_limit, "offset": self.default_offset}
+        default_args = {
+            "limit": self.default_limit,
+            "offset": self.default_offset,
+            "order_by": self.default_order_by,
+            "order_by_desc": self.default_order_by_desc,
+        }
         self.merged_runtime_and_default_vals = default_args | self.runtime_vals_expanded
 
     def generate_sparql(self):
@@ -140,7 +157,7 @@ class SHACLParser:
         if target_nodes:
             target_node_var = str(target_nodes[0])
             target_node_val = target_node_var[1:]
-            target_uri = URIRef(self.runtime_values[target_node_val])
+            target_uri = IRI(value=self.runtime_values[target_node_val])
             self.focus_node = target_uri
 
         # rule nodes - for CONSTRUCT TRIPLES patterns.
@@ -175,14 +192,44 @@ class SHACLParser:
         gpnt = GraphPatternNotTriples(content=gorugp)
         self.main_where_ggps.add_pattern(gpnt)
 
+    def sh_rule_type_conversion(self, items: List):
+        """
+        Assumes Literals are actually Variables.
+        """
+        new_items = []
+        for item in items:
+            if isinstance(item, URIRef):
+                item = IRI(value=item)
+            elif isinstance(item, Literal):
+                item = Var(value=item[1:])
+            new_items.append(item)
+        return new_items
+
     def _create_construct_triples_from_sh_rules(self, rule_node):
+        """CONSTRUCT {?s ?p ?o} based on sh:rule [ sh:subject ... ]"""
         subject = self.endpoint_graph.value(subject=rule_node, predicate=SH.subject)
         predicate = self.endpoint_graph.value(subject=rule_node, predicate=SH.predicate)
         object = self.endpoint_graph.value(subject=rule_node, predicate=SH.object)
         if subject == SH.this:
             subject = self.focus_node
-        if isinstance(object, Literal):  # assume it's a variable of the form ?xyz
-            object = Variable(str(object)[1:])
+        subject, predicate, object = self.sh_rule_type_conversion(
+            [subject, predicate, object]
+        )
+
+        # for item in subject, predicate, object:
+        #     if isinstance(item, URIRef):
+        #         item = IRI(value=item)
+        #     elif isinstance(item, BNode):
+        # if subject == SH.this:
+        #     if isinstance(self.focus_node, Var):
+        #         subject = self.focus_node
+        #     else:
+        #         subject = IRI(value=self.focus_node)
+        # elif isinstance(subject, Literal):  # assume it's a variable of the form ?xyz
+        #     subject = Var(value=str(subject)[1:])
+        # if isinstance(object, Literal):  # assume it's a variable of the form ?xyz
+        #     object = Var(value=str(object)[1:])
+
         triple = SimplifiedTriple(subject=subject, predicate=predicate, object=object)
         if self.construct_triples:
             self.construct_triples.append(triple)
@@ -190,11 +237,13 @@ class SHACLParser:
             self.construct_triples = [triple]
 
     def create_select_subquery_for_class_listing(self, target_classes):
-        target_class_var = URIRef(target_classes[0])
+        target_class_var = IRI(value=target_classes[0])
         triples_block = TriplesBlock(
             triples=[
                 SimplifiedTriple(
-                    subject=self.focus_node, predicate=RDF.type, object=target_class_var
+                    subject=self.focus_node,
+                    predicate=IRI(value=RDF.type),
+                    object=target_class_var,
                 )
             ]
         )
@@ -216,21 +265,13 @@ class SHACLParser:
         ggp = GroupGraphPattern(content=ggps)
         sub_select_where = WhereClause(group_graph_pattern=ggp)
         select_clause = SelectClause(variables_or_all="*")
-        limit = self.merged_runtime_and_default_vals["limit"]
-        offset = self.merged_runtime_and_default_vals["offset"]
-        if limit is not None and offset is not None:  # int = 0 is boolean False
-            limit_clause = LimitClause(limit=limit)
-            offset_clause = OffsetClause(offset=offset)
-            limit_offset_clauses = LimitOffsetClauses(
-                limit_clause=limit_clause, offset_clause=offset_clause
-            )
-            solution_modifier = SolutionModifier(limit_offset=limit_offset_clauses)
-        else:
-            solution_modifier = SolutionModifier()
+        sol_mod, order_by_triple = self._create_focus_node_solution_modifier()
+        if order_by_triple:
+            ggps.add_triple(order_by_triple)
         ss = SubSelect(
             select_clause=select_clause,
             where_clause=sub_select_where,
-            solution_modifier=solution_modifier,
+            solution_modifier=sol_mod,
         )
         ggp = GroupGraphPattern(content=ss)
         return ggp
@@ -244,26 +285,88 @@ class SHACLParser:
         # implemented
         substituted_query = select_statement.substitute(
             self.merged_runtime_and_default_vals
+        ).rstrip()
+        sol_mod, order_by_triple = self._create_focus_node_solution_modifier()
+        if order_by_triple:  # insert it before the end of the string,
+            order_by_triple_text = "".join(order_by_triple.render())
+            substituted_query = (
+                substituted_query[:-1] + f"{{{order_by_triple_text}}} }}"
+            )
+        sss = SubSelectString(
+            select_string=substituted_query, solution_modifier=sol_mod
         )
-        sss = SubSelectString(select_string=substituted_query)
         ggp = GroupGraphPattern(content=sss)
         return ggp
+
+    def _create_focus_node_solution_modifier(self):
+        order_clause = order_by_triple = None  # order clause is optional
+        order_by_path = self.merged_runtime_and_default_vals.get("order_by")
+        if order_by_path:
+            direction = self.merged_runtime_and_default_vals.get("order_by_desc")
+            if direction:
+                direction = "DESC"
+            else:
+                direction = "ASC"
+            order_cond = OrderCondition(
+                var=Var(value="order_by_var"), direction=direction
+            )
+            order_clause = OrderClause(conditions=[order_cond])
+            order_by_triple = SimplifiedTriple(
+                subject=self.focus_node,
+                predicate=IRI(value=order_by_path[0]),
+                object=Var(value="order_by_var"),
+            )
+        limit = int(self.merged_runtime_and_default_vals["limit"])
+        offset = int(self.merged_runtime_and_default_vals["offset"])
+        limit_clause = LimitClause(limit=limit)
+        offset_clause = OffsetClause(offset=offset)
+        limit_offset_clauses = LimitOffsetClauses(
+            limit_clause=limit_clause, offset_clause=offset_clause
+        )
+        sol_mod = SolutionModifier(
+            order_by=order_clause, limit_offset=limit_offset_clauses
+        )
+        return sol_mod, order_by_triple
 
     def _set_default_limit_and_offset(self):
         default_limit = list(
             self.endpoint_graph.objects(
-                subject=self.endpoint_uri, predicate=ONT["defaultLimit"]
+                subject=self.endpoint_uri, predicate=SHEXT.limit
             )
         )
         default_offset = list(
             self.endpoint_graph.objects(
-                subject=self.endpoint_uri, predicate=ONT["defaultOffset"]
+                subject=self.endpoint_uri, predicate=SHEXT.offset
             )
         )
+        default_order_by = list(
+            self.endpoint_graph.objects(
+                subject=self.endpoint_uri, predicate=SHEXT.orderBy
+            )
+        )
+
         if not default_limit or not default_offset:
             raise ValueError(
                 "Listing endpoint must have both a default limit and a default offset"
             )
+
+        # Process each blank node in the default_order_by list
+        for blank_node in default_order_by:
+            # Extract sh:path
+            path = next(self.endpoint_graph.objects(blank_node, SH.path), None)
+            if not path:
+                continue  # Skip if no sh:path is found
+
+            # Check for sh:desc
+            desc_node = next(self.endpoint_graph.objects(blank_node, SHEXT.desc), None)
+            is_descending = (
+                True if desc_node and (desc_node == Literal(True)) else False
+            )
+
+            # Add the configuration to the list
+            self.default_order_by = (path,)
+            self.default_order_by_desc = is_descending
+
         self.default_limit = int(default_limit[0])
         self.default_offset = int(default_offset[0])
 
@@ -289,7 +392,9 @@ class SHACLParser:
     def _add_target_class(self, target_class):
         triples = [
             SimplifiedTriple(
-                subject=self.focus_node, predicate=RDF.type, object=target_class
+                subject=self.focus_node,
+                predicate=IRI(value=RDF.type),
+                object=IRI(value=target_class),
             )
         ]
         if self.construct_triples:
@@ -298,22 +403,30 @@ class SHACLParser:
             self.construct_triples = triples
 
     def _build_bnode_blocks(self):
-        bnode_depth = list(self.profile_graph.objects(subject=self.profile_uri, predicate=SHEXT["bnode-depth"]))
+        bnode_depth = list(
+            self.profile_graph.objects(
+                subject=self.profile_uri, predicate=SHEXT["bnode-depth"]
+            )
+        )
         if not bnode_depth or bnode_depth == [0]:
             return
         else:
             bnode_depth = int(bnode_depth[0])
-        p1 = Variable(f"?bn_p_1")
-        o1 = Variable(f"?bn_o_1")
-        p2 = Variable(f"?bn_p_2")
-        o2 = Variable(f"?bn_o_2")
+        p1 = Var(value="bn_p_1")
+        o1 = Var(value="bn_o_1")
+        p2 = Var(value="bn_p_2")
+        o2 = Var(value="bn_o_2")
         triples_block = TriplesBlock(
             triples=[
                 SimplifiedTriple(subject=self.focus_node, predicate=p1, object=o1),
                 SimplifiedTriple(subject=o1, predicate=p2, object=o2),
             ]
         )
-        filter_block = Filter(variable=o1, expression="ISBLANK")
+        o1_pe = PrimaryExpression(content=o1)
+        constraint = Constraint(
+            content=BuiltInCall.create_with_one_expr("isBLANK", o1_pe)
+        )
+        filter_block = Filter(constraint=constraint)
         gpnt = GraphPatternNotTriples(content=filter_block)
         ggps = GroupGraphPatternSub(
             triples_block=triples_block, graph_patterns_or_triples_blocks=[gpnt]
@@ -327,9 +440,9 @@ class SHACLParser:
         container_ggp = GroupGraphPattern(content=container_ggps)
 
         def process_bn_level(depth, max_depth, outer_ggps):
-            old_o_var = Variable(f"?bn_o_{depth}")
-            new_p_var = Variable(f"?bn_p_{depth + 1}")
-            new_o_var = Variable(f"?bn_o_{depth + 1}")
+            old_o_var = Var(value=f"bn_o_{depth}")
+            new_p_var = Var(value=f"bn_p_{depth + 1}")
+            new_o_var = Var(value=f"bn_o_{depth + 1}")
             triples_block = TriplesBlock(
                 triples=[
                     SimplifiedTriple(
@@ -337,7 +450,11 @@ class SHACLParser:
                     )
                 ]
             )
-            filter_block = Filter(variable=old_o_var, expression="ISBLANK")
+            old_o_var_pe = PrimaryExpression(content=old_o_var)
+            constraint = Constraint(
+                content=BuiltInCall.create_with_one_expr("isBLANK", old_o_var_pe)
+            )
+            filter_block = Filter(constraint=constraint)
             gpnt = GraphPatternNotTriples(content=filter_block)
             ggps = GroupGraphPatternSub(
                 triples_block=triples_block, graph_patterns_or_triples_blocks=[gpnt]
@@ -364,10 +481,10 @@ class SHACLParser:
                 if bnode_obj == SH.union:
                     pass
                 elif bnode_pred == SH.inversePath:
-                    inverse_preds.append(bnode_obj)
+                    inverse_preds.append(IRI(value=bnode_obj))
                 elif bnode_pred == SH.alternativePath:
                     predicates.extend(list(Collection(self.profile_graph, bnode_obj)))
-                else:  # "regular" paths - no special predicate, just list members
+                else:  # sequence paths
                     predicates.append(
                         tuple(Collection(self.profile_graph, path_object))
                     )
@@ -426,13 +543,13 @@ class SHACLParser:
         if inverse_preds:
             ggps.add_triple(
                 SimplifiedTriple(
-                    subject=Variable(f"inv_path_{i}"),
-                    predicate=Variable(f"inv_pred_{i}"),
+                    subject=Var(value=f"inv_path_{i}"),
+                    predicate=Var(value=f"inv_pred_{i}"),
                     object=self.focus_node,
                 )
             )
             inline_data_one_var = InlineDataOneVar(
-                variable=Variable(f"inv_pred_{i}"), values=inverse_preds
+                variable=Var(value=f"inv_pred_{i}"), values=inverse_preds
             )
             data_block = DataBlock(block=inline_data_one_var)
             inline_data = InlineData(data_block=data_block)
@@ -442,19 +559,21 @@ class SHACLParser:
 
     def _add_predicate_constraints(self, predicates, property_node, ggp_list):
         # check for any sequence paths - process separately
-        sps = [p for p in predicates if isinstance(p, tuple)]
-        predicates = [p for p in predicates if not isinstance(p, tuple)]
+        sps = [p for p in predicates if isinstance(p, tuple)]  # convert to IRIs here
+        predicates = [
+            IRI(value=p) for p in predicates if not isinstance(p, tuple)
+        ]  # convert to IRIs below
 
         for i, (pred1, pred2) in enumerate(sps):
             t1 = SimplifiedTriple(
                 subject=self.focus_node,
-                predicate=pred1,
-                object=Variable(f"seq_obj_{i + 1}"),
+                predicate=IRI(value=pred1),
+                object=Var(value=f"seq_obj_{i + 1}"),
             )
             t2 = SimplifiedTriple(
-                subject=Variable(f"seq_obj_{i + 1}"),
-                predicate=pred2,
-                object=Variable(f"seq_obj_terminal{i + 1}"),
+                subject=Var(value=f"seq_obj_{i + 1}"),
+                predicate=IRI(value=pred2),
+                object=Var(value=f"seq_obj_terminal{i + 1}"),
             )
             tb = TriplesBlock(triples=[t1, t2])
             ggps = GroupGraphPatternSub(triples_block=tb)
@@ -465,25 +584,33 @@ class SHACLParser:
         max = self.profile_graph.value(subject=property_node, predicate=SH.maxCount)
         simplified_triple = SimplifiedTriple(
             subject=self.focus_node,
-            predicate=Variable("preds"),
-            object=Variable("objs"),
+            predicate=Var(value="preds"),
+            object=Var(value="objs"),
         )
         tb = TriplesBlock(triples=[simplified_triple])
         if predicates:
-            # filters must be added to all union statements
             if max == Literal(0):
-                values_constraint = Filter(variable=Variable("preds"), expression="NOT IN", value=predicates)
+                values = [
+                    PrimaryExpression(content=IRIOrFunction(iri=p)) for p in predicates
+                ]
+                values_constraint = Filter.filter_in(
+                    focus=Var(value="preds"), comparators=values, not_in=True
+                )
                 gpnt = GraphPatternNotTriples(content=values_constraint)
                 if ggp_list:
                     for ggp in ggp_list:
                         ggp.content.add_pattern(gpnt)
                 else:
-                    ggps = GroupGraphPatternSub(graph_patterns_or_triples_blocks=[gpnt, tb])
+                    ggps = GroupGraphPatternSub(
+                        graph_patterns_or_triples_blocks=[gpnt, tb]
+                    )
                     ggp = GroupGraphPattern(content=ggps)
                     ggp_list.append(ggp)
-            elif SHEXT.allPredicateValues not in predicates:  # add VALUES clause
+            elif (
+                IRI(value=SHEXT.allPredicateValues) not in predicates
+            ):  # add VALUES clause
                 inline_data_one_var = InlineDataOneVar(
-                    variable=Variable("preds"), values=predicates
+                    variable=Var(value="preds"), values=predicates
                 )
                 data_block = DataBlock(block=inline_data_one_var)
                 inline_data = InlineData(data_block=data_block)
@@ -491,11 +618,10 @@ class SHACLParser:
                 ggps = GroupGraphPatternSub(graph_patterns_or_triples_blocks=[gpnt, tb])
                 ggp = GroupGraphPattern(content=ggps)
                 ggp_list.append(ggp)
-            elif predicates == [SHEXT.allPredicateValues]:
+            elif predicates == [IRI(value=SHEXT.allPredicateValues)]:
                 ggps = GroupGraphPatternSub(triples_block=tb)
                 ggp = GroupGraphPattern(content=ggps)
                 ggp_list.append(ggp)
-
 
     def _add_object_constrains(self, ggp_list, property_node):
         value = self.profile_graph.value(
@@ -513,8 +639,14 @@ class SHACLParser:
             ggps = GroupGraphPatternSub()
             ggp = GroupGraphPattern(content=ggps)
             ggp_list.append(ggp)
+            objs = []
+            for obj in objects:
+                if isinstance(obj, Literal):
+                    objs.append(RDFLiteral(value=obj))
+                elif isinstance(obj, URIRef):
+                    objs.append(IRI(value=obj))
             inline_data_one_var = InlineDataOneVar(
-                variable=Variable("objs"), values=objects
+                variable=Var(value="objs"), values=objs
             )
             data_block = DataBlock(block=inline_data_one_var)
             inline_data = InlineData(data_block=data_block)

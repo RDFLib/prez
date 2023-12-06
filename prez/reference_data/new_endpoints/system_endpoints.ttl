@@ -1,0 +1,24 @@
+PREFIX dcat: <http://www.w3.org/ns/dcat#>
+PREFIX endpoint: <https://prez.dev/endpoint/system/>
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+PREFIX ont: <https://prez.dev/ont/>
+PREFIX prez: <https://prez.dev/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX sh: <http://www.w3.org/ns/shacl#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX prof: <http://www.w3.org/ns/dx/prof/>
+PREFIX shext: <http://example.com/shacl-extension#>
+
+endpoint:profiles-listing a ont:ListingEndpoint ;
+    ont:deliversClasses prez:ProfilesList ;
+    sh:targetClass prof:Profile ;
+    ont:endpointTemplate "/profiles" ;
+    shext:limit 20 ;
+    shext:offset 0 ;
+.
+
+endpoint:profile-object a ont:ObjectEndpoint ;
+    sh:targetNode "$object" ;
+    ont:deliversClasses prof:Profile ;
+    ont:endpointTemplate "/profiles/$object" ;
+.

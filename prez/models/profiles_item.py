@@ -41,8 +41,7 @@ class ProfileItem(BaseModel):
         q = f"""SELECT ?class {{ <{self.uri}> a ?class }}"""
         r = profiles_graph_cache.query(q)
         if len(r.bindings) > 0:
-            values["classes"] = frozenset([prof.get("class") for prof in r.bindings])
-        label = values.get("label")
+            self.classes = frozenset([prof.get("class") for prof in r.bindings])
+        label = self.label
         if not label:
-            values["label"] = settings.label_predicates[0]
-        return values
+            self.label = settings.label_predicates[0]

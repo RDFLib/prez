@@ -22,16 +22,16 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
         sh:targetClass prez:SPARQLQuery ;
-        altr-ext:hasDefaultProfile <https://prez.dev/profile/open>
+        altr-ext:hasDefaultProfile <https://prez.dev/profile/open-object>
     ]
 .
 
-<https://prez.dev/profile/open>
+<https://prez.dev/profile/open-object>
     a prof:Profile ;
-    dcterms:identifier "open" ;
-    dcterms:description "An open profile which will return all direct properties for a resource." ;
+    dcterms:identifier "openobj"^^xsd:token ;
+    dcterms:description "An open profile for objects which will return all direct properties for a resource." ;
     dcterms:title "Open profile" ;
-    altr-ext:constrainsClass prez:SPARQLQuery , prez:SearchResult , prez:CQLObjectList ;
+    altr-ext:constrainsClass prez:SPARQLQuery , prof:Profile ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat "application/ld+json" ,
         "application/ld+json" ,
@@ -42,8 +42,30 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     sh:property [
         sh:path shext:allPredicateValues ;
     ] ;
+    shext:bnode-depth 2 ;
     .
 
+<https://w3id.org/profile/mem>
+    a prof:Profile ;
+    dcterms:description "A very basic data model that lists the members of container objects only, i.e. not their other properties" ;
+    dcterms:identifier "mem"^^xsd:token ;
+    dcterms:title "Members" ;
+    altr-ext:constrainsClass prez:DatasetList ,
+                             prez:FeatureCollectionList ,
+                             prez:FeatureList ,
+                             prez:ProfilesList ,
+                             prez:SchemesList ,
+                             prez:VocPrezCollectionList ,
+                             prez:CatalogList ,
+                             prez:CQLObjectList ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
+    altr-ext:hasResourceFormat
+        "application/json" ,
+        "application/ld+json" ,
+        "application/rdf+xml" ,
+        "text/anot+turtle" ,
+        "text/turtle" ;
+.
 
 altr-ext:alt-profile
     a prof:Profile ;
@@ -74,38 +96,26 @@ altr-ext:alt-profile
         prez:VocPrezCollectionList ;
 .
 
-prez:profiles
-    a prof:Profile ;
-    dcterms:title "Profiles" ;
-    dcterms:description "List of profiles" ;
-    dcterms:identifier "profiles"^^xsd:token ;
-    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
-    altr-ext:hasResourceFormat
-        "application/ld+json" ,
-        "application/anot+ld+json" ,
-        "application/rdf+xml" ,
-        "text/anot+turtle" ,
-        "text/turtle" ;
-    altr-ext:constrainsClass prof:Profile ;
-.
 
-<https://w3id.org/profile/mem>
-    a prof:Profile ;
-    dcterms:description "A very basic data model that lists the members of container objects only, i.e. not their other properties" ;
-    dcterms:identifier "mem"^^xsd:token ;
-    dcterms:title "Members" ;
-    altr-ext:constrainsClass prez:DatasetList ,
-                             prez:FeatureCollectionList ,
-                             prez:FeatureList ,
-                             prez:ProfilesList ,
-                             prez:SchemesList ,
-                             prez:VocPrezCollectionList ,
-                             prez:CatalogList ;
+
+<https://www.w3.org/TR/vocab-dcat/>
+    a prof:Profile , prez:CatPrezProfile ;
+    dcterms:description "Dataset Catalog Vocabulary (DCAT) is a W3C-authored RDF vocabulary designed to facilitate interoperability between data catalogs" ;
+    dcterms:identifier "dcat"^^xsd:token ;
+    dcterms:title "DCAT" ;
+    altr-ext:constrainsClass
+        dcat:Catalog ,
+        dcat:Dataset ,
+        dcat:Resource ,
+        prez:CatalogList ,
+        prez:ResourceList ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
-        "application/json" ,
         "application/ld+json" ,
         "application/rdf+xml" ,
         "text/anot+turtle" ,
         "text/turtle" ;
-.
+    sh:property [
+                sh:path shext:allPredicateValues
+                ] ;
+    .

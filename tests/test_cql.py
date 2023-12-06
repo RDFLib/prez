@@ -44,7 +44,28 @@ def client(test_repo: Repo) -> TestClient:
 
 @pytest.mark.parametrize(
     "cql_json_filename",
-    ["example01.json", "example02.json", "example03.json"],
+    [
+        "example01.json",
+        "example02.json",
+        "example03.json",
+        "example05a.json",
+        "example05b.json",
+        "example06b.json",
+        "example09.json",
+        "example10.json",
+        "example11.json",
+        "example12.json",
+        "example14.json",
+        "example15.json",
+        "example17.json",
+        "example29.json",
+        "example31.json",
+        "example32.json",
+        "example33.json",
+        "example34.json",
+        "example35.json",
+        "example39.json",
+    ],
 )
 def test_simple(client, cql_json_filename):
     cql_json = Path(__file__).parent / f"data/cql/input/{cql_json_filename}"

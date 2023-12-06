@@ -1,10 +1,11 @@
+import logging
 from rdflib import URIRef
 
 from prez.cache import endpoints_graph_cache
 from prez.sparql.methods import Repo
 
-from prez.cache import endpoints_graph_cache
-from prez.sparql.methods import Repo
+log = logging.getLogger(__name__)
+
 
 async def get_classes(
     uri: URIRef, repo: Repo, endpoint: URIRef = None
@@ -16,7 +17,9 @@ async def get_classes(
     SELECT ?class
     {{ <{uri}> a ?class }}
     """
+    # a = time.time()
     _, r = await repo.send_queries([], [(uri, q)])
+    # log.debug(f"Time to query: {q}\n{time.time() - a}")
     tabular_result = r[0]  # should only be one result - only one query sent
     if endpoint != URIRef("https://prez.dev/endpoint/object"):
         endpoint_classes = list(

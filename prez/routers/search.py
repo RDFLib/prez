@@ -71,7 +71,7 @@ async def search(
     )
 
     full_query = generate_item_construct(
-        search_query, URIRef("https://prez.dev/profile/open")
+        search_query, URIRef("https://prez.dev/profile/open-object")
     )
 
     graph, _ = await repo.send_queries([full_query], [])
@@ -86,7 +86,7 @@ async def search(
     return await return_from_graph(
         graph,
         mediatype=prof_and_mt_info.mediatype,
-        profile=URIRef("https://prez.dev/profile/open"),
+        profile=URIRef("https://prez.dev/profile/open-object"),
         profile_headers=prof_and_mt_info.profile_headers,
         selected_class=prof_and_mt_info.selected_class,
         repo=repo,

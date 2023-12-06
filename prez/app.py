@@ -3,7 +3,6 @@ from textwrap import dedent
 
 import uvicorn
 from fastapi import FastAPI
-from fastapi.openapi.utils import get_openapi
 from rdflib import Graph
 from starlette.middleware.cors import CORSMiddleware
 
@@ -14,25 +13,23 @@ from prez.dependencies import (
     load_local_data_to_oxigraph,
     get_oxrdflib_store,
     get_system_store,
-    load_profile_data_to_oxigraph,
+    load_system_data_to_oxigraph,
 )
 from prez.models.model_exceptions import (
     ClassNotFoundException,
     URINotFoundException,
     NoProfilesException,
 )
-from prez.routers.catprez import router as catprez_router
 from prez.routers.cql import router as cql_router
-from prez.routers.catprez import router as catprez_router
 from prez.routers.identifier import router as identifier_router
 from prez.routers.management import router as management_router
 from prez.routers.object import router as object_router
-from prez.routers.ogc_catprez import router as ogc_router
+from prez.routers.ogc_vocprez import router as vocprez_router
+from prez.routers.ogc_spaceprez import router as spaceprez_router
+from prez.routers.ogc_catprez import router as catprez_router
 from prez.routers.profiles import router as profiles_router
 from prez.routers.search import router as search_router
-from prez.routers.spaceprez import router as spaceprez_router
 from prez.routers.sparql import router as sparql_router
-from prez.routers.vocprez import router as vocprez_router
 from prez.services.app_service import (
     healthcheck_sparql_endpoints,
     count_objects,
@@ -77,8 +74,6 @@ if "VocPrez" in settings.prez_flavours:
     app.include_router(vocprez_router)
 if "SpacePrez" in settings.prez_flavours:
     app.include_router(spaceprez_router)
-if "OGCPrez" in settings.prez_flavours:
-    app.include_router(ogc_router)
 app.include_router(identifier_router)
 
 
@@ -150,7 +145,7 @@ async def app_startup():
     await add_common_context_ontologies_to_tbox_cache()
 
     app.state.pyoxi_system_store = get_system_store()
-    await load_profile_data_to_oxigraph(app.state.pyoxi_system_store)
+    await load_system_data_to_oxigraph(app.state.pyoxi_system_store)
 
 
 @app.on_event("shutdown")
