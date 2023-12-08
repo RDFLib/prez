@@ -20,6 +20,17 @@ from temp.grammar import (
     SolutionModifier,
     ConstructQuery,
     ConstructTriples,
+    Var,
+    IRI,
+    RDFLiteral,
+    PrimaryExpression,
+    RegexExpression,
+    Expression,
+    BuiltInCall,
+    Constraint,
+    FunctionCall,
+    NumericLiteral,
+    DataBlockValue,
 )
 from temp.cql_sparql_reference import (
     cql_sparql_spatial_mapping,
@@ -32,7 +43,7 @@ CQL = Namespace("http://www.opengis.net/doc/IS/cql2/1.0/")
 class CQLParser:
     def __init__(self, cql=None, context: dict = None, cql_json: dict = None):
         self.ggps_inner_select = None
-        self.cql = cql
+        self.cql: dict = cql
         self.context = context
         self.cql_json = cql_json
         self.var_counter = 0
@@ -149,24 +160,30 @@ class CQLParser:
         if prop.startswith("^"):
             prop = prop[1:]
             inverse = True
-        value = args[1].get("@value")
-        subject = Variable("focus_node")
-        predicate = URIRef(prop)
+        val = args[1].get("@value")
+        if isinstance(val, str):
+            value = RDFLiteral(value=val)
+        elif isinstance(val, (int, float)):
+            value = NumericLiteral(value=val)
+        subject = Var(value="focus_node")
+        predicate = IRI(value=prop)
 
-        object = Variable(f"var_{self.var_counter}")
+        object = Var(value=f"var_{self.var_counter}")
+        object_pe = PrimaryExpression(content=object)
         if operator == "=":
-            inline_data_one_var = InlineDataOneVar(
-                variable=object, values=[Literal(value)]
-            )
+            iri_db_vals = [DataBlockValue(value=value)]
+            ildov = InlineDataOneVar(variable=object, datablockvalues=iri_db_vals)
             gpnt = GraphPatternNotTriples(
-                content=InlineData(data_block=DataBlock(block=inline_data_one_var))
+                content=InlineData(data_block=DataBlock(block=ildov))
             )
             self._append_graph_pattern(ggps, gpnt)
         else:
-            filter_clause = Filter(
-                variable=object, expression=operator, value=Literal(value)
+            value_pe = PrimaryExpression(content=value)
+            values_constraint = Filter.filter_relational(
+                focus=object_pe, comparators=value_pe, operator=operator
             )
-            self._append_graph_pattern(ggps, filter_clause)
+            gpnt = GraphPatternNotTriples(content=values_constraint)
+            self._append_graph_pattern(ggps, gpnt)
 
         if inverse:
             self._add_triple(ggps, object, predicate, subject)
@@ -191,15 +208,26 @@ class CQLParser:
             .replace("\\", "\\\\")
         )
 
-        subject = Variable("focus_node")
-        predicate = URIRef(prop)
-        obj = Variable(f"var_{self.var_counter}")
+        subject = Var(value="focus_node")
+        predicate = IRI(value=URIRef(prop))
+        obj = Var(value=f"var_{self.var_counter}")
         if inverse:
             self._add_triple(ggps, obj, predicate, subject)
         else:
             self._add_triple(ggps, subject, predicate, obj)
-        filter_clause = Filter(variable=obj, expression="regex", value=Literal(value))
-        self._append_graph_pattern(ggps, filter_clause)
+
+        te = Expression.from_primary_expr(
+            primary_expression=PrimaryExpression(content=obj)
+        )
+        pe = Expression.from_primary_expr(
+            primary_expression=PrimaryExpression(content=RDFLiteral(value=value))
+        )
+        re = RegexExpression(text_expression=te, pattern_expression=pe)
+        bic = BuiltInCall(other_expressions=re)
+        cons = Constraint(content=bic)
+        filter_expr = Filter(constraint=cons)
+
+        self._append_graph_pattern(ggps, filter_expr)
         yield ggps
 
     def _handle_spatial(self, operator, args, existing_ggps=None):
@@ -211,16 +239,22 @@ class CQLParser:
 
         if coordinates:
             wkt = cql_to_shapely_mapping[geom_type](coordinates).wkt
-            subject = Variable("focus_node")
-            geom_bn_var = Variable("geom_bnode")
-            geom_lit_var = Variable("geom_var")
-            self._add_triple(ggps, subject, GEO.hasGeometry, geom_bn_var)
-            self._add_triple(ggps, geom_bn_var, GEO.asWKT, geom_lit_var)
-            spatial_filter = Filter(
-                variable=geom_lit_var,
-                expression=cql_sparql_spatial_mapping[operator],
-                value=Literal(wkt),
+            subject = Var(value="focus_node")
+            geom_bn_var = Var(value="geom_bnode")
+            geom_lit_var = Var(value="geom_var")
+            self._add_triple(ggps, subject, IRI(value=GEO.hasGeometry), geom_bn_var)
+            self._add_triple(ggps, geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var)
+
+            geom_func_iri = IRI(value=cql_sparql_spatial_mapping[operator])
+            geom_1_exp = Expression.from_primary_expr(
+                primary_expression=PrimaryExpression(content=geom_lit_var)
             )
+            geom_2_exp = Expression.from_primary_expr(
+                primary_expression=PrimaryExpression(content=RDFLiteral(value=wkt))
+            )
+            fc = FunctionCall(iri=geom_func_iri, arg_list=[geom_1_exp, geom_2_exp])
+
+            spatial_filter = Filter(constraint=Constraint(content=fc))
             self._append_graph_pattern(ggps, spatial_filter)
 
         yield ggps
@@ -236,19 +270,28 @@ class CQLParser:
             inverse = True
         literal_values = [item["@value"] for item in args if "@value" in item]
         uri_values = [item["@id"] for item in args if "@id" in item]
-        rdflib_literal_values = [Literal(value) for value in literal_values]
-        rdflib_uri_values = [URIRef(value) for value in uri_values]
-        all_values = rdflib_literal_values + rdflib_uri_values
-        subject = Variable("focus_node")
-        predicate = URIRef(prop)
-        object = Variable(f"var_{self.var_counter}")
+        grammar_literal_values = []
+        for val in literal_values:
+            if isinstance(val, str):
+                value = RDFLiteral(value=val)
+            elif isinstance(val, (int, float)):
+                value = NumericLiteral(value=val)
+            grammar_literal_values.append(value)
+        grammar_uri_values = [IRI(value=URIRef(value)) for value in uri_values]
+        all_values = grammar_literal_values + grammar_uri_values
+        subject = Var(value="focus_node")
+        predicate = IRI(value=URIRef(prop))
+        object = Var(value=f"var_{self.var_counter}")
         if inverse:
             self._add_triple(ggps, object, predicate, subject)
         else:
             self._add_triple(ggps, subject, predicate, object)
-        inline_data_one_var = InlineDataOneVar(variable=object, values=all_values)
+
+        iri_db_vals = [DataBlockValue(value=p) for p in all_values]
+        ildov = InlineDataOneVar(variable=object, datablockvalues=iri_db_vals)
+
         gpnt = GraphPatternNotTriples(
-            content=InlineData(data_block=DataBlock(block=inline_data_one_var))
+            content=InlineData(data_block=DataBlock(block=ildov))
         )
         self._append_graph_pattern(ggps, gpnt)
 

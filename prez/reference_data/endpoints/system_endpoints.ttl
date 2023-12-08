@@ -22,3 +22,15 @@ endpoint:profile-object a ont:ObjectEndpoint ;
     ont:deliversClasses prof:Profile ;
     ont:endpointTemplate "/profiles/$object" ;
 .
+
+endpoint:alt-profiles-listing a ont:ListingEndpoint ;
+    ont:deliversClasses prez:ProfilesList ;
+    sh:targetClass prof:Profile ;
+    sh:target [ sh:select """SELECT ?focus_node
+             WHERE {
+             ?focus_node a prof:Profile ;
+                  <http://www.w3.org/ns/dx/conneg/altr-ext#constrainsClass> $selectedClass .
+                    }""" ] ;
+    shext:limit 20 ;
+    shext:offset 0 ;
+.

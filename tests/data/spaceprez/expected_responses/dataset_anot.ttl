@@ -18,8 +18,8 @@
         <http://example.com/datasets/sandgate/facilities>,
         <http://example.com/datasets/sandgate/floods>,
         <http://example.com/datasets/sandgate/roads> ;
-    prez:link "/s/datasets/exds:sandgate" ;
-    prez:members [ prez:link "/s/datasets/exds:sandgate/collections" ] .
+    prez:link "/s/catalogs/exds:sandgate" ;
+    prez:members [ prez:link "/s/catalogs/exds:sandgate/collections" ] .
 
 dcterms:description rdfs:label "Description"@en ;
     dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en .
@@ -51,25 +51,25 @@ skos:prefLabel rdfs:label "preferred label"@en ;
     dcterms:description "Hydrological catchments that are 'contracted', that is, guarenteed, to appear on multiple Geofabric surface hydrology data products"@en ;
     dcterms:identifier "sndgt:catchments"^^prez:identifier ;
     dcterms:title "Geofabric Contracted Catchments"@en ;
-    prez:link "/s/datasets/exds:sandgate/collections/sndgt:catchments" .
+    prez:link "/s/catalogs/exds:sandgate/collections/sndgt:catchments" .
 
 <http://example.com/datasets/sandgate/facilities> rdfs:label "Sandgate are demo Facilities"@en ;
     dcterms:description "Sandgate area demo Facilities"@en ;
     dcterms:identifier "sndgt:facilities"^^prez:identifier ;
     dcterms:title "Sandgate are demo Facilities"@en ;
-    prez:link "/s/datasets/exds:sandgate/collections/sndgt:facilities" .
+    prez:link "/s/catalogs/exds:sandgate/collections/sndgt:facilities" .
 
 <http://example.com/datasets/sandgate/floods> rdfs:label "Sandgate flooded areas"@en ;
     dcterms:description "Sandgate flooded areas"@en ;
     dcterms:identifier "sndgt:floods"^^prez:identifier ;
     dcterms:title "Sandgate flooded areas"@en ;
-    prez:link "/s/datasets/exds:sandgate/collections/sndgt:floods" .
+    prez:link "/s/catalogs/exds:sandgate/collections/sndgt:floods" .
 
 <http://example.com/datasets/sandgate/roads> rdfs:label "Sandgate main roads"@en ;
     dcterms:description "Sandgate main roads"@en ;
     dcterms:identifier "sndgt:roads"^^prez:identifier ;
     dcterms:title "Sandgate main roads"@en ;
-    prez:link "/s/datasets/exds:sandgate/collections/sndgt:roads" .
+    prez:link "/s/catalogs/exds:sandgate/collections/sndgt:roads" .
 
 geo:Geometry skos:definition "A coherent set of direct positions in space. The positions are held within a Spatial Reference System (SRS)."@en ;
     skos:prefLabel "Geometry"@en .

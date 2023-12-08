@@ -16,7 +16,7 @@
     dcterms:title "Geofabric Contracted Catchments"@en ;
     rdfs:member <http://example.com/datasets/sandgate/cc12109444>,
         <http://example.com/datasets/sandgate/cc12109445> ;
-    prez:link "/s/datasets/exds:sandgate/collections/sndgt:catchments" .
+    prez:link "/s/catalogs/exds:sandgate/collections/sndgt:catchments" .
 
 dcterms:description rdfs:label "Description"@en ;
     dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en .
@@ -41,12 +41,12 @@ skos:prefLabel rdfs:label "preferred label"@en ;
 <http://example.com/datasets/sandgate/cc12109444> a geo:Feature ;
     rdfs:label "Contracted Catchment 12109444" ;
     dcterms:identifier "sndgt:cc12109444"^^prez:identifier ;
-    prez:link "/s/datasets/exds:sandgate/collections/sndgt:catchments/items/sndgt:cc12109444" .
+    prez:link "/s/catalogs/exds:sandgate/collections/sndgt:catchments/items/sndgt:cc12109444" .
 
 <http://example.com/datasets/sandgate/cc12109445> a geo:Feature ;
     rdfs:label "Contracted Catchment 12109445" ;
     dcterms:identifier "sndgt:cc12109445"^^prez:identifier ;
-    prez:link "/s/datasets/exds:sandgate/collections/sndgt:catchments/items/sndgt:cc12109445" .
+    prez:link "/s/catalogs/exds:sandgate/collections/sndgt:catchments/items/sndgt:cc12109445" .
 
 geo:Feature skos:definition "A discrete spatial phenomenon in a universe of discourse."@en ;
     skos:prefLabel "Feature"@en ;

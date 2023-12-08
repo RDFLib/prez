@@ -47,7 +47,7 @@ def test_client(test_repo: Repo) -> TestClient:
     "url, mediatype, expected_data",
     [
         [
-            "/v/vocab?_profile=prfl:dd&_mediatype=",
+            "/v/catalogs/prez:vocprez-container-catalog/collections?_profile=prfl:dd&_mediatype=",
             "application/json",
             {
                 "@context": {

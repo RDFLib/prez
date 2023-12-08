@@ -5,7 +5,7 @@ from starlette.responses import PlainTextResponse
 from prez.dependencies import get_repo
 from prez.queries.object import object_inbound_query, object_outbound_query
 from prez.routers.identifier import get_iri_route
-from prez.services.objects import object_function_new
+from prez.services.objects import object_function
 
 router = APIRouter(tags=["Object"])
 
@@ -70,4 +70,4 @@ async def count_route(
 
 @router.get("/object", summary="Object", name="https://prez.dev/endpoint/object")
 async def object_route(request: Request, repo=Depends(get_repo)):
-    return await object_function_new(request, repo=repo)
+    return await object_function(request, repo=repo)

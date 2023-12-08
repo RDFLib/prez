@@ -48,7 +48,6 @@ from prez.services.exception_catchers import (
 )
 from prez.services.generate_profiles import create_profiles_graph
 from prez.services.prez_logging import setup_logger
-from prez.services.search_methods import get_all_search_methods
 from prez.sparql.methods import RemoteSparqlRepo, PyoxigraphRepo, OxrdflibRepo
 
 app = FastAPI(
@@ -137,7 +136,6 @@ async def app_startup():
         )
 
     await add_prefixes_to_prefix_graph(app.state.repo)
-    await get_all_search_methods(app.state.repo)
     await create_profiles_graph(app.state.repo)
     await create_endpoints_graph(app.state.repo)
     await count_objects(app.state.repo)

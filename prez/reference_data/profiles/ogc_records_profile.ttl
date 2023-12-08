@@ -25,7 +25,7 @@ prez:OGCRecordsProfile
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
-        sh:targetClass prez:CatalogList , prez:ConceptsList ;
+        sh:targetClass prez:CatalogList , prez:ConceptList ;
         altr-ext:hasDefaultProfile prez:OGCListingProfile
     ] , [
         a sh:NodeShape ;

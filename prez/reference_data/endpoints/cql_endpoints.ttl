@@ -12,7 +12,6 @@ PREFIX shext: <http://example.com/shacl-extension#>
 endpoint:cql a ont:ListingEndpoint ;
     ont:endpointTemplate "/cql" ;
     ont:deliversClasses prez:CQLObjectList ;  # required to determine the correct profile for ConnegP
-    sh:targetClass rdfs:Class ;  # required for query construction
     shext:limit 20 ;
     shext:offset 0 ;
 .

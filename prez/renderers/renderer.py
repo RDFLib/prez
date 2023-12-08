@@ -1,24 +1,18 @@
 import io
 import json
 import logging
-from typing import Optional
 
 from connegp import RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
 from fastapi import status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
-from rdflib import Graph, URIRef, Namespace, RDF
-from starlette.requests import Request
-from starlette.responses import Response
+from rdflib import Graph, URIRef, RDF
 
-from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
-from prez.models.profiles_item import ProfileItem
 from prez.renderers.csv_renderer import render_csv_dropdown
 from prez.renderers.json_renderer import render_json_dropdown, NotFoundError
 from prez.services.curie_functions import get_curie_id_for_uri
 from prez.sparql.methods import Repo
 from prez.sparql.objects_listings import (
-    generate_item_construct,
     get_annotation_properties,
 )
 
@@ -134,37 +128,3 @@ async def return_annotated_rdf(
 
     graph.bind("prez", "https://prez.dev/")
     return graph
-
-
-async def return_profiles(
-    classes: frozenset,
-    repo: Repo,
-    request: Optional[Request] = None,
-    prof_and_mt_info: Optional[ProfilesMediatypesInfo] = None,
-) -> Response:
-    from prez.cache import profiles_graph_cache
-
-    if not prof_and_mt_info:
-        prof_and_mt_info = ProfilesMediatypesInfo(request=request, classes=classes)
-    if not request:
-        request = prof_and_mt_info.request
-    items = [
-        ProfileItem(uri=str(uri), url_path=str(request.url.path))
-        for uri in prof_and_mt_info.avail_profile_uris
-    ]
-    queries = [
-        generate_item_construct(profile, URIRef("http://kurrawong.net/profile/prez"))
-        for profile in items
-    ]
-    g = Graph(bind_namespaces="rdflib")
-    g.bind("altr-ext", Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#"))
-    for q in queries:
-        g += profiles_graph_cache.query(q)
-    return await return_from_graph(
-        g,
-        prof_and_mt_info.mediatype,
-        prof_and_mt_info.profile,
-        prof_and_mt_info.profile_headers,
-        prof_and_mt_info.selected_class,
-        repo,
-    )

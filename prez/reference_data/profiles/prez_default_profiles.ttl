@@ -23,6 +23,10 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
         a sh:NodeShape ;
         sh:targetClass prez:SPARQLQuery ;
         altr-ext:hasDefaultProfile <https://prez.dev/profile/open-object>
+    ] , [
+        a sh:NodeShape ;
+        sh:targetClass prez:AltProfilesList ;
+        altr-ext:hasDefaultProfile <https://prez.dev/profile/open-object>
     ]
 .
 
@@ -31,7 +35,7 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     dcterms:identifier "openobj"^^xsd:token ;
     dcterms:description "An open profile for objects which will return all direct properties for a resource." ;
     dcterms:title "Open profile" ;
-    altr-ext:constrainsClass prez:SPARQLQuery , prof:Profile ;
+    altr-ext:constrainsClass prez:SPARQLQuery , prof:Profile , prez:SearchResult ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat "application/ld+json" ,
         "application/ld+json" ,
@@ -68,7 +72,7 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 .
 
 altr-ext:alt-profile
-    a prof:Profile ;
+    a prof:Profile , sh:NodeShape ;
     dcterms:description "The representation of the resource that lists all other representations (profiles and Media Types)" ;
     dcterms:identifier "alt"^^xsd:token ;
     dcterms:title "Alternates Profile" ;
@@ -87,13 +91,27 @@ altr-ext:alt-profile
         dcat:Dataset ,
         prez:DatasetList ,
         dcat:Catalog ,
-        dcat:Resource ,
         prez:CatalogList ,
+        dcat:Resource ,
+        prez:ResourceList ,
         skos:ConceptScheme ,
-        skos:Concept ,
-        skos:Collection ,
         prez:SchemesList ,
-        prez:VocPrezCollectionList ;
+        skos:Concept ,
+        prez:ConceptList ,
+        skos:Collection ,
+        prez:VocPrezCollectionList ,
+        prez:AltProfilesList ;
+    sh:property [
+        sh:path (
+                    sh:union (
+                            altr-ext:hasResourceFormat
+                            altr-ext:hasDefaultResourceFormat
+                            dcterms:description
+                            dcterms:title
+                            dcterms:identifier
+                    )
+                )
+    ] ;
 .
 
 

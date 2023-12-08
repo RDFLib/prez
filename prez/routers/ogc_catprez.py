@@ -1,12 +1,13 @@
 from typing import Optional
 
 from fastapi import APIRouter, Request, Depends
+from fastapi.responses import PlainTextResponse
 from rdflib import URIRef
 
-from prez.dependencies import get_repo, cql_parser_dependency, get_system_repo
+from prez.dependencies import get_repo, cql_post_parser_dependency, get_system_repo
 from prez.services.curie_functions import get_uri_for_curie_id
-from prez.services.listings import listing_function_new
-from prez.services.objects import object_function_new
+from prez.services.listings import listing_function
+from prez.services.objects import object_function
 from prez.sparql.methods import Repo
 
 router = APIRouter(tags=["ogccatprez"])
@@ -21,6 +22,11 @@ ogc_endpoints = {
 }
 
 
+@router.get("/c", summary="CatPrez Home")
+async def catprez_home():
+    return PlainTextResponse("CatPrez Home")
+
+
 @router.get(
     "/c/catalogs",
     summary="List Top Level Catalogs",
@@ -30,12 +36,20 @@ async def catalog_list(
     request: Request,
     page: Optional[int] = 1,
     per_page: Optional[int] = 20,
+    search_term: Optional[str] = None,
     repo: Repo = Depends(get_repo),
     system_repo: Repo = Depends(get_system_repo),
 ):
+    search_term = request.query_params.get("q")
     endpoint_uri = URIRef(request.scope.get("route").name)
-    return await listing_function_new(
-        request, repo, system_repo, endpoint_uri, page, per_page
+    return await listing_function(
+        request,
+        repo,
+        system_repo,
+        endpoint_uri,
+        page,
+        per_page,
+        search_term=search_term,
     )
 
 
@@ -48,13 +62,23 @@ async def vocab_list(
     request: Request,
     page: Optional[int] = 1,
     per_page: Optional[int] = 20,
+    search_term: Optional[str] = None,
     repo: Repo = Depends(get_repo),
     system_repo: Repo = Depends(get_system_repo),
 ):
+    search_term = request.query_params.get("q")
+
     parent_uri = get_uri_for_curie_id(request.path_params["catalogId"])
     endpoint_uri = URIRef(request.scope.get("route").name)
-    return await listing_function_new(
-        request, repo, system_repo, endpoint_uri, page, per_page, parent_uri
+    return await listing_function(
+        request,
+        repo,
+        system_repo,
+        endpoint_uri,
+        page,
+        per_page,
+        parent_uri,
+        search_term=search_term,
     )
 
 
@@ -67,13 +91,22 @@ async def concept_list(
     request: Request,
     page: Optional[int] = 1,
     per_page: Optional[int] = 20,
+    search_term: Optional[str] = None,
     repo: Repo = Depends(get_repo),
     system_repo: Repo = Depends(get_system_repo),
 ):
+    search_term = request.query_params.get("q")
     parent_uri = get_uri_for_curie_id(request.path_params["collectionId"])
     endpoint_uri = URIRef(request.scope.get("route").name)
-    return await listing_function_new(
-        request, repo, system_repo, endpoint_uri, page, per_page, parent_uri
+    return await listing_function(
+        request,
+        repo,
+        system_repo,
+        endpoint_uri,
+        page,
+        per_page,
+        parent_uri,
+        search_term=search_term,
     )
 
 
@@ -90,7 +123,7 @@ async def catalog_object(
     request_url = request.scope["path"]
     endpoint_uri = URIRef(request.scope.get("route").name)
     object_uri = get_uri_for_curie_id(request.path_params["catalogId"])
-    return await object_function_new(
+    return await object_function(
         request, endpoint_uri, object_uri, request_url, repo, system_repo
     )
 
@@ -108,7 +141,7 @@ async def catalog_object(
     request_url = request.scope["path"]
     endpoint_uri = URIRef(request.scope.get("route").name)
     object_uri = get_uri_for_curie_id(request.path_params["collectionId"])
-    return await object_function_new(
+    return await object_function(
         request, endpoint_uri, object_uri, request_url, repo, system_repo
     )
 
@@ -126,6 +159,6 @@ async def catalog_object(
     request_url = request.scope["path"]
     endpoint_uri = URIRef(request.scope.get("route").name)
     object_uri = get_uri_for_curie_id(request.path_params["itemId"])
-    return await object_function_new(
+    return await object_function(
         request, endpoint_uri, object_uri, request_url, repo, system_repo
     )

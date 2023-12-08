@@ -9,8 +9,6 @@ from rdflib.compare import isomorphic
 
 from prez.app import app
 from prez.dependencies import get_repo
-from prez.models.search_method import SearchMethod
-from prez.routers.search import extract_qsa_params
 from prez.sparql.methods import Repo, PyoxigraphRepo
 
 

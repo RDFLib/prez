@@ -1,0 +1,12 @@
+PREFIX dcat: <http://www.w3.org/ns/dcat#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+<https://prez.dev/vocprez-container-catalog> a dcat:Catalog ;
+    dcterms:hasPart <http://data.bgs.ac.uk/ref/BeddingSurfaceStructure> ,
+    <http://linked.data.gov.au/def2/borehole-purpose> ,
+    <http://linked.data.gov.au/def2/borehole-purpose-no-children> ,
+    <http://resource.geosciml.org/classifierscheme/cgi/2016.01/contacttype> ,
+    <https://linked.data.gov.au/def/reg-statuses> ,
+    <https://linked.data.gov.au/def/vocdermods> ,
+    <https://linked.data.gov.au/def/warox-alteration-types> ;
+    .

@@ -87,7 +87,7 @@ class CQLRequest(BaseModel):
     cql: Optional[dict]
 
 
-async def cql_parser_dependency(request: Request):
+async def cql_post_parser_dependency(request: Request):
     try:
         body = await request.json()
         context = json.load(
@@ -95,7 +95,24 @@ async def cql_parser_dependency(request: Request):
         )
         cql_parser = CQLParser(cql=body, context=context)
         cql_parser.generate_jsonld()
-        return cql_parser.cql_json
+        return cql_parser
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON format.")
+    except Exception as e:  # Replace with your specific parsing exception
+        raise HTTPException(
+            status_code=400, detail="Invalid CQL format: Parsing failed."
+        )
+
+
+async def cql_get_parser_dependency(request: Request):
+    try:
+        query = json.loads(request.query_params["q"])
+        context = json.load(
+            (Path(__file__).parent.parent / "temp" / "default_cql_context.json").open()
+        )
+        cql_parser = CQLParser(cql=query, context=context)
+        cql_parser.generate_jsonld()
+        return cql_parser
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON format.")
     except Exception as e:  # Replace with your specific parsing exception

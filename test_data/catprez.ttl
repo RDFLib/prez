@@ -19,3 +19,20 @@ ex:Resource a dcat:Resource ;
     rdfs:label "Resource" ;
     ex:property "resource property" ;
 .
+
+ex:TopLevelCatalogTwo a dcat:Catalog ;
+    rdfs:label "amazing catalog" ;
+    dcterms:hasPart ex:LowerLevelCatalogTwo ;
+    ex:property "complete" ;
+.
+
+ex:LowerLevelCatalogTwo a dcat:Catalog ;
+    rdfs:label "rightful" ;
+    dcterms:hasPart ex:ResourceTwo ;
+    ex:property "exposure"
+.
+
+ex:ResourceTwo a dcat:Resource ;
+    rdfs:label "salty" ;
+    ex:property "proficient" ;
+.

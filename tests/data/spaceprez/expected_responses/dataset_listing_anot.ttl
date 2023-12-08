@@ -10,7 +10,7 @@
     dcterms:description "Example floods, roads, catchment and facilities in the Sandgate are"@en ;
     dcterms:identifier "exds:sandgate"^^prez:identifier ;
     dcterms:title "Sandgate example dataset"@en ;
-    prez:link "/s/datasets/exds:sandgate" .
+    prez:link "/s/catalogs/exds:sandgate" .
 
 dcterms:description rdfs:label "Description"@en ;
     dcterms:description "Description may include but is not limited to: an abstract, a table of contents, a graphical representation, or a free-text account of the resource."@en .
@@ -34,18 +34,18 @@ skos:prefLabel rdfs:label "preferred label"@en ;
     dcterms:description "The Australian national dataset of important hydrological features such as rivers, water bodies, aquifers and monitoring points"@en ;
     dcterms:identifier "ldgovau:geofabric"^^prez:identifier ;
     dcterms:title "Australian Hydrological Geospatial Fabric"@en ;
-    prez:link "/s/datasets/ldgovau:geofabric" .
+    prez:link "/s/catalogs/ldgovau:geofabric" .
 
 <https://linked.data.gov.au/datasets/gnaf> a dcat:Dataset ;
     dcterms:description "The Australian Geocoded National Address File (G-NAF) is Australia’s authoritative, geocoded address file. It is built and maintained by Geoscape Australia using authoritative government data.."@en ;
     dcterms:identifier "ldgovau:gnaf"^^prez:identifier ;
     dcterms:title "Geocoded National Address File"@en ;
     skos:prefLabel "Geocoded National Address File"@en ;
-    prez:link "/s/datasets/ldgovau:gnaf" .
+    prez:link "/s/catalogs/ldgovau:gnaf" .
 
 <https://test/dataset> a dcat:Dataset ;
     dcterms:identifier "preztest:dataset"^^prez:identifier ;
-    prez:link "/s/datasets/preztest:dataset" .
+    prez:link "/s/catalogs/preztest:dataset" .
 
 dcat:Dataset rdfs:label "Dataset"@en ;
     skos:definition "A collection of data, published or curated by a single source, and available for access or download in one or more represenations."@en ;

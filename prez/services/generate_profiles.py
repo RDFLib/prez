@@ -87,7 +87,7 @@ def get_profiles_and_mediatypes(
     )
     log.debug(f"ConnegP query: {query}")
     response = profiles_graph_cache.query(query)
-    log.debug(f"ConnegP response:{results_pretty_printer(response)}")
+    # log.debug(f"ConnegP response:{results_pretty_printer(response)}")
     if len(response.bindings[0]) == 0:
         raise NoProfilesException(classes)
     top_result = response.bindings[0]

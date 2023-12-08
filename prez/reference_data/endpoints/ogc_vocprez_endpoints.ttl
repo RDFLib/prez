@@ -83,7 +83,7 @@ endpoint:concept-object a ont:ObjectEndpoint ;
 endpoint:narrowers
     a ont:ListingEndpoint ;
     ont:parentEndpoint endpoint:concept-object ;
-    ont:deliversClasses skos:Concept ;
+    ont:deliversClasses prez:ConceptList ;
     sh:rule
         [
             sh:object "?hasChildren" ;
@@ -101,13 +101,13 @@ endpoint:narrowers
         ] ;
     shext:limit 20 ;
     shext:offset 0 ;
-    shext:orderBy [ sh:path rdfs:label ] ;
+    shext:orderBy [ sh:path skos:prefLabel ] ;
     sh:targetClass skos:Concept ;
     ont:endpointTemplate "/v/catalogs/$parent_3/collections/$parent_2/items/$parent_1/narrowers" ;
 .
 
 endpoint:top-concepts a ont:ListingEndpoint ;
-    ont:deliversClasses skos:Concept ;
+    ont:deliversClasses prez:ConceptList ;
     ont:parentEndpoint endpoint:vocab-object ;
     sh:rule [ sh:subject sh:this ;
               sh:predicate prez:hasChildren ;
@@ -120,7 +120,7 @@ endpoint:top-concepts a ont:ListingEndpoint ;
              """ ] ;
     shext:limit 20 ;
     shext:offset 0 ;
-    shext:orderBy [ sh:path rdfs:label ] ;
+    shext:orderBy [ sh:path skos:prefLabel ] ;
     sh:targetClass skos:Concept ;
     ont:endpointTemplate "/v/catalogs/$parent_2/collections/$parent_1/top-concepts" ;
 .

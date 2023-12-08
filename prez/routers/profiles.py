@@ -2,8 +2,8 @@ from fastapi import APIRouter, Request, Depends
 
 from prez.dependencies import get_system_repo
 from prez.services.curie_functions import get_uri_for_curie_id
-from prez.services.listings import listing_function_new
-from prez.services.objects import object_function_new
+from prez.services.listings import listing_function
+from prez.services.objects import object_function
 from rdflib import URIRef
 
 router = APIRouter(tags=["Profiles"])
@@ -36,7 +36,7 @@ async def profiles(
     repo=Depends(get_system_repo),
 ):
     endpoint_uri = URIRef(request.scope.get("route").name)
-    return await listing_function_new(
+    return await listing_function(
         request=request,
         repo=repo,
         system_repo=repo,
@@ -55,7 +55,7 @@ async def profile(request: Request, profile_curie: str, repo=Depends(get_system_
     request_url = request.scope["path"]
     endpoint_uri = URIRef(request.scope.get("route").name)
     profile_uri = get_uri_for_curie_id(profile_curie)
-    return await object_function_new(
+    return await object_function(
         request=request,
         endpoint_uri=endpoint_uri,
         uri=profile_uri,

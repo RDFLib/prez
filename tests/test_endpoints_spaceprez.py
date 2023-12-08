@@ -46,7 +46,7 @@ def client(test_repo: Repo) -> TestClient:
 
 @pytest.fixture(scope="session")
 def a_dataset_link(client):
-    r = client.get("/s/datasets")
+    r = client.get("/s/catalogs")
     g = Graph().parse(data=r.text)
     member_uri = g.value(None, RDF.type, DCAT.Dataset)
     link = g.value(member_uri, URIRef(f"https://prez.dev/link", None))
@@ -121,7 +121,7 @@ def test_feature_anot(client, a_feature_link):
 
 
 def test_dataset_listing_anot(client):
-    r = client.get("/s/datasets?_mediatype=text/anot+turtle")
+    r = client.get("/s/catalogs?_mediatype=text/anot+turtle")
     response_graph = Graph().parse(data=r.text)
     expected_graph = Graph().parse(
         Path(__file__).parent

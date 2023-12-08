@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 import logging
+from decimal import Decimal
 from typing import List, Union, Optional, Generator, Tuple
 
 from pydantic import BaseModel, field_validator
-from rdflib import URIRef, Variable, BNode, Literal
+from rdflib import RDF
+from rdflib import URIRef, Variable
 from rdflib.plugins.sparql import prepareQuery
 from rdflib.plugins.sparql.algebra import translateAlgebra
 
-from temp.cql_sparql_reference import cql_sparql_spatial_mapping
+from prez.reference_data.prez_ns import PREZ
 
 log = logging.getLogger(__name__)
 
@@ -28,7 +30,7 @@ class SPARQLGrammarBase(BaseModel):
     def render(self):
         raise NotImplementedError("Subclasses must implement this method.")
 
-    def collect_triples(self) -> List[SimplifiedTriple]:
+    def collect_triples(self) -> List["SimplifiedTriple"]:
         """
         Recursively collect SimplifiedTriple instances from this object.
         """
@@ -58,6 +60,131 @@ class SPARQLGrammarBase(BaseModel):
         # deduplicate
         triples = list(set(triples))
         return triples
+
+
+class BlankNodeLabel(SPARQLGrammarBase):
+    """
+    BLANK_NODE_LABEL	  ::=  	'_:' ( PN_CHARS_U | [0-9] ) ((PN_CHARS|'.')* PN_CHARS)?
+    """
+
+    part_1: str
+    part_2: Optional[str] = None
+
+    def render(self):
+        yield "_:"
+        yield self.part_1
+        if self.part_2:
+            yield self.part_2
+
+
+class Anon:
+    """
+    ANON	  ::=  	'[' WS* ']'
+    https://www.w3.org/TR/sparql11-query/#rANON
+    """
+
+    # TODO not sure how to make this more useful - allow input of whitespace?
+    def render(self):
+        yield "[]"
+
+
+class Var(SPARQLGrammarBase):
+    value: str
+
+    def render(self) -> Generator[str, None, None]:
+        yield Variable(self.value).n3()
+
+    def __hash__(self):
+        return hash(self.value)
+
+
+class IRI(SPARQLGrammarBase):
+    """
+    Represents a SPARQL iri.
+    iri ::= IRIREF | PrefixedName
+    """
+
+    value: Union[URIRef, str]
+
+    def render(self) -> Generator[str, None, None]:
+        if isinstance(self.value, URIRef):
+            yield self.value.n3()
+        else:
+            yield "<"
+            yield self.value
+            yield ">"
+
+    def __hash__(self):
+        return hash(self.value)
+
+
+class BlankNode(SPARQLGrammarBase):
+    """
+    BlankNode	  ::=  	BLANK_NODE_LABEL | ANON
+    """
+
+    value: Union["BlankNodeLabel", "Anon"]
+
+    def render(self):
+        yield from self.value.render()
+
+    def __hash__(self):
+        return hash(self.value)
+
+
+class RDFLiteral(SPARQLGrammarBase):
+    """
+    RDFLiteral	  ::=  	String ( LANGTAG | ( '^^' iri ) )?
+    """
+
+    value: str
+    langtag_or_datatype: Optional[Union[LANGTAG, IRI]] = None
+
+    def render(self) -> Generator[str, None, None]:
+        yield f'"{self.value}"'
+        if self.langtag_or_datatype:
+            yield from self.langtag_or_datatype.render()
+
+    def __hash__(self):
+        return hash(self.value)
+
+
+class LANGTAG(SPARQLGrammarBase):
+    """
+    LANGTAG	  ::=  	'@' [a-zA-Z]+ ('-' [a-zA-Z0-9]+)*
+    """
+
+    tag: str
+    subtag: Optional[str] = None
+
+    def render(self) -> Generator[str, None, None]:
+        yield f"@{self.tag}"
+        if self.subtag:
+            yield f"-{self.subtag}"
+
+
+class NIL(SPARQLGrammarBase):
+    """
+    Represents a SPARQL NIL.
+    NIL	  ::=  	'(' WS* ')'
+    """
+
+    def render(self) -> Generator[str, None, None]:
+        yield "()"
+
+
+class NumericLiteral(SPARQLGrammarBase):
+    """
+    not implemented properly - only does integer literals
+    """
+
+    value: Union[float, int, Decimal]
+
+    def render(self) -> Generator[str, None, None]:
+        yield str(self.value)
+
+    def __hash__(self):
+        return hash(self.value)
 
 
 class SimplifiedTriple(SPARQLGrammarBase):
@@ -90,6 +217,188 @@ class TriplesBlock(SPARQLGrammarBase):
                 yield "\n"
 
 
+class PrimaryExpression(SPARQLGrammarBase):
+    """
+    PrimaryExpression	  ::=  	BrackettedExpression | BuiltInCall | iriOrFunction | RDFLiteral | NumericLiteral | BooleanLiteral | Var
+    """
+
+    content: Union[
+        BrackettedExpression,
+        BuiltInCall,
+        IRIOrFunction,
+        RDFLiteral,
+        NumericLiteral,
+        BooleanLiteral,
+        Var,
+    ]
+
+    def render(self) -> Generator[str, None, None]:
+        yield from self.content.render()
+
+
+class UnaryExpression(SPARQLGrammarBase):
+    operator: Optional[str] = None  # '!', '+', or '-'
+    primary_expression: PrimaryExpression
+
+    def render(self) -> Generator[str, None, None]:
+        if self.operator:
+            yield f"{self.operator} "
+        yield from self.primary_expression.render()
+
+
+class MultiplicativeExpression(SPARQLGrammarBase):
+    base_expression: UnaryExpression
+    additional_expressions: Optional[List[Tuple[str, UnaryExpression]]] = []
+
+    @field_validator("additional_expressions")
+    def validate_additional_expressions(cls, v):
+        if v[0] not in ["*", "/"]:
+            raise ValueError("Operator must be '*' or '/'")
+        return v
+
+    def render(self) -> Generator[str, None, None]:
+        yield from self.base_expression.render()
+        for operator, expression in self.additional_expressions:
+            yield f" {operator} "
+            yield from expression.render()
+
+
+class AdditiveExpression(SPARQLGrammarBase):
+    """
+    https://www.w3.org/TR/sparql11-query/#rAdditiveExpression
+    AdditiveExpression	  ::=  	MultiplicativeExpression ( '+' MultiplicativeExpression | '-' MultiplicativeExpression | ( NumericLiteralPositive | NumericLiteralNegative ) ( ( '*' UnaryExpression ) | ( '/' UnaryExpression ) )* )*
+    #TODO implement NumericLiteralPositive, NumericLiteralNegative - these should be options in the additional expressions
+    """
+
+    base_expression: "MultiplicativeExpression"
+    additional_expressions: Optional[
+        List[Tuple[str, Union[MultiplicativeExpression, UnaryExpression]]]
+    ] = []
+
+    @field_validator("additional_expressions")
+    def validate_additional_expressions(cls, v):
+        if v[0] not in ["+", "-", "*", "/"]:
+            raise ValueError("Operator must be one of '+', '-', '*', or '/'")
+        return v
+
+    def render(self) -> Generator[str, None, None]:
+        yield from self.base_expression.render()
+        for operator, expression in self.additional_expressions:
+            yield f" {operator} "
+            yield from expression.render()
+
+
+class NumericExpression(SPARQLGrammarBase):
+    additive_expression: AdditiveExpression
+
+    def render(self) -> Generator[str, None, None]:
+        yield from self.additive_expression.render()
+
+
+class RelationalExpression(SPARQLGrammarBase):
+    """
+    https://www.w3.org/TR/sparql11-query/#rRelationalExpression
+    RelationalExpression	  ::=  	NumericExpression ( '=' NumericExpression | '!=' NumericExpression | '<' NumericExpression | '>' NumericExpression | '<=' NumericExpression | '>=' NumericExpression | 'IN' ExpressionList | 'NOT' 'IN' ExpressionList )?
+    """
+
+    left: NumericExpression
+    operator: Optional[str] = None  # '=', '!=', '<', '>', '<=', '>=', 'IN' and 'NOT IN'
+    right: Optional[Union[NumericExpression, "ExpressionList"]] = None
+
+    def render(self) -> Generator[str, None, None]:
+        yield from self.left.render()
+        if self.operator:
+            yield f" {self.operator} "
+            if self.right:
+                yield from self.right.render()
+
+
+class ValueLogical(SPARQLGrammarBase):
+    relational_expression: RelationalExpression
+
+    def render(self) -> Generator[str, None, None]:
+        yield from self.relational_expression.render()
+
+
+class ConditionalAndExpression(SPARQLGrammarBase):
+    """
+    ConditionalAndExpression	  ::=  	ValueLogical ( '&&' ValueLogical )*
+    """
+
+    value_logicals: List[ValueLogical]
+
+    def render(self) -> Generator[str, None, None]:
+        for i, value_logical in enumerate(self.value_logicals):
+            yield from value_logical.render()
+            if i < len(self.value_logicals) - 1:
+                yield " && "
+
+
+class ConditionalOrExpression(SPARQLGrammarBase):
+    """
+    ConditionalOrExpression	  ::=  	ConditionalAndExpression ( '||' ConditionalAndExpression )*
+    """
+
+    conditional_and_expressions: List[ConditionalAndExpression]
+
+    def render(self) -> Generator[str, None, None]:
+        for i, conditional_and_expression in enumerate(
+            self.conditional_and_expressions
+        ):
+            yield from conditional_and_expression.render()
+            if i < len(self.conditional_and_expressions) - 1:
+                yield " || "
+
+
+class Expression(SPARQLGrammarBase):
+    """
+    Expression	  ::=  	ConditionalOrExpression
+    """
+
+    conditional_or_expression: ConditionalOrExpression
+
+    def render(self) -> Generator[str, None, None]:
+        yield from self.conditional_or_expression.render()
+
+    @classmethod
+    def from_primary_expr(cls, primary_expression: PrimaryExpression) -> Expression:
+        """
+        Convenience method to create an Expression directly from a Var, wrapped in a PrimaryExpression.
+        """
+        return cls(
+            conditional_or_expression=ConditionalOrExpression(
+                conditional_and_expressions=[
+                    ConditionalAndExpression(
+                        value_logicals=[
+                            ValueLogical(
+                                relational_expression=RelationalExpression(
+                                    left=NumericExpression(
+                                        additive_expression=AdditiveExpression(
+                                            base_expression=MultiplicativeExpression(
+                                                base_expression=UnaryExpression(
+                                                    primary_expression=primary_expression
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        ]
+                    )
+                ]
+            )
+        )
+
+
+class BrackettedExpression(SPARQLGrammarBase):
+    expression: Expression
+
+    def render(self) -> Generator[str, None, None]:
+        yield "("
+        yield from self.expression.render()
+        yield ")"
+
+
 class InlineDataOneVar(SPARQLGrammarBase):
     """
     https://www.w3.org/TR/sparql11-query/#rInlineDataOneVar
@@ -97,15 +406,30 @@ class InlineDataOneVar(SPARQLGrammarBase):
     """
 
     variable: Var
-    values: List[Union[IRI, RDFLiteral]]
+    datablockvalues: List[Union[DataBlockValue]]
 
     def render(self) -> Generator[str, None, None]:
         yield from self.variable.render()
         yield "{ "
-        for value in self.values:
+        for value in self.datablockvalues:
             yield from value.render()
             yield " "
         yield " }"
+
+
+class DataBlockValue(SPARQLGrammarBase):
+    """
+    https://www.w3.org/TR/sparql11-query/#rDataBlockValue
+    DataBlockValue	  ::=  	iri | RDFLiteral | NumericLiteral | BooleanLiteral | 'UNDEF'
+    """
+
+    value: Union[IRI, RDFLiteral, NumericLiteral, BooleanLiteral, str]
+
+    def render(self) -> Generator[str, None, None]:
+        if isinstance(self.value, str):
+            yield self.value
+        else:
+            yield from self.value.render()
 
 
 class InlineDataFull(SPARQLGrammarBase):
@@ -114,7 +438,7 @@ class InlineDataFull(SPARQLGrammarBase):
     ( NIL | '(' Var* ')' ) '{' ( '(' DataBlockValue* ')' | NIL )* '}'
     """
 
-    vars: List[Var]
+    vars: Union[NIL, List[Var]]
     values: List[List[Union[IRI, RDFLiteral]]]
 
     def render(self) -> Generator[str, None, None]:
@@ -183,7 +507,9 @@ class GraphPatternNotTriples(SPARQLGrammarBase):
     GraphPatternNotTriples	  ::=  	GroupOrUnionGraphPattern | OptionalGraphPattern | MinusGraphPattern | GraphGraphPattern | ServiceGraphPattern | Filter | Bind | InlineData
     """
 
-    content: Union[GroupOrUnionGraphPattern, OptionalGraphPattern, Filter, InlineData]
+    content: Union[
+        GroupOrUnionGraphPattern, OptionalGraphPattern, Filter, Bind, InlineData
+    ]
 
     def render(self) -> Generator[str, None, None]:
         yield from self.content.render()
@@ -250,28 +576,6 @@ class GroupGraphPatternSub(SPARQLGrammarBase):
 #             self.patterns.append(triples)
 
 
-# class SelectClause(SPARQLGrammarBase):
-#     """
-#     https://www.w3.org/TR/sparql11-query/#rSelectClause
-#     SelectClause	  ::=  	'SELECT' ( 'DISTINCT' | 'REDUCED' )? ( ( Var | ( '(' Expression 'AS' Var ')' ) )+ | '*' )
-#     Simplified model excluding casting of variables (e.g. (?var AS ?alias))
-#     """
-#
-#     distinct: Optional[bool] = None
-#     reduced: Optional[bool] = None
-#     variables_or_all: Union[List[Var], str]
-#
-#     def render(self):
-#         yield "SELECT"
-#         if self.distinct:
-#             yield " DISTINCT"
-#         elif self.reduced:
-#             yield " REDUCED"
-#         if isinstance(self.variables_or_all, str):
-#             yield " *"
-#         else:
-#             for var in self.variables_or_all:
-#                 yield from var.render()
 class SelectClause(SPARQLGrammarBase):
     """
     https://www.w3.org/TR/sparql11-query/#rSelectClause
@@ -331,7 +635,7 @@ class SubSelectString(SubSelect):
 
     select_clause: Optional[str] = None
     where_clause: Optional[str] = None
-    solution_modifier: Optional[SolutionModifier] = None
+    solution_modifier: Optional["SolutionModifier"] = None
     select_string: str
 
     @field_validator("select_string")
@@ -371,34 +675,50 @@ class Filter(SPARQLGrammarBase):
     constraint: Constraint
 
     def render(self) -> Generator[str, None, None]:
-        yield "FILTER("
+        yield "FILTER "
         yield from self.constraint.render()
-        yield ")"
 
     @classmethod
-    def filter_in(
-        cls, focus: Var, comparators: List[PrimaryExpression], not_in: bool = False
+    def filter_relational(
+        cls,
+        focus: PrimaryExpression,
+        comparators: Union[PrimaryExpression, List[PrimaryExpression]],
+        operator: str,
     ) -> Filter:
         """
-        Convenience method to create a FILTER clause to check if the focus is in/not in the list of comparators.
+        Convenience method to create a FILTER clause to compare the focus node to comparators.
         """
         # Wrap the focus in an NumericExpression
         numeric_left = NumericExpression(
             additive_expression=AdditiveExpression(
                 base_expression=MultiplicativeExpression(
-                    base_expression=UnaryExpression(
-                        primary_expression=PrimaryExpression(content=focus)
-                    )
+                    base_expression=UnaryExpression(primary_expression=focus)
                 )
             )
         )
-        # Wrap each comparator in an Expression
-        comparator_exprs = [Expression.from_primary_expr(comp) for comp in comparators]
-        # Create the ExpressionList for IN/NOT IN
-        in_list = ExpressionList(expressions=comparator_exprs)
-        # Build the RelationalExpression for IN or NOT IN
+        # for operators in '=', '!=', '<', '>', '<=', '>='
+        if isinstance(comparators, PrimaryExpression):
+            assert operator not in [
+                "IN",
+                "NOT IN",
+            ], "an ExpressionList must be supplied for 'IN' or 'NOT IN'"
+            expression_rhs = NumericExpression(
+                additive_expression=AdditiveExpression(
+                    base_expression=MultiplicativeExpression(
+                        base_expression=UnaryExpression(primary_expression=comparators)
+                    )
+                )
+            )
+        else:  # for operators 'IN' and 'NOT IN'
+            # Wrap each comparator in an Expression
+            assert operator in ["IN", "NOT IN"]
+            comparator_exprs = [
+                Expression.from_primary_expr(comp) for comp in comparators
+            ]
+            expression_rhs = ExpressionList(expressions=comparator_exprs)
+        # Build the RelationalExpression
         relational_expr = RelationalExpression(
-            left=numeric_left, operator="NOT IN" if not_in else "IN", right=in_list
+            left=numeric_left, operator=operator, right=expression_rhs
         )
         # Build the ValueLogical to wrap the RelationalExpression
         value_logical = ValueLogical(relational_expression=relational_expr)
@@ -448,39 +768,21 @@ class ArgList(SPARQLGrammarBase):
     ArgList ::= NIL | '(' 'DISTINCT'? Expression ( ',' Expression )* ')'
     """
 
-    expressions: Optional[List["Expression"]]
+    expressions: Optional[Union[NIL, List[Expression]]]
     distinct: bool = False
 
     def render(self) -> Generator[str, None, None]:
-        if not self.expressions:
-            yield "()"
+        if isinstance(self.expressions, NIL):
+            yield from self.expressions.render()
         else:
-            yield "("
             if self.distinct:
                 yield "DISTINCT "
+            yield "("
             for i, expr in enumerate(self.expressions):
                 yield from expr.render()
                 if i < len(self.expressions) - 1:
                     yield ", "
             yield ")"
-
-
-# class Filter(SPARQLGrammarBase):
-#     variable: Var
-#     expression: Union[IRI, str]
-#     value: Optional[Union[RDFLiteral, List[Union[IRI, RDFLiteral]]]] = None
-#
-#     def render(self) -> Generator[str, None, None]:
-#         if self.expression in ["<", ">", "<=", ">="]:
-#             yield f"\n\tFILTER({self.variable.render()}{self.expression}{self.value.n3()})"
-#         elif self.expression == "regex":
-#             yield f"\n\tFILTER regex({self.variable.render()}, {self.value.n3()})"
-#         elif self.expression in cql_sparql_spatial_mapping.values():
-#             yield f"\n\tFILTER({self.expression.n3()}({self.variable.render()}, {self.value.n3()}))"
-#         elif self.expression == "NOT IN":
-#             yield f'\n\tFILTER({self.variable.render()} NOT IN({", ".join([value.n3() for value in self.value])}))'
-#         elif self.expression == "ISBLANK":
-#             yield f"\n\tFILTER(ISBLANK({self.variable.render()}))"
 
 
 class Bind(SPARQLGrammarBase):
@@ -548,6 +850,10 @@ class OffsetClause(SPARQLGrammarBase):
 
 
 class OrderCondition(SPARQLGrammarBase):
+    """
+    Default direction is ASC if not specified
+    """
+
     var: Var
     direction: Optional[str] = None
 
@@ -598,7 +904,7 @@ class SolutionModifier(SPARQLGrammarBase):
     order_by: Optional[OrderClause] = None
     limit_offset: Optional[LimitOffsetClauses] = None
     # having: Optional[HavingClause]
-    group_by: Optional[GroupClause] = None
+    group_by: Optional["GroupClause"] = None
 
     def render(self) -> str:
         if self.order_by:
@@ -607,6 +913,8 @@ class SolutionModifier(SPARQLGrammarBase):
             if self.order_by:
                 yield "\n"
             yield from self.limit_offset.render()
+        if self.group_by:
+            yield from self.group_by.render()
 
 
 class GroupClause(SPARQLGrammarBase):
@@ -615,12 +923,14 @@ class GroupClause(SPARQLGrammarBase):
     GroupClause ::= 'GROUP' 'BY' GroupCondition+
     """
 
-    group_conditions: List[GroupCondition]
+    group_conditions: List["GroupCondition"]
 
     def render(self) -> Generator[str, None, None]:
         yield "\nGROUP BY "
-        for condition in self.group_conditions:
+        for i, condition in enumerate(self.group_conditions):
             yield from condition.render()
+            if i < len(self.group_conditions) - 1:  # Check if it's not the last triple
+                yield " "
 
 
 class GroupCondition(SPARQLGrammarBase):
@@ -629,23 +939,17 @@ class GroupCondition(SPARQLGrammarBase):
     GroupCondition ::= BuiltInCall | FunctionCall | '(' Expression ( 'AS' Var )? ')' | Var
     """
 
-    variable: Optional[Var] = None
-    expression: Optional[str] = None
-    as_variable: Optional[Var] = None
+    condition: Union["BuiltInCall", FunctionCall, Tuple[Expression, Var], Var]
 
     def render(self) -> Generator[str, None, None]:
-        if self.variable:
-            yield self.variable.render()
-        elif self.expression:
-            yield f"({self.expression}"
-            if self.as_variable:
-                yield f" AS {self.as_variable.render()})"
-            else:
-                yield ")"
+        if isinstance(self.condition, Tuple):
+            yield "("
+            yield from self.condition[0].render()
+            yield " AS "
+            yield from self.condition[1].render()
+            yield ")"
         else:
-            raise ValueError(
-                "GroupCondition must have either a variable or an expression defined."
-            )
+            yield from self.condition.render()
 
 
 class ConstructTriples(SPARQLGrammarBase):
@@ -712,16 +1016,6 @@ class ConstructQuery(SPARQLGrammarBase):
         yield from self.solution_modifier.render()
 
 
-class Var(SPARQLGrammarBase):
-    value: str
-
-    def render(self) -> Generator[str, None, None]:
-        yield Variable(self.value).n3()
-
-    def __hash__(self):
-        return hash(self.value)
-
-
 class BuiltInCall(SPARQLGrammarBase):
     """
     https://www.w3.org/TR/sparql11-query/#rBuiltInCall
@@ -730,23 +1024,27 @@ class BuiltInCall(SPARQLGrammarBase):
     other_expressions: Optional[Union[Aggregate, RegexExpression]] = None
     function_name: Optional[str] = None
     arguments: Optional[
-        List[Union[Expression, Var]]
-    ] = None  # TODO implement remaining argument types e.g. expression list
+        List[Union[Expression, Tuple[Expression], ExpressionList, Var, NIL]]
+    ] = None
 
     @field_validator("function_name")
     def validate_function_name(cls, v):
-        implemented = ["URI", "STR", "CONCAT", "SHA256", "LCASE", "SUM", "isBLANK"]
+        implemented = ["URI", "STR", "CONCAT", "SHA256", "LCASE", "isBLANK"]
         if v not in implemented:
             raise ValueError(f"{v} is not a valid SPARQL built-in function")
         return v
 
     def render(self) -> Generator[str, None, None]:
-        yield f"{self.function_name}("
-        for i, arg in enumerate(self.arguments):
-            yield from arg.render()
-            if i < len(self.arguments) - 1:
-                yield ", "
-        yield ")"
+        if self.other_expressions:
+            yield from self.other_expressions.render()
+        else:
+            yield f"{self.function_name}("
+            if self.arguments:
+                for i, arg in enumerate(self.arguments):
+                    yield from arg.render()
+                    if i < len(self.arguments) - 1:
+                        yield ", "
+            yield ")"
 
     @classmethod
     def create_with_one_expr(
@@ -772,170 +1070,11 @@ class BuiltInCall(SPARQLGrammarBase):
         return cls(function_name=function_name, arguments=wrapped_expressions)
 
 
-class Expression(SPARQLGrammarBase):
-    """
-    Expression	  ::=  	ConditionalOrExpression
-    """
-
-    conditional_or_expression: ConditionalOrExpression
-
-    def render(self) -> Generator[str, None, None]:
-        yield from self.conditional_or_expression.render()
-
-    @classmethod
-    def from_primary_expr(cls, primary_expression: PrimaryExpression) -> Expression:
-        """
-        Convenience method to create an Expression directly from a Var, wrapped in a PrimaryExpression.
-        """
-        return cls(
-            conditional_or_expression=ConditionalOrExpression(
-                conditional_and_expressions=[
-                    ConditionalAndExpression(
-                        value_logicals=[
-                            ValueLogical(
-                                relational_expression=RelationalExpression(
-                                    left=NumericExpression(
-                                        additive_expression=AdditiveExpression(
-                                            base_expression=MultiplicativeExpression(
-                                                base_expression=UnaryExpression(
-                                                    primary_expression=primary_expression
-                                                )
-                                            )
-                                        )
-                                    )
-                                )
-                            )
-                        ]
-                    )
-                ]
-            )
-        )
-
-
-class RelationalExpression(SPARQLGrammarBase):
-    """
-    https://www.w3.org/TR/sparql11-query/#rRelationalExpression
-    RelationalExpression	  ::=  	NumericExpression ( '=' NumericExpression | '!=' NumericExpression | '<' NumericExpression | '>' NumericExpression | '<=' NumericExpression | '>=' NumericExpression | 'IN' ExpressionList | 'NOT' 'IN' ExpressionList )?
-    """
-
-    left: NumericExpression
-    operator: Optional[str] = None  # '=', '!=', '<', '>', '<=', '>='
-    right: Optional[Union[NumericExpression, ExpressionList]] = None
-    # expression_list: Optional[ExpressionList] = None  #TODO implement expression list
-    not_in: bool = False  # To distinguish between 'IN' and 'NOT IN'
-
-    def render(self) -> Generator[str, None, None]:
-        yield from self.left.render()
-        if self.operator:
-            yield f" {self.operator} "
-            if self.right:
-                yield from self.right.render()
-        # elif self.expression_list:
-        #     if self.not_in:
-        #         yield " NOT IN "
-        #     else:
-        #         yield " IN "
-        #     yield from self.expression_list.render()
-
-
-class ValueLogical(SPARQLGrammarBase):
-    relational_expression: RelationalExpression
-
-    def render(self) -> Generator[str, None, None]:
-        yield from self.relational_expression.render()
-
-
-class AdditiveExpression(SPARQLGrammarBase):
-    """
-    https://www.w3.org/TR/sparql11-query/#rAdditiveExpression
-    AdditiveExpression	  ::=  	MultiplicativeExpression ( '+' MultiplicativeExpression | '-' MultiplicativeExpression | ( NumericLiteralPositive | NumericLiteralNegative ) ( ( '*' UnaryExpression ) | ( '/' UnaryExpression ) )* )*
-    #TODO implement NumericLiteralPositive, NumericLiteralNegative - these should be options in the additional expressions
-    """
-
-    base_expression: MultiplicativeExpression
-    additional_expressions: Optional[
-        List[Tuple[str, Union[MultiplicativeExpression, UnaryExpression]]]
-    ] = []
-
-    @field_validator("additional_expressions")
-    def validate_additional_expressions(cls, v):
-        if v[0] not in ["+", "-", "*", "/"]:
-            raise ValueError("Operator must be one of '+', '-', '*', or '/'")
-        return v
-
-    def render(self) -> Generator[str, None, None]:
-        yield from self.base_expression.render()
-        for operator, expression in self.additional_expressions:
-            yield f" {operator} "
-            yield from expression.render()
-
-
-class NumericExpression(SPARQLGrammarBase):
-    additive_expression: AdditiveExpression
-
-    def render(self) -> Generator[str, None, None]:
-        yield from self.additive_expression.render()
-
-
-class ConditionalAndExpression(SPARQLGrammarBase):
-    """
-    ConditionalAndExpression	  ::=  	ValueLogical ( '&&' ValueLogical )*
-    """
-
-    value_logicals: List[ValueLogical]
-
-    def render(self) -> Generator[str, None, None]:
-        for i, value_logical in enumerate(self.value_logicals):
-            yield from value_logical.render()
-            if i < len(self.value_logicals) - 1:
-                yield " && "
-
-
-class ConditionalOrExpression(SPARQLGrammarBase):
-    """
-    ConditionalOrExpression	  ::=  	ConditionalAndExpression ( '||' ConditionalAndExpression )*
-    """
-
-    conditional_and_expressions: List[ConditionalAndExpression]
-
-    def render(self) -> Generator[str, None, None]:
-        for i, conditional_and_expression in enumerate(
-            self.conditional_and_expressions
-        ):
-            yield from conditional_and_expression.render()
-            if i < len(self.conditional_and_expressions) - 1:
-                yield " || "
-
-
-class NumericLiteral(SPARQLGrammarBase):
-    """
-    not implemented properly - only does integer literals
-    """
-
-    value: float
-
-    def render(self) -> Generator[str, None, None]:
-        yield str(int(self.value))
-
-    def __hash__(self):
-        return hash(self.value)
-
-
 class BooleanLiteral(SPARQLGrammarBase):
     value: bool
 
     def render(self) -> Generator[str, None, None]:
         yield "true" if self.value else "false"
-
-
-class RDFLiteral(SPARQLGrammarBase):
-    value: str
-
-    def render(self) -> Generator[str, None, None]:
-        yield f'"{self.value}"'
-
-    def __hash__(self):
-        return hash(self.value)
 
 
 class GraphTerm(SPARQLGrammarBase):
@@ -944,56 +1083,7 @@ class GraphTerm(SPARQLGrammarBase):
     GraphTerm ::= iri | RDFLiteral | NumericLiteral | BooleanLiteral | BlankNode | NIL
     """
 
-    content: Union[IRI, RDFLiteral, NumericLiteral, BooleanLiteral, BlankNode]
-
-    def render(self) -> Generator[str, None, None]:
-        if self.content == "NIL":
-            yield "()"
-        else:
-            yield from self.content.render()
-
-
-class IRI(SPARQLGrammarBase):
-    """
-    Represents a SPARQL iri.
-    iri ::= IRIREF | PrefixedName
-    """
-
-    value: Union[URIRef, str]
-
-    def render(self) -> Generator[str, None, None]:
-        if isinstance(self.value, URIRef):
-            yield self.value.n3()
-        else:
-            yield self.value
-
-    def __hash__(self):
-        return hash(self.value)
-
-
-class BrackettedExpression(SPARQLGrammarBase):
-    expression: Expression
-
-    def render(self) -> Generator[str, None, None]:
-        yield "("
-        yield from self.expression.render()
-        yield ")"
-
-
-class PrimaryExpression(SPARQLGrammarBase):
-    """
-    PrimaryExpression	  ::=  	BrackettedExpression | BuiltInCall | iriOrFunction | RDFLiteral | NumericLiteral | BooleanLiteral | Var
-    """
-
-    content: Union[
-        BrackettedExpression,
-        BuiltInCall,
-        IRIOrFunction,
-        RDFLiteral,
-        NumericLiteral,
-        BooleanLiteral,
-        Var,
-    ]
+    content: Union[IRI, RDFLiteral, NumericLiteral, BooleanLiteral, BlankNode, NIL]
 
     def render(self) -> Generator[str, None, None]:
         yield from self.content.render()
@@ -1015,33 +1105,6 @@ class IRIOrFunction(SPARQLGrammarBase):
             yield ")"
 
 
-class UnaryExpression(SPARQLGrammarBase):
-    operator: Optional[str] = None  # '!', '+', or '-'
-    primary_expression: PrimaryExpression
-
-    def render(self) -> Generator[str, None, None]:
-        if self.operator:
-            yield f"{self.operator} "
-        yield from self.primary_expression.render()
-
-
-class MultiplicativeExpression(SPARQLGrammarBase):
-    base_expression: UnaryExpression
-    additional_expressions: Optional[List[Tuple[str, UnaryExpression]]] = []
-
-    @field_validator("additional_expressions")
-    def validate_additional_expressions(cls, v):
-        if v[0] not in ["*", "/"]:
-            raise ValueError("Operator must be '*' or '/'")
-        return v
-
-    def render(self) -> Generator[str, None, None]:
-        yield from self.base_expression.render()
-        for operator, expression in self.additional_expressions:
-            yield f" {operator} "
-            yield from expression.render()
-
-
 class ExpressionList(SPARQLGrammarBase):
     expressions: Optional[List[Expression]] = []
 
@@ -1058,33 +1121,62 @@ class ExpressionList(SPARQLGrammarBase):
 
 
 class Aggregate(SPARQLGrammarBase):
+    """
+    https://www.w3.org/TR/sparql11-query/#rAggregate
+    Aggregate	  ::=  	  'COUNT' '(' 'DISTINCT'? ( '*' | Expression ) ')'
+    | 'SUM' '(' 'DISTINCT'? Expression ')'
+    | 'MIN' '(' 'DISTINCT'? Expression ')'
+    | 'MAX' '(' 'DISTINCT'? Expression ')'
+    | 'AVG' '(' 'DISTINCT'? Expression ')'
+    | 'SAMPLE' '(' 'DISTINCT'? Expression ')'
+    | 'GROUP_CONCAT' '(' 'DISTINCT'? Expression ( ';' 'SEPARATOR' '=' String )? ')'
+    """
+
     function_name: str  # One of 'COUNT', 'SUM', 'MIN', 'MAX', 'AVG', 'SAMPLE', 'GROUP_CONCAT'
-    distinct: bool = False
-    expression: Optional[Expression] = None  # '*' for COUNT, else Expression
+    distinct: Optional[bool] = None
+    expression: Optional[
+        Union[str, Expression]
+    ] = None  # '*' for COUNT, else Expression
     separator: Optional[str] = None  # Only used for GROUP_CONCAT
+
+    @field_validator("function_name")
+    def validate_function_name(cls, v):
+        if v not in ["COUNT", "SUM", "MIN", "MAX", "AVG", "SAMPLE", "GROUP_CONCAT"]:
+            raise ValueError(
+                "Function name must be one of 'COUNT', 'SUM', 'MIN', 'MAX', 'AVG', 'SAMPLE', 'GROUP_CONCAT'"
+            )
+        return v
+
+    @field_validator("expression")
+    def validate_expression(cls, v):
+        if v == "*" and cls.function_name != "COUNT":
+            raise ValueError("'*' can only be used for COUNT")
+        return v
+
+    @field_validator("separator")
+    def validate_separator(cls, v):
+        if cls.function_name != "GROUP_CONCAT":
+            raise ValueError("'SEPARATOR' can only be used for GROUP_CONCAT")
+        return v
 
     def render(self) -> Generator[str, None, None]:
         yield f"{self.function_name}("
         if self.distinct:
             yield "DISTINCT "
-
-        # For COUNT, '*' is a valid expression
-        if self.function_name == "COUNT" and self.expression is None:
+        if self.expression == "*":
             yield "*"
-        elif self.expression is not None:
+        else:
             yield from self.expression.render()
-
         # Handle the separator for GROUP_CONCAT
-        if self.function_name == "GROUP_CONCAT" and self.separator is not None:
+        if self.separator:
             yield f" ; SEPARATOR='{self.separator}'"
-
         yield ")"
 
 
 class RegexExpression(SPARQLGrammarBase):
     """
-    Represents a SPARQL REGEX expression.
-    REGEX(Expression, Expression, Expression)
+    https://www.w3.org/TR/sparql11-query/#rRegexExpression
+    RegexExpression	  ::=  	'REGEX' '(' Expression ',' Expression ( ',' Expression )? ')'
     """
 
     text_expression: Expression
@@ -1102,43 +1194,3 @@ class RegexExpression(SPARQLGrammarBase):
             yield from self.flags_expression.render()
 
         yield ")"
-
-
-class BlankNode(SPARQLGrammarBase):
-    """
-    BlankNode	  ::=  	BLANK_NODE_LABEL | ANON
-    """
-
-    value: Union[BlankNodeLabel, Anon]
-
-    def render(self):
-        yield from self.value.render()
-
-    def __hash__(self):
-        return hash(self.value)
-
-
-class BlankNodeLabel(SPARQLGrammarBase):
-    """
-    BLANK_NODE_LABEL	  ::=  	'_:' ( PN_CHARS_U | [0-9] ) ((PN_CHARS|'.')* PN_CHARS)?
-    """
-
-    part_1: str
-    part_2: Optional[str] = None
-
-    def render(self):
-        yield "_:"
-        yield self.part_1
-        if self.part_2:
-            yield self.part_2
-
-
-class Anon:
-    """
-    ANON	  ::=  	'[' WS* ']'
-    https://www.w3.org/TR/sparql11-query/#rANON
-    """
-
-    # TODO not sure how to make this more useful - allow input of whitespace?
-    def render(self):
-        yield "[]"

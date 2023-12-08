@@ -90,12 +90,8 @@ class RemoteSparqlRepo(Repo):
         The optional context parameter allows an identifier to be supplied with the query, such that multiple results can be
         distinguished from each other.
         """
-        a = time.time()
-        log.debug(msg=f"query sent:{a} || {context} || {query}")
         response = await self._send_query(query, "application/sparql-results+json")
         await response.aread()
-        log.debug(msg=f"response received || {context} {time.time()}")
-        log.debug(msg=f"time diff: {time.time() -a }")
         return context, response.json()["results"]["bindings"]
 
     async def sparql(

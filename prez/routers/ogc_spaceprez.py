@@ -2,12 +2,12 @@ from typing import Optional
 
 from fastapi import APIRouter, Request, Depends
 from rdflib import Namespace
-from starlette.responses import PlainTextResponse
+from fastapi.responses import PlainTextResponse
 
 from prez.dependencies import get_repo, get_system_repo
 from prez.services.curie_functions import get_uri_for_curie_id
-from prez.services.listings import listing_function_new
-from prez.services.objects import object_function_new
+from prez.services.listings import listing_function
+from prez.services.objects import object_function
 from prez.sparql.methods import Repo
 
 router = APIRouter(tags=["SpacePrez"])
@@ -16,7 +16,7 @@ SP_EP = Namespace("https://prez.dev/endpoint/spaceprez/")
 
 
 @router.get("/s", summary="SpacePrez Home")
-async def spaceprez_profiles():
+async def spaceprez_home():
     return PlainTextResponse("SpacePrez Home")
 
 
@@ -31,15 +31,18 @@ async def list_datasets(
     system_repo: Repo = Depends(get_system_repo),
     page: Optional[int] = 1,
     per_page: Optional[int] = 20,
+    search_term: Optional[str] = None,
 ):
+    search_term = request.query_params.get("q")
     endpoint_uri = SP_EP["dataset-listing"]
-    return await listing_function_new(
+    return await listing_function(
         request=request,
         repo=repo,
         system_repo=system_repo,
         endpoint_uri=endpoint_uri,
         page=page,
         per_page=per_page,
+        search_term=search_term,
     )
 
 
@@ -55,10 +58,12 @@ async def list_feature_collections(
     system_repo: Repo = Depends(get_system_repo),
     page: Optional[int] = 1,
     per_page: Optional[int] = 20,
+    search_term: Optional[str] = None,
 ):
+    search_term = request.query_params.get("q")
     endpoint_uri = SP_EP["feature-collection-listing"]
     dataset_uri = get_uri_for_curie_id(dataset_curie)
-    return await listing_function_new(
+    return await listing_function(
         request=request,
         repo=repo,
         system_repo=system_repo,
@@ -66,6 +71,7 @@ async def list_feature_collections(
         page=page,
         per_page=per_page,
         parent_uri=dataset_uri,
+        search_term=search_term,
     )
 
 
@@ -82,10 +88,12 @@ async def list_features(
     system_repo: Repo = Depends(get_system_repo),
     page: Optional[int] = 1,
     per_page: Optional[int] = 20,
+    search_term: Optional[str] = None,
 ):
+    search_term = request.query_params.get("q")
     collection_uri = get_uri_for_curie_id(collection_curie)
     endpoint_uri = SP_EP["feature-listing"]
-    return await listing_function_new(
+    return await listing_function(
         request=request,
         repo=repo,
         system_repo=system_repo,
@@ -93,6 +101,7 @@ async def list_features(
         page=page,
         per_page=per_page,
         parent_uri=collection_uri,
+        search_term=search_term,
     )
 
 
@@ -108,7 +117,7 @@ async def dataset_item(
     request_url = request.scope["path"]
     endpoint_uri = SP_EP["dataset-object"]
     dataset_uri = get_uri_for_curie_id(dataset_curie)
-    return await object_function_new(
+    return await object_function(
         request=request,
         endpoint_uri=endpoint_uri,
         uri=dataset_uri,
@@ -133,7 +142,7 @@ async def feature_collection_item(
     request_url = request.scope["path"]
     endpoint_uri = SP_EP["feature-collection-object"]
     collection_uri = get_uri_for_curie_id(collection_curie)
-    return await object_function_new(
+    return await object_function(
         request=request,
         endpoint_uri=endpoint_uri,
         uri=collection_uri,
@@ -159,7 +168,7 @@ async def feature_item(
     request_url = request.scope["path"]
     endpoint_uri = SP_EP["feature-object"]
     feature_uri = get_uri_for_curie_id(feature_curie)
-    return await object_function_new(
+    return await object_function(
         request=request,
         endpoint_uri=endpoint_uri,
         uri=feature_uri,
