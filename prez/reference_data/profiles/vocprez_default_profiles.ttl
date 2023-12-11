@@ -153,24 +153,28 @@ prez:VocPrezProfile
         skos:ConceptScheme ,
         skos:Collection ;
     altr-ext:hasNodeShape [
+        sh:path skos:prefLabel ;
         a sh:NodeShape ;
         sh:targetClass skos:ConceptScheme ;
         altr-ext:childToFocus skos:inScheme ;
         altr-ext:relativeProperties skos:broader ;
     ] ;
     altr-ext:hasNodeShape [
+        sh:path skos:prefLabel ;
         a sh:NodeShape ;
         sh:targetClass skos:Collection ;
         altr-ext:focusToChild skos:member ;
         altr-ext:relativeProperties skos:definition ;
     ] ;
     altr-ext:hasNodeShape [
+        sh:path skos:prefLabel ;
         a sh:NodeShape ;
         sh:targetClass prez:SchemesList ;
         altr-ext:containerClass skos:ConceptScheme ;
         altr-ext:relativeProperties skos:definition, dcterms:publisher, reg:status ;
     ] ;
     altr-ext:hasNodeShape [
+        sh:path skos:prefLabel ;
         a sh:NodeShape ;
         sh:targetClass prez:VocPrezCollectionList ;
         altr-ext:containerClass skos:Collection ;
