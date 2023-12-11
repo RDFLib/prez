@@ -25,22 +25,27 @@ prez:VocPrezProfile
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
+        sh:path skos:prefLabel ;
         sh:targetClass prez:SchemesList ;
         altr-ext:hasDefaultProfile <https://w3id.org/profile/vocpub>
     ] , [
         a sh:NodeShape ;
+        sh:path skos:prefLabel ;
         sh:targetClass prez:VocPrezCollectionList ;
         altr-ext:hasDefaultProfile <https://w3id.org/profile/vocpub>
     ] , [
         a sh:NodeShape ;
+        sh:path skos:prefLabel ;
         sh:targetClass skos:Collection ;
         altr-ext:hasDefaultProfile <https://w3id.org/profile/vocpub>
     ] , [
         a sh:NodeShape ;
+        sh:path skos:prefLabel ;
         sh:targetClass skos:Concept ;
         altr-ext:hasDefaultProfile <https://w3id.org/profile/vocpub>
     ] , [
         a sh:NodeShape ;
+        sh:path skos:prefLabel ;
         sh:targetClass skos:ConceptScheme ;
         altr-ext:hasDefaultProfile <https://w3id.org/profile/vocpub>
     ]
@@ -82,31 +87,37 @@ prez:VocPrezProfile
         "text/turtle" ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
+        sh:path skos:prefLabel ;
         sh:targetClass skos:ConceptScheme ;
         altr-ext:focusToChild skos:hasTopConcept ;
     ] ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
+        sh:path skos:prefLabel ;
         sh:targetClass skos:Collection ;
         altr-ext:focusToChild skos:member ;
     ] ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
+        sh:path skos:prefLabel ;
         sh:targetClass skos:ConceptScheme ;
         altr-ext:childToFocus skos:inScheme ;
     ] ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
+        sh:path skos:prefLabel ;
         sh:targetClass skos:ConceptScheme ;
         altr-ext:relativeProperties skos:broader , skos:narrower ;
     ] ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
+        sh:path skos:prefLabel ;
         sh:targetClass skos:Concept ;
         altr-ext:focusToParent skos:inScheme ;
     ] ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
+        sh:path skos:prefLabel ;
         sh:targetClass prez:SchemesList ;
         sh:path dcterms:publisher, reg:status ;
         sh:sequencePath (
@@ -120,6 +131,7 @@ prez:VocPrezProfile
     ] ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
+        sh:path skos:prefLabel ;
         sh:targetClass prez:VocPrezCollectionList ;
         sh:path skos:definition ;
     ] ;
@@ -153,29 +165,29 @@ prez:VocPrezProfile
         skos:ConceptScheme ,
         skos:Collection ;
     altr-ext:hasNodeShape [
-        sh:path skos:prefLabel ;
         a sh:NodeShape ;
+        sh:path skos:prefLabel ;
         sh:targetClass skos:ConceptScheme ;
         altr-ext:childToFocus skos:inScheme ;
         altr-ext:relativeProperties skos:broader ;
     ] ;
     altr-ext:hasNodeShape [
-        sh:path skos:prefLabel ;
         a sh:NodeShape ;
+        sh:path skos:prefLabel ;
         sh:targetClass skos:Collection ;
         altr-ext:focusToChild skos:member ;
         altr-ext:relativeProperties skos:definition ;
     ] ;
     altr-ext:hasNodeShape [
-        sh:path skos:prefLabel ;
         a sh:NodeShape ;
+        sh:path skos:prefLabel ;
         sh:targetClass prez:SchemesList ;
         altr-ext:containerClass skos:ConceptScheme ;
         altr-ext:relativeProperties skos:definition, dcterms:publisher, reg:status ;
     ] ;
     altr-ext:hasNodeShape [
-        sh:path skos:prefLabel ;
         a sh:NodeShape ;
+        sh:path skos:prefLabel ;
         sh:targetClass prez:VocPrezCollectionList ;
         altr-ext:containerClass skos:Collection ;
         altr-ext:relativeProperties skos:definition, dcterms:publisher, reg:status ;
