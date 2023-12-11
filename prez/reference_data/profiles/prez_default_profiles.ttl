@@ -35,7 +35,7 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     dcterms:identifier "openobj"^^xsd:token ;
     dcterms:description "An open profile for objects which will return all direct properties for a resource." ;
     dcterms:title "Open profile" ;
-    altr-ext:constrainsClass prez:SPARQLQuery , prof:Profile , prez:SearchResult ;
+    altr-ext:constrainsClass prez:SPARQLQuery , prof:Profile , prez:SearchResult , prez:Object ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat "application/ld+json" ,
         "application/ld+json" ,
@@ -61,7 +61,8 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
                              prez:SchemesList ,
                              prez:VocPrezCollectionList ,
                              prez:CatalogList ,
-                             prez:CQLObjectList ;
+                             prez:CQLObjectList ,
+                             prez:QueryablesList ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
         "application/json" ,

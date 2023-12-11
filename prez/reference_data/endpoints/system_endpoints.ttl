@@ -7,6 +7,7 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX prof: <http://www.w3.org/ns/dx/prof/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX shext: <http://example.com/shacl-extension#>
 
 endpoint:profiles-listing a ont:ListingEndpoint ;
@@ -33,4 +34,8 @@ endpoint:alt-profiles-listing a ont:ListingEndpoint ;
                     }""" ] ;
     shext:limit 20 ;
     shext:offset 0 ;
+.
+
+endpoint:object a ont:ObjectEndpoint ;
+    ont:deliversClasses prez:Object ;
 .

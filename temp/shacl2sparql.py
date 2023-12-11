@@ -1,5 +1,6 @@
 from string import Template
 from typing import Union, Optional, List
+import re
 
 from rdflib import URIRef, Variable, Namespace, Graph, SH, RDF, BNode, Literal
 from rdflib.collection import Collection
@@ -176,8 +177,10 @@ class SHACLParser:
         # sh:target / sh:select
         if target_bn:
             ggp = self.create_select_subquery_from_template(target_bn)
-            self._add_target_class(target_classes[0])
             self._add_ggp_to_main_ggps(ggp)
+            if target_classes:
+                self._add_target_class(target_classes[0])
+
 
         # don't use the target class if there's a sh:target / sh:select #TODO confirm why this caused issues - duplicate
         #  pattern matches in the subquery?
@@ -223,7 +226,9 @@ class SHACLParser:
         else:
             self.construct_triples = [triple]
 
-    def create_select_subquery_for_class_listing(self, target_classes: Optional[List[URIRef]] = None):
+    def create_select_subquery_for_class_listing(
+        self, target_classes: Optional[List[URIRef]] = None
+    ):
         ggp = GroupGraphPattern(content=GroupGraphPatternSub())
 
         if target_classes:
@@ -277,11 +282,28 @@ class SHACLParser:
             substituted_query = (
                 substituted_query[:-1] + f"{{{order_by_triple_text}}} }}"
             )
+        if self.additional_ggps:  # for example from cql
+            additional_ggps_str = "".join(
+                part for part in self.additional_ggps.render()
+            )
+            substituted_query = self.split_query(substituted_query, additional_ggps_str)
         sss = SubSelectString(
             select_string=substituted_query, solution_modifier=sol_mod
         )
         ggp = GroupGraphPattern(content=sss)
         return ggp
+
+    def split_query(self, original_query, additional_ggps_str):
+        # Regex to match the entire structure: 'SELECT ?xxx { ... }'
+        pattern = r"(SELECT\s+[\?\w\s\(\)]+\s*\{)(.*?)(\}\s*)"
+        # Use re.split to split the query based on the pattern
+        parts = re.split(pattern, original_query, flags=re.DOTALL)
+        parts = [part for part in parts if part.strip()]
+        new_parts = [parts[0], additional_ggps_str]
+        if len(parts) > 1:
+            new_parts.extend(parts[1:])
+        new_query = "".join(part for part in new_parts)
+        return new_query
 
     def _create_focus_node_solution_modifier(self):
         """

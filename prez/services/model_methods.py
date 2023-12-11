@@ -19,7 +19,7 @@ async def get_classes(
     """
     _, r = await repo.send_queries([], [(uri, q)])
     tabular_result = r[0]  # should only be one result - only one query sent
-    if endpoint != URIRef("https://prez.dev/endpoint/object"):
+    if endpoint != URIRef("https://prez.dev/endpoint/system/object"):
         endpoint_classes = list(
             endpoints_graph_cache.objects(
                 subject=endpoint,
@@ -32,5 +32,5 @@ async def get_classes(
                 object_classes_delivered_by_endpoint.append(URIRef(c["class"]["value"]))
         classes = frozenset(object_classes_delivered_by_endpoint)
     else:
-        classes = frozenset([c["class"]["value"] for c in tabular_result[1]])
+        classes = frozenset([URIRef(c["class"]["value"]) for c in tabular_result[1]])
     return classes

@@ -2,7 +2,7 @@ from typing import Generator
 
 from pyld import jsonld
 from rdflib import URIRef, Namespace, Variable, Literal
-from rdflib.namespace import GEO
+from rdflib.namespace import GEO, SH
 
 from temp.grammar import (
     GroupOrUnionGraphPattern,
@@ -31,6 +31,7 @@ from temp.grammar import (
     FunctionCall,
     NumericLiteral,
     DataBlockValue,
+    ArgList,
 )
 from temp.cql_sparql_reference import (
     cql_sparql_spatial_mapping,
@@ -239,7 +240,11 @@ class CQLParser:
 
         if coordinates:
             wkt = cql_to_shapely_mapping[geom_type](coordinates).wkt
-            subject = Var(value="focus_node")
+            prop = args[0].get(str(CQL.property))[0].get("@id")
+            if URIRef(prop) == SH.this:
+                subject = Var(value="focus_node")
+            else:
+                subject = IRI(value=prop)
             geom_bn_var = Var(value="geom_bnode")
             geom_lit_var = Var(value="geom_var")
             self._add_triple(ggps, subject, IRI(value=GEO.hasGeometry), geom_bn_var)
@@ -249,10 +254,16 @@ class CQLParser:
             geom_1_exp = Expression.from_primary_expr(
                 primary_expression=PrimaryExpression(content=geom_lit_var)
             )
-            geom_2_exp = Expression.from_primary_expr(
-                primary_expression=PrimaryExpression(content=RDFLiteral(value=wkt))
+            geom_2_datatype = IRI(
+                value="http://www.opengis.net/ont/geosparql#wktLiteral"
             )
-            fc = FunctionCall(iri=geom_func_iri, arg_list=[geom_1_exp, geom_2_exp])
+            geom_2_exp = Expression.from_primary_expr(
+                primary_expression=PrimaryExpression(
+                    content=RDFLiteral(value=wkt, datatype=geom_2_datatype)
+                )
+            )
+            arg_list = ArgList(expressions=[geom_1_exp, geom_2_exp])
+            fc = FunctionCall(iri=geom_func_iri, arg_list=arg_list)
 
             spatial_filter = Filter(constraint=Constraint(content=fc))
             self._append_graph_pattern(ggps, spatial_filter)

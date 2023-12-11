@@ -29,7 +29,7 @@ endpoint:collection-concept a ont:ObjectEndpoint ;
     ont:parentEndpoint endpoint:collection-object ;
     ont:deliversClasses skos:Concept ;
     ont:endpointTemplate "/v/collection/$parent_1/$object" ;
-    ont:ParentToFocusRelation skos:member ;
+    ont:parentToFocusRelation skos:member ;
 .
 
  endpoint:vocabs-listing a ont:ListingEndpoint ;
@@ -50,7 +50,7 @@ endpoint:vocab-concept a ont:ObjectEndpoint ;
     ont:parentEndpoint endpoint:vocab-object ;
     ont:deliversClasses skos:Concept ;
     ont:endpointTemplate "/v/vocab/$parent_1/$object" ;
-    ont:FocusToParentRelation skos:inScheme ;
+    ont:focusToParentRelation skos:inScheme ;
 .
 
 endpoint:cs-top-concepts a ont:ListingEndpoint ;

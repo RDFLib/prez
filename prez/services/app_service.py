@@ -180,8 +180,8 @@ async def add_common_context_ontologies_to_tbox_cache():
     g = Dataset(default_union=True)
     for file in (
         Path(__file__).parent.parent / "reference_data/context_ontologies"
-    ).glob("*.nq"):
-        g.parse(file, format="nquads")
+    ).glob("*"):
+        g.parse(file)
     relevant_predicates = [
         RDFS.label,
         DCTERMS.title,

@@ -8,6 +8,7 @@ from pyoxigraph.pyoxigraph import Store
 from prez.app import app
 from prez.dependencies import get_repo
 from prez.sparql.methods import Repo, PyoxigraphRepo
+from urllib.parse import quote_plus
 
 
 @pytest.fixture(scope="session")
@@ -72,4 +73,22 @@ def test_simple(client, cql_json_filename):
     cql_json_as_json = json.loads(cql_json.read_text())
     headers = {"content-type": "application/json"}
     response = client.post("/cql", json=cql_json_as_json, headers=headers)
+    assert response.status_code == 200
+
+
+def test_intersects_post(client):
+    cql_json = Path(__file__).parent / f"data/cql/input/geo_intersects.json"
+    cql_json_as_json = json.loads(cql_json.read_text())
+    headers = {"content-type": "application/json"}
+    response = client.post("/cql", json=cql_json_as_json, headers=headers)
+    assert response.status_code == 200
+
+
+def test_intersects_get(client):
+    cql_json = Path(__file__).parent / f"data/cql/input/geo_intersects.json"
+    cql_json_as_json = json.loads(cql_json.read_text())
+    query_string = quote_plus(json.dumps(cql_json_as_json))
+    response = client.get(
+        f"/cql?filter={query_string}&_mediatype=application/sparql-query"
+    )
     assert response.status_code == 200

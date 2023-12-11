@@ -4,7 +4,7 @@ from fastapi import APIRouter, Request, Depends
 from fastapi.responses import PlainTextResponse
 from rdflib import URIRef
 
-from prez.dependencies import get_repo, get_system_repo
+from prez.dependencies import get_repo, get_system_repo, cql_get_parser_dependency
 from prez.services.curie_functions import get_uri_for_curie_id
 from prez.services.listings import listing_function
 from prez.services.objects import object_function
@@ -24,6 +24,11 @@ ogc_endpoints = {
 }
 
 
+@router.get("/v", summary="VocPrez Home")
+async def vocprez_home():
+    return PlainTextResponse("VocPrez Home")
+
+
 @router.get(
     "/v/catalogs",
     summary="List Catalogs",
@@ -36,6 +41,7 @@ async def catalog_list(
     search_term: Optional[str] = None,
     repo: Repo = Depends(get_repo),
     system_repo: Repo = Depends(get_system_repo),
+    cql_parser: Optional[dict] = Depends(cql_get_parser_dependency),
 ):
     search_term = request.query_params.get("q")
     endpoint_uri = URIRef(request.scope.get("route").name)
@@ -46,6 +52,7 @@ async def catalog_list(
         endpoint_uri,
         page,
         per_page,
+        cql_parser=cql_parser,
         search_term=search_term,
     )
 
@@ -106,22 +113,15 @@ async def concept_list(
     )
 
 
-@router.get(
-    "/v/catalogs/{catalogId}/collections/{collectionId}/top-concepts",
-    summary="List Top Concepts",
-    name=ogc_endpoints["top-concepts"],
-)
 async def top_concepts(
     request: Request,
     page: Optional[int] = 1,
     per_page: Optional[int] = 20,
-    search_term: Optional[str] = None,
     repo: Repo = Depends(get_repo),
     system_repo: Repo = Depends(get_system_repo),
 ):
-    search_term = request.query_params.get("q")
     parent_uri = get_uri_for_curie_id(request.path_params["collectionId"])
-    endpoint_uri = URIRef(request.scope.get("route").name)
+    endpoint_uri = URIRef(ogc_endpoints["top-concepts"])
     return await listing_function(
         request,
         repo,
@@ -130,31 +130,18 @@ async def top_concepts(
         page,
         per_page,
         parent_uri,
-        search_term=search_term,
     )
 
 
-@router.get("/v", summary="VocPrez Home")
-async def vocprez_home():
-    return PlainTextResponse("VocPrez Home")
-
-
-@router.get(
-    "/v/catalogs/{catalogId}/collections/{collectionId}/items/{itemId}/narrowers",
-    summary="List Narrower Concepts",
-    name=ogc_endpoints["narrowers"],
-)
 async def narrowers(
     request: Request,
     page: Optional[int] = 1,
     per_page: Optional[int] = 20,
-    search_term: Optional[str] = None,
     repo: Repo = Depends(get_repo),
     system_repo: Repo = Depends(get_system_repo),
 ):
-    search_term = request.query_params.get("q")
     parent_uri = get_uri_for_curie_id(request.path_params["itemId"])
-    endpoint_uri = URIRef(request.scope.get("route").name)
+    endpoint_uri = URIRef(ogc_endpoints["narrowers"])
     return await listing_function(
         request,
         repo,
@@ -163,7 +150,6 @@ async def narrowers(
         page,
         per_page,
         parent_uri,
-        search_term=search_term,
     )
 
 
@@ -192,9 +178,15 @@ async def catalog_object(
 )
 async def catalog_object(
     request: Request,
+    page: Optional[int] = 1,  # for top-concepts
+    per_page: Optional[int] = 20,  # for top-concepts
     repo: Repo = Depends(get_repo),
     system_repo: Repo = Depends(get_system_repo),
 ):
+    if "top-concepts" in request.query_params:
+        return await top_concepts(
+            request, page, per_page, repo=repo, system_repo=system_repo
+        )
     request_url = request.scope["path"]
     endpoint_uri = URIRef(request.scope.get("route").name)
     object_uri = get_uri_for_curie_id(request.path_params["collectionId"])
@@ -210,9 +202,16 @@ async def catalog_object(
 )
 async def catalog_object(
     request: Request,
+    page: Optional[int] = 1,  # for narrowers
+    per_page: Optional[int] = 20,  # for narrowers
     repo: Repo = Depends(get_repo),
     system_repo: Repo = Depends(get_system_repo),
 ):
+    # check if it's a narrowers path param
+    if "narrowers" in request.query_params:
+        return await narrowers(
+            request, page, per_page, repo=repo, system_repo=system_repo
+        )
     request_url = request.scope["path"]
     endpoint_uri = URIRef(request.scope.get("route").name)
     object_uri = get_uri_for_curie_id(request.path_params["itemId"])

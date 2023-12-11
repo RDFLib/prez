@@ -5,8 +5,7 @@ from decimal import Decimal
 from typing import List, Union, Optional, Generator, Tuple
 
 from pydantic import BaseModel, field_validator
-from rdflib import RDF
-from rdflib import URIRef, Variable
+from rdflib import URIRef, Variable, BNode, Literal
 from rdflib.plugins.sparql import prepareQuery
 from rdflib.plugins.sparql.algebra import translateAlgebra
 
@@ -30,7 +29,7 @@ class SPARQLGrammarBase(BaseModel):
     def render(self):
         raise NotImplementedError("Subclasses must implement this method.")
 
-    def collect_triples(self) -> List["SimplifiedTriple"]:
+    def collect_triples(self) -> List[SimplifiedTriple]:
         """
         Recursively collect SimplifiedTriple instances from this object.
         """
@@ -83,7 +82,6 @@ class Anon:
     https://www.w3.org/TR/sparql11-query/#rANON
     """
 
-    # TODO not sure how to make this more useful - allow input of whitespace?
     def render(self):
         yield "[]"
 
@@ -138,12 +136,16 @@ class RDFLiteral(SPARQLGrammarBase):
     """
 
     value: str
-    langtag_or_datatype: Optional[Union[LANGTAG, IRI]] = None
+    langtag: Optional[LANGTAG] = None
+    datatype: Optional[IRI] = None
 
     def render(self) -> Generator[str, None, None]:
         yield f'"{self.value}"'
-        if self.langtag_or_datatype:
-            yield from self.langtag_or_datatype.render()
+        if self.langtag:
+            yield from self.langtag.render()
+        elif self.datatype:
+            yield "^^"
+            yield from self.datatype.render()
 
     def __hash__(self):
         return hash(self.value)
@@ -635,12 +637,13 @@ class SubSelectString(SubSelect):
 
     select_clause: Optional[str] = None
     where_clause: Optional[str] = None
-    solution_modifier: Optional["SolutionModifier"] = None
+    solution_modifier: Optional[SolutionModifier] = None
     select_string: str
 
     @field_validator("select_string")
     def validate_and_transform_select_string(cls, v):
         try:
+            translateAlgebra(prepareQuery(translateAlgebra(prepareQuery(v))))
             return translateAlgebra(prepareQuery(v))
         except Exception as e:
             log.error(msg=f'Potential query issue, or RDFLib bug: "{str(e)}"')
@@ -748,6 +751,7 @@ class Constraint(SPARQLGrammarBase):
 
 class FunctionCall(SPARQLGrammarBase):
     """
+    FunctionCall	  ::=  	iri ArgList
     Represents a SPARQL FunctionCall.
     FunctionCall ::= iri ArgList
     """
@@ -756,10 +760,8 @@ class FunctionCall(SPARQLGrammarBase):
     arg_list: ArgList
 
     def render(self) -> Generator[str, None, None]:
-        yield self.iri.render()
-        yield "("
+        yield from self.iri.render()
         yield from self.arg_list.render()
-        yield ")"
 
 
 class ArgList(SPARQLGrammarBase):

@@ -17,9 +17,9 @@ from prez.sparql.objects_listings import (
     temp_listing_count,
 )
 from prez.sparql.search_query import SearchQuery
-from temp.cql2sparql import CQLParser
-from temp.grammar import SubSelect
-from temp.shacl2sparql import SHACLParser
+from rdframe.grammar import SubSelect
+from rdframe import SHACLParser
+from rdframe import CQLParser
 
 log = logging.getLogger(__name__)
 

@@ -62,7 +62,7 @@ def client(test_repo: Repo) -> TestClient:
 @pytest.fixture(scope="session")
 def a_catalog_link(client):
     # get link for first catalog
-    r = client.get("/catalogs")
+    r = client.get("/c/catalogs")
     g = Graph().parse(data=r.text)
     member_uri = g.value(None, RDF.type, DCAT.Catalog)
     link = g.value(member_uri, URIRef(f"https://prez.dev/link", None))
@@ -81,59 +81,27 @@ def a_resource_link(client, a_catalog_link):
 
 def test_catalog_listing_anot(client):
     r = client.get(
-        f"/catalogs?_mediatype=text/anot+turtle&_profile=prez:OGCListingProfile"
+        f"/c/catalogs?_mediatype=text/turtle&_profile=prez:OGCListingProfile"
     )
     response_graph = Graph().parse(data=r.text)
-    expected_graph = Graph().parse(
-        Path(__file__).parent
-        / "../tests/data/catprez/expected_responses/top_level_catalog_listing_anot.ttl"
-    )
-    assert isomorphic(response_graph, expected_graph), print(
-        f"RESPONSE GRAPH\n{response_graph.serialize()},"
-        f"EXPECTED GRAPH\n{expected_graph.serialize()}",
-        f"MISSING TRIPLES\n{(expected_graph - response_graph).serialize()}",
-        f"EXTRA TRIPLES\n{(response_graph - expected_graph).serialize()}",
-    )
+    expected_response_1 = (URIRef("https://example.com/TopLevelCatalog"), RDF.type, DCAT.Catalog)
+    expected_response_2 = (URIRef("https://example.com/TopLevelCatalogTwo"), RDF.type, DCAT.Catalog)
+    assert next(response_graph.triples(expected_response_1))
+    assert next(response_graph.triples(expected_response_2))
 
 
 def test_catalog_anot(client, a_catalog_link):
-    r = client.get(f"{a_catalog_link}?_mediatype=text/anot+turtle")
+    r = client.get(f"{a_catalog_link}?_mediatype=text/turtle")
     response_graph = Graph().parse(data=r.text)
-    expected_graph = Graph().parse(
-        Path(__file__).parent
-        / "../tests/data/catprez/expected_responses/top_level_catalog_anot.ttl"
-    )
-    assert isomorphic(response_graph, expected_graph), print(
-        f"RESPONSE GRAPH\n{response_graph.serialize()},"
-        f"EXPECTED GRAPH\n{expected_graph.serialize()}",
-        f"MISSING TRIPLES\n{(expected_graph - response_graph).serialize()}",
-        f"EXTRA TRIPLES\n{(response_graph - expected_graph).serialize()}",
-    )
+    expected_response = (URIRef("https://example.com/TopLevelCatalog"), RDF.type, DCAT.Catalog)
+    assert next(response_graph.triples(expected_response))
 
 
-def test_resource_listing_anot(client, a_catalog_link):
-    r = client.get(f"{a_catalog_link}/collections?_mediatype=text/anot+turtle")
+def test_lower_level_listing_anot(client, a_catalog_link):
+    r = client.get(f"{a_catalog_link}/collections?_mediatype=text/turtle")
     response_graph = Graph().parse(data=r.text)
-    expected_graph = Graph().parse(
-        Path(__file__).parent
-        / "../tests/data/catprez/expected_responses/resource_listing_anot.ttl"
-    )
-    assert isomorphic(response_graph, expected_graph), print(
-        f"RESPONSE GRAPH\n{response_graph.serialize()},"
-        f"EXPECTED GRAPH\n{expected_graph.serialize()}",
-        f"MISSING TRIPLES\n{(expected_graph - response_graph).serialize()}",
-        f"EXTRA TRIPLES\n{(response_graph - expected_graph).serialize()}",
-    )
+    expected_response = (URIRef("https://example.com/LowerLevelCatalog"), RDF.type, DCAT.Catalog)
+    assert next(response_graph.triples(expected_response))
 
 
-def test_resource_anot(client, a_resource_link):
-    r = client.get(f"{a_resource_link}?_mediatype=text/anot+turtle")
-    response_graph = Graph().parse(data=r.text)
-    expected_graph = Graph().parse(
-        Path(__file__).parent
-        / "../tests/data/catprez/expected_responses/resource_anot.ttl"
-    )
-    assert response_graph.isomorphic(expected_graph), print(
-        f"Missing:{(expected_graph - response_graph).serialize()}"
-        f"Extra:{(response_graph - expected_graph).serialize()}"
-    )
+

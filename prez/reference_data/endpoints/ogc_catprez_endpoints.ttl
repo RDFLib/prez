@@ -34,7 +34,7 @@ endpoint:top-level-catalog-object a ont:ObjectEndpoint ;
 endpoint:lower-level-catalog-listing a ont:ListingEndpoint ;
     ont:endpointTemplate "/c/catalogs/$parent_1/collections" ;
     ont:deliversClasses prez:CatalogList ;  # required to determine the correct profile for ConnegP
-    ont:ParentToFocusRelation dcterms:hasPart ;
+    ont:parentToFocusRelation dcterms:hasPart ;
     sh:targetClass dcat:Catalog ;  # required for query construction
     ont:parentEndpoint endpoint:top-level-catalog-object ;
     shext:limit 20 ;
@@ -51,14 +51,14 @@ endpoint:lower-level-catalog-object a ont:ObjectEndpoint ;
     sh:targetNode "$object" ;
     ont:deliversClasses dcat:Catalog ;  # required for link generation for objects
     ont:endpointTemplate "/c/catalogs/$parent_1/collections/$object" ;
-    ont:ParentToFocusRelation dcterms:hasPart ;
+    ont:parentToFocusRelation dcterms:hasPart ;
     ont:parentEndpoint endpoint:lower-level-catalog-listing ;
 .
 
 endpoint:resource-listing a ont:ListingEndpoint ;
     ont:endpointTemplate "/c/catalogs/$parent_2/collections/$parent_1/items" ;
     ont:deliversClasses prez:ResourceList ;  # required to determine the correct profile for ConnegP
-    ont:ParentToFocusRelation dcterms:hasPart ;
+    ont:parentToFocusRelation dcterms:hasPart ;
     sh:targetClass dcat:Resource ;  # required for query construction
     ont:parentEndpoint endpoint:lower-level-catalog-object ;
     shext:limit 20 ;
@@ -75,7 +75,7 @@ endpoint:resource-object a ont:ObjectEndpoint ;
     sh:targetNode "$object" ;
     ont:deliversClasses dcat:Resource ;  # required for link generation for objects
     ont:endpointTemplate "/c/catalogs/$parent_2/collections/$parent_1/items/$object" ;
-    ont:ParentToFocusRelation dcterms:hasPart ;
+    ont:parentToFocusRelation dcterms:hasPart ;
     ont:parentEndpoint endpoint:resource-listing ;
 .
 

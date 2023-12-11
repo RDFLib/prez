@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Request, HTTPException, status, Query
 from fastapi import Depends
 from starlette.responses import PlainTextResponse
-
-from prez.dependencies import get_repo
+from rdflib import URIRef
+from prez.dependencies import get_repo, get_system_repo
 from prez.queries.object import object_inbound_query, object_outbound_query
 from prez.routers.identifier import get_iri_route
 from prez.services.objects import object_function
@@ -68,6 +68,20 @@ async def count_route(
         return row["count"]["value"]
 
 
-@router.get("/object", summary="Object", name="https://prez.dev/endpoint/object")
-async def object_route(request: Request, repo=Depends(get_repo)):
-    return await object_function(request, repo=repo)
+@router.get("/object", summary="Object", name="https://prez.dev/endpoint/system/object")
+async def object_route(
+        request: Request,
+        repo=Depends(get_repo),
+        system_repo=Depends(get_system_repo),
+):
+    endpoint_uri = URIRef(request.scope.get("route").name)
+    uri = URIRef(request.query_params.get("uri"))
+    request_url = request.scope["path"]
+    return await object_function(
+        request=request,
+        endpoint_uri=endpoint_uri,
+        uri=uri,
+        request_url=request_url,
+        repo=repo,
+        system_repo=system_repo,
+    )

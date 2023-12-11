@@ -35,7 +35,7 @@ endpoint:catalog-object a ont:ObjectEndpoint ;
 endpoint:vocab-listing a ont:ListingEndpoint ;
     ont:endpointTemplate "/v/catalogs/$parent_1/collections" ;
     ont:deliversClasses prez:SchemesList ;  # required to determine the correct profile for ConnegP
-    ont:ParentToFocusRelation dcterms:hasPart ;
+    ont:parentToFocusRelation dcterms:hasPart ;
     sh:targetClass skos:ConceptScheme ;  # required for query construction
     ont:parentEndpoint endpoint:catalog-object ;
     shext:limit 20 ;
@@ -52,14 +52,14 @@ endpoint:vocab-object a ont:ObjectEndpoint ;
     sh:targetNode "$object" ;
     ont:deliversClasses skos:ConceptScheme ;  # required for link generation for objects
     ont:endpointTemplate "/v/catalogs/$parent_1/collections/$object" ;
-    ont:ParentToFocusRelation dcterms:hasPart ;
+    ont:parentToFocusRelation dcterms:hasPart ;
     ont:parentEndpoint endpoint:vocab-listing ;
 .
 
 endpoint:concept-listing a ont:ListingEndpoint ;
     ont:endpointTemplate "/v/catalogs/$parent_2/collections/$parent_1/items" ;
     ont:deliversClasses prez:ConceptList ;  # required to determine the correct profile for ConnegP
-    ont:FocusToParentRelation skos:inScheme ;
+    ont:focusToParentRelation skos:inScheme ;
     sh:targetClass skos:Concept ;  # required for query construction
     ont:parentEndpoint endpoint:vocab-object ;
     shext:limit 20 ;
@@ -76,7 +76,7 @@ endpoint:concept-object a ont:ObjectEndpoint ;
     sh:targetNode "$object" ;
     ont:deliversClasses skos:Concept ;  # required for link generation for objects
     ont:endpointTemplate "/v/catalogs/$parent_2/collections/$parent_1/items/$object" ;
-    ont:FocusToParentRelation skos:inScheme ;
+    ont:focusToParentRelation skos:inScheme ;
     ont:parentEndpoint endpoint:concept-listing ;
 .
 
@@ -103,7 +103,6 @@ endpoint:narrowers
     shext:offset 0 ;
     shext:orderBy [ sh:path skos:prefLabel ] ;
     sh:targetClass skos:Concept ;
-    ont:endpointTemplate "/v/catalogs/$parent_3/collections/$parent_2/items/$parent_1/narrowers" ;
 .
 
 endpoint:top-concepts a ont:ListingEndpoint ;
@@ -122,5 +121,4 @@ endpoint:top-concepts a ont:ListingEndpoint ;
     shext:offset 0 ;
     shext:orderBy [ sh:path skos:prefLabel ] ;
     sh:targetClass skos:Concept ;
-    ont:endpointTemplate "/v/catalogs/$parent_2/collections/$parent_1/top-concepts" ;
 .

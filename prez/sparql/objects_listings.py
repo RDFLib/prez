@@ -386,7 +386,7 @@ def select_profile_mediatype(
       VALUES ?base_class {{ dcat:Dataset geo:FeatureCollection prez:FeatureCollectionList prez:FeatureList geo:Feature
       skos:ConceptScheme skos:Concept prez:ConceptList skos:Collection prez:DatasetList prez:VocPrezCollectionList prez:SchemesList
       prez:CatalogList prez:ResourceList prez:ProfilesList dcat:Catalog dcat:Resource prof:Profile prez:SPARQLQuery 
-      prez:SearchResult prez:CQLObjectList }}
+      prez:SearchResult prez:CQLObjectList prez:QueryablesList prez:Object }}
       ?profile altr-ext:constrainsClass ?class ;
                altr-ext:hasResourceFormat ?format ;
                dcterms:title ?title .\
@@ -453,8 +453,8 @@ def get_endpoint_template_queries(classes: FrozenSet[URIRef]):
         ont:endpointTemplate ?endpoint_template ;
         ont:deliversClasses ?classes .
   		FILTER(?classes IN ({", ".join('<' + str(klass) + '>' for klass in classes)}))
-        VALUES ?relation_direction {{ont:FocusToParentRelation ont:ParentToFocusRelation}}
-        VALUES ?ep_relation_direction {{ont:FocusToParentRelation ont:ParentToFocusRelation}}
+        VALUES ?relation_direction {{ont:focusToParentRelation ont:parentToFocusRelation}}
+        VALUES ?ep_relation_direction {{ont:focusToParentRelation ont:parentToFocusRelation}}
           {{ SELECT ?parent_endpoint ?endpoint (count(?intermediate) as ?distance)
             {{
               ?endpoint ont:parentEndpoint* ?intermediate ;
@@ -496,7 +496,7 @@ def generate_relationship_query(
             predicate, direction = relation
             if predicate:
                 parent = "?parent_" + str(i)
-                if direction == URIRef("https://prez.dev/ont/ParentToFocusRelation"):
+                if direction == URIRef("https://prez.dev/ont/parentToFocusRelation"):
                     subquery += f"{parent} <{predicate}> {uri_str} .\n"
                 else:  # assuming the direction is "focus_to_parent"
                     subquery += f"{uri_str} <{predicate}> {parent} .\n"

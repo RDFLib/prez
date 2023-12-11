@@ -15,7 +15,7 @@ from prez.services.link_generation import (
 )
 from prez.services.model_methods import get_classes
 from prez.sparql.methods import Repo
-from temp.shacl2sparql import SHACLParser
+from rdframe import SHACLParser
 
 log = logging.getLogger(__name__)
 
@@ -32,11 +32,11 @@ async def object_function(
     # ConnegP
     prof_and_mt_info = ProfilesMediatypesInfo(request=request, classes=klasses)
     # if we're on the object endpoint and a profile hasn't been requested, use the open profile
-    if (endpoint_uri == EP.object) and not (
-        prof_and_mt_info.req_profiles or prof_and_mt_info.req_profiles_token
-    ):
-        prof_and_mt_info.selected_class = None
-        prof_and_mt_info.profile = PREZ["profile/open"]
+    # if (endpoint_uri == EP.object) and not (
+    #     prof_and_mt_info.req_profiles or prof_and_mt_info.req_profiles_token
+    # ):
+    #     prof_and_mt_info.selected_class = None
+    #     prof_and_mt_info.profile = PREZ["profile/open"]
     # create the object with all required info
     object_item = ObjectItem(  # object item now does not need request
         uri=uri,

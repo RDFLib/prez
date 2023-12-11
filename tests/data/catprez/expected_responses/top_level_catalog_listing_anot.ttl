@@ -12,8 +12,6 @@ dcterms:description rdfs:label "Description"@en ;
 dcterms:identifier rdfs:label "Identifier"@en ;
     dcterms:description "Recommended practice is to identify the resource by means of a string conforming to an identification system. Examples include International Standard Book Number (ISBN), Digital Object Identifier (DOI), and Uniform Resource Name (URN).  Persistent identifiers should be provided as HTTP URIs."@en .
 
-dcterms:title rdfs:label "Title"@en .
-
 rdf:type rdfs:label "type" .
 
 rdfs:label rdfs:label "label" .
@@ -21,48 +19,23 @@ rdfs:label rdfs:label "label" .
 skos:definition rdfs:label "definition"@en ;
     skos:definition "A statement or formal explanation of the meaning of a concept."@en .
 
-<https://data.idnau.org/pid/container-catalog> a dcat:Catalog ;
-    rdfs:label "Container catalog Catalogue" ;
-    dcterms:description "container catalog to be used for testing" ;
-    dcterms:identifier "pd:container-catalog"^^prez:identifier ;
-    prez:link "/catalogs/pd:container-catalog" .
+<https://example.com/TopLevelCatalog> a dcat:Catalog ;
+    rdfs:label "Top level catalog" ;
+    dcterms:identifier "exm:TopLevelCatalog"^^prez:identifier ;
+    prez:link "/c/catalogs/exm:TopLevelCatalog",
+        "/v/catalogs/exm:TopLevelCatalog" .
 
-<https://data.idnau.org/pid/democat> a dcat:Catalog ;
-    rdfs:label "IDN Demonstration Catalogue" ;
-    dcterms:description """The Indigenous Data Network's demonstration catalogue of datasets. This catalogue contains records of datasets in Australia, most of which have some relation to indigenous Australia.
+<https://example.com/TopLevelCatalogTwo> a dcat:Catalog ;
+    rdfs:label "amazing catalog" ;
+    dcterms:identifier "exm:TopLevelCatalogTwo"^^prez:identifier ;
+    prez:link "/c/catalogs/exm:TopLevelCatalogTwo",
+        "/v/catalogs/exm:TopLevelCatalogTwo" .
 
-The purpose of this catalogue is not to act as a master catalogue of indigenous data in Australia to demonstrate improved metadata models and rating systems for data and metadata in order to improve indigenous data governance.
+prez:count rdfs:label "count" .
 
-The content of this catalogue conforms to the Indigenous Data Network's Catalogue Profile which is a profile of the DCAT, SKOS and PROV data models."""@en ;
-    dcterms:identifier "pd:democat"^^prez:identifier ;
-    dcterms:title "IDN Demonstration Catalogue" ;
-    prez:link "/catalogs/pd:democat" .
-
-<https://w3id.org/idn/dataset/agents> a dcat:Catalog ;
-    dcterms:description """The Indigenous Data Network's catalogue of Agents. This catalogue contains instances of Agents - People and Organisations - related to the holding of indigenous data. This includes non-indigenous Agents
-
-This catalogue extends on standard Agent information to include properties useful to understand the indigeneity of Agents: whether they are or not, or how much they are, indigenous"""@en ;
-    dcterms:identifier "dtst:agents"^^prez:identifier ;
-    dcterms:title "IDN Agents Catalogue" ;
-    prez:link "/catalogs/dtst:agents" .
-
-<https://w3id.org/idn/dataset/democat> a dcat:Catalog ;
-    dcterms:description """The Indigenous Data Network's catalogue of datasets. This catalogue contains records of datasets in Australia, most of which have some relation to indigenous Australia.
-
-The purpose of this catalogue is not to act as a master catalogue of indigenous data in Australia to demonstrate improved metadata models and rating systems for data and metadata in order to improve indigenous data governance.
-
-The content of this catalogue conforms to the Indigenous Data Network's Catalogue Profile which is a profile of the DCAT, SKOS and PROV data models."""@en ;
-    dcterms:identifier "dtst:democat"^^prez:identifier ;
-    dcterms:title "IDN Datasets Catalogue" ;
-    prez:link "/catalogs/dtst:democat" .
-
-<https://w3id.org/idn/system/catprez> a dcat:Catalog ;
-    dcterms:description "This is the system catalogue implemented by this instance of CatPrez that lists all its other Catalog instances"@en ;
-    dcterms:identifier "sys:catprez"^^prez:identifier ;
-    dcterms:title "CatPrez System Catalogue" ;
-    prez:link "/catalogs/sys:catprez" .
+prez:link rdfs:label "link" .
 
 dcat:Catalog rdfs:label "Catalog"@en ;
     skos:definition "A curated collection of metadata about resources (e.g., datasets and data services in the context of a data catalog)."@en ;
-    prez:count 5 .
+    prez:count 2 .
 

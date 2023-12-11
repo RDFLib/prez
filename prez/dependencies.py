@@ -16,7 +16,7 @@ from prez.cache import (
 )
 from prez.config import settings
 from prez.sparql.methods import PyoxigraphRepo, RemoteSparqlRepo, OxrdflibRepo
-from temp.cql2sparql import CQLParser
+from rdframe import CQLParser
 
 
 async def get_async_http_client():
@@ -105,17 +105,20 @@ async def cql_post_parser_dependency(request: Request):
 
 
 async def cql_get_parser_dependency(request: Request):
-    try:
-        query = json.loads(request.query_params["q"])
-        context = json.load(
-            (Path(__file__).parent.parent / "temp" / "default_cql_context.json").open()
-        )
-        cql_parser = CQLParser(cql=query, context=context)
-        cql_parser.generate_jsonld()
-        return cql_parser
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="Invalid JSON format.")
-    except Exception as e:  # Replace with your specific parsing exception
-        raise HTTPException(
-            status_code=400, detail="Invalid CQL format: Parsing failed."
-        )
+    if request.query_params.get("filter"):
+        try:
+            query = json.loads(request.query_params["filter"])
+            context = json.load(
+                (
+                    Path(__file__).parent.parent / "temp" / "default_cql_context.json"
+                ).open()
+            )
+            cql_parser = CQLParser(cql=query, context=context)
+            cql_parser.generate_jsonld()
+            return cql_parser
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=400, detail="Invalid JSON format.")
+        except Exception as e:  # Replace with your specific parsing exception
+            raise HTTPException(
+                status_code=400, detail="Invalid CQL format: Parsing failed."
+            )

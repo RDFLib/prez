@@ -1,6 +1,6 @@
 PREFIX dcat: <http://www.w3.org/ns/dcat#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX endpoint: <https://prez.dev/endpoint/>
+PREFIX endpoint: <https://prez.dev/endpoint/cql/>
 PREFIX prez: <https://prez.dev/>
 PREFIX ont: <https://prez.dev/ont/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -10,8 +10,31 @@ PREFIX shext: <http://example.com/shacl-extension#>
 
 
 endpoint:cql a ont:ListingEndpoint ;
-    ont:endpointTemplate "/cql" ;
     ont:deliversClasses prez:CQLObjectList ;  # required to determine the correct profile for ConnegP
     shext:limit 20 ;
+    shext:offset 0 ;
+.
+
+endpoint:queryables a ont:ListingEndpoint ;
+    sh:rule [ sh:subject "?focus_node" ;
+          sh:predicate <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ;
+          sh:object <https://prez.dev/Queryable> ] ;
+    ont:deliversClasses prez:QueryablesList ;
+    sh:target [ sh:select """SELECT DISTINCT ?focus_node
+             WHERE {
+             ?s a ?class ;
+                  ?focus_node ?o .
+              VALUES ?class {
+              dcat:Catalog
+              dcat:Dataset
+              dcat:Resource
+              skos:ConceptScheme
+              skos:Collection
+              skos:Concept
+              geo:FeatureCollection
+              geo:Feature
+              }
+                    }""" ] ;
+    shext:limit 100 ;
     shext:offset 0 ;
 .
