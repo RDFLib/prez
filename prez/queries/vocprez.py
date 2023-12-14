@@ -50,8 +50,6 @@ def get_concept_scheme_query(iri: str, bnode_depth: int) -> str:
     return dedent(query)
 
 
-# TODO query appears to erroneously create TopConcepts where they don't exist - perhaps from the optional statements
-#  see test_concept_scheme_top_concepts test w/ borehole-purpose-no-children
 def get_concept_scheme_top_concepts_query(iri: str, page: int, per_page: int) -> str:
     query = Template(
         """
@@ -59,6 +57,7 @@ def get_concept_scheme_top_concepts_query(iri: str, page: int, per_page: int) ->
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
         PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
         
         CONSTRUCT {
             ?concept skos:prefLabel ?label .
@@ -90,24 +89,37 @@ def get_concept_scheme_top_concepts_query(iri: str, page: int, per_page: int) ->
             }
         
             {
-                SELECT ?concept ?label (COUNT(?narrowerConcept) AS ?narrowerChildrenCount)
+                # Using two OPTIONAL clauses with a UNION causes ?narrowConcept to be duplicated.
+                # Use DISTINCT to get an accurate count.
+                SELECT ?concept ?label (COUNT(DISTINCT ?narrowerConcept) AS ?narrowerChildrenCount)
                 WHERE {
                     BIND(<{{ iri }}> as ?iri)
                     
-                    OPTIONAL {
-                        ?iri skos:hasTopConcept ?concept .
-                        ?concept skos:prefLabel ?label .
+                    {
+                        OPTIONAL {
+                            ?iri skos:hasTopConcept ?concept .
+                            ?concept skos:prefLabel ?label .
+                
+                            OPTIONAL {
+                                ?narrowerConcept skos:broader ?concept .
+                            }
+                            OPTIONAL {
+                                ?concept skos:narrower ?narrowerConcept .
+                            }
+                        }
                     }
-                    OPTIONAL {
-                        ?concept skos:topConceptOf ?iri .
-                        ?concept skos:prefLabel ?label .
-                    }
-                    
-                    OPTIONAL {
-                        ?narrowerConcept skos:broader ?concept .
-                    }
-                    OPTIONAL {
-                        ?concept skos:narrower ?narrowerConcept .
+                    UNION {
+                        OPTIONAL {
+                            ?concept skos:topConceptOf ?iri .
+                            ?concept skos:prefLabel ?label .
+                
+                            OPTIONAL {
+                                ?narrowerConcept skos:broader ?concept .
+                            }
+                            OPTIONAL {
+                                ?concept skos:narrower ?narrowerConcept .
+                            }
+                        }
                     }
                 }
                 GROUP BY ?concept ?label
@@ -149,7 +161,6 @@ def get_concept_narrowers_query(iri: str, page: int, per_page: int) -> str:
                 ?concept skos:prefLabel ?label .
             }
             ?iri rdf:type ?type .
-            ?concept rdf:type ?conceptType .
             
             {
                 SELECT (COUNT(?childConcept) AS ?childrenCount)
@@ -160,25 +171,41 @@ def get_concept_narrowers_query(iri: str, page: int, per_page: int) -> str:
             }
         
             {
-                SELECT ?concept ?label (COUNT(?narrowerConcept) AS ?narrowerChildrenCount)
+                SELECT ?concept ?label (skos:Concept AS ?conceptType) (COUNT(?narrowerConcept) AS ?narrowerChildrenCount)
                 WHERE {
                     BIND(<{{ iri }}> as ?iri)
                     
-                    OPTIONAL {
-                        ?concept skos:broader ?iri .
-                        ?concept skos:prefLabel ?label .
+                    {
+                        OPTIONAL {
+                            ?concept skos:broader ?iri .
+                            ?concept skos:prefLabel ?label .
+                
+                            OPTIONAL {
+                                ?narrowerConcept skos:broader ?concept .
+                            }
+                            OPTIONAL {
+                                ?concept skos:narrower ?narrowerConcept .
+                            }
+                        }
                     }
-                    OPTIONAL {
-                        ?iri skos:narrower ?concept .
-                        ?concept skos:prefLabel ?label .
+                    UNION {
+                        OPTIONAL {
+                            ?iri skos:narrower ?concept .
+                            ?concept skos:prefLabel ?label .
+                
+                            OPTIONAL {
+                                ?narrowerConcept skos:broader ?concept .
+                            }
+                            OPTIONAL {
+                                ?concept skos:narrower ?narrowerConcept .
+                            }
+                        }
                     }
                     
-                    OPTIONAL {
-                        ?narrowerConcept skos:broader ?concept .
-                    }
-                    OPTIONAL {
-                        ?concept skos:narrower ?narrowerConcept .
-                    }
+                    # Filter out any unbound ?concept rows which are invalid and may contain
+                    # a count of 0. This is possible because both paths within the select
+                    # query are using the OPTIONAL clause.
+                    FILTER (BOUND(?concept))
                 }
                 GROUP BY ?concept ?label
                 ORDER BY str(?label)
