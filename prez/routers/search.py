@@ -6,7 +6,7 @@ from starlette.responses import PlainTextResponse
 
 from prez.cache import search_methods
 from prez.config import settings
-from prez.dependencies import get_repo
+from prez.dependencies import get_repo, get_system_repo
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.reference_data.prez_ns import PREZ
 from prez.renderers.renderer import return_from_graph
@@ -22,6 +22,7 @@ router = APIRouter(tags=["Search"])
 async def search(
     request: Request,
     repo: Repo = Depends(get_repo),
+    system_repo: Repo = Depends(get_system_repo),
 ):
     term = request.query_params.get("term")
     limit = request.query_params.get("limit", 20)
@@ -81,7 +82,7 @@ async def search(
         request=request, classes=frozenset([PREZ.SearchResult])
     )
     if "anot+" in prof_and_mt_info.mediatype:
-        await _add_prez_links(graph, repo)
+        await _add_prez_links(graph, repo, system_repo)
 
     return await return_from_graph(
         graph,

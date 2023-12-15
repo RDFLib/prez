@@ -59,6 +59,7 @@ class Settings(BaseSettings):
     )
     prez_version: Optional[str]
     disable_prefix_generation: bool = False
+    local_rdf_dir: str = "rdf"
 
     @root_validator()
     def get_version(cls, values):

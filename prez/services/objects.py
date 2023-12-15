@@ -14,6 +14,7 @@ from prez.renderers.renderer import return_from_graph, return_profiles
 from prez.services.curie_functions import get_uri_for_curie_id
 from prez.services.model_methods import get_classes
 from prez.services.link_generation import _add_prez_links
+from prez.sparql.methods import Repo
 from prez.sparql.objects_listings import (
     generate_item_construct,
     generate_listing_construct,
@@ -22,7 +23,8 @@ from prez.sparql.objects_listings import (
 
 async def object_function(
     request: Request,
-    repo=Depends(get_repo),
+    repo: Repo,
+    system_repo=Repo,
     object_curie: Optional[str] = None,
 ):
     endpoint_uri = URIRef(request.scope["route"].name)
@@ -81,7 +83,7 @@ async def object_function(
     else:
         item_graph, _ = await repo.send_queries([item_query, item_members_query], [])
     if "anot+" in prof_and_mt_info.mediatype:
-        await _add_prez_links(item_graph, repo)
+        await _add_prez_links(item_graph, repo, system_repo)
     return await return_from_graph(
         item_graph,
         prof_and_mt_info.mediatype,
