@@ -11,7 +11,7 @@ from prez.cache import (
     profiles_graph_cache,
     links_ids_graph_cache,
 )
-from prez.dependencies import get_repo
+from prez.dependencies import get_repo, get_system_repo
 from prez.models.listing import ListingModel
 from prez.models.object_item import ObjectItem
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
@@ -93,5 +93,5 @@ async def count_route(
 
 
 @router.get("/object", summary="Object", name="https://prez.dev/endpoint/object")
-async def object_route(request: Request, repo=Depends(get_repo)):
-    return await object_function(request, repo=repo)
+async def object_route(request: Request, repo=Depends(get_repo), system_repo=Depends(get_system_repo)):
+    return await object_function(request, repo=repo, system_repo=system_repo)

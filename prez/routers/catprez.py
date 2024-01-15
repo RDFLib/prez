@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, Request, Depends
 from starlette.responses import PlainTextResponse
 
-from prez.dependencies import get_repo
+from prez.dependencies import get_repo, get_system_repo
 from prez.services.objects import object_function
 from prez.services.listings import listing_function
 from prez.services.curie_functions import get_uri_for_curie_id
@@ -27,9 +27,14 @@ async def catalog_list(
     page: Optional[int] = 1,
     per_page: Optional[int] = 20,
     repo: Repo = Depends(get_repo),
+    system_repo: Repo = Depends(get_system_repo),
 ):
     return await listing_function(
-        request=request, page=page, per_page=per_page, repo=repo
+        request=request,
+        page=page,
+        per_page=per_page,
+        repo=repo,
+        system_repo=system_repo,
     )
 
 
@@ -42,6 +47,7 @@ async def resource_list(
     request: Request,
     catalog_curie: str,
     repo: Repo = Depends(get_repo),
+    system_repo: Repo = Depends(get_system_repo),
     page: Optional[int] = 1,
     per_page: Optional[int] = 20,
 ):
@@ -51,6 +57,7 @@ async def resource_list(
         page=page,
         per_page=per_page,
         repo=repo,
+        system_repo=system_repo,
         uri=catalog_uri,
     )
 
@@ -65,9 +72,10 @@ async def resource_item(
     catalog_curie: str,
     resource_curie: str,
     repo: Repo = Depends(get_repo),
+    system_repo: Repo = Depends(get_system_repo),
 ):
     return await object_function(
-        request=request, object_curie=resource_curie, repo=repo
+        request=request, object_curie=resource_curie, repo=repo, system_repo=system_repo
     )
 
 
@@ -80,5 +88,8 @@ async def catalog_item(
     request: Request,
     catalog_curie: str,
     repo: Repo = Depends(get_repo),
+    system_repo: Repo = Depends(get_system_repo),
 ):
-    return await object_function(request=request, object_curie=catalog_curie, repo=repo)
+    return await object_function(
+        request=request, object_curie=catalog_curie, repo=repo, system_repo=system_repo
+    )

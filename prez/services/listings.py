@@ -16,6 +16,7 @@ from prez.sparql.objects_listings import (
 async def listing_function(
     request: Request,
     repo: Repo,
+    system_repo: Repo,
     page: int = 1,
     per_page: int = 20,
     uri: str = None,
@@ -61,7 +62,7 @@ async def listing_function(
     else:
         item_graph, _ = await repo.send_queries([count_query, item_members_query], [])
     if "anot+" in prof_and_mt_info.mediatype:
-        await _add_prez_links(item_graph, repo)
+        await _add_prez_links(item_graph, repo, system_repo)
     return await return_from_graph(
         item_graph,
         prof_and_mt_info.mediatype,

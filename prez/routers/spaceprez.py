@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, Request, Depends
 from starlette.responses import PlainTextResponse
 
-from prez.dependencies import get_repo
+from prez.dependencies import get_repo, get_system_repo
 from prez.services.objects import object_function
 from prez.services.listings import listing_function
 from prez.services.curie_functions import get_uri_for_curie_id
@@ -25,11 +25,12 @@ async def spaceprez_profiles():
 async def list_datasets(
     request: Request,
     repo: Repo = Depends(get_repo),
-    page: Optional[int] = 1,
+        system_repo: Repo = Depends(get_system_repo),
+        page: Optional[int] = 1,
     per_page: Optional[int] = 20,
 ):
     return await listing_function(
-        request=request, page=page, per_page=per_page, repo=repo
+        request=request, page=page, per_page=per_page, repo=repo, system_repo=system_repo
     )
 
 
@@ -42,7 +43,8 @@ async def list_feature_collections(
     request: Request,
     dataset_curie: str,
     repo: Repo = Depends(get_repo),
-    page: Optional[int] = 1,
+        system_repo: Repo = Depends(get_system_repo),
+        page: Optional[int] = 1,
     per_page: Optional[int] = 20,
 ):
     dataset_uri = get_uri_for_curie_id(dataset_curie)
@@ -52,6 +54,7 @@ async def list_feature_collections(
         per_page=per_page,
         uri=dataset_uri,
         repo=repo,
+        system_repo=system_repo,
     )
 
 
@@ -65,7 +68,8 @@ async def list_features(
     dataset_curie: str,
     collection_curie: str,
     repo: Repo = Depends(get_repo),
-    page: Optional[int] = 1,
+        system_repo: Repo = Depends(get_system_repo),
+        page: Optional[int] = 1,
     per_page: Optional[int] = 20,
 ):
     collection_uri = get_uri_for_curie_id(collection_curie)
@@ -75,6 +79,7 @@ async def list_features(
         per_page=per_page,
         uri=collection_uri,
         repo=repo,
+        system_repo=system_repo,
     )
 
 
@@ -87,8 +92,9 @@ async def dataset_item(
     request: Request,
     dataset_curie: str,
     repo: Repo = Depends(get_repo),
+        system_repo: Repo = Depends(get_system_repo),
 ):
-    return await object_function(request, object_curie=dataset_curie, repo=repo)
+    return await object_function(request, object_curie=dataset_curie, repo=repo, system_repo=system_repo)
 
 
 @router.get(
@@ -101,8 +107,9 @@ async def feature_collection_item(
     dataset_curie: str,
     collection_curie: str,
     repo: Repo = Depends(get_repo),
+        system_repo: Repo = Depends(get_system_repo),
 ):
-    return await object_function(request, object_curie=collection_curie, repo=repo)
+    return await object_function(request, object_curie=collection_curie, repo=repo, system_repo=system_repo)
 
 
 @router.get(
@@ -116,5 +123,6 @@ async def feature_item(
     collection_curie: str,
     feature_curie: str,
     repo: Repo = Depends(get_repo),
+        system_repo: Repo = Depends(get_system_repo),
 ):
-    return await object_function(request=request, object_curie=feature_curie, repo=repo)
+    return await object_function(request=request, object_curie=feature_curie, repo=repo, system_repo=system_repo)

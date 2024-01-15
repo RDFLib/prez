@@ -34,7 +34,7 @@ async def profiles(
     repo=Depends(get_system_repo),
 ):
     return await listing_function(
-        request=request, page=page, per_page=per_page, repo=repo
+        request=request, page=page, per_page=per_page, repo=repo, system_repo=repo
     )
 
 
@@ -44,4 +44,4 @@ async def profiles(
     name="https://prez.dev/endpoint/profile",
 )
 async def profile(request: Request, profile_curie: str, repo=Depends(get_system_repo)):
-    return await object_function(request, object_curie=profile_curie, repo=repo)
+    return await object_function(request, object_curie=profile_curie, repo=repo, system_repo=repo)
