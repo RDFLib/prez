@@ -6,7 +6,7 @@ from rdflib import URIRef
 
 from prez.cache import profiles_graph_cache, endpoints_graph_cache
 from prez.models.object_item import ObjectItem
-from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
+from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo, populate_profile_and_mediatype
 from prez.reference_data.prez_ns import PREZ, EP
 from prez.renderers.renderer import return_from_graph
 from prez.services.link_generation import (
@@ -30,7 +30,8 @@ async def object_function(
 ):
     klasses = await get_classes(uri=uri, repo=repo, endpoint=endpoint_uri)
     # ConnegP
-    prof_and_mt_info = ProfilesMediatypesInfo(request=request, classes=klasses)
+    prof_and_mt_info = ProfilesMediatypesInfo(request=request, classes=klasses, system_repo=system_repo)
+    await populate_profile_and_mediatype(prof_and_mt_info, system_repo)
     # if we're on the object endpoint and a profile hasn't been requested, use the open profile
     # if (endpoint_uri == EP.object) and not (
     #     prof_and_mt_info.req_profiles or prof_and_mt_info.req_profiles_token

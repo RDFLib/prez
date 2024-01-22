@@ -9,7 +9,7 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX shext: <http://example.com/shacl-extension#>
 
 
-endpoint:cql a ont:ListingEndpoint ;
+endpoint:get a ont:ListingEndpoint ;
     ont:deliversClasses prez:CQLObjectList ;  # required to determine the correct profile for ConnegP
     shext:limit 20 ;
     shext:offset 0 ;

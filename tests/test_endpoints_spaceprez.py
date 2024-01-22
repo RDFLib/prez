@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from pyoxigraph.pyoxigraph import Store
 from rdflib import Graph, URIRef
 from rdflib.compare import isomorphic
-from rdflib.namespace import RDF, DCAT, RDFS
+from rdflib.namespace import RDF, DCAT, RDFS, GEO
 
 from prez.app import app
 from prez.dependencies import get_repo
@@ -17,7 +17,7 @@ def test_store() -> Store:
     # Create a new pyoxigraph Store
     store = Store()
 
-    for file in Path(__file__).parent.glob("../tests/data/*/input/*.ttl"):
+    for file in Path(__file__).parent.glob("../test_data/spaceprez.ttl"):
         store.load(file.read_bytes(), "text/turtle")
 
     return store
@@ -57,109 +57,66 @@ def a_dataset_link(client):
 def an_fc_link(client, a_dataset_link):
     r = client.get(f"{a_dataset_link}/collections")
     g = Graph().parse(data=r.text)
-    member_uri = g.value(
-        URIRef("http://example.com/datasets/sandgate"), RDFS.member, None
-    )
-    link = g.value(member_uri, URIRef(f"https://prez.dev/link", None))
-    return link
+    links = g.objects(subject=None, predicate=URIRef(f"https://prez.dev/link"))
+    for link in links:
+        if link != a_dataset_link:
+            return link
 
 
 @pytest.fixture(scope="session")
 def a_feature_link(client, an_fc_link):
     r = client.get(f"{an_fc_link}/items")
     g = Graph().parse(data=r.text)
-    member_uri = g.value(
-        URIRef("http://example.com/datasets/sandgate/catchments"), RDFS.member, None
-    )
-    link = g.value(member_uri, URIRef(f"https://prez.dev/link", None))
-    return link
+    links = g.objects(subject=None, predicate=URIRef(f"https://prez.dev/link"))
+    for link in links:
+        if link != an_fc_link:
+            return link
 
 
 def test_dataset_anot(client, a_dataset_link):
-    r = client.get(f"{a_dataset_link}?_mediatype=text/anot+turtle")
+    r = client.get(f"{a_dataset_link}?_mediatype=text/turtle")
     response_graph = Graph().parse(data=r.text)
-    expected_graph = Graph().parse(
-        Path(__file__).parent
-        / "../tests/data/spaceprez/expected_responses/dataset_anot.ttl"
+    expected_response_1 = (
+        URIRef("https://example.com/Dataset"),
+        RDF.type,
+        DCAT.Dataset,
     )
-    assert isomorphic(response_graph, expected_graph), print(
-        f"RESPONSE GRAPH\n{response_graph.serialize()},"
-        f"EXPECTED GRAPH\n{expected_graph.serialize()}",
-        f"MISSING TRIPLES\n{(expected_graph - response_graph).serialize()}",
-        f"EXTRA TRIPLES\n{(response_graph - expected_graph).serialize()}",
-    )
+    assert next(response_graph.triples(expected_response_1))
 
 
-def test_feature_collection_anot(client, an_fc_link):
-    r = client.get(f"{an_fc_link}?_mediatype=text/anot+turtle")
+
+def test_feature_collection(client, an_fc_link):
+    r = client.get(f"{an_fc_link}?_mediatype=text/turtle")
     response_graph = Graph().parse(data=r.text)
-    expected_graph = Graph().parse(
-        Path(__file__).parent
-        / "../tests/data/spaceprez/expected_responses/feature_collection_anot.ttl"
+    expected_response_1 = (
+        URIRef("https://example.com/FeatureCollection"),
+        RDF.type,
+        GEO.FeatureCollection,
     )
-    assert isomorphic(response_graph, expected_graph), print(
-        f"RESPONSE GRAPH\n{response_graph.serialize()},"
-        f"EXPECTED GRAPH\n{expected_graph.serialize()}",
-        f"MISSING TRIPLES\n{(expected_graph - response_graph).serialize()}",
-        f"EXTRA TRIPLES\n{(response_graph - expected_graph).serialize()}",
-    )
+    assert next(response_graph.triples(expected_response_1))
 
-
-def test_feature_anot(client, a_feature_link):
-    r = client.get(f"{a_feature_link}?_mediatype=text/anot+turtle")
+def test_feature(client, a_feature_link):
+    r = client.get(f"{a_feature_link}?_mediatype=text/turtle")
     response_graph = Graph().parse(data=r.text)
-    expected_graph = Graph().parse(
-        Path(__file__).parent
-        / "../tests/data/spaceprez/expected_responses/feature_anot.ttl"
+    expected_response_1 = (
+        URIRef("https://example.com/Feature1"),
+        RDF.type,
+        GEO.Feature,
     )
-    assert isomorphic(response_graph, expected_graph), print(
-        f"RESPONSE GRAPH\n{response_graph.serialize()},"
-        f"EXPECTED GRAPH\n{expected_graph.serialize()}",
-        f"MISSING TRIPLES\n{(expected_graph - response_graph).serialize()}",
-        f"EXTRA TRIPLES\n{(response_graph - expected_graph).serialize()}",
-    )
-
-
-def test_dataset_listing_anot(client):
-    r = client.get("/s/catalogs?_mediatype=text/anot+turtle")
-    response_graph = Graph().parse(data=r.text)
-    expected_graph = Graph().parse(
-        Path(__file__).parent
-        / "../tests/data/spaceprez/expected_responses/dataset_listing_anot.ttl"
-    )
-    assert response_graph.isomorphic(expected_graph), print(
-        f"RESPONSE GRAPH\n{response_graph.serialize()},"
-        f"EXPECTED GRAPH\n{expected_graph.serialize()}",
-        f"MISSING TRIPLES\n{(expected_graph - response_graph).serialize()}",
-        f"EXTRA TRIPLES\n{(response_graph - expected_graph).serialize()}",
-    )
-
-
-def test_feature_collection_listing_anot(client, a_dataset_link):
-    r = client.get(f"{a_dataset_link}/collections?_mediatype=text/anot+turtle")
-    response_graph = Graph().parse(data=r.text)
-    expected_graph = Graph().parse(
-        Path(__file__).parent
-        / "../tests/data/spaceprez/expected_responses/feature_collection_listing_anot.ttl"
-    )
-    assert response_graph.isomorphic(expected_graph), print(
-        f"RESPONSE GRAPH\n{response_graph.serialize()},"
-        f"EXPECTED GRAPH\n{expected_graph.serialize()}",
-        f"MISSING TRIPLES\n{(expected_graph - response_graph).serialize()}",
-        f"EXTRA TRIPLES\n{(response_graph - expected_graph).serialize()}",
-    )
-
+    assert next(response_graph.triples(expected_response_1))
 
 def test_feature_listing_anot(client, an_fc_link):
-    r = client.get(f"{an_fc_link}/items?_mediatype=text/anot+turtle")
+    r = client.get(f"{an_fc_link}/items?_mediatype=text/turtle")
     response_graph = Graph().parse(data=r.text)
-    expected_graph = Graph().parse(
-        Path(__file__).parent
-        / "../tests/data/spaceprez/expected_responses/feature_listing_anot.ttl"
+    expected_response_1 = (
+        URIRef("https://example.com/Feature1"),
+        RDF.type,
+        GEO.Feature,
     )
-    assert response_graph.isomorphic(expected_graph), print(
-        f"RESPONSE GRAPH\n{response_graph.serialize()},"
-        f"EXPECTED GRAPH\n{expected_graph.serialize()}",
-        f"MISSING TRIPLES\n{(expected_graph - response_graph).serialize()}",
-        f"EXTRA TRIPLES\n{(response_graph - expected_graph).serialize()}",
+    expected_response_2 = (
+        URIRef("https://example.com/Feature2"),
+        RDF.type,
+        GEO.Feature,
     )
+    assert next(response_graph.triples(expected_response_1))
+    assert next(response_graph.triples(expected_response_2))

@@ -70,9 +70,9 @@ async def count_route(
 
 @router.get("/object", summary="Object", name="https://prez.dev/endpoint/system/object")
 async def object_route(
-        request: Request,
-        repo=Depends(get_repo),
-        system_repo=Depends(get_system_repo),
+    request: Request,
+    repo=Depends(get_repo),
+    system_repo=Depends(get_system_repo),
 ):
     endpoint_uri = URIRef(request.scope.get("route").name)
     uri = URIRef(request.query_params.get("uri"))

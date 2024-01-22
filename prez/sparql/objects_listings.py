@@ -327,6 +327,7 @@ def select_profile_mediatype(
     requested_profile_uri: URIRef = None,
     requested_profile_token: str = None,
     requested_mediatypes: List[Tuple] = None,
+    listing: bool = False,
 ):
     """
     Returns a SPARQL SELECT query which will determine the profile and mediatype to return based on user requests,
@@ -364,6 +365,10 @@ def select_profile_mediatype(
     4. If neither a profile nor mediatype is requested, the default profile for the most specific class is returned,
     with the default mediatype for that profile.
     """
+    if listing:
+        profile_class = PREZ.ListingProfile
+    else:
+        profile_class = PREZ.ObjectProfile
     if requested_profile_token:
         requested_profile_uri = get_uri_for_curie_id(requested_profile_token)
     query = dedent(
@@ -390,6 +395,7 @@ def select_profile_mediatype(
       ?profile altr-ext:constrainsClass ?class ;
                altr-ext:hasResourceFormat ?format ;
                dcterms:title ?title .\
+      {f'?profile a {profile_class.n3()} .'}
       {f'BIND(?profile=<{requested_profile_uri}> as ?req_profile)' if requested_profile_uri else ''}
       BIND(EXISTS {{ ?shape sh:targetClass ?class ;
                            altr-ext:hasDefaultProfile ?profile }} AS ?def_profile)

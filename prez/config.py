@@ -36,7 +36,6 @@ class Settings(BaseSettings):
     curie_separator: str = ":"
     system_uri: Optional[str] = f"{protocol}://{host}:{port}"
     order_lists_by_label: bool = True
-    prez_flavours: Optional[list] = ["SpacePrez", "VocPrez", "CatPrez", "ProfilesPrez"]
     label_predicates: Optional[List[URIRef]] = [
         SKOS.prefLabel,
         DCTERMS.title,

@@ -9,6 +9,7 @@ from prez.config import settings
 from prez.models.model_exceptions import NoProfilesException
 from prez.reference_data.prez_ns import PREZ
 from prez.services.curie_functions import get_curie_id_for_uri
+from prez.sparql.methods import Repo
 from prez.sparql.objects_listings import select_profile_mediatype
 
 log = logging.getLogger(__name__)
@@ -20,18 +21,8 @@ async def create_profiles_graph(repo) -> Graph:
     ):  # pytest imports app.py multiple times, so this is needed. Not sure why cache is
         # not cleared between calls
         return
-    flavours = ["CatPrez", "SpacePrez", "VocPrez"]
     for f in (Path(__file__).parent.parent / "reference_data/profiles").glob("*.ttl"):
-        # Check if file starts with any of the flavour prefixes
-        matching_flavour = next(
-            (flavour for flavour in flavours if f.name.startswith(flavour.lower())),
-            None,
-        )
-        # If the file doesn't start with any specific flavour or the matching flavour is in settings.prez_flavours, parse it.
-        if not matching_flavour or (
-            matching_flavour and matching_flavour in settings.prez_flavours
-        ):
-            profiles_graph_cache.parse(f)
+        profiles_graph_cache.parse(f)
     log.info("Prez default profiles loaded")
     remote_profiles_query = """
         PREFIX dcat: <http://www.w3.org/ns/dcat#>
@@ -76,25 +67,28 @@ async def create_profiles_graph(repo) -> Graph:
 
 
 # @lru_cache(maxsize=128)
-def get_profiles_and_mediatypes(
+async def get_profiles_and_mediatypes(
     classes: FrozenSet[URIRef],
+    system_repo: Repo,
     requested_profile: URIRef = None,
     requested_profile_token: str = None,
     requested_mediatype: URIRef = None,
+    listing: bool = False
 ):
     query = select_profile_mediatype(
-        classes, requested_profile, requested_profile_token, requested_mediatype
+        classes, requested_profile, requested_profile_token, requested_mediatype, listing
     )
     log.debug(f"ConnegP query: {query}")
-    response = profiles_graph_cache.query(query)
+    # response = profiles_graph_cache.query(query)
+    response = await system_repo.send_queries([], [(None, query)])
     # log.debug(f"ConnegP response:{results_pretty_printer(response)}")
-    if len(response.bindings[0]) == 0:
+    if response[1][0][1] == [{}]:
         raise NoProfilesException(classes)
-    top_result = response.bindings[0]
+    top_result = response[1][0][1][0]
     profile, mediatype, selected_class = (
-        top_result["profile"],
-        top_result["format"],
-        top_result["class"],
+        URIRef(top_result["profile"]["value"]),
+        Literal(top_result["format"]["value"]),
+        URIRef(top_result["class"]["value"]),
     )
     profile_headers, avail_profile_uris = generate_profiles_headers(
         selected_class, response, profile, mediatype
@@ -155,8 +149,8 @@ def generate_profiles_headers(selected_class, response, profile, mediatype):
         "Content-Type": mediatype,
     }
     avail_profiles = set(
-        (get_curie_id_for_uri(i["profile"]), i["profile"], i["title"])
-        for i in response.bindings
+        (get_curie_id_for_uri(i["profile"]["value"]), i["profile"]["value"], i["title"]["value"])
+        for i in response[1][0][1]
     )
     avail_profiles_headers = ", ".join(
         [
@@ -166,11 +160,11 @@ def generate_profiles_headers(selected_class, response, profile, mediatype):
     )
     avail_mediatypes_headers = ", ".join(
         [
-            f"""<{selected_class}?_profile={get_curie_id_for_uri(i["profile"])}&_mediatype={i["format"]}>; \
-rel="{"self" if i["profile"] == profile and i["format"] == mediatype else "alternate"}"; \
-type="{i["format"]}"; profile="{i["profile"]}"\
+            f"""<{selected_class}?_profile={get_curie_id_for_uri(i["profile"]["value"])}&_mediatype={i["format"]["value"]}>; \
+rel="{"self" if i["profile"]["value"] == profile and i["format"]["value"] == mediatype else "alternate"}"; \
+type="{i["format"]["value"]}"; profile="{i["profile"]["value"]}"\
 """
-            for i in response.bindings
+            for i in response[1][0][1]
         ]
     )
     headers["Link"] = ", ".join(

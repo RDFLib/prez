@@ -8,8 +8,8 @@ from starlette.datastructures import Headers
 from starlette.requests import Request
 from starlette.responses import StreamingResponse
 
-from prez.dependencies import get_repo
-from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
+from prez.dependencies import get_repo, get_system_repo
+from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo, populate_profile_and_mediatype
 from prez.renderers.renderer import return_annotated_rdf
 from prez.sparql.methods import Repo
 
@@ -26,6 +26,7 @@ async def sparql_endpoint(
     query: str,
     request: Request,
     repo: Repo = Depends(get_repo),
+    system_repo: Repo = Depends(get_system_repo),
 ):
     request_mediatype = request.headers.get("accept").split(",")[
         0
@@ -35,8 +36,11 @@ async def sparql_endpoint(
     # Intercept "+anot" mediatypes
     if "anot+" in request_mediatype:
         prof_and_mt_info = ProfilesMediatypesInfo(
-            request=request, classes=frozenset([PREZ.SPARQLQuery])
+            request=request,
+            classes=frozenset([PREZ.SPARQLQuery]),
+            system_repo=system_repo,
         )
+        await populate_profile_and_mediatype(prof_and_mt_info, system_repo)
         non_anot_mediatype = request_mediatype.replace("anot+", "")
         request._headers = Headers({**request.headers, "accept": non_anot_mediatype})
         response = await repo.sparql(request)

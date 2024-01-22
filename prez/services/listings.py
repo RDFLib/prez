@@ -8,7 +8,7 @@ from rdflib.namespace import PROF, RDF, SH
 
 from prez.cache import profiles_graph_cache, endpoints_graph_cache
 from prez.config import settings
-from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
+from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo, populate_profile_and_mediatype
 from prez.reference_data.prez_ns import ONT, PREZ
 from prez.renderers.renderer import return_from_graph
 from prez.services.link_generation import _add_prez_links
@@ -37,10 +37,10 @@ async def listing_function(
 ):
     queries = []
     # class is from endpoint definition.
-    listing_class = endpoints_graph_cache.value(endpoint_uri, ONT.deliversClasses)
     target_class = endpoints_graph_cache.value(endpoint_uri, SH.targetClass)
 
-    prof_and_mt_info = ProfilesMediatypesInfo(request=request, classes=[listing_class])
+    prof_and_mt_info = ProfilesMediatypesInfo(request=request, classes=[target_class], system_repo=system_repo, listing=True)
+    await populate_profile_and_mediatype(prof_and_mt_info, system_repo)
     selected_class, selected_profile = (
         prof_and_mt_info.selected_class,
         prof_and_mt_info.profile,

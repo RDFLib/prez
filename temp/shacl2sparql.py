@@ -181,7 +181,6 @@ class SHACLParser:
             if target_classes:
                 self._add_target_class(target_classes[0])
 
-
         # don't use the target class if there's a sh:target / sh:select #TODO confirm why this caused issues - duplicate
         #  pattern matches in the subquery?
         # elif target_classes:

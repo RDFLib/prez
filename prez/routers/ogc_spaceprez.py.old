@@ -18,39 +18,6 @@ SP_EP = Namespace("https://prez.dev/endpoint/spaceprez/")
 @router.get(
     "/s",
     summary="SpacePrez Home",
-    openapi_extra={
-        "parameters": [
-            {
-                "name": "page",
-                "in": "query",
-                "required": False,
-                "schema": {
-                    "anyOf": [{"type": "integer"}, {"type": "null"}],
-                    "default": 1,
-                    "title": "Page",
-                },
-            },
-            {
-                "name": "per_page",
-                "in": "query",
-                "required": False,
-                "schema": {
-                    "anyOf": [{"type": "integer"}, {"type": "null"}],
-                    "default": 20,
-                    "title": "Per Page",
-                },
-            },
-            {
-                "name": "search_term",
-                "in": "path",
-                "required": False,
-                "schema": {
-                    "anyOf": [{"type": "string"}, {"type": "null"}],
-                    "title": "Search Term",
-                },
-            },
-        ]
-    },
 )
 async def spaceprez_home():
     return PlainTextResponse("SpacePrez Home")

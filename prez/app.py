@@ -24,9 +24,7 @@ from prez.routers.cql import router as cql_router
 from prez.routers.identifier import router as identifier_router
 from prez.routers.management import router as management_router
 from prez.routers.object import router as object_router
-from prez.routers.ogc_vocprez import router as vocprez_router
-from prez.routers.ogc_spaceprez import router as spaceprez_router
-from prez.routers.ogc_catprez import router as catprez_router
+from prez.routers.ogc_router import router as ogc_records_router
 from prez.routers.profiles import router as profiles_router
 from prez.routers.search import router as search_router
 from prez.routers.sparql import router as sparql_router
@@ -67,12 +65,7 @@ app.include_router(object_router)
 app.include_router(sparql_router)
 app.include_router(search_router)
 app.include_router(profiles_router)
-if "CatPrez" in settings.prez_flavours:
-    app.include_router(catprez_router)
-if "VocPrez" in settings.prez_flavours:
-    app.include_router(vocprez_router)
-if "SpacePrez" in settings.prez_flavours:
-    app.include_router(spaceprez_router)
+app.include_router(ogc_records_router)
 app.include_router(identifier_router)
 
 

@@ -5,7 +5,7 @@ from rdflib.namespace import RDF
 
 from prez.config import settings
 from prez.dependencies import get_repo
-from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
+from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo, populate_profile_and_mediatype
 from prez.reference_data.prez_ns import PREZ
 from prez.renderers.renderer import return_from_graph
 from prez.services.link_generation import _add_prez_links
@@ -37,8 +37,9 @@ async def search(
     graph.add((PREZ.SearchResult, PREZ["count"], Literal(count)))
 
     prof_and_mt_info = ProfilesMediatypesInfo(
-        request=request, classes=frozenset([PREZ.SearchResult])
+        request=request, classes=frozenset([PREZ.SearchResult]), system_repo=system_repo
     )
+    await populate_profile_and_mediatype(prof_and_mt_info, system_repo)
 
     req_mt = prof_and_mt_info.req_mediatypes
     if req_mt:

@@ -59,27 +59,6 @@ async def count_objects(repo):
 
 
 async def populate_api_info():
-    for prez in settings.prez_flavours:
-        bnode = BNode()
-        prez_system_graph.add(
-            (URIRef(settings.system_uri), PREZ.enabledPrezFlavour, bnode)
-        )
-        prez_system_graph.add((bnode, RDF.type, PREZ[prez]))
-        # add links to prez subsystems
-        prez_system_graph.add((bnode, PREZ.link, Literal(f"/{prez[0].lower()}")))
-
-        # add links to search methods
-        sys_prof = profiles_graph_cache.value(None, ALTREXT.constrainsClass, PREZ[prez])
-        if sys_prof:
-            search_methods = [
-                sm
-                for sm in profiles_graph_cache.objects(
-                    sys_prof, PREZ.supportedSearchMethod
-                )
-            ]
-            for method in search_methods:
-                prez_system_graph.add((bnode, PREZ.availableSearchMethod, method))
-
     prez_system_graph.add(
         (URIRef(settings.system_uri), PREZ.version, Literal(settings.prez_version))
     )
