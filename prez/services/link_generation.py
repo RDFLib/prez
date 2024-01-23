@@ -52,7 +52,16 @@ async def _add_prez_links(graph: Graph, repo: Repo, system_repo: Repo):
         uri_to_klasses[uri] = await get_classes(uri, repo)
 
     for uri, klasses in uri_to_klasses.items():
-        await _create_internal_links_graph(uri, graph, repo, klasses, system_repo)
+        await _new_link_generation(uri, repo, klasses, system_repo)
+        # await _create_internal_links_graph(uri, graph, repo, klasses, system_repo)
+
+async def _new_link_generation(uri, repo: Repo, klasses, system_repo):
+    # get the endpoints that can deliver the class
+    query = f"""SELECT ?ep WHERE 
+            {{ ?ep a <{ONT.ObjectEndpoint}> }}"""
+    # if there's a link generation query for the endpoint, run it
+
+    _, tabular_results = await repo.send_queries([], [(None, query)])
 
 
 async def _create_internal_links_graph(uri, graph, repo: Repo, klasses, system_repo):

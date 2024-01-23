@@ -20,8 +20,7 @@ endpoint:top-level-catalog-listing a ont:ListingEndpoint ;
             <http://purl.org/dc/terms/hasPart> ?child .
             ?child a ?child_class .
         VALUES ?child_class { <http://www.w3.org/ns/dcat#Catalog> <http://www.w3.org/2004/02/skos/core#ConceptScheme>
-        <http://www.w3.org/2004/02/skos/core#Collection> <http://www.opengis.net/ont/geosparql#Feature>
-        <http://www.opengis.net/ont/geosparql#FeatureCollection> }
+        <http://www.w3.org/2004/02/skos/core#Collection> <http://www.opengis.net/ont/geosparql#FeatureCollection> }
         }
     """ ] ;
     shext:limit 20 ;
@@ -30,7 +29,7 @@ endpoint:top-level-catalog-listing a ont:ListingEndpoint ;
 
 endpoint:top-level-catalog-object a ont:ObjectEndpoint ;
     sh:targetNode "$object" ;
-    ont:deliversClasses dcat:Catalog ;  # required for link generation for objects
+    sh:targetClass dcat:Catalog ;  # endpoint CAN render objects of this class.
     ont:endpointTemplate "/catalogs/$object" ;
     ont:parentEndpoint endpoint:top-level-catalog-listing ;
 .
@@ -55,8 +54,9 @@ endpoint:lower-level-catalog-object a ont:ObjectEndpoint ;
     sh:targetNode "$object" ;
     ont:deliversClasses dcat:Catalog ;  # required for link generation for objects
     ont:endpointTemplate "/catalogs/$parent_1/collections/$object" ;
-    ont:parentToFocusRelation dcterms:hasPart ;
-    ont:parentEndpoint endpoint:lower-level-catalog-listing ;
+    ont:endpointRelation [
+        sh:path dcterms:hasPart
+                         ];
 .
 
 endpoint:resource-listing a ont:ListingEndpoint ;
