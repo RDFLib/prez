@@ -155,6 +155,12 @@ class SHACLParser:
             self.endpoint_graph.objects(subject=self.endpoint_uri, predicate=SH.rule)
         )
 
+        target_subjects_of = list(
+            self.endpoint_graph.objects(
+                subject=self.endpoint_uri, predicate=SH.targetSubjectsOf
+            )
+        )
+
         # objects - just set the focus node.
         if target_nodes:
             target_node_var = str(target_nodes[0])
@@ -181,12 +187,13 @@ class SHACLParser:
             if target_classes:
                 self._add_target_class(target_classes[0])
 
+        if target_subjects_of:
+            pass # TODO
+
         # don't use the target class if there's a sh:target / sh:select #TODO confirm why this caused issues - duplicate
         #  pattern matches in the subquery?
         # elif target_classes:
-        elif (
-            endpoint_type == ONT.ListingEndpoint
-        ):  # ignore class for non listing at present
+        if target_classes:
             ggp = self.create_select_subquery_for_class_listing(target_classes)
             self._add_ggp_to_main_ggps(ggp)
 
@@ -226,21 +233,34 @@ class SHACLParser:
             self.construct_triples = [triple]
 
     def create_select_subquery_for_class_listing(
-        self, target_classes: Optional[List[URIRef]] = None
+        self,
+            target_classes: Optional[List[URIRef]] = None,
+            target_subjects_of: Optional[URIRef] = None
     ):
         ggp = GroupGraphPattern(content=GroupGraphPatternSub())
+        triples = []
 
         if target_classes:
             target_class_var = IRI(value=target_classes[0])
-            triples_block = TriplesBlock(
-                triples=[
-                    SimplifiedTriple(
-                        subject=self.focus_node,
-                        predicate=IRI(value=RDF.type),
-                        object=target_class_var,
-                    )
-                ]
+            triples.append(
+                SimplifiedTriple(
+                    subject=self.focus_node,
+                    predicate=IRI(value=RDF.type),
+                    object=target_class_var,
+                )
             )
+
+        if target_subjects_of:  # typically used in conjunction with a sh:class statement to specify the class of the validation node.
+            triples.append(
+                SimplifiedTriple(
+                    subject=self.focus_node,
+                    predicate=target_subjects_of,
+                    object=Var(value="ValidationNode")  # better name?
+                )
+            )
+
+        triples_block = TriplesBlock(triples=triples)
+
         if self.additional_ggps:  # for example from cql
             gpnt = GraphPatternNotTriples(
                 content=GroupOrUnionGraphPattern(
@@ -510,7 +530,7 @@ class SHACLParser:
                 subject=path_object
             )
             bnode_pred, bnode_obj = next(predicate_objects_gen, (None, None))
-            if bnode_obj == SH.union:
+            if bnode_obj == SH.union:  # TODO or sh:or ??
                 union_list_bnode = list(Collection(self.profile_graph, path_object))[1]
                 union_items = list(Collection(self.profile_graph, union_list_bnode))
 

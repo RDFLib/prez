@@ -5,6 +5,7 @@ from typing import FrozenSet
 
 from fastapi import Depends
 from rdflib import Graph, Literal, URIRef, DCTERMS, BNode
+from rdflib.namespace import SH
 
 from prez.cache import endpoints_graph_cache, links_ids_graph_cache
 from prez.dependencies import get_system_repo
@@ -57,8 +58,13 @@ async def _add_prez_links(graph: Graph, repo: Repo, system_repo: Repo):
 
 async def _new_link_generation(uri, repo: Repo, klasses, system_repo):
     # get the endpoints that can deliver the class
-    query = f"""SELECT ?ep WHERE 
-            {{ ?ep a <{ONT.ObjectEndpoint}> }}"""
+    # many node shapes to one endpoint; multiple node shapes can point to the endpoint
+    query = f"""SELECT ?nodeShape {{ ?nodeShape a {SH.NodeShape} ;
+                                        {SH.targetClass} ?klasses .
+                                    VALUES ?klasses {" ".join(["<" + klass.n3() + ">" for klass in klasses])} 
+                                        }}"""
+    {" ".join(["<" + klass.n3() + ">" for klass in klasses])}
+    system_repo.send_queries()
     # if there's a link generation query for the endpoint, run it
 
     _, tabular_results = await repo.send_queries([], [(None, query)])
