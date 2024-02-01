@@ -23,37 +23,38 @@ class SHACL(BaseModel):
 
 class NodeShape(SHACL):
     uri: URIRef
-    nodeTarget: Optional[URIRef]
-    classTarget: Optional[List[URIRef]]
-    subjectsOfTarget: Optional[URIRef]
-    objectsOfTarget: Optional[URIRef]
-    propertyShapes: Optional[List[URIRef]]
-    _triples: Optional[List[SimplifiedTriple]]
+    targetNode: Optional[URIRef] = None
+    targetClass: Optional[List[URIRef]] = None
+    targetSubjectsOf: Optional[URIRef] = None
+    targetObjectsOf: Optional[URIRef] = None
+    propertyShapes: Optional[List[URIRef]] = None
+    _triples: Optional[List[SimplifiedTriple]] = None
 
-    def from_shacl_graph(self, graph):  # TODO this can be a SPARQL select against the system graph.
-        self.nodeTarget = next(graph.objects(self.uri, SH.targetNode), None)
-        self.classTarget = list(graph.objects(self.uri, SH.targetClass))
-        self.subjectsOfTarget = next(graph.objects(self.uri, SH.targetSubjectsOf), None)
-        self.objectsOfTarget = next(graph.objects(self.uri, SH.targetObjectsOf), None)
+    def from_graph(self, graph):  # TODO this can be a SPARQL select against the system graph.
+        self.targetNode = next(graph.objects(self.uri, SH.targetNode), None)
+        self.targetClass = list(graph.objects(self.uri, SH.targetClass))
+        self.targetSubjectsOf = next(graph.objects(self.uri, SH.targetSubjectsOf), None)
+        self.targetObjectsOf = next(graph.objects(self.uri, SH.targetObjectsOf), None)
         self.propertyShapes = list(graph.objects(self.uri, SH.property))
 
     def to_listing_select(self) -> TriplesBlock:
         focus_node = Var(value="focus_node")
-        if self.nodeTarget:
+        if self.targetNode:
             pass  # do not need to add any specific triples or the like
-        if self.classTarget:
+        if self.targetClass:
             self._process_class_target(focus_node)
-        if self.subjectsOfTarget:
+        if self.targetSubjectsOf:
             pass
-        if self.objectsOfTarget:
+        if self.targetObjectsOf:
             pass
         if self.propertyShapes:
             self._process_property_shapes()
 
     def to_link_select(self, focus_node) -> SelectClause:
+        pass
 
     def _process_class_target(self, focus_node):
-        for klass in self.classTarget:
+        for klass in self.targetClass:
             self._triples.append(
                 SimplifiedTriple(
                     subject=focus_node,
@@ -67,7 +68,7 @@ class NodeShape(SHACL):
         self._triples.append(
             SimplifiedTriple(
                 subject=self.focus_node,
-                predicate=IRI(value=self.subjectsOfTarget),
+                predicate=IRI(value=self.targetSubjectsOf),
                 object=Var(value="ValidationNode"),
             )
         )
@@ -76,7 +77,7 @@ class NodeShape(SHACL):
         self._triples.append(
             SimplifiedTriple(
                 subject=Var(value="ValidationNode"),
-                predicate=IRI(value=self.objectsOfTarget),
+                predicate=IRI(value=self.targetObjectsOf),
                 object=self.focus_node,
             )
         )
@@ -88,51 +89,56 @@ class NodeShape(SHACL):
 
 
 class PropertyShape(SHACL):
-    uri: URIRef  # URI of the shape
-    graph: Graph  # the graph containing the property shape
+    uri: URIRef | BNode  # URI of the shape
+    focus_node: Union[Var, IRI] = Var(value="focus_node")
     # inputs
-    property_paths: Optional[List[Union[URIRef, BNode]]]
-    or_klasses: List[URIRef]
+    property_paths: Optional[List[Union[URIRef, BNode]]] = None
+    or_klasses: Optional[List[URIRef]] = None
     # outputs
-    _st_list = Optional[List[SimplifiedTriple]]
-    _gpnt_list = Optional[List[GraphPatternNotTriples]]
-    _select_vars: Optional[List[Var]]
+    _st_list: Optional[List[SimplifiedTriple]] = None
+    _gpnt_list: Optional[List[GraphPatternNotTriples]] = None
+    _select_vars: Optional[List[Var]] = None
 
     def from_graph(self, graph):
         _single_class = next(graph.objects(self.uri, SH["class"]), None)
         if _single_class:
-            klasses = list(_single_class)
+            self.or_klasses = [_single_class]
         else:
-            # _multiple_classes = list(graph.objects(self.uri, SH["class"]), None)
-            klasses = _single_class # if _single_class else _multiple_classes
             pass
+            # _multiple_classes = list(graph.objects(self.uri, SH["class"]), None)
         # TODO logic for or statement
         self.property_paths = list(graph.objects(self.uri, SH.path))
 
-    def to_grammar(self, focus_node: Union[Var, IRI]):
+        pp_asts = Or()
+        for pp in self.property_paths:
+            pp_asts.paths.append(self.process_property_path(pp, graph))
+
         # focus node = URI when generating links; Variable when listing objects
         # process class statements NB this is the class on validation nodes
         # get the length of any property path chains; this is what the target class applies to.
-        for pp in self.property_paths:
-            if isinstance(pp, BNode):
-                pred_objects_gen = self.profile_graph.predicate_objects(
-                    subject=pp
-                )
-                bn_pred, bn_obj = next(pred_objects_gen, (None, None))
-                if bn_obj == SH.union:
-                    pass
-                elif bn_pred == SH.inversePath:
-                    inverse_preds.append(IRI(value=bn_obj))
-                elif bn_pred == SH.alternativePath:
-                    predicates.extend(list(Collection(self.profile_graph, bn_obj)))
-                else:  # sequence paths
-                    predicates.append(tuple(Collection(self.profile_graph, path_obj)))
-            else:  # a plain path specification to restrict the predicate to a specific value
-                predicates.append(path_obj)
+
+    def _process_property_path(self, pp, graph):
+        if isinstance(pp, BNode):
+            pred_objects_gen = graph.predicate_objects(
+                subject=pp
+            )
+            bn_pred, bn_obj = next(pred_objects_gen, (None, None))
+            if bn_obj == SH.union:
+                pass
+            elif bn_pred == SH.inversePath:
+                inverse_preds.append(IRI(value=bn_obj))
+            elif bn_pred == SH.alternativePath:
+                predicates.extend(list(Collection(self.profile_graph, bn_obj)))
+            else:  # sequence paths
+                predicates.append(tuple(Collection(self.profile_graph, path_obj)))
         else:  # a plain path specification to restrict the predicate to a specific value
             predicates.append(path_obj)
+        return pp_ast
 
 
+
+
+    def to_grammar(self):
         if self.property_paths:
             for property_path in self.property_paths:
                 if isinstance(property_path, URIRef):
@@ -163,11 +169,11 @@ class PropertyShape(SHACL):
         if self.or_klasses:
             if len(self.or_klasses) == 1:
                 self._st_list.append(
-                        SimplifiedTriple(
-                            subject=Var(value="ValidationNode"),
-                            predicate=IRI(value=RDF.type),
-                            object=IRI(value=self.or_klasses[0])
-                        )
+                    SimplifiedTriple(
+                        subject=Var(value="ValidationNode"),
+                        predicate=IRI(value=RDF.type),
+                        object=IRI(value=self.or_klasses[0])
+                    )
                 )
             else:
                 self._st_list.append(
@@ -190,18 +196,39 @@ class PropertyShape(SHACL):
                 )
 
 
-
-
 class PropertyPath(SHACL):
     uri: URIRef
 
-class Path(SHACL):
+
+class Path(PropertyPath):
     focus_uri: Union[IRI, Var]
     path_uri: URIRef
 
     def to_grammar(self):
         return SimplifiedTriple(self.focus_uri, IRI(value=self.uri), Var(value="ValidationNode"))
 
+
+class SequencePath(SHACL):
+    uri: URIRef
+    paths: List[PropertyPath]
+
+    def from_graph(self, graph):
+        pass
+
+    def to_grammar(self):
+        pass
+
+
 class InversePath(SHACL):
     focus_uri: Union[IRI, Var]
-    inverse_uri: URIRef
+    inverse_path: URIRef
+    validation_node: Var
+
+
+class Or(SHACL):
+    paths: List[SHACL]
+    pass
+
+
+class And(SHACL):
+    pass

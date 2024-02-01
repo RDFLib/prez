@@ -1,0 +1,97 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix geo: <http://www.opengis.net/ont/geosparql#> .
+@prefix ex: <http://example.org/ns#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:TopLevelCatalogs
+    a sh:NodeShape ;
+    sh:targetClass dcat:Catalog ;
+    sh:targetSubjectsOf dcterms:hasPart ;
+    sh:property [
+        sh:path dcterms:hasPart ;
+        sh:or (
+            [ sh:class dcat:Catalog ]
+            [ sh:class geo:FeatureCollection ]
+            [ sh:class skos:ConceptScheme ]
+            [ sh:class skos:Collection ]
+        ) ;
+    ] .
+
+ex:FeatureCollectionListing
+    a sh:NodeShape ;
+    sh:targetClass geo:FeatureCollection ;
+    sh:property [
+        sh:path [ sh:inversePath dcterms:hasPart ] ;
+        sh:class dcat:Catalog ;
+    ] .
+
+ex:ConceptSchemeListing
+    a sh:NodeShape ;
+    sh:targetClass skos:ConceptScheme ;
+    sh:property [
+        sh:path [ sh:inversePath dcterms:hasPart ] ;
+        sh:class dcat:Catalog ;
+    ] .
+
+ex:CollectionListing
+    a sh:NodeShape ;
+    sh:targetClass skos:Collection ;
+    sh:property [
+        sh:path [ sh:inversePath dcterms:hasPart ] ;
+        sh:class dcat:Catalog ;
+    ] .
+
+ex:LowerLevelCatalogListing
+    a sh:NodeShape ;
+    sh:targetClass dcat:Catalog ;
+    sh:property [
+        sh:path [ sh:inversePath dcterms:hasPart ] ;
+        sh:class dcat:Catalog ;
+    ] .
+
+ex:FeatureListing
+    a sh:NodeShape ;
+    sh:targetClass geo:Feature ;
+    sh:property [
+        sh:path [ sh:inversePath dcterms:hasPart ] ;
+        sh:class geo:FeatureCollection ;
+    ] , [
+        sh:path ( [sh:inversePath rdfs:member ] [ sh:inversePath dcterms:hasPart ] );
+        sh:class dcat:Catalog ;
+    ] .
+
+ex:ConceptSchemeConceptListing
+    a sh:NodeShape ;
+    sh:targetClass skos:Concept ;
+    sh:property [
+        sh:path skos:inScheme ;
+        sh:class skos:ConceptScheme ;
+    ] , [
+        sh:path ( skos:inScheme [ sh:inversePath dcterms:hasPart ] );
+        sh:class dcat:Catalog ;
+    ] .
+
+ex:CollectionConceptListing
+    a sh:NodeShape ;
+    sh:targetClass skos:Concept ;
+    sh:property [
+        sh:path skos:inScheme ;
+        sh:class skos:Collection ;
+    ] , [
+        sh:path ( [ sh:inversePath skos:member ] [ sh:inversePath dcterms:hasPart ] );
+        sh:class dcat:Catalog ;
+    ] .
+
+ex:ResourceListing
+    a sh:NodeShape ;
+    sh:targetClass dcat:Resource ;
+    sh:property [
+        sh:path [ sh:inversePath dcterms:hasPart ] ;
+        sh:class dcat:Catalog ;
+    ] , [
+        sh:path ( [ sh:inversePath dcterms:hasPart ] [ sh:inversePath dcterms:hasPart ] );
+        sh:class dcat:Catalog ;
+    ] .
