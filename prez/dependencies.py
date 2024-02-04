@@ -4,7 +4,13 @@ import httpx
 from fastapi import Depends
 from pyoxigraph import Store
 
-from prez.cache import store, oxrdflib_store, system_store, profiles_graph_cache
+from prez.cache import (
+    store,
+    oxrdflib_store,
+    system_store,
+    profiles_graph_cache,
+    endpoints_graph_cache,
+)
 from prez.config import settings
 from prez.sparql.methods import PyoxigraphRepo, RemoteSparqlRepo, OxrdflibRepo
 
@@ -57,14 +63,17 @@ async def load_local_data_to_oxigraph(store: Store):
     """
     Loads all the data from the local data directory into the local SPARQL endpoint
     """
-    for file in (Path(__file__).parent.parent / "rdf").glob("*.ttl"):
+    for file in (Path(__file__).parent.parent / settings.local_rdf_dir).glob("*.ttl"):
         store.load(file.read_bytes(), "text/turtle")
 
 
-async def load_profile_data_to_oxigraph(store: Store):
+async def load_system_data_to_oxigraph(store: Store):
     """
     Loads all the data from the local data directory into the local SPARQL endpoint
     """
     # TODO refactor to use the local files directly
-    graph_bytes = profiles_graph_cache.serialize(format="nt", encoding="utf-8")
-    store.load(graph_bytes, "application/n-triples")
+    profiles_bytes = profiles_graph_cache.serialize(format="nt", encoding="utf-8")
+    store.load(profiles_bytes, "application/n-triples")
+
+    endpoints_bytes = endpoints_graph_cache.serialize(format="nt", encoding="utf-8")
+    store.load(endpoints_bytes, "application/n-triples")

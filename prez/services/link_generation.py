@@ -1,9 +1,11 @@
 from string import Template
 from typing import FrozenSet
 
-from rdflib import Graph, Literal, URIRef, DCTERMS
+from fastapi import Depends
+from rdflib import Graph, Literal, URIRef, DCTERMS, BNode
 
 from prez.cache import endpoints_graph_cache, links_ids_graph_cache
+from prez.dependencies import get_system_repo
 from prez.reference_data.prez_ns import PREZ
 from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.model_methods import get_classes
@@ -14,14 +16,18 @@ from prez.sparql.objects_listings import (
 )
 
 
-async def _add_prez_links(graph: Graph, repo):
+async def _add_prez_links(graph: Graph, repo: Repo, system_repo: Repo):
     # get all URIRefs - if Prez can find a class and endpoint for them, an internal link will be generated.
     uris = [uri for uri in graph.all_nodes() if isinstance(uri, URIRef)]
+    uri_to_klasses = {}
     for uri in uris:
-        await _create_internal_links_graph(uri, graph, repo)
+        uri_to_klasses[uri] = await get_classes(uri, repo)
+
+    for uri, klasses in uri_to_klasses.items():
+        await _create_internal_links_graph(uri, graph, repo, klasses, system_repo)
 
 
-async def _create_internal_links_graph(uri, graph, repo: Repo):
+async def _create_internal_links_graph(uri, graph, repo: Repo, klasses, system_repo):
     quads = list(
         links_ids_graph_cache.quads((None, None, None, uri))
     )  # context required as not all triples that relate to links or identifiers for a particular object have that object's URI as the subject
@@ -29,9 +35,10 @@ async def _create_internal_links_graph(uri, graph, repo: Repo):
         for quad in quads:
             graph.add(quad[:3])
     else:
-        klasses = await get_classes(uri, repo)
         for klass in klasses:
-            endpoint_to_relations = get_endpoint_info_for_classes(frozenset([klass]))
+            endpoint_to_relations = await get_endpoint_info_for_classes(
+                frozenset([klass]), system_repo
+            )
             relationship_query = generate_relationship_query(uri, endpoint_to_relations)
             if relationship_query:
                 _, tabular_results = await repo.send_queries(
@@ -44,7 +51,9 @@ async def _create_internal_links_graph(uri, graph, repo: Repo):
                         links_ids_graph_cache.add(quad)  # add the quad to the cache
 
 
-def get_endpoint_info_for_classes(classes: FrozenSet[URIRef]) -> dict:
+async def get_endpoint_info_for_classes(
+    classes: FrozenSet[URIRef], system_repo
+) -> dict:
     """
     Queries Prez's in memory reference data for endpoints to determine which endpoints are relevant for the classes an
     object has, along with information about "parent" objects included in the URL path for the object. This information
@@ -52,13 +61,17 @@ def get_endpoint_info_for_classes(classes: FrozenSet[URIRef]) -> dict:
     and the predicate used for the relationship.
     """
     endpoint_query = get_endpoint_template_queries(classes)
-    results = endpoints_graph_cache.query(endpoint_query)
+    results = await system_repo.send_queries([], [(None, endpoint_query)])
     endpoint_to_relations = {}
-    if results.bindings != [{}]:
-        for result in results.bindings:
-            endpoint_template = result["endpoint_template"]
+    if results[1][0][1] != [{}]:
+        for result in results[1][0][1]:
+            endpoint_template = result["endpoint_template"]["value"]
             relation = result.get("relation_predicate")
+            if relation:
+                relation = URIRef(relation["value"])
             direction = result.get("relation_direction")
+            if direction:
+                direction = URIRef(direction["value"])
             if endpoint_template not in endpoint_to_relations:
                 endpoint_to_relations[endpoint_template] = [(relation, direction)]
             else:
