@@ -93,7 +93,6 @@ prez:VocPrezProfile
     ] ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
-        sh:path skos:prefLabel ;
         sh:targetClass skos:Collection ;
         altr-ext:focusToChild skos:member ;
     ] ;
@@ -111,7 +110,6 @@ prez:VocPrezProfile
     ] ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
-        sh:path skos:prefLabel ;
         sh:targetClass skos:Concept ;
         altr-ext:focusToParent skos:inScheme ;
     ] ;
