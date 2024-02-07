@@ -1,53 +1,10 @@
-from typing import Optional, List, Union, Tuple
+from typing import Optional, List
 
 from pydantic import BaseModel
 from rdflib import RDF, URIRef
 
 from prez.reference_data.prez_ns import PREZ
-from temp.grammar import (
-    Var,
-    LANGTAG,
-    BooleanLiteral,
-    PrimaryExpression,
-    GroupGraphPattern,
-    GroupGraphPatternSub,
-    SimplifiedTriple,
-    Bind,
-    Expression,
-    GraphPatternNotTriples,
-    NumericLiteral,
-    BuiltInCall,
-    Filter,
-    RDFLiteral,
-    RegexExpression,
-    Constraint,
-    GroupOrUnionGraphPattern,
-    OptionalGraphPattern,
-    FunctionCall,
-    ArgList,
-    BrackettedExpression,
-    InlineData,
-    InlineDataOneVar,
-    DataBlock,
-    IRI,
-    SelectClause,
-    Aggregate,
-    SubSelect,
-    GroupClause,
-    GroupCondition,
-    SolutionModifier,
-    WhereClause,
-    OrderClause,
-    OrderCondition,
-    SubSelectString,
-    ConstructTemplate,
-    ConstructTriples,
-    ConstructQuery,
-    LimitClause,
-    LimitOffsetClauses,
-    OffsetClause,
-    DataBlockValue,
-)
+from temp.grammar import *
 
 
 class SearchQuery(BaseModel):
@@ -291,11 +248,11 @@ class SearchQuery(BaseModel):
         return gougp
 
     def create_inner_ggp(
-        self,
-        weight_val: int,
-        function: str,
-        prefix: str,
-        case_insensitive: Optional[bool],
+            self,
+            weight_val: int,
+            function: str,
+            prefix: str,
+            case_insensitive: Optional[bool],
     ) -> GroupGraphPattern:
         ggp = GroupGraphPattern(content=GroupGraphPatternSub())
 
@@ -364,7 +321,6 @@ class SearchQuery(BaseModel):
         filter_gpnt = GraphPatternNotTriples(content=filter_expr)
         ggp.content.add_pattern(filter_gpnt)
         return ggp
-
 
 # if __name__ == "__main__":
 #     # additional_ss = SubSelectString(select_string="SELECT * {?focus_node a owl:Class}")

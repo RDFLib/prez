@@ -10,25 +10,17 @@ from prez.services.listings import listing_function
 from prez.services.objects import object_function
 from prez.sparql.methods import Repo
 from prez.reference_data.prez_ns import PREZ
+from temp.grammar import IRI
 
 router = APIRouter(tags=["ogccatprez"])
 
 OGCE = Namespace(PREZ["endpoint/extended-ogc-records/"])
 
-ogc_endpoints = {
-    "top-level-catalog-listing": OGCE["top-level-catalog-listing"],
-    "top-level-catalog-object": OGCE["top-level-catalog-object"],
-    "lower-level-catalog-listing": OGCE["lower-level-catalog-listing"],
-    "lower-level-catalog-object": OGCE["lower-level-catalog-object"],
-    "resource-listing": OGCE["resource-listing"],
-    "resource-object": OGCE["resource-object"],
-}
-
 
 @router.get(
     "/catalogs",
-    summary="List Top Level Catalogs",
-    name=ogc_endpoints["top-level-catalog-listing"],
+    summary="Catalog Listing",
+    name=OGCE["catalog-listing"],
 )
 async def catalog_list(
     request: Request,
@@ -45,18 +37,19 @@ async def catalog_list(
         repo,
         system_repo,
         endpoint_uri,
-        page,
-        per_page,
+        hierarchy_level=1,
+        page=page,
+        per_page=per_page,
         search_term=search_term,
     )
 
 
 @router.get(
     "/catalogs/{catalogId}/collections",
-    summary="List Lower Level Catalogs",
-    name=ogc_endpoints["lower-level-catalog-listing"],
+    summary="Collection Listing",
+    name=OGCE["collection-listing"],
 )
-async def vocab_list(
+async def collection_listing(
     request: Request,
     page: Optional[int] = 1,
     per_page: Optional[int] = 20,
@@ -66,26 +59,28 @@ async def vocab_list(
 ):
     search_term = request.query_params.get("q")
 
-    parent_uri = get_uri_for_curie_id(request.path_params["catalogId"])
+    path_node_1_uri = get_uri_for_curie_id(request.path_params["catalogId"])
     endpoint_uri = URIRef(request.scope.get("route").name)
     return await listing_function(
         request,
         repo,
         system_repo,
         endpoint_uri,
-        page,
-        per_page,
-        parent_uri,
+        hierarchy_level=2,
+        path_nodes={"path_node_1": IRI(value=path_node_1_uri)},
+        page=page,
+        per_page=per_page,
+        parent_uri=path_node_1_uri,
         search_term=search_term,
     )
 
 
 @router.get(
     "/catalogs/{catalogId}/collections/{collectionId}/items",
-    summary="List Resources",
-    name=ogc_endpoints["resource-listing"],
+    summary="Item Listing",
+    name=OGCE["item-listing"],
 )
-async def concept_list(
+async def item_listing(
     request: Request,
     page: Optional[int] = 1,
     per_page: Optional[int] = 20,
@@ -94,24 +89,27 @@ async def concept_list(
     system_repo: Repo = Depends(get_system_repo),
 ):
     search_term = request.query_params.get("q")
-    parent_uri = get_uri_for_curie_id(request.path_params["collectionId"])
+    path_node_1_uri = get_uri_for_curie_id(request.path_params["collectionId"])
+    path_node_2_uri = get_uri_for_curie_id(request.path_params["catalogId"])
     endpoint_uri = URIRef(request.scope.get("route").name)
     return await listing_function(
         request,
         repo,
         system_repo,
         endpoint_uri,
-        page,
-        per_page,
-        parent_uri,
+        hierarchy_level=3,
+        path_nodes={"path_node_1": IRI(value=path_node_1_uri), "path_node_2": IRI(value=path_node_2_uri)},
+        page=page,
+        per_page=per_page,
+        parent_uri=path_node_1_uri,
         search_term=search_term,
     )
 
 
 @router.get(
     "/catalogs/{catalogId}",
-    summary="Top Level Catalog Object",
-    name=ogc_endpoints["top-level-catalog-object"],
+    summary="Catalog Object",
+    name=OGCE["catalog-object"],
 )
 async def catalog_object(
     request: Request,
@@ -128,10 +126,10 @@ async def catalog_object(
 
 @router.get(
     "/catalogs/{catalogId}/collections/{collectionId}",
-    summary="Lower Level Catalog Object",
-    name=ogc_endpoints["lower-level-catalog-object"],
+    summary="Collection Object",
+    name=OGCE["collection-object"],
 )
-async def catalog_object(
+async def collection_object(
     request: Request,
     repo: Repo = Depends(get_repo),
     system_repo: Repo = Depends(get_system_repo),
@@ -146,10 +144,10 @@ async def catalog_object(
 
 @router.get(
     "/catalogs/{catalogId}/collections/{collectionId}/items/{itemId}",
-    summary="Resource Object",
-    name=ogc_endpoints["resource-object"],
+    summary="Item Object",
+    name=OGCE["item-object"],
 )
-async def catalog_object(
+async def item_object(
     request: Request,
     repo: Repo = Depends(get_repo),
     system_repo: Repo = Depends(get_system_repo),

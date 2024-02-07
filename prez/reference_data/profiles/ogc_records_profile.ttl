@@ -48,7 +48,9 @@ prez:OGCListingProfile
         "text/anot+turtle" ,
         "text/turtle" ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
-    altr-ext:constrainsClass dcat:Catalog , skos:Collection , geo:Feature , geo:FeatureCollection , skos:Concept ;
+    altr-ext:constrainsClass dcat:Catalog , skos:Collection , geo:Feature , geo:FeatureCollection , skos:Concept ,
+                             dcat:Resource ;
+    sh:property [ sh:path rdf:type ]
     .
 
 prez:OGCSchemesListProfile

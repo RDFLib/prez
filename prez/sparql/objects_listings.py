@@ -8,7 +8,7 @@ from rdflib import Graph, URIRef, Namespace, Literal
 from prez.cache import tbox_cache, profiles_graph_cache
 from prez.config import settings
 from prez.services.curie_functions import get_uri_for_curie_id
-from temp.grammar import SubSelect
+from temp.grammar.grammar import SubSelect
 
 log = logging.getLogger(__name__)
 
@@ -388,9 +388,9 @@ def select_profile_mediatype(
       VALUES ?class {{{" ".join('<' + str(klass) + '>' for klass in classes)}}}
       ?class rdfs:subClassOf* ?mid .
       ?mid rdfs:subClassOf* ?base_class .
-      VALUES ?base_class {{ dcat:Dataset geo:FeatureCollection prez:FeatureCollectionList prez:FeatureList geo:Feature
-      skos:ConceptScheme skos:Concept prez:ConceptList skos:Collection prez:DatasetList prez:VocPrezCollectionList prez:SchemesList
-      prez:CatalogList prez:ResourceList prez:ProfilesList dcat:Catalog dcat:Resource prof:Profile prez:SPARQLQuery 
+      VALUES ?base_class {{ dcat:Dataset geo:FeatureCollection geo:Feature
+      skos:ConceptScheme skos:Concept skos:Collection 
+      prez:ProfilesList dcat:Catalog dcat:Resource prof:Profile prez:SPARQLQuery 
       prez:SearchResult prez:CQLObjectList prez:QueryablesList prez:Object }}
       ?profile altr-ext:constrainsClass ?class ;
                altr-ext:hasResourceFormat ?format ;

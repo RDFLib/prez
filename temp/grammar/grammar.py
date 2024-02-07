@@ -121,7 +121,7 @@ class BlankNode(SPARQLGrammarBase):
     BlankNode	  ::=  	BLANK_NODE_LABEL | ANON
     """
 
-    value: Union["BlankNodeLabel", "Anon"]
+    value: Union[BlankNodeLabel, Anon]
 
     def render(self):
         yield from self.value.render()
@@ -536,14 +536,17 @@ class GroupGraphPatternSub(SPARQLGrammarBase):
             for item in self.graph_patterns_or_triples_blocks:
                 yield from item.render()
 
-    def add_pattern(self, pattern):
+    def add_pattern(self, pattern, prepend=False):
         if not isinstance(pattern, (TriplesBlock, GraphPatternNotTriples)):
             raise TypeError(
                 "Pattern must be an instance of TriplesBlock or GraphPatternNotTriples."
             )
         if self.graph_patterns_or_triples_blocks is None:
             self.graph_patterns_or_triples_blocks = []
-        self.graph_patterns_or_triples_blocks.append(pattern)
+        if prepend:
+            self.graph_patterns_or_triples_blocks.insert(0, pattern)
+        else:
+            self.graph_patterns_or_triples_blocks.append(pattern)
 
     def add_triple(self, triple):
         if not isinstance(triple, SimplifiedTriple):

@@ -14,21 +14,6 @@ router = APIRouter(tags=["Profiles"])
     summary="List Profiles",
     name="https://prez.dev/endpoint/system/profiles-listing",
 )
-@router.get(
-    "/s/profiles",
-    summary="SpacePrez Profiles",
-    name="https://prez.dev/endpoint/system/spaceprez-profiles-listing",
-)
-@router.get(
-    "/v/profiles",
-    summary="VocPrez Profiles",
-    name="https://prez.dev/endpoint/system/vocprez-profiles-listing",
-)
-@router.get(
-    "/c/profiles",
-    summary="CatPrez Profiles",
-    name="https://prez.dev/endpoint/system/catprez-profiles-listing",
-)
 async def profiles(
     request: Request,
     page: int = 1,
@@ -41,6 +26,7 @@ async def profiles(
         repo=repo,
         system_repo=repo,
         endpoint_uri=endpoint_uri,
+        hierarchy_level=1,
         page=page,
         per_page=per_page,
     )

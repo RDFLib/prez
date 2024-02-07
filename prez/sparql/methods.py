@@ -29,7 +29,7 @@ class Repo(ABC):
 
     async def send_queries(
         self, rdf_queries: List[str], tabular_queries: List[Tuple[URIRef, str]] = None
-    ):
+    ) -> Tuple[Graph, List]:
         # Common logic to send both query types in parallel
         results = await asyncio.gather(
             *[self.rdf_query_to_graph(query) for query in rdf_queries if query],

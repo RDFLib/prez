@@ -1,61 +1,32 @@
+import re
 from string import Template
 from typing import Union, Optional, List
-import re
 
-from rdflib import URIRef, Variable, Namespace, Graph, SH, RDF, BNode, Literal
+from rdflib import URIRef, Namespace, Graph, SH, RDF, BNode, Literal
 from rdflib.collection import Collection
 
-from temp.grammar import (
-    TriplesBlock,
-    OptionalGraphPattern,
-    SolutionModifier,
-    GroupGraphPattern,
-    SimplifiedTriple,
-    SubSelect,
-    SubSelectString,
-    GroupOrUnionGraphPattern,
-    GroupGraphPatternSub,
-    GraphPatternNotTriples,
-    SelectClause,
-    WhereClause,
-    LimitClause,
-    OffsetClause,
-    LimitOffsetClauses,
-    InlineDataOneVar,
-    DataBlock,
-    InlineData,
-    ConstructTemplate,
-    ConstructTriples,
-    ConstructQuery,
-    Filter,
-    OrderCondition,
-    OrderClause,
-    IRI,
-    Var,
-    Constraint,
-    BuiltInCall,
-    PrimaryExpression,
-    BrackettedExpression,
-    Expression,
-    RDFLiteral,
-    IRIOrFunction,
-    DataBlockValue,
-)
+from temp.grammar import *
 
 ONT = Namespace("https://prez.dev/ont/")
 ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
 SHEXT = Namespace("http://example.com/shacl-extension#")
 
 
-class SHACLParser:
+class PrezQueryConstructor:
     def __init__(
-        self,
-        runtime_values: dict,
-        endpoint_graph: Graph,
-        profile_graph: Graph,
-        endpoint_uri: Optional[URIRef] = None,
-        profile_uri: Optional[URIRef] = None,
-        additional_ggps: Optional[GroupGraphPatternSub] = None,
+            self,
+            runtime_values: dict,
+            endpoint_graph: Graph,
+            profile_graph: Graph,
+            listing_or_object: str,
+            focus_node: Union[IRI, Var] = Var(value="focus_node"),
+            endpoint_uri: Optional[URIRef] = None,
+            profile_uri: Optional[URIRef] = None,
+            additional_ggps: Optional[GroupGraphPatternSub] = None,
+            node_selection_triples: Optional[List[SimplifiedTriple]] = None,
+            node_selection_gpnt: Optional[GraphPatternNotTriples] = None,
+            target_class: URIRef = None,
+
     ):
         self.runtime_values = runtime_values
         self.endpoint_graph: Graph = endpoint_graph
@@ -64,16 +35,14 @@ class SHACLParser:
         self.profile_uri: Optional[URIRef] = profile_uri
         self.additional_ggps: Optional[GroupGraphPatternSub] = additional_ggps
 
-        self.focus_node: Union[IRI, Var] = Var(value="focus_node")
+        self.focus_node: Union[IRI, Var] = focus_node
 
         self.sparql = None
         self.results = None
 
         self.construct_triples = None
         self.main_where_ggps = GroupGraphPatternSub()
-        self.sub_select_ggps = None
-        self.optional_patterns = None
-        self.where_patterns = None
+        self.inner_select: Union[SubSelect, SubSelectString] = None
 
         self.default_limit = None
         self.default_offset = None
@@ -84,6 +53,12 @@ class SHACLParser:
         self.merged_runtime_and_default_vals = None
         self._expand_runtime_vars()
         self._merge_runtime_and_default_vars()
+
+        self.node_selection_triples = node_selection_triples
+        self.node_selection_gpnt = node_selection_gpnt
+
+        self.listing_or_object = listing_or_object
+        self.target_class = target_class
 
     def _expand_runtime_vars(self):
         self.runtime_vals_expanded = {}
@@ -105,9 +80,10 @@ class SHACLParser:
 
     def generate_sparql(self):
         """
-        Generates SPARQL query from SHACL profile_graph.
+        Generates SPARQL query from Shape profile_graph.
         """
-        self.parse_endpoint_definition()
+        if self.listing_or_object == "listing":
+            self.build_inner_select()
         self.parse_profile()
         self._generate_query()
 
@@ -115,11 +91,19 @@ class SHACLParser:
         where = WhereClause(
             group_graph_pattern=GroupGraphPattern(content=self.main_where_ggps)
         )
+
         if self.construct_triples:
             self.construct_triples.extend(where.collect_triples())
         else:
             self.construct_triples = where.collect_triples()
         self.construct_triples = list(set(self.construct_triples))
+
+        if self.listing_or_object == "listing":
+            gpnt = GraphPatternNotTriples(
+                content=GroupOrUnionGraphPattern(
+                    group_graph_patterns=[GroupGraphPattern(content=self.inner_select)]))
+            self.main_where_ggps.add_pattern(gpnt, prepend=True)
+
         construct_template = ConstructTemplate(
             construct_triples=ConstructTriples(triples=self.construct_triples)
         )
@@ -132,70 +116,58 @@ class SHACLParser:
         query_str = "".join(part for part in query.render())
         self.sparql = query_str
 
-    def parse_endpoint_definition(self):
+    def build_inner_select(self):
         """
         Either set the focus_node to a URIRef, if a target node is provided, or generate a triple pattern to get list items
         Generates triples for the endpoint definition with runtime values substituted.
         """
-        # sparql targets
+        inner_select_ggps = GroupGraphPatternSub()
+
+        self._set_limit_and_offset()
+        self._merge_runtime_and_default_vars()
+
+        # sparql targets - for complex selection queries specified as strings
         target_bn = list(
             self.endpoint_graph.objects(subject=self.endpoint_uri, predicate=SH.target)
-        )
-        target_nodes = list(
-            self.endpoint_graph.objects(
-                subject=self.endpoint_uri, predicate=SH.targetNode
-            )
-        )
-        target_classes = list(
-            self.endpoint_graph.objects(
-                subject=self.endpoint_uri, predicate=SH.targetClass
-            )
         )
         rule_nodes = list(
             self.endpoint_graph.objects(subject=self.endpoint_uri, predicate=SH.rule)
         )
 
-        target_subjects_of = list(
-            self.endpoint_graph.objects(
-                subject=self.endpoint_uri, predicate=SH.targetSubjectsOf
-            )
-        )
-
-        # objects - just set the focus node.
-        if target_nodes:
-            target_node_var = str(target_nodes[0])
-            target_node_val = target_node_var[1:]
-            target_uri = IRI(value=self.runtime_values[target_node_val])
-            self.focus_node = target_uri
-
-        # rule nodes - for CONSTRUCT TRIPLES patterns.
-        if rule_nodes:
-            for rule_node in rule_nodes:
-                self._create_construct_triples_from_sh_rules(rule_node)
-
-        # if it's a listing endpoint, get limit and offset if available, otherwise use defaults.
-        endpoint_type = self.get_endpoint_type()
-        if endpoint_type == ONT.ListingEndpoint:
-            # default limit and offset
-            self._set_default_limit_and_offset()
-        self._merge_runtime_and_default_vars()
-
         # sh:target / sh:select
         if target_bn:
-            ggp = self.create_select_subquery_from_template(target_bn)
-            self._add_ggp_to_main_ggps(ggp)
-            if target_classes:
-                self._add_target_class(target_classes[0])
+            sss = self.create_select_subquery_from_template(target_bn)
+            self.inner_select = sss
 
-        if target_subjects_of:
-            pass # TODO
+            # rule nodes - for CONSTRUCT TRIPLES patterns.
+            if rule_nodes:
+                for rule_node in rule_nodes:
+                    self._create_construct_triples_from_sh_rules(rule_node)
 
-        # don't use the target class if there's a sh:target / sh:select #TODO confirm why this caused issues - duplicate
-        #  pattern matches in the subquery?
-        # elif target_classes:
-        if target_classes:
-            ggp = self.create_select_subquery_for_class_listing(target_classes)
-            self._add_ggp_to_main_ggps(ggp)
+        else:
+            sol_mod, order_by_triple = self._create_focus_node_solution_modifier()
+
+            self.inner_select = SubSelect(
+                select_clause=SelectClause(
+                    variables_or_all=[self.focus_node]),
+                where_clause=WhereClause(
+                    group_graph_pattern=GroupGraphPattern(
+                        content=inner_select_ggps)
+                ),
+                solution_modifier=sol_mod
+            )
+
+            if order_by_triple:
+                inner_select_ggps.add_triple(order_by_triple)
+
+            # otherwise just use what is provided by the endpoint shapes
+            if self.node_selection_triples:
+                tb = TriplesBlock(triples=self.node_selection_triples)
+                inner_select_ggps.add_pattern(tb)
+
+            if self.node_selection_gpnt:
+                for gpnt in self.node_selection_gpnt:
+                    inner_select_ggps.add_pattern(gpnt)
 
     def _add_ggp_to_main_ggps(self, ggp):
         gorugp = GroupOrUnionGraphPattern(group_graph_patterns=[ggp])
@@ -232,65 +204,13 @@ class SHACLParser:
         else:
             self.construct_triples = [triple]
 
-    def create_select_subquery_for_class_listing(
-        self,
-            target_classes: Optional[List[URIRef]] = None,
-            target_subjects_of: Optional[URIRef] = None
-    ):
-        ggp = GroupGraphPattern(content=GroupGraphPatternSub())
-        triples = []
-
-        if target_classes:
-            target_class_var = IRI(value=target_classes[0])
-            triples.append(
-                SimplifiedTriple(
-                    subject=self.focus_node,
-                    predicate=IRI(value=RDF.type),
-                    object=target_class_var,
-                )
-            )
-
-        if target_subjects_of:  # typically used in conjunction with a sh:class statement to specify the class of the validation node.
-            triples.append(
-                SimplifiedTriple(
-                    subject=self.focus_node,
-                    predicate=target_subjects_of,
-                    object=Var(value="ValidationNode")  # better name?
-                )
-            )
-
-        triples_block = TriplesBlock(triples=triples)
-
-        if self.additional_ggps:  # for example from cql
-            gpnt = GraphPatternNotTriples(
-                content=GroupOrUnionGraphPattern(
-                    group_graph_patterns=[
-                        GroupGraphPattern(content=self.additional_ggps)
-                    ]
-                )
-            )
-            ggp.content.add_pattern(gpnt)
-        else:
-            ggp.content.add_pattern(triples_block)
-        wc = WhereClause(group_graph_pattern=ggp)
-        sc = SelectClause(variables_or_all="*")
-        sol_mod, order_by_triple = self._create_focus_node_solution_modifier()
-        if order_by_triple:
-            ggp.content.add_triple(order_by_triple)
-        ss = SubSelect(
-            select_clause=sc,
-            where_clause=wc,
-            solution_modifier=sol_mod,
-        )
-        ggp = GroupGraphPattern(content=ss)
-        return ggp
 
     def create_select_subquery_from_template(self, target_bn):
         select_statement = Template(
             str(self.endpoint_graph.value(target_bn[0], SH.select, default=None))
         )
         # expand any prefixes etc. in case the prefixes are not defined in the query this subquery is being inserted
-        # into. NB SHACL does provide a mechanism to declare prefixes used in SPARQL targets - this has not been
+        # into. NB Shape does provide a mechanism to declare prefixes used in SPARQL targets - this has not been
         # implemented
         substituted_query = select_statement.substitute(
             self.merged_runtime_and_default_vals
@@ -299,7 +219,7 @@ class SHACLParser:
         if order_by_triple:  # insert it before the end of the string,
             order_by_triple_text = "".join(order_by_triple.render())
             substituted_query = (
-                substituted_query[:-1] + f"{{{order_by_triple_text}}} }}"
+                    substituted_query[:-1] + f"{{{order_by_triple_text}}} }}"
             )
         if self.additional_ggps:  # for example from cql
             additional_ggps_str = "".join(
@@ -309,8 +229,7 @@ class SHACLParser:
         sss = SubSelectString(
             select_string=substituted_query, solution_modifier=sol_mod
         )
-        ggp = GroupGraphPattern(content=sss)
-        return ggp
+        return sss
 
     def split_query(self, original_query, additional_ggps_str):
         # Regex to match the entire structure: 'SELECT ?xxx { ... }'
@@ -357,19 +276,19 @@ class SHACLParser:
         )
         return sol_mod, order_by_triple
 
-    def _set_default_limit_and_offset(self):
+    def _set_limit_and_offset(self):
         """
         Sets the default limit, offset, and ordering for a listing endpoint.
         """
-        default_limit = list(
+        default_limit = next(
             self.endpoint_graph.objects(
                 subject=self.endpoint_uri, predicate=SHEXT.limit
-            )
+            ), 20
         )
-        default_offset = list(
+        default_offset = next(
             self.endpoint_graph.objects(
                 subject=self.endpoint_uri, predicate=SHEXT.offset
-            )
+            ), 0
         )
         default_order_by = list(
             self.endpoint_graph.objects(
@@ -377,10 +296,8 @@ class SHACLParser:
             )
         )
 
-        if not default_limit or not default_offset:
-            raise ValueError(
-                "Listing endpoint must have both a default limit and a default offset"
-            )
+        self.default_limit = int(default_limit)
+        self.default_offset = int(default_offset)
 
         # Process each blank node in the default_order_by list
         for blank_node in default_order_by:
@@ -399,40 +316,12 @@ class SHACLParser:
             self.default_order_by = (path,)
             self.default_order_by_desc = is_descending
 
-        self.default_limit = int(default_limit[0])
-        self.default_offset = int(default_offset[0])
-
-    def get_endpoint_type(self):
-        endpoint_type = list(
-            self.endpoint_graph.objects(subject=self.endpoint_uri, predicate=RDF.type)
-        )
-        if not endpoint_type:
-            raise ValueError(
-                'Endpoint definition must have a type of either "https://prez.dev/ont/ListingEndpoint" '
-                'or "https://prez.dev/ont/ObjectEndpoint"'
-            )
-        endpoint_type = endpoint_type[0]
-        return endpoint_type
-
     def parse_profile(self):
         for i, property_node in enumerate(
-            self.profile_graph.objects(subject=self.profile_uri, predicate=SH.property)
+                self.profile_graph.objects(subject=self.profile_uri, predicate=SH.property)
         ):
             self._parse_property_shapes(property_node, i)
         self._build_bnode_blocks()
-
-    def _add_target_class(self, target_class):
-        triples = [
-            SimplifiedTriple(
-                subject=self.focus_node,
-                predicate=IRI(value=RDF.type),
-                object=IRI(value=target_class),
-            )
-        ]
-        if self.construct_triples:
-            self.construct_triples.extend(triples)
-        else:
-            self.construct_triples = triples
 
     def _build_bnode_blocks(self):
         bnode_depth = list(
@@ -549,7 +438,7 @@ class SHACLParser:
             self._add_inverse_preds(ggps, inverse_preds, i)
         if predicates:
             self._add_predicate_constraints(predicates, property_node, ggp_list)
-        self._add_object_constrains(ggp_list, property_node)
+        self._add_object_constraints(ggp_list, property_node)
         union = GroupOrUnionGraphPattern(group_graph_patterns=ggp_list)
         gpnt = GraphPatternNotTriples(content=union)
 
@@ -568,7 +457,7 @@ class SHACLParser:
         self.main_where_ggps.add_pattern(gpnt)
 
     def _add_inverse_preds(
-        self, ggps: GroupGraphPatternSub, inverse_preds: List[IRI], i
+            self, ggps: GroupGraphPatternSub, inverse_preds: List[IRI], i
     ):
         if inverse_preds:
             ggps.add_triple(
@@ -619,7 +508,7 @@ class SHACLParser:
         )
         tb = TriplesBlock(triples=[simplified_triple])
         if predicates:
-            if max == Literal(0):
+            if max == Literal(0):  # excluded predicates.
                 values = [
                     PrimaryExpression(content=IRIOrFunction(iri=p)) for p in predicates
                 ]
@@ -638,7 +527,7 @@ class SHACLParser:
                     ggp = GroupGraphPattern(content=ggps)
                     ggp_list.append(ggp)
             elif (
-                IRI(value=SHEXT.allPredicateValues) not in predicates
+                    IRI(value=SHEXT.allPredicateValues) not in predicates
             ):  # add VALUES clause
                 dbv_list = [DataBlockValue(value=p) for p in predicates]
                 inline_data_one_var = InlineDataOneVar(
@@ -655,7 +544,7 @@ class SHACLParser:
                 ggp = GroupGraphPattern(content=ggps)
                 ggp_list.append(ggp)
 
-    def _add_object_constrains(self, ggp_list, property_node):
+    def _add_object_constraints(self, ggp_list, property_node):
         value = self.profile_graph.value(
             subject=property_node, predicate=SH.hasValue, default=None
         )

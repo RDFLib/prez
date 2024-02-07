@@ -8,7 +8,7 @@ from prez.dependencies import get_repo
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo, populate_profile_and_mediatype
 from prez.reference_data.prez_ns import PREZ
 from prez.renderers.renderer import return_from_graph
-from prez.services.link_generation import _add_prez_links
+from prez.services.link_generation import add_prez_links
 from prez.sparql.methods import Repo
 from prez.sparql.search_query import SearchQuery
 
@@ -47,7 +47,7 @@ async def search(
             return PlainTextResponse(query, media_type="application/sparql-query")
 
     if "anot+" in prof_and_mt_info.mediatype:
-        await _add_prez_links(graph, repo, system_repo)
+        await add_prez_links(graph, repo)
 
     return await return_from_graph(
         graph,

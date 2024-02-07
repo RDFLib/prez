@@ -1,6 +1,6 @@
 from os import environ
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Tuple
 
 import toml
 from pydantic import root_validator
@@ -62,6 +62,7 @@ class Settings(BaseSettings):
     disable_prefix_generation: bool = False
     default_language: str = "en"
     local_rdf_dir: str = "rdf"
+    endpoint_structure: Optional[Tuple[str, ...]] = ("catalogs", "collections", "items")
 
     # @root_validator()
     # def check_endpoint_enabled(cls, values):

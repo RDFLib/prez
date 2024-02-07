@@ -1,0 +1,34 @@
+@prefix ex: <http://example.org/ns#> .
+@prefix ogce: <https://prez.dev/endpoint/extended-ogc-records/> .
+@prefix ont: <https://prez.dev/ont/> .
+@prefix prez: <https://prez.dev/> .
+
+ogce:catalog-listing
+    a ont:ListingEndpoint ;
+    ont:relevantShapes ex:TopLevelCatalogs ;
+.
+
+ogce:catalog-object
+    a ont:ObjectEndpoint ;
+    ont:relevantShapes ex:TopLevelCatalogs ;
+.
+
+ogce:collection-listing
+    a ont:ListingEndpoint ;
+    ont:relevantShapes ex:Collections ;
+.
+
+ogce:collection-object
+    a ont:ObjectEndpoint ;
+    ont:relevantShapes ex:Collections ;
+.
+
+ogce:item-listing
+    a ont:ListingEndpoint ;
+    ont:relevantShapes ex:Feature , ex:ConceptSchemeConcept , ex:CollectionConcept , ex:Resource ;
+.
+
+ogce:item-object
+    a ont:ObjectEndpoint ;
+    ont:relevantShapes ex:Feature , ex:ConceptSchemeConcept , ex:CollectionConcept , ex:Resource ;
+.

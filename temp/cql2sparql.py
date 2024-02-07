@@ -1,10 +1,10 @@
 from typing import Generator
 
 from pyld import jsonld
-from rdflib import URIRef, Namespace, Variable, Literal
+from rdflib import URIRef, Namespace
 from rdflib.namespace import GEO, SH
 
-from temp.grammar import (
+from temp.grammar.grammar import (
     GroupOrUnionGraphPattern,
     GroupGraphPatternSub,
     TriplesBlock,
