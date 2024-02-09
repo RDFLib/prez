@@ -7,6 +7,7 @@ from rdflib import URIRef, BNode, Graph
 from rdflib.collection import Collection
 from rdflib.namespace import SH, RDF
 
+from prez.reference_data.prez_ns import ONT
 from temp.grammar import *
 
 
@@ -39,6 +40,8 @@ class NodeShape(Shape):
     triples_list: Optional[List[SimplifiedTriple]] = None
     gpnt_list: Optional[List[GraphPatternNotTriples]] = None
     path_nodes: Optional[Dict[str, Var | IRI]] = {}
+    classes_at_len: Optional[Dict[str, List[URIRef]]] = {}
+    hierarchy_level: Optional[int] = None
 
     def from_graph(self):  # TODO this can be a SPARQL select against the system graph.
         self.targetNode = next(self.graph.objects(self.uri, SH.targetNode), None)
@@ -50,6 +53,9 @@ class NodeShape(Shape):
             focus_node=self.focus_node,
             path_nodes=self.path_nodes
         ) for ps_uri in self.propertyShapesURIs]
+        self.hierarchy_level = next(self.graph.objects(self.uri, ONT.hierarchyLevel), None)
+        if not self.hierarchy_level:
+            print('')
 
     def to_grammar(self):
         if self.targetNode:
@@ -60,41 +66,43 @@ class NodeShape(Shape):
             self._process_property_shapes()
 
     def _process_class_targets(self):
-        if len(self.targetClasses) > 1:
-            if len(self.targetClasses) == 1:
-                self.triples_list.append(
-                    SimplifiedTriple(
-                        subject=self.focus_node,
-                        predicate=IRI(value=RDF.type),
-                        object=IRI(value=self.targetClasses[0])
-                    )
+        if len(self.targetClasses) == 1:
+            self.triples_list.append(
+                SimplifiedTriple(
+                    subject=self.focus_node,
+                    predicate=IRI(value=RDF.type),
+                    object=IRI(value=self.targetClasses[0])
                 )
-            else:
-                self.triples_list.append(
-                    SimplifiedTriple(
-                        subject=self.focus_node,
-                        predicate=IRI(value=RDF.type),
-                        object=Var(value=f"focus_classes")
-                    ))
-                dbvs = [DataBlockValue(value=IRI(value=klass)) for klass in self.targetClasses]
-                self.gpnt_list.append(
-                    GraphPatternNotTriples(
-                        content=InlineData(
-                            data_block=DataBlock(
-                                block=InlineDataOneVar(
-                                    variable=Var(value=f"focus_classes"),
-                                    datablockvalues=dbvs
-                                )
+            )
+        elif len(self.targetClasses) > 1:
+            self.triples_list.append(
+                SimplifiedTriple(
+                    subject=self.focus_node,
+                    predicate=IRI(value=RDF.type),
+                    object=Var(value=f"focus_classes")
+                ))
+            dbvs = [DataBlockValue(value=IRI(value=klass)) for klass in self.targetClasses]
+            self.gpnt_list.append(
+                GraphPatternNotTriples(
+                    content=InlineData(
+                        data_block=DataBlock(
+                            block=InlineDataOneVar(
+                                variable=Var(value=f"focus_classes"),
+                                datablockvalues=dbvs
                             )
                         )
                     )
                 )
+            )
+        else:
+            raise ValueError("No target classes found")
 
     def _process_property_shapes(self):
         for shape in self.propertyShapes:
             self.triples_list.extend(shape.triples_list)
             self.gpnt_list.extend(shape.gpnt_list)
             self.path_nodes = self.path_nodes | shape.path_nodes
+            self.classes_at_len = self.classes_at_len | shape.classes_at_len
         # deduplicate
         self.triples_list = list(set(self.triples_list))
 
@@ -111,6 +119,7 @@ class PropertyShape(Shape):
     triples_list: Optional[List[SimplifiedTriple]] = None
     gpnt_list: Optional[List[GraphPatternNotTriples]] = None
     path_nodes: Optional[Dict[str, Var | IRI]] = {}
+    classes_at_len: Optional[Dict[str, List[URIRef]]] = {}
     _select_vars: Optional[List[Var]] = None
 
     def from_graph(self):
@@ -161,6 +170,9 @@ class PropertyShape(Shape):
         len_pp = len(self.property_paths)
         # sh:class applies to the end of sequence paths
         path_node_term = self.path_nodes[f"path_node_{len_pp}"]
+
+        # useful for determining which endpoint property shape should be used when a request comes in on endpoint
+        self.classes_at_len[f"path_node_{len_pp}"] = self.or_klasses
 
         if self.or_klasses:
             if len(self.or_klasses) == 1:

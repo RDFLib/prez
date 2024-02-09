@@ -54,13 +54,11 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     dcterms:description "A very basic data model that lists the members of container objects only, i.e. not their other properties" ;
     dcterms:identifier "mem"^^xsd:token ;
     dcterms:title "Members" ;
-    altr-ext:constrainsClass prez:DatasetList ,
-                             prez:FeatureCollectionList ,
-                             prez:FeatureList ,
-                             prez:ProfilesList ,
-                             prez:SchemesList ,
-                             prez:VocPrezCollectionList ,
-                             prez:CatalogList ,
+    altr-ext:constrainsClass geo:FeatureCollection ,
+                             dcat:Dataset ,
+                             dcat:Catalog ,
+                             skos:ConceptScheme ,
+                             skos:Collection ,
                              prez:CQLObjectList ,
                              prez:QueryablesList ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
@@ -86,22 +84,13 @@ altr-ext:alt-profile
         "text/turtle" ;
     altr-ext:constrainsClass
         geo:Feature ,
-        prez:FeatureList ,
         geo:FeatureCollection ,
-        prez:FeatureCollectionList ,
         dcat:Dataset ,
-        prez:DatasetList ,
         dcat:Catalog ,
-        prez:CatalogList ,
         dcat:Resource ,
-        prez:ResourceList ,
         skos:ConceptScheme ,
-        prez:SchemesList ,
         skos:Concept ,
-        prez:ConceptList ,
-        skos:Collection ,
-        prez:VocPrezCollectionList ,
-        prez:AltProfilesList ;
+        skos:Collection ;
     sh:property [
         sh:path (
                     sh:union (

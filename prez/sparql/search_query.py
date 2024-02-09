@@ -321,33 +321,3 @@ class SearchQuery(BaseModel):
         filter_gpnt = GraphPatternNotTriples(content=filter_expr)
         ggp.content.add_pattern(filter_gpnt)
         return ggp
-
-# if __name__ == "__main__":
-#     # additional_ss = SubSelectString(select_string="SELECT * {?focus_node a owl:Class}")
-#     sr_uri = Var(value="focus_node")
-#     additional_ss = SubSelect(
-#         select_clause=SelectClause(variables_or_all=[sr_uri]),
-#         where_clause=WhereClause(
-#             group_graph_pattern=GroupGraphPattern(
-#                 content=GroupGraphPatternSub(
-#                     triples_block=TriplesBlock(
-#                         triples=[
-#                             SimplifiedTriple(
-#                                 subject=sr_uri,
-#                                 predicate=IRI(
-#                                     value="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
-#                                 ),
-#                                 object=IRI(value="http://www.w3.org/2002/07/owl#Class"),
-#                             )
-#                         ]
-#                     )
-#                 )
-#             )
-#         ),
-#     )
-#     sq = SearchQuery(
-#         search_term="test",
-#         pred_vals=[RDFS.label],
-#         additional_ss=additional_ss,
-#     ).render()
-#     print(sq)

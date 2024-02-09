@@ -82,7 +82,7 @@ async def get_profiles_and_mediatypes(
     # response = profiles_graph_cache.query(query)
     response = await system_repo.send_queries([], [(None, query)])
     # log.debug(f"ConnegP response:{results_pretty_printer(response)}")
-    if response[1][0][1] == [{}]:
+    if response[1][0][1] == []:
         raise NoProfilesException(classes)
     top_result = response[1][0][1][0]
     profile, mediatype, selected_class = (

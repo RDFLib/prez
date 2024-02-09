@@ -1,10 +1,12 @@
 import logging
+from typing import Tuple
 
 from fastapi import Request
 from fastapi.responses import PlainTextResponse
 from rdflib import URIRef
 
 from prez.cache import profiles_graph_cache, endpoints_graph_cache
+from prez.config import settings
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo, populate_profile_and_mediatype
 from prez.reference_data.prez_ns import EP
 from prez.renderers.renderer import return_from_graph
@@ -24,6 +26,7 @@ async def object_function(
     request_url: str,
     repo: Repo,
     system_repo: Repo,
+    endpoint_structure: Tuple[str] = settings.endpoint_structure,
 ):
     klasses = await get_classes(uri=uri, repo=repo, endpoint=endpoint_uri)
     # ConnegP
@@ -64,8 +67,8 @@ async def object_function(
         item_graph, _ = await repo.send_queries([query], [])
     if "anot+" in prof_and_mt_info.mediatype:
         if not endpoint_uri == EP.object:
-            await add_prez_links(item_graph, repo)
-        await add_prez_links(item_graph, repo)
+            await add_prez_links(item_graph, repo, endpoint_structure)
+        await add_prez_links(item_graph, repo, endpoint_structure)
     return await return_from_graph(
         item_graph,
         prof_and_mt_info.mediatype,

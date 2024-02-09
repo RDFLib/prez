@@ -49,7 +49,7 @@ prez:OGCListingProfile
         "text/turtle" ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:constrainsClass dcat:Catalog , skos:Collection , geo:Feature , geo:FeatureCollection , skos:Concept ,
-                             dcat:Resource ;
+                             dcat:Resource , prof:Profile ;
     sh:property [ sh:path rdf:type ]
     .
 
@@ -95,5 +95,12 @@ prez:OGCItemProfile
         sh:path [ sh:inversePath dcterms:hasPart ] ;
     ] ;
     shext:bnode-depth 2 ;
-    altr-ext:constrainsClass dcat:Catalog , dcat:Resource , skos:ConceptScheme, skos:Collection , skos:Concept , geo:FeatureCollection , geo:Feature ;
+    altr-ext:constrainsClass dcat:Catalog ,
+                             dcat:Resource ,
+                             skos:ConceptScheme,
+                             skos:Collection ,
+                             skos:Concept ,
+                             geo:FeatureCollection ,
+                             geo:Feature ,
+                             prof:Profile ;
     .

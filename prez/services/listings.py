@@ -39,6 +39,7 @@ async def listing_function(
         parent_uri: Optional[URIRef] = None,
         cql_parser: CQLParser = None,
         search_term: Optional[str] = None,
+        endpoint_structure: Tuple[str] = settings.endpoint_structure,
 ):
     """
     # determine the relevant node selection part of the query - from SHACL, CQL, Search
@@ -133,11 +134,11 @@ async def listing_function(
     ):
         item_graph, _ = await system_repo.send_queries(queries, [])
         if "anot+" in prof_and_mt_info.mediatype:
-            await add_prez_links(item_graph, system_repo)
+            await add_prez_links(item_graph, system_repo, endpoint_structure)
     else:
         item_graph, _ = await repo.send_queries(queries, [])
         if "anot+" in prof_and_mt_info.mediatype:
-            await add_prez_links(item_graph, repo)
+            await add_prez_links(item_graph, repo, endpoint_structure)
     # count search results - hard to do in SPARQL as the SELECT part of the query is NOT aggregated
     if search_term:
         count = len(list(item_graph.subjects(RDF.type, PREZ.SearchResult)))
@@ -169,51 +170,29 @@ async def determine_nodeshape(endpoint_uri, hierarchy_level, parent_uri, path_no
         target_classes = [URIRef(result["tc"]["value"]) for result in tabular_results]
     elif len(distinct_ns) > 1:  # more than one possible node shape
         # try all of the available nodeshapes
+        path_node_classes = {}
+        for pn, uri in path_nodes.items():
+            path_node_classes[pn] = await get_classes(URIRef(uri.value), repo)
         nodeshapes = [NodeShape(uri=URIRef(ns), graph=endpoints_graph_cache, path_nodes=path_nodes) for ns in
                       distinct_ns]
-
+        matching_nodeshapes = []
         for ns in nodeshapes:
-            ns.gpnt_list.append(
-                GraphPatternNotTriples(content=Bind(
-                    expression=Expression.from_primary_expr(
-                        PrimaryExpression(content=IRIOrFunction(iri=IRI(value=ns.uri)))
-                    ),
-                    var=Var(value="nodeshape"),
-                )
-                )
-            )
+            match_all_keys = True  # Assume a match for all keys initially
 
-        ggps_list = [GroupGraphPattern(
-            content=GroupGraphPatternSub(
-                graph_patterns_or_triples_blocks=[
-                    *ns.gpnt_list,
-                    TriplesBlock(triples=ns.triples_list),
-                ]
-            )
-        ) for ns in nodeshapes]
-        ss = SubSelect(
-            select_clause=SelectClause(
-                variables_or_all=[Var(value="nodeshape")]),
-            where_clause=WhereClause(
-                group_graph_pattern=GroupGraphPattern(
-                    content=GroupGraphPatternSub(
-                        graph_patterns_or_triples_blocks=[
-                            GraphPatternNotTriples(
-                                content=GroupOrUnionGraphPattern(
-                                    group_graph_patterns=ggps_list
-                                )
-                            )
-                        ]
-                    )
-                )
-            ),
-            solution_modifier=SolutionModifier()
-        )
-        ss_query = "".join(ss.render())
-        _, r = await repo.send_queries([], [(parent_uri, ss_query)])
-        node_selection_shape = URIRef(r[0][1][0]["nodeshape"]["value"])
+            for pn, klasses in path_node_classes.items():
+                # Check if all classes for this path node are in the ns.classes_at_len at this pn
+                if not all(klass in ns.classes_at_len.get(pn, []) for klass in klasses):
+                    match_all_keys = False  # Found a key where not all classes match
+                    break  # No need to check further for this ns
+
+            if match_all_keys:
+                matching_nodeshapes.append(ns)
+        # TODO logic if there is more than one nodeshape - current default nodeshapes will only return one.
+        node_selection_shape = matching_nodeshapes[0].uri
         target_classes = list(endpoints_graph_cache.objects(node_selection_shape, SH.targetClass))
     return node_selection_shape, target_classes
+
+
 
 
 def find_instances(obj, cls):
