@@ -1,0 +1,38 @@
+@prefix bblocks: <https://www.opengis.net/def/bblocks/> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix vocab: <http://example.com/bblock-vocabs/> .
+
+vocab:datatype
+    a skos:ConceptScheme ;
+    skos:prefLabel  "Datatype Building Blocks" ;
+    skos:hasTopConcept bblocks:ogc.ogc-utils.iri-or-curie ;
+    dct:identifier "datatype" ;
+    .
+
+bblocks:ogc.ogc-utils.iri-or-curie a skos:Concept,
+        bblocks:Datatype ;
+    rdfs:label "IRI or CURIE" ;
+    dct:abstract "This Building Block defines a data type for a full IRI/URI or a CURIE (with or without a prefix)" ;
+    dct:created "2023-08-08T00:00:00+00:00"^^xsd:dateTime ;
+    dct:description [ dct:format "text/markdown" ;
+            rdfs:isDefinedBy "https://opengeospatial.github.io/bblocks/generateddocs/markdown/ogc-utils/iri-or-curie/index.md" ],
+        [ dct:format "text/html" ;
+            rdfs:isDefinedBy "https://opengeospatial.github.io/bblocks/generateddocs/slate-build/ogc-utils/iri-or-curie/" ],
+        [ dct:format "application/json" ;
+            rdfs:isDefinedBy "https://opengeospatial.github.io/bblocks/generateddocs/json-full/ogc-utils/iri-or-curie/index.json" ] ;
+    dct:hasVersion "1.0" ;
+    dct:modified "2023-03-09"^^xsd:date ;
+    dct:source <https://www.ietf.org/rfc/rfc3986.txt>,
+        <https://www.ietf.org/rfc/rfc3987.txt>,
+        <https://www.w3.org/TR/curie/> ;
+    skos:inScheme <https://www.opengis.net/def/bblocks> , vocab:datatype ;
+    bblocks:hasJsonLdContext <https://opengeospatial.github.io/bblocks/annotated-schemas/ogc-utils/iri-or-curie/context.jsonld> ;
+    bblocks:hasSchema <https://opengeospatial.github.io/bblocks/annotated-schemas/ogc-utils/iri-or-curie/schema.json>,
+        <https://opengeospatial.github.io/bblocks/annotated-schemas/ogc-utils/iri-or-curie/schema.yaml> ;
+    bblocks:scope <http://www.opengis.net/def/bblocks/scope/geo> ;
+    bblocks:status <http://www.opengis.net/def/status/stable> .
