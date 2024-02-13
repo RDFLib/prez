@@ -1,11 +1,8 @@
-from itertools import chain
-
-from rdflib import Graph, URIRef, RDF, SH, Literal
+from rdflib import Graph, URIRef, RDF, SH
 from rdflib.term import Node
 
 from prez.cache import profiles_graph_cache
 from prez.reference_data.prez_ns import ALTREXT
-from prez.sparql.objects_listings import get_listing_predicates
 
 
 class NotFoundError(Exception):
@@ -29,11 +26,11 @@ def _get_label_predicates(profile_graph: Graph, profile: URIRef) -> list[Node]:
 
 
 def _get_child_iris(
-    graph: Graph,
-    iri: Node,
-    child_to_focus_predicates: list[Node],
-    parent_to_focus_predicates: list[Node],
-    focus_to_child_predicates: list[Node],
+        graph: Graph,
+        iri: Node,
+        child_to_focus_predicates: list[Node],
+        parent_to_focus_predicates: list[Node],
+        focus_to_child_predicates: list[Node],
 ) -> list[Node]:
     children = []
     for predicate in child_to_focus_predicates:
@@ -55,7 +52,7 @@ def _get_child_iris(
 
 
 def create_graph_item(
-    iri: str, predicates: list[Node], graph: Graph, context: dict
+        iri: str, predicates: list[Node], graph: Graph, context: dict
 ) -> tuple[dict, dict]:
     item = {"iri": iri}
     for predicate in predicates:
@@ -68,9 +65,9 @@ def create_graph_item(
 
 
 async def render_json_dropdown(
-    graph: Graph,
-    profile: URIRef,
-    selected_class: URIRef,
+        graph: Graph,
+        profile: URIRef,
+        selected_class: URIRef,
 ) -> dict:
     profile_graph = profiles_graph_cache.cbd(profile)
 
@@ -90,9 +87,9 @@ async def render_json_dropdown(
     ) = get_listing_predicates(profile, selected_class)
 
     if (
-        not child_to_focus_predicates
-        and not focus_to_parent_predicates
-        and not focus_to_child_predicates
+            not child_to_focus_predicates
+            and not focus_to_parent_predicates
+            and not focus_to_child_predicates
     ):
         # This is a listing view, e.g. /v/vocab.
         node_shape = profile_graph.value(

@@ -55,7 +55,7 @@ class NodeShape(Shape):
         ) for ps_uri in self.propertyShapesURIs]
         self.hierarchy_level = next(self.graph.objects(self.uri, ONT.hierarchyLevel), None)
         if not self.hierarchy_level:
-            print('')
+            raise ValueError("No hierarchy level found")
 
     def to_grammar(self):
         if self.targetNode:

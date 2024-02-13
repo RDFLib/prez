@@ -8,7 +8,7 @@ from rdflib import RDF, DCAT
 
 from prez.app import app
 from prez.dependencies import get_repo
-from prez.sparql.methods import Repo, PyoxigraphRepo
+from prez.repositories import Repo, PyoxigraphRepo
 
 
 @pytest.fixture(scope="session")

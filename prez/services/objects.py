@@ -11,10 +11,10 @@ from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo, populate
 from prez.reference_data.prez_ns import EP
 from prez.renderers.renderer import return_from_graph
 from prez.services.link_generation import add_prez_links
-from prez.services.model_methods import get_classes
-from prez.sparql.methods import Repo
+from prez.services.query_generation.classes import get_classes
+from prez.repositories import Repo
 from temp.grammar import IRI
-from temp.shacl2sparql import PrezQueryConstructor
+from prez.services.query_generation.umbrella import PrezQueryConstructor
 
 log = logging.getLogger(__name__)
 

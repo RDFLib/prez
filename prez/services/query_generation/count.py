@@ -16,6 +16,18 @@ class CountQuery(BaseModel):
         return "".join(part for part in cq.render())
 
     def create_construct_query(self):
+        """Calls lower level functions and builds the overall query.
+        Query is of the form:
+        CONSTRUCT {
+        _:N9008750f9acb47c08dfc2c3ae72ede37 <https://prez.dev/count> ?count .
+            }
+            WHERE {
+            SELECT (COUNT(DISTINCT ?focus_node) AS ?count)
+            WHERE {
+                <<<from SHACL node selection>>>
+            }
+        }
+        """
         self.remove_limit_and_offset()
         self.rebuild_select_clause()
         cq = ConstructQuery(
@@ -30,9 +42,15 @@ class CountQuery(BaseModel):
         return cq
 
     def remove_limit_and_offset(self):
+        """Removes the LIMIT and OFFSET clauses from the original subselect query,
+        such that the count of all member objects can be obtained."""
         self.subselect.solution_modifier = None
 
     def rebuild_select_clause(self):
+        """
+        Rebuilds the SELECT clause to retrieve the count of the focus node.
+        SELECT (COUNT(DISTINCT ?focus_node) AS ?count)
+        """
         sc = SelectClause(
             variables_or_all=[
                 (
@@ -60,6 +78,10 @@ class CountQuery(BaseModel):
 
     def create_construct_template(self):
         """
+        Generates a triple for the CONSTRUCT query of the form:
+        {
+        _:N38355498469c47c5bb1dfa5b34a73df0 <https://prez.dev/count> ?count .
+        }
         """
         bn = BlankNode(value=BlankNodeLabel(part_1=BNode()))
         search_result_triples = [
@@ -73,3 +95,12 @@ class CountQuery(BaseModel):
             construct_triples=ConstructTriples(triples=search_result_triples)
         )
         return ct
+
+
+def startup_count_objects():
+    """
+    Retrieves hardcoded counts for collections in the repository (Feature Collections, Catalogs etc.)
+    """
+    return f"""PREFIX prez: <https://prez.dev/>
+                CONSTRUCT {{ ?collection prez:count ?count }}
+                WHERE {{ ?collection prez:count ?count }}"""

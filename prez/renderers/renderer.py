@@ -11,8 +11,8 @@ from rdflib import Graph, URIRef, RDF
 from prez.renderers.csv_renderer import render_csv_dropdown
 from prez.renderers.json_renderer import render_json_dropdown, NotFoundError
 from prez.services.curie_functions import get_curie_id_for_uri
-from prez.sparql.methods import Repo
-from prez.sparql.objects_listings import (
+from prez.repositories import Repo
+from prez.services.annotations import (
     get_annotation_properties,
 )
 

@@ -108,12 +108,11 @@ class PrezQueryConstructor:
             construct_triples=ConstructTriples(triples=self.construct_triples)
         )
         solution_modifier = SolutionModifier()
-        query = ConstructQuery(
+        query_str = ConstructQuery(
             construct_template=construct_template,
             where_clause=where,
             solution_modifier=solution_modifier,
-        )
-        query_str = "".join(part for part in query.render())
+        ).to_string()
         self.sparql = query_str
 
     def build_inner_select(self):
@@ -217,7 +216,7 @@ class PrezQueryConstructor:
         ).rstrip()
         sol_mod, order_by_triple = self._create_focus_node_solution_modifier()
         if order_by_triple:  # insert it before the end of the string,
-            order_by_triple_text = "".join(order_by_triple.render())
+            order_by_triple_text = order_by_triple.to_string()
             substituted_query = (
                     substituted_query[:-1] + f"{{{order_by_triple_text}}} }}"
             )

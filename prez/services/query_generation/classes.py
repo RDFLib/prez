@@ -1,8 +1,7 @@
 import logging
 from rdflib import URIRef
 
-from prez.cache import endpoints_graph_cache
-from prez.sparql.methods import Repo
+from prez.repositories import Repo
 
 log = logging.getLogger(__name__)
 

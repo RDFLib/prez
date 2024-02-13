@@ -9,8 +9,8 @@ from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo, populate
 from prez.reference_data.prez_ns import PREZ
 from prez.renderers.renderer import return_from_graph
 from prez.services.link_generation import add_prez_links
-from prez.sparql.methods import Repo
-from prez.sparql.search_query import SearchQuery
+from prez.repositories import Repo
+from prez.services.query_generation.search import SearchQuery
 
 router = APIRouter(tags=["Search"])
 

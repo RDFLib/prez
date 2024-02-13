@@ -43,3 +43,8 @@ ogce:item-object
     a ont:ObjectEndpoint ;
     ont:relevantShapes ex:Feature , ex:ConceptSchemeConcept , ex:CollectionConcept , ex:Resource ;
 .
+
+ogce:cql-queryables
+    a ont:ListingEndpoint ;
+    ont:relevantShapes ex:queryables ;
+.

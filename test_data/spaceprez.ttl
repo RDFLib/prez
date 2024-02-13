@@ -4,10 +4,11 @@ PREFIX ex: <https://example.com/>
 PREFIX geo: <http://www.opengis.net/ont/geosparql#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-ex:Dataset a dcat:Dataset ;
-    rdfs:label "Dataset" ;
-    rdfs:member ex:FeatureCollection ;
-    ex:property "top level dataset property" ;
+
+ex:SpacePrezCatalog a dcat:Catalog ;
+    dcterms:title "SpacePrez Catalog" ;
+    dcterms:description "A catalog of SpacePrez data" ;
+    dcterms:hasPart ex:FeatureCollection ;
 .
 
 ex:FeatureCollection a geo:FeatureCollection ;

@@ -46,7 +46,7 @@ from prez.services.exception_catchers import (
 )
 from prez.services.generate_profiles import create_profiles_graph
 from prez.services.prez_logging import setup_logger
-from prez.sparql.methods import RemoteSparqlRepo, PyoxigraphRepo, OxrdflibRepo
+from prez.repositories import RemoteSparqlRepo, PyoxigraphRepo, OxrdflibRepo
 
 app = FastAPI(
     exception_handlers={

@@ -15,7 +15,7 @@ from prez.cache import (
     endpoints_graph_cache,
 )
 from prez.config import settings
-from prez.sparql.methods import PyoxigraphRepo, RemoteSparqlRepo, OxrdflibRepo
+from prez.repositories import PyoxigraphRepo, RemoteSparqlRepo, OxrdflibRepo
 from rdframe import CQLParser
 
 

@@ -5,12 +5,11 @@ from typing import FrozenSet
 from rdflib import Graph, URIRef, RDF, PROF, Literal
 
 from prez.cache import profiles_graph_cache, prefix_graph
-from prez.config import settings
 from prez.models.model_exceptions import NoProfilesException
 from prez.reference_data.prez_ns import PREZ
 from prez.services.curie_functions import get_curie_id_for_uri
-from prez.sparql.methods import Repo
-from prez.sparql.objects_listings import select_profile_mediatype
+from prez.repositories import Repo
+from prez.services.query_generation.connegp import select_profile_mediatype
 
 log = logging.getLogger(__name__)
 
@@ -66,7 +65,6 @@ async def create_profiles_graph(repo) -> Graph:
     _add_prez_profile_links()
 
 
-# @lru_cache(maxsize=128)
 async def get_profiles_and_mediatypes(
     classes: FrozenSet[URIRef],
     system_repo: Repo,
@@ -189,4 +187,3 @@ def _add_prez_profile_links():
                 Literal(f"/profiles/{get_curie_id_for_uri(profile)}"),
             )
         )
-    # profiles_graph_cache.__iadd__(g)

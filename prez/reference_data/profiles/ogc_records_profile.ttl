@@ -29,8 +29,8 @@ prez:OGCRecordsProfile
         altr-ext:hasDefaultProfile prez:OGCListingProfile
     ] , [
         a sh:NodeShape ;
-        sh:targetClass prez:SchemesList ;
-        altr-ext:hasDefaultProfile skos:ConceptScheme
+        sh:targetClass skos:ConceptScheme ;
+        altr-ext:hasDefaultProfile prez:OGCSchemesListProfile
     ] , [
         a sh:NodeShape ;
         sh:targetClass dcat:Catalog , skos:ConceptScheme , skos:Concept , geo:Feature , geo:FeatureCollection , skos:Collection ;

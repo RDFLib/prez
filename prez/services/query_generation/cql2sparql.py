@@ -4,36 +4,9 @@ from pyld import jsonld
 from rdflib import URIRef, Namespace
 from rdflib.namespace import GEO, SH
 
-from temp.grammar.grammar import (
-    GroupOrUnionGraphPattern,
-    GroupGraphPatternSub,
-    TriplesBlock,
-    SimplifiedTriple,
-    GroupGraphPattern,
-    GraphPatternNotTriples,
-    Filter,
-    InlineDataOneVar,
-    InlineData,
-    DataBlock,
-    WhereClause,
-    ConstructTemplate,
-    SolutionModifier,
-    ConstructQuery,
-    ConstructTriples,
-    Var,
-    IRI,
-    RDFLiteral,
-    PrimaryExpression,
-    RegexExpression,
-    Expression,
-    BuiltInCall,
-    Constraint,
-    FunctionCall,
-    NumericLiteral,
-    DataBlockValue,
-    ArgList,
-)
-from temp.cql_sparql_reference import (
+from temp.grammar import *
+
+from prez.services.query_generation.cql_sparql_reference import (
     cql_sparql_spatial_mapping,
     cql_to_shapely_mapping,
 )

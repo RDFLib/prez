@@ -5,11 +5,9 @@ from decimal import Decimal
 from typing import List, Union, Optional, Generator, Tuple
 
 from pydantic import BaseModel, field_validator
-from rdflib import URIRef, Variable, BNode, Literal
+from rdflib import URIRef, Variable
 from rdflib.plugins.sparql import prepareQuery
 from rdflib.plugins.sparql.algebra import translateAlgebra
-
-from prez.reference_data.prez_ns import PREZ
 
 log = logging.getLogger(__name__)
 
@@ -24,10 +22,13 @@ class SPARQLGrammarBase(BaseModel):
         return "".join(part for part in self.render())
 
     def __repr__(self):
-        return f"{self.__class__.__name__}({self})"
+        return f"{self.__class__.__name__} ({self})"
 
     def render(self):
         raise NotImplementedError("Subclasses must implement this method.")
+
+    def to_string(self):
+        return self.__str__()
 
     def collect_triples(self) -> List[SimplifiedTriple]:
         """
@@ -345,7 +346,7 @@ class ConditionalOrExpression(SPARQLGrammarBase):
 
     def render(self) -> Generator[str, None, None]:
         for i, conditional_and_expression in enumerate(
-            self.conditional_and_expressions
+                self.conditional_and_expressions
         ):
             yield from conditional_and_expression.render()
             if i < len(self.conditional_and_expressions) - 1:
@@ -686,10 +687,10 @@ class Filter(SPARQLGrammarBase):
 
     @classmethod
     def filter_relational(
-        cls,
-        focus: PrimaryExpression,
-        comparators: Union[PrimaryExpression, List[PrimaryExpression]],
-        operator: str,
+            cls,
+            focus: PrimaryExpression,
+            comparators: Union[PrimaryExpression, List[PrimaryExpression]],
+            operator: str,
     ) -> Filter:
         """
         Convenience method to create a FILTER clause to compare the focus node to comparators.
@@ -1053,7 +1054,7 @@ class BuiltInCall(SPARQLGrammarBase):
 
     @classmethod
     def create_with_one_expr(
-        cls, function_name: str, expression: PrimaryExpression
+            cls, function_name: str, expression: PrimaryExpression
     ) -> "BuiltInCall":
         """
         Convenience method for functions that take a single PrimaryExpression as an argument.
@@ -1063,7 +1064,7 @@ class BuiltInCall(SPARQLGrammarBase):
 
     @classmethod
     def create_with_n_expr(
-        cls, function_name: str, expressions: List[PrimaryExpression]
+            cls, function_name: str, expressions: List[PrimaryExpression]
     ) -> "BuiltInCall":
         """
         Convenience method for functions that take a list of PrimaryExpressions as arguments.

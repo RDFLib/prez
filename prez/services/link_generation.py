@@ -6,13 +6,12 @@ from rdflib.namespace import SH, RDF
 
 from prez.cache import endpoints_graph_cache, links_ids_graph_cache
 from prez.config import settings
-from prez.reference_data.prez_ns import ONT
 from prez.reference_data.prez_ns import PREZ
 from prez.services.curie_functions import get_curie_id_for_uri
-from prez.services.model_methods import get_classes
-from prez.sparql.methods import Repo
+from prez.services.query_generation.classes import get_classes
+from prez.repositories import Repo
 from temp.grammar import *
-from temp.shacl_node_selection import NodeShape
+from prez.services.query_generation.shacl_node_selection import NodeShape
 
 log = logging.getLogger(__name__)
 
@@ -29,7 +28,8 @@ async def add_prez_links(graph: Graph, repo: Repo, endpoint_structure):
             await _link_generation(uri, repo, klasses, graph, endpoint_structure)
 
 
-async def _link_generation(uri: URIRef, repo: Repo, klasses, graph: Graph, endpoint_structure: str = settings.endpoint_structure):
+async def _link_generation(uri: URIRef, repo: Repo, klasses, graph: Graph,
+                           endpoint_structure: str = settings.endpoint_structure):
     # check the cache
     quads = list(
         links_ids_graph_cache.quads((None, None, None, uri))
@@ -45,18 +45,21 @@ async def _link_generation(uri: URIRef, repo: Repo, klasses, graph: Graph, endpo
         # run queries for available nodeshapes to get link components
         for ns in available_nodeshapes:
             if int(ns.hierarchy_level) > 1:
-                results = await get_link_components(available_nodeshapes, repo)
+                results = await get_link_components(ns, repo)
                 for result in results:
                     # if the list at tuple[1] > 0 then there's some result and a link should be generated.
                     # NB for top level links, there will be a result (the graph pattern matched) BUT the result will not form
                     # part of the link. e.g. ?path_node_1 will have result(s) but is not part of the link.
                     for solution in result[1]:
                         # create link strings
-                        curie_for_uri, members_link, object_link = await create_link_strings(ns.hierarchy_level, solution, uri, endpoint_structure)
+                        curie_for_uri, members_link, object_link = await create_link_strings(ns.hierarchy_level,
+                                                                                             solution, uri,
+                                                                                             endpoint_structure)
                         # add links and identifiers to graph and cache
                         await add_links_to_graph_and_cache(curie_for_uri, graph, members_link, object_link, uri)
             else:
-                curie_for_uri, members_link, object_link = await create_link_strings(ns.hierarchy_level, {}, uri, endpoint_structure)
+                curie_for_uri, members_link, object_link = await create_link_strings(ns.hierarchy_level, {}, uri,
+                                                                                     endpoint_structure)
                 await add_links_to_graph_and_cache(curie_for_uri, graph, members_link, object_link, uri)
 
 
@@ -116,27 +119,26 @@ async def create_link_strings(hierarchy_level, solution, uri, endpoint_structure
     return curie_for_uri, members_link, object_link
 
 
-async def get_link_components(available_nodeshapes, repo):
+async def get_link_components(ns, repo):
     link_queries = []
-    for ns in available_nodeshapes:
-        link_queries.append(
-            (
-                ns.uri,
-                "".join(SubSelect(
-                    select_clause=SelectClause(
-                        variables_or_all=ns.path_nodes.values()),
-                    where_clause=WhereClause(
-                        group_graph_pattern=GroupGraphPattern(
-                            content=GroupGraphPatternSub(
-                                triples_block=TriplesBlock(
-                                    triples=ns.triples_list
-                                ),
-                                graph_patterns_or_triples_blocks=ns.gpnt_list
-                            )
+    link_queries.append(
+        (
+            ns.uri,
+            "".join(SubSelect(
+                select_clause=SelectClause(
+                    variables_or_all=ns.path_nodes.values()),
+                where_clause=WhereClause(
+                    group_graph_pattern=GroupGraphPattern(
+                        content=GroupGraphPatternSub(
+                            triples_block=TriplesBlock(
+                                triples=ns.triples_list
+                            ),
+                            graph_patterns_or_triples_blocks=ns.gpnt_list
                         )
                     )
-                ).render())
-            )
+                )
+            ).render())
         )
+    )
     _, results = await repo.send_queries([], link_queries)
     return results

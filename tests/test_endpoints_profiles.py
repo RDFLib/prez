@@ -8,7 +8,7 @@ from rdflib.namespace import RDF, PROF
 
 from prez.app import app
 from prez.dependencies import get_repo
-from prez.sparql.methods import Repo, PyoxigraphRepo
+from prez.repositories import Repo, PyoxigraphRepo
 
 
 @pytest.fixture(scope="session")
@@ -52,9 +52,9 @@ def test_profile(client):
 
 def test_ogcprez_profile(client):
     # check the example remote profile is loaded
-    r = client.get("/profiles/prez:OGCProfile")
+    r = client.get("/profiles/prez:OGCRecordsProfile")
     g = Graph().parse(data=r.text)
-    assert (URIRef("https://prez.dev/OGCProfile"), RDF.type, PROF.Profile) in g
+    assert (URIRef("https://prez.dev/OGCRecordsProfile"), RDF.type, PROF.Profile) in g
 
 
 def test_sp_profile(client):

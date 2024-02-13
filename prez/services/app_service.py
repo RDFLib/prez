@@ -3,21 +3,20 @@ import time
 from pathlib import Path
 
 import httpx
-from rdflib import URIRef, Literal, BNode, RDF, Graph, RDFS, DCTERMS, SDO, SKOS, Dataset
+from rdflib import URIRef, Literal, Graph, RDFS, DCTERMS, SDO, SKOS, Dataset
 
 from prez.cache import (
     prez_system_graph,
-    profiles_graph_cache,
     counts_graph,
     prefix_graph,
     endpoints_graph_cache,
     tbox_cache,
 )
 from prez.config import settings
-from prez.reference_data.prez_ns import PREZ, ALTREXT
+from prez.reference_data.prez_ns import PREZ
 from prez.services.curie_functions import get_curie_id_for_uri
-from prez.sparql.methods import Repo
-from prez.sparql.objects_listings import startup_count_objects
+from prez.repositories import Repo
+from prez.services.query_generation.count import startup_count_objects
 
 log = logging.getLogger(__name__)
 

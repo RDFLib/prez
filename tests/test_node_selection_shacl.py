@@ -1,8 +1,8 @@
-from temp.shacl_nodeshapes2sparql import NodeShape, PropertyShape
+from prez.services.query_generation.shacl_node_selection import NodeShape, PropertyShape
 from rdflib import Graph, URIRef
 import pytest
 
-endpoints_graph = Graph().parse("tests/data/nodeshapes/endpoints.ttl", format="turtle")
+endpoints_graph = Graph().parse("prez/reference_data/endpoints/endpoint_node_selection_shapes.ttl", format="turtle")
 
 
 # @pytest.fixture

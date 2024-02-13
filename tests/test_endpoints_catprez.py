@@ -1,3 +1,4 @@
+import asyncio
 import time
 from pathlib import Path
 
@@ -6,11 +7,10 @@ from fastapi.testclient import TestClient
 from pyoxigraph.pyoxigraph import Store
 from rdflib import Graph, URIRef
 from rdflib.namespace import RDF, DCAT
-from rdflib.compare import isomorphic
 
 from prez.app import app
 from prez.dependencies import get_repo
-from prez.sparql.methods import Repo, PyoxigraphRepo
+from prez.repositories import Repo, PyoxigraphRepo
 
 
 @pytest.fixture(scope="session")
@@ -18,8 +18,8 @@ def test_store() -> Store:
     # Create a new pyoxigraph Store
     store = Store()
 
-    for file in Path(__file__).parent.glob("../test_data/catprez.ttl"):
-        store.load(file.read_bytes(), "text/turtle")
+    file = Path("../test_data/catprez.ttl")
+    store.load(file.read_bytes(), "text/turtle")
 
     return store
 
@@ -51,7 +51,7 @@ def client(test_repo: Repo) -> TestClient:
 
     app.dependency_overrides[get_repo] = override_get_repo
 
-    with TestClient(app) as c:
+    with TestClient(app, backend_options={'loop_factory': asyncio.new_event_loop}) as c:
         wait_for_app_to_be_ready(c)
         yield c
 
@@ -62,7 +62,7 @@ def client(test_repo: Repo) -> TestClient:
 @pytest.fixture(scope="session")
 def a_catalog_link(client):
     # get link for first catalog
-    r = client.get("/c/catalogs")
+    r = client.get("/catalogs")
     g = Graph().parse(data=r.text)
     member_uri = g.value(None, RDF.type, DCAT.Catalog)
     link = g.value(member_uri, URIRef(f"https://prez.dev/link", None))
@@ -81,7 +81,7 @@ def a_resource_link(client, a_catalog_link):
 
 def test_catalog_listing_anot(client):
     r = client.get(
-        f"/c/catalogs?_mediatype=text/turtle&_profile=prez:OGCListingProfile"
+        f"/catalogs?_mediatype=text/turtle&_profile=prez:OGCListingProfile"
     )
     response_graph = Graph().parse(data=r.text)
     expected_response_1 = (

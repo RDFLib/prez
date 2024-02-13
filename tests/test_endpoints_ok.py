@@ -1,7 +1,7 @@
 import logging
 import time
 from pathlib import Path
-from typing import Optional, Set, Dict
+from typing import Optional, Set
 
 import pytest
 from fastapi.testclient import TestClient
@@ -11,7 +11,7 @@ from rdflib import Graph
 from prez.app import app
 from prez.dependencies import get_repo
 from prez.reference_data.prez_ns import PREZ
-from prez.sparql.methods import Repo, PyoxigraphRepo
+from prez.repositories import Repo, PyoxigraphRepo
 
 log = logging.getLogger(__name__)
 
@@ -62,8 +62,8 @@ def client(test_repo: Repo) -> TestClient:
     app.dependency_overrides.clear()
 
 
-def test_catprez_links(
-    client: TestClient, visited: Optional[Set] = None, link="/c/catalogs"
+def test_ogcprez_links(
+    client: TestClient, visited: Optional[Set] = None, link="/catalogs"
 ):
     if not visited:
         visited = set()
@@ -80,46 +80,4 @@ def test_catprez_links(
         print(link)
         if link not in visited:
             visited.add(link)
-            test_catprez_links(client, visited, str(link))
-
-
-def test_vocprez_links(
-    client: TestClient, visited: Optional[Set] = None, link="/v/catalogs"
-):
-    if not visited:
-        visited = set()
-    response = client.get(link)
-    g = Graph().parse(data=response.text, format="turtle")
-    links = list(g.objects(None, PREZ.link))
-    member_bnode_list = list(g.objects(None, PREZ.members))
-    if member_bnode_list:
-        member_bnode = member_bnode_list[0]
-        member_links = list(g.objects(member_bnode, PREZ.link))
-        links.extend(member_links)
-    assert response.status_code == 200
-    for link in links:
-        print(link)
-        if link not in visited:
-            visited.add(link)
-            test_vocprez_links(client, visited, str(link))
-
-
-def test_spaceprez_links(
-    client: TestClient, visited: Optional[Set] = None, link="/s/catalogs"
-):
-    if not visited:
-        visited = set()
-    response = client.get(link)
-    g = Graph().parse(data=response.text, format="turtle")
-    links = list(g.objects(None, PREZ.link))
-    member_bnode_list = list(g.objects(None, PREZ.members))
-    if member_bnode_list:
-        member_bnode = member_bnode_list[0]
-        member_links = list(g.objects(member_bnode, PREZ.link))
-        links.extend(member_links)
-    assert response.status_code == 200
-    for link in links:
-        print(link)
-        if link not in visited:
-            visited.add(link)
-            test_spaceprez_links(client, visited, str(link))
+            test_ogcprez_links(client, visited, str(link))

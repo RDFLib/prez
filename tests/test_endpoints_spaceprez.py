@@ -1,24 +1,24 @@
+import asyncio
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 from pyoxigraph.pyoxigraph import Store
 from rdflib import Graph, URIRef
-from rdflib.compare import isomorphic
-from rdflib.namespace import RDF, DCAT, RDFS, GEO
+from rdflib.namespace import RDF, DCAT, GEO
 
 from prez.app import app
 from prez.dependencies import get_repo
-from prez.sparql.methods import Repo, PyoxigraphRepo
+from prez.repositories import Repo, PyoxigraphRepo
 
 
 @pytest.fixture(scope="session")
 def test_store() -> Store:
     # Create a new pyoxigraph Store
     store = Store()
-
-    for file in Path(__file__).parent.glob("../test_data/spaceprez.ttl"):
-        store.load(file.read_bytes(), "text/turtle")
+    
+    file = Path("../test_data/spaceprez.ttl")
+    store.load(file.read_bytes(), "text/turtle")
 
     return store
 
@@ -37,7 +37,7 @@ def client(test_repo: Repo) -> TestClient:
 
     app.dependency_overrides[get_repo] = override_get_repo
 
-    with TestClient(app) as c:
+    with TestClient(app, backend_options={'loop_factory': asyncio.new_event_loop}) as c:
         yield c
 
     # Remove the override to ensure subsequent tests are unaffected
@@ -45,21 +45,21 @@ def client(test_repo: Repo) -> TestClient:
 
 
 @pytest.fixture(scope="session")
-def a_dataset_link(client):
-    r = client.get("/s/catalogs")
+def a_catalog_link(client):
+    r = client.get("/catalogs")
     g = Graph().parse(data=r.text)
-    member_uri = g.value(None, RDF.type, DCAT.Dataset)
+    member_uri = g.value(None, RDF.type, DCAT.Catalog)
     link = g.value(member_uri, URIRef(f"https://prez.dev/link", None))
     return link
 
 
 @pytest.fixture(scope="session")
-def an_fc_link(client, a_dataset_link):
-    r = client.get(f"{a_dataset_link}/collections")
+def an_fc_link(client, a_catalog_link):
+    r = client.get(f"{a_catalog_link}/collections")
     g = Graph().parse(data=r.text)
     links = g.objects(subject=None, predicate=URIRef(f"https://prez.dev/link"))
     for link in links:
-        if link != a_dataset_link:
+        if link != a_catalog_link:
             return link
 
 
@@ -73,13 +73,13 @@ def a_feature_link(client, an_fc_link):
             return link
 
 
-def test_dataset_anot(client, a_dataset_link):
-    r = client.get(f"{a_dataset_link}?_mediatype=text/turtle")
+def test_dataset_anot(client, a_catalog_link):
+    r = client.get(f"{a_catalog_link}?_mediatype=text/turtle")
     response_graph = Graph().parse(data=r.text)
     expected_response_1 = (
-        URIRef("https://example.com/Dataset"),
+        URIRef("https://example.com/SpacePrezCatalog"),
         RDF.type,
-        DCAT.Dataset,
+        DCAT.Catalog,
     )
     assert next(response_graph.triples(expected_response_1))
 

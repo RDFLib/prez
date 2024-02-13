@@ -6,7 +6,7 @@ from starlette.requests import Request
 
 from prez.services.generate_profiles import get_profiles_and_mediatypes
 from prez.services.connegp_service import get_requested_profile_and_mediatype
-from prez.sparql.methods import Repo
+from prez.repositories import Repo
 
 PREZ = Namespace("https://prez.dev/")
 
