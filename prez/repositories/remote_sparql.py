@@ -1,4 +1,5 @@
 import logging
+from urllib.parse import quote_plus
 
 import httpx
 from rdflib import Namespace, Graph, URIRef
@@ -51,7 +52,7 @@ class RemoteSparqlRepo(Repo):
         return context, response.json()["results"]["bindings"]
 
     async def sparql(
-            self, query: str, raw_headers: list[tuple[bytes, bytes]], method: str = "GET"
+        self, query: str, raw_headers: list[tuple[bytes, bytes]], method: str = "GET"
     ):
         """Sends a starlette Request object (containing a SPARQL query in the URL parameters) to a proxied SPARQL
         endpoint."""

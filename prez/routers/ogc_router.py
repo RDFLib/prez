@@ -98,7 +98,10 @@ async def item_listing(
         system_repo,
         endpoint_uri,
         hierarchy_level=3,
-        path_nodes={"path_node_1": IRI(value=path_node_1_uri), "path_node_2": IRI(value=path_node_2_uri)},
+        path_nodes={
+            "path_node_1": IRI(value=path_node_1_uri),
+            "path_node_2": IRI(value=path_node_2_uri),
+        },
         page=page,
         per_page=per_page,
         parent_uri=path_node_1_uri,

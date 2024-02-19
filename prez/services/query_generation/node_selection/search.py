@@ -248,11 +248,11 @@ class SearchQuery(BaseModel):
         return gougp
 
     def create_inner_ggp(
-            self,
-            weight_val: int,
-            function: str,
-            prefix: str,
-            case_insensitive: Optional[bool],
+        self,
+        weight_val: int,
+        function: str,
+        prefix: str,
+        case_insensitive: Optional[bool],
     ) -> GroupGraphPattern:
         ggp = GroupGraphPattern(content=GroupGraphPatternSub())
 

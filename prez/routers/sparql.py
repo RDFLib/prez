@@ -9,7 +9,10 @@ from starlette.requests import Request
 from starlette.responses import StreamingResponse
 
 from prez.dependencies import get_repo, get_system_repo
-from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo, populate_profile_and_mediatype
+from prez.models.profiles_and_mediatypes import (
+    ProfilesMediatypesInfo,
+    populate_profile_and_mediatype,
+)
 from prez.renderers.renderer import return_annotated_rdf
 from prez.repositories import Repo
 

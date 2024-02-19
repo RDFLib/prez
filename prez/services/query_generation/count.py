@@ -33,11 +33,9 @@ class CountQuery(BaseModel):
         cq = ConstructQuery(
             construct_template=self.create_construct_template(),
             where_clause=WhereClause(
-                group_graph_pattern=GroupGraphPattern(
-                    content=self.subselect
-                )
+                group_graph_pattern=GroupGraphPattern(content=self.subselect)
             ),
-            solution_modifier=SolutionModifier()
+            solution_modifier=SolutionModifier(),
         )
         return cq
 
@@ -62,15 +60,14 @@ class CountQuery(BaseModel):
                                     distinct=True,
                                     expression=Expression.from_primary_expr(
                                         PrimaryExpression(
-                                            content=Var(
-                                                value="focus_node")
+                                            content=Var(value="focus_node")
                                         )
-                                    )
+                                    ),
                                 )
                             )
                         )
                     ),
-                    Var(value="count")
+                    Var(value="count"),
                 )
             ]
         )

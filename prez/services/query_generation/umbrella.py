@@ -1,7 +1,7 @@
 import re
 from string import Template
-from typing import Union, Optional, List
-
+from typing import Union, Optional, List, Dict
+from pydantic import BaseModel, field_validator
 from rdflib import URIRef, Namespace, Graph, SH, RDF, BNode, Literal
 from rdflib.collection import Collection
 
@@ -12,56 +12,38 @@ ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
 SHEXT = Namespace("http://example.com/shacl-extension#")
 
 
-class PrezQueryConstructor:
-    def __init__(
-            self,
-            runtime_values: dict,
-            endpoint_graph: Graph,
-            profile_graph: Graph,
-            listing_or_object: str,
-            focus_node: Union[IRI, Var] = Var(value="focus_node"),
-            endpoint_uri: Optional[URIRef] = None,
-            profile_uri: Optional[URIRef] = None,
-            additional_ggps: Optional[GroupGraphPatternSub] = None,
-            node_selection_triples: Optional[List[SimplifiedTriple]] = None,
-            node_selection_gpnt: Optional[GraphPatternNotTriples] = None,
-            target_class: URIRef = None,
+class PrezQueryConstructor(BaseModel):
+    runtime_values: dict
+    endpoint_graph: Graph
+    profile_graph: Graph
+    listing_or_object: str
+    focus_node: Union[IRI, Var] = Var(value="focus_node")
+    endpoint_uri: Optional[URIRef] = None
+    profile_uri: Optional[URIRef] = None
 
-    ):
-        self.runtime_values = runtime_values
-        self.endpoint_graph: Graph = endpoint_graph
-        self.profile_graph: Graph = profile_graph
-        self.endpoint_uri: Optional[URIRef] = endpoint_uri
-        self.profile_uri: Optional[URIRef] = profile_uri
-        self.additional_ggps: Optional[GroupGraphPatternSub] = additional_ggps
+    construct_triples: Optional[List[SimplifiedTriple]] = []
+    main_where_ggps: Optional[GroupGraphPatternSub] = GroupGraphPatternSub()
+    inner_select: Optional[Union[SubSelect, SubSelectString]] = None
 
-        self.focus_node: Union[IRI, Var] = focus_node
+    endpoint_shacl_triples: Optional[List[SimplifiedTriple]] = []
+    endpoint_shacl_gpnt: Optional[List[GraphPatternNotTriples]] = []
+    cql_triples: Optional[List[SimplifiedTriple]] = []
+    cql_gpnt: Optional[List[GraphPatternNotTriples]] = []
+    select_template: Optional[Template] = None
+    sparql: Optional[str] = None
 
-        self.sparql = None
-        self.results = None
+    # Additional fields
+    default_limit: Optional[int] = None
+    default_offset: Optional[int] = None
+    default_order_by: Optional[str] = None
+    default_order_by_desc: Optional[bool] = None
+    runtime_vals_expanded: Optional[Dict] = {}
+    merged_runtime_and_default_vals: Optional[Dict] = {}
 
-        self.construct_triples = None
-        self.main_where_ggps = GroupGraphPatternSub()
-        self.inner_select: Union[SubSelect, SubSelectString] = None
-
-        self.default_limit = None
-        self.default_offset = None
-        self.default_order_by = None
-        self.default_order_by_desc = None
-
-        self.runtime_vals_expanded = None
-        self.merged_runtime_and_default_vals = None
-        self._expand_runtime_vars()
-        self._merge_runtime_and_default_vars()
-
-        self.node_selection_triples = node_selection_triples
-        self.node_selection_gpnt = node_selection_gpnt
-
-        self.listing_or_object = listing_or_object
-        self.target_class = target_class
+    class Config:
+        arbitrary_types_allowed = True
 
     def _expand_runtime_vars(self):
-        self.runtime_vals_expanded = {}
         for k, v in self.runtime_values.items():
             if k in ["limit", "offset", "q"]:
                 self.runtime_vals_expanded[k] = v
@@ -82,6 +64,7 @@ class PrezQueryConstructor:
         """
         Generates SPARQL query from Shape profile_graph.
         """
+        self._expand_runtime_vars()
         if self.listing_or_object == "listing":
             self.build_inner_select()
         self.parse_profile()
@@ -101,7 +84,9 @@ class PrezQueryConstructor:
         if self.listing_or_object == "listing":
             gpnt = GraphPatternNotTriples(
                 content=GroupOrUnionGraphPattern(
-                    group_graph_patterns=[GroupGraphPattern(content=self.inner_select)]))
+                    group_graph_patterns=[GroupGraphPattern(content=self.inner_select)]
+                )
+            )
             self.main_where_ggps.add_pattern(gpnt, prepend=True)
 
         construct_template = ConstructTemplate(
@@ -125,17 +110,15 @@ class PrezQueryConstructor:
         self._set_limit_and_offset()
         self._merge_runtime_and_default_vars()
 
-        # sparql targets - for complex selection queries specified as strings
-        target_bn = list(
-            self.endpoint_graph.objects(subject=self.endpoint_uri, predicate=SH.target)
-        )
         rule_nodes = list(
             self.endpoint_graph.objects(subject=self.endpoint_uri, predicate=SH.rule)
         )
 
-        # sh:target / sh:select
-        if target_bn:
-            sss = self.create_select_subquery_from_template(target_bn)
+        sol_mod, order_by_triple = self._create_focus_node_solution_modifier()
+
+        if self.select_template:
+            # sh:target / sh:select
+            sss = self.create_select_subquery_from_template(sol_mod, order_by_triple)
             self.inner_select = sss
 
             # rule nodes - for CONSTRUCT TRIPLES patterns.
@@ -144,28 +127,24 @@ class PrezQueryConstructor:
                     self._create_construct_triples_from_sh_rules(rule_node)
 
         else:
-            sol_mod, order_by_triple = self._create_focus_node_solution_modifier()
-
             self.inner_select = SubSelect(
-                select_clause=SelectClause(
-                    variables_or_all=[self.focus_node]),
+                select_clause=SelectClause(variables_or_all=[self.focus_node]),
                 where_clause=WhereClause(
-                    group_graph_pattern=GroupGraphPattern(
-                        content=inner_select_ggps)
+                    group_graph_pattern=GroupGraphPattern(content=inner_select_ggps)
                 ),
-                solution_modifier=sol_mod
+                solution_modifier=sol_mod,
             )
 
             if order_by_triple:
                 inner_select_ggps.add_triple(order_by_triple)
 
             # otherwise just use what is provided by the endpoint shapes
-            if self.node_selection_triples:
-                tb = TriplesBlock(triples=self.node_selection_triples)
+            if self.endpoint_shacl_triples:
+                tb = TriplesBlock(triples=self.endpoint_shacl_triples)
                 inner_select_ggps.add_pattern(tb)
 
-            if self.node_selection_gpnt:
-                for gpnt in self.node_selection_gpnt:
+            if self.endpoint_shacl_gpnt:
+                for gpnt in self.endpoint_shacl_gpnt:
                     inner_select_ggps.add_pattern(gpnt)
 
     def _add_ggp_to_main_ggps(self, ggp):
@@ -203,40 +182,38 @@ class PrezQueryConstructor:
         else:
             self.construct_triples = [triple]
 
-
-    def create_select_subquery_from_template(self, target_bn):
-        select_statement = Template(
-            str(self.endpoint_graph.value(target_bn[0], SH.select, default=None))
-        )
+    def create_select_subquery_from_template(self, sol_mod, order_by_triple):
         # expand any prefixes etc. in case the prefixes are not defined in the query this subquery is being inserted
-        # into. NB Shape does provide a mechanism to declare prefixes used in SPARQL targets - this has not been
+        # into. NB Shape does provide a mechanism to declare prefixes used in SPARQL target - this has not been
         # implemented
-        substituted_query = select_statement.substitute(
+        substituted_query = self.select_template.substitute(
             self.merged_runtime_and_default_vals
         ).rstrip()
-        sol_mod, order_by_triple = self._create_focus_node_solution_modifier()
         if order_by_triple:  # insert it before the end of the string,
             order_by_triple_text = order_by_triple.to_string()
             substituted_query = (
-                    substituted_query[:-1] + f"{{{order_by_triple_text}}} }}"
+                substituted_query[:-1] + f"{{{order_by_triple_text}}} }}"
             )
-        if self.additional_ggps:  # for example from cql
-            additional_ggps_str = "".join(
-                part for part in self.additional_ggps.render()
+        additional_strings = []
+        if self.cql_triples:  # for example from cql
+            additional_strings.append(
+                TriplesBlock(triples=self.cql_triples).to_string()
             )
-            substituted_query = self.split_query(substituted_query, additional_ggps_str)
+        if self.cql_gpnt:
+            additional_strings.extend([gpnt.to_string() for gpnt in self.cql_gpnt])
+            substituted_query = self.split_query(substituted_query, additional_strings)
         sss = SubSelectString(
             select_string=substituted_query, solution_modifier=sol_mod
         )
         return sss
 
-    def split_query(self, original_query, additional_ggps_str):
+    def split_query(self, original_query, additional_strings: List[str]):
         # Regex to match the entire structure: 'SELECT ?xxx { ... }'
         pattern = r"(SELECT\s+[\?\w\s\(\)]+\s*\{)(.*?)(\}\s*)"
         # Use re.split to split the query based on the pattern
         parts = re.split(pattern, original_query, flags=re.DOTALL)
         parts = [part for part in parts if part.strip()]
-        new_parts = [parts[0], additional_ggps_str]
+        new_parts = [parts[0]] + additional_strings
         if len(parts) > 1:
             new_parts.extend(parts[1:])
         new_query = "".join(part for part in new_parts)
@@ -282,12 +259,14 @@ class PrezQueryConstructor:
         default_limit = next(
             self.endpoint_graph.objects(
                 subject=self.endpoint_uri, predicate=SHEXT.limit
-            ), 20
+            ),
+            20,
         )
         default_offset = next(
             self.endpoint_graph.objects(
                 subject=self.endpoint_uri, predicate=SHEXT.offset
-            ), 0
+            ),
+            0,
         )
         default_order_by = list(
             self.endpoint_graph.objects(
@@ -317,7 +296,7 @@ class PrezQueryConstructor:
 
     def parse_profile(self):
         for i, property_node in enumerate(
-                self.profile_graph.objects(subject=self.profile_uri, predicate=SH.property)
+            self.profile_graph.objects(subject=self.profile_uri, predicate=SH.property)
         ):
             self._parse_property_shapes(property_node, i)
         self._build_bnode_blocks()
@@ -456,7 +435,7 @@ class PrezQueryConstructor:
         self.main_where_ggps.add_pattern(gpnt)
 
     def _add_inverse_preds(
-            self, ggps: GroupGraphPatternSub, inverse_preds: List[IRI], i
+        self, ggps: GroupGraphPatternSub, inverse_preds: List[IRI], i
     ):
         if inverse_preds:
             ggps.add_triple(
@@ -526,7 +505,7 @@ class PrezQueryConstructor:
                     ggp = GroupGraphPattern(content=ggps)
                     ggp_list.append(ggp)
             elif (
-                    IRI(value=SHEXT.allPredicateValues) not in predicates
+                IRI(value=SHEXT.allPredicateValues) not in predicates
             ):  # add VALUES clause
                 dbv_list = [DataBlockValue(value=p) for p in predicates]
                 inline_data_one_var = InlineDataOneVar(

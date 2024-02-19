@@ -11,12 +11,15 @@ from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.query_generation.classes import get_classes
 from prez.repositories import Repo
 from temp.grammar import *
-from prez.services.query_generation.shacl_node_selection import NodeShape
+from prez.services.query_generation.node_selection.endpoint_shacl import NodeShape
 
 log = logging.getLogger(__name__)
 
 
 async def add_prez_links(graph: Graph, repo: Repo, endpoint_structure):
+    """
+    Adds internal links to the given graph for all URIRefs that have a class and endpoint associated with them.
+    """
     # get all URIRefs - if Prez can find a class and endpoint for them, an internal link will be generated.
     uris = [uri for uri in graph.all_nodes() if isinstance(uri, URIRef)]
     uri_to_klasses = {}
@@ -28,8 +31,16 @@ async def add_prez_links(graph: Graph, repo: Repo, endpoint_structure):
             await _link_generation(uri, repo, klasses, graph, endpoint_structure)
 
 
-async def _link_generation(uri: URIRef, repo: Repo, klasses, graph: Graph,
-                           endpoint_structure: str = settings.endpoint_structure):
+async def _link_generation(
+    uri: URIRef,
+    repo: Repo,
+    klasses,
+    graph: Graph,
+    endpoint_structure: str = settings.endpoint_structure,
+):
+    """
+    Generates links for the given URI if it is not already cached.
+    """
     # check the cache
     quads = list(
         links_ids_graph_cache.quads((None, None, None, uri))
@@ -52,21 +63,37 @@ async def _link_generation(uri: URIRef, repo: Repo, klasses, graph: Graph,
                     # part of the link. e.g. ?path_node_1 will have result(s) but is not part of the link.
                     for solution in result[1]:
                         # create link strings
-                        curie_for_uri, members_link, object_link = await create_link_strings(ns.hierarchy_level,
-                                                                                             solution, uri,
-                                                                                             endpoint_structure)
+                        (
+                            curie_for_uri,
+                            members_link,
+                            object_link,
+                        ) = await create_link_strings(
+                            ns.hierarchy_level, solution, uri, endpoint_structure
+                        )
                         # add links and identifiers to graph and cache
-                        await add_links_to_graph_and_cache(curie_for_uri, graph, members_link, object_link, uri)
+                        await add_links_to_graph_and_cache(
+                            curie_for_uri, graph, members_link, object_link, uri
+                        )
             else:
-                curie_for_uri, members_link, object_link = await create_link_strings(ns.hierarchy_level, {}, uri,
-                                                                                     endpoint_structure)
-                await add_links_to_graph_and_cache(curie_for_uri, graph, members_link, object_link, uri)
+                curie_for_uri, members_link, object_link = await create_link_strings(
+                    ns.hierarchy_level, {}, uri, endpoint_structure
+                )
+                await add_links_to_graph_and_cache(
+                    curie_for_uri, graph, members_link, object_link, uri
+                )
 
 
 async def get_nodeshapes_constraining_class(klasses, uri):
+    """
+    Retrieves the node shapes that constrain the given classes.
+    """
     available_nodeshapes = []
-    available_nodeshape_uris = list(endpoints_graph_cache.subjects(predicate=RDF.type, object=SH.NodeShape))
-    available_nodeshape_triples = list(endpoints_graph_cache.triples_choices((None, SH.targetClass, list(klasses))))
+    available_nodeshape_uris = list(
+        endpoints_graph_cache.subjects(predicate=RDF.type, object=SH.NodeShape)
+    )
+    available_nodeshape_triples = list(
+        endpoints_graph_cache.triples_choices((None, SH.targetClass, list(klasses)))
+    )
     if available_nodeshape_triples:
         for ns, _, _ in available_nodeshape_triples:
             if ns in available_nodeshape_uris:
@@ -80,11 +107,14 @@ async def get_nodeshapes_constraining_class(klasses, uri):
     return available_nodeshapes
 
 
-async def add_links_to_graph_and_cache(curie_for_uri, graph, members_link, object_link, uri):
+async def add_links_to_graph_and_cache(
+    curie_for_uri, graph, members_link, object_link, uri
+):
+    """
+    Adds links and identifiers to the given graph and cache.
+    """
     quads = []
-    quads.append(
-        (uri, PREZ["link"], Literal(object_link), uri)
-    )
+    quads.append((uri, PREZ["link"], Literal(object_link), uri))
     quads.append(
         (uri, DCTERMS.identifier, Literal(curie_for_uri, datatype=PREZ.identifier), uri)
     )
@@ -94,25 +124,29 @@ async def add_links_to_graph_and_cache(curie_for_uri, graph, members_link, objec
         )
         if not existing_members_link:
             members_bn = BNode()
-            quads.append(
-                (uri, PREZ["members"], members_bn, uri)
-            )
-            quads.append(
-                (members_bn, PREZ["link"], Literal(members_link), uri)
-            )
+            quads.append((uri, PREZ["members"], members_bn, uri))
+            quads.append((members_bn, PREZ["link"], Literal(members_link), uri))
     for quad in quads:
         graph.add(quad[:3])
         links_ids_graph_cache.add(quad)
 
 
 async def create_link_strings(hierarchy_level, solution, uri, endpoint_structure):
-    components = list(endpoint_structure[:int(hierarchy_level)])
-    variables = reversed(["focus_node"] + [f"path_node_{i}" for i in range(1, len(components))])
+    """
+    Creates link strings based on the hierarchy level and solution provided.
+    """
+    components = list(endpoint_structure[: int(hierarchy_level)])
+    variables = reversed(
+        ["focus_node"] + [f"path_node_{i}" for i in range(1, len(components))]
+    )
     item_link_template = Template(
-        "".join([f"/{comp}/${pattern}" for comp, pattern in zip(components, variables)]))
+        "".join([f"/{comp}/${pattern}" for comp, pattern in zip(components, variables)])
+    )
     curie_for_uri = get_curie_id_for_uri(uri)
     sol_values = {k: get_curie_id_for_uri(v["value"]) for k, v in solution.items()}
-    object_link = item_link_template.substitute(sol_values | {"focus_node": curie_for_uri})
+    object_link = item_link_template.substitute(
+        sol_values | {"focus_node": curie_for_uri}
+    )
     members_link = None
     if len(components) < len(list(endpoint_structure)):
         members_link = object_link + "/" + endpoint_structure[len(components)]
@@ -120,24 +154,24 @@ async def create_link_strings(hierarchy_level, solution, uri, endpoint_structure
 
 
 async def get_link_components(ns, repo):
+    """
+    Retrieves link components for the given node shape.
+    """
     link_queries = []
     link_queries.append(
         (
             ns.uri,
-            "".join(SubSelect(
-                select_clause=SelectClause(
-                    variables_or_all=ns.path_nodes.values()),
+            SubSelect(
+                select_clause=SelectClause(variables_or_all=ns.path_nodes.values()),
                 where_clause=WhereClause(
                     group_graph_pattern=GroupGraphPattern(
                         content=GroupGraphPatternSub(
-                            triples_block=TriplesBlock(
-                                triples=ns.triples_list
-                            ),
-                            graph_patterns_or_triples_blocks=ns.gpnt_list
+                            triples_block=TriplesBlock(triples=ns.triples_list),
+                            graph_patterns_or_triples_blocks=ns.gpnt_list,
                         )
                     )
-                )
-            ).render())
+                ),
+            ).to_string(),
         )
     )
     _, results = await repo.send_queries([], link_queries)

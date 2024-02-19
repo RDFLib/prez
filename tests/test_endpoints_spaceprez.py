@@ -16,7 +16,7 @@ from prez.repositories import Repo, PyoxigraphRepo
 def test_store() -> Store:
     # Create a new pyoxigraph Store
     store = Store()
-    
+
     file = Path("../test_data/spaceprez.ttl")
     store.load(file.read_bytes(), "text/turtle")
 
@@ -37,7 +37,7 @@ def client(test_repo: Repo) -> TestClient:
 
     app.dependency_overrides[get_repo] = override_get_repo
 
-    with TestClient(app, backend_options={'loop_factory': asyncio.new_event_loop}) as c:
+    with TestClient(app, backend_options={"loop_factory": asyncio.new_event_loop}) as c:
         yield c
 
     # Remove the override to ensure subsequent tests are unaffected
@@ -84,16 +84,15 @@ def test_dataset_anot(client, a_catalog_link):
     assert next(response_graph.triples(expected_response_1))
 
 
-
 def test_feature_collection(client, an_fc_link):
     r = client.get(f"{an_fc_link}?_mediatype=text/turtle")
     response_graph = Graph().parse(data=r.text)
-    expected_response_1 = (
+    assert (
         URIRef("https://example.com/FeatureCollection"),
         RDF.type,
         GEO.FeatureCollection,
-    )
-    assert next(response_graph.triples(expected_response_1))
+    ) in response_graph
+
 
 def test_feature(client, a_feature_link):
     r = client.get(f"{a_feature_link}?_mediatype=text/turtle")
@@ -104,6 +103,7 @@ def test_feature(client, a_feature_link):
         GEO.Feature,
     )
     assert next(response_graph.triples(expected_response_1))
+
 
 def test_feature_listing_anot(client, an_fc_link):
     r = client.get(f"{an_fc_link}/items?_mediatype=text/turtle")

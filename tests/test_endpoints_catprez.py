@@ -51,7 +51,7 @@ def client(test_repo: Repo) -> TestClient:
 
     app.dependency_overrides[get_repo] = override_get_repo
 
-    with TestClient(app, backend_options={'loop_factory': asyncio.new_event_loop}) as c:
+    with TestClient(app, backend_options={"loop_factory": asyncio.new_event_loop}) as c:
         wait_for_app_to_be_ready(c)
         yield c
 
@@ -80,9 +80,7 @@ def a_resource_link(client, a_catalog_link):
 
 
 def test_catalog_listing_anot(client):
-    r = client.get(
-        f"/catalogs?_mediatype=text/turtle&_profile=prez:OGCListingProfile"
-    )
+    r = client.get(f"/catalogs?_mediatype=text/turtle&_profile=prez:OGCListingProfile")
     response_graph = Graph().parse(data=r.text)
     expected_response_1 = (
         URIRef("https://example.com/TopLevelCatalog"),

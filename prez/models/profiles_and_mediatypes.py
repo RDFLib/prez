@@ -38,9 +38,9 @@ class ProfilesMediatypesInfo(BaseModel):
         ) = get_requested_profile_and_mediatype(request)
         return self
 
+
 async def populate_profile_and_mediatype(
-        profiles_mediatypes_model: ProfilesMediatypesInfo,
-        system_repo: Repo
+    profiles_mediatypes_model: ProfilesMediatypesInfo, system_repo: Repo
 ):
     req_profiles = profiles_mediatypes_model.req_profiles
     req_profiles_token = profiles_mediatypes_model.req_profiles_token

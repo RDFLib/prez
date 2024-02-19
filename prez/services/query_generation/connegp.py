@@ -13,11 +13,11 @@ PREZ = Namespace("https://prez.dev/")
 
 
 def select_profile_mediatype(
-        classes: List[URIRef],
-        requested_profile_uri: URIRef = None,
-        requested_profile_token: str = None,
-        requested_mediatypes: List[Tuple] = None,
-        listing: bool = False,
+    classes: List[URIRef],
+    requested_profile_uri: URIRef = None,
+    requested_profile_token: str = None,
+    requested_mediatypes: List[Tuple] = None,
+    listing: bool = False,
 ):
     """
     Returns a SPARQL SELECT query which will determine the profile and mediatype to return based on user requests,
