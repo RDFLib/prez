@@ -1,0 +1,86 @@
+<https://linked.data.gov.au/def/vocdermods/extension> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use this Concept if the reusing vocabulary extends the original vocabulary but does not subset it" <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/extension> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://linked.data.gov.au/def/vocdermods> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/relabelling> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://linked.data.gov.au/def/vocdermods> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods> <http://www.w3.org/2004/02/skos/core#prefLabel> "Vocabulary Derivation Modes"@en <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/direct> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://linked.data.gov.au/def/vocdermods> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods> <http://purl.org/dc/terms/created> "2022-12-05"^^<http://www.w3.org/2001/XMLSchema#date> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods> <http://www.w3.org/2004/02/skos/core#hasTopConcept> <https://linked.data.gov.au/def/vocdermods/direct> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/subsetting> <http://www.w3.org/2004/02/skos/core#topConceptOf> <https://linked.data.gov.au/def/vocdermods> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods> <http://www.w3.org/2004/02/skos/core#hasTopConcept> <https://linked.data.gov.au/def/vocdermods/extension> <https://linked.data.gov.au/def/vocdermods> .
+<https://kurrawong.ai> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://schema.org/Organization> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/direct> <http://purl.org/linked-data/registry#status> <https://linked.data.gov.au/def/reg-statuses/original> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/subsetting-and-extension> <http://purl.org/linked-data/registry#status> <https://linked.data.gov.au/def/reg-statuses/original> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/extension> <http://www.w3.org/2004/02/skos/core#definition> "Derivation with extension"@en <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/subsetting-and-extension> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use this Concept if the reusing vocabulary both extends and subsets the original vocabulary" <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/subsetting-and-extension> <http://purl.org/dc/terms/provenance> "Created for the MER catalogue upgrade project, 2022"@en <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/relabelling> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/relabelling> <http://purl.org/linked-data/registry#status> <https://linked.data.gov.au/def/reg-statuses/original> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/direct> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods> <http://purl.org/dc/terms/publisher> <https://linked.data.gov.au/org/mer> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/subsetting> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://linked.data.gov.au/def/vocdermods> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/not-applicable> <http://www.w3.org/2004/02/skos/core#definition> "Derivation mode is not applicable to this vocabulary"@en <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/extension> <http://purl.org/linked-data/registry#status> <https://linked.data.gov.au/def/reg-statuses/original> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods> <http://purl.org/linked-data/registry#status> <https://linked.data.gov.au/def/reg-statuses/stable> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/extension> <http://purl.org/dc/terms/provenance> "Created for the MER catalogue upgrade project, 2022"@en <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/subsetting> <http://www.w3.org/2004/02/skos/core#prefLabel> "Subsetting"@en <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/not-applicable> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use this Concept if the vocabulary is known not to reuse any other vocabularies" <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/none> <http://www.w3.org/2004/02/skos/core#topConceptOf> <https://linked.data.gov.au/def/vocdermods> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#ConceptScheme> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/not-applicable> <http://www.w3.org/2004/02/skos/core#topConceptOf> <https://linked.data.gov.au/def/vocdermods> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/none> <http://www.w3.org/2004/02/skos/core#inScheme> <https://linked.data.gov.au/def/vocdermods> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/direct> <http://www.w3.org/2004/02/skos/core#inScheme> <https://linked.data.gov.au/def/vocdermods> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/none> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use this Concept if the vocabulary is known to not reuse any other vocabularies" <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/subsetting-and-extension> <http://www.w3.org/2004/02/skos/core#broader> <https://linked.data.gov.au/def/vocdermods/extension> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods> <http://www.w3.org/2004/02/skos/core#hasTopConcept> <https://linked.data.gov.au/def/vocdermods/none> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/relabelling> <http://www.w3.org/2004/02/skos/core#inScheme> <https://linked.data.gov.au/def/vocdermods> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/none> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://linked.data.gov.au/def/vocdermods> <https://linked.data.gov.au/def/vocdermods> .
+<https://kurrawong.ai> <https://schema.org/url> "https://kurrawong.ai"^^<http://www.w3.org/2001/XMLSchema#anyURI> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/subsetting> <http://purl.org/dc/terms/provenance> "Created for the MER catalogue upgrade project, 2022"@en <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/subsetting-and-extension> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://linked.data.gov.au/def/vocdermods> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/extension> <http://www.w3.org/2004/02/skos/core#inScheme> <https://linked.data.gov.au/def/vocdermods> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods> <http://www.w3.org/2004/02/skos/core#hasTopConcept> <https://linked.data.gov.au/def/vocdermods/relabelling> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/org/mer> <https://schema.org/url> "https://www.energymining.sa.gov.au/industry/geological-survey"^^<http://www.w3.org/2001/XMLSchema#anyURI> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/subsetting-and-extension> <http://www.w3.org/2004/02/skos/core#definition> "Derivation with subsetting and extension"@en <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/none> <http://purl.org/dc/terms/provenance> "Added to this vocabulary for multiple projects in 2023"@en <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/subsetting-and-extension> <http://www.w3.org/2004/02/skos/core#broader> <https://linked.data.gov.au/def/vocdermods/subsetting> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/not-applicable> <http://www.w3.org/2004/02/skos/core#prefLabel> "Not Applicable"@en <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/subsetting> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use this Concept if the reusing vocabulary only subsets the original but does not extend it" <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/none> <http://www.w3.org/2004/02/skos/core#prefLabel> "None"@en <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/none> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/not-applicable> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://linked.data.gov.au/def/vocdermods> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/relabelling> <http://www.w3.org/2004/02/skos/core#prefLabel> "Relabelling"@en <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/subsetting-and-extension> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/direct> <http://www.w3.org/2004/02/skos/core#prefLabel> "Direct"@en <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/none> <http://purl.org/linked-data/registry#status> <https://linked.data.gov.au/def/reg-statuses/original> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/relabelling> <http://www.w3.org/2004/02/skos/core#definition> "Derivation with relabelling"@en <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/subsetting> <http://www.w3.org/2004/02/skos/core#inScheme> <https://linked.data.gov.au/def/vocdermods> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods> <http://www.w3.org/2004/02/skos/core#hasTopConcept> <https://linked.data.gov.au/def/vocdermods/subsetting> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/extension> <http://www.w3.org/2004/02/skos/core#prefLabel> "Extension"@en <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/org/mer> <https://schema.org/name> "SA Minerals and Energy Resources" <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/direct> <http://purl.org/dc/terms/provenance> "Created for the MER catalogue upgrade project, 2022"@en <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/not-applicable> <http://purl.org/linked-data/registry#status> <https://linked.data.gov.au/def/reg-statuses/original> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/subsetting-and-extension> <http://www.w3.org/2004/02/skos/core#prefLabel> "Subset & Extension"@en <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods> <http://purl.org/dc/terms/modified> "2023-05-22"^^<http://www.w3.org/2001/XMLSchema#date> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods> <http://www.w3.org/2004/02/skos/core#hasTopConcept> <https://linked.data.gov.au/def/vocdermods/not-applicable> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/direct> <http://www.w3.org/2004/02/skos/core#definition> "Derivation without alteration"@en <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/not-applicable> <http://purl.org/dc/terms/provenance> "Created for the MER catalogue upgrade project, 2022"@en <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/extension> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/relabelling> <http://purl.org/dc/terms/provenance> "Created for the MER catalogue upgrade project, 2022"@en <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/not-applicable> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/relabelling> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use this Concept if the reusing vocabulary only relabels Concepts in the original vocabulary but does not alter their place in the Concept hierarchy or their definitions" <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/subsetting-and-extension> <http://www.w3.org/2004/02/skos/core#inScheme> <https://linked.data.gov.au/def/vocdermods> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods> <http://purl.org/dc/terms/issued> "2022-12-05"^^<http://www.w3.org/2001/XMLSchema#date> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/subsetting> <http://www.w3.org/2004/02/skos/core#definition> "Derivation with subsetting"@en <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/none> <http://www.w3.org/2004/02/skos/core#definition> "This vocabulary does not derive from another"@en <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods> <http://purl.org/dc/terms/provenance> "Created for the MER catalogue upgrade project, 2022"@en <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/org/mer> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://schema.org/Organization> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/subsetting> <http://purl.org/linked-data/registry#status> <https://linked.data.gov.au/def/reg-statuses/original> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/extension> <http://www.w3.org/2004/02/skos/core#topConceptOf> <https://linked.data.gov.au/def/vocdermods> <https://linked.data.gov.au/def/vocdermods> .
+<https://kurrawong.ai> <https://schema.org/name> "KurrawongAI" <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/relabelling> <http://www.w3.org/2004/02/skos/core#topConceptOf> <https://linked.data.gov.au/def/vocdermods> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods> <http://www.w3.org/2004/02/skos/core#definition> "The modes by which one vocabulary may derive from another"@en <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/direct> <http://www.w3.org/2004/02/skos/core#topConceptOf> <https://linked.data.gov.au/def/vocdermods> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods> <http://purl.org/dc/terms/creator> <https://kurrawong.ai> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods> <http://purl.org/dc/terms/contributor> <http://def.isotc211.org/org/tc211> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/subsetting> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> <https://linked.data.gov.au/def/vocdermods> .
+<https://linked.data.gov.au/def/vocdermods/not-applicable> <http://www.w3.org/2004/02/skos/core#inScheme> <https://linked.data.gov.au/def/vocdermods> <https://linked.data.gov.au/def/vocdermods> .

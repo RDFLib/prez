@@ -1,0 +1,167 @@
+<https://linked.data.gov.au/def/reg-statuses> <http://purl.org/vocab/vann/preferredNamespacePrefix> "reg-status"@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/deprecated> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/linked-data/registry#Status> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/deprecated> <http://www.w3.org/2004/02/skos/core#broader> <https://linked.data.gov.au/def/reg-statuses/accepted> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/submitted> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://www.epimorphics.com> <https://schema.org/url> "https://www.epimorphics.com"^^<http://www.w3.org/2001/XMLSchema#anyURI> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/deprecated> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/valid> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/stable> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/retired> <https://schema.org/color> "#ad5b24" <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/unstable> <http://www.w3.org/2004/02/skos/core#definition> "An entry that is not seen as having a reasonable measure of stability. This status is expected to be allocated to entries that were once Stable but have become Unstable, due to a management or technical mishap, rather than being allocated to resources before they become Stable. Those resources should be allocated Experimental."@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/submitted> <http://www.w3.org/2004/02/skos/core#broader> <https://linked.data.gov.au/def/reg-statuses/notAccepted> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/reserved> <https://schema.org/color> "#9b8d79" <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/notAccepted> <http://www.w3.org/2004/02/skos/core#topConceptOf> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses> <http://purl.org/dc/terms/creator> <https://www.epimorphics.com> <https://linked.data.gov.au/def/reg-statuses> .
+<http://purl.org/linked-data/registry#Status> <http://www.w3.org/2004/02/skos/core#prefLabel> "Status"@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/experimental> <http://www.w3.org/2004/02/skos/core#prefLabel> "experimental"@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/addition> <http://www.w3.org/2004/02/skos/core#inScheme> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/notAccepted> <http://www.w3.org/2004/02/skos/core#inScheme> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses> <http://www.w3.org/2004/02/skos/core#definition> "This vocabulary is a re-published and only marginally changed version of the Registry Ontology's (http://epimorphics.com/public/vocabulary/Registry.html) *Status* vocabulary (online in RDF: http://purl.org/linked-data/registry). The only real change to content has been the addition of the term `unstable`. This re-publication has been performed to allow the IRIs of each vocab term (skos:Concept) to resolve to both human-readable and machine-readable forms of content (HTML and RDF), using HTTP content negotiation.\n\nNote that just like the original form of this vocabulary, while it is a SKOS vocabulary implemented as a single skos:ConceptScheme, it is also an OWL Ontology and that each *Status* is both a skos:Concept and a reg:Status individual."@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/deprecated> <http://www.w3.org/2004/02/skos/core#definition> "An entry that has been Retired or Superseded or has become Unstable and is no longer to be used."@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/superseded> <https://schema.org/color> "#ad7624" <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/superseded> <http://www.w3.org/2004/02/skos/core#inScheme> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/unstable> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/linked-data/registry#Status> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/experimental> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/linked-data/registry#Status> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/invalid> <http://www.w3.org/2004/02/skos/core#inScheme> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/submitted> <https://schema.org/color> "#248bad" <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/experimental> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/invalid> <http://www.w3.org/2004/02/skos/core#definition> "An entry which has been invalidated due to serious flaws, distinct from retrirement."@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/stable> <https://schema.org/color> "#2e8c09" <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/submitted> <http://www.w3.org/2004/02/skos/core#inScheme> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses> <http://www.w3.org/2002/07/owl#versionInfo> "1.0 - 2018-06 - as per Registry Ontology original" <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/experimental> <http://www.w3.org/2004/02/skos/core#broader> <https://linked.data.gov.au/def/reg-statuses/valid> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses> <http://purl.org/dc/terms/contributor> <https://orcid.org/0000-0002-8742-7730> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/retired> <http://www.w3.org/2004/02/skos/core#inScheme> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses> <http://purl.org/dc/terms/created> "2018-07-23"^^<http://www.w3.org/2001/XMLSchema#date> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses> <http://www.w3.org/2002/07/owl#versionInfo> "2.0 - 2023-01 - addition of Concepts addition & original, as per updated Registry Item status codes" <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/stable> <http://www.w3.org/2004/02/skos/core#inScheme> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/addition> <http://www.w3.org/2004/02/skos/core#prefLabel> "addition"@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/addition> <https://schema.org/color> "#4ac11b" <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/reserved> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/linked-data/registry#Status> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/stable> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/linked-data/registry#Status> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/retired> <http://www.w3.org/2002/07/owl#sameAs> <http://purl.org/linked-data/registry#statusRetired> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/retired> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/accepted> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/linked-data/registry#Status> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/stable> <http://www.w3.org/2004/02/skos/core#definition> "An entry that is seen as having a reasonable measure of stability, may be used to mark the full adoption of a previously 'experimental' entry."@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses> <http://www.w3.org/2002/07/owl#versionInfo> "1.2 - 2021-11 - changes IRI to reg-statuses; added unstable" <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/superseded> <http://www.w3.org/2004/02/skos/core#prefLabel> "superseded"@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/notAccepted> <http://www.w3.org/2004/02/skos/core#prefLabel> "notAccepted"@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses> <http://www.w3.org/2004/02/skos/core#prefLabel> "Registry Status Vocabulary"@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses> <http://www.w3.org/2004/02/skos/core#hasTopConcept> <https://linked.data.gov.au/def/reg-statuses/accepted> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses> <http://www.w3.org/2004/02/skos/core#hasTopConcept> <https://linked.data.gov.au/def/reg-statuses/notAccepted> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/valid> <https://schema.org/color> "#36a80d" <https://linked.data.gov.au/def/reg-statuses> .
+<https://www.epimorphics.com> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://schema.org/Organization> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/experimental> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses> <http://purl.org/dc/terms/rights> "(c) Commonwealth of Australia 2021"@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/experimental> <http://www.w3.org/2004/02/skos/core#definition> "An entry that has been accepted into the register temporarily and may be subject to change or withdrawal."@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses> <http://purl.org/vocab/vann/preferredNamespaceUri> "https://linked.data.gov.au/def/reg-status/"^^<http://www.w3.org/2001/XMLSchema#string> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/unstable> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/invalid> <https://schema.org/color> "#ea3c2c" <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/notAccepted> <http://www.w3.org/2004/02/skos/core#definition> "An entry that should not be visible in the default register listing."@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/invalid> <http://www.w3.org/2004/02/skos/core#prefLabel> "invalid"@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/valid> <http://www.w3.org/2004/02/skos/core#definition> "An entry that has been accepted into the register and is deemed fit for use."@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/deprecated> <http://www.w3.org/2004/02/skos/core#inScheme> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/superseded> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/linked-data/registry#Status> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/invalid> <http://www.w3.org/2004/02/skos/core#broader> <https://linked.data.gov.au/def/reg-statuses/notAccepted> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/superseded> <http://www.w3.org/2004/02/skos/core#altLabel> "replaced"@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/unstable> <http://www.w3.org/2004/02/skos/core#broader> <https://linked.data.gov.au/def/reg-statuses/valid> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/experimental> <http://www.w3.org/2004/02/skos/core#altLabel> "provisional"@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/reserved> <http://www.w3.org/2002/07/owl#sameAs> <http://purl.org/linked-data/registry#statusReserved> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/addition> <http://www.w3.org/2004/02/skos/core#definition> "The item's status is stable and was supplied to the registry after initial creation"@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/notAccepted> <http://www.w3.org/2002/07/owl#sameAs> <http://purl.org/linked-data/registry#statusNotAccepted> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/agldwg> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://schema.org/Organization> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/superseded> <http://www.w3.org/2002/07/owl#sameAs> <http://purl.org/linked-data/registry#statusSuperseded> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/valid> <http://www.w3.org/2004/02/skos/core#inScheme> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses> <http://purl.org/dc/terms/modified> "2023-05-26"^^<http://www.w3.org/2001/XMLSchema#date> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/submitted> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/linked-data/registry#Status> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/unstable> <http://www.w3.org/2004/02/skos/core#prefLabel> "stable"@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/valid> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/linked-data/registry#Status> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/original> <http://www.w3.org/2004/02/skos/core#broader> <https://linked.data.gov.au/def/reg-statuses/stable> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses> <http://www.w3.org/2002/07/owl#versionInfo> "1.1 - 2020-06 - altered structure & metadata, not content, to conform to Vocab Publication Profile" <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/original> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/linked-data/registry#Status> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/original> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses> <http://www.w3.org/2000/01/rdf-schema#seeAlso> <https://github.com/AGLDWG/reg-status> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/reserved> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/stable> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> <https://linked.data.gov.au/def/reg-statuses> .
+<https://www.epimorphics.com> <https://schema.org/name> "Epimorphics" <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/agldwg> <https://schema.org/name> "Australian Government Linked Data Working Group" <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/stable> <http://www.w3.org/2004/02/skos/core#broader> <https://linked.data.gov.au/def/reg-statuses/valid> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/accepted> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses> <http://purl.org/dc/terms/source> <http://purl.org/linked-data/registry> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/unstable> <https://schema.org/color> "#678c09" <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/addition> <http://www.w3.org/2004/02/skos/core#broader> <https://linked.data.gov.au/def/reg-statuses/stable> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/addition> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/linked-data/registry#Status> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/original> <http://www.w3.org/2004/02/skos/core#prefLabel> "stable"@en <https://linked.data.gov.au/def/reg-statuses> .
+<http://purl.org/linked-data/registry#Status> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://www.w3.org/2004/02/skos/core#Concept> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/addition> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/invalid> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/original> <https://schema.org/color> "#38a30e" <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/submitted> <http://www.w3.org/2004/02/skos/core#definition> "A proposed entry which is not yet approved for use for use."@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/unstable> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/superseded> <http://www.w3.org/2004/02/skos/core#broader> <https://linked.data.gov.au/def/reg-statuses/deprecated> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/org/surround> <https://schema.org/name> "SURROUND Australia Pty Ltd" <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/invalid> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/linked-data/registry#Status> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/deprecated> <https://schema.org/color> "#a86a0d" <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/invalid> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/notAccepted> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/linked-data/registry#Status> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/notAccepted> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/deprecated> <http://www.w3.org/2004/02/skos/core#prefLabel> "deprecated"@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://orcid.org/0000-0002-8742-7730> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://schema.org/Person> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/valid> <http://www.w3.org/2002/07/owl#sameAs> <http://purl.org/linked-data/registry#statusValid> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/superseded> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/experimental> <https://schema.org/color> "#eae72c" <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/accepted> <http://www.w3.org/2004/02/skos/core#prefLabel> "accepted"@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/notAccepted> <https://schema.org/color> "#ea9e2c" <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/agldwg> <https://schema.org/url> "http://www.linked.data.gov.au"^^<http://www.w3.org/2001/XMLSchema#anyURI> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/deprecated> <http://www.w3.org/2002/07/owl#sameAs> <http://purl.org/linked-data/registry#statusDeprecated> <https://linked.data.gov.au/def/reg-statuses> .
+<https://orcid.org/0000-0002-8742-7730> <https://schema.org/email> "nicholas.car@surroundaustralia.com"^^<http://www.w3.org/2001/XMLSchema#anyURI> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/submitted> <http://www.w3.org/2002/07/owl#sameAs> <http://purl.org/linked-data/registry#statusSubmitted> <https://linked.data.gov.au/def/reg-statuses> .
+<https://orcid.org/0000-0002-8742-7730> <https://schema.org/affiliation> <https://linked.data.gov.au/org/surround> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/submitted> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/valid> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> <https://linked.data.gov.au/def/reg-statuses> .
+<http://purl.org/linked-data/registry#Status> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/retired> <http://www.w3.org/2004/02/skos/core#broader> <https://linked.data.gov.au/def/reg-statuses/deprecated> <https://linked.data.gov.au/def/reg-statuses> .
+<https://orcid.org/0000-0002-8742-7730> <https://schema.org/honorificPrefix> "Dr" <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/invalid> <http://www.w3.org/2002/07/owl#sameAs> <http://purl.org/linked-data/registry#statusInvalid> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/retired> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/linked-data/registry#Status> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/superseded> <http://www.w3.org/2004/02/skos/core#definition> "An entry that has been replaced by a new alternative which should be used instead."@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/unstable> <http://www.w3.org/2002/07/owl#sameAs> <http://purl.org/linked-data/registry#statusStable> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/retired> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/valid> <http://www.w3.org/2004/02/skos/core#broader> <https://linked.data.gov.au/def/reg-statuses/accepted> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/submitted> <http://www.w3.org/2004/02/skos/core#prefLabel> "submitted"@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/original> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/reserved> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses> <http://www.w3.org/2002/07/owl#versionInfo> "2.1 - 2023-05 - added colours" <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/accepted> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/accepted> <http://www.w3.org/2004/02/skos/core#definition> "An entry that has been accepted for use and is visible in the default register listing. Includes entries that have seen been retired or superseded."@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/original> <http://www.w3.org/2004/02/skos/core#definition> "The item's status is stable and was supplied to the registry after initial creation."@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Ontology> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses> <http://purl.org/dc/terms/publisher> <https://linked.data.gov.au/org/agldwg> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/reserved> <http://www.w3.org/2004/02/skos/core#broader> <https://linked.data.gov.au/def/reg-statuses/notAccepted> <https://linked.data.gov.au/def/reg-statuses> .
+<http://purl.org/linked-data/registry#Status> <http://www.w3.org/2004/02/skos/core#definition> "Open set of status code for entries in a register"@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/org/surround> <https://schema.org/url> "https://surroundaustralia.com"^^<http://www.w3.org/2001/XMLSchema#anyURI> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses> <http://www.w3.org/2002/07/owl#versionIRI> <https://linked.data.gov.au/def/reg-status/2.1> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#ConceptScheme> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/org/surround> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://schema.org/Organization> <https://linked.data.gov.au/def/reg-statuses> .
+<https://orcid.org/0000-0002-8742-7730> <https://schema.org/name> "Nicholas J. Car" <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/accepted> <http://www.w3.org/2002/07/owl#sameAs> <http://purl.org/linked-data/registry#statusAccepted> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/addition> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/unstable> <http://www.w3.org/2004/02/skos/core#inScheme> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/experimental> <http://www.w3.org/2004/02/skos/core#inScheme> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/stable> <http://www.w3.org/2004/02/skos/core#prefLabel> "stable"@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/valid> <http://www.w3.org/2004/02/skos/core#prefLabel> "valid"@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/notAccepted> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/superseded> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/retired> <http://www.w3.org/2004/02/skos/core#definition> "An entry that has been withdrawn from use."@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/experimental> <http://www.w3.org/2002/07/owl#sameAs> <http://purl.org/linked-data/registry#statusExperimental> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/reserved> <http://www.w3.org/2004/02/skos/core#prefLabel> "reserved"@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/accepted> <http://www.w3.org/2004/02/skos/core#topConceptOf> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/deprecated> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/retired> <http://www.w3.org/2004/02/skos/core#prefLabel> "retired"@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/accepted> <https://schema.org/color> "#1bc13f" <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/original> <http://www.w3.org/2004/02/skos/core#inScheme> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/reserved> <http://www.w3.org/2004/02/skos/core#inScheme> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/retired> <http://www.w3.org/2004/02/skos/core#altLabel> "withdrawn"@en <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/stable> <http://www.w3.org/2002/07/owl#sameAs> <http://purl.org/linked-data/registry#statusStable> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/accepted> <http://www.w3.org/2004/02/skos/core#inScheme> <https://linked.data.gov.au/def/reg-statuses> <https://linked.data.gov.au/def/reg-statuses> .
+<https://linked.data.gov.au/def/reg-statuses/reserved> <http://www.w3.org/2004/02/skos/core#definition> "A reserved entry allocated for some as yet undetermined future use."@en <https://linked.data.gov.au/def/reg-statuses> .
