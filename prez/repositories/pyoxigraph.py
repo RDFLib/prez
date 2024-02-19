@@ -16,7 +16,7 @@ class PyoxigraphRepo(Repo):
         self.pyoxi_store = pyoxi_store
 
     def _handle_query_solution_results(
-            self, results: pyoxigraph.QuerySolutions
+        self, results: pyoxigraph.QuerySolutions
     ) -> dict:
         """Organise the query results into format serializable by FastAPIs JSONResponse."""
         variables = results.variables
@@ -84,7 +84,7 @@ class PyoxigraphRepo(Repo):
         )
 
     async def sparql(
-            self, query: str, raw_headers: list[tuple[bytes, bytes]], method: str = ""
+        self, query: str, raw_headers: list[tuple[bytes, bytes]], method: str = ""
     ) -> list | Graph | bool:
         return self._sparql(query)
 

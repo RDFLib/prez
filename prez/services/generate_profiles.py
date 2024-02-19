@@ -61,8 +61,6 @@ async def create_profiles_graph(repo) -> Graph:
         log.info(f"Remote profile(s) found and added")
     else:
         log.info("No remote profiles found")
-    # add profiles internal links
-    _add_prez_profile_links()
 
 
 async def get_profiles_and_mediatypes(
@@ -71,10 +69,14 @@ async def get_profiles_and_mediatypes(
     requested_profile: URIRef = None,
     requested_profile_token: str = None,
     requested_mediatype: URIRef = None,
-    listing: bool = False
+    listing: bool = False,
 ):
     query = select_profile_mediatype(
-        classes, requested_profile, requested_profile_token, requested_mediatype, listing
+        classes,
+        requested_profile,
+        requested_profile_token,
+        requested_mediatype,
+        listing,
     )
     log.debug(f"ConnegP query: {query}")
     # response = profiles_graph_cache.query(query)
@@ -147,7 +149,11 @@ def generate_profiles_headers(selected_class, response, profile, mediatype):
         "Content-Type": mediatype,
     }
     avail_profiles = set(
-        (get_curie_id_for_uri(i["profile"]["value"]), i["profile"]["value"], i["title"]["value"])
+        (
+            get_curie_id_for_uri(i["profile"]["value"]),
+            i["profile"]["value"],
+            i["title"]["value"],
+        )
         for i in response[1][0][1]
     )
     avail_profiles_headers = ", ".join(
@@ -174,16 +180,3 @@ type="{i["format"]["value"]}"; profile="{i["profile"]["value"]}"\
     )
     avail_profile_uris = [i[1] for i in avail_profiles]
     return headers, avail_profile_uris
-
-
-def _add_prez_profile_links():
-    for profile in profiles_graph_cache.subjects(
-        predicate=RDF.type, object=PROF.Profile
-    ):
-        profiles_graph_cache.add(
-            (
-                profile,
-                PREZ["link"],
-                Literal(f"/profiles/{get_curie_id_for_uri(profile)}"),
-            )
-        )

@@ -16,7 +16,7 @@ PREZ = Namespace("https://prez.dev/")
 
 
 async def get_annotation_properties(
-        item_graph: Graph,
+    item_graph: Graph,
 ):
     """
     Gets annotation data used for HTML display.
@@ -30,9 +30,9 @@ async def get_annotation_properties(
     explanation_predicates = settings.provenance_predicates
     other_predicates = settings.other_predicates
     terms = (
-            set(i for i in item_graph.predicates() if isinstance(i, URIRef))
-            | set(i for i in item_graph.objects() if isinstance(i, URIRef))
-            | set(i for i in item_graph.subjects() if isinstance(i, URIRef))
+        set(i for i in item_graph.predicates() if isinstance(i, URIRef))
+        | set(i for i in item_graph.objects() if isinstance(i, URIRef))
+        | set(i for i in item_graph.subjects() if isinstance(i, URIRef))
     )
     # TODO confirm caching of SUBJECT labels does not cause issues! this could be a lot of labels. Perhaps these are
     # better separated and put in an LRU cache. Or it may not be worth the effort.
@@ -89,7 +89,7 @@ async def get_annotation_properties(
 
 
 def get_annotations_from_tbox_cache(
-        terms: List[URIRef], label_props, description_props, explanation_props, other_props
+    terms: List[URIRef], label_props, description_props, explanation_props, other_props
 ):
     """
     Gets labels from the TBox cache, returns a list of terms that were not found in the cache, and a graph of labels,

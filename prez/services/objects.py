@@ -7,7 +7,10 @@ from rdflib import URIRef
 
 from prez.cache import profiles_graph_cache, endpoints_graph_cache
 from prez.config import settings
-from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo, populate_profile_and_mediatype
+from prez.models.profiles_and_mediatypes import (
+    ProfilesMediatypesInfo,
+    populate_profile_and_mediatype,
+)
 from prez.reference_data.prez_ns import EP
 from prez.renderers.renderer import return_from_graph
 from prez.services.link_generation import add_prez_links
@@ -28,9 +31,11 @@ async def object_function(
     system_repo: Repo,
     endpoint_structure: Tuple[str] = settings.endpoint_structure,
 ):
-    klasses = await get_classes(uri=uri, repo=repo, endpoint=endpoint_uri)
+    klasses = await get_classes(uri=uri, repo=repo)
     # ConnegP
-    prof_and_mt_info = ProfilesMediatypesInfo(request=request, classes=klasses, system_repo=system_repo)
+    prof_and_mt_info = ProfilesMediatypesInfo(
+        request=request, classes=klasses, system_repo=system_repo
+    )
     await populate_profile_and_mediatype(prof_and_mt_info, system_repo)
 
     # handle alternate profiles
@@ -43,9 +48,9 @@ async def object_function(
 
     # runtime_values["object"] = uri
     query_constructor = PrezQueryConstructor(
-        runtime_values,
-        endpoints_graph_cache,
-        profiles_graph_cache,
+        runtime_values=runtime_values,
+        endpoint_graph=endpoints_graph_cache,
+        profile_graph=profiles_graph_cache,
         listing_or_object="object",
         focus_node=IRI(value=uri),
         endpoint_uri=endpoint_uri,

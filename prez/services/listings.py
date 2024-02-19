@@ -10,36 +10,40 @@ from rdframe import CQLParser
 
 from prez.cache import profiles_graph_cache, endpoints_graph_cache
 from prez.config import settings
-from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo, populate_profile_and_mediatype
+from prez.models.profiles_and_mediatypes import (
+    ProfilesMediatypesInfo,
+    populate_profile_and_mediatype,
+)
 from prez.reference_data.prez_ns import PREZ
 from prez.renderers.renderer import return_from_graph
 from prez.services.link_generation import add_prez_links
 from prez.services.query_generation.classes import get_classes
 from prez.services.query_generation.count import CountQuery
 from prez.repositories import Repo
-from prez.services.query_generation.search import SearchQuery
+from prez.services.query_generation.node_selection.search import SearchQuery
 from temp.grammar import *
+
 # from rdframe.grammar import SubSelect
 # from rdframe import PrezQueryConstructor
 from prez.services.query_generation.umbrella import PrezQueryConstructor
-from prez.services.query_generation.shacl_node_selection import NodeShape
+from prez.services.query_generation.node_selection.endpoint_shacl import NodeShape
 
 log = logging.getLogger(__name__)
 
 
 async def listing_function(
-        request: Request,
-        repo: Repo,
-        system_repo: Repo,
-        endpoint_uri: URIRef,
-        hierarchy_level: int,
-        path_nodes: Dict[str, Var | IRI] = None,
-        page: int = 1,
-        per_page: int = 20,
-        parent_uri: Optional[URIRef] = None,
-        cql_parser: CQLParser = None,
-        search_term: Optional[str] = None,
-        endpoint_structure: Tuple[str] = settings.endpoint_structure,
+    request: Request,
+    repo: Repo,
+    system_repo: Repo,
+    endpoint_uri: URIRef,
+    hierarchy_level: int,
+    path_nodes: Dict[str, Var | IRI] = None,
+    page: int = 1,
+    per_page: int = 20,
+    parent_uri: Optional[URIRef] = None,
+    cql_parser: CQLParser = None,
+    search_term: Optional[str] = None,
+    endpoint_structure: Tuple[str] = settings.endpoint_structure,
 ):
     """
     # determine the relevant node selection part of the query - from SHACL, CQL, Search
@@ -51,15 +55,20 @@ async def listing_function(
     queries = []
     # determine possible SHACL node shapes for endpoint
     node_selection_shape, target_classes = await determine_nodeshape(
-        endpoint_uri, hierarchy_level, parent_uri, path_nodes, repo, system_repo)
+        endpoint_uri, hierarchy_level, parent_uri, path_nodes, repo, system_repo
+    )
 
     if not path_nodes:
         path_nodes = {}
-    ns = NodeShape(uri=node_selection_shape, graph=endpoints_graph_cache, path_nodes=path_nodes)
+    if node_selection_shape:
+        ns = NodeShape(
+            uri=node_selection_shape, graph=endpoints_graph_cache, path_nodes=path_nodes
+        )
 
     # determine the relevant profile
-    prof_and_mt_info = ProfilesMediatypesInfo(request=request, classes=target_classes, system_repo=system_repo,
-                                              listing=True)
+    prof_and_mt_info = ProfilesMediatypesInfo(
+        request=request, classes=target_classes, system_repo=system_repo, listing=True
+    )
     await populate_profile_and_mediatype(prof_and_mt_info, system_repo)
     selected_class, selected_profile = (
         prof_and_mt_info.selected_class,
@@ -68,7 +77,7 @@ async def listing_function(
 
     runtime_values = {}
     if prof_and_mt_info.profile == URIRef(
-            "http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"
+        "http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"
     ):
         endpoint_uri = URIRef("https://prez.dev/endpoint/system/alt-profiles-listing")
         runtime_values["selectedClass"] = prof_and_mt_info.selected_class
@@ -76,22 +85,34 @@ async def listing_function(
     runtime_values["limit"] = per_page
     runtime_values["offset"] = (page - 1) * per_page
 
-    query_constructor = PrezQueryConstructor(
-        runtime_values,
-        endpoints_graph_cache,
-        profiles_graph_cache,
-        listing_or_object="listing",
-        endpoint_uri=endpoint_uri,
-        profile_uri=selected_profile,
-        node_selection_triples=ns.triples_list,
-        node_selection_gpnt=ns.gpnt_list,
-        target_class=target_classes
-    )
+    cql_triples_list = []
+    cql_gpnt_list = []
 
     if cql_parser:
         cql_parser.parse()
         cql_select_ggps = cql_parser.ggps_inner_select
-        query_constructor.additional_ggps = cql_select_ggps
+
+        if cql_select_ggps.triples_block:
+            cql_triples_list = cql_select_ggps.triples_block.triples
+        if cql_select_ggps.graph_patterns_or_triples_blocks:
+            for pattern in cql_select_ggps.graph_patterns_or_triples_blocks:
+                if isinstance(pattern, TriplesBlock):
+                    cql_triples_list += pattern.triples
+                elif isinstance(pattern, GraphPatternNotTriples):
+                    cql_gpnt_list.append(pattern)
+
+    query_constructor = PrezQueryConstructor(
+        runtime_values=runtime_values,
+        endpoint_graph=endpoints_graph_cache,
+        profile_graph=profiles_graph_cache,
+        listing_or_object="listing",
+        endpoint_uri=endpoint_uri,
+        profile_uri=selected_profile,
+        endpoint_shacl_triples=ns.triples_list,
+        endpoint_shacl_gpnt=ns.gpnt_list,
+        cql_triples=cql_triples_list,
+        cql_gpnt=cql_gpnt_list,
+    )
 
     query_constructor.generate_sparql()
     main_query = query_constructor.sparql
@@ -130,7 +151,7 @@ async def listing_function(
         #     queries.append(temp_listing_count(subselect, count_class))
 
     if prof_and_mt_info.profile == URIRef(
-            "http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"
+        "http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"
     ):
         item_graph, _ = await system_repo.send_queries(queries, [])
         if "anot+" in prof_and_mt_info.mediatype:
@@ -153,7 +174,9 @@ async def listing_function(
     )
 
 
-async def determine_nodeshape(endpoint_uri, hierarchy_level, parent_uri, path_nodes, repo, system_repo):
+async def determine_nodeshape(
+    endpoint_uri, hierarchy_level, parent_uri, path_nodes, repo, system_repo
+):
     node_selection_shape = None
     target_classes = []
     relevant_ns_query = f"""SELECT ?ns ?tc
@@ -173,8 +196,12 @@ async def determine_nodeshape(endpoint_uri, hierarchy_level, parent_uri, path_no
         path_node_classes = {}
         for pn, uri in path_nodes.items():
             path_node_classes[pn] = await get_classes(URIRef(uri.value), repo)
-        nodeshapes = [NodeShape(uri=URIRef(ns), graph=endpoints_graph_cache, path_nodes=path_nodes) for ns in
-                      distinct_ns]
+        nodeshapes = [
+            NodeShape(
+                uri=URIRef(ns), graph=endpoints_graph_cache, path_nodes=path_nodes
+            )
+            for ns in distinct_ns
+        ]
         matching_nodeshapes = []
         for ns in nodeshapes:
             match_all_keys = True  # Assume a match for all keys initially
@@ -189,10 +216,10 @@ async def determine_nodeshape(endpoint_uri, hierarchy_level, parent_uri, path_no
                 matching_nodeshapes.append(ns)
         # TODO logic if there is more than one nodeshape - current default nodeshapes will only return one.
         node_selection_shape = matching_nodeshapes[0].uri
-        target_classes = list(endpoints_graph_cache.objects(node_selection_shape, SH.targetClass))
+        target_classes = list(
+            endpoints_graph_cache.objects(node_selection_shape, SH.targetClass)
+        )
     return node_selection_shape, target_classes
-
-
 
 
 def find_instances(obj, cls):

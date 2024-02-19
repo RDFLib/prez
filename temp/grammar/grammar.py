@@ -346,7 +346,7 @@ class ConditionalOrExpression(SPARQLGrammarBase):
 
     def render(self) -> Generator[str, None, None]:
         for i, conditional_and_expression in enumerate(
-                self.conditional_and_expressions
+            self.conditional_and_expressions
         ):
             yield from conditional_and_expression.render()
             if i < len(self.conditional_and_expressions) - 1:
@@ -687,10 +687,10 @@ class Filter(SPARQLGrammarBase):
 
     @classmethod
     def filter_relational(
-            cls,
-            focus: PrimaryExpression,
-            comparators: Union[PrimaryExpression, List[PrimaryExpression]],
-            operator: str,
+        cls,
+        focus: PrimaryExpression,
+        comparators: Union[PrimaryExpression, List[PrimaryExpression]],
+        operator: str,
     ) -> Filter:
         """
         Convenience method to create a FILTER clause to compare the focus node to comparators.
@@ -1054,7 +1054,7 @@ class BuiltInCall(SPARQLGrammarBase):
 
     @classmethod
     def create_with_one_expr(
-            cls, function_name: str, expression: PrimaryExpression
+        cls, function_name: str, expression: PrimaryExpression
     ) -> "BuiltInCall":
         """
         Convenience method for functions that take a single PrimaryExpression as an argument.
@@ -1064,7 +1064,7 @@ class BuiltInCall(SPARQLGrammarBase):
 
     @classmethod
     def create_with_n_expr(
-            cls, function_name: str, expressions: List[PrimaryExpression]
+        cls, function_name: str, expressions: List[PrimaryExpression]
     ) -> "BuiltInCall":
         """
         Convenience method for functions that take a list of PrimaryExpressions as arguments.

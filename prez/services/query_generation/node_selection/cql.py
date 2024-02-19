@@ -6,7 +6,7 @@ from rdflib.namespace import GEO, SH
 
 from temp.grammar import *
 
-from prez.services.query_generation.cql_sparql_reference import (
+from prez.reference_data.cql.geo_function_mapping import (
     cql_sparql_spatial_mapping,
     cql_to_shapely_mapping,
 )

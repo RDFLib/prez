@@ -48,3 +48,8 @@ ogce:cql-queryables
     a ont:ListingEndpoint ;
     ont:relevantShapes ex:queryables ;
 .
+
+ogce:search
+    a ont:ListingEndpoint ;
+    ont:relevantShapes ex:search ;
+.

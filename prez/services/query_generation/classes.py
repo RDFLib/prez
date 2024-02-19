@@ -1,35 +1,47 @@
 import logging
 from rdflib import URIRef
+from rdflib.namespace import RDF
 
 from prez.repositories import Repo
+from temp.grammar import (
+    SelectClause,
+    Var,
+    SubSelect,
+    WhereClause,
+    GroupGraphPattern,
+    GroupGraphPatternSub,
+    TriplesBlock,
+    SimplifiedTriple,
+    IRI,
+)
 
 log = logging.getLogger(__name__)
 
 
-async def get_classes(
-    uri: URIRef, repo: Repo, endpoint: URIRef = None
-) -> frozenset[URIRef]:
+async def get_classes(uri: URIRef, repo: Repo) -> frozenset[URIRef]:
     """
-    if endpoint is specified, only classes that the endpoint can deliver will be returned.
+    Generates a query of the form:
+    SELECT ?class WHERE { <uri> rdf:type ?class }
     """
-    q = f"""
-    SELECT ?class
-    {{ <{uri}> a ?class }}
-    """
-    _, r = await repo.send_queries([], [(uri, q)])
+    query = SubSelect(
+        select_clause=SelectClause(variables_or_all=[Var(value="class")]),
+        where_clause=WhereClause(
+            group_graph_pattern=GroupGraphPattern(
+                content=GroupGraphPatternSub(
+                    triples_block=TriplesBlock(
+                        triples=[
+                            SimplifiedTriple(
+                                subject=IRI(value=uri),
+                                predicate=IRI(value=RDF.type),
+                                object=Var(value="class"),
+                            )
+                        ]
+                    )
+                )
+            )
+        ),
+    ).to_string()
+    _, r = await repo.send_queries([], [(uri, query)])
     tabular_result = r[0]  # should only be one result - only one query sent
-    # if endpoint != URIRef("https://prez.dev/endpoint/system/object"):
-    #     endpoint_classes = list(
-    #         endpoints_graph_cache.objects(
-    #             subject=endpoint,
-    #             predicate=URIRef("https://prez.dev/ont/deliversClasses"),
-    #         )
-    #     )
-    #     object_classes_delivered_by_endpoint = []
-    #     for c in tabular_result[1]:
-    #         if URIRef(c["class"]["value"]) in endpoint_classes:
-    #             object_classes_delivered_by_endpoint.append(URIRef(c["class"]["value"]))
-    #     classes = frozenset(object_classes_delivered_by_endpoint)
-    # else:
     classes = frozenset([URIRef(c["class"]["value"]) for c in tabular_result[1]])
     return classes

@@ -29,7 +29,7 @@ async def profiles(
         hierarchy_level=1,
         page=page,
         per_page=per_page,
-        endpoint_structure=("profiles",)
+        endpoint_structure=("profiles",),
     )
 
 

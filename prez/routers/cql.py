@@ -24,12 +24,12 @@ OGCE = Namespace(PREZ["endpoint/extended-ogc-records/"])
     name=OGCE["cql-post"],
 )
 async def cql_post_endpoint(
-        request: Request,
-        cql_parser: Optional[dict] = Depends(cql_post_parser_dependency),
-        page: int = 1,
-        per_page: int = 20,
-        repo: Repo = Depends(get_repo),
-        system_repo: Repo = Depends(get_system_repo),
+    request: Request,
+    cql_parser: Optional[dict] = Depends(cql_post_parser_dependency),
+    page: int = 1,
+    per_page: int = 20,
+    repo: Repo = Depends(get_repo),
+    system_repo: Repo = Depends(get_system_repo),
 ):
     endpoint_uri = URIRef("https://prez.dev/endpoint/cql/post")
     return await listing_function(
@@ -48,12 +48,12 @@ async def cql_post_endpoint(
     name=OGCE["cql-get"],
 )
 async def cql_get_endpoint(
-        request: Request,
-        cql_parser: Optional[dict] = Depends(cql_get_parser_dependency),
-        page: int = 1,
-        per_page: int = 20,
-        repo: Repo = Depends(get_repo),
-        system_repo: Repo = Depends(get_system_repo),
+    request: Request,
+    cql_parser: Optional[dict] = Depends(cql_get_parser_dependency),
+    page: int = 1,
+    per_page: int = 20,
+    repo: Repo = Depends(get_repo),
+    system_repo: Repo = Depends(get_system_repo),
 ):
     endpoint_uri = URIRef("https://prez.dev/endpoint/cql/get")
     return await listing_function(
@@ -72,12 +72,12 @@ async def cql_get_endpoint(
     name=OGCE["cql-queryables"],
 )
 async def queryables_endpoint(
-        request: Request,
-        cql_parser: Optional[dict] = Depends(cql_get_parser_dependency),
-        page: int = 1,
-        per_page: int = 20,
-        repo: Repo = Depends(get_repo),
-        system_repo: Repo = Depends(get_system_repo),
+    request: Request,
+    cql_parser: Optional[dict] = Depends(cql_get_parser_dependency),
+    page: int = 1,
+    per_page: int = 20,
+    repo: Repo = Depends(get_repo),
+    system_repo: Repo = Depends(get_system_repo),
 ):
     endpoint_uri = URIRef(request.scope.get("route").name)
     return await listing_function(
