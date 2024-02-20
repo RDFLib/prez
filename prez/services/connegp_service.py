@@ -20,7 +20,7 @@ class ConnegpParser(BaseModel):
     requested_mediatypes: list[tuple[str, float]] | None = None
 
     class Config:
-        # Enable coercion of Starlette Headers and QueryParams to dict.
+        # Disabled to allow coercion of Starlette Headers and QueryParams to dict.
         strict = False
 
     @staticmethod
@@ -28,14 +28,14 @@ class ConnegpParser(BaseModel):
         # TODO: implement token resolution logic
         #       "there's a system_repo: Repo = Depends(get_system_repo)
         #       which you can SPARQL query to go from token -> uri"
-        raise TokenError("invalid token")
+        raise TokenError("Token Resolution not yet implemented")
 
-    def _tupilize(self, string, is_profile: bool = False) -> tuple[str, float]:
-        parts = string.split("q=")  # split out the weights
-        parts[0] = parts[0].strip(" ;")  # remove seperator character, and whitespace
-        if is_profile and not re.search(r"^<.*>$", parts[0]):  # if it doesn't look like a URI
+    def _tupilize(self, string: str, is_profile: bool = False) -> tuple[str, float]:
+        parts: list[str | float] = string.split("q=")  # split out the weighting
+        parts[0] = parts[0].strip(" ;")  # remove the seperator character, and any whitespace characters
+        if is_profile and not re.search(r"^<.*>$", parts[0]):  # If it doesn't look like a URI ...
             try:
-                parts[0] = self._resolve_token(parts[0])
+                parts[0] = self._resolve_token(parts[0])  # then try to resolve the token to a URI
             except TokenError as e:
                 log = logging.getLogger("prez")
                 log.error(
@@ -44,7 +44,7 @@ class ConnegpParser(BaseModel):
             parts.append(self.default_weighting)
         else:
             try:
-                parts[1] = float(parts[1])
+                parts[1] = float(parts[1])  # Type-check the seperated weighting
             except ValueError as e:
                 log = logging.getLogger("prez")
                 log.debug(
@@ -56,7 +56,7 @@ class ConnegpParser(BaseModel):
         return sorted(types, key=lambda x: x[1], reverse=True)
 
     def _parse_mediatypes(self) -> None:
-        raw_mediatypes: str = self.params.get("_media", "")
+        raw_mediatypes: str = self.params.get("_media", "")  # Prefer mediatypes declared in the QSA, as per the spec.
         if not raw_mediatypes:
             raw_mediatypes: str = self.headers.get("Accept", "")
         if raw_mediatypes:
@@ -64,7 +64,7 @@ class ConnegpParser(BaseModel):
             self.requested_mediatypes = self._prioritize(mediatypes)
 
     def _parse_profiles(self) -> None:
-        raw_profiles: str = self.params.get("_profile", "")
+        raw_profiles: str = self.params.get("_profile", "")  # Prefer profiles declared in the QSA, as per the spec.
         if not raw_profiles:
             raw_profiles: str = self.headers.get("Accept-Profile", "")
         if raw_profiles:
