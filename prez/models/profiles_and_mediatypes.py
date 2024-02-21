@@ -40,19 +40,19 @@ class ProfilesMediatypesInfo(BaseModel):
 
 
 async def populate_profile_and_mediatype(
-    profiles_mediatypes_model: ProfilesMediatypesInfo, system_repo: Repo
+    prof_model: ProfilesMediatypesInfo, system_repo: Repo
 ):
-    req_profiles = profiles_mediatypes_model.req_profiles
-    req_profiles_token = profiles_mediatypes_model.req_profiles_token
-    req_mediatypes = profiles_mediatypes_model.req_mediatypes
-    classes = profiles_mediatypes_model.classes
-    listing = profiles_mediatypes_model.listing
+    req_profiles = prof_model.req_profiles
+    req_profiles_token = prof_model.req_profiles_token
+    req_mediatypes = prof_model.req_mediatypes
+    classes = prof_model.classes
+    listing = prof_model.listing
     (
-        profiles_mediatypes_model.profile,
-        profiles_mediatypes_model.mediatype,
-        profiles_mediatypes_model.selected_class,
-        profiles_mediatypes_model.profile_headers,
-        profiles_mediatypes_model.avail_profile_uris,
+        prof_model.profile,
+        prof_model.mediatype,
+        prof_model.selected_class,
+        prof_model.profile_headers,
+        prof_model.avail_profile_uris,
     ) = await get_profiles_and_mediatypes(
         classes, system_repo, req_profiles, req_profiles_token, req_mediatypes, listing
     )

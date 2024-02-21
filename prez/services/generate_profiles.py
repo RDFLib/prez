@@ -79,7 +79,6 @@ async def get_profiles_and_mediatypes(
         listing,
     )
     log.debug(f"ConnegP query: {query}")
-    # response = profiles_graph_cache.query(query)
     response = await system_repo.send_queries([], [(None, query)])
     # log.debug(f"ConnegP response:{results_pretty_printer(response)}")
     if response[1][0][1] == []:

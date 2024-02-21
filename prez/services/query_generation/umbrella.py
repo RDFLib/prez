@@ -13,6 +13,9 @@ SHEXT = Namespace("http://example.com/shacl-extension#")
 
 
 class PrezQueryConstructor(BaseModel):
+    class Config:
+        arbitrary_types_allowed = True
+
     runtime_values: dict
     endpoint_graph: Graph
     profile_graph: Graph
@@ -40,15 +43,14 @@ class PrezQueryConstructor(BaseModel):
     runtime_vals_expanded: Optional[Dict] = {}
     merged_runtime_and_default_vals: Optional[Dict] = {}
 
-    class Config:
-        arbitrary_types_allowed = True
+
 
     def _expand_runtime_vars(self):
         for k, v in self.runtime_values.items():
             if k in ["limit", "offset", "q"]:
                 self.runtime_vals_expanded[k] = v
             elif v:
-                val = "".join(IRI(value=v).render())
+                val = IRI(value=v).to_string()
                 self.runtime_vals_expanded[k] = val
 
     def _merge_runtime_and_default_vars(self):
@@ -139,18 +141,16 @@ class PrezQueryConstructor(BaseModel):
                 inner_select_ggps.add_triple(order_by_triple)
 
             # otherwise just use what is provided by the endpoint shapes
-            if self.endpoint_shacl_triples:
-                tb = TriplesBlock(triples=self.endpoint_shacl_triples)
+            all_triples = self.endpoint_shacl_triples + self.cql_triples
+            if all_triples:
+                tb = TriplesBlock(triples=all_triples)
                 inner_select_ggps.add_pattern(tb)
 
-            if self.endpoint_shacl_gpnt:
-                for gpnt in self.endpoint_shacl_gpnt:
+            all_gpnt = self.endpoint_shacl_gpnt + self.cql_gpnt
+            if all_gpnt:
+                for gpnt in all_gpnt:
                     inner_select_ggps.add_pattern(gpnt)
 
-    def _add_ggp_to_main_ggps(self, ggp):
-        gorugp = GroupOrUnionGraphPattern(group_graph_patterns=[ggp])
-        gpnt = GraphPatternNotTriples(content=gorugp)
-        self.main_where_ggps.add_pattern(gpnt)
 
     def sh_rule_type_conversion(self, items: List):
         """
@@ -366,7 +366,10 @@ class PrezQueryConstructor(BaseModel):
 
         if bnode_depth > 1:
             process_bn_level(depth=2, max_depth=bnode_depth, outer_ggps=ggps)
-        self._add_ggp_to_main_ggps(container_ggp)
+        gorugp = GroupOrUnionGraphPattern(group_graph_patterns=[container_ggp])
+        gpnt = GraphPatternNotTriples(content=gorugp)
+        self.main_where_ggps.add_pattern(gpnt)
+
 
     def _parse_property_shapes(self, property_node, i):
         def process_path_object(path_obj: Union[URIRef, BNode]):

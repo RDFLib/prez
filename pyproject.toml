@@ -6,7 +6,7 @@ authors = ["Jamie Feiss <jamie.feiss@gmail.com>", "Nicholas Car <nick@kurrawong.
 
 [tool.poetry.dependencies]
 python = "^3.11"
-uvicorn = "^0.27.0"
+uvicorn = "^0.27.1"
 httpx = "^0.26.0"
 rdflib = "^7.0.0"
 connegp = { file = "connegp-0.1.6-py3-none-any.whl" }
@@ -14,13 +14,12 @@ async-lru = "^2.0.4"
 geojson-rewind = "^1.0.3"
 toml = "^0.10.2"
 fastapi = "^0.109.2"
-python-multipart = "^0.0.7"
 jinja2 = "^3.1.2"
 oxrdflib = "^0.3.6"
 pydantic = "^2.5.2"
-pydantic-settings = "^2.1.0"
-pyld = "^2.0.3"
-shapely = "^2.0.2"
+pydantic-settings = "^2.2.0"
+pyld = "^2.0.4"
+shapely = "^2.0.3"
 aiocache = "^0.12.2"
 rdframe = "^0.1.1"
 

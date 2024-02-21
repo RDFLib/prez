@@ -16,7 +16,7 @@ from prez.cache import (
 )
 from prez.config import settings
 from prez.repositories import PyoxigraphRepo, RemoteSparqlRepo, OxrdflibRepo
-from rdframe import CQLParser
+from prez.services.query_generation.node_selection.cql import CQLParser
 
 
 async def get_async_http_client():
@@ -110,7 +110,7 @@ async def cql_get_parser_dependency(request: Request):
             query = json.loads(request.query_params["filter"])
             context = json.load(
                 (
-                    Path(__file__).parent.parent / "temp" / "default_cql_context.json"
+                    Path(__file__).parent / "reference_data/cql/default_context.json"
                 ).open()
             )
             cql_parser = CQLParser(cql=query, context=context)
