@@ -2,6 +2,11 @@ import logging
 import re
 
 from pydantic import BaseModel
+from pyoxigraph import Store
+from rdflib import Graph
+
+from prez.cache import system_store, prefix_graph
+from prez.services.curie_functions import get_uri_for_curie_id
 
 
 class TokenError(Exception):
@@ -16,19 +21,36 @@ class ConnegpParser(BaseModel):
     headers: dict
     params: dict
     default_weighting: float = 1.0
+    system_store: Store | None = None  # facilitate tests overriding the system_store
+    prefix_graph: Graph | None = None  # facilitate tests overriding the prefix_graph
     requested_profiles: list[tuple[str, float]] | None = None
     requested_mediatypes: list[tuple[str, float]] | None = None
 
     class Config:
-        # Disabled to allow coercion of Starlette Headers and QueryParams to dict.
         strict = False
+        arbitrary_types_allowed = True
 
-    @staticmethod
-    def _resolve_token(token: str) -> str:
-        # TODO: implement token resolution logic
-        #       "there's a system_repo: Repo = Depends(get_system_repo)
-        #       which you can SPARQL query to go from token -> uri"
-        raise TokenError("Token Resolution not yet implemented")
+    def _resolve_token(self, token: str) -> str:
+        query_str: str = """
+        PREFIX dcterms: <http://purl.org/dc/terms/>
+        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+        PREFIX prof: <http://www.w3.org/ns/dx/prof/>
+        
+        SELECT ?s
+        WHERE {
+            ?s a prof:Profile .
+            ?s dcterms:identifier ?o .
+            FILTER(?o="<token>"^^xsd:token)
+        }
+        """.replace("<token>", token)
+        if self.system_store is None:
+            self.system_store = system_store
+        try:
+            result = {result[0].value for result in self.system_store.query(query_str)}.pop()
+        except KeyError:
+            raise TokenError(f"Token: '{token}' could not be resolved to URI")
+        uri = "<" + result + ">"
+        return uri
 
     def _tupilize(self, string: str, is_profile: bool = False) -> tuple[str, float]:
         parts: list[str | float] = string.split("q=")  # split out the weighting
@@ -38,10 +60,16 @@ class ConnegpParser(BaseModel):
                 parts[0] = self._resolve_token(parts[0])  # then try to resolve the token to a URI
             except TokenError as e:
                 log = logging.getLogger("prez")
-                log.error(
-                    f"Could not resolve URI for token '{parts[0]}': {e.args[0]}")
+                log.error(e.args[0])
+                try:  # if token resolution fails, try to resolve as a curie
+                    if self.prefix_graph is None:
+                        self.prefix_graph = prefix_graph
+                    result = str(self.prefix_graph.namespace_manager.expand_curie(parts[0]))
+                    parts[0] = "<" + result + ">"
+                except ValueError as e:
+                    log.error(e.args[0])
         if len(parts) == 1:
-            parts.append(self.default_weighting)
+            parts.append(self.default_weighting)  # If no weight given, set the default
         else:
             try:
                 parts[1] = float(parts[1])  # Type-check the seperated weighting
