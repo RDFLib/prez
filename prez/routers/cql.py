@@ -60,6 +60,7 @@ async def cql_get_endpoint(
         request=request,
         repo=repo,
         system_repo=system_repo,
+        hierarchy_level=1,
         endpoint_uri=endpoint_uri,
         page=page,
         per_page=per_page,

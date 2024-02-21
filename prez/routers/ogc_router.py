@@ -70,7 +70,6 @@ async def collection_listing(
         path_nodes={"path_node_1": IRI(value=path_node_1_uri)},
         page=page,
         per_page=per_page,
-        parent_uri=path_node_1_uri,
         search_term=search_term,
     )
 
@@ -104,7 +103,6 @@ async def item_listing(
         },
         page=page,
         per_page=per_page,
-        parent_uri=path_node_1_uri,
         search_term=search_term,
     )
 

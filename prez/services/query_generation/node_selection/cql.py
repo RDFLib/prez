@@ -23,7 +23,6 @@ class CQLParser:
         self.var_counter = 0
         self.query_object = None
         self.query_str = None
-        # self.prefixes = self.extract_prefixes(self.context)
 
     def generate_jsonld(self):
         combined = {"@context": self.context, **self.cql}
@@ -60,7 +59,7 @@ class CQLParser:
             where_clause=where,
             solution_modifier=solution_modifier,
         )
-        self.query_str = "".join(part for part in self.query_object.render())
+        self.query_str = self.query_object.to_string()
 
     def parse_logical_operators(
         self, element, existing_ggps=None
@@ -119,11 +118,11 @@ class CQLParser:
         else:
             ggps.triples_block = TriplesBlock(triples=[simple_triple])
 
-    def _append_graph_pattern(self, ggps, graph_pattern):
-        if ggps.graph_patterns_or_triples_blocks:
-            ggps.graph_patterns_or_triples_blocks.append(graph_pattern)
-        else:
-            ggps.graph_patterns_or_triples_blocks = [graph_pattern]
+    # def _append_graph_pattern(self, ggps, graph_pattern):
+    #     if ggps.graph_patterns_or_triples_blocks:
+    #         ggps.graph_patterns_or_triples_blocks.append(graph_pattern)
+    #     else:
+    #         ggps.graph_patterns_or_triples_blocks = [graph_pattern]
 
     def _handle_comparison(self, operator, args, existing_ggps=None):
         self.var_counter += 1
@@ -150,14 +149,16 @@ class CQLParser:
             gpnt = GraphPatternNotTriples(
                 content=InlineData(data_block=DataBlock(block=ildov))
             )
-            self._append_graph_pattern(ggps, gpnt)
+            ggps.add_pattern(gpnt)
+            # self._append_graph_pattern(ggps, gpnt)
         else:
             value_pe = PrimaryExpression(content=value)
             values_constraint = Filter.filter_relational(
                 focus=object_pe, comparators=value_pe, operator=operator
             )
             gpnt = GraphPatternNotTriples(content=values_constraint)
-            self._append_graph_pattern(ggps, gpnt)
+            ggps.add_pattern(gpnt)
+            # self._append_graph_pattern(ggps, gpnt)
 
         if inverse:
             self._add_triple(ggps, object, predicate, subject)
@@ -200,8 +201,9 @@ class CQLParser:
         bic = BuiltInCall(other_expressions=re)
         cons = Constraint(content=bic)
         filter_expr = Filter(constraint=cons)
-
-        self._append_graph_pattern(ggps, filter_expr)
+        filter_gpnt = GraphPatternNotTriples(content=filter_expr)
+        ggps.add_pattern(filter_gpnt)
+        # self._append_graph_pattern(ggps, filter_expr)
         yield ggps
 
     def _handle_spatial(self, operator, args, existing_ggps=None):
@@ -239,8 +241,9 @@ class CQLParser:
             fc = FunctionCall(iri=geom_func_iri, arg_list=arg_list)
 
             spatial_filter = Filter(constraint=Constraint(content=fc))
-            self._append_graph_pattern(ggps, spatial_filter)
-
+            filter_gpnt = GraphPatternNotTriples(content=spatial_filter)
+            ggps.add_pattern(filter_gpnt)
+            # self._append_graph_pattern(ggps, spatial_filter)
         yield ggps
 
     def _handle_in(self, args, existing_ggps=None):
@@ -277,8 +280,8 @@ class CQLParser:
         gpnt = GraphPatternNotTriples(
             content=InlineData(data_block=DataBlock(block=ildov))
         )
-        self._append_graph_pattern(ggps, gpnt)
-
+        ggps.add_pattern(gpnt)
+        # self._append_graph_pattern(ggps, gpnt)
         yield ggps
 
     def _extract_spatial_info(self, coordinates_list, args):
