@@ -18,7 +18,7 @@ def test_store() -> Store:
 @pytest.fixture(scope="module")
 def test_prefix_graph():
     graph = Graph(bind_namespaces="rdflib")
-    graph.bind("ex", "http://example.com/")
+    graph.bind("ex", "https://example.com/")
     return graph
 
 
@@ -70,7 +70,7 @@ def test_prefix_graph():
         [
             {"Accept-Profile": "ex:profile"},
             {},
-            [("<http://example.com/profile>", 1.0)],
+            [("<https://example.com/profile>", 1.0)],
             None  # Test that a resolvable curie is resolved
         ]
     ]
