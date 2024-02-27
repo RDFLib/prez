@@ -3,11 +3,14 @@ import re
 from textwrap import dedent
 
 from pydantic import BaseModel
+from pyoxigraph import Store
 from rdflib import Graph, Namespace, URIRef
 
+from prez.cache import prefix_graph, system_store
+from prez.dependencies import get_system_repo
 from prez.models.model_exceptions import NoProfilesException
 from prez.repositories.base import Repo
-from prez.services.curie_functions import get_curie_id_for_uri, get_uri_for_curie_id
+from prez.services.curie_functions import get_curie_id_for_uri
 
 logger = logging.getLogger("prez")
 
@@ -34,58 +37,64 @@ class NegotiatedPMTs(BaseModel):
     headers: dict
     params: dict
     classes: list[URIRef]
-    system_repo: Repo
     listing: bool = False
     default_weighting: float = 1.0
     requested_profiles: list[tuple[str, float]] | None = None
     requested_mediatypes: list[tuple[str, float]] | None = None
     available: list[dict] | None = None
     selected: dict | None = None
+    _system_store: Store | None = None
+    _prefix_graph: Graph | None = None
+    _system_repo: Repo | None = None
 
     class Config:
         arbitrary_types_allowed = True
 
     async def setup(self) -> bool:
+        if self._system_store is None:
+            self._system_store = system_store
+        if self._prefix_graph is None:
+            self._prefix_graph = prefix_graph
+        if self._system_repo is None:
+            self._system_repo = await get_system_repo(self._system_store)
         self.requested_profiles = await self._get_requested_profiles()
         self.requested_mediatypes = await self._get_requested_mediatypes()
         self.available = await self._get_available()
         self.selected = await self._get_selected()
         return True if self.selected else False
 
-    async def _resolve_token(self, token: str) -> str:
+    def _resolve_token(self, token: str) -> str:
         query_str: str = dedent("""
         PREFIX dcterms: <http://purl.org/dc/terms/>
         PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
         PREFIX prof: <http://www.w3.org/ns/dx/prof/>
     
-        SELECT ?profile
+        SELECT ?s
         WHERE {
-            ?profile a prof:Profile .
-            ?profile dcterms:identifier ?o .
+            ?s a prof:Profile .
+            ?s dcterms:identifier ?o .
             FILTER(?o="<token>"^^xsd:token)
         }
         """.replace("<token>", token))
         try:
-            _, results = await self.system_repo.send_queries([], [(None, query_str)])
-            result: str = results[0][1][0]["profile"]["value"]
-        except (KeyError, IndexError, ValueError):
+            result = {result[0].value for result in self._system_store.query(query_str)}.pop()
+        except KeyError:
             raise TokenError(f"Token: '{token}' could not be resolved to URI")
         uri = "<" + result + ">"
         return uri
 
-    async def _tupilize(self, string: str, is_profile: bool = False) -> tuple[str, float]:
+    def _tupilize(self, string: str, is_profile: bool = False) -> tuple[str, float]:
         parts: list[str | float] = string.split("q=")  # split out the weighting
         parts[0] = parts[0].strip(" ;")  # remove the seperator character, and any whitespace characters
         if is_profile and not re.search(r"^<.*>$", parts[0]):  # If it doesn't look like a URI ...
             try:
-                parts[0] = await self._resolve_token(parts[0])  # then try to resolve the token to a URI
+                parts[0] = self._resolve_token(parts[0])  # then try to resolve the token to a URI
             except TokenError as e:
                 logger.error(e.args[0])
                 try:  # if token resolution fails, try to resolve as a curie
-                    result = str(get_uri_for_curie_id(parts[0]))
+                    result = str(self._prefix_graph.namespace_manager.expand_curie(parts[0]))
                     parts[0] = "<" + result + ">"
                 except ValueError as e:
-                    parts[0] = ""  # if curie resolution failed, then the profile is invalid
                     logger.error(e.args[0])
         if len(parts) == 1:
             parts.append(self.default_weighting)  # If no weight given, set the default
@@ -93,7 +102,8 @@ class NegotiatedPMTs(BaseModel):
             try:
                 parts[1] = float(parts[1])  # Type-check the seperated weighting
             except ValueError as e:
-                logger.debug(
+                log = logging.getLogger("prez")
+                log.debug(
                     f"Could not cast q={parts[1]} as float. Defaulting to {self.default_weighting}. {e.args[0]}")
         return parts[0], parts[1]
 
@@ -104,18 +114,18 @@ class NegotiatedPMTs(BaseModel):
     async def _get_requested_profiles(self) -> list[tuple[str, float]] | None:
         raw_profiles: str = self.params.get("_profile", "")  # Prefer profiles declared in the QSA, as per the spec.
         if not raw_profiles:
-            raw_profiles: str = self.headers.get("accept-profile", "")
+            raw_profiles: str = self.headers.get("Accept-Profile", "")
         if raw_profiles:
-            profiles: list = [await self._tupilize(profile, is_profile=True) for profile in raw_profiles.split(",")]
+            profiles: list = [self._tupilize(profile, is_profile=True) for profile in raw_profiles.split(",")]
             return self._prioritize(profiles)
         return None
 
     async def _get_requested_mediatypes(self) -> list[tuple[str, float]] | None:
         raw_mediatypes: str = self.params.get("_media", "")  # Prefer mediatypes declared in the QSA, as per the spec.
         if not raw_mediatypes:
-            raw_mediatypes: str = self.headers.get("accept", "")
+            raw_mediatypes: str = self.headers.get("Accept", "")
         if raw_mediatypes:
-            mediatypes: list = [await self._tupilize(mediatype) for mediatype in raw_mediatypes.split(",")]
+            mediatypes: list = [self._tupilize(mediatype) for mediatype in raw_mediatypes.split(",")]
             return self._prioritize(mediatypes)
         return None
 
@@ -152,6 +162,7 @@ class NegotiatedPMTs(BaseModel):
             ]
         )
         headers = {
+            "Access-Control-Allow-Origin": "*",  # HACK: why is this specified here?
             "Content-Type": self.selected["mediatype"],
             "link": profile_header_links + mediatype_header_links
         }
@@ -161,10 +172,10 @@ class NegotiatedPMTs(BaseModel):
         prez = Namespace("https://prez.dev/")
         profile_class = prez.ListingProfile if self.listing else prez.ObjectProfile
         try:
-            requested_profile = self.requested_profiles[0][0]  # TODO: handle multiple requested profiles
+            requested_profile = self.requested_profiles[0]  # TODO: handle multiple requested profiles
         except TypeError as e:
             requested_profile = None
-            logger.debug(f"{e}. normally this just means no profiles were requested")
+            logger.debug(e)
 
         query = dedent(
             f"""
@@ -192,7 +203,7 @@ class NegotiatedPMTs(BaseModel):
                        altr-ext:hasResourceFormat ?format ;
                        dcterms:title ?title .\
               {f'?profile a {profile_class.n3()} .'}
-              {f'BIND(?profile={requested_profile} as ?req_profile)' if requested_profile else ''}
+              {f'BIND(?profile=<{requested_profile}> as ?req_profile)' if requested_profile else ''}
               BIND(EXISTS {{ ?shape sh:targetClass ?class ;
                                    altr-ext:hasDefaultProfile ?profile }} AS ?def_profile)
               {self._generate_mediatype_if_statements()}
@@ -230,7 +241,7 @@ class NegotiatedPMTs(BaseModel):
         return ifs
 
     async def _do_query(self, query: str) -> tuple[Graph, list]:
-        response = await self.system_repo.send_queries([], [(None, query)])
+        response = await self._system_repo.send_queries([], [(None, query)])
         if not response[1][0][1]:
             raise NoProfilesException(self.classes)
         return response
