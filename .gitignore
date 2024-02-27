@@ -7,3 +7,4 @@ __pycache__/
 .env*
 !.env-template
 http/
+/.python-version
