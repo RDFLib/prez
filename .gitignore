@@ -8,3 +8,5 @@ __pycache__/
 !.env-template
 http/
 /.python-version
+http/
+rdf/

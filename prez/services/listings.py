@@ -1,32 +1,28 @@
 import copy
 import logging
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 from fastapi import Request
 from fastapi.responses import PlainTextResponse
-from rdflib import URIRef, Literal
+from rdflib import Literal, URIRef
 from rdflib.namespace import RDF, SH
 from rdframe import CQLParser
 
-from prez.cache import profiles_graph_cache, endpoints_graph_cache
+from prez.cache import endpoints_graph_cache, profiles_graph_cache
 from prez.config import settings
-from prez.models.profiles_and_mediatypes import (
-    ProfilesMediatypesInfo,
-    populate_profile_and_mediatype,
-)
 from prez.reference_data.prez_ns import PREZ
 from prez.renderers.renderer import return_from_graph
+from prez.repositories import Repo
+from prez.services.connegp_service import NegotiatedPMTs
 from prez.services.link_generation import add_prez_links
 from prez.services.query_generation.classes import get_classes
 from prez.services.query_generation.count import CountQuery
-from prez.repositories import Repo
+from prez.services.query_generation.node_selection.endpoint_shacl import NodeShape
 from prez.services.query_generation.node_selection.search import SearchQuery
-from temp.grammar import *
-
 # from rdframe.grammar import SubSelect
 # from rdframe import PrezQueryConstructor
 from prez.services.query_generation.umbrella import PrezQueryConstructor
-from prez.services.query_generation.node_selection.endpoint_shacl import NodeShape
+from temp.grammar import *
 
 log = logging.getLogger(__name__)
 
@@ -66,21 +62,13 @@ async def listing_function(
         )
 
     # determine the relevant profile
-    prof_and_mt_info = ProfilesMediatypesInfo(
-        request=request, classes=target_classes, system_repo=system_repo, listing=True
-    )
-    await populate_profile_and_mediatype(prof_and_mt_info, system_repo)
-    selected_class, selected_profile = (
-        prof_and_mt_info.selected_class,
-        prof_and_mt_info.profile,
-    )
+    pmts = NegotiatedPMTs(**{"headers": request.headers, "params": request.query_params, "classes": target_classes})
+    success = await pmts.setup()
 
     runtime_values = {}
-    if prof_and_mt_info.profile == URIRef(
-        "http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"
-    ):
+    if pmts.selected["profile"] == URIRef("http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"):
         endpoint_uri = URIRef("https://prez.dev/endpoint/system/alt-profiles-listing")
-        runtime_values["selectedClass"] = prof_and_mt_info.selected_class
+        runtime_values["selectedClass"] = pmts.selected["class"]
 
     runtime_values["limit"] = per_page
     runtime_values["offset"] = (page - 1) * per_page
@@ -107,7 +95,7 @@ async def listing_function(
         profile_graph=profiles_graph_cache,
         listing_or_object="listing",
         endpoint_uri=endpoint_uri,
-        profile_uri=selected_profile,
+        profile_uri=pmts.selected["profile"],
         endpoint_shacl_triples=ns.triples_list,
         endpoint_shacl_gpnt=ns.gpnt_list,
         cql_triples=cql_triples_list,
@@ -129,13 +117,11 @@ async def listing_function(
         queries.append(search_query)
     else:
         queries.append(main_query)
-    req_mt = prof_and_mt_info.req_mediatypes
-    if req_mt:
-        if list(req_mt)[0] == "application/sparql-query":
-            return PlainTextResponse(queries[0], media_type="application/sparql-query")
+    if pmts.requested_mediatypes is not None and pmts.requested_mediatypes[0][0] == "application/sparql-query":
+        return PlainTextResponse(queries[0], media_type="application/sparql-query")
 
     # add a count query if it's an annotated mediatype
-    if "anot+" in prof_and_mt_info.mediatype and not search_term:
+    if "anot+" in pmts.selected["mediatype"] and not search_term:
         subselect = copy.deepcopy(query_constructor.inner_select)
         subselect.solution_modifier = None  # remove the limit and offset from the subselect so that we can get a count
         count_query = CountQuery(subselect=subselect).render()
@@ -150,15 +136,13 @@ async def listing_function(
         # if count_class:  # target_class may be unknown (None) for queries involving CQL
         #     queries.append(temp_listing_count(subselect, count_class))
 
-    if prof_and_mt_info.profile == URIRef(
-        "http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"
-    ):
+    if pmts.selected["profile"] == URIRef("http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"):
         item_graph, _ = await system_repo.send_queries(queries, [])
-        if "anot+" in prof_and_mt_info.mediatype:
+        if "anot+" in pmts.selected["mediatype"]:
             await add_prez_links(item_graph, system_repo, endpoint_structure)
     else:
         item_graph, _ = await repo.send_queries(queries, [])
-        if "anot+" in prof_and_mt_info.mediatype:
+        if "anot+" in pmts.selected["mediatype"]:
             await add_prez_links(item_graph, repo, endpoint_structure)
     # count search results - hard to do in SPARQL as the SELECT part of the query is NOT aggregated
     if search_term:
@@ -166,10 +150,10 @@ async def listing_function(
         item_graph.add((PREZ.SearchResult, PREZ["count"], Literal(count)))
     return await return_from_graph(
         item_graph,
-        prof_and_mt_info.mediatype,
-        selected_profile,
-        prof_and_mt_info.profile_headers,
-        prof_and_mt_info.selected_class,
+        pmts.selected["mediatype"],
+        pmts.selected["profile"],
+        pmts.generate_response_headers(),
+        pmts.selected["class"],
         repo,
     )
 

@@ -9,12 +9,9 @@ from starlette.requests import Request
 from starlette.responses import StreamingResponse
 
 from prez.dependencies import get_repo, get_system_repo
-from prez.models.profiles_and_mediatypes import (
-    ProfilesMediatypesInfo,
-    populate_profile_and_mediatype,
-)
 from prez.renderers.renderer import return_annotated_rdf
 from prez.repositories import Repo
+from prez.services.connegp_service import NegotiatedPMTs
 
 PREZ = Namespace("https://prez.dev/")
 
@@ -31,33 +28,27 @@ async def sparql_endpoint(
     repo: Repo = Depends(get_repo),
     system_repo: Repo = Depends(get_system_repo),
 ):
-    request_mediatype = request.headers.get("accept").split(",")[
-        0
-    ]  # can't default the MT where not provided as it could be
-    # graph (CONSTRUCT like queries) or tabular (SELECT queries)
-
-    # Intercept "+anot" mediatypes
-    if "anot+" in request_mediatype:
-        prof_and_mt_info = ProfilesMediatypesInfo(
-            request=request,
-            classes=frozenset([PREZ.SPARQLQuery]),
-            system_repo=system_repo,
-        )
-        await populate_profile_and_mediatype(prof_and_mt_info, system_repo)
-        non_anot_mediatype = request_mediatype.replace("anot+", "")
+    pmts = NegotiatedPMTs(**{
+        "headers": request.headers,
+        "params": request.query_params,
+        "classes": [PREZ.SPARQlQuery],
+        "system_repo": system_repo
+    })
+    if pmts.requested_mediatypes is not None and "anot+" in pmts.requested_mediatypes[0][0]:
+        non_anot_mediatype = pmts.requested_mediatypes[0][0].replace("anot+", "")
         request._headers = Headers({**request.headers, "accept": non_anot_mediatype})
         response = await repo.sparql(request)
         await response.aread()
         g = Graph()
         g.parse(data=response.text, format=non_anot_mediatype)
-        graph = await return_annotated_rdf(g, prof_and_mt_info.profile)
+        graph = await return_annotated_rdf(g, pmts.selected["profile"])
         content = io.BytesIO(
             graph.serialize(format=non_anot_mediatype, encoding="utf-8")
         )
         return StreamingResponse(
             content=content,
             media_type=non_anot_mediatype,
-            headers=prof_and_mt_info.profile_headers,
+            headers=pmts.generate_response_headers()
         )
     else:
         query_result = await repo.sparql(query, request.headers.raw)
