@@ -85,6 +85,7 @@ class NegotiatedPMTs(BaseModel):
                     result = str(get_uri_for_curie_id(parts[0]))
                     parts[0] = "<" + result + ">"
                 except ValueError as e:
+                    parts[0] = ""  # if curie resolution failed, then the profile is invalid
                     logger.error(e.args[0])
         if len(parts) == 1:
             parts.append(self.default_weighting)  # If no weight given, set the default
