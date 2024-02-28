@@ -148,4 +148,4 @@ async def test_connegp(headers, params, classes, listing, expected_selected, tes
     pmts = NegotiatedPMTs(headers=headers, params=params, classes=classes, listing=listing, system_repo=test_repo)
     success = await pmts.setup()
     assert success
-    assert expected_selected == pmts.selected
+    assert pmts.selected == expected_selected
