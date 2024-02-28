@@ -260,23 +260,6 @@ files = [
 ]
 
 [[package]]
-name = "connegp"
-version = "0.1.6"
-description = "Content negotiation by profile"
-optional = false
-python-versions = ">=3.8,<4.0"
-files = [
-    {file = "connegp-0.1.6-py3-none-any.whl", hash = "sha256:8d4f7f605d568032243e7cfa84c22bedae66e28651acb58af82b4b43d3de899f"},
-]
-
-[package.dependencies]
-pydantic = ">=1.8.2,<3.0.0"
-
-[package.source]
-type = "file"
-url = "connegp-0.1.6-py3-none-any.whl"
-
-[[package]]
 name = "coverage"
 version = "7.4.3"
 description = "Code coverage measurement for Python"
@@ -1206,20 +1189,6 @@ files = [
 cli = ["click (>=5.0)"]
 
 [[package]]
-name = "python-multipart"
-version = "0.0.7"
-description = "A streaming multipart parser for Python"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "python_multipart-0.0.7-py3-none-any.whl", hash = "sha256:b1fef9a53b74c795e2347daac8c54b252d9e0df9c619712691c1cc8021bd3c49"},
-    {file = "python_multipart-0.0.7.tar.gz", hash = "sha256:288a6c39b06596c1b988bb6794c6fbc80e6c369e35e5062637df256bee0c9af9"},
-]
-
-[package.extras]
-dev = ["atomicwrites (==1.2.1)", "attrs (==19.2.0)", "coverage (==6.5.0)", "hatch", "invoke (==2.2.0)", "more-itertools (==4.3.0)", "pbr (==4.3.0)", "pluggy (==1.0.0)", "py (==1.11.0)", "pytest (==7.2.0)", "pytest-cov (==4.0.0)", "pytest-timeout (==2.1.0)", "pyyaml (==5.1)"]
-
-[[package]]
 name = "pyyaml"
 version = "6.0.1"
 description = "YAML parser and emitter for Python"
@@ -1592,4 +1561,4 @@ test = ["pytest (>=6.0.0)", "setuptools (>=65)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "f9d999e3c9ac329c3cbd40277b79312a743182e39ef1ca1f2db89b48f9cb7db8"
+content-hash = "86ae28eb5f2c4f08bc245ca34113f8d401778b377ca1050aa5d25565ff7ebe1e"
