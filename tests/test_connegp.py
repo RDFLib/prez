@@ -38,7 +38,8 @@ def test_prefix_graph():
         ],
     ]
 )
-def test_connegp(headers, params, classes, expected_selected, test_store, test_prefix_graph):
+@pytest.mark.asyncio
+async def test_connegp(headers, params, classes, expected_selected, test_store, test_prefix_graph):
     pmts = NegotiatedPMTs(**{
         "headers": headers,
         "params": params,
@@ -46,6 +47,6 @@ def test_connegp(headers, params, classes, expected_selected, test_store, test_p
         "_system_store": test_store,
         "_prefix_graph": test_prefix_graph
     })
-    pmts.setup()
+    success = await pmts.setup()
 
     assert pmts.selected == expected_selected
