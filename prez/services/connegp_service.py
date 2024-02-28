@@ -63,7 +63,7 @@ class NegotiatedPMTs(BaseModel):
         self.selected = await self._get_selected()
         return True if self.selected else False
 
-    def _resolve_token(self, token: str) -> str:
+    async def _resolve_token(self, token: str) -> str:
         query_str: str = dedent("""
         PREFIX dcterms: <http://purl.org/dc/terms/>
         PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
@@ -77,18 +77,18 @@ class NegotiatedPMTs(BaseModel):
         }
         """.replace("<token>", token))
         try:
-            result = {result[0].value for result in self._system_store.query(query_str)}.pop()
+            result = {result[0].value for result in self._system_store.query(query_str)}.pop()  # TODO: use _system_repo.send_queries instead
         except KeyError:
             raise TokenError(f"Token: '{token}' could not be resolved to URI")
         uri = "<" + result + ">"
         return uri
 
-    def _tupilize(self, string: str, is_profile: bool = False) -> tuple[str, float]:
+    async def _tupilize(self, string: str, is_profile: bool = False) -> tuple[str, float]:
         parts: list[str | float] = string.split("q=")  # split out the weighting
         parts[0] = parts[0].strip(" ;")  # remove the seperator character, and any whitespace characters
         if is_profile and not re.search(r"^<.*>$", parts[0]):  # If it doesn't look like a URI ...
             try:
-                parts[0] = self._resolve_token(parts[0])  # then try to resolve the token to a URI
+                parts[0] = await self._resolve_token(parts[0])  # then try to resolve the token to a URI
             except TokenError as e:
                 logger.error(e.args[0])
                 try:  # if token resolution fails, try to resolve as a curie
@@ -114,18 +114,18 @@ class NegotiatedPMTs(BaseModel):
     async def _get_requested_profiles(self) -> list[tuple[str, float]] | None:
         raw_profiles: str = self.params.get("_profile", "")  # Prefer profiles declared in the QSA, as per the spec.
         if not raw_profiles:
-            raw_profiles: str = self.headers.get("Accept-Profile", "")
+            raw_profiles: str = self.headers.get("accept-profile", "")
         if raw_profiles:
-            profiles: list = [self._tupilize(profile, is_profile=True) for profile in raw_profiles.split(",")]
+            profiles: list = [await self._tupilize(profile, is_profile=True) for profile in raw_profiles.split(",")]
             return self._prioritize(profiles)
         return None
 
     async def _get_requested_mediatypes(self) -> list[tuple[str, float]] | None:
         raw_mediatypes: str = self.params.get("_media", "")  # Prefer mediatypes declared in the QSA, as per the spec.
         if not raw_mediatypes:
-            raw_mediatypes: str = self.headers.get("Accept", "")
+            raw_mediatypes: str = self.headers.get("accept", "")
         if raw_mediatypes:
-            mediatypes: list = [self._tupilize(mediatype) for mediatype in raw_mediatypes.split(",")]
+            mediatypes: list = [await self._tupilize(mediatype) for mediatype in raw_mediatypes.split(",")]
             return self._prioritize(mediatypes)
         return None
 
@@ -162,7 +162,6 @@ class NegotiatedPMTs(BaseModel):
             ]
         )
         headers = {
-            "Access-Control-Allow-Origin": "*",  # HACK: why is this specified here?
             "Content-Type": self.selected["mediatype"],
             "link": profile_header_links + mediatype_header_links
         }

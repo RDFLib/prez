@@ -6,17 +6,13 @@ from fastapi import Request
 from fastapi.responses import PlainTextResponse
 from rdflib import URIRef, Literal
 from rdflib.namespace import RDF, SH
-from rdframe import CQLParser
 
 from prez.cache import profiles_graph_cache, endpoints_graph_cache
 from prez.config import settings
-from prez.models.profiles_and_mediatypes import (
-    ProfilesMediatypesInfo,
-    populate_profile_and_mediatype,
-)
 from prez.reference_data.prez_ns import PREZ
 from prez.renderers.renderer import return_from_graph
 from prez.repositories import Repo
+from prez.services.connegp_service import NegotiatedPMTs
 from prez.services.link_generation import add_prez_links
 from prez.services.query_generation.classes import get_classes
 from prez.services.query_generation.count import CountQuery
@@ -67,15 +63,17 @@ async def listing_function(
         elif search_term:
             target_classes = frozenset([PREZ.SearchResult])
     # determine the relevant profile
-    pmts = NegotiatedPMTs(**{"headers": request.headers, "params": request.query_params, "classes": target_classes})
+    pmts = NegotiatedPMTs(**{"headers": request.headers, "params": request.query_params, "classes": target_classes, "listing": True})
     success = await pmts.setup()
+    if not success:
+        log.error("ConnegP Error. NegotiatedPMTs.setup() was not successful")
 
     runtime_values = {}
     if pmts.selected["profile"] == URIRef("http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"):
         ns = NodeShape(
             uri=URIRef("http://example.org/ns#AltProfilesForListing"),
             graph=endpoints_graph_cache,
-            path_nodes={"path_node_1": IRI(value=prof_and_mt_info.selected_class)}
+            path_nodes={"path_node_1": IRI(value=pmts.selected["class"])}
         )
         ns_triples = ns.triples_list
         ns_gpnt = ns.gpnt_list
@@ -108,7 +106,7 @@ async def listing_function(
         listing_or_object="listing",
         endpoint_uri=endpoint_uri,
         profile_uri=pmts.selected["profile"],
-        endpoint_shacl_triples=ns.triples,
+        endpoint_shacl_triples=ns_triples,
         endpoint_shacl_gpnt=ns_gpnt,
         cql_triples=cql_triples_list,
         cql_gpnt=cql_gpnt_list,
