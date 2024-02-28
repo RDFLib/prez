@@ -16,7 +16,6 @@ RUN apk add --no-cache \
       bash \
       gcc \
       libffi-dev \
-      librdkafka-dev \
       musl-dev \
       pipx \
       python3-dev
@@ -42,9 +41,10 @@ ENV VIRTUAL_ENV=${VIRTUAL_ENV} \
 
 COPY --from=base ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
-RUN apk add --no-cache \
-      bash \
-      librdkafka
+RUN apk update && \
+    apk upgrade --no-cache && \
+    apk add --no-cache \
+      bash
 
 WORKDIR /app
 COPY . .
