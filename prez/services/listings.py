@@ -29,17 +29,17 @@ log = logging.getLogger(__name__)
 
 
 async def listing_function(
-    request: Request,
-    repo: Repo,
-    system_repo: Repo,
-    endpoint_uri: URIRef,
-    hierarchy_level: int,
-    path_nodes: Dict[str, Var | IRI] = None,
-    page: int = 1,
-    per_page: int = 20,
-    cql_parser: CQLParser = None,
-    search_term: Optional[str] = None,
-    endpoint_structure: Tuple[str] = settings.endpoint_structure,
+        request: Request,
+        repo: Repo,
+        system_repo: Repo,
+        endpoint_uri: URIRef,
+        hierarchy_level: int,
+        path_nodes: Dict[str, Var | IRI] = None,
+        page: int = 1,
+        per_page: int = 20,
+        cql_parser: CQLParser = None,
+        search_term: Optional[str] = None,
+        endpoint_structure: Tuple[str] = settings.endpoint_structure,
 ):
     """
     # determine the relevant node selection part of the query - from SHACL, CQL, Search
@@ -62,8 +62,10 @@ async def listing_function(
             target_classes = frozenset([PREZ.CQLObjectList])
         elif search_term:
             target_classes = frozenset([PREZ.SearchResult])
+
     # determine the relevant profile
-    pmts = NegotiatedPMTs(**{"headers": request.headers, "params": request.query_params, "classes": target_classes, "listing": True})
+    pmts = NegotiatedPMTs(headers=request.headers, params=request.query_params, classes=target_classes, listing=True,
+                          system_repo=system_repo)
     success = await pmts.setup()
     if not success:
         log.error("ConnegP Error. NegotiatedPMTs.setup() was not successful")
@@ -168,7 +170,7 @@ async def listing_function(
 
 
 async def get_shacl_node_selection(
-    endpoint_uri, hierarchy_level, path_nodes, repo, system_repo
+        endpoint_uri, hierarchy_level, path_nodes, repo, system_repo
 ):
     """
     Determines the relevant nodeshape based on the endpoint, hierarchy level, and parent URI

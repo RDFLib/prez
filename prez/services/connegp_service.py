@@ -3,14 +3,11 @@ import re
 from textwrap import dedent
 
 from pydantic import BaseModel
-from pyoxigraph import Store
 from rdflib import Graph, Namespace, URIRef
 
-from prez.cache import prefix_graph, system_store
-from prez.dependencies import get_system_repo
 from prez.models.model_exceptions import NoProfilesException
 from prez.repositories.base import Repo
-from prez.services.curie_functions import get_curie_id_for_uri
+from prez.services.curie_functions import get_curie_id_for_uri, get_uri_for_curie_id
 
 logger = logging.getLogger("prez")
 
@@ -37,26 +34,18 @@ class NegotiatedPMTs(BaseModel):
     headers: dict
     params: dict
     classes: list[URIRef]
+    system_repo: Repo
     listing: bool = False
     default_weighting: float = 1.0
     requested_profiles: list[tuple[str, float]] | None = None
     requested_mediatypes: list[tuple[str, float]] | None = None
     available: list[dict] | None = None
     selected: dict | None = None
-    _system_store: Store | None = None
-    _prefix_graph: Graph | None = None
-    _system_repo: Repo | None = None
 
     class Config:
         arbitrary_types_allowed = True
 
     async def setup(self) -> bool:
-        if self._system_store is None:
-            self._system_store = system_store
-        if self._prefix_graph is None:
-            self._prefix_graph = prefix_graph
-        if self._system_repo is None:
-            self._system_repo = await get_system_repo(self._system_store)
         self.requested_profiles = await self._get_requested_profiles()
         self.requested_mediatypes = await self._get_requested_mediatypes()
         self.available = await self._get_available()
@@ -69,16 +58,17 @@ class NegotiatedPMTs(BaseModel):
         PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
         PREFIX prof: <http://www.w3.org/ns/dx/prof/>
     
-        SELECT ?s
+        SELECT ?profile
         WHERE {
-            ?s a prof:Profile .
-            ?s dcterms:identifier ?o .
+            ?profile a prof:Profile .
+            ?profile dcterms:identifier ?o .
             FILTER(?o="<token>"^^xsd:token)
         }
         """.replace("<token>", token))
         try:
-            result = {result[0].value for result in self._system_store.query(query_str)}.pop()  # TODO: use _system_repo.send_queries instead
-        except KeyError:
+            _, results = await self.system_repo.send_queries([], [(None, query_str)])
+            result: str = results[0][1][0]["profile"]["value"]
+        except (KeyError, IndexError, ValueError):
             raise TokenError(f"Token: '{token}' could not be resolved to URI")
         uri = "<" + result + ">"
         return uri
@@ -92,7 +82,7 @@ class NegotiatedPMTs(BaseModel):
             except TokenError as e:
                 logger.error(e.args[0])
                 try:  # if token resolution fails, try to resolve as a curie
-                    result = str(self._prefix_graph.namespace_manager.expand_curie(parts[0]))
+                    result = str(get_uri_for_curie_id(parts[0]))
                     parts[0] = "<" + result + ">"
                 except ValueError as e:
                     logger.error(e.args[0])
@@ -102,8 +92,7 @@ class NegotiatedPMTs(BaseModel):
             try:
                 parts[1] = float(parts[1])  # Type-check the seperated weighting
             except ValueError as e:
-                log = logging.getLogger("prez")
-                log.debug(
+                logger.debug(
                     f"Could not cast q={parts[1]} as float. Defaulting to {self.default_weighting}. {e.args[0]}")
         return parts[0], parts[1]
 
@@ -240,7 +229,7 @@ class NegotiatedPMTs(BaseModel):
         return ifs
 
     async def _do_query(self, query: str) -> tuple[Graph, list]:
-        response = await self._system_repo.send_queries([], [(None, query)])
+        response = await self.system_repo.send_queries([], [(None, query)])
         if not response[1][0][1]:
             raise NoProfilesException(self.classes)
         return response

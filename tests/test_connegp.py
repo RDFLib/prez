@@ -2,51 +2,56 @@ from pathlib import Path
 
 import pytest
 from pyoxigraph import Store
-from rdflib import Graph, URIRef
+from pyoxigraph.pyoxigraph import Store
+from rdflib import URIRef
 
+from prez.app import app
+from prez.dependencies import get_repo
+from prez.repositories import PyoxigraphRepo, Repo
 from prez.services.connegp_service import NegotiatedPMTs
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def test_store() -> Store:
+    # Create a new pyoxigraph Store
     store = Store()
-    profiles = Path(__file__).parent / "data" / "profiles" / "remote_profile.ttl"
-    store.load(profiles, mime_type="text/turtle")
+
+    file = Path(__file__).parent / "data/profiles/ogc_records_profile.ttl"
+    store.load(file.read_bytes(), "text/turtle")
+
     return store
 
 
-@pytest.fixture(scope="module")
-def test_prefix_graph():
-    graph = Graph(bind_namespaces="rdflib")
-    graph.bind("ex", "https://example.com/")
-    return graph
+@pytest.fixture(scope="session")
+def test_repo(test_store: Store) -> Repo:
+    # Create a PyoxigraphQuerySender using the test_store
+    return PyoxigraphRepo(test_store)
 
 
 @pytest.mark.parametrize(
     "headers, params, classes, expected_selected",
     [
         [
-            {"Accept-Profile": "<default>, <alternate>;q=0.9"},
-            {"_media": "text/anot+turtle, text/turtle;q=0.9"},
-            [URIRef("<http://www.w3.org/ns/dx/prof/profile>")],
+            {},
+            {},
+            [URIRef("http://www.w3.org/ns/dcat#Catalog")],
             {
-                "profile": "",
-                "title": "",
-                "mediatype": "",
-                "class": ""
+                "profile": URIRef("https://prez.dev/OGCItemProfile"),
+                "title": "OGC Object Profile",
+                "mediatype": "text/anot+turtle",
+                "class": "http://www.w3.org/ns/dcat#Catalog"
             }
         ],
     ]
 )
 @pytest.mark.asyncio
-async def test_connegp(headers, params, classes, expected_selected, test_store, test_prefix_graph):
-    pmts = NegotiatedPMTs(**{
-        "headers": headers,
-        "params": params,
-        "classes": classes,
-        "_system_store": test_store,
-        "_prefix_graph": test_prefix_graph
-    })
-    success = await pmts.setup()
+async def test_connegp(headers, params, classes, expected_selected, test_repo):
+    def override_get_repo():
+        return test_repo
 
+    app.dependency_overrides[get_repo] = override_get_repo
+
+    pmts = NegotiatedPMTs(headers=headers, params=params, classes=classes, system_repo=test_repo)
+    success = await pmts.setup()
+    assert success
     assert pmts.selected == expected_selected
