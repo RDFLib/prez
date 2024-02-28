@@ -171,10 +171,10 @@ class NegotiatedPMTs(BaseModel):
         prez = Namespace("https://prez.dev/")
         profile_class = prez.ListingProfile if self.listing else prez.ObjectProfile
         try:
-            requested_profile = self.requested_profiles[0]  # TODO: handle multiple requested profiles
+            requested_profile = self.requested_profiles[0][0]  # TODO: handle multiple requested profiles
         except TypeError as e:
             requested_profile = None
-            logger.debug(e)
+            logger.debug(f"{e}. normally this just means no profiles were requested")
 
         query = dedent(
             f"""
@@ -202,7 +202,7 @@ class NegotiatedPMTs(BaseModel):
                        altr-ext:hasResourceFormat ?format ;
                        dcterms:title ?title .\
               {f'?profile a {profile_class.n3()} .'}
-              {f'BIND(?profile=<{requested_profile}> as ?req_profile)' if requested_profile else ''}
+              {f'BIND(?profile={requested_profile} as ?req_profile)' if requested_profile else ''}
               BIND(EXISTS {{ ?shape sh:targetClass ?class ;
                                    altr-ext:hasDefaultProfile ?profile }} AS ?def_profile)
               {self._generate_mediatype_if_statements()}
