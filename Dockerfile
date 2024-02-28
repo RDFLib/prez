@@ -1,53 +1,52 @@
-ARG PREZ_VERSION
+ARG PYTHON_VERSION=3.12
+ARG POETRY_VERSION=1.8.1
+ARG VIRTUAL_ENV=/opt/venv
 
-# Creating a python base with shared environment variables
-FROM python:3.11-slim-buster as builder-base
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=off \
-    PIP_DISABLE_PIP_VERSION_CHECK=on \
-    PIP_DEFAULT_TIMEOUT=100 \
-    POETRY_HOME="/opt/poetry" \
-    POETRY_VIRTUALENVS_IN_PROJECT=true \
-    POETRY_NO_INTERACTION=1 \
-    PYSETUP_PATH="/opt/pysetup" \
-    VENV_PATH="/opt/pysetup/.venv"
+#
+# Base
+#
+FROM python:${PYTHON_VERSION}-alpine AS base
+ARG POETRY_VERSION
+ARG VIRTUAL_ENV
+ENV VIRTUAL_ENV=${VIRTUAL_ENV} \
+    POETRY_VIRTUALENVS_CREATE=false \
+    PATH=${VIRTUAL_ENV}/bin:/root/.local/bin:${PATH}
 
-ENV PATH="$POETRY_HOME/bin:$VENV_PATH/bin:$PATH"
+RUN apk add --no-cache \
+      bash \
+      gcc \
+      libffi-dev \
+      librdkafka-dev \
+      musl-dev \
+      pipx \
+      python3-dev
 
-# builder-base is used to build dependencies
-RUN buildDeps="build-essential" \
-    && apt-get update \
-    && apt-get install --no-install-recommends -y \
-        curl \
-        git \
-    && apt-get install -y --no-install-recommends $buildDeps \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Poetry - respects $POETRY_VERSION & $POETRY_HOME
-ENV POETRY_VERSION=1.4.0
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN curl -sSL https://install.python-poetry.org | python && \
-    chmod a+x /opt/poetry/bin/poetry
+RUN pipx install poetry==${POETRY_VERSION}
 
 WORKDIR /app
-COPY poetry.lock pyproject.toml connegp-0.1.5-py3-none-any.whl ./
-RUN poetry install --only main --no-root --no-ansi
 
-FROM python:3.11-slim-buster
+COPY . .
 
-ARG PREZ_VERSION
-ENV PREZ_VERSION=${PREZ_VERSION}
+RUN poetry build
+RUN python -m venv --system-site-packages /opt/venv
+RUN pip install --no-cache-dir dist/*.whl
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PATH="/app/.venv/bin:$PATH"
+#
+# Final
+#
+FROM python:${PYTHON_VERSION}-alpine AS final
+
+ARG VIRTUAL_ENV
+ENV VIRTUAL_ENV=${VIRTUAL_ENV} \
+    PATH=${VIRTUAL_ENV}/bin:/root/.local/bin:${PATH}
+
+COPY --from=base ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+
+RUN apk add --no-cache \
+      bash \
+      librdkafka
+
 WORKDIR /app
-COPY ./prez /app/prez
-# copy the pyproject.toml as the application reads the version from here
-COPY pyproject.toml .
-
-# copy the venv folder from builder image
-COPY --from=builder-base /app/.venv ./.venv
+COPY . .
 
 ENTRYPOINT uvicorn prez.app:app --host=${HOST:-0.0.0.0} --port=${PORT:-8000} --proxy-headers
