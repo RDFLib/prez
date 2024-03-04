@@ -18,7 +18,7 @@ def test_store() -> Store:
     # Create a new pyoxigraph Store
     store = Store()
 
-    file = Path("../test_data/catprez.ttl")
+    file = Path(__file__).parent.parent / "test_data/catprez.ttl"
     store.load(file.read_bytes(), "text/turtle")
 
     return store
