@@ -1,11 +1,11 @@
 import logging
+import time
 from textwrap import dedent
 
 import uvicorn
-from fastapi import FastAPI
 from rdflib import Graph
 from starlette.middleware.cors import CORSMiddleware
-
+from fastapi import FastAPI
 from prez.config import settings
 from prez.dependencies import (
     get_async_http_client,
@@ -13,7 +13,7 @@ from prez.dependencies import (
     load_local_data_to_oxigraph,
     get_oxrdflib_store,
     get_system_store,
-    load_system_data_to_oxigraph,
+    load_system_data_to_oxigraph, get_annotations_store, load_annotations_data_to_oxigraph,
 )
 from prez.models.model_exceptions import (
     ClassNotFoundException,
@@ -34,7 +34,7 @@ from prez.services.app_service import (
     create_endpoints_graph,
     populate_api_info,
     add_prefixes_to_prefix_graph,
-    add_common_context_ontologies_to_tbox_cache,
+    # add_common_context_ontologies_to_tbox_cache,
 )
 from prez.services.exception_catchers import (
     catch_400,
@@ -89,18 +89,6 @@ app.add_middleware(
 )
 
 
-# def prez_open_api_metadata():
-#     return get_openapi(
-#         title=settings.prez_title,
-#         version=settings.prez_version,
-#         description=settings.prez_desc,
-#         routes=app.routes,
-#     )
-#
-#
-# app.openapi = prez_open_api_metadata
-
-
 @app.on_event("startup")
 async def app_startup():
     """
@@ -108,6 +96,7 @@ async def app_startup():
     are available. Initial caching can be triggered within the try block. NB this function does not check that data is
     appropriately configured at the SPARQL endpoint(s), only that the SPARQL endpoint(s) are reachable.
     """
+    a = time.time()
     setup_logger(settings)
     log = logging.getLogger("prez")
     log.info("Starting up")
@@ -133,11 +122,14 @@ async def app_startup():
     await create_endpoints_graph(app.state.repo)
     await count_objects(app.state.repo)
     await populate_api_info()
-    await add_common_context_ontologies_to_tbox_cache()
 
     app.state.pyoxi_system_store = get_system_store()
     await load_system_data_to_oxigraph(app.state.pyoxi_system_store)
 
+    app.state.pyoxi_annotations_store = get_annotations_store()
+    await load_annotations_data_to_oxigraph(app.state.pyoxi_annotations_store)
+
+    log.info(f"Startup took {time.time() - a} seconds")
 
 @app.on_event("shutdown")
 async def app_shutdown():

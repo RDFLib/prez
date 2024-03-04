@@ -1,11 +1,10 @@
 import json
 from pathlib import Path
-from typing import Optional
 
 import httpx
 from fastapi import Depends, Request, HTTPException
-from pydantic import BaseModel
 from pyoxigraph import Store
+from rdflib import Dataset
 
 from prez.cache import (
     store,
@@ -13,6 +12,8 @@ from prez.cache import (
     system_store,
     profiles_graph_cache,
     endpoints_graph_cache,
+    annotations_store,
+    annotations_repo
 )
 from prez.config import settings
 from prez.repositories import PyoxigraphRepo, RemoteSparqlRepo, OxrdflibRepo
@@ -34,6 +35,10 @@ def get_pyoxi_store():
 
 def get_system_store():
     return system_store
+
+
+def get_annotations_store():
+    return annotations_store
 
 
 def get_oxrdflib_store():
@@ -63,6 +68,14 @@ async def get_system_repo(
     return PyoxigraphRepo(pyoxi_store)
 
 
+async def get_annotations_repo():
+    """
+    A pyoxigraph Store with labels, descriptions etc. from Context Ontologies
+    """
+    return annotations_repo
+
+
+
 async def load_local_data_to_oxigraph(store: Store):
     """
     Loads all the data from the local data directory into the local SPARQL endpoint
@@ -83,8 +96,20 @@ async def load_system_data_to_oxigraph(store: Store):
     store.load(endpoints_bytes, "application/n-triples")
 
 
-class CQLRequest(BaseModel):
-    cql: Optional[dict]
+async def load_annotations_data_to_oxigraph(store: Store):
+    """
+    Loads all the data from the local data directory into the local SPARQL endpoint
+    """
+    relevant_predicates = settings.label_predicates + settings.description_predicates + settings.provenance_predicates
+    raw_g = Dataset(default_union=True)
+    for file in (Path(__file__).parent / "reference_data/context_ontologies").glob("*"):
+        raw_g.parse(file)
+    relevant_g = Dataset(default_union=True)
+    relevant_triples = raw_g.triples_choices((None, relevant_predicates, None))
+    for triple in relevant_triples:
+        relevant_g.add(triple)
+    file_bytes = relevant_g.serialize(format="nt", encoding="utf-8")
+    store.load(file_bytes, "application/n-triples")
 
 
 async def cql_post_parser_dependency(request: Request):

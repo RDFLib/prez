@@ -1,7 +1,11 @@
 from pyoxigraph.pyoxigraph import Store
 from rdflib import Graph, ConjunctiveGraph, Dataset
+from aiocache import SimpleMemoryCache, Cache
+
+from prez.repositories import PyoxigraphRepo
 
 tbox_cache = Graph()
+tbox_cache_aio = Cache.MEMORY
 
 profiles_graph_cache = ConjunctiveGraph()
 profiles_graph_cache.bind("prez", "https://prez.dev/")
@@ -25,5 +29,8 @@ search_methods = {}
 store = Store()
 
 system_store = Store()
+
+annotations_store = Store()
+annotations_repo = PyoxigraphRepo(annotations_store)
 
 oxrdflib_store = Graph(store="Oxigraph")

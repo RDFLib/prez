@@ -152,23 +152,3 @@ WHERE {{
         log.info(f"Remote endpoint definition(s) found and added")
     else:
         log.info("No remote endpoint definitions found")
-
-
-async def add_common_context_ontologies_to_tbox_cache():
-    g = Dataset(default_union=True)
-    for file in (
-        Path(__file__).parent.parent / "reference_data/context_ontologies"
-    ).glob("*"):
-        g.parse(file)
-    relevant_predicates = [
-        RDFS.label,
-        DCTERMS.title,
-        DCTERMS.description,
-        SDO.name,
-        SKOS.prefLabel,
-        SKOS.definition,
-    ]
-    triples = g.triples_choices((None, relevant_predicates, None))
-    for triple in triples:
-        tbox_cache.add(triple)
-    log.info(f"Added {len(tbox_cache):,} triples from context ontologies to TBox cache")

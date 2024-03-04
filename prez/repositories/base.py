@@ -1,10 +1,12 @@
 import asyncio
 import logging
+import time
 from abc import ABC, abstractmethod
 from typing import List
 from typing import Tuple
 
 from rdflib import Namespace, Graph, URIRef
+
 
 PREZ = Namespace("https://prez.dev/")
 
@@ -32,7 +34,8 @@ class Repo(ABC):
                 if query
             ],
         )
-        g = Graph()
+        from prez.cache import prefix_graph
+        g = Graph(namespace_manager=prefix_graph.namespace_manager)
         tabular_results = []
         for result in results:
             if isinstance(result, Graph):

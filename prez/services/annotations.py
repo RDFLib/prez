@@ -1,23 +1,68 @@
+import asyncio
 import logging
+import os
+import time
 from itertools import chain
-from textwrap import dedent
-from typing import List, Tuple
+from typing import List, FrozenSet
+from aiocache.serializers import PickleSerializer
+from aiocache import cached
+from rdflib import Graph, URIRef, Literal, Dataset
+from rdflib.namespace import RDFS
 
-from rdflib import Graph, URIRef, Namespace, Literal
-
-from prez.cache import tbox_cache
+from prez.cache import tbox_cache, tbox_cache_aio
 from prez.config import settings
-from prez.services.curie_functions import get_uri_for_curie_id
+from prez.dependencies import get_annotations_repo
+from prez.reference_data.prez_ns import PREZ
+from prez.repositories import Repo
+from prez.services.query_generation.annotations import AnnotationsConstructQuery
+from temp.grammar import *
 
 log = logging.getLogger(__name__)
 
-ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
-PREZ = Namespace("https://prez.dev/")
+pred = IRI(value=URIRef("https://prez.dev/label"))
+
+
+async def process_terms(terms, repo) -> Graph:
+    """
+    """
+    results = await asyncio.gather(*[process_term(term, repo) for term in terms])
+    triples = list(chain(*results))
+    annotations_g = Graph()
+    for triple in triples:
+        annotations_g.add(triple)
+    return annotations_g
+
+
+def term_based_key_builder(func, *args, **kwargs):
+    return args[0]
+
+
+@cached(cache=tbox_cache_aio, key_builder=term_based_key_builder, serializer=PickleSerializer())
+async def process_term(term, repo) -> FrozenSet[Tuple[URIRef, URIRef, Literal]]:
+    """
+    gets annotations for an individual term
+    """
+    log.info(f"Processing term within func {term}")
+    annotations_repo = await get_annotations_repo()
+    annotations_query = AnnotationsConstructQuery(
+        term=IRI(value=term),
+        construct_predicate=IRI(value=PREZ.label),  # TODO change to predicate map
+        select_predicates=[IRI(value=RDFS.label)]
+    ).to_string()
+    # check the prez cache
+    context_results = await annotations_repo.send_queries(rdf_queries=[annotations_query], tabular_queries=[])
+    # if not found, query the data repo
+    repo_results = await repo.send_queries(rdf_queries=[annotations_query], tabular_queries=[])
+    all_results = context_results[0] + repo_results[0]
+    cacheable_results = frozenset(all_results)
+    log.info(f"Processed term {term}, found {len(cacheable_results)} annotations.")
+    return cacheable_results
 
 
 async def get_annotation_properties(
-    item_graph: Graph,
-):
+        item_graph: Graph,
+        repo: Repo,
+) -> Graph:
     """
     Gets annotation data used for HTML display.
     This includes the label, description, and provenance, if available.
@@ -25,124 +70,9 @@ async def get_annotation_properties(
     which are often diverse in the predicates they use, to be aligned with the default predicates used by Prez. The full
     range of predicates used can be manually included via profiles.
     """
-    label_predicates = settings.label_predicates
-    description_predicates = settings.description_predicates
-    explanation_predicates = settings.provenance_predicates
-    other_predicates = settings.other_predicates
-    terms = (
-        set(i for i in item_graph.predicates() if isinstance(i, URIRef))
-        | set(i for i in item_graph.objects() if isinstance(i, URIRef))
-        | set(i for i in item_graph.subjects() if isinstance(i, URIRef))
-    )
-    # TODO confirm caching of SUBJECT labels does not cause issues! this could be a lot of labels. Perhaps these are
-    # better separated and put in an LRU cache. Or it may not be worth the effort.
+    terms = set(term for term in item_graph.all_nodes() if isinstance(term, URIRef))
     if not terms:
-        return None, Graph()
-    # read labels from the tbox cache, this should be the majority of labels
-    uncached_terms, labels_g = get_annotations_from_tbox_cache(
-        terms,
-        label_predicates,
-        description_predicates,
-        explanation_predicates,
-        other_predicates,
-    )
+        return Graph()
 
-    def other_predicates_statement(other_predicates, uncached_terms_other):
-        return f"""UNION
-            {{
-                ?unannotated_term ?other_prop ?other .
-                VALUES ?other_prop {{ {" ".join('<' + str(pred) + '>' for pred in other_predicates)} }}
-                VALUES ?unannotated_term {{ {" ".join('<' + str(term) + '>' for term in uncached_terms_other)}
-                }}
-            }}"""
-
-    queries_for_uncached = f"""CONSTRUCT {{
-    ?unlabeled_term ?label_prop ?label .
-    ?undescribed_term ?desc_prop ?description .
-    ?unexplained_term ?expl_prop ?explanation .
-    ?unannotated_term ?other_prop ?other .
-    }}
-        WHERE {{
-            {{
-                ?unlabeled_term ?label_prop ?label .
-                VALUES ?label_prop {{ {" ".join('<' + str(pred) + '>' for pred in label_predicates)} }}
-                VALUES ?unlabeled_term {{ {" ".join('<' + str(term) + '>' for term in uncached_terms["labels"])} }}
-                FILTER(lang(?label) = "" || lang(?label) = "en" || lang(?label) = "en-AU")
-            }}
-            UNION
-            {{
-                ?undescribed_term ?desc_prop ?description .
-                VALUES ?desc_prop {{ {" ".join('<' + str(pred) + '>' for pred in description_predicates)} }}
-                VALUES ?undescribed_term {{ {" ".join('<' + str(term) + '>' for term in uncached_terms["descriptions"])}
-                }}
-            }}
-            UNION
-            {{
-                ?unexplained_term ?expl_prop ?explanation .
-                VALUES ?expl_prop {{ {" ".join('<' + str(pred) + '>' for pred in explanation_predicates)} }}
-                VALUES ?unexplained_term {{ {" ".join('<' + str(term) + '>' for term in uncached_terms["provenance"])}
-                }}
-            }}
-            {other_predicates_statement(other_predicates, uncached_terms["other"]) if other_predicates else ""}
-        }}"""
-    return queries_for_uncached, labels_g
-
-
-def get_annotations_from_tbox_cache(
-    terms: List[URIRef], label_props, description_props, explanation_props, other_props
-):
-    """
-    Gets labels from the TBox cache, returns a list of terms that were not found in the cache, and a graph of labels,
-    descriptions, and explanations
-    """
-    labels_from_cache = Graph(bind_namespaces="rdflib")
-    terms_list = list(terms)
-    props_from_cache = {
-        "labels": list(
-            chain(
-                *(
-                    tbox_cache.triples_choices((terms_list, prop, None))
-                    for prop in label_props
-                )
-            )
-        ),
-        "descriptions": list(
-            chain(
-                *(
-                    tbox_cache.triples_choices((terms_list, prop, None))
-                    for prop in description_props
-                )
-            )
-        ),
-        "provenance": list(
-            chain(
-                *(
-                    tbox_cache.triples_choices((terms_list, prop, None))
-                    for prop in explanation_props
-                )
-            )
-        ),
-        "other": list(
-            chain(
-                *(
-                    tbox_cache.triples_choices((terms_list, prop, None))
-                    for prop in other_props
-                )
-            )
-        ),
-    }
-    # get all the annotations we can from the cache
-    all = list(chain(*props_from_cache.values()))
-    default_language = settings.default_language
-    for triple in all:
-        if isinstance(triple[2], Literal):
-            if triple[2].language == default_language:
-                labels_from_cache.add(triple)
-            elif triple[2].language is None:
-                labels_from_cache.add(triple)
-    # the remaining terms are not in the cache; we need to query the SPARQL endpoint to attempt to get them
-    uncached_props = {
-        k: list(set(terms) - set(triple[0] for triple in v))
-        for k, v in props_from_cache.items()
-    }
-    return uncached_props, labels_from_cache
+    annotations_g = await process_terms(terms, repo)
+    return annotations_g

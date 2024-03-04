@@ -945,7 +945,7 @@ class GroupCondition(SPARQLGrammarBase):
     GroupCondition ::= BuiltInCall | FunctionCall | '(' Expression ( 'AS' Var )? ')' | Var
     """
 
-    condition: Union["BuiltInCall", FunctionCall, Tuple[Expression, Var], Var]
+    condition: Union[BuiltInCall, FunctionCall, Tuple[Expression, Var], Var]
 
     def render(self) -> Generator[str, None, None]:
         if isinstance(self.condition, Tuple):

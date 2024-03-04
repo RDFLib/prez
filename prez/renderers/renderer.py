@@ -1,6 +1,7 @@
 import io
 import json
 import logging
+import time
 
 from connegp import RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
 from fastapi import status
@@ -10,22 +11,22 @@ from rdflib import Graph, URIRef, RDF
 
 from prez.renderers.csv_renderer import render_csv_dropdown
 from prez.renderers.json_renderer import render_json_dropdown, NotFoundError
-from prez.services.curie_functions import get_curie_id_for_uri
 from prez.repositories import Repo
 from prez.services.annotations import (
     get_annotation_properties,
 )
+from prez.services.curie_functions import get_curie_id_for_uri
 
 log = logging.getLogger(__name__)
 
 
 async def return_from_graph(
-    graph,
-    mediatype,
-    profile,
-    profile_headers,
-    selected_class: URIRef,
-    repo: Repo,
+        graph,
+        mediatype,
+        profile,
+        profile_headers,
+        selected_class: URIRef,
+        repo: Repo,
 ):
     profile_headers["Content-Disposition"] = "inline"
 
@@ -64,7 +65,7 @@ async def return_from_graph(
     else:
         if "anot+" in mediatype:
             non_anot_mediatype = mediatype.replace("anot+", "")
-            graph = await return_annotated_rdf(graph, profile, repo)
+            graph = await return_annotated_rdf(graph, repo)
             content = io.BytesIO(
                 graph.serialize(format=non_anot_mediatype, encoding="utf-8")
             )
@@ -88,43 +89,16 @@ async def return_rdf(graph, mediatype, profile_headers):
     return StreamingResponse(content=obj, media_type=mediatype, headers=profile_headers)
 
 
-async def get_annotations_graph(graph, cache, repo):
-    queries_for_uncached, annotations_graph = await get_annotation_properties(graph)
-
-    if queries_for_uncached is None:
-        anots_from_triplestore = Graph()
-    else:
-        anots_from_triplestore, _ = await repo.send_queries([queries_for_uncached], [])
-
-    if len(anots_from_triplestore) > 1:
-        annotations_graph += anots_from_triplestore
-        cache += anots_from_triplestore
-
-    return annotations_graph
-
-
 async def return_annotated_rdf(
-    graph: Graph,
-    profile,
-    repo,
+        graph: Graph,
+        repo,
 ) -> Graph:
-    from prez.cache import tbox_cache
-
-    cache = tbox_cache
-    queries_for_uncached, annotations_graph = await get_annotation_properties(graph)
-    anots_from_triplestore, _ = await repo.send_queries([queries_for_uncached], [])
-    if len(anots_from_triplestore) > 0:
-        annotations_graph += anots_from_triplestore
-        cache += anots_from_triplestore
-
-    previous_triples_count = len(graph)
-
-    # Expand the graph with annotations specified in the profile until no new statements are added.
-    while True:
-        graph += await get_annotations_graph(graph, cache, repo)
-        if len(graph) == previous_triples_count:
-            break
-        previous_triples_count = len(graph)
-
-    graph.bind("prez", "https://prez.dev/")
-    return graph
+    annotations_graph = await get_annotation_properties(graph, repo)
+    # previous_annotation_len = 0
+    # current_annotation_len = len(annotations_graph)
+    # while current_annotation_len != previous_annotation_len:
+    #     previous_annotation_len = current_annotation_len
+    #     new_annotations = await get_annotation_properties(annotations_graph, repo)
+    #     current_annotation_len = len(new_annotations)
+    #     annotations_graph += new_annotations
+    return graph.__iadd__(annotations_graph)
