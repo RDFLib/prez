@@ -2,19 +2,19 @@ import io
 import json
 import logging
 
-from connegp import RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
 from fastapi import status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
-from rdflib import Graph, URIRef, RDF
+from rdflib import Graph, RDF, URIRef
 
 from prez.renderers.csv_renderer import render_csv_dropdown
-from prez.renderers.json_renderer import render_json_dropdown, NotFoundError
-from prez.services.curie_functions import get_curie_id_for_uri
+from prez.renderers.json_renderer import NotFoundError, render_json_dropdown
 from prez.repositories import Repo
 from prez.services.annotations import (
     get_annotation_properties,
 )
+from prez.services.connegp_service import RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
+from prez.services.curie_functions import get_curie_id_for_uri
 
 log = logging.getLogger(__name__)
 
