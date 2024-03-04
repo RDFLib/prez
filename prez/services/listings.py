@@ -16,12 +16,9 @@ from prez.services.connegp_service import NegotiatedPMTs
 from prez.services.link_generation import add_prez_links
 from prez.services.query_generation.classes import get_classes
 from prez.services.query_generation.count import CountQuery
+from prez.services.query_generation.node_selection.cql import CQLParser
 from prez.services.query_generation.node_selection.endpoint_shacl import NodeShape
 from prez.services.query_generation.node_selection.search import SearchQuery
-from prez.services.query_generation.node_selection.cql import CQLParser
-
-# from rdframe.grammar import SubSelect
-# from rdframe import PrezQueryConstructor
 from prez.services.query_generation.umbrella import PrezQueryConstructor
 from temp.grammar import *
 
@@ -38,8 +35,8 @@ async def listing_function(
     page: int = 1,
     per_page: int = 20,
     cql_parser: CQLParser = None,
-        search_term: Optional[str] = None,
-        endpoint_structure: Tuple[str] = settings.endpoint_structure,
+    search_term: Optional[str] = None,
+    endpoint_structure: Tuple[str] = settings.endpoint_structure,
 ):
     """
     # determine the relevant node selection part of the query - from SHACL, CQL, Search
@@ -63,19 +60,25 @@ async def listing_function(
         elif search_term:
             target_classes = frozenset([PREZ.SearchResult])
     # determine the relevant profile
-    pmts = NegotiatedPMTs(headers=
-        request.headers, params=request.query_params, classes=target_classes, listing=True,
-                          system_repo=system_repo)
+    pmts = NegotiatedPMTs(
+        headers=request.headers,
+        params=request.query_params,
+        classes=target_classes,
+        listing=True,
+        system_repo=system_repo,
+    )
     success = await pmts.setup()
     if not success:
         log.error("ConnegP Error. NegotiatedPMTs.setup() was not successful")
 
     runtime_values = {}
-    if pmts.selected["profile"] == URIRef("http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"):
+    if pmts.selected["profile"] == URIRef(
+        "http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"
+    ):
         ns = NodeShape(
             uri=URIRef("http://example.org/ns#AltProfilesForListing"),
             graph=endpoints_graph_cache,
-            path_nodes={"path_node_1": IRI(value=pmts.selected["class"])}
+            path_nodes={"path_node_1": IRI(value=pmts.selected["class"])},
         )
         ns_triples = ns.triples_list
         ns_gpnt = ns.gpnt_list
@@ -129,7 +132,10 @@ async def listing_function(
         queries.append(search_query)
     else:
         queries.append(main_query)
-    if pmts.requested_mediatypes is not None and pmts.requested_mediatypes[0][0] == "application/sparql-query":
+    if (
+        pmts.requested_mediatypes is not None
+        and pmts.requested_mediatypes[0][0] == "application/sparql-query"
+    ):
         return PlainTextResponse(queries[0], media_type="application/sparql-query")
 
     # add a count query if it's an annotated mediatype
@@ -147,10 +153,14 @@ async def listing_function(
         # if count_class:  # target_class may be unknown (None) for queries involving CQL
         #     queries.append(temp_listing_count(subselect, count_class))
 
-    if pmts.selected["profile"] == URIRef("http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"):
+    if pmts.selected["profile"] == URIRef(
+        "http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"
+    ):
         item_graph, _ = await system_repo.send_queries(queries, [])
         if "anot+" in pmts.selected["mediatype"]:
-            await add_prez_links(item_graph, system_repo, endpoint_structure=("profiles",))
+            await add_prez_links(
+                item_graph, system_repo, endpoint_structure=("profiles",)
+            )
     else:
         item_graph, _ = await repo.send_queries(queries, [])
         if "anot+" in pmts.selected["mediatype"]:
@@ -170,7 +180,7 @@ async def listing_function(
 
 
 async def get_shacl_node_selection(
-        endpoint_uri, hierarchy_level, path_nodes, repo, system_repo
+    endpoint_uri, hierarchy_level, path_nodes, repo, system_repo
 ):
     """
     Determines the relevant nodeshape based on the endpoint, hierarchy level, and parent URI

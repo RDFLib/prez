@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Request, Depends
+from rdflib import URIRef
 
 from prez.dependencies import get_system_repo
 from prez.services.curie_functions import get_uri_for_curie_id
 from prez.services.listings import listing_function
 from prez.services.objects import object_function
-from rdflib import URIRef
 
 router = APIRouter(tags=["Profiles"])
 

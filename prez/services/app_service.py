@@ -3,19 +3,18 @@ import time
 from pathlib import Path
 
 import httpx
-from rdflib import URIRef, Literal, Graph, RDFS, DCTERMS, SDO, SKOS, Dataset
+from rdflib import URIRef, Literal, Graph
 
 from prez.cache import (
     prez_system_graph,
     counts_graph,
     prefix_graph,
     endpoints_graph_cache,
-    tbox_cache,
 )
 from prez.config import settings
 from prez.reference_data.prez_ns import PREZ
-from prez.services.curie_functions import get_curie_id_for_uri
 from prez.repositories import Repo
+from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.query_generation.count import startup_count_objects
 
 log = logging.getLogger(__name__)
@@ -81,7 +80,7 @@ async def add_prefixes_to_prefix_graph(repo: Repo):
             prefix_graph.bind(str(prefix), namespace)
 
             # prefix_graph.bind(str(subject_objects[1]), subject_objects[0])
-        log.info(f"{i+1:,} prefixes bound from file {f.name}")
+        log.info(f"{i + 1:,} prefixes bound from file {f.name}")
     log.info("Prefixes from local files added to prefix graph")
 
     if settings.disable_prefix_generation:

@@ -20,25 +20,30 @@ log = logging.getLogger(__name__)
 
 
 async def object_function(
-        request: Request,
-        endpoint_uri: URIRef,
-        uri: URIRef,
-        request_url: str,
-        repo: Repo,
-        system_repo: Repo,
-        endpoint_structure: Tuple[str] = settings.endpoint_structure,
+    request: Request,
+    endpoint_uri: URIRef,
+    uri: URIRef,
+    request_url: str,
+    repo: Repo,
+    system_repo: Repo,
+    endpoint_structure: Tuple[str] = settings.endpoint_structure,
 ):
     classes = await get_classes(uri=uri, repo=repo)
-    pmts = NegotiatedPMTs(headers=
-        request.headers, params=request.query_params, classes=classes,
-                          system_repo=system_repo)
+    pmts = NegotiatedPMTs(
+        headers=request.headers,
+        params=request.query_params,
+        classes=classes,
+        system_repo=system_repo,
+    )
     success = await pmts.setup()
     if not success:
         log.error("ConnegP Error. NegotiatedPMTs.setup() was not successful")
 
     # handle alternate profiles
     runtime_values = {}
-    if pmts.selected["profile"] == URIRef("http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"):
+    if pmts.selected["profile"] == URIRef(
+        "http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"
+    ):
         endpoint_uri = URIRef("https://prez.dev/endpoint/system/alt-profiles-listing")
     # runtime_values["selectedClass"] = prof_and_mt_info.selected_class
 
@@ -61,7 +66,9 @@ async def object_function(
     except IndexError as e:
         log.debug(e.args[0])
 
-    if pmts.selected["profile"] == URIRef("http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"):
+    if pmts.selected["profile"] == URIRef(
+        "http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"
+    ):
         item_graph, _ = await system_repo.send_queries([query], [])
     else:
         item_graph, _ = await repo.send_queries([query], [])

@@ -4,15 +4,15 @@ from fastapi import APIRouter, Request, Depends
 from rdflib import Namespace
 from rdflib.namespace import URIRef
 
-from prez.reference_data.prez_ns import PREZ
 from prez.dependencies import (
     get_repo,
     cql_post_parser_dependency,
     get_system_repo,
     cql_get_parser_dependency,
 )
-from prez.services.listings import listing_function
+from prez.reference_data.prez_ns import PREZ
 from prez.repositories import Repo
+from prez.services.listings import listing_function
 
 router = APIRouter(tags=["ogcrecords"])
 

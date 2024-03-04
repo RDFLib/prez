@@ -38,8 +38,8 @@ def test_repo(test_store: Store) -> Repo:
                 "profile": URIRef("https://prez.dev/OGCItemProfile"),
                 "title": "OGC Object Profile",
                 "mediatype": "text/anot+turtle",
-                "class": "http://www.w3.org/ns/dcat#Catalog"
-            }
+                "class": "http://www.w3.org/ns/dcat#Catalog",
+            },
         ],
         [
             {},  # Test that profiles/mediatypes resolve to their defaults if not requested (listing endpoint)
@@ -50,11 +50,13 @@ def test_repo(test_store: Store) -> Repo:
                 "profile": URIRef("https://prez.dev/OGCListingProfile"),
                 "title": "OGC Listing Profile",
                 "mediatype": "text/anot+turtle",
-                "class": "http://www.w3.org/ns/dcat#Catalog"
-            }
+                "class": "http://www.w3.org/ns/dcat#Catalog",
+            },
         ],
         [
-            {"accept": "application/ld+json"},  # Test that a valid mediatype is resolved
+            {
+                "accept": "application/ld+json"
+            },  # Test that a valid mediatype is resolved
             {},
             [URIRef("http://www.w3.org/ns/dcat#Catalog")],
             False,
@@ -62,11 +64,13 @@ def test_repo(test_store: Store) -> Repo:
                 "profile": URIRef("https://prez.dev/OGCItemProfile"),
                 "title": "OGC Object Profile",
                 "mediatype": "application/ld+json",
-                "class": "http://www.w3.org/ns/dcat#Catalog"
-            }
+                "class": "http://www.w3.org/ns/dcat#Catalog",
+            },
         ],
         [
-            {"accept": "application/ld+json;q=0.7,text/turtle"},  # Test resolution of multiple mediatypes
+            {
+                "accept": "application/ld+json;q=0.7,text/turtle"
+            },  # Test resolution of multiple mediatypes
             {},
             [URIRef("http://www.w3.org/ns/dcat#Catalog")],
             False,
@@ -74,8 +78,8 @@ def test_repo(test_store: Store) -> Repo:
                 "profile": URIRef("https://prez.dev/OGCItemProfile"),
                 "title": "OGC Object Profile",
                 "mediatype": "text/turtle",
-                "class": "http://www.w3.org/ns/dcat#Catalog"
-            }
+                "class": "http://www.w3.org/ns/dcat#Catalog",
+            },
         ],
         [
             {},
@@ -86,8 +90,8 @@ def test_repo(test_store: Store) -> Repo:
                 "profile": URIRef("https://prez.dev/OGCItemProfile"),
                 "title": "OGC Object Profile",
                 "mediatype": "application/ld+json",
-                "class": "http://www.w3.org/ns/dcat#Catalog"
-            }
+                "class": "http://www.w3.org/ns/dcat#Catalog",
+            },
         ],
         [
             {"accept": "text/turtle"},
@@ -98,8 +102,8 @@ def test_repo(test_store: Store) -> Repo:
                 "profile": URIRef("https://prez.dev/OGCItemProfile"),
                 "title": "OGC Object Profile",
                 "mediatype": "application/ld+json",
-                "class": "http://www.w3.org/ns/dcat#Catalog"
-            }
+                "class": "http://www.w3.org/ns/dcat#Catalog",
+            },
         ],
         [
             {"accept-profile": "oogabooga"},  # Test that invalid profile is ignored
@@ -110,8 +114,8 @@ def test_repo(test_store: Store) -> Repo:
                 "profile": URIRef("https://prez.dev/OGCItemProfile"),
                 "title": "OGC Object Profile",
                 "mediatype": "text/anot+turtle",
-                "class": "http://www.w3.org/ns/dcat#Catalog"
-            }
+                "class": "http://www.w3.org/ns/dcat#Catalog",
+            },
         ],
         [
             {"accept": "oogabooga"},  # Test that invalid mediatype is ignored
@@ -122,11 +126,13 @@ def test_repo(test_store: Store) -> Repo:
                 "profile": URIRef("https://prez.dev/OGCItemProfile"),
                 "title": "OGC Object Profile",
                 "mediatype": "text/anot+turtle",
-                "class": "http://www.w3.org/ns/dcat#Catalog"
-            }
+                "class": "http://www.w3.org/ns/dcat#Catalog",
+            },
         ],
         [
-            {"accept-profile": "<http://www.w3.org/ns/dx/prof/Profile>"},  # Test that a valid profile is resolved
+            {
+                "accept-profile": "<http://www.w3.org/ns/dx/prof/Profile>"
+            },  # Test that a valid profile is resolved
             {},
             [URIRef("http://www.w3.org/ns/dcat#Catalog")],
             True,
@@ -134,10 +140,10 @@ def test_repo(test_store: Store) -> Repo:
                 "profile": URIRef("https://www.w3.org/TR/vocab-dcat/"),
                 "title": "DCAT",
                 "mediatype": "text/anot+turtle",
-                "class": "http://www.w3.org/ns/dcat#Catalog"
-            }
+                "class": "http://www.w3.org/ns/dcat#Catalog",
+            },
         ],
-    ]
+    ],
 )
 @pytest.mark.asyncio
 async def test_connegp(headers, params, classes, listing, expected_selected, test_repo):
@@ -145,7 +151,13 @@ async def test_connegp(headers, params, classes, listing, expected_selected, tes
         return test_repo
 
     app.dependency_overrides[get_repo] = override_get_repo
-    pmts = NegotiatedPMTs(headers=headers, params=params, classes=classes, listing=listing, system_repo=test_repo)
+    pmts = NegotiatedPMTs(
+        headers=headers,
+        params=params,
+        classes=classes,
+        listing=listing,
+        system_repo=test_repo,
+    )
     success = await pmts.setup()
     assert success
     assert pmts.selected == expected_selected

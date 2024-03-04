@@ -17,6 +17,7 @@ PREZ = Namespace("https://prez.dev/")
 
 router = APIRouter(tags=["SPARQL"])
 
+
 # TODO: Split this into two routes on the same /sparql path.
 #  One to handle SPARQL GET requests, the other for SPARQL POST requests.
 
@@ -28,13 +29,18 @@ async def sparql_endpoint(
     repo: Repo = Depends(get_repo),
     system_repo: Repo = Depends(get_system_repo),
 ):
-    pmts = NegotiatedPMTs(**{
-        "headers": request.headers,
-        "params": request.query_params,
-        "classes": [PREZ.SPARQlQuery],
-        "system_repo": system_repo
-    })
-    if pmts.requested_mediatypes is not None and "anot+" in pmts.requested_mediatypes[0][0]:
+    pmts = NegotiatedPMTs(
+        **{
+            "headers": request.headers,
+            "params": request.query_params,
+            "classes": [PREZ.SPARQlQuery],
+            "system_repo": system_repo,
+        }
+    )
+    if (
+        pmts.requested_mediatypes is not None
+        and "anot+" in pmts.requested_mediatypes[0][0]
+    ):
         non_anot_mediatype = pmts.requested_mediatypes[0][0].replace("anot+", "")
         request._headers = Headers({**request.headers, "accept": non_anot_mediatype})
         response = await repo.sparql(request)
@@ -48,7 +54,7 @@ async def sparql_endpoint(
         return StreamingResponse(
             content=content,
             media_type=non_anot_mediatype,
-            headers=pmts.generate_response_headers()
+            headers=pmts.generate_response_headers(),
         )
     else:
         query_result = await repo.sparql(query, request.headers.raw)

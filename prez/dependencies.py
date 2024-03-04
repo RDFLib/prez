@@ -13,7 +13,7 @@ from prez.cache import (
     profiles_graph_cache,
     endpoints_graph_cache,
     annotations_store,
-    annotations_repo
+    annotations_repo,
 )
 from prez.config import settings
 from prez.repositories import PyoxigraphRepo, RemoteSparqlRepo, OxrdflibRepo
@@ -75,7 +75,6 @@ async def get_annotations_repo():
     return annotations_repo
 
 
-
 async def load_local_data_to_oxigraph(store: Store):
     """
     Loads all the data from the local data directory into the local SPARQL endpoint
@@ -100,7 +99,11 @@ async def load_annotations_data_to_oxigraph(store: Store):
     """
     Loads all the data from the local data directory into the local SPARQL endpoint
     """
-    relevant_predicates = settings.label_predicates + settings.description_predicates + settings.provenance_predicates
+    relevant_predicates = (
+        settings.label_predicates
+        + settings.description_predicates
+        + settings.provenance_predicates
+    )
     raw_g = Dataset(default_union=True)
     for file in (Path(__file__).parent / "reference_data/context_ontologies").glob("*"):
         raw_g.parse(file)

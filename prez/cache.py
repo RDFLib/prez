@@ -1,6 +1,6 @@
+from aiocache import Cache
 from pyoxigraph.pyoxigraph import Store
 from rdflib import Graph, ConjunctiveGraph, Dataset
-from aiocache import SimpleMemoryCache, Cache
 
 from prez.repositories import PyoxigraphRepo
 

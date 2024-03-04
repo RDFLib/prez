@@ -83,14 +83,6 @@ class Settings(BaseSettings):
     #         )["tool"]["poetry"]["version"]
     #
     #     return values
-    #
-    # @root_validator()
-    # def set_system_uri(cls, values):
-    #     if not values.get("system_uri"):
-    #         values["system_uri"] = URIRef(
-    #             f"{values['protocol']}://{values['host']}:{values['port']}"
-    #         )
-    #     return values
 
 
 settings = Settings()

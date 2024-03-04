@@ -5,11 +5,11 @@ from rdflib import Namespace
 from rdflib import URIRef
 
 from prez.dependencies import get_repo, get_system_repo
+from prez.reference_data.prez_ns import PREZ
+from prez.repositories import Repo
 from prez.services.curie_functions import get_uri_for_curie_id
 from prez.services.listings import listing_function
 from prez.services.objects import object_function
-from prez.repositories import Repo
-from prez.reference_data.prez_ns import PREZ
 from temp.grammar import IRI
 
 router = APIRouter(tags=["ogccatprez"])

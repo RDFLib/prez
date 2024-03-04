@@ -43,8 +43,6 @@ class PrezQueryConstructor(BaseModel):
     runtime_vals_expanded: Optional[Dict] = {}
     merged_runtime_and_default_vals: Optional[Dict] = {}
 
-
-
     def _expand_runtime_vars(self):
         for k, v in self.runtime_values.items():
             if k in ["limit", "offset", "q"]:
@@ -150,7 +148,6 @@ class PrezQueryConstructor(BaseModel):
             if all_gpnt:
                 for gpnt in all_gpnt:
                     inner_select_ggps.add_pattern(gpnt)
-
 
     def sh_rule_type_conversion(self, items: List):
         """
@@ -369,7 +366,6 @@ class PrezQueryConstructor(BaseModel):
         gorugp = GroupOrUnionGraphPattern(group_graph_patterns=[container_ggp])
         gpnt = GraphPatternNotTriples(content=gorugp)
         self.main_where_ggps.add_pattern(gpnt)
-
 
     def _parse_property_shapes(self, property_node, i):
         def process_path_object(path_obj: Union[URIRef, BNode]):

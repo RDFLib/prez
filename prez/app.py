@@ -3,9 +3,10 @@ import time
 from textwrap import dedent
 
 import uvicorn
+from fastapi import FastAPI
 from rdflib import Graph
 from starlette.middleware.cors import CORSMiddleware
-from fastapi import FastAPI
+
 from prez.config import settings
 from prez.dependencies import (
     get_async_http_client,
@@ -13,13 +14,16 @@ from prez.dependencies import (
     load_local_data_to_oxigraph,
     get_oxrdflib_store,
     get_system_store,
-    load_system_data_to_oxigraph, get_annotations_store, load_annotations_data_to_oxigraph,
+    load_system_data_to_oxigraph,
+    get_annotations_store,
+    load_annotations_data_to_oxigraph,
 )
 from prez.models.model_exceptions import (
     ClassNotFoundException,
     URINotFoundException,
     NoProfilesException,
 )
+from prez.repositories import RemoteSparqlRepo, PyoxigraphRepo, OxrdflibRepo
 from prez.routers.cql import router as cql_router
 from prez.routers.identifier import router as identifier_router
 from prez.routers.management import router as management_router
@@ -46,7 +50,6 @@ from prez.services.exception_catchers import (
 )
 from prez.services.generate_profiles import create_profiles_graph
 from prez.services.prez_logging import setup_logger
-from prez.repositories import RemoteSparqlRepo, PyoxigraphRepo, OxrdflibRepo
 
 app = FastAPI(
     exception_handlers={
@@ -130,6 +133,7 @@ async def app_startup():
     await load_annotations_data_to_oxigraph(app.state.pyoxi_annotations_store)
 
     log.info(f"Startup took {time.time() - a} seconds")
+
 
 @app.on_event("shutdown")
 async def app_shutdown():

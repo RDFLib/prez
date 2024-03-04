@@ -7,11 +7,11 @@ from rdflib.namespace import SH, RDF
 from prez.cache import endpoints_graph_cache, links_ids_graph_cache
 from prez.config import settings
 from prez.reference_data.prez_ns import PREZ
+from prez.repositories import Repo
 from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.query_generation.classes import get_classes
-from prez.repositories import Repo
-from temp.grammar import *
 from prez.services.query_generation.node_selection.endpoint_shacl import NodeShape
+from temp.grammar import *
 
 log = logging.getLogger(__name__)
 

@@ -1,12 +1,10 @@
 import asyncio
 import logging
-import time
 from abc import ABC, abstractmethod
 from typing import List
 from typing import Tuple
 
 from rdflib import Namespace, Graph, URIRef
-
 
 PREZ = Namespace("https://prez.dev/")
 
@@ -23,7 +21,9 @@ class Repo(ABC):
         pass
 
     async def send_queries(
-        self, rdf_queries: List[str], tabular_queries: List[Tuple[URIRef | None, str]] = None
+        self,
+        rdf_queries: List[str],
+        tabular_queries: List[Tuple[URIRef | None, str]] = None,
     ) -> Tuple[Graph, List]:
         # Common logic to send both query types in parallel
         results = await asyncio.gather(
@@ -35,6 +35,7 @@ class Repo(ABC):
             ],
         )
         from prez.cache import prefix_graph
+
         g = Graph(namespace_manager=prefix_graph.namespace_manager)
         tabular_results = []
         for result in results:

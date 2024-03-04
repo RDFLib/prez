@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Request, HTTPException, status, Query
 from fastapi import Depends
-from starlette.responses import PlainTextResponse
 from rdflib import URIRef
+from starlette.responses import PlainTextResponse
+
 from prez.dependencies import get_repo, get_system_repo
 from prez.queries.object import object_inbound_query, object_outbound_query
 from prez.routers.identifier import get_iri_route

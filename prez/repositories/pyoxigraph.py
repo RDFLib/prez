@@ -1,9 +1,9 @@
 import logging
 
-from fastapi.concurrency import run_in_threadpool
-from rdflib import Namespace, Graph, URIRef, Literal
-
 import pyoxigraph
+from fastapi.concurrency import run_in_threadpool
+from rdflib import Namespace, Graph, URIRef
+
 from prez.repositories.base import Repo
 
 PREZ = Namespace("https://prez.dev/")

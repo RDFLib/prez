@@ -85,13 +85,14 @@ def test_listing_alt_profile(client):
     assert (
         URIRef("http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"),
         RDF.type,
-        URIRef("https://prez.dev/ListingProfile")
-        ) in response_graph
-
+        URIRef("https://prez.dev/ListingProfile"),
+    ) in response_graph
 
 
 def test_object_alt_profile(client, a_catalog_link):
-    r = client.get(f"{a_catalog_link}?_mediatype=text/turtle&_profile=altr-ext:alt-profile")
+    r = client.get(
+        f"{a_catalog_link}?_mediatype=text/turtle&_profile=altr-ext:alt-profile"
+    )
     response_graph = Graph().parse(data=r.text)
     expected_response = (
         URIRef("https://example.com/TopLevelCatalog"),

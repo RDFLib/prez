@@ -1,9 +1,7 @@
 import io
 import json
 import logging
-import time
 
-from connegp import RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
 from fastapi import status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
@@ -15,18 +13,19 @@ from prez.repositories import Repo
 from prez.services.annotations import (
     get_annotation_properties,
 )
+from prez.services.connegp_service import RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
 from prez.services.curie_functions import get_curie_id_for_uri
 
 log = logging.getLogger(__name__)
 
 
 async def return_from_graph(
-        graph,
-        mediatype,
-        profile,
-        profile_headers,
-        selected_class: URIRef,
-        repo: Repo,
+    graph,
+    mediatype,
+    profile,
+    profile_headers,
+    selected_class: URIRef,
+    repo: Repo,
 ):
     profile_headers["Content-Disposition"] = "inline"
 
@@ -90,8 +89,8 @@ async def return_rdf(graph, mediatype, profile_headers):
 
 
 async def return_annotated_rdf(
-        graph: Graph,
-        repo,
+    graph: Graph,
+    repo,
 ) -> Graph:
     annotations_graph = await get_annotation_properties(graph, repo)
     # previous_annotation_len = 0
