@@ -29,4 +29,4 @@ def test_nodeshape_parsing(nodeshape_uri):
 )
 def test_nodeshape_to_grammar(nodeshape_uri):
     ns = NodeShape(uri=URIRef(nodeshape_uri), graph=endpoints_graph)
-    ns.to_grammar()
+    ns.to_string()

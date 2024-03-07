@@ -83,4 +83,5 @@ async def object_function(
         pmts.generate_response_headers(),
         pmts.selected["class"],
         repo,
+        system_repo,
     )

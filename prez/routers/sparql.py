@@ -47,7 +47,7 @@ async def sparql_endpoint(
         await response.aread()
         g = Graph()
         g.parse(data=response.text, format=non_anot_mediatype)
-        graph = await return_annotated_rdf(g, pmts.selected["profile"])
+        graph = await return_annotated_rdf(g, repo, system_repo)
         content = io.BytesIO(
             graph.serialize(format=non_anot_mediatype, encoding="utf-8")
         )

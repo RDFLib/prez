@@ -1,6 +1,7 @@
 import io
 import json
 import logging
+import time
 
 from fastapi import status
 from fastapi.exceptions import HTTPException
@@ -26,6 +27,7 @@ async def return_from_graph(
     profile_headers,
     selected_class: URIRef,
     repo: Repo,
+    system_repo: Repo,
 ):
     profile_headers["Content-Disposition"] = "inline"
 
@@ -64,7 +66,7 @@ async def return_from_graph(
     else:
         if "anot+" in mediatype:
             non_anot_mediatype = mediatype.replace("anot+", "")
-            graph = await return_annotated_rdf(graph, repo)
+            graph = await return_annotated_rdf(graph, repo, system_repo)
             content = io.BytesIO(
                 graph.serialize(format=non_anot_mediatype, encoding="utf-8")
             )
@@ -77,7 +79,7 @@ async def return_from_graph(
         )
 
 
-async def return_rdf(graph, mediatype, profile_headers):
+async def return_rdf(graph: Graph, mediatype, profile_headers):
     RDF_SERIALIZER_TYPES_MAP["text/anot+turtle"] = "turtle"
     obj = io.BytesIO(
         graph.serialize(
@@ -90,14 +92,10 @@ async def return_rdf(graph, mediatype, profile_headers):
 
 async def return_annotated_rdf(
     graph: Graph,
-    repo,
+    repo: Repo,
+    system_repo: Repo,
 ) -> Graph:
-    annotations_graph = await get_annotation_properties(graph, repo)
-    # previous_annotation_len = 0
-    # current_annotation_len = len(annotations_graph)
-    # while current_annotation_len != previous_annotation_len:
-    #     previous_annotation_len = current_annotation_len
-    #     new_annotations = await get_annotation_properties(annotations_graph, repo)
-    #     current_annotation_len = len(new_annotations)
-    #     annotations_graph += new_annotations
+    t_start = time.time()
+    annotations_graph = await get_annotation_properties(graph, repo, system_repo)
+    log.debug(f"Time to get annotations: {time.time() - t_start}")
     return graph.__iadd__(annotations_graph)

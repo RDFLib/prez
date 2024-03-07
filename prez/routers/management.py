@@ -10,9 +10,7 @@ from prez.cache import endpoints_graph_cache
 from prez.config import settings
 from prez.reference_data.prez_ns import PREZ
 from prez.renderers.renderer import return_rdf
-from prez.services.annotations import process_term
 
-# from prez.services.app_service import add_common_context_ontologies_to_tbox_cache
 
 router = APIRouter(tags=["Management"])
 log = logging.getLogger(__name__)
@@ -31,17 +29,25 @@ async def index():
     return await return_rdf(g, "text/turtle", profile_headers={})
 
 
-@router.get("/purge-tbox-cache", summary="Reset Tbox Cache")
-async def purge_tbox_cache():
-    """Purges the tbox cache, then re-adds annotations from common ontologies Prez has a copy of
-    (reference_data/context_ontologies)."""
-    cache = process_term.cache
-    cache_size = len(cache._cache)
-    result = await cache.clear()
-    if result:
-        return PlainTextResponse(f"{cache_size} terms removed from tbox cache.")
-    else:
-        return PlainTextResponse("Tbox cache already empty.")
+# @router.get("/purge-tbox-cache", summary="Reset Tbox Cache")
+# async def purge_tbox_cache():
+#     """Purges the tbox cache, then re-adds annotations from common ontologies Prez has a copy of
+#     (reference_data/context_ontologies)."""
+#     cache = process_term.cache
+#     cache_size = len(cache._cache)
+#     test = await cache.multi_get(
+#         [
+#             URIRef("https://prez.dev/profile/prez"),
+#             URIRef("https://example.com/TopLevelCatalogTwo"),
+#             URIRef("https://example.com/VocPrezCatalog"),
+#             URIRef("http://nonoenoenone"),
+#         ]
+#     )
+#     result = await cache.clear()
+#     if result:
+#         return PlainTextResponse(f"{cache_size} terms removed from tbox cache.")
+#     else:
+#         return PlainTextResponse("Tbox cache already empty.")
 
 
 # @router.get("/tbox-cache", summary="Show the Tbox Cache")

@@ -4,7 +4,7 @@ import logging
 from decimal import Decimal
 from typing import List, Union, Optional, Generator, Tuple
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, validator
 from rdflib import URIRef, Variable
 from rdflib.plugins.sparql import prepareQuery
 from rdflib.plugins.sparql.algebra import translateAlgebra
@@ -306,7 +306,7 @@ class RelationalExpression(SPARQLGrammarBase):
 
     left: NumericExpression
     operator: Optional[str] = None  # '=', '!=', '<', '>', '<=', '>=', 'IN' and 'NOT IN'
-    right: Optional[Union[NumericExpression, "ExpressionList"]] = None
+    right: Optional[Union[NumericExpression, ExpressionList]] = None
 
     def render(self) -> Generator[str, None, None]:
         yield from self.left.render()
@@ -392,6 +392,45 @@ class Expression(SPARQLGrammarBase):
             )
         )
 
+    @classmethod
+    def create_in_expression(
+        cls,
+        left_primary_expression: PrimaryExpression,
+        operator: str,  # "IN" or "NOT IN"
+        right_primary_expressions: List[PrimaryExpression],
+    ) -> Expression:
+        """ """
+        return cls(
+            conditional_or_expression=ConditionalOrExpression(
+                conditional_and_expressions=[
+                    ConditionalAndExpression(
+                        value_logicals=[
+                            ValueLogical(
+                                relational_expression=RelationalExpression(
+                                    left=NumericExpression(
+                                        additive_expression=AdditiveExpression(
+                                            base_expression=MultiplicativeExpression(
+                                                base_expression=UnaryExpression(
+                                                    primary_expression=left_primary_expression
+                                                )
+                                            )
+                                        )
+                                    ),
+                                    operator=operator,
+                                    right=ExpressionList(
+                                        expressions=[
+                                            Expression.from_primary_expr(expr)
+                                            for expr in right_primary_expressions
+                                        ]
+                                    ),
+                                )
+                            )
+                        ]
+                    )
+                ]
+            )
+        )
+
 
 class BrackettedExpression(SPARQLGrammarBase):
     expression: Expression
@@ -428,6 +467,12 @@ class DataBlockValue(SPARQLGrammarBase):
 
     value: Union[IRI, RDFLiteral, NumericLiteral, BooleanLiteral, str]
 
+    @field_validator("value")
+    def check_string_is_undef(cls, v):
+        if isinstance(v, str) and v != "UNDEF":
+            raise ValueError("Only permitted string value is 'UNDEF'")
+        return v
+
     def render(self) -> Generator[str, None, None]:
         if isinstance(self.value, str):
             yield self.value
@@ -442,7 +487,7 @@ class InlineDataFull(SPARQLGrammarBase):
     """
 
     vars: Union[NIL, List[Var]]
-    values: List[List[Union[IRI, RDFLiteral]]]
+    datablocks: List[Union[List[DataBlockValue], NIL]]
 
     def render(self) -> Generator[str, None, None]:
         if self.vars:
@@ -454,16 +499,17 @@ class InlineDataFull(SPARQLGrammarBase):
         else:
             yield "{"
 
-        if self.values_blocks is None:
+        if self.datablocks is None:
             yield "()"
         else:
-            for values_block in self.values_blocks:
-                if values_block:
+            for data_block in self.datablocks:
+                if data_block:
                     yield "("
-                    for value in values_block:
+                    for value in data_block:
                         yield from value.render()
                         yield " "
                     yield ")"
+                    yield "\n"
                 else:
                     yield "()"
         yield "}"
@@ -1035,9 +1081,20 @@ class BuiltInCall(SPARQLGrammarBase):
 
     @field_validator("function_name")
     def validate_function_name(cls, v):
-        implemented = ["URI", "STR", "CONCAT", "SHA256", "LCASE", "isBLANK"]
+        implemented = [
+            "URI",
+            "STR",
+            "CONCAT",
+            "SHA256",
+            "LCASE",
+            "isBLANK",
+            "LANG",
+            "LANGMATCHES",
+        ]
         if v not in implemented:
-            raise ValueError(f"{v} is not a valid SPARQL built-in function")
+            raise ValueError(
+                f"{v} is not a valid SPARQL built-in function or it is not implemented yet"
+            )
         return v
 
     def render(self) -> Generator[str, None, None]:

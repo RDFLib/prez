@@ -14,9 +14,9 @@ from prez.services.connegp_service import NegotiatedPMTs
 @pytest.fixture(scope="session")
 def test_store() -> Store:
     store = Store()
-    file = Path(__file__).parent / "data/profiles/ogc_records_profile.ttl"
+    file = Path(__file__).parent.parent / "test_data/ogc_records_profile.ttl"
     store.load(file.read_bytes(), "text/turtle")
-    file = Path(__file__).parent / "data/profiles/spaceprez_default_profiles.ttl"
+    file = Path(__file__).parent.parent / "test_data/spaceprez_default_profiles.ttl"
     store.load(file.read_bytes(), "text/turtle")
     return store
 

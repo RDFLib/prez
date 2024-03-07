@@ -176,6 +176,7 @@ async def listing_function(
         pmts.generate_response_headers(),
         pmts.selected["class"],
         repo,
+        system_repo,
     )
 
 
@@ -223,6 +224,10 @@ async def get_shacl_node_selection(
             if match_all_keys:
                 matching_nodeshapes.append(ns)
         # TODO logic if there is more than one nodeshape - current default nodeshapes will only return one.
+        if not matching_nodeshapes:
+            raise ValueError(
+                "No matching nodeshapes found for the given path nodes and hierarchy level"
+            )
         node_selection_shape = matching_nodeshapes[0].uri
         target_classes = list(
             endpoints_graph_cache.objects(node_selection_shape, SH.targetClass)

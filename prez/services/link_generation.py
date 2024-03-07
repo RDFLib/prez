@@ -1,4 +1,5 @@
 import logging
+import time
 from string import Template
 
 from rdflib import Graph, Literal, URIRef, DCTERMS, BNode
@@ -20,6 +21,7 @@ async def add_prez_links(graph: Graph, repo: Repo, endpoint_structure):
     """
     Adds internal links to the given graph for all URIRefs that have a class and endpoint associated with them.
     """
+    t_start = time.time()
     # get all URIRefs - if Prez can find a class and endpoint for them, an internal link will be generated.
     uris = [uri for uri in graph.all_nodes() if isinstance(uri, URIRef)]
     uri_to_klasses = {}
@@ -29,6 +31,7 @@ async def add_prez_links(graph: Graph, repo: Repo, endpoint_structure):
     for uri, klasses in uri_to_klasses.items():
         if klasses:  # need class to know which endpoints can deliver the class
             await _link_generation(uri, repo, klasses, graph, endpoint_structure)
+    log.debug(f"Time taken to add links: {time.time() - t_start}")
 
 
 async def _link_generation(
@@ -156,6 +159,15 @@ async def create_link_strings(hierarchy_level, solution, uri, endpoint_structure
 async def get_link_components(ns, repo):
     """
     Retrieves link components for the given node shape.
+
+    Of the form:
+    SELECT ?path_node_1
+    WHERE {
+    ?path_node_1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/dcat#Catalog> .
+    <https://example.com/TopLevelCatalogTwo> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?focus_classes .
+    ?path_node_1 <http://purl.org/dc/terms/hasPart> <https://example.com/TopLevelCatalogTwo> .
+        VALUES ?focus_classes{ <http://www.opengis.net/ont/geosparql#FeatureCollection> <http://www.w3.org/2004/02/skos/core#ConceptScheme> <http://www.w3.org/2004/02/skos/core#Collection> <http://www.w3.org/ns/dcat#Catalog>  }
+    }
     """
     link_queries = []
     link_queries.append(

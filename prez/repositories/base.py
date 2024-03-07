@@ -34,9 +34,9 @@ class Repo(ABC):
                 if query
             ],
         )
-        from prez.cache import prefix_graph
-
-        g = Graph(namespace_manager=prefix_graph.namespace_manager)
+        # from prez.cache import prefix_graph
+        # g = Graph(namespace_manager=prefix_graph.namespace_manager)  #TODO find where else this can go. significantly degrades performance
+        g = Graph()
         tabular_results = []
         for result in results:
             if isinstance(result, Graph):
