@@ -25,6 +25,15 @@ jobs:
         id: version
         run: echo "VALUE=$(npx --yes semver ${{ github.event.release.tag_name }})" >> "$GITHUB_OUTPUT"
 
+      - name: Set up Python
+        uses: actions/setup-python@v4
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+
+      - name: Update version
+        run: poetry version ${{ steps.version.outputs.VALUE }}
+
       - name: Docker metadata
         id: metadata
         uses: docker/metadata-action@v4
