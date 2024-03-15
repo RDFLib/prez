@@ -104,7 +104,7 @@ async def vocprez_scheme(
 async def concept_scheme_route(request: Request, repo: Repo = Depends(get_repo)):
     request_url = request.scope["path"]
     endpoint_uri = URIRef(vp_endpoints["vocab-object"])
-    object_uri = get_uri_for_curie_id(request.path_params["concept_scheme_curie"])
+    object_uri = await get_uri_for_curie_id(request.path_params["concept_scheme_curie"])
     return await object_function_new(
         request, endpoint_uri, request_url, repo, object_uri
     )
@@ -156,7 +156,7 @@ async def cs_narrowers_endpoint(
     per_page: int = 20,
 ):
     endpoint_uri = URIRef(vp_endpoints["cs-children"])
-    parent_uri = get_uri_for_curie_id(concept_curie)
+    parent_uri = await get_uri_for_curie_id(concept_curie)
     return await listing_function_new(
         request=request,
         repo=repo,
@@ -181,7 +181,7 @@ async def cs_narrowers_endpoint(
 async def concept_scheme_route(request: Request, repo: Repo = Depends(get_repo)):
     request_url = request.scope["path"]
     endpoint_uri = URIRef(vp_endpoints["vocab-concept"])
-    object_uri = get_uri_for_curie_id(request.path_params["concept_curie"])
+    object_uri = await get_uri_for_curie_id(request.path_params["concept_curie"])
     return await object_function_new(
         request, endpoint_uri, request_url, repo, object_uri
     )
@@ -195,7 +195,7 @@ async def concept_scheme_route(request: Request, repo: Repo = Depends(get_repo))
 async def concept_scheme_route(request: Request, repo: Repo = Depends(get_repo)):
     request_url = request.scope["path"]
     endpoint_uri = URIRef(vp_endpoints["concept-object"])
-    object_uri = get_uri_for_curie_id(request.path_params["concept_curie"])
+    object_uri = await get_uri_for_curie_id(request.path_params["concept_curie"])
     return await object_function_new(
         request, endpoint_uri, request_url, repo, object_uri
     )
@@ -209,7 +209,7 @@ async def concept_scheme_route(request: Request, repo: Repo = Depends(get_repo))
 async def concept_scheme_route(request: Request, repo: Repo = Depends(get_repo)):
     request_url = request.scope["path"]
     endpoint_uri = URIRef(vp_endpoints["collection-concept"])
-    object_uri = get_uri_for_curie_id(request.path_params["concept_curie"])
+    object_uri = await get_uri_for_curie_id(request.path_params["concept_curie"])
     return await object_function_new(
         request, endpoint_uri, request_url, repo, object_uri
     )

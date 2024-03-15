@@ -41,7 +41,7 @@ async def profiles(
 async def profile(request: Request, profile_curie: str, repo=Depends(get_system_repo)):
     request_url = request.scope["path"]
     endpoint_uri = URIRef(request.scope.get("route").name)
-    profile_uri = get_uri_for_curie_id(profile_curie)
+    profile_uri = await get_uri_for_curie_id(profile_curie)
     return await object_function(
         request=request,
         endpoint_uri=endpoint_uri,

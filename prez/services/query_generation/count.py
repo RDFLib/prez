@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from rdflib import RDF, BNode
+from rdflib import BNode
 
 from prez.reference_data.prez_ns import PREZ
 from temp.grammar import *
@@ -13,7 +13,7 @@ class CountQuery(BaseModel):
 
     def render(self):
         cq = self.create_construct_query()
-        return "".join(part for part in cq.render())
+        return cq
 
     def create_construct_query(self):
         """Calls lower level functions and builds the overall query.
@@ -92,6 +92,68 @@ class CountQuery(BaseModel):
             construct_triples=ConstructTriples(triples=search_result_triples)
         )
         return ct
+
+
+class CountQueryV2(ConstructQuery):
+    """Query is of the form:
+    CONSTRUCT {
+    _:N9008750f9acb47c08dfc2c3ae72ede37 <https://prez.dev/count> ?count .
+        }
+        WHERE {
+        SELECT (COUNT(DISTINCT ?focus_node) AS ?count)
+            WHERE {
+                <<<from original SubSelect>>>
+            }
+    }
+    """
+
+    def __init__(self, original_subselect: SubSelect):
+        # Construct Template
+        construct_template = ConstructTemplate(
+            construct_triples=ConstructTriples(
+                triples=[
+                    SimplifiedTriple(
+                        subject=BNode(),
+                        predicate=IRI(value="https://prez.dev/count"),
+                        object=Var(value="count"),
+                    )
+                ]
+            )
+        )
+
+        # Rebuild the SELECT clause in the new SubSelect to retrieve the count of the focus node
+        count_expression = Expression.from_primary_expr(
+            PrimaryExpression(
+                content=BuiltInCall(
+                    other_expressions=Aggregate(
+                        function_name="COUNT",
+                        distinct=True,
+                        expression=Expression.from_primary_expr(
+                            PrimaryExpression(content=Var(value="focus_node"))
+                        ),
+                    )
+                )
+            )
+        )
+
+        # Where Clause using the new SubSelect
+        where_clause = WhereClause(
+            group_graph_pattern=GroupGraphPattern(
+                content=SubSelect(
+                    select_clause=SelectClause(
+                        variables_or_all=[(count_expression, Var(value="count"))],
+                    ),
+                    where_clause=original_subselect.where_clause,
+                    values_clause=original_subselect.values_clause,
+                    solution_modifier=SolutionModifier(),
+                )
+            )
+        )
+        # Initialize the base ConstructQuery
+        super().__init__(
+            construct_template=construct_template,
+            where_clause=where_clause,
+        )
 
 
 def startup_count_objects():

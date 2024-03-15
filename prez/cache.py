@@ -1,11 +1,8 @@
-from aiocache import Cache
+from aiocache import caches
 from pyoxigraph.pyoxigraph import Store
 from rdflib import Graph, ConjunctiveGraph, Dataset
 
 from prez.repositories import PyoxigraphRepo
-
-tbox_cache = Graph()
-tbox_cache_aio = Cache.MEMORY
 
 profiles_graph_cache = ConjunctiveGraph()
 profiles_graph_cache.bind("prez", "https://prez.dev/")
@@ -34,3 +31,16 @@ annotations_store = Store()
 annotations_repo = PyoxigraphRepo(annotations_store)
 
 oxrdflib_store = Graph(store="Oxigraph")
+
+caches.set_config(
+    {
+        "default": {
+            "cache": "aiocache.SimpleMemoryCache",
+            "serializer": {"class": "aiocache.serializers.PickleSerializer"},
+        },
+        "curies": {
+            "cache": "aiocache.SimpleMemoryCache",
+            "serializer": {"class": "aiocache.serializers.PickleSerializer"},
+        },
+    }
+)

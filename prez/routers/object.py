@@ -43,7 +43,7 @@ async def count_route(
     repo=Depends(get_repo),
 ):
     """Get an Object's statements count based on the inbound or outbound predicate"""
-    iri = get_iri_route(curie)
+    iri = await get_iri_route(curie)
 
     if inbound is None and outbound is None:
         raise HTTPException(

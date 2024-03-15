@@ -47,23 +47,27 @@ class AnnotationsConstructQuery(ConstructQuery):
         # create a language filter
         # e.g. FILTER (LANG(?annotation) IN ("en", ""))
         anot_var = Var(value="annotation")
-        in_expr = Expression.create_in_expression(
-            left_primary_expression=PrimaryExpression(
-                content=BuiltInCall.create_with_one_expr(
-                    function_name="LANG",
-                    expression=PrimaryExpression(content=anot_var),
-                )
-            ),
-            operator="IN",
-            right_primary_expressions=[
-                PrimaryExpression(content=RDFLiteral(value=settings.default_language)),
-                PrimaryExpression(content=RDFLiteral(value="")),
-            ],
-        )
-
         lang_filter_gpnt = GraphPatternNotTriples(
             content=Filter(
-                constraint=Constraint(content=BrackettedExpression(expression=in_expr))
+                constraint=Constraint(
+                    content=BrackettedExpression(
+                        expression=Expression.create_in_expression(
+                            left_primary_expression=PrimaryExpression(
+                                content=BuiltInCall.create_with_one_expr(
+                                    function_name="LANG",
+                                    expression=PrimaryExpression(content=anot_var),
+                                )
+                            ),
+                            operator="IN",
+                            right_primary_expressions=[
+                                PrimaryExpression(
+                                    content=RDFLiteral(value=settings.default_language)
+                                ),
+                                PrimaryExpression(content=RDFLiteral(value="")),
+                            ],
+                        )
+                    )
+                )
             )
         )
 

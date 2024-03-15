@@ -35,5 +35,4 @@ bblocks:ogc.unstable.sosa a skos:Concept,
         <https://opengeospatial.github.io/bblocks/annotated-schemas/unstable/sosa/schema.yaml> ;
     bblocks:scope <http://www.opengis.net/def/bblocks/scope/unstable> ;
     bblocks:status <http://www.opengis.net/def/status/under-development> ;
-    prez:link "/catalogs/bblocks/collections/api/items/ogc.unstable.sosa" ;
     .

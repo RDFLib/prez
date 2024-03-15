@@ -71,7 +71,7 @@ async def vocab_list(
     system_repo: Repo = Depends(get_system_repo),
 ):
     search_term = request.query_params.get("q")
-    parent_uri = get_uri_for_curie_id(request.path_params["catalogId"])
+    parent_uri = await get_uri_for_curie_id(request.path_params["catalogId"])
     endpoint_uri = URIRef(request.scope.get("route").name)
     return await listing_function(
         request,
@@ -99,7 +99,7 @@ async def concept_list(
     system_repo: Repo = Depends(get_system_repo),
 ):
     search_term = request.query_params.get("q")
-    parent_uri = get_uri_for_curie_id(request.path_params["collectionId"])
+    parent_uri = await get_uri_for_curie_id(request.path_params["collectionId"])
     endpoint_uri = URIRef(request.scope.get("route").name)
     return await listing_function(
         request,
@@ -120,7 +120,7 @@ async def top_concepts(
     repo: Repo = Depends(get_repo),
     system_repo: Repo = Depends(get_system_repo),
 ):
-    parent_uri = get_uri_for_curie_id(request.path_params["collectionId"])
+    parent_uri = await get_uri_for_curie_id(request.path_params["collectionId"])
     endpoint_uri = URIRef(ogc_endpoints["top-concepts"])
     return await listing_function(
         request,
@@ -140,7 +140,7 @@ async def narrowers(
     repo: Repo = Depends(get_repo),
     system_repo: Repo = Depends(get_system_repo),
 ):
-    parent_uri = get_uri_for_curie_id(request.path_params["itemId"])
+    parent_uri = await get_uri_for_curie_id(request.path_params["itemId"])
     endpoint_uri = URIRef(ogc_endpoints["narrowers"])
     return await listing_function(
         request,
@@ -165,7 +165,7 @@ async def catalog_object(
 ):
     request_url = request.scope["path"]
     endpoint_uri = URIRef(request.scope.get("route").name)
-    object_uri = get_uri_for_curie_id(request.path_params["catalogId"])
+    object_uri = await get_uri_for_curie_id(request.path_params["catalogId"])
     return await object_function(
         request, endpoint_uri, object_uri, request_url, repo, system_repo
     )
@@ -189,7 +189,7 @@ async def catalog_object(
         )
     request_url = request.scope["path"]
     endpoint_uri = URIRef(request.scope.get("route").name)
-    object_uri = get_uri_for_curie_id(request.path_params["collectionId"])
+    object_uri = await get_uri_for_curie_id(request.path_params["collectionId"])
     return await object_function(
         request, endpoint_uri, object_uri, request_url, repo, system_repo
     )
@@ -214,7 +214,7 @@ async def catalog_object(
         )
     request_url = request.scope["path"]
     endpoint_uri = URIRef(request.scope.get("route").name)
-    object_uri = get_uri_for_curie_id(request.path_params["itemId"])
+    object_uri = await get_uri_for_curie_id(request.path_params["itemId"])
     return await object_function(
         request, endpoint_uri, object_uri, request_url, repo, system_repo
     )

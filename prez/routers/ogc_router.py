@@ -59,7 +59,7 @@ async def collection_listing(
 ):
     search_term = request.query_params.get("q")
 
-    path_node_1_uri = get_uri_for_curie_id(request.path_params["catalogId"])
+    path_node_1_uri = await get_uri_for_curie_id(request.path_params["catalogId"])
     endpoint_uri = URIRef(request.scope.get("route").name)
     return await listing_function(
         request,
@@ -88,8 +88,8 @@ async def item_listing(
     system_repo: Repo = Depends(get_system_repo),
 ):
     search_term = request.query_params.get("q")
-    path_node_1_uri = get_uri_for_curie_id(request.path_params["collectionId"])
-    path_node_2_uri = get_uri_for_curie_id(request.path_params["catalogId"])
+    path_node_1_uri = await get_uri_for_curie_id(request.path_params["collectionId"])
+    path_node_2_uri = await get_uri_for_curie_id(request.path_params["catalogId"])
     endpoint_uri = URIRef(request.scope.get("route").name)
     return await listing_function(
         request,
@@ -119,7 +119,7 @@ async def catalog_object(
 ):
     request_url = request.scope["path"]
     endpoint_uri = URIRef(request.scope.get("route").name)
-    object_uri = get_uri_for_curie_id(request.path_params["catalogId"])
+    object_uri = await get_uri_for_curie_id(request.path_params["catalogId"])
     return await object_function(
         request, endpoint_uri, object_uri, request_url, repo, system_repo
     )
@@ -137,7 +137,7 @@ async def collection_object(
 ):
     request_url = request.scope["path"]
     endpoint_uri = URIRef(request.scope.get("route").name)
-    object_uri = get_uri_for_curie_id(request.path_params["collectionId"])
+    object_uri = await get_uri_for_curie_id(request.path_params["collectionId"])
     return await object_function(
         request, endpoint_uri, object_uri, request_url, repo, system_repo
     )
@@ -155,7 +155,7 @@ async def item_object(
 ):
     request_url = request.scope["path"]
     endpoint_uri = URIRef(request.scope.get("route").name)
-    object_uri = get_uri_for_curie_id(request.path_params["itemId"])
+    object_uri = await get_uri_for_curie_id(request.path_params["itemId"])
     return await object_function(
         request, endpoint_uri, object_uri, request_url, repo, system_repo
     )

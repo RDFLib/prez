@@ -74,9 +74,9 @@ def get_curie_route(iri: str):
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"content": {"application/json": {}}},
     },
 )
-def get_iri_route(curie: str):
+async def get_iri_route(curie: str):
     try:
-        return get_uri_for_curie_id(curie)
+        return await get_uri_for_curie_id(curie)
     except ValueError as err:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST, f"Invalid input '{curie}'. {err}"

@@ -84,7 +84,7 @@ async def add_prefixes_to_prefix_graph(repo: Repo):
     log.info("Prefixes from local files added to prefix graph")
 
     if settings.disable_prefix_generation:
-        log.info("DISABLE_PREFIX_GENERATION set to false. Skipping prefix generation.")
+        log.info("DISABLE_PREFIX_GENERATION set to true. Skipping prefix generation.")
     else:
         query = """
             SELECT DISTINCT ?iri

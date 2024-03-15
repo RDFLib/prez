@@ -7,11 +7,12 @@ from rdflib import URIRef
 
 from prez.cache import endpoints_graph_cache, profiles_graph_cache
 from prez.config import settings
-from prez.reference_data.prez_ns import EP
+from prez.reference_data.prez_ns import EP, ALTREXT
 from prez.renderers.renderer import return_from_graph
 from prez.repositories import Repo
 from prez.services.connegp_service import NegotiatedPMTs
 from prez.services.link_generation import add_prez_links
+from prez.services.listings import listing_function
 from prez.services.query_generation.classes import get_classes
 from prez.services.query_generation.umbrella import PrezQueryConstructor
 from temp.grammar import IRI
@@ -35,27 +36,32 @@ async def object_function(
         classes=classes,
         system_repo=system_repo,
     )
-    success = await pmts.setup()
-    if not success:
-        log.error("ConnegP Error. NegotiatedPMTs.setup() was not successful")
+    await pmts.setup()
 
     # handle alternate profiles
-    runtime_values = {}
-    if pmts.selected["profile"] == URIRef(
-        "http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"
-    ):
-        endpoint_uri = URIRef("https://prez.dev/endpoint/system/alt-profiles-listing")
-    # runtime_values["selectedClass"] = prof_and_mt_info.selected_class
+    if pmts.selected["profile"] == ALTREXT["alt-profile"]:
+        return await listing_function(
+            request=request,
+            repo=repo,
+            system_repo=system_repo,
+            endpoint_uri=endpoint_uri,
+            hierarchy_level=1,
+        )
 
-    # runtime_values["object"] = uri
+    runtime_values = {}
+    listing_or_object = "object"
+    ns_gpnt = []
+    ns_triples = []
     query_constructor = PrezQueryConstructor(
         runtime_values=runtime_values,
         endpoint_graph=endpoints_graph_cache,
         profile_graph=profiles_graph_cache,
-        listing_or_object="object",
+        listing_or_object=listing_or_object,
         focus_node=IRI(value=uri),
         endpoint_uri=endpoint_uri,
         profile_uri=pmts.selected["profile"],
+        endpoint_shacl_triples=ns_triples,
+        endpoint_shacl_gpnt=ns_gpnt,
     )
     query_constructor.generate_sparql()
     query = query_constructor.sparql
@@ -66,12 +72,7 @@ async def object_function(
     except IndexError as e:
         log.debug(e.args[0])
 
-    if pmts.selected["profile"] == URIRef(
-        "http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"
-    ):
-        item_graph, _ = await system_repo.send_queries([query], [])
-    else:
-        item_graph, _ = await repo.send_queries([query], [])
+    item_graph, _ = await repo.send_queries([query], [])
     if "anot+" in pmts.selected["mediatype"]:
         if not endpoint_uri == EP.object:
             await add_prez_links(item_graph, repo, endpoint_structure)

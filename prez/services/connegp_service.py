@@ -9,7 +9,7 @@ from prez.models.model_exceptions import NoProfilesException
 from prez.repositories.base import Repo
 from prez.services.curie_functions import get_curie_id_for_uri, get_uri_for_curie_id
 
-logger = logging.getLogger("prez")
+log = logging.getLogger(__name__)
 
 RDF_MEDIATYPES = [
     "text/turtle",
@@ -70,12 +70,11 @@ class NegotiatedPMTs(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-    async def setup(self) -> bool:
+    async def setup(self):
         self.requested_profiles = await self._get_requested_profiles()
         self.requested_mediatypes = await self._get_requested_mediatypes()
         self.available = await self._get_available()
-        self.selected = await self._get_selected()
-        return True if self.selected else False
+        self.selected = self.available[0]
 
     async def _resolve_token(self, token: str) -> str:
         query_str: str = dedent(
@@ -117,22 +116,23 @@ class NegotiatedPMTs(BaseModel):
                     parts[0]
                 )  # then try to resolve the token to a URI
             except TokenError as e:
-                logger.error(e.args[0])
+                log.error(e.args[0])
                 try:  # if token resolution fails, try to resolve as a curie
-                    result = str(get_uri_for_curie_id(parts[0]))
+                    result = await get_uri_for_curie_id(parts[0])
+                    result = str(result)
                     parts[0] = "<" + result + ">"
                 except ValueError as e:
                     parts[
                         0
                     ] = ""  # if curie resolution failed, then the profile is invalid
-                    logger.error(e.args[0])
+                    log.error(e.args[0])
         if len(parts) == 1:
             parts.append(self.default_weighting)  # If no weight given, set the default
         else:
             try:
                 parts[1] = float(parts[1])  # Type-check the seperated weighting
             except ValueError as e:
-                logger.debug(
+                log.debug(
                     f"Could not cast q={parts[1]} as float. Defaulting to {self.default_weighting}. {e.args[0]}"
                 )
         return parts[0], parts[1]
@@ -157,7 +157,7 @@ class NegotiatedPMTs(BaseModel):
 
     async def _get_requested_mediatypes(self) -> list[tuple[str, float]] | None:
         raw_mediatypes: str = self.params.get(
-            "_media", ""
+            "_mediatype", ""
         )  # Prefer mediatypes declared in the QSA, as per the spec.
         if not raw_mediatypes:
             raw_mediatypes: str = self.headers.get("accept", "")
@@ -181,10 +181,9 @@ class NegotiatedPMTs(BaseModel):
             }
             for result in repo_response[1][0][1]
         ]
+        if not available:
+            raise NoProfilesException(self.classes)
         return available
-
-    async def _get_selected(self) -> dict:
-        return self.available[0]
 
     def generate_response_headers(self) -> dict:
         profile_uri = "<http://www.w3.org/ns/dx/prof/Profile>"
@@ -217,7 +216,7 @@ class NegotiatedPMTs(BaseModel):
             ]  # TODO: handle multiple requested profiles
         except TypeError as e:
             requested_profile = None
-            logger.debug(f"{e}. normally this just means no profiles were requested")
+            log.debug(f"{e}. normally this just means no profiles were requested")
 
         query = dedent(
             f"""
@@ -255,8 +254,6 @@ class NegotiatedPMTs(BaseModel):
             ORDER BY DESC(?req_profile) DESC(?distance) DESC(?def_profile) DESC(?req_format) DESC(?def_format)
             """
         )
-
-        logger.debug(f"ConnegP query: {query}")
         return query
 
     def _generate_mediatype_if_statements(self) -> str:

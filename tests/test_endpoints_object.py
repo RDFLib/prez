@@ -3,10 +3,10 @@ from rdflib.namespace import RDF, GEO
 
 
 def test_feature_collection(client):
-    r = client.get(f"/object?uri=https://test/feature-collection")
+    r = client.get(f"/object?uri=https://example.com/FeatureCollection")
     response_graph = Graph().parse(data=r.text)
     assert (
-        URIRef("https://test/feature-collection"),
+        URIRef("https://example.com/FeatureCollection"),
         RDF.type,
         GEO.FeatureCollection,
     ) in response_graph
@@ -14,11 +14,11 @@ def test_feature_collection(client):
 
 def test_feature(client):
     r = client.get(
-        f"/object?uri=https://linked.data.gov.au/datasets/geofabric/hydroid/102208962"
+        f"/object?uri=https://example.com/Feature1"
     )
     response_graph = Graph().parse(data=r.text)
     assert (
-        URIRef("https://linked.data.gov.au/datasets/geofabric/hydroid/102208962"),
+        URIRef("https://example.com/Feature1"),
         RDF.type,
         GEO.Feature,
     ) in response_graph

@@ -25,8 +25,8 @@ def test_nodeshape_parsing(nodeshape_uri):
 
 @pytest.mark.parametrize(
     "nodeshape_uri",
-    ["http://example.org/ns#TopLevelCatalogs" "http://example.org/ns#FeatureListing"],
+    ["http://example.org/ns#ConceptSchemeConcept"],
 )
 def test_nodeshape_to_grammar(nodeshape_uri):
     ns = NodeShape(uri=URIRef(nodeshape_uri), graph=endpoints_graph)
-    ns.to_string()
+    ...

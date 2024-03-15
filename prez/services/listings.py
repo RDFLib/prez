@@ -9,7 +9,7 @@ from rdflib.namespace import RDF, SH
 
 from prez.cache import profiles_graph_cache, endpoints_graph_cache
 from prez.config import settings
-from prez.reference_data.prez_ns import PREZ
+from prez.reference_data.prez_ns import PREZ, ALTREXT, ONT
 from prez.renderers.renderer import return_from_graph
 from prez.repositories import Repo
 from prez.services.connegp_service import NegotiatedPMTs
@@ -26,17 +26,17 @@ log = logging.getLogger(__name__)
 
 
 async def listing_function(
-    request: Request,
-    repo: Repo,
-    system_repo: Repo,
-    endpoint_uri: URIRef,
-    hierarchy_level: int,
-    path_nodes: Dict[str, Var | IRI] = None,
-    page: int = 1,
-    per_page: int = 20,
-    cql_parser: CQLParser = None,
-    search_term: Optional[str] = None,
-    endpoint_structure: Tuple[str] = settings.endpoint_structure,
+        request: Request,
+        repo: Repo,
+        system_repo: Repo,
+        endpoint_uri: URIRef,
+        hierarchy_level: int,
+        path_nodes: Dict[str, Var | IRI] = None,
+        page: int = 1,
+        per_page: int = 20,
+        cql_parser: CQLParser = None,
+        search_term: Optional[str] = None,
+        endpoint_structure: Tuple[str] = settings.endpoint_structure,
 ):
     """
     # determine the relevant node selection part of the query - from SHACL, CQL, Search
@@ -59,6 +59,7 @@ async def listing_function(
             target_classes = frozenset([PREZ.CQLObjectList])
         elif search_term:
             target_classes = frozenset([PREZ.SearchResult])
+
     # determine the relevant profile
     pmts = NegotiatedPMTs(
         headers=request.headers,
@@ -67,42 +68,20 @@ async def listing_function(
         listing=True,
         system_repo=system_repo,
     )
-    success = await pmts.setup()
-    if not success:
-        log.error("ConnegP Error. NegotiatedPMTs.setup() was not successful")
-
+    await pmts.setup()
     runtime_values = {}
-    if pmts.selected["profile"] == URIRef(
-        "http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"
-    ):
-        ns = NodeShape(
-            uri=URIRef("http://example.org/ns#AltProfilesForListing"),
-            graph=endpoints_graph_cache,
-            path_nodes={"path_node_1": IRI(value=pmts.selected["class"])},
+    if pmts.selected["profile"] == ALTREXT["alt-profile"]:
+        endpoint_uri, ns_gpnt, ns_triples = await handle_alternate_profile(
+            current_endpoint_uri=endpoint_uri, pmts=pmts, runtime_values=runtime_values
         )
-        ns_triples = ns.triples_list
-        ns_gpnt = ns.gpnt_list
-        endpoint_uri = URIRef("https://prez.dev/endpoint/system/alt-profiles-listing")
-        runtime_values["selectedClass"] = pmts.selected["class"]
 
     runtime_values["limit"] = per_page
     runtime_values["offset"] = (page - 1) * per_page
 
     cql_triples_list = []
     cql_gpnt_list = []
-
     if cql_parser:
-        cql_parser.parse()
-        cql_select_ggps = cql_parser.ggps_inner_select
-
-        if cql_select_ggps.triples_block:
-            cql_triples_list = cql_select_ggps.triples_block.triples
-        if cql_select_ggps.graph_patterns_or_triples_blocks:
-            for pattern in cql_select_ggps.graph_patterns_or_triples_blocks:
-                if isinstance(pattern, TriplesBlock):
-                    cql_triples_list += pattern.triples
-                elif isinstance(pattern, GraphPatternNotTriples):
-                    cql_gpnt_list.append(pattern)
+        cql_triples_list = await handle_cql(cql_gpnt_list, cql_parser, cql_triples_list)
 
     query_constructor = PrezQueryConstructor(
         runtime_values=runtime_values,
@@ -133,38 +112,30 @@ async def listing_function(
     else:
         queries.append(main_query)
     if (
-        pmts.requested_mediatypes is not None
-        and pmts.requested_mediatypes[0][0] == "application/sparql-query"
+            pmts.requested_mediatypes is not None
+            and pmts.requested_mediatypes[0][0] == "application/sparql-query"
     ):
         return PlainTextResponse(queries[0], media_type="application/sparql-query")
 
     # add a count query if it's an annotated mediatype
     if "anot+" in pmts.selected["mediatype"] and not search_term:
         subselect = copy.deepcopy(query_constructor.inner_select)
-        count_query = CountQuery(subselect=subselect).render()
+        count_query = CountQuery(subselect=subselect).render().to_string()
         queries.append(count_query)
 
-        # if prof_and_mt_info.profile == URIRef(
-        #     "http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"
-        # ):
-        #     count_class = PROF.Profile
-        # else:
-        #     count_class = target_classes
-        # if count_class:  # target_class may be unknown (None) for queries involving CQL
-        #     queries.append(temp_listing_count(subselect, count_class))
-
-    if pmts.selected["profile"] == URIRef(
-        "http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"
-    ):
-        item_graph, _ = await system_repo.send_queries(queries, [])
-        if "anot+" in pmts.selected["mediatype"]:
-            await add_prez_links(
-                item_graph, system_repo, endpoint_structure=("profiles",)
-            )
+    if pmts.selected["profile"] == ALTREXT["alt-profile"]:
+        query_repo = system_repo
+        endpoint_structure = ("profiles",)
     else:
-        item_graph, _ = await repo.send_queries(queries, [])
-        if "anot+" in pmts.selected["mediatype"]:
-            await add_prez_links(item_graph, repo, endpoint_structure)
+        query_repo = repo
+        endpoint_structure = endpoint_structure
+
+    item_graph, _ = await query_repo.send_queries(queries, [])
+    if "anot+" in pmts.selected["mediatype"]:
+        await add_prez_links(  # TODO can this go under return_from_graph?
+            item_graph, query_repo, endpoint_structure
+        )
+
     # count search results - hard to do in SPARQL as the SELECT part of the query is NOT aggregated
     if search_term:
         count = len(list(item_graph.subjects(RDF.type, PREZ.SearchResult)))
@@ -180,8 +151,41 @@ async def listing_function(
     )
 
 
+async def handle_cql(cql_gpnt_list, cql_parser, cql_triples_list):
+    cql_parser.parse()
+    cql_select_ggps = cql_parser.ggps_inner_select
+    if cql_select_ggps.triples_block:
+        cql_triples_list = cql_select_ggps.triples_block.triples
+    if cql_select_ggps.graph_patterns_or_triples_blocks:
+        for pattern in cql_select_ggps.graph_patterns_or_triples_blocks:
+            if isinstance(pattern, TriplesBlock):
+                cql_triples_list += pattern.triples
+            elif isinstance(pattern, GraphPatternNotTriples):
+                cql_gpnt_list.append(pattern)
+    return cql_triples_list
+
+
+async def handle_alternate_profile(current_endpoint_uri, pmts, runtime_values):
+    # determine whether we are displaying alternate profiles for a LISTING or OBJECT
+    ep_type = list(endpoints_graph_cache.objects(current_endpoint_uri, RDF.type))
+    if ONT["ObjectEndpoint"] in ep_type:
+        nodeshape_uri = URIRef("http://example.org/ns#AltProfilesForObject")
+    elif ONT["ListingEndpoint"] in ep_type:
+        nodeshape_uri = URIRef("http://example.org/ns#AltProfilesForListing")
+    ns = NodeShape(
+        uri=nodeshape_uri,
+        graph=endpoints_graph_cache,
+        path_nodes={"path_node_1": IRI(value=pmts.selected["class"])},
+    )
+    ns_triples = ns.triples_list
+    ns_gpnt = ns.gpnt_list
+    new_endpoint_uri = URIRef("https://prez.dev/endpoint/system/alt-profiles-listing")
+    runtime_values["selectedClass"] = pmts.selected["class"]
+    return new_endpoint_uri, ns_gpnt, ns_triples
+
+
 async def get_shacl_node_selection(
-    endpoint_uri, hierarchy_level, path_nodes, repo, system_repo
+        endpoint_uri, hierarchy_level, path_nodes, repo, system_repo
 ):
     """
     Determines the relevant nodeshape based on the endpoint, hierarchy level, and parent URI

@@ -1,30 +1,13 @@
 import logging
 import time
-from pathlib import Path
 from typing import Optional, Set
 
-import pytest
 from fastapi.testclient import TestClient
-from pyoxigraph.pyoxigraph import Store
 from rdflib import Graph
 
-from prez.app import app
-from prez.dependencies import get_repo
 from prez.reference_data.prez_ns import PREZ
-from prez.repositories import Repo, PyoxigraphRepo
 
 log = logging.getLogger(__name__)
-
-
-@pytest.fixture(scope="session")
-def test_store() -> Store:
-    # Create a new pyoxigraph Store
-    store = Store()
-
-    for file in Path(__file__).parent.glob("../test_data/*.ttl"):
-        store.load(file.read_bytes(), "text/turtle")
-
-    return store
 
 
 def wait_for_app_to_be_ready(client, timeout=10):
@@ -40,30 +23,8 @@ def wait_for_app_to_be_ready(client, timeout=10):
     raise RuntimeError("App did not start within the specified timeout")
 
 
-@pytest.fixture(scope="session")
-def test_repo(test_store: Store) -> Repo:
-    # Create a PyoxigraphQuerySender using the test_store
-    return PyoxigraphRepo(test_store)
-
-
-@pytest.fixture(scope="session")
-def client(test_repo: Repo) -> TestClient:
-    # Override the dependency to use the test_repo
-    def override_get_repo():
-        return test_repo
-
-    app.dependency_overrides[get_repo] = override_get_repo
-
-    with TestClient(app) as c:
-        wait_for_app_to_be_ready(c)
-        yield c
-
-    # Remove the override to ensure subsequent tests are unaffected
-    app.dependency_overrides.clear()
-
-
-def test_ogcprez_links(
-    client: TestClient, visited: Optional[Set] = None, link="/catalogs"
+def ogcprez_links(
+        client, visited: Optional[Set] = None, link="/catalogs", total_links_visited=0
 ):
     if not visited:
         visited = set()
@@ -76,8 +37,16 @@ def test_ogcprez_links(
         member_links = list(g.objects(member_bnode, PREZ.link))
         links.extend(member_links)
     assert response.status_code == 200
-    for link in links:
-        print(link)
-        if link not in visited:
-            visited.add(link)
-            test_ogcprez_links(client, visited, str(link))
+    for next_link in links:
+        print(next_link)
+        if next_link not in visited:
+            visited.add(next_link)
+            # Make the recursive call and update the total_links_visited
+            # and visited set with the returned values
+            visited, total_links_visited = ogcprez_links(client, visited, str(next_link), total_links_visited + 1)
+    # Return the updated count and visited set
+    return visited, total_links_visited
+
+def test_visit_all_links(client):
+    visited_links, total_count = ogcprez_links(client)
+    print(f"Total links visited: {total_count}")

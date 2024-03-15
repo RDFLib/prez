@@ -170,7 +170,9 @@ class PropertyShape(Shape):
             self._process_property_path(pp, self.graph)
 
     def _process_property_path(self, pp, graph):
-        if isinstance(pp, BNode):
+        if isinstance(pp, URIRef):
+            self.property_paths.append(Path(value=pp))
+        elif isinstance(pp, BNode):
             pred_objects_gen = graph.predicate_objects(subject=pp)
             bn_pred, bn_obj = next(pred_objects_gen, (None, None))
             if bn_obj == SH.union:

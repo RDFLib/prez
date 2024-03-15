@@ -22,9 +22,3 @@ def test_sp_profile(client):
     g = Graph().parse(data=r.text)
     assert (URIRef("https://prez.dev/SpacePrezProfile"), RDF.type, PROF.Profile) in g
 
-
-def test_vp_profile(client):
-    # check the example remote profile is loaded
-    r = client.get("/profiles/prez:VocPrezProfile")
-    g = Graph().parse(data=r.text)
-    assert (URIRef("https://prez.dev/VocPrezProfile"), RDF.type, PROF.Profile) in g

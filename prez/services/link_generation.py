@@ -121,7 +121,7 @@ async def add_links_to_graph_and_cache(
     quads.append(
         (uri, DCTERMS.identifier, Literal(curie_for_uri, datatype=PREZ.identifier), uri)
     )
-    if members_link:
+    if members_link:  #TODO need to confirm the link value doesn't match the existing link value, as multiple endpoints can deliver the same class/have different links for the same URI
         existing_members_link = list(
             links_ids_graph_cache.quads((uri, PREZ["members"], None, uri))
         )

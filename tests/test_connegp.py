@@ -7,11 +7,12 @@ from rdflib import URIRef
 
 from prez.app import app
 from prez.dependencies import get_repo
+from prez.reference_data.prez_ns import PREZ
 from prez.repositories import PyoxigraphRepo, Repo
 from prez.services.connegp_service import NegotiatedPMTs
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def test_store() -> Store:
     store = Store()
     file = Path(__file__).parent.parent / "test_data/ogc_records_profile.ttl"
@@ -21,7 +22,7 @@ def test_store() -> Store:
     return store
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def test_repo(test_store: Store) -> Repo:
     return PyoxigraphRepo(test_store)
 
@@ -83,7 +84,7 @@ def test_repo(test_store: Store) -> Repo:
         ],
         [
             {},
-            {"_media": "application/ld+json"},  # Test mediatype resolution as QSA
+            {"_mediatype": "application/ld+json"},  # Test mediatype resolution as QSA
             [URIRef("http://www.w3.org/ns/dcat#Catalog")],
             False,
             {
@@ -95,7 +96,7 @@ def test_repo(test_store: Store) -> Repo:
         ],
         [
             {"accept": "text/turtle"},
-            {"_media": "application/ld+json"},  # Test QSA mediatype is preferred
+            {"_mediatype": "application/ld+json"},  # Test QSA mediatype is preferred
             [URIRef("http://www.w3.org/ns/dcat#Catalog")],
             False,
             {
@@ -137,8 +138,8 @@ def test_repo(test_store: Store) -> Repo:
             [URIRef("http://www.w3.org/ns/dcat#Catalog")],
             True,
             {
-                "profile": URIRef("https://www.w3.org/TR/vocab-dcat/"),
-                "title": "DCAT",
+                "profile": PREZ["OGCListingProfile"],
+                "title": "OGC Listing Profile",
                 "mediatype": "text/anot+turtle",
                 "class": "http://www.w3.org/ns/dcat#Catalog",
             },
@@ -158,6 +159,5 @@ async def test_connegp(headers, params, classes, listing, expected_selected, tes
         listing=listing,
         system_repo=test_repo,
     )
-    success = await pmts.setup()
-    assert success
+    await pmts.setup()
     assert pmts.selected == expected_selected

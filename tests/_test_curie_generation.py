@@ -5934,7 +5934,7 @@ def test_get_curie_id_for_uri_negative():
         assert get_curie_id_for_uri(uri)
 
 
-def test_get_uri_for_curie_id():
-    assert get_uri_for_curie_id(curie_id="skos:prefLabel") == URIRef(
+def test_await get_uri_for_curie_id():
+    assert await get_uri_for_curie_id(curie_id="skos:prefLabel") == URIRef(
         "http://www.w3.org/2004/02/skos/core#prefLabel"
     )

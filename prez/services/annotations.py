@@ -3,7 +3,6 @@ from typing import List, FrozenSet, Set
 
 from aiocache import caches
 from rdflib import Graph, URIRef, Literal
-
 from prez.dependencies import get_annotations_repo
 from prez.repositories import Repo
 from prez.services.query_generation.annotations import (
@@ -12,17 +11,6 @@ from prez.services.query_generation.annotations import (
 from temp.grammar import *
 
 log = logging.getLogger(__name__)
-
-pred = IRI(value=URIRef("https://prez.dev/label"))
-
-caches.set_config(
-    {
-        "default": {
-            "cache": "aiocache.SimpleMemoryCache",
-            "serializer": {"class": "aiocache.serializers.PickleSerializer"},
-        }
-    }
-)
 
 
 async def process_terms(terms_and_dtypes: Set[URIRef], repo: Repo, system_repo: Repo):

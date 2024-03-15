@@ -1,19 +1,11 @@
-import asyncio
-import time
-from pathlib import Path
-
 import pytest
-from fastapi.testclient import TestClient
-from pyoxigraph.pyoxigraph import Store
 from rdflib import Graph, URIRef
 from rdflib.namespace import RDF, DCAT
 
-from prez.app import app
-from prez.dependencies import get_repo
-from prez.repositories import Repo, PyoxigraphRepo
+from prez.reference_data.prez_ns import PREZ
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def a_catalog_link(client):
     # get link for first catalog
     r = client.get("/catalogs")
@@ -23,7 +15,7 @@ def a_catalog_link(client):
     return link
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def a_resource_link(client, a_catalog_link):
     r = client.get(a_catalog_link)
     g = Graph().parse(data=r.text)
@@ -37,20 +29,26 @@ def test_listing_alt_profile(client):
     r = client.get(f"/catalogs?_mediatype=text/turtle&_profile=altr-ext:alt-profile")
     response_graph = Graph().parse(data=r.text)
     assert (
-        URIRef("http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"),
-        RDF.type,
-        URIRef("https://prez.dev/ListingProfile"),
-    ) in response_graph
+               URIRef("http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"),
+               RDF.type,
+               URIRef("https://prez.dev/ListingProfile"),
+           ) in response_graph
 
 
-def test_object_alt_profile(client, a_catalog_link):
+def test_object_alt_profile_token(client, a_catalog_link):
     r = client.get(
-        f"{a_catalog_link}?_mediatype=text/turtle&_profile=altr-ext:alt-profile"
+        f"{a_catalog_link}?_mediatype=text/turtle&_profile=alt"
     )
     response_graph = Graph().parse(data=r.text)
-    expected_response = (
-        URIRef("https://example.com/TopLevelCatalog"),
+    object_profiles = (
+        None,
         RDF.type,
-        DCAT.Catalog,
+        PREZ.ObjectProfile,
     )
-    assert next(response_graph.triples(expected_response))
+    listing_profiles = (
+        None,
+        RDF.type,
+        PREZ.ListingProfile,
+    )
+    assert len(list(response_graph.triples(object_profiles))) > 1
+    assert len(list(response_graph.triples(listing_profiles))) == 1  # only the alt profile

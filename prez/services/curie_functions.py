@@ -1,10 +1,12 @@
 import logging
 from urllib.parse import urlparse
 
+from aiocache.serializers import PickleSerializer
 from rdflib import URIRef
 
 from prez.cache import prefix_graph
 from prez.config import settings
+from aiocache import cached, Cache, caches
 
 log = logging.getLogger(__name__)
 
@@ -85,10 +87,17 @@ def get_curie_id_for_uri(uri: URIRef) -> str:
     return f"{qname[0]}{separator}{qname[2]}"
 
 
-def get_uri_for_curie_id(curie_id: str):
+async def get_uri_for_curie_id(curie_id: str):
     """
     Returns a URI for a given CURIE id with the specified separator
     """
-    separator = settings.curie_separator
-    curie = curie_id.replace(separator, ":")
-    return prefix_graph.namespace_manager.expand_curie(curie)
+    curie_cache = caches.get("curies")
+    result = await curie_cache.get(curie_id)
+    if result:
+        return result
+    else:
+        separator = settings.curie_separator
+        curie = curie_id.replace(separator, ":")
+        uri = prefix_graph.namespace_manager.expand_curie(curie)
+        curie_cache.set(curie_id, uri)
+        return uri
