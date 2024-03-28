@@ -87,7 +87,6 @@ prez:VocPrezProfile
         "text/turtle" ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
-        sh:path skos:prefLabel ;
         sh:targetClass skos:ConceptScheme ;
         altr-ext:focusToChild skos:hasTopConcept ;
     ] ;
@@ -98,13 +97,11 @@ prez:VocPrezProfile
     ] ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
-        sh:path skos:prefLabel ;
         sh:targetClass skos:ConceptScheme ;
         altr-ext:childToFocus skos:inScheme ;
     ] ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
-        sh:path skos:prefLabel ;
         sh:targetClass skos:ConceptScheme ;
         altr-ext:relativeProperties skos:broader , skos:narrower ;
     ] ;
