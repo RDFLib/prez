@@ -1,3 +1,4 @@
+ARG PREZ_VERSION
 ARG PYTHON_VERSION=3.12
 ARG POETRY_VERSION=1.8.1
 ARG VIRTUAL_ENV=/opt/venv
@@ -35,6 +36,8 @@ RUN pip install --no-cache-dir dist/*.whl
 #
 FROM python:${PYTHON_VERSION}-alpine AS final
 
+ARG PREZ_VERSION
+ENV PREZ_VERSION=${PREZ_VERSION}
 ARG VIRTUAL_ENV
 ENV VIRTUAL_ENV=${VIRTUAL_ENV} \
     PATH=${VIRTUAL_ENV}/bin:/root/.local/bin:${PATH}
