@@ -24,7 +24,7 @@ def wait_for_app_to_be_ready(client, timeout=10):
 
 
 def ogcprez_links(
-        client, visited: Optional[Set] = None, link="/catalogs", total_links_visited=0
+    client, visited: Optional[Set] = None, link="/catalogs", total_links_visited=0
 ):
     if not visited:
         visited = set()
@@ -43,9 +43,12 @@ def ogcprez_links(
             visited.add(next_link)
             # Make the recursive call and update the total_links_visited
             # and visited set with the returned values
-            visited, total_links_visited = ogcprez_links(client, visited, str(next_link), total_links_visited + 1)
+            visited, total_links_visited = ogcprez_links(
+                client, visited, str(next_link), total_links_visited + 1
+            )
     # Return the updated count and visited set
     return visited, total_links_visited
+
 
 def test_visit_all_links(client):
     visited_links, total_count = ogcprez_links(client)

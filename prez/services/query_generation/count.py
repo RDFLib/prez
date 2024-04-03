@@ -113,7 +113,7 @@ class CountQueryV2(ConstructQuery):
             construct_triples=ConstructTriples(
                 triples=[
                     SimplifiedTriple(
-                        subject=BNode(),
+                        subject=BlankNode(value=Anon()),
                         predicate=IRI(value="https://prez.dev/count"),
                         object=Var(value="count"),
                     )
@@ -153,6 +153,7 @@ class CountQueryV2(ConstructQuery):
         super().__init__(
             construct_template=construct_template,
             where_clause=where_clause,
+            solution_modifier=SolutionModifier(),
         )
 
 

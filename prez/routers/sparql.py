@@ -8,7 +8,7 @@ from starlette.datastructures import Headers
 from starlette.requests import Request
 from starlette.responses import StreamingResponse
 
-from prez.dependencies import get_repo, get_system_repo
+from prez.dependencies import get_data_repo, get_system_repo
 from prez.renderers.renderer import return_annotated_rdf
 from prez.repositories import Repo
 from prez.services.connegp_service import NegotiatedPMTs
@@ -26,7 +26,7 @@ router = APIRouter(tags=["SPARQL"])
 async def sparql_endpoint(
     query: str,
     request: Request,
-    repo: Repo = Depends(get_repo),
+    repo: Repo = Depends(get_data_repo),
     system_repo: Repo = Depends(get_system_repo),
 ):
     pmts = NegotiatedPMTs(

@@ -19,10 +19,10 @@ def test_feature_collection(client, an_fc_link):
     g_text = r.text
     response_graph = Graph().parse(data=g_text)
     assert (
-               URIRef("https://example.com/FeatureCollection"),
-               RDF.type,
-               GEO.FeatureCollection,
-           ) in response_graph
+        URIRef("https://example.com/FeatureCollection"),
+        RDF.type,
+        GEO.FeatureCollection,
+    ) in response_graph
 
 
 def test_feature(client, a_feature_link):

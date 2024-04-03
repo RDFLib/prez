@@ -16,7 +16,7 @@ from fastapi.testclient import TestClient
 from pyoxigraph.pyoxigraph import Store
 
 from prez.app import app
-from prez.dependencies import get_repo
+from prez.dependencies import get_data_repo
 from prez.repositories import Repo, PyoxigraphRepo
 
 
@@ -43,7 +43,7 @@ def client(test_repo: Repo) -> TestClient:
     def override_get_repo():
         return test_repo
 
-    app.dependency_overrides[get_repo] = override_get_repo
+    app.dependency_overrides[get_data_repo] = override_get_repo
 
     with TestClient(app) as c:
         yield c
@@ -99,7 +99,3 @@ def a_resource_link(client, a_top_level_catalog_link):
     for link in links:
         if link != a_top_level_catalog_link:
             return link
-
-
-
-

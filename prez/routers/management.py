@@ -60,7 +60,9 @@ async def return_tbox_cache(request: Request):
         # use pickle to deserialize the pred_obj_bytes
         pred_obj = pickle.loads(pred_obj_bytes)
         for pred, obj in pred_obj:
-            if pred_obj:  # cache entry for a URI can be empty - i.e. no annotations found for URI
+            if (
+                pred_obj
+            ):  # cache entry for a URI can be empty - i.e. no annotations found for URI
                 # Add the expanded triple (subject, predicate, object) to 'annotations_g'
                 cache_g.add((subject, pred, obj))
     return await return_rdf(cache_g, mediatype, profile_headers={})

@@ -8,6 +8,7 @@ from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
 from rdflib import Graph, URIRef, RDF
 
+from prez.cache import prefix_graph
 from prez.renderers.csv_renderer import render_csv_dropdown
 from prez.renderers.json_renderer import render_json_dropdown, NotFoundError
 from prez.repositories import Repo
@@ -67,6 +68,7 @@ async def return_from_graph(
         if "anot+" in mediatype:
             non_anot_mediatype = mediatype.replace("anot+", "")
             graph = await return_annotated_rdf(graph, repo, system_repo)
+            graph.namespace_manager = prefix_graph.namespace_manager
             content = io.BytesIO(
                 graph.serialize(format=non_anot_mediatype, encoding="utf-8")
             )

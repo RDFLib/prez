@@ -21,4 +21,3 @@ def test_sp_profile(client):
     r = client.get("/profiles/prez:SpacePrezProfile")
     g = Graph().parse(data=r.text)
     assert (URIRef("https://prez.dev/SpacePrezProfile"), RDF.type, PROF.Profile) in g
-

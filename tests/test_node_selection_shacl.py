@@ -1,9 +1,8 @@
 import pytest
 from rdflib import Graph, URIRef
 
-from prez.services.query_generation.node_selection.endpoint_shacl import (
+from prez.services.query_generation.shacl import (
     NodeShape,
-    PropertyShape,
 )
 
 endpoints_graph = Graph().parse(
@@ -13,7 +12,7 @@ endpoints_graph = Graph().parse(
 
 @pytest.mark.parametrize("nodeshape_uri", ["http://example.org/ns#Collections"])
 def test_nodeshape_parsing(nodeshape_uri):
-    ns = NodeShape(uri=URIRef(nodeshape_uri), graph=endpoints_graph)
+    ns = NodeShape(uri=URIRef(nodeshape_uri), graph=endpoints_graph, kind="endpoint")
     assert ns.targetClasses == [
         URIRef("http://www.opengis.net/ont/geosparql#FeatureCollection"),
         URIRef("http://www.w3.org/2004/02/skos/core#ConceptScheme"),
@@ -28,5 +27,5 @@ def test_nodeshape_parsing(nodeshape_uri):
     ["http://example.org/ns#ConceptSchemeConcept"],
 )
 def test_nodeshape_to_grammar(nodeshape_uri):
-    ns = NodeShape(uri=URIRef(nodeshape_uri), graph=endpoints_graph)
+    ns = NodeShape(uri=URIRef(nodeshape_uri), graph=endpoints_graph, kind="endpoint")
     ...

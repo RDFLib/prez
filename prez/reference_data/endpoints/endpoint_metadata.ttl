@@ -4,13 +4,13 @@
 @prefix prez: <https://prez.dev/> .
 @prefix sys: <https://prez.dev/endpoint/system/> .
 
-sys:profiles-listing
-    a ont:ListingEndpoint ;
+sys:profile-listing
+    a ont:ListingEndpoint , ont:SystemEndpoint ;
     ont:relevantShapes ex:Profiles ;
     .
 
-sys:profiles-object
-    a ont:ObjectEndpoint ;
+sys:profile-object
+    a ont:ObjectEndpoint , ont:SystemEndpoint ;
     ont:relevantShapes ex:Profiles ;
     .
 
@@ -53,3 +53,4 @@ ogce:search
     a ont:ListingEndpoint ;
     ont:relevantShapes ex:search ;
 .
+

@@ -3,7 +3,7 @@ from fastapi import Depends
 from rdflib import URIRef
 from starlette.responses import PlainTextResponse
 
-from prez.dependencies import get_repo, get_system_repo
+from prez.dependencies import get_data_repo, get_system_repo
 from prez.queries.object import object_inbound_query, object_outbound_query
 from prez.routers.identifier import get_iri_route
 from prez.services.objects import object_function
@@ -40,7 +40,7 @@ async def count_route(
             },
         },
     ),
-    repo=Depends(get_repo),
+    repo=Depends(get_data_repo),
 ):
     """Get an Object's statements count based on the inbound or outbound predicate"""
     iri = await get_iri_route(curie)
@@ -72,7 +72,7 @@ async def count_route(
 @router.get("/object", summary="Object", name="https://prez.dev/endpoint/system/object")
 async def object_route(
     request: Request,
-    repo=Depends(get_repo),
+    repo=Depends(get_data_repo),
     system_repo=Depends(get_system_repo),
 ):
     endpoint_uri = URIRef(request.scope.get("route").name)

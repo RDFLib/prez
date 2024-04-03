@@ -8,7 +8,7 @@ from pydantic_settings import BaseSettings
 from rdflib import URIRef, DCTERMS, RDFS, SDO
 from rdflib.namespace import SKOS
 
-from prez.reference_data.prez_ns import REG
+from prez.reference_data.prez_ns import REG, EP
 
 
 class Settings(BaseSettings):
@@ -61,8 +61,10 @@ class Settings(BaseSettings):
     prez_version: Optional[str] = None
     disable_prefix_generation: bool = False
     default_language: str = "en"
+    default_search_predicates: Optional[List[URIRef]] = [RDFS.label, SKOS.prefLabel, SDO.name, DCTERMS.title]
     local_rdf_dir: str = "rdf"
     endpoint_structure: Optional[Tuple[str, ...]] = ("catalogs", "collections", "items")
+    system_endpoints: Optional[List[URIRef]] = [EP["system/profile-listing"], EP["system/profile-object"]]
 
     # @root_validator()
     # def check_endpoint_enabled(cls, values):

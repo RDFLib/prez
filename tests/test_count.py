@@ -33,11 +33,11 @@ def get_curie(client: TestClient, iri: str) -> str:
     ],
 )
 def test_count(
-        client: TestClient,
-        iri: str,
-        inbound: str | None,
-        outbound: str | None,
-        count: int,
+    client: TestClient,
+    iri: str,
+    inbound: str | None,
+    outbound: str | None,
+    count: int,
 ):
     curie = get_curie(client, iri)
     params = {"curie": curie, "inbound": inbound, "outbound": outbound}

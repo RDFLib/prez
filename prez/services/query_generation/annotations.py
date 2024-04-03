@@ -1,3 +1,4 @@
+from functools import lru_cache
 from typing import List
 
 from prez.config import settings
@@ -26,7 +27,7 @@ class AnnotationsConstructQuery(ConstructQuery):
 
         prez_anot_var = Var(value="prezAnotProp")
         prop_var = Var(value="prop")
-        all_annotation_tuples = get_prez_annotation_tuples()
+        all_annotation_tuples = self.get_prez_annotation_tuples()
         props_gpnt = GraphPatternNotTriples(
             content=InlineData(
                 data_block=DataBlock(
@@ -103,28 +104,30 @@ class AnnotationsConstructQuery(ConstructQuery):
                 )
             )
         )
-        solution_modifier = SolutionModifier()
         super().__init__(
             construct_template=construct_template,
             where_clause=where_clause,
-            solution_modifier=solution_modifier,
+            solution_modifier=SolutionModifier(),
         )
 
-
-def get_prez_annotation_tuples():
-    label_tuples = [
-        (label_prop, PREZ.label) for label_prop in settings.label_predicates
-    ]
-    description_tuples = [
-        (description_prop, PREZ.description)
-        for description_prop in settings.description_predicates
-    ]
-    provenance_tuples = [
-        (provenance_prop, PREZ.provenance)
-        for provenance_prop in settings.provenance_predicates
-    ]
-    other_tuples = [
-        (other_prop, PREZ.other) for other_prop in settings.other_predicates
-    ]
-    all_tuples = label_tuples + description_tuples + provenance_tuples + other_tuples
-    return all_tuples
+    @staticmethod
+    @lru_cache(maxsize=None)
+    def get_prez_annotation_tuples():
+        label_tuples = [
+            (label_prop, PREZ.label) for label_prop in settings.label_predicates
+        ]
+        description_tuples = [
+            (description_prop, PREZ.description)
+            for description_prop in settings.description_predicates
+        ]
+        provenance_tuples = [
+            (provenance_prop, PREZ.provenance)
+            for provenance_prop in settings.provenance_predicates
+        ]
+        other_tuples = [
+            (other_prop, PREZ.other) for other_prop in settings.other_predicates
+        ]
+        all_tuples = (
+            label_tuples + description_tuples + provenance_tuples + other_tuples
+        )
+        return all_tuples

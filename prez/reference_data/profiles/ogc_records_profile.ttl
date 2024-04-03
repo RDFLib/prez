@@ -74,6 +74,8 @@ prez:OGCSchemesListProfile
               ( prov:qualifiedDerivation prov:entity )
             )
           )
+        ], [
+        sh:path rdf:type
         ]
     .
 
@@ -89,10 +91,6 @@ prez:OGCItemProfile
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     sh:property [
         sh:path shext:allPredicateValues ;
-    ] ,
-    [
-        sh:minCount 0 ;
-        sh:path [ sh:inversePath dcterms:hasPart ] ;
     ] ;
     shext:bnode-depth 2 ;
     altr-ext:constrainsClass dcat:Catalog ,

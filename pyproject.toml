@@ -6,7 +6,7 @@ authors = ["Jamie Feiss <jamie.feiss@gmail.com>", "Nicholas Car <nick@kurrawong.
 
 [tool.poetry.dependencies]
 python = "^3.11"
-uvicorn = "^0.27.1"
+uvicorn = "^0.28.0"
 httpx = "^0.27.0"
 rdflib = "^7.0.0"
 async-lru = "^2.0.4"

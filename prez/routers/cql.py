@@ -5,14 +5,13 @@ from rdflib import Namespace
 from rdflib.namespace import URIRef
 
 from prez.dependencies import (
-    get_repo,
+    get_data_repo,
     cql_post_parser_dependency,
     get_system_repo,
     cql_get_parser_dependency,
 )
 from prez.reference_data.prez_ns import PREZ
 from prez.repositories import Repo
-from prez.services.listings import listing_function
 
 router = APIRouter(tags=["ogcrecords"])
 
@@ -28,7 +27,7 @@ async def cql_post_endpoint(
     cql_parser: Optional[dict] = Depends(cql_post_parser_dependency),
     page: int = 1,
     per_page: int = 20,
-    repo: Repo = Depends(get_repo),
+    repo: Repo = Depends(get_data_repo),
     system_repo: Repo = Depends(get_system_repo),
 ):
     endpoint_uri = URIRef("https://prez.dev/endpoint/cql/post")
@@ -52,7 +51,7 @@ async def cql_get_endpoint(
     cql_parser: Optional[dict] = Depends(cql_get_parser_dependency),
     page: int = 1,
     per_page: int = 20,
-    repo: Repo = Depends(get_repo),
+    repo: Repo = Depends(get_data_repo),
     system_repo: Repo = Depends(get_system_repo),
 ):
     endpoint_uri = URIRef("https://prez.dev/endpoint/cql/get")
@@ -77,7 +76,7 @@ async def queryables_endpoint(
     cql_parser: Optional[dict] = Depends(cql_get_parser_dependency),
     page: int = 1,
     per_page: int = 20,
-    repo: Repo = Depends(get_repo),
+    repo: Repo = Depends(get_data_repo),
     system_repo: Repo = Depends(get_system_repo),
 ):
     endpoint_uri = URIRef(request.scope.get("route").name)

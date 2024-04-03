@@ -11,7 +11,7 @@ from prez.reference_data.prez_ns import PREZ
 from prez.repositories import Repo
 from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.query_generation.classes import get_classes
-from prez.services.query_generation.node_selection.endpoint_shacl import NodeShape
+from prez.services.query_generation.shacl import NodeShape
 from temp.grammar import *
 
 log = logging.getLogger(__name__)
@@ -104,6 +104,7 @@ async def get_nodeshapes_constraining_class(klasses, uri):
                     NodeShape(
                         uri=ns,
                         graph=endpoints_graph_cache,
+                        kind="endpoint",
                         focus_node=IRI(value=uri),
                     )
                 )
@@ -121,7 +122,9 @@ async def add_links_to_graph_and_cache(
     quads.append(
         (uri, DCTERMS.identifier, Literal(curie_for_uri, datatype=PREZ.identifier), uri)
     )
-    if members_link:  #TODO need to confirm the link value doesn't match the existing link value, as multiple endpoints can deliver the same class/have different links for the same URI
+    if (
+        members_link
+    ):  # TODO need to confirm the link value doesn't match the existing link value, as multiple endpoints can deliver the same class/have different links for the same URI
         existing_members_link = list(
             links_ids_graph_cache.quads((uri, PREZ["members"], None, uri))
         )

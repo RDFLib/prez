@@ -13,9 +13,7 @@ def test_feature_collection(client):
 
 
 def test_feature(client):
-    r = client.get(
-        f"/object?uri=https://example.com/Feature1"
-    )
+    r = client.get(f"/object?uri=https://example.com/Feature1")
     response_graph = Graph().parse(data=r.text)
     assert (
         URIRef("https://example.com/Feature1"),

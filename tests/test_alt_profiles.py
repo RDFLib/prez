@@ -29,16 +29,14 @@ def test_listing_alt_profile(client):
     r = client.get(f"/catalogs?_mediatype=text/turtle&_profile=altr-ext:alt-profile")
     response_graph = Graph().parse(data=r.text)
     assert (
-               URIRef("http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"),
-               RDF.type,
-               URIRef("https://prez.dev/ListingProfile"),
-           ) in response_graph
+        URIRef("http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"),
+        RDF.type,
+        URIRef("https://prez.dev/ListingProfile"),
+    ) in response_graph
 
 
 def test_object_alt_profile_token(client, a_catalog_link):
-    r = client.get(
-        f"{a_catalog_link}?_mediatype=text/turtle&_profile=alt"
-    )
+    r = client.get(f"{a_catalog_link}?_mediatype=text/turtle&_profile=alt")
     response_graph = Graph().parse(data=r.text)
     object_profiles = (
         None,
@@ -51,4 +49,6 @@ def test_object_alt_profile_token(client, a_catalog_link):
         PREZ.ListingProfile,
     )
     assert len(list(response_graph.triples(object_profiles))) > 1
-    assert len(list(response_graph.triples(listing_profiles))) == 1  # only the alt profile
+    assert (
+        len(list(response_graph.triples(listing_profiles))) == 1
+    )  # only the alt profile

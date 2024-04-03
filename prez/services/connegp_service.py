@@ -191,7 +191,7 @@ class NegotiatedPMTs(BaseModel):
         profile_header_links = ", ".join(
             [f'<{self.selected["profile"]}>; rel="profile"']
             + [
-                f'{profile_uri}; rel="type"; title="{pmt[1]}"; token="{get_curie_id_for_uri(pmt[0])}"; anchor={pmt[0]}"'
+                f'{profile_uri}; rel="type"; title="{pmt[1]}"; token="{get_curie_id_for_uri(pmt[0])}"; anchor="{pmt[0]}"'
                 for pmt in distinct_profiles
             ]
         )
@@ -203,7 +203,7 @@ class NegotiatedPMTs(BaseModel):
         )
         headers = {
             "Content-Type": self.selected["mediatype"],
-            "link": profile_header_links + mediatype_header_links,
+            "link": profile_header_links + ", " + mediatype_header_links,
         }
         return headers
 

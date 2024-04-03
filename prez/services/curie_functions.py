@@ -99,5 +99,5 @@ async def get_uri_for_curie_id(curie_id: str):
         separator = settings.curie_separator
         curie = curie_id.replace(separator, ":")
         uri = prefix_graph.namespace_manager.expand_curie(curie)
-        curie_cache.set(curie_id, uri)
+        await curie_cache.set(curie_id, uri)
         return uri

@@ -10,7 +10,7 @@ PREFIX prof: <http://www.w3.org/ns/dx/prof/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX shext: <http://example.com/shacl-extension#>
 
-endpoint:profiles-listing a ont:ListingEndpoint ;
+endpoint:profile-listing a ont:ListingEndpoint ;
     ont:deliversClasses prez:ProfilesList ;
     sh:targetClass prof:Profile ;
     ont:endpointTemplate "/profiles" ;
@@ -24,7 +24,7 @@ endpoint:profile-object a ont:ObjectEndpoint ;
     ont:endpointTemplate "/profiles/$object" ;
 .
 
-endpoint:alt-profiles-listing a ont:ListingEndpoint ;
+endpoint:alt-profile-listing a ont:ListingEndpoint ;
     ont:deliversClasses prez:ProfilesList ;
     sh:targetClass prof:Profile ;
     sh:target [ sh:select """SELECT ?focus_node

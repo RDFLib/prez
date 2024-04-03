@@ -6,7 +6,7 @@ from pyoxigraph.pyoxigraph import Store
 from rdflib import URIRef
 
 from prez.app import app
-from prez.dependencies import get_repo
+from prez.dependencies import get_data_repo
 from prez.reference_data.prez_ns import PREZ
 from prez.repositories import PyoxigraphRepo, Repo
 from prez.services.connegp_service import NegotiatedPMTs
@@ -151,7 +151,7 @@ async def test_connegp(headers, params, classes, listing, expected_selected, tes
     def override_get_repo():
         return test_repo
 
-    app.dependency_overrides[get_repo] = override_get_repo
+    app.dependency_overrides[get_data_repo] = override_get_repo
     pmts = NegotiatedPMTs(
         headers=headers,
         params=params,

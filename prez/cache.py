@@ -4,7 +4,7 @@ from rdflib import Graph, ConjunctiveGraph, Dataset
 
 from prez.repositories import PyoxigraphRepo
 
-profiles_graph_cache = ConjunctiveGraph()
+profiles_graph_cache = Dataset()
 profiles_graph_cache.bind("prez", "https://prez.dev/")
 
 endpoints_graph_cache = ConjunctiveGraph()

@@ -4,7 +4,7 @@ import logging
 from decimal import Decimal
 from typing import List, Union, Optional, Generator, Tuple
 
-from pydantic import BaseModel, field_validator, validator
+from pydantic import BaseModel, field_validator
 from rdflib import URIRef, Variable
 from rdflib.plugins.sparql import prepareQuery
 from rdflib.plugins.sparql.algebra import translateAlgebra
@@ -1122,7 +1122,7 @@ class BuiltInCall(SPARQLGrammarBase):
     @classmethod
     def create_with_n_expr(
         cls, function_name: str, expressions: List[PrimaryExpression]
-    ) -> "BuiltInCall":
+    ) -> BuiltInCall:
         """
         Convenience method for functions that take a list of PrimaryExpressions as arguments.
         Wraps each PrimaryExpression in an Expression.

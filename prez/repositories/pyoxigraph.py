@@ -47,10 +47,7 @@ class PyoxigraphRepo(Repo):
         return g.parse(data=ntriples, format="ntriples")
 
     def _sync_rdf_query_to_graph(self, query: str) -> Graph:
-        try:
-            results = self.pyoxi_store.query(query)
-        except Exception as e:
-            print(e)
+        results = self.pyoxi_store.query(query)
         result_graph = self._handle_query_triples_results(results)
         return result_graph
 
