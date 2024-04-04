@@ -30,6 +30,13 @@ ex:SecondLevelConcept a skos:Concept ;
     skos:inScheme ex:SchemingConceptScheme ;
 .
 
+ex:SecondLevelConceptBroader a skos:Concept ;
+    skos:prefLabel "A second level concept broader" ;
+    ex:property "a property of the first level concept" ;
+    skos:broader ex:TopLevelConcept ;
+    skos:inScheme ex:SchemingConceptScheme ;
+.
+
 ex:ThirdLevelConcept a skos:Concept ;
     skos:prefLabel "A third level concept" ;
     ex:property "a property of the third level concept" ;
