@@ -210,13 +210,10 @@ class NegotiatedPMTs(BaseModel):
     def _compose_select_query(self) -> str:
         prez = Namespace("https://prez.dev/")
         profile_class = prez.ListingProfile if self.listing else prez.ObjectProfile
-        try:
-            requested_profile = self.requested_profiles[0][
-                0
-            ]  # TODO: handle multiple requested profiles
-        except TypeError as e:
+        if self.requested_profiles:
+            requested_profile = self.requested_profiles[0][0]
+        else:
             requested_profile = None
-            log.debug(f"{e}. normally this just means no profiles were requested")
 
         query = dedent(
             f"""

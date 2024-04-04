@@ -14,6 +14,11 @@ sys:profile-object
     ont:relevantShapes ex:Profiles ;
     .
 
+sys:object
+    a ont:ObjectEndpoint , ont:SystemEndpoint ;
+    ont:relevantShapes ex:Profiles ;
+    .
+
 ogce:catalog-listing
     a ont:ListingEndpoint ;
     ont:relevantShapes ex:TopLevelCatalogs ;

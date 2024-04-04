@@ -130,3 +130,8 @@ ex:AltProfilesForObject
         sh:path altr-ext:constrainsClass ;
     ]
 .
+
+ex:Object
+    a sh:NodeShape ;
+    ont:hierarchyLevel 1 ;
+    .

@@ -52,7 +52,9 @@ class NodeShape(Shape):
     bnode_depth: Optional[int] = None
 
     def from_graph(self):  # TODO this can be a SPARQL select against the system graph.
-        self.bnode_depth = next(self.graph.objects(self.uri, SHEXT.bnodeDepth), None)
+        self.bnode_depth = next(
+            self.graph.objects(self.uri, SHEXT["bnode-depth"]), None
+        )
         self.targetNode = next(self.graph.objects(self.uri, SH.targetNode), None)
         self.targetClasses = list(self.graph.objects(self.uri, SH.targetClass))
         self.propertyShapesURIs = list(self.graph.objects(self.uri, SH.property))
@@ -87,7 +89,7 @@ class NodeShape(Shape):
             if self.rules:
                 self._process_rules()
         if self.bnode_depth:
-            _build_bnode_blocks(self)
+            self._build_bnode_blocks()
 
     def _process_class_targets(self):
         if len(self.targetClasses) == 1:
@@ -153,79 +155,60 @@ class NodeShape(Shape):
         self.triples_list = list(set(self.triples_list))
 
     def _build_bnode_blocks(self):
-        bnode_depth = int(self.bnode_depth)
+        max_depth = int(self.bnode_depth)
 
-        p1 = Var(value="bn_p_1")
-        o1 = Var(value="bn_o_1")
-        p2 = Var(value="bn_p_2")
-        o2 = Var(value="bn_o_2")
-        triples_block = TriplesBlock(
-            triples=[
-                SimplifiedTriple(subject=self.focus_node, predicate=p1, object=o1),
-                SimplifiedTriple(subject=o1, predicate=p2, object=o2),
-            ]
-        )
-        filter_block = Filter(
-            constraint=Constraint(
-                content=BuiltInCall.create_with_one_expr("isBLANK", PrimaryExpression(content=o1))
-            )
-        )
-        container_gpnt = GraphPatternNotTriples(
-            content=OptionalGraphPattern(
-                group_graph_pattern=GroupGraphPattern(
-                    content=GroupGraphPatternSub(
-                        triples_block=triples_block,
-                        graph_patterns_or_triples_blocks=[
-                            GraphPatternNotTriples(
-                                content=filter_block
+        def optional_gpnt(depth):
+            # graph pattern or triples block list, which will contain the filter, and any nested optional blocks
+            gpotb = [
+                GraphPatternNotTriples(
+                    content=Filter(
+                        constraint=Constraint(
+                            content=BuiltInCall.create_with_one_expr(
+                                "isBLANK",
+                                PrimaryExpression(content=Var(value=f"bn_o_{depth}")),
                             )
-                        ]
+                        )
+                    )
+                ),
+            ]
+
+            # recursive call to build nested optional blocks
+            if depth < max_depth:
+                gpotb.append(optional_gpnt(depth + 1))
+
+            # triples to go inside the optional block
+            triples = []
+            if depth == 1:
+                triples.append(
+                    SimplifiedTriple(
+                        subject=self.focus_node,
+                        predicate=Var(value=f"bn_p_{depth}"),
+                        object=Var(value=f"bn_o_{depth}"),
                     )
                 )
+            triples.append(
+                SimplifiedTriple(
+                    subject=Var(value=f"bn_o_{depth}"),
+                    predicate=Var(value=f"bn_p_{depth + 1}"),
+                    object=Var(value=f"bn_o_{depth + 1}"),
+                )
             )
-        )
-        container_ggps = GroupGraphPatternSub(
-            graph_patterns_or_triples_blocks=[container_gpnt]
-        )
-        container_ggp = GroupGraphPattern(content=container_ggps)
 
-        def process_bn_level(depth, max_depth, outer_ggps):
-            old_o_var = Var(value=f"bn_o_{depth}")
-            new_p_var = Var(value=f"bn_p_{depth + 1}")
-            new_o_var = Var(value=f"bn_o_{depth + 1}")
-            triples_block = TriplesBlock(
-                triples=[
-                    SimplifiedTriple(
-                        subject=old_o_var, predicate=new_p_var, object=new_o_var
-                    )
-                ]
-            )
-            gpnt = GraphPatternNotTriples(
-                content=Filter(
-                    constraint=Constraint(
-                        content=BuiltInCall.create_with_one_expr(
-                            "isBLANK", PrimaryExpression(content=old_o_var)
+            # optional block containing triples
+            opt_gpnt = GraphPatternNotTriples(
+                content=OptionalGraphPattern(
+                    group_graph_pattern=GroupGraphPattern(
+                        content=GroupGraphPatternSub(
+                            triples_block=TriplesBlock(triples=triples),
+                            graph_patterns_or_triples_blocks=gpotb,
                         )
                     )
                 )
             )
-            opt = OptionalGraphPattern(
-                group_graph_pattern=GroupGraphPattern(
-                    content=GroupGraphPatternSub(
-                        triples_block=triples_block,
-                        graph_patterns_or_triples_blocks=[gpnt],
-                    )
-                )
-            )
-            outer_ggps.graph_patterns_or_triples_blocks.append(opt)
-            if depth < max_depth:
-                process_bn_level(depth + 1, max_depth, ggps)
+            return opt_gpnt
 
-        if bnode_depth > 1:
-            process_bn_level(depth=2, max_depth=bnode_depth, outer_ggps=ggps)
-        gpnt = GraphPatternNotTriples(
-            content=GroupOrUnionGraphPattern(group_graph_patterns=[container_ggp])
-        )
+        nested_ogp = optional_gpnt(depth=1)
+        self.gpnt_list.append(nested_ogp)
 
 
 class PropertyShape(Shape):
@@ -511,80 +494,3 @@ class InversePath(PropertyPath):
 
     def __len__(self):
         return 1
-
-
-def _build_bnode_blocks(self):
-    bnode_depth = list(
-        self.profile_graph.objects(
-            subject=self.profile_uri, predicate=SHEXT["bnode-depth"]
-        )
-    )
-    if not bnode_depth or bnode_depth == [0]:
-        return
-    else:
-        bnode_depth = int(bnode_depth[0])
-    p1 = Var(value="bn_p_1")
-    o1 = Var(value="bn_o_1")
-    p2 = Var(value="bn_p_2")
-    o2 = Var(value="bn_o_2")
-    triples_block = TriplesBlock(
-        triples=[
-            SimplifiedTriple(subject=self.focus_node, predicate=p1, object=o1),
-            SimplifiedTriple(subject=o1, predicate=p2, object=o2),
-        ]
-    )
-    PrimaryExpression(content=o1) = PrimaryExpression(content=o1)
-    constraint = Constraint(
-        content=BuiltInCall.create_with_one_expr("isBLANK", PrimaryExpression(content=o1))
-    )
-    filter_block = Filter(constraint=constraint)
-    gpnt = GraphPatternNotTriples(content=filter_block)
-    ggps = GroupGraphPatternSub(
-        triples_block=triples_block, graph_patterns_or_triples_blocks=[gpnt]
-    )
-    ggp = GroupGraphPattern(content=ggps)
-    outer_opt = OptionalGraphPattern(group_graph_pattern=ggp)
-    container_gpnt = GraphPatternNotTriples(content=outer_opt)
-    container_ggps = GroupGraphPatternSub(
-        graph_patterns_or_triples_blocks=[container_gpnt]
-    )
-    container_ggp = GroupGraphPattern(content=container_ggps)
-
-    def process_bn_level(depth, max_depth, outer_ggps):
-        old_o_var = Var(value=f"bn_o_{depth}")
-        new_p_var = Var(value=f"bn_p_{depth + 1}")
-        new_o_var = Var(value=f"bn_o_{depth + 1}")
-        triples_block = TriplesBlock(
-            triples=[
-                SimplifiedTriple(
-                    subject=old_o_var, predicate=new_p_var, object=new_o_var
-                )
-            ]
-        )
-        gpnt = GraphPatternNotTriples(
-            content=Filter(
-                constraint=Constraint(
-                    content=BuiltInCall.create_with_one_expr(
-                        "isBLANK", PrimaryExpression(content=old_o_var)
-                    )
-                )
-            )
-        )
-        opt = OptionalGraphPattern(
-            group_graph_pattern=GroupGraphPattern(
-                content=GroupGraphPatternSub(
-                    triples_block=triples_block,
-                    graph_patterns_or_triples_blocks=[gpnt],
-                )
-            )
-        )
-        outer_ggps.graph_patterns_or_triples_blocks.append(opt)
-        if depth < max_depth:
-            process_bn_level(depth + 1, max_depth, ggps)
-
-    if bnode_depth > 1:
-        process_bn_level(depth=2, max_depth=bnode_depth, outer_ggps=ggps)
-    gpnt = GraphPatternNotTriples(
-        content=GroupOrUnionGraphPattern(group_graph_patterns=[container_ggp])
-    )
-    self.main_where_ggps.add_pattern(gpnt)

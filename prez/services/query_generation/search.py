@@ -650,5 +650,3 @@ class SearchQueryRegex(ConstructQuery):
     @property
     def order_by_direction(self):
         return "DESC"
-
-

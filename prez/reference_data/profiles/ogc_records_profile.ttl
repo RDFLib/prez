@@ -40,7 +40,9 @@ prez:OGCRecordsProfile
 
 prez:OGCListingProfile
     a prof:Profile , prez:ListingProfile , sh:NodeShape ;
+    dcterms:identifier "ogc-listing"^^xsd:token ;
     dcterms:title "OGC Listing Profile" ;
+    dcterms:description "A profile for listing different kinds of items relevant to an OGC Records API" ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,
         "application/anot+ld+json" ,
@@ -56,6 +58,8 @@ prez:OGCListingProfile
 prez:OGCSchemesListProfile
     a prof:Profile , prez:ListingProfile , sh:NodeShape ;
     dcterms:title "OGC Concept Scheme Listing Profile" ;
+    dcterms:description "A profile for listing SKOS Concept Schemes" ;
+    dcterms:identifier "ogc-schemes-listing"^^xsd:token ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,
         "application/anot+ld+json" ,
@@ -82,6 +86,8 @@ prez:OGCSchemesListProfile
 prez:OGCItemProfile
     a prof:Profile , prez:ObjectProfile , sh:NodeShape ;
     dcterms:title "OGC Object Profile" ;
+    dcterms:description "A profile for individual OGC Records API items" ;
+    dcterms:identifier "ogc-item"^^xsd:token ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,
         "application/anot+ld+json" ,

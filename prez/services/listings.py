@@ -19,26 +19,51 @@ from prez.services.query_generation.count import CountQuery, CountQueryV2
 from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.search import SearchQuery
 from prez.services.query_generation.shacl import NodeShape
-from prez.services.query_generation.umbrella import merge_listing_query_grammar_inputs, PrezQueryConstructorV2
+from prez.services.query_generation.umbrella import (
+    merge_listing_query_grammar_inputs,
+    PrezQueryConstructor,
+)
 from temp.grammar import *
 
 log = logging.getLogger(__name__)
 
 
 async def listing_function_new(
-        data_repo,
-        system_repo,
-        endpoint_nodeshape,
-        endpoint_structure,
-        search_query,
-        cql_parser,
-        pmts,
-        profile_nodeshape,
-        page,
-        per_page,
-        order_by,
-        order_by_direction,
+    data_repo,
+    system_repo,
+    endpoint_nodeshape,
+    endpoint_structure,
+    search_query,
+    cql_parser,
+    pmts,
+    profile_nodeshape,
+    page,
+    per_page,
+    order_by,
+    order_by_direction,
+    original_endpoint_type,
 ):
+    if (
+        pmts.selected["profile"] == ALTREXT["alt-profile"]
+    ):  # recalculate the endpoint node shape
+        endpoint_nodeshape_map = {
+            ONT["ObjectEndpoint"]: URIRef("http://example.org/ns#AltProfilesForObject"),
+            ONT["ListingEndpoint"]: URIRef(
+                "http://example.org/ns#AltProfilesForListing"
+            ),
+        }
+        endpoint_uri = endpoint_nodeshape_map[original_endpoint_type]
+        endpoint_nodeshape = NodeShape(
+            uri=endpoint_uri,
+            graph=endpoints_graph_cache,
+            kind="endpoint",
+            focus_node=Var(value="focus_node"),
+            path_nodes={
+                "path_node_1": IRI(value=pmts.selected["class"])
+            },  # hack - not sure how (or if) the class can be
+            # 'dynamicaly' expressed in SHACL. The class is only known at runtime
+        )
+
     query_construct_kwargs = merge_listing_query_grammar_inputs(
         cql_parser=cql_parser,
         endpoint_nodeshape=endpoint_nodeshape,
@@ -52,16 +77,16 @@ async def listing_function_new(
     profile_gpnt = profile_nodeshape.gpnt_list
 
     queries = []
-    main_query = PrezQueryConstructorV2(
+    main_query = PrezQueryConstructor(
         profile_triples=profile_triples,
         profile_gpnt=profile_gpnt,
-        **query_construct_kwargs
+        **query_construct_kwargs,
     )
     queries.append(main_query.to_string())
 
     if (
-            pmts.requested_mediatypes is not None
-            and pmts.requested_mediatypes[0][0] == "application/sparql-query"
+        pmts.requested_mediatypes is not None
+        and pmts.requested_mediatypes[0][0] == "application/sparql-query"
     ):
         return PlainTextResponse(queries[0], media_type="application/sparql-query")
 
@@ -71,18 +96,15 @@ async def listing_function_new(
         count_query = CountQueryV2(original_subselect=subselect).to_string()
         queries.append(count_query)
 
+    # TODO absorb this up the top of function
     if pmts.selected["profile"] == ALTREXT["alt-profile"]:
         query_repo = system_repo
-        # endpoint_structure = ("profiles",)
     else:
         query_repo = data_repo
-        # endpoint_structure = settings.endpoint_structure
 
     item_graph, _ = await query_repo.send_queries(queries, [])
     if "anot+" in pmts.selected["mediatype"]:
-        await add_prez_links(
-            item_graph, query_repo, endpoint_structure
-        )
+        await add_prez_links(item_graph, query_repo, endpoint_structure)
 
     # count search results - hard to do in SPARQL as the SELECT part of the query is NOT aggregated
     if search_query:
@@ -278,7 +300,7 @@ async def handle_alternate_profile(current_endpoint_uri, pmts, runtime_values):
 
 
 async def get_shacl_node_selection(
-        endpoint_uri, hierarchy_level, path_nodes, repo, system_repo
+    endpoint_uri, hierarchy_level, path_nodes, repo, system_repo
 ):
     """
     Determines the relevant nodeshape based on the endpoint, hierarchy level, and parent URI

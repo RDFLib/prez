@@ -13,7 +13,7 @@ from temp.grammar import *
 log = logging.getLogger(__name__)
 
 
-async def process_terms(terms_and_dtypes: Set[URIRef], repo: Repo, system_repo: Repo):
+async def get_annotations(terms_and_dtypes: Set[URIRef], repo: Repo, system_repo: Repo):
     """
     This function processes the terms and their data types. It first retrieves the cached results for the given terms
     and data types. Then, it processes the terms that are not cached. The results are added to a graph which is then
@@ -69,7 +69,7 @@ async def add_cached_entries(
 
 
 async def process_uncached_terms(
-    terms: List[URIRef], repo: Repo, system_repo: Repo, annotations_g: Graph
+    terms: List[URIRef], data_repo: Repo, system_repo: Repo, annotations_g: Graph
 ):
     """
     This function processes the terms that are not cached. It sends queries to the annotations repository and the
@@ -78,7 +78,7 @@ async def process_uncached_terms(
 
     Args:
         terms (list): A list of terms that are not cached.
-        repo (Repo): An instance of the Repo class.
+        data_repo (Repo): An instance of the Repo class.
         annotations_g (Graph): A graph to which the results are added.
 
     Returns:
@@ -92,7 +92,7 @@ async def process_uncached_terms(
     context_results = await annotations_repo.send_queries(
         rdf_queries=[annotations_query], tabular_queries=[]
     )
-    repo_results = await repo.send_queries(
+    repo_results = await data_repo.send_queries(
         rdf_queries=[annotations_query], tabular_queries=[]
     )
     system_results = await system_repo.send_queries(
@@ -144,5 +144,5 @@ async def get_annotation_properties(
     if not terms_and_types:
         return Graph()
 
-    annotations_g = await process_terms(terms_and_types, repo, system_repo)
+    annotations_g = await get_annotations(terms_and_types, repo, system_repo)
     return annotations_g

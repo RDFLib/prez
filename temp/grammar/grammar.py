@@ -216,8 +216,8 @@ class TriplesBlock(SPARQLGrammarBase):
     def render(self) -> Generator[str, None, None]:
         for i, triple in enumerate(self.triples):
             yield from triple.render()
-            if i < len(self.triples) - 1:  # Check if it's not the last triple
-                yield "\n"
+            # if i < len(self.triples) - 1:  # Check if it's not the last triple
+            yield "\n"
 
 
 class PrimaryExpression(SPARQLGrammarBase):

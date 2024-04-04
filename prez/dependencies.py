@@ -4,7 +4,7 @@ from pathlib import Path
 import httpx
 from fastapi import Depends, Request, HTTPException
 from pyoxigraph import Store
-from rdflib import Dataset, URIRef, SH
+from rdflib import Dataset, URIRef, SH, Graph
 
 from prez.cache import (
     store,
@@ -16,7 +16,7 @@ from prez.cache import (
     annotations_repo,
 )
 from prez.config import settings
-from prez.reference_data.prez_ns import ALTREXT, ONT
+from prez.reference_data.prez_ns import ALTREXT, ONT, EP
 from prez.repositories import PyoxigraphRepo, RemoteSparqlRepo, OxrdflibRepo, Repo
 from prez.services.connegp_service import NegotiatedPMTs
 from prez.services.curie_functions import get_uri_for_curie_id
@@ -53,10 +53,10 @@ def get_oxrdflib_store():
 
 
 async def get_data_repo(
-        request: Request,
-        http_async_client: httpx.AsyncClient = Depends(get_async_http_client),
-        pyoxi_data_store: Store = Depends(get_pyoxi_store),
-        pyoxi_system_store: Store = Depends(get_system_store),
+    request: Request,
+    http_async_client: httpx.AsyncClient = Depends(get_async_http_client),
+    pyoxi_data_store: Store = Depends(get_pyoxi_store),
+    pyoxi_system_store: Store = Depends(get_system_store),
 ) -> Repo:
     if URIRef(request.scope.get("route").name) in settings.system_endpoints:
         return PyoxigraphRepo(pyoxi_system_store)
@@ -69,7 +69,7 @@ async def get_data_repo(
 
 
 async def get_system_repo(
-        pyoxi_store: Store = Depends(get_system_store),
+    pyoxi_store: Store = Depends(get_system_store),
 ) -> Repo:
     """
     A pyoxigraph Store with Prez system data including:
@@ -99,8 +99,10 @@ async def load_system_data_to_oxigraph(store: Store):
     Loads all the data from the local data directory into the local SPARQL endpoint
     """
     # TODO refactor to use the local files directly
-    profiles_bytes = profiles_graph_cache.serialize(format="nt", encoding="utf-8")
-    store.load(profiles_bytes, "application/n-triples")
+    for f in (Path(__file__).parent / "reference_data/profiles").glob("*.ttl"):
+        prof_bytes = Graph().parse(f).serialize(format="nt", encoding="utf-8")
+        # profiles_bytes = profiles_graph_cache.default_context.serialize(format="nt", encoding="utf-8")
+        store.load(prof_bytes, "application/n-triples")
 
     endpoints_bytes = endpoints_graph_cache.serialize(format="nt", encoding="utf-8")
     store.load(endpoints_bytes, "application/n-triples")
@@ -111,9 +113,9 @@ async def load_annotations_data_to_oxigraph(store: Store):
     Loads all the data from the local data directory into the local SPARQL endpoint
     """
     relevant_predicates = (
-            settings.label_predicates
-            + settings.description_predicates
-            + settings.provenance_predicates
+        settings.label_predicates
+        + settings.description_predicates
+        + settings.provenance_predicates
     )
     raw_g = Dataset(default_union=True)
     for file in (Path(__file__).parent / "reference_data/context_ontologies").glob("*"):
@@ -150,7 +152,7 @@ async def cql_get_parser_dependency(request: Request) -> CQLParser:
             query = json.loads(request.query_params["filter"])
             context = json.load(
                 (
-                        Path(__file__).parent / "reference_data/cql/default_context.json"
+                    Path(__file__).parent / "reference_data/cql/default_context.json"
                 ).open()
             )
             cql_parser = CQLParser(cql=query, context=context)
@@ -182,24 +184,73 @@ async def generate_search_query(request: Request):
         )
 
 
-async def get_endpoint_nodeshapes(
-        request: Request,
-        repo: Repo = Depends(get_data_repo),
-        system_repo: Repo = Depends(get_system_repo),
-):
+async def get_endpoint_uri_type(
+    request: Request,
+    system_repo: Repo = Depends(get_system_repo),
+) -> tuple[URIRef, URIRef]:
     endpoint_uri = URIRef(request.scope.get("route").name)
-    path_node_curies = [i for i in request.url.path.split("/")[:-1] if i in request.path_params.values()]
-    path_nodes = {f"path_node_{i + 1}": IRI(value=await get_uri_for_curie_id(value)) for i, value in
-                  enumerate(reversed(path_node_curies))}
+    ep_type_fs = await get_classes(endpoint_uri, system_repo)
+    ep_types = list(ep_type_fs)
+
+    # Iterate over each item in ep_types
+    for ep_type in ep_types:
+        # Check if the current ep_type is either ObjectEndpoint or ListingEndpoint
+        if ep_type in [ONT.ObjectEndpoint, ONT.ListingEndpoint]:
+            return endpoint_uri, ep_type
+
+    raise ValueError(
+        "Endpoint must be declared as either a 'https://prez.dev/ont/ObjectEndpoint' or a "
+        "'https://prez.dev/ont/ListingEndpoint' in order for the appropriate profile to be determined."
+    )
+
+
+async def get_focus_node(
+    request: Request,
+    endpoint_uri_type: tuple[URIRef, URIRef] = Depends(get_endpoint_uri_type),
+):
+    ep_uri = endpoint_uri_type[0]
+    ep_type = endpoint_uri_type[1]
+    if ep_uri == EP["system/object"]:
+        uri = request.query_params.get("uri")
+        return IRI(value=uri)
+    elif ep_type == ONT.ObjectEndpoint:
+        object_curie = request.url.path.split("/")[-1]
+        focus_node_uri = await get_uri_for_curie_id(object_curie)
+        return IRI(value=focus_node_uri)
+    else:
+        return Var(value="focus_node")
+
+
+async def get_endpoint_nodeshapes(
+    request: Request,
+    repo: Repo = Depends(get_data_repo),
+    system_repo: Repo = Depends(get_system_repo),
+    endpoint_uri_type: tuple[URIRef, URIRef] = Depends(get_endpoint_uri_type),
+    focus_node: IRI | Var = Depends(get_focus_node),
+):
+    ep_uri = endpoint_uri_type[0]
+    if endpoint_uri_type[0] == EP["system/object"]:
+        return NodeShape(
+            uri=URIRef("http://example.org/ns#Object"),
+            graph=endpoints_graph_cache,
+            kind="endpoint",
+            focus_node=focus_node,
+        )
+    path_node_curies = [
+        i for i in request.url.path.split("/")[:-1] if i in request.path_params.values()
+    ]
+    path_nodes = {
+        f"path_node_{i + 1}": IRI(value=await get_uri_for_curie_id(value))
+        for i, value in enumerate(reversed(path_node_curies))
+    }
     hierarchy_level = int(len(request.url.path.split("/")) / 2)
     """
     Determines the relevant nodeshape based on the endpoint, hierarchy level, and parent URI
     """
     node_selection_shape = None
-    target_classes = []
     relevant_ns_query = f"""SELECT ?ns ?tc
                             WHERE {{ 
-                                {endpoint_uri.n3()} <https://prez.dev/ont/relevantShapes> ?ns .
+                                {ep_uri.n3()} <https://prez.dev/ont/relevantShapes> ?ns .
                                 ?ns <http://www.w3.org/ns/shacl#targetClass> ?tc ;
                                     <https://prez.dev/ont/hierarchyLevel> {hierarchy_level} .
                                 }}"""
@@ -208,7 +259,6 @@ async def get_endpoint_nodeshapes(
     distinct_ns = set([result["ns"]["value"] for result in tabular_results])
     if len(distinct_ns) == 1:  # only one possible node shape
         node_selection_shape = URIRef(tabular_results[0]["ns"]["value"])
-        target_classes = [URIRef(result["tc"]["value"]) for result in tabular_results]
     elif len(distinct_ns) > 1:  # more than one possible node shape
         # try all of the available nodeshapes
         path_node_classes = {}
@@ -220,7 +270,7 @@ async def get_endpoint_nodeshapes(
                 graph=endpoints_graph_cache,
                 kind="endpoint",
                 path_nodes=path_nodes,
-                focus_node=Var(value="focus_node")
+                focus_node=focus_node,
             )
             for ns in distinct_ns
         ]
@@ -250,51 +300,37 @@ async def get_endpoint_nodeshapes(
             graph=endpoints_graph_cache,
             kind="endpoint",
             path_nodes=path_nodes,
-            focus_node=Var(value="focus_node")
+            focus_node=focus_node,
         )
         return ns
     else:
         raise ValueError(
-            f"No relevant nodeshape found for the given endpoint {endpoint_uri}, hierarchy level {hierarchy_level}, "
-            f"and parent URI"
+            f"No relevant nodeshape found for the given endpoint {ep_uri}, hierarchy level "
+            f"{hierarchy_level}, and parent URI"
         )
 
 
-async def get_endpoint_type(
-    request: Request,
-    system_repo: Repo = Depends(get_system_repo),
-):
-    endpoint_uri = URIRef(request.scope.get("route").name)
-    ep_type_fs = await get_classes(endpoint_uri, system_repo)
-    ep_types = list(ep_type_fs)
-
-    # Iterate over each item in ep_types
-    for ep_type in ep_types:
-        # Check if the current ep_type is either ObjectEndpoint or ListingEndpoint
-        if ep_type in [ONT.ObjectEndpoint, ONT.ListingEndpoint]:
-            return ep_type
-
-    raise ValueError("Endpoint must be declared as either a 'https://prez.dev/ont/ObjectEndpoint' or a "
-                     "'https://prez.dev/ont/ListingEndpoint' in order for the appropriate profile to be determined.")
-
-
-
-
 async def get_negotiated_pmts(
-        request: Request,
-        endpoint_nodeshape: NodeShape = Depends(get_endpoint_nodeshapes),
-        system_repo: Repo = Depends(get_system_repo),
-        endpoint_type: URIRef = Depends(get_endpoint_type),
+    request: Request,
+    endpoint_nodeshape: NodeShape = Depends(get_endpoint_nodeshapes),
+    repo: Repo = Depends(get_data_repo),
+    system_repo: Repo = Depends(get_system_repo),
+    endpoint_uri_type: URIRef = Depends(get_endpoint_uri_type),
+    focus_node: IRI | Var = Depends(get_focus_node),
 ) -> NegotiatedPMTs:
     # Use endpoint_nodeshapes in constructing NegotiatedPMTs
-    if endpoint_type == ONT.ObjectEndpoint:
+    ep_type = endpoint_uri_type[1]
+    if ep_type == ONT.ObjectEndpoint:
         listing = False
-    else:
+        klasses_fs = await get_classes(focus_node.value, repo)
+        klasses = list(klasses_fs)
+    elif ep_type == ONT.ListingEndpoint:
         listing = True
+        klasses = endpoint_nodeshape.targetClasses
     pmts = NegotiatedPMTs(
         headers=request.headers,
         params=request.query_params,
-        classes=endpoint_nodeshape.targetClasses,
+        classes=klasses,
         listing=listing,
         system_repo=system_repo,
     )
@@ -303,14 +339,14 @@ async def get_negotiated_pmts(
 
 
 async def get_endpoint_structure(
-        request: Request,
-        pmts: NegotiatedPMTs = Depends(get_negotiated_pmts)
+    request: Request,
+    pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
+    endpoint_uri_type: URIRef = Depends(get_endpoint_uri_type),
 ):
-    endpoint_uri = URIRef(request.scope.get("route").name)
+    endpoint_uri = endpoint_uri_type[0]
 
-    if (
-            (endpoint_uri in settings.system_endpoints) or
-            (pmts.selected.get("profile") == ALTREXT["alt-profile"])
+    if (endpoint_uri in settings.system_endpoints) or (
+        pmts.selected.get("profile") == ALTREXT["alt-profile"]
     ):
         return ("profiles",)
     else:
@@ -318,16 +354,21 @@ async def get_endpoint_structure(
 
 
 async def get_profile_nodeshape(
-        request: Request,
-        pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
-        endpoint_type: URIRef = Depends(get_endpoint_type),
+    request: Request,
+    pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
+    endpoint_uri_type: URIRef = Depends(get_endpoint_uri_type),
 ):
     profile = pmts.selected.get("profile")
-    if endpoint_type == ONT.ObjectEndpoint:
+    if profile == ALTREXT["alt-profile"]:
+        focus_node = Var(value="focus_node")
+    elif endpoint_uri_type[0] == EP["system/object"]:
+        uri = request.query_params.get("uri")
+        focus_node = IRI(value=uri)
+    elif endpoint_uri_type[1] == ONT.ObjectEndpoint:
         object_curie = request.url.path.split("/")[-1]
         focus_node_uri = await get_uri_for_curie_id(object_curie)
         focus_node = IRI(value=focus_node_uri)
-    else:
+    else:  # listing
         focus_node = Var(value="focus_node")
     return NodeShape(
         uri=profile,

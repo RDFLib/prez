@@ -7,30 +7,54 @@ from rdflib import URIRef
 
 from prez.cache import endpoints_graph_cache, profiles_graph_cache
 from prez.config import settings
-from prez.reference_data.prez_ns import EP, ALTREXT
+from prez.reference_data.prez_ns import EP, ALTREXT, ONT
 from prez.renderers.renderer import return_from_graph
 from prez.repositories import Repo
 from prez.services.connegp_service import NegotiatedPMTs
 from prez.services.link_generation import add_prez_links
+from prez.services.listings import listing_function_new
 from prez.services.query_generation.classes import get_classes
-from prez.services.query_generation.umbrella import merge_listing_query_grammar_inputs, PrezQueryConstructorV2
+from prez.services.query_generation.umbrella import (
+    merge_listing_query_grammar_inputs,
+    PrezQueryConstructor,
+)
 from temp.grammar import IRI
 
 log = logging.getLogger(__name__)
 
 
 async def object_function_new(
-        data_repo,
-        system_repo,
-        endpoint_structure,
-        pmts,
-        profile_nodeshape,
+    data_repo,
+    system_repo,
+    endpoint_structure,
+    pmts,
+    profile_nodeshape,
 ):
+    if pmts.selected["profile"] == ALTREXT["alt-profile"]:
+        none_keys = [
+            "endpoint_nodeshape",
+            "search_query",
+            "cql_parser",
+            "order_by",
+            "order_by_direction",
+        ]
+        none_kwargs = {key: None for key in none_keys}
+        return await listing_function_new(
+            data_repo=data_repo,
+            system_repo=system_repo,
+            endpoint_structure=endpoint_structure,
+            pmts=pmts,
+            profile_nodeshape=profile_nodeshape,
+            page=1,
+            per_page=20,
+            original_endpoint_type=ONT["ObjectEndpoint"],
+            **none_kwargs
+        )
+
     profile_triples = profile_nodeshape.triples_list
     profile_gpnt = profile_nodeshape.gpnt_list
-    query = PrezQueryConstructorV2(
-        profile_triples=profile_triples,
-        profile_gpnt=profile_gpnt
+    query = PrezQueryConstructor(
+        profile_triples=profile_triples, profile_gpnt=profile_gpnt
     ).to_string()
 
     if pmts.requested_mediatypes[0][0] == "application/sparql-query":
@@ -48,7 +72,6 @@ async def object_function_new(
         data_repo,
         system_repo,
     )
-
 
 
 async def object_function(

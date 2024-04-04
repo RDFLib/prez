@@ -50,7 +50,8 @@ prez:SpacePrezProfile
 prez:FeatureCollectionProfile a prof:Profile ;
     dcterms:description "A profile for GeoSPARQL FeatureCollections" ;
     dcterms:identifier "geofc"^^xsd:token ;
-    dcterms:title "Feature Collection Profile" ;
+    dcterms:title "Feature Collection Profile" , "a second title" ;
+                              rdfs:label "Some Other Label" ;
     altr-ext:constrainsClass geo:FeatureCollection ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat

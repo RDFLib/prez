@@ -27,9 +27,7 @@ from prez.repositories import RemoteSparqlRepo, PyoxigraphRepo, OxrdflibRepo
 from prez.routers.cql import router as cql_router
 from prez.routers.identifier import router as identifier_router
 from prez.routers.management import router as management_router
-from prez.routers.object import router as object_router
 from prez.routers.ogc_router import router as ogc_records_router
-from prez.routers.profiles import router as profiles_router
 from prez.routers.search import router as search_router
 from prez.routers.sparql import router as sparql_router
 from prez.services.app_service import (
@@ -38,7 +36,6 @@ from prez.services.app_service import (
     create_endpoints_graph,
     populate_api_info,
     add_prefixes_to_prefix_graph,
-    # add_common_context_ontologies_to_tbox_cache,
 )
 from prez.services.exception_catchers import (
     catch_400,
@@ -64,10 +61,8 @@ app = FastAPI(
 
 app.include_router(cql_router)
 app.include_router(management_router)
-app.include_router(object_router)
 app.include_router(sparql_router)
 app.include_router(search_router)
-app.include_router(profiles_router)
 app.include_router(ogc_records_router)
 app.include_router(identifier_router)
 

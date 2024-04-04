@@ -60,7 +60,8 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
                              skos:ConceptScheme ,
                              skos:Collection ,
                              prez:CQLObjectList ,
-                             prez:QueryablesList ;
+                             prez:QueryablesList ,
+                             prof:Profile ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
         "application/json" ,
@@ -68,6 +69,9 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
         "application/rdf+xml" ,
         "text/anot+turtle" ,
         "text/turtle" ;
+    sh:property [
+        sh:path rdf:type ;
+        ] ;
 .
 
 altr-ext:alt-profile
@@ -90,7 +94,8 @@ altr-ext:alt-profile
         dcat:Resource ,
         skos:ConceptScheme ,
         skos:Concept ,
-        skos:Collection ;
+        skos:Collection ,
+        prof:Profile ;
     sh:property [
         sh:path (
                     sh:union (

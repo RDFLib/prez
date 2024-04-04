@@ -1,30 +1,9 @@
-from pathlib import Path
-
 import pytest
-from pyoxigraph import Store
-from pyoxigraph.pyoxigraph import Store
 from rdflib import URIRef
 
-from prez.app import app
-from prez.dependencies import get_data_repo
 from prez.reference_data.prez_ns import PREZ
-from prez.repositories import PyoxigraphRepo, Repo
+from prez.repositories import PyoxigraphRepo
 from prez.services.connegp_service import NegotiatedPMTs
-
-
-@pytest.fixture()
-def test_store() -> Store:
-    store = Store()
-    file = Path(__file__).parent.parent / "test_data/ogc_records_profile.ttl"
-    store.load(file.read_bytes(), "text/turtle")
-    file = Path(__file__).parent.parent / "test_data/spaceprez_default_profiles.ttl"
-    store.load(file.read_bytes(), "text/turtle")
-    return store
-
-
-@pytest.fixture()
-def test_repo(test_store: Store) -> Repo:
-    return PyoxigraphRepo(test_store)
 
 
 @pytest.mark.parametrize(
@@ -147,17 +126,17 @@ def test_repo(test_store: Store) -> Repo:
     ],
 )
 @pytest.mark.asyncio
-async def test_connegp(headers, params, classes, listing, expected_selected, test_repo):
-    def override_get_repo():
-        return test_repo
-
-    app.dependency_overrides[get_data_repo] = override_get_repo
+async def test_connegp(
+    headers, params, classes, listing, expected_selected, client_no_override
+):
+    system_store = client_no_override.app.state._state.get("pyoxi_system_store")
+    system_repo = PyoxigraphRepo(system_store)
     pmts = NegotiatedPMTs(
         headers=headers,
         params=params,
         classes=classes,
         listing=listing,
-        system_repo=test_repo,
+        system_repo=system_repo,
     )
     await pmts.setup()
     assert pmts.selected == expected_selected

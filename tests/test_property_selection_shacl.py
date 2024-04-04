@@ -30,7 +30,9 @@ def test_simple_path():
     """
     )
     path_bn = g.value(subject=URIRef("http://example-profile"), predicate=SH.property)
-    ps = PropertyShape(uri=path_bn, graph=g)
+    ps = PropertyShape(
+        uri=path_bn, graph=g, kind="profile", focus_node=Var(value="focus_node")
+    )
     assert (
         SimplifiedTriple(
             subject=Var(value="focus_node"),
@@ -51,7 +53,9 @@ def test_sequence_path():
     """
     )
     path_bn = g.value(subject=URIRef("http://example-profile"), predicate=SH.property)
-    ps = PropertyShape(uri=path_bn, graph=g)
+    ps = PropertyShape(
+        uri=path_bn, graph=g, kind="profile", focus_node=Var(value="focus_node")
+    )
     assert (
         SimplifiedTriple(
             subject=Var(value="focus_node"),
@@ -93,7 +97,9 @@ def test_union():
     """
     )
     path_bn = g.value(subject=URIRef("http://example-profile"), predicate=SH.property)
-    ps = PropertyShape(uri=path_bn, graph=g, kind="profile")
+    ps = PropertyShape(
+        uri=path_bn, graph=g, kind="profile", focus_node=Var(value="focus_node")
+    )
     assert (
         SimplifiedTriple(
             subject=Var(value="focus_node"),
@@ -161,7 +167,9 @@ def test_optional_props():
     """
     )
     path_bn = g.value(subject=URIRef("http://example-profile"), predicate=SH.property)
-    ps = PropertyShape(uri=path_bn, graph=g, kind="profile")
+    ps = PropertyShape(
+        uri=path_bn, graph=g, kind="profile", focus_node=Var(value="focus_node")
+    )
     assert ps.triples_list == []
     assert isinstance(ps.gpnt_list[0].content, OptionalGraphPattern)
 
@@ -187,7 +195,9 @@ def test_complex_optional_props():
     """
     )
     path_bn = g.value(subject=URIRef("http://example-profile"), predicate=SH.property)
-    ps = PropertyShape(uri=path_bn, graph=g, kind="profile")
+    ps = PropertyShape(
+        uri=path_bn, graph=g, kind="profile", focus_node=Var(value="focus_node")
+    )
     assert ps.triples_list == []
     assert isinstance(ps.gpnt_list[0].content, OptionalGraphPattern)
 
@@ -214,7 +224,9 @@ def test_excluded_props():
     """
     )
     path_bn = g.value(subject=URIRef("http://example-profile"), predicate=SH.property)
-    ps = PropertyShape(uri=path_bn, graph=g, kind="profile")
+    ps = PropertyShape(
+        uri=path_bn, graph=g, kind="profile", focus_node=Var(value="focus_node")
+    )
     assert (
         SimplifiedTriple(
             subject=Var(value="prof_node_1"),

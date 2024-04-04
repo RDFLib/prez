@@ -52,6 +52,12 @@ def client(test_repo: Repo) -> TestClient:
     app.dependency_overrides.clear()
 
 
+@pytest.fixture(scope="module")
+def client_no_override() -> TestClient:
+    with TestClient(app) as c:
+        yield c
+
+
 @pytest.fixture()
 def a_catalog_link(client):
     r = client.get("/catalogs")

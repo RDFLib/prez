@@ -67,22 +67,3 @@ async def count_route(
     _, rows = await repo.send_queries([], [(None, query)])
     for row in rows[0][1]:
         return row["count"]["value"]
-
-
-@router.get("/object", summary="Object", name="https://prez.dev/endpoint/system/object")
-async def object_route(
-    request: Request,
-    repo=Depends(get_data_repo),
-    system_repo=Depends(get_system_repo),
-):
-    endpoint_uri = URIRef(request.scope.get("route").name)
-    uri = URIRef(request.query_params.get("uri"))
-    request_url = request.scope["path"]
-    return await object_function(
-        request=request,
-        endpoint_uri=endpoint_uri,
-        uri=uri,
-        request_url=request_url,
-        repo=repo,
-        system_repo=system_repo,
-    )

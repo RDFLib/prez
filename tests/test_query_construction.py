@@ -4,12 +4,12 @@ from rdflib.namespace import GEO
 from prez.services.query_generation.search import (
     SearchQueryRegex,
 )
-from prez.services.query_generation.umbrella import PrezQueryConstructorV2
+from prez.services.query_generation.umbrella import PrezQueryConstructor
 from temp.grammar import *
 
 
 def test_basic_object():
-    PrezQueryConstructorV2(
+    PrezQueryConstructor(
         profile_triples=[
             SimplifiedTriple(
                 subject=IRI(value="https://test-object"),
@@ -26,7 +26,7 @@ def test_basic_object():
 
 
 def test_basic_listing():
-    test = PrezQueryConstructorV2(
+    test = PrezQueryConstructor(
         profile_triples=[
             SimplifiedTriple(
                 subject=Var(value="focus_node"),
@@ -61,7 +61,7 @@ def test_basic_listing():
 
 def test_search_query_regex():
     sq = SearchQueryRegex(term="test", predicates=[RDFS.label])
-    test = PrezQueryConstructorV2(
+    test = PrezQueryConstructor(
         profile_triples=[
             SimplifiedTriple(
                 subject=Var(value="focus_node"),

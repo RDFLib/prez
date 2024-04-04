@@ -43,9 +43,7 @@ async def search(
 
     item_graph, _ = await repo.send_queries([search_query_str], [])
     if "anot+" in pmts.selected["mediatype"]:
-        await add_prez_links(
-            item_graph, repo, settings.endpoint_structure
-        )
+        await add_prez_links(item_graph, repo, settings.endpoint_structure)
 
     # count search results - hard to do in SPARQL as the SELECT part of the query is NOT aggregated
     count = len(list(item_graph.subjects(RDF.type, PREZ.SearchResult)))

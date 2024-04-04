@@ -26,7 +26,7 @@ def a_resource_link(client, a_catalog_link):
 
 
 def test_listing_alt_profile(client):
-    r = client.get(f"/catalogs?_mediatype=text/turtle&_profile=altr-ext:alt-profile")
+    r = client.get(f"/catalogs?_profile=altr-ext:alt-profile")
     response_graph = Graph().parse(data=r.text)
     assert (
         URIRef("http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"),
