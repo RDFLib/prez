@@ -95,6 +95,7 @@ altr-ext:alt-profile
         skos:ConceptScheme ,
         skos:Concept ,
         skos:Collection ,
+        rdf:Resource ,
         prof:Profile ;
     sh:property [
         sh:path (

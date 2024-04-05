@@ -21,8 +21,6 @@ counts_graph = Graph()
 links_ids_graph_cache = Dataset()
 links_ids_graph_cache.bind("prez", "https://prez.dev/")
 
-search_methods = {}
-
 store = Store()
 
 system_store = Store()
@@ -39,6 +37,10 @@ caches.set_config(
             "serializer": {"class": "aiocache.serializers.PickleSerializer"},
         },
         "curies": {
+            "cache": "aiocache.SimpleMemoryCache",
+            "serializer": {"class": "aiocache.serializers.PickleSerializer"},
+        },
+        "classes": {
             "cache": "aiocache.SimpleMemoryCache",
             "serializer": {"class": "aiocache.serializers.PickleSerializer"},
         },

@@ -10,7 +10,7 @@ from prez.config import settings
 from prez.reference_data.prez_ns import PREZ
 from prez.repositories import Repo
 from prez.services.curie_functions import get_curie_id_for_uri
-from prez.services.query_generation.classes import get_classes
+from prez.services.classes import get_classes
 from prez.services.query_generation.shacl import NodeShape
 from temp.grammar import *
 
@@ -25,8 +25,11 @@ async def add_prez_links(graph: Graph, repo: Repo, endpoint_structure):
     # get all URIRefs - if Prez can find a class and endpoint for them, an internal link will be generated.
     uris = [uri for uri in graph.all_nodes() if isinstance(uri, URIRef)]
     uri_to_klasses = {}
-    for uri in uris:
-        uri_to_klasses[uri] = await get_classes(uri, repo)
+    t = time.time()
+    # for uri in uris:
+    #     uri_to_klasses[uri] = await get_classes(uri, repo)
+    uri_to_klasses = await get_classes(uris, repo)
+    log.debug(f"Time taken to get classes: {time.time() - t}")
 
     for uri, klasses in uri_to_klasses.items():
         if klasses:  # need class to know which endpoints can deliver the class
@@ -168,7 +171,7 @@ async def get_link_components(ns, repo):
     WHERE {
     ?path_node_1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/dcat#Catalog> .
     <https://example.com/TopLevelCatalogTwo> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?focus_classes .
-    ?path_node_1 <http://purl.org/dc/terms/hasPart> <https://example.com/TopLevelCatalogTwo> .
+    ?path_node_1 <http://purl.org/dc/terms/hasPart> <https://example.com/CatalogTwo> .
         VALUES ?focus_classes{ <http://www.opengis.net/ont/geosparql#FeatureCollection> <http://www.w3.org/2004/02/skos/core#ConceptScheme> <http://www.w3.org/2004/02/skos/core#Collection> <http://www.w3.org/ns/dcat#Catalog>  }
     }
     """

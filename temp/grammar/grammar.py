@@ -956,7 +956,7 @@ class SolutionModifier(SPARQLGrammarBase):
     order_by: Optional[OrderClause] = None
     limit_offset: Optional[LimitOffsetClauses] = None
     # having: Optional[HavingClause]
-    group_by: Optional["GroupClause"] = None
+    group_by: Optional[GroupClause] = None
 
     def render(self) -> str:
         if self.order_by:
@@ -1087,6 +1087,7 @@ class BuiltInCall(SPARQLGrammarBase):
             "CONCAT",
             "SHA256",
             "LCASE",
+            "isURI",
             "isBLANK",
             "LANG",
             "LANGMATCHES",
@@ -1112,7 +1113,7 @@ class BuiltInCall(SPARQLGrammarBase):
     @classmethod
     def create_with_one_expr(
         cls, function_name: str, expression: PrimaryExpression
-    ) -> "BuiltInCall":
+    ) -> BuiltInCall:
         """
         Convenience method for functions that take a single PrimaryExpression as an argument.
         Uses create_with_expression_list for consistency in handling expressions.

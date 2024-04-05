@@ -21,12 +21,12 @@ sys:object
 
 ogce:catalog-listing
     a ont:ListingEndpoint ;
-    ont:relevantShapes ex:TopLevelCatalogs ;
+    ont:relevantShapes ex:Catalogs ;
 .
 
 ogce:catalog-object
     a ont:ObjectEndpoint ;
-    ont:relevantShapes ex:TopLevelCatalogs ;
+    ont:relevantShapes ex:Catalogs ;
 .
 
 ogce:collection-listing

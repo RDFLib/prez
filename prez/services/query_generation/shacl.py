@@ -366,14 +366,16 @@ class PropertyShape(Shape):
                 if isinstance(property_path, Path):
                     if property_path.value == SHEXT.allPredicateValues:
                         pred = Var(value="preds")
+                        obj = Var(value="vals")
                     else:
                         pred = IRI(value=property_path.value)
+                        obj = path_node_1
                     # vanilla property path
                     self.triples_list.append(
                         SimplifiedTriple(
                             subject=self.focus_node,
                             predicate=pred,
-                            object=path_node_1,
+                            object=obj,
                         )
                     )
                     i += 1
@@ -448,9 +450,9 @@ class PropertyShape(Shape):
             # reset the triples list
             self.triples_list = [
                 SimplifiedTriple(
-                    subject=path_node_term,
-                    predicate=Var(value="excluded_props"),
-                    object=Var(value="excluded_prop_vals"),
+                    subject=self.focus_node,
+                    predicate=Var(value="preds"),
+                    object=Var(value="excluded_pred_vals"),
                 )
             ]
 
@@ -460,7 +462,7 @@ class PropertyShape(Shape):
             ]
             gpnt = GraphPatternNotTriples(
                 content=Filter.filter_relational(
-                    focus=PrimaryExpression(content=Var(value="excluded_props")),
+                    focus=PrimaryExpression(content=Var(value="preds")),
                     comparators=values,
                     operator="NOT IN",
                 )

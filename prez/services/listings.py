@@ -14,7 +14,7 @@ from prez.renderers.renderer import return_from_graph
 from prez.repositories import Repo
 from prez.services.connegp_service import NegotiatedPMTs
 from prez.services.link_generation import add_prez_links
-from prez.services.query_generation.classes import get_classes
+from prez.services.classes import get_classes, get_classes_single
 from prez.services.query_generation.count import CountQuery, CountQueryV2
 from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.search import SearchQuery
@@ -28,7 +28,7 @@ from temp.grammar import *
 log = logging.getLogger(__name__)
 
 
-async def listing_function_new(
+async def listing_function(
     data_repo,
     system_repo,
     endpoint_nodeshape,
@@ -323,7 +323,7 @@ async def get_shacl_node_selection(
         # try all of the available nodeshapes
         path_node_classes = {}
         for pn, uri in path_nodes.items():
-            path_node_classes[pn] = await get_classes(URIRef(uri.value), repo)
+            path_node_classes[pn] = await get_classes_single(URIRef(uri.value), repo)
         nodeshapes = [
             NodeShape(
                 uri=URIRef(ns),

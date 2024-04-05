@@ -1,13 +1,8 @@
-import logging
 import os
-from typing import Optional, Set
-
-from prez.reference_data.prez_ns import PREZ
 
 from rdflib import Graph, URIRef
 
 os.environ["SPARQL_REPO_TYPE"] = "pyoxigraph"
-# os.environ["LOG_LEVEL"] = "DEBUG"
 
 from pathlib import Path
 
@@ -59,7 +54,7 @@ def client_no_override() -> TestClient:
 
 
 @pytest.fixture()
-def a_catalog_link(client):
+def a_spaceprez_catalog_link(client):
     r = client.get("/catalogs")
     g = Graph().parse(data=r.text)
     member_uri = URIRef("https://example.com/SpacePrezCatalog")
@@ -68,12 +63,12 @@ def a_catalog_link(client):
 
 
 @pytest.fixture()
-def an_fc_link(client, a_catalog_link):
-    r = client.get(f"{a_catalog_link}/collections")
+def an_fc_link(client, a_spaceprez_catalog_link):
+    r = client.get(f"{a_spaceprez_catalog_link}/collections")
     g = Graph().parse(data=r.text)
     links = g.objects(subject=None, predicate=URIRef(f"https://prez.dev/link"))
     for link in links:
-        if link != a_catalog_link:
+        if link != a_spaceprez_catalog_link:
             return link
 
 
@@ -88,20 +83,20 @@ def a_feature_link(client, an_fc_link):
 
 
 @pytest.fixture()
-def a_top_level_catalog_link(client):
+def a_catprez_catalog_link(client):
     # get link for first catalog
     r = client.get("/catalogs")
     g = Graph().parse(data=r.text)
-    member_uri = URIRef("https://example.com/TopLevelCatalog")
+    member_uri = URIRef("https://example.com/CatalogOne")
     link = g.value(member_uri, URIRef(f"https://prez.dev/link", None))
     return link
 
 
 @pytest.fixture()
-def a_resource_link(client, a_top_level_catalog_link):
-    r = client.get(a_top_level_catalog_link)
+def a_resource_link(client, a_catprez_catalog_link):
+    r = client.get(a_catprez_catalog_link)
     g = Graph().parse(data=r.text)
     links = g.objects(subject=None, predicate=URIRef(f"https://prez.dev/link"))
     for link in links:
-        if link != a_top_level_catalog_link:
+        if link != a_catprez_catalog_link:
             return link

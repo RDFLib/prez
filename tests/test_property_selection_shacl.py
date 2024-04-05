@@ -229,9 +229,9 @@ def test_excluded_props():
     )
     assert (
         SimplifiedTriple(
-            subject=Var(value="prof_node_1"),
-            predicate=Var(value="excluded_props"),
-            object=Var(value="excluded_prop_vals"),
+            subject=Var(value="focus_node"),
+            predicate=Var(value="preds"),
+            object=Var(value="excluded_pred_vals"),
         )
         in ps.triples_list
     )

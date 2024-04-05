@@ -71,6 +71,18 @@ class AnnotationsConstructQuery(ConstructQuery):
                 )
             )
         )
+        # || isURI(?annotation)
+        isuri_expr = Expression.from_primary_expr(
+            primary_expression=PrimaryExpression(
+                content=BuiltInCall.create_with_one_expr(
+                    function_name="isURI",
+                    expression=PrimaryExpression(
+                        content=anot_var)
+                )
+            )
+        )
+        lang_filter_gpnt.content.constraint.content.expression.conditional_or_expression.conditional_and_expressions.append(
+            isuri_expr)
 
         # create the main query components - construct and where clauses
         construct_template = ConstructTemplate(
@@ -124,10 +136,11 @@ class AnnotationsConstructQuery(ConstructQuery):
             (provenance_prop, PREZ.provenance)
             for provenance_prop in settings.provenance_predicates
         ]
+        # other is different - the ORIGINAL property is returned as the predicate; not prez:x
         other_tuples = [
-            (other_prop, PREZ.other) for other_prop in settings.other_predicates
+            (other_prop, other_prop) for other_prop in settings.other_predicates
         ]
         all_tuples = (
-            label_tuples + description_tuples + provenance_tuples + other_tuples
+                label_tuples + description_tuples + provenance_tuples + other_tuples
         )
         return all_tuples

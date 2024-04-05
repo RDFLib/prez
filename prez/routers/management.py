@@ -68,14 +68,6 @@ async def return_tbox_cache(request: Request):
     return await return_rdf(cache_g, mediatype, profile_headers={})
 
 
-def unpack_cache():
-    pass
-    # #useful code for function
-    # cache = process_term.cache
-    # serialized_data = cache._cache[rdflib.term.URIRef('https://example.com/TopLevelCatalogTwo')]
-    # deserialized_data = pickle.loads(serialized_data)
-    # print(f"{' '.join([t.n3() for t in list(*b)])} .\n")
-
 
 @router.get("/health")
 async def health_check():
@@ -88,11 +80,13 @@ async def return_annotation_predicates():
     """
     g = Graph()
     g.bind("prez", "https://prez.dev/")
-    label_list_bn, description_list_bn, provenance_list_bn = BNode(), BNode(), BNode()
+    label_list_bn, description_list_bn, provenance_list_bn, other_list_bn = BNode(), BNode(), BNode(), BNode()
     g.add((PREZ.AnnotationPropertyList, PREZ.labelList, label_list_bn))
     g.add((PREZ.AnnotationPropertyList, PREZ.descriptionList, description_list_bn))
     g.add((PREZ.AnnotationPropertyList, PREZ.provenanceList, provenance_list_bn))
+    g.add((PREZ.AnnotationPropertyList, PREZ.otherList, other_list_bn))
     Collection(g, label_list_bn, settings.label_predicates)
     Collection(g, description_list_bn, settings.description_predicates)
     Collection(g, provenance_list_bn, settings.provenance_predicates)
+    Collection(g, other_list_bn, settings.other_predicates)
     return g

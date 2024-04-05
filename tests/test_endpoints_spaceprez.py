@@ -2,8 +2,8 @@ from rdflib import Graph, URIRef
 from rdflib.namespace import RDF, DCAT, GEO
 
 
-def test_dataset_anot(client, a_catalog_link):
-    r = client.get(f"{a_catalog_link}?_mediatype=text/turtle")
+def test_dataset_anot(client, a_spaceprez_catalog_link):
+    r = client.get(f"{a_spaceprez_catalog_link}?_mediatype=text/turtle")
     g_text = r.text
     response_graph = Graph().parse(data=g_text)
     expected_response_1 = (

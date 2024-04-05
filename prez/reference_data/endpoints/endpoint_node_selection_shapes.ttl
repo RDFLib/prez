@@ -5,20 +5,21 @@
 @prefix geo: <http://www.opengis.net/ont/geosparql#> .
 @prefix prez: <https://prez.dev/> .
 @prefix prof: <http://www.w3.org/ns/dx/prof/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix shext: <http://example.com/shacl-extension#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#> .
 
-ex:TopLevelCatalogs
+ex:Catalogs
     a sh:NodeShape ;
     ont:hierarchyLevel 1 ;
     sh:targetClass dcat:Catalog ;
     sh:property [
         sh:path dcterms:hasPart ;
         sh:or (
-            [ sh:class dcat:Catalog ]
+            [ sh:class dcat:Resource ]
             [ sh:class geo:FeatureCollection ]
             [ sh:class skos:ConceptScheme ]
             [ sh:class skos:Collection ]
@@ -28,7 +29,7 @@ ex:TopLevelCatalogs
 ex:Collections
     a sh:NodeShape ;
     ont:hierarchyLevel 2 ;
-    sh:targetClass geo:FeatureCollection , skos:ConceptScheme , skos:Collection , dcat:Catalog ;
+    sh:targetClass geo:FeatureCollection , skos:ConceptScheme , skos:Collection , dcat:Resource ;
     sh:property [
         sh:path [ sh:inversePath dcterms:hasPart ] ;
         sh:class dcat:Catalog ;
@@ -73,10 +74,10 @@ ex:CollectionConcept
 ex:Resource
     a sh:NodeShape ;
     ont:hierarchyLevel 3 ;
-    sh:targetClass dcat:Resource ;
+    sh:targetClass rdf:Resource ;
     sh:property [
         sh:path [ sh:inversePath dcterms:hasPart ] ;
-        sh:class dcat:Catalog ;
+        sh:class dcat:Resource ;
     ] , [
         sh:path ( [ sh:inversePath dcterms:hasPart ] [ sh:inversePath dcterms:hasPart ] );
         sh:class dcat:Catalog ;
@@ -107,6 +108,7 @@ ex:queryables a sh:NodeShape ;
               skos:Concept
               geo:FeatureCollection
               geo:Feature
+              rdf:Resource
               }
                     }""" ] ;
     shext:limit 100 ;

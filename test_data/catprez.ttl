@@ -1,38 +1,39 @@
 PREFIX dcat: <http://www.w3.org/ns/dcat#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX ex: <https://example.com/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-ex:TopLevelCatalog a dcat:Catalog ;
-    rdfs:label "Top level catalog" ;
-    dcterms:hasPart ex:LowerLevelCatalog ;
-    ex:property "top level catalog property" ;
+ex:CatalogOne a dcat:Catalog ;
+    rdfs:label "Catalog One" ;
+    dcterms:hasPart ex:DCATResource ;
+    ex:property "Catalog property" ;
 .
 
-ex:LowerLevelCatalog a dcat:Catalog ;
-    rdfs:label "Lower level catalog" ;
-    dcterms:hasPart ex:Resource ;
-    ex:property "lower level catalog property"
+ex:DCATResource a dcat:Resource ;
+    rdfs:label "DCAT Resource" ;
+    dcterms:hasPart ex:RDFResource ;
+    ex:property "DCAT Resource property"
 .
 
-ex:Resource a dcat:Resource ;
-    rdfs:label "Resource" ;
-    ex:property "resource property" ;
+ex:RDFResource a rdf:Resource ;
+    rdfs:label "RDF Resource" ;
+    ex:property "RDF resource property" ;
 .
 
-ex:TopLevelCatalogTwo a dcat:Catalog ;
+ex:CatalogTwo a dcat:Catalog ;
     rdfs:label "amazing catalog" ;
-    dcterms:hasPart ex:LowerLevelCatalogTwo ;
+    dcterms:hasPart ex:DCATResourceTwo ;
     ex:property "complete" ;
 .
 
-ex:LowerLevelCatalogTwo a dcat:Catalog ;
+ex:DCATResourceTwo a dcat:Resource ;
     rdfs:label "rightful" ;
-    dcterms:hasPart ex:ResourceTwo ;
+    dcterms:hasPart ex:RDFResourceTwo ;
     ex:property "exposure"
 .
 
-ex:ResourceTwo a dcat:Resource ;
+ex:RDFResourceTwo a rdf:Resource ;
     rdfs:label "salty" ;
     ex:property "proficient" ;
 .

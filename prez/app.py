@@ -127,7 +127,7 @@ async def app_startup():
     app.state.pyoxi_annotations_store = get_annotations_store()
     await load_annotations_data_to_oxigraph(app.state.pyoxi_annotations_store)
 
-    log.info(f"Startup took {time.time() - a} seconds")
+    log.info(f"Startup took {time.time() - a:.1f} seconds")
 
 
 @app.on_event("shutdown")

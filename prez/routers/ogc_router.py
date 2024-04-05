@@ -18,8 +18,8 @@ from prez.reference_data.prez_ns import PREZ, EP, ONT
 from prez.repositories import Repo
 from prez.services.connegp_service import NegotiatedPMTs
 from prez.services.curie_functions import get_uri_for_curie_id
-from prez.services.listings import listing_function_new
-from prez.services.objects import object_function, object_function_new
+from prez.services.listings import listing_function
+from prez.services.objects import object_function, object_function
 from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.shacl import NodeShape
 from temp.grammar import IRI, ConstructQuery
@@ -28,6 +28,15 @@ router = APIRouter(tags=["ogccatprez"])
 
 OGCE = Namespace(PREZ["endpoint/extended-ogc-records/"])
 
+
+########################################################################################################################
+# Listing endpoints
+
+# 1: /profiles
+# 2: /catalogs
+# 3: /catalogs/{catalogId}/collections
+# 4: /catalogs/{catalogId}/collections/{collectionId}/items
+########################################################################################################################
 
 @router.get(
     "/profiles",
@@ -63,7 +72,7 @@ async def listings(
     data_repo: Repo = Depends(get_data_repo),
     system_repo: Repo = Depends(get_system_repo),
 ):
-    return await listing_function_new(
+    return await listing_function(
         data_repo=data_repo,
         system_repo=system_repo,
         endpoint_nodeshape=endpoint_nodeshape,
@@ -119,7 +128,7 @@ async def objects(
     data_repo: Repo = Depends(get_data_repo),
     system_repo: Repo = Depends(get_system_repo),
 ):
-    return await object_function_new(
+    return await object_function(
         data_repo=data_repo,
         system_repo=system_repo,
         endpoint_structure=endpoint_structure,

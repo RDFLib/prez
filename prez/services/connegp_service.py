@@ -223,6 +223,7 @@ class NegotiatedPMTs(BaseModel):
             PREFIX geo: <http://www.opengis.net/ont/geosparql#>
             PREFIX prez: <https://prez.dev/>
             PREFIX prof: <http://www.w3.org/ns/dx/prof/>
+            PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             PREFIX sh: <http://www.w3.org/ns/shacl#>
@@ -235,7 +236,7 @@ class NegotiatedPMTs(BaseModel):
               ?mid rdfs:subClassOf* ?base_class .
               VALUES ?base_class {{ dcat:Dataset geo:FeatureCollection geo:Feature
               skos:ConceptScheme skos:Concept skos:Collection 
-              dcat:Catalog dcat:Resource prof:Profile prez:SPARQLQuery 
+              dcat:Catalog rdf:Resource dcat:Resource prof:Profile prez:SPARQLQuery 
               prez:SearchResult prez:CQLObjectList prez:QueryablesList prez:Object }}
               ?profile altr-ext:constrainsClass ?class ;
                        altr-ext:hasResourceFormat ?format ;

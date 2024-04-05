@@ -1,6 +1,7 @@
-from rdflib import RDF, RDFS
+from rdflib import RDF, RDFS, URIRef
 from rdflib.namespace import GEO
 
+from prez.services.query_generation.classes import ClassesSelectQuery
 from prez.services.query_generation.search import (
     SearchQueryRegex,
 )
@@ -82,4 +83,7 @@ def test_search_query_regex():
         order_by=sq.order_by,
         order_by_direction=sq.order_by_direction,
     )
-    print("")
+
+def test_classes():
+    test = ClassesSelectQuery(uris=[IRI(value="https://test1"), IRI(value="https://test2")])
+    print(test.to_string())
