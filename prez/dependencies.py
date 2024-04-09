@@ -115,19 +115,10 @@ async def load_annotations_data_to_oxigraph(store: Store):
     """
     Loads all the data from the local data directory into the local SPARQL endpoint
     """
-    relevant_predicates = (
-        settings.label_predicates
-        + settings.description_predicates
-        + settings.provenance_predicates
-    )
-    raw_g = Dataset(default_union=True)
-    for file in (Path(__file__).parent / "reference_data/context_ontologies").glob("*"):
-        raw_g.parse(file)
-    relevant_g = Dataset(default_union=True)
-    relevant_triples = raw_g.triples_choices((None, relevant_predicates, None))
-    for triple in relevant_triples:
-        relevant_g.add(triple)
-    file_bytes = relevant_g.serialize(format="nt", encoding="utf-8")
+    g = Dataset(default_union=True)
+    for file in (Path(__file__).parent / "reference_data/annotations").glob("*"):
+        g.parse(file)
+    file_bytes = g.serialize(format="nt", encoding="utf-8")
     store.load(file_bytes, "application/n-triples")
 
 

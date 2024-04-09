@@ -9,4 +9,4 @@ __pycache__/
 http/
 /.python-version
 http/
-rdf/
+.ropeproject/

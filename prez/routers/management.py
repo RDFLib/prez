@@ -35,7 +35,7 @@ async def index():
 @router.get("/purge-tbox-cache", summary="Reset Tbox Cache")
 async def purge_tbox_cache():
     """Purges the tbox cache, then re-adds annotations from common ontologies Prez has a copy of
-    (reference_data/context_ontologies)."""
+    (reference_data/annotations)."""
     cache = caches.get("default")
     cache_size = len(cache._cache)
     result = await cache.clear()

@@ -1,0 +1,186 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <https://schema.org/>
+PREFIX void: <http://rdfs.org/ns/void#>
+
+void:Dataset
+    rdfs:label "dataset" ;
+    schema:description "A set of RDF triples that are published, maintained or aggregated by a single provider." ;
+.
+
+void:DatasetDescription
+    rdfs:label "dataset description" ;
+    schema:description "A web resource whose foaf:primaryTopic or foaf:topics include void:Datasets." ;
+.
+
+void:Linkset
+    rdfs:label "linkset" ;
+    schema:description "A collection of RDF links between two void:Datasets." ;
+.
+
+void:TechnicalFeature
+    rdfs:label "technical feature" ;
+    schema:description "A technical feature of a void:Dataset, such as a supported RDF serialization format." ;
+.
+
+void:class
+    rdfs:label "class" ;
+    schema:description "The rdfs:Class that is the rdf:type of all entities in a class-based partition." ;
+.
+
+void:classPartition
+    rdfs:label "class partition" ;
+    schema:description "A subset of a void:Dataset that contains only the entities of a certain rdfs:Class." ;
+.
+
+void:classes
+    rdfs:label "classes" ;
+    schema:description "The total number of distinct classes in a void:Dataset. In other words, the number of distinct resources occuring as objects of rdf:type triples in the dataset." ;
+.
+
+void:dataDump
+    rdfs:label "Data Dump" ;
+    schema:description "An RDF dump, partial or complete, of a void:Dataset." ;
+.
+
+void:distinctObjects
+    rdfs:label "distinct objects" ;
+    schema:description "The total number of distinct objects in a void:Dataset. In other words, the number of distinct resources that occur in the object position of triples in the dataset. Literals are included in this count." ;
+.
+
+void:distinctSubjects
+    rdfs:label "distinct subjects" ;
+    schema:description "The total number of distinct subjects in a void:Dataset. In other words, the number of distinct resources that occur in the subject position of triples in the dataset." ;
+.
+
+void:documents
+    rdfs:label "number of documents" ;
+    schema:description "The total number of documents, for datasets that are published as a set of individual documents, such as RDF/XML documents or RDFa-annotated web pages. Non-RDF documents, such as web pages in HTML or images, are usually not included in this count. This property is intended for datasets where the total number of triples or entities is hard to determine. void:triples or void:entities should be preferred where practical." ;
+.
+
+void:entities
+    rdfs:label "number of entities" ;
+    schema:description "The total number of entities that are described in a void:Dataset." ;
+.
+
+void:exampleResource
+    rdfs:label "example resource of dataset" ;
+.
+
+void:feature
+    rdfs:label "feature" ;
+.
+
+void:inDataset
+    rdfs:label "in dataset" ;
+    schema:description "Points to the void:Dataset that a document is a part of." ;
+.
+
+void:linkPredicate
+    rdfs:label "a link predicate" ;
+.
+
+void:objectsTarget
+    rdfs:label "Objects Target" ;
+    schema:description "The dataset describing the objects of the triples contained in the Linkset." ;
+.
+
+void:openSearchDescription
+    rdfs:label "open search description" ;
+    schema:description "An OpenSearch description document for a free-text search service over a void:Dataset." ;
+.
+
+void:properties
+    rdfs:label "number of properties" ;
+    schema:description "The total number of distinct properties in a void:Dataset. In other words, the number of distinct resources that occur in the predicate position of triples in the dataset." ;
+.
+
+void:property
+    rdfs:label "property" ;
+    schema:description "The rdf:Property that is the predicate of all triples in a property-based partition." ;
+.
+
+void:propertyPartition
+    rdfs:label "property partition" ;
+    schema:description "A subset of a void:Dataset that contains only the triples of a certain rdf:Property." ;
+.
+
+void:rootResource
+    rdfs:label "root resource" ;
+    schema:description "A top concept or entry point for a void:Dataset that is structured in a tree-like fashion. All resources in a dataset can be reached by following links from its root resources in a small number of steps." ;
+.
+
+void:sparqlEndpoint
+    rdfs:label "has a SPARQL endpoint at" ;
+.
+
+void:subjectsTarget
+    rdfs:label "Subjects Target" ;
+    schema:description "The dataset describing the subjects of triples contained in the Linkset." ;
+.
+
+void:subset
+    rdfs:label "has subset" ;
+.
+
+void:target
+    rdfs:label "Target" ;
+    schema:description "One of the two datasets linked by the Linkset." ;
+.
+
+void:triples
+    rdfs:label "number of triples" ;
+    schema:description "The total number of triples contained in a void:Dataset." ;
+.
+
+void:uriLookupEndpoint
+    rdfs:label "has an URI look-up endpoint at" ;
+    schema:description "Defines a simple URI look-up protocol for accessing a dataset." ;
+.
+
+void:uriRegexPattern
+    rdfs:label "has URI regular expression pattern" ;
+    schema:description "Defines a regular expression pattern matching URIs in the dataset." ;
+.
+
+void:uriSpace
+    rdfs:label "URI space" ;
+    schema:description "A URI that is a common string prefix of all the entity URIs in a void:Dataset." ;
+.
+
+void:vocabulary
+    rdfs:label "vocabulary" ;
+    schema:description "A vocabulary that is used in the dataset." ;
+.
+
+<http://vocab.deri.ie/void>
+    rdfs:label "Vocabulary of Interlinked Datasets (VoID)" ;
+    schema:description "The Vocabulary of Interlinked Datasets (VoID) is an RDF Schema vocabulary for expressing metadata about RDF datasets. It is intended as a bridge between the publishers and users of RDF data, with applications ranging from data discovery to cataloging and archiving of datasets. This document provides a formal definition of the new RDF classes and properties introduced for VoID. It is a companion to the main specification document for VoID, <em><a href=\"http://www.w3.org/TR/void/\">Describing Linked Datasets with the VoID Vocabulary</a></em>." ;
+.
+
+[]    rdfs:label "Digital Enterprise Research Institute, NUI Galway" ;
+    rdfs:seeAlso
+        <http://www.deri.ie/> ,
+        <http://www.insight-centre.org> ;
+.
+
+[]    rdfs:label "Richard Cyganiak" ;
+.
+
+[]    rdfs:label "Jun Zhao" ;
+.
+
+[]    rdfs:label "Department of Zoology, University of Oxford" ;
+.
+
+[]    rdfs:label "Keith Alexander" ;
+.
+
+[]    rdfs:label "Talis" ;
+.
+
+[]    rdfs:label "Michael Hausenblas" ;
+.
+
+[]    rdfs:label "LiDRC" ;
+.
+

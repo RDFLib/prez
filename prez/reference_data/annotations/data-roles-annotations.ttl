@@ -1,0 +1,133 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <https://schema.org/>
+
+<https://linked.data.gov.au/def/data-roles>
+    rdfs:label "IDN Role Codes"@en ;
+    schema:description "This vocabulary lists the roles that Agents - People and Organisations - play in relation to data. This is an extended and Semantic Web version of the International Organisation for Standardization's ISO19115-1 standard's Role Codes codelist."@en ;
+.
+
+<https://linked.data.gov.au/def/data-roles/author>
+    rdfs:label "author"@en ;
+    schema:description "party who authored the resource" ;
+.
+
+<https://linked.data.gov.au/def/data-roles/coAuthor>
+    rdfs:label "co author"@en ;
+    schema:description "party who jointly authors the resource" ;
+.
+
+<https://linked.data.gov.au/def/data-roles/collaborator>
+    rdfs:label "collaborator"@en ;
+    schema:description "party who assists with the generation of the resource other than the principal investigator" ;
+.
+
+<https://linked.data.gov.au/def/data-roles/contributor>
+    rdfs:label "contributor"@en ;
+    schema:description "party contributing to the resource" ;
+.
+
+<https://linked.data.gov.au/def/data-roles/custodian>
+    rdfs:label "custodian"@en ;
+    schema:description "party that accepts accountability and responsibility for the resource and ensures appropriate care and maintenance of the resource" ;
+.
+
+<https://linked.data.gov.au/def/data-roles/distributor>
+    rdfs:label "distributor"@en ;
+    schema:description "party who distributes the resource" ;
+.
+
+<https://linked.data.gov.au/def/data-roles/editor>
+    rdfs:label "editor"@en ;
+    schema:description "party who reviewed or modified the resource to improve the content" ;
+.
+
+<https://linked.data.gov.au/def/data-roles/funder>
+    rdfs:label "funder"@en ;
+    schema:description "party providing monetary support for the resource" ;
+.
+
+<https://linked.data.gov.au/def/data-roles/isoRoles>
+    rdfs:label "ISO CI Role Code codes"@en ;
+    schema:description "Role Codes presented in the ISO 19115 original standard's codelist"@en ;
+.
+
+<https://linked.data.gov.au/def/data-roles/mediator>
+    rdfs:label "mediator"@en ;
+    schema:description "a class of entity that mediates access to the resource and for whom the resource is intended or useful" ;
+.
+
+<https://linked.data.gov.au/def/data-roles/originator>
+    rdfs:label "originator"@en ;
+    schema:description "party who created the resource" ;
+.
+
+<https://linked.data.gov.au/def/data-roles/owner>
+    rdfs:label "owner"@en ;
+    schema:description "party that owns the resource" ;
+.
+
+<https://linked.data.gov.au/def/data-roles/pointOfContact>
+    rdfs:label "point of contact"@en ;
+    schema:description "party who can be contacted for acquiring knowledge about or acquisition of the resource" ;
+.
+
+<https://linked.data.gov.au/def/data-roles/principalInvestigator>
+    rdfs:label "principal investigator"@en ;
+    schema:description "key party responsible for gathering information and conducting research" ;
+.
+
+<https://linked.data.gov.au/def/data-roles/processor>
+    rdfs:label "processor"@en ;
+    schema:description "party who has processed the data in a manner such that the resource has been modified" ;
+.
+
+<https://linked.data.gov.au/def/data-roles/publisher>
+    rdfs:label "publisher"@en ;
+    schema:description "party who published the resource" ;
+.
+
+<https://linked.data.gov.au/def/data-roles/resourceProvider>
+    rdfs:label "resource provider"@en ;
+    schema:description "party that supplies the resource" ;
+.
+
+<https://linked.data.gov.au/def/data-roles/rightsHolder>
+    rdfs:label "rights holder"@en ;
+    schema:description "party owning or managing rights over the resource" ;
+.
+
+<https://linked.data.gov.au/def/data-roles/sponsor>
+    rdfs:label "sponsor"@en ;
+    schema:description "party who speaks for the resource" ;
+.
+
+<https://linked.data.gov.au/def/data-roles/stakeholder>
+    rdfs:label "stakeholder"@en ;
+    schema:description "party who has an interest in the resource or the use of the resource" ;
+.
+
+<https://linked.data.gov.au/def/data-roles/subjectAgent>
+    rdfs:label "subject agent"@en ;
+    schema:description "party that the resources contains information about" ;
+.
+
+<https://linked.data.gov.au/def/data-roles/subjectAgentRepresentative>
+    rdfs:label "subject agent representative"@en ;
+    schema:description "party who can be contacted who best represents the interests of the subject agent" ;
+.
+
+<https://linked.data.gov.au/def/data-roles/user>
+    rdfs:label "user"@en ;
+    schema:description "party who uses the resource" ;
+.
+
+<https://linked.data.gov.au/org/agldwg>
+    rdfs:label "Australian Government Linked Data Working Group" ;
+    schema:description "The Australian Government's community of practice for Linked Data"@en ;
+.
+
+<https://linked.data.gov.au/org/idn>
+    rdfs:label "Indigenous Data Network" ;
+    schema:description "The Indigenous Data Network (IDN) was established in 2018 to support and coordinate the governance of Indigenous data for Aboriginal and Torres Strait Islander peoples and empower Aboriginal and Torres Strait Islander communities to decide their own local data priorities."@en ;
+.
+
