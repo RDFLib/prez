@@ -68,7 +68,6 @@ async def return_tbox_cache(request: Request):
     return await return_rdf(cache_g, mediatype, profile_headers={})
 
 
-
 @router.get("/health")
 async def health_check():
     return {"status": "ok"}
@@ -80,7 +79,12 @@ async def return_annotation_predicates():
     """
     g = Graph()
     g.bind("prez", "https://prez.dev/")
-    label_list_bn, description_list_bn, provenance_list_bn, other_list_bn = BNode(), BNode(), BNode(), BNode()
+    label_list_bn, description_list_bn, provenance_list_bn, other_list_bn = (
+        BNode(),
+        BNode(),
+        BNode(),
+        BNode(),
+    )
     g.add((PREZ.AnnotationPropertyList, PREZ.labelList, label_list_bn))
     g.add((PREZ.AnnotationPropertyList, PREZ.descriptionList, description_list_bn))
     g.add((PREZ.AnnotationPropertyList, PREZ.provenanceList, provenance_list_bn))

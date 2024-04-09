@@ -10,6 +10,7 @@ async def get_classes_single(uri: URIRef, repo: Repo):
     results = await get_classes([uri], repo)
     return results.get(uri, set())
 
+
 async def get_classes(uris: list[URIRef], repo: Repo):
     """
     This function gets the classes for a given URI
@@ -37,7 +38,7 @@ async def get_classes(uris: list[URIRef], repo: Repo):
 
 
 async def add_cached_entries(
-        klasses: dict, cached: list[tuple[URIRef, frozenset[URIRef]]]
+    klasses: dict, cached: list[tuple[URIRef, frozenset[URIRef]]]
 ):
     """
     This function adds the cached entries to the dict
@@ -53,9 +54,7 @@ async def add_cached_entries(
             klasses[subject].add(obj)
 
 
-async def process_uncached_classes(
-        uris: list[URIRef], data_repo: Repo, klasses: dict
-):
+async def process_uncached_classes(uris: list[URIRef], data_repo: Repo, klasses: dict):
     """
     This function gets classes for uris where there is no current cache entry.
 
@@ -85,7 +84,7 @@ async def process_uncached_classes(
 
     # Prepare subjects_list, only converting to frozenset where there are actual results
     subjects_list = [
-        (subject, frozenset(klasses)) if klasses else (subject, frozenset())
+        (subject, set(klasses)) if klasses else (subject, set())
         for subject, klasses in subjects_map.items()
     ]
 

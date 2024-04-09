@@ -24,7 +24,7 @@ from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.shacl import NodeShape
 from temp.grammar import IRI, ConstructQuery
 
-router = APIRouter(tags=["ogccatprez"])
+router = APIRouter(tags=["ogcprez"])
 
 OGCE = Namespace(PREZ["endpoint/extended-ogc-records/"])
 
@@ -37,6 +37,7 @@ OGCE = Namespace(PREZ["endpoint/extended-ogc-records/"])
 # 3: /catalogs/{catalogId}/collections
 # 4: /catalogs/{catalogId}/collections/{collectionId}/items
 ########################################################################################################################
+
 
 @router.get(
     "/profiles",

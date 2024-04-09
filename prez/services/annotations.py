@@ -3,6 +3,7 @@ from typing import List, FrozenSet, Set
 
 from aiocache import caches
 from rdflib import Graph, URIRef, Literal
+
 from prez.dependencies import get_annotations_repo
 from prez.repositories import Repo
 from prez.services.query_generation.annotations import (
@@ -134,13 +135,18 @@ async def get_annotation_properties(
     range of predicates used can be manually included via profiles.
     """
     # get all terms and datatypes for which we want to retrieve annotations
-    terms = set(term for term in item_graph.all_nodes() if isinstance(term, URIRef))
-    dtypes = set(
+    all_terms = (
+        set(item_graph.subjects(unique=True))
+        .union(set(item_graph.predicates(unique=True)))
+        .union(set(item_graph.objects(unique=True)))
+    )
+    all_uris = set(term for term in all_terms if isinstance(term, URIRef))
+    all_dtypes = set(
         term.datatype
-        for term in item_graph.all_nodes()
+        for term in all_terms
         if isinstance(term, Literal) and term.datatype
     )
-    terms_and_types = terms.union(dtypes)
+    terms_and_types = all_uris.union(all_dtypes)
     if not terms_and_types:
         return Graph()
 

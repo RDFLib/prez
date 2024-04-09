@@ -53,10 +53,10 @@ def get_oxrdflib_store():
 
 
 async def get_data_repo(
-        request: Request,
-        http_async_client: httpx.AsyncClient = Depends(get_async_http_client),
-        pyoxi_data_store: Store = Depends(get_pyoxi_store),
-        pyoxi_system_store: Store = Depends(get_system_store),
+    request: Request,
+    http_async_client: httpx.AsyncClient = Depends(get_async_http_client),
+    pyoxi_data_store: Store = Depends(get_pyoxi_store),
+    pyoxi_system_store: Store = Depends(get_system_store),
 ) -> Repo:
     if URIRef(request.scope.get("route").name) in settings.system_endpoints:
         return PyoxigraphRepo(pyoxi_system_store)
@@ -69,7 +69,7 @@ async def get_data_repo(
 
 
 async def get_system_repo(
-        pyoxi_store: Store = Depends(get_system_store),
+    pyoxi_store: Store = Depends(get_system_store),
 ) -> Repo:
     """
     A pyoxigraph Store with Prez system data including:
@@ -116,9 +116,9 @@ async def load_annotations_data_to_oxigraph(store: Store):
     Loads all the data from the local data directory into the local SPARQL endpoint
     """
     relevant_predicates = (
-            settings.label_predicates
-            + settings.description_predicates
-            + settings.provenance_predicates
+        settings.label_predicates
+        + settings.description_predicates
+        + settings.provenance_predicates
     )
     raw_g = Dataset(default_union=True)
     for file in (Path(__file__).parent / "reference_data/context_ontologies").glob("*"):
@@ -155,7 +155,7 @@ async def cql_get_parser_dependency(request: Request) -> CQLParser:
             query = json.loads(request.query_params["filter"])
             context = json.load(
                 (
-                        Path(__file__).parent / "reference_data/cql/default_context.json"
+                    Path(__file__).parent / "reference_data/cql/default_context.json"
                 ).open()
             )
             cql_parser = CQLParser(cql=query, context=context)
@@ -188,8 +188,8 @@ async def generate_search_query(request: Request):
 
 
 async def get_endpoint_uri_type(
-        request: Request,
-        system_repo: Repo = Depends(get_system_repo),
+    request: Request,
+    system_repo: Repo = Depends(get_system_repo),
 ) -> tuple[URIRef, URIRef]:
     endpoint_uri = URIRef(request.scope.get("route").name)
     ep_type_fs = await get_classes_single(endpoint_uri, system_repo)
@@ -208,8 +208,8 @@ async def get_endpoint_uri_type(
 
 
 async def get_focus_node(
-        request: Request,
-        endpoint_uri_type: tuple[URIRef, URIRef] = Depends(get_endpoint_uri_type),
+    request: Request,
+    endpoint_uri_type: tuple[URIRef, URIRef] = Depends(get_endpoint_uri_type),
 ):
     ep_uri = endpoint_uri_type[0]
     ep_type = endpoint_uri_type[1]
@@ -225,11 +225,11 @@ async def get_focus_node(
 
 
 async def get_endpoint_nodeshapes(
-        request: Request,
-        repo: Repo = Depends(get_data_repo),
-        system_repo: Repo = Depends(get_system_repo),
-        endpoint_uri_type: tuple[URIRef, URIRef] = Depends(get_endpoint_uri_type),
-        focus_node: IRI | Var = Depends(get_focus_node),
+    request: Request,
+    repo: Repo = Depends(get_data_repo),
+    system_repo: Repo = Depends(get_system_repo),
+    endpoint_uri_type: tuple[URIRef, URIRef] = Depends(get_endpoint_uri_type),
+    focus_node: IRI | Var = Depends(get_focus_node),
 ):
     ep_uri = endpoint_uri_type[0]
     if endpoint_uri_type[0] == EP["system/object"]:
@@ -314,12 +314,12 @@ async def get_endpoint_nodeshapes(
 
 
 async def get_negotiated_pmts(
-        request: Request,
-        endpoint_nodeshape: NodeShape = Depends(get_endpoint_nodeshapes),
-        repo: Repo = Depends(get_data_repo),
-        system_repo: Repo = Depends(get_system_repo),
-        endpoint_uri_type: URIRef = Depends(get_endpoint_uri_type),
-        focus_node: IRI | Var = Depends(get_focus_node),
+    request: Request,
+    endpoint_nodeshape: NodeShape = Depends(get_endpoint_nodeshapes),
+    repo: Repo = Depends(get_data_repo),
+    system_repo: Repo = Depends(get_system_repo),
+    endpoint_uri_type: URIRef = Depends(get_endpoint_uri_type),
+    focus_node: IRI | Var = Depends(get_focus_node),
 ) -> NegotiatedPMTs:
     # Use endpoint_nodeshapes in constructing NegotiatedPMTs
     ep_type = endpoint_uri_type[1]
@@ -342,14 +342,14 @@ async def get_negotiated_pmts(
 
 
 async def get_endpoint_structure(
-        request: Request,
-        pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
-        endpoint_uri_type: URIRef = Depends(get_endpoint_uri_type),
+    request: Request,
+    pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
+    endpoint_uri_type: URIRef = Depends(get_endpoint_uri_type),
 ):
     endpoint_uri = endpoint_uri_type[0]
 
     if (endpoint_uri in settings.system_endpoints) or (
-            pmts.selected.get("profile") == ALTREXT["alt-profile"]
+        pmts.selected.get("profile") == ALTREXT["alt-profile"]
     ):
         return ("profiles",)
     else:
@@ -357,9 +357,9 @@ async def get_endpoint_structure(
 
 
 async def get_profile_nodeshape(
-        request: Request,
-        pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
-        endpoint_uri_type: URIRef = Depends(get_endpoint_uri_type),
+    request: Request,
+    pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
+    endpoint_uri_type: URIRef = Depends(get_endpoint_uri_type),
 ):
     profile = pmts.selected.get("profile")
     if profile == ALTREXT["alt-profile"]:

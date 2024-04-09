@@ -38,8 +38,10 @@ log = logging.getLogger(__name__)
 
 
 class ClassesSelectQuery(SubSelect):
-    def __init__(self, uris: list[URIRef],
-                 ):
+    def __init__(
+        self,
+        uris: list[URIRef],
+    ):
         class_var = Var(value="class")
         uris_var = Var(value="uri")
         select_clause = SelectClause(variables_or_all=[class_var, uris_var])
@@ -62,12 +64,12 @@ class ClassesSelectQuery(SubSelect):
             data_block=DataBlock(
                 block=InlineDataOneVar(
                     variable=uris_var,
-                    datablockvalues=[DataBlockValue(value=uri) for uri in uris]
+                    datablockvalues=[DataBlockValue(value=uri) for uri in uris],
                 )
             )
         )
         super().__init__(
             select_clause=select_clause,
             where_clause=where_clause,
-            values_clause=values_clause
+            values_clause=values_clause,
         )

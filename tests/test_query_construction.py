@@ -84,6 +84,9 @@ def test_search_query_regex():
         order_by_direction=sq.order_by_direction,
     )
 
+
 def test_classes():
-    test = ClassesSelectQuery(uris=[IRI(value="https://test1"), IRI(value="https://test2")])
+    test = ClassesSelectQuery(
+        uris=[IRI(value="https://test1"), IRI(value="https://test2")]
+    )
     print(test.to_string())

@@ -15,11 +15,11 @@ log = logging.getLogger(__name__)
 
 
 async def object_function(
-        data_repo,
-        system_repo,
-        endpoint_structure,
-        pmts,
-        profile_nodeshape,
+    data_repo,
+    system_repo,
+    endpoint_structure,
+    pmts,
+    profile_nodeshape,
 ):
     if pmts.selected["profile"] == ALTREXT["alt-profile"]:
         none_keys = [
@@ -39,7 +39,7 @@ async def object_function(
             page=1,
             per_page=20,
             original_endpoint_type=ONT["ObjectEndpoint"],
-            **none_kwargs
+            **none_kwargs,
         )
 
     profile_triples = profile_nodeshape.triples_list
