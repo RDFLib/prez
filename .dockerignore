@@ -8,3 +8,5 @@ venv/
 .git/
 test_*.py
 .github/
+Dockerfile
+*.Dockerfile
