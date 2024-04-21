@@ -28,8 +28,8 @@ WORKDIR /app
 COPY . .
 
 RUN poetry build
-RUN python -m venv --system-site-packages /opt/venv
-RUN pip install --no-cache-dir dist/*.whl
+RUN python3 -m venv --system-site-packages ${VIRTUAL_ENV}
+RUN ${VIRTUAL_ENV}/bin/pip3 install --no-cache-dir dist/*.whl
 
 #
 # Final
