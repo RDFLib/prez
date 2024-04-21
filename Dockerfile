@@ -28,8 +28,8 @@ WORKDIR /app
 COPY . .
 
 RUN poetry build
-RUN python -m venv --system-site-packages /opt/venv
-RUN pip install --no-cache-dir dist/*.whl
+RUN python3 -m venv --system-site-packages ${VIRTUAL_ENV}
+RUN ${VIRTUAL_ENV}/bin/pip3 install --no-cache-dir dist/*.whl
 
 #
 # Final
@@ -50,6 +50,7 @@ RUN apk update && \
       bash
 
 WORKDIR /app
-COPY . .
+# prez module is already built as a package and installed in $VIRTUAL_ENV as a library
+COPY main.py pyproject.toml ./
 
 ENTRYPOINT uvicorn prez.app:app --host=${HOST:-0.0.0.0} --port=${PORT:-8000} --proxy-headers

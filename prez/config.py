@@ -67,9 +67,24 @@ class Settings(BaseSettings):
         values["prez_version"] = version
 
         if version is None or version == "":
-            values["prez_version"] = toml.load(
-                Path(Path(__file__).parent.parent) / "pyproject.toml"
-            )["tool"]["poetry"]["version"]
+            possible_locations = (
+                # dir above /prez, this is present in dev environments
+                # this is also used by derived projects to override the app version
+                Path(__file__).parent.parent,
+                # _inside_ /prez module, this is present in wheel builds
+                Path(__file__).parent,
+            )
+            p: Path
+            for p in possible_locations:
+                if (p / "pyproject.toml").exists():
+                    values["prez_version"] = toml.load(p / "pyproject.toml")["tool"][
+                        "poetry"
+                    ]["version"]
+                    break
+            else:
+                raise RuntimeError(
+                    "PREZ_VERSION not set, and cannot find a pyproject.toml to extract the version."
+                )
 
         return values
 

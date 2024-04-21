@@ -3,6 +3,20 @@ name = "prez"
 version = "0.1.0.dev0"
 description = "A python application for displaying linked data on the web"
 authors = ["Jamie Feiss <jamie.feiss@gmail.com>", "Nicholas Car <nick@kurrawong.net>", "David Habgood <dcchabgood@gmail.com>"]
+packages = [
+    { include = "prez" },
+    { include = "pyproject.toml", format = "wheel", to="prez" },
+]
+include = [
+    { path = "./*.md", format = "sdist" },
+    { path = "LICENSE", format = "sdist" },
+    { path = "demo", format = "sdist" },
+    { path = "dev", format = "sdist" },
+    { path = "tests", format = "sdist" },
+    { path = "poetry.lock", format = "sdist" },
+    { path = "./*.whl", format = "sdist" },
+    { path = "*.toml", format = "sdist" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.11"
