@@ -10,4 +10,4 @@ if __name__ == "__main__":
 
     port = int(environ.get("PREZ_DEV_SERVER_PORT", 8000))
 
-    uvicorn.run("prez.app:app", port=port, reload=True)
+    uvicorn.run("prez.app:assemble_app", factory=True, port=port, reload=True)

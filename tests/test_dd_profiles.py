@@ -6,7 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 from pyoxigraph.pyoxigraph import Store
 
-from prez.app import app
+from prez.app import assemble_app
 from prez.dependencies import get_repo
 from prez.sparql.methods import Repo, PyoxigraphRepo
 
@@ -33,6 +33,8 @@ def test_client(test_repo: Repo) -> TestClient:
     # Override the dependency to use the test_repo
     def override_get_repo():
         return test_repo
+
+    app = assemble_app()
 
     app.dependency_overrides[get_repo] = override_get_repo
 

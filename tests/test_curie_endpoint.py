@@ -1,11 +1,12 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from prez.app import app
+from prez.app import assemble_app
 
 
 @pytest.fixture
 def client() -> TestClient:
+    app = assemble_app()
     testclient = TestClient(app)
 
     # Make a request for the following IRI to ensure

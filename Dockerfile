@@ -53,4 +53,4 @@ WORKDIR /app
 # prez module is already built as a package and installed in $VIRTUAL_ENV as a library
 COPY main.py pyproject.toml ./
 
-ENTRYPOINT uvicorn prez.app:app --host=${HOST:-0.0.0.0} --port=${PORT:-8000} --proxy-headers
+ENTRYPOINT uvicorn prez.app:assemble_app --factory --host=${HOST:-0.0.0.0} --port=${PORT:-8000} --proxy-headers

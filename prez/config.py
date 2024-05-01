@@ -1,6 +1,6 @@
 from os import environ
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union, Any, Dict
 
 import toml
 from pydantic import BaseSettings, root_validator
@@ -58,6 +58,7 @@ class Settings(BaseSettings):
         "Knowledge Graph data which can be subset according to information profiles."
     )
     prez_version: Optional[str]
+    prez_contact: Optional[Dict[str, Union[str, Any]]]
     disable_prefix_generation: bool = False
     local_rdf_dir: str = "rdf"
 
