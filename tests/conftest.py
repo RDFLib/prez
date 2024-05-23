@@ -10,7 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 from pyoxigraph.pyoxigraph import Store
 
-from prez.app import app
+from prez.app import assemble_app
 from prez.dependencies import get_data_repo
 from prez.repositories import Repo, PyoxigraphRepo
 
@@ -38,6 +38,8 @@ def client(test_repo: Repo) -> TestClient:
     def override_get_repo():
         return test_repo
 
+    app = assemble_app()
+
     app.dependency_overrides[get_data_repo] = override_get_repo
 
     with TestClient(app) as c:
@@ -49,6 +51,9 @@ def client(test_repo: Repo) -> TestClient:
 
 @pytest.fixture(scope="module")
 def client_no_override() -> TestClient:
+
+    app = assemble_app()
+
     with TestClient(app) as c:
         yield c
 
