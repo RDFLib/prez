@@ -284,6 +284,13 @@ def handle_special_cases(ep_uri, focus_node):
             kind="endpoint",
             focus_node=focus_node,
         )
+    elif ep_uri == EP["extended-ogc-records/search"]:
+        return NodeShape(
+            uri=URIRef("http://example.org/ns#Search"),
+            graph=endpoints_graph_cache,
+            kind="endpoint",
+            focus_node=focus_node,
+        )
 
 
 async def get_endpoint_nodeshapes(
@@ -303,6 +310,7 @@ async def get_endpoint_nodeshapes(
         EP["extended-ogc-records/cql-get"],
         EP["extended-ogc-records/top-concepts"],
         EP["extended-ogc-records/narrowers"],
+        EP["extended-ogc-records/search"],
     ]:
         return handle_special_cases(ep_uri, focus_node)
 

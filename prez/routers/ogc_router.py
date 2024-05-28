@@ -91,6 +91,11 @@ openapi_extras = {
 
 
 @router.get(
+    path="/search",
+    summary="Search",
+    name=OGCE["search"],
+)
+@router.get(
     "/profiles",
     summary="List Profiles",
     name=EP["system/profile-listing"],

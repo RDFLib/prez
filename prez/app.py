@@ -1,8 +1,8 @@
 import logging
 from functools import partial
-import time
 from textwrap import dedent
 from typing import Optional, Dict, Union, Any
+
 import uvicorn
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
@@ -17,8 +17,6 @@ from prez.dependencies import (
     get_oxrdflib_store,
     get_system_store,
     load_system_data_to_oxigraph,
-    get_annotations_store,
-    load_annotations_data_to_oxigraph,
 )
 from prez.exceptions.model_exceptions import (
     ClassNotFoundException,
@@ -29,7 +27,6 @@ from prez.repositories import RemoteSparqlRepo, PyoxigraphRepo, OxrdflibRepo
 from prez.routers.identifier import router as identifier_router
 from prez.routers.management import router as management_router
 from prez.routers.ogc_router import router as ogc_records_router
-from prez.routers.search import router as search_router
 from prez.routers.sparql import router as sparql_router
 from prez.services.app_service import (
     healthcheck_sparql_endpoints,
@@ -137,7 +134,6 @@ def assemble_app(
     local_settings: Optional[Settings] = None,
     **kwargs
 ):
-
     _settings = local_settings if local_settings is not None else settings
 
     if title is None:
@@ -168,7 +164,6 @@ def assemble_app(
     app.include_router(ogc_records_router)
     app.include_router(management_router)
     app.include_router(sparql_router)
-    app.include_router(search_router)
     app.include_router(identifier_router)
     app.openapi = partial(
         prez_open_api_metadata,

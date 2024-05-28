@@ -61,7 +61,7 @@ ogce:cql-queryables
 
 ogce:search
     a ont:ListingEndpoint ;
-    ont:relevantShapes ex:search ;
+    ont:relevantShapes ex:Search ;
 .
 
 ogce:top-concepts

@@ -155,3 +155,9 @@ ex:CQL
     sh:targetClass rdfs:Resource ;
     ont:hierarchyLevel 1 ;
     .
+
+ex:Search
+    a sh:NodeShape ;
+    sh:targetClass rdfs:Resource ;
+    ont:hierarchyLevel 1 ;
+    .

@@ -39,7 +39,9 @@ class QueryParams:
             le=100,
             description="Number of items per page, must be greater than 0",
         ),
-        q: Optional[str] = Query(None, description="Optional: Search query"),
+        q: Optional[str] = Query(
+            None, description="Optional: Search query", examples=["building"]
+        ),
         filter: Optional[str] = Query(None, description="CQL JSON expression."),
         order_by: Optional[str] = Query(
             None, description="Optional: Field to order by"

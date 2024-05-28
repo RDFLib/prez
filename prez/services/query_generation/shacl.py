@@ -4,7 +4,7 @@ from string import Template
 from typing import List, Optional, Any, Dict, Literal as TypingLiteral, Union, Tuple
 
 from pydantic import BaseModel
-from rdflib import URIRef, BNode, Graph
+from rdflib import URIRef, BNode, Graph, RDFS
 from rdflib.collection import Collection
 from rdflib.namespace import SH, RDF
 from rdflib.term import Node
@@ -118,9 +118,16 @@ class NodeShape(Shape):
 
     def _process_class_targets(self):
         if len(self.targetClasses) == 1:
-            self.add_triple_to_tss_and_tssp(
-                (self.focus_node, IRI(value=RDF.type), IRI(value=self.targetClasses[0]))
-            )
+            if self.targetClasses == [RDFS.Resource]:
+                pass
+            else:
+                self.add_triple_to_tss_and_tssp(
+                    (
+                        self.focus_node,
+                        IRI(value=RDF.type),
+                        IRI(value=self.targetClasses[0]),
+                    )
+                )
         elif len(self.targetClasses) > 1:
             self.add_triple_to_tss_and_tssp(
                 (self.focus_node, IRI(value=RDF.type), Var(value="focus_classes"))
