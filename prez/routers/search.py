@@ -11,7 +11,7 @@ from prez.renderers.renderer import return_from_graph
 from prez.repositories import Repo
 from prez.services.connegp_service import NegotiatedPMTs
 from prez.services.link_generation import add_prez_links
-from temp.grammar import ConstructQuery
+from sparql_grammar_pydantic import ConstructQuery
 
 router = APIRouter(tags=["Search"])
 OGCE = Namespace(PREZ["endpoint/extended-ogc-records/"])

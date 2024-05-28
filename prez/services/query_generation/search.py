@@ -1,10 +1,48 @@
 from typing import Optional, List
 
 from rdflib import RDF
+from sparql_grammar_pydantic import (
+    ConstructQuery,
+    IRI,
+    Var,
+    GraphPatternNotTriples,
+    Expression,
+    PrimaryExpression,
+    BuiltInCall,
+    ConstructTemplate,
+    ConstructTriples,
+    TriplesSameSubject,
+    WhereClause,
+    GroupGraphPattern,
+    GroupGraphPatternSub,
+    TriplesBlock,
+    TriplesSameSubjectPath,
+    SolutionModifier,
+    Bind,
+    SelectClause,
+    LimitOffsetClauses,
+    LimitClause,
+    OffsetClause,
+    GroupOrUnionGraphPattern,
+    OrderClause,
+    OrderCondition,
+    SubSelect,
+    NumericLiteral,
+    RegexExpression,
+    Aggregate,
+    GroupClause,
+    GroupCondition,
+    InlineData,
+    DataBlock,
+    InlineDataOneVar,
+    DataBlockValue,
+    RDFLiteral,
+    Filter,
+    Constraint,
+)
 
 from prez.config import settings
 from prez.reference_data.prez_ns import PREZ
-from temp.grammar import *
 
 
 class SearchQueryRegex(ConstructQuery):
@@ -12,11 +50,11 @@ class SearchQueryRegex(ConstructQuery):
     offset: int = 0  # specify here to make available as attribute
 
     def __init__(
-            self,
-            term: str,
-            predicates: Optional[List[str]] = None,
-            limit: int = 10,
-            offset: int = 0,
+        self,
+        term: str,
+        predicates: Optional[List[str]] = None,
+        limit: int = 10,
+        offset: int = 0,
     ):
         sr_uri: Var = Var(value="focus_node")
         pred: Var = Var(value="pred")
@@ -81,19 +119,19 @@ class SearchQueryRegex(ConstructQuery):
                                                                                 content=b
                                                                             )
                                                                             for b in [
-                                                                            BuiltInCall.create_with_one_expr(
-                                                                                "STR",
-                                                                                PrimaryExpression(
-                                                                                    content=e
-                                                                                ),
-                                                                            )
-                                                                            for e in [
-                                                                                sr_uri,
-                                                                                pred,
-                                                                                match,
-                                                                                weight,
+                                                                                BuiltInCall.create_with_one_expr(
+                                                                                    "STR",
+                                                                                    PrimaryExpression(
+                                                                                        content=e
+                                                                                    ),
+                                                                                )
+                                                                                for e in [
+                                                                                    sr_uri,
+                                                                                    pred,
+                                                                                    match,
+                                                                                    weight,
+                                                                                ]
                                                                             ]
-                                                                        ]
                                                                         ],
                                                                     )
                                                                 ),
@@ -233,15 +271,15 @@ class SearchQueryRegex(ConstructQuery):
         }
 
     def create_inner_ggp(
-            self,
-            weight_val: int,
-            function: str,
-            prefix: str,
-            case_insensitive: Optional[bool],
-            sr_uri: Var,
-            pred: Var,
-            match: Var,
-            term: str,
+        self,
+        weight_val: int,
+        function: str,
+        prefix: str,
+        case_insensitive: Optional[bool],
+        sr_uri: Var,
+        pred: Var,
+        match: Var,
+        term: str,
     ) -> GroupGraphPattern:
         ggp = GroupGraphPattern(
             content=GroupGraphPatternSub(
@@ -280,12 +318,16 @@ class SearchQueryRegex(ConstructQuery):
                             text_expression=Expression.from_primary_expression(
                                 PrimaryExpression(content=match)
                             ),  # Expression for the text
-                            pattern_expression=Expression.from_primary_expression(pe_st),
-                            flags_expression=Expression.from_primary_expression(
-                                PrimaryExpression(content=RDFLiteral(value="i"))
-                            )
-                            if case_insensitive
-                            else None,
+                            pattern_expression=Expression.from_primary_expression(
+                                pe_st
+                            ),
+                            flags_expression=(
+                                Expression.from_primary_expression(
+                                    PrimaryExpression(content=RDFLiteral(value="i"))
+                                )
+                                if case_insensitive
+                                else None
+                            ),
                         )
                     )
                 )

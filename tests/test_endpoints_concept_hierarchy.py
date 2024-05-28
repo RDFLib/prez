@@ -5,7 +5,9 @@ from prez.reference_data.prez_ns import PREZ
 
 
 def test_concept_hierarchy_top_concepts(client):
-    r = client.get(f"/concept-hierarchy/exm:SchemingConceptScheme/top-concepts?_mediatype=text/turtle")
+    r = client.get(
+        f"/concept-hierarchy/exm:SchemingConceptScheme/top-concepts?_mediatype=text/turtle"
+    )
     response_graph = Graph().parse(data=r.text)
     expected_response_1 = (
         URIRef("https://example.com/TopLevelConcept"),
@@ -22,7 +24,9 @@ def test_concept_hierarchy_top_concepts(client):
 
 
 def test_concept_hierarchy_narrowers(client):
-    r = client.get(f"/concept-hierarchy/exm:TopLevelConcept/narrowers?_mediatype=text/turtle")
+    r = client.get(
+        f"/concept-hierarchy/exm:TopLevelConcept/narrowers?_mediatype=text/turtle"
+    )
     response_graph = Graph().parse(data=r.text)
     expected_response_1 = (
         URIRef("https://example.com/SecondLevelConcept"),
@@ -36,4 +40,3 @@ def test_concept_hierarchy_narrowers(client):
     )
     assert next(response_graph.triples(expected_response_1))
     assert next(response_graph.triples(expected_response_2))
-

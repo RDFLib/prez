@@ -1,9 +1,36 @@
 from functools import lru_cache
 from typing import List
 
+from sparql_grammar_pydantic import (
+    ConstructQuery,
+    IRI,
+    Var,
+    GraphPatternNotTriples,
+    InlineData,
+    DataBlock,
+    InlineDataOneVar,
+    DataBlockValue,
+    InlineDataFull,
+    Filter,
+    Constraint,
+    BrackettedExpression,
+    Expression,
+    PrimaryExpression,
+    BuiltInCall,
+    RDFLiteral,
+    ConstructTemplate,
+    ConstructTriples,
+    TriplesSameSubject,
+    WhereClause,
+    GroupGraphPattern,
+    GroupGraphPatternSub,
+    TriplesBlock,
+    TriplesSameSubjectPath,
+    SolutionModifier,
+)
+
 from prez.config import settings
 from prez.reference_data.prez_ns import PREZ
-from temp.grammar import *
 
 
 class AnnotationsConstructQuery(ConstructQuery):
@@ -25,6 +52,7 @@ class AnnotationsConstructQuery(ConstructQuery):
       FILTER (LANG(?annotation) IN ("en", "") || isURI(?annotation))
     }
     """
+
     def __init__(self, terms: List[IRI]):
         # create terms VALUES clause
         # e.g. VALUES ?term { ... }

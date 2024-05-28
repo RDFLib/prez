@@ -2,8 +2,21 @@ import logging
 
 from rdflib import URIRef
 from rdflib.namespace import RDF
-
-from temp.grammar import *
+from sparql_grammar_pydantic import (
+    IRI,
+    Var,
+    DataBlock,
+    InlineDataOneVar,
+    DataBlockValue,
+    WhereClause,
+    GroupGraphPattern,
+    GroupGraphPatternSub,
+    TriplesBlock,
+    TriplesSameSubjectPath,
+    SubSelect,
+    SelectClause,
+    ValuesClause,
+)
 
 log = logging.getLogger(__name__)
 
@@ -18,8 +31,8 @@ class ClassesSelectQuery(SubSelect):
     """
 
     def __init__(
-            self,
-            uris: list[URIRef],
+        self,
+        uris: list[URIRef],
     ):
         class_var = Var(value="class")
         uris_var = Var(value="uri")
@@ -33,7 +46,6 @@ class ClassesSelectQuery(SubSelect):
                             predicate=IRI(value=RDF.type),
                             object=class_var,
                         )
-
                     )
                 )
             )

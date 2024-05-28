@@ -1,4 +1,22 @@
-from temp.grammar import *
+from sparql_grammar_pydantic import (
+    ConstructQuery,
+    IRI,
+    Var,
+    Expression,
+    PrimaryExpression,
+    BuiltInCall,
+    ConstructTemplate,
+    ConstructTriples,
+    TriplesSameSubject,
+    WhereClause,
+    GroupGraphPattern,
+    SolutionModifier,
+    SubSelect,
+    BlankNode,
+    Anon,
+    Aggregate,
+    SelectClause,
+)
 
 
 class CountQuery(ConstructQuery):

@@ -52,9 +52,9 @@ async def return_from_graph(
                     filename = selected_class.split("#")[-1].split("/")[-1]
                 stream = render_csv_dropdown(jsonld_data["@graph"])
                 response = StreamingResponse(stream, media_type=mediatype)
-                response.headers[
-                    "Content-Disposition"
-                ] = f"attachment;filename={filename}.csv"
+                response.headers["Content-Disposition"] = (
+                    f"attachment;filename={filename}.csv"
+                )
                 return response
 
             # application/json
@@ -100,6 +100,8 @@ async def return_annotated_rdf(
     t_start = time.time()
     annotations_graph = await get_annotation_properties(graph, repo, system_repo)
     # get annotations for annotations - no need to do this recursively
-    annotations_graph += await get_annotation_properties(annotations_graph, repo, system_repo)
+    annotations_graph += await get_annotation_properties(
+        annotations_graph, repo, system_repo
+    )
     log.debug(f"Time to get annotations: {time.time() - t_start}")
     return graph.__iadd__(annotations_graph)

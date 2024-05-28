@@ -3,12 +3,41 @@ from typing import Generator
 from pyld import jsonld
 from rdflib import URIRef, Namespace
 from rdflib.namespace import GEO, SH
+from sparql_grammar_pydantic import (
+    ArgList,
+    FunctionCall,
+    ConstructQuery,
+    IRI,
+    Var,
+    GraphPatternNotTriples,
+    Expression,
+    PrimaryExpression,
+    BuiltInCall,
+    ConstructTemplate,
+    ConstructTriples,
+    TriplesSameSubject,
+    WhereClause,
+    GroupGraphPattern,
+    GroupGraphPatternSub,
+    TriplesBlock,
+    TriplesSameSubjectPath,
+    SolutionModifier,
+    GroupOrUnionGraphPattern,
+    NumericLiteral,
+    RegexExpression,
+    InlineData,
+    DataBlock,
+    InlineDataOneVar,
+    DataBlockValue,
+    RDFLiteral,
+    Filter,
+    Constraint,
+)
 
 from prez.reference_data.cql.geo_function_mapping import (
     cql_sparql_spatial_mapping,
     cql_to_shapely_mapping,
 )
-from temp.grammar import *
 
 CQL = Namespace("http://www.opengis.net/doc/IS/cql2/1.0/")
 
@@ -48,11 +77,15 @@ class CQLParser:
         )
         self.query_str = self.query_object.to_string()
         gpotb = self.query_object.where_clause.group_graph_pattern.content
-        gpnt_list = [i for i in gpotb.graph_patterns_or_triples_blocks if isinstance(i, GraphPatternNotTriples)]
+        gpnt_list = [
+            i
+            for i in gpotb.graph_patterns_or_triples_blocks
+            if isinstance(i, GraphPatternNotTriples)
+        ]
         self.inner_select_gpnt_list = gpnt_list
 
     def parse_logical_operators(
-            self, element, existing_ggps=None
+        self, element, existing_ggps=None
     ) -> Generator[GroupGraphPatternSub, None, None]:
         operator = element.get(str(CQL.operator))[0].get("@value")
         args = element.get(str(CQL.args))
@@ -80,9 +113,7 @@ class CQLParser:
                 or_components.append(component)
 
             gpnt = GraphPatternNotTriples(
-                content=GroupOrUnionGraphPattern(
-                    group_graph_patterns=or_components
-                )
+                content=GroupOrUnionGraphPattern(group_graph_patterns=or_components)
             )
             if ggps.graph_patterns_or_triples_blocks:
                 ggps.graph_patterns_or_triples_blocks.append(gpnt)
@@ -103,12 +134,18 @@ class CQLParser:
             raise NotImplementedError(f"Operator {operator} not implemented.")
 
     def _add_triple(self, ggps, subject, predicate, object):
-        tssp = TriplesSameSubjectPath.from_spo(subject=subject, predicate=predicate, object=object)
-        tss = TriplesSameSubject.from_spo(subject=subject, predicate=predicate, object=object)
+        tssp = TriplesSameSubjectPath.from_spo(
+            subject=subject, predicate=predicate, object=object
+        )
+        tss = TriplesSameSubject.from_spo(
+            subject=subject, predicate=predicate, object=object
+        )
         self.tss_list.append(tss)
         self.tssp_list.append(tssp)
         if ggps.triples_block:
-            ggps.triples_block = TriplesBlock(triples=tssp, triples_block=ggps.triples_block)
+            ggps.triples_block = TriplesBlock(
+                triples=tssp, triples_block=ggps.triples_block
+            )
         else:
             ggps.triples_block = TriplesBlock(triples=tssp)
 
@@ -191,17 +228,13 @@ class CQLParser:
                     content=BuiltInCall(
                         other_expressions=RegexExpression(
                             text_expression=Expression.from_primary_expression(
-                                primary_expression=PrimaryExpression(
-                                    content=obj
-                                )
+                                primary_expression=PrimaryExpression(content=obj)
                             ),
                             pattern_expression=Expression.from_primary_expression(
                                 primary_expression=PrimaryExpression(
-                                    content=RDFLiteral(
-                                        value=value
-                                    )
+                                    content=RDFLiteral(value=value)
                                 )
-                            )
+                            ),
                         )
                     )
                 )
@@ -221,7 +254,7 @@ class CQLParser:
         if coordinates:
             wkt = cql_to_shapely_mapping[geom_type](coordinates).wkt
             prop = args[0].get(str(CQL.property))[0].get("@id")
-            if URIRef(prop) == SH.this:
+            if URIRef(prop) == SH.focusNode:
                 subject = Var(value="focus_node")
             else:
                 subject = IRI(value=prop)

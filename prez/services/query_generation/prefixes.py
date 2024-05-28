@@ -1,4 +1,14 @@
-from temp.grammar import *
+from sparql_grammar_pydantic import (
+    IRI,
+    Var,
+    WhereClause,
+    GroupGraphPattern,
+    GroupGraphPatternSub,
+    TriplesBlock,
+    TriplesSameSubjectPath,
+    SelectClause,
+    SubSelect,
+)
 
 
 class PrefixQuery(SubSelect):
@@ -22,14 +32,18 @@ class PrefixQuery(SubSelect):
                         [
                             TriplesSameSubjectPath.from_spo(
                                 subject=subject_var,
-                                predicate=IRI(value="http://purl.org/vocab/vann/preferredNamespacePrefix"),
+                                predicate=IRI(
+                                    value="http://purl.org/vocab/vann/preferredNamespacePrefix"
+                                ),
                                 object=prefix_var,
                             ),
                             TriplesSameSubjectPath.from_spo(
                                 subject=subject_var,
-                                predicate=IRI(value="http://purl.org/vocab/vann/preferredNamespaceUri"),
+                                predicate=IRI(
+                                    value="http://purl.org/vocab/vann/preferredNamespaceUri"
+                                ),
                                 object=namespace_var,
-                            )
+                            ),
                         ]
                     )
                 )

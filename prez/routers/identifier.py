@@ -4,7 +4,7 @@ from rdflib import URIRef
 from rdflib.term import _is_valid_uri
 
 from prez.dependencies import get_data_repo
-from prez.queries.identifier import get_foaf_homepage_query
+from prez.services.query_generation.identifier import get_foaf_homepage_query
 from prez.services.curie_functions import get_uri_for_curie_id, get_curie_id_for_uri
 
 router = APIRouter(tags=["Identifier Resolution"])

@@ -4,6 +4,7 @@ import logging
 from fastapi.responses import PlainTextResponse
 from rdflib import URIRef, Literal
 from rdflib.namespace import RDF
+from sparql_grammar_pydantic import IRI, Var
 
 from prez.cache import endpoints_graph_cache
 from prez.reference_data.prez_ns import PREZ, ALTREXT, ONT
@@ -15,29 +16,29 @@ from prez.services.query_generation.umbrella import (
     merge_listing_query_grammar_inputs,
     PrezQueryConstructor,
 )
-from temp.grammar import *
 
 log = logging.getLogger(__name__)
 
 
 async def listing_function(
-        data_repo,
-        system_repo,
-        endpoint_nodeshape,
-        endpoint_structure,
-        search_query,
-        concept_hierarchy_query,
-        cql_parser,
-        pmts,
-        profile_nodeshape,
-        page,
-        per_page,
-        order_by,
-        order_by_direction,
-        original_endpoint_type,
+    data_repo,
+    system_repo,
+    endpoint_nodeshape,
+    endpoint_structure,
+    search_query,
+    concept_hierarchy_query,
+    cql_parser,
+    pmts,
+    profile_nodeshape,
+    query_params,
+    # page,
+    # per_page,
+    # order_by,
+    # order_by_direction,
+    original_endpoint_type,
 ):
     if (
-            pmts.selected["profile"] == ALTREXT["alt-profile"]
+        pmts.selected["profile"] == ALTREXT["alt-profile"]
     ):  # recalculate the endpoint node shape
         endpoint_nodeshape = await handle_alt_profile(original_endpoint_type, pmts)
 
@@ -46,10 +47,7 @@ async def listing_function(
         endpoint_nodeshape=endpoint_nodeshape,
         search_query=search_query,
         concept_hierarchy_query=concept_hierarchy_query,
-        page=page,
-        per_page=per_page,
-        order_by=order_by,
-        order_by_direction=order_by_direction,
+        query_params=query_params,
     )
 
     # merge subselect and profile triples same subject (for construct triples)
@@ -70,8 +68,8 @@ async def listing_function(
     queries.append(main_query.to_string())
 
     if (
-            pmts.requested_mediatypes is not None
-            and pmts.requested_mediatypes[0][0] == "application/sparql-query"
+        pmts.requested_mediatypes is not None
+        and pmts.requested_mediatypes[0][0] == "application/sparql-query"
     ):
         return PlainTextResponse(queries[0], media_type="application/sparql-query")
 
@@ -109,9 +107,7 @@ async def listing_function(
 async def handle_alt_profile(original_endpoint_type, pmts):
     endpoint_nodeshape_map = {
         ONT["ObjectEndpoint"]: URIRef("http://example.org/ns#AltProfilesForObject"),
-        ONT["ListingEndpoint"]: URIRef(
-            "http://example.org/ns#AltProfilesForListing"
-        ),
+        ONT["ListingEndpoint"]: URIRef("http://example.org/ns#AltProfilesForListing"),
     }
     endpoint_uri = endpoint_nodeshape_map[original_endpoint_type]
     endpoint_nodeshape = NodeShape(

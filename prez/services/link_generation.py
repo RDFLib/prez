@@ -4,15 +4,23 @@ from string import Template
 
 from rdflib import Graph, Literal, URIRef, DCTERMS, BNode
 from rdflib.namespace import SH, RDF
+from sparql_grammar_pydantic import (
+    IRI,
+    WhereClause,
+    GroupGraphPattern,
+    GroupGraphPatternSub,
+    TriplesBlock,
+    SelectClause,
+    SubSelect,
+)
 
 from prez.cache import endpoints_graph_cache, links_ids_graph_cache
 from prez.config import settings
 from prez.reference_data.prez_ns import PREZ
 from prez.repositories import Repo
-from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.classes import get_classes
+from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.query_generation.shacl import NodeShape
-from temp.grammar import *
 
 log = logging.getLogger(__name__)
 

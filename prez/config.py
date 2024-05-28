@@ -101,9 +101,9 @@ class Settings(BaseSettings):
             p: Path
             for p in possible_locations:
                 if (p / "pyproject.toml").exists():
-                    values = toml.load(p / "pyproject.toml")["tool"][
-                        "poetry"
-                    ]["version"]
+                    values = toml.load(p / "pyproject.toml")["tool"]["poetry"][
+                        "version"
+                    ]
                     return values
             else:
                 raise RuntimeError(

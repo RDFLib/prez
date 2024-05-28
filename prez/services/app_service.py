@@ -96,9 +96,9 @@ async def add_local_prefixes():
     for f in (Path(__file__).parent.parent / "reference_data/prefixes").glob("*.ttl"):
         g = Graph().parse(f, format="turtle")
         for i, (s, prefix) in enumerate(
-                g.subject_objects(
-                    predicate=URIRef("http://purl.org/vocab/vann/preferredNamespacePrefix")
-                )
+            g.subject_objects(
+                predicate=URIRef("http://purl.org/vocab/vann/preferredNamespacePrefix")
+            )
         ):
             namespace = g.value(
                 s, URIRef("http://purl.org/vocab/vann/preferredNamespaceUri")

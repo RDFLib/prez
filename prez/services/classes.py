@@ -3,7 +3,7 @@ from rdflib import URIRef
 
 from prez.repositories import Repo
 from prez.services.query_generation.classes import ClassesSelectQuery
-from temp.grammar import IRI
+from sparql_grammar_pydantic import IRI
 
 
 async def get_classes_single(uri: URIRef, repo: Repo):

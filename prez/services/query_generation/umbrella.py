@@ -1,10 +1,34 @@
 from typing import Union, Optional, List, Tuple
 
+from sparql_grammar_pydantic import (
+    ConstructQuery,
+    Var,
+    GraphPatternNotTriples,
+    Expression,
+    ConstructTemplate,
+    ConstructTriples,
+    TriplesSameSubject,
+    WhereClause,
+    GroupGraphPattern,
+    GroupGraphPatternSub,
+    TriplesBlock,
+    TriplesSameSubjectPath,
+    SolutionModifier,
+    SelectClause,
+    LimitOffsetClauses,
+    LimitClause,
+    OffsetClause,
+    GroupOrUnionGraphPattern,
+    OrderClause,
+    OrderCondition,
+    SubSelect,
+)
+
+from prez.models.query_params import QueryParams
 from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQuery
 from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.search import SearchQueryRegex
 from prez.services.query_generation.shacl import NodeShape
-from temp.grammar import *
 
 
 class PrezQueryConstructor(ConstructQuery):
@@ -33,20 +57,17 @@ class PrezQueryConstructor(ConstructQuery):
     """
 
     def __init__(
-            self,
-            construct_tss_list: Optional[List[TriplesSameSubject]] = None,
-
-            profile_triples: Optional[List[TriplesSameSubjectPath]] = [],
-            profile_gpnt: Optional[List[GraphPatternNotTriples]] = [],
-
-            inner_select_vars: Optional[List[Union[Var, Tuple[Expression, Var]]]] = [],
-            inner_select_tssp_list: Optional[List[TriplesSameSubjectPath]] = [],
-            inner_select_gpnt: Optional[List[GraphPatternNotTriples]] = [],
-
-            limit: Optional[int] = None,
-            offset: Optional[int] = None,
-            order_by: Optional[Var] = None,
-            order_by_direction: Optional[str] = None,
+        self,
+        construct_tss_list: Optional[List[TriplesSameSubject]] = None,
+        profile_triples: Optional[List[TriplesSameSubjectPath]] = [],
+        profile_gpnt: Optional[List[GraphPatternNotTriples]] = [],
+        inner_select_vars: Optional[List[Union[Var, Tuple[Expression, Var]]]] = [],
+        inner_select_tssp_list: Optional[List[TriplesSameSubjectPath]] = [],
+        inner_select_gpnt: Optional[List[GraphPatternNotTriples]] = [],
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        order_by: Optional[Var] = None,
+        order_by_direction: Optional[str] = None,
     ):
         # where clause triples and GraphPatternNotTriples - set up first as in the case of a listing query, the inner
         # select is appended to this list as a GraphPatternNotTriples
@@ -125,17 +146,8 @@ class PrezQueryConstructor(ConstructQuery):
         construct_triples = None
         if construct_tss_list:
             construct_triples = ConstructTriples.from_tss_list(construct_tss_list)
-        # ct_list = []
-        # if profile_construct_triples:
-        #     ct_list.append(profile_construct_triples)
-        # if construct_tss_list:
-        #     ct_list.append(construct_tss_list)
-        # if ct_list:
-        #     construct_triples = ConstructTriples.merge_ct(ct_list)
 
-        construct_template = ConstructTemplate(
-            construct_triples=construct_triples
-        )
+        construct_template = ConstructTemplate(construct_triples=construct_triples)
         super().__init__(
             construct_template=construct_template,
             where_clause=where_clause,
@@ -154,15 +166,16 @@ class PrezQueryConstructor(ConstructQuery):
 
 
 def merge_listing_query_grammar_inputs(
-        cql_parser: Optional[CQLParser] = None,
-        endpoint_nodeshape: Optional[NodeShape] = None,
-        search_query: Optional[SearchQueryRegex] = None,
-        concept_hierarchy_query: Optional[ConceptHierarchyQuery] = None,
-        page: Optional[int] = None,
-        per_page: Optional[int] = None,
-        order_by: Optional[str] = None,
-        order_by_direction: Optional[bool] = None,
+    cql_parser: Optional[CQLParser] = None,
+    endpoint_nodeshape: Optional[NodeShape] = None,
+    search_query: Optional[SearchQueryRegex] = None,
+    concept_hierarchy_query: Optional[ConceptHierarchyQuery] = None,
+    query_params: Optional[QueryParams] = None,
 ) -> dict:
+    page = query_params.page
+    per_page = query_params.per_page
+    order_by = query_params.order_by
+    order_by_direction = query_params.order_by_direction
     """
     Merges the inputs for a query grammar.
     """
@@ -186,7 +199,6 @@ def merge_listing_query_grammar_inputs(
         kwargs["inner_select_vars"] = concept_hierarchy_query.inner_select_vars
         kwargs["order_by"] = concept_hierarchy_query.order_by
         kwargs["inner_select_gpnt"] = [concept_hierarchy_query.inner_select_gpnt]
-
 
     # TODO can remove limit/offset/order by from search query - apply from QSA or defaults.
     elif search_query:

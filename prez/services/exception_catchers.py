@@ -2,11 +2,12 @@ from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from starlette.requests import Request
 
-from prez.models.model_exceptions import (
+from prez.exceptions.model_exceptions import (
     ClassNotFoundException,
     URINotFoundException,
     NoProfilesException,
 )
+
 
 async def catch_400(request: Request, exc: Exception):
     return JSONResponse(status_code=400, content=exc.__dict__)

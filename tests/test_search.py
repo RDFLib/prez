@@ -1,9 +1,31 @@
 import pytest
 from rdflib import DCAT
+from sparql_grammar_pydantic import (
+    ConstructQuery,
+    IRI,
+    Var,
+    GraphPatternNotTriples,
+    Expression,
+    PrimaryExpression,
+    BuiltInCall,
+    ConstructTemplate,
+    ConstructTriples,
+    TriplesSameSubject,
+    WhereClause,
+    GroupGraphPattern,
+    GroupGraphPatternSub,
+    SolutionModifier,
+    Bind,
+    NumericLiteral,
+    RegexExpression,
+    Aggregate,
+    RDFLiteral,
+    Filter,
+    SubSelectString,
+)
 
 from prez.reference_data.prez_ns import PREZ
 from prez.services.query_generation.sparql_escaping import escape_for_lucene_and_sparql
-from temp.grammar.grammar import *
 
 """
 SELECT ?search_result_uri ?predicate ?match ?weight (URI(CONCAT("urn:hash:", SHA256(CONCAT(STR(?search_result_uri), STR(?predicate), STR(?match), STR(?weight))))) AS ?hashID)
@@ -147,7 +169,9 @@ def test_regex():
     pe2 = PrimaryExpression(content=RDFLiteral(value="^regexPattern"))
     pe3 = PrimaryExpression(content=RDFLiteral(value="i"))
     regex_expression = RegexExpression(
-        text_expression=Expression.from_primary_expression(pe1),  # Expression for the text
+        text_expression=Expression.from_primary_expression(
+            pe1
+        ),  # Expression for the text
         pattern_expression=Expression.from_primary_expression(
             pe2
         ),  # Expression for the regex pattern
@@ -222,7 +246,11 @@ def test_count_query():
     count_var = Var(value="count")
 
     construct_triples = ConstructTriples.from_tss_list(
-        [TriplesSameSubject.from_spo(subject=klass, predicate=count_iri, object=count_var)]
+        [
+            TriplesSameSubject.from_spo(
+                subject=klass, predicate=count_iri, object=count_var
+            )
+        ]
     )
     construct_template = ConstructTemplate(construct_triples=construct_triples)
     # Assuming `subquery` is a string containing the subquery
@@ -254,7 +282,7 @@ def test_count_query():
         ("*", r"\\*"),
         ("?", r"\\?"),
         (":", r"\\:"),
-        (r'\\', r'\\\\\\'),
+        (r"\\", r"\\\\\\"),
         ("/", r"\\/"),
         ("simpleTerm", "simpleTerm"),
         ('"quotedTerm"', r'\\"quotedTerm\\"'),
@@ -264,8 +292,11 @@ def test_count_query():
         ("term_with_underscores", "term_with_underscores"),
         ("term.with.periods", "term.with.periods"),
         ("term+with+pluses", r"term\\+with\\+pluses"),
-        ("term%2Bwith%2Burl%2Bencoded%2Bpluses", "term%2Bwith%2Burl%2Bencoded%2Bpluses"),
-    ]
+        (
+            "term%2Bwith%2Burl%2Bencoded%2Bpluses",
+            "term%2Bwith%2Burl%2Bencoded%2Bpluses",
+        ),
+    ],
 )
 def test_escaping(original_term, expected_result):
     # Example usage of EscapedString

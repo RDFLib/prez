@@ -2,7 +2,13 @@ from rdflib import Graph, URIRef, SH, RDF, PROV, DCTERMS
 
 from prez.reference_data.prez_ns import REG
 from prez.services.query_generation.shacl import PropertyShape
-from temp.grammar import Var, IRI, OptionalGraphPattern, Filter, TriplesSameSubjectPath
+from sparql_grammar_pydantic import (
+    Var,
+    IRI,
+    OptionalGraphPattern,
+    Filter,
+    TriplesSameSubjectPath,
+)
 
 
 # uri: URIRef | BNode  # URI of the shape

@@ -2,7 +2,11 @@ import os
 
 from rdflib import Graph, URIRef
 
+# comment / uncomment for the CQL tests - cannot figure out how to get a different conftest picked up.
 os.environ["SPARQL_REPO_TYPE"] = "pyoxigraph"
+
+# os.environ["SPARQL_ENDPOINT"] = "http://localhost:3030/dataset"
+# os.environ["SPARQL_REPO_TYPE"] = "remote"
 
 from pathlib import Path
 

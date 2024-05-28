@@ -8,9 +8,28 @@ from rdflib import URIRef, BNode, Graph
 from rdflib.collection import Collection
 from rdflib.namespace import SH, RDF
 from rdflib.term import Node
+from sparql_grammar_pydantic import (
+    IRI,
+    Var,
+    GraphPatternNotTriples,
+    PrimaryExpression,
+    BuiltInCall,
+    TriplesSameSubject,
+    GroupGraphPattern,
+    GroupGraphPatternSub,
+    TriplesBlock,
+    TriplesSameSubjectPath,
+    InlineData,
+    DataBlock,
+    InlineDataOneVar,
+    DataBlockValue,
+    Filter,
+    Constraint,
+    OptionalGraphPattern,
+    IRIOrFunction,
+)
 
 from prez.reference_data.prez_ns import ONT, SHEXT
-from temp.grammar import *
 
 
 class Shape(BaseModel):
@@ -100,19 +119,11 @@ class NodeShape(Shape):
     def _process_class_targets(self):
         if len(self.targetClasses) == 1:
             self.add_triple_to_tss_and_tssp(
-                (
-                    self.focus_node,
-                    IRI(value=RDF.type),
-                    IRI(value=self.targetClasses[0])
-                )
+                (self.focus_node, IRI(value=RDF.type), IRI(value=self.targetClasses[0]))
             )
         elif len(self.targetClasses) > 1:
             self.add_triple_to_tss_and_tssp(
-                (
-                    self.focus_node,
-                    IRI(value=RDF.type),
-                    Var(value="focus_classes")
-                )
+                (self.focus_node, IRI(value=RDF.type), Var(value="focus_classes"))
             )
             dbvs = [
                 DataBlockValue(value=IRI(value=klass)) for klass in self.targetClasses
@@ -188,7 +199,7 @@ class NodeShape(Shape):
                     (
                         self.focus_node,
                         Var(value=f"bn_p_{depth}"),
-                        Var(value=f"bn_o_{depth}")
+                        Var(value=f"bn_o_{depth}"),
                     )
                 )
             triples.append(
@@ -448,7 +459,9 @@ class PropertyShape(Shape):
                     content=OptionalGraphPattern(
                         group_graph_pattern=GroupGraphPattern(
                             content=GroupGraphPatternSub(
-                                triples_block=TriplesBlock.from_tssp_list(self.tssp_list)
+                                triples_block=TriplesBlock.from_tssp_list(
+                                    self.tssp_list
+                                )
                             )
                         )
                     )

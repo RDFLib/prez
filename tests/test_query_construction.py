@@ -3,6 +3,7 @@ from itertools import product
 import pytest
 from rdflib import RDF, RDFS, SKOS
 from rdflib.namespace import GEO
+from sparql_grammar_pydantic import IRI, Var, TriplesSameSubject, TriplesSameSubjectPath
 
 from prez.services.query_generation.classes import ClassesSelectQuery
 from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQuery
@@ -11,7 +12,6 @@ from prez.services.query_generation.search import (
     SearchQueryRegex,
 )
 from prez.services.query_generation.umbrella import PrezQueryConstructor
-from temp.grammar import *
 
 
 def test_basic_object():
@@ -80,8 +80,11 @@ def test_search_query_regex():
                 object=Var(value="propValue"),
             ),
         ],
-        construct_tss_list=sq.construct_triples.to_tss_list() + [
-            TriplesSameSubject.from_spo(IRI(value="https://s"), IRI(value="https://p"), IRI(value="https://o"))
+        construct_tss_list=sq.construct_triples.to_tss_list()
+        + [
+            TriplesSameSubject.from_spo(
+                IRI(value="https://s"), IRI(value="https://p"), IRI(value="https://o")
+            )
         ],
         inner_select_vars=sq.inner_select_vars,
         inner_select_gpnt=[sq.inner_select_gpnt],
@@ -125,13 +128,16 @@ def test_triples_ss(s, p, o):
 
 def test_concept_hierarchy_top_concepts():
     parent_uri = IRI(value="https://parent-uri")
-    parent_child_predicates = (IRI(value=SKOS.hasTopConcept), IRI(value=SKOS.topConceptOf))
+    parent_child_predicates = (
+        IRI(value=SKOS.hasTopConcept),
+        IRI(value=SKOS.topConceptOf),
+    )
     child_grandchild_predicates = (IRI(value=SKOS.narrower), IRI(value=SKOS.broader))
 
     tc_cq = ConceptHierarchyQuery(
         parent_uri=parent_uri,
         parent_child_predicates=parent_child_predicates,
-        child_grandchild_predicates=child_grandchild_predicates
+        child_grandchild_predicates=child_grandchild_predicates,
     )
     tc_cq.to_string()
 

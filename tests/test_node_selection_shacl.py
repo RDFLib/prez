@@ -4,7 +4,7 @@ from rdflib import Graph, URIRef
 from prez.services.query_generation.shacl import (
     NodeShape,
 )
-from temp.grammar import Var
+from sparql_grammar_pydantic import Var
 
 endpoints_graph = Graph().parse(
     "prez/reference_data/endpoints/endpoint_nodeshapes.ttl", format="turtle"

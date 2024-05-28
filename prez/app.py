@@ -20,7 +20,7 @@ from prez.dependencies import (
     get_annotations_store,
     load_annotations_data_to_oxigraph,
 )
-from prez.models.model_exceptions import (
+from prez.exceptions.model_exceptions import (
     ClassNotFoundException,
     URINotFoundException,
     NoProfilesException,

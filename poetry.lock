@@ -1712,6 +1712,21 @@ files = [
 ]
 
 [[package]]
+name = "sparql-grammar-pydantic"
+version = "0.1.0"
+description = "Pydantic models for the SPARQL Grammar."
+optional = false
+python-versions = "<4.0,>=3.11"
+files = [
+    {file = "sparql_grammar_pydantic-0.1.0-py3-none-any.whl", hash = "sha256:892686544853bcc5fa54bbdd92023a2867237532c4fb0e3c0347971e78175380"},
+    {file = "sparql_grammar_pydantic-0.1.0.tar.gz", hash = "sha256:307cfb32142a5555df4db9d0febf2e9af978b437a74b365d6e3b4041910eb2ef"},
+]
+
+[package.dependencies]
+pydantic = ">=2.7.1,<3.0.0"
+rdflib = ">=7.0.0,<8.0.0"
+
+[[package]]
 name = "starlette"
 version = "0.37.2"
 description = "The little ASGI library that shines."
@@ -2145,4 +2160,4 @@ test = ["pytest (>=6.0.0)", "setuptools (>=65)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "6cdb04f040daa63e2b0fb22ddd97ddaebe8c7e376d938446427e95350241466a"
+content-hash = "4661e7994ee7f35804689e1f9adea03acd9e5d18647fa15558a8da3672616fc3"

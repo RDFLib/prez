@@ -5,7 +5,7 @@ from textwrap import dedent
 from pydantic import BaseModel
 from rdflib import Graph, Namespace, URIRef
 
-from prez.models.model_exceptions import NoProfilesException
+from prez.exceptions.model_exceptions import NoProfilesException
 from prez.repositories.base import Repo
 from prez.services.curie_functions import get_curie_id_for_uri, get_uri_for_curie_id
 
@@ -122,9 +122,9 @@ class NegotiatedPMTs(BaseModel):
                     result = str(result)
                     parts[0] = "<" + result + ">"
                 except ValueError as e:
-                    parts[
-                        0
-                    ] = ""  # if curie resolution failed, then the profile is invalid
+                    parts[0] = (
+                        ""  # if curie resolution failed, then the profile is invalid
+                    )
                     log.error(e.args[0])
         if len(parts) == 1:
             parts.append(self.default_weighting)  # If no weight given, set the default
