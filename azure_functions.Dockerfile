@@ -1,5 +1,5 @@
 ARG PREZ_VERSION
-ARG POETRY_VERSION=1.8.1
+ARG POETRY_VERSION=1.8.3
 
 #
 # Base
@@ -27,7 +27,7 @@ ENV VIRTUAL_ENV=/home/site/wwwroot/.python_packages \
     POETRY_VIRTUALENVS_CREATE=false
 ENV PATH=${VIRTUAL_ENV}/bin:${PATH}
 RUN python3 -m venv --system-site-packages ${VIRTUAL_ENV}
-RUN ${VIRTUAL_ENV}/bin/pip3 install --no-cache-dir ./dist/*.whl "azure-functions>=1.19"
+RUN ${VIRTUAL_ENV}/bin/pip3 install --no-cache-dir ./dist/*.whl "azure-functions>=1.19,<2"
 
 #
 # Final
