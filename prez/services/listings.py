@@ -31,10 +31,6 @@ async def listing_function(
     pmts,
     profile_nodeshape,
     query_params,
-    # page,
-    # per_page,
-    # order_by,
-    # order_by_direction,
     original_endpoint_type,
 ):
     if (

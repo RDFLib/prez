@@ -84,7 +84,6 @@ class ConceptHierarchyQuery(ConstructQuery):
         if not child_grandchild_predicates:
             child_grandchild_predicates = parent_child_predicates
         focus_node_var = Var(value="focus_node")
-        focus_node_class = Var(value="class")
         grandchildren_var = Var(value="grandchildren")
 
         parent_child_alt = PathSequence(

@@ -140,7 +140,7 @@ async def cql_post_parser_dependency(request: Request) -> CQLParser:
         raise HTTPException(status_code=400, detail="Invalid JSON format.")
     except Exception as e:  # Replace with your specific parsing exception
         raise HTTPException(
-            status_code=400, detail="Invalid CQL format: Parsing failed."
+            status_code=400, detail=e.args[0] if e.args else "Error parsing CQL."
         )
 
 

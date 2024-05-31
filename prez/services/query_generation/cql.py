@@ -149,11 +149,6 @@ class CQLParser:
         else:
             ggps.triples_block = TriplesBlock(triples=tssp)
 
-    # def _append_graph_pattern(self, ggps, graph_pattern):
-    #     if ggps.graph_patterns_or_triples_blocks:
-    #         ggps.graph_patterns_or_triples_blocks.append(graph_pattern)
-    #     else:
-    #         ggps.graph_patterns_or_triples_blocks = [graph_pattern]
 
     def _handle_comparison(self, operator, args, existing_ggps=None):
         self.var_counter += 1
@@ -165,9 +160,12 @@ class CQLParser:
             prop = prop[1:]
             inverse = True
         val = args[1].get("@value")
-        if isinstance(val, str):
+        if not val:  # then should be an IRI
+            val = args[1].get("@id")
+            value = IRI(value=val)
+        elif isinstance(val, str):  # literal string
             value = RDFLiteral(value=val)
-        elif isinstance(val, (int, float)):
+        elif isinstance(val, (int, float)):  # literal numeric
             value = NumericLiteral(value=val)
         subject = Var(value="focus_node")
         predicate = IRI(value=prop)
@@ -181,7 +179,6 @@ class CQLParser:
                 content=InlineData(data_block=DataBlock(block=ildov))
             )
             ggps.add_pattern(gpnt)
-            # self._append_graph_pattern(ggps, gpnt)
         else:
             value_pe = PrimaryExpression(content=value)
             values_constraint = Filter.filter_relational(
@@ -189,7 +186,6 @@ class CQLParser:
             )
             gpnt = GraphPatternNotTriples(content=values_constraint)
             ggps.add_pattern(gpnt)
-            # self._append_graph_pattern(ggps, gpnt)
 
         if inverse:
             self._add_triple(ggps, object, predicate, subject)
@@ -252,7 +248,7 @@ class CQLParser:
         coordinates, geom_type = self._extract_spatial_info(coordinates_list, args)
 
         if coordinates:
-            wkt = cql_to_shapely_mapping[geom_type](coordinates).wkt
+            wkt = self.get_wkt_from_coords(coordinates, geom_type)
             prop = args[0].get(str(CQL.property))[0].get("@id")
             if URIRef(prop) == SH.focusNode:
                 subject = Var(value="focus_node")
@@ -281,8 +277,14 @@ class CQLParser:
             spatial_filter = Filter(constraint=Constraint(content=fc))
             filter_gpnt = GraphPatternNotTriples(content=spatial_filter)
             ggps.add_pattern(filter_gpnt)
-            # self._append_graph_pattern(ggps, spatial_filter)
         yield ggps
+
+    def get_wkt_from_coords(self, coordinates, geom_type):
+        shapely_spatial_class = cql_to_shapely_mapping.get(geom_type)
+        if not shapely_spatial_class:
+            raise NotImplementedError(f"Geometry Class for \"{geom_type}\" not found in Shapely.")
+        wkt = shapely_spatial_class(coordinates).wkt
+        return wkt
 
     def _handle_in(self, args, existing_ggps=None):
         self.var_counter += 1

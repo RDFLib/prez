@@ -197,18 +197,26 @@ def merge_listing_query_grammar_inputs(
     if concept_hierarchy_query:
         kwargs["construct_tss_list"] = concept_hierarchy_query.tss_list
         kwargs["inner_select_vars"] = concept_hierarchy_query.inner_select_vars
-        kwargs["order_by"] = concept_hierarchy_query.order_by
+        if order_by:
+            kwargs["order_by"] = Var(value=order_by)
+        else:
+            kwargs["order_by"] = concept_hierarchy_query.order_by
+        if order_by_direction:
+            kwargs["order_by_direction"] = order_by_direction
+        else:
+            kwargs["order_by_direction"] = "ASC"
+            # kwargs["order_by_direction"] = concept_hierarchy_query.order_by_direction  # not implemented
         kwargs["inner_select_gpnt"] = [concept_hierarchy_query.inner_select_gpnt]
 
     # TODO can remove limit/offset/order by from search query - apply from QSA or defaults.
-    elif search_query:
-        kwargs["construct_tss_list"] = search_query.tss_list
-        kwargs["inner_select_vars"] = search_query.inner_select_vars
+    if search_query:
+        kwargs["construct_tss_list"].extend(search_query.tss_list)
+        kwargs["inner_select_vars"].extend(search_query.inner_select_vars)
         kwargs["limit"] = search_query.limit
         kwargs["offset"] = search_query.offset
         kwargs["order_by"] = search_query.order_by
         kwargs["order_by_direction"] = search_query.order_by_direction
-        kwargs["inner_select_gpnt"] = [search_query.inner_select_gpnt]
+        kwargs["inner_select_gpnt"].extend([search_query.inner_select_gpnt])
     else:
         if order_by:
             kwargs["order_by"] = Var(value=order_by)

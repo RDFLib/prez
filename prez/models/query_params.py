@@ -40,16 +40,19 @@ class QueryParams:
             description="Number of items per page, must be greater than 0",
         ),
         q: Optional[str] = Query(
-            None, description="Optional: Search query", examples=["building"]
+            None, description="Search query", examples=["building"]
         ),
-        filter: Optional[str] = Query(None, description="CQL JSON expression."),
+        filter: Optional[str] = Query(
+            None,
+            description="CQL JSON expression.",
+        ),
         order_by: Optional[str] = Query(
             None, description="Optional: Field to order by"
         ),
         order_by_direction: Optional[str] = Query(
             None,
-            regex="^(asc|desc)$",
-            description="Optional: Order direction, must be 'asc' or 'desc'",
+            regex="^(ASC|DESC)$",
+            description="Optional: Order direction, must be 'ASC' or 'DESC'",
         ),
     ):
         self.q = q

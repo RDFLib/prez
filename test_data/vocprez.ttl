@@ -19,7 +19,7 @@ ex:SchemingConceptScheme a skos:ConceptScheme ;
 ex:TopLevelConcept a skos:Concept ;
     skos:prefLabel "The toppiest of concepts" ;
     ex:property "a property of the toppiest concept" ;
-    skos:narrower ex:SecondLevelConcept ;
+    skos:narrower ex:SecondLevelConcept , ex:SiblingSecondLevelConcept ;
     skos:inScheme ex:SchemingConceptScheme ;
 .
 
@@ -27,6 +27,12 @@ ex:SecondLevelConcept a skos:Concept ;
     skos:prefLabel "A second level concept" ;
     ex:property "a property of the second level concept" ;
     skos:narrower ex:ThirdLevelConcept ;
+    skos:inScheme ex:SchemingConceptScheme ;
+.
+
+ex:SiblingSecondLevelConcept a skos:Concept ;
+    skos:prefLabel "A sibling second level concept" ;
+    ex:property "a property of the sibling second level concept" ;
     skos:inScheme ex:SchemingConceptScheme ;
 .
 

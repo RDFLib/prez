@@ -24,6 +24,11 @@ ogce:cql-get
     ont:relevantShapes ex:CQL ;
     .
 
+ogce:cql-post
+    a ont:ListingEndpoint ;
+    ont:relevantShapes ex:CQL ;
+    .
+
 ogce:catalog-listing
     a ont:ListingEndpoint ;
     ont:relevantShapes ex:Catalogs ;

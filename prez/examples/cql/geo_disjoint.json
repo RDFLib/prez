@@ -1,8 +1,8 @@
 {
-    "op": "s_intersects",
+    "op": "s_disjoint",
     "args": [
         {
-            "property": "http://www.w3.org/ns/shacl#this"
+            "property": "http://www.w3.org/ns/shacl#focusNode"
         },
         {
             "type": "Polygon",

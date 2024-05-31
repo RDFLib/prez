@@ -67,6 +67,11 @@ async def _link_generation(
     # many node shapes to one endpoint; multiple node shapes can point to the endpoint
     else:  # generate links
         available_nodeshapes = await get_nodeshapes_constraining_class(klasses, uri)
+        # ignore CQL and Search nodeshapes as we do not want to generate links for these.
+        available_nodeshapes = [
+            ns for ns in available_nodeshapes
+            if ns.uri not in [URIRef('http://example.org/ns#CQL'), URIRef('http://example.org/ns#Search')]
+        ]
         # run queries for available nodeshapes to get link components
         for ns in available_nodeshapes:
             if int(ns.hierarchy_level) > 1:
