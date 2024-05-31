@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 from fastapi import APIRouter, Depends
 from sparql_grammar_pydantic import ConstructQuery
 
@@ -21,13 +24,52 @@ from prez.services.objects import object_function
 from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQuery
 from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.shacl import NodeShape
-from pathlib import Path
-import json
 
 router = APIRouter(tags=["ogcprez"])
 
+responses_json = Path(__file__).parent / "rdf_response_examples.json"
+responses = json.loads(responses_json.read_text())
+# responses = {
+#     200: {
+#         "content": {
+#             "application/ld+json": {
+#                 "example": {
+#                     "@id": "https://example.com/item/1",
+#                     "https://example.com/property": "value"
+#                 }
+#             },
+#             "application/anot+ld+json": {
+#                 "example": {
+#                     "@context": {"prez": "https://prez.dev/"},
+#                     "@id": "https://example.com/item/1",
+#                     "https://example.com/property": "value",
+#                     "prez:label": "Item One"
+#                 }
+#             },
+#             "application/rdf+xml": {
+#                 "example": "<?xml version=\"1.0\"?>\n<rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n    <rdf:Description rdf:about=\"https://example.com/item/1\">\n        <ns1:property xmlns:ns1=\"https://example.com/\">value</ns1:property>\n    </rdf:Description>\n</rdf:RDF>"
+#             },
+#             "text/anot+turtle": {
+#                 "example": """
+#                     @prefix prez: <https://prez.dev/> .
+#
+#                     <https://example.com/item/1>
+#                         <https://example.com/property> "value" ;
+#                         prez:label "Item One" .
+#                 """
+#             },
+#             "text/turtle": {
+#                 "example": """
+#                     <https://example.com/item/1> <https://example.com/property> "value" .
+#                 """
+#             },
+#         }
+#     }
+# }
+
+
 # Path to the directory containing JSON files
-json_files_path = Path("__file__").parent/"examples/cql"
+cql_json_examples_dir = Path("__file__").parent / "examples/cql"
 
 # Dictionary comprehension to create examples
 cql_examples = {
@@ -35,7 +77,7 @@ cql_examples = {
         "summary": file.stem,
         "value": json.loads(file.read_text())
     }
-    for file in json_files_path.glob("*.json")
+    for file in cql_json_examples_dir.glob("*.json")
 }
 
 
@@ -108,45 +150,53 @@ openapi_extras = {
     path="/search",
     summary="Search",
     name=OGCE["search"],
+    responses=responses
 )
 @router.get(
     "/profiles",
     summary="List Profiles",
     name=EP["system/profile-listing"],
+    responses=responses
 )
 @router.get(
     path="/cql",
     summary="CQL GET endpoint",
     name=OGCE["cql-get"],
+    responses=responses
 )
 @router.get(
     "/catalogs",
     summary="Catalog Listing",
     name=OGCE["catalog-listing"],
+    responses=responses
 )
 @router.get(
     "/catalogs/{catalogId}/collections",
     summary="Collection Listing",
     name=OGCE["collection-listing"],
     openapi_extra=openapi_extras.get("collection-listing"),
+    responses=responses
 )
 @router.get(
     "/catalogs/{catalogId}/collections/{collectionId}/items",
     summary="Item Listing",
     name=OGCE["item-listing"],
     openapi_extra=openapi_extras.get("item-listing"),
+    responses=responses
 )
 @router.get(
     "/concept-hierarchy/{parent_curie}/top-concepts",
     summary="Top Concepts",
     name=OGCE["top-concepts"],
     openapi_extra=openapi_extras.get("top-concepts"),
+    responses=responses
 )
 @router.get(
     "/concept-hierarchy/{parent_curie}/narrowers",
     summary="Narrowers",
     name=OGCE["narrowers"],
     openapi_extra=openapi_extras.get("narrowers"),
+    responses=responses
 )
 async def listings(
         query_params: QueryParams = Depends(),
@@ -189,7 +239,8 @@ async def listings(
                 }
             }
         }
-    }
+    },
+    responses=responses
 )
 async def cql_post_listings(
         query_params: QueryParams = Depends(),
@@ -232,30 +283,35 @@ async def cql_post_listings(
     path="/object",
     summary="Object",
     name=EP["system/object"],
+    responses=responses
 )
 @router.get(
     path="/profiles/{profile_curie}",
     summary="Profile",
     name=EP["system/profile-object"],
     openapi_extra=openapi_extras.get("profile-object"),
+    responses=responses
 )
 @router.get(
     path="/catalogs/{catalogId}",
     summary="Catalog Object",
     name=OGCE["catalog-object"],
     openapi_extra=openapi_extras.get("catalog-object"),
+    responses=responses
 )
 @router.get(
     path="/catalogs/{catalogId}/collections/{collectionId}",
     summary="Collection Object",
     name=OGCE["collection-object"],
     openapi_extra=openapi_extras.get("collection-object"),
+    responses=responses
 )
 @router.get(
     path="/catalogs/{catalogId}/collections/{collectionId}/items/{itemId}",
     summary="Item Object",
     name=OGCE["item-object"],
     openapi_extra=openapi_extras.get("item-object"),
+    responses=responses
 )
 async def objects(
         pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
