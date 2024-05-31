@@ -69,7 +69,7 @@ responses = json.loads(responses_json.read_text())
 
 
 # Path to the directory containing JSON files
-cql_json_examples_dir = Path("__file__").parent / "examples/cql"
+cql_json_examples_dir = Path(__file__).parent.parent / "examples/cql"
 
 # Dictionary comprehension to create examples
 cql_examples = {
