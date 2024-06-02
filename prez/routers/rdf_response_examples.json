@@ -25,6 +25,9 @@
       },
       "text/turtle": {
         "example": "<https://example.com/item/1> <https://example.com/property> \"value\" ."
+      },
+      "application/sparql-query": {
+        "example": "CONSTRUCT { ?item <https://example.com/property> ?value } WHERE { ?item <https://example.com/property> ?value }"
       }
     }
   }
