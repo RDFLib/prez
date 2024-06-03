@@ -40,7 +40,10 @@ ENV VIRTUAL_ENV=/home/site/wwwroot/.python_packages \
     POETRY_VIRTUALENVS_CREATE=false
 ENV PATH=${VIRTUAL_ENV}/bin:/root/.local/bin:${PATH}
 
+# The base container installed some files in system-site-packages location, so copy those
+COPY --from=base /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 RUN mkdir -p /home/site/wwwroot
+# Copy the pre-built virtual env from the base container
 COPY --from=base ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get -qq update && \
