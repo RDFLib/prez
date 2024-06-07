@@ -16,7 +16,7 @@ from prez.dependencies import (
     load_local_data_to_oxigraph,
     get_oxrdflib_store,
     get_system_store,
-    load_system_data_to_oxigraph,
+    load_system_data_to_oxigraph, load_annotations_data_to_oxigraph, get_annotations_store,
 )
 from prez.exceptions.model_exceptions import (
     ClassNotFoundException,
@@ -111,7 +111,9 @@ async def app_startup(_settings: Settings, _app: FastAPI):
     await populate_api_info()
 
     _app.state.pyoxi_system_store = get_system_store()
+    _app.state.annotations_store = get_annotations_store()
     await load_system_data_to_oxigraph(_app.state.pyoxi_system_store)
+    await load_annotations_data_to_oxigraph(_app.state.annotations_store)
 
 
 async def app_shutdown(_settings: Settings, _app: FastAPI):
