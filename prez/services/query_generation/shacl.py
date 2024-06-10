@@ -229,7 +229,7 @@ class NodeShape(Shape):
                 content=OptionalGraphPattern(
                     group_graph_pattern=GroupGraphPattern(
                         content=GroupGraphPatternSub(
-                            triples_block=TriplesBlock.from_tssp_list(tssp_list),
+                            triples_block=TriplesBlock.from_tssp_list(tssp_list[::-1]),
                             graph_patterns_or_triples_blocks=gpotb,
                         )
                     )
