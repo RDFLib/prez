@@ -52,9 +52,7 @@ class Settings(BaseSettings):
     provenance_predicates: Optional[List[URIRef]] = [DCTERMS.provenance]
     other_predicates: Optional[List[URIRef]] = [
         SDO.color,
-        REG.status,
-        SKOS.narrower,
-        SKOS.broader,
+        REG.status
     ]
     sparql_repo_type: str = "remote"
     sparql_timeout: int = 30
