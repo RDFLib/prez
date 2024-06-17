@@ -17,7 +17,7 @@ from prez.services.curie_functions import get_uri_for_curie_id
 
 log = logging.getLogger(__name__)
 
-ALTREXT = Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#")
+ALTREXT = Namespace("http://www.w3.org/ns/dx/connegp/altr-ext#")
 PREZ = Namespace("https://prez.dev/")
 
 
@@ -756,7 +756,7 @@ def select_profile_mediatype(
     if requested_profile_token:
         requested_profile_uri = get_uri_for_curie_id(requested_profile_token)
     query = dedent(
-        f"""    PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
+        f"""    PREFIX altr-ext: <http://www.w3.org/ns/dx/connegp/altr-ext#>
     PREFIX dcat: <http://www.w3.org/ns/dcat#>
     PREFIX dcterms: <http://purl.org/dc/terms/>
     PREFIX geo: <http://www.opengis.net/ont/geosparql#>

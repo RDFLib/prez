@@ -313,7 +313,7 @@ PREFIX dcat: <http://www.w3.org/ns/dcat#>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
 PREFIX geo: <http://www.opengis.net/ont/geosparql#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
+PREFIX altr-ext: <http://www.w3.org/ns/dx/connegp/altr-ext#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX prez: <https://prez.dev/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>

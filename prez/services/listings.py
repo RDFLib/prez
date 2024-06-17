@@ -35,7 +35,7 @@ async def listing_function(
     listing_item.profile = prof_and_mt_info.profile
 
     if prof_and_mt_info.profile == URIRef(
-        "http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"
+        "http://www.w3.org/ns/dx/connegp/altr-ext#alt-profile"
     ):
         return await return_profiles(
             classes=frozenset(listing_item.selected_class),

@@ -9,7 +9,7 @@ PREFIX sdoprof: <https://schema.org>
 ] .
 
 [ vann:preferredNamespacePrefix "altr-ext" ;
- vann:preferredNamespaceUri <http://www.w3.org/ns/dx/conneg/altr-ext#>
+ vann:preferredNamespaceUri <http://www.w3.org/ns/dx/connegp/altr-ext#>
 ] .
 
 [ vann:preferredNamespacePrefix "exds" ;
