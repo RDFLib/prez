@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     host: Prez' host domain name. Usually 'localhost' but could be anything
     port: The port Prez is made accessible on. Default is 8000, could be 80 or anything else that your system has permission to use
     system_uri: Documentation property. An IRI for the Prez system as a whole. This value appears in the landing page RDF delivered by Prez ('/')
+    listing_count_limit: The maximum number of items to count for a listing endpoint. Counts greater than this limit will be returned as ">N" where N is the limit.
     log_level:
     log_output:
     prez_title:
@@ -38,6 +39,7 @@ class Settings(BaseSettings):
     curie_separator: str = ":"
     system_uri: Optional[str] = f"{protocol}://{host}:{port}"
     order_lists_by_label: bool = True
+    listing_count_limit: int = 1000
     label_predicates: Optional[List[URIRef]] = [
         SKOS.prefLabel,
         DCTERMS.title,
