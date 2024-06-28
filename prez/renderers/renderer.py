@@ -158,7 +158,7 @@ async def return_profiles(
         for profile in items
     ]
     g = Graph(bind_namespaces="rdflib")
-    g.bind("altr-ext", Namespace("http://www.w3.org/ns/dx/conneg/altr-ext#"))
+    g.bind("altr-ext", Namespace("http://www.w3.org/ns/dx/connegp/altr-ext#"))
     for q in queries:
         g += profiles_graph_cache.query(q)
     return await return_from_graph(
