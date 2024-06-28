@@ -35,16 +35,14 @@ def generate_new_prefix(uri):
     Generates a new prefix for a uri
     """
     parsed_url = urlparse(uri)
-    to_generate_prefix_from = ""
     if bool(parsed_url.fragment):
         ns = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}#"
-        to_generate_prefix_from = parsed_url.fragment.lower()
     else:
-        ns = f'{parsed_url.scheme}://{parsed_url.netloc}{"/".join(parsed_url.path.split("/")[:-1])}/'
-        split_path = parsed_url.path.split("/")
-        if len(split_path) > 1:
-            to_generate_prefix_from = split_path[-2].lower()
-    if to_generate_prefix_from:
+        ns = f'{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path.rsplit("/", 1)[0]}/'
+
+    split_prefix_path = ns[:-1].rsplit('/', 1)
+    if len(split_prefix_path) > 1:
+        to_generate_prefix_from = split_prefix_path[-1].lower()
         # attempt to just use the last part of the path prior to the fragment or "identifier"
         if len(to_generate_prefix_from) <= 6:
             proposed_prefix = to_generate_prefix_from
