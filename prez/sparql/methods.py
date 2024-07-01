@@ -101,19 +101,19 @@ class RemoteSparqlRepo(Repo):
 
         headers = []
         for header in raw_headers:
-            if header[0] not in (b"host", b"content-length"):
+            if header[0] not in (b"host", b"content-length", b"content-type"):
                 headers.append(header)
-
+        query_escaped_as_bytes = f"query={quote_plus(query)}".encode("utf-8")
         if method == "GET":
-            query_escaped_as_bytes = f"query={quote_plus(query)}".encode("utf-8")
             url = httpx.URL(url=settings.sparql_endpoint, query=query_escaped_as_bytes)
-            data = None
+            content = None
         else:
+            headers.append((b"content-type", b"application/x-www-form-urlencoded"))
             url = httpx.URL(url=settings.sparql_endpoint)
-            data = {"query": query}
+            content = query_escaped_as_bytes
 
         headers.append((b"host", str(url.host).encode("utf-8")))
-        rp_req = self.async_client.build_request(method, url, headers=headers, data=data)
+        rp_req = self.async_client.build_request(method, url, headers=headers, content=content)
         return await self.async_client.send(rp_req, stream=True)
 
 
