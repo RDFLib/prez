@@ -1,0 +1,11 @@
+PREFIX dcat: <http://www.w3.org/ns/dcat#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX ex: <https://example.com/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+<https://david/bogusCatalogous> a dcat:Catalog ;
+    rdfs:label "A Catalog with prefixed david" ;
+    dcterms:hasPart ex:DCATResource ;
+    ex:property "some property" ;
+.

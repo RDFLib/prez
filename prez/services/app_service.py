@@ -90,21 +90,22 @@ async def add_prefixes_to_prefix_graph(repo: Repo):
     """
     Adds prefixes to the prefix graph
     """
+    # look for remote prefixes
+    remote_prefix_query = f"""
+    CONSTRUCT WHERE {{ ?bn <http://purl.org/vocab/vann/preferredNamespacePrefix> ?prefix; 
+                    <http://purl.org/vocab/vann/preferredNamespaceUri> ?namespace. }}
+    """
+    remote_prefix_g, _ = await repo.send_queries([remote_prefix_query], [])
+    if remote_prefix_g:
+        remote_i = await _add_prefixes_from_graph(remote_prefix_g)
+        log.info(f"{remote_i+1:,} prefixes bound from remote repository.")
+    else:
+        log.info("No remote prefix declarations found.")
+
     for f in (Path(__file__).parent.parent / "reference_data/prefixes").glob("*.ttl"):
         g = Graph().parse(f, format="turtle")
-        for i, (s, prefix) in enumerate(
-            g.subject_objects(
-                predicate=URIRef("http://purl.org/vocab/vann/preferredNamespacePrefix")
-            )
-        ):
-            namespace = g.value(
-                s, URIRef("http://purl.org/vocab/vann/preferredNamespaceUri")
-            )
-            prefix_graph.bind(str(prefix), namespace)
-
-            # prefix_graph.bind(str(subject_objects[1]), subject_objects[0])
-        log.info(f"{i+1:,} prefixes bound from file {f.name}")
-    log.info("Prefixes from local files added to prefix graph")
+        local_i = await _add_prefixes_from_graph(g)
+        log.info(f"{local_i+1:,} prefixes bound from file {f.name}")
 
     if settings.disable_prefix_generation:
         log.info("DISABLE_PREFIX_GENERATION set to false. Skipping prefix generation.")
@@ -119,6 +120,8 @@ async def add_prefixes_to_prefix_graph(repo: Repo):
 
         _, rows = await repo.send_queries([], [(None, query)])
         iris = [tup["iri"]["value"] for tup in rows[0][1]]
+        len_iris = len(iris)
+        log.info(f"Generating prefixes for {len_iris} IRIs.")
         skipped_count = 0
         skipped = []
         for iri in iris:
@@ -133,6 +136,20 @@ async def add_prefixes_to_prefix_graph(repo: Repo):
         )
         for skipped_iri in skipped:
             log.info(f"Skipped IRI {skipped_iri}")
+
+
+async def _add_prefixes_from_graph(g):
+    i = 0
+    for i, (s, prefix) in enumerate(
+        g.subject_objects(
+            predicate=URIRef("http://purl.org/vocab/vann/preferredNamespacePrefix")
+        )
+    ):
+        namespace = g.value(
+            s, URIRef("http://purl.org/vocab/vann/preferredNamespaceUri")
+        )
+        prefix_graph.bind(str(prefix), namespace)
+    return i
 
 
 async def create_endpoints_graph(repo) -> Graph:
