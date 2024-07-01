@@ -5,7 +5,7 @@ from starlette.requests import Request
 from prez.models.model_exceptions import (
     ClassNotFoundException,
     URINotFoundException,
-    NoProfilesException,
+    NoProfilesException, InvalidSPARQLQueryException,
 )
 
 
@@ -48,6 +48,16 @@ async def catch_no_profiles_exception(request: Request, exc: NoProfilesException
         status_code=404,
         content={
             "error": "Not Found",
+            "detail": exc.message,
+        },
+    )
+
+
+async def catch_invalid_sparql_query(request: Request, exc: InvalidSPARQLQueryException):
+    return JSONResponse(
+        status_code=400,
+        content={
+            "error": "Bad Request",
             "detail": exc.message,
         },
     )

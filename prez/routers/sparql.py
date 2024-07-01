@@ -24,7 +24,7 @@ async def sparql_post_passthrough(
     # To maintain compatibility with the other SPARQL endpoints,
     # /sparql POST endpoint is not a JSON API, it uses
     # values encoded with x-www-form-urlencoded
-    query: Annotated[str, Form()],
+    query: Annotated[str, Form()],  # Pydantic validation prevents update queries (the Form would need to be "update")
     request: Request,
     repo: Repo = Depends(get_repo),
 ):
@@ -65,7 +65,6 @@ async def sparql_endpoint_handler(query: str, request: Request, repo: Repo, meth
             media_type=non_anot_mediatype,
             headers=prof_and_mt_info.profile_headers,
         )
-
     query_result: 'httpx.Response' = await repo.sparql(query, request.headers.raw, method=method)
     if isinstance(query_result, dict):
         return JSONResponse(content=query_result)

@@ -11,6 +11,7 @@ from fastapi.concurrency import run_in_threadpool
 from rdflib import Namespace, Graph, URIRef, Literal, BNode
 
 from prez.config import settings
+from prez.models.model_exceptions import InvalidSPARQLQueryException
 
 PREZ = Namespace("https://prez.dev/")
 
@@ -163,7 +164,10 @@ class PyoxigraphRepo(Repo):
 
     def _sparql(self, query: str) -> dict | Graph | bool:
         """Submit a sparql query to the pyoxigraph store and return the formatted results."""
-        results = self.pyoxi_store.query(query)
+        try:
+            results = self.pyoxi_store.query(query)
+        except SyntaxError as e:
+            raise InvalidSPARQLQueryException(e.msg)
         if isinstance(results, pyoxigraph.QuerySolutions):  # a SELECT query result
             results_dict = self._handle_query_solution_results(results)
             return results_dict
