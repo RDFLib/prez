@@ -1,0 +1,52 @@
+## Licensed under the terms of http://www.apache.org/licenses/LICENSE-2.0
+
+PREFIX :        <#>
+PREFIX fuseki:  <http://jena.apache.org/fuseki#>
+PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX ja:      <http://jena.hpl.hp.com/2005/11/Assembler#>
+PREFIX geosparql: <http://jena.apache.org/geosparql#>
+
+[] rdf:type fuseki:Server ;
+   fuseki:services (
+     :service
+   ) .
+
+:service rdf:type fuseki:Service ;
+    fuseki:name "dataset" ;
+    fuseki:endpoint [ fuseki:operation fuseki:query ; ] ;
+    fuseki:endpoint [ fuseki:operation fuseki:query ; fuseki:name "sparql" ];
+    fuseki:endpoint [ fuseki:operation fuseki:query ; fuseki:name "query" ] ;
+    fuseki:endpoint [ fuseki:operation fuseki:update ; fuseki:name "update" ];
+    fuseki:endpoint [ fuseki:operation fuseki:gsp-r ; fuseki:name "get" ] ;
+    fuseki:endpoint [ fuseki:operation fuseki:gsp-rw ; fuseki:name "data" ];
+    fuseki:dataset <#geo_ds>  ;
+    .
+
+<#geo_ds> rdf:type geosparql:GeosparqlDataset ;
+    geosparql:dataset :dataset ;
+    geosparql:inference            true ;
+    geosparql:queryRewrite         true ;
+    geosparql:indexEnabled         true ;
+    geosparql:applyDefaultGeometry true ;
+.
+
+# Transactional in-memory dataset.
+:dataset rdf:type ja:MemoryDataset ;
+    ## Optional load with data on start-up
+    ja:data "/rdf/sandgate.ttl";
+    ja:data "/rdf/object_vocab_parameter_bblocks.ttl";
+    ja:data "/rdf/object_catalog_bblocks_catalog.ttl";
+    ja:data "/rdf/bnode_depth-1.ttl";
+    ja:data "/rdf/bnode_depth-2.ttl";
+    ja:data "/rdf/catprez.ttl";
+    ja:data "/rdf/object_vocab_datatype_bblocks.ttl";
+    ja:data "/rdf/vocprez.ttl";
+    ja:data "/rdf/bnode_depth-2-2.ttl";
+    ja:data "/rdf/bnode_depth-4.ttl";
+    ja:data "/rdf/spaceprez.ttl";
+    ja:data "/rdf/sandgate.ttl";
+    ja:data "/rdf/object_vocab_api_bblocks.ttl";
+    ja:data "/rdf/object_vocab_schema_bblocks.ttl";
+    ja:data "/rdf/redirect-foaf-homepage.ttl";
+    .

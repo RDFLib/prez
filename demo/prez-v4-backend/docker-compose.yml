@@ -1,0 +1,33 @@
+version: "3"
+services:
+
+  fuseki:
+    image: "ghcr.io/zazuko/fuseki-geosparql:v3.3.1"
+    ports:
+      - "3030:3030"
+    volumes:
+      - type: bind
+        source: config.ttl
+        target: /fuseki/config.ttl
+      - type: bind
+        source: ../../test_data
+        target: /rdf
+    environment:
+      ADMIN_PASSWORD: pw
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3030 || exit 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+
+#  prez:
+#    build:
+#      context: ../../
+#      dockerfile: ./Dockerfile
+#    ports:
+#      - "8000:8000"
+#    environment:
+#      SPARQL_ENDPOINT: 'http://fuseki:3030/dataset'
+#    depends_on:
+#      fuseki:
+#        condition: service_healthy

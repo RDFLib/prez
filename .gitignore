@@ -8,3 +8,7 @@ __pycache__/
 dist/
 !.env-template
 rdf/
+http/
+/.python-version
+http/
+.ropeproject/

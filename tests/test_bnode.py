@@ -19,7 +19,7 @@ WORKING_DIR = pathlib.Path().parent
     ],
 )
 def test_bnode_depth(input_file: str, iri: str, expected_depth: int) -> None:
-    file = WORKING_DIR / "tests/data/bnode_depth" / input_file
+    file = WORKING_DIR / "test_data" / input_file
 
     graph = Graph()
     graph.parse(file)

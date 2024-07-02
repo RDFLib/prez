@@ -2,13 +2,13 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from pyoxigraph.pyoxigraph import Store
+from pyoxigraph import Store
 from rdflib import Graph, URIRef
 from rdflib.namespace import RDF, DCAT
 
 from prez.app import assemble_app
-from prez.dependencies import get_repo
-from prez.sparql.methods import Repo, PyoxigraphRepo
+from prez.dependencies import get_data_repo
+from prez.repositories import Repo, PyoxigraphRepo
 
 
 @pytest.fixture(scope="session")
@@ -36,7 +36,7 @@ def client(test_repo: Repo) -> TestClient:
 
     app = assemble_app()
 
-    app.dependency_overrides[get_repo] = override_get_repo
+    app.dependency_overrides[get_data_repo] = override_get_repo
 
     with TestClient(app) as c:
         yield c

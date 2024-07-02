@@ -1,0 +1,616 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <https://schema.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+<http://purl.org/ontology/bibo>
+    rdfs:label "The Bibliographic Ontology" ;
+    schema:description """The Bibliographic Ontology describes
+bibliographic things on the semantic Web in RDF.  This ontology can be
+used as a citation ontology, as a document classification ontology, or
+simply as a way to describe any kind of document in RDF. It has been
+inspired by many existing document description metadata formats, and
+can be used as a common ground for converting other bibliographic data
+sources."""@en ;
+.
+
+<http://purl.org/ontology/bibo/AcademicArticle>
+    rdfs:label "Academic Article"@en ;
+    schema:description "A scholarly academic article, typically published in a journal."@en ;
+.
+
+<http://purl.org/ontology/bibo/Article>
+    rdfs:label "Article"@en ;
+    schema:description "A written composition in prose, usually nonfiction, on a specific topic, forming an independent part of a book or other publication, as a newspaper or magazine."@en ;
+.
+
+<http://purl.org/ontology/bibo/AudioDocument>
+    rdfs:label "audio document"@en ;
+    schema:description "An audio document; aka record."@en ;
+.
+
+<http://purl.org/ontology/bibo/AudioVisualDocument>
+    rdfs:label "audio-visual document"@en ;
+    schema:description "An audio-visual document; film, video, and so forth."@en ;
+.
+
+<http://purl.org/ontology/bibo/Bill>
+    rdfs:label "Bill"@en ;
+    schema:description "Draft legislation presented for discussion to a legal body."@en ;
+.
+
+<http://purl.org/ontology/bibo/Book>
+    rdfs:label "Book"@en ;
+    schema:description "A written or printed work of fiction or nonfiction, usually on sheets of paper fastened or bound together within covers."@en ;
+.
+
+<http://purl.org/ontology/bibo/BookSection>
+    rdfs:label "Book Section"@en ;
+    schema:description "A section of a book."@en ;
+.
+
+<http://purl.org/ontology/bibo/Brief>
+    rdfs:label "Brief"@en ;
+    schema:description "A written argument submitted to a court."@en ;
+.
+
+<http://purl.org/ontology/bibo/Chapter>
+    rdfs:label "Chapter"@en ;
+    schema:description "A chapter of a book."@en ;
+.
+
+<http://purl.org/ontology/bibo/Code>
+    rdfs:label "Code"@en ;
+    schema:description "A collection of statutes."@en ;
+.
+
+<http://purl.org/ontology/bibo/CollectedDocument>
+    rdfs:label "Collected Document"@en ;
+    schema:description "A document that simultaneously contains other documents."@en ;
+.
+
+<http://purl.org/ontology/bibo/Collection>
+    rdfs:label "Collection"@en ;
+    schema:description "A collection of Documents or Collections"@en ;
+.
+
+<http://purl.org/ontology/bibo/Conference>
+    rdfs:label "Conference"@en ;
+    schema:description "A meeting for consultation or discussion."@en ;
+.
+
+<http://purl.org/ontology/bibo/CourtReporter>
+    rdfs:label "Court Reporter"@en ;
+    schema:description "A collection of legal cases."@en ;
+.
+
+<http://purl.org/ontology/bibo/Document>
+    rdfs:label "Document"@en ;
+    schema:description "A document (noun) is a bounded physical representation of body of information designed with the capacity (and usually intent) to communicate. A document may manifest symbolic, diagrammatic or sensory-representational information."@en ;
+.
+
+<http://purl.org/ontology/bibo/DocumentPart>
+    rdfs:label "document part"@en ;
+    schema:description "a distinct part of a larger document or collected document."@en ;
+.
+
+<http://purl.org/ontology/bibo/DocumentStatus>
+    rdfs:label "Document Status"@en ;
+    schema:description "The status of the publication of a document."@en ;
+.
+
+<http://purl.org/ontology/bibo/EditedBook>
+    rdfs:label "Edited Book"@en ;
+    schema:description "An edited book."@en ;
+.
+
+<http://purl.org/ontology/bibo/Email>
+    rdfs:label "EMail"@en ;
+    schema:description "A written communication addressed to a person or organization and transmitted electronically."@en ;
+.
+
+<http://purl.org/ontology/bibo/Excerpt>
+    rdfs:label "Excerpt"@en ;
+    schema:description "A passage selected from a larger work."@en ;
+.
+
+<http://purl.org/ontology/bibo/Film>
+    rdfs:label "Film"@en ;
+    schema:description "aka movie."@en ;
+.
+
+<http://purl.org/ontology/bibo/Hearing>
+    rdfs:label "Hearing"@en ;
+    schema:description "An instance or a session in which testimony and arguments are presented, esp. before an official, as a judge in a lawsuit."@en ;
+.
+
+<http://purl.org/ontology/bibo/Image>
+    rdfs:label "Image"@en ;
+    schema:description "A document that presents visual or diagrammatic information."@en ;
+.
+
+<http://purl.org/ontology/bibo/Interview>
+    rdfs:label "Interview"@en ;
+    schema:description "A formalized discussion between two or more people."@en ;
+.
+
+<http://purl.org/ontology/bibo/Issue>
+    rdfs:label "Issue"@en ;
+    schema:description "something that is printed or published and distributed, esp. a given number of a periodical"@en ;
+.
+
+<http://purl.org/ontology/bibo/Journal>
+    rdfs:label "Journal"@en ;
+    schema:description "A periodical of scholarly journal Articles."@en ;
+.
+
+<http://purl.org/ontology/bibo/LegalCaseDocument>
+    rdfs:label "Legal Case Document"@en ;
+    schema:description "A document accompanying a legal case."@en ;
+.
+
+<http://purl.org/ontology/bibo/LegalDecision>
+    rdfs:label "Decision"@en ;
+    schema:description "A document containing an authoritative determination (as a decree or judgment) made after consideration of facts or law."@en ;
+.
+
+<http://purl.org/ontology/bibo/LegalDocument>
+    rdfs:label "Legal Document"@en ;
+    schema:description "A legal document; for example, a court decision, a brief, and so forth."@en ;
+.
+
+<http://purl.org/ontology/bibo/Legislation>
+    rdfs:label "Legislation"@en ;
+    schema:description "A legal document proposing or enacting a law or a group of laws."@en ;
+.
+
+<http://purl.org/ontology/bibo/Letter>
+    rdfs:label "Letter"@en ;
+    schema:description "A written or printed communication addressed to a person or organization and usually transmitted by mail."@en ;
+.
+
+<http://purl.org/ontology/bibo/Magazine>
+    rdfs:label "Magazine"@en ;
+    schema:description "A periodical of magazine Articles. A magazine is a publication that is issued periodically, usually bound in a paper cover, and typically contains essays, stories, poems, etc., by many writers, and often photographs and drawings, frequently specializing in a particular subject or area, as hobbies, news, or sports."@en ;
+.
+
+<http://purl.org/ontology/bibo/Manual>
+    rdfs:label "Manual"@en ;
+    schema:description "A small reference book, especially one giving instructions."@en ;
+.
+
+<http://purl.org/ontology/bibo/Manuscript>
+    rdfs:label "Manuscript"@en ;
+    schema:description "An unpublished Document, which may also be submitted to a publisher for publication."@en ;
+.
+
+<http://purl.org/ontology/bibo/Map>
+    rdfs:label "Map"@en ;
+    schema:description "A graphical depiction of geographic features."@en ;
+.
+
+<http://purl.org/ontology/bibo/MultiVolumeBook>
+    rdfs:label "Multivolume Book"@en ;
+    schema:description "A loose, thematic, collection of Documents, often Books."@en ;
+.
+
+<http://purl.org/ontology/bibo/Newspaper>
+    rdfs:label "Newspaper"@en ;
+    schema:description "A periodical of documents, usually issued daily or weekly, containing current news, editorials, feature articles, and usually advertising."@en ;
+.
+
+<http://purl.org/ontology/bibo/Note>
+    rdfs:label "Note"@en ;
+    schema:description "Notes or annotations about a resource."@en ;
+.
+
+<http://purl.org/ontology/bibo/Patent>
+    rdfs:label "Patent"@en ;
+    schema:description "A document describing the exclusive right granted by a government to an inventor to manufacture, use, or sell an invention for a certain number of years."@en ;
+.
+
+<http://purl.org/ontology/bibo/Performance>
+    rdfs:label "Performance"@en ;
+    schema:description "A public performance."@en ;
+.
+
+<http://purl.org/ontology/bibo/Periodical>
+    rdfs:label "Periodical"@en ;
+    schema:description "A group of related documents issued at regular intervals."@en ;
+.
+
+<http://purl.org/ontology/bibo/PersonalCommunication>
+    rdfs:label "Personal Communication"@en ;
+    schema:description "A communication between an agent and one or more specific recipients."@en ;
+.
+
+<http://purl.org/ontology/bibo/PersonalCommunicationDocument>
+    rdfs:label "Personal Communication Document"@en ;
+    schema:description "A personal communication manifested in some document."@en ;
+.
+
+<http://purl.org/ontology/bibo/Proceedings>
+    rdfs:label "Proceedings"@en ;
+    schema:description "A compilation of documents published from an event, such as a conference."@en ;
+.
+
+<http://purl.org/ontology/bibo/Quote>
+    rdfs:label "Quote"@en ;
+    schema:description "An excerpted collection of words."@en ;
+.
+
+<http://purl.org/ontology/bibo/ReferenceSource>
+    rdfs:label "Reference Source"@en ;
+    schema:description "A document that presents authoritative reference information, such as a dictionary or encylopedia ."@en ;
+.
+
+<http://purl.org/ontology/bibo/Report>
+    rdfs:label "Report"@en ;
+    schema:description "A document describing an account or statement describing in detail an event, situation, or the like, usually as the result of observation, inquiry, etc.."@en ;
+.
+
+<http://purl.org/ontology/bibo/Series>
+    rdfs:label "Series"@en ;
+    schema:description "A loose, thematic, collection of Documents, often Books."@en ;
+.
+
+<http://purl.org/ontology/bibo/Slide>
+    rdfs:label "Slide"@en ;
+    schema:description "A slide in a slideshow"@en ;
+.
+
+<http://purl.org/ontology/bibo/Slideshow>
+    rdfs:label "Slideshow"@en ;
+    schema:description "A presentation of a series of slides, usually presented in front of an audience with written text and images."@en ;
+.
+
+<http://purl.org/ontology/bibo/Specification>
+    rdfs:label "Specification"@en ;
+    schema:description "A document describing a specification."@en ;
+.
+
+<http://purl.org/ontology/bibo/Standard>
+    rdfs:label "Standard"@en ;
+    schema:description "A document describing a standard: a specification organized through a standards body."@en ;
+.
+
+<http://purl.org/ontology/bibo/Statute>
+    rdfs:label "Statute"@en ;
+    schema:description "A bill enacted into law."@en ;
+.
+
+<http://purl.org/ontology/bibo/Thesis>
+    rdfs:label "Thesis"@en ;
+    schema:description "A document created to summarize research findings associated with the completion of an academic degree."@en ;
+.
+
+<http://purl.org/ontology/bibo/ThesisDegree>
+    rdfs:label "Thesis degree"@en ;
+    schema:description "The academic degree of a Thesis"@en ;
+.
+
+<http://purl.org/ontology/bibo/Webpage>
+    rdfs:label "Webpage"@en ;
+    schema:description "A web page is an online document available (at least initially) on the world wide web. A web page is written first and foremost to appear on the web, as distinct from other online resources such as books, manuscripts or audio documents which use the web primarily as a distribution mechanism alongside other more traditional methods such as print."@en ;
+.
+
+<http://purl.org/ontology/bibo/Website>
+    rdfs:label "Website"@en ;
+    schema:description "A group of Webpages accessible on the Web."@en ;
+.
+
+<http://purl.org/ontology/bibo/Workshop>
+    rdfs:label "Workshop"@en ;
+    schema:description "A seminar, discussion group, or the like, that emphasizes zxchange of ideas and the demonstration and application of techniques, skills, etc."@en ;
+.
+
+<http://purl.org/ontology/bibo/abstract>
+    rdfs:label "abstract" ;
+    schema:description "A summary of the resource." ;
+.
+
+<http://purl.org/ontology/bibo/affirmedBy>
+    schema:description "A legal decision that affirms a ruling."@en ;
+.
+
+<http://purl.org/ontology/bibo/annotates>
+    rdfs:label "annotates"@en ;
+    schema:description "Critical or explanatory note for a Document."@en ;
+.
+
+<http://purl.org/ontology/bibo/argued>
+    rdfs:label "date argued"@en ;
+    schema:description "The date on which a legal case is argued before a court. Date is of format xsd:date"@en ;
+.
+
+<http://purl.org/ontology/bibo/authorList>
+    rdfs:label "list of authors"@en ;
+    schema:description "An ordered list of authors. Normally, this list is seen as a priority list that order authors by importance."@en ;
+.
+
+<http://purl.org/ontology/bibo/bdarcus>
+    rdfs:seeAlso "http://purl.org/net/darcusb/info#me"^^xsd:anyURI ;
+.
+
+<http://purl.org/ontology/bibo/chapter>
+    rdfs:label "chapter"@en ;
+    schema:description "An chapter number"@en ;
+.
+
+<http://purl.org/ontology/bibo/citedBy>
+    rdfs:label "cited by"@en ;
+    schema:description """Relates a document to another document that cites the
+first document."""@en ;
+.
+
+<http://purl.org/ontology/bibo/cites>
+    rdfs:label "cites"@en ;
+    schema:description """Relates a document to another document that is cited
+by the first document as reference, comment, review, quotation or for
+another purpose."""@en ;
+.
+
+<http://purl.org/ontology/bibo/content>
+    rdfs:label "content"@en ;
+    schema:description "This property is for a plain-text rendering of the content of a Document. While the plain-text content of an entire document could be described by this property."@en ;
+.
+
+<http://purl.org/ontology/bibo/contributorList>
+    rdfs:label "list of contributors"@en ;
+    schema:description "An ordered list of contributors. Normally, this list is seen as a priority list that order contributors by importance."@en ;
+.
+
+<http://purl.org/ontology/bibo/court>
+    rdfs:label "court"@en ;
+    schema:description "A court associated with a legal document; for example, that which issues a decision."@en ;
+.
+
+<http://purl.org/ontology/bibo/degree>
+    rdfs:label "degree"@en ;
+    schema:description "The thesis degree."@en ;
+.
+
+<http://purl.org/ontology/bibo/degrees/ma>
+    rdfs:label "M.A."@en ;
+    schema:description "masters degree in arts"@en ;
+.
+
+<http://purl.org/ontology/bibo/degrees/ms>
+    rdfs:label "M.S."@en ;
+    schema:description "masters degree in science"@en ;
+.
+
+<http://purl.org/ontology/bibo/degrees/phd>
+    rdfs:label "PhD degree"@en ;
+    schema:description "PhD degree"@en ;
+.
+
+<http://purl.org/ontology/bibo/director>
+    rdfs:label "director" ;
+    schema:description "A Film director."@en ;
+.
+
+<http://purl.org/ontology/bibo/distributor>
+    rdfs:label "distributor"@en ;
+    schema:description "Distributor of a document or a collection of documents."@en ;
+.
+
+<http://purl.org/ontology/bibo/edition>
+    rdfs:label "edition"@en ;
+    schema:description "The name defining a special edition of a document. Normally its a literal value composed of a version number and words."@en ;
+.
+
+<http://purl.org/ontology/bibo/editor>
+    rdfs:label "editor" ;
+    schema:description "A person having managerial and sometimes policy-making responsibility for the editorial part of a publishing firm or of a newspaper, magazine, or other publication."@en ;
+.
+
+<http://purl.org/ontology/bibo/editorList>
+    rdfs:label "list of editors"@en ;
+    schema:description "An ordered list of editors. Normally, this list is seen as a priority list that order editors by importance."@en ;
+.
+
+<http://purl.org/ontology/bibo/fgiasson>
+    rdfs:seeAlso "http://fgiasson.com/me/"^^xsd:anyURI ;
+.
+
+<http://purl.org/ontology/bibo/interviewee>
+    rdfs:label "interviewee" ;
+    schema:description "An agent that is interviewed by another agent."@en ;
+.
+
+<http://purl.org/ontology/bibo/interviewer>
+    rdfs:label "interviewer" ;
+    schema:description "An agent that interview another agent."@en ;
+.
+
+<http://purl.org/ontology/bibo/issue>
+    rdfs:label "issue"@en ;
+    schema:description "An issue number"@en ;
+.
+
+<http://purl.org/ontology/bibo/issuer>
+    rdfs:label "issuer" ;
+    schema:description "An entity responsible for issuing often informally published documents such as press releases, reports, etc." ;
+.
+
+<http://purl.org/ontology/bibo/locator>
+    rdfs:label "locator"@en ;
+    schema:description "A description (often numeric) that locates an item within a containing document or collection."@en ;
+.
+
+<http://purl.org/ontology/bibo/numPages>
+    rdfs:label "number of pages"@en ;
+    schema:description "The number of pages contained in a document"@en ;
+.
+
+<http://purl.org/ontology/bibo/numVolumes>
+    rdfs:label "number of volumes"@en ;
+    schema:description "The number of volumes contained in a collection of documents (usually a series, periodical, etc.)."@en ;
+.
+
+<http://purl.org/ontology/bibo/number>
+    rdfs:label "number"@en ;
+    schema:description "A generic item or document number. Not to be confused with issue number."@en ;
+.
+
+<http://purl.org/ontology/bibo/organizer>
+    rdfs:label "organizer"@en ;
+    schema:description "The organizer of an event; includes conference organizers, but also government agencies or other bodies that are responsible for conducting hearings."@en ;
+.
+
+<http://purl.org/ontology/bibo/owner>
+    rdfs:label "owner"@en ;
+    schema:description "Owner of a document or a collection of documents."@en ;
+.
+
+<http://purl.org/ontology/bibo/pageEnd>
+    rdfs:label "page end"@en ;
+    schema:description "Ending page number within a continuous page range."@en ;
+.
+
+<http://purl.org/ontology/bibo/pageStart>
+    rdfs:label "page start"@en ;
+    schema:description "Starting page number within a continuous page range."@en ;
+.
+
+<http://purl.org/ontology/bibo/pages>
+    rdfs:label "pages"@en ;
+    schema:description "A string of non-contiguous page spans that locate a Document within a Collection. Example: 23-25, 34, 54-56. For continuous page ranges, use the pageStart and pageEnd properties."@en ;
+.
+
+<http://purl.org/ontology/bibo/performer>
+    rdfs:label "performer" ;
+.
+
+<http://purl.org/ontology/bibo/prefixName>
+    rdfs:label "prefix name"@en ;
+    schema:description "The prefix of a name"@en ;
+.
+
+<http://purl.org/ontology/bibo/presentedAt>
+    rdfs:label "presented at"@en ;
+    schema:description "Relates a document to an event; for example, a paper to a conference."@en ;
+.
+
+<http://purl.org/ontology/bibo/presents>
+    rdfs:label "presents"@en ;
+    schema:description "Relates an event to associated documents; for example, conference to a paper."@en ;
+.
+
+<http://purl.org/ontology/bibo/producer>
+    rdfs:label "producer"@en ;
+    schema:description "Producer of a document or a collection of documents."@en ;
+.
+
+<http://purl.org/ontology/bibo/recipient>
+    rdfs:label "recipient" ;
+    schema:description "An agent that receives a communication document."@en ;
+.
+
+<http://purl.org/ontology/bibo/reproducedIn>
+    schema:description "The resource in which another resource is reproduced."@en ;
+.
+
+<http://purl.org/ontology/bibo/reversedBy>
+    schema:description "A legal decision that reverses a ruling."@en ;
+.
+
+<http://purl.org/ontology/bibo/reviewOf>
+    rdfs:label "review of"@en ;
+    schema:description "Relates a review document to a reviewed thing (resource, item, etc.)."@en ;
+.
+
+<http://purl.org/ontology/bibo/section>
+    rdfs:label "section"@en ;
+    schema:description "A section number"@en ;
+.
+
+<http://purl.org/ontology/bibo/shortTitle>
+    rdfs:label "short title"@en ;
+    schema:description "The abbreviation of a title."@en ;
+.
+
+<http://purl.org/ontology/bibo/status>
+    rdfs:label "status"@en ;
+    schema:description "The publication status of (typically academic) content."@en ;
+.
+
+<http://purl.org/ontology/bibo/status/accepted>
+    rdfs:label "accepted"@en ;
+    schema:description "Accepted for publication after peer reviewing."@en ;
+.
+
+<http://purl.org/ontology/bibo/status/draft>
+    rdfs:label "draft"@en ;
+    schema:description "Document drafted"@en ;
+.
+
+<http://purl.org/ontology/bibo/status/forthcoming>
+    rdfs:label "forthcoming"@en ;
+    schema:description "Document to be published"@en ;
+.
+
+<http://purl.org/ontology/bibo/status/legal>
+    rdfs:label "legal"@en ;
+    schema:description "Legal document"@en ;
+.
+
+<http://purl.org/ontology/bibo/status/nonPeerReviewed>
+    rdfs:label "non peer reviewed"@en ;
+    schema:description "A document that is not peer reviewed"@en ;
+.
+
+<http://purl.org/ontology/bibo/status/peerReviewed>
+    rdfs:label "peer reviewed"@en ;
+    schema:description "The process by which articles are chosen to be included in a refereed journal. An editorial board consisting of experts in the same field as the author review the article and decide if it is authoritative enough for publication."@en ;
+.
+
+<http://purl.org/ontology/bibo/status/published>
+    rdfs:label "published"@en ;
+    schema:description "Published document"@en ;
+.
+
+<http://purl.org/ontology/bibo/status/rejected>
+    rdfs:label "rejected"@en ;
+    schema:description "Rejected for publication after peer reviewing."@en ;
+.
+
+<http://purl.org/ontology/bibo/status/unpublished>
+    rdfs:label "unpublished"@en ;
+    schema:description "Unpublished document"@en ;
+.
+
+<http://purl.org/ontology/bibo/subsequentLegalDecision>
+    schema:description "A legal decision on appeal that takes action on a case (affirming it, reversing it, etc.)."@en ;
+.
+
+<http://purl.org/ontology/bibo/suffixName>
+    rdfs:label "suffix name"@en ;
+    schema:description "The suffix of a name"@en ;
+.
+
+<http://purl.org/ontology/bibo/transcriptOf>
+    rdfs:label "transcript of"@en ;
+    schema:description "Relates a document to some transcribed original."@en ;
+.
+
+<http://purl.org/ontology/bibo/translationOf>
+    rdfs:label "translation of"@en ;
+    schema:description "Relates a translated document to the original document."@en ;
+.
+
+<http://purl.org/ontology/bibo/translator>
+    rdfs:label "translator" ;
+    schema:description "A person who translates written document from one language to another."@en ;
+.
+
+<http://purl.org/ontology/bibo/uri>
+    rdfs:label "uri"@en ;
+    schema:description "Universal Resource Identifier of a document"@en ;
+.
+
+<http://purl.org/ontology/bibo/volume>
+    rdfs:label "volume"@en ;
+    schema:description "A volume number"@en ;
+.
+

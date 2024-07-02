@@ -2,6 +2,334 @@
 
 This documentation is to assist developers of Prez, not users or installers.
 
+- [Developer README](#developer-readme)
+  - [Profiles](#profiles)
+    - [General profile specification](#general-profile-specification)
+    - [Specification of Mediatypes and Resource Formats](#specification-of-mediatypes-and-resource-formats)
+    - [Classes for a Profile](#classes-for-a-profile)
+    - [Default profiles](#default-profiles)
+    - [Direct Paths](#direct-paths)
+    - [Sequence Paths](#sequence-paths)
+    - [Inverse Paths](#inverse-paths)
+    - [Combinations of paths](#combinations-of-paths)
+    - [Excluded and Optional paths](#excluded-and-optional-paths)
+    - [Blank Nodes](#blank-nodes)
+    - [Profile and mediatype selection logic](#profile-and-mediatype-selection-logic)
+  - [Focus Node Selection](#focus-node-selection)
+    - [High level summary](#high-level-summary)
+    - [Detail](#detail)
+  - [Content delivered by Prez](#content-delivered-by-prez)
+  - [Internal links](#internal-links)
+    - [Link generation](#link-generation)
+  - [Generating Prefixes](#generating-prefixes)
+  - [Annotation properties](#annotation-properties)
+  - [How to add an endpoint](#how-to-add-an-endpoint)
+  - [Query Generation](#query-generation)
+  - [Repositories](#repositories)
+  - [Startup Routine](#startup-routine)
+  - [High Level Sequence `/object` endpoint](#high-level-sequence-object-endpoint)
+  - [High Level Sequence listing and individual object endpoints](#high-level-sequence-listing-and-individual-object-endpoints)
+
+## Profiles
+
+SHACL NodeShapes and PropertyShapes are utilised to determine which properties of Focus Nodes should be rendered.
+
+### General profile specification
+
+Each Profile must have the following properties:
+- A `prof:Profile` type
+- A type of either `prez:ObjectProfile` (for rendering objects) or `prez:ListingProfile` (for rendering lists of objects), or both.
+- A title, identifier (with datatype xsd:token), and description, using the DCTERMS namespace.
+
+### Specification of Mediatypes and Resource Formats
+
+Extensions to SHACL are used to specify the mediatypes and resource formats available for a given profile. These are specified as follows. The namespace used is http://www.w3.org/ns/dx/connegp/altr-ext#, and the prefix used for this namespace is `altr-ext`.
+
+#### Resource formats
+
+The default resource format for a profile can be set with `altr-ext:hasDefaultResourceFormat`.
+For example:
+```turtle
+prez:OGCSchemesObjectProfile  
+    a prof:Profile , prez:ObjectProfile , sh:NodeShape ;
+    altr-ext:hasDefaultResourceFormat "text/turtle" ;
+.
+```
+The available resource formats for a profile can be set with `altr-ext:hasResourceFormat`.
+For example:
+```turtle
+prez:OGCSchemesObjectProfile  
+    a prof:Profile , prez:ObjectProfile , sh:NodeShape ;
+    altr-ext:hasResourceFormat "text/turtle" , "application/ld+json" ;
+```
+
+#### Classes for a Profile
+The classes of object which a profile constrains can be specified with `altr-ext:constrainsClass`.
+Prez utilises this information when determining whether a requested profile can be used; and the alternate profiles that are available to render a resource. An example is given below:
+```turtle
+prez:OGCSchemesObjectProfile  
+    a prof:Profile , prez:ObjectProfile , sh:NodeShape ;
+    altr-ext:constrainsClass dcat:Catalog ;
+.
+```
+
+### Default profiles
+
+A default profile can be specified using the `altr-ext:hasNodeShape` and `altr-ext:hasDefaultProfile` predicates. This is typically done on an "umbrella" profile which indicates default profiles for all classes the API can render. An example is given below:
+```turtle
+prez:OGCRecordsProfile
+    a prof:Profile ;
+    dcterms:identifier "ogc"^^xsd:token ;
+    dcterms:description "A system profile for OGC Records conformant API" ;
+    dcterms:title "OGC Profile" ;
+    altr-ext:constrainsClass prez:CatPrez ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass prof:Profile , dcat:Catalog , dcat:Resource , skos:Concept , geo:Feature , geo:FeatureCollection
+                               , skos:Collection , rdf:Resource , prez:SearchResult , prez:CQLObjectList ;
+        altr-ext:hasDefaultProfile prez:OGCListingProfile
+    ] , [
+        a sh:NodeShape ;
+        sh:targetClass skos:ConceptScheme ;
+        altr-ext:hasDefaultProfile prez:OGCSchemesListProfile
+    ] , [
+        a sh:NodeShape ;
+        sh:targetClass skos:ConceptScheme ;
+        altr-ext:hasDefaultProfile prez:OGCSchemesObjectProfile
+    ] , [
+        a sh:NodeShape ;
+        sh:targetClass prof:Profile , dcat:Catalog , dcat:Resource , skos:Concept , geo:Feature , geo:FeatureCollection
+                               , skos:Collection , rdf:Resource ;
+        altr-ext:hasDefaultProfile prez:OGCItemProfile
+    ]
+    .
+```
+Note the target classes are shared across both listings of items, and items themselves; the API determines whether a listing or object profile is appropriate based on the endpoint a request is received at.
+
+#### Direct Paths
+Direct properties of a focus node are specified via `sh:path`.
+Example:
+```turtle
+sh:property [  
+    sh:path prov:qualifiedDerivation  
+    ]
+```
+
+A convenience predicate is provided to specify the inclusion of all predicates, `shext:allPredicateValues`.
+Example:
+```turtle
+sh:property [  
+    sh:path shext:allPredicateValues ;  
+	]
+```
+#### Sequence Paths
+
+Sequence paths are specified as property shapes with a path representing the linked list of properties from a focus node.
+```turtle
+sh:property [  
+    sh:path ( prov:qualifiedDerivation prov:hadRole )  
+	]
+```
+#### Inverse Paths
+
+Inverse paths are specified on a nested blank node where the first property is `sh:inversePath`.
+```turtle
+sh:property [  
+    sh:path [ sh:inversePath dcterms:hasPart ] ;  
+	]
+```
+#### Combinations of paths
+Multiple paths can be specified at once using `sh:union`.
+```turtle
+sh:property [  
+    sh:path (  
+        sh:union (  
+          dcterms:publisher  
+          reg:status  
+          ( prov:qualifiedDerivation prov:hadRole )  
+          ( prov:qualifiedDerivation prov:entity )  
+        )  
+      )  
+    ]
+```
+
+### Excluded and Optional paths.
+The above property paths when specified without a min or max count **must be present for a focus node to be returned.** That is, by default, specified paths must be present for the focus node and properties to be returned.
+The following constructs can be used to specify excluded or optional properties.
+#### Exclude
+Specification: `sh:maxCount 0`
+Interpretation: do not include these paths from the focus node, even if they exist in the data.
+Example:
+```turtle
+sh:property [  
+    sh:maxCount 0 ;  
+    sh:path dcterms:hasPart  
+    ]
+```
+#### Optional
+Specification: `sh:minCount 0`
+Interpretation: include these paths from the focus node if they exist.
+Example:
+```turtle
+sh:property [  
+    sh:minCount 0 ;  
+    sh:path dcterms:hasPart  
+    ]
+```
+
+### Blank Nodes
+A convenience predicate is provided to specify the inclusion of blank nodes to a given depth, `shext:bnode-depth`. Note this is specified directly on the profile and not on a property shape as it does not relate to any particular property shape.
+Specification: `shext:bnode-depth`
+Example:
+```turtle
+prez:OGCSchemesObjectProfile  
+    a prof:Profile , prez:ObjectProfile , sh:NodeShape ;
+	shext:bnode-depth 2 ;
+```
+
+### Profile and mediatype selection logic
+The following logic is used to determine the profile and mediatype to be returned:
+
+1. If a profile and mediatype are requested, they are returned if a matching profile which has the requested mediatype is found, otherwise the default profile for the most specific class is returned, with its default mediatype.
+2. If a profile only is requested, if it can be found it is returned, otherwise the default profile for the most specific class is returned. In both cases the default mediatype is returned.
+3. If a mediatype only is requested, the default profile for the most specific class is returned, and if the requested mediatype is available for that profile, it is returned, otherwise the default mediatype for that profile is returned.
+4. If neither a profile nor mediatype is requested, the default profile for the most specific class is returned, with the default mediatype for that profile.
+
+The SPARQL query used to select the profile is given in [Appendix D](appendix-d---example-profile-and-mediatype-selection-sparql-query).
+
+## Focus Node Selection
+
+### High level summary
+
+For object endpoints, the (single) focus node is specified at runtime, either as a URL path parameter or query string argument.
+
+For listing endpoints, the following inputs are used to determine which nodes to select:
+1. Endpoint - an endpoint is mapped to one or more endpoint SHACL NodeShapes.
+2. CQL JSON - only used as filter, i.e. filters on specified predicates.
+3. Search term - filters the label properties of focus nodes to a given search term. Currently a REGEX search is supported.
+
+All listing endpoints support these inputs. The inputs are transformed into the SPARQL Grammar, merged together, and combined with SPARQL Grammar for profiles to create a single query. Profiles specify the inclusion/exclusion of properties on focus nodes, and are detailed in "Profile Design".
+### Detail
+
+Determine **which** nodes to select. 
+This forms the inner select part of the SPARQL query. The inputs are one or more of: the URL path a query is sent to; a CQL filter expression; and a search term. The outputs are three sets of SPARQL Grammar objects `TriplesSameSubject`, `TriplesSameSubjectPath`,  and `GraphPatternNotTriples`. The `TriplesSameSubject` are used to form the `ConstructTriples` part of the query; the  `TriplesSameSubjectPath`,  and `GraphPatternNotTriples` form the `WhereClause`.
+
+#### 1. Endpoint Nodeshapes:
+Considerations:
+1. Class of objects to list (e.g. for /catalogs, list all items of class dcat:Catalog)
+2. Relationship to parent objects (e.g. for /catalogs/{parent_catalog_curie}/collections/, list all items that have the relationship dcterms:hasPart from the parent catalog curie)
+Implementation:
+	SHACL shapes are used to represent the how URL path parameters are translated into a SPARQL query.
+	One endpoint maps to one or more endpoint NodeShapes. For example the items endpoint can render resources of type `skos:Concept` and `geo:Feature`. An example of an endpoint definition is:
+```turtle
+ogce:item-object  
+    a ont:ObjectEndpoint ;  
+    ont:relevantShapes ex:Feature , ex:ConceptSchemeConcept , ex:CollectionConcept , ex:Resource ;  
+.
+```
+
+To determine which NodeShape (under `ont:relevantShapes`) should be used to render resources, the class of parents in the URL path is first determined. The logic for this is:
+    1. Get the classes of all parents in the URL path. Prez caches this class information.
+    2. Match these to `sh:class` statements on the PropertyShapes for the NodeShape. *`sh:class` is used on nested PropertyShapes to specify a constraint on the class of related nodes, that is, nodes related via the property shape. (e.g. "the class of the first parent is `dcat:Resource`, the class of the second parent is `dcat:Catalog`, therefore the applicable NodeShape for the listing is the `ex:Resource` NodeShape.)* 
+    The NodeShape information, once determined, is used for:
+    1. Query generation - which class of nodes to list (e.g. `rdf:Resource` below)
+    2. Link generation - to determine which endpoints can render a resource of a given class, and, how to find the parents of a given object in order to generate a link (e.g. the parents are all related via `dcterms:hasPart` in the example below.)
+    An example NodeShapes for describing an endpoint is:
+
+```turtle
+ex:Resource  
+    a sh:NodeShape ;  
+    ont:hierarchyLevel 3 ;  
+    sh:targetClass rdf:Resource ;  
+    sh:property [  
+        sh:path [ sh:inversePath dcterms:hasPart ] ;  
+        sh:class dcat:Resource ;  
+    ] , [  
+        sh:path ( [ sh:inversePath dcterms:hasPart ] [ sh:inversePath dcterms:hasPart ] );  
+        sh:class dcat:Catalog ;  
+    ] .
+```
+
+*The hierarchyLevel is used to filter the set of potentially relevant NodeShapes - when a request comes from an endpoint, that endpoint has a corresponding hierarchy level.*
+
+A  further example for the collections endpoint is provided:
+```turtle
+ex:Collections  
+	a sh:NodeShape ;  
+	ont:hierarchyLevel 2 ;  
+	sh:targetClass geo:FeatureCollection , skos:ConceptScheme , skos:Collection , dcat:Resource ;  
+	sh:property [  
+		sh:path [ sh:inversePath dcterms:hasPart ] ;  
+		sh:class dcat:Catalog ;  
+	] .
+```
+
+This means to select the nodes of class `dcat:Resource`, `geo:FeatureCollection`, `skos:ConceptScheme`, or `skos:Collection`, which are related to a parent node of class `dcat:Catalog`, by the relationship `dcterms:hasPart`. 
+#### 2. CQL
+Considerations:
+1. Mapping of JSON values to URIs.
+2. Filtering of properties vs. graph pattern matching; the latter supports more complex operations (sequence, inverse paths etc.). 
+Implementation:
+CQL JSON expressions are translated to JSON LD to allow easy mapping to URIs.
+Examples are provided in the API docs using test data. A demo instance is available [here](https://prezv4-with-fuseki.sgraljii8d3km.ap-southeast-2.cs.amazonlightsail.com/docs#/ogcprez/https___prez_dev_endpoint_extended_ogc_records_cql_post_cql_post).
+CQL JSON documentation is available [here](https://portal.ogc.org/files/96288#cql-json):
+
+Properties are assumed to be URIs.
+Values for properties can be specified as URIs using a JSON LD like "@id", for example:
+```json-ld
+{  
+  "op": "=",  
+  "args": [  
+    {  
+      "property": "http://www.w3.org/2000/01/rdf-schema#member"  
+    },  
+    { "@id": "http://example.com/datasets/sandgate/facilities" }  
+  ]  
+}
+```
+
+The following context is "inserted" into CQL JSON to create "CQL JSON-LD".
+```json-ld
+{  
+  "@version": 1.1,  
+  "@base": "http://example.com/",  
+  "@vocab": "http://example.com/vocab/",  
+  "cql": "http://www.opengis.net/doc/IS/cql2/1.0/",  
+  "sf": "http://www.opengis.net/ont/sf#",  
+  "geo": "http://www.opengis.net/ont/geosparql#",  
+  "landsat": "http://example.com/landsat/",  
+  "ro": "http://example.com/ro/",  
+  "args": {  
+    "@container": "@set",  
+    "@id": "cql:args"  
+  },  
+  "property": {  
+    "@type": "@id",  
+    "@id": "cql:property"  
+  },  
+  "op": {  
+    "@id": "cql:operator"  
+  },  
+  "type": {  
+    "@id": "sf:type"  
+  }  
+}
+```
+
+The following has been implemented:
+1. Spatial functions
+2. String pattern matching
+3. Property filtering
+
+The following has not yet been implemented:
+1. Time filtering
+#### 3. Search query.
+Implementation:
+The search term is inserted into three different regex expressions which match the search term in different ways, and weights the results. A full search query is generated, and then relevant parts are extracted (`TriplesSameSubject` etc. as listed above), to generate a final query.
+
+Prez utilises the sparql-grammar-pydantic library to generate SPARQL queries.
+
 ## Content delivered by Prez
 
 Prez returns:
@@ -17,11 +345,11 @@ Prez returns:
 
 ## Internal links
 The objects Prez delivers RDF for have URIs that uniquely identify them. Prez delivers RDF for these objects at URLs on the web. These URLs and URIs are not required to be the same, and frequently are not. For objects that Prez holds information for, it is helpful if Prez tells users the URL of these when they are referenced elsewhere in the API. This is in two places:
-1. Listings of objects, for example `dcat:Datasets` at the `/s/datasets` endpoint; and
+1. Listings of objects, for example `dcat:Catalog` at the `/catalogs` endpoint; and
 2. Links to related objects, where the API holds information on the related object.\
-In these cases, in the annotated RDF mediatype (`text/anot+turtle`) URL paths are provided which link to the related object
+In these cases, in the annotated RDF mediatype (`text/anot+turtle`) URL paths are provided which link to the related object.
 
-For cases where URIs and URLs for a given object differ slightly, URL redirection can be used to send users to the Prez URL instance which displays information for the object.
+For cases where URIs and URLs for a given object differ, URL redirection can be used to send users to the Prez URL instance which displays information for the object.
 
 ### Link generation
 Internal links use [CURIEs](https://en.wikipedia.org/wiki/CURIE). Prez uses the default RDFLib prefixes, covering common namespaces.
@@ -37,7 +365,7 @@ When Prez encounters a URI which is required for an internal link but is not in 
 To get "sensible" or "nice" prefixes, it is recommended to add all prefixes which will be required to turtle files in prez/reference_data/prefixes.
 A future change could allow the prefixes to be specified alongside data in the backend, as profiles currently can be.
 
-### Checking if namespace prefixes are defined
+## Generating Prefixes
 
 The following SPARQL query can be used as a starting point to check if a namespace prefix is defined for instances of
 the main classes prez delivers. NB this query should NOT be run against SPARQL endpoints for large datasets; offline
@@ -67,15 +395,155 @@ When an annotated mediatype is requested (e.g. `text/anot+turtle`), Prez will lo
 *every* RDF term in the (initial) response returned by the triplestore. That is it will expand the response to include
 the annotations and return the RDF merge of the original response and the annotations.
 
-Additional predicates can be added to the list of predicates Prez looks for in the profiles by adding these predicates
-using the properties listed below.
+Additional predicates can be added to the list of predicates Prez looks for in the profiles by adding these predicates to the configuration.
 
-| Property    | Default Predicate   | Examples of other predicates that would commonly be used | Profiles predicate to add *additional* predicates |
-|-------------|---------------------|----------------------------------------------------------|---------------------------------------------------|
-| label       | rdfs:label          | skos:prefLabel, dcterms:title                            | altr-ext:hasLabelPredicate                        |
-| description | dcterms:description | skos:definition, dcterms:abstract                        | altr-ext:hasDescriptionPredicate                  |
-| provenance  | dcterms:provenance  | dcterms:source                                           | altr-ext:hasExplanationPredicate                  |
-| other       | (None)              | schema:color                                             | altr-ext:otherAnnotationProps                     |
+
+
+## How to add an endpoint
+
+New endpoints can be added to Prez by adding RDF, and minimal addition of FastAPI decorators.
+
+1. Add FastAPI decorator,
+	1. For Listing endpoints, add these to the `listings` function in `prez/routers/ogc_router`. An example is:
+```python
+@router.get(  
+    "/catalogs",  
+    summary="Catalog Listing",  
+    name=OGCE["catalog-listing"],  
+    responses=responses  
+)
+```
+
+*See the references in the code for what should be provided for `responses` and `openapi_extra`; these fields are optional but useful for documentation.*
+The name is required, and should be a URI.
+2. An endpoint definition. 
+	1. **The endpoint URI must match the name uri in the decorator.** 
+	2. The endpoint must be declared a `ont:ListingEndpoint` or `ont:ObjectEndpopint`, as Prez uses different application code to render results for these two types of endpoint.
+	These are in `prez/reference_data/endpoints/endpoint_metadata.ttl`. An example is:
+```turtle
+ogce:catalog-listing  
+    a ont:ListingEndpoint ;  
+    ont:relevantShapes ex:Catalogs ;  
+.
+```
+3.  A NodeShape for the endpoint. This describes how nodes should be selected at the given endpoint. An example is:
+
+```turtle
+ex:Catalogs  
+    a sh:NodeShape ;  
+    ont:hierarchyLevel 1 ;  
+    sh:targetClass dcat:Catalog ;  
+    sh:property [  
+        sh:path dcterms:hasPart ;  
+        sh:or (  
+            [ sh:class dcat:Resource ]  
+            [ sh:class geo:FeatureCollection ]  
+            [ sh:class skos:ConceptScheme ]  
+            [ sh:class skos:Collection ]  
+        ) ;  
+    ] .
+```
+
+This specifies the selection of focus nodes of class `dcat:Catalog` which have the relationship `dcterms:hasPart` to one or more of the listed classes.
+
+## Query Generation
+Prez utilises the sparql-grammar-pydantic library to generate SPARQL queries.
+### Focus nodes
+For objects, the focus node is specified in a query path as a curie, or in the case of the `/object` endpoint, as query parameter with the key "uri".
+For lists of objects, the focus node is a variable, fixed within prez to `?focus_node`.
+**Usage:** The focus node is substituted into the main query.
+### Main Query Generation
+Prez creates a single main query to describe an object or listing of objects.
+
+The structure of the query is as follows:
+
+```sparql
+CONSTRUCT {  
+    <construct_triples + construct_tss_list>
+}  
+WHERE {  
+    # for listing queries only:    
+    { 
+	    SELECT ?focus_node <innser_select_vars>        
+	    WHERE {            
+		    <inner_select_tssp_list>            
+		    <inner_select_gpnt>        
+		    }        
+		ORDER BY <order_by_direction>(<order_by>)        
+	    LIMIT <limit>        
+	    OFFSET <offset>    
+    }
+    # for all queries:    
+    <profile_triples>    
+    <profile_gpnt>
+}
+```
+
+#### construct_triples and construct_tss_list
+The triples to construct. This is taken from the union of:
+1. Profile_Triples (directly) - i.e. any triple specified in the where clause will be constructed
+2. Any triples within the Profile_GPNTs object. *Prez utilises a convenience function provided by the SPARQL Grammar library which recursively extracts all triples within a given SPARQL Grammar object.*
+3. Additional_Construct_Triples (directly) - these may come from a search query, such as the query result weights, etc. 
+#### profile_triples and profile_GPNTs
+There is one source of profile triples and profile GPNTs - these are derived from SHACL node and property shapes associated with the selected profile (returned by ConnegP).
+
+At a conceptual level these profile shapes represent the "properties" or "attributes" to be returned for *each* focus node. At present the following SHACL expressions are covered:
+- minCount = 0 (optional property)
+- maxCount = 0 (exclude property)
+- path
+- sequence path
+- inverse path
+- class
+- blank nodes to a specified depth
+How to specify these is detailed in the Profile Design section.
+#### Inner_Select_Triples and Inner_Select_GPNTs
+Inner Select Triples and Inner Select GPNTs are taken from the union of:
+1. CQL
+2. Search queries
+3. Endpoint Nodeshapes
+These are detailed in the Focus Node Selection section.
+### Annotations
+
+- Where an annotated mediatype is requested, Prez returns any annotations it can find from all available repositories (data, systems, and annotations reposoitory).
+- These annotations are then cached against the URI they are for.
+- The caching utilises aiocache. 
+	- aiocache is currently set up with in memory caches. It could be extended to utilise Redis.
+
+A sequence diagram is shown for annotation retrieval:
+```mermaid
+sequenceDiagram
+    Client ->> FastAPI: Request for data with annotated mediatype
+    FastAPI ->> Repo: send_queries(object/list query)
+    Repo -->> FastAPI: initial response graph
+    FastAPI ->> FastAPI: get URIs in initial response
+    FastAPI ->> Cache: check cache for annotations
+    Cache -->> FastAPI: return cached annotations (if any)
+    FastAPI ->> FastAPI: determine cached and uncached URIs
+    FastAPI ->> Repo: query for uncached annotations
+    Repo -->> FastAPI: return cached annotations (if any)
+    FastAPI ->> Cache: cache previously uncached annotations
+    FastAPI ->> Client: return initial response graph + annotations
+```
+
+Annotations are returned with one of the following mapped prez namespaced URIs.
+
+prez:label: skos:prefLabel,  dcterms:title,  rdfs:label,  sdo:name
+prez:description: skos:definition,  dcterms:description,  sdo:description
+prez:provenance: dcterms:provenance
+### Repositories
+An abstraction over data providers is provided with "Repositories". Three types are supported; Pyoxigraph (in memory), Oxrdflib, and RemoteSparql. 
+1. Data repository - one of Pyoxigraph, Oxrdflib, or RemoteSparql
+2. System repository - Pyoxigraph
+3. Annotations repository - Pyoxygraph
+
+
+
+
+
+## Startup Routine
+1. Check the SPARQL endpoints can be reached. A blank query (`ASK {}`) is used to test this. The SPARQL endpoints are not health checked post startup.
+2. Create in memory profile, prefix, and endpoint graphs, containing all profiles in the `prez/profiles` directory, and any additional profiles available in the triplestore (declared as a `http://www.w3.org/ns/dx/prof/Profile`)
+3. Look for predefined object counts in the triplestore.
 
 ## High Level Sequence `/object` endpoint
 
@@ -93,375 +561,25 @@ these endpoints, specifying any variables that need to be substituted (such as p
 to construct the system links.
 5. Return the response
 
-### Machine requests
-
-Machine requests made to `/object` will use the provided media type and profile to return an appropriate response in one of the subsystems.
-
 ## High Level Sequence listing and individual object endpoints
 
 Prez follows the following logic to determine what information to return, based on a profile, and in what mediatype to return it.
 
 1. Determine the URI for an object or listing of objects:
 - For objects:
-   - Directly supplied through the /{x}/object?uri=<abc> query string argument where x is the Prez subsystem (v, s, or c)
-   - From the URL path the object is requested from, for example /s/dataset/<abc>. abc is a curie, which is expanded to a URI.
-
-- For listings:
-  - If the listing is for a "top level object", objects are listed based on their class. For example, in VocPrez, at the /v/vocab endpoint, vocabularies are listed based on a triple stating they are of class skos:ConceptScheme.
-    - Top level objects are currently hard-coded in the configuration. They could be modified by environment variables at present. We will consider moving configuration of top level objects to the system profiles. This is a low priority as top level objects are unlikely to change.
-  - If the listing is not for a "top level object", the listing is based on a member relation from a parent object. For example, if a listing of concepts is requested, these will be listed based on their declaration of being skos:inScheme to a specified Vocabulary.
-      - For the list of current top level objects (see _Top Level Class_ in the [Glossary](#Glossary)) in each Prez instance a Prez specific object contains the top level objects. For example, the a prez:DatasetList has rdfs:member the dcat:Dataset objects. This data is generated on startup if not supplied, as detailed in [Appendix C](#appendix-c---sparql-insert-queries-for-support-graphs).
-
+   - Directly supplied through the /object?uri=<abc> query string argument
+   - From the URL path the object is requested from, for example /catalogs/<abc>. abc is a curie, which is expanded to a URI.
 2. Get all classes for the object or object listing
-   _Steps 1 and 2 are implemented in the `prez/models/*` modules using Pydantic classes_
 3. Determine the profile and mediatype to use for the object. This is implemented as a SPARQL query and takes into account:
    1. The classes of the object
    2. Available profiles and mediatypes
    3. Requested profiles and mediatypes
    4. Default profiles and mediatypes
 The logic used to determine the profile and mediatype is detailed in section x.
-
-4. Build a SPARQL query:
-   - For objects
-      1. A SPARQL CONSTRUCT query is used, roughly equivalent to a DESCRIBE query, but with configurable blank node depth, and relations to other objects. The following properties can be specified in profiles to configure which information is returned for an object:
-
-		| Description                                                                    | Property                                    |
-		|---------------------------------------------------------------------------------|---------------------------------------------|
-		| The depth of blank nodes to return. | `prez:blankNodeDepth`                       |
-		| predicates to include                                                          | `sh:path`                                   |
-		| predicates to exclude                                                          | `sh:path` in conjunction with `dash:hidden` |
-		| inverse path predicates to include                                             | `sh:inversePath`                            |
-		| sequence path predicates to include, expressed as an RDF list.                 | `sh:sequencePath`                           |
-
-      2. Where _Relation Properties_ (see the [Glossary](#Glossary) for definition) are specified in the profile, a second SPARQL CONSTRUCT query is used, as detailed in object listings:
-   - For object listings:
-     1. A SPARQL CONSTRUCT query is used, with a LIMIT and OFFSET, and `prez:link` internal API URL paths are generated for each member object returned.
-5. Execute the SPARQL query
+4. Build a SPARQL query.
+5. Execute the SPARQL query.
 6. If the mediatype requested is NOT annotated RDF (`text/anot+turtle`), return the results of 5, else retrieve the annotations:
    1. Check Prez cache for annotations
    2. For terms without annotations in the cache, query the triplestore for annotations
    3. Cache any annotations returned from the triplestore
    4. Return the annotations merged with the results of the SPARQL query in step 5.
-
-## Profile and mediatype selection logic
-The following logic is used to determine the profile and mediatype to be returned:
-
-1. If a profile and mediatype are requested, they are returned if a matching profile which has the requested mediatype is found, otherwise the default profile for the most specific class is returned, with its default mediatype.
-2. If a profile only is requested, if it can be found it is returned, otherwise the default profile for the most specific class is returned. In both cases the default mediatype is returned.
-3. If a mediatype only is requested, the default profile for the most specific class is returned, and if the requested mediatype is available for that profile, it is returned, otherwise the default mediatype for that profile is returned.
-4. If neither a profile nor mediatype is requested, the default profile for the most specific class is returned, with the default mediatype for that profile.
-
-The SPARQL query used to select the profile is given in [Appendix D](appendix-d---example-profile-and-mediatype-selection-sparql-query).
-
-## Startup Routine
-1. Check the SPARQL endpoints can be reached. A blank query (`ASK {}`) is used to test this. The SPARQL endpoints are not health checked post startup.
-2. Find search methods, add these to an in memory dictionary with pydantic models, and add a reference to the available search methods in the system graph (available at the root endpoint)
-3. Create an in memory profile graph, containing all profiles in the `prez/profiles` directory, and any additional profiles available in the triplestore (declared as a `http://www.w3.org/ns/dx/prof/Profile`)
-4. Count the number of objects in each _Collection Class_
-5. Check for the required support graphs, and if the required support graphs are not present, create them. The SPARQL INSERT query used to create the support graphs is detailed in [Appendix C](#appendix-c---sparql-insert-queries-for-support-graphs). The required support graphs are:
-   1. A system support graph (e.g. `https://prez.dev/vocprez-system-graph` for VocPrez). See example in [Appendix F](appendix-f---example-system-support-graph).
-   2. A support graph per _Collection Class_ (see the [Glossary](#Glossary) for definition). See example in [Appendix G](appendix-g---example-system-support-graph-for-a-feature-collection).
-
-
-## Search
-Search methods can be defined as RDF. See the examples in `prez/reference_data/search_methods`.
-At present the parameterised SPARQL queries accept the following parameters: PREZ and TERM (for a search term).
-These parameters are substituted into the SPARQL query using the `string.Template` module. This module substitutes where $PREZ and $TERM are found in the query.
-You must also escape any $ characters in the query using a second $.
-
-To configure filters on search the following patterns can be used:
-- Specification of `filter-to-focus` and `focus-to-filter` filters as Query String Arguments on the search route. Examples:
-
-1. `/search?term=contact&method=default&
-/&_format=text/anot+turtle`
-_adds a triple to the search query of the form `?search_result_uri skos:broader <http://resource.geosciml.org/classifier/cgi/contacttype/metamorphic_contact>`_
-
-2. `/search?term=address&method=default&filter-to-focus[rdfs:member]=https://linked.data.gov.au/datasets/gnaf`
- _adds a triple to the search query of the form `<https://linked.data.gov.au/datasets/gnaf> rdfs:member ?search_result_uri`_
-
-3. Search with a filter on multiple objects (the list of objects is treated as an OR)`/search?term=address&method=default&filter-to-focus[rdfs:member]=https://linked.data.gov.au/datasets/gnaf,https://linked.data.gov.au/datasets/defg`
- _adds a triple to the search query of the form `<https://linked.data.gov.au/datasets/gnaf> rdfs:member ?o . VALUES ?o { <https://linked.data.gov.au/datasets/gnaf> <https://linked.data.gov.au/datasets/defg>}`_
-
-- URIs and CURIEs can be used to specify filters.
-_If CURIEs are used, they should only be CURIEs returned as `dcterms:identifier "{identifier}"^^prez:identifier` or in prez:links. There is no guarantee prefix declarations in turtle or other RDF serialisations returned by prez are consistent with the prefixes used internally by prez for links and identifiers._
-
-## Scaled instances of Prez
-When using Prez for large volumes of data, it is recommended the support graph data is created offline. This includes:
-- Identifiers for all objects (a `dcterms:identifier`)
-- Collection counts
-This information must be placed in graphs following Prez naming conventions in order for Prez to find them.
-
-## Prez and Altr-ext namespaces
-TODO separate ontology
-The following terms are in the Prez namespace:
-
-| Term                                                                | Description                                                                                                          |
-|---------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------|
-| `prez:count`                                                        | The number of objects in an instance of a _Collection Class_                                                         |
-| `prez:DatasetList`, `prez:FeatureCollectionList`, `prez:FeatureList` | Classes used to describe lists of `dcat:Dataset`, `geo:FeatureCollection`, and `geo:Feature` instances respectively  |
-| `prez:CatalogList`                                                  | Class used to describe a list of `dcat:Catalog` instances                                                            |
-| `prez:SchemesList`, `prez:VocPrezCollectionList`                    | Class used to describe a list of `skos:ConceptScheme` and `skos:Collection` instances respectively                  |
-TODO altr-ext - this may be merged with altr
-
-
-## Glossary
-| Term | Description                                                                                    |
-|-----------------------|------------------------------------------------------------------------------------------------|
-| Collection Class | `skos:Collection`, `skos:ConceptScheme`, `dcat:Dataset`, `geo:FeatureCollection`, `dcat:Catalog` |
-| Top Level Class | `skos:Collection`, `skos:ConceptScheme`, `dcat:Dataset`, `dcat:Catalog` |
-
-## Appendix A - Example SPARQL query for an object
-```sparql
-CONSTRUCT {
-  <https://linked.data.gov.au/datasets/gnaf> ?p ?o1.
-  ?o1 ?p2 ?o2.
-  ?o2 ?p3 ?o3.
-}
-WHERE {
-  {
-    <https://linked.data.gov.au/datasets/gnaf> ?p ?o1.
-    OPTIONAL {
-      FILTER(ISBLANK(?o1))
-      ?o1 ?p2 ?o2.
-      OPTIONAL {
-        FILTER(ISBLANK(?o2))
-        ?o2 ?p3 ?o3.
-      }
-    }
-  }
-}
-```
-## Appendix B - Example SPARQL query for an object listing
-```sparql
-to update - need one for membership object listing and class based
-```
-## Appendix C - SPARQL INSERT queries for support graphs
-### C.1 - SpacePrez Insert Support Graphs
-```sparql
-PREFIX dcat: <http://www.w3.org/ns/dcat#>
-PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX prez: <https://prez.dev/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-INSERT {
-  GRAPH prez:spaceprez-system-graph {
-    ?support_graph_uri prez:hasContextFor ?instance_of_main_class .
-    ?collectionList rdfs:member ?instance_of_top_class .
-    ?instance_of_main_class dcterms:identifier ?prez_id .
-  }
-  GRAPH ?support_graph_uri { ?member dcterms:identifier ?prez_mem_id . }
-}
-WHERE {
-  {
-    ?instance_of_main_class a ?collection_class .
-    VALUES ?collection_class { <http://www.w3.org/ns/dcat#Dataset>
-      <http://www.opengis.net/ont/geosparql#FeatureCollection> }
-    OPTIONAL {?instance_of_top_class a ?topmost_class
-      VALUES ?topmost_class { <http://www.w3.org/ns/dcat#Dataset> }
-    }
-    MINUS { GRAPH prez:spaceprez-system-graph {?a_context_graph prez:hasContextFor ?instance_of_main_class}
-    }
-    OPTIONAL {?instance_of_main_class dcterms:identifier ?id
-      BIND(DATATYPE(?id) AS ?dtype_id)
-      FILTER(?dtype_id = xsd:token)
-    }
-    OPTIONAL { ?instance_of_main_class rdfs:member ?member
-      OPTIONAL {?member dcterms:identifier ?mem_id
-        BIND(DATATYPE(?mem_id) AS ?dtype_mem_id)
-        FILTER(?dtype_mem_id = xsd:token) } }
-  }
-  BIND(
-    IF(?topmost_class=dcat:Dataset, prez:DatasetList,
-      IF(?topmost_class=dcat:Catalog,prez:CatalogList,
-        IF(?topmost_class=skos:ConceptScheme,prez:SchemesList,
-          IF(?topmost_class=skos:Collection,prez:VocPrezCollectionList,"")))) AS ?collectionList)
-  BIND(STRDT(COALESCE(STR(?id),MD5(STR(?instance_of_main_class))), prez:slug) AS ?prez_id)
-  BIND(STRDT(COALESCE(STR(?mem_id),MD5(STR(?member))), prez:slug) AS ?prez_mem_id)
-  BIND(URI(CONCAT(STR(?instance_of_main_class),"/support-graph")) AS ?support_graph_uri)
-}
-```
-## Appendix C - Removed - to updated numbering consistently
-## Appendix D - Example Profile and Mediatype Selection SPARQL query
-This SPARQL query determines the profile and mediatype to return based on user requests,
-defaults, and the availability of these in profiles.
-
-NB: Most specific class refers to the rdfs:Class of an object which has the most specific rdfs:subClassOf links to the general class delivered by that API endpoint. The general classes delivered by each API endpoint are:
-
-**SpacePrez**:
-/s/datasets -> `prez:DatasetList`
-/s/datasets/{ds_id} -> `dcat:Dataset`
-/s/datasets/{ds_id}/collections/{fc_id} -> `geo:FeatureCollection`
-/s/datasets/{ds_id}/collections -> `prez:FeatureCollectionList`
-/s/datasets/{ds_id}/collections/{fc_id}/features -> `geo:Feature`
-
-**VocPrez**:
-/v/schemes -> `skos:ConceptScheme`
-/v/collections -> `skos:Collection`
-/v/schemes/{cs_id}/concepts -> `skos:Concept`
-
-**CatPrez**:
-/c/catalogs -> `dcat:Catalog`
-/c/catalogs/{cat_id}/datasets -> `dcat:Dataset`
-
-This is an example query for SpacePrez requesting the Datasets listing from a web browser. Note the following components of the query are populated in Python:
-1. The `?class` VALUES
-2. A `?req_profile` value (not present in this query as no profile was requested)
-3. Nested IF statements, based on the mediatypes in the HTTP request.
-```sparql
-PREFIX dcat: <http://www.w3.org/ns/dcat#>
-PREFIX sh: <http://www.w3.org/ns/shacl#>
-PREFIX geo: <http://www.opengis.net/ont/geosparql#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX altr-ext: <http://www.w3.org/ns/dx/connegp/altr-ext#>
-PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX prez: <https://prez.dev/>
-PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-
-SELECT ?profile ?title ?class (count(?mid) as ?distance) ?req_profile ?def_profile ?format ?req_format ?def_format ?token
-
-WHERE {
-  VALUES ?class {<https://prez.dev/DatasetList>}
-  ?class rdfs:subClassOf* ?mid .
-  ?mid rdfs:subClassOf* ?base_class .
-  VALUES ?base_class { dcat:Dataset geo:FeatureCollection prez:FeatureCollectionList prez:FeatureList geo:Feature
-    skos:ConceptScheme skos:Concept skos:Collection prez:DatasetList prez:VocPrezCollectionList prez:SchemesList
-    prez:CatalogList dcat:Catalog dcat:Resource }
-  ?profile altr-ext:constrainsClass ?class ;
-           altr-ext:hasResourceFormat ?format ;
-           dcterms:identifier ?token ;
-           dcterms:title ?title .
-
-  BIND(EXISTS { ?shape sh:targetClass ?class ;
-                       altr-ext:hasDefaultProfile ?profile } AS ?def_profile)
-  BIND(
-    IF(?format="image/webp", "1",
-      IF(?format="application/xml", "0.9",
-        IF(?format="text/html", "1",
-          IF(?format="*/*", "0.8",
-            IF(?format="image/avif", "1",
-              IF(?format="application/xhtml+xml", "1", ""))))))
-    AS ?req_format)
-  BIND(EXISTS { ?profile altr-ext:hasDefaultResourceFormat ?format } AS ?def_format)
-}
-
-GROUP BY ?class ?profile ?req_profile ?def_profile ?format ?req_format ?def_format
-ORDER BY DESC(?req_profile) DESC(?distance) DESC(?def_profile) DESC(?req_format) DESC(?def_format)
-```
-## Appendix E - Example profiles
-### Appendix E.1 - Example system profile
-The following snippet shows a system profile for Prez which declares the default profile to be used for objects with a class of `dcat:Dataset`.
-```turtle
-<http://kurrawong.net/profile/prez>
-    a prof:Profile ;
-    dcterms:identifier "prez" ;
-    dcterms:description "A profile for the Prez Linked Data API" ;
-    skos:prefLabel "Prez profile" ;
-    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
-    altr-ext:hasNodeShape [
-        a sh:NodeShape ;
-        sh:targetClass dcat:Dataset ;
-        altr-ext:hasDefaultProfile <https://www.w3.org/TR/vocab-dcat/>
-    ] .
-```
-### Appendix E.2 - Example mediatype declarations
-The following snippet shows how to define which mediatypes a resource constrained by that profile should be available in, via the `altr-ext:hasResourceFormat` property. It also shows how default mediatypes can be declared, via the `altr-ext:hasDefaultResourceFormat` property.
-```turtle
-<http://www.opengis.net/def/geosparql>
-    a prof:Profile ;
-    dcterms:description "An RDF/OWL vocabulary for representing spatial information" ;
-    dcterms:identifier "geo" ;
-    dcterms:title "GeoSPARQL" ;
-    altr-ext:constrainsClass geo:Feature ;
-    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
-    altr-ext:hasResourceFormat
-        "application/ld+json" ,
-        "application/rdf+xml" ,
-        "text/anot+turtle" ,
-        "text/turtle" ;
-.
-```
-### Appendix E.3 - Example mediatype declarations
-The following snippet shows a profile which constrains a number of classes, and declares two NodeShapes which state the following:
-1. For a `geo:FeatureCollection`, only include properties where the predicate is one of those listed under `sh:path`. In this case, `rdfs:member` has been deliberately omitted as instances of `geo:FeatureCollection` can have significant numbers of `rdfs:member` relations which can create query performance issues. A sample of the Feature Collections members can still be included, using the method described in (2.) below
-2. Instances of `geo:FeatureCollection`, `prez:FeatureCollectionList`, and `prez:FeatureList`, have a number of member objects (related via the `rdfs:member` relation) which are delivered via Prez. With this information Prez:
-   1. Creates internal links when returning annotated RDF, such that HTML views can include internal links
-   2. Uses a LIMIT/OFFSET query to ensure that only a sample of the members are returned, to avoid query performance issues
-```turtle
-<http://www.opengis.net/spec/ogcapi-features-1/1.0/req/oas30>
-    a prof:Profile ;
-    dcterms:description "The OGC API Features specifies the behavior of Web APIs that provide access to features in a dataset in a manner independent of the underlying data store." ;
-    dcterms:identifier "oai" ;
-    dcterms:title "OGC API Features" ;
-    altr-ext:constrainsClass
-        dcat:Dataset ,
-        geo:FeatureCollection ,
-        geo:Feature ,
-        prez:FeatureCollectionList ,
-        prez:FeatureList ;
-    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
-    altr-ext:hasResourceFormat
-        "text/anot+turtle" ,
-        "application/geo+json" ;
-    altr-ext:hasNodeShape [
-        a sh:NodeShape ;
-        sh:targetClass geo:FeatureCollection ;
-        sh:path rdf:type,
-                dcterms:identifier,
-                dcterms:title,
-                geo:hasBoundingBox,
-                dcterms:provenance,
-                rdfs:label,
-                dcterms:description ;
-    ] ,
-    [  a sh:NodeShape ;
-        sh:targetClass geo:FeatureCollection , prez:FeatureCollectionList , prez:FeatureList ;
-        altr-ext:outboundChildren rdfs:member ;
-    ]
-.
-```
-### Appendix E.4 - Example inbound links
-The following VocPrez VocPub profile shows how to use a number of declarations:
-1. Inbound Children: for Concept Schemes, include concepts delivered via Prez that are skos:inScheme the Concept Scheme. NB sh:inversePath could also be used but this will not create internal links in the HTML view, nor limit the number of results returned.
-2. Outbound Parents: for Concepts, include the objects the Concept is skos:inScheme of. NB an 'open' profile declaring no constraints would return these triples by default - by declaring the predicate in a profile, an internal link will be created in the HTML view (and the number of linked results limited).
-```turtle
-<https://w3id.org/profile/vocpub>
-    a prof:Profile ;
-    dcterms:description "This is a profile of the taxonomy data model SKOS - i.e. SKOS with additional constraints." ;
-    dcterms:identifier "vocpub" ;
-    dcterms:title "VocPub" ;
-    altr-ext:hasLabelPredicate skos:prefLabel ;
-    altr-ext:constrainsClass
-        skos:ConceptScheme ,
-        skos:Concept ,
-        skos:Collection ,
-        prez:SchemesList ,
-        prez:VocPrezCollectionList ;
-    altr-ext:hasDefaultResourceFormat "text/turtle" ;
-    altr-ext:hasResourceFormat
-        "application/ld+json" ,
-        "application/rdf+xml" ,
-        "text/anot+turtle" ,
-        "text/turtle" ;
-    altr-ext:hasNodeShape [
-        a sh:NodeShape ;
-        sh:targetClass skos:ConceptScheme ;
-        altr-ext:outboundChildren skos:hasTopConcept ;
-    ] ;
-    altr-ext:hasNodeShape [
-        a sh:NodeShape ;
-        sh:targetClass skos:Collection ;
-        altr-ext:outboundChildren skos:member ;
-    ] ;
-    altr-ext:hasNodeShape [
-        a sh:NodeShape ;
-        sh:targetClass skos:ConceptScheme ;
-        altr-ext:inboundChildren skos:inScheme ;
-    ] ;
-    altr-ext:hasNodeShape [
-        a sh:NodeShape ;
-        sh:targetClass skos:Concept ;
-        altr-ext:outboundParents skos:inScheme ;
-    ]
-.
-```

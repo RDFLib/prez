@@ -3,21 +3,21 @@ import time
 from pathlib import Path
 
 import httpx
-from rdflib import URIRef, Literal, BNode, RDF, Graph, RDFS, DCTERMS, SDO, SKOS, Dataset
+from rdflib import URIRef, Literal, Graph
 
 from prez.cache import (
     prez_system_graph,
-    profiles_graph_cache,
     counts_graph,
     prefix_graph,
     endpoints_graph_cache,
-    tbox_cache,
 )
 from prez.config import settings
-from prez.reference_data.prez_ns import PREZ, ALTREXT
+from prez.reference_data.prez_ns import PREZ
+from prez.repositories import Repo
 from prez.services.curie_functions import get_curie_id_for_uri
-from prez.sparql.methods import Repo
-from prez.sparql.objects_listings import startup_count_objects
+from prez.services.query_generation.count import startup_count_objects
+from prez.services.query_generation.prefixes import PrefixQuery
+
 
 log = logging.getLogger(__name__)
 
@@ -59,34 +59,37 @@ async def count_objects(repo):
 
 
 async def populate_api_info():
-    for prez in settings.prez_flavours:
-        bnode = BNode()
-        prez_system_graph.add(
-            (URIRef(settings.system_uri), PREZ.enabledPrezFlavour, bnode)
-        )
-        prez_system_graph.add((bnode, RDF.type, PREZ[prez]))
-        # add links to prez subsystems
-        prez_system_graph.add((bnode, PREZ.link, Literal(f"/{prez[0].lower()}")))
-
-        # add links to search methods
-        sys_prof = profiles_graph_cache.value(None, ALTREXT.constrainsClass, PREZ[prez])
-        if sys_prof:
-            search_methods = [
-                sm
-                for sm in profiles_graph_cache.objects(
-                    sys_prof, PREZ.supportedSearchMethod
-                )
-            ]
-            for method in search_methods:
-                prez_system_graph.add((bnode, PREZ.availableSearchMethod, method))
-
     prez_system_graph.add(
         (URIRef(settings.system_uri), PREZ.version, Literal(settings.prez_version))
     )
     log.info(f"Populated API info")
 
 
-async def add_prefixes_to_prefix_graph(repo: Repo):
+async def prefix_initialisation(repo: Repo):
+    """
+    Adds prefixes defined using the vann ontology to the prefix graph.
+    Note due to the ordering, remote prefixes (typically user defined) will override local prefixes.
+    Generates prefixes for IRIs which do not have one unless the "disable_prefix_generation" environment variable is
+    set.
+    """
+    await add_remote_prefixes(repo)
+    await add_local_prefixes(repo)
+    await generate_prefixes(repo)
+
+
+async def add_remote_prefixes(repo: Repo):
+    # TODO allow mediatype specification in repo queries
+    query = PrefixQuery().to_string()
+    results = await repo.send_queries(rdf_queries=[], tabular_queries=[(None, query)])
+    i = 0
+    for i, result in enumerate(results[1][0][1]):
+        namespace = result["namespace"]["value"]
+        prefix = result["prefix"]["value"]
+        prefix_graph.bind(prefix, namespace)
+    log.info(f"{i + 1:,} prefixes bound from data repo")
+
+
+async def add_local_prefixes(repo):
     """
     Adds prefixes to the prefix graph
     """
@@ -107,8 +110,10 @@ async def add_prefixes_to_prefix_graph(repo: Repo):
         local_i = await _add_prefixes_from_graph(g)
         log.info(f"{local_i+1:,} prefixes bound from file {f.name}")
 
+
+async def generate_prefixes(repo: Repo):
     if settings.disable_prefix_generation:
-        log.info("DISABLE_PREFIX_GENERATION set to false. Skipping prefix generation.")
+        log.info("DISABLE_PREFIX_GENERATION set to true. Skipping prefix generation.")
     else:
         query = """
             SELECT DISTINCT ?iri
@@ -153,24 +158,8 @@ async def _add_prefixes_from_graph(g):
 
 
 async def create_endpoints_graph(repo) -> Graph:
-    flavours = ["CatPrez", "SpacePrez", "VocPrez"]
-    added_anything = False
     for f in (Path(__file__).parent.parent / "reference_data/endpoints").glob("*.ttl"):
-        # Check if file starts with any of the flavour prefixes
-        matching_flavour = next(
-            (flavour for flavour in flavours if f.name.startswith(flavour.lower())),
-            None,
-        )
-        # If the file doesn't start with any specific flavour or the matching flavour is in settings.prez_flavours, parse it.
-        if not matching_flavour or (
-            matching_flavour and matching_flavour in settings.prez_flavours
-        ):
-            endpoints_graph_cache.parse(f)
-            added_anything = True
-    if added_anything:
-        log.info("Local endpoint definitions loaded")
-    else:
-        log.info("No local endpoint definitions found")
+        endpoints_graph_cache.parse(f)
     await get_remote_endpoint_definitions(repo)
 
 
@@ -191,23 +180,3 @@ WHERE {{
         log.info(f"Remote endpoint definition(s) found and added")
     else:
         log.info("No remote endpoint definitions found")
-
-
-async def add_common_context_ontologies_to_tbox_cache():
-    g = Dataset(default_union=True)
-    for file in (
-        Path(__file__).parent.parent / "reference_data/context_ontologies"
-    ).glob("*.nq"):
-        g.parse(file, format="nquads")
-    relevant_predicates = [
-        RDFS.label,
-        DCTERMS.title,
-        DCTERMS.description,
-        SDO.name,
-        SKOS.prefLabel,
-        SKOS.definition,
-    ]
-    triples = g.triples_choices((None, relevant_predicates, None))
-    for triple in triples:
-        tbox_cache.add(triple)
-    log.info(f"Added {len(tbox_cache):,} triples from context ontologies to TBox cache")

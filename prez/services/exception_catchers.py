@@ -2,10 +2,11 @@ from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from starlette.requests import Request
 
-from prez.models.model_exceptions import (
+from prez.exceptions.model_exceptions import (
     ClassNotFoundException,
     URINotFoundException,
-    NoProfilesException, InvalidSPARQLQueryException,
+    NoProfilesException,
+    InvalidSPARQLQueryException,
 )
 
 
@@ -27,8 +28,8 @@ async def catch_class_not_found_exception(
     return JSONResponse(
         status_code=404,
         content={
-            "error": "Not Found",
-            "detail": exc.message,
+            "error": "NO_CLASS",
+            "message": exc.message,
         },
     )
 
@@ -37,8 +38,8 @@ async def catch_uri_not_found_exception(request: Request, exc: URINotFoundExcept
     return JSONResponse(
         status_code=404,
         content={
-            "error": "Not Found",
-            "detail": exc.message,
+            "error": "NO_URI",
+            "message": exc.message,
         },
     )
 
@@ -47,13 +48,15 @@ async def catch_no_profiles_exception(request: Request, exc: NoProfilesException
     return JSONResponse(
         status_code=404,
         content={
-            "error": "Not Found",
-            "detail": exc.message,
+            "error": "NO_PROFILES",
+            "message": exc.message,
         },
     )
 
 
-async def catch_invalid_sparql_query(request: Request, exc: InvalidSPARQLQueryException):
+async def catch_invalid_sparql_query(
+    request: Request, exc: InvalidSPARQLQueryException
+):
     return JSONResponse(
         status_code=400,
         content={

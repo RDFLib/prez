@@ -1,0 +1,28 @@
+PREFIX dcat: <http://www.w3.org/ns/dcat#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX ex: <https://example.com/>
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+
+ex:SpacePrezCatalog a dcat:Catalog ;
+    dcterms:title "SpacePrez Catalog" ;
+    dcterms:description "A catalog of SpacePrez data" ;
+    dcterms:hasPart ex:FeatureCollection ;
+.
+
+ex:FeatureCollection a geo:FeatureCollection ;
+    rdfs:label "Geo Feature Collection" ;
+    rdfs:member ex:Feature1 , ex:Feature2 ;
+    ex:property "lower level feature collection property"
+.
+
+ex:Feature1 a geo:Feature ;
+    rdfs:label "Feature 1" ;
+    ex:property "feature property" ;
+.
+
+ex:Feature2 a geo:Feature ;
+    rdfs:label "Feature 2" ;
+    ex:property "feature property" ;
+.
