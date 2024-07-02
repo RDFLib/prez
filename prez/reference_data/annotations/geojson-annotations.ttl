@@ -1,0 +1,87 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <https://schema.org/>
+
+<http://purl.org/geojson/vocab#>
+    schema:description "A description of the RFC 7946 GeoJSON model. See https://github.com/geojson/geojson-ld for vocabulary developments." ;
+.
+
+<https://purl.org/geojson/vocab#Feature>
+    rdfs:label "Feature"@en ;
+    schema:description "See RFC 7946 Section 3.2."@en ;
+.
+
+<https://purl.org/geojson/vocab#FeatureCollection>
+    rdfs:label "FeatureCollection"@en ;
+    schema:description "See RFC 7946 Section 3.3."@en ;
+.
+
+<https://purl.org/geojson/vocab#GeometryCollection>
+    rdfs:label "GeometryCollection"@en ;
+    schema:description "See RFC 7946 Section 3.1.8."@en ;
+.
+
+<https://purl.org/geojson/vocab#LineString>
+    rdfs:label "LineString"@en ;
+    schema:description "See RFC 7946 Section 3.1.4."@en ;
+.
+
+<https://purl.org/geojson/vocab#MultiLineString>
+    rdfs:label "MultiLineString"@en ;
+    schema:description "See RFC 7946 Section 3.1.5."@en ;
+.
+
+<https://purl.org/geojson/vocab#MultiPoint>
+    rdfs:label "MultiPoint"@en ;
+    schema:description "See RFC 7946 Section 3.1.3."@en ;
+.
+
+<https://purl.org/geojson/vocab#MultiPolygon>
+    rdfs:label "MultiPolygon"@en ;
+    schema:description "See RFC 7946 Section 3.1.7."@en ;
+.
+
+<https://purl.org/geojson/vocab#Point>
+    rdfs:label "Point"@en ;
+    schema:description "See RFC 7946 Section 3.1.2."@en ;
+.
+
+<https://purl.org/geojson/vocab#Polygon>
+    rdfs:label "Polygon"@en ;
+    schema:description "See RFC 7946 Section 3.1.6."@en ;
+.
+
+<https://purl.org/geojson/vocab#bbox>
+    rdfs:label "bbox"@en ;
+    schema:description "See RFC 7946 Section 5."@en ;
+.
+
+<https://purl.org/geojson/vocab#coordinates>
+    rdfs:label "coordinates"@en ;
+    schema:description "RFC 7946 Section 3.1.1."@en ;
+.
+
+<https://purl.org/geojson/vocab#features>
+    rdfs:label "features"@en ;
+    schema:description "RFC 7946 Section 3.3."@en ;
+.
+
+<https://purl.org/geojson/vocab#geometry>
+    rdfs:label "geometry"@en ;
+    schema:description "RFC 7946 Section 3.2."@en ;
+.
+
+<https://purl.org/geojson/vocab#id>
+    rdfs:label "id"@en ;
+    schema:description "RFC 7946 Section 3.2."@en ;
+.
+
+<https://purl.org/geojson/vocab#properties>
+    rdfs:label "properties"@en ;
+    schema:description "RFC 7946 Section 3.2."@en ;
+.
+
+<https://purl.org/geojson/vocab#type>
+    rdfs:label "type"@en ;
+    schema:description "RFC 7946 Section 3."@en ;
+.
+

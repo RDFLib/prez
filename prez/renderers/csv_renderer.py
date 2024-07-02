@@ -1,5 +1,5 @@
-import io
 import csv
+import io
 
 
 def render_csv_dropdown(rows: list[dict]) -> io.StringIO:

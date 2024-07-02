@@ -1,0 +1,34 @@
+{
+  "200": {
+    "content": {
+      "application/ld+json": {
+        "example": {
+          "@id": "https://example.com/item/1",
+          "https://example.com/property": "value"
+        }
+      },
+      "application/anot+ld+json": {
+        "example": {
+          "@context": {
+            "prez": "https://prez.dev/"
+          },
+          "@id": "https://example.com/item/1",
+          "https://example.com/property": "value",
+          "prez:label": "Item One"
+        }
+      },
+      "application/rdf+xml": {
+        "example": "<![CDATA[\n<?xml version=\"1.0\"?>\n<rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n    <rdf:Description rdf:about=\"https://example.com/item/1\">\n        <ns1:property xmlns:ns1=\"https://example.com/\">value</ns1:property>\n    </rdf:Description>\n</rdf:RDF>\n]]>"
+      },
+      "text/anot+turtle": {
+        "example": "@prefix prez: <https://prez.dev/> .\n\n<https://example.com/item/1> \n    <https://example.com/property> \"value\" ;\n    prez:label \"Item One\" ."
+      },
+      "text/turtle": {
+        "example": "<https://example.com/item/1> <https://example.com/property> \"value\" ."
+      },
+      "application/sparql-query": {
+        "example": "CONSTRUCT { ?item <https://example.com/property> ?value } WHERE { ?item <https://example.com/property> ?value }"
+      }
+    }
+  }
+}

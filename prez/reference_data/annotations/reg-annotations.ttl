@@ -1,0 +1,345 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <https://schema.org/>
+
+<http://dbpedia.org/ontology/Language>
+    rdfs:label "Language" ;
+    schema:description "A language that is supported by a multilingual registry." ;
+.
+
+<http://dbpedia.org/ontology/languageCode>
+    rdfs:label "Language code" ;
+    schema:description "The two-character ISO 639-1 language code." ;
+.
+
+<http://purl.org/linked-data/registry>
+    rdfs:label "Registry ontology"@en ;
+    schema:description
+        <https://github.com/ukgovld/registry-core/wiki/images/registry-diagram.png> ,
+        "Core ontology for linked data registry services. Based on ISO19135 but heavily modified to suit Linked Data representations and applications."@en ;
+.
+
+<http://purl.org/linked-data/registry#Delegated>
+    rdfs:label "Delegated"@en ;
+    schema:description "A registerable entity which represents some form of delegation"@en ;
+.
+
+<http://purl.org/linked-data/registry#DelegatedRegister>
+    rdfs:label "Delegated Register"@en ;
+    schema:description "A register whose member contents are determined through delegation to a SPARQL endpoint"@en ;
+.
+
+<http://purl.org/linked-data/registry#EntityReference>
+    rdfs:label "Entity Reference"@en ;
+    schema:description "A reference to some internal or external Linked Data resource. The reg:entity gives the URI of the resource being referenced. If a reg:sourceGraph value is present then it is the URI for a named graph within the Registry containing the properties of the referenced entity. If reg:entityVersion is present it gives URI for the particular version:Version of the entity being referenced. Normally only one of reg:sourceGraph and reg:entityVersion is needed since versioned entities are normally stored in the default graph."@en ;
+.
+
+<http://purl.org/linked-data/registry#FederatedRegister>
+    rdfs:label "Federated Register"@en ;
+    schema:description "A registerable entity which forwards all requests to a remote register. Queries which traverse the register hierarchy such as entity search will also be forwarded"@en ;
+.
+
+<http://purl.org/linked-data/registry#MonitorSpec>
+    rdfs:label "Monitor Spec"@en ;
+    schema:description "A specification for a register to be monitored."@en ;
+.
+
+<http://purl.org/linked-data/registry#NamespaceForward>
+    rdfs:label "Namespace Forward"@en ;
+    schema:description "A registerable entity which simply forwards all requests to the delegation target."@en ;
+.
+
+<http://purl.org/linked-data/registry#Register>
+    rdfs:label "Register"@en ;
+    schema:description "Represents a collection of registered items, together with some associated governance regime. If one or more licenses is stated then each license applies to all the entries in the register. "@en ;
+.
+
+<http://purl.org/linked-data/registry#RegisterItem>
+    rdfs:label "RegisterItem"@en ;
+    schema:description "A metadata record for an entry in a register. Note that cardinality constraints can be met by sub-properties, for example an item with a skos:prefLabel implies an rdfs:label and so meets the cardinality constraint on rdfs:label."@en ;
+.
+
+<http://purl.org/linked-data/registry#SPARQLAskQuery>
+    rdfs:label "SPARQL ASK query"@en ;
+    schema:description "Represents a SPARQL ASK query as might be used for validation."@en ;
+.
+
+<http://purl.org/linked-data/registry#SPARQLConstructQuery>
+    rdfs:label "SPARQL CONSTRUCT query"@en ;
+    schema:description "Represents a SPARQL CONSTRUCT query."@en ;
+.
+
+<http://purl.org/linked-data/registry#SPARQLQuery>
+    rdfs:label "SPARQL query"@en ;
+    schema:description "Represents a SPARQL query as a reusable resource."@en ;
+.
+
+<http://purl.org/linked-data/registry#SPARQLSelectQuery>
+    rdfs:label "SPARQL SELECT query"@en ;
+    schema:description "Represents a SPARQL SELECT query."@en ;
+.
+
+<http://purl.org/linked-data/registry#Status>
+    rdfs:label "Status"@en ;
+    schema:description "Open set of status code for entries in a register"@en ;
+.
+
+<http://purl.org/linked-data/registry#StatusScheme>
+    rdfs:label "Status Scheme"@en ;
+    schema:description "Concept scheme containing registry status codes"@en ;
+.
+
+<http://purl.org/linked-data/registry#Topic>
+    rdfs:label "Topic"@en ;
+    schema:description "A messaging topic that can be notified of changes in the registry." ;
+.
+
+<http://purl.org/linked-data/registry#alias>
+    rdfs:label "alias"@en ;
+    schema:description "An alternative URI for the entity, the alias resource is regarded by this register as owl:sameAs the definition entity"@en ;
+.
+
+<http://purl.org/linked-data/registry#annotation>
+    rdfs:label "annotation"@en ;
+    schema:description "The URI of a graph of annotation statements associate with this item"@en ;
+.
+
+<http://purl.org/linked-data/registry#category>
+    rdfs:label "category"@en ;
+    schema:description "Optional classification for a registered item within one or more SKOS classification schemes to support navigation and discovery. Orthogonal to the structure provided by the register hierarchy which is about governance."@en ;
+.
+
+<http://purl.org/linked-data/registry#containedItemClass>
+    rdfs:label "contained item class"@en ;
+    schema:description "A class of entities that can occur in this register"@en ;
+.
+
+<http://purl.org/linked-data/registry#definition>
+    rdfs:label "definition"@en ;
+    schema:description "The entity which has been registered."@en ;
+.
+
+<http://purl.org/linked-data/registry#delegationTarget>
+    rdfs:label "delegation target"@en ;
+    schema:description "A resource to which the delegated register delegates, may be a register in another registry service, a SPARQL endpoint or some other web resource"@en ;
+.
+
+<http://purl.org/linked-data/registry#entity>
+    rdfs:label "entity"@en ;
+    schema:description "The RDF resource identified by an entity reference"@en ;
+.
+
+<http://purl.org/linked-data/registry#entityVersion>
+    rdfs:label "entity version"@en ;
+    schema:description "Indicates the particular version:Version of the entity being referenced."@en ;
+.
+
+<http://purl.org/linked-data/registry#enumerationObject>
+    rdfs:label "enumeration object"@en ;
+    schema:description "Specifies the object part of a triple pattern used to enumerate the members of a delegated register"@en ;
+.
+
+<http://purl.org/linked-data/registry#enumerationPredicate>
+    rdfs:label "enumeration predicate"@en ;
+    schema:description "Specifies the predicate part of a triple pattern used to enumerate the members of a delegated register"@en ;
+.
+
+<http://purl.org/linked-data/registry#enumerationSubject>
+    rdfs:label "enumeration subject"@en ;
+    schema:description "Specifies the subject part of a triple pattern used to enumerate the members of a delegated register"@en ;
+.
+
+<http://purl.org/linked-data/registry#forwardingCode>
+    rdfs:label "forwarding code"@en ;
+    schema:description "The HTTP status code to return the requester in order to forward the request."@en ;
+.
+
+<http://purl.org/linked-data/registry#governancePolicy>
+    rdfs:label "governance policy"@en ;
+    schema:description "A resource, such as a web accessible-document, which describes the governance policy applicable to this register."@en ;
+.
+
+<http://purl.org/linked-data/registry#ignores>
+    rdfs:label "ignores"@en ;
+    schema:description "A sub-register to exclude from monitoring."@en ;
+.
+
+<http://purl.org/linked-data/registry#inverseMembershipPredicate>
+    rdfs:label "inverse membership predicate"@en ;
+    schema:description "Indicates a property which links a member of a collection back to the collection itself, this is the reverse direction to the normal ldp:membershipPredicate"@en ;
+.
+
+<http://purl.org/linked-data/registry#itemClass>
+    rdfs:label "item class"@en ;
+    schema:description "The type of the entity that this record is about. Note that it may be possible to register a non-RDF resource in which case this property provides a way to state the intended class of the entity even though no direct RDF assertion of type is available."@en ;
+.
+
+<http://purl.org/linked-data/registry#manager>
+    rdfs:label "manager"@en ;
+    schema:description "The manager of the register, may be a person (foaf:Person) or an organization (org:Organization). Operates the register on behalf of the owner, makes day to day decisions on acceptance of entries based on agreed principles but it may be possible to appeal to the owner to override a decision by the manager."@en ;
+.
+
+<http://purl.org/linked-data/registry#monitors>
+    rdfs:label "monitors"@en ;
+    schema:description "A register to be monitored."@en ;
+.
+
+<http://purl.org/linked-data/registry#nextState>
+    rdfs:label "next state"@en ;
+    schema:description "Gives the label of a state which can follow from this state"@en ;
+.
+
+<http://purl.org/linked-data/registry#notation>
+    rdfs:label "notation"@en ;
+    schema:description "A short text string which can be used to denote the register item. Must be unique within the register. If available it should be used as the path segment, relative to the parent register, for the RegisterItem (and for the item itself, if managed). Restricted to be a syntactically legal URI segment (i.e. *pchar)."@en ;
+.
+
+<http://purl.org/linked-data/registry#notifies>
+    rdfs:label "notifies"@en ;
+    schema:description "A topic or channel to be notified when the monitored register changes."@en ;
+.
+
+<http://purl.org/linked-data/registry#operatingLanguage>
+    rdfs:label "operating language"@en ;
+    schema:description "Indicates a language supported by the register and the items within it. The language should be indicated by a resource within a well-maintained URI set such as the Library of Congress language URIs e.g. http://id.loc.gov/vocabulary/iso639-1/en"@en ;
+.
+
+<http://purl.org/linked-data/registry#owner>
+    rdfs:label "owner"@en ;
+    schema:description "The owner of the register, may be a person (foaf:Person) or an organization (org:Organization). The owner has final authority over the contents of the regster."@en ;
+.
+
+<http://purl.org/linked-data/registry#predecessor>
+    rdfs:label "predecessor"@en ;
+    schema:description "An item which has been replaced this one within the register. Should be asserted between hub resources (VersionedThing)."@en ;
+.
+
+<http://purl.org/linked-data/registry#presentation>
+    rdfs:label "presentation"@en ;
+    schema:description "Presentational hint for showing items with this status"@en ;
+.
+
+<http://purl.org/linked-data/registry#priorState>
+    rdfs:label "next state"@en ;
+    schema:description "Gives the label of a state which can precede this state"@en ;
+.
+
+<http://purl.org/linked-data/registry#query>
+    rdfs:label "query"@en ;
+    schema:description "The source of a SPARQL query"@en ;
+.
+
+<http://purl.org/linked-data/registry#register>
+    rdfs:label "register"@en ;
+    schema:description "The register in which this item has been registered."@en ;
+.
+
+<http://purl.org/linked-data/registry#release>
+    rdfs:label "release"@en ;
+    schema:description "A tagged snapshot of a register"@en ;
+.
+
+<http://purl.org/linked-data/registry#representationOf>
+    rdfs:label "representation of"@en ;
+    schema:description "A resource, typically a real-world object, which the registered entity is a representation for."@en ;
+.
+
+<http://purl.org/linked-data/registry#sourceDataset>
+    rdfs:label "source dataset"@en ;
+    schema:description "Gives the source dataset in a Linkset, the other link target is assumed to be the destination"@en ;
+.
+
+<http://purl.org/linked-data/registry#sourceGraph>
+    rdfs:label "source graph"@en ;
+    schema:description "A resource representing an RDF graph (within the Registry's SPARQL dataset) containing the properties of the reference entity. If not present then assume default graph."@en ;
+.
+
+<http://purl.org/linked-data/registry#status>
+    rdfs:label "status"@en ;
+    schema:description "The status of this register entry"@en ;
+.
+
+<http://purl.org/linked-data/registry#statusAccepted>
+    rdfs:label "accepted"@en ;
+    schema:description "An entry that has been accepted for use and is visible in the default register listing. Includes entries that have seen been retired or superseded."@en ;
+.
+
+<http://purl.org/linked-data/registry#statusAny>
+    rdfs:label "any"@en ;
+    schema:description "Placeholder denoting any registry status."@en ;
+.
+
+<http://purl.org/linked-data/registry#statusDeprecated>
+    rdfs:label "deprecated"@en ;
+    schema:description "An entry that has been retired or replaced and is no longer to be used."@en ;
+.
+
+<http://purl.org/linked-data/registry#statusExperimental>
+    rdfs:label "experimental"@en ;
+    schema:description "An entry that has been accepted into the register temporarily and may be subject to change or withdrawal."@en ;
+.
+
+<http://purl.org/linked-data/registry#statusInvalid>
+    rdfs:label "invalid"@en ;
+    schema:description "An entry which has been invalidated due to serious flaws, distinct from retrirement. Corresponds to ISO 19135(redraft) 'invalid'"@en ;
+.
+
+<http://purl.org/linked-data/registry#statusNotAccepted>
+    rdfs:label "notAccepted"@en ;
+    schema:description "An entry that should not be visible in the default register listing. Corresponds to ISO 19135:2005 'notValid'"@en ;
+.
+
+<http://purl.org/linked-data/registry#statusReserved>
+    rdfs:label "reserved"@en ;
+    schema:description "A reserved entry allocated for some as yet undetermined future use."@en ;
+.
+
+<http://purl.org/linked-data/registry#statusRetired>
+    rdfs:label "retired"@en ;
+    schema:description "An entry that has been withdrawn from use.  Corresponds to ISO 19135:2005 'retired'"@en ;
+.
+
+<http://purl.org/linked-data/registry#statusStable>
+    rdfs:label "stable"@en ;
+    schema:description "An entry that is seen as having a reasonable measure of stability, may be used to mark the full adoption of a previously 'experimental' entry."@en ;
+.
+
+<http://purl.org/linked-data/registry#statusSubmitted>
+    rdfs:label "submitted"@en ;
+    schema:description "A proposed entry which is not yet approved for use for use. Corresponds to ISO 19135:(redraft) 'submitted'"@en ;
+.
+
+<http://purl.org/linked-data/registry#statusSuperseded>
+    rdfs:label "superseded"@en ;
+    schema:description "An entry that has been replaced by a new alternative which should be used instead.  Corresponds to ISO 19135:2005 'superseded'."@en ;
+.
+
+<http://purl.org/linked-data/registry#statusValid>
+    rdfs:label "valid"@en ;
+    schema:description "An entry that has been accepted into the register and is deemed fit for use. Corresponds to ISO 19135:2005 'valid'."@en ;
+.
+
+<http://purl.org/linked-data/registry#submitter>
+    rdfs:label "submitter"@en ;
+    schema:description "The person or organization who originally submitted this register entry. Subsequent chages to the entry may have been made by other agents."@en ;
+.
+
+<http://purl.org/linked-data/registry#subregister>
+    rdfs:label "subregister"@en ;
+    schema:description "Indicates a register that is itself an entry in this principle register."@en ;
+.
+
+<http://purl.org/linked-data/registry#successor>
+    rdfs:label "successor"@en ;
+    schema:description "Indicates the replacement for a superseded item."@en ;
+.
+
+<http://purl.org/linked-data/registry#tag>
+    rdfs:label "tag"@en ;
+    schema:description "The tag used to label a collection which snapshots the state of a register"@en ;
+.
+
+<http://purl.org/linked-data/registry#validationQuery>
+    rdfs:label "validation query"@en ;
+    schema:description "A SPARQL ASK query which can be used to validate a proposed entry in this register. Returns true of an error is found."@en ;
+.
+

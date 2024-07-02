@@ -1,0 +1,622 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <https://schema.org/>
+
+<http://rs.tdwg.org/dwc/terms/materialSampleID>
+    rdfs:label "material sample ID" ;
+    schema:description "An identifier for the MaterialSample (as opposed to a particular digital record of the material sample). In the absence of a persistent global unique identifier, construct one from a combination of identifiers in the record that will most closely make the materialSampleID globally unique." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/>
+    rdfs:label "TERN Ontology" ;
+    rdfs:seeAlso
+        <https://www.publish.csiro.au/book/5230/> ,
+        <https://www.w3.org/TR/vocab-ssn-ext/> ,
+        <https://www.w3.org/ns/ssn/> ;
+    schema:description """The TERN Ontology comprises a set of vocabularies for representing plot-based ecological data. It was developed primarily based on the SOSA (Sensor, Observation, Sample, and Actuator) ontology. The TERN Ontology's classes and properties have been tailored to describe terrestrial ecology survey data including flora, vegetation and soil, following the methodologies outlined in the Australian Soil and Land Survey Field Handbook.
+  
+  
+  """ ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Attribute>
+    rdfs:label "Attribute" ;
+    schema:description "A property-value pair. Same modelling pattern as [schema:PropertyValue](https://schema.org/PropertyValue)." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Boolean>
+    rdfs:label "Boolean" ;
+    schema:description "Class to encapsulate a true-or-false value" ;
+.
+
+<https://w3id.org/tern/ontologies/tern/CategoricalValue>
+    rdfs:label "Categorical Value" ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Concept>
+    rdfs:label "Concept" ;
+    schema:description "Class to encapsulate a classifier, usually a value from a controlled vocabulary." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/CosmOzStation>
+    rdfs:label "CosmOz Station" ;
+    rdfs:seeAlso <https://cosmoz.csiro.au> ;
+    schema:description """CosmOz is the Australian Cosmic-Ray Neutron Soil Moisture Monitoring Network
+Beginning in October 2010, CSIRO Land and Water installed cosmic-ray probes at a number of locations around Australia to form the inaugural CosmOz network. These sites were established at instrumented research sites operated by CSIRO and University collaborators to test and validate the operation of this new technology.
+These novel probes use cosmic rays originating from outer space to measure average soil moisture over an area of about 30 hectares to depths in the soil of between 10 to 50 cm. This constitutes a quantum leap over conventional on-ground soil moisture sensing technology that can only measure soil moisture content within small volumes of soil.
+Each system is comprised of a data logger, neutron detector, satellite telemetry, tipping bucket rain gauge, temperature humidity and pressure sensors and three surface moisture (TDR) probes. The system requires minimal maintenance and is powered by a solar charging system. The entire system is installed on a single mast. Data is logged and transmitted every 60 minutes to the CosmOz database.""" ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Count>
+    rdfs:label "Count" ;
+    schema:description "Class to encapsulate an integer value." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Dataset>
+    rdfs:label "Dataset" ;
+    schema:description "A collection of data, published or curated by a single agent, and available for access or download in one or more representations." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Date>
+    rdfs:label "Date" ;
+.
+
+<https://w3id.org/tern/ontologies/tern/DateTime>
+    rdfs:label "Date time" ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Deployment>
+    rdfs:label "Deployment" ;
+    schema:description "Describes the Deployment of one or more Systems for a particular purpose. Deployment may be done on a Platform."@en ;
+.
+
+<https://w3id.org/tern/ontologies/tern/DigitalCamera>
+    rdfs:label "Digital Camera" ;
+    schema:description "The model as defined by the manufacturer." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Dimension>
+    rdfs:label "Dimension" ;
+    schema:description "The dimension of a 2D square or rectangular feature. Example, the dimension of a rectangular plot [Site](#EcologicalSite). This class should perhaps have specialised classes to express not just square or rectangular features but also others such as circular features." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Distribution>
+    rdfs:label "Distribution" ;
+    schema:description "A specific representation of a dataset. A dataset might be available in multiple serializations that may differ in various ways, including natural language, media-type or format, schematic organization, temporal and spatial resolution, level of detail or profiles (which might specify any or all of the above)." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/EarthObservationSatellite>
+    rdfs:label "Earth Observation Satellite" ;
+    rdfs:seeAlso <https://gcmd.earthdata.nasa.gov/kms/concept/3466eed1-2fbb-49bf-ab0b-dc08731d502b> ;
+    schema:description "Earth observation satellites are satellites specifically designed to observe Earth from orbit, similar to spy satellites but intended for non-military uses such as environmental monitoring, meteorology, map making etc. Source: Wikipedia, http://en.wikipedia.org/wiki/Earth_observation_satellite Group: Platform_Details Entry_ID: Earth Observation Satellites Group: Platform_Identification Platform_Category: Earth Observation Satellites Short_Name: Earth Observation Satellites End_Group End_Group" ;
+.
+
+<https://w3id.org/tern/ontologies/tern/EcosystemProcessesSite>
+    rdfs:label "Ecosystem Processes Site" ;
+    schema:description "An ecological [Site](#EcologicalSite) that usually hosts a [FluxTower](#FluxTower)." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/FeatureOfInterest>
+    rdfs:label "Feature of Interest" ;
+    schema:description "The thing whose property is being estimated or calculated in the course of an Observation to arrive at a Result or whose property is being manipulated by an Actuator, or which is being sampled or transformed in an act of Sampling."@en ;
+.
+
+<https://w3id.org/tern/ontologies/tern/FixedPlatform>
+    rdfs:label "Fixed Platform" ;
+    schema:description "A fixed platform based on land." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/FluxTower>
+    rdfs:label "Flux Tower" ;
+    schema:description "Across the globe, towers stand among the landscape, with sensors monitoring these eddies for carbon dioxide, water vapor and other gasses.  These so-called flux towers collect data on carbon dioxide exchange rates between the earth and atmosphere." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/IRI>
+    rdfs:label "IRI" ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Input>
+    rdfs:label "Input" ;
+    schema:description "*Input* - Any information that is provided to a [Procedure](#Procedure) for its use." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Instant>
+    rdfs:label "Instant" ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Instrument>
+    rdfs:label "Instrument" ;
+    schema:description "A device or instrument that is used for making measurements or observations." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/ManagedFeature>
+    rdfs:label "Feature which is managed for TERN purposes" ;
+.
+
+<https://w3id.org/tern/ontologies/tern/MaterialSample>
+    rdfs:label "Material sample" ;
+    schema:description "A physical result of a sampling (or subsampling) event. In biological collections, the material sample is typically collected, and either preserved or destructively processed." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Method>
+    rdfs:label "Method" ;
+    rdfs:seeAlso
+        <https://apps.usgs.gov/thesaurus/term-simple.php?thcode=2&code=376> ,
+        <https://the9000store.com/iso-9001-2015-requirements/iso-9001-2015-context-of-the-organization/processes-procedures-work-instructions/> ;
+    schema:description "A Method describes in detailed steps how a workflow, protocol, plan or algorithm is carried out to make an [Observation](#Observation) or a [Sample](#Sample). It explains the steps to be carried out to arrive at reproducible [Result](#Result)." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/MobilePlatform>
+    rdfs:label "Mobile Platform" ;
+    schema:description "A moving mobile platform on land, in water or in space." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/ObservableProperty>
+    rdfs:label "Observable Property" ;
+    schema:description "An observable quality (property, characteristic) of a [FeatureOfInterest](http://w3.org/ns/sosa/FeatureOfInterest). A feature-of-interest refers to a feature whose properties are measured or observed. " ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Observation>
+    rdfs:label "Observation" ;
+    schema:description "Act of carrying out an (Observation) [Procedure](#Procedure) to estimate or calculate a value of a property of a [FeatureOfInterest](http://w3.org/ns/sosa/FeatureOfInterest). Links to a [Sensor](http://w3.org/ns/sosa/Sensor) to describe what made the [Observation](#Observation) and how; links to an [ObservableProperty](#ObservableProperty) to describe what the result is an estimate of, and to a [FeatureOfInterest](http://w3.org/ns/sosa/FeatureOfInterest) to detail what that property was associated with." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/ObservationCollection>
+    rdfs:label "Observation collection" ;
+    schema:description "Collection of one or more observations, whose members share a common value for one or more property" ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Parameter>
+    rdfs:label "Parameter" ;
+    schema:description "A [FeatureOfInterest's](http://w3.org/ns/sosa/FeatureOfInterest) property or characteristic which an [Observation](#Observation) is measuring using some [Procedure](#Procedure)." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Percent>
+    rdfs:label "Percent" ;
+    schema:description "Class to encapsulate a quantitative measure expressed as a percent value." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/PercentRange>
+    rdfs:label "Percent Range" ;
+    schema:description "Class to encapsulate a quantitative range expressed as in percent values." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Platform>
+    rdfs:label "Platform" ;
+    schema:description "An entity that hosts other entities, particularly [Sensors](#Sensor), [Samplers](#Sampler), and other [Platforms](#Platform)." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Plot>
+    rdfs:label "Plot" ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Procedure>
+    rdfs:label "Procedure" ;
+    schema:description "A workflow, protocol, plan, algorithm, or computational method specifying how to make an [Observation](#Observation), create a [Sample](#Sample), or make a change to the state of the world (via an [Actuator](http://w3.org/ns/sosa/Actuator). A [Procedure](#Procedure) is re-usable, and might be involved in many [Observations](#Observation), [Samplings](#Sampling), or [Actuations](http://w3.org/ns/sosa/Actuation). it explains the steps to be carried out to arrive at reproducible [Results](#Result)." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Quadrat>
+    rdfs:label "Quadrat" ;
+.
+
+<https://w3id.org/tern/ontologies/tern/QuantitativeMeasure>
+    rdfs:label "Quantitative Measure" ;
+.
+
+<https://w3id.org/tern/ontologies/tern/QuantitativeRange>
+    rdfs:label "Quantitative range" ;
+    schema:description "Class to encapsulate a quantitative range." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/RDFDataset>
+    rdfs:label "RDFDataset" ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Result>
+    rdfs:label "Result" ;
+    schema:description "The result of an [Observation](#Observation), [Actuation](http://w3.org/ns/sosa/Actuation), or act of [Sampling](#Sampling). To store an observation's simple result value one can use the [hasSimpleResult](http://w3.org/ns/sosa/hasSimpleResult) property." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Sample>
+    rdfs:label "Sample" ;
+    schema:description "*A feature which is intended to be representative of a [FeatureOfInterest](http://w3.org/ns/sosa/FeatureOfInterest) on which [Observations](#Observation) may be made. Physical samples are sometimes known as physical specimens." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Sampler>
+    rdfs:label "Sampler" ;
+    schema:description "Sampler - A device that is used by, or implements, a (Sampling) [Procedure](#Procedure) to create or transform one or more samples. " ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Sampling>
+    rdfs:label "Sampling" ;
+    schema:description "An activity of [Sampling](#Sampling) carries out a (Sampling) [Procedure](#Procedure) to create or transform one or more [Samples](#Sample)." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Sensor>
+    rdfs:label "Sensor" ;
+    schema:description "Device, agent (including humans), or software (simulation) involved in, or implementing, a Procedure. Sensors respond to a stimulus, e.g., a change in the environment, or input data composed from the results of prior Observations, and generate a Result. Sensors can be hosted by Platforms." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Site>
+    rdfs:label "Ecological Site" ;
+    schema:description "Location where observations may be made. This is a subclass of [Sample](#Sample) because a site should be designed to be representative of an environmental system (which may be an ecosystem or bioregion) or zone (which may be a zone such as a parcel or tract)." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/SiteVisit>
+    rdfs:label "Site Visit" ;
+    schema:description "A Site Visit is a discrete time-bounded activity at a [Site](#Site), during which [Sampling](#Sampling) or [Observation](#Observation) activities occur. " ;
+.
+
+<https://w3id.org/tern/ontologies/tern/System>
+    rdfs:label "System" ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Taxon>
+    rdfs:label "Taxon" ;
+    schema:description "A group of organisms (sensu http://purl.obolibrary.org/obo/OBI_0100026) considered by taxonomists to form a homogeneous unit." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Text>
+    rdfs:label "Text" ;
+    schema:description "Class to encapsulate a textual value." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Transect>
+    rdfs:label "Transect" ;
+.
+
+<https://w3id.org/tern/ontologies/tern/Value>
+    rdfs:label "Value" ;
+.
+
+<https://w3id.org/tern/ontologies/tern/area>
+    rdfs:label "area" ;
+    schema:description "The extent of a [Site](#EcologicalSite) area, e.g., in m2" ;
+.
+
+<https://w3id.org/tern/ontologies/tern/attribute>
+    rdfs:label "attribute" ;
+    schema:description "Point to a concept representing the attribute." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/cardinalDirection>
+    rdfs:label "cardinal direction" ;
+    schema:description "The cardinal direction of the *thing* represented as a string and expressed by cardinal and intercardinal points. " ;
+.
+
+<https://w3id.org/tern/ontologies/tern/centroidPoint>
+    rdfs:label "centroid point" ;
+    rdfs:seeAlso <https://en.wikipedia.org/wiki/List_of_centroids> ;
+    schema:description "The centroid point of an object-of-interest." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/dateCommissioned>
+    rdfs:label "date commissioned" ;
+    schema:description "The date when, e.g., a [Site](#EcologicalSite) is ready to commence its operations, after it is successfully installed and tested." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/dateDecommissioned>
+    rdfs:label "date decommissioned" ;
+    schema:description "The date when, e.g., a [Site](#EcologicalSite) is decommissioned or stopped operating." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/dimension>
+    rdfs:label "dimension" ;
+    schema:description "Dimenion in metres." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/domain>
+    rdfs:label "domain" ;
+    schema:description "The domain of the observation." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/equipment>
+    rdfs:label "equipment" ;
+    schema:description "Describe the equipment used as text." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/featureType>
+    rdfs:label "feature type" ;
+    schema:description "The feature type of a [Feature of Interest](#FeatureofInterest)." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/fluxnetID>
+    rdfs:label "fluxnet ID" ;
+    rdfs:seeAlso <https://fluxnet.org/> ;
+    schema:description "The unique identifier for flux towers registered with FLUXNET." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/globalMatch>
+    rdfs:label "global match" ;
+    schema:description "Link a concept to an upper concept (in the closed system)." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/globalValue>
+    rdfs:label "global value" ;
+    schema:description "A property that links a concept from a vocabulary to another concept in an authoritative/endorsed vocabulary." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/globalVocabulary>
+    rdfs:label "global vocabulary" ;
+    schema:description "The global vocabulary refers to the main vocabulary, which takes precedence over other similar vocabularies to promote data harmonisation." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/hasAttribute>
+    rdfs:label "has attribute" ;
+    schema:description "Link to an [Attribute](#Attribute)." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/hasCategoricalCollection>
+    rdfs:label "has categorical collection" ;
+    schema:description "A property that links a concept to a collection containing its categorical values." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/hasEnvironmentalCharacteristic>
+    rdfs:label "has environmental characteristic" ;
+    schema:description "The subject has some environmental characteristic. Points to a set of [Observations](#Observation) within an [EnvironmentalCharacteristic](#EnvironmentalCharacteristic)." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/hasFeatureType>
+    rdfs:label "has feature type" ;
+    schema:description "Links a concept to a feature type." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/hasMethod>
+    rdfs:label "has method" ;
+    schema:description "A property that links a concept to a method." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/hasObservation>
+    rdfs:label "has observation" ;
+    schema:description "Link to an [Observation](#Observation)." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/hasObservationTheme>
+    rdfs:label "has observation theme" ;
+    schema:description "Link a concept to an observation theme." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/hasParameter>
+    rdfs:label "has parameter" ;
+    schema:description "A property that links a concept to a parameter." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/hasSampling>
+    rdfs:label "has sampling" ;
+    schema:description "Link to a [Sampling](#Sampling) instance." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/hasSamplingPoint>
+    rdfs:label "has sampling point" ;
+    schema:description "A property that links, e.g., a [Sampling](#Sampling) to a [SamplingPoint](#SamplingPoint)." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/hasSimpleValue>
+    rdfs:label "has simple value" ;
+.
+
+<https://w3id.org/tern/ontologies/tern/hasSite>
+    rdfs:label "has site" ;
+    schema:description "A property that links, e.g., a [SiteVisit](#EcologicalSiteVisit) to a [Site](#EcologicalSite)." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/hasSiteVisit>
+    rdfs:label "has site visit" ;
+    schema:description "A property that links, e.g., a [Site](#EcologicalSite) to a [Site Visit](#EcologicalSiteVisit)." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/hasSubActivity>
+    rdfs:label "has sub activity" ;
+    schema:description "Link to an [Observation](#Observation) or [Sampling](#Sampling)." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/hasValue>
+    rdfs:label "has value" ;
+.
+
+<https://w3id.org/tern/ontologies/tern/instructions>
+    rdfs:label "instructions" ;
+    schema:description "Describe the instructions of the procedure/method." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/instrumentType>
+    rdfs:label "instrument type" ;
+    schema:description "The type of instrument used." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/isAttributeOf>
+    rdfs:label "is attribute of" ;
+    schema:description "Link from an [Attribute](#Attribute)." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/isGlobalMatchOf>
+    rdfs:label "is global match of" ;
+    schema:description "An inverse property of [globalMatch](#globalMatch); Links an upper concept to a concept (in the closed system)." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/isSamplingPointOf>
+    rdfs:label "is sampling point of" ;
+    schema:description "The inverse property [hasSamplingPoint](#hasSamplingPoint)." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/isSiteOf>
+    rdfs:label "is site of" ;
+.
+
+<https://w3id.org/tern/ontologies/tern/isSiteVisitOf>
+    rdfs:label "is site visit of" ;
+.
+
+<https://w3id.org/tern/ontologies/tern/isSubActivityOf>
+    rdfs:label "is sub activity of" ;
+    schema:description "A property that links an activity to its parent activity." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/length>
+    rdfs:label "length" ;
+    rdfs:seeAlso <http://qudt.org/vocab/quantitykind/Length> ;
+    schema:description "A measure of distance." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/localValue>
+    rdfs:label "local value" ;
+.
+
+<https://w3id.org/tern/ontologies/tern/localVocabulary>
+    rdfs:label "local vocabulary" ;
+.
+
+<https://w3id.org/tern/ontologies/tern/locationDescription>
+    rdfs:label "location description" ;
+    schema:description "The description of the location." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/locationProcedure>
+    rdfs:label "location procedure" ;
+    schema:description "Link to a procedure used to obtain the location." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/methodType>
+    rdfs:label "method type" ;
+    schema:description "A particular method type used to conduct some survey." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/observationType>
+    rdfs:label "observation type" ;
+    schema:description "The type of observation." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/polygon>
+    rdfs:label "polygon" ;
+    schema:description "The polygon of the subject." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/purpose>
+    rdfs:label "purpose" ;
+    schema:description "Describe the purpose of something." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/sampleStorageLocation>
+    rdfs:label "sample storage location" ;
+    schema:description "A property that links a [PhysicalSpecimen](#PhysicalSpecimen) to the location [Point](https://w3id.org/tern/ontologies/loc/Point) of where it is stored." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/samplingType>
+    rdfs:label "sampling type" ;
+    schema:description "The type of sampling act." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/scope>
+    rdfs:label "scope" ;
+    schema:description "Describe the scope of something." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/shortName>
+    rdfs:label "short name" ;
+.
+
+<https://w3id.org/tern/ontologies/tern/siteDescription>
+    rdfs:label "site description" ;
+    schema:description "Contextual information is collected at each site. This includes measures of slope an aspect, surface strew and lithology, and information on the grazing and fire history of the site (Credit: TERN AusPlots)." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/soilClassification>
+    rdfs:label "soil classification" ;
+    schema:description "The term used to classify the SoilProfile." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/soilHorizonClassifier>
+    rdfs:label "soil horizon classifier" ;
+    schema:description "Soil horizon classifier as defined in the Australian Soil and Land Survey Field Handbook on page 148." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/stratum>
+    rdfs:label "stratum" ;
+    schema:description "A stratum is a distinct, easily seen, layer of foliage and branches of a measurable height." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/swPoint>
+    rdfs:label "sw point" ;
+    schema:description "The south-west point of the subject." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/taxon>
+    rdfs:label "taxon" ;
+    schema:description "Taxon classification." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/transectDirection>
+    rdfs:label "transect direction" ;
+    schema:description "Describes the direction of the transect." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/transectEndPoint>
+    rdfs:label "transect end point" ;
+    schema:description "Refers to the [tern-loc:Point](https://w3id.org/tern/ontologies/loc/Point) representing the end of a transect." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/transectStartPoint>
+    rdfs:label "transect start point" ;
+    schema:description "Refers to the [tern-loc:Point](https://w3id.org/tern/ontologies/loc/Point) representing the start of a transect." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/uncertainty>
+    rdfs:label "uncertainty" ;
+    schema:description "Uncertainty for a quantitative value." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/unit>
+    rdfs:label "unit" ;
+    schema:description "Unit of measure." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/usedInstrument>
+    rdfs:label "used instrument" ;
+.
+
+<https://w3id.org/tern/ontologies/tern/valueType>
+    rdfs:label "value type" ;
+    schema:description "Relates a Property to a specialisation of tern:Value." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/vocabulary>
+    rdfs:label "vocabulary" ;
+    schema:description "Controlled vocabulary, taxonomy etc." ;
+.
+
+<https://w3id.org/tern/ontologies/tern/width>
+    rdfs:label "width" ;
+    rdfs:seeAlso <http://qudt.org/vocab/quantitykind/Width> ;
+    schema:description "The measurement or extent of something from side to side." ;
+.
+
+<https://w3id.org/tern/resources/a083902d-d821-41be-b663-1d7cb33eea66>
+    rdfs:label "TERN" ;
+.
+
+[]    rdfs:label "Anusuriya Devaraju" ;
+.
+
+[]    rdfs:label "Habacuc Flores Moreno" ;
+.
+
+[]    rdfs:label "Javier Sanchez Gonzalez" ;
+.
+
+[]    rdfs:label "Mosheh Eliyahu" ;
+.
+
+[]    rdfs:label "Tina Parkhurst" ;
+.
+
+[]    rdfs:label "Edmond Chuc" ;
+.
+
+[]    rdfs:label "Siddeswara Guru" ;
+.
+
+[]    rdfs:label "Simon J.D.Cox" ;
+.
+
+[]    rdfs:label "CSIRO" ;
+.
+

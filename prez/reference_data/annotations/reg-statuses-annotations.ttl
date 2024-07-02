@@ -1,0 +1,102 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <https://schema.org/>
+
+<http://purl.org/linked-data/registry#Status>
+    rdfs:label "Status"@en ;
+    schema:description "Open set of status code for entries in a register"@en ;
+.
+
+<https://linked.data.gov.au/def/agldwg>
+    rdfs:label "Australian Government Linked Data Working Group" ;
+.
+
+<https://linked.data.gov.au/def/reg-statuses>
+    rdfs:label "Registry Status Vocabulary"@en ;
+    rdfs:seeAlso <https://github.com/AGLDWG/reg-status> ;
+    schema:description """This vocabulary is a re-published and only marginally changed version of the Registry Ontology's (http://epimorphics.com/public/vocabulary/Registry.html) *Status* vocabulary (online in RDF: http://purl.org/linked-data/registry). The only real change to content has been the addition of the term `unstable`. This re-publication has been performed to allow the IRIs of each vocab term (skos:Concept) to resolve to both human-readable and machine-readable forms of content (HTML and RDF), using HTTP content negotiation.
+
+Note that just like the original form of this vocabulary, while it is a SKOS vocabulary implemented as a single skos:ConceptScheme, it is also an OWL Ontology and that each *Status* is both a skos:Concept and a reg:Status individual."""@en ;
+.
+
+<https://linked.data.gov.au/def/reg-statuses/accepted>
+    rdfs:label "accepted"@en ;
+    schema:description "An entry that has been accepted for use and is visible in the default register listing. Includes entries that have seen been retired or superseded."@en ;
+.
+
+<https://linked.data.gov.au/def/reg-statuses/addition>
+    rdfs:label "addition"@en ;
+    schema:description "The item's status is stable and was supplied to the registry after initial creation"@en ;
+.
+
+<https://linked.data.gov.au/def/reg-statuses/deprecated>
+    rdfs:label "deprecated"@en ;
+    schema:description "An entry that has been Retired or Superseded or has become Unstable and is no longer to be used."@en ;
+.
+
+<https://linked.data.gov.au/def/reg-statuses/experimental>
+    rdfs:label "experimental"@en ;
+    schema:description "An entry that has been accepted into the register temporarily and may be subject to change or withdrawal."@en ;
+.
+
+<https://linked.data.gov.au/def/reg-statuses/invalid>
+    rdfs:label "invalid"@en ;
+    schema:description "An entry which has been invalidated due to serious flaws, distinct from retrirement."@en ;
+.
+
+<https://linked.data.gov.au/def/reg-statuses/notAccepted>
+    rdfs:label "notAccepted"@en ;
+    schema:description "An entry that should not be visible in the default register listing."@en ;
+.
+
+<https://linked.data.gov.au/def/reg-statuses/original>
+    rdfs:label "stable"@en ;
+    schema:description "The item's status is stable and was supplied to the registry after initial creation."@en ;
+.
+
+<https://linked.data.gov.au/def/reg-statuses/reserved>
+    rdfs:label "reserved"@en ;
+    schema:description "A reserved entry allocated for some as yet undetermined future use."@en ;
+.
+
+<https://linked.data.gov.au/def/reg-statuses/retired>
+    rdfs:label "retired"@en ;
+    schema:description "An entry that has been withdrawn from use."@en ;
+.
+
+<https://linked.data.gov.au/def/reg-statuses/stable>
+    rdfs:label "stable"@en ;
+    schema:description "An entry that is seen as having a reasonable measure of stability, may be used to mark the full adoption of a previously 'experimental' entry."@en ;
+.
+
+<https://linked.data.gov.au/def/reg-statuses/submitted>
+    rdfs:label "submitted"@en ;
+    schema:description "A proposed entry which is not yet approved for use for use."@en ;
+.
+
+<https://linked.data.gov.au/def/reg-statuses/superseded>
+    rdfs:label "superseded"@en ;
+    schema:description "An entry that has been replaced by a new alternative which should be used instead."@en ;
+.
+
+<https://linked.data.gov.au/def/reg-statuses/unstable>
+    rdfs:label "stable"@en ;
+    schema:description "An entry that is not seen as having a reasonable measure of stability. This status is expected to be allocated to entries that were once Stable but have become Unstable, due to a management or technical mishap, rather than being allocated to resources before they become Stable. Those resources should be allocated Experimental."@en ;
+.
+
+<https://linked.data.gov.au/def/reg-statuses/valid>
+    rdfs:label "valid"@en ;
+    schema:description "An entry that has been accepted into the register and is deemed fit for use."@en ;
+.
+
+<https://linked.data.gov.au/org/surround>
+    rdfs:label "SURROUND Australia Pty Ltd" ;
+.
+
+<https://orcid.org/0000-0002-8742-7730>
+    rdfs:label "Nicholas J. Car" ;
+.
+
+<https://www.epimorphics.com>
+    rdfs:label "Epimorphics" ;
+.
+

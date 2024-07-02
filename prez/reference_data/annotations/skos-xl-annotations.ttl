@@ -1,0 +1,43 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <https://schema.org/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+<http://www.w3.org/2008/05/skos-xl>
+    rdfs:label "SKOS XL Vocabulary"@en ;
+    rdfs:seeAlso <http://www.w3.org/2008/05/skos> ;
+    schema:description "An RDF vocabulary extending SKOS and allowing the description and linking of lexical entities."@en ;
+.
+
+<http://www.w3.org/2008/05/skos-xl#Label>
+    rdfs:label "Label"@en ;
+    schema:description "A special class of lexical entities."@en ;
+.
+
+<http://www.w3.org/2008/05/skos-xl#altLabel>
+    rdfs:label "alternative label"@en ;
+    rdfs:seeAlso skos:altLabel ;
+    schema:description "The property skosxl:altLabel is used to associate an skosxl:Label with a skos:Concept. The property is analogous to skos:altLabel."@en ;
+.
+
+<http://www.w3.org/2008/05/skos-xl#hiddenLabel>
+    rdfs:label "hidden label"@en ;
+    rdfs:seeAlso skos:hiddenLabel ;
+    schema:description "The property skosxl:hiddenLabel is used to associate an skosxl:Label with a skos:Concept. The property is analogous to skos:hiddenLabel."@en ;
+.
+
+<http://www.w3.org/2008/05/skos-xl#labelRelation>
+    rdfs:label "label relation"@en ;
+    schema:description "The property skosxl:labelRelation is used for representing binary ('direct') relations between instances of the class skosxl:Label."@en ;
+.
+
+<http://www.w3.org/2008/05/skos-xl#literalForm>
+    rdfs:label "literal form"@en ;
+    schema:description "The property skosxl:literalForm is used to give the literal form of an skosxl:Label."@en ;
+.
+
+<http://www.w3.org/2008/05/skos-xl#prefLabel>
+    rdfs:label "preferred label"@en ;
+    rdfs:seeAlso skos:prefLabel ;
+    schema:description "The property skosxl:prefLabel is used to associate an skosxl:Label with a skos:Concept. The property is analogous to skos:prefLabel."@en ;
+.
+

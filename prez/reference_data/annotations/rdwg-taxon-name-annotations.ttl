@@ -1,0 +1,421 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <https://schema.org/>
+
+<http://rs.tdwg.org/ontology/voc/TaxonName>
+    schema:description
+        """ This vocabulary closely follows the structure of the ScientificName complex type that is part of the TDWG standard Taxon Concept Schema. The TCS structure was based
+         on the name structures suggested by the LinneanCore and those found in schemas such as ABCD. 
+         It reflects the contributions of many authors over a number of years."""^^rdf:XMLLiteral ,
+        "Ontology describing the metadata returned for LSIDs that are used for Taxon Names. " ,
+        "Version 0.3 removed subclass declarations to classes outside of this ontology in accordance with Recommendation 2.9 of the VoMaG Report http://www.gbif.org/resource/80862" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Allolectotype>
+    rdfs:label "Allolectotype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Alloneotype>
+    rdfs:label "Alloneotype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Allotype>
+    rdfs:label "Allotype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Bacteriological>
+    rdfs:label "Bacteriological" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#BasedOn>
+    rdfs:label "based on" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#ConservedAgainst>
+    rdfs:label "conserved against" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Cotype>
+    rdfs:label "Cotype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Epitype>
+    rdfs:label "Epitype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#ExEpitype>
+    rdfs:label "Ex-Epitype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#ExHolotype>
+    rdfs:label "Ex-Holotype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#ExIsotype>
+    rdfs:label "Ex-Isotype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#ExLectotype>
+    rdfs:label "Ex-Lectotype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#ExNeotype>
+    rdfs:label "Ex-Neotype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#ExParatype>
+    rdfs:label "Ex-Paratype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#ExSyntype>
+    rdfs:label "Ex-Syntype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#ExType>
+    rdfs:label "Ex-Type" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Hapantotype>
+    rdfs:label "Hapantotype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Holotype>
+    rdfs:label "Holotype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#ICBN>
+    rdfs:label "ICBN" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#ICNCP>
+    rdfs:label "ICNCP" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#ICZN>
+    rdfs:label "ICZN" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Iconotype>
+    rdfs:label "Iconotype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Isolectotype>
+    rdfs:label "Isolectotype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Isoneotype>
+    rdfs:label "Isoneotype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Isosyntype>
+    rdfs:label "Isosyntype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Isotype>
+    rdfs:label "Isotype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#LaterHomonymOf>
+    rdfs:label "later homonym of" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Lectotype>
+    rdfs:label "Lectotype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Neotype>
+    rdfs:label "Neotype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#NomenclaturalCodeTerm>
+    rdfs:label "Nomenclatural Code Term" ;
+    schema:description " A class for which instances can be defined to create a controlled vocabulary for the nomenclatural codes. Equivalent to TCS NomenclaturalCodesEnum " ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#NomenclaturalNote>
+    rdfs:label "Nomenclatural Note" ;
+    schema:description " A note on a Taxon Name. An object representing a comment or addition to a Taxon Name beyond it's original publication. Equivalent to TCS NomenclaturalNoteType " ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#NomenclaturalNoteTypeTerm>
+    rdfs:label "Nomenclatural Note Type Term" ;
+    schema:description """ The different types of Nomenclatural Note. An object used to represent the different types of Nomenclatural Note. No direct equivalent in TCS but used to represents different
+         elements of type NomenclaturalNoteType. """ ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#NomenclaturalType>
+    rdfs:label "Nomenclatural Type" ;
+    schema:description """A type name or specimen. Typification can be complex to represent. On the one hand a type is a property of a TaxonName that is created at the time the name is published. But it
+         needs to exist as a structure so that the type of type can be indicated. On the other hand a type can be the result of a later typification event - almost like a nomenclatural note. This
+         object can therefore be used in two ways. It can be the target of the 'type' property in a TaxonName object (in which case the typeOf property may be ommitted) or it can be used as a free
+         standing object with its own ID and the typeOf property used to indicate which TaxonName this is a type of - this is more likely scenario in a the case of a leptotypification event.
+         Equivalent to TCS ScientificName/Typification """ ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#NomenclaturalTypeTypeTerm>
+    rdfs:label "Nomenclatural Type Type" ;
+    schema:description """ A kind of nomenclatural type. Nomenclatural types can be of different kinds (or types) to indicate whether they are duplicates, replacements, related specimens etc. Instances of
+         this class describe kinds of nomenclatural types. Equivalent to TCS NomenclaturalTypeStatusOfUnitsEnum """ ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#NotAType>
+    rdfs:label "NotAType" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Paralectotype>
+    rdfs:label "Paralectotype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Paraneotype>
+    rdfs:label "Paraneotype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Paratype>
+    rdfs:label "Paratype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Plastoholotype>
+    rdfs:label "Plastoholotype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Plastoisotype>
+    rdfs:label "Plastoisotype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Plastolectotype>
+    rdfs:label "Plastolectotype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Plastoneotype>
+    rdfs:label "Plastoneotype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Plastoparatype>
+    rdfs:label "Plastoparatype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Plastosyntype>
+    rdfs:label "Plastosyntype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Plastotype>
+    rdfs:label "Plastotype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#PublicationStatus>
+    rdfs:label "publication status" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#ReplacementNameFor>
+    rdfs:label "replacement name for" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Sanctioned>
+    rdfs:label "sanctioned" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#SecondaryType>
+    rdfs:label "Secondary Type" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#SpellingCorrection>
+    rdfs:label "spelling correction" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#SupplementaryType>
+    rdfs:label "Supplementary Type" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Syntype>
+    rdfs:label "Syntype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#TaxonName>
+    rdfs:label "Taxon Name" ;
+    schema:description """ A scientific biological name. An object that represents a single scientific biological name that either is governed by or appears to be governed by one of the biological codes of
+         nomenclature. These are not taxa. Taxa, whether accepted or not, are represented by TaxonConcept objects. """ ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Topotype>
+    rdfs:label "Topotype" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Type>
+    rdfs:label "Type" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#Viral>
+    rdfs:label "Viral" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#authorTeam>
+    rdfs:label "Author Team" ;
+    schema:description "A breakdown of the authors who published this name including both basionym and combination authors (if any)." ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#authorship>
+    rdfs:label "Authorship" ;
+    schema:description """ The full author string used for this name. The full code-appropriate author team string for this name at this rank. Use this property for all names including both original
+         combinations and new combinations of bi and trinomial names (where some of the authors may be in brackets). If the TaxonName instance contains any details about authorship a representation of
+         them should be included in this property.""" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#basionymAuthorship>
+    rdfs:label "Basionym Authorship" ;
+    schema:description """ A string representing the authors of the basionym of this name. This represents the authors of the basionym. It is the part of authorship that is typically included in brackets.
+         The brackets should be omitted. A year may be included as is common in citing names governed by the ICZN. This property is only used for names that are new combinations.""" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#basionymFor>
+    rdfs:label "Basionym For" ;
+    schema:description " Relationship between a basionym and a new combination of the name. " ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#code>
+    rdfs:label "Code" ;
+    schema:description " The nomenclatural code under which this note should be interpreted." ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#combinationAuthorship>
+    rdfs:label "Combination Authorship" ;
+    schema:description """ A string representing the authors of this combination of the name. This represents the authors of the new combination of this name. The authors who come after the brackets in the
+         traditional way of citing botanical names. These authors are not usually cited in zoology though the ICZN recommends that they should be included (Art.51G). A year may be included. See also
+         note under year property. This property is only used for names that are new combinations.""" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#cultivarNameGroup>
+    rdfs:label "Cultivar Name or Cultivar Group Name" ;
+    schema:description """ The cultivar or related name governed by ICNCP. The name of the Cultivar, Cultivar Group, grex, convar or graft chimera under the International Code for the Nomenclature of
+         Cultivated Plants. Only include here the string of the name. i.e. omit the single quotes around cultivar names, the word Group that denotes cultivar group and the + sign used in chimeras.
+         These symbols can be added in later on the basis of the rank of the name. For example the use of the word 'Group' is language dependent.""" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#genusPart>
+    rdfs:label "Genus Part" ;
+    schema:description """ The genus part of a bi or trinomial name. The name of the genus for names below the rank of genus. This property should not be used for names at and above the rank of genus. For
+         names at and above genus rank the uninomial property should be used.""" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#hasAnnotation>
+    rdfs:label "Has Annotation" ;
+    schema:description " Association between a name and the notes that it may have. Often notes relate to other names such as replacement names." ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#hasBasionym>
+    rdfs:label "Has Basionym" ;
+    schema:description """ The basionym of this name if it is a new combination. The current name is a recombination (comb. nov.) of the name pointed to and the name pointed to is not, itself, a
+         recombination.""" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#infragenericEpithet>
+    rdfs:label "Infrageneric Epithet" ;
+    schema:description """ The infrageneric part of a binomial name at ranks above species but below genus. Names at ranks between species and genus are composed of two words; the genus and this
+         infrageneric epithet. This property should therefore always be accompanied by the genusPart property. If the infragenericEpithet property is present the uninomial, infraspecificEpithet,
+         specificEpithet and subspecificEpithet properties should be absent.""" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#infraspecificEpithet>
+    rdfs:label "Infraspecific Epithet" ;
+    schema:description """ The infraspecific epithet part of a trinomial name below the rank of species. Names at ranks below species are composed of three words; the genus epithet, the specific epithet and
+         an infraspecific epithet. This property should therefore always be accompanied by the genusPart property and a specificEpithet property. If the specificEpithet property is present the
+         uninomial and infragenusPart properties should be absent. """ ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#nameComplete>
+    rdfs:label "Name Complete" ;
+    schema:description """ The complete uninomial, binomial or trinomial name without any authority or year components. Every TaxonName should have a DublinCore:title property that contains the complete
+         name string including authors and year (where appropriate).""" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#nomenclaturalCode>
+    rdfs:label "Nomenclatural Code" ;
+    schema:description " The nomenclatural code that governs this name. By definition all taxon names are governed by one of the codes of nomenclature. These include ICBN, ICZN, ICNCP and others." ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#note>
+    rdfs:label "Note" ;
+    schema:description " The text of the nomenclatural note. Text describing the nomenclatural event/fact that is represented by this Nomenclatural Note. " ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#objectTaxonName>
+    rdfs:label "Object Taxon Name" ;
+    schema:description " The Taxon Name that is the target for this note. The TO side of the note relationship. The Taxon Name that this note refers to." ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#rank>
+    rdfs:label "Rank" ;
+    schema:description "The taxonomic rank of this name. This is a link to an instance of TaxonomicRank. Compare with the rankString property." ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#rankString>
+    rdfs:label "Rank String" ;
+    schema:description """The taxonomic rank of this name as a string. A string representation of the rank of this name. It is highly recommended that the rank property be used along with this one unless
+         the correct rank is not available in the rank vocabulary.""" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#ruleConsidered>
+    rdfs:label "Rule Considered" ;
+    schema:description " The nomenclatural code rule considered. The article/note/recommendation in the code in question that is commented on in the note property." ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#specificEpithet>
+    rdfs:label "Specific Epithet" ;
+    schema:description """ The specific epithet part of a binomial or trinomial name at or below the rank of species. Names at ranks of species and below are composed of two or three words; the genus
+         epithet, the specific epithet and possibly an infraspecific epithet. This property should therefore always be accompanied by the genusPart property. If the specificEpithet property is present
+         the uninomial and infragenericEpithet properties should be absent.""" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#subjectTaxonName>
+    rdfs:label "Subject Taxon Name" ;
+    schema:description " The Taxon Name that is the subject of this note. The FROM side of the note relationship. The Taxon Name that this note is qualifying." ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#type>
+    rdfs:label "Type" ;
+    schema:description " The kind of nomenclatural note this is, e.g. sanctioning of name. " ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#typeName>
+    rdfs:label "Type Name" ;
+    schema:description """The name that is the type. TaxonNames at ranks above species level are typified by the NAME of a lower taxon. Ultimately, by following the chain of type names, all names resolve to
+         a type species and so a type specimen. This property is mutually exclusive with typeSpecimen. A name can't have both. Equivalent to TCS ScientificName/Typification/TypeName. """ ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#typeOfType>
+    rdfs:label "Type of Type" ;
+    schema:description """The kind of type this specimen is e.g. paratype, isotype, holotype etc. Types can be of different kinds. Equivalent to TCS
+         ScientificName/Typification/TypeVouchers/TypeVoucher@typeOfType """ ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#typeSpecimen>
+    rdfs:label "Type Specimen" ;
+    schema:description """The specimen that is the type. TaxonNames at ranks of family and below are typified by a specimen. This property is mutually exclusive with typeName. Equivalent to TCS
+         ScientificName/Typification/TypeVouchers/TypeVoucher """ ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#typificationString>
+    rdfs:label "Typified String" ;
+    schema:description "A string representing the typification of this name. See also the typifiedBy property." ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#typifiedBy>
+    rdfs:label "Typified By" ;
+    schema:description """A NomenclaturalType that typifies this name. An instance of NomenclaturalType that contains a type specimen or name for this name. See also note with NomenclaturalType class. See
+         also the typificationString property.""" ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#uninomial>
+    rdfs:label "Uninomial" ;
+    schema:description """ Family, genus, infrafamilial, suprafamilial or other uninomial name. This property should be used for any 'single word' names. These include Family, genus, infrafamilial, and
+         suprafamilial names. Note that this property should be used for Genus names. The genus field should only be used for names below rank of genus. """ ;
+.
+
+<http://rs.tdwg.org/ontology/voc/TaxonName#year>
+    rdfs:label "Publication Year" ;
+    schema:description """ The year of publication of this name. This is the year this name was published. If it is a new combination of the name then it is the year of publication of the combination not
+         the basionym. It should be the same as the year given in the publishedIn property. In zoology the place of first publication of a new combination is rarely given as it is not considered a
+         nomenclatural act unless it leads to homonymy. For new combinations of names in zoology it may therefore be inappropriate to supply this property or the publishedIn, combintationAuthorship or
+         combintationAuthorTeam properties. The main role of this property is to aid disambiguation where author strings may be confusing. This property is not restricted to a date type as feedback
+         from TCS suggested that this restriction was inappropriate.""" ;
+.
+

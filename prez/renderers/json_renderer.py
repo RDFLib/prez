@@ -1,15 +1,11 @@
-from itertools import chain
-
-from rdflib import Graph, URIRef, RDF, SH, Literal
+from rdflib import Graph, URIRef, RDF, SH
 from rdflib.term import Node
 
 from prez.cache import profiles_graph_cache
 from prez.reference_data.prez_ns import ALTREXT
-from prez.sparql.objects_listings import get_listing_predicates
 
 
-class NotFoundError(Exception):
-    ...
+class NotFoundError(Exception): ...
 
 
 def _get_resource_iri(graph: Graph, profile_graph: Graph, profile: URIRef) -> Node:

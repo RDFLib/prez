@@ -1,0 +1,83 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <https://schema.org/>
+
+rdfs:
+    rdfs:seeAlso <http://www.w3.org/2000/01/rdf-schema-more> ;
+.
+
+rdfs:Class
+    rdfs:label "Class" ;
+    schema:description "The class of classes." ;
+.
+
+rdfs:Container
+    rdfs:label "Container" ;
+    schema:description "The class of RDF containers." ;
+.
+
+rdfs:ContainerMembershipProperty
+    rdfs:label "Container Membership Property" ;
+    schema:description """The class of container membership properties, rdf:_1, rdf:_2, ...,
+                    all of which are sub-properties of 'member'.""" ;
+.
+
+rdfs:Datatype
+    rdfs:label "Datatype" ;
+    schema:description "The class of RDF datatypes." ;
+.
+
+rdfs:Literal
+    rdfs:label "Literal" ;
+    schema:description "The class of literal values, eg. textual strings and integers." ;
+.
+
+rdfs:Resource
+    rdfs:label "Resource" ;
+    schema:description "The class resource, everything." ;
+.
+
+rdfs:comment
+    rdfs:label "comment" ;
+    schema:description "A description of the subject resource." ;
+.
+
+rdfs:domain
+    rdfs:label "domain" ;
+    schema:description "A domain of the subject property." ;
+.
+
+rdfs:isDefinedBy
+    rdfs:label "is defined by" ;
+    schema:description "The defininition of the subject resource." ;
+.
+
+rdfs:label
+    rdfs:label "label" ;
+    schema:description "A human-readable name for the subject." ;
+.
+
+rdfs:member
+    rdfs:label "member" ;
+    schema:description "A member of the subject resource." ;
+.
+
+rdfs:range
+    rdfs:label "range" ;
+    schema:description "A range of the subject property." ;
+.
+
+rdfs:seeAlso
+    rdfs:label "see also" ;
+    schema:description "Further information about the subject resource." ;
+.
+
+rdfs:subClassOf
+    rdfs:label "subclass of" ;
+    schema:description "The subject is a subclass of a class." ;
+.
+
+rdfs:subPropertyOf
+    rdfs:label "subproperty of" ;
+    schema:description "The subject is a subproperty of a property." ;
+.
+

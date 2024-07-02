@@ -1,0 +1,61 @@
+@prefix bblocks: <https://www.opengis.net/def/bblocks/> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix vocab: <http://example.com/bblock-vocabs/> .
+
+vocab:parameter
+    a skos:ConceptScheme ;
+    skos:prefLabel  "Parameter Building Blocks" ;
+    skos:hasTopConcept bblocks:ogc.geo.common.parameters.bbox , bblocks:ogc.geo.common.parameters.bbox-crs ;
+    dct:identifier "parameter"
+    .
+
+bblocks:ogc.geo.common.parameters.bbox a skos:Concept,
+        bblocks:Parameter ;
+    rdfs:label "bbox" ;
+    dct:abstract "The bbox query parameter provides a simple mechanism for filtering resources based on their location. It selects all resources that intersect a rectangle (map view) or box (including height information)." ;
+    dct:created "2022-05-24T13:51:38+00:00"^^xsd:dateTime ;
+    dct:description [ dct:format "application/json" ;
+            rdfs:isDefinedBy "https://opengeospatial.github.io/bblocks/generateddocs/json-full/geo/common/parameters/bbox/index.json" ],
+        [ dct:format "text/html" ;
+            rdfs:isDefinedBy "https://opengeospatial.github.io/bblocks/generateddocs/slate-build/geo/common/parameters/bbox/" ],
+        [ dct:format "text/markdown" ;
+            rdfs:isDefinedBy "https://opengeospatial.github.io/bblocks/generateddocs/markdown/geo/common/parameters/bbox/index.md" ] ;
+    dct:hasVersion "1.0" ;
+    dct:modified "2022-05-24"^^xsd:date ;
+    dct:source <https://docs.ogc.org/is/17-069r3/17-069r3.html#_parameter_bbox> ;
+    skos:inScheme <https://www.opengis.net/def/bblocks> , vocab:parameter ;
+    bblocks:hasJsonLdContext <https://opengeospatial.github.io/bblocks/annotated-schemas/geo/common/parameters/bbox/context.jsonld> ;
+    bblocks:hasSchema <https://opengeospatial.github.io/bblocks/annotated-schemas/geo/common/parameters/bbox/schema.json>,
+        <https://opengeospatial.github.io/bblocks/annotated-schemas/geo/common/parameters/bbox/schema.yaml> ;
+    bblocks:scope <http://www.opengis.net/def/bblocks/scope/geo> ;
+    bblocks:status <http://www.opengis.net/def/status/stable> .
+
+bblocks:ogc.geo.common.parameters.bbox-crs a skos:Concept,
+        bblocks:Parameter ;
+    rdfs:label "bbox-crs" ;
+    dct:abstract "The bbox-crs query parameter can be used to assert the coordinate reference system that is used for the coordinate values of the bbox parameter." ;
+    dct:created "2022-07-05T01:01:01+02:00"^^xsd:dateTime ;
+    dct:description [ dct:format "application/json" ;
+            rdfs:isDefinedBy "https://opengeospatial.github.io/bblocks/generateddocs/json-full/geo/common/parameters/bbox-crs/index.json" ],
+        [ dct:format "text/markdown" ;
+            rdfs:isDefinedBy "https://opengeospatial.github.io/bblocks/generateddocs/markdown/geo/common/parameters/bbox-crs/index.md" ],
+        [ dct:format "text/html" ;
+            rdfs:isDefinedBy "https://opengeospatial.github.io/bblocks/generateddocs/slate-build/geo/common/parameters/bbox-crs/" ] ;
+    dct:hasVersion "1.0" ;
+    dct:modified "2022-07-05"^^xsd:date ;
+    dct:source <http://www.opengis.net/doc/IS/ogcapi-features-2/1.0#_parameter_bbox_crs> ;
+    skos:inScheme <https://www.opengis.net/def/bblocks> , vocab:parameter ;
+    bblocks:hasJsonLdContext <https://opengeospatial.github.io/bblocks/annotated-schemas/geo/common/parameters/bbox-crs/context.jsonld> ;
+    bblocks:hasSchema <https://opengeospatial.github.io/bblocks/annotated-schemas/geo/common/parameters/bbox-crs/schema.json>,
+        <https://opengeospatial.github.io/bblocks/annotated-schemas/geo/common/parameters/bbox-crs/schema.yaml> ;
+    bblocks:scope <http://www.opengis.net/def/bblocks/scope/geo> ;
+    bblocks:status <http://www.opengis.net/def/status/stable> .
+
+
+
+

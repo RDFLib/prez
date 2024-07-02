@@ -1,0 +1,70 @@
+PREFIX altr-ext: <http://www.w3.org/ns/dx/connegp/altr-ext#>
+PREFIX dcat: <http://www.w3.org/ns/dcat#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX prez: <https://prez.dev/>
+PREFIX prof: <http://www.w3.org/ns/dx/prof/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <https://schema.org/>
+PREFIX sh: <http://www.w3.org/ns/shacl#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX reg: <http://purl.org/linked-data/registry#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX shext: <http://example.com/shacl-extension#>
+
+
+<https://w3id.org/profile/dd>
+    a prof:Profile ;
+    dcterms:description "A simple data model to provide items for form drop-down lists. The basic information is an ID & name tuple and the optional extra value is an item's parent. For vocabularies, this is then URI, prefLabel or URI, prefLabel & broader Concept" ;
+    dcterms:identifier "dd"^^xsd:token ;
+    dcterms:title "Drop-Down List" ;
+    altr-ext:constrainsClass
+        prez:CatalogList ,
+        prez:SchemesList ,
+        prez:VocPrezCollectionList ,
+        dcat:Catalog ,
+        skos:ConceptScheme ,
+        skos:Collection ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass dcat:Catalog ;
+        altr-ext:focusToChild dcterms:hasPart ;
+    ] ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass prez:CatalogList ;
+        altr-ext:containerClass dcat:Catalog ;
+    ] ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass skos:ConceptScheme ;
+        altr-ext:childToFocus skos:inScheme ;
+        altr-ext:relativeProperties skos:broader ;
+    ] ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass skos:Collection ;
+        altr-ext:focusToChild skos:member ;
+        altr-ext:relativeProperties skos:definition ;
+    ] ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass prez:SchemesList ;
+        altr-ext:containerClass skos:ConceptScheme ;
+        altr-ext:relativeProperties skos:definition, dcterms:publisher, reg:status , skos:prefLabel ;
+    ] ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass prez:VocPrezCollectionList ;
+        altr-ext:containerClass skos:Collection ;
+        altr-ext:relativeProperties skos:definition, dcterms:publisher, reg:status ;
+    ] ;
+    altr-ext:hasDefaultResourceFormat "application/json" ;
+    altr-ext:hasResourceFormat
+        "text/turtle" ,
+        "application/json" ,
+        "text/csv"
+.

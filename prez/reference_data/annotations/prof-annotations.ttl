@@ -1,0 +1,78 @@
+PREFIX prof: <http://www.w3.org/ns/dx/prof/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <https://schema.org/>
+
+<http://www.w3.org/ns/dx/prof>
+    rdfs:label "Profiles Vocabulary" ;
+    schema:description """This vocabulary is for describing relationships between standards/specifications, profiles of them and supporting artifacts such as validating resources.
+
+This model starts with [http://dublincore.org/2012/06/14/dcterms#Standard](dct:Standard) entities which can either be Base Specifications (a standard not profiling any other Standard) or Profiles (Standards which do profile others). Base Specifications or Profiles can have Resource Descriptors associated with them that defines implementing rules for the it. Resource Descriptors must indicate the role they play (to guide, to validate etc.) and the formalism they adhere to (dct:format) to allow for content negotiation. A vocabulary of Resource Roles are provided alongside this vocabulary but that list is extensible."""@en ;
+.
+
+prof:Profile
+    rdfs:label "Profile" ;
+    schema:description """A specification that constrains, extends, combines, or provides guidance or explanation about the usage of other specifications.
+
+This definition includes what are often called "application profiles", "metadata application profiles", or "metadata profiles"."""@en ;
+.
+
+prof:ResourceDescriptor
+    rdfs:label "Resource Descriptor"@en ;
+    schema:description "A description of a resource that defines an aspect - a particular part, feature or role - of a Profile"@en ;
+.
+
+prof:ResourceRole
+    rdfs:label "Resource Role" ;
+    schema:description "A role that an profile resource, described by a Resource Descriptor, plays"@en ;
+.
+
+prof:hasArtifact
+    rdfs:label "has artifact" ;
+    schema:description "The URL of a downloadable file with particulars such as its format and role indicated by the Resource Descriptor"@en ;
+.
+
+prof:hasResource
+    rdfs:label "has resource"@en ;
+    schema:description "A resource which describes the nature of an artifact and the role it plays in relation to the Profile"@en ;
+.
+
+prof:hasRole
+    rdfs:label "has role" ;
+    schema:description "The function of an artifact described by a Resource Descriptor, such as specification, guidance etc."@en ;
+.
+
+prof:hasToken
+    rdfs:label "has token" ;
+    schema:description "The preferred identifier for the Profile, for use in circumstances where its URI cannot be used"@en ;
+.
+
+prof:isInheritedFrom
+    rdfs:label "is inherited from" ;
+    schema:description "A base specification, a Resource Descriptor from which is to be considered a Resource Descriptor for this Profile also"@en ;
+.
+
+prof:isProfileOf
+    rdfs:label "is profile of" ;
+    schema:description "A specification for which this Profile defines constraints, extensions, or which it uses in combination with other specifications, or provides guidance or explanation about its usage"@en ;
+.
+
+prof:isTransitiveProfileOf
+    rdfs:label "is transitive profile of" ;
+    schema:description "The transitive closure of the prof:isProfileOf property. Relates a profile to another specification that it is a profile of, possibly via a chain of intermediate profiles that are in prof:isProfileOf relationships"@en ;
+.
+
+[]    rdfs:label "Nicholas J. Car" ;
+.
+
+[]    rdfs:label "SURROUND Australia Pty Ltd" ;
+.
+
+[]    rdfs:label "Rob Atkinson" ;
+.
+
+[]    rdfs:label "Open Geospatial Consortium" ;
+.
+
+[]    rdfs:label "Metalinkage" ;
+.
+

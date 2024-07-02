@@ -44,7 +44,7 @@ PREFIX sdoprof: <https://schema.org>
  vann:preferredNamespaceUri <https://orcid.org/>
 ] .
 
-[ vann:preferredNamespacePrefix "prezprof" ;
+[ vann:preferredNamespacePrefix "profile" ;
  vann:preferredNamespaceUri <https://prez.dev/profile/>
 ] .
 

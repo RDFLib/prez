@@ -1,22 +1,11 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from prez.app import assemble_app
-
 
 @pytest.fixture
-def client() -> TestClient:
-    app = assemble_app()
-    testclient = TestClient(app)
-
-    # Make a request for the following IRI to ensure
-    # the curie is available in the 'test_curie' test.
+def setup(client):
     iri = "http://example.com/namespace/test"
-    response = testclient.get(f"/identifier/curie/{iri}")
-    assert response.status_code == 200
-    assert response.text == "nmspc:test"
-
-    return testclient
+    client.get(f"/identifier/curie/{iri}")
 
 
 @pytest.mark.parametrize(
@@ -40,6 +29,6 @@ def test_iri(iri: str, expected_status_code: int, client: TestClient):
         ["nmspc:test", 200],
     ],
 )
-def test_curie(curie: str, expected_status_code: int, client: TestClient):
+def test_curie(curie: str, expected_status_code: int, client: TestClient, setup):
     response = client.get(f"/identifier/iri/{curie}")
     assert response.status_code == expected_status_code

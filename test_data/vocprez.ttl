@@ -1,0 +1,43 @@
+PREFIX dcat: <http://www.w3.org/ns/dcat#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX ex: <https://example.com/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+ex:VocPrezCatalog a dcat:Catalog ;
+    rdfs:label "A Demo Catalog" ;
+    dcterms:hasPart ex:SchemingConceptScheme ;
+    ex:property "cataract" ;
+.
+
+ex:SchemingConceptScheme a skos:ConceptScheme ;
+    skos:prefLabel "The Scheming Concept Scheme" ;
+    skos:hasTopConcept ex:TopLevelConcept ;
+    ex:property "schemish conceptual property"
+.
+
+ex:TopLevelConcept a skos:Concept ;
+    skos:prefLabel "The toppiest of concepts" ;
+    ex:property "a property of the toppiest concept" ;
+    skos:narrower ex:SecondLevelConcept , ex:SiblingSecondLevelConcept ;
+    skos:inScheme ex:SchemingConceptScheme ;
+.
+
+ex:SecondLevelConcept a skos:Concept ;
+    skos:prefLabel "A second level concept" ;
+    ex:property "a property of the second level concept" ;
+    skos:narrower ex:ThirdLevelConcept ;
+    skos:inScheme ex:SchemingConceptScheme ;
+.
+
+ex:SiblingSecondLevelConcept a skos:Concept ;
+    skos:prefLabel "A sibling second level concept" ;
+    ex:property "a property of the sibling second level concept" ;
+    skos:inScheme ex:SchemingConceptScheme ;
+.
+
+ex:ThirdLevelConcept a skos:Concept ;
+    skos:prefLabel "A third level concept" ;
+    ex:property "a property of the third level concept" ;
+    skos:inScheme ex:SchemingConceptScheme ;
+.

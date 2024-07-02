@@ -1,0 +1,923 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <https://schema.org/>
+PREFIX sh: <http://www.w3.org/ns/shacl#>
+
+sh:
+    rdfs:label "W3C Shapes Constraint Language (SHACL) Vocabulary"@en ;
+    schema:description "This vocabulary defines terms used in SHACL, the W3C Shapes Constraint Language."@en ;
+.
+
+sh:AbstractResult
+    rdfs:label "Abstract result"@en ;
+    schema:description "The base class of validation results, typically not instantiated directly."@en ;
+.
+
+sh:AndConstraintComponent
+    rdfs:label "And constraint component"@en ;
+    schema:description "A constraint component that can be used to test whether a value node conforms to all members of a provided list of shapes."@en ;
+.
+
+sh:BlankNode
+    rdfs:label "Blank node"@en ;
+    schema:description "The node kind of all blank nodes."@en ;
+.
+
+sh:BlankNodeOrIRI
+    rdfs:label "Blank node or IRI"@en ;
+    schema:description "The node kind of all blank nodes or IRIs."@en ;
+.
+
+sh:BlankNodeOrLiteral
+    rdfs:label "Blank node or literal"@en ;
+    schema:description "The node kind of all blank nodes or literals."@en ;
+.
+
+sh:ClassConstraintComponent
+    rdfs:label "Class constraint component"@en ;
+    schema:description "A constraint component that can be used to verify that each value node is an instance of a given type."@en ;
+.
+
+sh:ClosedConstraintComponent
+    rdfs:label "Closed constraint component"@en ;
+    schema:description "A constraint component that can be used to indicate that focus nodes must only have values for those properties that have been explicitly enumerated via sh:property/sh:path."@en ;
+.
+
+sh:ConstraintComponent
+    rdfs:label "Constraint component"@en ;
+    schema:description "The class of constraint components."@en ;
+.
+
+sh:DatatypeConstraintComponent
+    rdfs:label "Datatype constraint component"@en ;
+    schema:description "A constraint component that can be used to restrict the datatype of all value nodes."@en ;
+.
+
+sh:DisjointConstraintComponent
+    rdfs:label "Disjoint constraint component"@en ;
+    schema:description "A constraint component that can be used to verify that the set of value nodes is disjoint with the the set of nodes that have the focus node as subject and the value of a given property as predicate."@en ;
+.
+
+sh:EqualsConstraintComponent
+    rdfs:label "Equals constraint component"@en ;
+    schema:description "A constraint component that can be used to verify that the set of value nodes is equal to the set of nodes that have the focus node as subject and the value of a given property as predicate."@en ;
+.
+
+sh:ExpressionConstraintComponent
+    rdfs:label "Expression constraint component"@en ;
+    schema:description "A constraint component that can be used to verify that a given node expression produces true for all value nodes."@en ;
+.
+
+sh:Function
+    rdfs:label "Function"@en ;
+    schema:description "The class of SHACL functions."@en ;
+.
+
+sh:HasValueConstraintComponent
+    rdfs:label "Has-value constraint component"@en ;
+    schema:description "A constraint component that can be used to verify that one of the value nodes is a given RDF node."@en ;
+.
+
+sh:IRI
+    rdfs:label "IRI"@en ;
+    schema:description "The node kind of all IRIs."@en ;
+.
+
+sh:IRIOrLiteral
+    rdfs:label "IRI or literal"@en ;
+    schema:description "The node kind of all IRIs or literals."@en ;
+.
+
+sh:InConstraintComponent
+    rdfs:label "In constraint component"@en ;
+    schema:description "A constraint component that can be used to exclusively enumerate the permitted value nodes."@en ;
+.
+
+sh:Info
+    rdfs:label "Info"@en ;
+    schema:description "The severity for an informational validation result."@en ;
+.
+
+sh:JSConstraint
+    rdfs:label "JavaScript-based constraint"@en ;
+    schema:description "The class of constraints backed by a JavaScript function."@en ;
+.
+
+sh:JSConstraintComponent
+    rdfs:label "JavaScript constraint component"@en ;
+    schema:description "A constraint component with the parameter sh:js linking to a sh:JSConstraint containing a sh:script."@en ;
+.
+
+sh:JSExecutable
+    rdfs:label "JavaScript executable"@en ;
+    schema:description "Abstract base class of resources that declare an executable JavaScript."@en ;
+.
+
+sh:JSFunction
+    rdfs:label "JavaScript function"@en ;
+    schema:description "The class of SHACL functions that execute a JavaScript function when called."@en ;
+.
+
+sh:JSLibrary
+    rdfs:label "JavaScript library"@en ;
+    schema:description "Represents a JavaScript library, typically identified by one or more URLs of files to include."@en ;
+.
+
+sh:JSRule
+    rdfs:label "JavaScript rule"@en ;
+    schema:description "The class of SHACL rules expressed using JavaScript."@en ;
+.
+
+sh:JSTarget
+    rdfs:label "JavaScript target"@en ;
+    schema:description "The class of targets that are based on JavaScript functions."@en ;
+.
+
+sh:JSTargetType
+    rdfs:label "JavaScript target type"@en ;
+    schema:description "The (meta) class for parameterizable targets that are based on JavaScript functions."@en ;
+.
+
+sh:JSValidator
+    rdfs:label "JavaScript validator"@en ;
+    schema:description "A SHACL validator based on JavaScript. This can be used to declare SHACL constraint components that perform JavaScript-based validation when used."@en ;
+.
+
+sh:LanguageInConstraintComponent
+    rdfs:label "Language-in constraint component"@en ;
+    schema:description "A constraint component that can be used to enumerate language tags that all value nodes must have."@en ;
+.
+
+sh:LessThanConstraintComponent
+    rdfs:label "Less-than constraint component"@en ;
+    schema:description "A constraint component that can be used to verify that each value node is smaller than all the nodes that have the focus node as subject and the value of a given property as predicate."@en ;
+.
+
+sh:LessThanOrEqualsConstraintComponent
+    rdfs:label "less-than-or-equals constraint component"@en ;
+    schema:description "A constraint component that can be used to verify that every value node is smaller than all the nodes that have the focus node as subject and the value of a given property as predicate."@en ;
+.
+
+sh:Literal
+    rdfs:label "Literal"@en ;
+    schema:description "The node kind of all literals."@en ;
+.
+
+sh:MaxCountConstraintComponent
+    rdfs:label "Max-count constraint component"@en ;
+    schema:description "A constraint component that can be used to restrict the maximum number of value nodes."@en ;
+.
+
+sh:MaxExclusiveConstraintComponent
+    rdfs:label "Max-exclusive constraint component"@en ;
+    schema:description "A constraint component that can be used to restrict the range of value nodes with a maximum exclusive value."@en ;
+.
+
+sh:MaxInclusiveConstraintComponent
+    rdfs:label "Max-inclusive constraint component"@en ;
+    schema:description "A constraint component that can be used to restrict the range of value nodes with a maximum inclusive value."@en ;
+.
+
+sh:MaxLengthConstraintComponent
+    rdfs:label "Max-length constraint component"@en ;
+    schema:description "A constraint component that can be used to restrict the maximum string length of value nodes."@en ;
+.
+
+sh:MinCountConstraintComponent
+    rdfs:label "Min-count constraint component"@en ;
+    schema:description "A constraint component that can be used to restrict the minimum number of value nodes."@en ;
+.
+
+sh:MinExclusiveConstraintComponent
+    rdfs:label "Min-exclusive constraint component"@en ;
+    schema:description "A constraint component that can be used to restrict the range of value nodes with a minimum exclusive value."@en ;
+.
+
+sh:MinInclusiveConstraintComponent
+    rdfs:label "Min-inclusive constraint component"@en ;
+    schema:description "A constraint component that can be used to restrict the range of value nodes with a minimum inclusive value."@en ;
+.
+
+sh:MinLengthConstraintComponent
+    rdfs:label "Min-length constraint component"@en ;
+    schema:description "A constraint component that can be used to restrict the minimum string length of value nodes."@en ;
+.
+
+sh:NodeConstraintComponent
+    rdfs:label "Node constraint component"@en ;
+    schema:description "A constraint component that can be used to verify that all value nodes conform to the given node shape."@en ;
+.
+
+sh:NodeKind
+    rdfs:label "Node kind"@en ;
+    schema:description "The class of all node kinds, including sh:BlankNode, sh:IRI, sh:Literal or the combinations of these: sh:BlankNodeOrIRI, sh:BlankNodeOrLiteral, sh:IRIOrLiteral."@en ;
+.
+
+sh:NodeKindConstraintComponent
+    rdfs:label "Node-kind constraint component"@en ;
+    schema:description "A constraint component that can be used to restrict the RDF node kind of each value node."@en ;
+.
+
+sh:NodeShape
+    rdfs:label "Node shape"@en ;
+    schema:description "A node shape is a shape that specifies constraint that need to be met with respect to focus nodes."@en ;
+.
+
+sh:NotConstraintComponent
+    rdfs:label "Not constraint component"@en ;
+    schema:description "A constraint component that can be used to verify that value nodes do not conform to a given shape."@en ;
+.
+
+sh:OrConstraintComponent
+    rdfs:label "Or constraint component"@en ;
+    schema:description "A constraint component that can be used to restrict the value nodes so that they conform to at least one out of several provided shapes."@en ;
+.
+
+sh:Parameter
+    rdfs:label "Parameter"@en ;
+    schema:description "The class of parameter declarations, consisting of a path predicate and (possibly) information about allowed value type, cardinality and other characteristics."@en ;
+.
+
+sh:Parameterizable
+    rdfs:label "Parameterizable"@en ;
+    schema:description "Superclass of components that can take parameters, especially functions and constraint components."@en ;
+.
+
+sh:PatternConstraintComponent
+    rdfs:label "Pattern constraint component"@en ;
+    schema:description "A constraint component that can be used to verify that every value node matches a given regular expression."@en ;
+.
+
+sh:PrefixDeclaration
+    rdfs:label "Prefix declaration"@en ;
+    schema:description "The class of prefix declarations, consisting of pairs of a prefix with a namespace."@en ;
+.
+
+sh:PropertyConstraintComponent
+    rdfs:label "Property constraint component"@en ;
+    schema:description "A constraint component that can be used to verify that all value nodes conform to the given property shape."@en ;
+.
+
+sh:PropertyGroup
+    rdfs:label "Property group"@en ;
+    schema:description "Instances of this class represent groups of property shapes that belong together."@en ;
+.
+
+sh:PropertyShape
+    rdfs:label "Property shape"@en ;
+    schema:description "A property shape is a shape that specifies constraints on the values of a focus node for a given property or path."@en ;
+.
+
+sh:QualifiedMaxCountConstraintComponent
+    rdfs:label "Qualified-max-count constraint component"@en ;
+    schema:description "A constraint component that can be used to verify that a specified maximum number of value nodes conforms to a given shape."@en ;
+.
+
+sh:QualifiedMinCountConstraintComponent
+    rdfs:label "Qualified-min-count constraint component"@en ;
+    schema:description "A constraint component that can be used to verify that a specified minimum number of value nodes conforms to a given shape."@en ;
+.
+
+sh:ResultAnnotation
+    rdfs:label "Result annotation"@en ;
+    schema:description "A class of result annotations, which define the rules to derive the values of a given annotation property as extra values for a validation result."@en ;
+.
+
+sh:Rule
+    rdfs:label "Rule"@en ;
+    schema:description "The class of SHACL rules. Never instantiated directly."@en ;
+.
+
+sh:SPARQLAskExecutable
+    rdfs:label "SPARQL ASK executable"@en ;
+    schema:description "The class of SPARQL executables that are based on an ASK query."@en ;
+.
+
+sh:SPARQLAskValidator
+    rdfs:label "SPARQL ASK validator"@en ;
+    schema:description "The class of validators based on SPARQL ASK queries. The queries are evaluated for each value node and are supposed to return true if the given node conforms."@en ;
+.
+
+sh:SPARQLConstraint
+    rdfs:label "SPARQL constraint"@en ;
+    schema:description "The class of constraints based on SPARQL SELECT queries."@en ;
+.
+
+sh:SPARQLConstraintComponent
+    rdfs:label "SPARQL constraint component"@en ;
+    schema:description "A constraint component that can be used to define constraints based on SPARQL queries."@en ;
+.
+
+sh:SPARQLConstructExecutable
+    rdfs:label "SPARQL CONSTRUCT executable"@en ;
+    schema:description "The class of SPARQL executables that are based on a CONSTRUCT query."@en ;
+.
+
+sh:SPARQLExecutable
+    rdfs:label "SPARQL executable"@en ;
+    schema:description "The class of resources that encapsulate a SPARQL query."@en ;
+.
+
+sh:SPARQLFunction
+    rdfs:label "SPARQL function"@en ;
+    schema:description "A function backed by a SPARQL query - either ASK or SELECT."@en ;
+.
+
+sh:SPARQLRule
+    rdfs:label "SPARQL CONSTRUCT rule"@en ;
+    schema:description "The class of SHACL rules based on SPARQL CONSTRUCT queries."@en ;
+.
+
+sh:SPARQLSelectExecutable
+    rdfs:label "SPARQL SELECT executable"@en ;
+    schema:description "The class of SPARQL executables based on a SELECT query."@en ;
+.
+
+sh:SPARQLSelectValidator
+    rdfs:label "SPARQL SELECT validator"@en ;
+    schema:description "The class of validators based on SPARQL SELECT queries. The queries are evaluated for each focus node and are supposed to produce bindings for all focus nodes that do not conform."@en ;
+.
+
+sh:SPARQLTarget
+    rdfs:label "SPARQL target"@en ;
+    schema:description "The class of targets that are based on SPARQL queries."@en ;
+.
+
+sh:SPARQLTargetType
+    rdfs:label "SPARQL target type"@en ;
+    schema:description "The (meta) class for parameterizable targets that are based on SPARQL queries."@en ;
+.
+
+sh:SPARQLUpdateExecutable
+    rdfs:label "SPARQL UPDATE executable"@en ;
+    schema:description "The class of SPARQL executables based on a SPARQL UPDATE."@en ;
+.
+
+sh:Severity
+    rdfs:label "Severity"@en ;
+    schema:description "The class of validation result severity levels, including violation and warning levels."@en ;
+.
+
+sh:Shape
+    rdfs:label "Shape"@en ;
+    schema:description "A shape is a collection of constraints that may be targeted for certain nodes."@en ;
+.
+
+sh:Target
+    rdfs:label "Target"@en ;
+    schema:description "The base class of targets such as those based on SPARQL queries."@en ;
+.
+
+sh:TargetType
+    rdfs:label "Target type"@en ;
+    schema:description "The (meta) class for parameterizable targets.	Instances of this are instantiated as values of the sh:target property."@en ;
+.
+
+sh:TripleRule
+    rdfs:label "A rule based on triple (subject, predicate, object) pattern."@en ;
+.
+
+sh:UniqueLangConstraintComponent
+    rdfs:label "Unique-languages constraint component"@en ;
+    schema:description "A constraint component that can be used to specify that no pair of value nodes may use the same language tag."@en ;
+.
+
+sh:ValidationReport
+    rdfs:label "Validation report"@en ;
+    schema:description "The class of SHACL validation reports."@en ;
+.
+
+sh:ValidationResult
+    rdfs:label "Validation result"@en ;
+    schema:description "The class of validation results."@en ;
+.
+
+sh:Validator
+    rdfs:label "Validator"@en ;
+    schema:description "The class of validators, which provide instructions on how to process a constraint definition. This class serves as base class for the SPARQL-based validators and other possible implementations."@en ;
+.
+
+sh:Violation
+    rdfs:label "Violation"@en ;
+    schema:description "The severity for a violation validation result."@en ;
+.
+
+sh:Warning
+    rdfs:label "Warning"@en ;
+    schema:description "The severity for a warning validation result."@en ;
+.
+
+sh:XoneConstraintComponent
+    rdfs:label "Exactly one constraint component"@en ;
+    schema:description "A constraint component that can be used to restrict the value nodes so that they conform to exactly one out of several provided shapes."@en ;
+.
+
+sh:alternativePath
+    rdfs:label "alternative path"@en ;
+    schema:description "The (single) value of this property must be a list of path elements, representing the elements of alternative paths."@en ;
+.
+
+sh:and
+    rdfs:label "and"@en ;
+    schema:description "RDF list of shapes to validate the value nodes against."@en ;
+.
+
+sh:annotationProperty
+    rdfs:label "annotation property"@en ;
+    schema:description "The annotation property that shall be set."@en ;
+.
+
+sh:annotationValue
+    rdfs:label "annotation value"@en ;
+    schema:description "The (default) values of the annotation property."@en ;
+.
+
+sh:annotationVarName
+    rdfs:label "annotation variable name"@en ;
+    schema:description "The name of the SPARQL variable from the SELECT clause that shall be used for the values."@en ;
+.
+
+sh:ask
+    rdfs:label "ask"@en ;
+    schema:description "The SPARQL ASK query to execute."@en ;
+.
+
+sh:class
+    rdfs:label "class"@en ;
+    schema:description "The type that all value nodes must have."@en ;
+.
+
+sh:closed
+    rdfs:label "closed"@en ;
+    schema:description "If set to true then the shape is closed."@en ;
+.
+
+sh:condition
+    rdfs:label "condition"@en ;
+    schema:description "The shapes that the focus nodes need to conform to before a rule is executed on them."@en ;
+.
+
+sh:conforms
+    rdfs:label "conforms"@en ;
+    schema:description "True if the validation did not produce any validation results, and false otherwise."@en ;
+.
+
+sh:construct
+    rdfs:label "construct"@en ;
+    schema:description "The SPARQL CONSTRUCT query to execute."@en ;
+.
+
+sh:datatype
+    rdfs:label "datatype"@en ;
+    schema:description "Specifies an RDF datatype that all value nodes must have."@en ;
+.
+
+sh:deactivated
+    rdfs:label "deactivated"@en ;
+    schema:description "If set to true then all nodes conform to this."@en ;
+.
+
+sh:declare
+    rdfs:label "declare"@en ;
+    schema:description "Links a resource with its namespace prefix declarations."@en ;
+.
+
+sh:defaultValue
+    rdfs:label "default value"@en ;
+    schema:description "A default value for a property, for example for user interface tools to pre-populate input fields."@en ;
+.
+
+sh:description
+    rdfs:label "description"@en ;
+    schema:description "Human-readable descriptions for the property in the context of the surrounding shape."@en ;
+.
+
+sh:detail
+    rdfs:label "detail"@en ;
+    schema:description "Links a result with other results that provide more details, for example to describe violations against nested shapes."@en ;
+.
+
+sh:disjoint
+    rdfs:label "disjoint"@en ;
+    schema:description "Specifies a property where the set of values must be disjoint with the value nodes."@en ;
+.
+
+sh:entailment
+    rdfs:label "entailment"@en ;
+    schema:description "An entailment regime that indicates what kind of inferencing is required by a shapes graph."@en ;
+.
+
+sh:equals
+    rdfs:label "equals"@en ;
+    schema:description "Specifies a property that must have the same values as the value nodes."@en ;
+.
+
+sh:expression
+    rdfs:label "expression"@en ;
+    schema:description "The node expression that must return true for the value nodes."@en ;
+.
+
+sh:filterShape
+    rdfs:label "filter shape"@en ;
+    schema:description "The shape that all input nodes of the expression need to conform to."@en ;
+.
+
+sh:flags
+    rdfs:label "flags"@en ;
+    schema:description "An optional flag to be used with regular expression pattern matching."@en ;
+.
+
+sh:focusNode
+    rdfs:label "focus node"@en ;
+    schema:description "The focus node that was validated when the result was produced."@en ;
+.
+
+sh:group
+    rdfs:label "group"@en ;
+    schema:description "Can be used to link to a property group to indicate that a property shape belongs to a group of related property shapes."@en ;
+.
+
+sh:hasValue
+    rdfs:label "has value"@en ;
+    schema:description "Specifies a value that must be among the value nodes."@en ;
+.
+
+sh:ignoredProperties
+    rdfs:label "ignored properties"@en ;
+    schema:description "An optional RDF list of properties that are also permitted in addition to those explicitly enumerated via sh:property/sh:path."@en ;
+.
+
+sh:in
+    rdfs:label "in"@en ;
+    schema:description "Specifies a list of allowed values so that each value node must be among the members of the given list."@en ;
+.
+
+sh:intersection
+    rdfs:label "intersection"@en ;
+    schema:description "A list of node expressions that shall be intersected."@en ;
+.
+
+sh:inversePath
+    rdfs:label "inverse path"@en ;
+    schema:description "The (single) value of this property represents an inverse path (object to subject)."@en ;
+.
+
+sh:js
+    rdfs:label "JavaScript constraint"@en ;
+    schema:description "Constraints expressed in JavaScript." ;
+.
+
+sh:jsFunctionName
+    rdfs:label "JavaScript function name"@en ;
+    schema:description "The name of the JavaScript function to execute."@en ;
+.
+
+sh:jsLibrary
+    rdfs:label "JavaScript library"@en ;
+    schema:description "Declares which JavaScript libraries are needed to execute this."@en ;
+.
+
+sh:jsLibraryURL
+    rdfs:label "JavaScript library URL"@en ;
+    schema:description "Declares the URLs of a JavaScript library. This should be the absolute URL of a JavaScript file. Implementations may redirect those to local files."@en ;
+.
+
+sh:labelTemplate
+    rdfs:label "label template"@en ;
+    schema:description "Outlines how human-readable labels of instances of the associated Parameterizable shall be produced. The values can contain {?paramName} as placeholders for the actual values of the given parameter."@en ;
+.
+
+sh:languageIn
+    rdfs:label "language in"@en ;
+    schema:description "Specifies a list of language tags that all value nodes must have."@en ;
+.
+
+sh:lessThan
+    rdfs:label "less than"@en ;
+    schema:description "Specifies a property that must have smaller values than the value nodes."@en ;
+.
+
+sh:lessThanOrEquals
+    rdfs:label "less than or equals"@en ;
+    schema:description "Specifies a property that must have smaller or equal values than the value nodes."@en ;
+.
+
+sh:maxCount
+    rdfs:label "max count"@en ;
+    schema:description "Specifies the maximum number of values in the set of value nodes."@en ;
+.
+
+sh:maxExclusive
+    rdfs:label "max exclusive"@en ;
+    schema:description "Specifies the maximum exclusive value of each value node."@en ;
+.
+
+sh:maxInclusive
+    rdfs:label "max inclusive"@en ;
+    schema:description "Specifies the maximum inclusive value of each value node."@en ;
+.
+
+sh:maxLength
+    rdfs:label "max length"@en ;
+    schema:description "Specifies the maximum string length of each value node."@en ;
+.
+
+sh:message
+    rdfs:label "message"@en ;
+    schema:description "A human-readable message (possibly with placeholders for variables) explaining the cause of the result."@en ;
+.
+
+sh:minCount
+    rdfs:label "min count"@en ;
+    schema:description "Specifies the minimum number of values in the set of value nodes."@en ;
+.
+
+sh:minExclusive
+    rdfs:label "min exclusive"@en ;
+    schema:description "Specifies the minimum exclusive value of each value node."@en ;
+.
+
+sh:minInclusive
+    rdfs:label "min inclusive"@en ;
+    schema:description "Specifies the minimum inclusive value of each value node."@en ;
+.
+
+sh:minLength
+    rdfs:label "min length"@en ;
+    schema:description "Specifies the minimum string length of each value node."@en ;
+.
+
+sh:name
+    rdfs:label "name"@en ;
+    schema:description "Human-readable labels for the property in the context of the surrounding shape."@en ;
+.
+
+sh:namespace
+    rdfs:label "namespace"@en ;
+    schema:description "The namespace associated with a prefix in a prefix declaration."@en ;
+.
+
+sh:node
+    rdfs:label "node"@en ;
+    schema:description "Specifies the node shape that all value nodes must conform to."@en ;
+.
+
+sh:nodeKind
+    rdfs:label "node kind"@en ;
+    schema:description "Specifies the node kind (e.g. IRI or literal) each value node."@en ;
+.
+
+sh:nodeValidator
+    rdfs:label "shape validator"@en ;
+    schema:description "The validator(s) used to evaluate a constraint in the context of a node shape."@en ;
+.
+
+sh:nodes
+    rdfs:label "nodes"@en ;
+    schema:description "The node expression producing the input nodes of a filter shape expression."@en ;
+.
+
+sh:not
+    rdfs:label "not"@en ;
+    schema:description "Specifies a shape that the value nodes must not conform to."@en ;
+.
+
+sh:object
+    rdfs:label "object"@en ;
+    schema:description "An expression producing the nodes that shall be inferred as objects."@en ;
+.
+
+sh:oneOrMorePath
+    rdfs:label "one or more path"@en ;
+    schema:description "The (single) value of this property represents a path that is matched one or more times."@en ;
+.
+
+sh:optional
+    rdfs:label "optional"@en ;
+    schema:description "Indicates whether a parameter is optional."@en ;
+.
+
+sh:or
+    rdfs:label "or"@en ;
+    schema:description "Specifies a list of shapes so that the value nodes must conform to at least one of the shapes."@en ;
+.
+
+sh:order
+    rdfs:label "order"@en ;
+    schema:description "Specifies the relative order of this compared to its siblings. For example use 0 for the first, 1 for the second."@en ;
+.
+
+sh:parameter
+    rdfs:label "parameter"@en ;
+    schema:description "The parameters of a function or constraint component."@en ;
+.
+
+sh:path
+    rdfs:label "path"@en ;
+    schema:description "Specifies the property path of a property shape."@en ;
+.
+
+sh:pattern
+    rdfs:label "pattern"@en ;
+    schema:description "Specifies a regular expression pattern that the string representations of the value nodes must match."@en ;
+.
+
+sh:predicate
+    rdfs:label "predicate"@en ;
+    schema:description "An expression producing the properties that shall be inferred as predicates."@en ;
+.
+
+sh:prefix
+    rdfs:label "prefix"@en ;
+    schema:description "The prefix of a prefix declaration."@en ;
+.
+
+sh:prefixes
+    rdfs:label "prefixes"@en ;
+    schema:description "The prefixes that shall be applied before parsing the associated SPARQL query."@en ;
+.
+
+sh:property
+    rdfs:label "property"@en ;
+    schema:description "Links a shape to its property shapes."@en ;
+.
+
+sh:propertyValidator
+    rdfs:label "property validator"@en ;
+    schema:description "The validator(s) used to evaluate a constraint in the context of a property shape."@en ;
+.
+
+sh:qualifiedMaxCount
+    rdfs:label "qualified max count"@en ;
+    schema:description "The maximum number of value nodes that can conform to the shape."@en ;
+.
+
+sh:qualifiedMinCount
+    rdfs:label "qualified min count"@en ;
+    schema:description "The minimum number of value nodes that must conform to the shape."@en ;
+.
+
+sh:qualifiedValueShape
+    rdfs:label "qualified value shape"@en ;
+    schema:description "The shape that a specified number of values must conform to."@en ;
+.
+
+sh:qualifiedValueShapesDisjoint
+    rdfs:label "qualified value shapes disjoint"@en ;
+    schema:description "Can be used to mark the qualified value shape to be disjoint with its sibling shapes."@en ;
+.
+
+sh:result
+    rdfs:label "result"@en ;
+    schema:description "The validation results contained in a validation report."@en ;
+.
+
+sh:resultAnnotation
+    rdfs:label "result annotation"@en ;
+    schema:description "Links a SPARQL validator with zero or more sh:ResultAnnotation instances, defining how to derive additional result properties based on the variables of the SELECT query."@en ;
+.
+
+sh:resultMessage
+    rdfs:label "result message"@en ;
+    schema:description "Human-readable messages explaining the cause of the result."@en ;
+.
+
+sh:resultPath
+    rdfs:label "result path"@en ;
+    schema:description "The path of a validation result, based on the path of the validated property shape."@en ;
+.
+
+sh:resultSeverity
+    rdfs:label "result severity"@en ;
+    schema:description "The severity of the result, e.g. warning."@en ;
+.
+
+sh:returnType
+    rdfs:label "return type"@en ;
+    schema:description "The expected type of values returned by the associated function."@en ;
+.
+
+sh:rule
+    rdfs:label "rule"@en ;
+    schema:description "The rules linked to a shape."@en ;
+.
+
+sh:select
+    rdfs:label "select"@en ;
+    schema:description "The SPARQL SELECT query to execute."@en ;
+.
+
+sh:severity
+    rdfs:label "severity"@en ;
+    schema:description "Defines the severity that validation results produced by a shape must have. Defaults to sh:Violation."@en ;
+.
+
+sh:shapesGraph
+    rdfs:label "shapes graph"@en ;
+    schema:description "Shapes graphs that should be used when validating this data graph."@en ;
+.
+
+sh:shapesGraphWellFormed
+    rdfs:label "shapes graph well-formed"@en ;
+    schema:description "If true then the validation engine was certain that the shapes graph has passed all SHACL syntax requirements during the validation process."@en ;
+.
+
+sh:sourceConstraint
+    rdfs:label "source constraint"@en ;
+    schema:description "The constraint that was validated when the result was produced."@en ;
+.
+
+sh:sourceConstraintComponent
+    rdfs:label "source constraint component"@en ;
+    schema:description "The constraint component that is the source of the result."@en ;
+.
+
+sh:sourceShape
+    rdfs:label "source shape"@en ;
+    schema:description "The shape that is was validated when the result was produced."@en ;
+.
+
+sh:sparql
+    rdfs:label "constraint (in SPARQL)"@en ;
+    schema:description "Links a shape with SPARQL constraints."@en ;
+.
+
+sh:subject
+    rdfs:label "subject"@en ;
+    schema:description "An expression producing the resources that shall be inferred as subjects."@en ;
+.
+
+sh:suggestedShapesGraph
+    rdfs:label "suggested shapes graph"@en ;
+    schema:description "Suggested shapes graphs for this ontology. The values of this property may be used in the absence of specific sh:shapesGraph statements."@en ;
+.
+
+sh:target
+    rdfs:label "target"@en ;
+    schema:description "Links a shape to a target specified by an extension language, for example instances of sh:SPARQLTarget."@en ;
+.
+
+sh:targetClass
+    rdfs:label "target class"@en ;
+    schema:description "Links a shape to a class, indicating that all instances of the class must conform to the shape."@en ;
+.
+
+sh:targetNode
+    rdfs:label "target node"@en ;
+    schema:description "Links a shape to individual nodes, indicating that these nodes must conform to the shape."@en ;
+.
+
+sh:targetObjectsOf
+    rdfs:label "target objects of"@en ;
+    schema:description "Links a shape to a property, indicating that all all objects of triples that have the given property as their predicate must conform to the shape."@en ;
+.
+
+sh:targetSubjectsOf
+    rdfs:label "target subjects of"@en ;
+    schema:description "Links a shape to a property, indicating that all subjects of triples that have the given property as their predicate must conform to the shape."@en ;
+.
+
+sh:this
+    rdfs:label "this"@en ;
+    schema:description "A node expression that represents the current focus node."@en ;
+.
+
+sh:union
+    rdfs:label "union"@en ;
+    schema:description "A list of node expressions that shall be used together."@en ;
+.
+
+sh:uniqueLang
+    rdfs:label "unique languages"@en ;
+    schema:description "Specifies whether all node values must have a unique (or no) language tag."@en ;
+.
+
+sh:update
+    rdfs:label "update"@en ;
+    schema:description "The SPARQL UPDATE to execute."@en ;
+.
+
+sh:validator
+    rdfs:label "validator"@en ;
+    schema:description "The validator(s) used to evaluate constraints of either node or property shapes."@en ;
+.
+
+sh:value
+    rdfs:label "value"@en ;
+    schema:description "An RDF node that has caused the result."@en ;
+.
+
+sh:xone
+    rdfs:label "exactly one"@en ;
+    schema:description "Specifies a list of shapes so that the value nodes must conform to exactly one of the shapes."@en ;
+.
+
+sh:zeroOrMorePath
+    rdfs:label "zero or more path"@en ;
+    schema:description "The (single) value of this property represents a path that is matched zero or more times."@en ;
+.
+
+sh:zeroOrOnePath
+    rdfs:label "zero or one path"@en ;
+    schema:description "The (single) value of this property represents a path that is matched zero or one times."@en ;
+.
+

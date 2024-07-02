@@ -1,0 +1,191 @@
+PREFIX qb: <http://purl.org/linked-data/cube#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <https://schema.org/>
+
+<http://purl.org/linked-data/cube>
+    rdfs:label
+        "The data cube vocabulary" ,
+        "Vocabulary for multi-dimensional (e.g. statistical) data publishing" ;
+    schema:description "This vocabulary allows multi-dimensional data, such as statistics, to be published in RDF. It is based on the core information model from SDMX (and thus also DDI)." ;
+.
+
+qb:Attachable
+    rdfs:label "Attachable (abstract)"@en ;
+    schema:description "Abstract superclass for everything that can have attributes and dimensions"@en ;
+.
+
+qb:AttributeProperty
+    rdfs:label "Attribute property"@en ;
+    schema:description "The class of components which represent attributes of observations in the cube, e.g. unit of measurement"@en ;
+.
+
+qb:CodedProperty
+    rdfs:label "Coded property"@en ;
+    schema:description "Superclass of all coded ComponentProperties"@en ;
+.
+
+qb:ComponentProperty
+    rdfs:label "Component property (abstract)"@en ;
+    schema:description "Abstract super-property of all properties representing dimensions, attributes or measures"@en ;
+.
+
+qb:ComponentSet
+    rdfs:label "Component set"@en ;
+    schema:description "Abstract class of things which reference one or more ComponentProperties"@en ;
+.
+
+qb:ComponentSpecification
+    rdfs:label "Component specification"@en ;
+    schema:description "Used to define properties of a component (attribute, dimension etc) which are specific to its usage in a DSD."@en ;
+.
+
+qb:DataSet
+    rdfs:label "Data set"@en ;
+    schema:description "Represents a collection of observations, possibly organized into various slices, conforming to some common dimensional structure."@en ;
+.
+
+qb:DataStructureDefinition
+    rdfs:label "Data structure definition"@en ;
+    schema:description "Defines the structure of a DataSet or slice"@en ;
+.
+
+qb:DimensionProperty
+    rdfs:label "Dimension property"@en ;
+    schema:description "The class of components which represent the dimensions of the cube"@en ;
+.
+
+qb:HierarchicalCodeList
+    rdfs:label "Hierarchical Code List"@en ;
+    schema:description "Represents a generalized hierarchy of concepts which can be used for coding. The hierarchy is defined by one or more roots together with a property which relates concepts in the hierarchy to thier child concept .  The same concepts may be members of multiple hierarchies provided that different qb:parentChildProperty values are used for each hierarchy."@en ;
+.
+
+qb:MeasureProperty
+    rdfs:label "Measure property"@en ;
+    schema:description "The class of components which represent the measured value of the phenomenon being observed"@en ;
+.
+
+qb:Observation
+    rdfs:label "Observation"@en ;
+    schema:description "A single observation in the cube, may have one or more associated measured values"@en ;
+.
+
+qb:ObservationGroup
+    rdfs:label "Observation Group"@en ;
+    schema:description "A, possibly arbitrary, group of observations."@en ;
+.
+
+qb:Slice
+    rdfs:label "Slice"@en ;
+    schema:description "Denotes a subset of a DataSet defined by fixing a subset of the dimensional values, component properties on the Slice"@en ;
+.
+
+qb:SliceKey
+    rdfs:label "Slice key"@en ;
+    schema:description "Denotes a subset of the component properties of a DataSet which are fixed in the corresponding slices"@en ;
+.
+
+qb:attribute
+    rdfs:label "attribute"@en ;
+    schema:description "An alternative to qb:componentProperty which makes explicit that the component is a attribute"@en ;
+.
+
+qb:codeList
+    rdfs:label "code list"@en ;
+    schema:description "gives the code list associated with a CodedProperty"@en ;
+.
+
+qb:component
+    rdfs:label "component specification"@en ;
+    schema:description "indicates a component specification which is included in the structure of the dataset"@en ;
+.
+
+qb:componentAttachment
+    rdfs:label "component attachment"@en ;
+    schema:description "Indicates the level at which the component property should be attached, this might an qb:DataSet, qb:Slice or qb:Observation, or a qb:MeasureProperty."@en ;
+.
+
+qb:componentProperty
+    rdfs:label "component"@en ;
+    schema:description "indicates a ComponentProperty (i.e. attribute/dimension) expected on a DataSet, or a dimension fixed in a SliceKey"@en ;
+.
+
+qb:componentRequired
+    rdfs:label "component required"@en ;
+    schema:description """Indicates whether a component property is required (true) or optional (false) in the context of a DSD. Only applicable
+    to components correspond to an attribute. Defaults to false (optional)."""@en ;
+.
+
+qb:concept
+    rdfs:label "concept"@en ;
+    schema:description "gives the concept which is being measured or indicated by a ComponentProperty"@en ;
+.
+
+qb:dataSet
+    rdfs:label "data set"@en ;
+    schema:description "indicates the data set of which this observation is a part"@en ;
+.
+
+qb:dimension
+    rdfs:label "dimension"@en ;
+    schema:description "An alternative to qb:componentProperty which makes explicit that the component is a dimension"@en ;
+.
+
+qb:hierarchyRoot
+    schema:description "Specifies a root of the hierarchy. A hierarchy may have multiple roots but must have at least one."@en ;
+.
+
+qb:measure
+    rdfs:label "measure"@en ;
+    schema:description "An alternative to qb:componentProperty which makes explicit that the component is a measure"@en ;
+.
+
+qb:measureDimension
+    rdfs:label "measure dimension"@en ;
+    schema:description "An alternative to qb:componentProperty which makes explicit that the component is a measure dimension"@en ;
+.
+
+qb:measureType
+    rdfs:label "measure type"@en ;
+    schema:description "Generic measure dimension, the value of this dimension indicates which measure (from the set of measures in the DSD) is being given by the obsValue (or other primary measure)"@en ;
+.
+
+qb:observation
+    rdfs:label "observation"@en ;
+    schema:description "indicates a observation contained within this slice of the data set"@en ;
+.
+
+qb:observationGroup
+    rdfs:label "observation group"@en ;
+    schema:description "Indicates a group of observations. The domain of this property is left open so that a group may be attached to different resources and need not be restricted to a single DataSet"@en ;
+.
+
+qb:order
+    rdfs:label "order"@en ;
+    schema:description "indicates a priority order for the components of sets with this structure, used to guide presentations - lower order numbers come before higher numbers, un-numbered components come last"@en ;
+.
+
+qb:parentChildProperty
+    rdfs:label "parent-child property"@en ;
+    schema:description "Specifies a property which relates a parent concept in the hierarchy to a child concept."@en ;
+.
+
+qb:slice
+    rdfs:label "slice"@en ;
+    schema:description "Indicates a subset of a DataSet defined by fixing a subset of the dimensional values"@en ;
+.
+
+qb:sliceKey
+    rdfs:label "slice key"@en ;
+    schema:description "indicates a slice key which is used for slices in this dataset"@en ;
+.
+
+qb:sliceStructure
+    rdfs:label "slice structure"@en ;
+    schema:description "indicates the sub-key corresponding to this slice"@en ;
+.
+
+qb:structure
+    rdfs:label "structure"@en ;
+    schema:description "indicates the structure to which this data set conforms"@en ;
+.
+

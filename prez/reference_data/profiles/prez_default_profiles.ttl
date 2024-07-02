@@ -5,9 +5,12 @@ PREFIX geo: <http://www.opengis.net/ont/geosparql#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX prez: <https://prez.dev/>
 PREFIX prof: <http://www.w3.org/ns/dx/prof/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX reg: <http://purl.org/linked-data/registry#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
+PREFIX shext: <http://example.com/shacl-extension#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
@@ -21,103 +24,117 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
         sh:targetClass prez:SPARQLQuery ;
-        altr-ext:hasDefaultProfile <https://prez.dev/profile/open>
+        altr-ext:hasDefaultProfile <https://prez.dev/profile/open-object>
+    ] , [
+        a sh:NodeShape ;
+        sh:targetClass prez:AltProfilesList ;
+        altr-ext:hasDefaultProfile <https://prez.dev/profile/open-object>
     ]
 .
 
-<https://prez.dev/profile/open>
-    a prof:Profile ;
-    dcterms:identifier "open" ;
-    dcterms:description "An open profile which will return all direct properties for a resource." ;
+<https://prez.dev/profile/open-object>
+    a prof:Profile , prez:ObjectProfile ;
+    dcterms:identifier "openobj"^^xsd:token ;
+    dcterms:description "An open profile for objects which will return all direct properties for a resource." ;
     dcterms:title "Open profile" ;
-    altr-ext:constrainsClass prez:SPARQLQuery , prez:SearchResult ;
+    altr-ext:constrainsClass prez:SPARQLQuery , prof:Profile , prez:SearchResult , prez:Object ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
-    altr-ext:hasResourceFormat "application/json" ,
+    altr-ext:hasResourceFormat "application/ld+json" ,
+        "application/ld+json" ,
+        "application/anot+ld+json" ,
+        "application/rdf+xml" ,
+        "text/anot+turtle" ,
+        "text/turtle" ;
+    sh:property [
+        sh:path shext:allPredicateValues ;
+    ] ;
+    shext:bnode-depth 2 ;
+    .
+
+
+<https://prez.dev/profile/cqlgeo>
+    a prof:Profile , prez:ListingProfile;
+    dcterms:identifier "cqlgeo"^^xsd:token ;
+    dcterms:description "A CQL profile targeted towards listing CQL results, including geospatial information." ;
+    dcterms:title "CQL Geo profile" ;
+    altr-ext:constrainsClass rdfs:Resource ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
+    altr-ext:hasResourceFormat "application/ld+json" ,
+        "application/ld+json" ,
+        "application/anot+ld+json" ,
+        "application/rdf+xml" ,
+        "text/anot+turtle" ,
+        "text/turtle" ;
+    sh:property [
+        sh:minCount 0 ;
+        sh:path (
+            sh:union (
+              rdf:type
+              ( geo:hasGeometry geo:asWKT )
+            )
+          )
+        ] ;
+    .
+
+
+<https://w3id.org/profile/mem>
+    a prof:Profile , prez:ListingProfile ;
+    dcterms:description "A very basic data model that lists the members of container objects only, i.e. not their other properties" ;
+    dcterms:identifier "mem"^^xsd:token ;
+    dcterms:title "Members" ;
+    altr-ext:constrainsClass geo:FeatureCollection ,
+                             dcat:Dataset ,
+                             dcat:Catalog ,
+                             skos:ConceptScheme ,
+                             skos:Collection ,
+                             prez:CQLObjectList ,
+                             prez:QueryablesList ,
+                             prof:Profile ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
+    altr-ext:hasResourceFormat
+        "application/json" ,
         "application/ld+json" ,
         "application/rdf+xml" ,
         "text/anot+turtle" ,
         "text/turtle" ;
-    .
-
-
-
-<http://www.opengis.net/spec/ogcapi-features-1/1.0/req/oas30>
-    a prof:Profile ;
-    dcterms:description "The OGC API Features specifies the behavior of Web APIs that provide access to features in a dataset in a manner independent of the underlying data store." ;
-    dcterms:identifier "oai"^^xsd:token ;
-    dcterms:title "OGC API Features" ;
-    altr-ext:constrainsClass
-        prez:Home ;
-    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
-    altr-ext:hasResourceFormat
-        "text/anot+turtle" ,
-        "application/geo+json" ;
+    sh:property [
+        sh:path rdf:type ;
+        ] ;
 .
 
 altr-ext:alt-profile
-    a prof:Profile ;
+    a prof:Profile , prez:ListingProfile , prez:ObjectProfile ;
     dcterms:description "The representation of the resource that lists all other representations (profiles and Media Types)" ;
     dcterms:identifier "alt"^^xsd:token ;
     dcterms:title "Alternates Profile" ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,
+        "application/anot+ld+json" ,
         "application/rdf+xml" ,
         "text/anot+turtle" ,
         "text/turtle" ;
     altr-ext:constrainsClass
         geo:Feature ,
-        prez:FeatureList ,
         geo:FeatureCollection ,
-        prez:FeatureCollectionList ,
         dcat:Dataset ,
-        prez:DatasetList ,
         dcat:Catalog ,
         dcat:Resource ,
-        prez:CatalogList ,
         skos:ConceptScheme ,
         skos:Concept ,
         skos:Collection ,
-        prez:SchemesList ,
-        prez:VocPrezCollectionList ;
-.
-
-prez:profiles
-    a prof:Profile ;
-    dcterms:title "Profiles" ;
-    dcterms:description "List of profiles" ;
-    dcterms:identifier "profiles"^^xsd:token ;
-    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
-    altr-ext:hasResourceFormat
-        "application/json" ,
-        "text/anot+turtle" ;
-    altr-ext:constrainsClass prof:Profile ;
-.
-
-<https://w3id.org/profile/mem>
-    a prof:Profile ;
-    dcterms:description "A very basic data model that lists the members of container objects only, i.e. not their other properties" ;
-    dcterms:identifier "mem"^^xsd:token ;
-    dcterms:title "Members" ;
-    altr-ext:constrainsClass prez:DatasetList ,
-                             prez:FeatureCollectionList ,
-                             prez:FeatureList ,
-                             prez:ProfilesList ,
-                             prez:SchemesList ,
-                             prez:VocPrezCollectionList ,
-                             prez:CatalogList ;
-    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
-    altr-ext:hasResourceFormat
-        "application/json" ,
-        "application/ld+json" ,
-        "application/rdf+xml" ,
-        "text/anot+turtle" ,
-        "text/turtle" ;
-    altr-ext:hasNodeShape [
-      a sh:NodeShape ;
-        sh:targetClass prez:ProfilesList ;
-        sh:path prez:link ,
-                dcterms:title ,
-                dcterms:description ;
-    ]
+        rdf:Resource ,
+        prof:Profile ;
+    sh:property [
+        sh:path (
+                    sh:union (
+                            rdf:type
+                            altr-ext:hasResourceFormat
+                            altr-ext:hasDefaultResourceFormat
+                            dcterms:description
+                            dcterms:title
+                            dcterms:identifier
+                    )
+                )
+    ] ;
 .
