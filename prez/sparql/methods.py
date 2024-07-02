@@ -11,6 +11,7 @@ from fastapi.concurrency import run_in_threadpool
 from rdflib import Namespace, Graph, URIRef, Literal, BNode
 
 from prez.config import settings
+from prez.models.model_exceptions import InvalidSPARQLQueryException
 
 PREZ = Namespace("https://prez.dev/")
 
@@ -96,18 +97,24 @@ class RemoteSparqlRepo(Repo):
     ):
         """Sends a starlette Request object (containing a SPARQL query in the URL parameters) to a proxied SPARQL
         endpoint."""
-        # TODO: This only supports SPARQL GET requests because the query is sent as a query parameter.
+        # Uses GET if the proxied query was received as a query param using GET
+        # Uses POST if the proxied query was received as a form-encoded body using POST
 
-        query_escaped_as_bytes = f"query={quote_plus(query)}".encode("utf-8")
-
-        # TODO: Global app settings should be passed in as a function argument.
-        url = httpx.URL(url=settings.sparql_endpoint, query=query_escaped_as_bytes)
         headers = []
         for header in raw_headers:
-            if header[0] != b"host":
+            if header[0] not in (b"host", b"content-length", b"content-type"):
                 headers.append(header)
+        query_escaped_as_bytes = f"query={quote_plus(query)}".encode("utf-8")
+        if method == "GET":
+            url = httpx.URL(url=settings.sparql_endpoint, query=query_escaped_as_bytes)
+            content = None
+        else:
+            headers.append((b"content-type", b"application/x-www-form-urlencoded"))
+            url = httpx.URL(url=settings.sparql_endpoint)
+            content = query_escaped_as_bytes
+
         headers.append((b"host", str(url.host).encode("utf-8")))
-        rp_req = self.async_client.build_request(method, url, headers=headers)
+        rp_req = self.async_client.build_request(method, url, headers=headers, content=content)
         return await self.async_client.send(rp_req, stream=True)
 
 
@@ -157,7 +164,10 @@ class PyoxigraphRepo(Repo):
 
     def _sparql(self, query: str) -> dict | Graph | bool:
         """Submit a sparql query to the pyoxigraph store and return the formatted results."""
-        results = self.pyoxi_store.query(query)
+        try:
+            results = self.pyoxi_store.query(query)
+        except SyntaxError as e:
+            raise InvalidSPARQLQueryException(e.msg)
         if isinstance(results, pyoxigraph.QuerySolutions):  # a SELECT query result
             results_dict = self._handle_query_solution_results(results)
             return results_dict

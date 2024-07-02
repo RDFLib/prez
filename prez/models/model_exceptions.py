@@ -35,3 +35,13 @@ class NoProfilesException(Exception):
             f"for which a profile was searched was/were: {', '.join(klass for klass in classes)}"
         )
         super().__init__(self.message)
+
+
+class InvalidSPARQLQueryException(Exception):
+    """
+    Raised when a SPARQL query is invalid.
+    """
+
+    def __init__(self, error: str):
+        self.message = f"Invalid SPARQL query: {error}"
+        super().__init__(self.message)
