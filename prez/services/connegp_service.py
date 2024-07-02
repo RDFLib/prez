@@ -217,7 +217,7 @@ class NegotiatedPMTs(BaseModel):
 
         query = dedent(
             f"""
-            PREFIX altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#>
+            PREFIX altr-ext: <http://www.w3.org/ns/dx/connegp/altr-ext#>
             PREFIX dcat: <http://www.w3.org/ns/dcat#>
             PREFIX dcterms: <http://purl.org/dc/terms/>
             PREFIX geo: <http://www.opengis.net/ont/geosparql#>

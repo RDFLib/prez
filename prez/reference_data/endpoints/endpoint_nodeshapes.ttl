@@ -10,7 +10,7 @@
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix shext: <http://example.com/shacl-extension#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
-@prefix altr-ext: <http://www.w3.org/ns/dx/conneg/altr-ext#> .
+@prefix altr-ext: <http://www.w3.org/ns/dx/connegp/altr-ext#> .
 
 ex:Catalogs
     a sh:NodeShape ;

@@ -41,7 +41,7 @@ class AnnotationsConstructQuery(ConstructQuery):
       ?term ?prezAnotProp ?annotation
     }
     WHERE {
-      VALUES ?term { <http://www.w3.org/ns/dx/conneg/altr-ext#hasResourceFormat> <http://purl.org/dc/terms/description>  }
+      VALUES ?term { <http://www.w3.org/ns/dx/connegp/altr-ext#hasResourceFormat> <http://purl.org/dc/terms/description>  }
       VALUES (?prop ?prezAnotProp ) {(<http://www.w3.org/2004/02/skos/core#prefLabel> <https://prez.dev/label> )
         (<http://purl.org/dc/terms/title> <https://prez.dev/label> )
         (<http://www.w3.org/2000/01/rdf-schema#label> <https://prez.dev/label> )

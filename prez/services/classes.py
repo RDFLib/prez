@@ -67,7 +67,7 @@ async def process_uncached_classes(uris: list[URIRef], data_repo: Repo, klasses:
         None
     """
     klasses_query = ClassesSelectQuery(
-        uris=[IRI(value=uri) for uri in uris]
+        iris=[IRI(value=uri) for uri in uris]
     ).to_string()
 
     repo_results = await data_repo.send_queries(

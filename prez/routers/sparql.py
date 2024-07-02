@@ -9,7 +9,7 @@ from starlette.datastructures import Headers
 from starlette.requests import Request
 from starlette.responses import StreamingResponse
 
-from prez.dependencies import get_data_repo, get_system_repo
+from prez.dependencies import get_data_repo, get_system_repo, get_negotiated_pmts
 from prez.renderers.renderer import return_annotated_rdf
 from prez.repositories import Repo
 from prez.services.connegp_service import NegotiatedPMTs
@@ -21,37 +21,29 @@ router = APIRouter(tags=["SPARQL"])
 
 @router.post("/sparql")
 async def sparql_post_passthrough(
-    # To maintain compatibility with the other SPARQL endpoints,
-    # /sparql POST endpoint is not a JSON API, it uses
-    # values encoded with x-www-form-urlencoded
-    query: Annotated[str, Form()],  # Pydantic validation prevents update queries (the Form would need to be "update")
-    request: Request,
-    repo: Repo = Depends(get_repo),
+        # To maintain compatibility with the other SPARQL endpoints,
+        # /sparql POST endpoint is not a JSON API, it uses
+        # values encoded with x-www-form-urlencoded
+        query: Annotated[str, Form()],
+        # Pydantic validation prevents update queries (the Form would need to be "update")
+        request: Request,
+        repo: Repo = Depends(get_data_repo),
+        system_repo: Repo = Depends(get_system_repo),
 ):
-    return await sparql_endpoint_handler(query, request, repo, method="POST")
+    return await sparql_endpoint_handler(query, request, repo, system_repo, method="POST")
 
 
 @router.get("/sparql")
 async def sparql_get_passthrough(
-    query: str,
-    request: Request,
-    repo: Repo = Depends(get_data_repo),
-    system_repo: Repo = Depends(get_system_repo),
+        query: str,
+        request: Request,
+        repo: Repo = Depends(get_data_repo),
+        system_repo: Repo = Depends(get_system_repo),
 ):
-    return await sparql_endpoint_handler(query, request, repo, method="GET")
+    return await sparql_endpoint_handler(query, request, repo, system_repo, method="GET")
 
 
-async def sparql_endpoint_handler(query: str, request: Request, repo: Repo, method="GET"):
-    request_mediatype = request.headers.get("accept").split(",")[0]
-    # can't default the MT where not provided as it could be
-    # graph (CONSTRUCT like queries) or tabular (SELECT queries)
-
-    # Intercept "+anot" mediatypes
-    if "anot+" in request_mediatype:
-        prof_and_mt_info = ProfilesMediatypesInfo(
-            request=request, classes=frozenset([PREZ.SPARQLQuery])
-        )
-        non_anot_mediatype = request_mediatype.replace("anot+", "")
+async def sparql_endpoint_handler(query: str, request: Request, repo: Repo, system_repo, method="GET"):
     pmts = NegotiatedPMTs(
         **{
             "headers": request.headers,

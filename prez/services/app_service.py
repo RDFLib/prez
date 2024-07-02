@@ -73,7 +73,7 @@ async def prefix_initialisation(repo: Repo):
     set.
     """
     await add_remote_prefixes(repo)
-    await add_local_prefixes()
+    await add_local_prefixes(repo)
     await generate_prefixes(repo)
 
 
@@ -89,7 +89,7 @@ async def add_remote_prefixes(repo: Repo):
     log.info(f"{i + 1:,} prefixes bound from data repo")
 
 
-async def add_local_prefixes():
+async def add_local_prefixes(repo):
     """
     Adds prefixes to the prefix graph
     """
@@ -110,6 +110,8 @@ async def add_local_prefixes():
         local_i = await _add_prefixes_from_graph(g)
         log.info(f"{local_i+1:,} prefixes bound from file {f.name}")
 
+
+async def generate_prefixes(repo: Repo):
     if settings.disable_prefix_generation:
         log.info("DISABLE_PREFIX_GENERATION set to true. Skipping prefix generation.")
     else:

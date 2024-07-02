@@ -103,7 +103,7 @@ def test_search_query_regex():
 
 def test_classes():
     test = ClassesSelectQuery(
-        uris=[IRI(value="https://test1"), IRI(value="https://test2")]
+        iris=[IRI(value="https://test1"), IRI(value="https://test2")]
     )
     print(test.to_string())
 

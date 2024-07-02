@@ -29,7 +29,7 @@ def test_listing_alt_profile(client):
     r = client.get(f"/catalogs?_profile=altr-ext:alt-profile")
     response_graph = Graph().parse(data=r.text)
     assert (
-        URIRef("http://www.w3.org/ns/dx/conneg/altr-ext#alt-profile"),
+        URIRef("http://www.w3.org/ns/dx/connegp/altr-ext#alt-profile"),
         RDF.type,
         URIRef("https://prez.dev/ListingProfile"),
     ) in response_graph

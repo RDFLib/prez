@@ -43,7 +43,7 @@ Each Profile must have the following properties:
 
 ### Specification of Mediatypes and Resource Formats
 
-Extensions to SHACL are used to specify the mediatypes and resource formats available for a given profile. These are specified as follows. The namespace used is http://www.w3.org/ns/dx/conneg/altr-ext#, and the prefix used for this namespace is `altr-ext`.
+Extensions to SHACL are used to specify the mediatypes and resource formats available for a given profile. These are specified as follows. The namespace used is http://www.w3.org/ns/dx/connegp/altr-ext#, and the prefix used for this namespace is `altr-ext`.
 
 #### Resource formats
 

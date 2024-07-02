@@ -1,6 +1,5 @@
 import logging
 
-from rdflib import URIRef
 from rdflib.namespace import RDF
 from sparql_grammar_pydantic import (
     IRI,
@@ -31,8 +30,8 @@ class ClassesSelectQuery(SubSelect):
     """
 
     def __init__(
-        self,
-        uris: list[URIRef],
+            self,
+            iris: list[IRI],
     ):
         class_var = Var(value="class")
         uris_var = Var(value="uri")
@@ -54,7 +53,7 @@ class ClassesSelectQuery(SubSelect):
             data_block=DataBlock(
                 block=InlineDataOneVar(
                     variable=uris_var,
-                    datablockvalues=[DataBlockValue(value=uri) for uri in uris],
+                    datablockvalues=[DataBlockValue(value=uri) for uri in iris],
                 )
             )
         )
