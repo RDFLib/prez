@@ -9,7 +9,7 @@ from starlette.datastructures import Headers
 from starlette.requests import Request
 from starlette.responses import StreamingResponse
 
-from prez.dependencies import get_data_repo, get_system_repo, get_negotiated_pmts
+from prez.dependencies import get_data_repo, get_system_repo
 from prez.renderers.renderer import return_annotated_rdf
 from prez.repositories import Repo
 from prez.services.connegp_service import NegotiatedPMTs
@@ -21,29 +21,35 @@ router = APIRouter(tags=["SPARQL"])
 
 @router.post("/sparql")
 async def sparql_post_passthrough(
-        # To maintain compatibility with the other SPARQL endpoints,
-        # /sparql POST endpoint is not a JSON API, it uses
-        # values encoded with x-www-form-urlencoded
-        query: Annotated[str, Form()],
-        # Pydantic validation prevents update queries (the Form would need to be "update")
-        request: Request,
-        repo: Repo = Depends(get_data_repo),
-        system_repo: Repo = Depends(get_system_repo),
+    # To maintain compatibility with the other SPARQL endpoints,
+    # /sparql POST endpoint is not a JSON API, it uses
+    # values encoded with x-www-form-urlencoded
+    query: Annotated[str, Form()],
+    # Pydantic validation prevents update queries (the Form would need to be "update")
+    request: Request,
+    repo: Repo = Depends(get_data_repo),
+    system_repo: Repo = Depends(get_system_repo),
 ):
-    return await sparql_endpoint_handler(query, request, repo, system_repo, method="POST")
+    return await sparql_endpoint_handler(
+        query, request, repo, system_repo, method="POST"
+    )
 
 
 @router.get("/sparql")
 async def sparql_get_passthrough(
-        query: str,
-        request: Request,
-        repo: Repo = Depends(get_data_repo),
-        system_repo: Repo = Depends(get_system_repo),
+    query: str,
+    request: Request,
+    repo: Repo = Depends(get_data_repo),
+    system_repo: Repo = Depends(get_system_repo),
 ):
-    return await sparql_endpoint_handler(query, request, repo, system_repo, method="GET")
+    return await sparql_endpoint_handler(
+        query, request, repo, system_repo, method="GET"
+    )
 
 
-async def sparql_endpoint_handler(query: str, request: Request, repo: Repo, system_repo, method="GET"):
+async def sparql_endpoint_handler(
+    query: str, request: Request, repo: Repo, system_repo, method="GET"
+):
     pmts = NegotiatedPMTs(
         **{
             "headers": request.headers,
@@ -72,13 +78,14 @@ async def sparql_endpoint_handler(query: str, request: Request, repo: Repo, syst
             media_type=non_anot_mediatype,
             headers=pmts.generate_response_headers(),
         )
-    query_result: 'httpx.Response' = await repo.sparql(query, request.headers.raw, method=method)
+    query_result: "httpx.Response" = await repo.sparql(
+        query, request.headers.raw, method=method
+    )
     if isinstance(query_result, dict):
         return JSONResponse(content=query_result)
     elif isinstance(query_result, Graph):
         return Response(
-            content=query_result.serialize(format="text/turtle"),
-            status_code=200
+            content=query_result.serialize(format="text/turtle"), status_code=200
         )
 
     dispositions = query_result.headers.get_list("Content-Disposition")
@@ -92,7 +99,11 @@ async def sparql_endpoint_handler(query: str, request: Request, repo: Repo, syst
         # remove transfer-encoding chunked, disposition=attachment, and content-length
         headers = dict()
         for k, v in query_result.headers.items():
-            if k.lower() not in ("transfer-encoding", "content-disposition", "content-length"):
+            if k.lower() not in (
+                "transfer-encoding",
+                "content-disposition",
+                "content-length",
+            ):
                 headers[k] = v
         content = await query_result.aread()
         await query_result.aclose()

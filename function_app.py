@@ -9,7 +9,9 @@ except ImportError:
 
 
 if assemble_app is None:
-    raise RuntimeError("Cannot import prez in the Azure function app. Check requirements.py and pyproject.toml.")
+    raise RuntimeError(
+        "Cannot import prez in the Azure function app. Check requirements.py and pyproject.toml."
+    )
 
 
 # This is the base URL path that Prez routes will stem from
@@ -32,7 +34,8 @@ app = func.AsgiFunctionApp(app=prez_app, http_auth_level=auth_level)
 if __name__ == "__main__":
     from azure.functions import HttpRequest, Context
     import asyncio
-    req = HttpRequest("GET", "/v", headers={}, body=b'')
+
+    req = HttpRequest("GET", "/v", headers={}, body=b"")
     context = dict()
     loop = asyncio.get_event_loop()
 

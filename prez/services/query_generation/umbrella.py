@@ -97,7 +97,9 @@ class PrezQueryConstructor(ConstructQuery):
         # for listing queries only, add an inner select to the where clause
         ss_gpotb = []
         if inner_select_tssp_list:
-            inner_select_tssp_list = sorted(inner_select_tssp_list, key=lambda x: str(x), reverse=True)  # grouping for performance
+            inner_select_tssp_list = sorted(
+                inner_select_tssp_list, key=lambda x: str(x), reverse=True
+            )  # grouping for performance
             ss_gpotb.append(TriplesBlock.from_tssp_list(inner_select_tssp_list))
         if inner_select_gpnt:
             ss_gpotb.extend(inner_select_gpnt)

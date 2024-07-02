@@ -3,12 +3,43 @@ from itertools import product
 import pytest
 from rdflib import RDF, RDFS, SKOS
 from rdflib.namespace import GEO
-from sparql_grammar_pydantic import IRI, Var, TriplesSameSubject, TriplesSameSubjectPath, SubSelect, SelectClause, \
-    WhereClause, GroupGraphPattern, GroupGraphPatternSub, TriplesBlock, SolutionModifier, LimitOffsetClauses, \
-    LimitClause, Expression, PrimaryExpression, BuiltInCall, Aggregate, ConditionalOrExpression, \
-    ConditionalAndExpression, ValueLogical, RelationalExpression, NumericExpression, AdditiveExpression, \
-    MultiplicativeExpression, UnaryExpression, NumericLiteral, RDFLiteral, Bind, GraphPatternNotTriples, \
-    GroupOrUnionGraphPattern, ConstructTemplate, BlankNode, Anon, ConstructTriples, ConstructQuery
+from sparql_grammar_pydantic import (
+    IRI,
+    Var,
+    TriplesSameSubject,
+    TriplesSameSubjectPath,
+    SubSelect,
+    SelectClause,
+    WhereClause,
+    GroupGraphPattern,
+    GroupGraphPatternSub,
+    TriplesBlock,
+    SolutionModifier,
+    LimitOffsetClauses,
+    LimitClause,
+    Expression,
+    PrimaryExpression,
+    BuiltInCall,
+    Aggregate,
+    ConditionalOrExpression,
+    ConditionalAndExpression,
+    ValueLogical,
+    RelationalExpression,
+    NumericExpression,
+    AdditiveExpression,
+    MultiplicativeExpression,
+    UnaryExpression,
+    NumericLiteral,
+    RDFLiteral,
+    Bind,
+    GraphPatternNotTriples,
+    GroupOrUnionGraphPattern,
+    ConstructTemplate,
+    BlankNode,
+    Anon,
+    ConstructTriples,
+    ConstructQuery,
+)
 
 from prez.services.query_generation.classes import ClassesSelectQuery
 from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQuery
@@ -86,11 +117,11 @@ def test_search_query_regex():
             ),
         ],
         construct_tss_list=sq.construct_triples.to_tss_list()
-                           + [
-                               TriplesSameSubject.from_spo(
-                                   IRI(value="https://s"), IRI(value="https://p"), IRI(value="https://o")
-                               )
-                           ],
+        + [
+            TriplesSameSubject.from_spo(
+                IRI(value="https://s"), IRI(value="https://p"), IRI(value="https://o")
+            )
+        ],
         inner_select_vars=sq.inner_select_vars,
         inner_select_gpnt=[sq.inner_select_gpnt],
         limit=sq.limit,
@@ -160,9 +191,7 @@ def test_concept_hierarchy_narrowers():
 
 def test_count_query():
     inner_ss = SubSelect(
-        select_clause=SelectClause(
-            variables_or_all=[Var(value="focus_node")]
-        ),
+        select_clause=SelectClause(variables_or_all=[Var(value="focus_node")]),
         where_clause=WhereClause(
             group_graph_pattern=GroupGraphPattern(
                 content=GroupGraphPatternSub(
@@ -172,7 +201,9 @@ def test_count_query():
                                 TriplesSameSubjectPath.from_spo(
                                     subject=Var(value="focus_node"),
                                     predicate=IRI(value=RDF.type),
-                                    object=IRI(value="http://www.w3.org/ns/sosa/Sampling")
+                                    object=IRI(
+                                        value="http://www.w3.org/ns/sosa/Sampling"
+                                    ),
                                 )
                             ]
                         )
@@ -181,10 +212,8 @@ def test_count_query():
             )
         ),
         solution_modifier=SolutionModifier(
-            limit_offset=LimitOffsetClauses(
-                limit_clause=LimitClause(limit=1001)
-            ),
-        )
+            limit_offset=LimitOffsetClauses(limit_clause=LimitClause(limit=1001)),
+        ),
     )
     count_expression = Expression.from_primary_expression(
         PrimaryExpression(
@@ -204,10 +233,8 @@ def test_count_query():
             variables_or_all=[(count_expression, Var(value="count"))],
         ),
         where_clause=WhereClause(
-            group_graph_pattern=GroupGraphPattern(
-                content=inner_ss
-            )
-        )
+            group_graph_pattern=GroupGraphPattern(content=inner_ss)
+        ),
     )
     outer_ss_ggp = GroupGraphPattern(content=outer_ss)
     count_equals_1001_expr = Expression(
@@ -234,14 +261,12 @@ def test_count_query():
                                         base_expression=MultiplicativeExpression(
                                             base_expression=UnaryExpression(
                                                 primary_expression=PrimaryExpression(
-                                                    content=NumericLiteral(
-                                                        value=1001
-                                                    )
+                                                    content=NumericLiteral(value=1001)
                                                 )
                                             )
                                         )
                                     )
-                                )
+                                ),
                             )
                         )
                     ]
@@ -249,14 +274,14 @@ def test_count_query():
             ]
         )
     )
-    gt_1000_exp = Expression.from_primary_expression(PrimaryExpression(content=RDFLiteral(value=">1000")))
+    gt_1000_exp = Expression.from_primary_expression(
+        PrimaryExpression(content=RDFLiteral(value=">1000"))
+    )
     str_count_exp = Expression.from_primary_expression(
         PrimaryExpression(
             content=BuiltInCall.create_with_one_expr(
                 function_name="STR",
-                expression=PrimaryExpression(
-                    content=Var(value="count")
-                )
+                expression=PrimaryExpression(content=Var(value="count")),
             )
         )
     )
@@ -265,15 +290,11 @@ def test_count_query():
             PrimaryExpression(
                 content=BuiltInCall(
                     function_name="IF",
-                    arguments=[
-                        count_equals_1001_expr,
-                        gt_1000_exp,
-                        str_count_exp
-                    ]
+                    arguments=[count_equals_1001_expr, gt_1000_exp, str_count_exp],
                 )
             )
         ),
-        var=Var(value="count_str")
+        var=Var(value="count_str"),
     )
     wc = WhereClause(
         group_graph_pattern=GroupGraphPattern(
@@ -281,14 +302,10 @@ def test_count_query():
                 graph_patterns_or_triples_blocks=[
                     GraphPatternNotTriples(
                         content=GroupOrUnionGraphPattern(
-                            group_graph_patterns=[
-                                outer_ss_ggp
-                            ]
+                            group_graph_patterns=[outer_ss_ggp]
                         )
                     ),
-                    GraphPatternNotTriples(
-                        content=bind
-                    )
+                    GraphPatternNotTriples(content=bind),
                 ]
             )
         )
@@ -307,6 +324,6 @@ def test_count_query():
     query = ConstructQuery(
         construct_template=construct_template,
         where_clause=wc,
-        solution_modifier=SolutionModifier()
+        solution_modifier=SolutionModifier(),
     )
     print(query)

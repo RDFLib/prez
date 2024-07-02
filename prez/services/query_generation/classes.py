@@ -30,8 +30,8 @@ class ClassesSelectQuery(SubSelect):
     """
 
     def __init__(
-            self,
-            iris: list[IRI],
+        self,
+        iris: list[IRI],
     ):
         class_var = Var(value="class")
         uris_var = Var(value="uri")

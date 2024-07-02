@@ -52,10 +52,7 @@ class Settings(BaseSettings):
         SDO.description,
     ]
     provenance_predicates: Optional[List[URIRef]] = [DCTERMS.provenance]
-    other_predicates: Optional[List[URIRef]] = [
-        SDO.color,
-        REG.status
-    ]
+    other_predicates: Optional[List[URIRef]] = [SDO.color, REG.status]
     sparql_repo_type: str = "remote"
     sparql_timeout: int = 30
     log_level: str = "INFO"

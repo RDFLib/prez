@@ -149,7 +149,6 @@ class CQLParser:
         else:
             ggps.triples_block = TriplesBlock(triples=tssp)
 
-
     def _handle_comparison(self, operator, args, existing_ggps=None):
         self.var_counter += 1
         ggps = existing_ggps if existing_ggps is not None else GroupGraphPatternSub()
@@ -282,7 +281,9 @@ class CQLParser:
     def get_wkt_from_coords(self, coordinates, geom_type):
         shapely_spatial_class = cql_to_shapely_mapping.get(geom_type)
         if not shapely_spatial_class:
-            raise NotImplementedError(f"Geometry Class for \"{geom_type}\" not found in Shapely.")
+            raise NotImplementedError(
+                f'Geometry Class for "{geom_type}" not found in Shapely.'
+            )
         wkt = shapely_spatial_class(coordinates).wkt
         return wkt
 

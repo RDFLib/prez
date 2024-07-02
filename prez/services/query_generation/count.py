@@ -1,9 +1,38 @@
-from sparql_grammar_pydantic import IRI, Var, TriplesSameSubject, SubSelect, SelectClause, \
-    WhereClause, GroupGraphPattern, GroupGraphPatternSub, SolutionModifier, LimitOffsetClauses, \
-    LimitClause, Expression, PrimaryExpression, BuiltInCall, Aggregate, ConditionalOrExpression, \
-    ConditionalAndExpression, ValueLogical, RelationalExpression, NumericExpression, AdditiveExpression, \
-    MultiplicativeExpression, UnaryExpression, NumericLiteral, RDFLiteral, Bind, GraphPatternNotTriples, \
-    GroupOrUnionGraphPattern, ConstructTemplate, BlankNode, Anon, ConstructTriples, ConstructQuery
+from sparql_grammar_pydantic import (
+    IRI,
+    Var,
+    TriplesSameSubject,
+    SubSelect,
+    SelectClause,
+    WhereClause,
+    GroupGraphPattern,
+    GroupGraphPatternSub,
+    SolutionModifier,
+    LimitOffsetClauses,
+    LimitClause,
+    Expression,
+    PrimaryExpression,
+    BuiltInCall,
+    Aggregate,
+    ConditionalOrExpression,
+    ConditionalAndExpression,
+    ValueLogical,
+    RelationalExpression,
+    NumericExpression,
+    AdditiveExpression,
+    MultiplicativeExpression,
+    UnaryExpression,
+    NumericLiteral,
+    RDFLiteral,
+    Bind,
+    GraphPatternNotTriples,
+    GroupOrUnionGraphPattern,
+    ConstructTemplate,
+    BlankNode,
+    Anon,
+    ConstructTriples,
+    ConstructQuery,
+)
 
 from prez.config import settings
 
@@ -35,16 +64,14 @@ class CountQuery(ConstructQuery):
         limit = settings.listing_count_limit
         limit_plus_one = limit + 1
         inner_ss = SubSelect(
-            select_clause=SelectClause(
-                variables_or_all=[Var(value="focus_node")]
-            ),
+            select_clause=SelectClause(variables_or_all=[Var(value="focus_node")]),
             where_clause=original_subselect.where_clause,
             solution_modifier=SolutionModifier(
                 limit_offset=LimitOffsetClauses(
                     limit_clause=LimitClause(limit=limit_plus_one)
                 ),
             ),
-            values_clause=original_subselect.values_clause
+            values_clause=original_subselect.values_clause,
         )
         count_expression = Expression.from_primary_expression(
             PrimaryExpression(
@@ -64,10 +91,8 @@ class CountQuery(ConstructQuery):
                 variables_or_all=[(count_expression, Var(value="count"))],
             ),
             where_clause=WhereClause(
-                group_graph_pattern=GroupGraphPattern(
-                    content=inner_ss
-                )
-            )
+                group_graph_pattern=GroupGraphPattern(content=inner_ss)
+            ),
         )
         outer_ss_ggp = GroupGraphPattern(content=outer_ss)
         count_equals_1001_expr = Expression(
@@ -101,7 +126,7 @@ class CountQuery(ConstructQuery):
                                                 )
                                             )
                                         )
-                                    )
+                                    ),
                                 )
                             )
                         ]
@@ -109,14 +134,14 @@ class CountQuery(ConstructQuery):
                 ]
             )
         )
-        gt_1000_exp = Expression.from_primary_expression(PrimaryExpression(content=RDFLiteral(value=f">{limit}")))
+        gt_1000_exp = Expression.from_primary_expression(
+            PrimaryExpression(content=RDFLiteral(value=f">{limit}"))
+        )
         str_count_exp = Expression.from_primary_expression(
             PrimaryExpression(
                 content=BuiltInCall.create_with_one_expr(
                     function_name="STR",
-                    expression=PrimaryExpression(
-                        content=Var(value="count")
-                    )
+                    expression=PrimaryExpression(content=Var(value="count")),
                 )
             )
         )
@@ -125,15 +150,11 @@ class CountQuery(ConstructQuery):
                 PrimaryExpression(
                     content=BuiltInCall(
                         function_name="IF",
-                        arguments=[
-                            count_equals_1001_expr,
-                            gt_1000_exp,
-                            str_count_exp
-                        ]
+                        arguments=[count_equals_1001_expr, gt_1000_exp, str_count_exp],
                     )
                 )
             ),
-            var=Var(value="count_str")
+            var=Var(value="count_str"),
         )
         wc = WhereClause(
             group_graph_pattern=GroupGraphPattern(
@@ -141,14 +162,10 @@ class CountQuery(ConstructQuery):
                     graph_patterns_or_triples_blocks=[
                         GraphPatternNotTriples(
                             content=GroupOrUnionGraphPattern(
-                                group_graph_patterns=[
-                                    outer_ss_ggp
-                                ]
+                                group_graph_patterns=[outer_ss_ggp]
                             )
                         ),
-                        GraphPatternNotTriples(
-                            content=bind
-                        )
+                        GraphPatternNotTriples(content=bind),
                     ]
                 )
             )

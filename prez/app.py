@@ -16,12 +16,15 @@ from prez.dependencies import (
     load_local_data_to_oxigraph,
     get_oxrdflib_store,
     get_system_store,
-    load_system_data_to_oxigraph, load_annotations_data_to_oxigraph, get_annotations_store,
+    load_system_data_to_oxigraph,
+    load_annotations_data_to_oxigraph,
+    get_annotations_store,
 )
 from prez.exceptions.model_exceptions import (
     ClassNotFoundException,
     URINotFoundException,
-    NoProfilesException, InvalidSPARQLQueryException,
+    NoProfilesException,
+    InvalidSPARQLQueryException,
 )
 from prez.repositories import RemoteSparqlRepo, PyoxigraphRepo, OxrdflibRepo
 from prez.routers.identifier import router as identifier_router
@@ -161,7 +164,7 @@ def assemble_app(
             ClassNotFoundException: catch_class_not_found_exception,
             URINotFoundException: catch_uri_not_found_exception,
             NoProfilesException: catch_no_profiles_exception,
-            InvalidSPARQLQueryException: catch_invalid_sparql_query
+            InvalidSPARQLQueryException: catch_invalid_sparql_query,
         },
         **kwargs
     )

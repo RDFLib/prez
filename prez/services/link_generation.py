@@ -46,11 +46,11 @@ async def add_prez_links(graph: Graph, repo: Repo, endpoint_structure):
 
 
 async def _link_generation(
-        uri: URIRef,
-        repo: Repo,
-        klasses,
-        graph: Graph,
-        endpoint_structure: str = settings.endpoint_structure,
+    uri: URIRef,
+    repo: Repo,
+    klasses,
+    graph: Graph,
+    endpoint_structure: str = settings.endpoint_structure,
 ):
     """
     Generates links for the given URI if it is not already cached.
@@ -69,8 +69,13 @@ async def _link_generation(
         available_nodeshapes = await get_nodeshapes_constraining_class(klasses, uri)
         # ignore CQL and Search nodeshapes as we do not want to generate links for these.
         available_nodeshapes = [
-            ns for ns in available_nodeshapes
-            if ns.uri not in [URIRef('http://example.org/ns#CQL'), URIRef('http://example.org/ns#Search')]
+            ns
+            for ns in available_nodeshapes
+            if ns.uri
+            not in [
+                URIRef("http://example.org/ns#CQL"),
+                URIRef("http://example.org/ns#Search"),
+            ]
         ]
         # run queries for available nodeshapes to get link components
         for ns in available_nodeshapes:
@@ -128,7 +133,7 @@ async def get_nodeshapes_constraining_class(klasses, uri):
 
 
 async def add_links_to_graph_and_cache(
-        curie_for_uri, graph, members_link, object_link, uri
+    curie_for_uri, graph, members_link, object_link, uri
 ):
     """
     Adds links and identifiers to the given graph and cache.
@@ -139,7 +144,7 @@ async def add_links_to_graph_and_cache(
         (uri, DCTERMS.identifier, Literal(curie_for_uri, datatype=PREZ.identifier), uri)
     )
     if (
-            members_link
+        members_link
     ):  # TODO need to confirm the link value doesn't match the existing link value, as multiple endpoints can deliver the same class/have different links for the same URI
         existing_members_link = list(
             links_ids_graph_cache.quads((uri, PREZ["members"], None, uri))
@@ -197,7 +202,9 @@ async def get_link_components(ns, repo):
                 where_clause=WhereClause(
                     group_graph_pattern=GroupGraphPattern(
                         content=GroupGraphPatternSub(
-                            triples_block=TriplesBlock.from_tssp_list(ns.tssp_list[::-1]),  # reversed for performance
+                            triples_block=TriplesBlock.from_tssp_list(
+                                ns.tssp_list[::-1]
+                            ),  # reversed for performance
                             graph_patterns_or_triples_blocks=ns.gpnt_list,
                         )
                     )
