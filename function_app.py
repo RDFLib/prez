@@ -16,8 +16,11 @@ if assemble_app is None:
 
 # This is the base URL path that Prez routes will stem from
 # must _start_ in a slash, but _not end_ in slash, eg: /prez
-env_root_path: str = os.getenv("FUNCTION_APP_ROOT_PATH", "/")
+env_root_path: str = os.getenv("FUNCTION_APP_ROOT_PATH", "")
 ROOT_PATH: str = env_root_path.strip()
+# Note, must be _empty_ string for no path prefix (not "/")
+if ROOT_PATH == "/":
+    ROOT_PATH = ""
 env_auth_level: str = os.getenv("FUNCTION_APP_AUTH_LEVEL", "FUNCTION")
 env_auth_level = env_auth_level.strip().upper()
 if env_auth_level == "ADMIN":
