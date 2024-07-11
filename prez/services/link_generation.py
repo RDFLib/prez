@@ -2,7 +2,7 @@ import logging
 import time
 from string import Template
 
-from rdflib import Graph, Literal, URIRef
+from rdflib import Graph, Literal, URIRef, BNode
 from rdflib.namespace import SH, RDF
 from sparql_grammar_pydantic import (
     IRI,
