@@ -1,8 +1,9 @@
 import logging
 import pickle
+from typing import Optional
 
 from aiocache import caches
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from rdflib import BNode
 from rdflib import Graph, URIRef, Literal
 from rdflib.collection import Collection
@@ -12,23 +13,29 @@ from starlette.responses import PlainTextResponse
 from prez.cache import endpoints_graph_cache
 from prez.config import settings
 from prez.reference_data.prez_ns import PREZ
-from prez.renderers.renderer import return_rdf
-from prez.services.connegp_service import RDF_MEDIATYPES
+from prez.renderers.renderer import return_rdf, return_from_graph
+from prez.services.connegp_service import RDF_MEDIATYPES, MediaType
 
 router = APIRouter(tags=["Management"])
 log = logging.getLogger(__name__)
 
 
 @router.get("/", summary="Home page", tags=["Prez"])
-async def index():
+async def index(
+        mediatype: Optional[MediaType] = Query(
+            MediaType("text/turtle"), alias="_mediatype", description="Requested mediatype"
+        ),
+):
     """Returns the following information about the API"""
+    if "anot+" in mediatype.value:
+        mediatype = MediaType(mediatype.value.replace("anot+", ""))
     g = Graph()
     g.bind("prez", "https://prez.dev/")
     g.bind("ont", "https://prez.dev/ont/")
     g.add((URIRef(settings.system_uri), PREZ.version, Literal(settings.prez_version)))
     g += endpoints_graph_cache
     g += await return_annotation_predicates()
-    return await return_rdf(g, "text/turtle", profile_headers={})
+    return await return_rdf(g, mediatype.value, profile_headers={})
 
 
 @router.get("/purge-tbox-cache", summary="Reset Tbox Cache")
