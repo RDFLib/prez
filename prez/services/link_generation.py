@@ -150,9 +150,7 @@ async def add_links_to_graph_and_cache(
             links_ids_graph_cache.quads((uri, PREZ["members"], None, uri))
         )
         if not existing_members_link:
-            members_bn = BNode()
-            quads.append((uri, PREZ["members"], members_bn, uri))
-            quads.append((members_bn, PREZ["link"], Literal(members_link), uri))
+            quads.append((uri, PREZ["members"], Literal(members_link), uri))
     for quad in quads:
         graph.add(quad[:3])
         links_ids_graph_cache.add(quad)
