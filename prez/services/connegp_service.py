@@ -1,5 +1,6 @@
 import logging
 import re
+from enum import Enum
 from textwrap import dedent
 
 from pydantic import BaseModel
@@ -34,6 +35,26 @@ RDF_SERIALIZER_TYPES_MAP = {
     "text/n-triples": "nt",
     "text/plain": "nt",  # text/plain is the old/deprecated mimetype for n-triples
 }
+
+class MediaType(str, Enum):
+    turtle = "text/turtle"
+    n3 = "text/n3"
+    nt = "application/n-triples"
+    json_ld = "application/ld+json"
+    xml = "application/rdf+xml"
+    anot_turtle = "text/anot+turtle"
+    anot_n3 = "text/anot+n3"
+    anot_nt = "application/anot+n-triples"
+    anot_json_ld = "application/anot+ld+json"
+    anot_xml = "application/anot+rdf+xml"
+    # Some common but incorrect mimetypes
+    application_rdf = "application/rdf"
+    application_rdf_xml = "application/rdf xml"
+    application_json = "application/json"
+    application_ld_json = "application/ld json"
+    text_ttl = "text/ttl"
+    text_ntriples = "text/ntriples"
+    text_plain = "text/plain"
 
 
 class TokenError(Exception):
