@@ -4,6 +4,12 @@
 <https://prez.dev/searchResultMatch> <http://www.w3.org/2000/01/rdf-schema#label> "Matched Term" <https://prez.dev/ontology> .
 <https://prez.dev/searchResultPredicate> <http://www.w3.org/2000/01/rdf-schema#label> "Matched Predicate" <https://prez.dev/ontology> .
 <https://prez.dev/searchResultWeight> <http://www.w3.org/2000/01/rdf-schema#label> "Search Result Weight" <https://prez.dev/ontology> .
+<https://prez.dev/CatalogList> <http://www.w3.org/2000/01/rdf-schema#label> "Catalog List" <https://prez.dev/ontology> .
+<https://prez.dev/DatasetList> <http://www.w3.org/2000/01/rdf-schema#label> "Dataset List" <https://prez.dev/ontology> .
+<https://prez.dev/FeatureCollectionList> <http://www.w3.org/2000/01/rdf-schema#label> "Feature Collection List" <https://prez.dev/ontology> .
+<https://prez.dev/FeatureList> <http://www.w3.org/2000/01/rdf-schema#label> "Feature List" <https://prez.dev/ontology> .
+<https://prez.dev/SchemesList> <http://www.w3.org/2000/01/rdf-schema#label> "Schemes List" <https://prez.dev/ontology> .
+<https://prez.dev/VocPrezCollectionList> <http://www.w3.org/2000/01/rdf-schema#label> "VocPrez Collection List" <https://prez.dev/ontology> .
 <http://www.w3.org/ns/dx/connegp/altr-ext#hasDefaultResourceFormat> <http://www.w3.org/2000/01/rdf-schema#label> "Default Resource Format" <https://prez.dev/ontology> .
 <http://www.w3.org/ns/dx/connegp/altr-ext#hasResourceFormat> <http://www.w3.org/2000/01/rdf-schema#label> "Has Resource Format" <https://prez.dev/ontology> .
 <http://www.w3.org/ns/dx/connegp/altr-ext#constrainsClass> <http://www.w3.org/2000/01/rdf-schema#label> "Constrains Class" <https://prez.dev/ontology> .
