@@ -25,6 +25,10 @@ dcterms:title rdfs:label "Title"@en .
 
 rdfs:label rdfs:label "label" .
 
+<https://prez.dev/count> rdfs:label "count" .
+
+<https://prez.dev/link> rdfs:label "link" .
+
 <https://data.idnau.org/pid/democat> rdfs:label "IDN Demonstration Catalogue" ;
     dcterms:description """The Indigenous Data Network's demonstration catalogue of datasets. This catalogue contains records of datasets in Australia, most of which have some relation to indigenous Australia.
 

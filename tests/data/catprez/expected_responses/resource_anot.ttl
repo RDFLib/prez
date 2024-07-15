@@ -26,6 +26,8 @@ rdf:type rdfs:label "type" .
 
 rdfs:label rdfs:label "label" .
 
+<https://prez.dev/link> rdfs:label "link" .
+
 <https://data.idnau.org/pid/AAC-SA> a dcat:Resource ;
     dcterms:creator <https://linked.data.gov.au/org/anu> ;
     dcterms:description """This study contains time series of data of the Annual Aboriginal Census for Australia, Australian Capital Territory, New South Wales, Northern Territory, Queensland, South Australia, Tasmania, Victoria and Western Australia from 1921 to 1944.

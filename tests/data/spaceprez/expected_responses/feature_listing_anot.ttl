@@ -27,6 +27,10 @@ rdfs:label rdfs:label "label" .
 
 rdfs:member rdfs:label "member" .
 
+prez:link rdfs:label "link" .
+
+prez:count rdfs:label "count" .
+
 <http://example.com/datasets/sandgate/cc12109444> rdfs:label "Contracted Catchment 12109444" ;
     dcterms:identifier "sndgt:cc12109444"^^prez:identifier ;
     prez:link "/s/datasets/exds:sandgate/collections/sndgt:catchments/items/sndgt:cc12109444" .
