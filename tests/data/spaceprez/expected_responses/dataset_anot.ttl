@@ -40,6 +40,8 @@ rdfs:label rdfs:label "label" .
 
 rdfs:member rdfs:label "member" .
 
+prez:link rdfs:label "link" .
+
 skos:definition rdfs:label "definition"@en ;
     skos:definition "A statement or formal explanation of the meaning of a concept."@en .
 

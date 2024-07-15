@@ -17,6 +17,11 @@ rdf:type rdfs:label "type" .
 
 rdfs:label rdfs:label "label" .
 
+prez:count rdfs:label "count" .
+
+prez:link rdfs:label "link" .
+
+
 <https://data.idnau.org/pid/democat> a dcat:Catalog ;
     rdfs:label "IDN Demonstration Catalogue" ;
     dcterms:description """The Indigenous Data Network's demonstration catalogue of datasets. This catalogue contains records of datasets in Australia, most of which have some relation to indigenous Australia.

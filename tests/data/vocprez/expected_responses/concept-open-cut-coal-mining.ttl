@@ -31,6 +31,8 @@ rdfs:isDefinedBy rdfs:label "isDefinedBy" .
 
 rdfs:label rdfs:label "label" .
 
+prez:link rdfs:label "link" .
+
 skos:broader rdfs:label "has broader"@en ;
     skos:definition "Relates a concept to a concept that is more general in meaning."@en .
 

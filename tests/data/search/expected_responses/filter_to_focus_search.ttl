@@ -27,6 +27,14 @@ rdfs:isDefinedBy rdfs:label "isDefinedBy" .
 
 rdfs:label rdfs:label "label" .
 
+prez:link rdfs:label "link" .
+
+prez:searchResultMatch rdfs:label "Matched Term" .
+
+prez:searchResultPredicate rdfs:label "Matched Predicate" .
+
+prez:searchResultWeight rdfs:label "Search Result Weight" .
+
 skos:altLabel rdfs:label "alternative label"@en ;
     skos:definition "An alternative lexical label for a resource."@en .
 

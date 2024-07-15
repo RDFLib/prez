@@ -25,6 +25,10 @@ rdfs:label rdfs:label "label" .
 
 rdfs:member rdfs:label "member" .
 
+prez:link rdfs:label "link" .
+
+prez:count rdfs:label "count" .
+
 <http://example.com/datasets/sandgate/catchments> dcterms:description "Hydrological catchments that are 'contracted', that is, guarenteed, to appear on multiple Geofabric surface hydrology data products"@en ;
     dcterms:identifier "sndgt:catchments"^^prez:identifier ;
     dcterms:title "Geofabric Contracted Catchments"@en ;
