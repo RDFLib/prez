@@ -1,5 +1,3 @@
-import time
-
 from connegp import Connegp
 from fastapi import Request
 

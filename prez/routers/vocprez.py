@@ -1,28 +1,24 @@
 import logging
 
-from fastapi import APIRouter, Request
-from fastapi import Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse
-from rdflib import URIRef, SKOS
+from rdflib import SKOS
 from starlette.responses import PlainTextResponse
 
 from prez.bnode import get_bnode_depth
 from prez.dependencies import get_repo, get_system_repo
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.queries.vocprez import (
+    get_concept_narrowers_query,
     get_concept_scheme_query,
     get_concept_scheme_top_concepts_query,
-    get_concept_narrowers_query,
 )
-from prez.renderers.renderer import (
-    return_from_graph,
-)
+from prez.renderers.renderer import return_from_graph
 from prez.response import StreamingTurtleAnnotatedResponse
 from prez.routers.identifier import get_iri_route
-from prez.services.objects import object_function
-from prez.services.listings import listing_function
 from prez.services.link_generation import _add_prez_links
-from prez.services.curie_functions import get_curie_id_for_uri
+from prez.services.listings import listing_function
+from prez.services.objects import object_function
 from prez.sparql.methods import Repo
 from prez.sparql.resource import get_resource
 
@@ -178,9 +174,6 @@ async def concept_scheme_top_concepts_route(
     )
 
     graph, _ = await repo.send_queries([concept_scheme_top_concepts_query], [])
-    for concept in graph.objects(iri, SKOS.hasTopConcept):
-        if isinstance(concept, URIRef):
-            concept_curie = get_curie_id_for_uri(concept)
     if "anot+" in profiles_mediatypes_info.mediatype:
         await _add_prez_links(graph, repo, system_repo)
     return await return_from_graph(

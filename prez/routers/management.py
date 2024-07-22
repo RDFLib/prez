@@ -28,7 +28,7 @@ async def index():
     g.add((URIRef(settings.system_uri), PREZ.version, Literal(settings.prez_version)))
     g += endpoints_graph_cache
     g += await return_annotation_predicates()
-    log.info(f"Populated API info")
+    log.info("Populated API info")
     return await return_rdf(g, "text/turtle", profile_headers={})
 
 

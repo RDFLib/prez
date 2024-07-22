@@ -40,7 +40,7 @@ async def healthcheck_sparql_endpoints():
             )
             response.raise_for_status()
             if response.status_code == 200:
-                log.info(f"Successfully connected to triplestore SPARQL endpoint")
+                log.info("Successfully connected to triplestore SPARQL endpoint")
                 connected_to_triplestore = True
         except httpx.HTTPError as exc:
             log.error(f"HTTP Exception for {exc.request.url} - {exc}")
@@ -83,7 +83,7 @@ async def populate_api_info():
     prez_system_graph.add(
         (URIRef(settings.system_uri), PREZ.version, Literal(settings.prez_version))
     )
-    log.info(f"Populated API info")
+    log.info("Populated API info")
 
 
 async def add_prefixes_to_prefix_graph(repo: Repo):
@@ -91,9 +91,9 @@ async def add_prefixes_to_prefix_graph(repo: Repo):
     Adds prefixes to the prefix graph
     """
     # look for remote prefixes
-    remote_prefix_query = f"""
-    CONSTRUCT WHERE {{ ?bn <http://purl.org/vocab/vann/preferredNamespacePrefix> ?prefix; 
-                    <http://purl.org/vocab/vann/preferredNamespaceUri> ?namespace. }}
+    remote_prefix_query = """
+    CONSTRUCT WHERE { ?bn <http://purl.org/vocab/vann/preferredNamespacePrefix> ?prefix; 
+                    <http://purl.org/vocab/vann/preferredNamespaceUri> ?namespace. }
     """
     remote_prefix_g, _ = await repo.send_queries([remote_prefix_query], [])
     if remote_prefix_g:
@@ -175,20 +175,20 @@ async def create_endpoints_graph(repo) -> Graph:
 
 
 async def get_remote_endpoint_definitions(repo):
-    remote_endpoints_query = f"""
+    remote_endpoints_query = """
 PREFIX ont: <https://prez.dev/ont/>
-CONSTRUCT {{
+CONSTRUCT {
     ?endpoint ?p ?o.
-}}
-WHERE {{
+}
+WHERE {
     ?endpoint a ont:Endpoint;
               ?p ?o.
-}}
+}
     """
     g, _ = await repo.send_queries([remote_endpoints_query], [])
     if len(g) > 0:
         endpoints_graph_cache.__iadd__(g)
-        log.info(f"Remote endpoint definition(s) found and added")
+        log.info("Remote endpoint definition(s) found and added")
     else:
         log.info("No remote endpoint definitions found")
 

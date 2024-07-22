@@ -68,7 +68,7 @@ async def create_profiles_graph(repo) -> Graph:
     g, _ = await repo.send_queries([remote_profiles_query], [])
     if len(g) > 0:
         profiles_graph_cache.__iadd__(g)
-        log.info(f"Remote profile(s) found and added")
+        log.info("Remote profile(s) found and added")
     else:
         log.info("No remote profiles found")
     # add profiles internal links

@@ -1,11 +1,9 @@
 from string import Template
 from typing import FrozenSet
 
-from fastapi import Depends
-from rdflib import Graph, Literal, URIRef, DCTERMS, BNode
+from rdflib import Graph, Literal, URIRef, DCTERMS
 
-from prez.cache import endpoints_graph_cache, links_ids_graph_cache
-from prez.dependencies import get_system_repo
+from prez.cache import links_ids_graph_cache
 from prez.reference_data.prez_ns import PREZ
 from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.model_methods import get_classes

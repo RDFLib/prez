@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, Depends
 
-from prez.dependencies import get_repo, get_system_repo
+from prez.dependencies import get_system_repo
 from prez.services.objects import object_function
 from prez.services.listings import listing_function
 
@@ -44,4 +44,6 @@ async def profiles(
     name="https://prez.dev/endpoint/profile",
 )
 async def profile(request: Request, profile_curie: str, repo=Depends(get_system_repo)):
-    return await object_function(request, object_curie=profile_curie, repo=repo, system_repo=repo)
+    return await object_function(
+        request, object_curie=profile_curie, repo=repo, system_repo=repo
+    )

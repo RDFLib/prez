@@ -40,7 +40,7 @@ def generate_new_prefix(uri):
     else:
         ns = f'{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path.rsplit("/", 1)[0]}/'
 
-    split_prefix_path = ns[:-1].rsplit('/', 1)
+    split_prefix_path = ns[:-1].rsplit("/", 1)
     if len(split_prefix_path) > 1:
         to_generate_prefix_from = split_prefix_path[-1].lower()
         # attempt to just use the last part of the path prior to the fragment or "identifier"

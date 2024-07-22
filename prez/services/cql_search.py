@@ -3,10 +3,10 @@ from typing import Tuple
 
 from fastapi import HTTPException
 
+from prez.config import settings
+
 
 class CQLSearch(object):
-    from prez.config import settings
-
     def __init__(self, cql_query: str, sparql_query: str) -> None:
         self.cql_query = cql_query
         self.sparql_query = sparql_query

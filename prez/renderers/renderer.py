@@ -70,7 +70,7 @@ async def return_from_graph(
     else:
         if "anot+" in mediatype:
             non_anot_mediatype = mediatype.replace("anot+", "")
-            profile_headers['Content-Type'] = non_anot_mediatype
+            profile_headers["Content-Type"] = non_anot_mediatype
             graph = await return_annotated_rdf(graph, profile, repo)
             content = io.BytesIO(
                 graph.serialize(format=non_anot_mediatype, encoding="utf-8")

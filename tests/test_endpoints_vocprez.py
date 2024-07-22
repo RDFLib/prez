@@ -50,7 +50,7 @@ def links(test_client: TestClient):
     r = test_client.get("/v/collection")
     g = Graph().parse(data=r.text)
     vocab_uri = URIRef("http://resource.geosciml.org/classifier/cgi/contacttype")
-    vocab_link = g.value(vocab_uri, URIRef(f"https://prez.dev/link", None))
+    vocab_link = g.value(vocab_uri, URIRef("https://prez.dev/link", None))
     # vocab_uri = g.value(None, RDF.type, SKOS.ConceptScheme)
     # vocab_link = g.value(member_uri, URIRef(f"https://prez.dev/link", None))
     return vocab_link
@@ -64,7 +64,7 @@ def get_curie(test_client: TestClient, iri: str) -> str:
 
 
 def test_vocab_listing(test_client: TestClient):
-    response = test_client.get(f"/v/vocab?_mediatype=text/anot+turtle")
+    response = test_client.get("/v/vocab?_mediatype=text/anot+turtle")
     response_graph = Graph().parse(data=response.text)
     expected_graph = Graph().parse(
         Path(__file__).parent
@@ -225,7 +225,7 @@ def test_concept(
 
 
 def test_collection_listing(test_client: TestClient):
-    response = test_client.get(f"/v/collection?_mediatype=text/anot+turtle")
+    response = test_client.get("/v/collection?_mediatype=text/anot+turtle")
     response_graph = Graph().parse(data=response.text, format="turtle")
     expected_graph = Graph().parse(
         Path(__file__).parent

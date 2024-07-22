@@ -28,7 +28,7 @@ class Repo(ABC):
         pass
 
     async def send_queries(
-            self, rdf_queries: List[str], tabular_queries: List[Tuple[URIRef, str]] = None
+        self, rdf_queries: List[str], tabular_queries: List[Tuple[URIRef, str]] = None
     ):
         # Common logic to send both query types in parallel
         results = await asyncio.gather(
@@ -49,7 +49,9 @@ class Repo(ABC):
         return g, tabular_results
 
     @abstractmethod
-    def sparql(self, query: str, raw_headers: list[tuple[bytes, bytes]], method: str = "GET"):
+    def sparql(
+        self, query: str, raw_headers: list[tuple[bytes, bytes]], method: str = "GET"
+    ):
         pass
 
 
@@ -114,7 +116,9 @@ class RemoteSparqlRepo(Repo):
             content = query_escaped_as_bytes
 
         headers.append((b"host", str(url.host).encode("utf-8")))
-        rp_req = self.async_client.build_request(method, url, headers=headers, content=content)
+        rp_req = self.async_client.build_request(
+            method, url, headers=headers, content=content
+        )
         return await self.async_client.send(rp_req, stream=True)
 
 
@@ -122,7 +126,9 @@ class PyoxigraphRepo(Repo):
     def __init__(self, pyoxi_store: pyoxigraph.Store):
         self.pyoxi_store = pyoxi_store
 
-    def _handle_query_solution_results(self, results: pyoxigraph.QuerySolutions) -> dict:
+    def _handle_query_solution_results(
+        self, results: pyoxigraph.QuerySolutions
+    ) -> dict:
         """Organise the query results into format serializable by FastAPIs JSONResponse."""
         variables = results.variables
         results_dict = {"head": {"vars": [v.value for v in results.variables]}}
@@ -188,7 +194,9 @@ class PyoxigraphRepo(Repo):
             self._sync_tabular_query_to_table, query, context
         )
 
-    async def sparql(self, query: str, raw_headers: list[tuple[bytes, bytes]], method: str = "") -> list | Graph | bool:
+    async def sparql(
+        self, query: str, raw_headers: list[tuple[bytes, bytes]], method: str = ""
+    ) -> list | Graph | bool:
         return self._sparql(query)
 
     @staticmethod

@@ -82,5 +82,5 @@ def test_count(
 ):
     curie = get_curie(test_client, iri)
     params = {"curie": curie, "inbound": inbound, "outbound": outbound}
-    response = test_client.get(f"/count", params=params)
+    response = test_client.get("/count", params=params)
     assert int(response.text) == count
