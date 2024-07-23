@@ -46,11 +46,11 @@ async def add_prez_links(graph: Graph, repo: Repo, endpoint_structure):
 
 
 async def _link_generation(
-    uri: URIRef,
-    repo: Repo,
-    klasses,
-    graph: Graph,
-    endpoint_structure: str = settings.endpoint_structure,
+        uri: URIRef,
+        repo: Repo,
+        klasses,
+        graph: Graph,
+        endpoint_structure: str = settings.endpoint_structure,
 ):
     """
     Generates links for the given URI if it is not already cached.
@@ -75,6 +75,8 @@ async def _link_generation(
             not in [
                 URIRef("http://example.org/ns#CQL"),
                 URIRef("http://example.org/ns#Search"),
+                URIRef("http://example.org/ns#TopConcepts"),
+                URIRef("http://example.org/ns#Narrowers"),
             ]
         ]
         # run queries for available nodeshapes to get link components
@@ -91,19 +93,20 @@ async def _link_generation(
                             curie_for_uri,
                             members_link,
                             object_link,
+                            identifiers
                         ) = await create_link_strings(
                             ns.hierarchy_level, solution, uri, endpoint_structure
                         )
                         # add links and identifiers to graph and cache
                         await add_links_to_graph_and_cache(
-                            curie_for_uri, graph, members_link, object_link, uri
+                            curie_for_uri, graph, members_link, object_link, uri, identifiers
                         )
             else:
-                curie_for_uri, members_link, object_link = await create_link_strings(
+                curie_for_uri, members_link, object_link, identifiers = await create_link_strings(
                     ns.hierarchy_level, {}, uri, endpoint_structure
                 )
                 await add_links_to_graph_and_cache(
-                    curie_for_uri, graph, members_link, object_link, uri
+                    curie_for_uri, graph, members_link, object_link, uri, identifiers
                 )
 
 
@@ -133,19 +136,21 @@ async def get_nodeshapes_constraining_class(klasses, uri):
 
 
 async def add_links_to_graph_and_cache(
-    curie_for_uri, graph, members_link, object_link, uri
+        curie_for_uri, graph, members_link, object_link, uri, identifiers: dict
 ):
     """
     Adds links and identifiers to the given graph and cache.
     """
     quads = []
     quads.append((uri, PREZ["link"], Literal(object_link), uri))
-    quads.append(
-        (uri, DCTERMS.identifier, Literal(curie_for_uri, datatype=PREZ.identifier), uri)
-    )
+    for uri_in_link_string, curie_in_link_string in identifiers.items():
+        quads.append(
+            (uri_in_link_string, DCTERMS.identifier, Literal(curie_in_link_string, datatype=PREZ.identifier), uri)
+        )
     if (
-        members_link
-    ):  # TODO need to confirm the link value doesn't match the existing link value, as multiple endpoints can deliver the same class/have different links for the same URI
+            members_link
+    ):  # TODO need to confirm the link value doesn't match the existing link value, as multiple endpoints can deliver
+        # the same class/have different links for the same URI
         existing_members_link = list(
             links_ids_graph_cache.quads((uri, PREZ["members"], None, uri))
         )
@@ -162,6 +167,8 @@ async def create_link_strings(hierarchy_level, solution, uri, endpoint_structure
     """
     Creates link strings based on the hierarchy level and solution provided.
     """
+    identifiers = {URIRef(v["value"]): get_curie_id_for_uri(v["value"]) for k, v in solution.items()} | {
+        uri: get_curie_id_for_uri(uri)}
     components = list(endpoint_structure[: int(hierarchy_level)])
     variables = reversed(
         ["focus_node"] + [f"path_node_{i}" for i in range(1, len(components))]
@@ -170,14 +177,14 @@ async def create_link_strings(hierarchy_level, solution, uri, endpoint_structure
         "".join([f"/{comp}/${pattern}" for comp, pattern in zip(components, variables)])
     )
     curie_for_uri = get_curie_id_for_uri(uri)
-    sol_values = {k: get_curie_id_for_uri(v["value"]) for k, v in solution.items()}
+    sol_values = {k: identifiers[URIRef(v["value"])] for k, v in solution.items()}
     object_link = item_link_template.substitute(
         sol_values | {"focus_node": curie_for_uri}
     )
     members_link = None
     if len(components) < len(list(endpoint_structure)):
         members_link = object_link + "/" + endpoint_structure[len(components)]
-    return curie_for_uri, members_link, object_link
+    return curie_for_uri, members_link, object_link, identifiers
 
 
 async def get_link_components(ns, repo):
