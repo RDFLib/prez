@@ -54,7 +54,7 @@ async def object_function(
         profile_nodeshape.tss_list.append(
             TriplesSameSubject.from_spo(
                 subject=profile_nodeshape.focus_node,
-                predicate=IRI(value="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+                predicate=IRI(value="https://prez.dev/type"),
                 object=IRI(value="https://prez.dev/FocusNode"),
             )
         )
