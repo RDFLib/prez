@@ -1,8 +1,9 @@
 import logging
 import pickle
+from typing import Optional
 
 from aiocache import caches
-from fastapi import APIRouter
+from fastapi import APIRouter, Query, Depends
 from rdflib import BNode
 from rdflib import Graph, URIRef, Literal
 from rdflib.collection import Collection
@@ -11,24 +12,45 @@ from starlette.responses import PlainTextResponse
 
 from prez.cache import endpoints_graph_cache
 from prez.config import settings
+from prez.dependencies import get_system_repo
 from prez.reference_data.prez_ns import PREZ
-from prez.renderers.renderer import return_rdf
-from prez.services.connegp_service import RDF_MEDIATYPES
+from prez.renderers.renderer import return_rdf, return_from_graph
+from prez.repositories import Repo
+from prez.services.connegp_service import RDF_MEDIATYPES, MediaType, NegotiatedPMTs
 
 router = APIRouter(tags=["Management"])
 log = logging.getLogger(__name__)
 
 
 @router.get("/", summary="Home page", tags=["Prez"])
-async def index():
+async def index(
+        request: Request,
+        system_repo: Repo = Depends(get_system_repo)
+):
     """Returns the following information about the API"""
+    pmts = NegotiatedPMTs(
+        headers=request.headers,
+        params=request.query_params,
+        classes=[PREZ.Object],
+        system_repo=system_repo,
+    )
+    await pmts.setup()
     g = Graph()
     g.bind("prez", "https://prez.dev/")
     g.bind("ont", "https://prez.dev/ont/")
     g.add((URIRef(settings.system_uri), PREZ.version, Literal(settings.prez_version)))
     g += endpoints_graph_cache
     g += await return_annotation_predicates()
-    return await return_rdf(g, "text/turtle", profile_headers={})
+    return await return_from_graph(
+        graph=g,
+        mediatype=pmts.selected["mediatype"],
+        profile=pmts.selected["profile"],
+        profile_headers=pmts.generate_response_headers(),
+        selected_class=pmts.selected["class"],
+        repo=system_repo,
+        system_repo=system_repo
+    )
+
 
 
 @router.get("/purge-tbox-cache", summary="Reset Tbox Cache")

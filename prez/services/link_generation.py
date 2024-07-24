@@ -2,7 +2,7 @@ import logging
 import time
 from string import Template
 
-from rdflib import Graph, Literal, URIRef, DCTERMS, BNode
+from rdflib import Graph, Literal, URIRef, BNode
 from rdflib.namespace import SH, RDF
 from sparql_grammar_pydantic import (
     IRI,
@@ -145,7 +145,7 @@ async def add_links_to_graph_and_cache(
     quads.append((uri, PREZ["link"], Literal(object_link), uri))
     for uri_in_link_string, curie_in_link_string in identifiers.items():
         quads.append(
-            (uri_in_link_string, DCTERMS.identifier, Literal(curie_in_link_string, datatype=PREZ.identifier), uri)
+            (uri_in_link_string, PREZ.identifier, Literal(curie_in_link_string), uri)
         )
     if (
             members_link
