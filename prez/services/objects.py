@@ -2,6 +2,7 @@ import logging
 import time
 
 from fastapi.responses import PlainTextResponse
+from sparql_grammar_pydantic import TriplesSameSubject, IRI
 
 from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import ALTREXT, ONT
@@ -16,11 +17,11 @@ log = logging.getLogger(__name__)
 
 
 async def object_function(
-    data_repo,
-    system_repo,
-    endpoint_structure,
-    pmts,
-    profile_nodeshape,
+        data_repo,
+        system_repo,
+        endpoint_structure,
+        pmts,
+        profile_nodeshape,
 ):
     if pmts.selected["profile"] == ALTREXT["alt-profile"]:
         none_keys = [
@@ -49,7 +50,14 @@ async def object_function(
             original_endpoint_type=ONT["ObjectEndpoint"],
             **none_kwargs,
         )
-
+    if "anot+" in pmts.selected["mediatype"]:
+        profile_nodeshape.tss_list.append(
+            TriplesSameSubject.from_spo(
+                subject=profile_nodeshape.focus_node,
+                predicate=IRI(value="https://prez.dev/type"),
+                object=IRI(value="https://prez.dev/FocusNode"),
+            )
+        )
     query = PrezQueryConstructor(
         profile_triples=profile_nodeshape.tssp_list,
         profile_gpnt=profile_nodeshape.gpnt_list,

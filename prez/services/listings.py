@@ -4,7 +4,7 @@ import logging
 from fastapi.responses import PlainTextResponse
 from rdflib import URIRef, Literal
 from rdflib.namespace import RDF
-from sparql_grammar_pydantic import IRI, Var
+from sparql_grammar_pydantic import IRI, Var, TriplesSameSubject
 
 from prez.cache import endpoints_graph_cache
 from prez.reference_data.prez_ns import PREZ, ALTREXT, ONT
@@ -53,6 +53,16 @@ async def listing_function(
         construct_tss_list.extend(subselect_tss_list)
     if profile_nodeshape.tss_list:
         construct_tss_list.extend(profile_nodeshape.tss_list)
+
+    # add focus node declaration if it's an annotated mediatype
+    if "anot+" in pmts.selected["mediatype"]:
+        construct_tss_list.append(
+            TriplesSameSubject.from_spo(
+                subject=profile_nodeshape.focus_node,
+                predicate=IRI(value="https://prez.dev/type"),
+                object=IRI(value="https://prez.dev/FocusNode"),
+            )
+        )
 
     queries = []
     main_query = PrezQueryConstructor(
