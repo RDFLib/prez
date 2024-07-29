@@ -7,20 +7,18 @@ from connegp import RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
 from fastapi import status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
-from rdflib import Graph, URIRef, Namespace, RDF
+from rdflib import RDF, Graph, Namespace, URIRef
 from starlette.requests import Request
 from starlette.responses import Response
 
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.models.profiles_item import ProfileItem
 from prez.renderers.csv_renderer import render_csv_dropdown
-from prez.renderers.json_renderer import render_json_dropdown, NotFoundError
+from prez.renderers.json_renderer import NotFoundError, render_json_dropdown
 from prez.services.curie_functions import get_curie_id_for_uri
 from prez.sparql.methods import Repo
-from prez.sparql.objects_listings import (
-    generate_item_construct,
-    get_annotation_properties,
-)
+from prez.sparql.objects_listings import (generate_item_construct,
+                                          get_annotation_properties)
 
 log = logging.getLogger(__name__)
 
@@ -33,40 +31,38 @@ async def return_from_graph(
     selected_class: URIRef,
     repo: Repo,
 ):
-    profile_headers["Content-Disposition"] = "inline"
+    # set content-disposition
+    profile_headers["Content-Disposition"] = (
+        "attachment;" if str(mediatype) == "text/csv" else "inline;"
+    )
+    iri = graph.value(None, RDF.type, selected_class)
+    if iri:
+        profile_headers[
+            "Content-Disposition"
+        ] += f" filename={get_curie_id_for_uri(URIRef(str(iri)))}"
+    elif selected_class:
+        profile_headers[
+            "Content-Disposition"
+        ] += f" filename={selected_class.split('#')[-1].split('/')[-1]}"
 
     if str(mediatype) in RDF_MEDIATYPES:
         return await return_rdf(graph, mediatype, profile_headers)
-
     elif profile == URIRef("https://w3id.org/profile/dd"):
         graph = await return_annotated_rdf(graph, profile, repo)
-
         try:
             # TODO: Currently, data is generated in memory, instead of in a streaming manner.
             #       Not possible to do a streaming response yet since we are reading the RDF
             #       data into an in-memory graph.
             jsonld_data = await render_json_dropdown(graph, profile, selected_class)
-
             if str(mediatype) == "text/csv":
-                iri = graph.value(None, RDF.type, selected_class)
-                if iri:
-                    filename = get_curie_id_for_uri(URIRef(str(iri)))
-                else:
-                    filename = selected_class.split("#")[-1].split("/")[-1]
                 stream = render_csv_dropdown(jsonld_data["@graph"])
-                response = StreamingResponse(stream, media_type=mediatype)
-                response.headers[
-                    "Content-Disposition"
-                ] = f"attachment;filename={filename}.csv"
-                return response
-
-            # application/json
-            stream = io.StringIO(json.dumps(jsonld_data))
-            return StreamingResponse(stream, media_type=mediatype)
-
+            else:
+                stream = io.StringIO(json.dumps(jsonld_data))
+            return StreamingResponse(
+                stream, media_type=mediatype, headers=profile_headers
+            )
         except NotFoundError as err:
             raise HTTPException(status.HTTP_404_NOT_FOUND, str(err))
-
     else:
         if "anot+" in mediatype:
             non_anot_mediatype = mediatype.replace("anot+", "")
@@ -78,7 +74,6 @@ async def return_from_graph(
             return StreamingResponse(
                 content=content, media_type=non_anot_mediatype, headers=profile_headers
             )
-
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST, f"Unsupported mediatype: {mediatype}."
         )
@@ -91,7 +86,6 @@ async def return_rdf(graph, mediatype, profile_headers):
             format=RDF_SERIALIZER_TYPES_MAP[str(mediatype)], encoding="utf-8"
         )
     )
-    profile_headers["Content-Disposition"] = "inline"
     return StreamingResponse(content=obj, media_type=mediatype, headers=profile_headers)
 
 
