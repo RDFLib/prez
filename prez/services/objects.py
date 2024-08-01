@@ -1,12 +1,9 @@
 from typing import Optional
 
-from fastapi import Depends
 from fastapi import Request, HTTPException
 from rdflib import URIRef
 
 from prez.cache import profiles_graph_cache
-from prez.config import settings
-from prez.dependencies import get_repo
 from prez.models.object_item import ObjectItem
 from prez.models.profiles_and_mediatypes import ProfilesMediatypesInfo
 from prez.reference_data.prez_ns import PREZ

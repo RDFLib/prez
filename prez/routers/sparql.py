@@ -1,9 +1,10 @@
 import io
 from typing import Annotated
 
+import httpx
 from fastapi import APIRouter, Depends, Form
 from fastapi.responses import JSONResponse, Response
-from rdflib import Namespace, Graph
+from rdflib import Graph, Namespace
 from starlette.background import BackgroundTask
 from starlette.datastructures import Headers
 from starlette.requests import Request
@@ -24,7 +25,9 @@ async def sparql_post_passthrough(
     # To maintain compatibility with the other SPARQL endpoints,
     # /sparql POST endpoint is not a JSON API, it uses
     # values encoded with x-www-form-urlencoded
-    query: Annotated[str, Form()],  # Pydantic validation prevents update queries (the Form would need to be "update")
+    query: Annotated[
+        str, Form()
+    ],  # Pydantic validation prevents update queries (the Form would need to be "update")
     request: Request,
     repo: Repo = Depends(get_repo),
 ):
@@ -40,7 +43,9 @@ async def sparql_get_passthrough(
     return await sparql_endpoint_handler(query, request, repo, method="GET")
 
 
-async def sparql_endpoint_handler(query: str, request: Request, repo: Repo, method="GET"):
+async def sparql_endpoint_handler(
+    query: str, request: Request, repo: Repo, method="GET"
+):
     request_mediatype = request.headers.get("accept").split(",")[0]
     # can't default the MT where not provided as it could be
     # graph (CONSTRUCT like queries) or tabular (SELECT queries)
@@ -65,13 +70,14 @@ async def sparql_endpoint_handler(query: str, request: Request, repo: Repo, meth
             media_type=non_anot_mediatype,
             headers=prof_and_mt_info.profile_headers,
         )
-    query_result: 'httpx.Response' = await repo.sparql(query, request.headers.raw, method=method)
+    query_result: httpx.Response = await repo.sparql(
+        query, request.headers.raw, method=method
+    )
     if isinstance(query_result, dict):
         return JSONResponse(content=query_result)
     elif isinstance(query_result, Graph):
         return Response(
-            content=query_result.serialize(format="text/turtle"),
-            status_code=200
+            content=query_result.serialize(format="text/turtle"), status_code=200
         )
 
     dispositions = query_result.headers.get_list("Content-Disposition")
@@ -85,7 +91,11 @@ async def sparql_endpoint_handler(query: str, request: Request, repo: Repo, meth
         # remove transfer-encoding chunked, disposition=attachment, and content-length
         headers = dict()
         for k, v in query_result.headers.items():
-            if k.lower() not in ("transfer-encoding", "content-disposition", "content-length"):
+            if k.lower() not in (
+                "transfer-encoding",
+                "content-disposition",
+                "content-length",
+            ):
                 headers[k] = v
         content = await query_result.aread()
         await query_result.aclose()

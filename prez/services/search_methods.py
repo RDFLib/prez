@@ -26,7 +26,7 @@ async def get_remote_search_methods(repo):
     graph, _ = await repo.send_queries([remote_search_methods_query], [])
     if len(graph) > 1:
         await generate_search_methods(graph)
-        log.info(f"Remote search methods found and added.")
+        log.info("Remote search methods found and added.")
     else:
         log.info("No remote search methods found.")
 

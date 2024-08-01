@@ -2,15 +2,14 @@ import logging
 from functools import lru_cache
 from itertools import chain
 from textwrap import dedent
-from typing import List, Optional, Tuple, Dict, FrozenSet
+from typing import Dict, FrozenSet, List, Optional, Tuple
 
-from rdflib import Graph, URIRef, Namespace, Literal
+from rdflib import Graph, Literal, Namespace, URIRef
 
-from prez.cache import endpoints_graph_cache, tbox_cache, profiles_graph_cache
+from prez.cache import endpoints_graph_cache, profiles_graph_cache, tbox_cache
 from prez.config import settings
 from prez.models import SearchMethod
 from prez.models.listing import ListingModel
-from prez.models.profiles_item import ProfileItem
 from prez.models.profiles_listings import ProfilesMembers
 from prez.reference_data.prez_ns import ONT
 from prez.services.curie_functions import get_uri_for_curie_id
@@ -45,9 +44,7 @@ def generate_listing_construct(
         ) = get_item_predicates(profile, focus_item.selected_class)
     else:  # for objects, this context is already included in the separate "generate_item_construct" function, so these
         # predicates are explicitly set to None here to avoid duplication.
-        include_predicates = (
-            exclude_predicates
-        ) = inverse_predicates = sequence_predicates = None
+        include_predicates = sequence_predicates = None
     (
         child_to_focus,
         parent_to_focus,
@@ -196,7 +193,7 @@ def generate_item_construct(focus_item, profile: URIRef):
 
 def search_query_construct():
     return dedent(
-        f"""?hashID a prez:SearchResult ;
+        """?hashID a prez:SearchResult ;
         prez:searchResultWeight ?weight ;
         prez:searchResultPredicate ?predicate ;
         prez:searchResultMatch ?match ;
@@ -234,7 +231,7 @@ def generate_relative_properties(
     for k, v in kvs.items():
         if v:
             if construct_select == "select":
-                rel_string += f"""OPTIONAL {{ """
+                rel_string += """OPTIONAL { """
             rel_string += f"""?{other_kvs[k]} ?rel_{k}_props ?rel_{k}_val .\n"""
             if construct_select == "select":
                 rel_string += f"""VALUES ?rel_{k}_props {{ {" ".join('<' + str(pred) + '>' for pred in relative_properties)} }} }}\n"""
@@ -899,6 +896,6 @@ def startup_count_objects():
     """
     Retrieves hardcoded counts for collections in the dataset (feature collections, datasets etc.)
     """
-    return f"""PREFIX prez: <https://prez.dev/>
-CONSTRUCT {{ ?collection prez:count ?count }}
-WHERE {{ ?collection prez:count ?count }}"""
+    return """PREFIX prez: <https://prez.dev/>
+CONSTRUCT { ?collection prez:count ?count }
+WHERE { ?collection prez:count ?count }"""

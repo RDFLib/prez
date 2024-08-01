@@ -59,7 +59,7 @@ def test_object_endpoint_sp_dataset(test_client, dataset_uri):
 
 
 def test_feature_collection(test_client):
-    r = test_client.get(f"/object?uri=https://test/feature-collection")
+    r = test_client.get("/object?uri=https://test/feature-collection")
     response_graph = Graph().parse(data=r.text)
     expected_graph = Graph().parse(
         Path(__file__).parent / "../tests/data/object/expected_responses/fc.ttl"
@@ -72,7 +72,7 @@ def test_feature_collection(test_client):
 
 def test_feature(test_client):
     r = test_client.get(
-        f"/object?uri=https://linked.data.gov.au/datasets/geofabric/hydroid/102208962"
+        "/object?uri=https://linked.data.gov.au/datasets/geofabric/hydroid/102208962"
     )
     response_graph = Graph().parse(data=r.text)
     expected_graph = Graph().parse(

@@ -50,7 +50,7 @@ def a_dataset_link(client):
     r = client.get("/s/datasets")
     g = Graph().parse(data=r.text)
     member_uri = g.value(None, RDF.type, DCAT.Dataset)
-    link = g.value(member_uri, URIRef(f"https://prez.dev/link", None))
+    link = g.value(member_uri, URIRef("https://prez.dev/link", None))
     return link
 
 
@@ -61,7 +61,7 @@ def an_fc_link(client, a_dataset_link):
     member_uri = g.value(
         URIRef("http://example.com/datasets/sandgate"), RDFS.member, None
     )
-    link = g.value(member_uri, URIRef(f"https://prez.dev/link", None))
+    link = g.value(member_uri, URIRef("https://prez.dev/link", None))
     return link
 
 
@@ -72,7 +72,7 @@ def a_feature_link(client, an_fc_link):
     member_uri = g.value(
         URIRef("http://example.com/datasets/sandgate/catchments"), RDFS.member, None
     )
-    link = g.value(member_uri, URIRef(f"https://prez.dev/link", None))
+    link = g.value(member_uri, URIRef("https://prez.dev/link", None))
     return link
 
 

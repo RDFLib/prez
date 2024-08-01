@@ -46,7 +46,7 @@ def client(test_repo: Repo) -> TestClient:
 
 
 def test_annotation_predicates(client):
-    r = client.get(f"/")
+    r = client.get("/")
     response_graph = Graph().parse(data=r.text)
     labelList = list(
         response_graph.objects(

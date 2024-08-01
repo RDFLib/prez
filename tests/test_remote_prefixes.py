@@ -53,5 +53,5 @@ def test_catalog_link(client):
     r = client.get("/c/catalogs")
     g = Graph().parse(data=r.text)
     member_uri = g.value(None, RDF.type, DCAT.Catalog)
-    link = str(g.value(member_uri, URIRef(f"https://prez.dev/link", None)))
+    link = str(g.value(member_uri, URIRef("https://prez.dev/link", None)))
     assert link == "/c/catalogs/davo:bogusCatalogous"

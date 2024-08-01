@@ -51,7 +51,7 @@ def a_catalog_link(client):
     r = client.get("/c/catalogs")
     g = Graph().parse(data=r.text)
     member_uri = g.value(None, RDF.type, DCAT.Catalog)
-    link = g.value(member_uri, URIRef(f"https://prez.dev/link", None))
+    link = g.value(member_uri, URIRef("https://prez.dev/link", None))
     return link
 
 
@@ -59,7 +59,7 @@ def a_catalog_link(client):
 def a_resource_link(client, a_catalog_link):
     r = client.get(a_catalog_link)
     g = Graph().parse(data=r.text)
-    links = g.objects(subject=None, predicate=URIRef(f"https://prez.dev/link"))
+    links = g.objects(subject=None, predicate=URIRef("https://prez.dev/link"))
     for link in links:
         if link != a_catalog_link:
             return link
@@ -67,7 +67,7 @@ def a_resource_link(client, a_catalog_link):
 
 # @pytest.mark.xfail(reason="passes locally - setting to xfail pending test changes to pyoxigraph")
 def test_catalog_listing_anot(client):
-    r = client.get(f"/c/catalogs?_mediatype=text/anot+turtle")
+    r = client.get("/c/catalogs?_mediatype=text/anot+turtle")
     response_graph = Graph().parse(data=r.text)
     expected_graph = Graph().parse(
         Path(__file__).parent
@@ -80,7 +80,7 @@ def test_catalog_listing_anot(client):
 
 
 def test_catalog_anot(client, a_catalog_link):
-    r = client.get(f"/c/catalogs/pd:democat?_mediatype=text/anot+turtle")
+    r = client.get("/c/catalogs/pd:democat?_mediatype=text/anot+turtle")
     response_graph = Graph().parse(data=r.text)
     expected_graph = Graph().parse(
         Path(__file__).parent

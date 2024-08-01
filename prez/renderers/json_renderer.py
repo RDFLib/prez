@@ -1,6 +1,4 @@
-from itertools import chain
-
-from rdflib import Graph, URIRef, RDF, SH, Literal
+from rdflib import Graph, URIRef, RDF, SH
 from rdflib.term import Node
 
 from prez.cache import profiles_graph_cache

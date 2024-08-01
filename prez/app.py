@@ -20,7 +20,8 @@ from prez.dependencies import (
 from prez.models.model_exceptions import (
     ClassNotFoundException,
     URINotFoundException,
-    NoProfilesException, InvalidSPARQLQueryException,
+    NoProfilesException,
+    InvalidSPARQLQueryException,
 )
 from prez.routers.catprez import router as catprez_router
 from prez.routers.cql import router as cql_router
@@ -168,7 +169,7 @@ def assemble_app(
             ClassNotFoundException: catch_class_not_found_exception,
             URINotFoundException: catch_uri_not_found_exception,
             NoProfilesException: catch_no_profiles_exception,
-            InvalidSPARQLQueryException: catch_invalid_sparql_query
+            InvalidSPARQLQueryException: catch_invalid_sparql_query,
         },
         **kwargs
     )
