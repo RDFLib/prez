@@ -143,10 +143,10 @@ prez:OGCSchemesObjectProfile
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:constrainsClass skos:ConceptScheme ;
     sh:property [
-        sh:minCount 0 ;
-        sh:path [sh:inversePath skos:inScheme ]
-        ] , [
         sh:path shext:allPredicateValues
+        ] , [
+        sh:maxCount 0 ;
+        sh:path skos:hasTopConcept ;
         ] ;
     shext:bnode-depth 2 ;
     .
