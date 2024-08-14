@@ -29,6 +29,10 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
         a sh:NodeShape ;
         sh:targetClass prez:AltProfilesList ;
         altr-ext:hasDefaultProfile <https://prez.dev/profile/open-object>
+    ] , [
+        a sh:NodeShape ;
+        sh:targetClass prof:Profile ;
+        altr-ext:hasDefaultProfile <https://prez.dev/profile/profiles>
     ]
 .
 
@@ -138,3 +142,32 @@ altr-ext:alt-profile
                 )
     ] ;
 .
+
+<https://prez.dev/profile/profiles>
+    a prof:Profile , prez:ObjectProfile , prez:ListingProfile ;
+    dcterms:description "A Profile for displaying profiles" ;
+    dcterms:identifier "prof"^^xsd:token ;
+    dcterms:title "Profiles Profile" ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
+    altr-ext:hasResourceFormat
+        "application/ld+json" ,
+        "application/anot+ld+json" ,
+        "application/rdf+xml" ,
+        "text/anot+turtle" ,
+        "text/turtle" ;
+    altr-ext:constrainsClass
+        prof:Profile ;
+        sh:property [
+        sh:path (
+                    sh:union (
+                            rdf:type
+                            altr-ext:hasResourceFormat
+                            altr-ext:hasDefaultResourceFormat
+                            dcterms:description
+                            dcterms:title
+                            dcterms:identifier
+                    )
+                )
+    ] ;
+    shext:bnode-depth 20 ;
+    .

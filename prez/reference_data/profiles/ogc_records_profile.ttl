@@ -25,7 +25,7 @@ prez:OGCRecordsProfile
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
-        sh:targetClass prof:Profile , dcat:Catalog , dcat:Resource , skos:Concept , geo:Feature , geo:FeatureCollection
+        sh:targetClass dcat:Catalog , dcat:Resource , skos:Concept , geo:Feature , geo:FeatureCollection
                                , skos:Collection , rdf:Resource , prez:SearchResult , prez:CQLObjectList ;
         altr-ext:hasDefaultProfile prez:OGCListingProfile
     ] , [
@@ -38,7 +38,7 @@ prez:OGCRecordsProfile
         altr-ext:hasDefaultProfile prez:OGCSchemesObjectProfile
     ] , [
         a sh:NodeShape ;
-        sh:targetClass prof:Profile , dcat:Catalog , dcat:Resource , skos:Concept , geo:Feature , geo:FeatureCollection
+        sh:targetClass dcat:Catalog , dcat:Resource , skos:Concept , geo:Feature , geo:FeatureCollection
                                , skos:Collection , rdf:Resource ;
         altr-ext:hasDefaultProfile prez:OGCItemProfile
     ]

@@ -6,6 +6,7 @@ from textwrap import dedent
 from pydantic import BaseModel
 from rdflib import Graph, Namespace, URIRef
 
+from prez.config import settings
 from prez.exceptions.model_exceptions import NoProfilesException
 from prez.repositories.base import Repo
 from prez.services.curie_functions import get_curie_id_for_uri, get_uri_for_curie_id
@@ -302,4 +303,28 @@ class NegotiatedPMTs(BaseModel):
         response = await self.system_repo.send_queries([], [(None, query)])
         if not response[1][0][1]:
             raise NoProfilesException(self.classes)
+
+        if settings.log_level == "DEBUG":
+            from tabulate import tabulate
+            table_data = [
+                [
+                    item['profile']['value'],
+                    item['title']['value'],
+                    item['class']['value'],
+                    item['distance']['value'],
+                    item['def_profile']['value'],
+                    item['format']['value'],
+                    item['req_format']['value'],
+                    item['def_format']['value'],
+                ]
+                for item in response[1][0][1]
+            ]
+
+            # Define headers
+            headers = ["Profile", "Title", "Class", "Distance", "Default Profile", "Format", "Requested Format",
+                       "Default Format"]
+
+            # Render as a table
+            print(tabulate(table_data, headers=headers, tablefmt="grid"))
+
         return response
