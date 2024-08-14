@@ -19,8 +19,14 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     a prof:Profile ;
     dcterms:identifier "prez"^^xsd:token ;
     dcterms:description "A profile for the Prez Linked Data API" ;
-    skos:prefLabel "Prez profile" ;
+    dcterms:title "Prez profile" ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
+    altr-ext:hasResourceFormat
+        "application/json" ,
+        "application/ld+json" ,
+        "application/rdf+xml" ,
+        "text/anot+turtle" ,
+        "text/turtle" ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
         sh:targetClass prez:SPARQLQuery ;

@@ -23,6 +23,12 @@ prez:OGCRecordsProfile
     dcterms:title "OGC Profile" ;
     altr-ext:constrainsClass prez:CatPrez ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
+    altr-ext:hasResourceFormat
+        "application/json" ,
+        "application/ld+json" ,
+        "application/rdf+xml" ,
+        "text/anot+turtle" ,
+        "text/turtle" ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
         sh:targetClass dcat:Catalog , dcat:Resource , skos:Concept , geo:Feature , geo:FeatureCollection
