@@ -325,6 +325,6 @@ class NegotiatedPMTs(BaseModel):
                        "Default Format"]
 
             # Render as a table
-            print(tabulate(table_data, headers=headers, tablefmt="grid"))
+            log.debug(tabulate(table_data, headers=headers, tablefmt="grid"))
 
         return response
