@@ -102,7 +102,7 @@ def test_basic_listing():
 
 
 def test_search_query_regex():
-    sq = SearchQueryRegex(term="test", predicates=[RDFS.label])
+    sq = SearchQueryRegex(term="test", predicates=[RDFS.label], limit=10, offset=0)
     test = PrezQueryConstructor(
         profile_triples=[
             TriplesSameSubjectPath.from_spo(

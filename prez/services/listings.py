@@ -99,7 +99,7 @@ async def listing_function(
     # count search results - hard to do in SPARQL as the SELECT part of the query is NOT aggregated
     if search_query:
         count = len(list(item_graph.subjects(RDF.type, PREZ.SearchResult)))
-        if count == settings.search_count_limit:
+        if count == search_query.limit:
             count_literal = f">{count-1}"
         else:
             count_literal = f"{count}"

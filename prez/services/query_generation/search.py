@@ -49,9 +49,9 @@ class SearchQueryRegex(ConstructQuery):
     def __init__(
         self,
         term: str,
+        limit: int,
+        offset: int,
         predicates: Optional[List[str]] = None,
-        limit: int = None,
-        offset: int = None,
     ):
 
         limit += 1  # increase the limit by one so we know if there are further pages of results.
