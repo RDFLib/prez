@@ -7,6 +7,7 @@ from rdflib.namespace import RDF
 from sparql_grammar_pydantic import IRI, Var, TriplesSameSubject
 
 from prez.cache import endpoints_graph_cache
+from prez.config import settings
 from prez.reference_data.prez_ns import PREZ, ALTREXT, ONT
 from prez.renderers.renderer import return_from_graph
 from prez.services.link_generation import add_prez_links
@@ -98,7 +99,11 @@ async def listing_function(
     # count search results - hard to do in SPARQL as the SELECT part of the query is NOT aggregated
     if search_query:
         count = len(list(item_graph.subjects(RDF.type, PREZ.SearchResult)))
-        item_graph.add((PREZ.SearchResult, PREZ["count"], Literal(count)))
+        if count == settings.search_count_limit:
+            count_literal = f">{count-1}"
+        else:
+            count_literal = f"{count}"
+        item_graph.add((PREZ.SearchResult, PREZ["count"], Literal(count_literal)))
     return await return_from_graph(
         item_graph,
         pmts.selected["mediatype"],

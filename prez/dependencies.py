@@ -171,8 +171,8 @@ async def generate_search_query(request: Request):
         escaped_term = escape_for_lucene_and_sparql(term)
         predicates = request.query_params.getlist("predicates")
         page = request.query_params.get("page", 1)
-        per_page = request.query_params.get("per_page", 10)
-        limit = int(per_page)
+        per_page = request.query_params.get("per_page")
+        limit = int(per_page) if per_page else settings.search_count_limit
         offset = limit * (int(page) - 1)
 
         return SearchQueryRegex(
