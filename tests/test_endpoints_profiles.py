@@ -3,7 +3,7 @@ from rdflib.namespace import RDF, PROF
 
 
 def test_profile(client_no_override):
-    r = client_no_override.get("/profiles")
+    r = client_no_override.get("/profiles?per_page=50")
     g = Graph().parse(data=r.text)
     assert (URIRef("https://prez.dev/profile/prez"), RDF.type, PROF.Profile) in g
 
