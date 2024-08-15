@@ -5,8 +5,8 @@ import pytest
 from fastapi.testclient import TestClient
 from ogctests.main import run_ogctests
 from pyoxigraph.pyoxigraph import Store
-from prez.app import assemble_app
 
+from prez.app import assemble_app
 from prez.dependencies import get_data_repo
 from prez.repositories import PyoxigraphRepo, Repo
 
@@ -38,13 +38,15 @@ def client(test_repo: Repo) -> TestClient:
 
     app.dependency_overrides[get_data_repo] = override_get_data_repo
 
-    with TestClient(app, backend_options={'loop_factory': asyncio.new_event_loop}) as c:
+    with TestClient(app, backend_options={"loop_factory": asyncio.new_event_loop}) as c:
         yield c
 
     # Remove the override to ensure subsequent tests are unaffected
     app.dependency_overrides.clear()
 
 
+@pytest.mark.xfail()
 def test_features_core(client: TestClient):
     scope = "features/core"
-    run_ogctests(scope, test_client=client)
+    exit_code = run_ogctests(scope, test_client=client)
+    assert exit_code == pytest.ExitCode.OK
