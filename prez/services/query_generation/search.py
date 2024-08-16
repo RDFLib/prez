@@ -46,24 +46,24 @@ from prez.reference_data.prez_ns import PREZ
 
 
 class SearchQueryRegex(ConstructQuery):
-    limit: int = 10  # specify here to make available as attribute
-    offset: int = 0  # specify here to make available as attribute
-
     def __init__(
         self,
         term: str,
+        limit: int,
+        offset: int,
         predicates: Optional[List[str]] = None,
-        limit: int = 10,
-        offset: int = 0,
     ):
+
+        limit += 1  # increase the limit by one so we know if there are further pages of results.
+
+        if not predicates:
+            predicates = settings.default_search_predicates
+
         sr_uri: Var = Var(value="focus_node")
         pred: Var = Var(value="pred")
         match: Var = Var(value="match")
         weight: Var = Var(value="weight")
         hashid: Var = Var(value="hashID")
-
-        if not predicates:
-            predicates = settings.default_search_predicates
 
         ct_map = {
             IRI(value=PREZ.searchResultWeight): weight,
@@ -376,3 +376,11 @@ class SearchQueryRegex(ConstructQuery):
     @property
     def order_by_direction(self):
         return "DESC"
+
+    @property
+    def limit(self):
+        return self.where_clause.group_graph_pattern.content.solution_modifier.limit_offset.limit_clause.limit
+
+    @property
+    def offset(self):
+        return self.where_clause.group_graph_pattern.content.solution_modifier.limit_offset.offset_clause.offset
