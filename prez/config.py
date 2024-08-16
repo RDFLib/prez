@@ -40,6 +40,7 @@ class Settings(BaseSettings):
     system_uri: Optional[str] = f"{protocol}://{host}:{port}"
     order_lists_by_label: bool = True
     listing_count_limit: int = 100
+    search_count_limit: int = 10
     label_predicates: Optional[List[URIRef]] = [
         SKOS.prefLabel,
         DCTERMS.title,
