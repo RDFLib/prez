@@ -38,7 +38,7 @@ if __name__ == "__main__":
     from azure.functions import HttpRequest, Context
     import asyncio
 
-    req = HttpRequest("GET", "/v", headers={}, body=b"")
+    req = HttpRequest("GET", "/catalogs", headers={}, body=b"")
     context = dict()
     loop = asyncio.get_event_loop()
 
