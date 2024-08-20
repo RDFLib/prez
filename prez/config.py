@@ -79,6 +79,7 @@ class Settings(BaseSettings):
         EP["system/profile-listing"],
         EP["system/profile-object"],
     ]
+    enable_sparql_endpoint: bool = False
 
     @field_validator("prez_version")
     @classmethod

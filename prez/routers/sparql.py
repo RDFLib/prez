@@ -12,6 +12,7 @@ from starlette.responses import StreamingResponse
 from prez.dependencies import get_data_repo, get_system_repo
 from prez.renderers.renderer import return_annotated_rdf
 from prez.repositories import Repo
+from prez.routers.api_extras_examples import responses
 from prez.services.connegp_service import NegotiatedPMTs
 
 PREZ = Namespace("https://prez.dev/")
@@ -35,7 +36,7 @@ async def sparql_post_passthrough(
     )
 
 
-@router.get("/sparql")
+@router.get("/sparql", responses=responses)
 async def sparql_get_passthrough(
     query: str,
     request: Request,

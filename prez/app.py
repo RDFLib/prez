@@ -171,7 +171,8 @@ def assemble_app(
 
     app.include_router(management_router)
     app.include_router(ogc_records_router)
-    app.include_router(sparql_router)
+    if _settings.enable_sparql_endpoint:
+        app.include_router(sparql_router)
     app.include_router(identifier_router)
     app.openapi = partial(
         prez_open_api_metadata,
