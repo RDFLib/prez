@@ -7,6 +7,7 @@ os.environ["SPARQL_REPO_TYPE"] = "pyoxigraph"
 
 # os.environ["SPARQL_ENDPOINT"] = "http://localhost:3030/dataset"
 # os.environ["SPARQL_REPO_TYPE"] = "remote"
+os.environ["ENABLE_SPARQL_ENDPOINT"] = "1"
 
 from pathlib import Path
 
