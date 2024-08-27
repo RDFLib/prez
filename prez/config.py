@@ -7,7 +7,7 @@ from typing import Optional, List, Tuple
 from typing import Union, Any, Dict
 
 import toml
-from pydantic import field_validator, root_validator
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 from rdflib import URIRef, DCTERMS, RDFS, SDO
 from rdflib.namespace import SKOS
@@ -86,6 +86,7 @@ class Settings(BaseSettings):
         EP["system/profile-listing"],
         EP["system/profile-object"],
     ]
+    enable_sparql_endpoint: bool = False
     api_flavour: Optional[APIFlavour] = "ogc_extended"
 
     @cached_property

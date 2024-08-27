@@ -172,6 +172,9 @@ def assemble_app(
     )
 
     app.include_router(management_router)
+    app.include_router(ogc_records_router)
+    if _settings.enable_sparql_endpoint:
+        app.include_router(sparql_router)
     if _settings.api_flavour.value == "ogc_features":
         app.include_router(ogc_features_router)
     elif _settings.api_flavour.value == "ogc_extended":
