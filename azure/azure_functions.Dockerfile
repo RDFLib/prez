@@ -19,7 +19,7 @@ RUN pip3 install poetry==${POETRY_VERSION}
 RUN mkdir -p /build
 WORKDIR /build
 
-COPY . .
+COPY .. .
 RUN poetry build
 
 RUN mkdir -p /home/site/wwwroot
@@ -52,7 +52,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -qq update && \
       bash
 
 WORKDIR /home/site/wwwroot
-COPY requirements.txt pyproject.toml host.json function_app.py ./
+COPY pyproject.toml poetry.lock azure/host.json azure/function_app.py azure/patched_asgi_function_wrapper.py ./
 
 ENTRYPOINT []
 CMD ["/opt/startup/start_nonappservice.sh"]

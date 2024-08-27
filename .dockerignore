@@ -6,6 +6,7 @@ venv/
 .vscode/
 .idea/
 .git/
+build/
 test_*.py
 .github/
 Dockerfile
