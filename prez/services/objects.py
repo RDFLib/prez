@@ -17,11 +17,11 @@ log = logging.getLogger(__name__)
 
 
 async def object_function(
-        data_repo,
-        system_repo,
-        endpoint_structure,
-        pmts,
-        profile_nodeshape,
+    data_repo,
+    system_repo,
+    endpoint_structure,
+    pmts,
+    profile_nodeshape,
 ):
     if pmts.selected["profile"] == ALTREXT["alt-profile"]:
         none_keys = [

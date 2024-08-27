@@ -1,0 +1,21 @@
+@prefix ex: <http://example.org/ns#> .
+@prefix geo: <http://www.opengis.net/ont/geosparql#> .
+@prefix ont: <https://prez.dev/ont/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:Feature a sh:NodeShape ;
+    sh:property [ sh:class geo:FeatureCollection ;
+            sh:path [ sh:inversePath rdfs:member ] ] ;
+    sh:targetClass geo:Feature ;
+    ont:hierarchyLevel 2 .
+
+ex:FeatureCollections a sh:NodeShape ;
+    sh:property [ sh:class geo:Feature ;
+            sh:path rdfs:member ] ;
+    sh:targetClass geo:FeatureCollection ;
+    ont:hierarchyLevel 1 .
+
+ex:Object a sh:NodeShape ;
+    ont:hierarchyLevel 1 .

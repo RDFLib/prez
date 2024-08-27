@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from rdflib import Graph, URIRef
 
@@ -6,9 +8,15 @@ from prez.services.query_generation.shacl import (
 )
 from sparql_grammar_pydantic import Var
 
-endpoints_graph = Graph().parse(
-    "prez/reference_data/endpoints/endpoint_nodeshapes.ttl", format="turtle"
-)
+endpoints_graph = Graph()
+for file in (Path(__file__).parent.parent / "prez/reference_data/endpoints").glob(
+    "*.ttl"
+):
+    endpoints_graph.parse(file, format="ttl")
+for file in (
+    Path(__file__).parent.parent / "prez/reference_data/endpoints/ogc_extended"
+).glob("*.ttl"):
+    endpoints_graph.parse(file, format="ttl")
 
 
 @pytest.mark.parametrize("nodeshape_uri", ["http://example.org/ns#Collections"])

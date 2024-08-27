@@ -29,14 +29,17 @@ from prez.exceptions.model_exceptions import (
 from prez.repositories import RemoteSparqlRepo, PyoxigraphRepo, OxrdflibRepo
 from prez.routers.identifier import router as identifier_router
 from prez.routers.management import router as management_router
-from prez.routers.ogc_router import router as ogc_records_router
+from prez.routers.ogc_extended import router as ogc_records_router
+from prez.routers.ogc_features import router as ogc_features_router
 from prez.routers.sparql import router as sparql_router
+from prez.routers.cql import router as cql_router
 from prez.services.app_service import (
     healthcheck_sparql_endpoints,
     count_objects,
     create_endpoints_graph,
     populate_api_info,
     prefix_initialisation,
+    create_profiles_graph,
 )
 from prez.services.exception_catchers import (
     catch_400,
@@ -47,7 +50,6 @@ from prez.services.exception_catchers import (
     catch_no_profiles_exception,
     catch_invalid_sparql_query,
 )
-from prez.services.generate_profiles import create_profiles_graph
 from prez.services.prez_logging import setup_logger
 
 
@@ -170,9 +172,13 @@ def assemble_app(
     )
 
     app.include_router(management_router)
-    app.include_router(ogc_records_router)
+    if _settings.api_flavour.value == "ogc_features":
+        app.include_router(ogc_features_router)
+    elif _settings.api_flavour.value == "ogc_extended":
+        app.include_router(ogc_records_router)
     app.include_router(sparql_router)
     app.include_router(identifier_router)
+    app.include_router(cql_router)
     app.openapi = partial(
         prez_open_api_metadata,
         title=title,

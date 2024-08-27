@@ -1,0 +1,25 @@
+@prefix ex: <http://example.org/ns#> .
+@prefix ogce: <https://prez.dev/endpoint/extended-ogc-records/> .
+@prefix ont: <https://prez.dev/ont/> .
+@prefix prez: <https://prez.dev/> .
+@prefix sys: <https://prez.dev/endpoint/system/> .
+
+sys:profile-listing
+    a ont:ListingEndpoint , ont:SystemEndpoint ;
+    ont:relevantShapes ex:Profiles ;
+    .
+
+sys:profile-object
+    a ont:ObjectEndpoint , ont:SystemEndpoint ;
+    ont:relevantShapes ex:Profiles ;
+    .
+
+sys:object
+    a ont:ObjectEndpoint , ont:SystemEndpoint ;
+    ont:relevantShapes ex:Profiles ;
+    .
+
+ogce:search
+    a ont:ListingEndpoint ;
+    ont:relevantShapes ex:Search ;
+.

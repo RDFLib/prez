@@ -1,3 +1,5 @@
+from enum import Enum
+from functools import cached_property
 from os import environ
 from pathlib import Path
 from typing import Optional, Union, Any, Dict
@@ -5,12 +7,18 @@ from typing import Optional, List, Tuple
 from typing import Union, Any, Dict
 
 import toml
-from pydantic import field_validator
+from pydantic import field_validator, root_validator
 from pydantic_settings import BaseSettings
 from rdflib import URIRef, DCTERMS, RDFS, SDO
 from rdflib.namespace import SKOS
 
 from prez.reference_data.prez_ns import REG, EP
+
+
+class APIFlavour(str, Enum):
+    OGC_FEATURES = "ogc_features"
+    OGC_EXTENDED = "ogc_extended"
+    OGC_RECORDS = "ogc_records"
 
 
 class Settings(BaseSettings):
@@ -74,11 +82,19 @@ class Settings(BaseSettings):
         DCTERMS.title,
     ]
     local_rdf_dir: str = "rdf"
-    endpoint_structure: Optional[Tuple[str, ...]] = ("catalogs", "collections", "items")
     system_endpoints: Optional[List[URIRef]] = [
         EP["system/profile-listing"],
         EP["system/profile-object"],
     ]
+    api_flavour: Optional[APIFlavour] = "ogc_extended"
+
+    @cached_property
+    def endpoint_structure(self) -> Tuple[str, ...]:
+        if self.api_flavour == APIFlavour.OGC_FEATURES:
+            return ("collections", "items")
+        elif self.api_flavour == APIFlavour.OGC_EXTENDED:
+            return ("catalogs", "collections", "items")
+        return ()  # Return an empty tuple if api_flavour is not set or is invalid
 
     @field_validator("prez_version")
     @classmethod

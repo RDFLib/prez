@@ -1,0 +1,14 @@
+@prefix ex: <http://example.org/ns#> .
+@prefix ogce: <https://prez.dev/endpoint/extended-ogc-records/> .
+@prefix ont: <https://prez.dev/ont/> .
+
+
+ogce:top-concepts
+    a ont:ListingEndpoint ;
+    ont:relevantShapes ex:TopConcepts ;
+.
+
+ogce:narrowers
+    a ont:ListingEndpoint ;
+    ont:relevantShapes ex:Narrowers ;
+.

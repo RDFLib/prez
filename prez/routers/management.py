@@ -1,9 +1,8 @@
 import logging
 import pickle
-from typing import Optional
 
 from aiocache import caches
-from fastapi import APIRouter, Query, Depends
+from fastapi import APIRouter, Depends
 from rdflib import BNode
 from rdflib import Graph, URIRef, Literal
 from rdflib.collection import Collection
@@ -16,17 +15,14 @@ from prez.dependencies import get_system_repo
 from prez.reference_data.prez_ns import PREZ
 from prez.renderers.renderer import return_rdf, return_from_graph
 from prez.repositories import Repo
-from prez.services.connegp_service import RDF_MEDIATYPES, MediaType, NegotiatedPMTs
+from prez.services.connegp_service import RDF_MEDIATYPES, NegotiatedPMTs
 
 router = APIRouter(tags=["Management"])
 log = logging.getLogger(__name__)
 
 
 @router.get("/", summary="Home page", tags=["Prez"])
-async def index(
-        request: Request,
-        system_repo: Repo = Depends(get_system_repo)
-):
+async def index(request: Request, system_repo: Repo = Depends(get_system_repo)):
     """Returns the following information about the API"""
     pmts = NegotiatedPMTs(
         headers=request.headers,
@@ -48,9 +44,8 @@ async def index(
         profile_headers=pmts.generate_response_headers(),
         selected_class=pmts.selected["class"],
         repo=system_repo,
-        system_repo=system_repo
+        system_repo=system_repo,
     )
-
 
 
 @router.get("/purge-tbox-cache", summary="Reset Tbox Cache")

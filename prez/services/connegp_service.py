@@ -37,6 +37,7 @@ RDF_SERIALIZER_TYPES_MAP = {
     "text/plain": "nt",  # text/plain is the old/deprecated mimetype for n-triples
 }
 
+
 class MediaType(str, Enum):
     turtle = "text/turtle"
     n3 = "text/n3"
@@ -306,23 +307,32 @@ class NegotiatedPMTs(BaseModel):
 
         if settings.log_level == "DEBUG":
             from tabulate import tabulate
+
             table_data = [
                 [
-                    item['profile']['value'],
-                    item['title']['value'],
-                    item['class']['value'],
-                    item['distance']['value'],
-                    item['def_profile']['value'],
-                    item['format']['value'],
-                    item['req_format']['value'],
-                    item['def_format']['value'],
+                    item["profile"]["value"],
+                    item["title"]["value"],
+                    item["class"]["value"],
+                    item["distance"]["value"],
+                    item["def_profile"]["value"],
+                    item["format"]["value"],
+                    item["req_format"]["value"],
+                    item["def_format"]["value"],
                 ]
                 for item in response[1][0][1]
             ]
 
             # Define headers
-            headers = ["Profile", "Title", "Class", "Distance", "Default Profile", "Format", "Requested Format",
-                       "Default Format"]
+            headers = [
+                "Profile",
+                "Title",
+                "Class",
+                "Distance",
+                "Default Profile",
+                "Format",
+                "Requested Format",
+                "Default Format",
+            ]
 
             # Render as a table
             log.debug(tabulate(table_data, headers=headers, tablefmt="grid"))

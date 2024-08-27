@@ -39,9 +39,7 @@ class QueryParams:
             le=100,
             description="Number of items per page, must be greater than 0",
         ),
-        q: Optional[str] = Query(
-            None, description="Search query", example="building"
-        ),
+        q: Optional[str] = Query(None, description="Search query", example="building"),
         filter: Optional[str] = Query(
             None,
             description="CQL JSON expression.",

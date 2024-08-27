@@ -1,0 +1,40 @@
+@prefix ex: <http://example.org/ns#> .
+@prefix ont: <https://prez.dev/ont/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix prez: <https://prez.dev/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix shext: <http://example.com/shacl-extension#> .
+
+ex:CQL
+    a sh:NodeShape ;
+    sh:targetClass rdfs:Resource ;
+    ont:hierarchyLevel 1 ;
+    .
+
+ex:queryables a sh:NodeShape ;
+    ont:hierarchyLevel 1 ;
+    sh:rule [ sh:subject "?focus_node" ;
+          sh:predicate <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ;
+          sh:object <https://prez.dev/Queryable> ] ;
+    ont:deliversClasses prez:QueryablesList ;
+    sh:target [ sh:select """SELECT DISTINCT ?focus_node
+             WHERE {
+             ?s a ?class ;
+                  ?focus_node ?o .
+              VALUES ?class {
+              dcat:Catalog
+              dcat:Dataset
+              dcat:Resource
+              skos:ConceptScheme
+              skos:Collection
+              skos:Concept
+              geo:FeatureCollection
+              geo:Feature
+              rdf:Resource
+              }
+                    }""" ] ;
+    shext:limit 100 ;
+    shext:offset 0 ;
+.

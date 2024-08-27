@@ -43,7 +43,7 @@ def test_simple_path():
         TriplesSameSubjectPath.from_spo(
             subject=Var(value="focus_node"),
             predicate=IRI(value=RDF.type),
-            object=Var(value="prof_node_1"),
+            object=Var(value="prof_1_node_1"),
         )
         in ps.tssp_list
     )
@@ -66,15 +66,15 @@ def test_sequence_path():
         TriplesSameSubjectPath.from_spo(
             subject=Var(value="focus_node"),
             predicate=IRI(value=PROV.qualifiedDerivation),
-            object=Var(value="prof_node_1"),
+            object=Var(value="prof_1_node_1"),
         )
         in ps.tssp_list
     )
     assert (
         TriplesSameSubjectPath.from_spo(
-            subject=Var(value="prof_node_1"),
+            subject=Var(value="prof_1_node_1"),
             predicate=IRI(value=PROV.hadRole),
-            object=Var(value="prof_node_2"),
+            object=Var(value="prof_1_node_2"),
         )
         in ps.tssp_list
     )
@@ -110,15 +110,15 @@ def test_union():
         TriplesSameSubjectPath.from_spo(
             subject=Var(value="focus_node"),
             predicate=IRI(value=PROV.qualifiedDerivation),
-            object=Var(value="prof_node_1"),
+            object=Var(value="prof_1_node_1"),
         )
         in ps.tssp_list
     )
     assert (
         TriplesSameSubjectPath.from_spo(
-            subject=Var(value="prof_node_1"),
+            subject=Var(value="prof_1_node_1"),
             predicate=IRI(value=PROV.hadRole),
-            object=Var(value="prof_node_2"),
+            object=Var(value="prof_1_node_2"),
         )
         in ps.tssp_list
     )
@@ -126,15 +126,15 @@ def test_union():
         TriplesSameSubjectPath.from_spo(
             subject=Var(value="focus_node"),
             predicate=IRI(value=PROV.qualifiedDerivation),
-            object=Var(value="prof_node_3"),
+            object=Var(value="prof_1_node_3"),
         )
         in ps.tssp_list
     )
     assert (
         TriplesSameSubjectPath.from_spo(
-            subject=Var(value="prof_node_3"),
+            subject=Var(value="prof_1_node_3"),
             predicate=IRI(value=PROV.entity),
-            object=Var(value="prof_node_4"),
+            object=Var(value="prof_1_node_4"),
         )
         in ps.tssp_list
     )
@@ -142,7 +142,7 @@ def test_union():
         TriplesSameSubjectPath.from_spo(
             subject=Var(value="focus_node"),
             predicate=IRI(value=DCTERMS.publisher),
-            object=Var(value="prof_node_5"),
+            object=Var(value="prof_1_node_5"),
         )
         in ps.tssp_list
     )
@@ -150,7 +150,7 @@ def test_union():
         TriplesSameSubjectPath.from_spo(
             subject=Var(value="focus_node"),
             predicate=IRI(value=REG.status),
-            object=Var(value="prof_node_6"),
+            object=Var(value="prof_1_node_6"),
         )
         in ps.tssp_list
     )

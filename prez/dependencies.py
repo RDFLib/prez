@@ -106,10 +106,12 @@ async def load_system_data_to_oxigraph(store: Store):
     Loads all the data from the local data directory into the local SPARQL endpoint
     """
     # TODO refactor to use the local files directly
-    for f in (Path(__file__).parent / "reference_data/profiles").glob("*.ttl"):
-        prof_bytes = Graph().parse(f).serialize(format="nt", encoding="utf-8")
-        # profiles_bytes = profiles_graph_cache.default_context.serialize(format="nt", encoding="utf-8")
-        store.load(prof_bytes, "application/n-triples")
+    # for f in (Path(__file__).parent / "reference_data/profiles").glob("*.ttl"):
+    #     prof_bytes = Graph().parse(f).serialize(format="nt", encoding="utf-8")
+    prof_bytes = profiles_graph_cache.default_context.serialize(
+        format="nt", encoding="utf-8"
+    )
+    store.load(prof_bytes, "application/n-triples")
 
     endpoints_bytes = endpoints_graph_cache.serialize(format="nt", encoding="utf-8")
     store.load(endpoints_bytes, "application/n-triples")
@@ -200,7 +202,7 @@ async def get_endpoint_uri_type(
         if ep_type in [ONT.ObjectEndpoint, ONT.ListingEndpoint]:
             return endpoint_uri, ep_type
     raise ValueError(
-        "Endpoint must be declared as either a 'https://prez.dev/ont/ObjectEndpoint' or a "
+        f"Endpoint {endpoint_uri} must be declared as either a 'https://prez.dev/ont/ObjectEndpoint' or a "
         "'https://prez.dev/ont/ListingEndpoint' in order for the appropriate profile to be determined."
     )
 

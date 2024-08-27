@@ -1,0 +1,44 @@
+@prefix ont: <https://prez.dev/ont/> .
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <http://example.org/ns#> .
+@prefix geo: <http://www.opengis.net/ont/geosparql#> .
+@prefix prez: <https://prez.dev/> .
+@prefix prof: <http://www.w3.org/ns/dx/prof/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix shext: <http://example.com/shacl-extension#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix altr-ext: <http://www.w3.org/ns/dx/connegp/altr-ext#> .
+
+
+ex:Search
+    a sh:NodeShape ;
+    sh:targetClass rdfs:Resource ;
+    ont:hierarchyLevel 1 ;
+    .
+
+ex:Profiles
+    a sh:NodeShape ;
+    ont:hierarchyLevel 1 ;
+    sh:targetClass prof:Profile ;
+.
+
+ex:AltProfilesForListing
+    a sh:NodeShape ;
+    ont:hierarchyLevel 1 ;
+    sh:targetClass prez:ListingProfile ;
+    sh:property [
+        sh:path altr-ext:constrainsClass ;
+    ]
+.
+
+ex:AltProfilesForObject
+    a sh:NodeShape ;
+    ont:hierarchyLevel 1 ;
+    sh:targetClass prez:ObjectProfile ;
+    sh:property [
+        sh:path altr-ext:constrainsClass ;
+    ]
+.

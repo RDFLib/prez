@@ -1,0 +1,18 @@
+@prefix ont: <https://prez.dev/ont/> .
+@prefix ex: <http://example.org/ns#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+
+ex:TopConcepts
+    a sh:NodeShape ;
+    sh:targetClass skos:Concept ;
+    ont:hierarchyLevel 1 ;
+.
+
+ex:Narrowers
+    a sh:NodeShape ;
+    sh:targetClass skos:Concept ;
+    ont:hierarchyLevel 1 ;
+.

@@ -3,7 +3,8 @@ import time
 from pathlib import Path
 
 import httpx
-from rdflib import URIRef, Literal, Graph
+from rdflib import Graph
+from rdflib import URIRef, Literal
 
 from prez.cache import (
     prez_system_graph,
@@ -11,13 +12,13 @@ from prez.cache import (
     prefix_graph,
     endpoints_graph_cache,
 )
+from prez.cache import profiles_graph_cache
 from prez.config import settings
 from prez.reference_data.prez_ns import PREZ
 from prez.repositories import Repo
 from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.query_generation.count import startup_count_objects
 from prez.services.query_generation.prefixes import PrefixQuery
-
 
 log = logging.getLogger(__name__)
 
@@ -101,14 +102,16 @@ async def add_local_prefixes(repo):
     remote_prefix_g, _ = await repo.send_queries([remote_prefix_query], [])
     if remote_prefix_g:
         remote_i = await _add_prefixes_from_graph(remote_prefix_g)
-        log.info(f"{remote_i+1:,} prefixes bound from remote repository.")
+        log.info(f"{remote_i + 1:,} prefixes bound from remote repository.")
     else:
         log.info("No remote prefix declarations found.")
 
-    for f in (Path(__file__).parent.parent / "reference_data/prefixes").glob("*.ttl"):
+    for f in reversed(
+        sorted((Path(__file__).parent.parent / "reference_data/prefixes").glob("*.ttl"))
+    ):
         g = Graph().parse(f, format="turtle")
         local_i = await _add_prefixes_from_graph(g)
-        log.info(f"{local_i+1:,} prefixes bound from file {f.name}")
+        log.info(f"{local_i + 1:,} prefixes bound from file {f.name}")
 
 
 async def generate_prefixes(repo: Repo):
@@ -160,6 +163,11 @@ async def _add_prefixes_from_graph(g):
 async def create_endpoints_graph(repo) -> Graph:
     for f in (Path(__file__).parent.parent / "reference_data/endpoints").glob("*.ttl"):
         endpoints_graph_cache.parse(f)
+    for f in (
+        Path(__file__).parent.parent
+        / f"reference_data/endpoints/{settings.api_flavour.value}"
+    ).glob("*.ttl"):
+        endpoints_graph_cache.parse(f)
     await get_remote_endpoint_definitions(repo)
 
 
@@ -180,3 +188,57 @@ WHERE {{
         log.info(f"Remote endpoint definition(s) found and added")
     else:
         log.info("No remote endpoint definitions found")
+
+
+async def create_profiles_graph(repo) -> Graph:
+    if (
+        len(profiles_graph_cache) > 0
+    ):  # pytest imports app.py multiple times, so this is needed. Not sure why cache is
+        # not cleared between calls
+        return
+    for f in (Path(__file__).parent.parent / "reference_data/profiles").glob("*.ttl"):
+        profiles_graph_cache.parse(f)
+    for f in (
+        Path(__file__).parent.parent
+        / f"reference_data/profiles/{settings.api_flavour.value}"
+    ).glob("*.ttl"):
+        profiles_graph_cache.parse(f)
+    log.info("Prez default profiles loaded")
+    remote_profiles_query = """
+        PREFIX dcat: <http://www.w3.org/ns/dcat#>
+        PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+        PREFIX prof: <http://www.w3.org/ns/dx/prof/>
+        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+        CONSTRUCT {?s ?p ?o .
+                    ?o ?p2 ?o2 .
+                    ?o2 ?p3 ?o3 .
+                    ?class ?cp ?co}
+        WHERE {?s a prof:Profile ;
+                      ?p ?o
+          OPTIONAL {?o ?p2 ?o2
+            FILTER(ISBLANK(?o))
+            OPTIONAL {?o2 ?p3 ?o3
+            FILTER(ISBLANK(?o2))}
+          }
+          OPTIONAL {
+            ?class rdfs:subClassOf dcat:Resource ;
+                ?cp ?co .
+          }
+          OPTIONAL {
+            ?class rdfs:subClassOf geo:Feature ;
+                ?cp ?co .
+          }
+          OPTIONAL {
+            ?class rdfs:subClassOf skos:Concept ;
+                ?cp ?co .
+          }
+        }
+        """
+    g, _ = await repo.send_queries([remote_profiles_query], [])
+    if len(g) > 0:
+        profiles_graph_cache.__iadd__(g)
+        log.info(f"Remote profile(s) found and added")
+    else:
+        log.info("No remote profiles found")

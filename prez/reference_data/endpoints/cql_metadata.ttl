@@ -1,0 +1,21 @@
+@prefix ex: <http://example.org/ns#> .
+@prefix ogce: <https://prez.dev/endpoint/extended-ogc-records/> .
+@prefix ogcfeat: <http://www.opengis.net/ogcapi-features-1/1.0/> .
+@prefix ont: <https://prez.dev/ont/> .
+@prefix prez: <https://prez.dev/> .
+@prefix sys: <https://prez.dev/endpoint/system/> .
+
+ogce:cql-get
+    a ont:ListingEndpoint ;
+    ont:relevantShapes ex:CQL ;
+    .
+
+ogce:cql-post
+    a ont:ListingEndpoint ;
+    ont:relevantShapes ex:CQL ;
+    .
+
+ogce:cql-queryables
+    a ont:ListingEndpoint ;
+    ont:relevantShapes ex:queryables ;
+.
