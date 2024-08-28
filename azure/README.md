@@ -1,17 +1,17 @@
 # Prez Azure Function-App deployment files
 
-This directory contains the files required to deploy Prez as an Azure Function-App, as well as a Dockerfile that 
+This directory contains the files required to build and start or publish Prez as an Azure Function-App, as well as a Dockerfile that 
 can be used to build a container image for deploying the app as an Azure Container App.
 
 ## Publishing
-There is a publish.sh script that can be used to publish the app to Azure.
+There is a publish_or_start.sh script that can be used to either build and run the function app locally, or publish the app to Azure.
 To call it, make sure you are not in the "azure" directory, instead run the script from the root of the project.
 
 ```bash
-./azure/publish.sh --extra-options <function-app-name>
+./azure/publish_or_start.sh start|publish --extra-options <function-app-name>
 ```
-The FunctionAppName is the name of the Azure Function-App that you want to publish to.
-Note, the FunctionAppName must be the last argument to the script, after any optional arguments.
+The FunctionAppName is required for publishing only, and is the name of the Azure Function-App that you want to publish to.
+Note, the FunctionAppName must be the second argument to the script, after any optional arguments.
 
 This script will perform the following steps:
 1. Create a ./build directory
@@ -24,7 +24,7 @@ This script will perform the following steps:
 4. Copy the .env file into the ./build directory if it exists
 5. Copy the pyproject.toml and poetry.lock files into the ./build directory
 6. Generate the requirements.txt file using poetry
-7. Publish the app to the Azure Function-App (using remote build)
+7. Start the app locally, or publish the app to the Azure Function-App (using remote build)
 
 **extra-options** can be used to pass additional arguments to the azure publish command. (Eg, the `--subscription` argument)
 
