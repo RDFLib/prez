@@ -15,6 +15,12 @@ log = logging.getLogger(__name__)
 class RemoteSparqlRepo(Repo):
     def __init__(self, async_client: httpx.AsyncClient):
         self.async_client = async_client
+        if not settings.sparql_endpoint:
+            raise ValueError(
+                "When using a remote SPARQL endpoint, "
+                "the SPARQL_ENDPOINT setting must be set using either "
+                "the environment variable or the config file."
+            )
 
     async def _send_query(self, query: str, mediatype="text/turtle"):
         """Sends a SPARQL query asynchronously.
