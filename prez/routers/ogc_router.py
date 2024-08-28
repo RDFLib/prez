@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, FastAPI
+from fastapi import APIRouter, Depends
 from sparql_grammar_pydantic import ConstructQuery
 
 from prez.dependencies import (
@@ -40,6 +40,20 @@ router = APIRouter(tags=["ogcprez"])
     "/catalogs",
     summary="Catalog Listing",
     name=OGCE["catalog-listing"],
+    responses=responses,
+)
+@router.get(
+    "/catalogs/{catalogId}/collections",
+    summary="Collection Listing",
+    name=OGCE["collection-listing"],
+    openapi_extra=openapi_extras.get("collection-listing"),
+    responses=responses,
+)
+@router.get(
+    "/catalogs/{catalogId}/collections/{collectionId}/items",
+    summary="Item Listing",
+    name=OGCE["item-listing"],
+    openapi_extra=openapi_extras.get("item-listing"),
     responses=responses,
 )
 @router.get(
@@ -126,6 +140,8 @@ async def cql_post_listings(
 # 1: /object?uri=<uri>
 # 2: /profiles/{profile_curie}
 # 3: /catalogs/{catalogId}
+# 4: /catalogs/{catalogId}/collections/{collectionId}
+# 5: /catalogs/{catalogId}/collections/{collectionId}/items/{itemId}
 ########################################################################################################################
 
 
@@ -144,6 +160,20 @@ async def cql_post_listings(
     summary="Catalog Object",
     name=OGCE["catalog-object"],
     openapi_extra=openapi_extras.get("catalog-object"),
+    responses=responses,
+)
+@router.get(
+    path="/catalogs/{catalogId}/collections/{collectionId}",
+    summary="Collection Object",
+    name=OGCE["collection-object"],
+    openapi_extra=openapi_extras.get("collection-object"),
+    responses=responses,
+)
+@router.get(
+    path="/catalogs/{catalogId}/collections/{collectionId}/items/{itemId}",
+    summary="Item Object",
+    name=OGCE["item-object"],
+    openapi_extra=openapi_extras.get("item-object"),
     responses=responses,
 )
 async def objects(

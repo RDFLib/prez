@@ -24,6 +24,16 @@ class URINotFoundException(Exception):
         super().__init__(self.message)
 
 
+class PrefixNotFoundException(Exception):
+    """
+    Raised when a requested prefix is not found in the triplestore.
+    """
+
+    def __init__(self, prefix: str):
+        self.message = f"Prefix \"{prefix}\" not found at endpoint {settings.sparql_endpoint}."
+        super().__init__(self.message)
+
+
 class NoProfilesException(Exception):
     """
     Raised when no profiles can be found for a resource.

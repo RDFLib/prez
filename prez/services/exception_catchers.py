@@ -6,7 +6,7 @@ from prez.exceptions.model_exceptions import (
     ClassNotFoundException,
     URINotFoundException,
     NoProfilesException,
-    InvalidSPARQLQueryException,
+    InvalidSPARQLQueryException, PrefixNotFoundException,
 )
 
 
@@ -39,6 +39,16 @@ async def catch_uri_not_found_exception(request: Request, exc: URINotFoundExcept
         status_code=404,
         content={
             "error": "NO_URI",
+            "message": exc.message,
+        },
+    )
+
+
+async def catch_prefix_not_found_exception(request: Request, exc: PrefixNotFoundException):
+    return JSONResponse(
+        status_code=404,
+        content={
+            "error": "NO_PREFIX",
             "message": exc.message,
         },
     )

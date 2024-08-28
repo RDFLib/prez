@@ -1,12 +1,15 @@
+import io
 import logging
 import time
 
 from fastapi.responses import PlainTextResponse
-from sparql_grammar_pydantic import TriplesSameSubject, IRI
+from sparql_grammar_pydantic import TriplesSameSubject, IRI, Var, TriplesSameSubjectPath
+from starlette.responses import StreamingResponse
 
 from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import ALTREXT, ONT
 from prez.renderers.renderer import return_from_graph
+from prez.services.curie_functions import get_uri_for_curie_id
 from prez.services.link_generation import add_prez_links
 from prez.services.listings import listing_function
 from prez.services.query_generation.umbrella import (
@@ -80,3 +83,42 @@ async def object_function(
         data_repo,
         system_repo,
     )
+
+
+async def ogc_features_object_function(
+        collectionId,
+        itemId,
+        props,
+        data_repo,
+):
+    if itemId is not None:
+        focus_node_curie = itemId
+    else:
+        focus_node_curie = collectionId
+    focus_node_uri = await get_uri_for_curie_id(focus_node_curie)
+    focus_node = IRI(value=focus_node_uri)
+    if not props:
+        prop_terms = [Var(value="props")]  # get all props
+    else:
+        prop_terms = [IRI(value=prop) for prop in props]  # get specific props
+    tssp_list = []
+    for i, prop in enumerate(prop_terms):
+        tssp_list.append(
+            TriplesSameSubjectPath.from_spo(
+                subject=focus_node,
+                predicate=prop,
+                object=Var(value=f"var_{i}"),
+            )
+        )
+    query = PrezQueryConstructor(
+        profile_triples=tssp_list,
+    ).to_string()
+
+    query_start_time = time.time()
+    item_graph, _ = await data_repo.send_queries([query], [])
+    log.debug(f"Query time: {time.time() - query_start_time}")
+    link_headers = None
+    content = io.BytesIO(
+        item_graph.serialize(format="turtle", encoding="utf-8")
+    )
+    return content, link_headers
