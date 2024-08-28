@@ -8,7 +8,7 @@ There is a publish_or_start.sh script that can be used to either build and run t
 To call it, make sure you are not in the "azure" directory, instead run the script from the root of the project.
 
 ```bash
-./azure/publish_or_start.sh start|publish --extra-options <function-app-name>
+./azure/publish_or_start.sh start|publish <function-app-name> --extra-options 
 ```
 The FunctionAppName is required for publishing only, and is the name of the Azure Function-App that you want to publish to.
 Note, the FunctionAppName must be the second argument to the script, after any optional arguments.
