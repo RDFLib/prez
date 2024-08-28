@@ -30,6 +30,7 @@ from prez.repositories import RemoteSparqlRepo, PyoxigraphRepo, OxrdflibRepo
 from prez.routers.identifier import router as identifier_router
 from prez.routers.management import router as management_router
 from prez.routers.ogc_router import router as ogc_records_router
+from prez.routers.ogc_features_router import features_subapi
 from prez.routers.sparql import router as sparql_router
 from prez.services.app_service import (
     healthcheck_sparql_endpoints,
@@ -173,6 +174,7 @@ def assemble_app(
     app.include_router(ogc_records_router)
     if _settings.enable_sparql_endpoint:
         app.include_router(sparql_router)
+    app.mount("/catalogs/{catalogId}", features_subapi)
     app.include_router(identifier_router)
     app.openapi = partial(
         prez_open_api_metadata,
