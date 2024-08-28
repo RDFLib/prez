@@ -1,18 +1,29 @@
 import os
-import azure.functions as func
+import sys
+import pathlib
+import logging
 
+cwd = pathlib.Path(__file__).parent
+if cwd.name == "azure":
+    # We are running from the repo source directory
+    # assume running locally, we need to add the parent
+    # directory to the Python Path
+    sys.path.append(str(cwd.parent))
+
+import azure.functions as func
 
 try:
     from prez.app import assemble_app
-except ImportError:
+except ImportError as e:
+    logging.exception("Cannot import prez")
     assemble_app = None
 
 
 if assemble_app is None:
     raise RuntimeError(
-        "Cannot import prez in the Azure function app. Check requirements.py and pyproject.toml."
+        "Cannot import prez in the Azure function app. Check requirements.txt and pyproject.toml."
     )
-
+from patched_asgi_function_wrapper import AsgiFunctionApp
 
 # This is the base URL path that Prez routes will stem from
 # must _start_ in a slash, but _not end_ in slash, eg: /prez
@@ -32,7 +43,7 @@ else:
 
 prez_app = assemble_app(root_path=ROOT_PATH)
 
-app = func.AsgiFunctionApp(app=prez_app, http_auth_level=auth_level)
+app = AsgiFunctionApp(app=prez_app, http_auth_level=auth_level)
 
 if __name__ == "__main__":
     from azure.functions import HttpRequest, Context
@@ -41,7 +52,11 @@ if __name__ == "__main__":
     req = HttpRequest("GET", "/catalogs", headers={}, body=b"")
     context = dict()
     loop = asyncio.get_event_loop()
-
-    task = app.middleware.handle_async(req, context)
+    fns = app.get_functions()
+    assert len(fns) == 1
+    fn_def = fns[0]
+    fn = fn_def.get_user_function()
+    task = fn(req, context)
     resp = loop.run_until_complete(task)
     print(resp)
+
