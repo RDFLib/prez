@@ -4,22 +4,23 @@ DEFAULT_POETRY=$(which poetry)
 FUNC_CLI=${FUNC_CLI:-"$DEFAULT_FUNC"}
 POETRY=${POETRY:-"$DEFAULT_POETRY"}
 
-ARG_COUNT="$#"
-if [[ "$ARG_COUNT" -lt 1 ]] ; then
-  # Publishes the function app code to the remote FunctionAppName on Azure
-  echo "Usage: $0 [optional publish arguments] <FunctionAppName>"
+if [[ "$#" -lt 1 ]] ; then
+  echo "Usage: $0 <start|publish> [optional arguments] [FunctionAppName]"
+  echo "  start: Run the function app locally (FunctionAppName not required)"
+  echo "  publish: Publish the function app to Azure (FunctionAppName required)"
   exit 1
 fi
 
-FUNC_APP_NAME="${@: -1}"
-# Set args to all args minus the function app name
-set -- "${@:1:$(($#-1))}"
+# Extract the first argument as the ACTION
+ACTION="$1"
+shift
+
 CWD="$(pwd)"
 BASE_CWD="${CWD##*/}"
 if [[ "$BASE_CWD" = "azure" ]] ; then
   echo "Do not run this script from within the azure directory"
   echo "Run from the root of the repo"
-  echo "eg: ./azure/build.sh"
+  echo "eg: ./azure/publish_or_start.sh start"
   exit 1
 fi
 
@@ -46,6 +47,21 @@ cd ./build
 "$POETRY" export --without-hashes --format=requirements.txt > requirements.txt
 echo "generated requirements.txt"
 cat ./requirements.txt
-"$FUNC_CLI" azure functionapp publish "$FUNC_APP_NAME" --build remote "$@"
+
+if [[ "$ACTION" == "publish" ]] ; then
+  if [[ "$#" -lt 1 ]] ; then
+    echo "Error: FunctionAppName is required for publish action"
+    exit 1
+  fi
+  FUNC_APP_NAME="$1"
+  shift
+  "$FUNC_CLI" azure functionapp publish "$FUNC_APP_NAME" --build remote "$@"
+elif [[ "$ACTION" == "start" ]] ; then
+  "$FUNC_CLI" start "$@"
+else
+  echo "Invalid action. Use 'start' for local testing or 'publish' for publishing to Azure."
+  exit 1
+fi
+
 cd ..
 echo "You can now delete the build directory if you wish."
