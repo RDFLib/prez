@@ -238,3 +238,22 @@ def merge_listing_query_grammar_inputs(
         kwargs["inner_select_gpnt"].extend(endpoint_nodeshape.gpnt_list)
 
     return kwargs
+
+
+async def create_triples_for_props(focus_node, prop_terms, function):
+    """
+    Generates triple patterns to select properties for OGC Features queries.
+    TriplesSameSubjectPath are used in the "body" of queries i.e. within WHERE clauses.
+    TriplesSameSubject are used in the "construct" part of queries i.e. within CONSTRUCT clauses.
+    """
+    function = TriplesSameSubjectPath if function == "tssp" else TriplesSameSubject
+    prop_triples_list = []
+    for i, prop in enumerate(prop_terms):
+        prop_triples_list.append(
+            function.from_spo(
+                subject=focus_node,
+                predicate=prop,
+                object=Var(value=f"var_{i}"),
+            )
+        )
+    return prop_triples_list

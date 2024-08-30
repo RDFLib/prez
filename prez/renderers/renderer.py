@@ -36,7 +36,8 @@ async def return_from_graph(
         return await return_rdf(graph, mediatype, profile_headers)
 
     elif profile == URIRef("https://w3id.org/profile/dd"):
-        graph = await return_annotated_rdf(graph, profile, repo)
+        annotations_graph = await return_annotated_rdf(graph, profile, repo)
+        graph.__iadd__(annotations_graph)
 
         try:
             # TODO: Currently, data is generated in memory, instead of in a streaming manner.
@@ -67,7 +68,8 @@ async def return_from_graph(
     else:
         if "anot+" in mediatype:
             non_anot_mediatype = mediatype.replace("anot+", "")
-            graph = await return_annotated_rdf(graph, repo, system_repo)
+            annotations_graph = await return_annotated_rdf(graph, repo, system_repo)
+            graph.__iadd__(annotations_graph)
             graph.namespace_manager = prefix_graph.namespace_manager
             content = io.BytesIO(
                 graph.serialize(format=non_anot_mediatype, encoding="utf-8")
@@ -104,4 +106,5 @@ async def return_annotated_rdf(
         annotations_graph, repo, system_repo
     )
     log.debug(f"Time to get annotations: {time.time() - t_start}")
-    return graph.__iadd__(annotations_graph)
+    # return graph.__iadd__(annotations_graph)
+    return annotations_graph

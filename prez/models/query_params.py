@@ -15,6 +15,13 @@ ALLOWED_MEDIA_TYPES = {
     "application/anot+n-triples",
 }
 
+ALLOWED_OGC_FEATURES_MEDIA_TYPES = {
+    "application/json",
+    "application/geo+json",
+    "text/turtle",
+    "application/sparql-query"
+}
+
 
 class QueryParams:
     """
@@ -23,37 +30,37 @@ class QueryParams:
     """
 
     def __init__(
-        self,
-        mediatype: Optional[str] = Query(
-            "text/anot+turtle", alias="_mediatype", description="Requested mediatype"
-        ),
-        profile: Optional[str] = Query(
-            None, alias="_profile", description="Requested profile"
-        ),
-        page: Optional[int] = Query(
-            1, ge=1, description="Page number, must be greater than 0"
-        ),
-        per_page: Optional[int] = Query(
-            20,
-            ge=1,
-            le=100,
-            description="Number of items per page, must be greater than 0",
-        ),
-        q: Optional[str] = Query(
-            None, description="Search query", example="building"
-        ),
-        filter: Optional[str] = Query(
-            None,
-            description="CQL JSON expression.",
-        ),
-        order_by: Optional[str] = Query(
-            None, description="Optional: Field to order by"
-        ),
-        order_by_direction: Optional[str] = Query(
-            None,
-            regex="^(ASC|DESC)$",
-            description="Optional: Order direction, must be 'ASC' or 'DESC'",
-        ),
+            self,
+            mediatype: Optional[str] = Query(
+                "text/anot+turtle", alias="_mediatype", description="Requested mediatype"
+            ),
+            profile: Optional[str] = Query(
+                None, alias="_profile", description="Requested profile"
+            ),
+            page: Optional[int] = Query(
+                1, ge=1, description="Page number, must be greater than 0"
+            ),
+            per_page: Optional[int] = Query(
+                20,
+                ge=1,
+                le=100,
+                description="Number of items per page, must be greater than 0",
+            ),
+            q: Optional[str] = Query(
+                None, description="Search query", example="building"
+            ),
+            filter: Optional[str] = Query(
+                None,
+                description="CQL JSON expression.",
+            ),
+            order_by: Optional[str] = Query(
+                None, description="Optional: Field to order by"
+            ),
+            order_by_direction: Optional[str] = Query(
+                None,
+                regex="^(ASC|DESC)$",
+                description="Optional: Order direction, must be 'ASC' or 'DESC'",
+            ),
     ):
         self.q = q
         self.page = page
@@ -68,6 +75,65 @@ class QueryParams:
 
     def validate_mediatype(self):
         if self.mediatype and self.mediatype not in ALLOWED_MEDIA_TYPES:
+            raise HTTPException(
+                status_code=400, detail=f"Invalid media type: {self.mediatype}"
+            )
+
+    def validate_filter(self):
+        if self.filter:
+            try:
+                json.loads(self.filter)
+            except json.JSONDecodeError:
+                raise HTTPException(
+                    status_code=400, detail="Filter criteria must be valid JSON."
+                )
+
+
+class OGCFeaturesQueryParams:
+    """
+    Not using Pydantic as cannot pass descriptions through to OpenAPI docs when using Pydantic.
+    See: https://stackoverflow.com/a/64366434/15371702
+    """
+
+    def __init__(
+            self,
+            mediatype: Optional[str] = Query(
+                "application/geo+json", alias="_mediatype", description="Requested mediatype"
+            ),
+            page: Optional[int] = Query(
+                1, ge=1, description="Page number, must be greater than 0"
+            ),
+            per_page: Optional[int] = Query(
+                10,
+                ge=1,
+                le=10000,
+                description="Number of items per page, must be 1<=limit<=10000",
+                alias="limit",
+            ),
+            filter: Optional[str] = Query(
+                None,
+                description="CQL JSON expression.",
+            ),
+            order_by: Optional[str] = Query(
+                None, description="Optional: Field to order by"
+            ),
+            order_by_direction: Optional[str] = Query(
+                None,
+                regex="^(ASC|DESC)$",
+                description="Optional: Order direction, must be 'ASC' or 'DESC'",
+            ),
+    ):
+        self.page = page
+        self.per_page = per_page
+        self.order_by = order_by
+        self.order_by_direction = order_by_direction
+        self.filter = filter
+        self.mediatype = mediatype
+        self.validate_mediatype()
+        self.validate_filter()
+
+    def validate_mediatype(self):
+        if self.mediatype and self.mediatype not in ALLOWED_OGC_FEATURES_MEDIA_TYPES:
             raise HTTPException(
                 status_code=400, detail=f"Invalid media type: {self.mediatype}"
             )

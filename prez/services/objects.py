@@ -1,20 +1,24 @@
 import io
 import logging
 import time
+from pathlib import Path
+from urllib.parse import urlencode
 
 from fastapi.responses import PlainTextResponse
+from rdflib import RDF, URIRef
 from sparql_grammar_pydantic import TriplesSameSubject, IRI, Var, TriplesSameSubjectPath
-from starlette.responses import StreamingResponse
 
+from prez.config import settings
+from prez.models.ogc_features import Link, Collection
 from prez.models.query_params import QueryParams
-from prez.reference_data.prez_ns import ALTREXT, ONT
-from prez.renderers.renderer import return_from_graph
+from prez.reference_data.prez_ns import ALTREXT, ONT, PREZ
+from prez.renderers.renderer import return_from_graph, return_annotated_rdf
+from prez.services.connegp_service import RDF_MEDIATYPES
 from prez.services.curie_functions import get_uri_for_curie_id
 from prez.services.link_generation import add_prez_links
 from prez.services.listings import listing_function
 from prez.services.query_generation.umbrella import (
-    PrezQueryConstructor,
-)
+    PrezQueryConstructor, )
 
 log = logging.getLogger(__name__)
 
@@ -86,39 +90,50 @@ async def object_function(
 
 
 async def ogc_features_object_function(
+        selected_mediatype,
+        url_path,
         collectionId,
-        itemId,
-        props,
+        featureId,
         data_repo,
+        system_repo,
 ):
-    if itemId is not None:
-        focus_node_curie = itemId
-    else:
-        focus_node_curie = collectionId
-    focus_node_uri = await get_uri_for_curie_id(focus_node_curie)
-    focus_node = IRI(value=focus_node_uri)
-    if not props:
-        prop_terms = [Var(value="props")]  # get all props
-    else:
-        prop_terms = [IRI(value=prop) for prop in props]  # get specific props
-    tssp_list = []
-    for i, prop in enumerate(prop_terms):
-        tssp_list.append(
-            TriplesSameSubjectPath.from_spo(
-                subject=focus_node,
-                predicate=prop,
-                object=Var(value=f"var_{i}"),
-            )
+    collection_uri = await get_uri_for_curie_id(collectionId)
+    if featureId is None:  # feature collection
+        collection_iri = IRI(value=collection_uri)
+        tssp_list = [TriplesSameSubjectPath.from_spo(collection_iri, IRI(value=RDF.type), Var(value="type"))]
+        query = PrezQueryConstructor(
+            profile_triples=tssp_list,
+        ).to_string()
+    else:  # feature
+        feature_uri = await get_uri_for_curie_id(featureId)
+        feature_query_file = Path(__file__).parent / "query_generation" / "bdr_feature.rq"
+        feature_query_template = feature_query_file.read_text()
+        query = feature_query_template.replace(
+            "VALUES ?focusNode { UNDEF }",
+            f"VALUES ?focusNode {{ {feature_uri.n3()} }}"
         )
-    query = PrezQueryConstructor(
-        profile_triples=tssp_list,
-    ).to_string()
 
     query_start_time = time.time()
     item_graph, _ = await data_repo.send_queries([query], [])
+    annotations_graph = await return_annotated_rdf(item_graph, data_repo, system_repo)
     log.debug(f"Query time: {time.time() - query_start_time}")
+
+    if selected_mediatype == "application/json":
+        collection = create_collection_json(collectionId, collection_uri, annotations_graph, url_path)
+        content = io.BytesIO(collection.model_dump_json(exclude_none=True).encode("utf-8"))
+    else:
+        content = io.BytesIO(
+            item_graph.serialize(format=selected_mediatype, encoding="utf-8")
+        )
     link_headers = None
-    content = io.BytesIO(
-        item_graph.serialize(format="turtle", encoding="utf-8")
-    )
     return content, link_headers
+
+
+def create_collection_json(collection_curie, collection_uri, annotations_graph, url_path):
+    return Collection(
+        id=collection_curie,
+        title=annotations_graph.value(subject=collection_uri, predicate=PREZ.label, default=None),
+        description=annotations_graph.value(subject=collection_uri, predicate=PREZ.description, default=None),
+        links=[Link(href=URIRef(f"{settings.system_uri}{url_path}/items?{urlencode({'_mediatype': mt})}"),
+                    rel="items", type=mt) for mt in ["application/geo+json", *RDF_MEDIATYPES]]
+    )

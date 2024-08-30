@@ -2,12 +2,15 @@ import logging
 import re
 from enum import Enum
 from textwrap import dedent
+from typing import List, Dict
+from urllib.parse import urlencode
 
 from pydantic import BaseModel
 from rdflib import Graph, Namespace, URIRef
 
 from prez.config import settings
 from prez.exceptions.model_exceptions import NoProfilesException
+from prez.models.ogc_features import Link
 from prez.repositories.base import Repo
 from prez.services.curie_functions import get_curie_id_for_uri, get_uri_for_curie_id
 
@@ -36,6 +39,7 @@ RDF_SERIALIZER_TYPES_MAP = {
     "text/n-triples": "nt",
     "text/plain": "nt",  # text/plain is the old/deprecated mimetype for n-triples
 }
+
 
 class MediaType(str, Enum):
     turtle = "text/turtle"
@@ -88,6 +92,7 @@ class NegotiatedPMTs(BaseModel):
     requested_mediatypes: list[tuple[str, float]] | None = None
     available: list[dict] | None = None
     selected: dict | None = None
+    current_path: str | None = None
 
     class Config:
         arbitrary_types_allowed = True
@@ -124,14 +129,14 @@ class NegotiatedPMTs(BaseModel):
         return uri
 
     async def _tupilize(
-        self, string: str, is_profile: bool = False
+            self, string: str, is_profile: bool = False
     ) -> tuple[str, float]:
         parts: list[str | float] = string.split("q=")  # split out the weighting
         parts[0] = parts[0].strip(
             " ;"
         )  # remove the seperator character, and any whitespace characters
         if is_profile and not re.search(
-            r"^<.*>$", parts[0]
+                r"^<.*>$", parts[0]
         ):  # If it doesn't look like a URI ...
             try:
                 parts[0] = await self._resolve_token(
@@ -219,7 +224,7 @@ class NegotiatedPMTs(BaseModel):
         )
         mediatype_header_links = ", ".join(
             [
-                f'<{self.selected["class"]}?_profile={get_curie_id_for_uri(pmt["profile"])}&_mediatype={pmt["mediatype"]}>; rel="{"self" if pmt == self.selected else "alternate"}"; type="{pmt["mediatype"]}"; profile="{pmt["profile"]}"'
+                f'<{settings.system_uri}{self.current_path}?_profile={get_curie_id_for_uri(pmt["profile"])}&_mediatype={pmt["mediatype"]}>; rel="{"self" if pmt == self.selected else "alternate"}"; type="{pmt["mediatype"]}"; format="{pmt["profile"]}"'
                 for pmt in self.available
             ]
         )
@@ -328,3 +333,35 @@ class NegotiatedPMTs(BaseModel):
             log.debug(tabulate(table_data, headers=headers, tablefmt="grid"))
 
         return response
+
+
+def generate_ogc_features_links(url_path: str, selected_mediatype: str) -> List[Link]:
+    components_after_collections = url_path.split('collections')[1:]
+    components_len = len(components_after_collections)
+
+    if components_len == 1:  # collections or a specific collection - links are the same
+        self_link = Link(
+            rel="self",
+            href=f"{settings.system_uri}{url_path}?{urlencode({'_mediatype': selected_mediatype})}",
+            type="application/json"
+        )
+
+        alt_links = [
+            Link(
+                rel="alternate",
+                href=f"{settings.system_uri}{url_path}?{urlencode({'_mediatype': mediatype})}",
+                type=mediatype
+            )
+            for mediatype in RDF_MEDIATYPES
+            if mediatype != selected_mediatype
+        ]
+        return [self_link] + alt_links
+    return []
+
+
+def generate_link_headers(url_path: str, selected_mediatype: str) -> Dict[str, str]:
+    links = generate_ogc_features_links(url_path, selected_mediatype)
+    if links:
+        link_header = ", ".join([f'<{link.href}>; rel="{link.rel}"; type="{link.type}"' for link in links])
+        return {"Link": link_header}
+    return {}

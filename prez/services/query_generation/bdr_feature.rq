@@ -1,0 +1,66 @@
+PREFIX sosa: <http://www.w3.org/ns/sosa/>
+CONSTRUCT {
+    ?focusNode ?fp1 ?fo .
+    ?fs ?fp2 ?focusNode .
+    ?fo_bn ?fo_bnp ?fo_bno .
+    ?fo_bn2 ?fo_bn2p ?fo_bn2o .
+    ?oc  ?ocp1 ?oco .
+    ?ocs ?ocp2 ?oc .
+    ?ob ?obp1 ?obo .
+    ?obs ?obp2 ?ob .
+    ?obo_bn ?obo_bnp ?obo_bno .
+    ?res ?rp1 ?ro .
+    ?rs ?rp2 ?res .
+    ?ro_bn ?ro_bnp ?ro_bno .
+}
+WHERE {
+    VALUES ?focusNode { UNDEF }
+    ?focusNode ?fp1 ?fo .
+    ?fs ?fp2 ?focusNode .
+    OPTIONAL {
+        ?focusNode ?fp1 ?fo_bn .
+        FILTER(isBLANK(?fo_bn))
+        ?fo_bn ?fo_bnp ?fo_bno .
+        OPTIONAL {
+            ?fo_bn ?fo_bnp ?fo_bn2 .
+            FILTER(isBLANK(?fo_bn2))
+            ?fo_bn2 ?fo_bn2p ?fo_bn2o .
+        }
+    }
+    {
+        ?focusNode sosa:isFeatureOfInterestOf|^sosa:hasFeatureOfInterest ?ob .
+        FILTER NOT EXISTS {
+            # Filter out collections
+            ?ob sosa:hasMember ?x .
+        }
+    }
+    UNION
+    {
+        ?focusNode sosa:isFeatureOfInterestOf|^sosa:hasFeatureOfInterest ?oc .
+        # this one gets all observations from collections
+        ?oc sosa:hasMember ?ob .
+        ?oc ?ocp1 ?oco .
+        OPTIONAL {
+            ?ocs ?ocp2 ?oc .
+        }
+    }
+    ?ob ?obp1 ?obo .
+    OPTIONAL {
+        ?obs ?obp2 ?ob .
+    }
+    OPTIONAL {
+        ?ob ?obp1 ?obo_bn .
+        FILTER (isBLANK(?obo_bn)) .
+        ?obo_bn ?obo_bnp ?obo_bno .
+    }
+    ?res sosa:isResultOf|^sosa:hasResult ?ob .
+    ?res ?rp1 ?ro .
+    OPTIONAL {
+        ?rs ?rp2 ?res .
+    }
+    OPTIONAL {
+        ?res ?rp1 ?ro_bn .
+        FILTER (isBLANK(?ro_bn))
+        ?ro_bn ?ro_bnp ?ro_bno .
+    }
+}

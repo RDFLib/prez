@@ -1,20 +1,8 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from typing import List
+
+from prez.models.ogc_features import ConformanceDeclaration, CONFORMANCE_CLASSES
 
 router = APIRouter(tags=["Conformance"])
-
-
-class ConformanceDeclaration(BaseModel):
-    conformsTo: List[str]
-
-
-CONFORMANCE_CLASSES = [
-    "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
-    "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30",
-    "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/html",
-    # "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson",
-]
 
 
 @router.get("/conformance", response_model=ConformanceDeclaration, status_code=200)
