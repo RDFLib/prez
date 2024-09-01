@@ -17,8 +17,8 @@ from prez.cache import (
     annotations_repo,
 )
 from prez.config import settings
-from prez.models.query_params import ALLOWED_OGC_FEATURES_MEDIA_TYPES
-from prez.reference_data.prez_ns import ALTREXT, ONT, EP, OGCE
+from prez.models.query_params import ALLOWED_OGC_FEATURES_INSTANCE_MEDIA_TYPES, ALLOWED_OGC_FEATURES_COLLECTIONS_MEDIA_TYPES
+from prez.reference_data.prez_ns import ALTREXT, ONT, EP, OGCE, OGCFEAT
 from prez.repositories import PyoxigraphRepo, RemoteSparqlRepo, OxrdflibRepo, Repo
 from prez.services.classes import get_classes_single
 from prez.services.connegp_service import NegotiatedPMTs
@@ -463,19 +463,36 @@ async def get_url_path(
     return request.url.path
 
 
-async def get_ogc_features_mediatype(
+async def get_endpoint_uri(
         request: Request,
 ):
+    return URIRef(request.scope.get("route").name)
+
+
+async def get_ogc_features_mediatype(
+        request: Request,
+        endpoint_uri: URIRef = Depends(get_endpoint_uri),
+):
+    if endpoint_uri in [OGCFEAT["feature-collections"], OGCFEAT["feature-collection"]]:
+        ALLOWED_MEDIATYPES = ALLOWED_OGC_FEATURES_COLLECTIONS_MEDIA_TYPES
+        DEFAULT_MEDIATYPE = "application/json"
+    elif endpoint_uri in [OGCFEAT["features"], OGCFEAT["feature"]]:
+        ALLOWED_MEDIATYPES = ALLOWED_OGC_FEATURES_INSTANCE_MEDIA_TYPES
+        DEFAULT_MEDIATYPE = "application/geo+json"
+    else:
+        raise ValueError("Endpoint not recognized")
+
     qsa_mt = request.query_params.get("_mediatype")
+
     if qsa_mt:
-        if qsa_mt in ALLOWED_OGC_FEATURES_MEDIA_TYPES:
+        if qsa_mt in ALLOWED_MEDIATYPES:
             return qsa_mt
     elif request.headers.get("Accept"):
         split_accept = request.headers.get("Accept").split(",")
-        if any(mt in split_accept for mt in ALLOWED_OGC_FEATURES_MEDIA_TYPES):
+        if any(mt in split_accept for mt in ALLOWED_MEDIATYPES):
             for mt in split_accept:
-                if mt in ALLOWED_OGC_FEATURES_MEDIA_TYPES:
+                if mt in ALLOWED_MEDIATYPES:
                     return mt
         else:
-            return "text/turtle"
-    return "text/turtle"
+            return DEFAULT_MEDIATYPE
+    return DEFAULT_MEDIATYPE

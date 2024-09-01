@@ -1,9 +1,11 @@
 import io
+import json
 import logging
 import time
 from pathlib import Path
 from urllib.parse import urlencode
 
+import rdf2geojson
 from fastapi.responses import PlainTextResponse
 from rdflib import RDF, URIRef
 from sparql_grammar_pydantic import TriplesSameSubject, IRI, Var, TriplesSameSubjectPath
@@ -118,14 +120,19 @@ async def ogc_features_object_function(
     annotations_graph = await return_annotated_rdf(item_graph, data_repo, system_repo)
     log.debug(f"Query time: {time.time() - query_start_time}")
 
-    if selected_mediatype == "application/json":
+    link_headers = None
+    if selected_mediatype == "application/sparql-query":
+        content = io.BytesIO(query.encode("utf-8"))
+    elif selected_mediatype == "application/json":
         collection = create_collection_json(collectionId, collection_uri, annotations_graph, url_path)
         content = io.BytesIO(collection.model_dump_json(exclude_none=True).encode("utf-8"))
+    elif selected_mediatype == "application/geo+json":
+        geojson = rdf2geojson.convert(item_graph, do_validate=False)
+        content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
     else:
         content = io.BytesIO(
             item_graph.serialize(format=selected_mediatype, encoding="utf-8")
         )
-    link_headers = None
     return content, link_headers
 
 

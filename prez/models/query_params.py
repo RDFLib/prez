@@ -15,8 +15,13 @@ ALLOWED_MEDIA_TYPES = {
     "application/anot+n-triples",
 }
 
-ALLOWED_OGC_FEATURES_MEDIA_TYPES = {
+ALLOWED_OGC_FEATURES_COLLECTIONS_MEDIA_TYPES = {
     "application/json",
+    "text/turtle",
+    "application/sparql-query"
+}
+
+ALLOWED_OGC_FEATURES_INSTANCE_MEDIA_TYPES = {
     "application/geo+json",
     "text/turtle",
     "application/sparql-query"
@@ -129,14 +134,8 @@ class OGCFeaturesQueryParams:
         self.order_by_direction = order_by_direction
         self.filter = filter
         self.mediatype = mediatype
-        self.validate_mediatype()
         self.validate_filter()
 
-    def validate_mediatype(self):
-        if self.mediatype and self.mediatype not in ALLOWED_OGC_FEATURES_MEDIA_TYPES:
-            raise HTTPException(
-                status_code=400, detail=f"Invalid media type: {self.mediatype}"
-            )
 
     def validate_filter(self):
         if self.filter:

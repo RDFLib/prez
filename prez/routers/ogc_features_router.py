@@ -1,6 +1,7 @@
 from typing import Optional
 
 from fastapi import Depends, FastAPI
+from rdflib import Namespace
 from starlette.responses import StreamingResponse
 
 from prez.dependencies import (
@@ -11,7 +12,7 @@ from prez.exceptions.model_exceptions import ClassNotFoundException, URINotFound
     PrefixNotFoundException
 from prez.models.ogc_features import generate_landing_page_links, Link, OGCFeaturesLandingPage
 from prez.models.query_params import OGCFeaturesQueryParams
-from prez.reference_data.prez_ns import EP
+from prez.reference_data.prez_ns import EP, OGCFEAT
 from prez.repositories import Repo
 from prez.routers.api_extras_examples import responses
 from prez.routers.conformance import router as conformance_router
@@ -20,6 +21,7 @@ from prez.services.exception_catchers import catch_400, catch_404, catch_500, ca
 from prez.services.listings import ogc_features_listing_function
 from prez.services.objects import ogc_features_object_function
 from prez.services.query_generation.cql import CQLParser
+
 
 features_subapi = FastAPI(
     title="OGC Features API",
@@ -60,20 +62,20 @@ async def ogc_features_api(
 @features_subapi.get(
     "/collections",
     # summary="Collection Listing",
-    # name=OGCE["collection-listing"],
+    name=OGCFEAT["feature-collections"],
     # openapi_extra=openapi_extras.get("collection-listing"),
     # responses=responses,
 )
 @features_subapi.get(
     "/collections/{collectionId}/items",
     # summary="Item Listing",
-    # name=OGCE["item-listing"],
+    name=OGCFEAT["features"],
     # openapi_extra=openapi_extras.get("item-listing"),
     # responses=responses,
 )
 async def listings(
-        mediatype: str = Depends(get_ogc_features_mediatype),
         url_path: str = Depends(get_url_path),
+        mediatype: str = Depends(get_ogc_features_mediatype),
         collectionId: Optional[str] = None,
         query_params: OGCFeaturesQueryParams = Depends(),
         cql_parser: CQLParser = Depends(cql_get_parser_dependency),
@@ -112,14 +114,14 @@ async def listings(
 @features_subapi.get(
     path="/collections/{collectionId}",
     # summary="Collection Object",
-    # name=OGCE["collection-object"],
+    name=OGCFEAT["feature-collection"],
     # openapi_extra=openapi_extras.get("collection-object"),
     # responses=responses,
 )
 @features_subapi.get(
     path="/collections/{collectionId}/items/{featureId}",
     # summary="Item Object",
-    # name=OGCE["item-object"],
+    name=OGCFEAT["feature"],
     # openapi_extra=openapi_extras.get("item-object"),
     # responses=responses,
 )

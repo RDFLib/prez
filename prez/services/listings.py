@@ -1,8 +1,11 @@
 import copy
 import io
+import json
 import logging
+from pathlib import Path
 from urllib.parse import urlencode
 
+import rdf2geojson
 from fastapi.responses import PlainTextResponse
 from rdflib import URIRef, Literal, RDFS
 from rdflib.namespace import RDF, Namespace, GEO
@@ -146,27 +149,23 @@ async def ogc_features_listing_function(
                   )
         construct_tss_list.append(TriplesSameSubject.from_spo(*triple))
         tssp_list.append(TriplesSameSubjectPath.from_spo(*triple))
+        subselect_kwargs["inner_select_tssp_list"].extend(tssp_list)
+        query = PrezQueryConstructor(
+            construct_tss_list=construct_tss_list,
+            profile_triples=tssp_list,
+            **subselect_kwargs,
+        ).to_string()
     else:  # list items in a Feature Collection
-        parent_curie = collectionId
-        parent_uri = await get_uri_for_curie_id(parent_curie)
-        triples = [(IRI(value=parent_uri),
-                    IRI(value=RDFS.member),
-                    Var(value="focus_node")),
-                   (IRI(value=parent_uri),
-                    IRI(value=RDF.type),
-                    IRI(value=GEO.FeatureCollection))
-                   ]
-        construct_tss_list.extend([TriplesSameSubject.from_spo(*t) for t in triples])
-        tssp_list.extend([TriplesSameSubjectPath.from_spo(*t) for t in triples])
+        feature_collection_uri = await get_uri_for_curie_id(collectionId)
+        feature_collection_query_file = Path(__file__).parent / "query_generation" / "bdr_feature_collection.rq"
+        feature_collection_query_template = feature_collection_query_file.read_text()
+        query = feature_collection_query_template.replace(
+            "VALUES ?focusNode { UNDEF }",
+            f"VALUES ?focusNode {{ {feature_collection_uri.n3()} }}"
+        )
 
-    subselect_kwargs["inner_select_tssp_list"].extend(tssp_list)
-    query = PrezQueryConstructor(
-        construct_tss_list=construct_tss_list,
-        profile_triples=tssp_list,
-        **subselect_kwargs,
-    ).to_string()
-
-    link_headers = generate_link_headers(url_path, selected_mediatype)
+    # link_headers = generate_link_headers(links)
+    link_headers = None
 
     if selected_mediatype == "application/sparql-query":
         content = io.BytesIO(query.encode("utf-8"))
@@ -178,6 +177,10 @@ async def ogc_features_listing_function(
     if selected_mediatype == "application/json":
         collections = create_collections_json(item_graph, annotations_graph, url_path, selected_mediatype)
         content = io.BytesIO(collections.model_dump_json(exclude_none=True).encode("utf-8"))
+
+    elif selected_mediatype == "application/geo+json":
+        geojson = rdf2geojson.convert(item_graph, do_validate=False)
+        content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
 
     # TODO append to geojson once library imported
     else:

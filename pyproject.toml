@@ -33,6 +33,7 @@ pyld = "^2.0.4"
 shapely = "^2.0.3"
 aiocache = "^0.12.2"
 sparql-grammar-pydantic = "^0.1.2"
+rdf2geojson = {git = "https://github.com/ashleysommer/rdf2geojson.git", rev = "v0.1.0"}
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.1"

@@ -359,9 +359,6 @@ def generate_ogc_features_links(url_path: str, selected_mediatype: str) -> List[
     return []
 
 
-def generate_link_headers(url_path: str, selected_mediatype: str) -> Dict[str, str]:
-    links = generate_ogc_features_links(url_path, selected_mediatype)
-    if links:
-        link_header = ", ".join([f'<{link.href}>; rel="{link.rel}"; type="{link.type}"' for link in links])
-        return {"Link": link_header}
-    return {}
+def generate_link_headers(links) -> Dict[str, str]:
+    link_header = ", ".join([f'<{link.href}>; rel="{link.rel}"; type="{link.type}"' for link in links])
+    return {"Link": link_header}
