@@ -2,7 +2,7 @@
     "op": "s_intersects",
     "args": [
         {
-            "property": "http://www.w3.org/ns/shacl#focusNode"
+            "property": "geometry"
         },
         {
             "type": "Polygon",

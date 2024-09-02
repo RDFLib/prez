@@ -2,21 +2,22 @@ import copy
 import io
 import json
 import logging
-from pathlib import Path
 from urllib.parse import urlencode
 
-import rdf2geojson
 from fastapi.responses import PlainTextResponse
-from rdflib import URIRef, Literal, RDFS
+from rdf2geojson import convert
+from rdflib import URIRef, Literal
 from rdflib.namespace import RDF, Namespace, GEO
-from sparql_grammar_pydantic import IRI, Var, TriplesSameSubject, TriplesSameSubjectPath
+from sparql_grammar_pydantic import IRI, Var, TriplesSameSubject, TriplesSameSubjectPath, PrimaryExpression, \
+    GraphPatternNotTriples, Bind, Expression, IRIOrFunction, OptionalGraphPattern, GroupGraphPattern, \
+    GroupGraphPatternSub, TriplesBlock
 
 from prez.cache import endpoints_graph_cache
 from prez.config import settings
 from prez.models.ogc_features import Collection, Link, Collections
 from prez.reference_data.prez_ns import PREZ, ALTREXT, ONT
 from prez.renderers.renderer import return_from_graph, return_annotated_rdf
-from prez.services.connegp_service import generate_link_headers, RDF_MEDIATYPES
+from prez.services.connegp_service import RDF_MEDIATYPES
 from prez.services.curie_functions import get_uri_for_curie_id, get_curie_id_for_uri
 from prez.services.link_generation import add_prez_links
 from prez.services.query_generation.count import CountQuery
@@ -125,6 +126,8 @@ async def listing_function(
 
 
 async def ogc_features_listing_function(
+        endpoint_nodeshape,
+        profile_nodeshape,
         selected_mediatype,
         url_path,
         collectionId,
@@ -134,15 +137,21 @@ async def ogc_features_listing_function(
         query_params,
 ):
     subselect_kwargs = merge_listing_query_grammar_inputs(
+        endpoint_nodeshape=endpoint_nodeshape,
         cql_parser=cql_parser,
         query_params=query_params,
     )
+    # merge subselect and profile triples same subject (for construct triples)
     construct_tss_list = []
     subselect_tss_list = subselect_kwargs.pop("construct_tss_list")
     if subselect_tss_list:
         construct_tss_list.extend(subselect_tss_list)
-    tssp_list = []
+    if profile_nodeshape.tss_list:
+        construct_tss_list.extend(profile_nodeshape.tss_list)
+
+    queries = []
     if not collectionId:  # list Feature Collections
+        tssp_list = []
         triple = (Var(value="focus_node"),
                   IRI(value=RDF.type),
                   IRI(value=GEO.FeatureCollection)
@@ -155,23 +164,65 @@ async def ogc_features_listing_function(
             profile_triples=tssp_list,
             **subselect_kwargs,
         ).to_string()
+        queries.append(query)
     else:  # list items in a Feature Collection
-        feature_collection_uri = await get_uri_for_curie_id(collectionId)
-        feature_collection_query_file = Path(__file__).parent / "query_generation" / "bdr_feature_collection.rq"
-        feature_collection_query_template = feature_collection_query_file.read_text()
-        query = feature_collection_query_template.replace(
-            "VALUES ?focusNode { UNDEF }",
-            f"VALUES ?focusNode {{ {feature_collection_uri.n3()} }}"
+
+        # add inbound links - not currently possible via profiles
+        triple = (Var(value="inbound_s"), Var(value="inbound_p"), Var(value="focus_node"))
+        construct_tss_list.append(TriplesSameSubject.from_spo(*triple))
+        inbound_tssp_list = [TriplesSameSubjectPath.from_spo(*triple)]
+        opt_inbound_gpnt = GraphPatternNotTriples(
+            content=OptionalGraphPattern(
+                group_graph_pattern=GroupGraphPattern(
+                    content=GroupGraphPatternSub(
+                        triples_block=TriplesBlock.from_tssp_list(inbound_tssp_list)
+                    )
+                )
+            )
         )
+        profile_nodeshape.gpnt_list.append(opt_inbound_gpnt)
+
+        feature_list_query = PrezQueryConstructor(
+            construct_tss_list=construct_tss_list,
+            profile_triples=profile_nodeshape.tssp_list,
+            profile_gpnt=profile_nodeshape.gpnt_list,
+            **subselect_kwargs,
+        ).to_string()
+        queries.append(feature_list_query)
+
+        collection_uri = await get_uri_for_curie_id(collectionId)
+        # Features listing requires CBD of the Feature Collection as well; reuse items profile to get all props/bns to
+        # depth two.
+        gpnt = GraphPatternNotTriples(
+            content=Bind(
+                expression=Expression.from_primary_expression(
+                    PrimaryExpression(
+                        content=IRIOrFunction(iri=IRI(value=collection_uri))
+                    )
+                ),
+                var=Var(value="focus_node"),
+            )
+        )
+        feature_collection_query = PrezQueryConstructor(
+            construct_tss_list=construct_tss_list,
+            profile_triples=profile_nodeshape.tssp_list,
+            profile_gpnt=profile_nodeshape.gpnt_list,
+            inner_select_gpnt=[gpnt],  # BIND(<fc_uri> AS ?focus_node)
+            limit=1,
+            offset=0,
+        ).to_string()
+        queries.append(feature_collection_query)
 
     # link_headers = generate_link_headers(links)
     link_headers = None
 
     if selected_mediatype == "application/sparql-query":
-        content = io.BytesIO(query.encode("utf-8"))
+        queries_dict = {f"query_{i}": query for i, query in enumerate(queries)}
+        content = io.BytesIO(json.dumps(queries_dict).encode("utf-8"))
         return content, link_headers
 
-    item_graph, _ = await data_repo.send_queries([query], [])
+
+    item_graph, _ = await data_repo.send_queries(queries, [])
     annotations_graph = await return_annotated_rdf(item_graph, data_repo, system_repo)
 
     if selected_mediatype == "application/json":
@@ -179,7 +230,7 @@ async def ogc_features_listing_function(
         content = io.BytesIO(collections.model_dump_json(exclude_none=True).encode("utf-8"))
 
     elif selected_mediatype == "application/geo+json":
-        geojson = rdf2geojson.convert(item_graph, do_validate=False)
+        geojson = convert(item_graph, do_validate=False)
         content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
 
     # TODO append to geojson once library imported

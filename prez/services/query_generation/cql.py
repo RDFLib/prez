@@ -249,7 +249,7 @@ class CQLParser:
         if coordinates:
             wkt = self.get_wkt_from_coords(coordinates, geom_type)
             prop = args[0].get(str(CQL.property))[0].get("@id")
-            if URIRef(prop) == SH.focusNode:
+            if prop == 'http://example.com/geometry':
                 subject = Var(value="focus_node")
             else:
                 subject = IRI(value=prop)

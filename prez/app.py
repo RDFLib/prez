@@ -175,7 +175,7 @@ def assemble_app(
     app.include_router(ogc_records_router)
     if _settings.enable_sparql_endpoint:
         app.include_router(sparql_router)
-    app.mount("/x", features_subapi)
+    app.mount("/catalogs/{catalogId}/collections/{collectionId}/features", features_subapi)
     app.include_router(identifier_router)
     app.openapi = partial(
         prez_open_api_metadata,

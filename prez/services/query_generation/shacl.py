@@ -175,7 +175,7 @@ class NodeShape(Shape):
             self.path_nodes = self.path_nodes | shape.path_nodes
             self.classes_at_len = self.classes_at_len | shape.classes_at_len
         # deduplicate
-        # self.tssp_list = list(set(self.tssp_list))  #TODO requires re implementation of hash functions for classes
+        self.tssp_list = list(set(self.tssp_list))  #TODO requires re implementation of hash functions for classes
 
     def _build_bnode_blocks(self):
         max_depth = int(self.bnode_depth)

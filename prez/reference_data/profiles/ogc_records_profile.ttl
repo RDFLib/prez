@@ -1,7 +1,6 @@
 PREFIX altr-ext: <http://www.w3.org/ns/dx/connegp/altr-ext#>
 PREFIX dcat: <http://www.w3.org/ns/dcat#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX geo: <http://www.opengis.net/ont/geosparql#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX prez: <https://prez.dev/>
 PREFIX prof: <http://www.w3.org/ns/dx/prof/>
@@ -31,7 +30,7 @@ prez:OGCRecordsProfile
         "text/turtle" ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
-        sh:targetClass dcat:Catalog , dcat:Resource , skos:Concept , geo:Feature , geo:FeatureCollection
+        sh:targetClass dcat:Catalog , dcat:Resource , skos:Concept
                                , skos:Collection , rdf:Resource , prez:SearchResult , prez:CQLObjectList ;
         altr-ext:hasDefaultProfile prez:OGCListingProfile
     ] , [
@@ -44,7 +43,7 @@ prez:OGCRecordsProfile
         altr-ext:hasDefaultProfile prez:OGCSchemesObjectProfile
     ] , [
         a sh:NodeShape ;
-        sh:targetClass dcat:Catalog , dcat:Resource , skos:Concept , geo:Feature , geo:FeatureCollection
+        sh:targetClass dcat:Catalog , dcat:Resource , skos:Concept
                                , skos:Collection , rdf:Resource ;
         altr-ext:hasDefaultProfile prez:OGCItemProfile
     ]
@@ -62,7 +61,7 @@ prez:OGCListingProfile
         "text/anot+turtle" ,
         "text/turtle" ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
-    altr-ext:constrainsClass dcat:Catalog , skos:Collection , geo:Feature , geo:FeatureCollection , skos:Concept ,
+    altr-ext:constrainsClass dcat:Catalog , skos:Collection , skos:Concept ,
                              dcat:Resource , prof:Profile , prez:SearchResult , prez:CQLObjectList , rdf:Resource ;
     sh:property [ sh:path rdf:type ]
     .
@@ -99,8 +98,6 @@ prez:OGCItemProfile
                              skos:ConceptScheme,
                              skos:Collection ,
                              skos:Concept ,
-                             geo:FeatureCollection ,
-                             geo:Feature ,
                              rdf:Resource ,
                              prof:Profile ;
     .

@@ -1,0 +1,100 @@
+@prefix altr-ext: <http://www.w3.org/ns/dx/connegp/altr-ext#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix geo: <http://www.opengis.net/ont/geosparql#> .
+@prefix prez: <https://prez.dev/> .
+@prefix prof: <http://www.w3.org/ns/dx/prof/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix shext: <http://example.com/shacl-extension#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+prez:OGCFeaturesProfile a prof:Profile ;
+    dcterms:description "A system profile for OGC Features conformant API" ;
+    dcterms:identifier "ogcfeat"^^xsd:token ;
+    dcterms:title "OGC Features Profile" ;
+    altr-ext:constrainsClass prez:CatPrez ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
+    altr-ext:hasNodeShape
+        [
+            a sh:NodeShape ;
+            altr-ext:hasDefaultProfile prez:OGCFeaturesListingProfile ;
+            sh:targetClass
+                geo:Feature,
+                geo:FeatureCollection,
+                prez:CQLObjectList,
+                prez:SearchResult
+        ],
+        [
+            a sh:NodeShape ;
+            altr-ext:hasDefaultProfile prez:OGCFeaturesItemProfile ;
+            sh:targetClass
+                geo:Feature,
+                geo:FeatureCollection,
+                rdf:Resource
+        ] ;
+    altr-ext:hasResourceFormat
+        "application/json",
+        "application/ld+json",
+        "application/rdf+xml",
+        "text/anot+turtle",
+        "text/turtle" .
+
+prez:OGCFeaturesItemProfile a
+        prof:Profile,
+        sh:NodeShape,
+        prez:ObjectProfile ;
+    shext:bnode-depth 2 ;
+    dcterms:description "A profile for individual OGC Features API items" ;
+    dcterms:identifier "ogcfeat-item"^^xsd:token ;
+    dcterms:title "OGC Features Object Profile" ;
+    altr-ext:constrainsClass
+        geo:Feature,
+        geo:FeatureCollection,
+        rdf:Resource,
+        prof:Profile ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
+    altr-ext:hasResourceFormat
+        "application/anot+ld+json",
+        "application/ld+json",
+        "application/n-triples",
+        "application/rdf+xml",
+        "text/anot+turtle",
+        "text/turtle" ;
+    sh:property
+        [ sh:path shext:allPredicateValues ],
+        [
+            sh:maxCount 0 ;
+            sh:path ( sh:union ( dcterms:hasPart rdfs:member ) )
+        ] ;
+    shext:bnode-depth 2 ;
+.
+
+prez:OGCFeaturesListingProfile a
+        prof:Profile,
+        sh:NodeShape,
+        prez:ListingProfile ;
+    dcterms:description "A profile for listing different kinds of items relevant to an OGC Features API" ;
+    dcterms:identifier "ogcfeat-listing"^^xsd:token ;
+    dcterms:title "OGC Features Listing Profile" ;
+    altr-ext:constrainsClass
+        geo:Feature,
+        geo:FeatureCollection,
+        rdf:Resource,
+        prof:Profile,
+        prez:CQLObjectList,
+        prez:SearchResult ;
+    altr-ext:hasDefaultResourceFormat "application/geo+json" ;
+    altr-ext:hasResourceFormat
+        "application/geo+json",
+        "application/anot+ld+json",
+        "application/ld+json",
+        "application/rdf+xml",
+        "text/anot+turtle",
+        "text/turtle" ;
+    sh:property [ sh:path shext:allPredicateValues ] ;
+    shext:bnode-depth 2 ;
+.
+
+
+

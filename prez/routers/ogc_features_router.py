@@ -6,7 +6,8 @@ from starlette.responses import StreamingResponse
 
 from prez.dependencies import (
     get_data_repo,
-    cql_get_parser_dependency, get_url_path, get_ogc_features_mediatype, get_system_repo
+    cql_get_parser_dependency, get_url_path, get_ogc_features_mediatype, get_system_repo, get_endpoint_nodeshapes,
+    get_profile_nodeshape
 )
 from prez.exceptions.model_exceptions import ClassNotFoundException, URINotFoundException, InvalidSPARQLQueryException, \
     PrefixNotFoundException
@@ -21,7 +22,7 @@ from prez.services.exception_catchers import catch_400, catch_404, catch_500, ca
 from prez.services.listings import ogc_features_listing_function
 from prez.services.objects import ogc_features_object_function
 from prez.services.query_generation.cql import CQLParser
-
+from prez.services.query_generation.shacl import NodeShape
 
 features_subapi = FastAPI(
     title="OGC Features API",
@@ -67,16 +68,18 @@ async def ogc_features_api(
     # responses=responses,
 )
 @features_subapi.get(
-    "/collections/{collectionId}/items",
+    "/collections/{featureCollectionId}/items",
     # summary="Item Listing",
     name=OGCFEAT["features"],
     # openapi_extra=openapi_extras.get("item-listing"),
     # responses=responses,
 )
 async def listings(
+        endpoint_nodeshape: NodeShape = Depends(get_endpoint_nodeshapes),
+        profile_nodeshape: NodeShape = Depends(get_profile_nodeshape),
         url_path: str = Depends(get_url_path),
         mediatype: str = Depends(get_ogc_features_mediatype),
-        collectionId: Optional[str] = None,
+        featureCollectionId: Optional[str] = None,
         query_params: OGCFeaturesQueryParams = Depends(),
         cql_parser: CQLParser = Depends(cql_get_parser_dependency),
         data_repo: Repo = Depends(get_data_repo),
@@ -84,9 +87,11 @@ async def listings(
 ):
     try:
         content, headers = await ogc_features_listing_function(
+            endpoint_nodeshape,
+            profile_nodeshape,
             mediatype,
             url_path,
-            collectionId,
+            featureCollectionId,
             data_repo,
             system_repo,
             cql_parser,
@@ -112,14 +117,14 @@ async def listings(
     path="/object", summary="Object", name=EP["system/object"], responses=responses
 )
 @features_subapi.get(
-    path="/collections/{collectionId}",
+    path="/collections/{featureCollectionId}",
     # summary="Collection Object",
     name=OGCFEAT["feature-collection"],
     # openapi_extra=openapi_extras.get("collection-object"),
     # responses=responses,
 )
 @features_subapi.get(
-    path="/collections/{collectionId}/items/{featureId}",
+    path="/collections/{featureCollectionId}/items/{featureId}",
     # summary="Item Object",
     name=OGCFEAT["feature"],
     # openapi_extra=openapi_extras.get("item-object"),
@@ -128,17 +133,16 @@ async def listings(
 async def objects(
         mediatype: str = Depends(get_ogc_features_mediatype),
         url_path: str = Depends(get_url_path),
-        collectionId: str = None,
+        featureCollectionId: str = None,
         featureId: Optional[str] = None,
         data_repo: Repo = Depends(get_data_repo),
         system_repo: Repo = Depends(get_system_repo),
 ):
-    props = None  # can define which props here to filter props
     try:
         content, headers = await ogc_features_object_function(
             mediatype,
             url_path,
-            collectionId,
+            featureCollectionId,
             featureId,
             data_repo,
             system_repo,

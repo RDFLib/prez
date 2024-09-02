@@ -1,0 +1,40 @@
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix geo: <http://www.opengis.net/ont/geosparql#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/> .
+
+ex:DemoCatalog a dcat:Catalog ;
+    dcterms:title "Demo Catalog" ;
+    dcterms:description "A demonstration catalog containing a dataset with geographic features." ;
+    dcterms:hasPart ex:GeoDataset ;
+    ex:catalogVersion "1.0" ;
+    dcterms:issued "2024-09-02"^^xsd:date .
+
+ex:GeoDataset a dcat:Dataset ;
+    dcterms:title "Geographic Dataset" ;
+    dcterms:description "A dataset containing a feature collection of geographic features." ;
+    dcterms:hasPart ex:FeatureCollection ;
+    ex:datasetTheme "Geography" ;
+    dcterms:creator "Jane Doe" .
+
+ex:FeatureCollection a geo:FeatureCollection ;
+    dcterms:description "A collection of geographic features representing points of interest." ;
+    geo:hasGeometry "POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))"^^geo:wktLiteral ;
+    rdfs:member ex:Feature1, ex:Feature2 ;
+    ex:featureCount 2 .
+
+ex:Feature1 a geo:Feature ;
+    rdfs:label "Point of Interest 1" ;
+    dcterms:description "A notable location within the feature collection." ;
+    geo:hasGeometry "POINT(5 5)"^^geo:wktLiteral ;
+    ex:category "Landmark" ;
+    ex:visitorCount 1000 .
+
+ex:Feature2 a geo:Feature ;
+    rdfs:label "Point of Interest 2" ;
+    dcterms:description "Another notable location within the feature collection." ;
+    geo:hasGeometry "POINT(7 3)"^^geo:wktLiteral ;
+    ex:category "Historical Site" ;
+    ex:yearEstablished 1850 .
