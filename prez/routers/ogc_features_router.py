@@ -1,7 +1,6 @@
 from typing import Optional
 
 from fastapi import Depends, FastAPI
-from rdflib import Namespace
 from starlette.responses import StreamingResponse
 
 from prez.dependencies import (
@@ -43,7 +42,7 @@ features_subapi.include_router(conformance_router)
     "/", summary="OGC Features API"
 )
 async def ogc_features_api(
-    url_path: str = Depends(get_url_path),
+        url_path: str = Depends(get_url_path),
 ):
     links = generate_landing_page_links(url_path)
     return OGCFeaturesLandingPage(

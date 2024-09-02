@@ -168,18 +168,7 @@ async def ogc_features_listing_function(
     else:  # list items in a Feature Collection
 
         # add inbound links - not currently possible via profiles
-        triple = (Var(value="inbound_s"), Var(value="inbound_p"), Var(value="focus_node"))
-        construct_tss_list.append(TriplesSameSubject.from_spo(*triple))
-        inbound_tssp_list = [TriplesSameSubjectPath.from_spo(*triple)]
-        opt_inbound_gpnt = GraphPatternNotTriples(
-            content=OptionalGraphPattern(
-                group_graph_pattern=GroupGraphPattern(
-                    content=GroupGraphPatternSub(
-                        triples_block=TriplesBlock.from_tssp_list(inbound_tssp_list)
-                    )
-                )
-            )
-        )
+        opt_inbound_gpnt = await _add_inbound_triple_pattern_match(construct_tss_list)
         profile_nodeshape.gpnt_list.append(opt_inbound_gpnt)
 
         feature_list_query = PrezQueryConstructor(
@@ -239,6 +228,22 @@ async def ogc_features_listing_function(
             item_graph.serialize(format="turtle", encoding="utf-8")
         )
     return content, link_headers
+
+
+async def _add_inbound_triple_pattern_match(construct_tss_list):
+    triple = (Var(value="inbound_s"), Var(value="inbound_p"), Var(value="focus_node"))
+    construct_tss_list.append(TriplesSameSubject.from_spo(*triple))
+    inbound_tssp_list = [TriplesSameSubjectPath.from_spo(*triple)]
+    opt_inbound_gpnt = GraphPatternNotTriples(
+        content=OptionalGraphPattern(
+            group_graph_pattern=GroupGraphPattern(
+                content=GroupGraphPatternSub(
+                    triples_block=TriplesBlock.from_tssp_list(inbound_tssp_list)
+                )
+            )
+        )
+    )
+    return opt_inbound_gpnt
 
 
 def create_collections_json(item_graph, annotations_graph, url_path, selected_mediatype):
