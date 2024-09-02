@@ -9,7 +9,7 @@ from prez.dependencies import (
     get_profile_nodeshape
 )
 from prez.exceptions.model_exceptions import ClassNotFoundException, URINotFoundException, InvalidSPARQLQueryException, \
-    PrefixNotFoundException
+    PrefixNotFoundException, NoProfilesException
 from prez.models.ogc_features import generate_landing_page_links, Link, OGCFeaturesLandingPage
 from prez.models.query_params import OGCFeaturesQueryParams
 from prez.reference_data.prez_ns import EP, OGCFEAT
@@ -17,7 +17,8 @@ from prez.repositories import Repo
 from prez.routers.api_extras_examples import responses
 from prez.routers.conformance import router as conformance_router
 from prez.services.exception_catchers import catch_400, catch_404, catch_500, catch_class_not_found_exception, \
-    catch_uri_not_found_exception, catch_invalid_sparql_query, catch_prefix_not_found_exception
+    catch_uri_not_found_exception, catch_invalid_sparql_query, catch_prefix_not_found_exception, \
+    catch_no_profiles_exception
 from prez.services.listings import ogc_features_listing_function
 from prez.services.objects import ogc_features_object_function
 from prez.services.query_generation.cql import CQLParser
@@ -29,6 +30,7 @@ features_subapi = FastAPI(
         400: catch_400,
         404: catch_404,
         500: catch_500,
+        NoProfilesException: catch_no_profiles_exception,
         ClassNotFoundException: catch_class_not_found_exception,
         URINotFoundException: catch_uri_not_found_exception,
         PrefixNotFoundException: catch_prefix_not_found_exception,
@@ -60,6 +62,13 @@ async def ogc_features_api(
 ########################################################################################################################
 
 @features_subapi.get(
+    "/queryables",
+    # summary="Item Listing",
+    name=OGCFEAT["queryables-global"],
+    # openapi_extra=openapi_extras.get("item-listing"),
+    # responses=responses,
+)
+@features_subapi.get(
     "/collections",
     # summary="Collection Listing",
     name=OGCFEAT["feature-collections"],
@@ -70,6 +79,13 @@ async def ogc_features_api(
     "/collections/{featureCollectionId}/items",
     # summary="Item Listing",
     name=OGCFEAT["features"],
+    # openapi_extra=openapi_extras.get("item-listing"),
+    # responses=responses,
+)
+@features_subapi.get(
+    "/collections/{featureCollectionId}/queryables",
+    # summary="Item Listing",
+    name=OGCFEAT["queryables-local"],
     # openapi_extra=openapi_extras.get("item-listing"),
     # responses=responses,
 )
@@ -96,8 +112,8 @@ async def listings(
             cql_parser,
             query_params,
         )
-    except Exception:
-        raise
+    except Exception as e:
+        raise e
     return StreamingResponse(
         content=content, media_type=mediatype, headers=headers
     )

@@ -473,7 +473,8 @@ async def get_ogc_features_mediatype(
         request: Request,
         endpoint_uri: URIRef = Depends(get_endpoint_uri),
 ):
-    if endpoint_uri in [OGCFEAT["feature-collections"], OGCFEAT["feature-collection"]]:
+    if endpoint_uri in [OGCFEAT["feature-collections"], OGCFEAT["feature-collection"],
+                        OGCFEAT["queryables-global"], OGCFEAT["queryables-local"]]:
         ALLOWED_MEDIATYPES = ALLOWED_OGC_FEATURES_COLLECTIONS_MEDIA_TYPES
         DEFAULT_MEDIATYPE = "application/json"
     elif endpoint_uri in [OGCFEAT["features"], OGCFEAT["feature"]]:

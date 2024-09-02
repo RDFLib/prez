@@ -24,3 +24,13 @@ ogcfeat:feature
     a ont:ObjectEndpoint ;
     ont:relevantShapes ex:Feature ;
 .
+
+ogcfeat:queryables-global
+    a ont:ListingEndpoint ;
+    ont:relevantShapes ex:FeatureCollections ;
+.
+
+ogcfeat:queryables-local
+    a ont:ListingEndpoint ;
+    ont:relevantShapes ex:Queryables ;
+.

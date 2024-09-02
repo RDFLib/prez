@@ -18,19 +18,17 @@ prez:OGCFeaturesProfile a prof:Profile ;
     altr-ext:hasNodeShape
         [
             a sh:NodeShape ;
-            altr-ext:hasDefaultProfile prez:OGCFeaturesListingProfile ;
+            altr-ext:hasDefaultProfile prez:OGCFeaturesMinimalProps ;
             sh:targetClass
-                geo:Feature,
                 geo:FeatureCollection,
                 prez:CQLObjectList,
                 prez:SearchResult
         ],
         [
             a sh:NodeShape ;
-            altr-ext:hasDefaultProfile prez:OGCFeaturesItemProfile ;
+            altr-ext:hasDefaultProfile prez:OGCFeaturesAllProps ;
             sh:targetClass
                 geo:Feature,
-                geo:FeatureCollection,
                 rdf:Resource
         ] ;
     altr-ext:hasResourceFormat
@@ -40,19 +38,19 @@ prez:OGCFeaturesProfile a prof:Profile ;
         "text/anot+turtle",
         "text/turtle" .
 
-prez:OGCFeaturesItemProfile a
+prez:OGCFeaturesMinimalProps a
         prof:Profile,
         sh:NodeShape,
-        prez:ObjectProfile ;
-    shext:bnode-depth 2 ;
-    dcterms:description "A profile for individual OGC Features API items" ;
-    dcterms:identifier "ogcfeat-item"^^xsd:token ;
-    dcterms:title "OGC Features Object Profile" ;
+        prez:ListingProfile ;
+    dcterms:description "A profile showing only the classes of items" ;
+    dcterms:identifier "ogcfeat-minimal"^^xsd:token ;
+    dcterms:title "OGC Features Minimal Profile" ;
     altr-ext:constrainsClass
         geo:Feature,
         geo:FeatureCollection,
         rdf:Resource,
-        prof:Profile ;
+        prof:Profile ,
+        prez:Queryable ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
         "application/anot+ld+json",
@@ -62,21 +60,16 @@ prez:OGCFeaturesItemProfile a
         "text/anot+turtle",
         "text/turtle" ;
     sh:property
-        [ sh:path shext:allPredicateValues ],
-        [
-            sh:maxCount 0 ;
-            sh:path ( sh:union ( dcterms:hasPart rdfs:member ) )
-        ] ;
-    shext:bnode-depth 2 ;
+        [ sh:path rdf:type ] ;
 .
 
-prez:OGCFeaturesListingProfile a
+prez:OGCFeaturesAllProps a
         prof:Profile,
         sh:NodeShape,
         prez:ListingProfile ;
-    dcterms:description "A profile for listing different kinds of items relevant to an OGC Features API" ;
-    dcterms:identifier "ogcfeat-listing"^^xsd:token ;
-    dcterms:title "OGC Features Listing Profile" ;
+    dcterms:description "A profile returning all properties and blank nodes to a depth of two." ;
+    dcterms:identifier "ogcfeat-all"^^xsd:token ;
+    dcterms:title "OGC Features All Properties Profile" ;
     altr-ext:constrainsClass
         geo:Feature,
         geo:FeatureCollection,

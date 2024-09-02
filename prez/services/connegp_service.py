@@ -264,7 +264,7 @@ class NegotiatedPMTs(BaseModel):
               VALUES ?base_class {{ dcat:Dataset geo:FeatureCollection geo:Feature
               skos:ConceptScheme skos:Concept skos:Collection 
               dcat:Catalog rdf:Resource dcat:Resource prof:Profile prez:SPARQLQuery 
-              prez:SearchResult prez:CQLObjectList prez:QueryablesList prez:Object rdfs:Resource }}
+              prez:SearchResult prez:CQLObjectList prez:Queryable prez:Object rdfs:Resource }}
               ?profile altr-ext:constrainsClass ?class ;
                        altr-ext:hasResourceFormat ?format ;
                        dcterms:title ?title .\

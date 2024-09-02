@@ -1926,7 +1926,7 @@ files = [
 
 [[package]]
 name = "rdf2geojson"
-version = "0.1.0"
+version = "0.2.0"
 description = "A Python package that converts any RDF to GeoJSON"
 optional = false
 python-versions = "^3.11"
@@ -1936,13 +1936,13 @@ develop = false
 [package.dependencies]
 geojson = "^3.1.0"
 pyshacl = "^0.26.0"
-shapely = "^2.0.5"
+rdflib = "^7.0.0"
 
 [package.source]
 type = "git"
 url = "https://github.com/ashleysommer/rdf2geojson.git"
-reference = "v0.1.0"
-resolved_reference = "45bfb79c2fd90db00712d00bc510665bc8acd106"
+reference = "v0.2.0"
+resolved_reference = "4f98a71cf8310a734318c5c9c2a1af3132c06baa"
 
 [[package]]
 name = "rdflib"
@@ -2731,4 +2731,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "76c162791f38320e34c9e510a4b05e623be05bdd48418d46f8607c9f5bd6265f"
+content-hash = "00b729eea52ca892a9527b6d84d120a82ee827bd5abc9e8ffc3103a5e03d958c"

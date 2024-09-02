@@ -150,23 +150,27 @@ async def ogc_features_listing_function(
         construct_tss_list.extend(profile_nodeshape.tss_list)
 
     queries = []
-    if not collectionId:  # list Feature Collections
-        tssp_list = []
-        triple = (Var(value="focus_node"),
-                  IRI(value=RDF.type),
-                  IRI(value=GEO.FeatureCollection)
-                  )
-        construct_tss_list.append(TriplesSameSubject.from_spo(*triple))
-        tssp_list.append(TriplesSameSubjectPath.from_spo(*triple))
-        subselect_kwargs["inner_select_tssp_list"].extend(tssp_list)
+    if url_path.split("/")[-1] == "queryables":
+        queryable_var = Var(value="queryable")
+        innser_select_triple = (Var(value="focus_node"), queryable_var, Var(value="queryable_value"))
+        subselect_kwargs["inner_select_tssp_list"].append(TriplesSameSubjectPath.from_spo(*innser_select_triple))
+        subselect_kwargs["inner_select_vars"] = [queryable_var]
+        construct_triple = (queryable_var, IRI(value=RDF.type), IRI(value="http://www.opengis.net/def/rel/ogc/1.0/Queryable"))
+        construct_tss_list = [TriplesSameSubject.from_spo(*construct_triple)]
         query = PrezQueryConstructor(
             construct_tss_list=construct_tss_list,
-            profile_triples=tssp_list,
+            profile_triples=profile_nodeshape.tssp_list,
+            **subselect_kwargs,
+        ).to_string()
+        queries.append(query)
+    elif not collectionId:  # list Feature Collections
+        query = PrezQueryConstructor(
+            construct_tss_list=construct_tss_list,
+            profile_triples=profile_nodeshape.tssp_list,
             **subselect_kwargs,
         ).to_string()
         queries.append(query)
     else:  # list items in a Feature Collection
-
         # add inbound links - not currently possible via profiles
         opt_inbound_gpnt = await _add_inbound_triple_pattern_match(construct_tss_list)
         profile_nodeshape.gpnt_list.append(opt_inbound_gpnt)
@@ -215,6 +219,7 @@ async def ogc_features_listing_function(
     annotations_graph = await return_annotated_rdf(item_graph, data_repo, system_repo)
 
     if selected_mediatype == "application/json":
+        #TODO add logic here to check if it's queryables, if so, return different model (to create)
         collections = create_collections_json(item_graph, annotations_graph, url_path, selected_mediatype)
         content = io.BytesIO(collections.model_dump_json(exclude_none=True).encode("utf-8"))
 
