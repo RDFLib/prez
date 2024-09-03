@@ -32,5 +32,5 @@ ogcfeat:queryables-global
 
 ogcfeat:queryables-local
     a ont:ListingEndpoint ;
-    ont:relevantShapes ex:Queryables ;
+    ont:relevantShapes ex:Feature ;
 .

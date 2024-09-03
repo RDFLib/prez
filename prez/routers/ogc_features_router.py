@@ -6,7 +6,7 @@ from starlette.responses import StreamingResponse
 from prez.dependencies import (
     get_data_repo,
     cql_get_parser_dependency, get_url_path, get_ogc_features_mediatype, get_system_repo, get_endpoint_nodeshapes,
-    get_profile_nodeshape
+    get_profile_nodeshape, get_endpoint_uri_type
 )
 from prez.exceptions.model_exceptions import ClassNotFoundException, URINotFoundException, InvalidSPARQLQueryException, \
     PrefixNotFoundException, NoProfilesException
@@ -90,6 +90,7 @@ async def ogc_features_api(
     # responses=responses,
 )
 async def listings(
+        endpoint_uri_type: tuple = Depends(get_endpoint_uri_type),
         endpoint_nodeshape: NodeShape = Depends(get_endpoint_nodeshapes),
         profile_nodeshape: NodeShape = Depends(get_profile_nodeshape),
         url_path: str = Depends(get_url_path),
@@ -102,6 +103,7 @@ async def listings(
 ):
     try:
         content, headers = await ogc_features_listing_function(
+            endpoint_uri_type,
             endpoint_nodeshape,
             profile_nodeshape,
             mediatype,

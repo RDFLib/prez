@@ -45,6 +45,12 @@ def generate_landing_page_links(url_path):
             "rel": "data",
             "type": "application/json",
             "title": "Information about the feature collections"
+        },
+        {
+            "href": f"{settings.system_uri}{url_path}queryables",
+            "rel": "http://www.opengis.net/def/rel/ogc/1.0/queryables",
+            "type": "application/schema+json",
+            "title": "Global Queryables"
         }
     ]
 
@@ -128,3 +134,50 @@ class Collections(BaseModel):
         }
 
 
+########################################################################################################################
+# Queryables
+
+from pydantic import BaseModel, Field, AnyUrl, constr
+from typing import Optional, List, Union, Literal
+from enum import Enum
+
+class GeometryType(str, Enum):
+    POINT = "Point"
+    LINESTRING = "LineString"
+    POLYGON = "Polygon"
+    MULTIPOINT = "MultiPoint"
+    MULTILINESTRING = "MultiLineString"
+    MULTIPOLYGON = "MultiPolygon"
+    GEOMETRYCOLLECTION = "GeometryCollection"
+
+class QueryableProperty(BaseModel):
+    title: Optional[str] = Field(None, description="Human readable title of the queryable")
+    description: Optional[str] = Field(None, description="Description of the queryable")
+    type: Optional[str] = Field(default="string", description="Data type of the queryable")
+    minLength: Optional[int] = Field(None, description="Minimum length for string properties")
+    maxLength: Optional[int] = Field(None, description="Maximum length for string properties")
+    enum: Optional[List[Union[str, int]]] = Field(None, description="Enumerated values")
+    pattern: Optional[str] = Field(None, description="Regex pattern for string properties")
+    multipleOf: Optional[float] = Field(None, description="Multiple of for numeric properties")
+    minimum: Optional[float] = Field(None, description="Minimum value for numeric properties")
+    exclusiveMinimum: Optional[float] = Field(None, description="Exclusive minimum for numeric properties")
+    maximum: Optional[float] = Field(None, description="Maximum value for numeric properties")
+    exclusiveMaximum: Optional[float] = Field(None, description="Exclusive maximum for numeric properties")
+    format: Optional[Literal["date-time", "date", "time", "duration"]] = Field(None, description="Format for temporal properties")
+    items: Optional[Union[List[str], List[int]]] = Field(None, description="Items for array properties")
+
+class SpatialQueryableProperty(QueryableProperty):
+    type: Literal["object"] = "object"
+    geometryType: GeometryType = Field(..., description="Type of geometry")
+    schema: AnyUrl = Field(..., description="URL to the GeoJSON schema for the geometry type")
+
+class Queryables(BaseModel):
+    schema: Literal["https://json-schema.org/draft/2019-09/schema", "http://json-schema.org/draft-07/schema#"] = Field(
+        default="https://json-schema.org/draft/2019-09/schema",
+        alias="$schema"
+    )
+    id: str = Field(..., alias="$id", description="URI of the resource without query parameters")
+    type: Literal["object"] = "object"
+    title: Optional[str] = Field(None, description="Title of the schema")
+    description: Optional[str] = Field(None, description="Description of the schema")
+    properties: dict[str, Union[QueryableProperty, SpatialQueryableProperty]] = Field(..., description="Queryable properties")

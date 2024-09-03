@@ -15,10 +15,11 @@ from sparql_grammar_pydantic import IRI, Var, TriplesSameSubject, TriplesSameSub
 from prez.cache import endpoints_graph_cache
 from prez.config import settings
 from prez.models.ogc_features import Collection, Link, Collections
-from prez.reference_data.prez_ns import PREZ, ALTREXT, ONT
+from prez.reference_data.prez_ns import PREZ, ALTREXT, ONT, OGCFEAT
 from prez.renderers.renderer import return_from_graph, return_annotated_rdf
 from prez.services.connegp_service import RDF_MEDIATYPES
 from prez.services.curie_functions import get_uri_for_curie_id, get_curie_id_for_uri
+from prez.services.generate_queryables import generate_queryables_json
 from prez.services.link_generation import add_prez_links
 from prez.services.query_generation.count import CountQuery
 from prez.services.query_generation.shacl import NodeShape
@@ -126,6 +127,7 @@ async def listing_function(
 
 
 async def ogc_features_listing_function(
+        endpoint_uri_type,
         endpoint_nodeshape,
         profile_nodeshape,
         selected_mediatype,
@@ -150,7 +152,7 @@ async def ogc_features_listing_function(
         construct_tss_list.extend(profile_nodeshape.tss_list)
 
     queries = []
-    if url_path.split("/")[-1] == "queryables":
+    if endpoint_uri_type[0] in [OGCFEAT["queryables-local"], OGCFEAT["queryables-global"]]:
         queryable_var = Var(value="queryable")
         innser_select_triple = (Var(value="focus_node"), queryable_var, Var(value="queryable_value"))
         subselect_kwargs["inner_select_tssp_list"].append(TriplesSameSubjectPath.from_spo(*innser_select_triple))
@@ -219,9 +221,12 @@ async def ogc_features_listing_function(
     annotations_graph = await return_annotated_rdf(item_graph, data_repo, system_repo)
 
     if selected_mediatype == "application/json":
-        #TODO add logic here to check if it's queryables, if so, return different model (to create)
-        collections = create_collections_json(item_graph, annotations_graph, url_path, selected_mediatype)
-        content = io.BytesIO(collections.model_dump_json(exclude_none=True).encode("utf-8"))
+        if endpoint_uri_type[0] in [OGCFEAT["queryables-local"], OGCFEAT["queryables-global"]]:
+            queryables = generate_queryables_json(item_graph, annotations_graph, url_path, endpoint_uri_type[0])
+            content = io.BytesIO(queryables.model_dump_json(exclude_none=True, by_alias=True).encode("utf-8"))
+        else:
+            collections = create_collections_json(item_graph, annotations_graph, url_path, selected_mediatype)
+            content = io.BytesIO(collections.model_dump_json(exclude_none=True).encode("utf-8"))
 
     elif selected_mediatype == "application/geo+json":
         geojson = convert(item_graph, do_validate=False)
