@@ -17,7 +17,8 @@ from prez.cache import (
     annotations_repo,
 )
 from prez.config import settings
-from prez.models.query_params import ALLOWED_OGC_FEATURES_INSTANCE_MEDIA_TYPES, ALLOWED_OGC_FEATURES_COLLECTIONS_MEDIA_TYPES
+from prez.models.query_params import ALLOWED_OGC_FEATURES_INSTANCE_MEDIA_TYPES, \
+    ALLOWED_OGC_FEATURES_COLLECTIONS_MEDIA_TYPES
 from prez.reference_data.prez_ns import ALTREXT, ONT, EP, OGCE, OGCFEAT
 from prez.repositories import PyoxigraphRepo, RemoteSparqlRepo, OxrdflibRepo, Repo
 from prez.services.classes import get_classes_single

@@ -1,8 +1,10 @@
-from typing import List, Optional
+from typing import List
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
 from prez.config import settings
+
 
 ########################################################################################################################
 # Landing Page
@@ -29,9 +31,15 @@ def generate_landing_page_links(url_path):
             "title": "this document",
         },
         {
-            "href": f"{settings.system_uri}{url_path}docs",
+            "href": f"{settings.system_uri}{url_path}openapi.json",
             "rel": "service-desc",
             "type": "application/vnd.oai.openapi+json;version=3.1",
+            "title": "the API definition",
+        },
+        {
+            "href": f"{settings.system_uri}{url_path}docs",
+            "rel": "service-desc",
+            "type": "text/html",
             "title": "the API definition",
         },
         {
@@ -54,6 +62,7 @@ def generate_landing_page_links(url_path):
         }
     ]
 
+
 ########################################################################################################################
 # Conformance
 
@@ -67,6 +76,7 @@ CONFORMANCE_CLASSES = [
     "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/html",
     "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson",
 ]
+
 
 ########################################################################################################################
 # Collection and Collections
@@ -137,9 +147,10 @@ class Collections(BaseModel):
 ########################################################################################################################
 # Queryables
 
-from pydantic import BaseModel, Field, AnyUrl, constr
+from pydantic import BaseModel, Field, AnyUrl
 from typing import Optional, List, Union, Literal
 from enum import Enum
+
 
 class GeometryType(str, Enum):
     POINT = "Point"
@@ -149,6 +160,7 @@ class GeometryType(str, Enum):
     MULTILINESTRING = "MultiLineString"
     MULTIPOLYGON = "MultiPolygon"
     GEOMETRYCOLLECTION = "GeometryCollection"
+
 
 class QueryableProperty(BaseModel):
     title: Optional[str] = Field(None, description="Human readable title of the queryable")
@@ -163,13 +175,16 @@ class QueryableProperty(BaseModel):
     exclusiveMinimum: Optional[float] = Field(None, description="Exclusive minimum for numeric properties")
     maximum: Optional[float] = Field(None, description="Maximum value for numeric properties")
     exclusiveMaximum: Optional[float] = Field(None, description="Exclusive maximum for numeric properties")
-    format: Optional[Literal["date-time", "date", "time", "duration"]] = Field(None, description="Format for temporal properties")
+    format: Optional[Literal["date-time", "date", "time", "duration"]] = Field(None,
+                                                                               description="Format for temporal properties")
     items: Optional[Union[List[str], List[int]]] = Field(None, description="Items for array properties")
+
 
 class SpatialQueryableProperty(QueryableProperty):
     type: Literal["object"] = "object"
     geometryType: GeometryType = Field(..., description="Type of geometry")
     schema: AnyUrl = Field(..., description="URL to the GeoJSON schema for the geometry type")
+
 
 class Queryables(BaseModel):
     schema: Literal["https://json-schema.org/draft/2019-09/schema", "http://json-schema.org/draft-07/schema#"] = Field(
@@ -180,4 +195,5 @@ class Queryables(BaseModel):
     type: Literal["object"] = "object"
     title: Optional[str] = Field(None, description="Title of the schema")
     description: Optional[str] = Field(None, description="Description of the schema")
-    properties: dict[str, Union[QueryableProperty, SpatialQueryableProperty]] = Field(..., description="Queryable properties")
+    properties: dict[str, Union[QueryableProperty, SpatialQueryableProperty]] = Field(...,
+                                                                                      description="Queryable properties")

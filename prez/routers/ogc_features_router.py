@@ -1,6 +1,7 @@
-from typing import Optional
+from typing import Optional, List
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Query
+from sparql_grammar_pydantic import GraphPatternNotTriples
 from starlette.responses import StreamingResponse
 
 from prez.dependencies import (
@@ -24,6 +25,8 @@ from prez.services.objects import ogc_features_object_function
 from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.shacl import NodeShape
 
+ALLOWED_METHODS: List[str] = ["GET", "HEAD", "OPTIONS"]
+
 features_subapi = FastAPI(
     title="OGC Features API",
     exception_handlers={
@@ -40,8 +43,10 @@ features_subapi = FastAPI(
 features_subapi.include_router(conformance_router)
 
 
-@features_subapi.get(
-    "/", summary="OGC Features API"
+@features_subapi.api_route(
+    "/",
+    summary="OGC Features API",
+    methods=ALLOWED_METHODS,
 )
 async def ogc_features_api(
         url_path: str = Depends(get_url_path),
@@ -61,33 +66,26 @@ async def ogc_features_api(
 # 2: /features/collections/{collectionId}/items
 ########################################################################################################################
 
-@features_subapi.get(
+
+@features_subapi.api_route(
     "/queryables",
-    # summary="Item Listing",
+    methods=ALLOWED_METHODS,
     name=OGCFEAT["queryables-global"],
-    # openapi_extra=openapi_extras.get("item-listing"),
-    # responses=responses,
 )
-@features_subapi.get(
+@features_subapi.api_route(
     "/collections",
-    # summary="Collection Listing",
+    methods=ALLOWED_METHODS,
     name=OGCFEAT["feature-collections"],
-    # openapi_extra=openapi_extras.get("collection-listing"),
-    # responses=responses,
 )
-@features_subapi.get(
+@features_subapi.api_route(
     "/collections/{featureCollectionId}/items",
-    # summary="Item Listing",
+    methods=ALLOWED_METHODS,
     name=OGCFEAT["features"],
-    # openapi_extra=openapi_extras.get("item-listing"),
-    # responses=responses,
 )
-@features_subapi.get(
+@features_subapi.api_route(
     "/collections/{featureCollectionId}/queryables",
-    # summary="Item Listing",
+    methods=ALLOWED_METHODS,
     name=OGCFEAT["queryables-local"],
-    # openapi_extra=openapi_extras.get("item-listing"),
-    # responses=responses,
 )
 async def listings(
         endpoint_uri_type: tuple = Depends(get_endpoint_uri_type),
@@ -129,23 +127,15 @@ async def listings(
 # 3: /features/collections/{collectionId}/items/{featureId}
 ########################################################################################################################
 
-
-@features_subapi.get(
-    path="/object", summary="Object", name=EP["system/object"], responses=responses
-)
-@features_subapi.get(
+@features_subapi.api_route(
     path="/collections/{featureCollectionId}",
-    # summary="Collection Object",
+    methods=ALLOWED_METHODS,
     name=OGCFEAT["feature-collection"],
-    # openapi_extra=openapi_extras.get("collection-object"),
-    # responses=responses,
 )
-@features_subapi.get(
+@features_subapi.api_route(
     path="/collections/{featureCollectionId}/items/{featureId}",
-    # summary="Item Object",
+    methods=ALLOWED_METHODS,
     name=OGCFEAT["feature"],
-    # openapi_extra=openapi_extras.get("item-object"),
-    # responses=responses,
 )
 async def objects(
         mediatype: str = Depends(get_ogc_features_mediatype),

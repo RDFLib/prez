@@ -1,6 +1,8 @@
+from rdflib import Literal
+
 from prez.models.ogc_features import QueryableProperty, Queryables
 from prez.reference_data.prez_ns import PREZ, OGCFEAT
-
+from prez.config import settings
 
 def generate_queryables_json(item_graph, annotations_graph, url_path, endpoint_uri):
     queryable_props = {}
@@ -16,7 +18,7 @@ def generate_queryables_json(item_graph, annotations_graph, url_path, endpoint_u
         title = "Local Queryables"
         description = "Local queryable properties for the collection in the OGC Features API."
     queryable_params = {
-        "$id": url_path,
+        "$id": f"{settings.system_uri}{url_path}",
         "title": title,
         "description": description,
         "properties": queryable_props

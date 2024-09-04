@@ -85,7 +85,7 @@ class CQLParser:
         self.inner_select_gpnt_list = gpnt_list
 
     def parse_logical_operators(
-        self, element, existing_ggps=None
+            self, element, existing_ggps=None
     ) -> Generator[GroupGraphPatternSub, None, None]:
         operator = element.get(str(CQL.operator))[0].get("@value")
         args = element.get(str(CQL.args))
@@ -247,7 +247,7 @@ class CQLParser:
         coordinates, geom_type = self._extract_spatial_info(coordinates_list, args)
 
         if coordinates:
-            wkt = self.get_wkt_from_coords(coordinates, geom_type)
+            wkt = get_wkt_from_coords(coordinates, geom_type)
             prop = args[0].get(str(CQL.property))[0].get("@id")
             if prop == 'http://example.com/geometry':
                 subject = Var(value="focus_node")
@@ -277,15 +277,6 @@ class CQLParser:
             filter_gpnt = GraphPatternNotTriples(content=spatial_filter)
             ggps.add_pattern(filter_gpnt)
         yield ggps
-
-    def get_wkt_from_coords(self, coordinates, geom_type):
-        shapely_spatial_class = cql_to_shapely_mapping.get(geom_type)
-        if not shapely_spatial_class:
-            raise NotImplementedError(
-                f'Geometry Class for "{geom_type}" not found in Shapely.'
-            )
-        wkt = shapely_spatial_class(coordinates).wkt
-        return wkt
 
     def _handle_in(self, args, existing_ggps=None):
         self.var_counter += 1
@@ -338,12 +329,32 @@ class CQLParser:
         if bbox_list:
             geom_type = "Polygon"
             bbox_values = [item["@value"] for item in bbox_list]
-            if len(bbox_values) == 4:
-                coordinates = [
-                    (bbox_values[0], bbox_values[1]),
-                    (bbox_values[0], bbox_values[3]),
-                    (bbox_values[2], bbox_values[3]),
-                    (bbox_values[2], bbox_values[1]),
-                    (bbox_values[0], bbox_values[1]),
-                ]
+            coordinates = format_coordinates_as_wkt(bbox_values, coordinates)
         return coordinates, geom_type
+
+
+def format_coordinates_as_wkt(bbox_values):
+    if len(bbox_values) == 4:
+        coordinates = [
+            (bbox_values[0], bbox_values[1]),
+            (bbox_values[0], bbox_values[3]),
+            (bbox_values[2], bbox_values[3]),
+            (bbox_values[2], bbox_values[1]),
+            (bbox_values[0], bbox_values[1]),
+        ]
+    else:
+        if len(bbox_values) == 6:
+            raise NotImplementedError("XYZ bbox not yet supported.")
+        else:
+            raise ValueError(f"Invalid number of values in bbox ({len(bbox_values)}).")
+    return coordinates
+
+
+def get_wkt_from_coords(coordinates, geom_type: str):
+    shapely_spatial_class = cql_to_shapely_mapping.get(geom_type)
+    if not shapely_spatial_class:
+        raise NotImplementedError(
+            f'Geometry Class for "{geom_type}" not found in Shapely.'
+        )
+    wkt = shapely_spatial_class(coordinates).wkt
+    return wkt

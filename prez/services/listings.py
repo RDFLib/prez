@@ -157,7 +157,8 @@ async def ogc_features_listing_function(
         innser_select_triple = (Var(value="focus_node"), queryable_var, Var(value="queryable_value"))
         subselect_kwargs["inner_select_tssp_list"].append(TriplesSameSubjectPath.from_spo(*innser_select_triple))
         subselect_kwargs["inner_select_vars"] = [queryable_var]
-        construct_triple = (queryable_var, IRI(value=RDF.type), IRI(value="http://www.opengis.net/def/rel/ogc/1.0/Queryable"))
+        construct_triple = (
+        queryable_var, IRI(value=RDF.type), IRI(value="http://www.opengis.net/def/rel/ogc/1.0/Queryable"))
         construct_tss_list = [TriplesSameSubject.from_spo(*construct_triple)]
         query = PrezQueryConstructor(
             construct_tss_list=construct_tss_list,
@@ -174,7 +175,7 @@ async def ogc_features_listing_function(
         queries.append(query)
     else:  # list items in a Feature Collection
         # add inbound links - not currently possible via profiles
-        opt_inbound_gpnt = await _add_inbound_triple_pattern_match(construct_tss_list)
+        opt_inbound_gpnt = _add_inbound_triple_pattern_match(construct_tss_list)
         profile_nodeshape.gpnt_list.append(opt_inbound_gpnt)
 
         feature_list_query = PrezQueryConstructor(
@@ -216,7 +217,6 @@ async def ogc_features_listing_function(
         content = io.BytesIO(json.dumps(queries_dict).encode("utf-8"))
         return content, link_headers
 
-
     item_graph, _ = await data_repo.send_queries(queries, [])
     annotations_graph = await return_annotated_rdf(item_graph, data_repo, system_repo)
 
@@ -240,7 +240,7 @@ async def ogc_features_listing_function(
     return content, link_headers
 
 
-async def _add_inbound_triple_pattern_match(construct_tss_list):
+def _add_inbound_triple_pattern_match(construct_tss_list):
     triple = (Var(value="inbound_s"), Var(value="inbound_p"), Var(value="focus_node"))
     construct_tss_list.append(TriplesSameSubject.from_spo(*triple))
     inbound_tssp_list = [TriplesSameSubjectPath.from_spo(*triple)]

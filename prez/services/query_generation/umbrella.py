@@ -25,6 +25,7 @@ from sparql_grammar_pydantic import (
 )
 
 from prez.models.query_params import QueryParams
+from prez.services.query_generation.bbox_filter import generate_bbox_filter_gpnt
 from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQuery
 from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.search import SearchQueryRegex
@@ -179,6 +180,7 @@ def merge_listing_query_grammar_inputs(
     per_page = query_params.per_page
     order_by = query_params.order_by
     order_by_direction = query_params.order_by_direction
+    bbox = query_params.bbox
     """
     Merges the inputs for a query grammar.
     """
@@ -236,6 +238,11 @@ def merge_listing_query_grammar_inputs(
     if endpoint_nodeshape:
         kwargs["inner_select_tssp_list"].extend(endpoint_nodeshape.tssp_list)
         kwargs["inner_select_gpnt"].extend(endpoint_nodeshape.gpnt_list)
+
+    if bbox:
+        gpnt, tssp_list = generate_bbox_filter_gpnt(bbox)
+        kwargs["inner_select_gpnt"].append(gpnt)
+        kwargs["inner_select_tssp_list"].extend(tssp_list)
 
     return kwargs
 
