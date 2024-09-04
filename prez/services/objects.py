@@ -5,8 +5,8 @@ import time
 from pathlib import Path
 from urllib.parse import urlencode
 
-import rdf2geojson
 from fastapi.responses import PlainTextResponse
+from rdf2geojson import convert
 from rdflib import RDF, URIRef
 from sparql_grammar_pydantic import TriplesSameSubject, IRI, Var, TriplesSameSubjectPath
 
@@ -16,7 +16,7 @@ from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import ALTREXT, ONT, PREZ
 from prez.renderers.renderer import return_from_graph, return_annotated_rdf
 from prez.services.connegp_service import RDF_MEDIATYPES
-from prez.services.curie_functions import get_uri_for_curie_id
+from prez.services.curie_functions import get_uri_for_curie_id, get_curie_id_for_uri
 from prez.services.link_generation import add_prez_links
 from prez.services.listings import listing_function
 from prez.services.query_generation.umbrella import (
@@ -127,7 +127,7 @@ async def ogc_features_object_function(
         collection = create_collection_json(collectionId, collection_uri, annotations_graph, url_path)
         content = io.BytesIO(collection.model_dump_json(exclude_none=True).encode("utf-8"))
     elif selected_mediatype == "application/geo+json":
-        geojson = rdf2geojson.convert(item_graph, do_validate=False)
+        geojson = convert(g=item_graph, do_validate=False, iri2id=get_curie_id_for_uri)
         content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
     else:
         content = io.BytesIO(

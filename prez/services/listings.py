@@ -229,7 +229,7 @@ async def ogc_features_listing_function(
             content = io.BytesIO(collections.model_dump_json(exclude_none=True).encode("utf-8"))
 
     elif selected_mediatype == "application/geo+json":
-        geojson = convert(item_graph, do_validate=False)
+        geojson = convert(g=item_graph, do_validate=False, iri2id=get_curie_id_for_uri)
         content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
 
     # TODO append to geojson once library imported
