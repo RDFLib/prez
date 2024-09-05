@@ -2,6 +2,7 @@ import copy
 import io
 import json
 import logging
+import time
 from urllib.parse import urlencode
 
 from fastapi.responses import PlainTextResponse
@@ -12,7 +13,7 @@ from sparql_grammar_pydantic import IRI, Var, TriplesSameSubject, TriplesSameSub
     GraphPatternNotTriples, Bind, Expression, IRIOrFunction, OptionalGraphPattern, GroupGraphPattern, \
     GroupGraphPatternSub, TriplesBlock
 
-from prez.cache import endpoints_graph_cache
+from prez.cache import endpoints_graph_cache, prefix_graph
 from prez.config import settings
 from prez.models.ogc_features import Collection, Link, Collections
 from prez.reference_data.prez_ns import PREZ, ALTREXT, ONT, OGCFEAT
@@ -132,12 +133,13 @@ async def ogc_features_listing_function(
         profile_nodeshape,
         selected_mediatype,
         url_path,
-        collectionId,
         data_repo,
         system_repo,
         cql_parser,
         query_params,
+        **path_params,
 ):
+    collectionId = path_params.get("collectionId")
     subselect_kwargs = merge_listing_query_grammar_inputs(
         endpoint_nodeshape=endpoint_nodeshape,
         cql_parser=cql_parser,

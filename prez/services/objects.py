@@ -10,6 +10,7 @@ from rdf2geojson import convert
 from rdflib import RDF, URIRef
 from sparql_grammar_pydantic import TriplesSameSubject, IRI, Var, TriplesSameSubjectPath
 
+from prez.cache import prefix_graph
 from prez.config import settings
 from prez.models.ogc_features import Link, Collection
 from prez.models.query_params import QueryParams
@@ -94,11 +95,12 @@ async def object_function(
 async def ogc_features_object_function(
         selected_mediatype,
         url_path,
-        collectionId,
-        featureId,
         data_repo,
         system_repo,
+        **path_params,
 ):
+    collectionId = path_params.get("collectionId")
+    featureId = path_params.get("featureId")
     collection_uri = await get_uri_for_curie_id(collectionId)
     if featureId is None:  # feature collection
         collection_iri = IRI(value=collection_uri)

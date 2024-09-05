@@ -7,7 +7,7 @@ from starlette.responses import StreamingResponse
 from prez.dependencies import (
     get_data_repo,
     cql_get_parser_dependency, get_url_path, get_ogc_features_mediatype, get_system_repo, get_endpoint_nodeshapes,
-    get_profile_nodeshape, get_endpoint_uri_type
+    get_profile_nodeshape, get_endpoint_uri_type, get_ogc_features_path_params
 )
 from prez.exceptions.model_exceptions import ClassNotFoundException, URINotFoundException, InvalidSPARQLQueryException, \
     PrefixNotFoundException, NoProfilesException
@@ -15,7 +15,7 @@ from prez.models.ogc_features import generate_landing_page_links, Link, OGCFeatu
 from prez.models.query_params import OGCFeaturesQueryParams
 from prez.reference_data.prez_ns import EP, OGCFEAT
 from prez.repositories import Repo
-from prez.routers.api_extras_examples import responses
+from prez.routers.api_extras_examples import responses, ogc_features_openapi_extras
 from prez.routers.conformance import router as conformance_router
 from prez.services.exception_catchers import catch_400, catch_404, catch_500, catch_class_not_found_exception, \
     catch_uri_not_found_exception, catch_invalid_sparql_query, catch_prefix_not_found_exception, \
@@ -78,22 +78,24 @@ async def ogc_features_api(
     name=OGCFEAT["feature-collections"],
 )
 @features_subapi.api_route(
-    "/collections/{featureCollectionId}/items",
+    "/collections/{collectionId}/items",
     methods=ALLOWED_METHODS,
     name=OGCFEAT["features"],
+    openapi_extra=ogc_features_openapi_extras.get("feature-collection"),
 )
 @features_subapi.api_route(
-    "/collections/{featureCollectionId}/queryables",
+    "/collections/{collectionId}/queryables",
     methods=ALLOWED_METHODS,
     name=OGCFEAT["queryables-local"],
+    openapi_extra=ogc_features_openapi_extras.get("feature-collection"),
 )
-async def listings(
+async def listings_with_feature_collection(
         endpoint_uri_type: tuple = Depends(get_endpoint_uri_type),
         endpoint_nodeshape: NodeShape = Depends(get_endpoint_nodeshapes),
         profile_nodeshape: NodeShape = Depends(get_profile_nodeshape),
         url_path: str = Depends(get_url_path),
         mediatype: str = Depends(get_ogc_features_mediatype),
-        featureCollectionId: Optional[str] = None,
+        path_params: dict = Depends(get_ogc_features_path_params),
         query_params: OGCFeaturesQueryParams = Depends(),
         cql_parser: CQLParser = Depends(cql_get_parser_dependency),
         data_repo: Repo = Depends(get_data_repo),
@@ -106,11 +108,11 @@ async def listings(
             profile_nodeshape,
             mediatype,
             url_path,
-            featureCollectionId,
             data_repo,
             system_repo,
             cql_parser,
             query_params,
+            **path_params,
         )
     except Exception as e:
         raise e
@@ -122,26 +124,26 @@ async def listings(
 ########################################################################################################################
 # Object endpoints
 
-# 1: /object?uri=<uri>
-# 2: /features/collections/{collectionId}
-# 3: /features/collections/{collectionId}/items/{featureId}
+# 1: /features/collections/{collectionId}
+# 2: /features/collections/{collectionId}/items/{featureId}
 ########################################################################################################################
 
 @features_subapi.api_route(
-    path="/collections/{featureCollectionId}",
+    path="/collections/{collectionId}",
     methods=ALLOWED_METHODS,
     name=OGCFEAT["feature-collection"],
+    openapi_extra=ogc_features_openapi_extras.get("feature-collection"),
 )
 @features_subapi.api_route(
-    path="/collections/{featureCollectionId}/items/{featureId}",
+    path="/collections/{collectionId}/items/{featureId}",
     methods=ALLOWED_METHODS,
     name=OGCFEAT["feature"],
+    openapi_extra=ogc_features_openapi_extras.get("feature"),
 )
 async def objects(
         mediatype: str = Depends(get_ogc_features_mediatype),
         url_path: str = Depends(get_url_path),
-        featureCollectionId: str = None,
-        featureId: Optional[str] = None,
+        path_params: dict = Depends(get_ogc_features_path_params),
         data_repo: Repo = Depends(get_data_repo),
         system_repo: Repo = Depends(get_system_repo),
 ):
@@ -149,13 +151,12 @@ async def objects(
         content, headers = await ogc_features_object_function(
             mediatype,
             url_path,
-            featureCollectionId,
-            featureId,
             data_repo,
             system_repo,
+            **path_params,
         )
-    except Exception:
-        raise
+    except Exception as e:
+        raise e
     return StreamingResponse(
         content=content, media_type=mediatype, headers=headers
     )

@@ -16,7 +16,7 @@ from prez.dependencies import (
 from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import EP, ONT, OGCE
 from prez.repositories import Repo
-from prez.routers.api_extras_examples import responses, cql_examples, openapi_extras
+from prez.routers.api_extras_examples import responses, cql_examples, ogc_extended_openapi_extras
 from prez.services.connegp_service import NegotiatedPMTs
 from prez.services.listings import listing_function
 from prez.services.objects import object_function
@@ -46,28 +46,28 @@ router = APIRouter(tags=["ogcprez"])
     "/catalogs/{catalogId}/collections",
     summary="Collection Listing",
     name=OGCE["collection-listing"],
-    openapi_extra=openapi_extras.get("collection-listing"),
+    openapi_extra=ogc_extended_openapi_extras.get("collection-listing"),
     responses=responses,
 )
 @router.get(
-    "/catalogs/{catalogId}/collections/{collectionId}/items",
+    "/catalogs/{catalogId}/collections/{recordsCollectionId}/items",
     summary="Item Listing",
     name=OGCE["item-listing"],
-    openapi_extra=openapi_extras.get("item-listing"),
+    openapi_extra=ogc_extended_openapi_extras.get("item-listing"),
     responses=responses,
 )
 @router.get(
     "/concept-hierarchy/{parent_curie}/top-concepts",
     summary="Top Concepts",
     name=OGCE["top-concepts"],
-    openapi_extra=openapi_extras.get("top-concepts"),
+    openapi_extra=ogc_extended_openapi_extras.get("top-concepts"),
     responses=responses,
 )
 @router.get(
     "/concept-hierarchy/{parent_curie}/narrowers",
     summary="Narrowers",
     name=OGCE["narrowers"],
-    openapi_extra=openapi_extras.get("narrowers"),
+    openapi_extra=ogc_extended_openapi_extras.get("narrowers"),
     responses=responses,
 )
 async def listings(
@@ -140,8 +140,8 @@ async def cql_post_listings(
 # 1: /object?uri=<uri>
 # 2: /profiles/{profile_curie}
 # 3: /catalogs/{catalogId}
-# 4: /catalogs/{catalogId}/collections/{collectionId}
-# 5: /catalogs/{catalogId}/collections/{collectionId}/items/{itemId}
+# 4: /catalogs/{catalogId}/collections/{recordsCollectionId}
+# 5: /catalogs/{catalogId}/collections/{recordsCollectionId}/items/{itemId}
 ########################################################################################################################
 
 
@@ -152,28 +152,28 @@ async def cql_post_listings(
     path="/profiles/{profile_curie}",
     summary="Profile",
     name=EP["system/profile-object"],
-    openapi_extra=openapi_extras.get("profile-object"),
+    openapi_extra=ogc_extended_openapi_extras.get("profile-object"),
     responses=responses,
 )
 @router.get(
     path="/catalogs/{catalogId}",
     summary="Catalog Object",
     name=OGCE["catalog-object"],
-    openapi_extra=openapi_extras.get("catalog-object"),
+    openapi_extra=ogc_extended_openapi_extras.get("catalog-object"),
     responses=responses,
 )
 @router.get(
-    path="/catalogs/{catalogId}/collections/{collectionId}",
+    path="/catalogs/{catalogId}/collections/{recordsCollectionId}",
     summary="Collection Object",
     name=OGCE["collection-object"],
-    openapi_extra=openapi_extras.get("collection-object"),
+    openapi_extra=ogc_extended_openapi_extras.get("collection-object"),
     responses=responses,
 )
 @router.get(
-    path="/catalogs/{catalogId}/collections/{collectionId}/items/{itemId}",
+    path="/catalogs/{catalogId}/collections/{recordsCollectionId}/items/{itemId}",
     summary="Item Object",
     name=OGCE["item-object"],
-    openapi_extra=openapi_extras.get("item-object"),
+    openapi_extra=ogc_extended_openapi_extras.get("item-object"),
     responses=responses,
 )
 async def objects(

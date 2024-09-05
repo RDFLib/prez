@@ -2,8 +2,6 @@ from aiocache import caches
 from pyoxigraph.pyoxigraph import Store
 from rdflib import Graph, ConjunctiveGraph, Dataset
 
-from prez.repositories import PyoxigraphRepo
-
 profiles_graph_cache = Dataset()
 profiles_graph_cache.bind("prez", "https://prez.dev/")
 
@@ -26,7 +24,6 @@ store = Store()
 system_store = Store()
 
 annotations_store = Store()
-annotations_repo = PyoxigraphRepo(annotations_store)
 
 oxrdflib_store = Graph(store="Oxigraph")
 

@@ -13,8 +13,7 @@ from prez.cache import (
     system_store,
     profiles_graph_cache,
     endpoints_graph_cache,
-    annotations_store,
-    annotations_repo,
+    annotations_store
 )
 from prez.config import settings
 from prez.models.query_params import ALLOWED_OGC_FEATURES_INSTANCE_MEDIA_TYPES, \
@@ -89,7 +88,7 @@ async def get_annotations_repo():
     """
     A pyoxigraph Store with labels, descriptions etc. from Context Ontologies
     """
-    return annotations_repo
+    return PyoxigraphRepo(annotations_store)
 
 
 async def load_local_data_to_oxigraph(store: Store):
@@ -468,6 +467,12 @@ async def get_endpoint_uri(
         request: Request,
 ):
     return URIRef(request.scope.get("route").name)
+
+
+async def get_ogc_features_path_params(
+        request: Request,
+):
+    return request.path_params
 
 
 async def get_ogc_features_mediatype(
