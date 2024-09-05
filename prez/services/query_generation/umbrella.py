@@ -25,9 +25,10 @@ from sparql_grammar_pydantic import (
 )
 
 from prez.models.query_params import QueryParams
-from prez.services.query_generation.bbox_filter import generate_bbox_filter_gpnt
+from prez.services.query_generation.bbox_filter import generate_bbox_filter
 from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQuery
 from prez.services.query_generation.cql import CQLParser
+from prez.services.query_generation.datetime_filter import generate_datetime_filter
 from prez.services.query_generation.search import SearchQueryRegex
 from prez.services.query_generation.shacl import NodeShape
 
@@ -181,6 +182,8 @@ def merge_listing_query_grammar_inputs(
     order_by = query_params.order_by
     order_by_direction = query_params.order_by_direction
     bbox = query_params.bbox
+    datetime = query_params.datetime
+    filter_crs = query_params.filter_crs
     """
     Merges the inputs for a query grammar.
     """
@@ -240,27 +243,13 @@ def merge_listing_query_grammar_inputs(
         kwargs["inner_select_gpnt"].extend(endpoint_nodeshape.gpnt_list)
 
     if bbox:
-        gpnt, tssp_list = generate_bbox_filter_gpnt(bbox)
+        gpnt, tssp_list = generate_bbox_filter(bbox, filter_crs)
         kwargs["inner_select_gpnt"].append(gpnt)
         kwargs["inner_select_tssp_list"].extend(tssp_list)
 
+    if datetime:
+        gpnt_list, tssp_list = generate_datetime_filter(*datetime)
+        kwargs["inner_select_gpnt"].extend(gpnt_list)
+        kwargs["inner_select_tssp_list"].extend(tssp_list)
+
     return kwargs
-
-
-async def create_triples_for_props(focus_node, prop_terms, function):
-    """
-    Generates triple patterns to select properties for OGC Features queries.
-    TriplesSameSubjectPath are used in the "body" of queries i.e. within WHERE clauses.
-    TriplesSameSubject are used in the "construct" part of queries i.e. within CONSTRUCT clauses.
-    """
-    function = TriplesSameSubjectPath if function == "tssp" else TriplesSameSubject
-    prop_triples_list = []
-    for i, prop in enumerate(prop_terms):
-        prop_triples_list.append(
-            function.from_spo(
-                subject=focus_node,
-                predicate=prop,
-                object=Var(value=f"var_{i}"),
-            )
-        )
-    return prop_triples_list

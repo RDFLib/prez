@@ -1,0 +1,10 @@
+{
+  "op": "=",
+  "args": [
+    {
+      "op": "Foo",
+      "args": [ { "property": "geometry" } ]
+    },
+    true
+  ]
+}

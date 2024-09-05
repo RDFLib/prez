@@ -23,7 +23,7 @@ class OGCFeaturesLandingPage(BaseModel):
 
 
 def generate_landing_page_links(url_path):
-    return [
+    link_dicts = [
         {
             "href": f"{settings.system_uri}{url_path}",
             "rel": "self",
@@ -38,7 +38,7 @@ def generate_landing_page_links(url_path):
         },
         {
             "href": f"{settings.system_uri}{url_path}docs",
-            "rel": "service-desc",
+            "rel": "service-doc",
             "type": "text/html",
             "title": "the API definition",
         },
@@ -61,6 +61,7 @@ def generate_landing_page_links(url_path):
             "title": "Global Queryables"
         }
     ]
+    return [Link(**link) for link in link_dicts]
 
 
 ########################################################################################################################
@@ -197,3 +198,16 @@ class Queryables(BaseModel):
     description: Optional[str] = Field(None, description="Description of the schema")
     properties: dict[str, Union[QueryableProperty, SpatialQueryableProperty]] = Field(...,
                                                                                       description="Queryable properties")
+
+
+########################################################################################################################
+# generate link headers
+
+def generate_link_header(links: List[Link]) -> str:
+    header_links = []
+    for link in links:
+        header_link = f'<{link.href}>; rel="{link.rel}"; type="{link.type}"'
+        if link.title is not None:
+            header_link += f'; title="{link.title}"'
+        header_links.append(header_link)
+    return ", ".join(header_links)

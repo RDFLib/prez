@@ -20,5 +20,14 @@
   },
   "type": {
     "@id": "sf:type"
+  },
+  "date": {
+    "@id": "cql:date"
+  },
+  "datetime": {
+      "@id": "cql:datetime"
+  },
+  "timestamp": {
+      "@id": "cql:timestamp"
   }
 }

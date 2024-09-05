@@ -63,10 +63,10 @@ ogc_extended_openapi_extras = {
 
 ogc_features_path_parameters = {
     "feature-collection": [
-        create_path_param("collectionId", "Collection ID.", "syn:68a782a8-d7fe-4b3e-8377-c76c9cc245cc")
+        create_path_param("collectionId", "Collection ID.", "ns4:9fcf7a21-681f-43fd-8a8f-b56dbe2f4660")
     ],
     "feature": [
-        create_path_param("collectionId", "Collection ID.", "syn:68a782a8-d7fe-4b3e-8377-c76c9cc245cc"),
+        create_path_param("collectionId", "Collection ID.", "ns4:9fcf7a21-681f-43fd-8a8f-b56dbe2f4660"),
         create_path_param("featureId", "Feature ID.", "ns3:2c8e292e-6eff-4a36-ad27-54fed2c1b422"),
     ],
 }

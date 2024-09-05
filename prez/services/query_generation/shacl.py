@@ -92,8 +92,9 @@ class NodeShape(Shape):
                 kind=self.kind,
                 focus_node=self.focus_node,
                 path_nodes=self.path_nodes,
+                shape_number=i,
             )
-            for ps_uri in self.propertyShapesURIs
+            for i, ps_uri in enumerate(self.propertyShapesURIs)
         ]
         self.hierarchy_level = next(
             self.graph.objects(self.uri, ONT.hierarchyLevel), None
@@ -175,7 +176,7 @@ class NodeShape(Shape):
             self.path_nodes = self.path_nodes | shape.path_nodes
             self.classes_at_len = self.classes_at_len | shape.classes_at_len
         # deduplicate
-        self.tssp_list = list(set(self.tssp_list))  #TODO requires re implementation of hash functions for classes
+        # self.tssp_list = list(set(self.tssp_list))  #TODO requires re implementation of hash functions for classes
 
     def _build_bnode_blocks(self):
         max_depth = int(self.bnode_depth)
@@ -247,6 +248,7 @@ class PropertyShape(Shape):
     kind: TypingLiteral["endpoint", "profile"]
     focus_node: Union[IRI, Var]
     # inputs
+    shape_number: int = 0
     property_paths: Optional[List[PropertyPath]] = None
     or_klasses: Optional[List[URIRef]] = None
     # outputs
@@ -326,7 +328,7 @@ class PropertyShape(Shape):
         if self.kind == "endpoint":
             path_or_prop = "path"
         elif self.kind == "profile":
-            path_or_prop = "prof"
+            path_or_prop = f"prof_{self.shape_number + 1}"
 
         # set up the path nodes - either from supplied values or set as variables
         total_individual_nodes = sum([len(i) for i in self.property_paths])

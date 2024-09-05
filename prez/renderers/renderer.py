@@ -6,6 +6,7 @@ import time
 from fastapi import status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
+from rdf2geojson import convert
 from rdflib import Graph, URIRef, RDF
 
 from prez.cache import prefix_graph
@@ -64,6 +65,13 @@ async def return_from_graph(
 
         except NotFoundError as err:
             raise HTTPException(status.HTTP_404_NOT_FOUND, str(err))
+
+    elif str(mediatype) == "application/geo+json":
+        geojson = convert(g=graph, do_validate=False, iri2id=get_curie_id_for_uri)
+        content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
+        return StreamingResponse(
+            content=content, media_type=mediatype
+        )
 
     else:
         if "anot+" in mediatype:

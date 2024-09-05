@@ -79,6 +79,8 @@ class Settings(BaseSettings):
         EP["system/profile-object"],
     ]
     enable_sparql_endpoint: bool = False
+    temporal_predicate: Optional[URIRef] = SDO.temporal
+    endpoint_to_template_query_filename: Optional[Dict[str, str]] = {}
 
     @field_validator("prez_version")
     @classmethod

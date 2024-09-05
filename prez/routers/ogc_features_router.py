@@ -2,12 +2,12 @@ from typing import Optional, List
 
 from fastapi import Depends, FastAPI, Query
 from sparql_grammar_pydantic import GraphPatternNotTriples
-from starlette.responses import StreamingResponse
+from starlette.responses import StreamingResponse, JSONResponse
 
 from prez.dependencies import (
     get_data_repo,
     cql_get_parser_dependency, get_url_path, get_ogc_features_mediatype, get_system_repo, get_endpoint_nodeshapes,
-    get_profile_nodeshape, get_endpoint_uri_type, get_ogc_features_path_params
+    get_profile_nodeshape, get_endpoint_uri_type, get_ogc_features_path_params, get_template_query
 )
 from prez.exceptions.model_exceptions import ClassNotFoundException, URINotFoundException, InvalidSPARQLQueryException, \
     PrefixNotFoundException, NoProfilesException
@@ -17,6 +17,7 @@ from prez.reference_data.prez_ns import EP, OGCFEAT
 from prez.repositories import Repo
 from prez.routers.api_extras_examples import responses, ogc_features_openapi_extras
 from prez.routers.conformance import router as conformance_router
+from prez.services.connegp_service import generate_link_headers
 from prez.services.exception_catchers import catch_400, catch_404, catch_500, catch_class_not_found_exception, \
     catch_uri_not_found_exception, catch_invalid_sparql_query, catch_prefix_not_found_exception, \
     catch_no_profiles_exception
@@ -52,11 +53,13 @@ async def ogc_features_api(
         url_path: str = Depends(get_url_path),
 ):
     links = generate_landing_page_links(url_path)
-    return OGCFeaturesLandingPage(
+    link_headers = generate_link_headers(links)
+    lp = OGCFeaturesLandingPage(
         title="OGC API - Features",
         description="This is a landing page for the OGC API - Features.",
-        links=[Link(**link) for link in links]
+        links=links
     )
+    return JSONResponse(content=lp.model_dump(), headers={"Content-Type": "application/json"} | link_headers)
 
 
 ########################################################################################################################
@@ -141,6 +144,7 @@ async def listings_with_feature_collection(
     openapi_extra=ogc_features_openapi_extras.get("feature"),
 )
 async def objects(
+        template_query: Optional[str] = Depends(get_template_query),
         mediatype: str = Depends(get_ogc_features_mediatype),
         url_path: str = Depends(get_url_path),
         path_params: dict = Depends(get_ogc_features_path_params),
@@ -149,6 +153,7 @@ async def objects(
 ):
     try:
         content, headers = await ogc_features_object_function(
+            template_query,
             mediatype,
             url_path,
             data_repo,

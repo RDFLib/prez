@@ -1,8 +1,9 @@
+from datetime import datetime
 from typing import Generator
 
 from pyld import jsonld
 from rdflib import URIRef, Namespace
-from rdflib.namespace import GEO, SH
+from rdflib.namespace import GEO
 from sparql_grammar_pydantic import (
     ArgList,
     FunctionCall,
@@ -32,6 +33,13 @@ from sparql_grammar_pydantic import (
     RDFLiteral,
     Filter,
     Constraint,
+    ConditionalAndExpression,
+    ValueLogical,
+    RelationalExpression,
+    NumericExpression,
+    AdditiveExpression,
+    MultiplicativeExpression,
+    UnaryExpression, BrackettedExpression, ConditionalOrExpression,
 )
 
 from prez.reference_data.cql.geo_function_mapping import (
@@ -41,9 +49,19 @@ from prez.reference_data.cql.geo_function_mapping import (
 
 CQL = Namespace("http://www.opengis.net/doc/IS/cql2/1.0/")
 
+SUPPORTED_CQL_TIME_OPERATORS = {"t_after", "t_before", "t_equals", "t_disjoint", "t_intersects"}
+
+
+# all CQL time operators
+# {"t_after", "t_before", "t_contains",
+#  "t_disjoint", "t_during", "t_equals",
+#  "t_finishedBy", "t_finishes", "t_intersects",
+#  "t_meets", "t_metBy", "t_overlappedBy",
+#  "t_overlaps", "t_startedBy", "t_starts"}
+
 
 class CQLParser:
-    def __init__(self, cql=None, context: dict = None, cql_json: dict = None):
+    def __init__(self, cql=None, context: dict = None, cql_json: dict = None, crs=None):
         self.ggps_inner_select = None
         self.inner_select_gpnt_list = None
         self.cql: dict = cql
@@ -55,6 +73,7 @@ class CQLParser:
         self.gpnt_list = []
         self.tss_list = []
         self.tssp_list = []
+        self.crs = crs
 
     def generate_jsonld(self):
         combined = {"@context": self.context, **self.cql}
@@ -130,6 +149,8 @@ class CQLParser:
             yield from self._handle_spatial(operator, args, ggps)
         elif operator == "in":
             yield from self._handle_in(args, ggps)
+        elif operator in SUPPORTED_CQL_TIME_OPERATORS:
+            yield from self._handle_temporal(operator, args, ggps)
         else:
             raise NotImplementedError(f"Operator {operator} not implemented.")
 
@@ -248,6 +269,7 @@ class CQLParser:
 
         if coordinates:
             wkt = get_wkt_from_coords(coordinates, geom_type)
+            wkt_with_crs = f"<{self.crs}> {wkt}"
             prop = args[0].get(str(CQL.property))[0].get("@id")
             if prop == 'http://example.com/geometry':
                 subject = Var(value="focus_node")
@@ -267,7 +289,7 @@ class CQLParser:
             )
             geom_2_exp = Expression.from_primary_expression(
                 primary_expression=PrimaryExpression(
-                    content=RDFLiteral(value=wkt, datatype=geom_2_datatype)
+                    content=RDFLiteral(value=wkt_with_crs, datatype=geom_2_datatype)
                 )
             )
             arg_list = ArgList(expressions=[geom_1_exp, geom_2_exp])
@@ -332,6 +354,35 @@ class CQLParser:
             coordinates = format_coordinates_as_wkt(bbox_values, coordinates)
         return coordinates, geom_type
 
+    def _handle_temporal(self, operator, args, existing_ggps=None):
+        ggps = existing_ggps if existing_ggps is not None else GroupGraphPatternSub()
+
+        assert len(args) == 2
+        prop_uri = date = None
+        for arg in args:
+            prop = arg.get(str(CQL.property))
+            if prop:
+                prop_uri = prop[0].get("@id")
+            date = arg.get(str(CQL.date)) or arg.get(str(CQL.datetime)) or arg.get(str(CQL.timestamp))
+            if date:
+                date = date[0].get("@value")
+
+        if operator == "t_before":
+            gpnt = create_temporal_filter_gpnt(datetime.fromisoformat(date), "<")
+        elif operator == "t_after":
+            gpnt = create_temporal_filter_gpnt(datetime.fromisoformat(date), ">")
+        elif operator == "t_equals":
+            gpnt = create_temporal_filter_gpnt(datetime.fromisoformat(date),
+                                               "=")  # potentially could do straight triple pattern matching
+        elif operator == "t_disjoint":
+            gpnt = create_temporal_or_gpnt(datetime.fromisoformat(date), "<", datetime.fromisoformat(date), ">")
+        elif operator == "t_intersects":
+            gpnt = create_temporal_or_gpnt(datetime.fromisoformat(date), ">=", datetime.fromisoformat(date), "<=")
+
+        self._add_triple(ggps, Var(value="focus_node"), IRI(value=prop_uri), Var(value="datetime"))
+        ggps.add_pattern(gpnt)
+        yield ggps
+
 
 def format_coordinates_as_wkt(bbox_values):
     if len(bbox_values) == 4:
@@ -358,3 +409,80 @@ def get_wkt_from_coords(coordinates, geom_type: str):
         )
     wkt = shapely_spatial_class(coordinates).wkt
     return wkt
+
+
+def create_temporal_filter_gpnt(dt: datetime, op: str) -> GraphPatternNotTriples:
+    if op not in ["=", "<=", ">=", "<", ">"]:
+        raise ValueError(f"Invalid operator: {op}")
+    return GraphPatternNotTriples(
+        content=Filter.filter_relational(
+            focus=PrimaryExpression(
+                content=Var(
+                    value="datetime"
+                ),
+            ),
+            comparators=PrimaryExpression(
+                content=RDFLiteral(
+                    value=dt.isoformat(),
+                    datatype=IRI(value="http://www.w3.org/2001/XMLSchema#dateTime")
+                )
+            ),
+            operator=op,
+        )
+    )
+
+
+def create_temporal_or_gpnt(dt1: datetime, op1: str, dt2: datetime, op2: str) -> GraphPatternNotTriples:
+    _and_expressions = []
+    for dt, op in [(dt1, op1), (dt2, op2)]:
+        if op not in ["=", "<=", ">=", "<", ">"]:
+            raise ValueError(f"Invalid operator: {op}")
+        _and_expressions.append(
+            ConditionalAndExpression(
+                value_logicals=[
+                    ValueLogical(
+                        relational_expression=RelationalExpression(
+                            left=NumericExpression(
+                                additive_expression=AdditiveExpression(
+                                    base_expression=MultiplicativeExpression(
+                                        base_expression=UnaryExpression(
+                                            primary_expression=PrimaryExpression(
+                                                content=Var(value="datetime")
+                                            )
+                                        )
+                                    )
+                                )
+                            ),
+                            operator=op,
+                            right=NumericExpression(
+                                additive_expression=AdditiveExpression(
+                                    base_expression=MultiplicativeExpression(
+                                        base_expression=UnaryExpression(
+                                            primary_expression=PrimaryExpression(
+                                                content=RDFLiteral(
+                                                    value=dt.isoformat(),
+                                                    datatype=IRI(value="http://www.w3.org/2001/XMLSchema#dateTime")
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            ),
+                        )
+                    )
+                ]
+            )
+        )
+    GraphPatternNotTriples(
+        content=Filter(
+            constraint=Constraint(
+                content=BrackettedExpression(
+                    expression=Expression(
+                        conditional_or_expression=ConditionalOrExpression(
+                            conditional_and_expressions=_and_expressions
+                        )
+                    )
+                )
+            )
+        )
+    )

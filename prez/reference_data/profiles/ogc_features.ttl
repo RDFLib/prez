@@ -28,7 +28,8 @@ prez:OGCFeaturesProfile a prof:Profile ;
             a sh:NodeShape ;
             altr-ext:hasDefaultProfile prez:OGCFeaturesAllProps ;
             sh:targetClass
-                geo:Feature,
+                geo:Feature ,
+                geo:FeatureCollection ,
                 rdf:Resource
         ] ;
     altr-ext:hasResourceFormat
@@ -66,7 +67,8 @@ prez:OGCFeaturesMinimalProps a
 prez:OGCFeaturesAllProps a
         prof:Profile,
         sh:NodeShape,
-        prez:ListingProfile ;
+        prez:ListingProfile ,
+        prez:ObjectProfile ;
     dcterms:description "A profile returning all properties and blank nodes to a depth of two." ;
     dcterms:identifier "ogcfeat-all"^^xsd:token ;
     dcterms:title "OGC Features All Properties Profile" ;

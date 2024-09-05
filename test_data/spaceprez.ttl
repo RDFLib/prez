@@ -3,15 +3,22 @@ PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX ex: <https://example.com/>
 PREFIX geo: <http://www.opengis.net/ont/geosparql#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX void: <http://rdfs.org/ns/void#>
 
 
 ex:SpacePrezCatalog a dcat:Catalog ;
     dcterms:title "SpacePrez Catalog" ;
     dcterms:description "A catalog of SpacePrez data" ;
-    dcterms:hasPart ex:FeatureCollection ;
+    dcterms:hasPart ex:SpacePrezDataset ;
+.
+
+ex:SpacePrezDataset a dcat:Dataset ;
+    dcterms:title "SpacePrez Dataset" ;
+    dcterms:description "A dataset of SpacePrez data" ;
 .
 
 ex:FeatureCollection a geo:FeatureCollection ;
+    void:inDataset ex:SpacePrezDataset ;
     rdfs:label "Geo Feature Collection" ;
     rdfs:member ex:Feature1 , ex:Feature2 ;
     ex:property "lower level feature collection property"

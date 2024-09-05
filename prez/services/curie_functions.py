@@ -98,9 +98,6 @@ async def get_uri_for_curie_id(curie_id: str):
     else:
         separator = settings.curie_separator
         curie = curie_id.replace(separator, ":")
-        try:
-            uri = prefix_graph.namespace_manager.expand_curie(curie)
-        except ValueError:
-            raise PrefixNotFoundException(curie.split(":")[0])
+        uri = prefix_graph.namespace_manager.expand_curie(curie)
         await curie_cache.set(curie_id, uri)
         return uri

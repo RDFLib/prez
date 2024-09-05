@@ -18,7 +18,7 @@ from prez.config import settings
 from prez.models.ogc_features import Collection, Link, Collections
 from prez.reference_data.prez_ns import PREZ, ALTREXT, ONT, OGCFEAT
 from prez.renderers.renderer import return_from_graph, return_annotated_rdf
-from prez.services.connegp_service import RDF_MEDIATYPES
+from prez.services.connegp_service import RDF_MEDIATYPES, generate_link_headers
 from prez.services.curie_functions import get_uri_for_curie_id, get_curie_id_for_uri
 from prez.services.generate_queryables import generate_queryables_json
 from prez.services.link_generation import add_prez_links
@@ -215,8 +215,10 @@ async def ogc_features_listing_function(
     link_headers = None
 
     if selected_mediatype == "application/sparql-query":
-        queries_dict = {f"query_{i}": query for i, query in enumerate(queries)}
-        content = io.BytesIO(json.dumps(queries_dict).encode("utf-8"))
+        # queries_dict = {f"query_{i}": query for i, query in enumerate(queries)}
+        # just do the first query for now:
+        content = io.BytesIO(queries[0].encode("utf-8"))
+        # content = io.BytesIO(json.dumps(queries_dict).encode("utf-8"))
         return content, link_headers
 
     item_graph, _ = await data_repo.send_queries(queries, [])
@@ -228,13 +230,15 @@ async def ogc_features_listing_function(
             content = io.BytesIO(queryables.model_dump_json(exclude_none=True, by_alias=True).encode("utf-8"))
         else:
             collections = create_collections_json(item_graph, annotations_graph, url_path, selected_mediatype)
+            all_links = collections.links
+            for coll in collections.collections:
+                all_links.extend(coll.links)
+            link_headers = generate_link_headers(all_links)
             content = io.BytesIO(collections.model_dump_json(exclude_none=True).encode("utf-8"))
 
     elif selected_mediatype == "application/geo+json":
         geojson = convert(g=item_graph, do_validate=False, iri2id=get_curie_id_for_uri)
         content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
-
-    # TODO append to geojson once library imported
     else:
         content = io.BytesIO(
             item_graph.serialize(format="turtle", encoding="utf-8")

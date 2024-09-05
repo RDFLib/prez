@@ -1,0 +1,8 @@
+{
+  "op": "t_during",
+  "args": [
+    {"interval": [{ "property": "starts_at" }, { "property": "ends_at" }]},
+    {"interval": ["2005-01-10", "2010-02-10"]
+    }
+  ]
+}

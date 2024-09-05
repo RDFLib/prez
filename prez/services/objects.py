@@ -10,13 +10,12 @@ from rdf2geojson import convert
 from rdflib import RDF, URIRef
 from sparql_grammar_pydantic import TriplesSameSubject, IRI, Var, TriplesSameSubjectPath
 
-from prez.cache import prefix_graph
 from prez.config import settings
 from prez.models.ogc_features import Link, Collection
 from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import ALTREXT, ONT, PREZ
 from prez.renderers.renderer import return_from_graph, return_annotated_rdf
-from prez.services.connegp_service import RDF_MEDIATYPES
+from prez.services.connegp_service import RDF_MEDIATYPES, generate_link_headers
 from prez.services.curie_functions import get_uri_for_curie_id, get_curie_id_for_uri
 from prez.services.link_generation import add_prez_links
 from prez.services.listings import listing_function
@@ -47,6 +46,10 @@ async def object_function(
             q=None,
             page=1,
             per_page=100,
+            datetime=None,
+            bbox=None,
+            filter_crs=None,
+            filter_lang=None,
             order_by=None,
             order_by_direction=None,
         )
@@ -93,6 +96,7 @@ async def object_function(
 
 
 async def ogc_features_object_function(
+        template_query,
         selected_mediatype,
         url_path,
         data_repo,
@@ -102,20 +106,25 @@ async def ogc_features_object_function(
     collectionId = path_params.get("collectionId")
     featureId = path_params.get("featureId")
     collection_uri = await get_uri_for_curie_id(collectionId)
-    if featureId is None:  # feature collection
-        collection_iri = IRI(value=collection_uri)
-        tssp_list = [TriplesSameSubjectPath.from_spo(collection_iri, IRI(value=RDF.type), Var(value="type"))]
+    if template_query:
+        if featureId:
+            focus_uri = await get_uri_for_curie_id(featureId)
+        else:
+            focus_uri = collection_uri
+        query = template_query.replace(
+            "VALUES ?focusNode { UNDEF }",
+            f"VALUES ?focusNode {{ {focus_uri.n3()} }}")
+    else:
+        if featureId is None:  # feature collection
+            collection_iri = IRI(value=collection_uri)
+            tssp_list = [TriplesSameSubjectPath.from_spo(collection_iri, IRI(value=RDF.type), Var(value="type"))]
+        else:  # feature
+            feature_uri = await get_uri_for_curie_id(featureId)
+            feature_iri = IRI(value=feature_uri)
+            tssp_list = [TriplesSameSubjectPath.from_spo(feature_iri, IRI(value=RDF.type), Var(value="type"))]
         query = PrezQueryConstructor(
             profile_triples=tssp_list,
         ).to_string()
-    else:  # feature
-        feature_uri = await get_uri_for_curie_id(featureId)
-        feature_query_file = Path(__file__).parent / "query_generation" / "bdr_feature.rq"
-        feature_query_template = feature_query_file.read_text()
-        query = feature_query_template.replace(
-            "VALUES ?focusNode { UNDEF }",
-            f"VALUES ?focusNode {{ {feature_uri.n3()} }}"
-        )
 
     query_start_time = time.time()
     item_graph, _ = await data_repo.send_queries([query], [])
@@ -127,6 +136,7 @@ async def ogc_features_object_function(
         content = io.BytesIO(query.encode("utf-8"))
     elif selected_mediatype == "application/json":
         collection = create_collection_json(collectionId, collection_uri, annotations_graph, url_path)
+        link_headers = generate_link_headers(collection.links)
         content = io.BytesIO(collection.model_dump_json(exclude_none=True).encode("utf-8"))
     elif selected_mediatype == "application/geo+json":
         geojson = convert(g=item_graph, do_validate=False, iri2id=get_curie_id_for_uri)

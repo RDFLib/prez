@@ -17,7 +17,7 @@ from prez.cache import (
 )
 from prez.config import settings
 from prez.models.query_params import ALLOWED_OGC_FEATURES_INSTANCE_MEDIA_TYPES, \
-    ALLOWED_OGC_FEATURES_COLLECTIONS_MEDIA_TYPES
+    ALLOWED_OGC_FEATURES_COLLECTIONS_MEDIA_TYPES, OGCFeaturesQueryParams
 from prez.reference_data.prez_ns import ALTREXT, ONT, EP, OGCE, OGCFEAT
 from prez.repositories import PyoxigraphRepo, RemoteSparqlRepo, OxrdflibRepo, Repo
 from prez.services.classes import get_classes_single
@@ -127,7 +127,9 @@ async def load_annotations_data_to_oxigraph(store: Store):
     store.load(file_bytes, "application/n-triples")
 
 
-async def cql_post_parser_dependency(request: Request) -> CQLParser:
+async def cql_post_parser_dependency(
+        request: Request
+) -> CQLParser:
     try:
         body = await request.json()
         context = json.load(
@@ -145,16 +147,19 @@ async def cql_post_parser_dependency(request: Request) -> CQLParser:
         )
 
 
-async def cql_get_parser_dependency(request: Request) -> CQLParser:
-    if request.query_params.get("filter"):
+async def cql_get_parser_dependency(
+        query_params: OGCFeaturesQueryParams = Depends(),
+) -> CQLParser:
+    if query_params.filter:
         try:
-            query = json.loads(request.query_params["filter"])
+            crs = query_params.filter_crs
+            query = json.loads(query_params.filter)
             context = json.load(
                 (
                         Path(__file__).parent / "reference_data/cql/default_context.json"
                 ).open()
             )
-            cql_parser = CQLParser(cql=query, context=context)
+            cql_parser = CQLParser(cql=query, context=context, crs=crs)
             cql_parser.generate_jsonld()
             cql_parser.parse()
             return cql_parser
@@ -503,3 +508,13 @@ async def get_ogc_features_mediatype(
         else:
             return DEFAULT_MEDIATYPE
     return DEFAULT_MEDIATYPE
+
+
+async def get_template_query(
+    endpoint_uri_type: tuple[URIRef, URIRef] = Depends(get_endpoint_uri_type),
+):
+    endpoint_uri = endpoint_uri_type[0]
+    filename = settings.endpoint_to_template_query_filename.get(str(endpoint_uri))
+    if filename:
+        return (Path(__file__).parent / "reference_data/template_queries" / filename).read_text()
+    return None

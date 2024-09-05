@@ -1,6 +1,8 @@
 import os
 
-from rdflib import Graph, URIRef
+from rdflib import Graph, URIRef, RDF
+from rdflib.namespace import GEO
+from starlette.routing import Mount
 
 # comment / uncomment for the CQL tests - cannot figure out how to get a different conftest picked up.
 os.environ["SPARQL_REPO_TYPE"] = "pyoxigraph"
@@ -47,6 +49,10 @@ def client(test_repo: Repo) -> TestClient:
 
     app.dependency_overrides[get_data_repo] = override_get_repo
 
+    for route in app.routes:
+        if isinstance(route, Mount):
+            route.app.dependency_overrides[get_data_repo] = override_get_repo
+
     with TestClient(app) as c:
         yield c
 
@@ -67,29 +73,28 @@ def client_no_override() -> TestClient:
 def a_spaceprez_catalog_link(client):
     r = client.get("/catalogs")
     g = Graph().parse(data=r.text)
-    member_uri = URIRef("https://example.com/SpacePrezCatalog")
-    link = g.value(member_uri, URIRef(f"https://prez.dev/link", None))
+    cat_uri = URIRef("https://example.com/SpacePrezCatalog")
+    link = g.value(cat_uri, URIRef(f"https://prez.dev/link", None))
+    return link
+
+@pytest.fixture()
+def a_spaceprez_dataset_link(client, a_spaceprez_catalog_link):
+    r = client.get(f"{a_spaceprez_catalog_link}/collections")
+    g = Graph().parse(data=r.text)
+    ds_uri = URIRef("https://example.com/SpacePrezDataset")
+    link = g.value(ds_uri, URIRef(f"https://prez.dev/link", None))
     return link
 
 
+
 @pytest.fixture()
-def an_fc_link(client, a_spaceprez_catalog_link):
-    r = client.get(f"{a_spaceprez_catalog_link}/collections")
-    g = Graph().parse(data=r.text)
-    links = g.objects(subject=None, predicate=URIRef(f"https://prez.dev/link"))
-    for link in links:
-        if link != a_spaceprez_catalog_link:
-            return link
+def an_fc_link(client, a_spaceprez_dataset_link):
+    return f"{a_spaceprez_dataset_link}/features/collections/exm:FeatureCollection"
 
 
 @pytest.fixture()
 def a_feature_link(client, an_fc_link):
-    r = client.get(f"{an_fc_link}/items")
-    g = Graph().parse(data=r.text)
-    links = g.objects(subject=None, predicate=URIRef(f"https://prez.dev/link"))
-    for link in links:
-        if link != an_fc_link:
-            return link
+    return f"{an_fc_link}/items/exm:Feature1"
 
 
 @pytest.fixture()
