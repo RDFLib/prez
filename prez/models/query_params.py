@@ -5,47 +5,40 @@ from typing import Optional, List, Tuple, Union
 
 from fastapi import HTTPException, Query, Depends
 
-NON_ANOT_RDF_MEDIA_TYPES = {
-    "application/ld+json",
-    "application/rdf+xml",
-    "text/turtle",
-    "application/n-triples",
-}
-ANOT_RDF_MEDIA_TYPES = {f"{type_}/anot+{subtype}"
-                        for type_, subtype in (mt.split("/") for mt in NON_ANOT_RDF_MEDIA_TYPES)}
+from prez.enums import FilterLangEnum, OrderByDirectionEnum
 
-SPARQL_QUERY_MEDIA_TYPE = {"application/sparql-query"}
-JSON_MEDIA_TYPE = {"application/json"}
-GEOJSON_MEDIA_TYPE = {"application/geo+json"}
-
-STANDARD_MEDIA_TYPES = (
-        SPARQL_QUERY_MEDIA_TYPE
-        | NON_ANOT_RDF_MEDIA_TYPES
-        | ANOT_RDF_MEDIA_TYPES
-)
-
-ALLOWED_OGC_FEATURES_COLLECTIONS_MEDIA_TYPES = (
-        JSON_MEDIA_TYPE
-        | NON_ANOT_RDF_MEDIA_TYPES
-        | SPARQL_QUERY_MEDIA_TYPE
-)
-
-ALLOWED_OGC_FEATURES_INSTANCE_MEDIA_TYPES = (
-    GEOJSON_MEDIA_TYPE
-    | NON_ANOT_RDF_MEDIA_TYPES
-    | SPARQL_QUERY_MEDIA_TYPE
-)
+# NON_ANOT_RDF_MEDIA_TYPES = {
+#     "application/ld+json",
+#     "application/rdf+xml",
+#     "text/turtle",
+#     "application/n-triples",
+# }
+# ANOT_RDF_MEDIA_TYPES = {f"{type_}/anot+{subtype}"
+#                         for type_, subtype in (mt.split("/") for mt in NON_ANOT_RDF_MEDIA_TYPES)}
+#
+# SPARQL_QUERY_MEDIA_TYPE = {"application/sparql-query"}
+# JSON_MEDIA_TYPE = {"application/json"}
+# GEOJSON_MEDIA_TYPE = {"application/geo+json"}
+#
+# STANDARD_MEDIA_TYPES = (
+#         SPARQL_QUERY_MEDIA_TYPE
+#         | NON_ANOT_RDF_MEDIA_TYPES
+#         | ANOT_RDF_MEDIA_TYPES
+# )
+#
+# ALLOWED_OGC_FEATURES_COLLECTIONS_MEDIA_TYPES = (
+#         JSON_MEDIA_TYPE
+#         | NON_ANOT_RDF_MEDIA_TYPES
+#         | SPARQL_QUERY_MEDIA_TYPE
+# )
+#
+# ALLOWED_OGC_FEATURES_INSTANCE_MEDIA_TYPES = (
+#     GEOJSON_MEDIA_TYPE
+#     | NON_ANOT_RDF_MEDIA_TYPES
+#     | SPARQL_QUERY_MEDIA_TYPE
+# )
 
 DateTimeOrUnbounded = Union[datetime, str, None]
-
-
-class OrderByDirectionEnum(Enum):
-    ASC = "ASC"
-    DESC = "DESC"
-
-
-class FilterLangEnum(Enum):
-    CQL_JSON = "cql2-json"
 
 
 def reformat_bbox(
@@ -163,7 +156,7 @@ class QueryParams:
     def __init__(
             self,
             mediatype: Optional[str] = Query(
-                "application/geo+json", alias="_mediatype", description="Requested mediatype"
+                "text/turtle", alias="_mediatype", description="Requested mediatype"
             ),
             page: Optional[int] = Query(
                 1, ge=1, description="Page number, must be greater than 0"

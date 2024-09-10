@@ -14,8 +14,8 @@ from sparql_grammar_pydantic import IRI, Var, TriplesSameSubject, TriplesSameSub
 
 from prez.cache import endpoints_graph_cache
 from prez.config import settings
+from prez.enums import NonAnnotatedRDFMediaType
 from prez.models.ogc_features import Collection, Link, Collections
-from prez.models.query_params import NON_ANOT_RDF_MEDIA_TYPES
 from prez.reference_data.prez_ns import PREZ, ALTREXT, ONT, OGCFEAT
 from prez.renderers.renderer import return_from_graph, return_annotated_rdf
 from prez.services.connegp_service import RDF_MEDIATYPES, generate_link_headers
@@ -239,7 +239,7 @@ async def ogc_features_listing_function(
     elif selected_mediatype == "application/geo+json":
         geojson = convert(g=item_graph, do_validate=False, iri2id=get_curie_id_for_uri)
         content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
-    elif selected_mediatype in NON_ANOT_RDF_MEDIA_TYPES:
+    elif selected_mediatype in NonAnnotatedRDFMediaType:
         content = io.BytesIO(
             item_graph.serialize(format=selected_mediatype, encoding="utf-8")
         )

@@ -2,7 +2,6 @@ import io
 import json
 import logging
 import pickle
-from enum import Enum
 from typing import Optional
 
 from aiocache import caches
@@ -16,7 +15,7 @@ from starlette.responses import PlainTextResponse, StreamingResponse
 from prez.cache import endpoints_graph_cache, prefix_graph
 from prez.config import settings
 from prez.dependencies import get_system_repo
-from prez.models.query_params import NON_ANOT_RDF_MEDIA_TYPES, JSON_MEDIA_TYPE
+from prez.enums import JSONMediaType, NonAnnotatedRDFMediaType
 from prez.reference_data.prez_ns import PREZ
 from prez.renderers.renderer import return_rdf, return_from_graph
 from prez.repositories import Repo
@@ -120,17 +119,10 @@ async def return_annotation_predicates():
     return g
 
 
-def create_enum_name(media_type: str) -> str:
-    return media_type.replace('+', '_').replace('/', '_').replace('-', '_').upper()
-
-PrefixMediatypesEnum = Enum('PrefixMediatypesEnum', {
-    create_enum_name(mt): mt for mt in NON_ANOT_RDF_MEDIA_TYPES | JSON_MEDIA_TYPE
-})
-
-
 @router.get("/prefixes", summary="Show prefixes known to prez")
 async def show_prefixes(
-        mediatype: Optional[PrefixMediatypesEnum] = Query(default=PrefixMediatypesEnum.TEXT_TURTLE, alias="_mediatype")
+        mediatype: Optional[NonAnnotatedRDFMediaType | JSONMediaType] = Query(default=NonAnnotatedRDFMediaType.TURTLE,
+                                                                              alias="_mediatype")
 ):
     """Returns the prefixes known to prez"""
     mediatype_str = str(mediatype.value)
@@ -149,5 +141,3 @@ async def show_prefixes(
             g.serialize(format=mediatype_str, encoding="utf-8")
         )
     return StreamingResponse(content=content, media_type=mediatype_str)
-
-

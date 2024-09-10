@@ -16,8 +16,8 @@ from prez.cache import (
     annotations_store, prez_system_graph
 )
 from prez.config import settings
-from prez.models.query_params import ALLOWED_OGC_FEATURES_INSTANCE_MEDIA_TYPES, \
-    ALLOWED_OGC_FEATURES_COLLECTIONS_MEDIA_TYPES, QueryParams, QueryParams
+from prez.enums import NonAnnotatedRDFMediaType, SPARQLQueryMediaType, JSONMediaType, GeoJSONMediaType
+from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import ALTREXT, ONT, EP, OGCE, OGCFEAT, PREZ
 from prez.repositories import PyoxigraphRepo, RemoteSparqlRepo, OxrdflibRepo, Repo
 from prez.services.classes import get_classes_single
@@ -486,28 +486,28 @@ async def get_ogc_features_mediatype(
 ):
     if endpoint_uri in [OGCFEAT["feature-collections"], OGCFEAT["feature-collection"],
                         OGCFEAT["queryables-global"], OGCFEAT["queryables-local"]]:
-        ALLOWED_MEDIATYPES = ALLOWED_OGC_FEATURES_COLLECTIONS_MEDIA_TYPES
-        DEFAULT_MEDIATYPE = "application/json"
-    elif endpoint_uri in [OGCFEAT["features"], OGCFEAT["feature"]]:
-        ALLOWED_MEDIATYPES = ALLOWED_OGC_FEATURES_INSTANCE_MEDIA_TYPES
-        DEFAULT_MEDIATYPE = "application/geo+json"
+        allowed_mts = [mt.value for mt in [*NonAnnotatedRDFMediaType, *SPARQLQueryMediaType, *JSONMediaType]]
+        default_mt = JSONMediaType.JSON.value
+    elif endpoint_uri in [OGCFEAT["feature"], OGCFEAT["features"]]:
+        allowed_mts = [mt.value for mt in [*NonAnnotatedRDFMediaType, *SPARQLQueryMediaType, *GeoJSONMediaType]]
+        default_mt = GeoJSONMediaType.GEOJSON.value
     else:
         raise ValueError("Endpoint not recognized")
 
     qsa_mt = request.query_params.get("_mediatype")
 
     if qsa_mt:
-        if qsa_mt in ALLOWED_MEDIATYPES:
+        if qsa_mt in allowed_mts:
             return qsa_mt
     elif request.headers.get("Accept"):
         split_accept = request.headers.get("Accept").split(",")
-        if any(mt in split_accept for mt in ALLOWED_MEDIATYPES):
+        if any(mt in split_accept for mt in allowed_mts):
             for mt in split_accept:
-                if mt in ALLOWED_MEDIATYPES:
+                if mt in allowed_mts:
                     return mt
         else:
-            return DEFAULT_MEDIATYPE
-    return DEFAULT_MEDIATYPE
+            return default_mt
+    return default_mt
 
 
 async def get_template_query(
