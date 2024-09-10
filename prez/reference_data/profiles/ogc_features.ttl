@@ -29,7 +29,6 @@ prez:OGCFeaturesProfile a prof:Profile ;
             altr-ext:hasDefaultProfile prez:OGCFeaturesAllProps ;
             sh:targetClass
                 geo:Feature ,
-                geo:FeatureCollection ,
                 rdf:Resource
         ] ;
     altr-ext:hasResourceFormat

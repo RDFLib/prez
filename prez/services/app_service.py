@@ -93,18 +93,6 @@ async def add_local_prefixes(repo):
     """
     Adds prefixes to the prefix graph
     """
-    # look for remote prefixes
-    remote_prefix_query = f"""
-    CONSTRUCT WHERE {{ ?bn <http://purl.org/vocab/vann/preferredNamespacePrefix> ?prefix; 
-                    <http://purl.org/vocab/vann/preferredNamespaceUri> ?namespace. }}
-    """
-    remote_prefix_g, _ = await repo.send_queries([remote_prefix_query], [])
-    if remote_prefix_g:
-        remote_i = await _add_prefixes_from_graph(remote_prefix_g)
-        log.info(f"{remote_i+1:,} prefixes bound from remote repository.")
-    else:
-        log.info("No remote prefix declarations found.")
-
     for f in (Path(__file__).parent.parent / "reference_data/prefixes").glob("*.ttl"):
         g = Graph().parse(f, format="turtle")
         local_i = await _add_prefixes_from_graph(g)

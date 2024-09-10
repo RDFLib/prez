@@ -5,29 +5,36 @@ from typing import Optional, List, Tuple, Union
 
 from fastapi import HTTPException, Query, Depends
 
-# TODO auto generate allowed mediatypes based on mediatypes referenced in profiles
-ALLOWED_MEDIA_TYPES = {
-    "application/sparql-query",
+NON_ANOT_RDF_MEDIA_TYPES = {
     "application/ld+json",
-    "application/anot+ld+json",
     "application/rdf+xml",
     "text/turtle",
-    "text/anot+turtle",
     "application/n-triples",
-    "application/anot+n-triples",
 }
+ANOT_RDF_MEDIA_TYPES = {f"{type_}/anot+{subtype}"
+                        for type_, subtype in (mt.split("/") for mt in NON_ANOT_RDF_MEDIA_TYPES)}
 
-ALLOWED_OGC_FEATURES_COLLECTIONS_MEDIA_TYPES = {
-    "application/json",
-    "text/turtle",
-    "application/sparql-query"
-}
+SPARQL_QUERY_MEDIA_TYPE = {"application/sparql-query"}
+JSON_MEDIA_TYPE = {"application/json"}
+GEOJSON_MEDIA_TYPE = {"application/geo+json"}
 
-ALLOWED_OGC_FEATURES_INSTANCE_MEDIA_TYPES = {
-    "application/geo+json",
-    "text/turtle",
-    "application/sparql-query"
-}
+STANDARD_MEDIA_TYPES = (
+        SPARQL_QUERY_MEDIA_TYPE
+        | NON_ANOT_RDF_MEDIA_TYPES
+        | ANOT_RDF_MEDIA_TYPES
+)
+
+ALLOWED_OGC_FEATURES_COLLECTIONS_MEDIA_TYPES = (
+        JSON_MEDIA_TYPE
+        | NON_ANOT_RDF_MEDIA_TYPES
+        | SPARQL_QUERY_MEDIA_TYPE
+)
+
+ALLOWED_OGC_FEATURES_INSTANCE_MEDIA_TYPES = (
+    GEOJSON_MEDIA_TYPE
+    | NON_ANOT_RDF_MEDIA_TYPES
+    | SPARQL_QUERY_MEDIA_TYPE
+)
 
 DateTimeOrUnbounded = Union[datetime, str, None]
 
@@ -209,7 +216,7 @@ class QueryParams:
         self.validate_filter()
 
     def validate_mediatype(self):
-        if self.mediatype and self.mediatype not in ALLOWED_MEDIA_TYPES:
+        if self.mediatype and self.mediatype not in STANDARD_MEDIA_TYPES:
             raise HTTPException(
                 status_code=400, detail=f"Invalid media type: {self.mediatype}"
             )

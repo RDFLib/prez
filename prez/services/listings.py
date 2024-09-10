@@ -2,7 +2,6 @@ import copy
 import io
 import json
 import logging
-import time
 from urllib.parse import urlencode
 
 from fastapi.responses import PlainTextResponse
@@ -13,9 +12,10 @@ from sparql_grammar_pydantic import IRI, Var, TriplesSameSubject, TriplesSameSub
     GraphPatternNotTriples, Bind, Expression, IRIOrFunction, OptionalGraphPattern, GroupGraphPattern, \
     GroupGraphPatternSub, TriplesBlock
 
-from prez.cache import endpoints_graph_cache, prefix_graph
+from prez.cache import endpoints_graph_cache
 from prez.config import settings
 from prez.models.ogc_features import Collection, Link, Collections
+from prez.models.query_params import NON_ANOT_RDF_MEDIA_TYPES
 from prez.reference_data.prez_ns import PREZ, ALTREXT, ONT, OGCFEAT
 from prez.renderers.renderer import return_from_graph, return_annotated_rdf
 from prez.services.connegp_service import RDF_MEDIATYPES, generate_link_headers
@@ -160,7 +160,7 @@ async def ogc_features_listing_function(
         subselect_kwargs["inner_select_tssp_list"].append(TriplesSameSubjectPath.from_spo(*innser_select_triple))
         subselect_kwargs["inner_select_vars"] = [queryable_var]
         construct_triple = (
-        queryable_var, IRI(value=RDF.type), IRI(value="http://www.opengis.net/def/rel/ogc/1.0/Queryable"))
+            queryable_var, IRI(value=RDF.type), IRI(value="http://www.opengis.net/def/rel/ogc/1.0/Queryable"))
         construct_tss_list = [TriplesSameSubject.from_spo(*construct_triple)]
         query = PrezQueryConstructor(
             construct_tss_list=construct_tss_list,
@@ -239,9 +239,9 @@ async def ogc_features_listing_function(
     elif selected_mediatype == "application/geo+json":
         geojson = convert(g=item_graph, do_validate=False, iri2id=get_curie_id_for_uri)
         content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
-    else:
+    elif selected_mediatype in NON_ANOT_RDF_MEDIA_TYPES:
         content = io.BytesIO(
-            item_graph.serialize(format="turtle", encoding="utf-8")
+            item_graph.serialize(format=selected_mediatype, encoding="utf-8")
         )
     return content, link_headers
 
