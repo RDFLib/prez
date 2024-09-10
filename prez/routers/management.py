@@ -1,14 +1,18 @@
+import io
+import json
 import logging
+from enum import Enum
+from typing import Optional
 
 from connegp import RDF_MEDIATYPES
-from fastapi import APIRouter
-from rdflib import BNode
+from fastapi import APIRouter, Query
+from rdflib import BNode, VANN
 from rdflib import Graph, URIRef, Literal
 from rdflib.collection import Collection
 from starlette.requests import Request
-from starlette.responses import PlainTextResponse
+from starlette.responses import PlainTextResponse, StreamingResponse
 
-from prez.cache import endpoints_graph_cache
+from prez.cache import endpoints_graph_cache, prefix_graph
 from prez.cache import tbox_cache
 from prez.config import settings
 from prez.reference_data.prez_ns import PREZ
@@ -64,3 +68,34 @@ async def return_annotation_predicates():
     Collection(g, description_list_bn, settings.description_predicates)
     Collection(g, provenance_list_bn, settings.provenance_predicates)
     return g
+
+
+class PrefixMediatypesEnum(Enum):
+    TEXT_TURTLE = "text/turtle"
+    APPLICATION_JSON = "application/json"
+    APPLICATION_LD_JSON = "application/ld+json"
+    APPLICATION_RDF_XML = "application/rdf+xml"
+    APPLICATION_N_TRIPLES = "application/n-triples"
+
+
+@router.get("/prefixes", summary="Show prefixes known to prez")
+async def show_prefixes(
+        mediatype: Optional[PrefixMediatypesEnum] = Query(default=PrefixMediatypesEnum.TEXT_TURTLE, alias="_mediatype")
+):
+    """Returns the prefixes known to prez"""
+    mediatype_str = str(mediatype.value)
+    ns_map = {pfx: ns for pfx, ns in prefix_graph.namespaces()}
+    if mediatype_str == "application/json":
+        content = io.BytesIO(
+            json.dumps(ns_map).encode("utf-8")
+        )
+    else:
+        g = Graph()
+        for prefix, namespace in ns_map.items():
+            bn = BNode()
+            g.add((bn, VANN.preferredNamespacePrefix, Literal(prefix)))
+            g.add((bn, VANN.preferredNamespaceUri, Literal(namespace)))
+        content = io.BytesIO(
+            g.serialize(format=mediatype_str, encoding="utf-8")
+        )
+    return StreamingResponse(content=content, media_type=mediatype_str)
