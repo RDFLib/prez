@@ -2,7 +2,7 @@ import logging
 import time
 from string import Template
 
-from rdflib import Graph, Literal, URIRef, BNode
+from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import SH, RDF
 from sparql_grammar_pydantic import (
     IRI,
@@ -72,12 +72,12 @@ async def _link_generation(
             ns
             for ns in available_nodeshapes
             if ns.uri
-            not in [
-                URIRef("http://example.org/ns#CQL"),
-                URIRef("http://example.org/ns#Search"),
-                URIRef("http://example.org/ns#TopConcepts"),
-                URIRef("http://example.org/ns#Narrowers"),
-            ]
+               not in [
+                   URIRef("http://example.org/ns#CQL"),
+                   URIRef("http://example.org/ns#Search"),
+                   URIRef("http://example.org/ns#TopConcepts"),
+                   URIRef("http://example.org/ns#Narrowers"),
+               ]
         ]
         # run queries for available nodeshapes to get link components
         for ns in available_nodeshapes:

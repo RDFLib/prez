@@ -41,7 +41,8 @@ prez:OGCFeaturesProfile a prof:Profile ;
 prez:OGCFeaturesMinimalProps a
         prof:Profile,
         sh:NodeShape,
-        prez:ListingProfile ;
+        prez:ListingProfile ,
+        prez:ObjectProfile ;
     dcterms:description "A profile showing only the classes of items" ;
     dcterms:identifier "ogcfeat-minimal"^^xsd:token ;
     dcterms:title "OGC Features Minimal Profile" ;

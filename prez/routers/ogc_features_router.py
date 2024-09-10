@@ -1,7 +1,6 @@
 from typing import Optional, List
 
-from fastapi import Depends, FastAPI, Query
-from sparql_grammar_pydantic import GraphPatternNotTriples
+from fastapi import Depends, FastAPI
 from starlette.responses import StreamingResponse, JSONResponse
 
 from prez.dependencies import (
@@ -11,11 +10,11 @@ from prez.dependencies import (
 )
 from prez.exceptions.model_exceptions import ClassNotFoundException, URINotFoundException, InvalidSPARQLQueryException, \
     PrefixNotFoundException, NoProfilesException
-from prez.models.ogc_features import generate_landing_page_links, Link, OGCFeaturesLandingPage
-from prez.models.query_params import OGCFeaturesQueryParams
-from prez.reference_data.prez_ns import EP, OGCFEAT
+from prez.models.ogc_features import generate_landing_page_links, OGCFeaturesLandingPage
+from prez.models.query_params import QueryParams
+from prez.reference_data.prez_ns import OGCFEAT
 from prez.repositories import Repo
-from prez.routers.api_extras_examples import responses, ogc_features_openapi_extras
+from prez.routers.api_extras_examples import ogc_features_openapi_extras
 from prez.routers.conformance import router as conformance_router
 from prez.services.connegp_service import generate_link_headers
 from prez.services.exception_catchers import catch_400, catch_404, catch_500, catch_class_not_found_exception, \
@@ -99,7 +98,7 @@ async def listings_with_feature_collection(
         url_path: str = Depends(get_url_path),
         mediatype: str = Depends(get_ogc_features_mediatype),
         path_params: dict = Depends(get_ogc_features_path_params),
-        query_params: OGCFeaturesQueryParams = Depends(),
+        query_params: QueryParams = Depends(),
         cql_parser: CQLParser = Depends(cql_get_parser_dependency),
         data_repo: Repo = Depends(get_data_repo),
         system_repo: Repo = Depends(get_system_repo),

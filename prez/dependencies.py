@@ -4,7 +4,7 @@ from pathlib import Path
 import httpx
 from fastapi import Depends, Request, HTTPException
 from pyoxigraph import Store
-from rdflib import Dataset, URIRef, Graph, SKOS
+from rdflib import Dataset, URIRef, Graph, SKOS, RDF
 from sparql_grammar_pydantic import IRI, Var
 
 from prez.cache import (
@@ -13,12 +13,12 @@ from prez.cache import (
     system_store,
     profiles_graph_cache,
     endpoints_graph_cache,
-    annotations_store
+    annotations_store, prez_system_graph
 )
 from prez.config import settings
 from prez.models.query_params import ALLOWED_OGC_FEATURES_INSTANCE_MEDIA_TYPES, \
-    ALLOWED_OGC_FEATURES_COLLECTIONS_MEDIA_TYPES, OGCFeaturesQueryParams
-from prez.reference_data.prez_ns import ALTREXT, ONT, EP, OGCE, OGCFEAT
+    ALLOWED_OGC_FEATURES_COLLECTIONS_MEDIA_TYPES, QueryParams, QueryParams
+from prez.reference_data.prez_ns import ALTREXT, ONT, EP, OGCE, OGCFEAT, PREZ
 from prez.repositories import PyoxigraphRepo, RemoteSparqlRepo, OxrdflibRepo, Repo
 from prez.services.classes import get_classes_single
 from prez.services.connegp_service import NegotiatedPMTs
@@ -148,7 +148,7 @@ async def cql_post_parser_dependency(
 
 
 async def cql_get_parser_dependency(
-        query_params: OGCFeaturesQueryParams = Depends(),
+        query_params: QueryParams = Depends(),
 ) -> CQLParser:
     if query_params.filter:
         try:
@@ -177,8 +177,8 @@ async def generate_search_query(request: Request):
         escaped_term = escape_for_lucene_and_sparql(term)
         predicates = request.query_params.getlist("predicates")
         page = request.query_params.get("page", 1)
-        per_page = request.query_params.get("per_page")
-        limit = int(per_page) if per_page else settings.search_count_limit
+        limit = request.query_params.get("limit")
+        limit = int(limit) if limit else settings.search_count_limit
         offset = limit * (int(page) - 1)
 
         return SearchQueryRegex(
@@ -515,6 +515,15 @@ async def get_template_query(
 ):
     endpoint_uri = endpoint_uri_type[0]
     filename = settings.endpoint_to_template_query_filename.get(str(endpoint_uri))
+
+    # check local files
     if filename:
         return (Path(__file__).parent / "reference_data/template_queries" / filename).read_text()
+
+    # check prez_system_graph
+    for s in prez_system_graph.subjects(RDF.type, ONT.TemplateQuery):
+        endpoint_in_sys_graph = prez_system_graph.value(s, ONT.forEndpoint, None)
+        if str(endpoint_uri) == str(endpoint_in_sys_graph):
+            template_query = prez_system_graph.value(s, RDF.value, None)
+            return str(template_query)
     return None

@@ -13,7 +13,7 @@ SELECT DISTINCT ?focus_node
 WHERE {
 ?focus_node <http://example.com/updated_at> ?datetime
 FILTER (?datetime < "2012-08-10T05:30:00+00:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>)
-}LIMIT 20
+}LIMIT 10
 OFFSET 0
 }
 

@@ -37,7 +37,7 @@ from prez.services.app_service import (
     count_objects,
     create_endpoints_graph,
     populate_api_info,
-    prefix_initialisation,
+    prefix_initialisation, retrieve_remote_template_queries,
 )
 from prez.services.exception_catchers import (
     catch_400,
@@ -109,6 +109,7 @@ async def app_startup(_settings: Settings, _app: FastAPI):
         )
 
     await prefix_initialisation(_repo)
+    await retrieve_remote_template_queries(_repo)
     await create_profiles_graph(_repo)
     await create_endpoints_graph(_repo)
     await count_objects(_repo)

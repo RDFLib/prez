@@ -3,7 +3,7 @@ import time
 from pathlib import Path
 
 import httpx
-from rdflib import URIRef, Literal, Graph
+from rdflib import URIRef, Literal, Graph, RDF, BNode
 
 from prez.cache import (
     prez_system_graph,
@@ -12,7 +12,7 @@ from prez.cache import (
     endpoints_graph_cache,
 )
 from prez.config import settings
-from prez.reference_data.prez_ns import PREZ
+from prez.reference_data.prez_ns import PREZ, ONT
 from prez.repositories import Repo
 from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.query_generation.count import startup_count_objects
@@ -75,6 +75,32 @@ async def prefix_initialisation(repo: Repo):
     await add_remote_prefixes(repo)
     await add_local_prefixes(repo)
     await generate_prefixes(repo)
+
+
+async def retrieve_remote_template_queries(repo: Repo):
+    # TODO allow mediatype specification in repo queries
+    query = """
+        PREFIX prez: <https://prez.dev/ont/>
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        SELECT ?query ?endpoint
+        WHERE {
+            ?bn a prez:TemplateQuery ;
+                  rdf:value ?query ;
+                  prez:forEndpoint ?endpoint ;
+        }
+    """
+    _, results = await repo.send_queries([], [(None, query)])
+    if results:
+        for result in results[0][1]:
+            bn = BNode()
+            query = result["query"]["value"]
+            endpoint = result["endpoint"]["value"]
+            prez_system_graph.add((bn, RDF.type, ONT.TemplateQuery))
+            prez_system_graph.add((bn, RDF.value, Literal(query)))
+            prez_system_graph.add((bn, ONT.forEndpoint, URIRef(endpoint)))
+        log.info(f"Remote template query(ies) found and added")
+    else:
+        log.info("No remote template queries found")
 
 
 async def add_remote_prefixes(repo: Repo):

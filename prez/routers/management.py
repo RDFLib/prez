@@ -1,9 +1,8 @@
 import logging
 import pickle
-from typing import Optional
 
 from aiocache import caches
-from fastapi import APIRouter, Query, Depends
+from fastapi import APIRouter, Depends
 from rdflib import BNode
 from rdflib import Graph, URIRef, Literal
 from rdflib.collection import Collection
@@ -16,7 +15,7 @@ from prez.dependencies import get_system_repo
 from prez.reference_data.prez_ns import PREZ
 from prez.renderers.renderer import return_rdf, return_from_graph
 from prez.repositories import Repo
-from prez.services.connegp_service import RDF_MEDIATYPES, MediaType, NegotiatedPMTs
+from prez.services.connegp_service import RDF_MEDIATYPES, NegotiatedPMTs
 
 router = APIRouter(tags=["Management"])
 log = logging.getLogger(__name__)
@@ -52,7 +51,6 @@ async def index(
     )
 
 
-
 @router.get("/purge-tbox-cache", summary="Reset Tbox Cache")
 async def purge_tbox_cache():
     """Purges the tbox cache, then re-adds annotations from common ontologies Prez has a copy of
@@ -82,7 +80,7 @@ async def return_tbox_cache(request: Request):
         pred_obj = pickle.loads(pred_obj_bytes)
         for pred, obj in pred_obj:
             if (
-                pred_obj
+                    pred_obj
             ):  # cache entry for a URI can be empty - i.e. no annotations found for URI
                 # Add the expanded triple (subject, predicate, object) to 'annotations_g'
                 cache_g.add((subject, pred, obj))

@@ -178,7 +178,7 @@ def merge_listing_query_grammar_inputs(
     query_params: Optional[QueryParams] = None,
 ) -> dict:
     page = query_params.page
-    per_page = query_params.per_page
+    limit = query_params.limit
     order_by = query_params.order_by
     order_by_direction = query_params.order_by_direction
     bbox = query_params.bbox
@@ -198,7 +198,7 @@ def merge_listing_query_grammar_inputs(
         "order_by_direction": order_by_direction,
     }
 
-    limit = int(per_page)
+    limit = int(limit)
     offset = limit * (int(page) - 1)
     kwargs["limit"] = limit
     kwargs["offset"] = offset

@@ -2,7 +2,6 @@ import io
 import json
 import logging
 import time
-from pathlib import Path
 from urllib.parse import urlencode
 
 from fastapi.responses import PlainTextResponse
@@ -45,9 +44,9 @@ async def object_function(
             filter=None,
             q=None,
             page=1,
-            per_page=100,
+            limit=100,
             datetime=None,
-            bbox=None,
+            bbox=[],
             filter_crs=None,
             filter_lang=None,
             order_by=None,
