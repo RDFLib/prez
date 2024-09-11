@@ -1,42 +1,10 @@
 import json
 from datetime import datetime
-from enum import Enum
 from typing import Optional, List, Tuple, Union
 
 from fastapi import HTTPException, Query, Depends
 
 from prez.enums import FilterLangEnum, OrderByDirectionEnum
-
-# NON_ANOT_RDF_MEDIA_TYPES = {
-#     "application/ld+json",
-#     "application/rdf+xml",
-#     "text/turtle",
-#     "application/n-triples",
-# }
-# ANOT_RDF_MEDIA_TYPES = {f"{type_}/anot+{subtype}"
-#                         for type_, subtype in (mt.split("/") for mt in NON_ANOT_RDF_MEDIA_TYPES)}
-#
-# SPARQL_QUERY_MEDIA_TYPE = {"application/sparql-query"}
-# JSON_MEDIA_TYPE = {"application/json"}
-# GEOJSON_MEDIA_TYPE = {"application/geo+json"}
-#
-# STANDARD_MEDIA_TYPES = (
-#         SPARQL_QUERY_MEDIA_TYPE
-#         | NON_ANOT_RDF_MEDIA_TYPES
-#         | ANOT_RDF_MEDIA_TYPES
-# )
-#
-# ALLOWED_OGC_FEATURES_COLLECTIONS_MEDIA_TYPES = (
-#         JSON_MEDIA_TYPE
-#         | NON_ANOT_RDF_MEDIA_TYPES
-#         | SPARQL_QUERY_MEDIA_TYPE
-# )
-#
-# ALLOWED_OGC_FEATURES_INSTANCE_MEDIA_TYPES = (
-#     GEOJSON_MEDIA_TYPE
-#     | NON_ANOT_RDF_MEDIA_TYPES
-#     | SPARQL_QUERY_MEDIA_TYPE
-# )
 
 DateTimeOrUnbounded = Union[datetime, str, None]
 
