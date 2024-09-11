@@ -1,8 +1,6 @@
 {
   "IsEncrypted": false,
   "Values": {
-    "LOCAL_RDF_DIR": "bdr_test_data",
-    "SPARQL_REPO_TYPE": "pyoxigraph",
     "FUNCTIONS_WORKER_RUNTIME": "python",
     "AzureWebJobsFeatureFlags": "EnableWorkerIndexing",
     "AzureWebJobsStorage": "",
