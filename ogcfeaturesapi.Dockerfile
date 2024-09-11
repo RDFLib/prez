@@ -15,13 +15,7 @@ ENV VIRTUAL_ENV=${VIRTUAL_ENV} \
 
 RUN apk add --no-cache \
       bash \
-      gcc \
-      libffi-dev \
-      musl-dev \
       pipx \
-      python3-dev \
-      geos \
-      geos-dev \
     git
 
 RUN pipx install poetry==${POETRY_VERSION}
@@ -50,10 +44,8 @@ COPY --from=base ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
 RUN apk update && \
     apk upgrade --no-cache && \
-    apk add --no-cache \
-      bash \
-      geos \
-      geos-dev
+    apk add --no-cache
+
 
 WORKDIR /app
 # prez module is already built as a package and installed in $VIRTUAL_ENV as a library

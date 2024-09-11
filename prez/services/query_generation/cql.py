@@ -1,7 +1,10 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import Generator
 
 from pyld import jsonld
+from rdf2geojson.contrib.geomet.util import flatten_multi_dim
+from rdf2geojson.contrib.geomet.wkt import dumps
 from rdflib import URIRef, Namespace
 from rdflib.namespace import GEO
 from sparql_grammar_pydantic import (
@@ -46,7 +49,6 @@ from sparql_grammar_pydantic import (
 
 from prez.reference_data.cql.geo_function_mapping import (
     cql_sparql_spatial_mapping,
-    cql_to_shapely_mapping,
 )
 
 CQL = Namespace("http://www.opengis.net/doc/IS/cql2/1.0/")
@@ -112,7 +114,7 @@ class CQLParser:
         self.inner_select_gpnt_list = gpnt_list
 
     def parse_logical_operators(
-        self, element, existing_ggps=None
+            self, element, existing_ggps=None
     ) -> Generator[GroupGraphPatternSub, None, None]:
         operator = element.get(str(CQL.operator))[0].get("@value")
         args = element.get(str(CQL.args))
@@ -372,9 +374,9 @@ class CQLParser:
             if prop:
                 prop_uri = prop[0].get("@id")
             date = (
-                arg.get(str(CQL.date))
-                or arg.get(str(CQL.datetime))
-                or arg.get(str(CQL.timestamp))
+                    arg.get(str(CQL.date))
+                    or arg.get(str(CQL.datetime))
+                    or arg.get(str(CQL.timestamp))
             )
             if date:
                 date = date[0].get("@value")
@@ -420,14 +422,22 @@ def format_coordinates_as_wkt(bbox_values):
     return coordinates
 
 
+def count_decimal_places(num):
+    return abs(Decimal(str(num)).as_tuple().exponent)
+
+
+def find_max_decimals(coordinates):
+    max_decimals = 0
+    flattened = flatten_multi_dim(coordinates)
+    for value in flattened:
+        if isinstance(value, (int, float)):
+            max_decimals = max(max_decimals, count_decimal_places(value))
+    return max_decimals
+
+
 def get_wkt_from_coords(coordinates, geom_type: str):
-    shapely_spatial_class = cql_to_shapely_mapping.get(geom_type)
-    if not shapely_spatial_class:
-        raise NotImplementedError(
-            f'Geometry Class for "{geom_type}" not found in Shapely.'
-        )
-    wkt = shapely_spatial_class(coordinates).wkt
-    return wkt
+    max_decimals = find_max_decimals([(geom_type, coordinates, None)])
+    return dumps({"type": geom_type, "coordinates": coordinates}, max_decimals)
 
 
 def create_temporal_filter_gpnt(dt: datetime, op: str) -> GraphPatternNotTriples:
@@ -450,7 +460,7 @@ def create_temporal_filter_gpnt(dt: datetime, op: str) -> GraphPatternNotTriples
 
 
 def create_temporal_or_gpnt(
-    dt1: datetime, op1: str, dt2: datetime, op2: str
+        dt1: datetime, op1: str, dt2: datetime, op2: str
 ) -> GraphPatternNotTriples:
     _and_expressions = []
     for dt, op in [(dt1, op1), (dt2, op2)]:

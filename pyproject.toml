@@ -20,20 +20,23 @@ include = [
 
 [tool.poetry.dependencies]
 python = "^3.11"
-uvicorn = "^0.30.0"
+uvicorn = {version = "^0.30.0", optional = true }
 httpx = "^0.27.0"
 rdflib = "^7.0.0"
 toml = "^0.10.2"
-fastapi = "^0.111.0"
+fastapi = "^0.114.0"
 jinja2 = "^3.1.2"
 oxrdflib = "^0.3.6"
-pydantic = "^2.7.2"
-pydantic-settings = "^2.2.0"
+pydantic = "^2.9.1"
+pydantic-settings = "^2.5.0"
 pyld = "^2.0.4"
-shapely = "^2.0.3"
 aiocache = "^0.12.2"
 sparql-grammar-pydantic = "^0.1.2"
 rdf2geojson = {git = "https://github.com/ashleysommer/rdf2geojson.git", rev = "v0.2.1"}
+python-multipart = "^0.0.9"
+
+[tool.poetry.extras]
+server = ["uvicorn"]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.1"
