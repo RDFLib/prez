@@ -7,6 +7,7 @@ from azure.functions._http_wsgi import WsgiMiddleware
 from azure.functions._abc import Context
 from azure.functions import HttpRequest
 
+
 # -------------------
 # Create a patched AsgiFunctionApp to fix the ASGI scope state issue
 # -------------------
@@ -16,11 +17,12 @@ class MyAsgiMiddleware(AsgiMiddleware):
         asgi_request = AsgiRequest(req, context)
         scope = asgi_request.to_asgi_http_scope()
         # shallow copy the state as-per the ASGI spec
-        scope["state"] = copy(self.state)  # <-- this is the patch, add the state to the scope
-        asgi_response = await AsgiResponse.from_app(self._app,
-                                                    scope,
-                                                    req.get_body())
+        scope["state"] = copy(
+            self.state
+        )  # <-- this is the patch, add the state to the scope
+        asgi_response = await AsgiResponse.from_app(self._app, scope, req.get_body())
         return asgi_response.to_func_response()
+
 
 # -------------------
 # Create a patched AsgiFunctionApp to fix the double-slash route issue
@@ -35,7 +37,7 @@ class AsgiFunctionApp(func.AsgiFunctionApp):
         self.startup_task_done = False
 
     def _add_http_app(
-            self, http_middleware: Union[AsgiMiddleware, WsgiMiddleware]
+        self, http_middleware: Union[AsgiMiddleware, WsgiMiddleware]
     ) -> None:
         """Add an Asgi app integrated http function.
 

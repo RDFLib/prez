@@ -13,10 +13,16 @@ from prez.cache import (
     system_store,
     profiles_graph_cache,
     endpoints_graph_cache,
-    annotations_store, prez_system_graph
+    annotations_store,
+    prez_system_graph,
 )
 from prez.config import settings
-from prez.enums import NonAnnotatedRDFMediaType, SPARQLQueryMediaType, JSONMediaType, GeoJSONMediaType
+from prez.enums import (
+    NonAnnotatedRDFMediaType,
+    SPARQLQueryMediaType,
+    JSONMediaType,
+    GeoJSONMediaType,
+)
 from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import ALTREXT, ONT, EP, OGCE, OGCFEAT, PREZ
 from prez.repositories import PyoxigraphRepo, RemoteSparqlRepo, OxrdflibRepo, Repo
@@ -58,10 +64,10 @@ def get_oxrdflib_store():
 
 
 async def get_data_repo(
-        request: Request,
-        http_async_client: httpx.AsyncClient = Depends(get_async_http_client),
-        pyoxi_data_store: Store = Depends(get_pyoxi_store),
-        pyoxi_system_store: Store = Depends(get_system_store),
+    request: Request,
+    http_async_client: httpx.AsyncClient = Depends(get_async_http_client),
+    pyoxi_data_store: Store = Depends(get_pyoxi_store),
+    pyoxi_system_store: Store = Depends(get_system_store),
 ) -> Repo:
     if URIRef(request.scope.get("route").name) in settings.system_endpoints:
         return PyoxigraphRepo(pyoxi_system_store)
@@ -74,7 +80,7 @@ async def get_data_repo(
 
 
 async def get_system_repo(
-        pyoxi_store: Store = Depends(get_system_store),
+    pyoxi_store: Store = Depends(get_system_store),
 ) -> Repo:
     """
     A pyoxigraph Store with Prez system data including:
@@ -127,9 +133,7 @@ async def load_annotations_data_to_oxigraph(store: Store):
     store.load(file_bytes, "application/n-triples")
 
 
-async def cql_post_parser_dependency(
-        request: Request
-) -> CQLParser:
+async def cql_post_parser_dependency(request: Request) -> CQLParser:
     try:
         body = await request.json()
         context = json.load(
@@ -148,7 +152,7 @@ async def cql_post_parser_dependency(
 
 
 async def cql_get_parser_dependency(
-        query_params: QueryParams = Depends(),
+    query_params: QueryParams = Depends(),
 ) -> CQLParser:
     if query_params.filter:
         try:
@@ -156,7 +160,7 @@ async def cql_get_parser_dependency(
             query = json.loads(query_params.filter)
             context = json.load(
                 (
-                        Path(__file__).parent / "reference_data/cql/default_context.json"
+                    Path(__file__).parent / "reference_data/cql/default_context.json"
                 ).open()
             )
             cql_parser = CQLParser(cql=query, context=context, crs=crs)
@@ -190,8 +194,8 @@ async def generate_search_query(request: Request):
 
 
 async def get_endpoint_uri_type(
-        request: Request,
-        system_repo: Repo = Depends(get_system_repo),
+    request: Request,
+    system_repo: Repo = Depends(get_system_repo),
 ) -> tuple[URIRef, URIRef]:
     """
     Returns the URI of the endpoint and its type (ObjectEndpoint or ListingEndpoint)
@@ -212,8 +216,8 @@ async def get_endpoint_uri_type(
 
 
 async def generate_concept_hierarchy_query(
-        request: Request,
-        endpoint_uri_type: tuple[URIRef, URIRef] = Depends(get_endpoint_uri_type),
+    request: Request,
+    endpoint_uri_type: tuple[URIRef, URIRef] = Depends(get_endpoint_uri_type),
 ) -> ConceptHierarchyQuery | None:
     ep_uri = endpoint_uri_type[0]
     if ep_uri not in [OGCE["top-concepts"], OGCE["narrowers"]]:
@@ -239,8 +243,8 @@ async def generate_concept_hierarchy_query(
 
 
 async def get_focus_node(
-        request: Request,
-        endpoint_uri_type: tuple[URIRef, URIRef] = Depends(get_endpoint_uri_type),
+    request: Request,
+    endpoint_uri_type: tuple[URIRef, URIRef] = Depends(get_endpoint_uri_type),
 ):
     """
     Either a variable or IRI depending on whether an object or listing endpoint is being used.
@@ -300,11 +304,11 @@ def handle_special_cases(ep_uri, focus_node):
 
 
 async def get_endpoint_nodeshapes(
-        request: Request,
-        repo: Repo = Depends(get_data_repo),
-        system_repo: Repo = Depends(get_system_repo),
-        endpoint_uri_type: tuple[URIRef, URIRef] = Depends(get_endpoint_uri_type),
-        focus_node: IRI | Var = Depends(get_focus_node),
+    request: Request,
+    repo: Repo = Depends(get_data_repo),
+    system_repo: Repo = Depends(get_system_repo),
+    endpoint_uri_type: tuple[URIRef, URIRef] = Depends(get_endpoint_uri_type),
+    focus_node: IRI | Var = Depends(get_focus_node),
 ):
     """
     Determines the relevant endpoint nodeshape which will be used to list items at the endpoint.
@@ -395,12 +399,12 @@ async def get_endpoint_nodeshapes(
 
 
 async def get_negotiated_pmts(
-        request: Request,
-        endpoint_nodeshape: NodeShape = Depends(get_endpoint_nodeshapes),
-        repo: Repo = Depends(get_data_repo),
-        system_repo: Repo = Depends(get_system_repo),
-        endpoint_uri_type: URIRef = Depends(get_endpoint_uri_type),
-        focus_node: IRI | Var = Depends(get_focus_node),
+    request: Request,
+    endpoint_nodeshape: NodeShape = Depends(get_endpoint_nodeshapes),
+    repo: Repo = Depends(get_data_repo),
+    system_repo: Repo = Depends(get_system_repo),
+    endpoint_uri_type: URIRef = Depends(get_endpoint_uri_type),
+    focus_node: IRI | Var = Depends(get_focus_node),
 ) -> NegotiatedPMTs:
     # Use endpoint_nodeshapes in constructing NegotiatedPMTs
     ep_type = endpoint_uri_type[1]
@@ -424,13 +428,13 @@ async def get_negotiated_pmts(
 
 
 async def get_endpoint_structure(
-        pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
-        endpoint_uri_type: URIRef = Depends(get_endpoint_uri_type),
+    pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
+    endpoint_uri_type: URIRef = Depends(get_endpoint_uri_type),
 ):
     endpoint_uri = endpoint_uri_type[0]
 
     if (endpoint_uri in settings.system_endpoints) or (
-            pmts.selected.get("profile") == ALTREXT["alt-profile"]
+        pmts.selected.get("profile") == ALTREXT["alt-profile"]
     ):
         return ("profiles",)
     else:
@@ -438,9 +442,9 @@ async def get_endpoint_structure(
 
 
 async def get_profile_nodeshape(
-        request: Request,
-        pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
-        endpoint_uri_type: URIRef = Depends(get_endpoint_uri_type),
+    request: Request,
+    pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
+    endpoint_uri_type: URIRef = Depends(get_endpoint_uri_type),
 ):
     profile = pmts.selected.get("profile")
     if profile == ALTREXT["alt-profile"]:
@@ -463,33 +467,47 @@ async def get_profile_nodeshape(
 
 
 async def get_url_path(
-        request: Request,
+    request: Request,
 ):
     return request.url.path
 
 
 async def get_endpoint_uri(
-        request: Request,
+    request: Request,
 ):
     return URIRef(request.scope.get("route").name)
 
 
 async def get_ogc_features_path_params(
-        request: Request,
+    request: Request,
 ):
     return request.path_params
 
 
 async def get_ogc_features_mediatype(
-        request: Request,
-        endpoint_uri: URIRef = Depends(get_endpoint_uri),
+    request: Request,
+    endpoint_uri: URIRef = Depends(get_endpoint_uri),
 ):
-    if endpoint_uri in [OGCFEAT["feature-collections"], OGCFEAT["feature-collection"],
-                        OGCFEAT["queryables-global"], OGCFEAT["queryables-local"]]:
-        allowed_mts = [mt.value for mt in [*NonAnnotatedRDFMediaType, *SPARQLQueryMediaType, *JSONMediaType]]
+    if endpoint_uri in [
+        OGCFEAT["feature-collections"],
+        OGCFEAT["feature-collection"],
+        OGCFEAT["queryables-global"],
+        OGCFEAT["queryables-local"],
+    ]:
+        allowed_mts = [
+            mt.value
+            for mt in [*NonAnnotatedRDFMediaType, *SPARQLQueryMediaType, *JSONMediaType]
+        ]
         default_mt = JSONMediaType.JSON.value
     elif endpoint_uri in [OGCFEAT["feature"], OGCFEAT["features"]]:
-        allowed_mts = [mt.value for mt in [*NonAnnotatedRDFMediaType, *SPARQLQueryMediaType, *GeoJSONMediaType]]
+        allowed_mts = [
+            mt.value
+            for mt in [
+                *NonAnnotatedRDFMediaType,
+                *SPARQLQueryMediaType,
+                *GeoJSONMediaType,
+            ]
+        ]
         default_mt = GeoJSONMediaType.GEOJSON.value
     else:
         raise ValueError("Endpoint not recognized")
@@ -518,7 +536,9 @@ async def get_template_query(
 
     # check local files
     if filename:
-        return (Path(__file__).parent / "reference_data/template_queries" / filename).read_text()
+        return (
+            Path(__file__).parent / "reference_data/template_queries" / filename
+        ).read_text()
 
     # check prez_system_graph
     for s in prez_system_graph.subjects(RDF.type, ONT.TemplateQuery):

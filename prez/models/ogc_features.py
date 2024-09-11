@@ -9,6 +9,7 @@ from prez.config import settings
 ########################################################################################################################
 # Landing Page
 
+
 class Link(BaseModel):
     href: str
     rel: str
@@ -52,20 +53,21 @@ def generate_landing_page_links(url_path):
             "href": f"{settings.system_uri}{url_path}collections",
             "rel": "data",
             "type": "application/json",
-            "title": "Information about the feature collections"
+            "title": "Information about the feature collections",
         },
         {
             "href": f"{settings.system_uri}{url_path}queryables",
             "rel": "http://www.opengis.net/def/rel/ogc/1.0/queryables",
             "type": "application/schema+json",
-            "title": "Global Queryables"
-        }
+            "title": "Global Queryables",
+        },
     ]
     return [Link(**link) for link in link_dicts]
 
 
 ########################################################################################################################
 # Conformance
+
 
 class ConformanceDeclaration(BaseModel):
     conformsTo: List[str]
@@ -88,16 +90,24 @@ class Extent(BaseModel):
 
 
 class Collection(BaseModel):
-    id: str = Field(..., description="identifier of the collection used, for example, in URIs")
-    title: Optional[str] = Field(None, description="human readable title of the collection")
-    description: Optional[str] = Field(None, description="a description of the features in the collection")
+    id: str = Field(
+        ..., description="identifier of the collection used, for example, in URIs"
+    )
+    title: Optional[str] = Field(
+        None, description="human readable title of the collection"
+    )
+    description: Optional[str] = Field(
+        None, description="a description of the features in the collection"
+    )
     links: List[Link]
     extent: Optional[Extent] = None
-    itemType: str = Field(default="feature",
-                          description="indicator about the type of the items in the collection (the default value is 'feature').")
+    itemType: str = Field(
+        default="feature",
+        description="indicator about the type of the items in the collection (the default value is 'feature').",
+    )
     crs: List[str] = Field(
         default=["http://www.opengis.net/def/crs/OGC/1.3/CRS84"],
-        description="the list of coordinate reference systems supported by the service"
+        description="the list of coordinate reference systems supported by the service",
     )
 
     class Config:
@@ -108,12 +118,16 @@ class Collection(BaseModel):
                 "description": "An address.",
                 "links": [
                     {"href": "http://data.example.com/buildings", "rel": "item"},
-                    {"href": "http://example.com/concepts/buildings.html", "rel": "describedby", "type": "text/html"}
+                    {
+                        "href": "http://example.com/concepts/buildings.html",
+                        "rel": "describedby",
+                        "type": "text/html",
+                    },
                 ],
                 "crs": [
                     "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
-                    "http://www.opengis.net/def/crs/EPSG/0/4326"
-                ]
+                    "http://www.opengis.net/def/crs/EPSG/0/4326",
+                ],
             }
         }
 
@@ -127,7 +141,7 @@ class Collections(BaseModel):
             "example": {
                 "links": [
                     {"href": "http://data.example.com/collections", "rel": "self"},
-                    {"href": "http://data.example.com/", "rel": "parent"}
+                    {"href": "http://data.example.com/", "rel": "parent"},
                 ],
                 "collections": [
                     {
@@ -135,12 +149,18 @@ class Collections(BaseModel):
                         "title": "address",
                         "description": "An address.",
                         "links": [
-                            {"href": "http://data.example.com/collections/address", "rel": "item"},
-                            {"href": "http://example.com/concepts/address.html", "rel": "describedby",
-                             "type": "text/html"}
-                        ]
+                            {
+                                "href": "http://data.example.com/collections/address",
+                                "rel": "item",
+                            },
+                            {
+                                "href": "http://example.com/concepts/address.html",
+                                "rel": "describedby",
+                                "type": "text/html",
+                            },
+                        ],
                     }
-                ]
+                ],
             }
         }
 
@@ -164,44 +184,73 @@ class GeometryType(str, Enum):
 
 
 class QueryableProperty(BaseModel):
-    title: Optional[str] = Field(None, description="Human readable title of the queryable")
+    title: Optional[str] = Field(
+        None, description="Human readable title of the queryable"
+    )
     description: Optional[str] = Field(None, description="Description of the queryable")
-    type: Optional[str] = Field(default="string", description="Data type of the queryable")
-    minLength: Optional[int] = Field(None, description="Minimum length for string properties")
-    maxLength: Optional[int] = Field(None, description="Maximum length for string properties")
+    type: Optional[str] = Field(
+        default="string", description="Data type of the queryable"
+    )
+    minLength: Optional[int] = Field(
+        None, description="Minimum length for string properties"
+    )
+    maxLength: Optional[int] = Field(
+        None, description="Maximum length for string properties"
+    )
     enum: Optional[List[Union[str, int]]] = Field(None, description="Enumerated values")
-    pattern: Optional[str] = Field(None, description="Regex pattern for string properties")
-    multipleOf: Optional[float] = Field(None, description="Multiple of for numeric properties")
-    minimum: Optional[float] = Field(None, description="Minimum value for numeric properties")
-    exclusiveMinimum: Optional[float] = Field(None, description="Exclusive minimum for numeric properties")
-    maximum: Optional[float] = Field(None, description="Maximum value for numeric properties")
-    exclusiveMaximum: Optional[float] = Field(None, description="Exclusive maximum for numeric properties")
-    format: Optional[Literal["date-time", "date", "time", "duration"]] = Field(None,
-                                                                               description="Format for temporal properties")
-    items: Optional[Union[List[str], List[int]]] = Field(None, description="Items for array properties")
+    pattern: Optional[str] = Field(
+        None, description="Regex pattern for string properties"
+    )
+    multipleOf: Optional[float] = Field(
+        None, description="Multiple of for numeric properties"
+    )
+    minimum: Optional[float] = Field(
+        None, description="Minimum value for numeric properties"
+    )
+    exclusiveMinimum: Optional[float] = Field(
+        None, description="Exclusive minimum for numeric properties"
+    )
+    maximum: Optional[float] = Field(
+        None, description="Maximum value for numeric properties"
+    )
+    exclusiveMaximum: Optional[float] = Field(
+        None, description="Exclusive maximum for numeric properties"
+    )
+    format: Optional[Literal["date-time", "date", "time", "duration"]] = Field(
+        None, description="Format for temporal properties"
+    )
+    items: Optional[Union[List[str], List[int]]] = Field(
+        None, description="Items for array properties"
+    )
 
 
 class SpatialQueryableProperty(QueryableProperty):
     type: Literal["object"] = "object"
     geometryType: GeometryType = Field(..., description="Type of geometry")
-    schema: AnyUrl = Field(..., description="URL to the GeoJSON schema for the geometry type")
+    schema: AnyUrl = Field(
+        ..., description="URL to the GeoJSON schema for the geometry type"
+    )
 
 
 class Queryables(BaseModel):
-    schema: Literal["https://json-schema.org/draft/2019-09/schema", "http://json-schema.org/draft-07/schema#"] = Field(
-        default="https://json-schema.org/draft/2019-09/schema",
-        alias="$schema"
+    schema: Literal[
+        "https://json-schema.org/draft/2019-09/schema",
+        "http://json-schema.org/draft-07/schema#",
+    ] = Field(default="https://json-schema.org/draft/2019-09/schema", alias="$schema")
+    id: str = Field(
+        ..., alias="$id", description="URI of the resource without query parameters"
     )
-    id: str = Field(..., alias="$id", description="URI of the resource without query parameters")
     type: Literal["object"] = "object"
     title: Optional[str] = Field(None, description="Title of the schema")
     description: Optional[str] = Field(None, description="Description of the schema")
-    properties: dict[str, Union[QueryableProperty, SpatialQueryableProperty]] = Field(...,
-                                                                                      description="Queryable properties")
+    properties: dict[str, Union[QueryableProperty, SpatialQueryableProperty]] = Field(
+        ..., description="Queryable properties"
+    )
 
 
 ########################################################################################################################
 # generate link headers
+
 
 def generate_link_header(links: List[Link]) -> str:
     header_links = []

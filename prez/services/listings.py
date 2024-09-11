@@ -8,9 +8,21 @@ from fastapi.responses import PlainTextResponse
 from rdf2geojson import convert
 from rdflib import URIRef, Literal
 from rdflib.namespace import RDF, Namespace, GEO
-from sparql_grammar_pydantic import IRI, Var, TriplesSameSubject, TriplesSameSubjectPath, PrimaryExpression, \
-    GraphPatternNotTriples, Bind, Expression, IRIOrFunction, OptionalGraphPattern, GroupGraphPattern, \
-    GroupGraphPatternSub, TriplesBlock
+from sparql_grammar_pydantic import (
+    IRI,
+    Var,
+    TriplesSameSubject,
+    TriplesSameSubjectPath,
+    PrimaryExpression,
+    GraphPatternNotTriples,
+    Bind,
+    Expression,
+    IRIOrFunction,
+    OptionalGraphPattern,
+    GroupGraphPattern,
+    GroupGraphPatternSub,
+    TriplesBlock,
+)
 
 from prez.cache import endpoints_graph_cache
 from prez.config import settings
@@ -26,7 +38,8 @@ from prez.services.query_generation.count import CountQuery
 from prez.services.query_generation.shacl import NodeShape
 from prez.services.query_generation.umbrella import (
     merge_listing_query_grammar_inputs,
-    PrezQueryConstructor, )
+    PrezQueryConstructor,
+)
 
 log = logging.getLogger(__name__)
 
@@ -34,20 +47,20 @@ DWC = Namespace("http://rs.tdwg.org/dwc/terms/")
 
 
 async def listing_function(
-        data_repo,
-        system_repo,
-        endpoint_nodeshape,
-        endpoint_structure,
-        search_query,
-        concept_hierarchy_query,
-        cql_parser,
-        pmts,
-        profile_nodeshape,
-        query_params,
-        original_endpoint_type,
+    data_repo,
+    system_repo,
+    endpoint_nodeshape,
+    endpoint_structure,
+    search_query,
+    concept_hierarchy_query,
+    cql_parser,
+    pmts,
+    profile_nodeshape,
+    query_params,
+    original_endpoint_type,
 ):
     if (
-            pmts.selected["profile"] == ALTREXT["alt-profile"]
+        pmts.selected["profile"] == ALTREXT["alt-profile"]
     ):  # recalculate the endpoint node shape
         endpoint_nodeshape = await handle_alt_profile(original_endpoint_type, pmts)
 
@@ -87,8 +100,8 @@ async def listing_function(
     queries.append(main_query.to_string())
 
     if (
-            pmts.requested_mediatypes is not None
-            and pmts.requested_mediatypes[0][0] == "application/sparql-query"
+        pmts.requested_mediatypes is not None
+        and pmts.requested_mediatypes[0][0] == "application/sparql-query"
     ):
         return PlainTextResponse(queries[0], media_type="application/sparql-query")
 
@@ -128,16 +141,16 @@ async def listing_function(
 
 
 async def ogc_features_listing_function(
-        endpoint_uri_type,
-        endpoint_nodeshape,
-        profile_nodeshape,
-        selected_mediatype,
-        url_path,
-        data_repo,
-        system_repo,
-        cql_parser,
-        query_params,
-        **path_params,
+    endpoint_uri_type,
+    endpoint_nodeshape,
+    profile_nodeshape,
+    selected_mediatype,
+    url_path,
+    data_repo,
+    system_repo,
+    cql_parser,
+    query_params,
+    **path_params,
 ):
     collectionId = path_params.get("collectionId")
     subselect_kwargs = merge_listing_query_grammar_inputs(
@@ -154,13 +167,25 @@ async def ogc_features_listing_function(
         construct_tss_list.extend(profile_nodeshape.tss_list)
 
     queries = []
-    if endpoint_uri_type[0] in [OGCFEAT["queryables-local"], OGCFEAT["queryables-global"]]:
+    if endpoint_uri_type[0] in [
+        OGCFEAT["queryables-local"],
+        OGCFEAT["queryables-global"],
+    ]:
         queryable_var = Var(value="queryable")
-        innser_select_triple = (Var(value="focus_node"), queryable_var, Var(value="queryable_value"))
-        subselect_kwargs["inner_select_tssp_list"].append(TriplesSameSubjectPath.from_spo(*innser_select_triple))
+        innser_select_triple = (
+            Var(value="focus_node"),
+            queryable_var,
+            Var(value="queryable_value"),
+        )
+        subselect_kwargs["inner_select_tssp_list"].append(
+            TriplesSameSubjectPath.from_spo(*innser_select_triple)
+        )
         subselect_kwargs["inner_select_vars"] = [queryable_var]
         construct_triple = (
-            queryable_var, IRI(value=RDF.type), IRI(value="http://www.opengis.net/def/rel/ogc/1.0/Queryable"))
+            queryable_var,
+            IRI(value=RDF.type),
+            IRI(value="http://www.opengis.net/def/rel/ogc/1.0/Queryable"),
+        )
         construct_tss_list = [TriplesSameSubject.from_spo(*construct_triple)]
         query = PrezQueryConstructor(
             construct_tss_list=construct_tss_list,
@@ -225,16 +250,29 @@ async def ogc_features_listing_function(
     annotations_graph = await return_annotated_rdf(item_graph, data_repo, system_repo)
 
     if selected_mediatype == "application/json":
-        if endpoint_uri_type[0] in [OGCFEAT["queryables-local"], OGCFEAT["queryables-global"]]:
-            queryables = generate_queryables_json(item_graph, annotations_graph, url_path, endpoint_uri_type[0])
-            content = io.BytesIO(queryables.model_dump_json(exclude_none=True, by_alias=True).encode("utf-8"))
+        if endpoint_uri_type[0] in [
+            OGCFEAT["queryables-local"],
+            OGCFEAT["queryables-global"],
+        ]:
+            queryables = generate_queryables_json(
+                item_graph, annotations_graph, url_path, endpoint_uri_type[0]
+            )
+            content = io.BytesIO(
+                queryables.model_dump_json(exclude_none=True, by_alias=True).encode(
+                    "utf-8"
+                )
+            )
         else:
-            collections = create_collections_json(item_graph, annotations_graph, url_path, selected_mediatype)
+            collections = create_collections_json(
+                item_graph, annotations_graph, url_path, selected_mediatype
+            )
             all_links = collections.links
             for coll in collections.collections:
                 all_links.extend(coll.links)
             link_headers = generate_link_headers(all_links)
-            content = io.BytesIO(collections.model_dump_json(exclude_none=True).encode("utf-8"))
+            content = io.BytesIO(
+                collections.model_dump_json(exclude_none=True).encode("utf-8")
+            )
 
     elif selected_mediatype == "application/geo+json":
         geojson = convert(g=item_graph, do_validate=False, iri2id=get_curie_id_for_uri)
@@ -262,31 +300,46 @@ def _add_inbound_triple_pattern_match(construct_tss_list):
     return opt_inbound_gpnt
 
 
-def create_collections_json(item_graph, annotations_graph, url_path, selected_mediatype):
+def create_collections_json(
+    item_graph, annotations_graph, url_path, selected_mediatype
+):
     collections_list = []
     for s, p, o in item_graph.triples((None, RDF.type, GEO.FeatureCollection)):
         curie_id = get_curie_id_for_uri(s)
         collections_list.append(
             Collection(
                 id=curie_id,
-                title=annotations_graph.value(subject=s, predicate=PREZ.label, default=None),
-                description=annotations_graph.value(subject=s, predicate=PREZ.description, default=None),
-                links=[Link(
-                    href=URIRef(f"{settings.system_uri}{url_path}/{curie_id}/items?{urlencode({'_mediatype': mt})}"),
-                    rel="items", type=mt) for mt in ["application/geo+json", *RDF_MEDIATYPES]]
+                title=annotations_graph.value(
+                    subject=s, predicate=PREZ.label, default=None
+                ),
+                description=annotations_graph.value(
+                    subject=s, predicate=PREZ.description, default=None
+                ),
+                links=[
+                    Link(
+                        href=URIRef(
+                            f"{settings.system_uri}{url_path}/{curie_id}/items?{urlencode({'_mediatype': mt})}"
+                        ),
+                        rel="items",
+                        type=mt,
+                    )
+                    for mt in ["application/geo+json", *RDF_MEDIATYPES]
+                ],
             )
         )
     collections = Collections(
         collections=collections_list,
         links=[
             Link(
-                href=URIRef(f"{settings.system_uri}{url_path}?{urlencode({'_mediatype': mt})}"),
+                href=URIRef(
+                    f"{settings.system_uri}{url_path}?{urlencode({'_mediatype': mt})}"
+                ),
                 rel="self" if mt == selected_mediatype else "alternate",
                 type=mt,
-                title="this document"
+                title="this document",
             )
             for mt in ["application/json", *RDF_MEDIATYPES]
-        ]
+        ],
     )
     return collections
 

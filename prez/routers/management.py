@@ -26,10 +26,7 @@ log = logging.getLogger(__name__)
 
 
 @router.get("/", summary="Home page", tags=["Prez"])
-async def index(
-        request: Request,
-        system_repo: Repo = Depends(get_system_repo)
-):
+async def index(request: Request, system_repo: Repo = Depends(get_system_repo)):
     """Returns the following information about the API"""
     pmts = NegotiatedPMTs(
         headers=request.headers,
@@ -51,7 +48,7 @@ async def index(
         profile_headers=pmts.generate_response_headers(),
         selected_class=pmts.selected["class"],
         repo=system_repo,
-        system_repo=system_repo
+        system_repo=system_repo,
     )
 
 
@@ -84,7 +81,7 @@ async def return_tbox_cache(request: Request):
         pred_obj = pickle.loads(pred_obj_bytes)
         for pred, obj in pred_obj:
             if (
-                    pred_obj
+                pred_obj
             ):  # cache entry for a URI can be empty - i.e. no annotations found for URI
                 # Add the expanded triple (subject, predicate, object) to 'annotations_g'
                 cache_g.add((subject, pred, obj))
@@ -121,23 +118,20 @@ async def return_annotation_predicates():
 
 @router.get("/prefixes", summary="Show prefixes known to prez")
 async def show_prefixes(
-        mediatype: Optional[NonAnnotatedRDFMediaType | JSONMediaType] = Query(default=NonAnnotatedRDFMediaType.TURTLE,
-                                                                              alias="_mediatype")
+    mediatype: Optional[NonAnnotatedRDFMediaType | JSONMediaType] = Query(
+        default=NonAnnotatedRDFMediaType.TURTLE, alias="_mediatype"
+    )
 ):
     """Returns the prefixes known to prez"""
     mediatype_str = str(mediatype.value)
     ns_map = {pfx: ns for pfx, ns in prefix_graph.namespaces()}
     if mediatype_str == "application/json":
-        content = io.BytesIO(
-            json.dumps(ns_map).encode("utf-8")
-        )
+        content = io.BytesIO(json.dumps(ns_map).encode("utf-8"))
     else:
         g = Graph()
         for prefix, namespace in ns_map.items():
             bn = BNode()
             g.add((bn, VANN.preferredNamespacePrefix, Literal(prefix)))
             g.add((bn, VANN.preferredNamespaceUri, Literal(namespace)))
-        content = io.BytesIO(
-            g.serialize(format=mediatype_str, encoding="utf-8")
-        )
+        content = io.BytesIO(g.serialize(format=mediatype_str, encoding="utf-8"))
     return StreamingResponse(content=content, media_type=mediatype_str)

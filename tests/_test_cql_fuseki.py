@@ -77,9 +77,7 @@ def test_spatial_contains_filter(client_fuseki):
         cql = json.load(f)
     cql_str = json.dumps(cql)
     cql_encoded = quote_plus(cql_str)
-    response = client_fuseki.get(
-        f"/cql?filter={cql_encoded}"
-    )
+    response = client_fuseki.get(f"/cql?filter={cql_encoded}")
     response_graph = Graph().parse(data=response.text)
     print(response_graph.serialize(format="turtle"))
 
@@ -101,8 +99,6 @@ def test_spatial_contains_inverse(client_fuseki):
         cql = json.load(f)
     cql_str = json.dumps(cql)
     cql_encoded = quote_plus(cql_str)
-    response = client_fuseki.get(
-        f"/cql?filter={cql_encoded}"
-    )
+    response = client_fuseki.get(f"/cql?filter={cql_encoded}")
     response_graph = Graph().parse(data=response.text)
     print(response_graph.serialize(format="turtle"))

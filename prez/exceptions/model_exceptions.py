@@ -30,7 +30,9 @@ class PrefixNotFoundException(Exception):
     """
 
     def __init__(self, prefix: str):
-        self.message = f"Prefix \"{prefix}\" not found at endpoint {settings.sparql_endpoint}."
+        self.message = (
+            f'Prefix "{prefix}" not found at endpoint {settings.sparql_endpoint}.'
+        )
         super().__init__(self.message)
 
 

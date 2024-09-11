@@ -2,15 +2,23 @@ from datetime import datetime
 from typing import List, Optional
 from prez.config import settings
 
-from sparql_grammar_pydantic import GraphPatternNotTriples, TriplesSameSubjectPath, Filter, PrimaryExpression, \
-    Var, IRI, RDFLiteral
+from sparql_grammar_pydantic import (
+    GraphPatternNotTriples,
+    TriplesSameSubjectPath,
+    Filter,
+    PrimaryExpression,
+    Var,
+    IRI,
+    RDFLiteral,
+)
 
 from prez.models.query_params import DateTimeOrUnbounded
 from prez.services.query_generation.cql import create_temporal_filter_gpnt
 
 
-def generate_datetime_filter(datetime_1: DateTimeOrUnbounded, datetime_2: Optional[DateTimeOrUnbounded]) -> (
-        GraphPatternNotTriples, List[TriplesSameSubjectPath]):
+def generate_datetime_filter(
+    datetime_1: DateTimeOrUnbounded, datetime_2: Optional[DateTimeOrUnbounded]
+) -> (GraphPatternNotTriples, List[TriplesSameSubjectPath]):
     # tssp
     tssp_list = [
         TriplesSameSubjectPath.from_spo(
@@ -48,8 +56,7 @@ def generate_datetime_filter(datetime_1: DateTimeOrUnbounded, datetime_2: Option
         filter_gpnts.append(create_temporal_filter_gpnt(datetime_1, dt_1_op))
         filter_gpnts.append(create_temporal_filter_gpnt(datetime_2, dt_2_op))
     else:
-        raise ValueError(f"Invalid datetime format, datetime_1: {datetime_1}, datetime_2: {datetime_2}")
+        raise ValueError(
+            f"Invalid datetime format, datetime_1: {datetime_1}, datetime_2: {datetime_2}"
+        )
     return filter_gpnts, tssp_list
-
-
-

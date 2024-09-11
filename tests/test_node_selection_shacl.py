@@ -23,7 +23,7 @@ def test_nodeshape_parsing(nodeshape_uri):
         URIRef("http://www.w3.org/2004/02/skos/core#ConceptScheme"),
         URIRef("http://www.w3.org/2004/02/skos/core#Collection"),
         URIRef("http://www.w3.org/ns/dcat#Resource"),
-        URIRef("http://www.w3.org/ns/dcat#Dataset")
+        URIRef("http://www.w3.org/ns/dcat#Dataset"),
     ]
     assert len(ns.propertyShapesURIs) == 1
 

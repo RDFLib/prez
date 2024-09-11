@@ -19,17 +19,18 @@ from prez.services.curie_functions import get_uri_for_curie_id, get_curie_id_for
 from prez.services.link_generation import add_prez_links
 from prez.services.listings import listing_function
 from prez.services.query_generation.umbrella import (
-    PrezQueryConstructor, )
+    PrezQueryConstructor,
+)
 
 log = logging.getLogger(__name__)
 
 
 async def object_function(
-        data_repo,
-        system_repo,
-        endpoint_structure,
-        pmts,
-        profile_nodeshape,
+    data_repo,
+    system_repo,
+    endpoint_structure,
+    pmts,
+    profile_nodeshape,
 ):
     if pmts.selected["profile"] == ALTREXT["alt-profile"]:
         none_keys = [
@@ -95,12 +96,12 @@ async def object_function(
 
 
 async def ogc_features_object_function(
-        template_query,
-        selected_mediatype,
-        url_path,
-        data_repo,
-        system_repo,
-        **path_params,
+    template_query,
+    selected_mediatype,
+    url_path,
+    data_repo,
+    system_repo,
+    **path_params,
 ):
     collectionId = path_params.get("collectionId")
     featureId = path_params.get("featureId")
@@ -111,16 +112,24 @@ async def ogc_features_object_function(
         else:
             focus_uri = collection_uri
         query = template_query.replace(
-            "VALUES ?focusNode { UNDEF }",
-            f"VALUES ?focusNode {{ {focus_uri.n3()} }}")
+            "VALUES ?focusNode { UNDEF }", f"VALUES ?focusNode {{ {focus_uri.n3()} }}"
+        )
     else:
         if featureId is None:  # feature collection
             collection_iri = IRI(value=collection_uri)
-            tssp_list = [TriplesSameSubjectPath.from_spo(collection_iri, IRI(value=RDF.type), Var(value="type"))]
+            tssp_list = [
+                TriplesSameSubjectPath.from_spo(
+                    collection_iri, IRI(value=RDF.type), Var(value="type")
+                )
+            ]
         else:  # feature
             feature_uri = await get_uri_for_curie_id(featureId)
             feature_iri = IRI(value=feature_uri)
-            tssp_list = [TriplesSameSubjectPath.from_spo(feature_iri, IRI(value=RDF.type), Var(value="type"))]
+            tssp_list = [
+                TriplesSameSubjectPath.from_spo(
+                    feature_iri, IRI(value=RDF.type), Var(value="type")
+                )
+            ]
         query = PrezQueryConstructor(
             profile_triples=tssp_list,
         ).to_string()
@@ -134,9 +143,13 @@ async def ogc_features_object_function(
     if selected_mediatype == "application/sparql-query":
         content = io.BytesIO(query.encode("utf-8"))
     elif selected_mediatype == "application/json":
-        collection = create_collection_json(collectionId, collection_uri, annotations_graph, url_path)
+        collection = create_collection_json(
+            collectionId, collection_uri, annotations_graph, url_path
+        )
         link_headers = generate_link_headers(collection.links)
-        content = io.BytesIO(collection.model_dump_json(exclude_none=True).encode("utf-8"))
+        content = io.BytesIO(
+            collection.model_dump_json(exclude_none=True).encode("utf-8")
+        )
     elif selected_mediatype == "application/geo+json":
         geojson = convert(g=item_graph, do_validate=False, iri2id=get_curie_id_for_uri)
         content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
@@ -147,11 +160,25 @@ async def ogc_features_object_function(
     return content, link_headers
 
 
-def create_collection_json(collection_curie, collection_uri, annotations_graph, url_path):
+def create_collection_json(
+    collection_curie, collection_uri, annotations_graph, url_path
+):
     return Collection(
         id=collection_curie,
-        title=annotations_graph.value(subject=collection_uri, predicate=PREZ.label, default=None),
-        description=annotations_graph.value(subject=collection_uri, predicate=PREZ.description, default=None),
-        links=[Link(href=URIRef(f"{settings.system_uri}{url_path}/items?{urlencode({'_mediatype': mt})}"),
-                    rel="items", type=mt) for mt in ["application/geo+json", *RDF_MEDIATYPES]]
+        title=annotations_graph.value(
+            subject=collection_uri, predicate=PREZ.label, default=None
+        ),
+        description=annotations_graph.value(
+            subject=collection_uri, predicate=PREZ.description, default=None
+        ),
+        links=[
+            Link(
+                href=URIRef(
+                    f"{settings.system_uri}{url_path}/items?{urlencode({'_mediatype': mt})}"
+                ),
+                rel="items",
+                type=mt,
+            )
+            for mt in ["application/geo+json", *RDF_MEDIATYPES]
+        ],
     )

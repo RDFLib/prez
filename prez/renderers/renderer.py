@@ -69,9 +69,7 @@ async def return_from_graph(
     elif str(mediatype) == "application/geo+json":
         geojson = convert(g=graph, do_validate=False, iri2id=get_curie_id_for_uri)
         content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
-        return StreamingResponse(
-            content=content, media_type=mediatype
-        )
+        return StreamingResponse(content=content, media_type=mediatype)
 
     else:
         if "anot+" in mediatype:

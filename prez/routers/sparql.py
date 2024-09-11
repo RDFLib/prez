@@ -72,9 +72,7 @@ async def sparql_endpoint_handler(
         g.parse(data=response.text, format=non_anot_mediatype)
         annotations_graph = await return_annotated_rdf(g, repo, system_repo)
         g.__iadd__(annotations_graph)
-        content = io.BytesIO(
-            g.serialize(format=non_anot_mediatype, encoding="utf-8")
-        )
+        content = io.BytesIO(g.serialize(format=non_anot_mediatype, encoding="utf-8"))
         return StreamingResponse(
             content=content,
             media_type=non_anot_mediatype,

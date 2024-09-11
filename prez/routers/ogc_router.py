@@ -16,7 +16,11 @@ from prez.dependencies import (
 from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import EP, ONT, OGCE
 from prez.repositories import Repo
-from prez.routers.api_extras_examples import responses, cql_examples, ogc_extended_openapi_extras
+from prez.routers.api_extras_examples import (
+    responses,
+    cql_examples,
+    ogc_extended_openapi_extras,
+)
 from prez.services.connegp_service import NegotiatedPMTs
 from prez.services.listings import listing_function
 from prez.services.objects import object_function
@@ -25,6 +29,7 @@ from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.shacl import NodeShape
 
 router = APIRouter(tags=["ogcprez"])
+
 
 @router.get(path="/search", summary="Search", name=OGCE["search"], responses=responses)
 @router.get(

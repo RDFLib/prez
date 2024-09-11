@@ -3,7 +3,9 @@ from rdflib.namespace import RDF, GEO
 
 
 def test_feature_collection(client):
-    r = client.get(f"/object?uri=https://example.com/FeatureCollection&_mediatype=text/turtle")
+    r = client.get(
+        f"/object?uri=https://example.com/FeatureCollection&_mediatype=text/turtle"
+    )
     response_graph = Graph().parse(data=r.text)
     assert (
         URIRef("https://example.com/FeatureCollection"),

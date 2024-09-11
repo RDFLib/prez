@@ -77,6 +77,7 @@ def a_spaceprez_catalog_link(client):
     link = g.value(cat_uri, URIRef(f"https://prez.dev/link", None))
     return link
 
+
 @pytest.fixture()
 def a_spaceprez_dataset_link(client, a_spaceprez_catalog_link):
     r = client.get(f"{a_spaceprez_catalog_link}/collections")
@@ -84,7 +85,6 @@ def a_spaceprez_dataset_link(client, a_spaceprez_catalog_link):
     ds_uri = URIRef("https://example.com/SpacePrezDataset")
     link = g.value(ds_uri, URIRef(f"https://prez.dev/link", None))
     return link
-
 
 
 @pytest.fixture()

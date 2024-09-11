@@ -24,7 +24,8 @@ from prez.exceptions.model_exceptions import (
     ClassNotFoundException,
     URINotFoundException,
     NoProfilesException,
-    InvalidSPARQLQueryException, PrefixNotFoundException,
+    InvalidSPARQLQueryException,
+    PrefixNotFoundException,
 )
 from prez.repositories import RemoteSparqlRepo, PyoxigraphRepo, OxrdflibRepo
 from prez.routers.identifier import router as identifier_router
@@ -37,7 +38,8 @@ from prez.services.app_service import (
     count_objects,
     create_endpoints_graph,
     populate_api_info,
-    prefix_initialisation, retrieve_remote_template_queries,
+    prefix_initialisation,
+    retrieve_remote_template_queries,
 )
 from prez.services.exception_catchers import (
     catch_400,
@@ -46,7 +48,8 @@ from prez.services.exception_catchers import (
     catch_class_not_found_exception,
     catch_uri_not_found_exception,
     catch_no_profiles_exception,
-    catch_invalid_sparql_query, catch_prefix_not_found_exception,
+    catch_invalid_sparql_query,
+    catch_prefix_not_found_exception,
 )
 from prez.services.generate_profiles import create_profiles_graph
 from prez.services.prez_logging import setup_logger
@@ -176,7 +179,10 @@ def assemble_app(
     app.include_router(ogc_records_router)
     if _settings.enable_sparql_endpoint:
         app.include_router(sparql_router)
-    app.mount("/catalogs/{catalogId}/collections/{recordsCollectionId}/features", features_subapi)
+    app.mount(
+        "/catalogs/{catalogId}/collections/{recordsCollectionId}/features",
+        features_subapi,
+    )
     app.include_router(identifier_router)
     app.openapi = partial(
         prez_open_api_metadata,

@@ -42,44 +42,45 @@ DateTimeOrUnbounded = Union[datetime, str, None]
 
 
 def reformat_bbox(
-        bbox: List[str] = Query(
-            default=[],  # Australia
-            description="Bounding box coordinates",
-            alias="bbox",
-            openapi_extra={
-                "name": "bbox",
-                "in": "query",
-                "required": False,
-                "schema": {
-                    "type": "array",
-                    "oneOf": [
-                        {"minItems": 4, "maxItems": 4},
-                        {"minItems": 6, "maxItems": 6}
-                    ],
-                    "items": {
-                        "type": "number"
-                    }
-                },
-                "style": "form",
-                "explode": False
+    bbox: List[str] = Query(
+        default=[],  # Australia
+        description="Bounding box coordinates",
+        alias="bbox",
+        openapi_extra={
+            "name": "bbox",
+            "in": "query",
+            "required": False,
+            "schema": {
+                "type": "array",
+                "oneOf": [
+                    {"minItems": 4, "maxItems": 4},
+                    {"minItems": 6, "maxItems": 6},
+                ],
+                "items": {"type": "number"},
             },
-            example=["113.338953078, -43.6345972634, 153.569469029, -10.6681857235"]
-        )) -> List[float]:
+            "style": "form",
+            "explode": False,
+        },
+        example=["113.338953078, -43.6345972634, 153.569469029, -10.6681857235"],
+    )
+) -> List[float]:
     if bbox:
-        return [float(x) for x in bbox[0].split(',')]
+        return [float(x) for x in bbox[0].split(",")]
     return None
 
 
-def parse_datetime(datetime_str: str) -> Tuple[DateTimeOrUnbounded, DateTimeOrUnbounded]:
+def parse_datetime(
+    datetime_str: str,
+) -> Tuple[DateTimeOrUnbounded, DateTimeOrUnbounded]:
     def normalize_and_parse(part: str) -> DateTimeOrUnbounded:
         if not part:
             return None
-        if part == '..':
-            return '..'
-        normalized = part.replace('t', 'T').replace('z', 'Z')
+        if part == "..":
+            return ".."
+        normalized = part.replace("t", "T").replace("z", "Z")
         return datetime.fromisoformat(normalized)
 
-    parts = datetime_str.split('/')
+    parts = datetime_str.split("/")
     if len(parts) == 1:
         return normalize_and_parse(parts[0]), None
     elif len(parts) == 2:
@@ -93,9 +94,9 @@ def parse_datetime(datetime_str: str) -> Tuple[DateTimeOrUnbounded, DateTimeOrUn
 
 
 def validate_datetime(
-        datetime: Optional[str] = Query(
-            None,
-            description=""" Either a date-time or an interval. Date and time expressions adhere to RFC 3339.
+    datetime: Optional[str] = Query(
+        None,
+        description=""" Either a date-time or an interval. Date and time expressions adhere to RFC 3339.
   Intervals may be bounded or half-bounded (double-dots at start or end).
   
   Temporal geometries are either a date-time value or a time interval. The parameter value SHALL conform to the following syntax (using ABNF):
@@ -117,24 +118,24 @@ def validate_datetime(
   If a feature has multiple temporal properties, it is the decision of the
   server whether only a single temporal property is used to determine
   the extent or all relevant temporal properties.""",
-            alias="datetime",
-            openapi_extra={
-                "name": "datetime",
-                "in": "query",
-                "required": False,
-                "schema": {
-                    "type": "string",
-                    "examples": [
-                        "2018-02-12T23:20:50Z",
-                        "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z",
-                        "2018-02-12T00:00:00Z/..",
-                        "../2018-03-18T12:31:12Z"
-                    ]
-                },
-                "style": "form",
-                "explode": False
-            }
-        )
+        alias="datetime",
+        openapi_extra={
+            "name": "datetime",
+            "in": "query",
+            "required": False,
+            "schema": {
+                "type": "string",
+                "examples": [
+                    "2018-02-12T23:20:50Z",
+                    "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z",
+                    "2018-02-12T00:00:00Z/..",
+                    "../2018-03-18T12:31:12Z",
+                ],
+            },
+            "style": "form",
+            "explode": False,
+        },
+    )
 ) -> Optional[tuple]:
     if datetime:
         try:
@@ -154,45 +155,43 @@ class QueryParams:
     """
 
     def __init__(
-            self,
-            mediatype: Optional[str] = Query(
-                "text/turtle", alias="_mediatype", description="Requested mediatype"
-            ),
-            page: Optional[int] = Query(
-                1, ge=1, description="Page number, must be greater than 0"
-            ),
-            limit: Optional[int] = Query(
-                10,
-                ge=1,
-                le=10000,
-                description="Number of items per page, must be 1<=limit<=10000",
-                alias="limit",
-            ),
-            datetime: Optional[tuple] = Depends(validate_datetime),
-            bbox: List[float] = Depends(reformat_bbox),
-            filter_lang: Optional[FilterLangEnum] = Query(
-                'cql2-json',
-                description="Language of the filter expression",
-                alias="filter-lang",
-            ),
-            filter_crs: Optional[str] = Query(
-                "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
-                description="CRS used for the filter expression"
-            ),
-            q: Optional[str] = Query(
-                None, description="Search query", example="building"
-            ),
-            filter: Optional[str] = Query(
-                None,
-                description="CQL JSON expression.",
-            ),
-            order_by: Optional[str] = Query(
-                None, description="Optional: Field to order by"
-            ),
-            order_by_direction: Optional[OrderByDirectionEnum] = Query(
-                None,
-                description="Optional: Order direction, must be 'ASC' or 'DESC'",
-            ),
+        self,
+        mediatype: Optional[str] = Query(
+            "text/turtle", alias="_mediatype", description="Requested mediatype"
+        ),
+        page: Optional[int] = Query(
+            1, ge=1, description="Page number, must be greater than 0"
+        ),
+        limit: Optional[int] = Query(
+            10,
+            ge=1,
+            le=10000,
+            description="Number of items per page, must be 1<=limit<=10000",
+            alias="limit",
+        ),
+        datetime: Optional[tuple] = Depends(validate_datetime),
+        bbox: List[float] = Depends(reformat_bbox),
+        filter_lang: Optional[FilterLangEnum] = Query(
+            "cql2-json",
+            description="Language of the filter expression",
+            alias="filter-lang",
+        ),
+        filter_crs: Optional[str] = Query(
+            "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+            description="CRS used for the filter expression",
+        ),
+        q: Optional[str] = Query(None, description="Search query", example="building"),
+        filter: Optional[str] = Query(
+            None,
+            description="CQL JSON expression.",
+        ),
+        order_by: Optional[str] = Query(
+            None, description="Optional: Field to order by"
+        ),
+        order_by_direction: Optional[OrderByDirectionEnum] = Query(
+            None,
+            description="Optional: Order direction, must be 'ASC' or 'DESC'",
+        ),
     ):
         self.q = q
         self.page = page
