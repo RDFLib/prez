@@ -1,0 +1,10 @@
+CONSTRUCT {
+?focus_node <http://example.com/ends_at> ?dt_1_end .
+?focus_node <http://example.com/starts_at> ?dt_1_start
+}
+WHERE {
+?focus_node <http://example.com/ends_at> ?dt_1_end .
+?focus_node <http://example.com/starts_at> ?dt_1_start
+
+FILTER (?dt_1_start > "2005-01-10T00:00:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> && ?dt_1_end < "2010-02-10T00:00:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>)
+}

@@ -1,4 +1,5 @@
 import logging
+from contextlib import asynccontextmanager
 from functools import partial
 from textwrap import dedent
 from typing import Optional, Dict, Union, Any
@@ -85,56 +86,49 @@ async def add_cors_headers(request, call_next):
     return response
 
 
-async def app_startup(_settings: Settings, _app: FastAPI):
-    """
-    This function runs at startup and will continually poll the separate backends until their SPARQL endpoints
-    are available. Initial caching can be triggered within the try block. NB this function does not check that data is
-    appropriately configured at the SPARQL endpoint(s), only that the SPARQL endpoint(s) are reachable.
-    """
-    setup_logger(_settings)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    setup_logger(app.state.settings)
     log = logging.getLogger("prez")
     log.info("Starting up")
 
-    if _settings.sparql_repo_type == "pyoxigraph":
-        _app.state.pyoxi_store = get_pyoxi_store()
-        _app.state.repo = _repo = PyoxigraphRepo(_app.state.pyoxi_store)
-        await load_local_data_to_oxigraph(_app.state.pyoxi_store)
-    elif _settings.sparql_repo_type == "oxrdflib":
-        _app.state.oxrdflib_store = get_oxrdflib_store()
-        _app.state.repo = _repo = OxrdflibRepo(_app.state.oxrdflib_store)
-    elif _settings.sparql_repo_type == "remote":
-        _app.state.http_async_client = await get_async_http_client()
-        _app.state.repo = _repo = RemoteSparqlRepo(_app.state.http_async_client)
+    if app.state.settings.sparql_repo_type == "pyoxigraph":
+        app.state.pyoxi_store = get_pyoxi_store()
+        app.state.repo = PyoxigraphRepo(app.state.pyoxi_store)
+        await load_local_data_to_oxigraph(app.state.pyoxi_store)
+    elif app.state.settings.sparql_repo_type == "oxrdflib":
+        app.state.oxrdflib_store = get_oxrdflib_store()
+        app.state.repo = OxrdflibRepo(app.state.oxrdflib_store)
+    elif app.state.settings.sparql_repo_type == "remote":
+        app.state.http_async_client = await get_async_http_client()
+        app.state.repo = RemoteSparqlRepo(app.state.http_async_client)
         await healthcheck_sparql_endpoints()
     else:
         raise ValueError(
             "SPARQL_REPO_TYPE must be one of 'pyoxigraph', 'oxrdflib' or 'remote'"
         )
 
-    await prefix_initialisation(_repo)
-    await retrieve_remote_template_queries(_repo)
-    await create_profiles_graph(_repo)
-    await create_endpoints_graph(_repo)
-    await count_objects(_repo)
+    await prefix_initialisation(app.state.repo)
+    await retrieve_remote_template_queries(app.state.repo)
+    await create_profiles_graph(app.state.repo)
+    await create_endpoints_graph(app.state.repo)
+    await count_objects(app.state.repo)
     await populate_api_info()
 
-    _app.state.pyoxi_system_store = get_system_store()
-    _app.state.annotations_store = get_annotations_store()
-    await load_system_data_to_oxigraph(_app.state.pyoxi_system_store)
-    await load_annotations_data_to_oxigraph(_app.state.annotations_store)
+    app.state.pyoxi_system_store = get_system_store()
+    app.state.annotations_store = get_annotations_store()
+    await load_system_data_to_oxigraph(app.state.pyoxi_system_store)
+    await load_annotations_data_to_oxigraph(app.state.annotations_store)
 
+    yield
 
-async def app_shutdown(_settings: Settings, _app: FastAPI):
-    """
-    persists caches
-    close async SPARQL clients
-    """
-    log = logging.getLogger("prez")
+    # Shutdown
     log.info("Shutting down...")
 
     # close all SPARQL async clients
-    if not _settings.sparql_repo_type:
-        await _app.state.http_async_client.aclose()
+    if app.state.settings.sparql_repo_type == "remote":
+        await app.state.http_async_client.aclose()
 
 
 def assemble_app(
@@ -145,7 +139,6 @@ def assemble_app(
     local_settings: Optional[Settings] = None,
     **kwargs
 ):
-
     _settings = local_settings if local_settings is not None else settings
 
     if title is None:
@@ -162,6 +155,7 @@ def assemble_app(
         version=version,
         description=description,
         contact=contact,
+        lifespan=lifespan,
         exception_handlers={
             400: catch_400,
             404: catch_404,
@@ -174,6 +168,8 @@ def assemble_app(
         },
         **kwargs
     )
+
+    app.state.settings = _settings
 
     app.include_router(management_router)
     app.include_router(ogc_records_router)
@@ -203,8 +199,7 @@ def assemble_app(
         allow_headers=["*"],
         expose_headers=["*"],
     )
-    app.on_event("startup")(partial(app_startup, _settings=_settings, _app=app))
-    app.on_event("shutdown")(partial(app_shutdown, _settings=_settings, _app=app))
+
     return app
 
 

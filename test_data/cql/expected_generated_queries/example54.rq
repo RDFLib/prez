@@ -1,27 +1,7 @@
 CONSTRUCT {
-?focus_node <https://prez.dev/type> <https://prez.dev/FocusNode> .
-?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?prof_1_node_3 .
-?prof_1_node_1 <http://www.opengis.net/ont/geosparql#asWKT> ?prof_1_node_2 .
-?focus_node <http://www.opengis.net/ont/geosparql#hasGeometry> ?prof_1_node_1 .
-?focus_node <http://example.com/updated_at> ?datetime
+?focus_node <http://example.com/updated_at> ?dt_1_instant
 }
 WHERE {
-
-
-{
-SELECT DISTINCT ?focus_node
-WHERE {
-?focus_node <http://example.com/updated_at> ?datetime
-FILTER (?datetime < "2012-08-10T05:30:00+00:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>)
-}LIMIT 10
-OFFSET 0
-}
-
-OPTIONAL {
-?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?prof_1_node_3 .
-?prof_1_node_1 <http://www.opengis.net/ont/geosparql#asWKT> ?prof_1_node_2 .
-?focus_node <http://www.opengis.net/ont/geosparql#hasGeometry> ?prof_1_node_1
-
-
-}
+?focus_node <http://example.com/updated_at> ?dt_1_instant
+FILTER (?dt_1_instant < "2012-08-10T05:30:00+00:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>)
 }

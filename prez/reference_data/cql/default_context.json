@@ -25,9 +25,12 @@
     "@id": "cql:date"
   },
   "datetime": {
-      "@id": "cql:datetime"
+    "@id": "cql:datetime"
   },
   "timestamp": {
-      "@id": "cql:timestamp"
+    "@id": "cql:timestamp"
+  },
+  "interval": {
+    "@id": "cql:interval"
   }
 }

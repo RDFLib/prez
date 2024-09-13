@@ -1,0 +1,93 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "description": "A collection of temporal interval relations and their definitions",
+  "patternProperties": {
+    "^T_[A-Z_]+$": {
+      "type": "object",
+      "description": "A temporal interval relation",
+      "properties": {
+        "definition": {
+          "type": "string",
+          "format": "uri",
+          "description": "A URL linking to the formal definition of the temporal relation"
+        },
+        "interval_interval": {
+          "$ref": "#/$defs/comparisonSet"
+        },
+        "instant_interval": {
+          "$ref": "#/$defs/comparisonSet"
+        },
+        "interval_instant": {
+          "$ref": "#/$defs/comparisonSet"
+        },
+        "instant_instant": {
+          "$ref": "#/$defs/comparisonSet"
+        }
+      },
+      "required": ["definition", "interval_interval"],
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "temporalOperand": {
+      "type": "string",
+      "enum": ["t1_start", "t1_end", "t2_start", "t2_end", "t1_instant", "t2_instant"],
+      "description": "A temporal operand representing a start, end, or instant of an interval"
+    },
+    "comparisonOperator": {
+      "type": "string",
+      "enum": ["<", ">", "="],
+      "description": "An operator for comparing temporal operands"
+    },
+    "condition": {
+      "type": "array",
+      "description": "A single condition in the form [left_operand, operator, right_operand]",
+      "items": [
+        { "$ref": "#/$defs/temporalOperand" },
+        { "$ref": "#/$defs/comparisonOperator" },
+        { "$ref": "#/$defs/temporalOperand" }
+      ],
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "conditionSet": {
+      "type": "object",
+      "properties": {
+        "logic": {
+          "type": "string",
+          "enum": ["AND", "OR"],
+          "description": "The logical relationship between the conditions"
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/condition"
+          },
+          "minItems": 1
+        }
+      },
+      "required": ["conditions"],
+      "additionalProperties": false
+    },
+    "comparisonSet": {
+      "type": "object",
+      "patternProperties": {
+        "^[BUI]{1,2}_[BUI]{1,2}$": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/conditionSet"
+            },
+            {
+              "type": "boolean",
+              "enum": [false],
+              "description": "Indicates that the relation is impossible for this combination of bounded/unbounded intervals or instants"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
