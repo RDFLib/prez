@@ -2,7 +2,10 @@ import copy
 import io
 import json
 import logging
+from datetime import datetime
+from typing import Dict
 from urllib.parse import urlencode
+from zoneinfo import ZoneInfo
 
 from fastapi.responses import PlainTextResponse
 from rdf2geojson import convert
@@ -27,10 +30,10 @@ from sparql_grammar_pydantic import (
 from prez.cache import endpoints_graph_cache
 from prez.config import settings
 from prez.enums import NonAnnotatedRDFMediaType
-from prez.models.ogc_features import Collection, Link, Collections
+from prez.models.ogc_features import Collection, Link, Collections, Links
 from prez.reference_data.prez_ns import PREZ, ALTREXT, ONT, OGCFEAT
 from prez.renderers.renderer import return_from_graph, return_annotated_rdf
-from prez.services.connegp_service import RDF_MEDIATYPES, generate_link_headers
+from prez.services.connegp_service import RDF_MEDIATYPES
 from prez.services.curie_functions import get_uri_for_curie_id, get_curie_id_for_uri
 from prez.services.generate_queryables import generate_queryables_json
 from prez.services.link_generation import add_prez_links
@@ -145,13 +148,15 @@ async def ogc_features_listing_function(
     endpoint_nodeshape,
     profile_nodeshape,
     selected_mediatype,
-    url_path,
+    url,
     data_repo,
     system_repo,
     cql_parser,
     query_params,
     **path_params,
 ):
+    count_query = None
+    count = 0
     collectionId = path_params.get("collectionId")
     subselect_kwargs = merge_listing_query_grammar_inputs(
         endpoint_nodeshape=endpoint_nodeshape,
@@ -198,8 +203,11 @@ async def ogc_features_listing_function(
             construct_tss_list=construct_tss_list,
             profile_triples=profile_nodeshape.tssp_list,
             **subselect_kwargs,
-        ).to_string()
-        queries.append(query)
+        )
+        queries.append(query.to_string())
+        # add the count query
+        subselect = copy.deepcopy(query.inner_select)
+        count_query = CountQuery(original_subselect=subselect).to_string()
     else:  # list items in a Feature Collection
         # add inbound links - not currently possible via profiles
         opt_inbound_gpnt = _add_inbound_triple_pattern_match(construct_tss_list)
@@ -210,12 +218,16 @@ async def ogc_features_listing_function(
             profile_triples=profile_nodeshape.tssp_list,
             profile_gpnt=profile_nodeshape.gpnt_list,
             **subselect_kwargs,
-        ).to_string()
-        queries.append(feature_list_query)
+        )
+        queries.append(feature_list_query.to_string())
 
-        collection_uri = await get_uri_for_curie_id(collectionId)
+        # add the count query
+        subselect = copy.deepcopy(feature_list_query.inner_select)
+        count_query = CountQuery(original_subselect=subselect).to_string()
+
         # Features listing requires CBD of the Feature Collection as well; reuse items profile to get all props/bns to
         # depth two.
+        collection_uri = await get_uri_for_curie_id(collectionId)
         gpnt = GraphPatternNotTriples(
             content=Bind(
                 expression=Expression.from_primary_expression(
@@ -236,9 +248,7 @@ async def ogc_features_listing_function(
         ).to_string()
         queries.append(feature_collection_query)
 
-    # link_headers = generate_link_headers(links)
     link_headers = None
-
     if selected_mediatype == "application/sparql-query":
         # queries_dict = {f"query_{i}": query for i, query in enumerate(queries)}
         # just do the first query for now:
@@ -248,6 +258,10 @@ async def ogc_features_listing_function(
 
     item_graph, _ = await data_repo.send_queries(queries, [])
     annotations_graph = await return_annotated_rdf(item_graph, data_repo, system_repo)
+    if count_query:
+        count_g, _ = await data_repo.send_queries([count_query], [])
+        if count_g:
+            count = int(next(iter(count_g.objects())))
 
     if selected_mediatype == "application/json":
         if endpoint_uri_type[0] in [
@@ -255,7 +269,7 @@ async def ogc_features_listing_function(
             OGCFEAT["queryables-global"],
         ]:
             queryables = generate_queryables_json(
-                item_graph, annotations_graph, url_path, endpoint_uri_type[0]
+                item_graph, annotations_graph, url, endpoint_uri_type[0]
             )
             content = io.BytesIO(
                 queryables.model_dump_json(exclude_none=True, by_alias=True).encode(
@@ -264,7 +278,12 @@ async def ogc_features_listing_function(
             )
         else:
             collections = create_collections_json(
-                item_graph, annotations_graph, url_path, selected_mediatype
+                item_graph,
+                annotations_graph,
+                url,
+                selected_mediatype,
+                query_params,
+                count,
             )
             all_links = collections.links
             for coll in collections.collections:
@@ -276,6 +295,13 @@ async def ogc_features_listing_function(
 
     elif selected_mediatype == "application/geo+json":
         geojson = convert(g=item_graph, do_validate=False, iri2id=get_curie_id_for_uri)
+        all_links = create_self_alt_links(selected_mediatype, url, query_params, count)
+        all_links_dict = Links(links=all_links).model_dump()
+        link_headers = generate_link_headers(all_links)
+        geojson["links"] = all_links_dict["links"]
+        geojson["timeStamp"] = get_brisbane_timestamp()
+        geojson["numberMatched"] = count
+        geojson["numberReturned"] = len(geojson["features"])
         content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
     elif selected_mediatype in NonAnnotatedRDFMediaType:
         content = io.BytesIO(
@@ -301,7 +327,7 @@ def _add_inbound_triple_pattern_match(construct_tss_list):
 
 
 def create_collections_json(
-    item_graph, annotations_graph, url_path, selected_mediatype
+    item_graph, annotations_graph, url, selected_mediatype, query_params, count
 ):
     collections_list = []
     for s, p, o in item_graph.triples((None, RDF.type, GEO.FeatureCollection)):
@@ -318,7 +344,7 @@ def create_collections_json(
                 links=[
                     Link(
                         href=URIRef(
-                            f"{settings.system_uri}{url_path}/{curie_id}/items?{urlencode({'_mediatype': mt})}"
+                            f"{settings.system_uri}{url.path}/{curie_id}/items?{urlencode({'_mediatype': mt})}"
                         ),
                         rel="items",
                         type=mt,
@@ -327,21 +353,61 @@ def create_collections_json(
                 ],
             )
         )
+    self_alt_links = create_self_alt_links(selected_mediatype, url, query_params, count)
     collections = Collections(
         collections=collections_list,
-        links=[
+        links=self_alt_links,
+    )
+    return collections
+
+
+def create_self_alt_links(selected_mediatype, url, query_params, count):
+    self_alt_links = []
+    for mt in [selected_mediatype, *RDF_MEDIATYPES]:
+        self_alt_links.append(
             Link(
                 href=URIRef(
-                    f"{settings.system_uri}{url_path}?{urlencode({'_mediatype': mt})}"
+                    f"{settings.system_uri}{url.path}?{urlencode({'_mediatype': mt})}"
                 ),
                 rel="self" if mt == selected_mediatype else "alternate",
                 type=mt,
                 title="this document",
             )
-            for mt in ["application/json", *RDF_MEDIATYPES]
-        ],
+        )
+    page = query_params.page
+    limit = query_params.limit
+    if page != 1:
+        prev_page = page - 1
+        self_alt_links.append(
+            Link(
+                href=URIRef(
+                    f"{settings.system_uri}{url.path}?{urlencode({'_mediatype': selected_mediatype, 'page': prev_page, 'limit': limit})}"
+                ),
+                rel="prev",
+                type=selected_mediatype,
+                title="previous page",
+            )
+        )
+    if count > page * limit:
+        next_page = page + 1
+        self_alt_links.append(
+            Link(
+                href=URIRef(
+                    f"{settings.system_uri}{url.path}?{urlencode({'_mediatype': selected_mediatype, 'page': next_page, 'limit': limit})}"
+                ),
+                rel="next",
+                type=selected_mediatype,
+                title="next page",
+            )
+        )
+    return self_alt_links
+
+
+def generate_link_headers(links) -> Dict[str, str]:
+    link_header = ", ".join(
+        [f'<{link.href}>; rel="{link.rel}"; type="{link.type}"' for link in links]
     )
-    return collections
+    return {"Link": link_header}
 
 
 async def handle_alt_profile(original_endpoint_type, pmts):
@@ -361,3 +427,14 @@ async def handle_alt_profile(original_endpoint_type, pmts):
         # 'dynamicaly' expressed in SHACL. The class is only known at runtime
     )
     return endpoint_nodeshape
+
+
+def get_brisbane_timestamp():
+    # Get current time in Brisbane
+    brisbane_time = datetime.now(ZoneInfo("Australia/Brisbane"))
+
+    # Format the timestamp
+    timestamp = brisbane_time.strftime("%Y-%m-%dT%H:%M:%S%z")
+
+    # Insert colon in timezone offset
+    return f"{timestamp[:-2]}:{timestamp[-2:]}"

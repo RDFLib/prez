@@ -342,34 +342,3 @@ class NegotiatedPMTs(BaseModel):
             log.debug(tabulate(table_data, headers=headers, tablefmt="grid"))
 
         return response
-
-
-def generate_ogc_features_links(url_path: str, selected_mediatype: str) -> List[Link]:
-    components_after_collections = url_path.split("collections")[1:]
-    components_len = len(components_after_collections)
-
-    if components_len == 1:  # collections or a specific collection - links are the same
-        self_link = Link(
-            rel="self",
-            href=f"{settings.system_uri}{url_path}?{urlencode({'_mediatype': selected_mediatype})}",
-            type="application/json",
-        )
-
-        alt_links = [
-            Link(
-                rel="alternate",
-                href=f"{settings.system_uri}{url_path}?{urlencode({'_mediatype': mediatype})}",
-                type=mediatype,
-            )
-            for mediatype in RDF_MEDIATYPES
-            if mediatype != selected_mediatype
-        ]
-        return [self_link] + alt_links
-    return []
-
-
-def generate_link_headers(links) -> Dict[str, str]:
-    link_header = ", ".join(
-        [f'<{link.href}>; rel="{link.rel}"; type="{link.type}"' for link in links]
-    )
-    return {"Link": link_header}

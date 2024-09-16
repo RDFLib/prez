@@ -40,7 +40,7 @@ from prez.config import settings
 class CountQuery(ConstructQuery):
     """
     Counts focus nodes that can be retrieved for listing queries.
-    Default limit is 1000 and can be configured in the settings.
+    Default limit is 100 and can be configured in the settings.
 
     Query is of the form:
     CONSTRUCT {
@@ -53,10 +53,10 @@ class CountQuery(ConstructQuery):
           SELECT ?focus_node
           WHERE {
             <<< original where clause >>>
-          } LIMIT 1001
+          } LIMIT 101
         }
       }
-      BIND(IF(?count = 1001, ">1000", STR(?count)) AS ?count_str)
+      BIND(IF(?count = 101, ">100", STR(?count)) AS ?count_str)
     }
     """
 
@@ -95,7 +95,7 @@ class CountQuery(ConstructQuery):
             ),
         )
         outer_ss_ggp = GroupGraphPattern(content=outer_ss)
-        count_equals_1001_expr = Expression(
+        count_equals_limit_expr = Expression(
             conditional_or_expression=ConditionalOrExpression(
                 conditional_and_expressions=[
                     ConditionalAndExpression(
@@ -134,7 +134,7 @@ class CountQuery(ConstructQuery):
                 ]
             )
         )
-        gt_1000_exp = Expression.from_primary_expression(
+        gt_limit_exp = Expression.from_primary_expression(
             PrimaryExpression(content=RDFLiteral(value=f">{limit}"))
         )
         str_count_exp = Expression.from_primary_expression(
@@ -150,7 +150,11 @@ class CountQuery(ConstructQuery):
                 PrimaryExpression(
                     content=BuiltInCall(
                         function_name="IF",
-                        arguments=[count_equals_1001_expr, gt_1000_exp, str_count_exp],
+                        arguments=[
+                            count_equals_limit_expr,
+                            gt_limit_exp,
+                            str_count_exp,
+                        ],
                     )
                 )
             ),

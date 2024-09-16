@@ -137,7 +137,7 @@ class CQLParser:
         self.inner_select_gpnt_list = gpnt_list
 
     def parse_logical_operators(
-            self, element, existing_ggps=None
+        self, element, existing_ggps=None
     ) -> Generator[GroupGraphPatternSub, None, None]:
         operator = element.get(str(CQL.operator))[0].get("@value")
         args = element.get(str(CQL.args))
@@ -418,9 +418,9 @@ class CQLParser:
 
             # check if the arg is a date
             date = (
-                    arg.get(str(CQL.date))
-                    or arg.get(str(CQL.datetime))
-                    or arg.get(str(CQL.timestamp))
+                arg.get(str(CQL.date))
+                or arg.get(str(CQL.datetime))
+                or arg.get(str(CQL.timestamp))
             )
             if date:
                 date_val = date[0].get("@value")
@@ -522,11 +522,13 @@ class CQLParser:
 def format_coordinates_as_wkt(bbox_values):
     if len(bbox_values) == 4:
         coordinates = [
-            (bbox_values[0], bbox_values[1]),
-            (bbox_values[0], bbox_values[3]),
-            (bbox_values[2], bbox_values[3]),
-            (bbox_values[2], bbox_values[1]),
-            (bbox_values[0], bbox_values[1]),
+            [
+                [bbox_values[0], bbox_values[1]],
+                [bbox_values[0], bbox_values[3]],
+                [bbox_values[2], bbox_values[3]],
+                [bbox_values[2], bbox_values[1]],
+                [bbox_values[0], bbox_values[1]],
+            ]
         ]
     else:
         if len(bbox_values) == 6:
@@ -574,8 +576,7 @@ def create_temporal_filter_gpnt(dt: datetime, op: str) -> GraphPatternNotTriples
 
 
 def create_temporal_or_gpnt(
-        comparisons: list[tuple[Var | RDFLiteral, str, Var | RDFLiteral]],
-        negated=False
+    comparisons: list[tuple[Var | RDFLiteral, str, Var | RDFLiteral]], negated=False
 ) -> GraphPatternNotTriples:
     """
     Create a FILTER with multiple conditions joined by OR (||).
@@ -661,7 +662,7 @@ def create_temporal_or_gpnt(
                                                                                 )
                                                                             )
                                                                         )
-                                                                    )
+                                                                    ),
                                                                 )
                                                             )
                                                         )
@@ -702,7 +703,7 @@ def create_filter_bool_gpnt(boolean: bool) -> GraphPatternNotTriples:
 
 
 def create_temporal_and_gpnt(
-        comparisons: list[tuple[Var | RDFLiteral, str, Var | RDFLiteral]]
+    comparisons: list[tuple[Var | RDFLiteral, str, Var | RDFLiteral]]
 ) -> GraphPatternNotTriples:
     """
     Create a FILTER with multiple conditions joined by AND.

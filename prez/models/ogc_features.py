@@ -17,13 +17,18 @@ class Link(BaseModel):
     title: Optional[str] = None
 
 
+class Links(BaseModel):
+    links: List[Link]
+
+
 class OGCFeaturesLandingPage(BaseModel):
     title: str
     description: str
     links: List[Link]
 
 
-def generate_landing_page_links(url_path):
+def generate_landing_page_links(url):
+    url_path = url.path
     link_dicts = [
         {
             "href": f"{settings.system_uri}{url_path}",

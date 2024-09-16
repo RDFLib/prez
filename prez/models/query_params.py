@@ -124,40 +124,40 @@ class QueryParams:
 
     def __init__(
         self,
-        mediatype: Optional[str] = Query(
-            "text/turtle", alias="_mediatype", description="Requested mediatype"
+        mediatype: str = Query(
+            default="text/turtle", alias="_mediatype", description="Requested mediatype"
         ),
-        page: Optional[int] = Query(
-            1, ge=1, description="Page number, must be greater than 0"
+        page: int = Query(
+            default=1, ge=1, description="Page number, must be greater than 0"
         ),
-        limit: Optional[int] = Query(
-            10,
+        limit: int = Query(
+            default=10,
             ge=1,
             le=10000,
             description="Number of items per page, must be 1<=limit<=10000",
             alias="limit",
+            style="form",
+            explode=False,
         ),
         datetime: Optional[tuple] = Depends(validate_datetime),
         bbox: List[float] = Depends(reformat_bbox),
-        filter_lang: Optional[FilterLangEnum] = Query(
-            "cql2-json",
+        filter_lang: FilterLangEnum = Query(
+            default="cql2-json",
             description="Language of the filter expression",
             alias="filter-lang",
         ),
-        filter_crs: Optional[str] = Query(
+        filter_crs: str = Query(
             "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
             description="CRS used for the filter expression",
         ),
-        q: Optional[str] = Query(None, description="Search query", example="building"),
-        filter: Optional[str] = Query(
-            None,
+        q: str = Query(None, description="Search query", example="building"),
+        filter: str = Query(
+            default=None,
             description="CQL JSON expression.",
         ),
-        order_by: Optional[str] = Query(
-            None, description="Optional: Field to order by"
-        ),
-        order_by_direction: Optional[OrderByDirectionEnum] = Query(
-            None,
+        order_by: str = Query(default=None, description="Optional: Field to order by"),
+        order_by_direction: OrderByDirectionEnum = Query(
+            default=None,
             description="Optional: Order direction, must be 'ASC' or 'DESC'",
         ),
     ):

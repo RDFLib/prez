@@ -466,10 +466,10 @@ async def get_profile_nodeshape(
     )
 
 
-async def get_url_path(
+async def get_url(
     request: Request,
 ):
-    return request.url.path
+    return request.url
 
 
 async def get_endpoint_uri(
@@ -547,3 +547,25 @@ async def get_template_query(
             template_query = prez_system_graph.value(s, RDF.value, None)
             return str(template_query)
     return None
+
+
+async def check_unknown_params(request: Request):
+    known_params = {
+        "_mediatype",
+        "page",
+        "limit",
+        "datetime",
+        "bbox",
+        "filter-lang",
+        "filter_crs",
+        "q",
+        "filter",
+        "order_by",
+        "order_by_direction",
+    }
+    unknown_params = set(request.query_params.keys()) - known_params
+    if unknown_params:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown query parameters: {', '.join(unknown_params)}",
+        )

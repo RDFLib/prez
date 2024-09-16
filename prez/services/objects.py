@@ -14,10 +14,10 @@ from prez.models.ogc_features import Link, Collection
 from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import ALTREXT, ONT, PREZ
 from prez.renderers.renderer import return_from_graph, return_annotated_rdf
-from prez.services.connegp_service import RDF_MEDIATYPES, generate_link_headers
+from prez.services.connegp_service import RDF_MEDIATYPES
 from prez.services.curie_functions import get_uri_for_curie_id, get_curie_id_for_uri
 from prez.services.link_generation import add_prez_links
-from prez.services.listings import listing_function
+from prez.services.listings import listing_function, generate_link_headers
 from prez.services.query_generation.umbrella import (
     PrezQueryConstructor,
 )
@@ -98,7 +98,7 @@ async def object_function(
 async def ogc_features_object_function(
     template_query,
     selected_mediatype,
-    url_path,
+    url,
     data_repo,
     system_repo,
     **path_params,
@@ -144,7 +144,7 @@ async def ogc_features_object_function(
         content = io.BytesIO(query.encode("utf-8"))
     elif selected_mediatype == "application/json":
         collection = create_collection_json(
-            collectionId, collection_uri, annotations_graph, url_path
+            collectionId, collection_uri, annotations_graph, url
         )
         link_headers = generate_link_headers(collection.links)
         content = io.BytesIO(
@@ -160,9 +160,7 @@ async def ogc_features_object_function(
     return content, link_headers
 
 
-def create_collection_json(
-    collection_curie, collection_uri, annotations_graph, url_path
-):
+def create_collection_json(collection_curie, collection_uri, annotations_graph, url):
     return Collection(
         id=collection_curie,
         title=annotations_graph.value(
@@ -174,7 +172,7 @@ def create_collection_json(
         links=[
             Link(
                 href=URIRef(
-                    f"{settings.system_uri}{url_path}/items?{urlencode({'_mediatype': mt})}"
+                    f"{settings.system_uri}{url.path}/items?{urlencode({'_mediatype': mt})}"
                 ),
                 rel="items",
                 type=mt,
