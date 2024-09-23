@@ -237,7 +237,7 @@ def generate_relative_properties(
                 if relative_properties == [URIRef('http://example.com/shacl-extension#allPredicateValues')]:
                     rel_string += f"""VALUES ?rel_{k}_props {{ UNDEF }} }}\n"""
                 else:
-                    rel_string += f"""VALUES ?rel_{k}_props {{ {" ".join('<' + str(pred.n3()) + '>' for pred in relative_properties)} }} }}\n"""
+                    rel_string += f"""VALUES ?rel_{k}_props {{ {" ".join('<' + pred + '>' for pred in relative_properties)} }} }}\n"""
     return rel_string
 
 
