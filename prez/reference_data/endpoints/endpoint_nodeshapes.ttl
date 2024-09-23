@@ -19,7 +19,6 @@ ex:Catalogs
     sh:property [
         sh:path dcterms:hasPart ;
         sh:or (
-            [ sh:class dcat:Resource ]
             [ sh:class skos:ConceptScheme ]
             [ sh:class skos:Collection ]
             [ sh:class dcat:Dataset ]
@@ -29,7 +28,7 @@ ex:Catalogs
 ex:Collections
     a sh:NodeShape ;
     ont:hierarchyLevel 2 ;
-    sh:targetClass skos:ConceptScheme , skos:Collection , dcat:Resource , dcat:Dataset ;
+    sh:targetClass skos:ConceptScheme , skos:Collection , dcat:Dataset ;
     sh:property [
         sh:path [ sh:inversePath dcterms:hasPart ] ;
         sh:class dcat:Catalog ;
@@ -63,10 +62,10 @@ ex:CollectionConcept
 ex:Resource
     a sh:NodeShape ;
     ont:hierarchyLevel 3 ;
-    sh:targetClass rdf:Resource ;
+    sh:targetClass geo:FeatureCollection ;
     sh:property [
         sh:path [ sh:inversePath dcterms:hasPart ] ;
-        sh:class dcat:Resource ;
+        sh:class dcat:Dataset ;
     ] , [
         sh:path ( [ sh:inversePath dcterms:hasPart ] [ sh:inversePath dcterms:hasPart ] );
         sh:class dcat:Catalog ;

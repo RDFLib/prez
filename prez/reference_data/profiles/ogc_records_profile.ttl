@@ -109,13 +109,7 @@ prez:OGCItemProfile
         ],
         [
             sh:maxCount 0 ;
-            sh:path
-                (
-                    sh:union (
-                                 dcterms:hasPart
-                                 rdfs:member
-                             )
-                )
+            sh:path dcterms:hasPart , rdfs:member ;
         ] ;
     shext:bnode-depth 2 ;
     altr-ext:constrainsClass
@@ -143,26 +137,17 @@ prez:OGCSchemesListProfile
         "text/turtle" ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:constrainsClass skos:ConceptScheme ;
-    sh:property
-        [
-            sh:minCount 0 ;
-            sh:path dcterms:publisher ;
-        ],
-        [
-            sh:minCount 0 ;
-            sh:path reg:status ;
-        ],
-        [
-            sh:minCount 0 ;
-            sh:path ( prov:qualifiedDerivation prov:hadRole ) ;
-        ],
-        [
-            sh:minCount 0 ;
-            sh:path ( prov:qualifiedDerivation prov:entity ) ;
-        ],
-        [
-            sh:path rdf:type
-        ]
+    sh:property [
+        sh:path (
+            sh:union (
+                  rdf:type
+                  dcterms:publisher
+                  reg:status
+                  ( prov:qualifiedDerivation prov:hadRole )
+                  ( prov:qualifiedDerivation prov:entity )
+            )
+        )
+    ] ;
 .
 
 

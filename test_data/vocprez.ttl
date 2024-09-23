@@ -6,7 +6,7 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
 ex:VocPrezCatalog a dcat:Catalog ;
     rdfs:label "A Demo Catalog" ;
-    dcterms:hasPart ex:SchemingConceptScheme ;
+    dcterms:hasPart ex:SchemingConceptScheme , <https://draft.com/Australian-physiographic-units> ;
     ex:property "cataract" ;
 .
 
