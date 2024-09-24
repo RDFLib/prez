@@ -16,7 +16,7 @@ def test_store() -> Store:
     # Create a new pyoxigraph Store
     store = Store()
 
-    file = Path("../test_data/spaceprez.ttl")
+    file = Path("../test_data/ogc_features.ttl")
     store.load(file.read_bytes(), "text/turtle")
 
     return store
@@ -39,6 +39,7 @@ def client(test_repo: Repo) -> TestClient:
     app.dependency_overrides[get_data_repo] = override_get_data_repo
 
     with TestClient(app, backend_options={"loop_factory": asyncio.new_event_loop}) as c:
+        c.base_url = "http://localhost:8000/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features"
         yield c
 
     # Remove the override to ensure subsequent tests are unaffected
