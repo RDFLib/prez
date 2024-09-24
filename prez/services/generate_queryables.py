@@ -1,6 +1,10 @@
+from fastapi import Depends
+
 from prez.config import settings
+from prez.dependencies import get_system_repo
 from prez.models.ogc_features import QueryableProperty, Queryables
 from prez.reference_data.prez_ns import PREZ, OGCFEAT
+from prez.repositories import Repo
 
 
 def generate_queryables_json(item_graph, annotations_graph, url, endpoint_uri):

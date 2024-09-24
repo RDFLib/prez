@@ -1,0 +1,30 @@
+@prefix cql: <http://example.com/cql#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix dwc: <http://rs.tdwg.org/dwc/terms/> .
+@prefix ex: <http://example.com/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix sname: <https://fake-scientific-name-id.com/name/afd/> .
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:SpeciesQueryableShape
+  a sh:PropertyShape ;
+  a cql:Queryable ;
+  sh:path (
+    [ sh:inversePath ex:hasFeatureOfInterest ]
+    [
+      sh:zeroOrMorePath [ sh:inversePath ex:hasMember ]
+    ]
+    ex:hasSimpleResult
+  ) ;
+  sh:datatype xsd:string ;
+  sh:in (
+    "Homo sapiens"
+    "Canis lupus familiaris"
+    "Felis catus"
+    "Mus musculus"
+    "Rattus norvegicus"
+  ) ;
+  sh:name "Species Name" ;
+  dcterms:identifier "specname" ;
+  .

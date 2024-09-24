@@ -6,6 +6,7 @@ from fastapi import Depends, Request, HTTPException
 from pyoxigraph import Store
 from rdflib import Dataset, URIRef, Graph, SKOS, RDF
 from sparql_grammar_pydantic import IRI, Var
+from starlette.responses import JSONResponse
 
 from prez.cache import (
     store,
@@ -15,6 +16,7 @@ from prez.cache import (
     endpoints_graph_cache,
     annotations_store,
     prez_system_graph,
+    queryable_props,
 )
 from prez.config import settings
 from prez.enums import (
@@ -23,6 +25,7 @@ from prez.enums import (
     JSONMediaType,
     GeoJSONMediaType,
 )
+from prez.models.ogc_features import Queryables
 from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import ALTREXT, ONT, EP, OGCE, OGCFEAT, PREZ
 from prez.repositories import PyoxigraphRepo, RemoteSparqlRepo, OxrdflibRepo, Repo
@@ -61,6 +64,10 @@ def get_annotations_store():
 
 def get_oxrdflib_store():
     return oxrdflib_store
+
+
+def get_queryable_props():
+    return queryable_props
 
 
 async def get_data_repo(
@@ -153,6 +160,7 @@ async def cql_post_parser_dependency(request: Request) -> CQLParser:
 
 async def cql_get_parser_dependency(
     query_params: QueryParams = Depends(),
+    queryable_props: list = Depends(get_queryable_props),
 ) -> CQLParser:
     if query_params.filter:
         try:
@@ -163,13 +171,15 @@ async def cql_get_parser_dependency(
                     Path(__file__).parent / "reference_data/cql/default_context.json"
                 ).open()
             )
-            cql_parser = CQLParser(cql=query, context=context, crs=crs)
+            cql_parser = CQLParser(
+                cql=query, context=context, crs=crs, queryable_props=queryable_props
+            )
             cql_parser.generate_jsonld()
             cql_parser.parse()
             return cql_parser
         except json.JSONDecodeError:
             raise HTTPException(status_code=400, detail="Invalid JSON format.")
-        except Exception as e:  # Replace with your specific parsing exception
+        except Exception as e:
             raise HTTPException(
                 status_code=400, detail="Invalid CQL format: Parsing failed."
             )
@@ -569,3 +579,70 @@ async def check_unknown_params(request: Request):
             status_code=400,
             detail=f"Unknown query parameters: {', '.join(unknown_params)}",
         )
+
+
+# TODO cache this
+async def generate_queryables_from_shacl_definition(
+    url: str = Depends(get_url),
+    endpoint_uri: URIRef = Depends(get_endpoint_uri),
+    system_repo: Repo = Depends(get_system_repo),
+):
+    query = """
+    PREFIX cql: <http://www.opengis.net/doc/IS/cql2/1.0/>
+    PREFIX dcterms: <http://purl.org/dc/terms/>
+    PREFIX sh: <http://www.w3.org/ns/shacl#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+    CONSTRUCT {
+    ?queryable cql:id ?id ;
+    	cql:name ?title ;
+    	cql:datatype ?type ;
+    	cql:enum ?enums .
+    }
+    WHERE {?queryable a <http://www.opengis.net/doc/IS/cql2/1.0/Queryable> ;
+        dcterms:identifier ?id ;
+        sh:name ?title ;
+        sh:datatype ?type ;
+        sh:in/rdf:rest*/rdf:first ?enums ;
+    }
+    """
+    g, _ = await system_repo.send_queries([query], [])
+    if len(g) == 0:
+        return JSONResponse(
+            content={"detail": "No queryables found for this endpoint"},
+            status_code=404,
+        )
+    jsonld_string = g.serialize(format="json-ld")
+    jsonld = json.loads(jsonld_string)
+    queryable_props = {}
+    for item in jsonld:
+        id_value = item["http://www.opengis.net/doc/IS/cql2/1.0/id"][0]["@value"]
+        queryable_props[id_value] = {
+            "title": item["http://www.opengis.net/doc/IS/cql2/1.0/name"][0]["@value"],
+            "type": item["http://www.opengis.net/doc/IS/cql2/1.0/datatype"][0][
+                "@id"
+            ].split("#")[
+                -1
+            ],  # hack
+            "enum": [
+                enum_item["@id"]
+                for enum_item in item["http://www.opengis.net/doc/IS/cql2/1.0/enum"]
+            ],
+        }
+    if endpoint_uri == OGCFEAT["queryables-global"]:
+        title = "Global Queryables"
+        description = (
+            "Global queryable properties for all collections in the OGC Features API."
+        )
+    else:
+        title = "Local Queryables"
+        description = (
+            "Local queryable properties for the collection in the OGC Features API."
+        )
+    queryable_params = {
+        "$id": f"{settings.system_uri}{url.path}",
+        "title": title,
+        "description": description,
+        "properties": queryable_props,
+    }
+    return Queryables(**queryable_params).model_dump(exclude_none=True)

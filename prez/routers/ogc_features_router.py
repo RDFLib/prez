@@ -19,6 +19,8 @@ from prez.dependencies import (
     get_ogc_features_path_params,
     get_template_query,
     check_unknown_params,
+    generate_queryables_from_shacl_definition,
+    get_queryable_props,
 )
 from prez.exceptions.model_exceptions import (
     ClassNotFoundException,
@@ -119,6 +121,18 @@ async def ogc_features_api(
     name=OGCFEAT["queryables-global"],
 )
 @features_subapi.api_route(
+    "/collections/{collectionId}/queryables",
+    methods=ALLOWED_METHODS,
+    name=OGCFEAT["queryables-local"],
+    openapi_extra=ogc_features_openapi_extras.get("feature-collection"),
+)
+async def queryables(
+    queryables: dict = Depends(generate_queryables_from_shacl_definition),
+):
+    return queryables
+
+
+@features_subapi.api_route(
     "/collections",
     methods=ALLOWED_METHODS,
     name=OGCFEAT["feature-collections"],
@@ -127,12 +141,6 @@ async def ogc_features_api(
     "/collections/{collectionId}/items",
     methods=ALLOWED_METHODS,
     name=OGCFEAT["features"],
-    openapi_extra=ogc_features_openapi_extras.get("feature-collection"),
-)
-@features_subapi.api_route(
-    "/collections/{collectionId}/queryables",
-    methods=ALLOWED_METHODS,
-    name=OGCFEAT["queryables-local"],
     openapi_extra=ogc_features_openapi_extras.get("feature-collection"),
 )
 async def listings_with_feature_collection(

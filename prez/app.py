@@ -19,6 +19,7 @@ from prez.dependencies import (
     load_system_data_to_oxigraph,
     load_annotations_data_to_oxigraph,
     get_annotations_store,
+    get_queryable_props,
 )
 from prez.exceptions.model_exceptions import (
     ClassNotFoundException,
@@ -40,6 +41,7 @@ from prez.services.app_service import (
     populate_api_info,
     prefix_initialisation,
     retrieve_remote_template_queries,
+    retrieve_remote_queryable_definitions,
 )
 from prez.services.exception_catchers import (
     catch_400,
@@ -115,8 +117,10 @@ async def lifespan(app: FastAPI):
     await count_objects(app.state.repo)
     await populate_api_info()
 
+    app.state.queryable_props = get_queryable_props()
     app.state.pyoxi_system_store = get_system_store()
     app.state.annotations_store = get_annotations_store()
+    await retrieve_remote_queryable_definitions(app.state, app.state.pyoxi_system_store)
     await load_system_data_to_oxigraph(app.state.pyoxi_system_store)
     await load_annotations_data_to_oxigraph(app.state.annotations_store)
 
