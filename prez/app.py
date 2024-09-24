@@ -241,7 +241,10 @@ if __name__ == "__main__":
     try:
         import uvicorn
     except ImportError:
-        print("Error: Uvicorn is not installed. Install it with 'poetry install --extras \"server\".")
+        print(
+            'Error: Uvicorn is not installed. Install it with \'poetry install --extras "server".'
+        )
         import sys
+
         sys.exit(1)
     uvicorn.run(assemble_app, factory=True, port=settings.port, host=settings.host)

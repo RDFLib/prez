@@ -1,7 +1,16 @@
 from __future__ import annotations
 
 from string import Template
-from typing import List, Optional, Any, Dict, Literal as TypingLiteral, Union, Tuple, Type
+from typing import (
+    List,
+    Optional,
+    Any,
+    Dict,
+    Literal as TypingLiteral,
+    Union,
+    Tuple,
+    Type,
+)
 
 from pydantic import BaseModel
 from rdflib import URIRef, BNode, Graph, RDFS
@@ -36,7 +45,12 @@ from sparql_grammar_pydantic import (
     GraphNodePath,
     VarOrTerm,
     GraphTerm,
-    GroupOrUnionGraphPattern, PathElt, PathEltOrInverse, PathPrimary, PathSequence, PathMod,
+    GroupOrUnionGraphPattern,
+    PathElt,
+    PathEltOrInverse,
+    PathPrimary,
+    PathSequence,
+    PathMod,
 )
 
 from prez.reference_data.prez_ns import ONT, SHEXT
@@ -252,8 +266,6 @@ class NodeShape(Shape):
         self.gpnt_list.append(nested_ogp)
 
 
-
-
 class PropertyShape(Shape):
     uri: URIRef | BNode  # URI of the shape
     graph: Graph
@@ -354,7 +366,6 @@ class PropertyShape(Shape):
         else:
             self.and_property_paths.append(path)
 
-
     def to_grammar(self):
         # label nodes in the inner select and profile part of the query differently for clarity.
         if self.kind == "endpoint":
@@ -441,9 +452,7 @@ class PropertyShape(Shape):
                 )
             self.gpnt_list.append(
                 GraphPatternNotTriples(
-                    content=GroupOrUnionGraphPattern(
-                        group_graph_patterns=ggp_list
-                    )
+                    content=GroupOrUnionGraphPattern(group_graph_patterns=ggp_list)
                 )
             )
 
@@ -522,11 +531,18 @@ class PropertyShape(Shape):
                 current_tssp.append(TriplesSameSubjectPath.from_spo(*triple))
                 pp_i += 1
 
-            elif isinstance(property_path, Union[ZeroOrMorePath, OneOrMorePath, ZeroOrOnePath]):
+            elif isinstance(
+                property_path, Union[ZeroOrMorePath, OneOrMorePath, ZeroOrOnePath]
+            ):
                 triple = (self.focus_node, IRI(value=property_path.value), path_node_1)
                 self.tss_list.append(TriplesSameSubject.from_spo(*triple))
                 self.tssp_list.append(
-                    _tssp_for_pathmods(self.focus_node, IRI(value=property_path.value), path_node_1, property_path.operand)
+                    _tssp_for_pathmods(
+                        self.focus_node,
+                        IRI(value=property_path.value),
+                        path_node_1,
+                        property_path.operand,
+                    )
                 )
                 pp_i += 1
 
@@ -534,12 +550,20 @@ class PropertyShape(Shape):
                 for j, path in enumerate(property_path.value):
                     if isinstance(path, Path):
                         if j == 0:
-                            triple = (self.focus_node, IRI(value=path.value), path_node_1)
+                            triple = (
+                                self.focus_node,
+                                IRI(value=path.value),
+                                path_node_1,
+                            )
                         else:
                             triple = (path_node_1, IRI(value=path.value), path_node_2)
                     elif isinstance(path, InversePath):
                         if j == 0:
-                            triple = (path_node_1, IRI(value=path.value), self.focus_node)
+                            triple = (
+                                path_node_1,
+                                IRI(value=path.value),
+                                self.focus_node,
+                            )
                         else:
                             triple = (path_node_2, IRI(value=path.value), path_node_1)
                     self.tss_list.append(TriplesSameSubject.from_spo(*triple))
@@ -566,20 +590,19 @@ def _tssp_for_pathmods(focus_node, pred, obj, pathmod):
                     VerbPath(
                         path=SG_Path(
                             path_alternative=PathAlternative(
-                                sequence_paths=[PathSequence(
-                                    list_path_elt_or_inverse=[
-                                        PathEltOrInverse(
-                                            path_elt=PathElt(
-                                                path_primary=PathPrimary(
-                                                    value=pred,
-                                                ),
-                                                path_mod=PathMod(
-                                                    pathmod=pathmod
+                                sequence_paths=[
+                                    PathSequence(
+                                        list_path_elt_or_inverse=[
+                                            PathEltOrInverse(
+                                                path_elt=PathElt(
+                                                    path_primary=PathPrimary(
+                                                        value=pred,
+                                                    ),
+                                                    path_mod=PathMod(pathmod=pathmod),
                                                 )
                                             )
-                                        )
-                                    ]
-                                )
+                                        ]
+                                    )
                                 ]
                             )
                         )

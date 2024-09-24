@@ -8,7 +8,8 @@ from sparql_grammar_pydantic import (
     IRI,
     OptionalGraphPattern,
     Filter,
-    TriplesSameSubjectPath, TriplesSameSubject,
+    TriplesSameSubjectPath,
+    TriplesSameSubject,
 )
 
 
@@ -223,9 +224,18 @@ def test_excluded_props():
 @pytest.mark.parametrize(
     ["cardinality_type", "expected_result"],
     [
-        ("sh:zeroOrMorePath", '?focus_node <http://purl.org/dc/terms/publisher>* ?prof_1_node_1'),
-        ("sh:oneOrMorePath", '?focus_node <http://purl.org/dc/terms/publisher>+ ?prof_1_node_1'),
-        ("sh:zeroOrOnePath", '?focus_node <http://purl.org/dc/terms/publisher>? ?prof_1_node_1'),
+        (
+            "sh:zeroOrMorePath",
+            "?focus_node <http://purl.org/dc/terms/publisher>* ?prof_1_node_1",
+        ),
+        (
+            "sh:oneOrMorePath",
+            "?focus_node <http://purl.org/dc/terms/publisher>+ ?prof_1_node_1",
+        ),
+        (
+            "sh:zeroOrOnePath",
+            "?focus_node <http://purl.org/dc/terms/publisher>? ?prof_1_node_1",
+        ),
     ],
 )
 def test_cardinality_props(cardinality_type, expected_result):

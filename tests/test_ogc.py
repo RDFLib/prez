@@ -46,8 +46,32 @@ def client(test_repo: Repo) -> TestClient:
     app.dependency_overrides.clear()
 
 
-@pytest.mark.xfail()
-def test_features_core(client: TestClient):
-    scope = "features/core"
+@pytest.mark.parametrize(
+    "test_file",
+    [
+        pytest.param(
+            "apidefinition",
+            marks=pytest.mark.xfail(
+                reason="see https://github.com/RDFLib/prez/pull/265#issuecomment-2367130294"
+            ),
+        ),
+        "collection",
+        "collections",
+        "conformance",
+        pytest.param(
+            "crs",
+            marks=pytest.mark.xfail(
+                reason="see https://github.com/RDFLib/prez/issues/267"
+            ),
+        ),
+        "errorconditions",
+        "feature",
+        "features",
+        "general",
+        "landingpage",
+    ],
+)
+def test_features_core(client: TestClient, test_file: str):
+    scope = f"features/core/test_{test_file}.py"
     exit_code = run_ogctests(scope, test_client=client)
     assert exit_code == pytest.ExitCode.OK
