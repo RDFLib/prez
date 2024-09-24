@@ -79,6 +79,7 @@ class Settings(BaseSettings):
         EP["system/profile-object"],
     ]
     enable_sparql_endpoint: bool = False
+    enable_ogc_features: bool = True
     temporal_predicate: Optional[URIRef] = SDO.temporal
     endpoint_to_template_query_filename: Optional[Dict[str, str]] = {}
 

@@ -4,7 +4,6 @@ from functools import partial
 from textwrap import dedent
 from typing import Optional, Dict, Union, Any
 
-import uvicorn
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from rdflib import Graph
@@ -175,10 +174,11 @@ def assemble_app(
     app.include_router(ogc_records_router)
     if _settings.enable_sparql_endpoint:
         app.include_router(sparql_router)
-    app.mount(
-        "/catalogs/{catalogId}/collections/{recordsCollectionId}/features",
-        features_subapi,
-    )
+    if _settings.enable_ogc_features:
+        app.mount(
+            "/catalogs/{catalogId}/collections/{recordsCollectionId}/features",
+            features_subapi,
+        )
     app.include_router(identifier_router)
     app.openapi = partial(
         prez_open_api_metadata,
@@ -238,4 +238,10 @@ def _get_sparql_service_description(request, format):
 
 
 if __name__ == "__main__":
+    try:
+        import uvicorn
+    except ImportError:
+        print("Error: Uvicorn is not installed. Install it with 'poetry install --extras \"server\".")
+        import sys
+        sys.exit(1)
     uvicorn.run(assemble_app, factory=True, port=settings.port, host=settings.host)
