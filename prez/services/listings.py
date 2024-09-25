@@ -296,7 +296,7 @@ async def ogc_features_listing_function(
     elif selected_mediatype == "application/geo+json":
         geojson = convert(g=item_graph, do_validate=False, iri2id=get_curie_id_for_uri)
         all_links = create_self_alt_links(selected_mediatype, url, query_params, count)
-        all_links_dict = Links(links=all_links).model_dump()
+        all_links_dict = Links(links=all_links).model_dump(exclude_none=True)
         link_headers = generate_link_headers(all_links)
         geojson["links"] = all_links_dict["links"]
         geojson["timeStamp"] = get_brisbane_timestamp()
@@ -361,7 +361,7 @@ def create_collections_json(
     return collections
 
 
-def create_self_alt_links(selected_mediatype, url, query_params, count):
+def create_self_alt_links(selected_mediatype, url, query_params = None, count = None):
     self_alt_links = []
     for mt in [selected_mediatype, *RDF_MEDIATYPES]:
         self_alt_links.append(
@@ -374,32 +374,33 @@ def create_self_alt_links(selected_mediatype, url, query_params, count):
                 title="this document",
             )
         )
-    page = query_params.page
-    limit = query_params.limit
-    if page != 1:
-        prev_page = page - 1
-        self_alt_links.append(
-            Link(
-                href=URIRef(
-                    f"{settings.system_uri}{url.path}?{urlencode({'_mediatype': selected_mediatype, 'page': prev_page, 'limit': limit})}"
-                ),
-                rel="prev",
-                type=selected_mediatype,
-                title="previous page",
+    if count:  # only for listings; add prev/next links
+        page = query_params.page
+        limit = query_params.limit
+        if page != 1:
+            prev_page = page - 1
+            self_alt_links.append(
+                Link(
+                    href=URIRef(
+                        f"{settings.system_uri}{url.path}?{urlencode({'_mediatype': selected_mediatype, 'page': prev_page, 'limit': limit})}"
+                    ),
+                    rel="prev",
+                    type=selected_mediatype,
+                    title="previous page",
+                )
             )
-        )
-    if count > page * limit:
-        next_page = page + 1
-        self_alt_links.append(
-            Link(
-                href=URIRef(
-                    f"{settings.system_uri}{url.path}?{urlencode({'_mediatype': selected_mediatype, 'page': next_page, 'limit': limit})}"
-                ),
-                rel="next",
-                type=selected_mediatype,
-                title="next page",
+        if count > page * limit:
+            next_page = page + 1
+            self_alt_links.append(
+                Link(
+                    href=URIRef(
+                        f"{settings.system_uri}{url.path}?{urlencode({'_mediatype': selected_mediatype, 'page': next_page, 'limit': limit})}"
+                    ),
+                    rel="next",
+                    type=selected_mediatype,
+                    title="next page",
+                )
             )
-        )
     return self_alt_links
 
 

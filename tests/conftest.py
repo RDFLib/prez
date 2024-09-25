@@ -73,7 +73,7 @@ def client_no_override() -> TestClient:
 def a_spaceprez_catalog_link(client):
     r = client.get("/catalogs")
     g = Graph().parse(data=r.text)
-    cat_uri = URIRef("https://example.com/SpacePrezCatalog")
+    cat_uri = URIRef("https://example.com/spaceprez/SpacePrezCatalog")
     link = g.value(cat_uri, URIRef(f"https://prez.dev/link", None))
     return link
 
@@ -82,19 +82,19 @@ def a_spaceprez_catalog_link(client):
 def a_spaceprez_dataset_link(client, a_spaceprez_catalog_link):
     r = client.get(f"{a_spaceprez_catalog_link}/collections")
     g = Graph().parse(data=r.text)
-    ds_uri = URIRef("https://example.com/SpacePrezDataset")
+    ds_uri = URIRef("https://example.com/spaceprez/SpacePrezDataset")
     link = g.value(ds_uri, URIRef(f"https://prez.dev/link", None))
     return link
 
 
 @pytest.fixture()
 def an_fc_link(client, a_spaceprez_dataset_link):
-    return f"{a_spaceprez_dataset_link}/features/collections/exm:FeatureCollection"
+    return f"{a_spaceprez_dataset_link}/features/collections/spcprz:FeatureCollection"
 
 
 @pytest.fixture()
 def a_feature_link(client, an_fc_link):
-    return f"{an_fc_link}/items/exm:Feature1"
+    return f"{an_fc_link}/items/spcprz:Feature1"
 
 
 @pytest.fixture()

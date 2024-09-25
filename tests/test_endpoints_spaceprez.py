@@ -7,7 +7,7 @@ def test_dataset_anot(client, a_spaceprez_catalog_link):
     g_text = r.text
     response_graph = Graph().parse(data=g_text)
     expected_response_1 = (
-        URIRef("https://example.com/SpacePrezCatalog"),
+        URIRef("https://example.com/spaceprez/SpacePrezCatalog"),
         RDF.type,
         DCAT.Catalog,
     )
@@ -19,7 +19,7 @@ def test_feature_collection(client, an_fc_link):
     g_text = r.text
     response_graph = Graph().parse(data=g_text)
     assert (
-        URIRef("https://example.com/FeatureCollection"),
+        URIRef("https://example.com/spaceprez/FeatureCollection"),
         RDF.type,
         GEO.FeatureCollection,
     ) in response_graph
@@ -30,7 +30,7 @@ def test_feature(client, a_feature_link):
     g_text = r.text
     response_graph = Graph().parse(data=g_text)
     expected_response_1 = (
-        URIRef("https://example.com/Feature1"),
+        URIRef("https://example.com/spaceprez/Feature1"),
         RDF.type,
         GEO.Feature,
     )
@@ -42,12 +42,12 @@ def test_feature_listing_anot(client, an_fc_link):
     g_text = r.text
     response_graph = Graph().parse(data=g_text)
     expected_response_1 = (
-        URIRef("https://example.com/Feature1"),
+        URIRef("https://example.com/spaceprez/Feature1"),
         RDF.type,
         GEO.Feature,
     )
     expected_response_2 = (
-        URIRef("https://example.com/Feature2"),
+        URIRef("https://example.com/spaceprez/Feature2"),
         RDF.type,
         GEO.Feature,
     )

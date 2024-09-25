@@ -6,18 +6,21 @@ from urllib.parse import urlencode
 
 from fastapi.responses import PlainTextResponse
 from rdf2geojson import convert
-from rdflib import RDF, URIRef
+from rdflib import RDF, URIRef, RDFS
+from rdflib.namespace import GEO
 from sparql_grammar_pydantic import TriplesSameSubject, IRI, Var, TriplesSameSubjectPath
 
 from prez.config import settings
-from prez.models.ogc_features import Link, Collection
+from prez.exceptions.model_exceptions import URINotFoundException
+from prez.models.ogc_features import Link, Collection, Links
 from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import ALTREXT, ONT, PREZ
 from prez.renderers.renderer import return_from_graph, return_annotated_rdf
 from prez.services.connegp_service import RDF_MEDIATYPES
 from prez.services.curie_functions import get_uri_for_curie_id, get_curie_id_for_uri
 from prez.services.link_generation import add_prez_links
-from prez.services.listings import listing_function, generate_link_headers
+from prez.services.listings import listing_function, generate_link_headers, create_self_alt_links, \
+    get_brisbane_timestamp
 from prez.services.query_generation.umbrella import (
     PrezQueryConstructor,
 )
@@ -95,6 +98,15 @@ async def object_function(
     )
 
 
+def create_parent_link(url):
+    return Link(
+        href=f"{settings.system_uri}{url.path.split('/items')[0]}",
+        rel="collection",
+        type="application/geo+json"
+    )
+
+
+
 async def ogc_features_object_function(
     template_query,
     selected_mediatype,
@@ -105,6 +117,10 @@ async def ogc_features_object_function(
 ):
     collectionId = path_params.get("collectionId")
     featureId = path_params.get("featureId")
+    if featureId:
+        feature_uri = await get_uri_for_curie_id(featureId)
+    else:
+        feature_uri = None
     collection_uri = await get_uri_for_curie_id(collectionId)
     if template_query:
         if featureId:
@@ -117,6 +133,7 @@ async def ogc_features_object_function(
     else:
         if featureId is None:  # feature collection
             collection_iri = IRI(value=collection_uri)
+            construct_tss_list = None
             tssp_list = [
                 TriplesSameSubjectPath.from_spo(
                     collection_iri, IRI(value=RDF.type), Var(value="type")
@@ -125,17 +142,23 @@ async def ogc_features_object_function(
         else:  # feature
             feature_uri = await get_uri_for_curie_id(featureId)
             feature_iri = IRI(value=feature_uri)
-            tssp_list = [
-                TriplesSameSubjectPath.from_spo(
-                    feature_iri, IRI(value=RDF.type), Var(value="type")
-                )
+            triples = [
+                (feature_iri, Var(value="prop"), Var(value="val")),
+                (feature_iri, IRI(value=GEO.hasGeometry), Var(value="bn")),  # Pyoxigraph DESCRIBE does not follow blank nodes, so specify the geometry path
+                (Var(value="bn"), IRI(value=GEO.asWKT), Var(value="wkt"))
             ]
+            tssp_list = [TriplesSameSubjectPath.from_spo(*triple) for triple in triples]
+            construct_tss_list = [TriplesSameSubject.from_spo(*triple) for triple in triples]
         query = PrezQueryConstructor(
+            construct_tss_list=construct_tss_list,
             profile_triples=tssp_list,
         ).to_string()
 
     query_start_time = time.time()
     item_graph, _ = await data_repo.send_queries([query], [])
+    if len(item_graph) == 0:
+        uri = feature_uri if feature_uri else collection_uri
+        raise URINotFoundException(uri)
     annotations_graph = await return_annotated_rdf(item_graph, data_repo, system_repo)
     log.debug(f"Query time: {time.time() - query_start_time}")
 
@@ -152,6 +175,13 @@ async def ogc_features_object_function(
         )
     elif selected_mediatype == "application/geo+json":
         geojson = convert(g=item_graph, do_validate=False, iri2id=get_curie_id_for_uri)
+        self_alt_links = create_self_alt_links(selected_mediatype, url)
+        parent_link = create_parent_link(url)
+        all_links = [*self_alt_links, parent_link]
+        all_links_dict = Links(links=all_links).model_dump(exclude_none=True)
+        link_headers = generate_link_headers(all_links)
+        geojson["links"] = all_links_dict["links"]
+        geojson["timeStamp"] = get_brisbane_timestamp()
         content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
     else:
         content = io.BytesIO(
