@@ -1,0 +1,37 @@
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix dcat:    <http://www.w3.org/ns/dcat#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex:      <http://example.org/ns#> .
+@prefix geo:     <http://www.opengis.net/ont/geosparql#> .
+@prefix ont:     <https://prez.dev/ont/> .
+@prefix prez:    <https://prez.dev/> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:      <http://www.w3.org/ns/shacl#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+
+ex:FeatureCollections
+    a sh:NodeShape ;
+    sh:property [ sh:path  void:inDataset ;
+                sh:class dcat:Dataset ; ] ;
+    sh:targetClass geo:FeatureCollection ;
+    ont:hierarchyLevel 3 .
+
+ex:Feature
+    a                  sh:NodeShape ;
+    sh:property        [ sh:class geo:FeatureCollection ;
+                         sh:path  [ sh:inversePath rdfs:member ] ] ;
+    sh:property        [ sh:class dcat:Dataset ;
+                        sh:path ( [ sh:inversePath rdfs:member ] void:inDataset ) ] ;
+    sh:targetClass     geo:Feature ;
+    ont:hierarchyLevel 4 .
+
+ex:Object
+    a                  sh:NodeShape ;
+    ont:hierarchyLevel 3 .
+
+ex:Queryables
+    a sh:NodeShape ;
+    sh:targetClass prez:Queryable ;
+    ont:hierarchyLevel 3 , 5
+.

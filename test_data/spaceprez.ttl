@@ -1,28 +1,41 @@
 PREFIX dcat: <http://www.w3.org/ns/dcat#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX ex: <https://example.com/>
+PREFIX sp: <https://example.com/spaceprez/>
 PREFIX geo: <http://www.opengis.net/ont/geosparql#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX void: <http://rdfs.org/ns/void#>
 
 
-ex:SpacePrezCatalog a dcat:Catalog ;
+sp:SpacePrezCatalog a dcat:Catalog ;
     dcterms:title "SpacePrez Catalog" ;
     dcterms:description "A catalog of SpacePrez data" ;
-    dcterms:hasPart ex:FeatureCollection ;
+    dcterms:hasPart sp:SpacePrezDataset ;
 .
 
-ex:FeatureCollection a geo:FeatureCollection ;
+sp:SpacePrezDataset a dcat:Dataset ;
+    dcterms:title "SpacePrez Dataset" ;
+    dcterms:description "A dataset of SpacePrez data" ;
+.
+
+sp:FeatureCollection a geo:FeatureCollection ;
+    void:inDataset sp:SpacePrezDataset ;
     rdfs:label "Geo Feature Collection" ;
-    rdfs:member ex:Feature1 , ex:Feature2 ;
-    ex:property "lower level feature collection property"
+    rdfs:member sp:Feature1 , sp:Feature2 ;
+    sp:property "lower level feature collection property"
 .
 
-ex:Feature1 a geo:Feature ;
+sp:Feature1 a geo:Feature ;
     rdfs:label "Feature 1" ;
-    ex:property "feature property" ;
+    geo:hasGeometry [
+        geo:asWKT "POLYGON((1 1, 0 10, 10 10, 10 0, 1 1))"^^geo:wktLiteral
+    ] ;
+    sp:property "feature property" ;
 .
 
-ex:Feature2 a geo:Feature ;
+sp:Feature2 a geo:Feature ;
     rdfs:label "Feature 2" ;
-    ex:property "feature property" ;
+    geo:hasGeometry [
+        geo:asWKT "POLYGON((2 2, 0 10, 10 10, 10 0, 2 2))"^^geo:wktLiteral
+    ] ;
+    sp:property "feature property" ;
 .

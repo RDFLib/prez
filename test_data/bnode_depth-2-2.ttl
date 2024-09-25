@@ -30,6 +30,10 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
         <https://draft.com//Australian-physiographic-units/wunaamin-miliwundi-durack-ranges> ;
     skos:historyNote "The scheme for Australian physiographic units is derived from: Pain, C, Gregory, L, Wilson, P and McKenzie, N (2011), The physiographic regions of Australia – Explanatory notes 2011; Australian Collaborative Land Evaluation Program and National Committee on Soil and Terrain (dataset available at https://www.asris.csiro.au/themes/PhysioRegions.html). The Geological Survey of Western Australia's regolith classification system is available at https://dmpbookshop.eruditetechnologies.com.au/product/revised-classification-system-for-regolith-in-western-australia-and-the-recommended-approach-to-regolith-mapping.do (2024 update including physiographic units is in progress)."@en ;
     skos:prefLabel "Australian physiographic units"@en ;
+    prov:qualifiedDerivation
+        [
+            prov:hadRole <http://def.isotc211.org/iso19115/-1/2018/CitationAndResponsiblePartyInformation/code/CI_RoleCode/originator> ;
+        ] ;
     prov:qualifiedAttribution
         [
             prov:agent [

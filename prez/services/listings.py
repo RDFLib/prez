@@ -1,15 +1,41 @@
 import copy
+import io
+import json
 import logging
+from datetime import datetime
+from typing import Dict
+from urllib.parse import urlencode
+from zoneinfo import ZoneInfo
 
 from fastapi.responses import PlainTextResponse
+from rdf2geojson import convert
 from rdflib import URIRef, Literal
-from rdflib.namespace import RDF
-from sparql_grammar_pydantic import IRI, Var, TriplesSameSubject
+from rdflib.namespace import RDF, Namespace, GEO
+from sparql_grammar_pydantic import (
+    IRI,
+    Var,
+    TriplesSameSubject,
+    TriplesSameSubjectPath,
+    PrimaryExpression,
+    GraphPatternNotTriples,
+    Bind,
+    Expression,
+    IRIOrFunction,
+    OptionalGraphPattern,
+    GroupGraphPattern,
+    GroupGraphPatternSub,
+    TriplesBlock,
+)
 
 from prez.cache import endpoints_graph_cache
 from prez.config import settings
-from prez.reference_data.prez_ns import PREZ, ALTREXT, ONT
-from prez.renderers.renderer import return_from_graph
+from prez.enums import NonAnnotatedRDFMediaType
+from prez.models.ogc_features import Collection, Link, Collections, Links
+from prez.reference_data.prez_ns import PREZ, ALTREXT, ONT, OGCFEAT
+from prez.renderers.renderer import return_from_graph, return_annotated_rdf
+from prez.services.connegp_service import RDF_MEDIATYPES
+from prez.services.curie_functions import get_uri_for_curie_id, get_curie_id_for_uri
+from prez.services.generate_queryables import generate_queryables_json
 from prez.services.link_generation import add_prez_links
 from prez.services.query_generation.count import CountQuery
 from prez.services.query_generation.shacl import NodeShape
@@ -19,6 +45,8 @@ from prez.services.query_generation.umbrella import (
 )
 
 log = logging.getLogger(__name__)
+
+DWC = Namespace("http://rs.tdwg.org/dwc/terms/")
 
 
 async def listing_function(
@@ -100,7 +128,7 @@ async def listing_function(
     if search_query:
         count = len(list(item_graph.subjects(RDF.type, PREZ.SearchResult)))
         if count == search_query.limit:
-            count_literal = f">{count-1}"
+            count_literal = f">{count - 1}"
         else:
             count_literal = f"{count}"
         item_graph.add((PREZ.SearchResult, PREZ["count"], Literal(count_literal)))
@@ -113,6 +141,274 @@ async def listing_function(
         data_repo,
         system_repo,
     )
+
+
+async def ogc_features_listing_function(
+    endpoint_uri_type,
+    endpoint_nodeshape,
+    profile_nodeshape,
+    selected_mediatype,
+    url,
+    data_repo,
+    system_repo,
+    cql_parser,
+    query_params,
+    **path_params,
+):
+    count_query = None
+    count = 0
+    collectionId = path_params.get("collectionId")
+    subselect_kwargs = merge_listing_query_grammar_inputs(
+        endpoint_nodeshape=endpoint_nodeshape,
+        cql_parser=cql_parser,
+        query_params=query_params,
+    )
+    # merge subselect and profile triples same subject (for construct triples)
+    construct_tss_list = []
+    subselect_tss_list = subselect_kwargs.pop("construct_tss_list")
+    if subselect_tss_list:
+        construct_tss_list.extend(subselect_tss_list)
+    if profile_nodeshape.tss_list:
+        construct_tss_list.extend(profile_nodeshape.tss_list)
+
+    queries = []
+    if endpoint_uri_type[0] in [
+        OGCFEAT["queryables-local"],
+        OGCFEAT["queryables-global"],
+    ]:
+        queryable_var = Var(value="queryable")
+        innser_select_triple = (
+            Var(value="focus_node"),
+            queryable_var,
+            Var(value="queryable_value"),
+        )
+        subselect_kwargs["inner_select_tssp_list"].append(
+            TriplesSameSubjectPath.from_spo(*innser_select_triple)
+        )
+        subselect_kwargs["inner_select_vars"] = [queryable_var]
+        construct_triple = (
+            queryable_var,
+            IRI(value=RDF.type),
+            IRI(value="http://www.opengis.net/def/rel/ogc/1.0/Queryable"),
+        )
+        construct_tss_list = [TriplesSameSubject.from_spo(*construct_triple)]
+        query = PrezQueryConstructor(
+            construct_tss_list=construct_tss_list,
+            profile_triples=profile_nodeshape.tssp_list,
+            **subselect_kwargs,
+        ).to_string()
+        queries.append(query)
+    elif not collectionId:  # list Feature Collections
+        query = PrezQueryConstructor(
+            construct_tss_list=construct_tss_list,
+            profile_triples=profile_nodeshape.tssp_list,
+            **subselect_kwargs,
+        )
+        queries.append(query.to_string())
+        # add the count query
+        subselect = copy.deepcopy(query.inner_select)
+        count_query = CountQuery(original_subselect=subselect).to_string()
+    else:  # list items in a Feature Collection
+        # add inbound links - not currently possible via profiles
+        opt_inbound_gpnt = _add_inbound_triple_pattern_match(construct_tss_list)
+        profile_nodeshape.gpnt_list.append(opt_inbound_gpnt)
+
+        feature_list_query = PrezQueryConstructor(
+            construct_tss_list=construct_tss_list,
+            profile_triples=profile_nodeshape.tssp_list,
+            profile_gpnt=profile_nodeshape.gpnt_list,
+            **subselect_kwargs,
+        )
+        queries.append(feature_list_query.to_string())
+
+        # add the count query
+        subselect = copy.deepcopy(feature_list_query.inner_select)
+        count_query = CountQuery(original_subselect=subselect).to_string()
+
+        # Features listing requires CBD of the Feature Collection as well; reuse items profile to get all props/bns to
+        # depth two.
+        collection_uri = await get_uri_for_curie_id(collectionId)
+        gpnt = GraphPatternNotTriples(
+            content=Bind(
+                expression=Expression.from_primary_expression(
+                    PrimaryExpression(
+                        content=IRIOrFunction(iri=IRI(value=collection_uri))
+                    )
+                ),
+                var=Var(value="focus_node"),
+            )
+        )
+        feature_collection_query = PrezQueryConstructor(
+            construct_tss_list=construct_tss_list,
+            profile_triples=profile_nodeshape.tssp_list,
+            profile_gpnt=profile_nodeshape.gpnt_list,
+            inner_select_gpnt=[gpnt],  # BIND(<fc_uri> AS ?focus_node)
+            limit=1,
+            offset=0,
+        ).to_string()
+        queries.append(feature_collection_query)
+
+    link_headers = None
+    if selected_mediatype == "application/sparql-query":
+        # queries_dict = {f"query_{i}": query for i, query in enumerate(queries)}
+        # just do the first query for now:
+        content = io.BytesIO(queries[0].encode("utf-8"))
+        # content = io.BytesIO(json.dumps(queries_dict).encode("utf-8"))
+        return content, link_headers
+
+    item_graph, _ = await data_repo.send_queries(queries, [])
+    annotations_graph = await return_annotated_rdf(item_graph, data_repo, system_repo)
+    if count_query:
+        count_g, _ = await data_repo.send_queries([count_query], [])
+        if count_g:
+            count = int(next(iter(count_g.objects())))
+
+    if selected_mediatype == "application/json":
+        if endpoint_uri_type[0] in [
+            OGCFEAT["queryables-local"],
+            OGCFEAT["queryables-global"],
+        ]:
+            queryables = generate_queryables_json(
+                item_graph, annotations_graph, url, endpoint_uri_type[0]
+            )
+            content = io.BytesIO(
+                queryables.model_dump_json(exclude_none=True, by_alias=True).encode(
+                    "utf-8"
+                )
+            )
+        else:
+            collections = create_collections_json(
+                item_graph,
+                annotations_graph,
+                url,
+                selected_mediatype,
+                query_params,
+                count,
+            )
+            all_links = collections.links
+            for coll in collections.collections:
+                all_links.extend(coll.links)
+            link_headers = generate_link_headers(all_links)
+            content = io.BytesIO(
+                collections.model_dump_json(exclude_none=True).encode("utf-8")
+            )
+
+    elif selected_mediatype == "application/geo+json":
+        geojson = convert(g=item_graph, do_validate=False, iri2id=get_curie_id_for_uri)
+        all_links = create_self_alt_links(selected_mediatype, url, query_params, count)
+        all_links_dict = Links(links=all_links).model_dump(exclude_none=True)
+        link_headers = generate_link_headers(all_links)
+        geojson["links"] = all_links_dict["links"]
+        geojson["timeStamp"] = get_brisbane_timestamp()
+        geojson["numberMatched"] = count
+        geojson["numberReturned"] = len(geojson["features"])
+        content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
+    elif selected_mediatype in NonAnnotatedRDFMediaType:
+        content = io.BytesIO(
+            item_graph.serialize(format=selected_mediatype, encoding="utf-8")
+        )
+    return content, link_headers
+
+
+def _add_inbound_triple_pattern_match(construct_tss_list):
+    triple = (Var(value="inbound_s"), Var(value="inbound_p"), Var(value="focus_node"))
+    construct_tss_list.append(TriplesSameSubject.from_spo(*triple))
+    inbound_tssp_list = [TriplesSameSubjectPath.from_spo(*triple)]
+    opt_inbound_gpnt = GraphPatternNotTriples(
+        content=OptionalGraphPattern(
+            group_graph_pattern=GroupGraphPattern(
+                content=GroupGraphPatternSub(
+                    triples_block=TriplesBlock.from_tssp_list(inbound_tssp_list)
+                )
+            )
+        )
+    )
+    return opt_inbound_gpnt
+
+
+def create_collections_json(
+    item_graph, annotations_graph, url, selected_mediatype, query_params, count
+):
+    collections_list = []
+    for s, p, o in item_graph.triples((None, RDF.type, GEO.FeatureCollection)):
+        curie_id = get_curie_id_for_uri(s)
+        collections_list.append(
+            Collection(
+                id=curie_id,
+                title=annotations_graph.value(
+                    subject=s, predicate=PREZ.label, default=None
+                ),
+                description=annotations_graph.value(
+                    subject=s, predicate=PREZ.description, default=None
+                ),
+                links=[
+                    Link(
+                        href=URIRef(
+                            f"{settings.system_uri}{url.path}/{curie_id}/items?{urlencode({'_mediatype': mt})}"
+                        ),
+                        rel="items",
+                        type=mt,
+                    )
+                    for mt in ["application/geo+json", *RDF_MEDIATYPES]
+                ],
+            )
+        )
+    self_alt_links = create_self_alt_links(selected_mediatype, url, query_params, count)
+    collections = Collections(
+        collections=collections_list,
+        links=self_alt_links,
+    )
+    return collections
+
+
+def create_self_alt_links(selected_mediatype, url, query_params = None, count = None):
+    self_alt_links = []
+    for mt in [selected_mediatype, *RDF_MEDIATYPES]:
+        self_alt_links.append(
+            Link(
+                href=URIRef(
+                    f"{settings.system_uri}{url.path}?{urlencode({'_mediatype': mt})}"
+                ),
+                rel="self" if mt == selected_mediatype else "alternate",
+                type=mt,
+                title="this document",
+            )
+        )
+    if count:  # only for listings; add prev/next links
+        page = query_params.page
+        limit = query_params.limit
+        if page != 1:
+            prev_page = page - 1
+            self_alt_links.append(
+                Link(
+                    href=URIRef(
+                        f"{settings.system_uri}{url.path}?{urlencode({'_mediatype': selected_mediatype, 'page': prev_page, 'limit': limit})}"
+                    ),
+                    rel="prev",
+                    type=selected_mediatype,
+                    title="previous page",
+                )
+            )
+        if count > page * limit:
+            next_page = page + 1
+            self_alt_links.append(
+                Link(
+                    href=URIRef(
+                        f"{settings.system_uri}{url.path}?{urlencode({'_mediatype': selected_mediatype, 'page': next_page, 'limit': limit})}"
+                    ),
+                    rel="next",
+                    type=selected_mediatype,
+                    title="next page",
+                )
+            )
+    return self_alt_links
+
+
+def generate_link_headers(links) -> Dict[str, str]:
+    link_header = ", ".join(
+        [f'<{link.href}>; rel="{link.rel}"; type="{link.type}"' for link in links]
+    )
+    return {"Link": link_header}
 
 
 async def handle_alt_profile(original_endpoint_type, pmts):
@@ -132,3 +428,14 @@ async def handle_alt_profile(original_endpoint_type, pmts):
         # 'dynamicaly' expressed in SHACL. The class is only known at runtime
     )
     return endpoint_nodeshape
+
+
+def get_brisbane_timestamp():
+    # Get current time in Brisbane
+    brisbane_time = datetime.now(ZoneInfo("Australia/Brisbane"))
+
+    # Format the timestamp
+    timestamp = brisbane_time.strftime("%Y-%m-%dT%H:%M:%S%z")
+
+    # Insert colon in timezone offset
+    return f"{timestamp[:-2]}:{timestamp[-2:]}"

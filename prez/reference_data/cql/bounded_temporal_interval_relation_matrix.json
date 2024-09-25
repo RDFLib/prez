@@ -1,0 +1,1284 @@
+{
+  "t_after": {
+    "definition": [
+      "https://www.w3.org/TR/owl-time/#time:after",
+      ",https://www.w3.org/TR/owl-time/#time:intervalAfter"
+    ],
+    "interval_interval": {
+      "BB_BB": {
+        "conditions": [
+          [
+            "t1_start",
+            ">",
+            "t2_end"
+          ]
+        ]
+      },
+      "BB_BU": false,
+      "BB_UB": {
+        "conditions": [
+          [
+            "t1_start",
+            ">",
+            "t2_end"
+          ]
+        ]
+      },
+      "BB_UU": false,
+      "BU_BB": {
+        "conditions": [
+          [
+            "t1_start",
+            ">",
+            "t2_end"
+          ]
+        ]
+      },
+      "BU_BU": false,
+      "BU_UB": {
+        "conditions": [
+          [
+            "t1_start",
+            ">",
+            "t2_end"
+          ]
+        ]
+      },
+      "BU_UU": false,
+      "UB_BB": false,
+      "UB_BU": false,
+      "UB_UB": false,
+      "UB_UU": false,
+      "UU_BB": false,
+      "UU_BU": false,
+      "UU_UB": false,
+      "UU_UU": false
+    },
+    "instant_interval": {
+      "I_BB": {
+        "conditions": [
+          [
+            "t1_instant",
+            ">",
+            "t2_end"
+          ]
+        ]
+      },
+      "I_BU": false,
+      "I_UB": {
+        "conditions": [
+          [
+            "t1_instant",
+            ">",
+            "t2_end"
+          ]
+        ]
+      },
+      "I_UU": false
+    },
+    "interval_instant": {
+      "BB_I": {
+        "conditions": [
+          [
+            "t1_start",
+            ">",
+            "t2_instant"
+          ]
+        ]
+      },
+      "BU_I": {
+        "conditions": [
+          [
+            "t1_start",
+            ">",
+            "t2_instant"
+          ]
+        ]
+      },
+      "UB_I": false,
+      "UU_I": false
+    },
+    "instant_instant": {
+      "I_I": {
+        "conditions": [
+          [
+            "t1_instant",
+            ">",
+            "t2_instant"
+          ]
+        ]
+      }
+    }
+  },
+  "t_before": {
+    "definition": [
+      "https://www.w3.org/TR/owl-time/#time:before",
+      "https://www.w3.org/TR/owl-time/#time:intervalBefore"
+    ],
+    "interval_interval": {
+      "BB_BB": {
+        "conditions": [
+          [
+            "t1_end",
+            "<",
+            "t2_start"
+          ]
+        ]
+      },
+      "BB_BU": false,
+      "BB_UB": {
+        "conditions": [
+          [
+            "t1_end",
+            "<",
+            "t2_end"
+          ]
+        ]
+      },
+      "BB_UU": false,
+      "BU_BB": {
+        "conditions": [
+          [
+            "t1_end",
+            "<",
+            "t2_start"
+          ]
+        ]
+      },
+      "BU_BU": false,
+      "BU_UB": {
+        "conditions": [
+          [
+            "t1_end",
+            "<",
+            "t2_end"
+          ]
+        ]
+      },
+      "BU_UU": false,
+      "UB_BB": false,
+      "UB_BU": false,
+      "UB_UB": false,
+      "UB_UU": false,
+      "UU_BB": false,
+      "UU_BU": false,
+      "UU_UB": false,
+      "UU_UU": false
+    },
+    "instant_interval": {
+      "I_BB": {
+        "conditions": [
+          [
+            "t1_instant",
+            "<",
+            "t2_start"
+          ]
+        ]
+      },
+      "I_BU": false,
+      "I_UB": {
+        "conditions": [
+          [
+            "t1_instant",
+            "<",
+            "t2_end"
+          ]
+        ]
+      },
+      "I_UU": false
+    },
+    "interval_instant": {
+      "BB_I": false,
+      "BU_I": false,
+      "UB_I": {
+        "conditions": [
+          [
+            "t1_start",
+            "<",
+            "t2_instant"
+          ]
+        ]
+      },
+      "UU_I": {
+        "conditions": [
+          [
+            "t1_start",
+            "<",
+            "t2_instant"
+          ]
+        ]
+      }
+    },
+    "instant_instant": {
+      "I_I": {
+        "conditions": [
+          [
+            "t1_instant",
+            "<",
+            "t2_instant"
+          ]
+        ]
+      }
+    }
+  },
+  "t_disjoint": {
+    "definition": "https://www.w3.org/TR/owl-time/#time:intervalDisjoint",
+    "interval_interval": {
+      "BB_BB": {
+        "logic": "OR",
+        "conditions": [
+          [
+            "t1_end",
+            "<",
+            "t2_start"
+          ],
+          [
+            "t1_start",
+            ">",
+            "t2_end"
+          ]
+        ]
+      },
+      "BB_BU": {
+        "conditions": [
+          [
+            "t1_end",
+            "<",
+            "t2_start"
+          ]
+        ]
+      },
+      "BB_UB": {
+        "conditions": [
+          [
+            "t1_start",
+            ">",
+            "t2_end"
+          ]
+        ]
+      },
+      "BB_UU": false,
+      "BU_BB": {
+        "conditions": [
+          [
+            "t1_start",
+            ">",
+            "t2_end"
+          ]
+        ]
+      },
+      "BU_BU": false,
+      "BU_UB": {
+        "conditions": [
+          [
+            "t1_start",
+            ">",
+            "t2_end"
+          ]
+        ]
+      },
+      "BU_UU": false,
+      "UB_BB": {
+        "conditions": [
+          [
+            "t1_end",
+            "<",
+            "t2_start"
+          ]
+        ]
+      },
+      "UB_BU": {
+        "conditions": [
+          [
+            "t1_end",
+            "<",
+            "t2_start"
+          ]
+        ]
+      },
+      "UB_UB": false,
+      "UB_UU": false,
+      "UU_BB": false,
+      "UU_BU": false,
+      "UU_UB": false,
+      "UU_UU": false
+    },
+    "instant_interval": {
+      "I_BB": {
+        "logic": "OR",
+        "conditions": [
+          [
+            "t1_instant",
+            ">",
+            "t2_end"
+          ],
+          [
+            "t1_instant",
+            "<",
+            "t2_start"
+          ]
+        ]
+      },
+      "I_BU": {
+        "logic": "OR",
+        "conditions": [
+          [
+            "t1_instant",
+            ">",
+            "t2_end"
+          ],
+          [
+            "t1_instant",
+            "<",
+            "t2_start"
+          ]
+        ]
+      },
+      "I_UB": {
+        "logic": "OR",
+        "conditions": [
+          [
+            "t1_instant",
+            ">",
+            "t2_end"
+          ],
+          [
+            "t1_instant",
+            "<",
+            "t2_start"
+          ]
+        ]
+      },
+      "I_UU": false
+    },
+    "interval_instant": {
+      "BB_I": {
+        "logic": "OR",
+        "conditions": [
+          [
+            "t1_start",
+            ">",
+            "t2_instant"
+          ],
+          [
+            "t1_end",
+            "<",
+            "t2_instant"
+          ]
+        ]
+      },
+      "BU_I": {
+        "logic": "OR",
+        "conditions": [
+          [
+            "t1_start",
+            ">",
+            "t2_instant"
+          ],
+          [
+            "t1_end",
+            "<",
+            "t2_instant"
+          ]
+        ]
+      },
+      "UB_I": {
+        "logic": "OR",
+        "conditions": [
+          [
+            "t1_start",
+            ">",
+            "t2_instant"
+          ],
+          [
+            "t1_end",
+            "<",
+            "t2_instant"
+          ]
+        ]
+      },
+      "UU_I": false
+    },
+    "instant_instant": {
+      "I_I": {
+        "logic": "OR",
+        "conditions": [
+          [
+            "t1_instant",
+            ">",
+            "t2_instant"
+          ],
+          [
+            "t1_instant",
+            "<",
+            "t2_instant"
+          ]
+        ]
+      }
+    }
+  },
+  "t_equals": {
+    "definition": "https://www.w3.org/TR/owl-time/#time:intervalEquals",
+    "interval_interval": {
+      "BB_BB": {
+        "logic": "AND",
+        "conditions": [
+          [
+            "t1_start",
+            "=",
+            "t2_start"
+          ],
+          [
+            "t1_end",
+            "=",
+            "t2_end"
+          ]
+        ]
+      },
+      "BB_BU": false,
+      "BB_UB": false,
+      "BB_UU": false,
+      "BU_BB": false,
+      "BU_BU": {
+        "logic": "AND",
+        "conditions": [
+          [
+            "t1_start",
+            "=",
+            "t2_start"
+          ]
+        ]
+      },
+      "BU_UB": false,
+      "BU_UU": false,
+      "UB_BB": false,
+      "UB_BU": {
+        "logic": "AND",
+        "conditions": [
+          [
+            "t1_start",
+            "=",
+            "t2_start"
+          ]
+        ]
+      },
+      "UB_UB": {
+        "logic": "AND",
+        "conditions": [
+          [
+            "t1_start",
+            "=",
+            "t2_start"
+          ]
+        ]
+      },
+      "UB_UU": false,
+      "UU_BB": false,
+      "UU_BU": false,
+      "UU_UB": false,
+      "UU_UU": true
+    },
+    "instant_instant": {
+      "I_I": {
+        "logic": "AND",
+        "conditions": [
+          [
+            "t1_instant",
+            "=",
+            "t2_instant"
+          ]
+        ]
+      }
+    },
+    "instant_interval": {
+      "I_BB": false,
+      "I_BU": false,
+      "I_UB": false,
+      "I_UU": false
+    },
+    "interval_instant": {
+      "BB_I": false,
+      "BU_I": false,
+      "UB_I": false,
+      "UU_I": false
+    }
+  },
+  "t_intersects": {
+    "negated": true,
+    "definition": "https://www.w3.org/TR/owl-time/#time:intervalDisjoint",
+    "interval_interval": {
+      "BB_BB": {
+        "logic": "OR",
+        "conditions": [
+          [
+            "t1_end",
+            "<",
+            "t2_start"
+          ],
+          [
+            "t1_start",
+            ">",
+            "t2_end"
+          ]
+        ]
+      },
+      "BB_BU": {
+        "conditions": [
+          [
+            "t1_end",
+            "<",
+            "t2_start"
+          ]
+        ]
+      },
+      "BB_UB": {
+        "conditions": [
+          [
+            "t1_start",
+            ">",
+            "t2_end"
+          ]
+        ]
+      },
+      "BB_UU": false,
+      "BU_BB": {
+        "conditions": [
+          [
+            "t1_start",
+            ">",
+            "t2_end"
+          ]
+        ]
+      },
+      "BU_BU": false,
+      "BU_UB": {
+        "conditions": [
+          [
+            "t1_start",
+            ">",
+            "t2_end"
+          ]
+        ]
+      },
+      "BU_UU": false,
+      "UB_BB": {
+        "conditions": [
+          [
+            "t1_end",
+            "<",
+            "t2_start"
+          ]
+        ]
+      },
+      "UB_BU": {
+        "conditions": [
+          [
+            "t1_end",
+            "<",
+            "t2_start"
+          ]
+        ]
+      },
+      "UB_UB": false,
+      "UB_UU": false,
+      "UU_BB": false,
+      "UU_BU": false,
+      "UU_UB": false,
+      "UU_UU": false
+    },
+    "instant_interval": {
+      "I_BB": {
+        "logic": "OR",
+        "conditions": [
+          [
+            "t1_instant",
+            ">",
+            "t2_end"
+          ],
+          [
+            "t1_instant",
+            "<",
+            "t2_start"
+          ]
+        ]
+      },
+      "I_BU": {
+        "logic": "OR",
+        "conditions": [
+          [
+            "t1_instant",
+            ">",
+            "t2_end"
+          ],
+          [
+            "t1_instant",
+            "<",
+            "t2_start"
+          ]
+        ]
+      },
+      "I_UB": {
+        "logic": "OR",
+        "conditions": [
+          [
+            "t1_instant",
+            ">",
+            "t2_end"
+          ],
+          [
+            "t1_instant",
+            "<",
+            "t2_start"
+          ]
+        ]
+      },
+      "I_UU": false
+    },
+    "interval_instant": {
+      "BB_I": {
+        "logic": "OR",
+        "conditions": [
+          [
+            "t1_start",
+            ">",
+            "t2_instant"
+          ],
+          [
+            "t1_end",
+            "<",
+            "t2_instant"
+          ]
+        ]
+      },
+      "BU_I": {
+        "logic": "OR",
+        "conditions": [
+          [
+            "t1_start",
+            ">",
+            "t2_instant"
+          ],
+          [
+            "t1_end",
+            "<",
+            "t2_instant"
+          ]
+        ]
+      },
+      "UB_I": {
+        "logic": "OR",
+        "conditions": [
+          [
+            "t1_start",
+            ">",
+            "t2_instant"
+          ],
+          [
+            "t1_end",
+            "<",
+            "t2_instant"
+          ]
+        ]
+      },
+      "UU_I": false
+    },
+    "instant_instant": {
+      "I_I": {
+        "logic": "OR",
+        "conditions": [
+          [
+            "t1_instant",
+            ">",
+            "t2_instant"
+          ],
+          [
+            "t1_instant",
+            "<",
+            "t2_instant"
+          ]
+        ]
+      }
+    }
+  },
+  "t_contains": {
+    "definition": "https://www.w3.org/TR/owl-time/#time:intervalContains",
+    "interval_interval": {
+      "BB_BB": {
+        "logic": "AND",
+        "conditions": [
+          [
+            "t1_start",
+            "<",
+            "t2_start"
+          ],
+          [
+            "t1_end",
+            ">",
+            "t2_end"
+          ]
+        ]
+      },
+      "BB_BU": false,
+      "BB_UB": false,
+      "BB_UU": false,
+      "BU_BB": {
+        "conditions": [
+          [
+            "t1_start",
+            "<",
+            "t2_start"
+          ]
+        ]
+      },
+      "BU_BU": {
+        "conditions": [
+          [
+            "t1_start",
+            "<",
+            "t2_start"
+          ]
+        ]
+      },
+      "BU_UB": false,
+      "BU_UU": false,
+      "UB_BB": {
+        "conditions": [
+          [
+            "t1_end",
+            ">",
+            "t2_end"
+          ]
+        ]
+      },
+      "UB_BU": false,
+      "UB_UB": {
+        "logic": "AND",
+        "conditions": [
+          [
+            "t1_end",
+            ">",
+            "t2_end"
+          ]
+        ]
+      },
+      "UB_UU": false,
+      "UU_BB": true,
+      "UU_BU": true,
+      "UU_UB": true,
+      "UU_UU": false
+    }
+  },
+  "t_during": {
+    "definition": "Logical inverse of https://www.w3.org/TR/owl-time/#time:intervalContains",
+    "interval_interval": {
+      "BB_BB": {
+        "logic": "AND",
+        "conditions": [
+          [
+            "t1_start",
+            ">",
+            "t2_start"
+          ],
+          [
+            "t1_end",
+            "<",
+            "t2_end"
+          ]
+        ]
+      },
+      "BB_BU": true,
+      "BB_UB": true,
+      "BB_UU": true,
+      "BU_BB": {
+        "conditions": [
+          [
+            "t1_start",
+            ">",
+            "t2_start"
+          ]
+        ]
+      },
+      "BU_BU": {
+        "conditions": [
+          [
+            "t1_start",
+            ">",
+            "t2_start"
+          ]
+        ]
+      },
+      "BU_UB": true,
+      "BU_UU": true,
+      "UB_BB": {
+        "conditions": [
+          [
+            "t1_end",
+            "<",
+            "t2_end"
+          ]
+        ]
+      },
+      "UB_BU": true,
+      "UB_UB": {
+        "conditions": [
+          [
+            "t1_end",
+            "<",
+            "t2_end"
+          ]
+        ]
+      },
+      "UB_UU": true,
+      "UU_BB": false,
+      "UU_BU": false,
+      "UU_UB": false,
+      "UU_UU": false
+    }
+  },
+  "t_finishes": {
+    "definition": "https://www.w3.org/TR/owl-time/#time:intervalFinishes",
+    "interval_interval": {
+      "BB_BB": {
+        "logic": "AND",
+        "conditions": [
+          [
+            "t1_start",
+            ">",
+            "t2_start"
+          ],
+          [
+            "t1_end",
+            "=",
+            "t2_end"
+          ]
+        ]
+      },
+      "BB_BU": false,
+      "BB_UB": {
+        "conditions": [
+          [
+            "t1_end",
+            "=",
+            "t2_end"
+          ]
+        ]
+      },
+      "BB_UU": false,
+      "BU_BB": false,
+      "BU_BU": false,
+      "BU_UB": false,
+      "BU_UU": false,
+      "UB_BB": false,
+      "UB_BU": false,
+      "UB_UB": false,
+      "UB_UU": false,
+      "UU_BB": false,
+      "UU_BU": false,
+      "UU_UB": false,
+      "UU_UU": false
+    }
+  },
+  "t_finishedBy": {
+    "definition": "https://www.w3.org/TR/owl-time/#time:intervalFinishedBy",
+    "interval_interval": {
+      "BB_BB": {
+        "logic": "AND",
+        "conditions": [
+          [
+            "t1_start",
+            "<",
+            "t2_start"
+          ],
+          [
+            "t1_end",
+            "=",
+            "t2_end"
+          ]
+        ]
+      },
+      "BB_BU": false,
+      "BB_UB": false,
+      "BB_UU": false,
+      "BU_BB": false,
+      "BU_BU": false,
+      "BU_UB": false,
+      "BU_UU": false,
+      "UB_BB": {
+        "conditions": [
+          [
+            "t1_end",
+            "=",
+            "t2_end"
+          ]
+        ]
+      },
+      "UB_BU": false,
+      "UB_UB": false,
+      "UB_UU": false,
+      "UU_BB": false,
+      "UU_BU": false,
+      "UU_UB": false,
+      "UU_UU": false
+    }
+  },
+  "t_meets": {
+    "definition": "https://www.w3.org/TR/owl-time/#time:intervalMeets",
+    "interval_interval": {
+      "BB_BB": {
+        "conditions": [
+          [
+            "t1_end",
+            "=",
+            "t2_start"
+          ]
+        ]
+      },
+      "BB_BU": {
+        "conditions": [
+          [
+            "t1_end",
+            "=",
+            "t2_start"
+          ]
+        ]
+      },
+      "BB_UB": false,
+      "BB_UU": false,
+      "BU_BB": false,
+      "BU_BU": false,
+      "BU_UB": false,
+      "BU_UU": false,
+      "UB_BB": {
+        "conditions": [
+          [
+            "t1_end",
+            "=",
+            "t2_start"
+          ]
+        ]
+      },
+      "UB_BU": {
+        "conditions": [
+          [
+            "t1_end",
+            "=",
+            "t2_start"
+          ]
+        ]
+      },
+      "UB_UB": false,
+      "UB_UU": false,
+      "UU_BB": false,
+      "UU_BU": false,
+      "UU_UB": false,
+      "UU_UU": false
+    }
+  },
+  "t_metBy": {
+    "definition": "https://www.w3.org/TR/owl-time/#time:intervalMetBy",
+    "interval_interval": {
+      "BB_BB": {
+        "conditions": [
+          [
+            "t1_start",
+            "=",
+            "t2_end"
+          ]
+        ]
+      },
+      "BB_BU": false,
+      "BB_UB": {
+        "conditions": [
+          [
+            "t1_start",
+            "=",
+            "t2_end"
+          ]
+        ]
+      },
+      "BB_UU": false,
+      "BU_BB": {
+        "conditions": [
+          [
+            "t1_start",
+            "=",
+            "t2_end"
+          ]
+        ]
+      },
+      "BU_BU": false,
+      "BU_UB": {
+        "conditions": [
+          [
+            "t1_start",
+            "=",
+            "t2_end"
+          ]
+        ]
+      },
+      "BU_UU": false,
+      "UB_BB": false,
+      "UB_BU": false,
+      "UB_UB": false,
+      "UB_UU": false,
+      "UU_BB": false,
+      "UU_BU": false,
+      "UU_UB": false,
+      "UU_UU": false
+    }
+  },
+  "t_overlappedBy": {
+    "definition": "https://www.w3.org/TR/owl-time/#time:intervalOverlappedBy",
+    "interval_interval": {
+      "BB_BB": {
+        "logic": "AND",
+        "conditions": [
+          [
+            "t1_start",
+            ">",
+            "t2_start"
+          ],
+          [
+            "t1_start",
+            "<",
+            "t2_end"
+          ],
+          [
+            "t1_end",
+            ">",
+            "t2_end"
+          ]
+        ]
+      },
+      "BB_BU": false,
+      "BB_UB": {
+        "logic": "AND",
+        "conditions": [
+          [
+            "t1_start",
+            "<",
+            "t2_end"
+          ],
+          [
+            "t1_end",
+            ">",
+            "t2_end"
+          ]
+        ]
+      },
+      "BB_UU": false,
+      "BU_BB": {
+        "logic": "AND",
+        "conditions": [
+          [
+            "t1_start",
+            ">",
+            "t2_start"
+          ],
+          [
+            "t1_start",
+            "<",
+            "t2_end"
+          ]
+        ]
+      },
+      "BU_BU": {
+        "conditions": [
+          [
+            "t1_start",
+            ">",
+            "t2_start"
+          ]
+        ]
+      },
+      "BU_UB": false,
+      "BU_UU": false,
+      "UB_BB": false,
+      "UB_BU": false,
+      "UB_UB": false,
+      "UB_UU": false,
+      "UU_BB": false,
+      "UU_BU": false,
+      "UU_UB": false,
+      "UU_UU": false
+    }
+  },
+  "t_overlaps": {
+    "definition": "https://www.w3.org/TR/owl-time/#time:intervalOverlaps",
+    "interval_interval": {
+      "BB_BB": {
+        "logic": "AND",
+        "conditions": [
+          [
+            "t1_start",
+            "<",
+            "t2_start"
+          ],
+          [
+            "t1_end",
+            ">",
+            "t2_start"
+          ],
+          [
+            "t1_end",
+            "<",
+            "t2_end"
+          ]
+        ]
+      },
+      "BB_BU": {
+        "logic": "AND",
+        "conditions": [
+          [
+            "t1_start",
+            "<",
+            "t2_start"
+          ],
+          [
+            "t1_end",
+            ">",
+            "t2_start"
+          ]
+        ]
+      },
+      "BB_UB": false,
+      "BB_UU": false,
+      "BU_BB": {
+        "logic": "AND",
+        "conditions": [
+          [
+            "t1_start",
+            "<",
+            "t2_start"
+          ],
+          [
+            "t1_end",
+            ">",
+            "t2_start"
+          ]
+        ]
+      },
+      "BU_BU": {
+        "logic": "AND",
+        "conditions": [
+          [
+            "t1_start",
+            "<",
+            "t2_start"
+          ],
+          [
+            "t1_end",
+            ">",
+            "t2_start"
+          ]
+        ]
+      },
+      "BU_UB": false,
+      "BU_UU": false,
+      "UB_BB": {
+        "logic": "AND",
+        "conditions": [
+          [
+            "t1_end",
+            ">",
+            "t2_start"
+          ],
+          [
+            "t1_end",
+            "<",
+            "t2_end"
+          ]
+        ]
+      },
+      "UB_BU": {
+        "conditions": [
+          [
+            "t1_end",
+            ">",
+            "t2_start"
+          ]
+        ]
+      },
+      "UB_UB": false,
+      "UB_UU": false,
+      "UU_BB": false,
+      "UU_BU": false,
+      "UU_UB": false,
+      "UU_UU": false
+    }
+  },
+  "t_startedBy": {
+    "definition": "https://www.w3.org/TR/owl-time/#time:intervalStartedBy",
+    "interval_interval": {
+      "BB_BB": {
+        "logic": "AND",
+        "conditions": [
+          [
+            "t1_start",
+            "=",
+            "t2_start"
+          ],
+          [
+            "t1_end",
+            ">",
+            "t2_end"
+          ]
+        ]
+      },
+      "BB_BU": false,
+      "BB_UB": false,
+      "BB_UU": false,
+      "BU_BB": {
+        "conditions": [
+          [
+            "t1_start",
+            "=",
+            "t2_start"
+          ]
+        ]
+      },
+      "BU_BU": false,
+      "BU_UB": false,
+      "BU_UU": false,
+      "UB_BB": false,
+      "UB_BU": false,
+      "UB_UB": false,
+      "UB_UU": false,
+      "UU_BB": false,
+      "UU_BU": false,
+      "UU_UB": false,
+      "UU_UU": false
+    }
+  },
+  "t_starts": {
+    "definition": "https://www.w3.org/TR/owl-time/#time:intervalStarts",
+    "interval_interval": {
+      "BB_BB": {
+        "logic": "AND",
+        "conditions": [
+          ["t1_start", "=", "t2_start"],
+          ["t1_end", "<", "t2_end"]
+        ]
+      },
+      "BB_BU": {
+        "conditions": [
+          ["t1_start", "=", "t2_start"]
+        ]
+      },
+      "BB_UB": false,
+      "BB_UU": false,
+      "BU_BB": false,
+      "BU_BU": false,
+      "BU_UB": false,
+      "BU_UU": false,
+      "UB_BB": false,
+      "UB_BU": false,
+      "UB_UB": false,
+      "UB_UU": false,
+      "UU_BB": false,
+      "UU_BU": false,
+      "UU_UB": false,
+      "UU_UU": false
+    }
+  }
+}

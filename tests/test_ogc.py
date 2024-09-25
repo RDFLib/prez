@@ -16,7 +16,7 @@ def test_store() -> Store:
     # Create a new pyoxigraph Store
     store = Store()
 
-    file = Path("../test_data/spaceprez.ttl")
+    file = Path(__file__).parent.parent / "test_data/ogc_features.ttl"
     store.load(file.read_bytes(), "text/turtle")
 
     return store
@@ -39,14 +39,39 @@ def client(test_repo: Repo) -> TestClient:
     app.dependency_overrides[get_data_repo] = override_get_data_repo
 
     with TestClient(app, backend_options={"loop_factory": asyncio.new_event_loop}) as c:
+        c.base_url = "http://localhost:8000/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features"
         yield c
 
     # Remove the override to ensure subsequent tests are unaffected
     app.dependency_overrides.clear()
 
 
-@pytest.mark.xfail()
-def test_features_core(client: TestClient):
-    scope = "features/core"
+@pytest.mark.parametrize(
+    "test_file",
+    [
+        pytest.param(
+            "apidefinition",
+            marks=pytest.mark.xfail(
+                reason="see https://github.com/RDFLib/prez/pull/265#issuecomment-2367130294"
+            ),
+        ),
+        "collection",
+        "collections",
+        "conformance",
+        pytest.param(
+            "crs",
+            marks=pytest.mark.xfail(
+                reason="see https://github.com/RDFLib/prez/issues/267"
+            ),
+        ),
+        "errorconditions",
+        "feature",
+        "features",
+        "general",
+        "landingpage",
+    ],
+)
+def test_features_core(client: TestClient, test_file: str):
+    scope = f"features/core/test_{test_file}.py"
     exit_code = run_ogctests(scope, test_client=client)
     assert exit_code == pytest.ExitCode.OK

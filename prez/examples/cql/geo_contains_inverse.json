@@ -5,7 +5,7 @@
       "op": "s_contains",
       "args": [
         {
-          "property": "http://www.w3.org/ns/shacl#focusNode"
+          "property": "geometry"
         },
         {
           "type": "Polygon",

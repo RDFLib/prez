@@ -2,12 +2,15 @@ import logging
 import re
 from enum import Enum
 from textwrap import dedent
+from typing import List, Dict
+from urllib.parse import urlencode
 
 from pydantic import BaseModel
 from rdflib import Graph, Namespace, URIRef
 
 from prez.config import settings
 from prez.exceptions.model_exceptions import NoProfilesException
+from prez.models.ogc_features import Link
 from prez.repositories.base import Repo
 from prez.services.curie_functions import get_curie_id_for_uri, get_uri_for_curie_id
 
@@ -36,6 +39,7 @@ RDF_SERIALIZER_TYPES_MAP = {
     "text/n-triples": "nt",
     "text/plain": "nt",  # text/plain is the old/deprecated mimetype for n-triples
 }
+
 
 class MediaType(str, Enum):
     turtle = "text/turtle"
@@ -88,6 +92,7 @@ class NegotiatedPMTs(BaseModel):
     requested_mediatypes: list[tuple[str, float]] | None = None
     available: list[dict] | None = None
     selected: dict | None = None
+    current_path: str | None = None
 
     class Config:
         arbitrary_types_allowed = True
@@ -219,7 +224,7 @@ class NegotiatedPMTs(BaseModel):
         )
         mediatype_header_links = ", ".join(
             [
-                f'<{self.selected["class"]}?_profile={get_curie_id_for_uri(pmt["profile"])}&_mediatype={pmt["mediatype"]}>; rel="{"self" if pmt == self.selected else "alternate"}"; type="{pmt["mediatype"]}"; profile="{pmt["profile"]}"'
+                f'<{settings.system_uri}{self.current_path}?_profile={get_curie_id_for_uri(pmt["profile"])}&_mediatype={pmt["mediatype"]}>; rel="{"self" if pmt == self.selected else "alternate"}"; type="{pmt["mediatype"]}"; format="{pmt["profile"]}"'
                 for pmt in self.available
             ]
         )
@@ -259,7 +264,7 @@ class NegotiatedPMTs(BaseModel):
               VALUES ?base_class {{ dcat:Dataset geo:FeatureCollection geo:Feature
               skos:ConceptScheme skos:Concept skos:Collection 
               dcat:Catalog rdf:Resource dcat:Resource prof:Profile prez:SPARQLQuery 
-              prez:SearchResult prez:CQLObjectList prez:QueryablesList prez:Object rdfs:Resource }}
+              prez:SearchResult prez:CQLObjectList prez:Queryable prez:Object rdfs:Resource }}
               ?profile altr-ext:constrainsClass ?class ;
                        altr-ext:hasResourceFormat ?format ;
                        dcterms:title ?title .\
@@ -306,23 +311,32 @@ class NegotiatedPMTs(BaseModel):
 
         if settings.log_level == "DEBUG":
             from tabulate import tabulate
+
             table_data = [
                 [
-                    item['profile']['value'],
-                    item['title']['value'],
-                    item['class']['value'],
-                    item['distance']['value'],
-                    item['def_profile']['value'],
-                    item['format']['value'],
-                    item['req_format']['value'],
-                    item['def_format']['value'],
+                    item["profile"]["value"],
+                    item["title"]["value"],
+                    item["class"]["value"],
+                    item["distance"]["value"],
+                    item["def_profile"]["value"],
+                    item["format"]["value"],
+                    item["req_format"]["value"],
+                    item["def_format"]["value"],
                 ]
                 for item in response[1][0][1]
             ]
 
             # Define headers
-            headers = ["Profile", "Title", "Class", "Distance", "Default Profile", "Format", "Requested Format",
-                       "Default Format"]
+            headers = [
+                "Profile",
+                "Title",
+                "Class",
+                "Distance",
+                "Default Profile",
+                "Format",
+                "Requested Format",
+                "Default Format",
+            ]
 
             # Render as a table
             log.debug(tabulate(table_data, headers=headers, tablefmt="grid"))

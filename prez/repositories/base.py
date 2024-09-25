@@ -6,6 +6,8 @@ from typing import Tuple
 
 from rdflib import Namespace, Graph, URIRef
 
+from prez.cache import prefix_graph
+
 PREZ = Namespace("https://prez.dev/")
 
 log = logging.getLogger(__name__)
@@ -34,9 +36,7 @@ class Repo(ABC):
                 if query
             ],
         )
-        # from prez.cache import prefix_graph
-        # g = Graph(namespace_manager=prefix_graph.namespace_manager)  #TODO find where else this can go. significantly degrades performance
-        g = Graph()
+        g = Graph(namespace_manager=prefix_graph.namespace_manager)
         tabular_results = []
         for result in results:
             if isinstance(result, Graph):

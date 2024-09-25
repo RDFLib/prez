@@ -561,6 +561,42 @@ these endpoints, specifying any variables that need to be substituted (such as p
 to construct the system links.
 5. Return the response
 
+## Specification of remote SPARQL templates for Object endpoints
+
+The OGC Features endpoints can utilise custom SPARQL templates.
+At present the queries must be of the form:
+```sparql
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX sosa: <http://www.w3.org/ns/sosa/>
+CONSTRUCT {
+ ...
+}
+WHERE {
+    VALUES ?focusNode { UNDEF } 
+...
+}
+```
+At present the queries are ONLY substituted with the focus node URI, and only for OGC Features endpoints. It is intended that this functionality will provide the basis for a more general templating system across all OBJECT endpoints in the future.  
+These templates should be declared in the remote repo in this format:  
+```sparql
+PREFIX prez: <https://prez.dev/ont/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+INSERT DATA { GRAPH <https://prez/system> {
+    [ a prez:TemplateQuery ;
+        rdf:value """<template_query>
+""" ;
+        prez:forEndpoint "http://www.opengis.net/ogcapi-features-1/1.0/feature" ;
+    ]
+    }}
+```
+Prez will detect these template queries and when a request comes in on the endpoint with the relevant URI, utilise the template query.
+
+Templates can also be specified in `prez/reference_data/xxx.rq`, and mapped to an endpoint using the `endpoint_to_template_query_filename` setting (can be set as an environment variable), where `xxx.rq` is the filename of the template query. For example:
+```bash
+export ENDPOINT_TO_TEMPLATE_QUERY_FILENAME='{"http://www.opengis.net/ogcapi-features-1/1.0/feature": "xxx.rq"}'
+```
+
 ## High Level Sequence listing and individual object endpoints
 
 Prez follows the following logic to determine what information to return, based on a profile, and in what mediatype to return it.

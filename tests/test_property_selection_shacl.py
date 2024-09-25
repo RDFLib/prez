@@ -1,3 +1,4 @@
+import pytest
 from rdflib import Graph, URIRef, SH, RDF, PROV, DCTERMS
 
 from prez.reference_data.prez_ns import REG
@@ -8,22 +9,8 @@ from sparql_grammar_pydantic import (
     OptionalGraphPattern,
     Filter,
     TriplesSameSubjectPath,
+    TriplesSameSubject,
 )
-
-
-# uri: URIRef | BNode  # URI of the shape
-# graph: Graph
-# focus_node: IRI | Var = Var(value="focus_node")
-# # inputs
-# property_paths: Optional[List[PropertyPath]] = None
-# or_klasses: Optional[List[URIRef]] = None
-# # outputs
-# grammar: Optional[GroupGraphPatternSub] = None
-# tssp_list: Optional[List[SimplifiedTriple]] = None
-# gpnt_list: Optional[List[GraphPatternNotTriples]] = None
-# prof_nodes: Optional[Dict[str, Var | IRI]] = {}
-# classes_at_len: Optional[Dict[str, List[URIRef]]] = {}
-# _select_vars: Optional[List[Var]] = None
 
 
 def test_simple_path():
@@ -43,7 +30,7 @@ def test_simple_path():
         TriplesSameSubjectPath.from_spo(
             subject=Var(value="focus_node"),
             predicate=IRI(value=RDF.type),
-            object=Var(value="prof_node_1"),
+            object=Var(value="prof_1_node_1"),
         )
         in ps.tssp_list
     )
@@ -66,15 +53,15 @@ def test_sequence_path():
         TriplesSameSubjectPath.from_spo(
             subject=Var(value="focus_node"),
             predicate=IRI(value=PROV.qualifiedDerivation),
-            object=Var(value="prof_node_1"),
+            object=Var(value="prof_1_node_1"),
         )
         in ps.tssp_list
     )
     assert (
         TriplesSameSubjectPath.from_spo(
-            subject=Var(value="prof_node_1"),
+            subject=Var(value="prof_1_node_1"),
             predicate=IRI(value=PROV.hadRole),
-            object=Var(value="prof_node_2"),
+            object=Var(value="prof_1_node_2"),
         )
         in ps.tssp_list
     )
@@ -107,52 +94,52 @@ def test_union():
         uri=path_bn, graph=g, kind="profile", focus_node=Var(value="focus_node")
     )
     assert (
-        TriplesSameSubjectPath.from_spo(
+        TriplesSameSubject.from_spo(
             subject=Var(value="focus_node"),
             predicate=IRI(value=PROV.qualifiedDerivation),
-            object=Var(value="prof_node_1"),
+            object=Var(value="prof_1_node_3"),
         )
-        in ps.tssp_list
+        in ps.tss_list
     )
     assert (
-        TriplesSameSubjectPath.from_spo(
-            subject=Var(value="prof_node_1"),
+        TriplesSameSubject.from_spo(
+            subject=Var(value="prof_1_node_3"),
             predicate=IRI(value=PROV.hadRole),
-            object=Var(value="prof_node_2"),
+            object=Var(value="prof_1_node_4"),
         )
-        in ps.tssp_list
+        in ps.tss_list
     )
     assert (
-        TriplesSameSubjectPath.from_spo(
+        TriplesSameSubject.from_spo(
             subject=Var(value="focus_node"),
             predicate=IRI(value=PROV.qualifiedDerivation),
-            object=Var(value="prof_node_3"),
+            object=Var(value="prof_1_node_5"),
         )
-        in ps.tssp_list
+        in ps.tss_list
     )
     assert (
-        TriplesSameSubjectPath.from_spo(
-            subject=Var(value="prof_node_3"),
+        TriplesSameSubject.from_spo(
+            subject=Var(value="prof_1_node_5"),
             predicate=IRI(value=PROV.entity),
-            object=Var(value="prof_node_4"),
+            object=Var(value="prof_1_node_6"),
         )
-        in ps.tssp_list
+        in ps.tss_list
     )
     assert (
-        TriplesSameSubjectPath.from_spo(
+        TriplesSameSubject.from_spo(
             subject=Var(value="focus_node"),
             predicate=IRI(value=DCTERMS.publisher),
-            object=Var(value="prof_node_5"),
+            object=Var(value="prof_1_node_1"),
         )
-        in ps.tssp_list
+        in ps.tss_list
     )
     assert (
-        TriplesSameSubjectPath.from_spo(
+        TriplesSameSubject.from_spo(
             subject=Var(value="focus_node"),
             predicate=IRI(value=REG.status),
-            object=Var(value="prof_node_6"),
+            object=Var(value="prof_1_node_2"),
         )
-        in ps.tssp_list
+        in ps.tss_list
     )
 
 
@@ -189,12 +176,7 @@ def test_complex_optional_props():
 
     <http://example-profile> sh:property [
         sh:minCount 0 ;
-        sh:path (
-            sh:union (
-              dcterms:publisher
-              ( prov:qualifiedDerivation prov:hadRole )
-            )
-          )
+        sh:path dcterms:publisher , ( prov:qualifiedDerivation prov:hadRole ) 
         ]
     .
 
@@ -218,12 +200,7 @@ def test_excluded_props():
 
     <http://example-profile> sh:property [
         sh:maxCount 0 ;
-        sh:path (
-            sh:union (
-              dcterms:publisher
-              reg:status
-            )
-          )
+        sh:path dcterms:publisher , reg:status
         ]
     .
 
@@ -242,3 +219,40 @@ def test_excluded_props():
         in ps.tssp_list
     )
     assert isinstance(ps.gpnt_list[0].content, Filter)
+
+
+@pytest.mark.parametrize(
+    ["cardinality_type", "expected_result"],
+    [
+        (
+            "sh:zeroOrMorePath",
+            "?focus_node <http://purl.org/dc/terms/publisher>* ?prof_1_node_1",
+        ),
+        (
+            "sh:oneOrMorePath",
+            "?focus_node <http://purl.org/dc/terms/publisher>+ ?prof_1_node_1",
+        ),
+        (
+            "sh:zeroOrOnePath",
+            "?focus_node <http://purl.org/dc/terms/publisher>? ?prof_1_node_1",
+        ),
+    ],
+)
+def test_cardinality_props(cardinality_type, expected_result):
+    g = Graph().parse(
+        data=f"""
+    PREFIX dcterms: <http://purl.org/dc/terms/>
+    PREFIX sh: <http://www.w3.org/ns/shacl#>
+
+    <http://example-profile> sh:property [
+        sh:path [ {cardinality_type} dcterms:publisher ] ;
+        ]
+    .
+
+    """
+    )
+    path_bn = g.value(subject=URIRef("http://example-profile"), predicate=SH.property)
+    ps = PropertyShape(
+        uri=path_bn, graph=g, kind="profile", focus_node=Var(value="focus_node")
+    )
+    assert ps.tssp_list[0].to_string() == expected_result

@@ -1,0 +1,7 @@
+{
+  "op": "=",
+  "args": [
+    { "op": "accenti", "args": [ { "property": "etat_vol" } ] },
+    { "op": "accenti", "args": [ "débárquér" ] }
+  ]
+}

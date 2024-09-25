@@ -1,7 +1,16 @@
 from __future__ import annotations
 
 from string import Template
-from typing import List, Optional, Any, Dict, Literal as TypingLiteral, Union, Tuple
+from typing import (
+    List,
+    Optional,
+    Any,
+    Dict,
+    Literal as TypingLiteral,
+    Union,
+    Tuple,
+    Type,
+)
 
 from pydantic import BaseModel
 from rdflib import URIRef, BNode, Graph, RDFS
@@ -9,6 +18,14 @@ from rdflib.collection import Collection
 from rdflib.namespace import SH, RDF
 from rdflib.term import Node
 from sparql_grammar_pydantic import (
+    InlineData,
+    DataBlock,
+    InlineDataOneVar,
+    DataBlockValue,
+    Filter,
+    Constraint,
+    OptionalGraphPattern,
+    IRIOrFunction,
     IRI,
     Var,
     GraphPatternNotTriples,
@@ -19,14 +36,21 @@ from sparql_grammar_pydantic import (
     GroupGraphPatternSub,
     TriplesBlock,
     TriplesSameSubjectPath,
-    InlineData,
-    DataBlock,
-    InlineDataOneVar,
-    DataBlockValue,
-    Filter,
-    Constraint,
-    OptionalGraphPattern,
-    IRIOrFunction,
+    PropertyListPathNotEmpty,
+    VerbPath,
+    SG_Path,
+    PathAlternative,
+    ObjectListPath,
+    ObjectPath,
+    GraphNodePath,
+    VarOrTerm,
+    GraphTerm,
+    GroupOrUnionGraphPattern,
+    PathElt,
+    PathEltOrInverse,
+    PathPrimary,
+    PathSequence,
+    PathMod,
 )
 
 from prez.reference_data.prez_ns import ONT, SHEXT
@@ -92,8 +116,9 @@ class NodeShape(Shape):
                 kind=self.kind,
                 focus_node=self.focus_node,
                 path_nodes=self.path_nodes,
+                shape_number=i,
             )
-            for ps_uri in self.propertyShapesURIs
+            for i, ps_uri in enumerate(self.propertyShapesURIs)
         ]
         self.hierarchy_level = next(
             self.graph.objects(self.uri, ONT.hierarchyLevel), None
@@ -247,7 +272,9 @@ class PropertyShape(Shape):
     kind: TypingLiteral["endpoint", "profile"]
     focus_node: Union[IRI, Var]
     # inputs
-    property_paths: Optional[List[PropertyPath]] = None
+    shape_number: int = 0
+    and_property_paths: Optional[List[PropertyPath]] = None
+    union_property_paths: Optional[List[PropertyPath]] = None
     or_klasses: Optional[List[URIRef]] = None
     # outputs
     grammar: Optional[GroupGraphPatternSub] = None
@@ -271,7 +298,8 @@ class PropertyShape(Shape):
             return int(maxc)
 
     def from_graph(self):
-        self.property_paths = []
+        self.and_property_paths = []
+        self.union_property_paths = []
         _single_class = next(self.graph.objects(self.uri, SH["class"]), None)
         if _single_class:
             self.or_klasses = [URIRef(_single_class)]
@@ -287,177 +315,146 @@ class PropertyShape(Shape):
         for pp in pps:
             self._process_property_path(pp)
         # get the longest property path first - for endpoints this will be the path any path_nodes apply to
-        self.property_paths = sorted(
-            self.property_paths, key=lambda x: len(x), reverse=True
+        self.and_property_paths = sorted(
+            self.and_property_paths, key=lambda x: len(x), reverse=True
         )
 
-    def _process_property_path(self, pp):
+    def _process_property_path(self, pp, union: bool = False):
         if isinstance(pp, URIRef):
-            self.property_paths.append(Path(value=pp))
+            self._add_path(Path(value=pp), union)
         elif isinstance(pp, BNode):
-            pred_objects_gen = self.graph.predicate_objects(subject=pp)
-            bn_pred, bn_obj = next(pred_objects_gen, (None, None))
+            pred_objects = list(self.graph.predicate_objects(subject=pp))
+            if not pred_objects:
+                return
+
+            bn_pred, bn_obj = pred_objects[0]
+
             if bn_obj == SH.union:
-                union_list = list(Collection(self.graph, pp))
-                if union_list != [SH.union]:
-                    union_list_bnode = union_list[1]
-                union_items = list(Collection(self.graph, union_list_bnode))
-                for item in union_items:
-                    self._process_property_path(item)
-            elif bn_pred == SH.inversePath:
-                self.property_paths.append(InversePath(value=bn_obj))
-            # elif bn_pred == SH.alternativePath:
-            #     predicates.extend(list(Collection(self.profile_graph, bn_obj)))
+                self._process_union(pp, union)
+            elif bn_pred in PRED_TO_PATH_CLASS:
+                path_class = PRED_TO_PATH_CLASS[bn_pred]
+                self._add_path(path_class(value=bn_obj), union)
             else:  # sequence paths
-                paths = list(Collection(self.graph, pp))
-                sp_list = []
-                for path in paths:
-                    if isinstance(path, BNode):
-                        pred_objects_gen = self.graph.predicate_objects(subject=path)
-                        bn_pred, bn_obj = next(pred_objects_gen, (None, None))
-                        if bn_pred == SH.inversePath:
-                            sp_list.append(InversePath(value=bn_obj))
-                    elif isinstance(path, URIRef):
-                        sp_list.append(Path(value=path))
-                self.property_paths.append(SequencePath(value=sp_list))
+                self._process_sequence(pp, union)
+
+    def _process_union(self, pp, union: bool):
+        union_list = list(Collection(self.graph, pp))
+        if union_list != [SH.union]:
+            union_list_bnode = union_list[1]
+        union_items = list(Collection(self.graph, union_list_bnode))
+        for item in union_items:
+            self._process_property_path(item, True)
+
+    def _process_sequence(self, pp, union: bool):
+        paths = list(Collection(self.graph, pp))
+        sp_list = []
+        for path in paths:
+            if isinstance(path, BNode):
+                pred_objects = list(self.graph.predicate_objects(subject=path))
+                if pred_objects:
+                    bn_pred, bn_obj = pred_objects[0]
+                    if bn_pred in PRED_TO_PATH_CLASS:
+                        path_class = PRED_TO_PATH_CLASS[bn_pred]
+                        sp_list.append(path_class(value=bn_obj))
+            elif isinstance(path, URIRef):
+                sp_list.append(Path(value=path))
+        self._add_path(SequencePath(value=sp_list), union)
+
+    def _add_path(self, path: PropertyPath, union: bool):
+        if union:
+            self.union_property_paths.append(path)
+        else:
+            self.and_property_paths.append(path)
 
     def to_grammar(self):
         # label nodes in the inner select and profile part of the query differently for clarity.
         if self.kind == "endpoint":
             path_or_prop = "path"
         elif self.kind == "profile":
-            path_or_prop = "prof"
+            path_or_prop = f"prof_{self.shape_number + 1}"
 
         # set up the path nodes - either from supplied values or set as variables
-        total_individual_nodes = sum([len(i) for i in self.property_paths])
+        total_individual_nodes = sum([len(i) for i in self.and_property_paths])
         for i in range(total_individual_nodes):
             path_node_str = f"{path_or_prop}_node_{i + 1}"
             if path_node_str not in self.path_nodes:
                 self.path_nodes[path_node_str] = Var(value=path_node_str)
 
         self.tssp_list = []
-        len_pp = max([len(i) for i in self.property_paths])
-        # sh:class applies to the end of sequence paths
-        if f"{path_or_prop}_node_{len_pp}" in self.path_nodes:
-            path_node_term = self.path_nodes[f"{path_or_prop}_node_{len_pp}"]
-        else:
-            path_node_term = Var(value=f"{path_or_prop}_node_{len_pp}")
-
-        # useful for determining which endpoint property shape should be used when a request comes in on endpoint
-        self.classes_at_len[f"{path_or_prop}_node_{len_pp}"] = self.or_klasses
-
-        if self.or_klasses:
-            if len(self.or_klasses) == 1:
-                self.add_triple_to_tss_and_tssp(
-                    (
-                        path_node_term,
-                        IRI(value=RDF.type),
-                        IRI(value=self.or_klasses[0]),
-                    )
-                )
+        if path_or_prop == "path":
+            len_pp = max([len(i) for i in self.and_property_paths])
+            # sh:class applies to the end of sequence paths
+            if f"{path_or_prop}_node_{len_pp}" in self.path_nodes:
+                path_node_term = self.path_nodes[f"{path_or_prop}_node_{len_pp}"]
             else:
-                self.add_triple_to_tss_and_tssp(
-                    (
-                        path_node_term,
-                        IRI(value=RDF.type),
-                        Var(value=f"{path_or_prop}_node_classes_{len_pp}"),
+                path_node_term = Var(value=f"{path_or_prop}_node_{len_pp}")
+
+            # useful for determining which endpoint property shape should be used when a request comes in on endpoint
+            self.classes_at_len[f"{path_or_prop}_node_{len_pp}"] = self.or_klasses
+
+            if self.or_klasses:
+                if len(self.or_klasses) == 1:
+                    self.add_triple_to_tss_and_tssp(
+                        (
+                            path_node_term,
+                            IRI(value=RDF.type),
+                            IRI(value=self.or_klasses[0]),
+                        )
                     )
-                )
-                dbvs = [
-                    DataBlockValue(value=IRI(value=klass)) for klass in self.or_klasses
-                ]
-                self.gpnt_list.append(
-                    GraphPatternNotTriples(
-                        content=InlineData(
-                            data_block=DataBlock(
-                                block=InlineDataOneVar(
-                                    variable=Var(
-                                        value=f"{path_or_prop}_node_classes_{len_pp}"
-                                    ),
-                                    datablockvalues=dbvs,
+                else:
+                    self.add_triple_to_tss_and_tssp(
+                        (
+                            path_node_term,
+                            IRI(value=RDF.type),
+                            Var(value=f"{path_or_prop}_node_classes_{len_pp}"),
+                        )
+                    )
+                    dbvs = [
+                        DataBlockValue(value=IRI(value=klass))
+                        for klass in self.or_klasses
+                    ]
+                    self.gpnt_list.append(
+                        GraphPatternNotTriples(
+                            content=InlineData(
+                                data_block=DataBlock(
+                                    block=InlineDataOneVar(
+                                        variable=Var(
+                                            value=f"{path_or_prop}_node_classes_{len_pp}"
+                                        ),
+                                        datablockvalues=dbvs,
+                                    )
                                 )
                             )
                         )
                     )
+
+        pp_i = 0
+        tssp_list_for_and = []
+        tssp_list_for_union = []
+        if self.and_property_paths:
+            self.process_property_paths(
+                self.and_property_paths, path_or_prop, tssp_list_for_and, pp_i
+            )
+        for inner_list in tssp_list_for_and:
+            self.tssp_list.extend(inner_list)
+        if self.union_property_paths:
+            self.process_property_paths(
+                self.union_property_paths, path_or_prop, tssp_list_for_union, pp_i
+            )
+            ggp_list = []
+            for inner_list in tssp_list_for_union:
+                ggp_list.append(
+                    GroupGraphPattern(
+                        content=GroupGraphPatternSub(
+                            triples_block=TriplesBlock.from_tssp_list(inner_list)
+                        )
+                    )
                 )
-
-        if self.property_paths:
-            i = 0
-            for property_path in self.property_paths:
-                if f"{path_or_prop}_node_{i + 1}" in self.path_nodes:
-                    path_node_1 = self.path_nodes[f"{path_or_prop}_node_{i + 1}"]
-                else:
-                    path_node_1 = Var(value=f"{path_or_prop}_node_{i + 1}")
-                # for sequence paths up to length two:
-                if f"{path_or_prop}_node_{i + 2}" in self.path_nodes:
-                    path_node_2 = self.path_nodes[f"{path_or_prop}_node_{i + 2}"]
-                else:
-                    path_node_2 = Var(value=f"{path_or_prop}_node_{i + 2}")
-
-                if isinstance(property_path, Path):
-                    if property_path.value == SHEXT.allPredicateValues:
-                        pred = Var(value="preds")
-                        obj = Var(value="vals")
-                    else:
-                        pred = IRI(value=property_path.value)
-                        obj = path_node_1
-                    # vanilla property path
-                    self.add_triple_to_tss_and_tssp(
-                        (
-                            self.focus_node,
-                            pred,
-                            obj,
-                        )
-                    )
-                    i += 1
-
-                elif isinstance(property_path, InversePath):
-                    self.add_triple_to_tss_and_tssp(
-                        (
-                            path_node_1,
-                            IRI(value=property_path.value),
-                            self.focus_node,
-                        )
-                    )
-                    i += 1
-
-                elif isinstance(property_path, SequencePath):
-                    for j, path in enumerate(property_path.value):
-                        if isinstance(path, Path):
-                            if j == 0:
-                                self.add_triple_to_tss_and_tssp(
-                                    (
-                                        self.focus_node,
-                                        IRI(value=path.value),
-                                        path_node_1,
-                                    )
-                                )
-                            else:
-                                self.add_triple_to_tss_and_tssp(
-                                    (
-                                        path_node_1,
-                                        IRI(value=path.value),
-                                        path_node_2,
-                                    )
-                                )
-                        elif isinstance(path, InversePath):
-                            if j == 0:
-                                self.add_triple_to_tss_and_tssp(
-                                    (
-                                        path_node_1,
-                                        IRI(value=path.value),
-                                        self.focus_node,
-                                    )
-                                )
-                            else:
-                                self.add_triple_to_tss_and_tssp(
-                                    (
-                                        path_node_2,
-                                        IRI(value=path.value),
-                                        path_node_1,
-                                    )
-                                )
-                    i += len(property_path)
+            self.gpnt_list.append(
+                GraphPatternNotTriples(
+                    content=GroupOrUnionGraphPattern(group_graph_patterns=ggp_list)
+                )
+            )
 
         if self.minCount == 0:
             # triples = self.tssp_list.copy()
@@ -477,7 +474,7 @@ class PropertyShape(Shape):
             self.tssp_list = []
 
         if self.maxCount == 0:
-            for p in self.property_paths:
+            for p in self.and_property_paths:
                 assert isinstance(p, Path)  # only support filtering direct predicates
 
             # reset the triples list
@@ -491,7 +488,7 @@ class PropertyShape(Shape):
 
             values = [
                 PrimaryExpression(content=IRIOrFunction(iri=IRI(value=p.value)))
-                for p in self.property_paths
+                for p in self.and_property_paths
             ]
             gpnt = GraphPatternNotTriples(
                 content=Filter.filter_relational(
@@ -502,6 +499,130 @@ class PropertyShape(Shape):
             )
             self.gpnt_list.append(gpnt)
 
+    def process_property_paths(self, property_paths, path_or_prop, tssp_list, pp_i):
+        for property_path in property_paths:
+            if f"{path_or_prop}_node_{pp_i + 1}" in self.path_nodes:
+                path_node_1 = self.path_nodes[f"{path_or_prop}_node_{pp_i + 1}"]
+            else:
+                path_node_1 = Var(value=f"{path_or_prop}_node_{pp_i + 1}")
+
+            if f"{path_or_prop}_node_{pp_i + 2}" in self.path_nodes:
+                path_node_2 = self.path_nodes[f"{path_or_prop}_node_{pp_i + 2}"]
+            else:
+                path_node_2 = Var(value=f"{path_or_prop}_node_{pp_i + 2}")
+
+            current_tssp = []
+
+            if isinstance(property_path, Path):
+                if property_path.value == SHEXT.allPredicateValues:
+                    pred = Var(value="preds")
+                    obj = Var(value="vals")
+                else:
+                    pred = IRI(value=property_path.value)
+                    obj = path_node_1
+                triple = (self.focus_node, pred, obj)
+                self.tss_list.append(TriplesSameSubject.from_spo(*triple))
+                current_tssp.append(TriplesSameSubjectPath.from_spo(*triple))
+                pp_i += 1
+
+            elif isinstance(property_path, InversePath):
+                triple = (path_node_1, IRI(value=property_path.value), self.focus_node)
+                self.tss_list.append(TriplesSameSubject.from_spo(*triple))
+                current_tssp.append(TriplesSameSubjectPath.from_spo(*triple))
+                pp_i += 1
+
+            elif isinstance(
+                property_path, Union[ZeroOrMorePath, OneOrMorePath, ZeroOrOnePath]
+            ):
+                triple = (self.focus_node, IRI(value=property_path.value), path_node_1)
+                self.tss_list.append(TriplesSameSubject.from_spo(*triple))
+                self.tssp_list.append(
+                    _tssp_for_pathmods(
+                        self.focus_node,
+                        IRI(value=property_path.value),
+                        path_node_1,
+                        property_path.operand,
+                    )
+                )
+                pp_i += 1
+
+            elif isinstance(property_path, SequencePath):
+                for j, path in enumerate(property_path.value):
+                    if isinstance(path, Path):
+                        if j == 0:
+                            triple = (
+                                self.focus_node,
+                                IRI(value=path.value),
+                                path_node_1,
+                            )
+                        else:
+                            triple = (path_node_1, IRI(value=path.value), path_node_2)
+                    elif isinstance(path, InversePath):
+                        if j == 0:
+                            triple = (
+                                path_node_1,
+                                IRI(value=path.value),
+                                self.focus_node,
+                            )
+                        else:
+                            triple = (path_node_2, IRI(value=path.value), path_node_1)
+                    self.tss_list.append(TriplesSameSubject.from_spo(*triple))
+                    current_tssp.append(TriplesSameSubjectPath.from_spo(*triple))
+                pp_i += len(property_path.value)
+
+            if current_tssp:
+                tssp_list.append(current_tssp)
+
+        return pp_i
+
+
+def _tssp_for_pathmods(focus_node, pred, obj, pathmod):
+    """
+    Creates path modifier TriplesSameSubjectPath objects.
+    """
+    if isinstance(focus_node, IRI):
+        focus_node = GraphTerm(value=focus_node)
+    return TriplesSameSubjectPath(
+        content=(
+            VarOrTerm(varorterm=focus_node),
+            PropertyListPathNotEmpty(
+                first_pair=(
+                    VerbPath(
+                        path=SG_Path(
+                            path_alternative=PathAlternative(
+                                sequence_paths=[
+                                    PathSequence(
+                                        list_path_elt_or_inverse=[
+                                            PathEltOrInverse(
+                                                path_elt=PathElt(
+                                                    path_primary=PathPrimary(
+                                                        value=pred,
+                                                    ),
+                                                    path_mod=PathMod(pathmod=pathmod),
+                                                )
+                                            )
+                                        ]
+                                    )
+                                ]
+                            )
+                        )
+                    ),
+                    ObjectListPath(
+                        object_paths=[
+                            ObjectPath(
+                                graph_node_path=GraphNodePath(
+                                    varorterm_or_triplesnodepath=VarOrTerm(
+                                        varorterm=obj
+                                    )
+                                )
+                            )
+                        ]
+                    ),
+                )
+            ),
+        )
+    )
+
 
 class PropertyPath(BaseModel):
     class Config:
@@ -509,23 +630,51 @@ class PropertyPath(BaseModel):
 
     uri: Optional[URIRef] = None
 
+    def __len__(self):
+        return 1  # Default length for all PropertyPath subclasses
+
 
 class Path(PropertyPath):
     value: URIRef
-
-    def __len__(self):
-        return 1
 
 
 class SequencePath(PropertyPath):
     value: List[PropertyPath]
 
     def __len__(self):
-        return len(self.value)
+        return len(self.value)  # Override to return the length of the sequence
 
 
 class InversePath(PropertyPath):
     value: URIRef
 
+
+class ZeroOrMorePath(PropertyPath):
+    value: URIRef
+    operand: str = "*"
+
+
+class OneOrMorePath(PropertyPath):
+    value: URIRef
+    operand: str = "+"
+
+
+class ZeroOrOnePath(PropertyPath):
+    value: URIRef
+    operand: str = "?"
+
+
+class AlternativePath(PropertyPath):
+    value: List[PropertyPath]
+
     def __len__(self):
-        return 1
+        return len(self.value)
+
+
+PRED_TO_PATH_CLASS: Dict[URIRef, Type[PropertyPath]] = {
+    SH.inversePath: InversePath,
+    SH.zeroOrMorePath: ZeroOrMorePath,
+    SH.oneOrMorePath: OneOrMorePath,
+    SH.zeroOrOnePath: ZeroOrOnePath,
+    SH.alternativePath: AlternativePath,
+}

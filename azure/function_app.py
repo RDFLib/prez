@@ -59,4 +59,3 @@ if __name__ == "__main__":
     task = fn(req, context)
     resp = loop.run_until_complete(task)
     print(resp)
-

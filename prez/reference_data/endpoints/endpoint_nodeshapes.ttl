@@ -19,33 +19,21 @@ ex:Catalogs
     sh:property [
         sh:path dcterms:hasPart ;
         sh:or (
-            [ sh:class dcat:Resource ]
-            [ sh:class geo:FeatureCollection ]
             [ sh:class skos:ConceptScheme ]
             [ sh:class skos:Collection ]
+            [ sh:class dcat:Dataset ]
         ) ;
     ] .
 
 ex:Collections
     a sh:NodeShape ;
     ont:hierarchyLevel 2 ;
-    sh:targetClass geo:FeatureCollection , skos:ConceptScheme , skos:Collection , dcat:Resource ;
+    sh:targetClass skos:ConceptScheme , skos:Collection , dcat:Dataset ;
     sh:property [
         sh:path [ sh:inversePath dcterms:hasPart ] ;
         sh:class dcat:Catalog ;
     ] .
 
-ex:Feature
-    a sh:NodeShape ;
-    ont:hierarchyLevel 3 ;
-    sh:targetClass geo:Feature ;
-    sh:property [
-        sh:path [ sh:inversePath rdfs:member ] ;
-        sh:class geo:FeatureCollection ;
-    ] , [
-        sh:path ( [sh:inversePath rdfs:member ] [ sh:inversePath dcterms:hasPart ] );
-        sh:class dcat:Catalog ;
-    ] .
 
 ex:ConceptSchemeConcept
     a sh:NodeShape ;
@@ -74,10 +62,10 @@ ex:CollectionConcept
 ex:Resource
     a sh:NodeShape ;
     ont:hierarchyLevel 3 ;
-    sh:targetClass rdf:Resource ;
+    sh:targetClass geo:FeatureCollection ;
     sh:property [
         sh:path [ sh:inversePath dcterms:hasPart ] ;
-        sh:class dcat:Resource ;
+        sh:class dcat:Dataset ;
     ] , [
         sh:path ( [ sh:inversePath dcterms:hasPart ] [ sh:inversePath dcterms:hasPart ] );
         sh:class dcat:Catalog ;
@@ -87,32 +75,6 @@ ex:Profiles
     a sh:NodeShape ;
     ont:hierarchyLevel 1 ;
     sh:targetClass prof:Profile ;
-.
-
-ex:queryables a sh:NodeShape ;
-    ont:hierarchyLevel 1 ;
-    sh:rule [ sh:subject "?focus_node" ;
-          sh:predicate <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ;
-          sh:object <https://prez.dev/Queryable> ] ;
-    ont:deliversClasses prez:QueryablesList ;
-    sh:target [ sh:select """SELECT DISTINCT ?focus_node
-             WHERE {
-             ?s a ?class ;
-                  ?focus_node ?o .
-              VALUES ?class {
-              dcat:Catalog
-              dcat:Dataset
-              dcat:Resource
-              skos:ConceptScheme
-              skos:Collection
-              skos:Concept
-              geo:FeatureCollection
-              geo:Feature
-              rdf:Resource
-              }
-                    }""" ] ;
-    shext:limit 100 ;
-    shext:offset 0 ;
 .
 
 ex:AltProfilesForListing

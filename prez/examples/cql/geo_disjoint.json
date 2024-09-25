@@ -2,7 +2,7 @@
     "op": "s_disjoint",
     "args": [
         {
-            "property": "http://www.w3.org/ns/shacl#focusNode"
+            "property": "geometry"
         },
         {
             "type": "Polygon",

@@ -22,7 +22,7 @@ jobs:
         id: setup-python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       #----------------------------------------------
       #  -----  install & configure poetry  -----
       #----------------------------------------------
@@ -52,7 +52,7 @@ jobs:
       # install your root project, if required
       #----------------------------------------------
       - name: Install project
-        run: poetry install --no-interaction
+        run: poetry install --no-interaction --extras "server"
       #----------------------------------------------
       #              run test suite
       #----------------------------------------------

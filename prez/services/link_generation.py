@@ -2,7 +2,7 @@ import logging
 import time
 from string import Template
 
-from rdflib import Graph, Literal, URIRef, BNode
+from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import SH, RDF
 from sparql_grammar_pydantic import (
     IRI,
@@ -46,11 +46,11 @@ async def add_prez_links(graph: Graph, repo: Repo, endpoint_structure):
 
 
 async def _link_generation(
-        uri: URIRef,
-        repo: Repo,
-        klasses,
-        graph: Graph,
-        endpoint_structure: str = settings.endpoint_structure,
+    uri: URIRef,
+    repo: Repo,
+    klasses,
+    graph: Graph,
+    endpoint_structure: str = settings.endpoint_structure,
 ):
     """
     Generates links for the given URI if it is not already cached.
@@ -89,21 +89,25 @@ async def _link_generation(
                     # part of the link. e.g. ?path_node_1 will have result(s) but is not part of the link.
                     for solution in result[1]:
                         # create link strings
-                        (
-                            curie_for_uri,
-                            members_link,
-                            object_link,
-                            identifiers
-                        ) = await create_link_strings(
-                            ns.hierarchy_level, solution, uri, endpoint_structure
+                        (curie_for_uri, members_link, object_link, identifiers) = (
+                            await create_link_strings(
+                                ns.hierarchy_level, solution, uri, endpoint_structure
+                            )
                         )
                         # add links and identifiers to graph and cache
                         await add_links_to_graph_and_cache(
-                            curie_for_uri, graph, members_link, object_link, uri, identifiers
+                            curie_for_uri,
+                            graph,
+                            members_link,
+                            object_link,
+                            uri,
+                            identifiers,
                         )
             else:
-                curie_for_uri, members_link, object_link, identifiers = await create_link_strings(
-                    ns.hierarchy_level, {}, uri, endpoint_structure
+                curie_for_uri, members_link, object_link, identifiers = (
+                    await create_link_strings(
+                        ns.hierarchy_level, {}, uri, endpoint_structure
+                    )
                 )
                 await add_links_to_graph_and_cache(
                     curie_for_uri, graph, members_link, object_link, uri, identifiers
@@ -136,7 +140,7 @@ async def get_nodeshapes_constraining_class(klasses, uri):
 
 
 async def add_links_to_graph_and_cache(
-        curie_for_uri, graph, members_link, object_link, uri, identifiers: dict
+    curie_for_uri, graph, members_link, object_link, uri, identifiers: dict
 ):
     """
     Adds links and identifiers to the given graph and cache.
@@ -148,7 +152,7 @@ async def add_links_to_graph_and_cache(
             (uri_in_link_string, PREZ.identifier, Literal(curie_in_link_string), uri)
         )
     if (
-            members_link
+        members_link
     ):  # TODO need to confirm the link value doesn't match the existing link value, as multiple endpoints can deliver
         # the same class/have different links for the same URI
         existing_members_link = list(
@@ -165,8 +169,10 @@ async def create_link_strings(hierarchy_level, solution, uri, endpoint_structure
     """
     Creates link strings based on the hierarchy level and solution provided.
     """
-    identifiers = {URIRef(v["value"]): get_curie_id_for_uri(v["value"]) for k, v in solution.items()} | {
-        uri: get_curie_id_for_uri(uri)}
+    identifiers = {
+        URIRef(v["value"]): get_curie_id_for_uri(v["value"])
+        for k, v in solution.items()
+    } | {uri: get_curie_id_for_uri(uri)}
     components = list(endpoint_structure[: int(hierarchy_level)])
     variables = reversed(
         ["focus_node"] + [f"path_node_{i}" for i in range(1, len(components))]

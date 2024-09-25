@@ -25,8 +25,10 @@ from sparql_grammar_pydantic import (
 )
 
 from prez.models.query_params import QueryParams
+from prez.services.query_generation.bbox_filter import generate_bbox_filter
 from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQuery
 from prez.services.query_generation.cql import CQLParser
+from prez.services.query_generation.datetime_filter import generate_datetime_filter
 from prez.services.query_generation.search import SearchQueryRegex
 from prez.services.query_generation.shacl import NodeShape
 
@@ -176,9 +178,12 @@ def merge_listing_query_grammar_inputs(
     query_params: Optional[QueryParams] = None,
 ) -> dict:
     page = query_params.page
-    per_page = query_params.per_page
+    limit = query_params.limit
     order_by = query_params.order_by
     order_by_direction = query_params.order_by_direction
+    bbox = query_params.bbox
+    datetime = query_params.datetime
+    filter_crs = query_params.filter_crs
     """
     Merges the inputs for a query grammar.
     """
@@ -193,7 +198,7 @@ def merge_listing_query_grammar_inputs(
         "order_by_direction": order_by_direction,
     }
 
-    limit = int(per_page)
+    limit = int(limit)
     offset = limit * (int(page) - 1)
     kwargs["limit"] = limit
     kwargs["offset"] = offset
@@ -236,5 +241,15 @@ def merge_listing_query_grammar_inputs(
     if endpoint_nodeshape:
         kwargs["inner_select_tssp_list"].extend(endpoint_nodeshape.tssp_list)
         kwargs["inner_select_gpnt"].extend(endpoint_nodeshape.gpnt_list)
+
+    if bbox:
+        gpnt, tssp_list = generate_bbox_filter(bbox, filter_crs)
+        kwargs["inner_select_gpnt"].append(gpnt)
+        kwargs["inner_select_tssp_list"].extend(tssp_list)
+
+    if datetime:
+        gpnt_list, tssp_list = generate_datetime_filter(*datetime)
+        kwargs["inner_select_gpnt"].extend(gpnt_list)
+        kwargs["inner_select_tssp_list"].extend(tssp_list)
 
     return kwargs

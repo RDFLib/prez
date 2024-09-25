@@ -40,6 +40,50 @@ poetry install
 
 > **Note:** Poetry must be installed on the system. To check if you have Poetry installed run `poetry --version`. For tips on installing and managing specific dependency groups check the [documentation](https://python-poetry.org/docs/managing-dependencies/).
 
+## Endpoints
+
+Prez delivers the following endpoints:
+
+### Core Endpoints
+
+**Endpoint** | **Default MT**
+--- | ---
+/ | text/anot+turtle
+/docs | text/html
+/catalogs/{catalogId} | text/anot+turtle
+/catalogs/{catalogId}/collections | text/anot+turtle
+/catalogs/{catalogId}/collections/{recordsCollectionId} | text/anot+turtle
+/catalogs/{catalogId}/collections/{recordsCollectionId}/items | text/anot+turtle
+/catalogs/{catalogId}/collections/{recordsCollectionId}/items/{itemId} | text/anot+turtle
+/purge-tbox-cache | application/json
+/tbox-cache | application/json
+/health | application/json
+/prefixes | text/anot+turtle
+/concept-hierarchy/{parent_curie}/narrowers | text/anot+turtle
+/concept-hierarchy/{parent_curie}/top-concepts | text/anot+turtle
+/cql | text/anot+turtle
+/profiles | text/anot+turtle
+/search | text/anot+turtle
+/profiles/{profile_curie} | text/anot+turtle
+/object | text/anot+turtle
+/identifier/redirect | N/A
+/identifier/curie/{iri} | text/plain
+/identifier/iri/{curie} | text/plai
+
+### OGC Features API Endpoints
+
+**The OGC Features API Endpoints are based at the ROOT `/catalogs/{catalogId}/collections/{recordsCollectionId}/`**
+
+**Endpoint** | **Default MT**
+--- | ---
+{ROOT}/features | application/json
+{ROOT}/features/docs | text/html
+{ROOT}/features/conformance | application/json
+{ROOT}/features/collections | application/json
+{ROOT}/features/collections/{collectionId} | application/json
+{ROOT}/features/collections/{collectionId}/items | application/geo+json
+{ROOT}/features/collections/{collectionId}/items/{featureId} | application/geo+jso
+
 ## Configuration
 
 The following Environment Variables can be used to configure Prez:
@@ -143,6 +187,23 @@ Used in conjunction with the Pyoxigraph repo. Specifies a directory (from the re
 - **`system_endpoints`**: List of system endpoints. Default includes:
     - `ep:system/profile-listing`
     - `ep:system/profile-object`
+
+#### Listing and Search Configuration
+
+- **`listing_count_limit`**: The maximum number of items to count for a listing endpoint. Counts greater than this limit will be returned as ">N" where N is the limit. Default is `100`.
+- **`search_count_limit`**: The maximum number of items to return in a search result. Default is `10`.
+
+#### SPARQL Endpoint
+
+- **`enable_sparql_endpoint`**: Whether to enable the SPARQL endpoint. Default is `False`.
+
+#### Temporal Configuration
+
+- **`temporal_predicate`**: The predicate used for temporal properties. Default is `sdo:temporal`.
+
+#### Query Template Configuration
+
+- **`endpoint_to_template_query_filename`**: A dictionary mapping endpoints to query template filenames. Default is an empty dictionary.
 
 ## Running
 

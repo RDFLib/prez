@@ -1,12 +1,11 @@
 import logging
 from urllib.parse import urlparse
 
-from aiocache.serializers import PickleSerializer
+from aiocache import caches
 from rdflib import URIRef
 
 from prez.cache import prefix_graph
 from prez.config import settings
-from aiocache import cached, Cache, caches
 
 log = logging.getLogger(__name__)
 

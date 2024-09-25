@@ -4,7 +4,7 @@ from pathlib import Path
 import httpx
 from fastapi import Depends, Request, HTTPException
 from pyoxigraph import Store
-from rdflib import Dataset, URIRef, Graph, SKOS
+from rdflib import Dataset, URIRef, Graph, SKOS, RDF
 from sparql_grammar_pydantic import IRI, Var
 
 from prez.cache import (
@@ -14,10 +14,17 @@ from prez.cache import (
     profiles_graph_cache,
     endpoints_graph_cache,
     annotations_store,
-    annotations_repo,
+    prez_system_graph,
 )
 from prez.config import settings
-from prez.reference_data.prez_ns import ALTREXT, ONT, EP, OGCE
+from prez.enums import (
+    NonAnnotatedRDFMediaType,
+    SPARQLQueryMediaType,
+    JSONMediaType,
+    GeoJSONMediaType,
+)
+from prez.models.query_params import QueryParams
+from prez.reference_data.prez_ns import ALTREXT, ONT, EP, OGCE, OGCFEAT, PREZ
 from prez.repositories import PyoxigraphRepo, RemoteSparqlRepo, OxrdflibRepo, Repo
 from prez.services.classes import get_classes_single
 from prez.services.connegp_service import NegotiatedPMTs
@@ -87,7 +94,7 @@ async def get_annotations_repo():
     """
     A pyoxigraph Store with labels, descriptions etc. from Context Ontologies
     """
-    return annotations_repo
+    return PyoxigraphRepo(annotations_store)
 
 
 async def load_local_data_to_oxigraph(store: Store):
@@ -144,16 +151,19 @@ async def cql_post_parser_dependency(request: Request) -> CQLParser:
         )
 
 
-async def cql_get_parser_dependency(request: Request) -> CQLParser:
-    if request.query_params.get("filter"):
+async def cql_get_parser_dependency(
+    query_params: QueryParams = Depends(),
+) -> CQLParser:
+    if query_params.filter:
         try:
-            query = json.loads(request.query_params["filter"])
+            crs = query_params.filter_crs
+            query = json.loads(query_params.filter)
             context = json.load(
                 (
                     Path(__file__).parent / "reference_data/cql/default_context.json"
                 ).open()
             )
-            cql_parser = CQLParser(cql=query, context=context)
+            cql_parser = CQLParser(cql=query, context=context, crs=crs)
             cql_parser.generate_jsonld()
             cql_parser.parse()
             return cql_parser
@@ -171,8 +181,8 @@ async def generate_search_query(request: Request):
         escaped_term = escape_for_lucene_and_sparql(term)
         predicates = request.query_params.getlist("predicates")
         page = request.query_params.get("page", 1)
-        per_page = request.query_params.get("per_page")
-        limit = int(per_page) if per_page else settings.search_count_limit
+        limit = request.query_params.get("limit")
+        limit = int(limit) if limit else settings.search_count_limit
         offset = limit * (int(page) - 1)
 
         return SearchQueryRegex(
@@ -411,6 +421,7 @@ async def get_negotiated_pmts(
         classes=klasses,
         listing=listing,
         system_repo=system_repo,
+        current_path=request.url.path,
     )
     await pmts.setup()
     return pmts
@@ -453,3 +464,108 @@ async def get_profile_nodeshape(
         kind="profile",
         focus_node=focus_node,
     )
+
+
+async def get_url(
+    request: Request,
+):
+    return request.url
+
+
+async def get_endpoint_uri(
+    request: Request,
+):
+    return URIRef(request.scope.get("route").name)
+
+
+async def get_ogc_features_path_params(
+    request: Request,
+):
+    return request.path_params
+
+
+async def get_ogc_features_mediatype(
+    request: Request,
+    endpoint_uri: URIRef = Depends(get_endpoint_uri),
+):
+    if endpoint_uri in [
+        OGCFEAT["feature-collections"],
+        OGCFEAT["feature-collection"],
+        OGCFEAT["queryables-global"],
+        OGCFEAT["queryables-local"],
+    ]:
+        allowed_mts = [
+            mt.value
+            for mt in [*NonAnnotatedRDFMediaType, *SPARQLQueryMediaType, *JSONMediaType]
+        ]
+        default_mt = JSONMediaType.JSON.value
+    elif endpoint_uri in [OGCFEAT["feature"], OGCFEAT["features"]]:
+        allowed_mts = [
+            mt.value
+            for mt in [
+                *NonAnnotatedRDFMediaType,
+                *SPARQLQueryMediaType,
+                *GeoJSONMediaType,
+            ]
+        ]
+        default_mt = GeoJSONMediaType.GEOJSON.value
+    else:
+        raise ValueError("Endpoint not recognized")
+
+    qsa_mt = request.query_params.get("_mediatype")
+
+    if qsa_mt:
+        if qsa_mt in allowed_mts:
+            return qsa_mt
+    elif request.headers.get("Accept"):
+        split_accept = request.headers.get("Accept").split(",")
+        if any(mt in split_accept for mt in allowed_mts):
+            for mt in split_accept:
+                if mt in allowed_mts:
+                    return mt
+        else:
+            return default_mt
+    return default_mt
+
+
+async def get_template_query(
+    endpoint_uri_type: tuple[URIRef, URIRef] = Depends(get_endpoint_uri_type),
+):
+    endpoint_uri = endpoint_uri_type[0]
+    filename = settings.endpoint_to_template_query_filename.get(str(endpoint_uri))
+
+    # check local files
+    if filename:
+        return (
+            Path(__file__).parent / "reference_data/template_queries" / filename
+        ).read_text()
+
+    # check prez_system_graph
+    for s in prez_system_graph.subjects(RDF.type, ONT.TemplateQuery):
+        endpoint_in_sys_graph = prez_system_graph.value(s, ONT.forEndpoint, None)
+        if str(endpoint_uri) == str(endpoint_in_sys_graph):
+            template_query = prez_system_graph.value(s, RDF.value, None)
+            return str(template_query)
+    return None
+
+
+async def check_unknown_params(request: Request):
+    known_params = {
+        "_mediatype",
+        "page",
+        "limit",
+        "datetime",
+        "bbox",
+        "filter-lang",
+        "filter_crs",
+        "q",
+        "filter",
+        "order_by",
+        "order_by_direction",
+    }
+    unknown_params = set(request.query_params.keys()) - known_params
+    if unknown_params:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown query parameters: {', '.join(unknown_params)}",
+        )

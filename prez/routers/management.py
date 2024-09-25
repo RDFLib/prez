@@ -1,32 +1,32 @@
+import io
+import json
 import logging
 import pickle
 from typing import Optional
 
 from aiocache import caches
-from fastapi import APIRouter, Query, Depends
-from rdflib import BNode
+from fastapi import APIRouter, Depends, Query
+from rdflib import BNode, VANN
 from rdflib import Graph, URIRef, Literal
 from rdflib.collection import Collection
 from starlette.requests import Request
-from starlette.responses import PlainTextResponse
+from starlette.responses import PlainTextResponse, StreamingResponse
 
-from prez.cache import endpoints_graph_cache
+from prez.cache import endpoints_graph_cache, prefix_graph
 from prez.config import settings
 from prez.dependencies import get_system_repo
+from prez.enums import JSONMediaType, NonAnnotatedRDFMediaType
 from prez.reference_data.prez_ns import PREZ
 from prez.renderers.renderer import return_rdf, return_from_graph
 from prez.repositories import Repo
-from prez.services.connegp_service import RDF_MEDIATYPES, MediaType, NegotiatedPMTs
+from prez.services.connegp_service import RDF_MEDIATYPES, NegotiatedPMTs
 
 router = APIRouter(tags=["Management"])
 log = logging.getLogger(__name__)
 
 
 @router.get("/", summary="Home page", tags=["Prez"])
-async def index(
-        request: Request,
-        system_repo: Repo = Depends(get_system_repo)
-):
+async def index(request: Request, system_repo: Repo = Depends(get_system_repo)):
     """Returns the following information about the API"""
     pmts = NegotiatedPMTs(
         headers=request.headers,
@@ -48,9 +48,8 @@ async def index(
         profile_headers=pmts.generate_response_headers(),
         selected_class=pmts.selected["class"],
         repo=system_repo,
-        system_repo=system_repo
+        system_repo=system_repo,
     )
-
 
 
 @router.get("/purge-tbox-cache", summary="Reset Tbox Cache")
@@ -115,3 +114,24 @@ async def return_annotation_predicates():
     Collection(g, provenance_list_bn, settings.provenance_predicates)
     Collection(g, other_list_bn, settings.other_predicates)
     return g
+
+
+@router.get("/prefixes", summary="Show prefixes known to prez")
+async def show_prefixes(
+    mediatype: Optional[NonAnnotatedRDFMediaType | JSONMediaType] = Query(
+        default=NonAnnotatedRDFMediaType.TURTLE, alias="_mediatype"
+    )
+):
+    """Returns the prefixes known to prez"""
+    mediatype_str = str(mediatype.value)
+    ns_map = {pfx: ns for pfx, ns in prefix_graph.namespaces()}
+    if mediatype_str == "application/json":
+        content = io.BytesIO(json.dumps(ns_map).encode("utf-8"))
+    else:
+        g = Graph()
+        for prefix, namespace in ns_map.items():
+            bn = BNode()
+            g.add((bn, VANN.preferredNamespacePrefix, Literal(prefix)))
+            g.add((bn, VANN.preferredNamespaceUri, Literal(namespace)))
+        content = io.BytesIO(g.serialize(format=mediatype_str, encoding="utf-8"))
+    return StreamingResponse(content=content, media_type=mediatype_str)

@@ -1,0 +1,10 @@
+{
+  "op": "s_intersects",
+  "args": [
+    { "property": "geometry" },
+    {
+      "type": "Polygon",
+      "coordinates": [ [ [ -10, -10 ], [ 10, -10 ], [ 10, 10 ], [ -10, -10 ] ] ]
+    }
+  ]
+}

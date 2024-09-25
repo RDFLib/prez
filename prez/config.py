@@ -1,6 +1,5 @@
 from os import environ
 from pathlib import Path
-from typing import Optional, Union, Any, Dict
 from typing import Optional, List, Tuple
 from typing import Union, Any, Dict
 
@@ -80,6 +79,9 @@ class Settings(BaseSettings):
         EP["system/profile-object"],
     ]
     enable_sparql_endpoint: bool = False
+    enable_ogc_features: bool = True
+    temporal_predicate: Optional[URIRef] = SDO.temporal
+    endpoint_to_template_query_filename: Optional[Dict[str, str]] = {}
 
     @field_validator("prez_version")
     @classmethod

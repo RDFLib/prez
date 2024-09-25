@@ -6,6 +6,7 @@ import time
 from fastapi import status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
+from rdf2geojson import convert
 from rdflib import Graph, URIRef, RDF
 
 from prez.cache import prefix_graph
@@ -36,7 +37,8 @@ async def return_from_graph(
         return await return_rdf(graph, mediatype, profile_headers)
 
     elif profile == URIRef("https://w3id.org/profile/dd"):
-        graph = await return_annotated_rdf(graph, profile, repo)
+        annotations_graph = await return_annotated_rdf(graph, profile, repo)
+        graph.__iadd__(annotations_graph)
 
         try:
             # TODO: Currently, data is generated in memory, instead of in a streaming manner.
@@ -64,10 +66,16 @@ async def return_from_graph(
         except NotFoundError as err:
             raise HTTPException(status.HTTP_404_NOT_FOUND, str(err))
 
+    elif str(mediatype) == "application/geo+json":
+        geojson = convert(g=graph, do_validate=False, iri2id=get_curie_id_for_uri)
+        content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
+        return StreamingResponse(content=content, media_type=mediatype)
+
     else:
         if "anot+" in mediatype:
             non_anot_mediatype = mediatype.replace("anot+", "")
-            graph = await return_annotated_rdf(graph, repo, system_repo)
+            annotations_graph = await return_annotated_rdf(graph, repo, system_repo)
+            graph.__iadd__(annotations_graph)
             graph.namespace_manager = prefix_graph.namespace_manager
             content = io.BytesIO(
                 graph.serialize(format=non_anot_mediatype, encoding="utf-8")
@@ -104,4 +112,5 @@ async def return_annotated_rdf(
         annotations_graph, repo, system_repo
     )
     log.debug(f"Time to get annotations: {time.time() - t_start}")
-    return graph.__iadd__(annotations_graph)
+    # return graph.__iadd__(annotations_graph)
+    return annotations_graph
