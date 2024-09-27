@@ -15,12 +15,10 @@ from prez.dependencies import (
     get_system_repo,
     get_endpoint_nodeshapes,
     get_profile_nodeshape,
-    get_endpoint_uri_type,
     get_ogc_features_path_params,
     get_template_query,
     check_unknown_params,
-    generate_queryables_from_shacl_definition,
-    get_queryable_props,
+    get_endpoint_uri_type,
 )
 from prez.exceptions.model_exceptions import (
     ClassNotFoundException,
@@ -126,12 +124,6 @@ async def ogc_features_api(
     name=OGCFEAT["queryables-local"],
     openapi_extra=ogc_features_openapi_extras.get("feature-collection"),
 )
-async def queryables(
-    queryables: dict = Depends(generate_queryables_from_shacl_definition),
-):
-    return queryables
-
-
 @features_subapi.api_route(
     "/collections",
     methods=ALLOWED_METHODS,
@@ -145,7 +137,7 @@ async def queryables(
 )
 async def listings_with_feature_collection(
     validate_unknown_params: bool = Depends(check_unknown_params),
-    endpoint_uri_type: tuple = Depends(get_endpoint_uri_type),
+    endpoint_uri_type: str = Depends(get_endpoint_uri_type),
     endpoint_nodeshape: NodeShape = Depends(get_endpoint_nodeshapes),
     profile_nodeshape: NodeShape = Depends(get_profile_nodeshape),
     url: str = Depends(get_url),

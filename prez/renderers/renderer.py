@@ -13,9 +13,7 @@ from prez.cache import prefix_graph
 from prez.renderers.csv_renderer import render_csv_dropdown
 from prez.renderers.json_renderer import render_json_dropdown, NotFoundError
 from prez.repositories import Repo
-from prez.services.annotations import (
-    get_annotation_properties,
-)
+from prez.services.annotations import get_annotation_properties
 from prez.services.connegp_service import RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP
 from prez.services.curie_functions import get_curie_id_for_uri
 

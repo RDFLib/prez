@@ -333,7 +333,7 @@ class PropertyShape(Shape):
                 self._process_union(pp, union)
             elif bn_pred in PRED_TO_PATH_CLASS:
                 path_class = PRED_TO_PATH_CLASS[bn_pred]
-                self._add_path(path_class(value=bn_obj), union)
+                self._add_path(path_class(value=Path(value=bn_obj)), union)
             else:  # sequence paths
                 self._process_sequence(pp, union)
 
@@ -358,10 +358,12 @@ class PropertyShape(Shape):
                         path_class = PRED_TO_PATH_CLASS[bn_pred]
                         if isinstance(bn_obj, URIRef):
                             if not parent_path_class:
-                                sp_list.append(path_class(value=bn_obj))
+                                sp_list.append(path_class(value=Path(value=bn_obj)))
                             else:
                                 sp_list.append(
-                                    parent_path_class(value=path_class(value=bn_obj))
+                                    parent_path_class(
+                                        value=path_class(value=Path(value=bn_obj))
+                                    )
                                 )
                         elif isinstance(bn_obj, BNode):
                             process_path(bn_obj, path_class)
@@ -539,7 +541,11 @@ class PropertyShape(Shape):
                 pp_i += 1
 
             elif isinstance(property_path, InversePath):
-                triple = (path_node_1, IRI(value=property_path.value), self.focus_node)
+                triple = (
+                    path_node_1,
+                    IRI(value=property_path.value.value),
+                    self.focus_node,
+                )
                 self.tss_list.append(TriplesSameSubject.from_spo(*triple))
                 current_tssp.append(TriplesSameSubjectPath.from_spo(*triple))
                 pp_i += 1
@@ -547,12 +553,13 @@ class PropertyShape(Shape):
             elif isinstance(
                 property_path, Union[ZeroOrMorePath, OneOrMorePath, ZeroOrOnePath]
             ):
-                triple = (self.focus_node, IRI(value=property_path.value), path_node_1)
-                self.tss_list.append(TriplesSameSubject.from_spo(*triple))
+                # triple = (self.focus_node, IRI(value=property_path.value), path_node_1)
+                # self.tss_list.append(TriplesSameSubject.from_spo(*triple))
+                # remove TSS as it cannot capture the full set of triples possibly created by the path expression
                 self.tssp_list.append(
                     _tssp_for_pathmods(
                         self.focus_node,
-                        IRI(value=property_path.value),
+                        IRI(value=property_path.value.value),
                         path_node_1,
                         property_path.operand,
                     )
@@ -563,29 +570,41 @@ class PropertyShape(Shape):
                 preds_pathmods_inverse = []
                 for j, path in enumerate(property_path.value):
                     if isinstance(path, Path):
-                        preds_pathmods_inverse.append(
-                            (IRI(value=path.value), None, False)
-                        )
-                        if j == 0:
-                            triple = (
-                                self.focus_node,
-                                IRI(value=path.value),
-                                path_node_1,
+                        if self.kind == "endpoint":
+                            preds_pathmods_inverse.append(
+                                (IRI(value=path.value), None, False)
                             )
-                        else:
-                            triple = (path_node_1, IRI(value=path.value), path_node_2)
+                        elif self.kind == "profile":
+                            if j == 0:
+                                triple = (
+                                    self.focus_node,
+                                    IRI(value=path.value),
+                                    path_node_1,
+                                )
+                            else:
+                                triple = (
+                                    path_node_1,
+                                    IRI(value=path.value),
+                                    path_node_2,
+                                )
                     elif isinstance(path, InversePath):
-                        preds_pathmods_inverse.append(
-                            (IRI(value=path.value), None, True)
-                        )
-                        if j == 0:
-                            triple = (
-                                path_node_1,
-                                IRI(value=path.value),
-                                self.focus_node,
+                        if self.kind == "endpoint":
+                            preds_pathmods_inverse.append(
+                                (IRI(value=path.value.value), None, True)
                             )
-                        else:
-                            triple = (path_node_2, IRI(value=path.value), path_node_1)
+                        elif self.kind == "profile":
+                            if j == 0:
+                                triple = (
+                                    path_node_1,
+                                    IRI(value=path.value),
+                                    self.focus_node,
+                                )
+                            else:
+                                triple = (
+                                    path_node_2,
+                                    IRI(value=path.value),
+                                    path_node_1,
+                                )
                     elif isinstance(
                         path, Union[ZeroOrMorePath, OneOrMorePath, ZeroOrOnePath]
                     ):
@@ -595,16 +614,17 @@ class PropertyShape(Shape):
                             )
                         elif isinstance(path.value, InversePath):
                             preds_pathmods_inverse.append(
-                                (IRI(value=path.value.value), path.operand, True)
+                                (IRI(value=path.value.value.value), path.operand, True)
                             )
-                    # self.tss_list.append(TriplesSameSubject.from_spo(*triple))
-                    # current_tssp.append(TriplesSameSubjectPath.from_spo(*triple))
+                    if self.kind == "profile":
+                        self.tss_list.append(TriplesSameSubject.from_spo(*triple))
+                        current_tssp.append(TriplesSameSubjectPath.from_spo(*triple))
                 pp_i += len(property_path.value)
-
-                tssp = _tssp_for_sequence(
-                    self.focus_node, preds_pathmods_inverse, path_node_2
-                )
-                current_tssp.append(tssp)
+                if self.kind == "endpoint":
+                    tssp = _tssp_for_sequence(
+                        self.focus_node, preds_pathmods_inverse, path_node_2
+                    )
+                    current_tssp.append(tssp)
 
             if current_tssp:
                 tssp_list.append(current_tssp)
@@ -751,7 +771,7 @@ class SequencePath(PropertyPath):
 
 
 class InversePath(PropertyPath):
-    value: URIRef
+    value: PropertyPath
 
 
 class ZeroOrMorePath(PropertyPath):
