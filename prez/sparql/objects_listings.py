@@ -234,7 +234,10 @@ def generate_relative_properties(
                 rel_string += """OPTIONAL { """
             rel_string += f"""?{other_kvs[k]} ?rel_{k}_props ?rel_{k}_val .\n"""
             if construct_select == "select":
-                rel_string += f"""VALUES ?rel_{k}_props {{ {" ".join('<' + str(pred) + '>' for pred in relative_properties)} }} }}\n"""
+                if relative_properties == [URIRef('http://example.com/shacl-extension#allPredicateValues')]:
+                    rel_string += f"""VALUES ?rel_{k}_props {{ UNDEF }} }}\n"""
+                else:
+                    rel_string += f"""VALUES ?rel_{k}_props {{ {" ".join('<' + pred + '>' for pred in relative_properties)} }} }}\n"""
     return rel_string
 
 
@@ -272,7 +275,10 @@ def generate_include_predicates(include_predicates):
     VALUES ?p { <http://example1.com> <http://example2.com> }
     """
     if include_predicates:
-        return f"""VALUES ?p{{\n{chr(10).join([f"<{p}>" for p in include_predicates])}\n}}"""
+        if include_predicates == [URIRef('http://example.com/shacl-extension#allPredicateValues')]:
+            return ""
+        else:
+            return f"""VALUES ?p{{\n{chr(10).join([f"<{p}>" for p in include_predicates])}\n}}"""
     return ""
 
 
