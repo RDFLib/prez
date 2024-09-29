@@ -171,10 +171,26 @@ async def _add_prefixes_from_graph(g):
     return i
 
 
-async def create_endpoints_graph(repo) -> Graph:
-    for f in (Path(__file__).parent.parent / "reference_data/endpoints").glob("*.ttl"):
+async def create_endpoints_graph(app_state) -> Graph:
+    endpoints_root = Path(__file__).parent.parent / "reference_data/endpoints"
+    # OGC Features endpoints
+    if app_state.settings.enable_ogc_features:
+        for f in (endpoints_root / "features").glob("*.ttl"):
+            endpoints_graph_cache.parse(f)
+    # Custom data endpoints
+    if app_state.settings.custom_endpoints:
+        for f in (endpoints_root / "data_endpoints_custom").glob("*.ttl"):
+            endpoints_graph_cache.parse(f)
+        log.info("Custom endpoints loaded")
+    # Default data endpoints
+    else:
+        for f in (endpoints_root / "data_endpoints_default").glob("*.ttl"):
+            endpoints_graph_cache.parse(f)
+        await get_remote_endpoint_definitions(app_state.repo)
+    # Base endpoints
+    for f in (endpoints_root / "base").glob("*.ttl"):
         endpoints_graph_cache.parse(f)
-    await get_remote_endpoint_definitions(repo)
+
 
 
 async def get_remote_endpoint_definitions(repo):

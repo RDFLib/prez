@@ -29,10 +29,11 @@ from prez.exceptions.model_exceptions import (
     PrefixNotFoundException,
 )
 from prez.repositories import RemoteSparqlRepo, PyoxigraphRepo, OxrdflibRepo
+from prez.routers.custom_endpoints import create_dynamic_router
 from prez.routers.identifier import router as identifier_router
 from prez.routers.management import router as management_router
-from prez.routers.ogc_router import router as ogc_records_router
 from prez.routers.ogc_features_router import features_subapi
+from prez.routers.base_router import router as base_prez_router
 from prez.routers.sparql import router as sparql_router
 from prez.services.app_service import (
     healthcheck_sparql_endpoints,
@@ -113,7 +114,7 @@ async def lifespan(app: FastAPI):
     await prefix_initialisation(app.state.repo)
     await retrieve_remote_template_queries(app.state.repo)
     await create_profiles_graph(app.state.repo)
-    await create_endpoints_graph(app.state.repo)
+    await create_endpoints_graph(app.state)
     await count_objects(app.state.repo)
     await populate_api_info()
 
@@ -175,7 +176,6 @@ def assemble_app(
     app.state.settings = _settings
 
     app.include_router(management_router)
-    app.include_router(ogc_records_router)
     if _settings.enable_sparql_endpoint:
         app.include_router(sparql_router)
     if _settings.enable_ogc_features:
@@ -183,6 +183,11 @@ def assemble_app(
             "/catalogs/{catalogId}/collections/{recordsCollectionId}/features",
             features_subapi,
         )
+    if _settings.custom_endpoints:
+        app.include_router(
+            create_dynamic_router()
+        )
+    app.include_router(base_prez_router)
     app.include_router(identifier_router)
     app.openapi = partial(
         prez_open_api_metadata,

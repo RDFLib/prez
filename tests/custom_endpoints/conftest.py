@@ -10,6 +10,7 @@ os.environ["SPARQL_REPO_TYPE"] = "pyoxigraph"
 # os.environ["SPARQL_ENDPOINT"] = "http://localhost:3030/dataset"
 # os.environ["SPARQL_REPO_TYPE"] = "remote"
 os.environ["ENABLE_SPARQL_ENDPOINT"] = "true"
+os.environ["CUSTOM_ENDPOINTS"] = "true"
 
 from pathlib import Path
 
@@ -27,7 +28,7 @@ def test_store() -> Store:
     # Create a new pyoxigraph Store
     store = Store()
 
-    for file in Path(__file__).parent.glob("../test_data/*.ttl"):
+    for file in Path(__file__).parent.parent.glob("../test_data/*.ttl"):
         store.load(file.read_bytes(), "text/turtle")
 
     return store

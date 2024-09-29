@@ -1,4 +1,4 @@
-import pathlib
+from pathlib import Path
 
 import pytest
 from rdflib import Graph, URIRef
@@ -6,7 +6,6 @@ from rdflib import Graph, URIRef
 from prez.bnode import get_bnode_depth
 
 
-WORKING_DIR = pathlib.Path().parent
 
 
 @pytest.mark.parametrize(
@@ -19,7 +18,7 @@ WORKING_DIR = pathlib.Path().parent
     ],
 )
 def test_bnode_depth(input_file: str, iri: str, expected_depth: int) -> None:
-    file = WORKING_DIR / "test_data" / input_file
+    file = Path(__file__).parent.parent.parent / "test_data" / input_file
 
     graph = Graph()
     graph.parse(file)

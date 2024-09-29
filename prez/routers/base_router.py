@@ -42,26 +42,6 @@ router = APIRouter(tags=["ogcprez"])
     path="/cql", summary="CQL GET endpoint", name=OGCE["cql-get"], responses=responses
 )
 @router.get(
-    "/catalogs",
-    summary="Catalog Listing",
-    name=OGCE["catalog-listing"],
-    responses=responses,
-)
-@router.get(
-    "/catalogs/{catalogId}/collections",
-    summary="Collection Listing",
-    name=OGCE["collection-listing"],
-    openapi_extra=ogc_extended_openapi_extras.get("collection-listing"),
-    responses=responses,
-)
-@router.get(
-    "/catalogs/{catalogId}/collections/{recordsCollectionId}/items",
-    summary="Item Listing",
-    name=OGCE["item-listing"],
-    openapi_extra=ogc_extended_openapi_extras.get("item-listing"),
-    responses=responses,
-)
-@router.get(
     "/concept-hierarchy/{parent_curie}/top-concepts",
     summary="Top Concepts",
     name=OGCE["top-concepts"],
@@ -144,9 +124,6 @@ async def cql_post_listings(
 
 # 1: /object?uri=<uri>
 # 2: /profiles/{profile_curie}
-# 3: /catalogs/{catalogId}
-# 4: /catalogs/{catalogId}/collections/{recordsCollectionId}
-# 5: /catalogs/{catalogId}/collections/{recordsCollectionId}/items/{itemId}
 ########################################################################################################################
 
 
@@ -158,27 +135,6 @@ async def cql_post_listings(
     summary="Profile",
     name=EP["system/profile-object"],
     openapi_extra=ogc_extended_openapi_extras.get("profile-object"),
-    responses=responses,
-)
-@router.get(
-    path="/catalogs/{catalogId}",
-    summary="Catalog Object",
-    name=OGCE["catalog-object"],
-    openapi_extra=ogc_extended_openapi_extras.get("catalog-object"),
-    responses=responses,
-)
-@router.get(
-    path="/catalogs/{catalogId}/collections/{recordsCollectionId}",
-    summary="Collection Object",
-    name=OGCE["collection-object"],
-    openapi_extra=ogc_extended_openapi_extras.get("collection-object"),
-    responses=responses,
-)
-@router.get(
-    path="/catalogs/{catalogId}/collections/{recordsCollectionId}/items/{itemId}",
-    summary="Item Object",
-    name=OGCE["item-object"],
-    openapi_extra=ogc_extended_openapi_extras.get("item-object"),
     responses=responses,
 )
 async def objects(
