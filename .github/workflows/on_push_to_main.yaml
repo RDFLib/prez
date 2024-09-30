@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           # Required by WyriHaximus/github-action-get-previous-tag
           fetch-depth: 0
@@ -54,34 +54,34 @@ jobs:
 
       - name: Get git commit hash
         id: commit-hash
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: type=sha
 
       - name: Rename git commit hash
         id: hash
-        uses: mad9000/actions-find-and-replace-string@4
+        uses: mad9000/actions-find-and-replace-string@5
         with:
           source: ${{ steps.commit-hash.outputs.version }}
           find: "sha-"
           replace: dev.${{ steps.commitscount.outputs.value }}.
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v6
         with:
           push: true
           build-args: PREZ_VERSION=${{ steps.patch.outputs.patch }}-${{ steps.hash.outputs.value }}

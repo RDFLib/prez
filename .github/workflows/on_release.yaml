@@ -59,7 +59,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           push: true
           build-args: PREZ_VERSION=${{ steps.version.outputs.VALUE }}
