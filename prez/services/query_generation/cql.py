@@ -4,6 +4,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Generator
 
+from fastapi import Depends
 from pyld import jsonld
 from rdf2geojson.contrib.geomet.util import flatten_multi_dim
 from rdf2geojson.contrib.geomet.wkt import dumps
@@ -50,23 +51,16 @@ from sparql_grammar_pydantic import (
     BooleanLiteral,
 )
 
+from prez.cache import prez_system_graph
 from prez.models.query_params import parse_datetime
 from prez.reference_data.cql.geo_function_mapping import (
     cql_sparql_spatial_mapping,
 )
+from prez.repositories import Repo
+from prez.services.query_generation.shacl import PropertyShape
 
 CQL = Namespace("http://www.opengis.net/doc/IS/cql2/1.0/")
 
-# SUPPORTED_CQL_TIME_OPERATORS = {
-#     "t_after",
-#     "t_before",
-#     "t_equals",
-#     "t_disjoint",
-#     "t_intersects",
-# }
-
-
-# all CQL time operators
 SUPPORTED_CQL_TIME_OPERATORS = {
     "t_after",
     "t_before",
@@ -92,11 +86,21 @@ relations_path = Path(__file__).parent.parent.parent / (
 )
 relations = json.loads(relations_path.read_text())
 
+SHACL_FILTER_NAMESPACE = Namespace("https://cql-shacl-filter/")
+
 
 class CQLParser:
-    def __init__(self, cql=None, context: dict = None, cql_json: dict = None, crs=None):
+    def __init__(
+        self,
+        cql=None,
+        context: dict = None,
+        cql_json: dict = None,
+        crs=None,
+        queryable_props=None,
+    ):
         self.ggps_inner_select = None
         self.inner_select_gpnt_list = None
+        self.inner_select_vars: list[Var] = []
         self.cql: dict = cql
         self.context = context
         self.cql_json = cql_json
@@ -107,6 +111,7 @@ class CQLParser:
         self.tss_list = []
         self.tssp_list = []
         self.crs = crs
+        self.queryable_props = queryable_props
 
     def generate_jsonld(self):
         combined = {"@context": self.context, **self.cql}
@@ -118,9 +123,11 @@ class CQLParser:
         where = WhereClause(
             group_graph_pattern=GroupGraphPattern(content=self.ggps_inner_select)
         )
-        construct_template = ConstructTemplate(
-            construct_triples=ConstructTriples.from_tss_list(self.tss_list)
-        )
+        if self.tss_list:
+            construct_triples = ConstructTriples.from_tss_list(self.tss_list)
+        else:
+            construct_triples = None
+        construct_template = ConstructTemplate(construct_triples=construct_triples)
         solution_modifier = SolutionModifier()
         self.query_object = ConstructQuery(
             construct_template=construct_template,
@@ -204,14 +211,8 @@ class CQLParser:
             ggps.triples_block = TriplesBlock(triples=tssp)
 
     def _handle_comparison(self, operator, args, existing_ggps=None):
-        self.var_counter += 1
-        ggps = existing_ggps if existing_ggps is not None else GroupGraphPatternSub()
+        ggps, object = self._add_tss_tssp(args, existing_ggps)
 
-        prop = args[0].get(str(CQL.property))[0].get("@id")
-        inverse = False  # for inverse properties
-        if prop.startswith("^"):
-            prop = prop[1:]
-            inverse = True
         val = args[1].get("@value")
         if not val:  # then should be an IRI
             val = args[1].get("@id")
@@ -220,10 +221,7 @@ class CQLParser:
             value = RDFLiteral(value=val)
         elif isinstance(val, (int, float)):  # literal numeric
             value = NumericLiteral(value=val)
-        subject = Var(value="focus_node")
-        predicate = IRI(value=prop)
 
-        object = Var(value=f"var_{self.var_counter}")
         object_pe = PrimaryExpression(content=object)
         if operator == "=":
             iri_db_vals = [DataBlockValue(value=value)]
@@ -240,21 +238,24 @@ class CQLParser:
             gpnt = GraphPatternNotTriples(content=values_constraint)
             ggps.add_pattern(gpnt)
 
-        if inverse:
-            self._add_triple(ggps, object, predicate, subject)
-        else:
-            self._add_triple(ggps, subject, predicate, object)
-
         yield ggps
 
-    def _handle_like(self, args, existing_ggps=None):
+    def _add_tss_tssp(self, args, existing_ggps):
         self.var_counter += 1
         ggps = existing_ggps if existing_ggps is not None else GroupGraphPatternSub()
         prop = args[0].get(str(CQL.property))[0].get("@id")
-        inverse = False
-        if prop.startswith("^"):
-            prop = prop[1:]
-            inverse = True
+        if prop in self.queryable_props:
+            object = self._handle_shacl_defined_prop(prop)
+        else:
+            subject = Var(value="focus_node")
+            predicate = IRI(value=prop)
+            object = Var(value=f"var_{self.var_counter}")
+            self._add_triple(ggps, subject, predicate, object)
+        return ggps, object
+
+    def _handle_like(self, args, existing_ggps=None):
+        ggps, object = self._add_tss_tssp(args, existing_ggps)
+
         value = (
             args[1]
             .get("@value")
@@ -263,21 +264,13 @@ class CQLParser:
             .replace("\\", "\\\\")
         )
 
-        subject = Var(value="focus_node")
-        predicate = IRI(value=URIRef(prop))
-        obj = Var(value=f"var_{self.var_counter}")
-        if inverse:
-            self._add_triple(ggps, obj, predicate, subject)
-        else:
-            self._add_triple(ggps, subject, predicate, obj)
-
         filter_gpnt = GraphPatternNotTriples(
             content=Filter(
                 constraint=Constraint(
                     content=BuiltInCall(
                         other_expressions=RegexExpression(
                             text_expression=Expression.from_primary_expression(
-                                primary_expression=PrimaryExpression(content=obj)
+                                primary_expression=PrimaryExpression(content=object)
                             ),
                             pattern_expression=Expression.from_primary_expression(
                                 primary_expression=PrimaryExpression(
@@ -333,16 +326,14 @@ class CQLParser:
         yield ggps
 
     def _handle_in(self, args, existing_ggps=None):
-        self.var_counter += 1
-        ggps = existing_ggps if existing_ggps is not None else GroupGraphPatternSub()
+        ggps, object = self._add_tss_tssp(args, existing_ggps)
 
-        prop = args[0].get(str(CQL.property))[0].get("@id")
-        inverse = False
-        if prop.startswith("^"):
-            prop = prop[1:]
-            inverse = True
         literal_values = [item["@value"] for item in args if "@value" in item]
         uri_values = [item["@id"] for item in args if "@id" in item]
+        for i, lit_val in enumerate(literal_values):
+            if lit_val.startswith("http"):  # hack
+                uri_values.append(literal_values.pop(i))
+        grammar_uri_values = [IRI(value=URIRef(value)) for value in uri_values]
         grammar_literal_values = []
         for val in literal_values:
             if isinstance(val, str):
@@ -350,15 +341,7 @@ class CQLParser:
             elif isinstance(val, (int, float)):
                 value = NumericLiteral(value=val)
             grammar_literal_values.append(value)
-        grammar_uri_values = [IRI(value=URIRef(value)) for value in uri_values]
         all_values = grammar_literal_values + grammar_uri_values
-        subject = Var(value="focus_node")
-        predicate = IRI(value=URIRef(prop))
-        object = Var(value=f"var_{self.var_counter}")
-        if inverse:
-            self._add_triple(ggps, object, predicate, subject)
-        else:
-            self._add_triple(ggps, subject, predicate, object)
 
         iri_db_vals = [DataBlockValue(value=p) for p in all_values]
         ildov = InlineDataOneVar(variable=object, datablockvalues=iri_db_vals)
@@ -368,6 +351,18 @@ class CQLParser:
         )
         ggps.add_pattern(gpnt)
         yield ggps
+
+    def _handle_shacl_defined_prop(self, prop):
+        tssp_list, object = self.queryable_id_to_tssp(self.queryable_props[prop])
+        tss_triple = (
+            Var(value="focus_node"),
+            IRI(value=SHACL_FILTER_NAMESPACE[prop]),
+            object,
+        )
+        self.tss_list.append(TriplesSameSubject.from_spo(*tss_triple))
+        self.tssp_list.extend(tssp_list)
+        self.inner_select_vars.append(object)
+        return object
 
     def _extract_spatial_info(self, coordinates_list, args):
         coordinates = []
@@ -517,6 +512,26 @@ class CQLParser:
                 value=dt.isoformat(),
                 datatype=IRI(value="http://www.w3.org/2001/XMLSchema#dateTime"),
             )
+
+    def queryable_id_to_tssp(
+        self,
+        queryable_uri,
+    ):
+        queryable_shape = prez_system_graph.cbd(URIRef(queryable_uri))
+        ps = PropertyShape(
+            uri=URIRef(queryable_uri),
+            graph=queryable_shape,
+            kind="endpoint",  # could be renamed - originally only endpoint nodeshapes filtered the nodes to be selected
+            focus_node=Var(value="focus_node"),
+        )
+        obj_var_name = (
+            ps.tssp_list[0]
+            .content[1]
+            .first_pair[1]
+            .object_paths[0]
+            .graph_node_path.varorterm_or_triplesnodepath.varorterm
+        )
+        return ps.tssp_list, obj_var_name
 
 
 def format_coordinates_as_wkt(bbox_values):

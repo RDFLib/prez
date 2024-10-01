@@ -3,7 +3,7 @@ import time
 from pathlib import Path
 
 import httpx
-from rdflib import URIRef, Literal, Graph, RDF, BNode
+from rdflib import URIRef, Literal, Graph, RDF, BNode, DCTERMS
 
 from prez.cache import (
     prez_system_graph,
@@ -194,3 +194,25 @@ WHERE {{
         log.info(f"Remote endpoint definition(s) found and added")
     else:
         log.info("No remote endpoint definitions found")
+
+
+async def retrieve_remote_queryable_definitions(app_state, system_store):
+    query = "DESCRIBE ?queryable { ?queryable a <http://www.opengis.net/doc/IS/cql2/1.0/Queryable> }"
+    g, _ = await app_state.repo.send_queries([query], [])
+    if len(g) > 0:
+        prez_system_graph.__iadd__(g)  # use for generating property shapes
+        queryable_bytes = g.serialize(
+            format="nt", encoding="utf-8"
+        )  # use for generating JSON
+        system_store.load(queryable_bytes, "application/n-triples")
+        queryables = list(
+            g.subjects(
+                object=URIRef("http://www.opengis.net/doc/IS/cql2/1.0/Queryable")
+            )
+        )
+        for triple in list(g.triples_choices((queryables, DCTERMS.identifier, None))):
+            app_state.queryable_props[str(triple[2])] = str(triple[0])
+        n_queryables = len(queryables)
+        log.info(f"Remote queryable definition(s) found and added: {n_queryables}")
+    else:
+        log.info("No remote queryable definitions found")

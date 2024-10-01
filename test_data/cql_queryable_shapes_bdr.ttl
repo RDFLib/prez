@@ -1,0 +1,34 @@
+@prefix cql: <http://www.opengis.net/doc/IS/cql2/1.0/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix dwc: <http://rs.tdwg.org/dwc/terms/> .
+@prefix ex: <http://example.com/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix sname: <https://fake-scientific-name-id.com/name/afd/> .
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:BDRScientificNameQueryableShape
+  a sh:PropertyShape ;
+  a cql:Queryable ;
+  sh:path (
+      [ sh:inversePath sosa:hasFeatureOfInterest ]
+      sosa:hasMember
+      sosa:hasResult
+      dwc:scientificNameID
+      ) ;
+  sh:name "Scientific Name" ;
+  dcterms:identifier "scientificname" ;
+  sh:datatype xsd:string ;
+  sh:in (
+  sname:001
+  sname:002
+  sname:003
+  sname:004
+  sname:005
+  sname:006
+  sname:007
+  sname:008
+  sname:009
+  sname:010
+) ;
+.

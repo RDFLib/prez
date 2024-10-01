@@ -15,6 +15,7 @@ from prez.cache import (
     endpoints_graph_cache,
     annotations_store,
     prez_system_graph,
+    queryable_props,
 )
 from prez.config import settings
 from prez.enums import (
@@ -24,7 +25,7 @@ from prez.enums import (
     GeoJSONMediaType,
 )
 from prez.models.query_params import QueryParams
-from prez.reference_data.prez_ns import ALTREXT, ONT, EP, OGCE, OGCFEAT, PREZ
+from prez.reference_data.prez_ns import ALTREXT, ONT, EP, OGCE, OGCFEAT
 from prez.repositories import PyoxigraphRepo, RemoteSparqlRepo, OxrdflibRepo, Repo
 from prez.services.classes import get_classes_single
 from prez.services.connegp_service import NegotiatedPMTs
@@ -61,6 +62,10 @@ def get_annotations_store():
 
 def get_oxrdflib_store():
     return oxrdflib_store
+
+
+def get_queryable_props():
+    return queryable_props
 
 
 async def get_data_repo(
@@ -133,13 +138,18 @@ async def load_annotations_data_to_oxigraph(store: Store):
     store.load(file_bytes, "application/n-triples")
 
 
-async def cql_post_parser_dependency(request: Request) -> CQLParser:
+async def cql_post_parser_dependency(
+    request: Request,
+    queryable_props: list = Depends(get_queryable_props),
+) -> CQLParser:
     try:
         body = await request.json()
         context = json.load(
             (Path(__file__).parent / "reference_data/cql/default_context.json").open()
         )
-        cql_parser = CQLParser(cql=body, context=context)
+        cql_parser = CQLParser(
+            cql=body, context=context, queryable_props=queryable_props
+        )
         cql_parser.generate_jsonld()
         cql_parser.parse()
         return cql_parser
@@ -153,6 +163,7 @@ async def cql_post_parser_dependency(request: Request) -> CQLParser:
 
 async def cql_get_parser_dependency(
     query_params: QueryParams = Depends(),
+    queryable_props: list = Depends(get_queryable_props),
 ) -> CQLParser:
     if query_params.filter:
         try:
@@ -163,13 +174,15 @@ async def cql_get_parser_dependency(
                     Path(__file__).parent / "reference_data/cql/default_context.json"
                 ).open()
             )
-            cql_parser = CQLParser(cql=query, context=context, crs=crs)
+            cql_parser = CQLParser(
+                cql=query, context=context, crs=crs, queryable_props=queryable_props
+            )
             cql_parser.generate_jsonld()
             cql_parser.parse()
             return cql_parser
         except json.JSONDecodeError:
             raise HTTPException(status_code=400, detail="Invalid JSON format.")
-        except Exception as e:  # Replace with your specific parsing exception
+        except Exception as e:
             raise HTTPException(
                 status_code=400, detail="Invalid CQL format: Parsing failed."
             )

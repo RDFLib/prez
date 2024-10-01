@@ -19,8 +19,12 @@ from prez.renderers.renderer import return_from_graph, return_annotated_rdf
 from prez.services.connegp_service import RDF_MEDIATYPES
 from prez.services.curie_functions import get_uri_for_curie_id, get_curie_id_for_uri
 from prez.services.link_generation import add_prez_links
-from prez.services.listings import listing_function, generate_link_headers, create_self_alt_links, \
-    get_brisbane_timestamp
+from prez.services.listings import (
+    listing_function,
+    generate_link_headers,
+    create_self_alt_links,
+    get_brisbane_timestamp,
+)
 from prez.services.query_generation.umbrella import (
     PrezQueryConstructor,
 )
@@ -102,9 +106,8 @@ def create_parent_link(url):
     return Link(
         href=f"{settings.system_uri}{url.path.split('/items')[0]}",
         rel="collection",
-        type="application/geo+json"
+        type="application/geo+json",
     )
-
 
 
 async def ogc_features_object_function(
@@ -144,11 +147,17 @@ async def ogc_features_object_function(
             feature_iri = IRI(value=feature_uri)
             triples = [
                 (feature_iri, Var(value="prop"), Var(value="val")),
-                (feature_iri, IRI(value=GEO.hasGeometry), Var(value="bn")),  # Pyoxigraph DESCRIBE does not follow blank nodes, so specify the geometry path
-                (Var(value="bn"), IRI(value=GEO.asWKT), Var(value="wkt"))
+                (
+                    feature_iri,
+                    IRI(value=GEO.hasGeometry),
+                    Var(value="bn"),
+                ),  # Pyoxigraph DESCRIBE does not follow blank nodes, so specify the geometry path
+                (Var(value="bn"), IRI(value=GEO.asWKT), Var(value="wkt")),
             ]
             tssp_list = [TriplesSameSubjectPath.from_spo(*triple) for triple in triples]
-            construct_tss_list = [TriplesSameSubject.from_spo(*triple) for triple in triples]
+            construct_tss_list = [
+                TriplesSameSubject.from_spo(*triple) for triple in triples
+            ]
         query = PrezQueryConstructor(
             construct_tss_list=construct_tss_list,
             profile_triples=tssp_list,

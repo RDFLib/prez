@@ -189,7 +189,7 @@ def merge_listing_query_grammar_inputs(
     """
     kwargs = {
         "construct_tss_list": [],
-        "inner_select_vars": [],
+        "inner_select_vars": [Var(value="focus_node")],
         "inner_select_tssp_list": [],
         "inner_select_gpnt": [],
         "limit": None,
@@ -234,6 +234,7 @@ def merge_listing_query_grammar_inputs(
                 kwargs["order_by_direction"] = "ASC"
 
     if cql_parser:
+        kwargs["inner_select_vars"].extend(cql_parser.inner_select_vars)
         kwargs["construct_tss_list"].extend(cql_parser.tss_list)
         kwargs["inner_select_tssp_list"].extend(cql_parser.tssp_list)
         kwargs["inner_select_gpnt"].extend(cql_parser.inner_select_gpnt_list)

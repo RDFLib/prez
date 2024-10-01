@@ -25,6 +25,8 @@ system_store = Store()
 
 annotations_store = Store()
 
+queryable_props = {}
+
 oxrdflib_store = Graph(store="Oxigraph")
 
 caches.set_config(

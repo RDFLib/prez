@@ -1,10 +1,10 @@
 CONSTRUCT {
-?focus_node <http://example.com/ends_at> ?dt_2_end .
-?focus_node <http://example.com/starts_at> ?dt_2_start
+?focus_node <ends_at> ?dt_2_end .
+?focus_node <starts_at> ?dt_2_start
 }
 WHERE {
-?focus_node <http://example.com/ends_at> ?dt_2_end .
-?focus_node <http://example.com/starts_at> ?dt_2_start
+?focus_node <ends_at> ?dt_2_end .
+?focus_node <starts_at> ?dt_2_start
 
 FILTER ("1991-10-07T08:21:06.393262+00:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> > ?dt_2_start && "1991-10-07T08:21:06.393262+00:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> < ?dt_2_end && "2010-02-10T05:29:20.073225+00:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> > ?dt_2_end)
 }

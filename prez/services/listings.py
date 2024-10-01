@@ -7,6 +7,7 @@ from typing import Dict
 from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
 
+from fastapi import Depends
 from fastapi.responses import PlainTextResponse
 from rdf2geojson import convert
 from rdflib import URIRef, Literal
@@ -29,10 +30,12 @@ from sparql_grammar_pydantic import (
 
 from prez.cache import endpoints_graph_cache
 from prez.config import settings
+from prez.dependencies import get_url, get_endpoint_uri, get_system_repo
 from prez.enums import NonAnnotatedRDFMediaType
-from prez.models.ogc_features import Collection, Link, Collections, Links
+from prez.models.ogc_features import Collection, Link, Collections, Links, Queryables
 from prez.reference_data.prez_ns import PREZ, ALTREXT, ONT, OGCFEAT
 from prez.renderers.renderer import return_from_graph, return_annotated_rdf
+from prez.repositories import Repo
 from prez.services.connegp_service import RDF_MEDIATYPES
 from prez.services.curie_functions import get_uri_for_curie_id, get_curie_id_for_uri
 from prez.services.generate_queryables import generate_queryables_json
@@ -176,28 +179,38 @@ async def ogc_features_listing_function(
         OGCFEAT["queryables-local"],
         OGCFEAT["queryables-global"],
     ]:
-        queryable_var = Var(value="queryable")
-        innser_select_triple = (
-            Var(value="focus_node"),
-            queryable_var,
-            Var(value="queryable_value"),
+        queryables = await generate_queryables_from_shacl_definition(
+            url, endpoint_uri_type[0], system_repo
         )
-        subselect_kwargs["inner_select_tssp_list"].append(
-            TriplesSameSubjectPath.from_spo(*innser_select_triple)
-        )
-        subselect_kwargs["inner_select_vars"] = [queryable_var]
-        construct_triple = (
-            queryable_var,
-            IRI(value=RDF.type),
-            IRI(value="http://www.opengis.net/def/rel/ogc/1.0/Queryable"),
-        )
-        construct_tss_list = [TriplesSameSubject.from_spo(*construct_triple)]
-        query = PrezQueryConstructor(
-            construct_tss_list=construct_tss_list,
-            profile_triples=profile_nodeshape.tssp_list,
-            **subselect_kwargs,
-        ).to_string()
-        queries.append(query)
+        if queryables:  # from shacl definitions
+            content = io.BytesIO(
+                queryables.model_dump_json(exclude_none=True, by_alias=True).encode(
+                    "utf-8"
+                )
+            )
+        else:
+            queryable_var = Var(value="queryable")
+            innser_select_triple = (
+                Var(value="focus_node"),
+                queryable_var,
+                Var(value="queryable_value"),
+            )
+            subselect_kwargs["inner_select_tssp_list"].append(
+                TriplesSameSubjectPath.from_spo(*innser_select_triple)
+            )
+            subselect_kwargs["inner_select_vars"] = [queryable_var]
+            construct_triple = (
+                queryable_var,
+                IRI(value=RDF.type),
+                IRI(value="http://www.opengis.net/def/rel/ogc/1.0/Queryable"),
+            )
+            construct_tss_list = [TriplesSameSubject.from_spo(*construct_triple)]
+            query = PrezQueryConstructor(
+                construct_tss_list=construct_tss_list,
+                profile_triples=profile_nodeshape.tssp_list,
+                **subselect_kwargs,
+            ).to_string()
+            queries.append(query)
     elif not collectionId:  # list Feature Collections
         query = PrezQueryConstructor(
             construct_tss_list=construct_tss_list,
@@ -268,14 +281,17 @@ async def ogc_features_listing_function(
             OGCFEAT["queryables-local"],
             OGCFEAT["queryables-global"],
         ]:
-            queryables = generate_queryables_json(
-                item_graph, annotations_graph, url, endpoint_uri_type[0]
-            )
-            content = io.BytesIO(
-                queryables.model_dump_json(exclude_none=True, by_alias=True).encode(
-                    "utf-8"
+            if queryables:  # queryables were generated from SHACL
+                pass
+            else:  # generate them from the data
+                queryables = generate_queryables_json(
+                    item_graph, annotations_graph, url, endpoint_uri_type[0]
                 )
-            )
+                content = io.BytesIO(
+                    queryables.model_dump_json(exclude_none=True, by_alias=True).encode(
+                        "utf-8"
+                    )
+                )
         else:
             collections = create_collections_json(
                 item_graph,
@@ -361,7 +377,7 @@ def create_collections_json(
     return collections
 
 
-def create_self_alt_links(selected_mediatype, url, query_params = None, count = None):
+def create_self_alt_links(selected_mediatype, url, query_params=None, count=None):
     self_alt_links = []
     for mt in [selected_mediatype, *RDF_MEDIATYPES]:
         self_alt_links.append(
@@ -439,3 +455,68 @@ def get_brisbane_timestamp():
 
     # Insert colon in timezone offset
     return f"{timestamp[:-2]}:{timestamp[-2:]}"
+
+
+# TODO cache this
+async def generate_queryables_from_shacl_definition(
+    url: str = Depends(get_url),
+    endpoint_uri: URIRef = Depends(get_endpoint_uri),
+    system_repo: Repo = Depends(get_system_repo),
+):
+    query = """
+    PREFIX cql: <http://www.opengis.net/doc/IS/cql2/1.0/>
+    PREFIX dcterms: <http://purl.org/dc/terms/>
+    PREFIX sh: <http://www.w3.org/ns/shacl#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    CONSTRUCT {
+    ?queryable cql:id ?id ;
+    	cql:name ?title ;
+    	cql:datatype ?type ;
+    	cql:enum ?enums .
+    }
+    WHERE {?queryable a cql:Queryable ;
+        dcterms:identifier ?id ;
+        sh:name ?title ;
+        sh:datatype ?type ;
+        sh:in/rdf:rest*/rdf:first ?enums ;
+    }
+    """
+    g, _ = await system_repo.send_queries([query], [])
+    if (
+        len(g) == 0
+    ):  # will auto generate queryables from data - less preferable approach
+        return None
+    jsonld_string = g.serialize(format="json-ld")
+    jsonld = json.loads(jsonld_string)
+    queryable_props = {}
+    for item in jsonld:
+        id_value = item["http://www.opengis.net/doc/IS/cql2/1.0/id"][0]["@value"]
+        queryable_props[id_value] = {
+            "title": item["http://www.opengis.net/doc/IS/cql2/1.0/name"][0]["@value"],
+            "type": item["http://www.opengis.net/doc/IS/cql2/1.0/datatype"][0][
+                "@id"
+            ].split("#")[
+                -1
+            ],  # hack
+            "enum": [
+                enum_item["@id"]
+                for enum_item in item["http://www.opengis.net/doc/IS/cql2/1.0/enum"]
+            ],
+        }
+    if endpoint_uri == OGCFEAT["queryables-global"]:
+        title = "Global Queryables"
+        description = (
+            "Global queryable properties for all collections in the OGC Features API."
+        )
+    else:
+        title = "Local Queryables"
+        description = (
+            "Local queryable properties for the collection in the OGC Features API."
+        )
+    queryable_params = {
+        "$id": f"{settings.system_uri}{url.path}",
+        "title": title,
+        "description": description,
+        "properties": queryable_props,
+    }
+    return Queryables(**queryable_params)
