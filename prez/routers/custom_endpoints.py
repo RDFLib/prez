@@ -1,12 +1,13 @@
 import logging
 from pathlib import Path as PLPath
 from typing import List
-
+import os
 from fastapi import APIRouter, Depends
 from fastapi import Path
 from rdflib import Graph, RDF, RDFS
 from sparql_grammar_pydantic import ConstructQuery
-
+from httpx import Client
+from prez.cache import endpoints_graph_cache
 from prez.dependencies import (
     get_data_repo,
     get_system_repo,
@@ -18,6 +19,8 @@ from prez.dependencies import (
     get_endpoint_structure,
     generate_concept_hierarchy_query,
 )
+from urllib.parse import urlencode
+
 from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import ONT
 from prez.repositories import Repo
@@ -27,15 +30,9 @@ from prez.services.objects import object_function
 from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQuery
 from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.shacl import NodeShape
+import sys
 
-log = logging.getLogger(__name__)
-
-
-def load_routes() -> Graph:
-    g = Graph()
-    for file in (PLPath(__file__).parent.parent / "reference_data" / "endpoints" / "data_endpoints_custom").glob("*ttl"):
-        g.parse(file, format="ttl")
-    return g
+logger = logging.getLogger(__name__)
 
 
 def create_path_param(name: str, description: str, example: str):
@@ -72,6 +69,7 @@ def create_dynamic_route_handler(route_type: str):
                 query_params=query_params,
                 original_endpoint_type=ONT["ListingEndpoint"],
             )
+
         return dynamic_list_handler
     elif route_type == "ObjectEndpoint":
         async def dynamic_object_handler(
@@ -88,6 +86,7 @@ def create_dynamic_route_handler(route_type: str):
                 pmts=pmts,
                 profile_nodeshape=profile_nodeshape,
             )
+
         return dynamic_object_handler
 
 
@@ -98,24 +97,24 @@ def extract_path_params(path: str) -> List[str]:
 
 # Add routes dynamically to the router
 def add_routes(router: APIRouter):
-    g = load_routes()
     routes = []
-    for s in g.subjects(predicate=RDF.type, object=ONT.ListingEndpoint):
-        route = {
-            "path": str(g.value(s, ONT.apiPath)),
-            "name": str(s),
-            "description": str(g.value(s, RDFS.label)),
-            "type": "ListingEndpoint",
-        }
-        routes.append(route)
-    for s in g.subjects(predicate=RDF.type, object=ONT.ObjectEndpoint):
-        route = {
-            "path": str(g.value(s, ONT.apiPath)),
-            "name": str(s),
-            "description": str(g.value(s, RDFS.label)),
-            "type": "ObjectEndpoint",
-        }
-        routes.append(route)
+    for s in endpoints_graph_cache.subjects(predicate=RDF.type, object=ONT.DynamicEndpoint):
+        if ONT.ListingEndpoint in endpoints_graph_cache.objects(subject=s, predicate=RDF.type):
+            route = {
+                "path": str(endpoints_graph_cache.value(s, ONT.apiPath)),
+                "name": str(s),
+                "description": str(endpoints_graph_cache.value(s, RDFS.label)),
+                "type": "ListingEndpoint",
+            }
+            routes.append(route)
+        elif ONT.ObjectEndpoint in endpoints_graph_cache.objects(subject=s, predicate=RDF.type):
+            route = {
+                "path": str(endpoints_graph_cache.value(s, ONT.apiPath)),
+                "name": str(s),
+                "description": str(endpoints_graph_cache.value(s, RDFS.label)),
+                "type": "ObjectEndpoint",
+            }
+            routes.append(route)
 
     for route in routes:
         path_param_names = extract_path_params(route["path"])
@@ -153,11 +152,10 @@ def add_routes(router: APIRouter):
             openapi_extra=openapi_extras
         )
 
-        log.info(f"Added route: {route['path']} with path parameters: {path_param_names}")
+        logger.info(f"Added dynamic route: {route['path']}")
 
 
 def create_dynamic_router() -> APIRouter:
-    log.info("Adding Custom Endpoints")
     router = APIRouter(tags=["Custom Endpoints"])
     add_routes(router)
     return router

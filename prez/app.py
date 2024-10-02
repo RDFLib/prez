@@ -126,6 +126,9 @@ async def lifespan(app: FastAPI):
     await load_system_data_to_oxigraph(app.state.pyoxi_system_store)
     await load_annotations_data_to_oxigraph(app.state.annotations_store)
 
+    # dynamic routes are either: custom routes if enabled, else default prez "data" routes are added dynamically
+    app.include_router(create_dynamic_router())
+
     yield
 
     # Shutdown
@@ -181,18 +184,14 @@ def assemble_app(
         app.include_router(sparql_router)
     if _settings.configuration_mode:
         app.include_router(config_router)
+        app.mount("/static", StaticFiles(directory="static"), name="static")
     if _settings.enable_ogc_features:
         app.mount(
-            "/catalogs/{catalogId}/datasets/{datasetId}/features",
+            "/catalogs/{catalogId}/collections/{recordsCollectionId}/features",
             features_subapi,
-        )
-    if _settings.custom_endpoints:
-        app.include_router(
-            create_dynamic_router()
         )
     app.include_router(base_prez_router)
     app.include_router(identifier_router)
-    app.mount("/static", StaticFiles(directory="static"), name="static")
     app.openapi = partial(
         prez_open_api_metadata,
         title=title,

@@ -16,7 +16,7 @@ def test_store() -> Store:
     # Create a new pyoxigraph Store
     store = Store()
 
-    file = Path(__file__).parent.parent.parent / "test_data/ogc_features.ttl"
+    file = Path(__file__).parent.parent / "test_data/ogc_features.ttl"
     store.load(file.read_bytes(), "text/turtle")
 
     return store

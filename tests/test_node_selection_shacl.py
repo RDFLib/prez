@@ -9,13 +9,13 @@ from prez.services.query_generation.shacl import (
 from sparql_grammar_pydantic import Var
 
 endpoints_graph = Graph().parse(
-    Path(__file__).parent.parent.parent
+    Path(__file__).parent.parent
     / "prez/reference_data/endpoints/data_endpoints_default/default_endpoints.ttl",
     format="turtle",
 )
 
 
-@pytest.mark.parametrize("nodeshape_uri", ["http://example.org/shape-2"])
+@pytest.mark.parametrize("nodeshape_uri", ["http://example.org/shape-R0-HL2"])
 def test_nodeshape_parsing(nodeshape_uri):
     ns = NodeShape(
         uri=URIRef(nodeshape_uri),
@@ -33,7 +33,7 @@ def test_nodeshape_parsing(nodeshape_uri):
 
 @pytest.mark.parametrize(
     "nodeshape_uri",
-    ["http://example.org/shape-3"],
+    ["http://example.org/shape-R0-HL3-2"],
 )
 def test_nodeshape_to_grammar(nodeshape_uri):
     ns = NodeShape(

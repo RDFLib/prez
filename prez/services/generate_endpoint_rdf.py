@@ -6,25 +6,25 @@ from rdflib.collection import Collection
 
 from prez.reference_data.prez_ns import ONT
 
-
-
 EX = Namespace("http://example.org/")
 TEMP = Namespace("http://temporary/")
 
 
-def add_endpoint(g, endpoint_type, name, api_path, shapes_name, i):
+def add_endpoint(g, endpoint_type, name, api_path, i, route_num):
     hl = (i + 2) // 2
     endpoint_uri = EX[f"{name}-{endpoint_type}"]
     title_cased = f"{name.title()} {endpoint_type.title()}"
 
     g.add((endpoint_uri, RDF.type, ONT[f"{endpoint_type.title()}Endpoint"]))
+    g.add((endpoint_uri, RDF.type, ONT.DynamicEndpoint))
     g.add((endpoint_uri, RDFS.label, Literal(title_cased)))
     g.add((endpoint_uri, ONT.apiPath, Literal(api_path)))
-    g.add((endpoint_uri, TEMP.relevantShapes, Literal(hl)))
+    g.add((endpoint_uri, TEMP.route_num, Literal(route_num)))
+    g.add((endpoint_uri, TEMP.hierarchy_level, Literal(hl)))
 
 
 def create_endpoint_metadata(data, g):
-    for route in data['routes']:
+    for route_num, route in enumerate(data['routes']):
         fullApiPath = route["fullApiPath"]
         components = fullApiPath.split("/")[1:]
 
@@ -34,11 +34,13 @@ def create_endpoint_metadata(data, g):
             shapes_name = name.title()
 
             if i % 2 == 0:
-                add_endpoint(g, "listing", name, api_path, shapes_name, i)
+                add_endpoint(g, "listing", name, api_path, i, route_num)
             else:
-                add_endpoint(g, "object", name, api_path, shapes_name, i)
+                add_endpoint(g, "object", name, api_path, i, route_num)
+
 
 def process_relations(data):
+    levels_list = []
     for route in data['routes']:
         levels = {}
         for hier_rel in route["hierarchiesRelations"]:
@@ -60,21 +62,24 @@ def process_relations(data):
                         "klasses_from": {klass_from_key},
                         "klasses_to": {klass_to_key}
                     }
-    return levels
+        levels_list.append(levels)
+    return levels_list
 
 
-def process_levels(levels: dict, g: Graph):
+def process_levels(levels: dict, g: Graph, route_num: int, shape_names: set):
     unique_suffix = 1
-    shape_names = set()
     for i, (k, v) in enumerate(levels.items()):
-        proposed_shape_uri = EX[f"shape-{k[2][1]}"]
+        proposed_shape_uri = EX[f"shape-R{route_num}-HL{k[2][1]}"]
         if proposed_shape_uri not in shape_names:
-            shape_names.add(proposed_shape_uri)
             shape_uri = proposed_shape_uri
+            shape_names.add(shape_uri)
         else:
-            shape_uri = EX[f"shape-{k[2][1]}-{unique_suffix}"]
+            shape_uri = EX[f"shape-R{route_num}-HL{k[2][1]}-{unique_suffix}"]
+            shape_names.add(shape_uri)
             unique_suffix += 1
         g.add((shape_uri, RDF.type, SH.NodeShape))
+        g.add((shape_uri, TEMP.route_num, Literal(route_num)))
+        g.add((shape_uri, TEMP.hierarchy_level, Literal(k[2][1])))
         g.add((shape_uri, ONT.hierarchyLevel, Literal(k[2][1])))  # hierarchyLevel = levelTo
         klasses_to = []
         klasses_from = []
@@ -95,7 +100,12 @@ def process_levels(levels: dict, g: Graph):
                 g.add((klass_bn, SH["class"], klass))
                 klass_bns.append(klass_bn)
             Collection(g, or_bn, klass_bns)
-            g.add((prop_bn, SH["path"], URIRef(k[3][1])))
+            if k[0][1] == "outbound":
+                path_bn = BNode()
+                g.add((prop_bn, SH.path, path_bn))
+                g.add((path_bn, SH.inversePath, URIRef(k[3][1])))  # relation
+            else:
+                g.add((prop_bn, SH.path, URIRef(k[3][1])))
         elif k[1][1] < k[2][1]:  # levelFrom < levelTo
             if k[0][1] == "outbound":
                 path_bn = BNode()
@@ -135,7 +145,6 @@ def process_levels(levels: dict, g: Graph):
                     g.add((second_prop_bn, SH["class"], URIRef(tup[2][1])))
 
 
-
 def add_inverse_for_top_level(data):
     """
     the RDF relation between the first and second endpoints is reused in reverse so endpoints can be defined based on
@@ -157,25 +166,40 @@ def add_inverse_for_top_level(data):
 
 
 def link_endpoints_shapes(endpoints_g, shapes_g, links_g):
-    for s, p, o in shapes_g.triples((None, ONT.hierarchyLevel, None)):
-        for s2, p2, o2 in endpoints_g.triples((None, TEMP.relevantShapes, None)):
-            if o == o2:
-                links_g.add((s2, ONT.relevantShapes, s))
-                endpoints_g.remove((s2, TEMP.relevantShapes, o2))
+    for s_s in shapes_g.subjects(predicate=RDF.type, object=SH.NodeShape):
+        s_route_num = shapes_g.value(s_s, TEMP.route_num)
+        s_hl = shapes_g.value(s_s, TEMP.hierarchy_level)
+        for ep_s, _, _ in endpoints_g.triples_choices((None, RDF.type, [ONT.ListingEndpoint, ONT.ObjectEndpoint])):
+            ep_route_num = endpoints_g.value(ep_s, TEMP.route_num)
+            ep_hl = endpoints_g.value(ep_s, TEMP.hierarchy_level)
+            if (s_route_num == ep_route_num) and (s_hl == ep_hl):
+                links_g.add((ep_s, ONT.relevantShapes, s_s))
+                # endpoints_g.remove((ep_s, TEMP.relevantShapes, o2))
+
+
+def cleanup_temp_preds(g):
+    for s, p, o in g.triples((None, TEMP.route_num, None)):
+        g.remove((s, p, o))
+    for s, p, o in g.triples((None, TEMP.hierarchy_level, None)):
+        g.remove((s, p, o))
 
 
 def create_endpoint_rdf(endpoint_json: dict):
     data = add_inverse_for_top_level(endpoint_json)
     g = Graph()
     create_endpoint_metadata(data, g)
-    levels = process_relations(data)
-    g2 = Graph()
-    process_levels(levels, g2)
-    g3 = Graph()
-    link_endpoints_shapes(g, g2, g3)
-    complete = g + g2 + g3
-    complete.bind("ont", ONT)
-    complete.bind("ex", EX)
-    file_path = Path(__file__).parent.parent / "reference_data" / "endpoints" / "data_endpoints_custom" / "custom_endpoints.ttl"
-    complete.serialize(destination=file_path, format="turtle")
-
+    levels_list = process_relations(data)
+    shape_names = set()
+    for route_num, levels in enumerate(levels_list):
+        g2 = Graph()
+        process_levels(levels, g2, route_num, shape_names)
+        g3 = Graph()
+        link_endpoints_shapes(g, g2, g3)
+        g += g2
+        g += g3
+    cleanup_temp_preds(g)
+    g.bind("ont", ONT)
+    g.bind("ex", EX)
+    file_path = Path(
+        __file__).parent.parent / "reference_data" / "endpoints" / "data_endpoints_custom" / "custom_endpoints.ttl"
+    g.serialize(destination=file_path, format="turtle")

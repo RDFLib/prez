@@ -1,0 +1,43 @@
+@prefix ex: <http://example.org/> .
+@prefix ont: <https://prez.dev/ont/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:catalogs-listing a ont:ListingEndpoint , ont:DynamicEndpoint ;
+    rdfs:label "Catalogs Listing" ;
+    ont:apiPath "/catalogs" ;
+    ont:relevantShapes ex:shape-R0-HL1 .
+
+ex:catalogs-object a ont:ObjectEndpoint , ont:DynamicEndpoint ;
+    rdfs:label "Catalogs Object" ;
+    ont:apiPath "/catalogs/{catalogId}" ;
+    ont:relevantShapes ex:shape-R0-HL1 .
+
+ex:items-listing a ont:ListingEndpoint , ont:DynamicEndpoint ;
+    rdfs:label "Items Listing" ;
+    ont:apiPath "/catalogs/{catalogId}/items" ;
+    ont:relevantShapes ex:shape-R0-HL2 .
+
+ex:items-object a ont:ObjectEndpoint , ont:DynamicEndpoint ;
+    rdfs:label "Items Object" ;
+    ont:apiPath "/catalogs/{catalogId}/items/{itemId}" ;
+    ont:relevantShapes ex:shape-R0-HL2 .
+
+ex:shape-R0-HL1 a sh:NodeShape ;
+    sh:property [ sh:or ( [ sh:class <https://linked.data.gov.au/def/nsl/Taxon> ] [ sh:class schema:CreativeWork ] [ sh:class <https://linked.data.gov.au/def/nsl/Usage> ] [ sh:class <https://linked.data.gov.au/def/nsl/TaxonName> ] ) ;
+            sh:path skos:member ] ;
+    sh:targetClass skos:Collection ;
+    ont:hierarchyLevel 1 .
+
+ex:shape-R0-HL2 a sh:NodeShape ;
+    sh:property [ sh:class skos:Collection ;
+            sh:path [ sh:inversePath skos:member ] ] ;
+    sh:targetClass <https://linked.data.gov.au/def/nsl/Taxon>,
+        <https://linked.data.gov.au/def/nsl/TaxonName>,
+        <https://linked.data.gov.au/def/nsl/Usage>,
+        schema:CreativeWork ;
+    ont:hierarchyLevel 2 .

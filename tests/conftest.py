@@ -10,7 +10,6 @@ os.environ["SPARQL_REPO_TYPE"] = "pyoxigraph"
 # os.environ["SPARQL_ENDPOINT"] = "http://localhost:3030/dataset"
 # os.environ["SPARQL_REPO_TYPE"] = "remote"
 os.environ["ENABLE_SPARQL_ENDPOINT"] = "true"
-os.environ["CUSTOM_ENDPOINTS"] = "true"
 
 from pathlib import Path
 
@@ -23,24 +22,24 @@ from prez.dependencies import get_data_repo
 from prez.repositories import Repo, PyoxigraphRepo
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def test_store() -> Store:
     # Create a new pyoxigraph Store
     store = Store()
 
-    for file in Path(__file__).parent.parent.glob("../test_data/*.ttl"):
+    for file in (Path(__file__).parent.parent / "test_data").glob("*.ttl"):
         store.load(file.read_bytes(), "text/turtle")
 
     return store
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def test_repo(test_store: Store) -> Repo:
     # Create a PyoxigraphQuerySender using the test_store
     return PyoxigraphRepo(test_store)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def client(test_repo: Repo) -> TestClient:
     # Override the dependency to use the test_repo
     def override_get_repo():
@@ -61,7 +60,7 @@ def client(test_repo: Repo) -> TestClient:
     app.dependency_overrides.clear()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def client_no_override() -> TestClient:
 
     app = assemble_app()

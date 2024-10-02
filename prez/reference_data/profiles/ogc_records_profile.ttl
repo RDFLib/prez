@@ -109,7 +109,7 @@ prez:OGCItemProfile
         ],
         [
             sh:maxCount 0 ;
-            sh:path dcterms:hasPart , rdfs:member ;
+            sh:path dcterms:hasPart , rdfs:member , skos:member ;
         ] ;
     shext:bnode-depth 2 ;
     altr-ext:constrainsClass

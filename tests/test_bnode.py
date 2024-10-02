@@ -18,7 +18,7 @@ from prez.bnode import get_bnode_depth
     ],
 )
 def test_bnode_depth(input_file: str, iri: str, expected_depth: int) -> None:
-    file = Path(__file__).parent.parent.parent / "test_data" / input_file
+    file = Path(__file__).parent.parent / "test_data" / input_file
 
     graph = Graph()
     graph.parse(file)

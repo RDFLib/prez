@@ -2,45 +2,12 @@
 <html>
 <head>
 	<title>Configure Endpoints</title>
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.4/css/bulma.min.css">
-	<style>
-		.hierarchy-relation-container {
-			display: flex;
-		}
-		.class-container {
-			flex: 1;
-			display: flex;
-			flex-direction: column;
-		}
-		.relation-container {
-			flex: 1;
-			display: flex;
-			flex-direction: column;
-			justify-content: space-around;
-			padding-top: 60px;
-			padding-bottom: 60px;
-		}
-		.class-item, .relation-item {
-			padding: 10px;
-			margin-bottom: 20px;
-		}
-		.relation-item {
-			max-width: 300px;
-			margin-left: 20px;
-		}
-		.limit-message {
-			display: none;
-			color: #666;
-			font-style: italic;
-			margin-left: 10px;
-		}
-	</style>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
 </head>
 <body>
 	<section class="section">
 		<div class="container">
 			<h1 class="title">Configure Endpoints</h1>
-
 			<div class="box content">
 				<h2>Instructions:</h2>
 				<ol>
@@ -56,7 +23,7 @@
 				</ol>
 			</div>
 
-			<form action="/configure-endpoints" method="post">
+			<form id="configForm" action="/configure-endpoints" method="post">
 				<div class="field">
 					<label class="label">Configuration Name:</label>
 					<div class="control">
@@ -64,15 +31,19 @@
 					</div>
 				</div>
 
-				<h2 class="subtitle">Routes:</h2>
-				<button class="button is-primary add-route" type="button">Add Route</button>
+				<div class="field">
+					<label class="label">Routes:</label>
+					<div class="control">
+						<button class="button is-primary add-route" type="button">Add Route</button>
+					</div>
+				</div>
 
 				<div class="route-container" id="route-container">
 				</div>
 
-				<div class="field mt-5">
+				<div class="field">
 					<div class="control">
-						<button class="button is-success" type="submit">Submit Configuration</button>
+						<button class="button is-link" type="submit">Submit Configuration</button>
 					</div>
 				</div>
 			</form>
@@ -83,12 +54,28 @@
 		const routeContainer = document.querySelector('div#route-container');
 		let routeCount = 0;
 
+		function addRemoveButton(element, container, removeFunction) {
+			const removeBtn = document.createElement('button');
+			removeBtn.className = 'button is-danger is-small';
+			removeBtn.textContent = 'Remove';
+			removeBtn.style.marginLeft = '10px';
+			removeBtn.addEventListener('click', (e) => {
+				e.preventDefault();
+				removeFunction(element, container);
+			});
+			element.querySelector('h3, h4, h5').appendChild(removeBtn);
+		}
+
+		function removeElement(element, container) {
+			container.removeChild(element);
+		}
+
 		document.querySelector('button.add-route').addEventListener('click', (e) => {
 			e.preventDefault();
 			const newRoute = document.createElement('div');
-			newRoute.classList.add('box', 'mt-4');
+			newRoute.className = 'box';
 			newRoute.innerHTML = `
-				<h3 class="subtitle">Route ${routeCount + 1}</h3>
+				<h3 class="title is-4">Route ${routeCount + 1}</h3>
 				<div class="field">
 					<label class="label">Name:</label>
 					<div class="control">
@@ -101,49 +88,57 @@
 						<input class="input" type="text" name="fullApiPath">
 					</div>
 				</div>
-				<button class="button is-info add-hierarchy-relation" type="button">Add Hierarchy Relation</button>
-				<div class="hierarchy-relations-container mt-4" id="hierarchy-relations-container-${routeCount}"></div>
+				<div class="field">
+					<div class="control">
+						<button class="button is-info add-hierarchy-relation" type="button">Add Hierarchy Relation</button>
+					</div>
+				</div>
+				<div class="hierarchy-relations-container" id="hierarchy-relations-container-${routeCount}"></div>
 			`;
 			routeContainer.appendChild(newRoute);
+			addRemoveButton(newRoute, routeContainer, removeElement);
 			routeCount++;
 
 			const hierarchyRelationBtn = newRoute.querySelector('button.add-hierarchy-relation');
 			hierarchyRelationBtn.addEventListener('click', (e) => {
 				e.preventDefault();
 				const newHierarchyRelation = document.createElement('div');
-				newHierarchyRelation.classList.add('box');
+				newHierarchyRelation.className = 'box';
 				newHierarchyRelation.innerHTML = `
-					<h3 class="subtitle">Add Class Hierarchy</h3>
+					<h4 class="title is-5">Add Class Hierarchy</h4>
 					<div class="field">
 						<label class="label">Name:</label>
 						<div class="control">
 							<input class="input" type="text" name="name">
 						</div>
 					</div>
-					<button class="button is-info add-class" type="button">Add Class</button>
-					<span class="limit-message">Prez currently supports class hierarchies of up to three levels</span>
-					<div class="hierarchy-relation-container mt-4">
-						<div class="class-container" id="class-container-${routeCount}"></div>
-						<div class="relation-container" id="relation-container-${routeCount}"></div>
+					<div class="field">
+						<div class="control">
+							<button class="button is-info add-class" type="button">Add Class</button>
+						</div>
+					</div>
+					<div class="columns hierarchy-relation-container">
+						<div class="column class-container" id="class-container-${routeCount}"></div>
+						<div class="column relation-container" id="relation-container-${routeCount}"></div>
 					</div>
 				`;
 				const hierarchyRelationsContainer = newRoute.querySelector(`div#hierarchy-relations-container-${routeCount - 1}`);
 				hierarchyRelationsContainer.appendChild(newHierarchyRelation);
+				addRemoveButton(newHierarchyRelation, hierarchyRelationsContainer, removeElement);
 
 				const classContainer = newHierarchyRelation.querySelector(`div#class-container-${routeCount}`);
 				const relationContainer = newHierarchyRelation.querySelector(`div#relation-container-${routeCount}`);
-				const classBtn = newHierarchyRelation.querySelector('button.add-class');
-				const limitMessage = newHierarchyRelation.querySelector('.limit-message');
 				let classCount = 0;
 
+				const classBtn = newHierarchyRelation.querySelector('button.add-class');
 				classBtn.addEventListener('click', (e) => {
 					e.preventDefault();
 					if (classCount < 3) {
 						classCount++;
 						const newClass = document.createElement('div');
-						newClass.className = 'class-item box';
+						newClass.className = 'box class-item';
 						newClass.innerHTML = `
-							<h3 class="subtitle">Class at Hierarchy Level <span class="hierarchy-level">${classCount}</span></h3>
+							<h5 class="title is-6">Class at Hierarchy Level <span class="tag is-primary">${classCount}</span></h5>
 							<div class="field">
 								<label class="label">RDF Class:</label>
 								<div class="control">
@@ -158,12 +153,19 @@
 							</div>
 						`;
 						classContainer.appendChild(newClass);
+						addRemoveButton(newClass, classContainer, (element, container) => {
+							removeElement(element, container);
+							classCount--;
+							classBtn.disabled = false;
+							updateClassLevels(classContainer);
+							updateRelations(relationContainer, classCount);
+						});
 
 						if (classCount > 1) {
 							const newRelation = document.createElement('div');
-							newRelation.className = 'relation-item box';
+							newRelation.className = 'box relation-item';
 							newRelation.innerHTML = `
-								<h3 class="subtitle">Relation between Classes at Hierarchy Levels ${classCount - 1} and ${classCount}</h3>
+								<h5 class="title is-6">Relation between Classes at Hierarchy Levels ${classCount - 1} and ${classCount}</h5>
 								<div class="field">
 									<label class="label">Direction:</label>
 									<div class="control">
@@ -183,14 +185,102 @@
 								</div>
 							`;
 							relationContainer.appendChild(newRelation);
+							addRemoveButton(newRelation, relationContainer, removeElement);
 						}
 
 						if (classCount === 3) {
 							classBtn.disabled = true;
-							limitMessage.style.display = 'inline';
 						}
 					}
 				});
+
+				function updateClassLevels(container) {
+					const classes = container.querySelectorAll('.class-item');
+					classes.forEach((classItem, index) => {
+						const levelTag = classItem.querySelector('.tag');
+						levelTag.textContent = index + 1;
+					});
+				}
+
+				function updateRelations(container, classCount) {
+					const relations = container.querySelectorAll('.relation-item');
+					relations.forEach((relationItem, index) => {
+						const title = relationItem.querySelector('h5');
+						title.textContent = `Relation between Classes at Hierarchy Levels ${index + 1} and ${index + 2}`;
+					});
+					while (relations.length > classCount - 1) {
+						container.removeChild(relations[relations.length - 1]);
+					}
+				}
+			});
+		});
+
+		document.getElementById('configForm').addEventListener('submit', function(e) {
+			e.preventDefault();
+			const formData = new FormData(this);
+
+			const config = {
+				configName: formData.get('configName'),
+				routes: []
+			};
+
+			const routes = document.querySelectorAll('.route-container > div');
+			routes.forEach(route => {
+				const routeData = {
+					name: route.querySelector('[name="name"]').value,
+					fullApiPath: route.querySelector('[name="fullApiPath"]').value,
+					hierarchiesRelations: []
+				};
+
+				const hierarchyRelations = route.querySelectorAll('.hierarchy-relations-container > div');
+				hierarchyRelations.forEach(hierarchyRelation => {
+					const hierarchyRelationData = {
+						name: hierarchyRelation.querySelector('[name="name"]').value,
+						hierarchy: [],
+						relations: []
+					};
+
+					const classes = hierarchyRelation.querySelectorAll('.class-item');
+					classes.forEach((classItem, index) => {
+						hierarchyRelationData.hierarchy.push({
+							rdfClass: classItem.querySelector('[name="rdfClass"]').value,
+							className: classItem.querySelector('[name="className"]').value,
+							hierarchyLevel: index + 1
+						});
+					});
+
+					const relations = hierarchyRelation.querySelectorAll('.relation-item');
+					relations.forEach((relationItem, index) => {
+						hierarchyRelationData.relations.push({
+							levelFrom: index + 1,
+							levelTo: index + 2,
+							direction: relationItem.querySelector('[name="direction"]').value,
+							rdfPredicate: relationItem.querySelector('[name="rdfPredicate"]').value
+						});
+					});
+
+					routeData.hierarchiesRelations.push(hierarchyRelationData);
+				});
+
+				config.routes.push(routeData);
+			});
+
+			// Post the data to /configure-endpoints
+			fetch('/configure-endpoints', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(config),
+			})
+			.then(response => response.json())
+			.then(data => {
+				console.log('Success:', data);
+				alert('Configuration submitted successfully!');
+			})
+			.catch((error) => {
+				console.error('Error:', error);
+				alert('An error occurred while submitting the configuration. Please try again.');
 			});
 		});
 	</script>

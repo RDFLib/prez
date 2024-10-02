@@ -42,16 +42,16 @@ cql_time_generated_queries = [
 )
 def test_time_funcs(cql_json_filename, output_query_filename):
     cql_json_path = (
-        Path(__file__).parent.parent.parent / f"test_data/cql/input/{cql_json_filename}"
+        Path(__file__).parent.parent / f"test_data/cql/input/{cql_json_filename}"
     )
     cql_json = json.loads(cql_json_path.read_text())
     reference_query = (
-        Path(__file__).parent.parent.parent
+        Path(__file__).parent.parent
         / f"test_data/cql/expected_generated_queries/{output_query_filename}"
     ).read_text()
     context = json.load(
         (
-            Path(__file__).parent.parent.parent
+            Path(__file__).parent.parent
             / "prez/reference_data/cql/default_context.json"
         ).open()
     )

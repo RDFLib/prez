@@ -18,7 +18,6 @@ from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.query_generation.count import startup_count_objects
 from prez.services.query_generation.prefixes import PrefixQuery
 
-
 log = logging.getLogger(__name__)
 
 
@@ -90,7 +89,7 @@ async def retrieve_remote_template_queries(repo: Repo):
         }
     """
     _, results = await repo.send_queries([], [(None, query)])
-    if results:
+    if results[0][1]:
         for result in results[0][1]:
             bn = BNode()
             query = result["query"]["value"]
@@ -122,7 +121,7 @@ async def add_local_prefixes(repo):
     for f in (Path(__file__).parent.parent / "reference_data/prefixes").glob("*.ttl"):
         g = Graph().parse(f, format="turtle")
         local_i = await _add_prefixes_from_graph(g)
-        log.info(f"{local_i+1:,} prefixes bound from file {f.name}")
+        log.info(f"{local_i + 1:,} prefixes bound from file {f.name}")
 
 
 async def generate_prefixes(repo: Repo):
@@ -160,9 +159,9 @@ async def generate_prefixes(repo: Repo):
 async def _add_prefixes_from_graph(g):
     i = 0
     for i, (s, prefix) in enumerate(
-        g.subject_objects(
-            predicate=URIRef("http://purl.org/vocab/vann/preferredNamespacePrefix")
-        )
+            g.subject_objects(
+                predicate=URIRef("http://purl.org/vocab/vann/preferredNamespacePrefix")
+            )
     ):
         namespace = g.value(
             s, URIRef("http://purl.org/vocab/vann/preferredNamespaceUri")
@@ -171,7 +170,7 @@ async def _add_prefixes_from_graph(g):
     return i
 
 
-async def create_endpoints_graph(app_state) -> Graph:
+async def create_endpoints_graph(app_state):
     endpoints_root = Path(__file__).parent.parent / "reference_data/endpoints"
     # OGC Features endpoints
     if app_state.settings.enable_ogc_features:
@@ -179,35 +178,31 @@ async def create_endpoints_graph(app_state) -> Graph:
             endpoints_graph_cache.parse(f)
     # Custom data endpoints
     if app_state.settings.custom_endpoints:
-        for f in (endpoints_root / "data_endpoints_custom").glob("*.ttl"):
-            endpoints_graph_cache.parse(f)
-        log.info("Custom endpoints loaded")
+        # first try remote, if endpoints are found, use these
+        g = await get_remote_endpoint_definitions(app_state.repo)
+        if g:
+            endpoints_graph_cache.__iadd__(g)
+        else:
+            for f in (endpoints_root / "data_endpoints_custom").glob("*.ttl"):
+                endpoints_graph_cache.parse(f)
+                log.info("Custom endpoints loaded from local file")
     # Default data endpoints
     else:
         for f in (endpoints_root / "data_endpoints_default").glob("*.ttl"):
             endpoints_graph_cache.parse(f)
-        await get_remote_endpoint_definitions(app_state.repo)
     # Base endpoints
     for f in (endpoints_root / "base").glob("*.ttl"):
         endpoints_graph_cache.parse(f)
 
 
-
 async def get_remote_endpoint_definitions(repo):
-    remote_endpoints_query = f"""
-PREFIX ont: <https://prez.dev/ont/>
-CONSTRUCT {{
-    ?endpoint ?p ?o.
-}}
-WHERE {{
-    ?endpoint a ont:Endpoint;
-              ?p ?o.
-}}
-    """
-    g, _ = await repo.send_queries([remote_endpoints_query], [])
+    listing_ep_query = f"DESCRIBE ?ep {{ ?ep a {ONT['ListingEndpoint'].n3()} }}"
+    object_ep_query = f"DESCRIBE ?ep {{ ?ep a {ONT['ObjectEndpoint'].n3()} }}"
+    ep_nodeshape_query = f"DESCRIBE ?shape {{ ?shape {ONT['hierarchyLevel'].n3()} ?obj }}"
+    g, _ = await repo.send_queries([listing_ep_query, object_ep_query, ep_nodeshape_query], [])
     if len(g) > 0:
-        endpoints_graph_cache.__iadd__(g)
         log.info(f"Remote endpoint definition(s) found and added")
+        return g
     else:
         log.info("No remote endpoint definitions found")
 
