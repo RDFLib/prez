@@ -136,21 +136,24 @@ def process_levels(levels: dict, g: Graph):
 
 
 
-def read_json(file_path):
-    with open(file_path, "r") as f:
-        data = json.load(f)
-        for route in data['routes']:
-            for hr in route["hierarchiesRelations"]:
-                for relation in hr["relations"]:
-                    if relation["levelFrom"] == 1 and relation["levelTo"] == 2:
-                        inverted_relation = {
-                            "levelFrom": 2,
-                            "levelTo": 1,
-                            "rdfPredicate": relation["rdfPredicate"],
-                            "direction": "inbound" if relation["direction"] == "outbound" else "outbound"
-                        }
-                        hr["relations"].append(inverted_relation)
-        return data
+def add_inverse_for_top_level(data):
+    """
+    the RDF relation between the first and second endpoints is reused in reverse so endpoints can be defined based on
+    their relation to each other rather than needing to say put the class of objects at the top level in some arbitrary
+    collection
+    """
+    for route in data['routes']:
+        for hr in route["hierarchiesRelations"]:
+            for relation in hr["relations"]:
+                if relation["levelFrom"] == 1 and relation["levelTo"] == 2:
+                    inverted_relation = {
+                        "levelFrom": 2,
+                        "levelTo": 1,
+                        "rdfPredicate": relation["rdfPredicate"],
+                        "direction": "inbound" if relation["direction"] == "outbound" else "outbound"
+                    }
+                    hr["relations"].append(inverted_relation)
+    return data
 
 
 def link_endpoints_shapes(endpoints_g, shapes_g, links_g):
@@ -161,14 +164,13 @@ def link_endpoints_shapes(endpoints_g, shapes_g, links_g):
                 endpoints_g.remove((s2, TEMP.relevantShapes, o2))
 
 
-if __name__ == "__main__":
-    file_path = Path(__file__).parent.parent.parent / "test_data" / "custom_endpoints.json"
-    data = read_json(file_path)
+def create_endpoint_rdf(endpoint_json: dict):
+    data = add_inverse_for_top_level(endpoint_json)
     g = Graph()
     create_endpoint_metadata(data, g)
     levels = process_relations(data)
     g2 = Graph()
-    results = process_levels(levels, g2)
+    process_levels(levels, g2)
     g3 = Graph()
     link_endpoints_shapes(g, g2, g3)
     complete = g + g2 + g3
@@ -176,3 +178,4 @@ if __name__ == "__main__":
     complete.bind("ex", EX)
     file_path = Path(__file__).parent.parent / "reference_data" / "endpoints" / "data_endpoints_custom" / "custom_endpoints.ttl"
     complete.serialize(destination=file_path, format="turtle")
+

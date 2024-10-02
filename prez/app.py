@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from rdflib import Graph
 from starlette.middleware.cors import CORSMiddleware
+from starlette.staticfiles import StaticFiles
 
 from prez.config import settings, Settings
 from prez.dependencies import (
@@ -31,7 +32,7 @@ from prez.exceptions.model_exceptions import (
 from prez.repositories import RemoteSparqlRepo, PyoxigraphRepo, OxrdflibRepo
 from prez.routers.custom_endpoints import create_dynamic_router
 from prez.routers.identifier import router as identifier_router
-from prez.routers.management import router as management_router
+from prez.routers.management import router as management_router, config_router
 from prez.routers.ogc_features_router import features_subapi
 from prez.routers.base_router import router as base_prez_router
 from prez.routers.sparql import router as sparql_router
@@ -178,9 +179,11 @@ def assemble_app(
     app.include_router(management_router)
     if _settings.enable_sparql_endpoint:
         app.include_router(sparql_router)
+    if _settings.configuration_mode:
+        app.include_router(config_router)
     if _settings.enable_ogc_features:
         app.mount(
-            "/catalogs/{catalogId}/collections/{recordsCollectionId}/features",
+            "/catalogs/{catalogId}/datasets/{datasetId}/features",
             features_subapi,
         )
     if _settings.custom_endpoints:
@@ -189,6 +192,7 @@ def assemble_app(
         )
     app.include_router(base_prez_router)
     app.include_router(identifier_router)
+    app.mount("/static", StaticFiles(directory="static"), name="static")
     app.openapi = partial(
         prez_open_api_metadata,
         title=title,

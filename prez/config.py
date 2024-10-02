@@ -73,7 +73,7 @@ class Settings(BaseSettings):
         DCTERMS.title,
     ]
     local_rdf_dir: str = "rdf"
-    endpoint_structure: Optional[Tuple[str, ...]] = ("levelone", "leveltwo", "levelthree", "levelfour")
+    endpoint_structure: Optional[Tuple[str, ...]] = ("catalogs", "collections", "items")
     system_endpoints: Optional[List[URIRef]] = [
         EP["system/profile-listing"],
         EP["system/profile-object"],
@@ -81,6 +81,7 @@ class Settings(BaseSettings):
     enable_sparql_endpoint: bool = False
     enable_ogc_features: bool = True
     custom_endpoints: bool = False
+    configuration_mode: bool = False
     temporal_predicate: Optional[URIRef] = SDO.temporal
     endpoint_to_template_query_filename: Optional[Dict[str, str]] = {}
 

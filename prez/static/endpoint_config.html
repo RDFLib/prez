@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Configure Endpoints</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.4/css/bulma.min.css">
+	<style>
+		.hierarchy-relation-container {
+			display: flex;
+		}
+		.class-container {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+		}
+		.relation-container {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			justify-content: space-around;
+			padding-top: 60px;
+			padding-bottom: 60px;
+		}
+		.class-item, .relation-item {
+			padding: 10px;
+			margin-bottom: 20px;
+		}
+		.relation-item {
+			max-width: 300px;
+			margin-left: 20px;
+		}
+		.limit-message {
+			display: none;
+			color: #666;
+			font-style: italic;
+			margin-left: 10px;
+		}
+	</style>
+</head>
+<body>
+	<section class="section">
+		<div class="container">
+			<h1 class="title">Configure Endpoints</h1>
+
+			<div class="box content">
+				<h2>Instructions:</h2>
+				<ol>
+					<li>Configure endpoints here and submit. This will create an endpoints configuration file in <code>prez/reference_data/endpoints/data_endpoints_custom/custom_endpoints.ttl</code></li>
+					<li>Set the following environment variables:
+						<ol type="a">
+							<li><code>CUSTOM_ENDPOINTS=true</code></li>
+							<li><code>ENDPOINT_STRUCTURE</code> based on your custom endpoints e.g. <code>ENDPOINT_STRUCTURE=["catalogs", "collections", "items"]</code></li>
+						</ol>
+					</li>
+					<li>Restart Prez, confirm it is working as expected</li>
+					<li>Unset the CONFIGURATION_MODE environment variable (or set it to other than "true")</li>
+				</ol>
+			</div>
+
+			<form action="/configure-endpoints" method="post">
+				<div class="field">
+					<label class="label">Configuration Name:</label>
+					<div class="control">
+						<input class="input" type="text" name="configName" placeholder="Enter configuration name">
+					</div>
+				</div>
+
+				<h2 class="subtitle">Routes:</h2>
+				<button class="button is-primary add-route" type="button">Add Route</button>
+
+				<div class="route-container" id="route-container">
+				</div>
+
+				<div class="field mt-5">
+					<div class="control">
+						<button class="button is-success" type="submit">Submit Configuration</button>
+					</div>
+				</div>
+			</form>
+		</div>
+	</section>
+
+	<script>
+		const routeContainer = document.querySelector('div#route-container');
+		let routeCount = 0;
+
+		document.querySelector('button.add-route').addEventListener('click', (e) => {
+			e.preventDefault();
+			const newRoute = document.createElement('div');
+			newRoute.classList.add('box', 'mt-4');
+			newRoute.innerHTML = `
+				<h3 class="subtitle">Route ${routeCount + 1}</h3>
+				<div class="field">
+					<label class="label">Name:</label>
+					<div class="control">
+						<input class="input" type="text" name="name">
+					</div>
+				</div>
+				<div class="field">
+					<label class="label">Full API Path:</label>
+					<div class="control">
+						<input class="input" type="text" name="fullApiPath">
+					</div>
+				</div>
+				<button class="button is-info add-hierarchy-relation" type="button">Add Hierarchy Relation</button>
+				<div class="hierarchy-relations-container mt-4" id="hierarchy-relations-container-${routeCount}"></div>
+			`;
+			routeContainer.appendChild(newRoute);
+			routeCount++;
+
+			const hierarchyRelationBtn = newRoute.querySelector('button.add-hierarchy-relation');
+			hierarchyRelationBtn.addEventListener('click', (e) => {
+				e.preventDefault();
+				const newHierarchyRelation = document.createElement('div');
+				newHierarchyRelation.classList.add('box');
+				newHierarchyRelation.innerHTML = `
+					<h3 class="subtitle">Add Class Hierarchy</h3>
+					<div class="field">
+						<label class="label">Name:</label>
+						<div class="control">
+							<input class="input" type="text" name="name">
+						</div>
+					</div>
+					<button class="button is-info add-class" type="button">Add Class</button>
+					<span class="limit-message">Prez currently supports class hierarchies of up to three levels</span>
+					<div class="hierarchy-relation-container mt-4">
+						<div class="class-container" id="class-container-${routeCount}"></div>
+						<div class="relation-container" id="relation-container-${routeCount}"></div>
+					</div>
+				`;
+				const hierarchyRelationsContainer = newRoute.querySelector(`div#hierarchy-relations-container-${routeCount - 1}`);
+				hierarchyRelationsContainer.appendChild(newHierarchyRelation);
+
+				const classContainer = newHierarchyRelation.querySelector(`div#class-container-${routeCount}`);
+				const relationContainer = newHierarchyRelation.querySelector(`div#relation-container-${routeCount}`);
+				const classBtn = newHierarchyRelation.querySelector('button.add-class');
+				const limitMessage = newHierarchyRelation.querySelector('.limit-message');
+				let classCount = 0;
+
+				classBtn.addEventListener('click', (e) => {
+					e.preventDefault();
+					if (classCount < 3) {
+						classCount++;
+						const newClass = document.createElement('div');
+						newClass.className = 'class-item box';
+						newClass.innerHTML = `
+							<h3 class="subtitle">Class at Hierarchy Level <span class="hierarchy-level">${classCount}</span></h3>
+							<div class="field">
+								<label class="label">RDF Class:</label>
+								<div class="control">
+									<input class="input" type="text" name="rdfClass">
+								</div>
+							</div>
+							<div class="field">
+								<label class="label">Class Name:</label>
+								<div class="control">
+									<input class="input" type="text" name="className">
+								</div>
+							</div>
+						`;
+						classContainer.appendChild(newClass);
+
+						if (classCount > 1) {
+							const newRelation = document.createElement('div');
+							newRelation.className = 'relation-item box';
+							newRelation.innerHTML = `
+								<h3 class="subtitle">Relation between Classes at Hierarchy Levels ${classCount - 1} and ${classCount}</h3>
+								<div class="field">
+									<label class="label">Direction:</label>
+									<div class="control">
+										<div class="select">
+											<select name="direction">
+												<option value="outbound">Outbound</option>
+												<option value="inbound">Inbound</option>
+											</select>
+										</div>
+									</div>
+								</div>
+								<div class="field">
+									<label class="label">Predicate:</label>
+									<div class="control">
+										<input class="input" type="text" name="rdfPredicate">
+									</div>
+								</div>
+							`;
+							relationContainer.appendChild(newRelation);
+						}
+
+						if (classCount === 3) {
+							classBtn.disabled = true;
+							limitMessage.style.display = 'inline';
+						}
+					}
+				});
+			});
+		});
+	</script>
+</body>
+</html>
