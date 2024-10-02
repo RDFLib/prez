@@ -150,6 +150,10 @@ def generate_item_construct(focus_item, profile: URIRef):
         None,
         default=2,
     )
+    try:
+        bnode_depth = int(bnode_depth)
+    except ValueError as e:
+        raise ValueError(f"Could not cast bnode depth to int. check the specification of profile {profile.n3()}\n error: {e}")
     if search_query:
         uri_or_search_item = "?search_result_uri"
     else:
@@ -165,20 +169,18 @@ def generate_item_construct(focus_item, profile: URIRef):
     PREFIX prez: <https://prez.dev/>
     CONSTRUCT {{
     {f'{search_query_construct()} {chr(10)}' if search_query else ""}\
-    \t{uri_or_search_item} ?p ?o1 .
     {sequence_construct}
     {f'{chr(9)}?s ?inverse_predicate {uri_or_search_item} .' if inverse_predicates else ""}
-    {generate_bnode_construct(bnode_depth)} \
+    {generate_bnode_construct(bnode_depth, uri_or_search_item)} \
     \n}}
     WHERE {{
         {{ {f'{focus_item.populated_query}' if search_query else ""} }}
         {{
-            {uri_or_search_item} ?p ?o1 . {chr(10)} \
             {f'?s ?inverse_predicate {uri_or_search_item}{chr(10)}' if inverse_predicates else chr(10)} \
             {generate_exclude_predicates(exclude_predicates)} \
             {generate_include_predicates(include_predicates)} \
             {generate_inverse_predicates(inverse_predicates)} \
-            {generate_bnode_select(bnode_depth)}\
+            {generate_bnode_select(bnode_depth, uri_or_search_item)}\
         }}
 
         UNION {{
@@ -234,7 +236,9 @@ def generate_relative_properties(
                 rel_string += """OPTIONAL { """
             rel_string += f"""?{other_kvs[k]} ?rel_{k}_props ?rel_{k}_val .\n"""
             if construct_select == "select":
-                if relative_properties == [URIRef('http://example.com/shacl-extension#allPredicateValues')]:
+                if relative_properties == [
+                    URIRef("http://example.com/shacl-extension#allPredicateValues")
+                ]:
                     rel_string += f"""VALUES ?rel_{k}_props {{ UNDEF }} }}\n"""
                 else:
                     rel_string += f"""VALUES ?rel_{k}_props {{ {" ".join('<' + pred + '>' for pred in relative_properties)} }} }}\n"""
@@ -275,7 +279,9 @@ def generate_include_predicates(include_predicates):
     VALUES ?p { <http://example1.com> <http://example2.com> }
     """
     if include_predicates:
-        if include_predicates == [URIRef('http://example.com/shacl-extension#allPredicateValues')]:
+        if include_predicates == [
+            URIRef("http://example.com/shacl-extension#allPredicateValues")
+        ]:
             return ""
         else:
             return f"""VALUES ?p{{\n{chr(10).join([f"<{p}>" for p in include_predicates])}\n}}"""
@@ -334,19 +340,22 @@ def generate_sequence_construct(
     return sequence_construct, sequence_construct_where
 
 
-def generate_bnode_construct(depth):
+def generate_bnode_construct(depth, uri_or_search_item):
     """
     Generate the construct query for the bnodes, this is of the form:
+    ?uri_or_search_item ?p ?o1 .
     ?o1 ?p2 ?o2 .
         ?o2 ?p3 ?o3 .
         ...
     """
-    return "\n" + "\n".join(
+    if depth < 1:
+        return ""
+    return f"\n{uri_or_search_item} ?p ?o1 .\n".join(
         [f"\t?o{i + 1} ?p{i + 2} ?o{i + 2} ." for i in range(depth)]
     )
 
 
-def generate_bnode_select(depth):
+def generate_bnode_select(depth, uri_or_search_item):
     """
     Generates a SPARQL select string for bnodes to a given depth, of the form:
     OPTIONAL {
@@ -360,9 +369,11 @@ def generate_bnode_select(depth):
             }
         }
     """
-    part_one = "\n".join(
+    if depth < 1:
+        return ""
+    part_one = f"\n{uri_or_search_item} ?p ?o1 .\n".join(
         [
-            f"""{chr(9) * (i + 1)}OPTIONAL {{
+            f"""{uri_or_search_item} ?p ?o1 .\n{chr(9) * (i + 1)}OPTIONAL {{
 {chr(9) * (i + 2)}FILTER(ISBLANK(?o{i + 1}))
 {chr(9) * (i + 2)}?o{i + 1} ?p{i + 2} ?o{i + 2} ."""
             for i in range(depth)
