@@ -6,8 +6,6 @@ from rdflib import Graph, URIRef
 from prez.bnode import get_bnode_depth
 
 
-
-
 @pytest.mark.parametrize(
     "input_file, iri, expected_depth",
     [

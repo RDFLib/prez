@@ -24,7 +24,7 @@ def add_endpoint(g, endpoint_type, name, api_path, i, route_num):
 
 
 def create_endpoint_metadata(data, g):
-    for route_num, route in enumerate(data['routes']):
+    for route_num, route in enumerate(data["routes"]):
         fullApiPath = route["fullApiPath"]
         components = fullApiPath.split("/")[1:]
 
@@ -41,18 +41,24 @@ def create_endpoint_metadata(data, g):
 
 def process_relations(data):
     levels_list = []
-    for route in data['routes']:
+    for route in data["routes"]:
         levels = {}
         for hier_rel in route["hierarchiesRelations"]:
             hierarchy_dict = {h["hierarchyLevel"]: h for h in hier_rel["hierarchy"]}
             for relation in hier_rel["relations"]:
-                rel_key = tuple(sorted(relation.items()))  # Sort items before creating tuple
+                rel_key = tuple(
+                    sorted(relation.items())
+                )  # Sort items before creating tuple
                 level_from = relation["levelFrom"]
                 level_to = relation["levelTo"]
                 klass_from = hierarchy_dict[level_from]
                 klass_to = hierarchy_dict[level_to]
-                klass_from_key = tuple(sorted(klass_from.items()))  # Sort items before creating tuple
-                klass_to_key = tuple(sorted(klass_to.items()))  # Sort items before creating tuple
+                klass_from_key = tuple(
+                    sorted(klass_from.items())
+                )  # Sort items before creating tuple
+                klass_to_key = tuple(
+                    sorted(klass_to.items())
+                )  # Sort items before creating tuple
 
                 if rel_key in levels:
                     levels[rel_key]["klasses_from"].add(klass_from_key)
@@ -60,7 +66,7 @@ def process_relations(data):
                 else:
                     levels[rel_key] = {
                         "klasses_from": {klass_from_key},
-                        "klasses_to": {klass_to_key}
+                        "klasses_to": {klass_to_key},
                     }
         levels_list.append(levels)
     return levels_list
@@ -80,7 +86,9 @@ def process_levels(levels: dict, g: Graph, route_num: int, shape_names: set):
         g.add((shape_uri, RDF.type, SH.NodeShape))
         g.add((shape_uri, TEMP.route_num, Literal(route_num)))
         g.add((shape_uri, TEMP.hierarchy_level, Literal(k[2][1])))
-        g.add((shape_uri, ONT.hierarchyLevel, Literal(k[2][1])))  # hierarchyLevel = levelTo
+        g.add(
+            (shape_uri, ONT.hierarchyLevel, Literal(k[2][1]))
+        )  # hierarchyLevel = levelTo
         klasses_to = []
         klasses_from = []
         for tup in v["klasses_to"]:
@@ -136,7 +144,9 @@ def process_levels(levels: dict, g: Graph, route_num: int, shape_names: set):
                     list_comps.append(URIRef(k[3][1]))
                 if second_rel[0][1] == "outbound":
                     inverse_bn = BNode()
-                    g.add((inverse_bn, SH.inversePath, URIRef(second_rel[3][1])))  # relation
+                    g.add(
+                        (inverse_bn, SH.inversePath, URIRef(second_rel[3][1]))
+                    )  # relation
                     list_comps.append(inverse_bn)
                 else:
                     list_comps.append(URIRef(second_rel[3][1]))
@@ -151,7 +161,7 @@ def add_inverse_for_top_level(data):
     their relation to each other rather than needing to say put the class of objects at the top level in some arbitrary
     collection
     """
-    for route in data['routes']:
+    for route in data["routes"]:
         for hr in route["hierarchiesRelations"]:
             for relation in hr["relations"]:
                 if relation["levelFrom"] == 1 and relation["levelTo"] == 2:
@@ -159,7 +169,11 @@ def add_inverse_for_top_level(data):
                         "levelFrom": 2,
                         "levelTo": 1,
                         "rdfPredicate": relation["rdfPredicate"],
-                        "direction": "inbound" if relation["direction"] == "outbound" else "outbound"
+                        "direction": (
+                            "inbound"
+                            if relation["direction"] == "outbound"
+                            else "outbound"
+                        ),
                     }
                     hr["relations"].append(inverted_relation)
     return data
@@ -169,7 +183,9 @@ def link_endpoints_shapes(endpoints_g, shapes_g, links_g):
     for s_s in shapes_g.subjects(predicate=RDF.type, object=SH.NodeShape):
         s_route_num = shapes_g.value(s_s, TEMP.route_num)
         s_hl = shapes_g.value(s_s, TEMP.hierarchy_level)
-        for ep_s, _, _ in endpoints_g.triples_choices((None, RDF.type, [ONT.ListingEndpoint, ONT.ObjectEndpoint])):
+        for ep_s, _, _ in endpoints_g.triples_choices(
+            (None, RDF.type, [ONT.ListingEndpoint, ONT.ObjectEndpoint])
+        ):
             ep_route_num = endpoints_g.value(ep_s, TEMP.route_num)
             ep_hl = endpoints_g.value(ep_s, TEMP.hierarchy_level)
             if (s_route_num == ep_route_num) and (s_hl == ep_hl):
@@ -200,6 +216,11 @@ def create_endpoint_rdf(endpoint_json: dict):
     cleanup_temp_preds(g)
     g.bind("ont", ONT)
     g.bind("ex", EX)
-    file_path = Path(
-        __file__).parent.parent / "reference_data" / "endpoints" / "data_endpoints_custom" / "custom_endpoints.ttl"
+    file_path = (
+        Path(__file__).parent.parent
+        / "reference_data"
+        / "endpoints"
+        / "data_endpoints_custom"
+        / "custom_endpoints.ttl"
+    )
     g.serialize(destination=file_path, format="turtle")

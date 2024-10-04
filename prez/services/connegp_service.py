@@ -208,9 +208,23 @@ class NegotiatedPMTs(BaseModel):
         ]
         if not available:
             if self.listing:
-                return [{"profile": URIRef("https://w3id.org/profile/mem"), "title": "Members", "mediatype": "text/anot+turtle", "class": "http://www.w3.org/2000/01/rdf-schema#Resource"}]
+                return [
+                    {
+                        "profile": URIRef("https://w3id.org/profile/mem"),
+                        "title": "Members",
+                        "mediatype": "text/anot+turtle",
+                        "class": "http://www.w3.org/2000/01/rdf-schema#Resource",
+                    }
+                ]
             else:
-                return [{"profile": URIRef("https://prez.dev/profile/open-object"), "title": "Open profile", "mediatype": "text/anot+turtle", "class": "http://www.w3.org/2000/01/rdf-schema#Resource"}]
+                return [
+                    {
+                        "profile": URIRef("https://prez.dev/profile/open-object"),
+                        "title": "Open profile",
+                        "mediatype": "text/anot+turtle",
+                        "class": "http://www.w3.org/2000/01/rdf-schema#Resource",
+                    }
+                ]
         return available
 
     def generate_response_headers(self) -> dict:
@@ -238,7 +252,9 @@ class NegotiatedPMTs(BaseModel):
     def _compose_select_query(self) -> str:
         prez = Namespace("https://prez.dev/")
         profile_class = prez.ListingProfile if self.listing else prez.ObjectProfile
-        query_klasses = set(endpoints_graph_cache.objects(subject=None, predicate=SH.targetClass))
+        query_klasses = set(
+            endpoints_graph_cache.objects(subject=None, predicate=SH.targetClass)
+        )
         if self.requested_profiles:
             requested_profile = self.requested_profiles[0][0]
         else:

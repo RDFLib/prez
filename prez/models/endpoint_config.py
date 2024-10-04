@@ -42,11 +42,14 @@ class HierarchyRelation(BaseModel):
 
     @classmethod
     @field_validator("relations")
-    def validate_relations_count(cls, v: List[Relation], values: dict) -> List[Relation]:
-        hierarchy = values.get('hierarchy')
+    def validate_relations_count(
+        cls, v: List[Relation], values: dict
+    ) -> List[Relation]:
+        hierarchy = values.get("hierarchy")
         if hierarchy and len(v) != len(hierarchy) - 1:
             raise ValueError(
-                f"Number of relations ({len(v)}) should be one less than the number of hierarchy items ({len(hierarchy)})")
+                f"Number of relations ({len(v)}) should be one less than the number of hierarchy items ({len(hierarchy)})"
+            )
         return v
 
 
@@ -73,24 +76,24 @@ configure_endpoings_example = {
                         {
                             "rdfClass": "http://www.w3.org/ns/dcat#Catalog",
                             "className": "Catalog",
-                            "hierarchyLevel": 1
+                            "hierarchyLevel": 1,
                         },
                         {
                             "rdfClass": "http://www.w3.org/ns/dcat#Dataset",
                             "className": "DCAT Dataset",
-                            "hierarchyLevel": 2
-                        }
+                            "hierarchyLevel": 2,
+                        },
                     ],
                     "relations": [
                         {
                             "levelFrom": 1,
                             "levelTo": 2,
                             "direction": "outbound",
-                            "rdfPredicate": "http://purl.org/dc/terms/hasPart"
+                            "rdfPredicate": "http://purl.org/dc/terms/hasPart",
                         }
-                    ]
+                    ],
                 }
-            ]
+            ],
         }
-    ]
+    ],
 }

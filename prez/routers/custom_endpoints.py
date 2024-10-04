@@ -42,19 +42,20 @@ def create_path_param(name: str, description: str, example: str):
 # Dynamic route handler
 def create_dynamic_route_handler(route_type: str):
     if route_type == "ListingEndpoint":
+
         async def dynamic_list_handler(
-                query_params: QueryParams = Depends(),
-                endpoint_nodeshape: NodeShape = Depends(get_endpoint_nodeshapes),
-                pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
-                endpoint_structure: tuple[str, ...] = Depends(get_endpoint_structure),
-                profile_nodeshape: NodeShape = Depends(get_profile_nodeshape),
-                cql_parser: CQLParser = Depends(cql_get_parser_dependency),
-                search_query: ConstructQuery = Depends(generate_search_query),
-                concept_hierarchy_query: ConceptHierarchyQuery = Depends(
-                    generate_concept_hierarchy_query
-                ),
-                data_repo: Repo = Depends(get_data_repo),
-                system_repo: Repo = Depends(get_system_repo),
+            query_params: QueryParams = Depends(),
+            endpoint_nodeshape: NodeShape = Depends(get_endpoint_nodeshapes),
+            pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
+            endpoint_structure: tuple[str, ...] = Depends(get_endpoint_structure),
+            profile_nodeshape: NodeShape = Depends(get_profile_nodeshape),
+            cql_parser: CQLParser = Depends(cql_get_parser_dependency),
+            search_query: ConstructQuery = Depends(generate_search_query),
+            concept_hierarchy_query: ConceptHierarchyQuery = Depends(
+                generate_concept_hierarchy_query
+            ),
+            data_repo: Repo = Depends(get_data_repo),
+            system_repo: Repo = Depends(get_system_repo),
         ):
             return await listing_function(
                 data_repo=data_repo,
@@ -72,12 +73,13 @@ def create_dynamic_route_handler(route_type: str):
 
         return dynamic_list_handler
     elif route_type == "ObjectEndpoint":
+
         async def dynamic_object_handler(
-                pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
-                endpoint_structure: tuple[str, ...] = Depends(get_endpoint_structure),
-                profile_nodeshape: NodeShape = Depends(get_profile_nodeshape),
-                data_repo: Repo = Depends(get_data_repo),
-                system_repo: Repo = Depends(get_system_repo),
+            pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
+            endpoint_structure: tuple[str, ...] = Depends(get_endpoint_structure),
+            profile_nodeshape: NodeShape = Depends(get_profile_nodeshape),
+            data_repo: Repo = Depends(get_data_repo),
+            system_repo: Repo = Depends(get_system_repo),
         ):
             return await object_function(
                 data_repo=data_repo,
@@ -92,14 +94,22 @@ def create_dynamic_route_handler(route_type: str):
 
 # Extract path parameters from the path
 def extract_path_params(path: str) -> List[str]:
-    return [part[1:-1] for part in path.split("/") if part.startswith("{") and part.endswith("}")]
+    return [
+        part[1:-1]
+        for part in path.split("/")
+        if part.startswith("{") and part.endswith("}")
+    ]
 
 
 # Add routes dynamically to the router
 def add_routes(router: APIRouter):
     routes = []
-    for s in endpoints_graph_cache.subjects(predicate=RDF.type, object=ONT.DynamicEndpoint):
-        if ONT.ListingEndpoint in endpoints_graph_cache.objects(subject=s, predicate=RDF.type):
+    for s in endpoints_graph_cache.subjects(
+        predicate=RDF.type, object=ONT.DynamicEndpoint
+    ):
+        if ONT.ListingEndpoint in endpoints_graph_cache.objects(
+            subject=s, predicate=RDF.type
+        ):
             route = {
                 "path": str(endpoints_graph_cache.value(s, ONT.apiPath)),
                 "name": str(s),
@@ -107,7 +117,9 @@ def add_routes(router: APIRouter):
                 "type": "ListingEndpoint",
             }
             routes.append(route)
-        elif ONT.ObjectEndpoint in endpoints_graph_cache.objects(subject=s, predicate=RDF.type):
+        elif ONT.ObjectEndpoint in endpoints_graph_cache.objects(
+            subject=s, predicate=RDF.type
+        ):
             route = {
                 "path": str(endpoints_graph_cache.value(s, ONT.apiPath)),
                 "name": str(s),
@@ -121,7 +133,9 @@ def add_routes(router: APIRouter):
 
         # Create path parameters using FastAPI's Path
         path_params = {
-            param: create_path_param(param, f"Path parameter: {param}", f"example_{param}")
+            param: create_path_param(
+                param, f"Path parameter: {param}", f"example_{param}"
+            )
             for param in path_param_names
         }
 
@@ -149,7 +163,7 @@ def add_routes(router: APIRouter):
             endpoint=endpoint,
             methods=["GET"],
             description=route["description"],
-            openapi_extra=openapi_extras
+            openapi_extra=openapi_extras,
         )
 
         logger.info(f"Added dynamic route: {route['path']}")

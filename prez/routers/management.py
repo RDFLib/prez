@@ -86,7 +86,7 @@ async def return_tbox_cache(request: Request):
         pred_obj = pickle.loads(pred_obj_bytes)
         for pred, obj in pred_obj:
             if (
-                    pred_obj
+                pred_obj
             ):  # cache entry for a URI can be empty - i.e. no annotations found for URI
                 # Add the expanded triple (subject, predicate, object) to 'annotations_g'
                 cache_g.add((subject, pred, obj))
@@ -123,9 +123,9 @@ async def return_annotation_predicates():
 
 @router.get("/prefixes", summary="Show prefixes known to prez")
 async def show_prefixes(
-        mediatype: Optional[NonAnnotatedRDFMediaType | JSONMediaType] = Query(
-            default=NonAnnotatedRDFMediaType.TURTLE, alias="_mediatype"
-        )
+    mediatype: Optional[NonAnnotatedRDFMediaType | JSONMediaType] = Query(
+        default=NonAnnotatedRDFMediaType.TURTLE, alias="_mediatype"
+    )
 ):
     """Returns the prefixes known to prez"""
     mediatype_str = str(mediatype.value)
@@ -142,16 +142,15 @@ async def show_prefixes(
     return StreamingResponse(content=content, media_type=mediatype_str)
 
 
-
 @config_router.post("/configure-endpoints", summary="Configuration")
-async def submit_config(config: RootModel = Body(
-    ...,
-    examples=[configure_endpoings_example]
-)
+async def submit_config(
+    config: RootModel = Body(..., examples=[configure_endpoings_example])
 ):
     try:
         create_endpoint_rdf(config.model_dump())
-        return {"message": f"Configuration received successfully. {len(config.routes)} routes processed."}
+        return {
+            "message": f"Configuration received successfully. {len(config.routes)} routes processed."
+        }
     except ValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -159,4 +158,6 @@ async def submit_config(config: RootModel = Body(
 @config_router.get("/configure-endpoints")
 async def open_config_page():
     """Redirects to the endpoint configuration page"""
-    return Response(status_code=302, headers={"Location": "/static/endpoint_config.html"})
+    return Response(
+        status_code=302, headers={"Location": "/static/endpoint_config.html"}
+    )

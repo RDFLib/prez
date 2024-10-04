@@ -159,9 +159,9 @@ async def generate_prefixes(repo: Repo):
 async def _add_prefixes_from_graph(g):
     i = 0
     for i, (s, prefix) in enumerate(
-            g.subject_objects(
-                predicate=URIRef("http://purl.org/vocab/vann/preferredNamespacePrefix")
-            )
+        g.subject_objects(
+            predicate=URIRef("http://purl.org/vocab/vann/preferredNamespacePrefix")
+        )
     ):
         namespace = g.value(
             s, URIRef("http://purl.org/vocab/vann/preferredNamespaceUri")
@@ -198,8 +198,12 @@ async def create_endpoints_graph(app_state):
 async def get_remote_endpoint_definitions(repo):
     listing_ep_query = f"DESCRIBE ?ep {{ ?ep a {ONT['ListingEndpoint'].n3()} }}"
     object_ep_query = f"DESCRIBE ?ep {{ ?ep a {ONT['ObjectEndpoint'].n3()} }}"
-    ep_nodeshape_query = f"DESCRIBE ?shape {{ ?shape {ONT['hierarchyLevel'].n3()} ?obj }}"
-    g, _ = await repo.send_queries([listing_ep_query, object_ep_query, ep_nodeshape_query], [])
+    ep_nodeshape_query = (
+        f"DESCRIBE ?shape {{ ?shape {ONT['hierarchyLevel'].n3()} ?obj }}"
+    )
+    g, _ = await repo.send_queries(
+        [listing_ep_query, object_ep_query, ep_nodeshape_query], []
+    )
     if len(g) > 0:
         log.info(f"Remote endpoint definition(s) found and added")
         return g
