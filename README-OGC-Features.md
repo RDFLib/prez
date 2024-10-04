@@ -40,7 +40,6 @@ ex:BDRScientificNameQueryableShape
 .
 ```
 It is recommended that templated SPARQL queries are used to periodically update the `sh:in` values, which correspond to enumerations.
-# TODO other SHACL predicates can be reused to specify min/max values, etc. where the range is numeric and enumerations are not appropriate.
 
 When Prez starts, it will query the remote repository (typically a triplestore) for all Queryables.
 It queries for them using a CONSTRUCT query, serializes this as JSON-LD, and does a minimal transformation to produce the OGC Features compliant response. 

@@ -31,13 +31,6 @@
 					</div>
 				</div>
 
-				<div class="field">
-					<label class="label">Routes:</label>
-					<div class="control">
-						<button class="button is-primary add-route" type="button">Add Route</button>
-					</div>
-				</div>
-
 				<div class="route-container" id="route-container">
 				</div>
 
@@ -54,11 +47,12 @@
 		const routeContainer = document.querySelector('div#route-container');
 		let routeCount = 0;
 
-		function addRemoveButton(element, container, removeFunction) {
+		function addRemoveButton(element, container, removeFunction, isDisabled = false) {
 			const removeBtn = document.createElement('button');
 			removeBtn.className = 'button is-danger is-small';
 			removeBtn.textContent = 'Remove';
 			removeBtn.style.marginLeft = '10px';
+			removeBtn.disabled = isDisabled;
 			removeBtn.addEventListener('click', (e) => {
 				e.preventDefault();
 				removeFunction(element, container);
@@ -70,42 +64,12 @@
 			container.removeChild(element);
 		}
 
-		document.querySelector('button.add-route').addEventListener('click', (e) => {
-			e.preventDefault();
-			const newRoute = document.createElement('div');
-			newRoute.className = 'box';
-			newRoute.innerHTML = `
-				<h3 class="title is-4">Route ${routeCount + 1}</h3>
-				<div class="field">
-					<label class="label">Name:</label>
-					<div class="control">
-						<input class="input" type="text" name="name">
-					</div>
-				</div>
-				<div class="field">
-					<label class="label">Full API Path:</label>
-					<div class="control">
-						<input class="input" type="text" name="fullApiPath">
-					</div>
-				</div>
-				<div class="field">
-					<div class="control">
-						<button class="button is-info add-hierarchy-relation" type="button">Add Hierarchy Relation</button>
-					</div>
-				</div>
-				<div class="hierarchy-relations-container" id="hierarchy-relations-container-${routeCount}"></div>
-			`;
-			routeContainer.appendChild(newRoute);
-			addRemoveButton(newRoute, routeContainer, removeElement);
-			routeCount++;
-
-			const hierarchyRelationBtn = newRoute.querySelector('button.add-hierarchy-relation');
-			hierarchyRelationBtn.addEventListener('click', (e) => {
-				e.preventDefault();
-				const newHierarchyRelation = document.createElement('div');
-				newHierarchyRelation.className = 'box';
-				newHierarchyRelation.innerHTML = `
-					<h4 class="title is-5">Add Class Hierarchy</h4>
+		function addRoute() {
+			if (routeCount === 0) {
+				const newRoute = document.createElement('div');
+				newRoute.className = 'box';
+				newRoute.innerHTML = `
+					<h3 class="title is-4">Route ${routeCount + 1}</h3>
 					<div class="field">
 						<label class="label">Name:</label>
 						<div class="control">
@@ -113,107 +77,151 @@
 						</div>
 					</div>
 					<div class="field">
+						<label class="label">Full API Path:</label>
 						<div class="control">
-							<button class="button is-info add-class" type="button">Add Class</button>
+							<input class="input" type="text" name="fullApiPath">
 						</div>
 					</div>
-					<div class="columns hierarchy-relation-container">
-						<div class="column class-container" id="class-container-${routeCount}"></div>
-						<div class="column relation-container" id="relation-container-${routeCount}"></div>
+					<div class="field">
+						<div class="control">
+							<button class="button is-info add-hierarchy-relation" type="button">Add Hierarchy Relation</button>
+						</div>
+					</div>
+					<div class="hierarchy-relations-container" id="hierarchy-relations-container-${routeCount}"></div>
+				`;
+				routeContainer.appendChild(newRoute);
+				addRemoveButton(newRoute, routeContainer, removeElement, true);  // Disable the remove button
+				routeCount++;
+
+				const hierarchyRelationBtn = newRoute.querySelector('button.add-hierarchy-relation');
+				hierarchyRelationBtn.addEventListener('click', addHierarchyRelation);
+
+				// Automatically add the first hierarchy relation
+				addHierarchyRelation({ target: hierarchyRelationBtn });
+			}
+		}
+
+		function addHierarchyRelation(event) {
+			const newHierarchyRelation = document.createElement('div');
+			newHierarchyRelation.className = 'box';
+			newHierarchyRelation.innerHTML = `
+				<h4 class="title is-5">Class Hierarchy</h4>
+				<div class="field">
+					<label class="label">Name:</label>
+					<div class="control">
+						<input class="input" type="text" name="name">
+					</div>
+				</div>
+				<div class="field">
+					<div class="control">
+						<button class="button is-info add-class" type="button">Add Class</button>
+					</div>
+				</div>
+				<div class="columns hierarchy-relation-container">
+					<div class="column class-container" id="class-container-${routeCount}"></div>
+					<div class="column relation-container" id="relation-container-${routeCount}"></div>
+				</div>
+			`;
+			const hierarchyRelationsContainer = event.target.closest('.box').querySelector('.hierarchy-relations-container');
+			hierarchyRelationsContainer.appendChild(newHierarchyRelation);
+			addRemoveButton(newHierarchyRelation, hierarchyRelationsContainer, removeElement);
+
+			const classContainer = newHierarchyRelation.querySelector('.class-container');
+			const relationContainer = newHierarchyRelation.querySelector('.relation-container');
+			let classCount = 0;
+
+			const classBtn = newHierarchyRelation.querySelector('button.add-class');
+			classBtn.addEventListener('click', () => addClass(classContainer, relationContainer, classBtn));
+
+			// Automatically add two classes and one relation
+			addClass(classContainer, relationContainer, classBtn);
+			addClass(classContainer, relationContainer, classBtn);
+		}
+
+		function addClass(classContainer, relationContainer, classBtn) {
+			const classCount = classContainer.children.length;
+			if (classCount < 3) {
+				const newClass = document.createElement('div');
+				newClass.className = 'box class-item';
+				newClass.innerHTML = `
+					<h5 class="title is-6">Class at Hierarchy Level <span class="tag is-primary">${classCount + 1}</span></h5>
+					<div class="field">
+						<label class="label">RDF Class:</label>
+						<div class="control">
+							<input class="input" type="text" name="rdfClass">
+						</div>
+					</div>
+					<div class="field">
+						<label class="label">Class Name:</label>
+						<div class="control">
+							<input class="input" type="text" name="className">
+						</div>
 					</div>
 				`;
-				const hierarchyRelationsContainer = newRoute.querySelector(`div#hierarchy-relations-container-${routeCount - 1}`);
-				hierarchyRelationsContainer.appendChild(newHierarchyRelation);
-				addRemoveButton(newHierarchyRelation, hierarchyRelationsContainer, removeElement);
-
-				const classContainer = newHierarchyRelation.querySelector(`div#class-container-${routeCount}`);
-				const relationContainer = newHierarchyRelation.querySelector(`div#relation-container-${routeCount}`);
-				let classCount = 0;
-
-				const classBtn = newHierarchyRelation.querySelector('button.add-class');
-				classBtn.addEventListener('click', (e) => {
-					e.preventDefault();
-					if (classCount < 3) {
-						classCount++;
-						const newClass = document.createElement('div');
-						newClass.className = 'box class-item';
-						newClass.innerHTML = `
-							<h5 class="title is-6">Class at Hierarchy Level <span class="tag is-primary">${classCount}</span></h5>
-							<div class="field">
-								<label class="label">RDF Class:</label>
-								<div class="control">
-									<input class="input" type="text" name="rdfClass">
-								</div>
-							</div>
-							<div class="field">
-								<label class="label">Class Name:</label>
-								<div class="control">
-									<input class="input" type="text" name="className">
-								</div>
-							</div>
-						`;
-						classContainer.appendChild(newClass);
-						addRemoveButton(newClass, classContainer, (element, container) => {
-							removeElement(element, container);
-							classCount--;
-							classBtn.disabled = false;
-							updateClassLevels(classContainer);
-							updateRelations(relationContainer, classCount);
-						});
-
-						if (classCount > 1) {
-							const newRelation = document.createElement('div');
-							newRelation.className = 'box relation-item';
-							newRelation.innerHTML = `
-								<h5 class="title is-6">Relation between Classes at Hierarchy Levels ${classCount - 1} and ${classCount}</h5>
-								<div class="field">
-									<label class="label">Direction:</label>
-									<div class="control">
-										<div class="select">
-											<select name="direction">
-												<option value="outbound">Outbound</option>
-												<option value="inbound">Inbound</option>
-											</select>
-										</div>
-									</div>
-								</div>
-								<div class="field">
-									<label class="label">Predicate:</label>
-									<div class="control">
-										<input class="input" type="text" name="rdfPredicate">
-									</div>
-								</div>
-							`;
-							relationContainer.appendChild(newRelation);
-							addRemoveButton(newRelation, relationContainer, removeElement);
-						}
-
-						if (classCount === 3) {
-							classBtn.disabled = true;
-						}
+				classContainer.appendChild(newClass);
+				addRemoveButton(newClass, classContainer, (element, container) => {
+					if (container.children.length > 2) {
+						removeElement(element, container);
+						updateClassLevels(classContainer);
+						updateRelations(relationContainer, classContainer.children.length);
+						classBtn.disabled = false;
 					}
 				});
 
-				function updateClassLevels(container) {
-					const classes = container.querySelectorAll('.class-item');
-					classes.forEach((classItem, index) => {
-						const levelTag = classItem.querySelector('.tag');
-						levelTag.textContent = index + 1;
-					});
+				if (classCount > 0) {
+					addRelation(relationContainer, classCount, classCount + 1);
 				}
 
-				function updateRelations(container, classCount) {
-					const relations = container.querySelectorAll('.relation-item');
-					relations.forEach((relationItem, index) => {
-						const title = relationItem.querySelector('h5');
-						title.textContent = `Relation between Classes at Hierarchy Levels ${index + 1} and ${index + 2}`;
-					});
-					while (relations.length > classCount - 1) {
-						container.removeChild(relations[relations.length - 1]);
-					}
+				if (classCount === 2) {
+					classBtn.disabled = true;
 				}
+			}
+		}
+
+		function addRelation(relationContainer, levelFrom, levelTo) {
+			const newRelation = document.createElement('div');
+			newRelation.className = 'box relation-item';
+			newRelation.innerHTML = `
+				<h5 class="title is-6">Relation between Classes at Hierarchy Levels ${levelFrom} and ${levelTo}</h5>
+				<div class="field">
+					<label class="label">Direction:</label>
+					<div class="control">
+						<div class="select">
+							<select name="direction">
+								<option value="outbound">Outbound</option>
+								<option value="inbound">Inbound</option>
+							</select>
+						</div>
+					</div>
+				</div>
+				<div class="field">
+					<label class="label">Predicate:</label>
+					<div class="control">
+						<input class="input" type="text" name="rdfPredicate">
+					</div>
+				</div>
+			`;
+			relationContainer.appendChild(newRelation);
+		}
+
+		function updateClassLevels(container) {
+			const classes = container.querySelectorAll('.class-item');
+			classes.forEach((classItem, index) => {
+				const levelTag = classItem.querySelector('.tag');
+				levelTag.textContent = index + 1;
 			});
-		});
+		}
+
+		function updateRelations(container, classCount) {
+			const relations = container.querySelectorAll('.relation-item');
+			relations.forEach((relationItem, index) => {
+				const title = relationItem.querySelector('h5');
+				title.textContent = `Relation between Classes at Hierarchy Levels ${index + 1} and ${index + 2}`;
+			});
+			while (relations.length > classCount - 1) {
+				container.removeChild(relations[relations.length - 1]);
+			}
+		}
 
 		document.getElementById('configForm').addEventListener('submit', function(e) {
 			e.preventDefault();
@@ -283,6 +291,9 @@
 				alert('An error occurred while submitting the configuration. Please try again.');
 			});
 		});
+
+		// Automatically add the first route when the page loads
+		window.addEventListener('load', addRoute);
 	</script>
 </body>
 </html>
