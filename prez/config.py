@@ -1,10 +1,10 @@
 from os import environ
 from pathlib import Path
-from typing import Optional, Union, Any, Dict
+from typing import Any, Dict, Optional, Union
 
 import toml
 from pydantic import BaseSettings, root_validator
-from rdflib import URIRef, DCTERMS, RDFS, SDO
+from rdflib import DCTERMS, RDFS, SDO, URIRef
 from rdflib.namespace import SKOS
 
 from prez.reference_data.prez_ns import REG
@@ -43,7 +43,12 @@ class Settings(BaseSettings):
     order_lists_by_label: bool = True
     base_classes: Optional[dict]
     prez_flavours: Optional[list] = ["SpacePrez", "VocPrez", "CatPrez", "ProfilesPrez"]
-    label_predicates = [SKOS.prefLabel, DCTERMS.title, RDFS.label, SDO.name]
+    label_predicates: list[URIRef] = [
+        SKOS.prefLabel,
+        DCTERMS.title,
+        RDFS.label,
+        SDO.name,
+    ]
     description_predicates = [SKOS.definition, DCTERMS.description, SDO.description]
     provenance_predicates = [DCTERMS.provenance]
     other_predicates = [SDO.color, REG.status]
@@ -95,6 +100,21 @@ class Settings(BaseSettings):
             values["system_uri"] = URIRef(
                 f"{values['protocol']}://{values['host']}:{values['port']}"
             )
+        return values
+
+    @root_validator()
+    def get_label_predicates(cls, values):
+        try:
+            label_predicates = [
+                URIRef(label_predicate)
+                for label_predicate in values["label_predicates"]
+            ]
+        except ValueError as e:
+            raise ValueError(
+                "Could not parse label_predicates. label predicates must be valid URIs no prefixes allowed "
+                f"original message: {e}"
+            )
+        values["label_predicates"] = label_predicates
         return values
 
 
