@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from contextlib import asynccontextmanager
 from functools import partial
 from textwrap import dedent
@@ -184,7 +185,7 @@ def assemble_app(
         app.include_router(sparql_router)
     if _settings.configuration_mode:
         app.include_router(config_router)
-        app.mount("/static", StaticFiles(directory="static"), name="static")
+        app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
     if _settings.enable_ogc_features:
         app.mount(
             "/catalogs/{catalogId}/collections/{recordsCollectionId}/features",
