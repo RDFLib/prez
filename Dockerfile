@@ -6,7 +6,7 @@ ARG VIRTUAL_ENV=/opt/venv
 #
 # Base
 #
-FROM python:${PYTHON_VERSION}-alpine AS base
+FROM python:${PYTHON_VERSION}-alpine3.19 AS base
 ARG POETRY_VERSION
 ARG VIRTUAL_ENV
 ENV VIRTUAL_ENV=${VIRTUAL_ENV} \
@@ -34,7 +34,7 @@ RUN ${VIRTUAL_ENV}/bin/pip3 install --no-cache-dir dist/*.whl
 #
 # Final
 #
-FROM python:${PYTHON_VERSION}-alpine AS final
+FROM python:${PYTHON_VERSION}-alpine3.19 AS final
 
 ARG PREZ_VERSION
 ENV PREZ_VERSION=${PREZ_VERSION}
