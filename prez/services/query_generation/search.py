@@ -57,7 +57,7 @@ class SearchQueryRegex(ConstructQuery):
         limit += 1  # increase the limit by one so we know if there are further pages of results.
 
         if not predicates:
-            predicates = settings.default_search_predicates
+            predicates = settings.search_predicates
 
         sr_uri: Var = Var(value="focus_node")
         pred: Var = Var(value="pred")
