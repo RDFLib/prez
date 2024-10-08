@@ -80,6 +80,8 @@ class Settings(BaseSettings):
     ]
     enable_sparql_endpoint: bool = False
     enable_ogc_features: bool = True
+    custom_endpoints: bool = False
+    configuration_mode: bool = False
     temporal_predicate: Optional[URIRef] = SDO.temporal
     endpoint_to_template_query_filename: Optional[Dict[str, str]] = {}
 

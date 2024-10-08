@@ -2,15 +2,13 @@ import logging
 import re
 from enum import Enum
 from textwrap import dedent
-from typing import List, Dict
-from urllib.parse import urlencode
 
 from pydantic import BaseModel
-from rdflib import Graph, Namespace, URIRef
+from rdflib import Graph, Namespace, URIRef, SH
 
+from prez.cache import endpoints_graph_cache
 from prez.config import settings
 from prez.exceptions.model_exceptions import NoProfilesException
-from prez.models.ogc_features import Link
 from prez.repositories.base import Repo
 from prez.services.curie_functions import get_curie_id_for_uri, get_uri_for_curie_id
 
@@ -209,7 +207,24 @@ class NegotiatedPMTs(BaseModel):
             for result in repo_response[1][0][1]
         ]
         if not available:
-            raise NoProfilesException(self.classes)
+            if self.listing:
+                return [
+                    {
+                        "profile": URIRef("https://w3id.org/profile/mem"),
+                        "title": "Members",
+                        "mediatype": "text/anot+turtle",
+                        "class": "http://www.w3.org/2000/01/rdf-schema#Resource",
+                    }
+                ]
+            else:
+                return [
+                    {
+                        "profile": URIRef("https://prez.dev/profile/open-object"),
+                        "title": "Open profile",
+                        "mediatype": "text/anot+turtle",
+                        "class": "http://www.w3.org/2000/01/rdf-schema#Resource",
+                    }
+                ]
         return available
 
     def generate_response_headers(self) -> dict:
@@ -237,6 +252,9 @@ class NegotiatedPMTs(BaseModel):
     def _compose_select_query(self) -> str:
         prez = Namespace("https://prez.dev/")
         profile_class = prez.ListingProfile if self.listing else prez.ObjectProfile
+        query_klasses = set(
+            endpoints_graph_cache.objects(subject=None, predicate=SH.targetClass)
+        )
         if self.requested_profiles:
             requested_profile = self.requested_profiles[0][0]
         else:
@@ -261,10 +279,9 @@ class NegotiatedPMTs(BaseModel):
               VALUES ?class {{{" ".join('<' + str(klass) + '>' for klass in self.classes)}}}
               ?class rdfs:subClassOf* ?mid .
               ?mid rdfs:subClassOf* ?base_class .
-              VALUES ?base_class {{ dcat:Dataset geo:FeatureCollection geo:Feature
-              skos:ConceptScheme skos:Concept skos:Collection 
-              dcat:Catalog rdf:Resource dcat:Resource prof:Profile prez:SPARQLQuery 
-              prez:SearchResult prez:CQLObjectList prez:Queryable prez:Object rdfs:Resource }}
+              VALUES ?base_class {{ {" ".join(klass.n3() for klass in query_klasses)}
+               prof:Profile prez:SPARQLQuery 
+              prez:SearchResult prez:CQLObjectList prez:Object rdfs:Resource }}
               ?profile altr-ext:constrainsClass ?class ;
                        altr-ext:hasResourceFormat ?format ;
                        dcterms:title ?title .\
@@ -306,10 +323,7 @@ class NegotiatedPMTs(BaseModel):
 
     async def _do_query(self, query: str) -> tuple[Graph, list]:
         response = await self.system_repo.send_queries([], [(None, query)])
-        if not response[1][0][1]:
-            raise NoProfilesException(self.classes)
-
-        if settings.log_level == "DEBUG":
+        if response[1][0][1] and settings.log_level == "DEBUG":
             from tabulate import tabulate
 
             table_data = [

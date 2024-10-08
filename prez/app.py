@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from contextlib import asynccontextmanager
 from functools import partial
 from textwrap import dedent
@@ -8,6 +9,7 @@ from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from rdflib import Graph
 from starlette.middleware.cors import CORSMiddleware
+from starlette.staticfiles import StaticFiles
 
 from prez.config import settings, Settings
 from prez.dependencies import (
@@ -29,10 +31,11 @@ from prez.exceptions.model_exceptions import (
     PrefixNotFoundException,
 )
 from prez.repositories import RemoteSparqlRepo, PyoxigraphRepo, OxrdflibRepo
+from prez.routers.custom_endpoints import create_dynamic_router
 from prez.routers.identifier import router as identifier_router
-from prez.routers.management import router as management_router
-from prez.routers.ogc_router import router as ogc_records_router
+from prez.routers.management import router as management_router, config_router
 from prez.routers.ogc_features_router import features_subapi
+from prez.routers.base_router import router as base_prez_router
 from prez.routers.sparql import router as sparql_router
 from prez.services.app_service import (
     healthcheck_sparql_endpoints,
@@ -113,7 +116,7 @@ async def lifespan(app: FastAPI):
     await prefix_initialisation(app.state.repo)
     await retrieve_remote_template_queries(app.state.repo)
     await create_profiles_graph(app.state.repo)
-    await create_endpoints_graph(app.state.repo)
+    await create_endpoints_graph(app.state)
     await count_objects(app.state.repo)
     await populate_api_info()
 
@@ -123,6 +126,9 @@ async def lifespan(app: FastAPI):
     await retrieve_remote_queryable_definitions(app.state, app.state.pyoxi_system_store)
     await load_system_data_to_oxigraph(app.state.pyoxi_system_store)
     await load_annotations_data_to_oxigraph(app.state.annotations_store)
+
+    # dynamic routes are either: custom routes if enabled, else default prez "data" routes are added dynamically
+    app.include_router(create_dynamic_router())
 
     yield
 
@@ -175,14 +181,17 @@ def assemble_app(
     app.state.settings = _settings
 
     app.include_router(management_router)
-    app.include_router(ogc_records_router)
     if _settings.enable_sparql_endpoint:
         app.include_router(sparql_router)
+    if _settings.configuration_mode:
+        app.include_router(config_router)
+        app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
     if _settings.enable_ogc_features:
         app.mount(
             "/catalogs/{catalogId}/collections/{recordsCollectionId}/features",
             features_subapi,
         )
+    app.include_router(base_prez_router)
     app.include_router(identifier_router)
     app.openapi = partial(
         prez_open_api_metadata,

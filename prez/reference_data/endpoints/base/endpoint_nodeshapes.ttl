@@ -12,65 +12,6 @@
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix altr-ext: <http://www.w3.org/ns/dx/connegp/altr-ext#> .
 
-ex:Catalogs
-    a sh:NodeShape ;
-    ont:hierarchyLevel 1 ;
-    sh:targetClass dcat:Catalog ;
-    sh:property [
-        sh:path dcterms:hasPart ;
-        sh:or (
-            [ sh:class skos:ConceptScheme ]
-            [ sh:class skos:Collection ]
-            [ sh:class dcat:Dataset ]
-        ) ;
-    ] .
-
-ex:Collections
-    a sh:NodeShape ;
-    ont:hierarchyLevel 2 ;
-    sh:targetClass skos:ConceptScheme , skos:Collection , dcat:Dataset ;
-    sh:property [
-        sh:path [ sh:inversePath dcterms:hasPart ] ;
-        sh:class dcat:Catalog ;
-    ] .
-
-
-ex:ConceptSchemeConcept
-    a sh:NodeShape ;
-    ont:hierarchyLevel 3 ;
-    sh:targetClass skos:Concept ;
-    sh:property [
-        sh:path skos:inScheme ;
-        sh:class skos:ConceptScheme ;
-    ] , [
-        sh:path ( skos:inScheme [ sh:inversePath dcterms:hasPart ] );
-        sh:class dcat:Catalog ;
-    ] .
-
-ex:CollectionConcept
-    a sh:NodeShape ;
-    ont:hierarchyLevel 3 ;
-    sh:targetClass skos:Concept ;
-    sh:property [
-        sh:path [ sh:inversePath skos:member ] ;
-        sh:class skos:Collection ;
-    ] , [
-        sh:path ( [ sh:inversePath skos:member ] [ sh:inversePath dcterms:hasPart ] );
-        sh:class dcat:Catalog ;
-    ] .
-
-ex:Resource
-    a sh:NodeShape ;
-    ont:hierarchyLevel 3 ;
-    sh:targetClass geo:FeatureCollection ;
-    sh:property [
-        sh:path [ sh:inversePath dcterms:hasPart ] ;
-        sh:class dcat:Dataset ;
-    ] , [
-        sh:path ( [ sh:inversePath dcterms:hasPart ] [ sh:inversePath dcterms:hasPart ] );
-        sh:class dcat:Catalog ;
-    ] .
-
 ex:Profiles
     a sh:NodeShape ;
     ont:hierarchyLevel 1 ;

@@ -5,23 +5,28 @@ import pickle
 from typing import Optional
 
 from aiocache import caches
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException, Body
+from pydantic import ValidationError
 from rdflib import BNode, VANN
 from rdflib import Graph, URIRef, Literal
 from rdflib.collection import Collection
 from starlette.requests import Request
-from starlette.responses import PlainTextResponse, StreamingResponse
+from starlette.responses import PlainTextResponse, StreamingResponse, Response
 
 from prez.cache import endpoints_graph_cache, prefix_graph
 from prez.config import settings
 from prez.dependencies import get_system_repo
 from prez.enums import JSONMediaType, NonAnnotatedRDFMediaType
+from prez.models.endpoint_config import RootModel, configure_endpoings_example
 from prez.reference_data.prez_ns import PREZ
 from prez.renderers.renderer import return_rdf, return_from_graph
 from prez.repositories import Repo
 from prez.services.connegp_service import RDF_MEDIATYPES, NegotiatedPMTs
+from prez.services.generate_endpoint_rdf import create_endpoint_rdf
 
 router = APIRouter(tags=["Management"])
+config_router = APIRouter(tags=["Configuration"])
+
 log = logging.getLogger(__name__)
 
 
@@ -135,3 +140,24 @@ async def show_prefixes(
             g.add((bn, VANN.preferredNamespaceUri, Literal(namespace)))
         content = io.BytesIO(g.serialize(format=mediatype_str, encoding="utf-8"))
     return StreamingResponse(content=content, media_type=mediatype_str)
+
+
+@config_router.post("/configure-endpoints", summary="Configuration")
+async def submit_config(
+    config: RootModel = Body(..., examples=[configure_endpoings_example])
+):
+    try:
+        create_endpoint_rdf(config.model_dump())
+        return {
+            "message": f"Configuration received successfully. {len(config.routes)} routes processed."
+        }
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@config_router.get("/configure-endpoints")
+async def open_config_page():
+    """Redirects to the endpoint configuration page"""
+    return Response(
+        status_code=302, headers={"Location": "/static/endpoint_config.html"}
+    )
