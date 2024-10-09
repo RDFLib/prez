@@ -1,15 +1,14 @@
 from os import environ
 from pathlib import Path
-from typing import Optional, List, Tuple
-from typing import Union, Any, Dict
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import toml
 from pydantic import field_validator
 from pydantic_settings import BaseSettings
-from rdflib import URIRef, DCTERMS, RDFS, SDO
+from rdflib import DCTERMS, RDFS, SDO, URIRef
 from rdflib.namespace import SKOS
 
-from prez.reference_data.prez_ns import REG, EP
+from prez.reference_data.prez_ns import EP, REG
 
 
 class Settings(BaseSettings):
@@ -40,19 +39,25 @@ class Settings(BaseSettings):
     order_lists_by_label: bool = True
     listing_count_limit: int = 100
     search_count_limit: int = 10
-    label_predicates: Optional[List[URIRef]] = [
+    label_predicates: list = [
         SKOS.prefLabel,
         DCTERMS.title,
         RDFS.label,
         SDO.name,
     ]
-    description_predicates: Optional[List[URIRef]] = [
+    description_predicates: list = [
         SKOS.definition,
         DCTERMS.description,
         SDO.description,
     ]
-    provenance_predicates: Optional[List[URIRef]] = [DCTERMS.provenance]
-    other_predicates: Optional[List[URIRef]] = [SDO.color, REG.status]
+    provenance_predicates: list = [DCTERMS.provenance]
+    search_predicates: list = [
+        RDFS.label,
+        SKOS.prefLabel,
+        SDO.name,
+        DCTERMS.title,
+    ]
+    other_predicates: list = [SDO.color, REG.status]
     sparql_repo_type: str = "remote"
     sparql_timeout: int = 30
     log_level: str = "INFO"
@@ -66,12 +71,6 @@ class Settings(BaseSettings):
     prez_contact: Optional[Dict[str, Union[str, Any]]] = None
     disable_prefix_generation: bool = False
     default_language: str = "en"
-    default_search_predicates: Optional[List[URIRef]] = [
-        RDFS.label,
-        SKOS.prefLabel,
-        SDO.name,
-        DCTERMS.title,
-    ]
     local_rdf_dir: str = "rdf"
     endpoint_structure: Optional[Tuple[str, ...]] = ("catalogs", "collections", "items")
     system_endpoints: Optional[List[URIRef]] = [
@@ -113,6 +112,23 @@ class Settings(BaseSettings):
                 raise RuntimeError(
                     "PREZ_VERSION not set, and cannot find a pyproject.toml to extract the version."
                 )
+
+    @field_validator(
+        "label_predicates",
+        "description_predicates",
+        "provenance_predicates",
+        "search_predicates",
+        "other_predicates",
+    )
+    def validate_predicates(cls, v):
+        try:
+            v = [URIRef(predicate) for predicate in v]
+        except ValueError as e:
+            raise ValueError(
+                "Could not parse predicates. predicates must be valid URIs no prefixes allowed "
+                f"original message: {e}"
+            )
+        return v
 
 
 settings = Settings()
