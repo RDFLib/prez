@@ -108,8 +108,18 @@ def a_catprez_catalog_link(client):
 
 
 @pytest.fixture()
-def a_resource_link(client, a_catprez_catalog_link):
-    r = client.get(a_catprez_catalog_link)
+def a_dataset_link(client, a_catprez_catalog_link):
+    r = client.get(f"{a_catprez_catalog_link}/collections")
+    g = Graph().parse(data=r.text)
+    links = g.objects(subject=None, predicate=URIRef(f"https://prez.dev/link"))
+    for link in links:
+        if link != a_catprez_catalog_link:
+            return link
+
+
+@pytest.fixture()
+def a_resource_link(client, a_dataset_link):
+    r = client.get(f"{a_dataset_link}/items")
     g = Graph().parse(data=r.text)
     links = g.objects(subject=None, predicate=URIRef(f"https://prez.dev/link"))
     for link in links:

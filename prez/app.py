@@ -185,7 +185,11 @@ def assemble_app(
         app.include_router(sparql_router)
     if _settings.configuration_mode:
         app.include_router(config_router)
-        app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
+        app.mount(
+            "/static",
+            StaticFiles(directory=Path(__file__).parent / "static"),
+            name="static",
+        )
     if _settings.enable_ogc_features:
         app.mount(
             "/catalogs/{catalogId}/collections/{recordsCollectionId}/features",

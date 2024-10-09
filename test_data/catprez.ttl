@@ -12,11 +12,11 @@ ex:CatalogOne a dcat:Catalog ;
 
 ex:DCATDataset a dcat:Dataset ;
     rdfs:label "DCAT Resource" ;
-    dcterms:hasPart ex:RDFResource ;
+    dcterms:hasPart ex:DCATResource ;
     ex:property "DCAT Resource property"
 .
 
-ex:RDFResource a rdf:Resource ;
+ex:DCATResource a dcat:Resource ;
     rdfs:label "RDF Resource" ;
     ex:property "RDF resource property" ;
 .
@@ -29,11 +29,11 @@ ex:CatalogTwo a dcat:Catalog ;
 
 ex:DCATDatasetTwo a dcat:Dataset ;
     rdfs:label "rightful" ;
-    dcterms:hasPart ex:RDFResourceTwo ;
+    dcterms:hasPart ex:DCATResourceTwo ;
     ex:property "exposure"
 .
 
-ex:RDFResourceTwo a rdf:Resource ;
+ex:DCATResourceTwo a dcat:Resource ;
     rdfs:label "salty" ;
     ex:property "proficient" ;
 .

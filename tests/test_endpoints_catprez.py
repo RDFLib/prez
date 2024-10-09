@@ -39,3 +39,14 @@ def test_lower_level_listing_anot(client, a_catprez_catalog_link):
         DCAT.Dataset,
     )
     assert next(response_graph.triples(expected_response))
+
+
+def test_dcat_record(client, a_resource_link):
+    r = client.get(f"{a_resource_link}?_mediatype=text/turtle")
+    response_graph = Graph().parse(data=r.text)
+    expected_response = (
+        URIRef("https://example.com/DCATResource"),
+        RDF.type,
+        DCAT.Resource,
+    )
+    assert next(response_graph.triples(expected_response))
