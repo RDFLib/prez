@@ -6,34 +6,22 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
 ex:CatalogOne a dcat:Catalog ;
     rdfs:label "Catalog One" ;
-    dcterms:hasPart ex:DCATDataset ;
+    dcterms:hasPart ex:DCATResource ;
     ex:property "Catalog property" ;
 .
 
-ex:DCATDataset a dcat:Dataset ;
+ex:DCATResource a dcat:Resource ;
     rdfs:label "DCAT Resource" ;
-    dcterms:hasPart ex:RDFResource ;
     ex:property "DCAT Resource property"
-.
-
-ex:RDFResource a rdf:Resource ;
-    rdfs:label "RDF Resource" ;
-    ex:property "RDF resource property" ;
 .
 
 ex:CatalogTwo a dcat:Catalog ;
     rdfs:label "amazing catalog" ;
-    dcterms:hasPart ex:DCATDatasetTwo ;
+    dcterms:hasPart ex:DCATResourceTwo ;
     ex:property "complete" ;
 .
 
-ex:DCATDatasetTwo a dcat:Dataset ;
+ex:DCATResourceTwo a dcat:Resource ;
     rdfs:label "rightful" ;
-    dcterms:hasPart ex:RDFResourceTwo ;
     ex:property "exposure"
-.
-
-ex:RDFResourceTwo a rdf:Resource ;
-    rdfs:label "salty" ;
-    ex:property "proficient" ;
 .
