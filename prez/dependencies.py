@@ -117,11 +117,8 @@ async def load_system_data_to_oxigraph(store: Store):
     """
     Loads all the data from the local data directory into the local SPARQL endpoint
     """
-    # TODO refactor to use the local files directly
-    for f in (Path(__file__).parent / "reference_data/profiles").glob("*.ttl"):
-        prof_bytes = Graph().parse(f).serialize(format="nt", encoding="utf-8")
-        # profiles_bytes = profiles_graph_cache.default_context.serialize(format="nt", encoding="utf-8")
-        store.load(prof_bytes, "application/n-triples")
+    profiles_bytes = profiles_graph_cache.serialize(format="nt", encoding="utf-8")
+    store.load(profiles_bytes, "application/n-triples")
 
     endpoints_bytes = endpoints_graph_cache.serialize(format="nt", encoding="utf-8")
     store.load(endpoints_bytes, "application/n-triples")
