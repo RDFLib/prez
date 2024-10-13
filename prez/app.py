@@ -189,7 +189,7 @@ def assemble_app(
         app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
     if _settings.enable_ogc_features:
         app.mount(
-            "/catalogs/{catalogId}/collections/{recordsCollectionId}/features",
+            _settings.ogc_features_mount_path,
             features_subapi,
         )
     app.include_router(base_prez_router)
