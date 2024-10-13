@@ -25,7 +25,7 @@ from prez.exceptions.model_exceptions import (
     URINotFoundException,
     InvalidSPARQLQueryException,
     PrefixNotFoundException,
-    NoProfilesException,
+    NoProfilesException, NoEndpointNodeshapeException,
 )
 from prez.models.ogc_features import generate_landing_page_links, OGCFeaturesLandingPage
 from prez.models.query_params import QueryParams
@@ -41,7 +41,7 @@ from prez.services.exception_catchers import (
     catch_uri_not_found_exception,
     catch_invalid_sparql_query,
     catch_prefix_not_found_exception,
-    catch_no_profiles_exception,
+    catch_no_profiles_exception, catch_no_endpoint_nodeshape_exception,
 )
 from prez.services.listings import ogc_features_listing_function, generate_link_headers
 from prez.services.objects import ogc_features_object_function
@@ -61,6 +61,7 @@ features_subapi = FastAPI(
         URINotFoundException: catch_uri_not_found_exception,
         PrefixNotFoundException: catch_prefix_not_found_exception,
         InvalidSPARQLQueryException: catch_invalid_sparql_query,
+        NoEndpointNodeshapeException: catch_no_endpoint_nodeshape_exception,
     },
 )
 features_subapi.include_router(conformance_router)

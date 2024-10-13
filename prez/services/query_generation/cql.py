@@ -217,6 +217,8 @@ class CQLParser:
         if not val:  # then should be an IRI
             val = args[1].get("@id")
             value = IRI(value=val)
+        elif val.startswith("http"):  # hack
+            value = IRI(value=val)
         elif isinstance(val, str):  # literal string
             value = RDFLiteral(value=val)
         elif isinstance(val, (int, float)):  # literal numeric

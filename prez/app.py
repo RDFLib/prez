@@ -28,7 +28,7 @@ from prez.exceptions.model_exceptions import (
     URINotFoundException,
     NoProfilesException,
     InvalidSPARQLQueryException,
-    PrefixNotFoundException,
+    PrefixNotFoundException, NoEndpointNodeshapeException,
 )
 from prez.repositories import RemoteSparqlRepo, PyoxigraphRepo, OxrdflibRepo
 from prez.routers.custom_endpoints import create_dynamic_router
@@ -54,7 +54,7 @@ from prez.services.exception_catchers import (
     catch_uri_not_found_exception,
     catch_no_profiles_exception,
     catch_invalid_sparql_query,
-    catch_prefix_not_found_exception,
+    catch_prefix_not_found_exception, catch_no_endpoint_nodeshape_exception,
 )
 from prez.services.generate_profiles import create_profiles_graph
 from prez.services.prez_logging import setup_logger
@@ -174,6 +174,7 @@ def assemble_app(
             PrefixNotFoundException: catch_prefix_not_found_exception,
             NoProfilesException: catch_no_profiles_exception,
             InvalidSPARQLQueryException: catch_invalid_sparql_query,
+            NoEndpointNodeshapeException: catch_no_endpoint_nodeshape_exception,
         },
         **kwargs
     )
