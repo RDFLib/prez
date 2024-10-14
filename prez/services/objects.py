@@ -1,10 +1,11 @@
 import io
 import json
 import logging
+import re
 import time
 from urllib.parse import urlencode
 
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import PlainTextResponse, RedirectResponse
 from rdf2geojson import convert
 from rdflib import RDF, URIRef, RDFS
 from rdflib.namespace import GEO
@@ -89,6 +90,16 @@ async def object_function(
     query_start_time = time.time()
     item_graph, _ = await data_repo.send_queries([query], [])
     log.debug(f"Query time: {time.time() - query_start_time}")
+    if settings.prez_ui_url:
+        # If HTML or no specific media type requested
+        if pmts.requested_mediatypes[0][0] in ('text/html', '*/*'):
+            item_uri = URIRef(profile_nodeshape.focus_node.value)
+            await add_prez_links(item_graph, data_repo, endpoint_structure, [item_uri])
+            prez_link = item_graph.value(subject=item_uri, predicate=URIRef("https://prez.dev/link"), any=True)
+            # TODO: 404
+            if prez_link:
+                prez_ui_url = re.sub(r'/+$', '', settings.prez_ui_url)
+                return RedirectResponse(prez_ui_url + str(prez_link))
     if "anot+" in pmts.selected["mediatype"]:
         await add_prez_links(item_graph, data_repo, endpoint_structure)
     return await return_from_graph(
