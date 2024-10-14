@@ -101,7 +101,7 @@ async def object_function(
             if prez_link:
                 return RedirectResponse(prez_ui_url + str(prez_link))
             else:
-                return RedirectResponse(prez_ui_url + '/object?uri=' + urllib.parse.quote_plus(item_uri))
+                return RedirectResponse(prez_ui_url + '/404?uri=' + urllib.parse.quote_plus(item_uri))
     if "anot+" in pmts.selected["mediatype"]:
         await add_prez_links(item_graph, data_repo, endpoint_structure)
     return await return_from_graph(
