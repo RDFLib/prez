@@ -7,7 +7,7 @@ from prez.exceptions.model_exceptions import (
     URINotFoundException,
     NoProfilesException,
     InvalidSPARQLQueryException,
-    PrefixNotFoundException,
+    PrefixNotFoundException, NoEndpointNodeshapeException,
 )
 
 
@@ -69,6 +69,18 @@ async def catch_no_profiles_exception(request: Request, exc: NoProfilesException
 
 async def catch_invalid_sparql_query(
     request: Request, exc: InvalidSPARQLQueryException
+):
+    return JSONResponse(
+        status_code=400,
+        content={
+            "error": "Bad Request",
+            "detail": exc.message,
+        },
+    )
+
+
+async def catch_no_endpoint_nodeshape_exception(
+    request: Request, exc: NoEndpointNodeshapeException
 ):
     return JSONResponse(
         status_code=400,

@@ -24,6 +24,7 @@ from prez.enums import (
     JSONMediaType,
     GeoJSONMediaType,
 )
+from prez.exceptions.model_exceptions import NoEndpointNodeshapeException
 from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import ALTREXT, ONT, EP, OGCE, OGCFEAT
 from prez.repositories import PyoxigraphRepo, RemoteSparqlRepo, OxrdflibRepo, Repo
@@ -402,10 +403,7 @@ async def get_endpoint_nodeshapes(
         )
         return ns
     else:
-        raise ValueError(
-            f"No relevant nodeshape found for the given endpoint {ep_uri}, hierarchy level "
-            f"{hierarchy_level}, and parent URI"
-        )
+        raise NoEndpointNodeshapeException(ep_uri, hierarchy_level)
 
 
 async def get_negotiated_pmts(

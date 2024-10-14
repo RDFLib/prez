@@ -57,3 +57,17 @@ class InvalidSPARQLQueryException(Exception):
     def __init__(self, error: str):
         self.message = f"Invalid SPARQL query: {error}"
         super().__init__(self.message)
+
+
+class NoEndpointNodeshapeException(Exception):
+    """
+    Raised when no endpoint nodeshape can be identified for the given classes/relations.
+    """
+
+    def __init__(self, ep_uri: str, hierarchy_level: int):
+        self.message = (
+            f"No relevant nodeshape found for the given endpoint {ep_uri}, hierarchy level "
+            f"{hierarchy_level}, and parent URI"
+        )
+        super().__init__(self.message)
+

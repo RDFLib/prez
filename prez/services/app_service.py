@@ -159,9 +159,9 @@ async def generate_prefixes(repo: Repo):
 async def _add_prefixes_from_graph(g):
     i = 0
     for i, (s, prefix) in enumerate(
-        g.subject_objects(
-            predicate=URIRef("http://purl.org/vocab/vann/preferredNamespacePrefix")
-        )
+            g.subject_objects(
+                predicate=URIRef("http://purl.org/vocab/vann/preferredNamespacePrefix")
+            )
     ):
         namespace = g.value(
             s, URIRef("http://purl.org/vocab/vann/preferredNamespaceUri")
@@ -174,8 +174,19 @@ async def create_endpoints_graph(app_state):
     endpoints_root = Path(__file__).parent.parent / "reference_data/endpoints"
     # OGC Features endpoints
     if app_state.settings.enable_ogc_features:
+        features_g = Graph()
+        updated_hl_g = Graph()
         for f in (endpoints_root / "features").glob("*.ttl"):
-            endpoints_graph_cache.parse(f)
+            features_g.parse(f)
+        segments = [seg for seg in app_state.settings.ogc_features_mount_path.strip('/').split('/') if seg.startswith("{")]
+        mount_delta = len(segments)
+        if mount_delta > 0:
+            for s, p, o in features_g.triples((None, ONT.hierarchyLevel, None)):
+                new_o = Literal(int(o) + mount_delta)
+                features_g.remove((s, p, o))
+                updated_hl_g.add((s, p, new_o))
+        endpoints_graph_cache.__iadd__(features_g)
+        endpoints_graph_cache.__iadd__(updated_hl_g)
     # Custom data endpoints
     if app_state.settings.custom_endpoints:
         # first try remote, if endpoints are found, use these

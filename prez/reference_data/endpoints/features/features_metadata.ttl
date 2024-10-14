@@ -27,10 +27,10 @@ ogcfeat:feature
 
 ogcfeat:queryables-global
     a ont:ListingEndpoint ;
-    ont:relevantShapes ex:FeatureCollections ;
+    ont:relevantShapes ex:QueryablesGlobal ;
 .
 
 ogcfeat:queryables-local
     a ont:ListingEndpoint ;
-    ont:relevantShapes ex:Feature ;
+    ont:relevantShapes ex:QueryablesLocal ;
 .

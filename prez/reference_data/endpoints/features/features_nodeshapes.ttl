@@ -15,7 +15,7 @@ ex:FeatureCollections
     sh:property [ sh:path  void:inDataset ;
                 sh:class dcat:Dataset ; ] ;
     sh:targetClass geo:FeatureCollection ;
-    ont:hierarchyLevel 3 .
+    ont:hierarchyLevel 1 .
 
 ex:Feature
     a                  sh:NodeShape ;
@@ -24,14 +24,20 @@ ex:Feature
     sh:property        [ sh:class dcat:Dataset ;
                         sh:path ( [ sh:inversePath rdfs:member ] void:inDataset ) ] ;
     sh:targetClass     geo:Feature ;
-    ont:hierarchyLevel 4 .
+    ont:hierarchyLevel 2 .
 
 ex:Object
     a                  sh:NodeShape ;
-    ont:hierarchyLevel 3 .
+    ont:hierarchyLevel 1 .
 
-ex:Queryables
+ex:QueryablesGlobal
     a sh:NodeShape ;
     sh:targetClass prez:Queryable ;
-    ont:hierarchyLevel 3 , 5
+    ont:hierarchyLevel 1 ;
+.
+
+ex:QueryablesLocal
+    a sh:NodeShape ;
+    sh:targetClass prez:Queryable ;
+    ont:hierarchyLevel 2 ;
 .
