@@ -3,6 +3,7 @@ import json
 import logging
 import re
 import time
+import urllib.parse
 from urllib.parse import urlencode
 
 from fastapi.responses import PlainTextResponse, RedirectResponse
@@ -96,10 +97,11 @@ async def object_function(
             item_uri = URIRef(profile_nodeshape.focus_node.value)
             await add_prez_links(item_graph, data_repo, endpoint_structure, [item_uri])
             prez_link = item_graph.value(subject=item_uri, predicate=URIRef("https://prez.dev/link"), any=True)
-            # TODO: 404
+            prez_ui_url = re.sub(r'/+$', '', settings.prez_ui_url)
             if prez_link:
-                prez_ui_url = re.sub(r'/+$', '', settings.prez_ui_url)
                 return RedirectResponse(prez_ui_url + str(prez_link))
+            else:
+                return RedirectResponse(prez_ui_url + '/object?uri=' + urllib.parse.quote_plus(item_uri))
     if "anot+" in pmts.selected["mediatype"]:
         await add_prez_links(item_graph, data_repo, endpoint_structure)
     return await return_from_graph(
