@@ -1,20 +1,49 @@
 import logging
+import sys
 
-from rdflib import Namespace
-from rdflib.namespace import RDF, RDFS
-from sparql_grammar_pydantic import (IRI, CollectionPath, ConstructQuery,
-                                     ConstructTemplate, ConstructTriples,
-                                     GraphNodePath, GraphTerm,
-                                     GroupGraphPattern, GroupGraphPatternSub,
-                                     ObjectListPath, ObjectPath,
-                                     PathAlternative, PathElt,
-                                     PathEltOrInverse, PathPrimary,
-                                     PathSequence, PropertyListPath,
-                                     PropertyListPathNotEmpty, SG_Path,
-                                     SolutionModifier, TriplesBlock,
-                                     TriplesNodePath, TriplesSameSubject,
-                                     TriplesSameSubjectPath, Var, VarOrTerm,
-                                     VerbPath, WhereClause)
+from rdflib import Namespace, URIRef
+from rdflib.namespace import RDF
+from sparql_grammar_pydantic import (
+    IRI,
+    BuiltInCall,
+    CollectionPath,
+    ConstructQuery,
+    ConstructTemplate,
+    ConstructTriples,
+    Expression,
+    GraphNodePath,
+    GraphTerm,
+    GroupGraphPattern,
+    GroupGraphPatternSub,
+    LimitClause,
+    LimitOffsetClauses,
+    ObjectListPath,
+    ObjectPath,
+    OffsetClause,
+    OrderClause,
+    OrderCondition,
+    PathAlternative,
+    PathElt,
+    PathEltOrInverse,
+    PathPrimary,
+    PathSequence,
+    PrimaryExpression,
+    PropertyListPath,
+    PropertyListPathNotEmpty,
+    RDFLiteral,
+    SelectClause,
+    SG_Path,
+    SolutionModifier,
+    SubSelect,
+    TriplesBlock,
+    TriplesNodePath,
+    TriplesSameSubject,
+    TriplesSameSubjectPath,
+    Var,
+    VarOrTerm,
+    VerbPath,
+    WhereClause,
+)
 
 from prez.config import settings
 from prez.reference_data.prez_ns import PREZ
@@ -23,14 +52,29 @@ logger = logging.getLogger(__name__)
 
 
 class SearchQueryFusekiFTS:
-    """Full text search query generation for Fuseki FTS Index
+    """Full-text search query generation for Fuseki FTS Index
 
     generates a query of the form
 
-        select ?focus_node ?weight ?match ?g ?pred
-        where {
-            (?focus_node ?weight ?match ?g ?pred) text:query ( <search_predicates> "<search_term>")
+    .. code:: sparql
+
+        construct {
+            ?hashID <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://prez.dev/SearchResult> .
+            ?hashID <https://prez.dev/searchResultURI> ?focus_node .
+            ?hashID <https://prez.dev/searchResultMatch> ?match .
+            ?hashID <https://prez.dev/searchResultPredicate> ?pred .
+            ?hashID <https://prez.dev/searchResultWeight> ?weight
         }
+        where {
+            select ?focus_node ?pred ?match ?weight (URI(CONCAT("urn:hash:", SHA256(CONCAT(STR(?focus_node), STR(?pred), STR(?match), STR(?weight))))) as ?hashID)
+            where {
+                (?focus_node ?weight ?match ?g ?pred) text:query ( <search_predicates> "<search_term>")
+            }
+        }
+        order by desc(?weight)
+        limit <limit>
+        offset <offset>
+
     """
 
     def __init__(
@@ -38,10 +82,16 @@ class SearchQueryFusekiFTS:
         term: str,
         limit: int,
         offset: int,
-        predicates: list[str] = None,
+        predicates: list[URIRef] = None,
     ):
+        """Initialize a full text search SPARQL query
 
-        limit += 1  # increase the limit by one so we know if there are further pages of results.
+        :param term: the search term
+        :param limit: sparql limit directive
+        :param offset: sparql offset directive
+        :param predicates: a list of indexed predicates to search on.
+        """
+        limit += 1  # increase the limit by one, so we know if there are further pages of results.
 
         sr_uri: Var = Var(value="focus_node")
         weight: Var = Var(value="weight")
@@ -76,87 +126,183 @@ class SearchQueryFusekiFTS:
             ),
             where_clause=WhereClause(
                 group_graph_pattern=GroupGraphPattern(
-                    content=GroupGraphPatternSub(
-                        triples_block=TriplesBlock(
-                            triples=TriplesSameSubjectPath(
-                                content=(
-                                    TriplesNodePath(
-                                        coll_path_or_bnpl_path=CollectionPath(
-                                            graphnodepath_list=[
-                                                GraphNodePath(
-                                                    varorterm_or_triplesnodepath=VarOrTerm(
-                                                        varorterm=sr_uri
-                                                    )
-                                                ),
-                                                GraphNodePath(
-                                                    varorterm_or_triplesnodepath=VarOrTerm(
-                                                        varorterm=weight
-                                                    )
-                                                ),
-                                                GraphNodePath(
-                                                    varorterm_or_triplesnodepath=VarOrTerm(
-                                                        varorterm=match
-                                                    )
-                                                ),
-                                                GraphNodePath(
-                                                    varorterm_or_triplesnodepath=VarOrTerm(
-                                                        varorterm=g
-                                                    )
-                                                ),
-                                                GraphNodePath(
-                                                    varorterm_or_triplesnodepath=VarOrTerm(
-                                                        varorterm=pred
-                                                    )
-                                                ),
-                                            ]
-                                        )
-                                    ),
-                                    PropertyListPath(
-                                        plpne=PropertyListPathNotEmpty(
-                                            first_pair=(
-                                                VerbPath(
-                                                    path=SG_Path(
-                                                        path_alternative=PathAlternative(
-                                                            sequence_paths=[
-                                                                PathSequence(
-                                                                    list_path_elt_or_inverse=[
-                                                                        PathEltOrInverse(
-                                                                            path_elt=PathElt(
-                                                                                path_primary=PathPrimary(
-                                                                                    value=text_query
+                    content=SubSelect(
+                        # SELECT ?focus_node ?predicate ?match ?weight (URI(CONCAT("urn:hash:",
+                        #   SHA256(CONCAT(STR(?focus_node), STR(?predicate), STR(?match), STR(?weight))))) AS ?hashID)
+                        select_clause=SelectClause(
+                            variables_or_all=[
+                                sr_uri,
+                                pred,
+                                match,
+                                weight,
+                                (
+                                    Expression.from_primary_expression(
+                                        PrimaryExpression(
+                                            content=BuiltInCall.create_with_one_expr(
+                                                "URI",
+                                                PrimaryExpression(
+                                                    content=BuiltInCall.create_with_n_expr(
+                                                        "CONCAT",
+                                                        [
+                                                            PrimaryExpression(
+                                                                content=RDFLiteral(
+                                                                    value="urn:hash:"
+                                                                )
+                                                            ),
+                                                            PrimaryExpression(
+                                                                content=BuiltInCall.create_with_one_expr(
+                                                                    "SHA256",
+                                                                    PrimaryExpression(
+                                                                        content=BuiltInCall.create_with_n_expr(
+                                                                            "CONCAT",
+                                                                            [
+                                                                                PrimaryExpression(
+                                                                                    content=b
                                                                                 )
-                                                                            )
+                                                                                for b in [
+                                                                                    BuiltInCall.create_with_one_expr(
+                                                                                        "STR",
+                                                                                        PrimaryExpression(
+                                                                                            content=e
+                                                                                        ),
+                                                                                    )
+                                                                                    for e in [
+                                                                                        sr_uri,
+                                                                                        pred,
+                                                                                        match,
+                                                                                        weight,
+                                                                                    ]
+                                                                                ]
+                                                                            ],
                                                                         )
-                                                                    ]
+                                                                    ),
                                                                 )
-                                                            ]
-                                                        )
+                                                            ),
+                                                        ],
                                                     )
-                                                ),
-                                                # TODO: finish implementation
-                                                ObjectListPath(
-                                                    object_paths=[ObjectPath(
-                                                        graph_node_path=GraphNodePath(
-                                                            varorterm_or_triplesnodepath=VarOrTerm(
-                                                                varorterm=GraphTerm(
-                                                                    content=IRI(
-                                                                        value=RDFS.label
-                                                                    )
-                                                                )
-                                                            )
-                                                        )
-                                                    )]
                                                 ),
                                             )
                                         )
                                     ),
+                                    hashid,
+                                ),
+                            ]
+                        ),
+                        where_clause=WhereClause(
+                            group_graph_pattern=GroupGraphPattern(
+                                content=GroupGraphPatternSub(
+                                    triples_block=TriplesBlock(
+                                        triples=TriplesSameSubjectPath(
+                                            content=(
+                                                TriplesNodePath(
+                                                    coll_path_or_bnpl_path=CollectionPath(
+                                                        graphnodepath_list=[
+                                                            GraphNodePath(
+                                                                varorterm_or_triplesnodepath=VarOrTerm(
+                                                                    varorterm=sr_uri
+                                                                )
+                                                            ),
+                                                            GraphNodePath(
+                                                                varorterm_or_triplesnodepath=VarOrTerm(
+                                                                    varorterm=weight
+                                                                )
+                                                            ),
+                                                            GraphNodePath(
+                                                                varorterm_or_triplesnodepath=VarOrTerm(
+                                                                    varorterm=match
+                                                                )
+                                                            ),
+                                                            GraphNodePath(
+                                                                varorterm_or_triplesnodepath=VarOrTerm(
+                                                                    varorterm=g
+                                                                )
+                                                            ),
+                                                            GraphNodePath(
+                                                                varorterm_or_triplesnodepath=VarOrTerm(
+                                                                    varorterm=pred
+                                                                )
+                                                            ),
+                                                        ]
+                                                    )
+                                                ),
+                                                PropertyListPath(
+                                                    plpne=PropertyListPathNotEmpty(
+                                                        first_pair=(
+                                                            VerbPath(
+                                                                path=SG_Path(
+                                                                    path_alternative=PathAlternative(
+                                                                        sequence_paths=[
+                                                                            PathSequence(
+                                                                                list_path_elt_or_inverse=[
+                                                                                    PathEltOrInverse(
+                                                                                        path_elt=PathElt(
+                                                                                            path_primary=PathPrimary(
+                                                                                                value=text_query
+                                                                                            )
+                                                                                        )
+                                                                                    )
+                                                                                ]
+                                                                            )
+                                                                        ]
+                                                                    )
+                                                                )
+                                                            ),
+                                                            ObjectListPath(
+                                                                object_paths=[
+                                                                    ObjectPath(
+                                                                        graph_node_path=GraphNodePath(
+                                                                            varorterm_or_triplesnodepath=TriplesNodePath(
+                                                                                coll_path_or_bnpl_path=CollectionPath(
+                                                                                    graphnodepath_list=[
+                                                                                        GraphNodePath(
+                                                                                            varorterm_or_triplesnodepath=VarOrTerm(
+                                                                                                varorterm=GraphTerm(
+                                                                                                    content=IRI(
+                                                                                                        value=predicate
+                                                                                                    )
+                                                                                                )
+                                                                                            )
+                                                                                        )
+                                                                                        for predicate in predicates
+                                                                                    ]
+                                                                                    + [
+                                                                                        GraphNodePath(
+                                                                                            varorterm_or_triplesnodepath=VarOrTerm(
+                                                                                                varorterm=GraphTerm(
+                                                                                                    content=RDFLiteral(
+                                                                                                        value=term
+                                                                                                    )
+                                                                                                )
+                                                                                            )
+                                                                                        )
+                                                                                    ]
+                                                                                )
+                                                                            )
+                                                                        )
+                                                                    )
+                                                                ]
+                                                            ),
+                                                        )
+                                                    )
+                                                ),
+                                            )
+                                        )
+                                    )
                                 )
                             )
-                        )
+                        ),
                     )
                 )
             ),
-            solution_modifier=SolutionModifier(),
+            solution_modifier=SolutionModifier(
+                order_by=OrderClause(
+                    conditions=[OrderCondition(var=weight, direction="DESC")]
+                ),
+                limit_offset=LimitOffsetClauses(
+                    limit_clause=LimitClause(limit=limit),
+                    offset_clause=OffsetClause(offset=offset),
+                ),
+            ),
         )
         logger.debug(f"constructed Fuseki FTS query:\n{query}")
 
@@ -179,6 +325,5 @@ class SearchQueryFusekiFTS:
 
 if __name__ == "__main__":
     logger.setLevel(logging.DEBUG)
-    fts_query = SearchQueryFusekiFTS(
-        term="test", limit=10, offset=0, predicates=[IRI(value=RDFS.label)]
-    )
+    logger.addHandler(logging.StreamHandler(sys.stdout))
+    fts_query = SearchQueryFusekiFTS(term="test", limit=10, offset=0, predicates=[URIRef("http://example.org/searchFields")])
