@@ -8,7 +8,7 @@ from pydantic_settings import BaseSettings
 from rdflib import DCTERMS, RDFS, SDO, URIRef
 from rdflib.namespace import SKOS
 
-from prez.enums import FtsVariant
+from prez.enums import SearchMethod
 from prez.reference_data.prez_ns import EP, REG
 
 
@@ -86,7 +86,7 @@ class Settings(BaseSettings):
     temporal_predicate: Optional[URIRef] = SDO.temporal
     endpoint_to_template_query_filename: Optional[Dict[str, str]] = {}
     prez_ui_url: Optional[str] = None
-    fts_variant: FtsVariant = FtsVariant.default
+    search_method: SearchMethod = SearchMethod.default
 
     @field_validator("prez_version")
     @classmethod

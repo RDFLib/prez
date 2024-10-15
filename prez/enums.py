@@ -35,7 +35,7 @@ class OrderByDirectionEnum(Enum):
 class FilterLangEnum(Enum):
     CQL_JSON = "cql2-json"
 
-class FtsVariant(Enum):
-    """Full Text Search Variants"""
-    default = 0
-    fuseki = 1
+class SearchMethod(str, Enum):
+    """Search Methods"""
+    default = "default"
+    fts_fuseki = "fts_fuseki"

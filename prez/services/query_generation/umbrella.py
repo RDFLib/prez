@@ -29,7 +29,8 @@ from prez.services.query_generation.bbox_filter import generate_bbox_filter
 from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQuery
 from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.datetime_filter import generate_datetime_filter
-from prez.services.query_generation.search import SearchQueryRegex
+from prez.services.query_generation.search_default import SearchQueryRegex
+from prez.services.query_generation.search_fts import SearchQueryFusekiFTS
 from prez.services.query_generation.shacl import NodeShape
 
 
@@ -173,7 +174,7 @@ class PrezQueryConstructor(ConstructQuery):
 def merge_listing_query_grammar_inputs(
     cql_parser: Optional[CQLParser] = None,
     endpoint_nodeshape: Optional[NodeShape] = None,
-    search_query: Optional[SearchQueryRegex] = None,
+    search_query: Optional[SearchQueryRegex | SearchQueryFusekiFTS] = None,
     concept_hierarchy_query: Optional[ConceptHierarchyQuery] = None,
     query_params: Optional[QueryParams] = None,
 ) -> dict:

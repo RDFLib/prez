@@ -2,7 +2,7 @@ import logging
 import sys
 
 from rdflib import Namespace, URIRef
-from rdflib.namespace import RDF
+from rdflib.namespace import RDF, RDFS
 from sparql_grammar_pydantic import (
     IRI,
     BuiltInCall,
@@ -12,9 +12,11 @@ from sparql_grammar_pydantic import (
     ConstructTriples,
     Expression,
     GraphNodePath,
+    GraphPatternNotTriples,
     GraphTerm,
     GroupGraphPattern,
     GroupGraphPatternSub,
+    GroupOrUnionGraphPattern,
     LimitClause,
     LimitOffsetClauses,
     ObjectListPath,
@@ -89,7 +91,7 @@ class SearchQueryFusekiFTS:
         :param term: the search term
         :param limit: sparql limit directive
         :param offset: sparql offset directive
-        :param predicates: a list of indexed predicates to search on.
+        :param predicates: a list of indexed predicates or text:propListProps to search on.
         """
         limit += 1  # increase the limit by one, so we know if there are further pages of results.
 
@@ -120,7 +122,7 @@ class SearchQueryFusekiFTS:
             for p, v in ct_map.items()
         ]
 
-        query = ConstructQuery(
+        self.query = ConstructQuery(
             construct_template=ConstructTemplate(
                 construct_triples=ConstructTriples.from_tss_list(construct_tss_list)
             ),
@@ -304,7 +306,7 @@ class SearchQueryFusekiFTS:
                 ),
             ),
         )
-        logger.debug(f"constructed Fuseki FTS query:\n{query}")
+        logger.debug(f"constructed Fuseki FTS query:\n{self.query}")
 
     @property
     def order_by(self):
@@ -316,14 +318,38 @@ class SearchQueryFusekiFTS:
 
     @property
     def limit(self):
-        return self.limit
+        return self.query.solution_modifier.limit_offset.limit_clause.limit
 
     @property
     def offset(self):
-        return self.offset
+        return self.query.solution_modifier.limit_offset.offset_clause.offset
+
+    @property
+    def tss_list(self):
+        return self.query.construct_template.construct_triples.to_tss_list()
+
+    @property
+    def inner_select_vars(self):
+        return (
+            self.query.where_clause.group_graph_pattern.content.select_clause.variables_or_all
+        )
+
+    @property
+    def inner_select_gpnt(self):
+        inner_ggp = (
+            self.query.where_clause.group_graph_pattern.content.where_clause.group_graph_pattern
+        )
+        return GraphPatternNotTriples(
+            content=GroupOrUnionGraphPattern(group_graph_patterns=[inner_ggp])
+        )
 
 
 if __name__ == "__main__":
     logger.setLevel(logging.DEBUG)
     logger.addHandler(logging.StreamHandler(sys.stdout))
-    fts_query = SearchQueryFusekiFTS(term="test", limit=10, offset=0, predicates=[URIRef("http://example.org/searchFields")])
+    fts_query = SearchQueryFusekiFTS(
+        term="test",
+        limit=10,
+        offset=0,
+        predicates=[RDFS.label, RDFS.comment],
+    )

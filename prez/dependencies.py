@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from prez.enums import SearchMethod
 
 import httpx
 from fastapi import Depends, Request, HTTPException
@@ -33,7 +34,8 @@ from prez.services.connegp_service import NegotiatedPMTs
 from prez.services.curie_functions import get_uri_for_curie_id
 from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQuery
 from prez.services.query_generation.cql import CQLParser
-from prez.services.query_generation.search import SearchQueryRegex
+from prez.services.query_generation.search_default import SearchQueryRegex
+from prez.services.query_generation.search_fts import SearchQueryFusekiFTS
 from prez.services.query_generation.shacl import NodeShape
 from prez.services.query_generation.sparql_escaping import escape_for_lucene_and_sparql
 
@@ -196,12 +198,23 @@ async def generate_search_query(request: Request):
         limit = int(limit) if limit else settings.search_count_limit
         offset = limit * (int(page) - 1)
 
-        return SearchQueryRegex(
-            term=escaped_term,
-            predicates=predicates,
-            limit=limit,
-            offset=offset,
-        )
+        if settings.search_method == SearchMethod.default:
+            return SearchQueryRegex(
+                term=escaped_term,
+                predicates=predicates,
+                limit=limit,
+                offset=offset,
+            )
+        elif settings.search_method == SearchMethod.fts_fuseki:
+            return SearchQueryFusekiFTS(
+                term=escaped_term,
+                predicates=predicates,
+                limit=limit,
+                offset=offset
+            )
+        else:
+            raise NotImplementedError(f"Search method {settings.search_method} not implemented")
+
 
 
 async def get_endpoint_uri_type(
