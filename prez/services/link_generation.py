@@ -25,13 +25,14 @@ from prez.services.query_generation.shacl import NodeShape
 log = logging.getLogger(__name__)
 
 
-async def add_prez_links(graph: Graph, repo: Repo, endpoint_structure):
+async def add_prez_links(graph: Graph, repo: Repo, endpoint_structure, uris: list[URIRef] | None = None):
     """
     Adds internal links to the given graph for all URIRefs that have a class and endpoint associated with them.
     """
     t_start = time.time()
     # get all URIRefs - if Prez can find a class and endpoint for them, an internal link will be generated.
-    uris = [uri for uri in graph.all_nodes() if isinstance(uri, URIRef)]
+    if uris is None:
+        uris = [uri for uri in graph.all_nodes() if isinstance(uri, URIRef)]
     uri_to_klasses = {}
     t = time.time()
     # for uri in uris:
