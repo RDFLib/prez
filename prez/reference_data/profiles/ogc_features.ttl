@@ -9,7 +9,7 @@
 @prefix shext: <http://example.com/shacl-extension#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-prez:OGCFeaturesProfile a prof:Profile ;
+prez:OGCFeaturesProfile a prof:Profile , prez:IndexProfile ;
     dcterms:description "A system profile for OGC Features conformant API" ;
     dcterms:identifier "ogcfeat"^^xsd:token ;
     dcterms:title "OGC Features Profile" ;

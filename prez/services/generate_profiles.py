@@ -18,35 +18,12 @@ async def create_profiles_graph(repo) -> Graph:
         profiles_graph_cache.parse(f)
     log.info("Prez default profiles loaded")
     remote_profiles_query = """
-        PREFIX dcat: <http://www.w3.org/ns/dcat#>
-        PREFIX geo: <http://www.opengis.net/ont/geosparql#>
         PREFIX prof: <http://www.w3.org/ns/dx/prof/>
-        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-
-        CONSTRUCT {?s ?p ?o .
-                    ?o ?p2 ?o2 .
-                    ?o2 ?p3 ?o3 .
-                    ?class ?cp ?co}
-        WHERE {?s a prof:Profile ;
-                      ?p ?o
-          OPTIONAL {?o ?p2 ?o2
-            FILTER(ISBLANK(?o))
-            OPTIONAL {?o2 ?p3 ?o3
-            FILTER(ISBLANK(?o2))}
-          }
-          OPTIONAL {
-            ?class rdfs:subClassOf dcat:Resource ;
-                ?cp ?co .
-          }
-          OPTIONAL {
-            ?class rdfs:subClassOf geo:Feature ;
-                ?cp ?co .
-          }
-          OPTIONAL {
-            ?class rdfs:subClassOf skos:Concept ;
-                ?cp ?co .
-          }
+        PREFIX prez: <https://prez.dev/>
+        
+        DESCRIBE ?prof {
+            VALUES ?prof_class { prez:ListingProfile prez:ObjectProfile prez:IndexProfile }
+            ?prof a ?prof_class
         }
         """
     g, _ = await repo.send_queries([remote_profiles_query], [])
