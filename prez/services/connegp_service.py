@@ -273,7 +273,7 @@ class NegotiatedPMTs(BaseModel):
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             PREFIX sh: <http://www.w3.org/ns/shacl#>
         
-            SELECT ?profile ?title ?class (count(?mid) as ?distance) ?req_profile ?def_profile ?format ?req_format ?def_format
+            SELECT ?profile ?title ?class (count(?mid) as ?distance) ?req_profile ?def_profile ?format ?req_format ?def_format ?alt_prof
         
             WHERE {{
               VALUES ?class {{{" ".join('<' + str(klass) + '>' for klass in self.classes)}}}
@@ -291,9 +291,10 @@ class NegotiatedPMTs(BaseModel):
                                    altr-ext:hasDefaultProfile ?profile }} AS ?def_profile)
               {self._generate_mediatype_if_statements()}
               BIND(EXISTS {{ ?profile altr-ext:hasDefaultResourceFormat ?format }} AS ?def_format)
+              BIND(?profile=<http://www.w3.org/ns/dx/connegp/altr-ext#alt-profile> AS ?alt_prof)
             }}
-            GROUP BY ?class ?profile ?req_profile ?def_profile ?format ?req_format ?def_format ?title
-            ORDER BY DESC(?req_profile) DESC(?distance) DESC(?def_profile) DESC(?req_format) DESC(?def_format)
+            GROUP BY ?class ?profile ?req_profile ?def_profile ?format ?req_format ?def_format ?title ?alt_prof
+            ORDER BY DESC(?req_profile) DESC(?distance) DESC(?def_profile) DESC(?req_format) DESC(?def_format) ASC(?alt_prof)
             """
         )
         return query
@@ -336,6 +337,7 @@ class NegotiatedPMTs(BaseModel):
                     item["format"]["value"],
                     item["req_format"]["value"],
                     item["def_format"]["value"],
+                    item["alt_prof"]["value"],
                 ]
                 for item in response[1][0][1]
             ]
@@ -350,6 +352,7 @@ class NegotiatedPMTs(BaseModel):
                 "Format",
                 "Requested Format",
                 "Default Format",
+                "Alternate Profile"
             ]
 
             # Render as a table
