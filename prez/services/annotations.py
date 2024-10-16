@@ -100,7 +100,10 @@ async def process_uncached_terms(
         rdf_queries=[annotations_query], tabular_queries=[]
     )
 
-    all_results = context_results[0] + repo_results[0] + system_results[0]
+    all_results = Graph()
+    all_results += context_results[0]
+    all_results += repo_results[0]
+    all_results += system_results[0]
 
     # Initialize subjects_map with each term having an empty set to start with
     subjects_map = {term: set() for term in terms}

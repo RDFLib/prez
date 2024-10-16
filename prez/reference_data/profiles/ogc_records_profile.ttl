@@ -16,7 +16,7 @@ PREFIX shext: <http://example.com/shacl-extension#>
 
 
 prez:OGCRecordsProfile
-    a prof:Profile ;
+    a prof:Profile , prez:IndexProfile ;
     dcterms:identifier "ogc"^^xsd:token ;
     dcterms:description "A system profile for OGC Records conformant API" ;
     dcterms:title "OGC Profile" ;
@@ -57,8 +57,7 @@ prez:OGCRecordsProfile
             sh:targetClass
                 dcat:Catalog,
                 dcat:Resource,
-                skos:Concept
-            ,
+                skos:Concept ,
                 skos:Collection,
                 rdf:Resource ;
             altr-ext:hasDefaultProfile prez:OGCItemProfile
