@@ -52,7 +52,7 @@ def generate_new_prefix(uri):
                 return
         # otherwise, remove vowels to reduce length
         proposed_prefix = "".join(
-            [c for c in to_generate_prefix_from if c not in "aeiou"]
+            [c for c in to_generate_prefix_from if c not in "aeiou!@#$%^&*()_+-=,."]
         )
         if not prefix_registered(proposed_prefix):
             prefix_graph.bind(proposed_prefix, ns)
@@ -95,6 +95,9 @@ async def get_uri_for_curie_id(curie_id: str):
     else:
         separator = settings.curie_separator
         curie = curie_id.replace(separator, ":")
-        uri = prefix_graph.namespace_manager.expand_curie(curie)
+        try:
+            uri = prefix_graph.namespace_manager.expand_curie(curie)
+        except ValueError:
+            raise
         await curie_cache.set(curie_id, uri)
         return uri

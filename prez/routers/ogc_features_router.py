@@ -160,7 +160,7 @@ async def listings_with_feature_collection(
             system_repo,
             cql_parser,
             query_params,
-            **path_params,
+            path_params,
         )
     except Exception as e:
         raise e
@@ -202,7 +202,7 @@ async def objects(
             url,
             data_repo,
             system_repo,
-            **path_params,
+            path_params,
         )
     except Exception as e:
         raise e
