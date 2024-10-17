@@ -8,7 +8,7 @@ from urllib.parse import urlencode
 
 from fastapi.responses import PlainTextResponse, RedirectResponse
 from rdf2geojson import convert
-from rdflib import RDF, URIRef, RDFS
+from rdflib import RDF, URIRef
 from rdflib.namespace import GEO
 from sparql_grammar_pydantic import TriplesSameSubject, IRI, Var, TriplesSameSubjectPath
 
@@ -129,25 +129,20 @@ async def ogc_features_object_function(
     url,
     data_repo,
     system_repo,
-    **path_params,
+    path_params,
 ):
-    collectionId = path_params.get("collectionId")
-    featureId = path_params.get("featureId")
-    if featureId:
-        feature_uri = await get_uri_for_curie_id(featureId)
-    else:
-        feature_uri = None
-    collection_uri = await get_uri_for_curie_id(collectionId)
+    collection_uri = path_params.get("collection_uri")
+    feature_uri = path_params.get("feature_uri")
     if template_query:
-        if featureId:
-            focus_uri = await get_uri_for_curie_id(featureId)
+        if feature_uri:
+            focus_uri = feature_uri
         else:
             focus_uri = collection_uri
         query = template_query.replace(
             "VALUES ?focusNode { UNDEF }", f"VALUES ?focusNode {{ {focus_uri.n3()} }}"
         )
     else:
-        if featureId is None:  # feature collection
+        if feature_uri is None:  # feature collection
             collection_iri = IRI(value=collection_uri)
             construct_tss_list = None
             tssp_list = [
@@ -156,7 +151,6 @@ async def ogc_features_object_function(
                 )
             ]
         else:  # feature
-            feature_uri = await get_uri_for_curie_id(featureId)
             feature_iri = IRI(value=feature_uri)
             triples = [
                 (feature_iri, Var(value="prop"), Var(value="val")),
@@ -180,7 +174,7 @@ async def ogc_features_object_function(
     item_graph, _ = await data_repo.send_queries([query], [])
     if len(item_graph) == 0:
         uri = feature_uri if feature_uri else collection_uri
-        raise URINotFoundException(uri)
+        raise URINotFoundException(uri=uri)
     annotations_graph = await return_annotated_rdf(item_graph, data_repo, system_repo)
     log.debug(f"Query time: {time.time() - query_start_time}")
 
@@ -188,6 +182,7 @@ async def ogc_features_object_function(
     if selected_mediatype == "application/sparql-query":
         content = io.BytesIO(query.encode("utf-8"))
     elif selected_mediatype == "application/json":
+        collectionId = get_curie_id_for_uri(collection_uri)
         collection = create_collection_json(
             collectionId, collection_uri, annotations_graph, url
         )

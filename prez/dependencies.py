@@ -24,7 +24,7 @@ from prez.enums import (
     JSONMediaType,
     GeoJSONMediaType,
 )
-from prez.exceptions.model_exceptions import NoEndpointNodeshapeException
+from prez.exceptions.model_exceptions import NoEndpointNodeshapeException, URINotFoundException
 from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import ALTREXT, ONT, EP, OGCE, OGCFEAT
 from prez.repositories import PyoxigraphRepo, RemoteSparqlRepo, OxrdflibRepo, Repo
@@ -489,7 +489,22 @@ async def get_endpoint_uri(
 async def get_ogc_features_path_params(
     request: Request,
 ):
-    return request.path_params
+    collection_id = request.path_params.get("collectionId")
+    feature_id = request.path_params.get("featureId")
+    path_params = {}
+    if feature_id:
+        try:
+            feature_uri = await get_uri_for_curie_id(feature_id)
+        except ValueError:
+            raise URINotFoundException(curie=feature_id)
+        path_params["feature_uri"] = feature_uri
+    if collection_id:
+        try:
+            collection_uri = await get_uri_for_curie_id(collection_id)
+        except ValueError:
+            raise URINotFoundException(curie=collection_id)
+        path_params["collection_uri"] = collection_uri
+    return path_params
 
 
 async def get_ogc_features_mediatype(

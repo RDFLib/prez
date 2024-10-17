@@ -32,12 +32,12 @@ ex:Object
 
 ex:QueryablesGlobal
     a sh:NodeShape ;
-    sh:targetClass prez:Queryable ;
+    sh:targetClass geo:Feature ;
     ont:hierarchyLevel 1 ;
 .
 
 ex:QueryablesLocal
     a sh:NodeShape ;
-    sh:targetClass prez:Queryable ;
+    sh:targetClass geo:Feature ;
     ont:hierarchyLevel 2 ;
 .

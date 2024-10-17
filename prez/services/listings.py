@@ -156,11 +156,11 @@ async def ogc_features_listing_function(
     system_repo,
     cql_parser,
     query_params,
-    **path_params,
+    path_params,
 ):
     count_query = None
     count = 0
-    collectionId = path_params.get("collectionId")
+    collection_uri = path_params.get("collection_uri")
     subselect_kwargs = merge_listing_query_grammar_inputs(
         endpoint_nodeshape=endpoint_nodeshape,
         cql_parser=cql_parser,
@@ -199,6 +199,7 @@ async def ogc_features_listing_function(
                 TriplesSameSubjectPath.from_spo(*innser_select_triple)
             )
             subselect_kwargs["inner_select_vars"] = [queryable_var]
+            subselect_kwargs["limit"] = 100
             construct_triple = (
                 queryable_var,
                 IRI(value=RDF.type),
@@ -211,7 +212,7 @@ async def ogc_features_listing_function(
                 **subselect_kwargs,
             ).to_string()
             queries.append(query)
-    elif not collectionId:  # list Feature Collections
+    elif not collection_uri:  # list Feature Collections
         query = PrezQueryConstructor(
             construct_tss_list=construct_tss_list,
             profile_triples=profile_nodeshape.tssp_list,
@@ -240,7 +241,6 @@ async def ogc_features_listing_function(
 
         # Features listing requires CBD of the Feature Collection as well; reuse items profile to get all props/bns to
         # depth two.
-        collection_uri = await get_uri_for_curie_id(collectionId)
         gpnt = GraphPatternNotTriples(
             content=Bind(
                 expression=Expression.from_primary_expression(
