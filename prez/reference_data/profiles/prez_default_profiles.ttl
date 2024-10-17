@@ -16,7 +16,7 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 
 <https://prez.dev/profile/prez>
-    a prof:Profile ;
+    a prof:Profile , prez:IndexProfile ;
     dcterms:identifier "prez"^^xsd:token ;
     dcterms:description "A profile for the Prez Linked Data API" ;
     dcterms:title "Prez profile" ;

@@ -48,9 +48,9 @@ class CountQuery(ConstructQuery):
     }
     WHERE {
       {
-        SELECT (COUNT(DISTINCT ?focus_node) AS ?count)
+        SELECT (COUNT(?focus_node) AS ?count)
         WHERE {
-          SELECT ?focus_node
+          SELECT DISTINCT ?focus_node
           WHERE {
             <<< original where clause >>>
           } LIMIT 101
@@ -64,7 +64,10 @@ class CountQuery(ConstructQuery):
         limit = settings.listing_count_limit
         limit_plus_one = limit + 1
         inner_ss = SubSelect(
-            select_clause=SelectClause(variables_or_all=[Var(value="focus_node")]),
+            select_clause=SelectClause(
+                variables_or_all=[Var(value="focus_node")],
+                distinct=True,
+            ),
             where_clause=original_subselect.where_clause,
             solution_modifier=SolutionModifier(
                 limit_offset=LimitOffsetClauses(
@@ -78,7 +81,6 @@ class CountQuery(ConstructQuery):
                 content=BuiltInCall(
                     other_expressions=Aggregate(
                         function_name="COUNT",
-                        distinct=True,
                         expression=Expression.from_primary_expression(
                             PrimaryExpression(content=Var(value="focus_node"))
                         ),
