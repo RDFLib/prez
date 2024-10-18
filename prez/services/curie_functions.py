@@ -1,4 +1,5 @@
 import logging
+import re
 from urllib.parse import urlparse
 
 from aiocache import caches
@@ -31,6 +32,19 @@ def namespace_registered(namespace):
         return False
 
 
+def valid_prefix(prefix: str):
+    """For turtle serialization, as per https://www.w3.org/TR/turtle/#grammar-production-PN_PREFIX"""
+    valid = True
+    PN_CHARS_BASE = r"([A-Z]|[a-z]|[\u00C0-\u00D6]|[\u00D8-\u00F6]|[\u00F8-\u02FF]|[\u0370-\u037D]|[\u037F-\u1FFF]|[\u200C-\u200D]|[\u2070-\u218F]|[\u2C00-\u2FEF]|[\u3001-\uD7FF]|[\uF900-\uFDCF]|[\uFDF0-\uFFFD]|[\U00010000-\U000EFFFF])"
+    PN_CHARS_U = rf"({PN_CHARS_BASE}|_)"
+    PN_CHARS = rf"({PN_CHARS_U}|-|[0-9]|\u00B7|[\u0300-\u036F]|[\u203F-\u2040])"
+    PN_PREFIX = rf"({PN_CHARS_BASE}(({PN_CHARS}|.)*{PN_CHARS})?)"
+    matches = re.match(PN_PREFIX, prefix)
+    if not matches:
+        valid = False
+    return valid
+
+
 def generate_new_prefix(uri):
     """
     Generates a new prefix for a uri
@@ -52,8 +66,11 @@ def generate_new_prefix(uri):
                 return
         # otherwise, remove vowels to reduce length
         proposed_prefix = "".join(
-            [c for c in to_generate_prefix_from if c not in "aeiou"]
+            [c for c in to_generate_prefix_from if c not in "aeiou!@#$%^&*()_+-=,."]
         )
+        if not valid_prefix(proposed_prefix):
+            # if we still can't get a nice prefix. use an ugly but valid one using a hash of the IRI
+            proposed_prefix = f"ns{hash(to_generate_prefix_from)}"
         if not prefix_registered(proposed_prefix):
             prefix_graph.bind(proposed_prefix, ns)
             return
@@ -95,6 +112,9 @@ async def get_uri_for_curie_id(curie_id: str):
     else:
         separator = settings.curie_separator
         curie = curie_id.replace(separator, ":")
-        uri = prefix_graph.namespace_manager.expand_curie(curie)
+        try:
+            uri = prefix_graph.namespace_manager.expand_curie(curie)
+        except ValueError:
+            raise
         await curie_cache.set(curie_id, uri)
         return uri

@@ -19,8 +19,11 @@ class URINotFoundException(Exception):
     Raised when a URI is not found in the triplestore.
     """
 
-    def __init__(self, uri: URIRef):
-        self.message = f"URI {uri} not found at endpoint {settings.sparql_endpoint}."
+    def __init__(self, uri: URIRef = None, curie: str = None):
+        if uri:
+            self.message = f"URI \"{uri}\" not found at endpoint {settings.sparql_endpoint}."
+        if curie:
+            self.message = f"URI for curie \"{curie}\" not found at endpoint {settings.sparql_endpoint}."
         super().__init__(self.message)
 
 
