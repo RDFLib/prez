@@ -1,7 +1,7 @@
 import logging
 import sys
 
-from rdflib import Namespace, URIRef
+from rdflib import Namespace
 from rdflib.namespace import RDF, RDFS
 from sparql_grammar_pydantic import (
     IRI,
@@ -84,7 +84,7 @@ class SearchQueryFusekiFTS:
         term: str,
         limit: int,
         offset: int,
-        predicates: list[URIRef] = None,
+        predicates: list[str] | None = None,
     ):
         """Initialize a full text search SPARQL query
 

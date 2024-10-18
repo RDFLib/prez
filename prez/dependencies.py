@@ -1,11 +1,10 @@
 import json
 from pathlib import Path
-from prez.enums import SearchMethod
 
 import httpx
 from fastapi import Depends, Request, HTTPException
 from pyoxigraph import Store
-from rdflib import Dataset, URIRef, Graph, SKOS, RDF
+from rdflib import Dataset, URIRef, SKOS, RDF
 from sparql_grammar_pydantic import IRI, Var
 
 from prez.cache import (
@@ -26,6 +25,7 @@ from prez.enums import (
     GeoJSONMediaType,
 )
 from prez.exceptions.model_exceptions import NoEndpointNodeshapeException, URINotFoundException
+from prez.enums import SearchMethod
 from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import ALTREXT, ONT, EP, OGCE, OGCFEAT
 from prez.repositories import PyoxigraphRepo, RemoteSparqlRepo, OxrdflibRepo, Repo
@@ -207,14 +207,12 @@ async def generate_search_query(request: Request):
             )
         elif settings.search_method == SearchMethod.fts_fuseki:
             return SearchQueryFusekiFTS(
-                term=escaped_term,
-                predicates=predicates,
-                limit=limit,
-                offset=offset
+                term=escaped_term, predicates=predicates, limit=limit, offset=offset
             )
         else:
-            raise NotImplementedError(f"Search method {settings.search_method} not implemented")
-
+            raise NotImplementedError(
+                f"Search method {settings.search_method} not implemented"
+            )
 
 
 async def get_endpoint_uri_type(
