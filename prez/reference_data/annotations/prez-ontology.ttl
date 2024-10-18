@@ -1,0 +1,43 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<http://example.com/shacl-extension#allPredicateValues> rdfs:label "All Predicate Values" .
+
+<http://example.com/shacl-extension#bnode-depth> rdfs:comment "blank node depth" .
+
+<http://example.com/shacl-extension#limit> rdfs:comment "limit" .
+
+<http://example.com/shacl-extension#offset> rdfs:comment "offset" .
+
+<http://example.com/shacl-extension#orderBy> rdfs:comment "order by" .
+
+<http://www.w3.org/ns/dx/connegp/altr-ext#constrainsClass> rdfs:label "Constrains Class" .
+
+<http://www.w3.org/ns/dx/connegp/altr-ext#hasDefaultProfile> rdfs:label "Has Default Profile" .
+
+<http://www.w3.org/ns/dx/connegp/altr-ext#hasDefaultResourceFormat> rdfs:label "Default Resource Format" .
+
+<http://www.w3.org/ns/dx/connegp/altr-ext#hasNodeShape> rdfs:label "Has Node Shape" .
+
+<http://www.w3.org/ns/dx/connegp/altr-ext#hasResourceFormat> rdfs:label "Has Resource Format" .
+
+<https://prez.dev/count> rdfs:label "count" .
+
+<https://prez.dev/link> rdfs:label "link" .
+
+<https://prez.dev/members> rdfs:label "members" .
+
+<https://prez.dev/ont/deliversClasses> rdfs:label "delivers classes" .
+
+<https://prez.dev/ont/endpointTemplate> rdfs:label "endpoint template" .
+
+<https://prez.dev/ont/focusToParentRelation> rdfs:label "focus to parent relation" .
+
+<https://prez.dev/ont/parentEndpoint> rdfs:label "parent endpoint" .
+
+<https://prez.dev/ont/parentToFocusRelation> rdfs:label "parent to focus relation" .
+
+<https://prez.dev/searchResultMatch> rdfs:label "Matched Term" .
+
+<https://prez.dev/searchResultPredicate> rdfs:label "Matched Predicate" .
+
+<https://prez.dev/searchResultWeight> rdfs:label "Search Result Weight" .
