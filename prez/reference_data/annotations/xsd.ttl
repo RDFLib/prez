@@ -1,0 +1,517 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:ENTITIES a rdfs:Datatype ;
+    rdfs:label "ENTITIES" ;
+    rdfs:comment """
+    `ENTITIES` represents the `ENTITIES` attribute type from [XML]. The _value
+    space_ of `ENTITIES` is the set of finite, non-zero-length sequences of
+    `ENTITY` values that have been declared as unparsed entities in a document
+    type definition. The _lexical space_ of `ENTITIES` is the set of
+    space-separated lists of tokens, of which each token is in the _lexical
+    space_ of `ENTITY`. The _item type_ of `ENTITIES` is `ENTITY`. `ENTITIES` is
+    derived from `anySimpleType` in two steps: an anonymous list type is
+    defined, whose _item type_ is `ENTITY`; this is the _base type_ of `ENTITIES`,
+    which restricts its value space to lists with at least one item.
+  """ ;
+    rdfs:subClassOf xsd:anySimpleType .
+
+xsd:ENTITY a rdfs:Datatype ;
+    rdfs:label "ENTITY" ;
+    rdfs:comment """
+     `ENTITY` represents the `ENTITY` attribute type from [XML]. The _value space_
+     of `ENTITY` is the set of all strings that match the `NCName` production in
+     [Namespaces in XML] and have been declared as an unparsed entity in a
+     document type definition. The _lexical space_ of ENTITY is the set of all
+     strings that match the NCName production in [Namespaces in XML]. The
+     _base type_ of ENTITY is NCName.
+  """ ;
+    rdfs:subClassOf xsd:NCName .
+
+xsd:ID a rdfs:Datatype ;
+    rdfs:label "ID" ;
+    rdfs:comment """
+     `ID` represents the `ID` attribute type from [XML]. The _value space_ of `ID` is
+     the set of all strings that match the `NCName` production in [Namespaces
+     in XML]. The _lexical space_ of `ID` is the set of all strings that match
+     the `NCName` production in [Namespaces in XML]. The _base type_ of `ID` is
+     `NCName`.
+  """ ;
+    rdfs:subClassOf xsd:NCName .
+
+xsd:IDREF a rdfs:Datatype ;
+    rdfs:label "IDREF" ;
+    rdfs:comment """
+    `IDREF` represents the `IDREF` attribute type from [XML]. The _value space_ of
+    `IDREF` is the set of all strings that match the `NCName` production in
+    [Namespaces in XML]. The _lexical space_ of `IDREF` is the set of strings
+    that match the `NCName` production in [Namespaces in XML]. The _base type_
+    of `IDREF` is `NCName`.
+  """ ;
+    rdfs:subClassOf xsd:NCName .
+
+xsd:IDREFS a rdfs:Datatype ;
+    rdfs:label "IDREFS" ;
+    rdfs:comment """
+    `IDREFS` represents the `IDREFS` attribute type from [XML]. The _value space_
+    of `IDREFS` is the set of finite, non-zero-length sequences of `IDREF`s. The
+    _lexical space_ of `IDREFS` is the set of space-separated lists of tokens, of
+    which each token is in the _lexical space_ of `IDREF`. The _item type_ of
+    `IDREFS` is `IDREF`. `IDREFS` is derived from `anySimpleType` in two steps: an
+    anonymous list type is defined, whose _item type_ is `IDREF`; this is the
+    _base type_ of `IDREFS`, which restricts its value space to lists with at
+    least one item.
+  """ ;
+    rdfs:subClassOf xsd:anySimpleType .
+
+xsd:NMTOKEN a rdfs:Datatype ;
+    rdfs:label "NMTOKEN" ;
+    rdfs:comment """
+     `NMTOKEN` represents the `NMTOKEN` attribute type from [XML]. The _value
+     space_ of `NMTOKEN` is the set of tokens that match the `Nmtoken` production
+     in [XML]. The _lexical space_ of `NMTOKEN` is the set of strings that
+     match the Nmtoken production in [XML]. The _base type_ of `NMTOKEN` is
+     `token`.
+  """ ;
+    rdfs:subClassOf xsd:token .
+
+xsd:NMTOKENS a rdfs:Datatype ;
+    rdfs:label "NMTOKENS" ;
+    rdfs:comment """
+    `NMTOKENS` represents the `NMTOKENS` attribute type from [XML]. The _value
+    space_ of `NMTOKENS` is the set of finite, non-zero-length sequences of
+    `NMTOKEN`s. The _lexical space_ of `NMTOKENS` is the set of space-separated
+    lists of tokens, of which each token is in the _lexical space_ of `NMTOKEN`.
+    The _item type_ of `NMTOKENS` is `NMTOKEN`. `NMTOKENS` is derived from
+    `anySimpleType` in two steps: an anonymous list type is defined, whose
+    _item type_ is `NMTOKEN`; this is the _base type_ of `NMTOKENS`, which
+    restricts its value space to lists with at least one item.
+  """ ;
+    rdfs:subClassOf xsd:anySimpleType .
+
+xsd:NOTATION a rdfs:Datatype ;
+    rdfs:label "NOTATION" ;
+    rdfs:comment """
+    `NOTATION` represents the `NOTATION` attribute type from [XML]. The _value
+    space_ of `NOTATION` is the set of `QNames` of notations declared in the
+    current schema. The _lexical space_ of `NOTATION` is the set of all names of
+    notations declared in the current schema (in the form of `QNames`).
+  """ ;
+    rdfs:subClassOf xsd:anyAtomicType .
+
+xsd:QName a rdfs:Datatype ;
+    rdfs:label "QName" ;
+    rdfs:comment """
+    `QName` represents XML qualified names. The _value space_ of `QName` is the set
+    of tuples `{namespace name, local part}`, where namespace name is an `anyURI`
+    and local part is an `NCName`. The _lexical space_ of `QName` is the set of
+    strings that match the `QName` production of [Namespaces in XML].
+  """ ;
+    rdfs:subClassOf xsd:anyAtomicType .
+
+xsd:anyURI a rdfs:Datatype ;
+    rdfs:label "anyURI" ;
+    rdfs:comment """
+    `anyURI` represents an Internationalized Resource Identifier Reference
+    (IRI). An `anyURI` value can be absolute or relative, and may have an
+    optional fragment identifier (i.e., it may be an IRI Reference). This
+    type should be used when the value fulfills the role of an IRI, as
+    defined in [RFC 3987] or its successor(s) in the IETF Standards Track.
+  """ ;
+    rdfs:subClassOf xsd:anyAtomicType .
+
+xsd:base64Binary a rdfs:Datatype ;
+    rdfs:label "base64Binary" ;
+    rdfs:comment """
+    `base64Binary` represents arbitrary Base64-encoded binary data. For
+    `base64Binary` data the entire binary stream is encoded using the `Base64`
+    Encoding defined in [RFC 3548], which is derived from the encoding
+    described in [RFC 2045].
+  """ ;
+    rdfs:subClassOf xsd:anyAtomicType .
+
+xsd:boolean a rdfs:Datatype ;
+    rdfs:label "boolean" ;
+    rdfs:comment """
+    `boolean` represents the values of two-valued logic.
+  """ ;
+    rdfs:subClassOf xsd:anyAtomicType .
+
+xsd:byte a rdfs:Datatype ;
+    rdfs:label "byte" ;
+    rdfs:comment """
+    `byte` is _derived_ from `short` by setting the value of `maxInclusive` to be
+    `127` and `minInclusive` to be `-128`. The _base type_ of `byte` is `short`.
+  """ ;
+    rdfs:subClassOf xsd:short .
+
+xsd:date a rdfs:Datatype ;
+    rdfs:label "date" ;
+    rdfs:comment """
+    `date` represents top-open intervals of exactly one day in length on the
+    timelines of `dateTime`, beginning on the beginning moment of each day, up to
+    but not including the beginning moment of the next day). For non-timezoned
+    values, the top-open intervals disjointly cover the non-timezoned timeline,
+    one per day. For timezoned values, the intervals begin at every minute and
+    therefore overlap.
+  """ ;
+    rdfs:subClassOf xsd:anyAtomicType .
+
+xsd:dateTimeStamp a rdfs:Datatype ;
+    rdfs:label "dateTimeStamp" ;
+    rdfs:comment """
+    The `dateTimeStamp` datatype is _derived_ from `dateTime` by giving the value
+    required to its `explicitTimezone` facet. The result is that all values of
+    `dateTimeStamp` are required to have explicit time zone offsets and the
+    datatype is totally ordered.
+  """ ;
+    rdfs:subClassOf xsd:dateTime .
+
+xsd:dayTimeDuration a rdfs:Datatype ;
+    rdfs:label "dayTimeDuration" ;
+    rdfs:comment """
+     `dayTimeDuration` is a datatype _derived_ from `duration` by restricting its
+     _lexical representations_ to instances of `dayTimeDurationLexicalRep`. The
+     _value space_ of `dayTimeDuration` is therefore that of `duration` restricted
+     to those whose `months` property is `0`. This results in a `duration` datatype
+     which is totally ordered.
+  """ ;
+    rdfs:subClassOf xsd:duration .
+
+xsd:double a rdfs:Datatype ;
+    rdfs:label "double" ;
+    rdfs:comment """
+    The `double` datatype is patterned after the IEEE double-precision 64-bit
+    floating point datatype [IEEE 754-2008]. Each floating point datatype has a
+    value space that is a subset of the rational numbers. Floating point
+    numbers are often used to approximate arbitrary real numbers.
+  """ ;
+    rdfs:subClassOf xsd:anyAtomicType .
+
+xsd:float a rdfs:Datatype ;
+    rdfs:label "float" ;
+    rdfs:comment """
+    The `float` datatype is patterned after the IEEE single-precision 32-bit
+    floating point datatype [IEEE 754-2008]. Its value space is a subset of the
+    rational numbers. Floating point numbers are often used to approximate
+    arbitrary real numbers.
+  """ ;
+    rdfs:subClassOf xsd:anyAtomicType .
+
+xsd:gDay a rdfs:Datatype ;
+    rdfs:label "gDay" ;
+    rdfs:comment """
+    `gDay` represents whole days within an arbitrary month—days that recur at the
+    same point in each (Gregorian) month. This datatype is used to represent a
+    specific day of the month. To indicate, for example, that an employee gets
+    a paycheck on the 15th of each month. (Obviously, days beyond 28 cannot
+    occur in all months; they are nonetheless permitted, up to 31.)
+  """ ;
+    rdfs:subClassOf xsd:anyAtomicType .
+
+xsd:gMonth a rdfs:Datatype ;
+    rdfs:label "gMonth" ;
+    rdfs:comment """
+    `gMonth` represents whole (Gregorian) months within an arbitrary year—months
+    that recur at the same point in each year. It might be used, for example,
+    to say what month annual Thanksgiving celebrations fall in different
+    countries (`--11` in the United States, `--10` in Canada, and possibly other
+    months in other countries).
+  """ ;
+    rdfs:subClassOf xsd:anyAtomicType .
+
+xsd:gMonthDay a rdfs:Datatype ;
+    rdfs:label "gMonthDay" ;
+    rdfs:comment """
+    `gMonthDay` represents whole calendar days that recur at the same point in
+    each calendar year, or that occur in some arbitrary calendar year.
+    (Obviously, days beyond 28 cannot occur in all Februaries; 29 is
+    nonetheless permitted.)
+  """ ;
+    rdfs:subClassOf xsd:anyAtomicType .
+
+xsd:gYear a rdfs:Datatype ;
+    rdfs:label "gYear" ;
+    rdfs:comment """
+    `gYear` represents Gregorian calendar years.
+  """ ;
+    rdfs:subClassOf xsd:anyAtomicType .
+
+xsd:gYearMonth a rdfs:Datatype ;
+    rdfs:label "gYearMonth" ;
+    rdfs:comment """
+    `gYearMonth` represents specific whole Gregorian months in specific Gregorian years.
+  """ ;
+    rdfs:subClassOf xsd:anyAtomicType .
+
+xsd:hexBinary a rdfs:Datatype ;
+    rdfs:label "hexBinary" ;
+    rdfs:comment """
+    hexBinary` represents arbitrary hex-encoded binary data.
+  """ ;
+    rdfs:subClassOf xsd:anyAtomicType .
+
+xsd:language a rdfs:Datatype ;
+    rdfs:label "language" ;
+    rdfs:comment """
+    `language` represents formal natural language identifiers, as defined by [BCP
+    47] (currently represented by [RFC 4646] and [RFC 4647]) or its
+    successor(s). The _value space_ and _lexical space_ of `language` are the set
+    of all strings that conform to the pattern `[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*`.
+  """ ;
+    rdfs:subClassOf xsd:token .
+
+xsd:negativeInteger a rdfs:Datatype ;
+    rdfs:label "negativeInteger" ;
+    rdfs:comment """
+     `negativeInteger` is _derived_ from `nonPositiveInteger` by setting the value
+     of `maxInclusive` to be `-1`. This results in the standard mathematical
+     concept of the negative integers. The _value space_ of `negativeInteger` is
+     the infinite set `{...,-2,-1}`. The _base type_ of `negativeInteger` is
+     `nonPositiveInteger`.
+  """ ;
+    rdfs:subClassOf xsd:nonPositiveInteger .
+
+xsd:positiveInteger a rdfs:Datatype ;
+    rdfs:label "positiveInteger" ;
+    rdfs:comment """
+     `positiveInteger` is _derived_ from `nonNegativeInteger` by setting the value
+     of `minInclusive` to be `1`. This results in the standard mathematical
+     concept of the positive integer numbers. The _value space_ of
+     `positiveInteger` is the infinite set `{1,2,...}`. The _base type_ of
+     `positiveInteger` is `nonNegativeInteger`.
+  """ ;
+    rdfs:subClassOf xsd:nonNegativeInteger .
+
+xsd:time a rdfs:Datatype ;
+    rdfs:label "time" ;
+    rdfs:comment """
+    `time` represents instants of time that recur at the same point in each
+    calendar day, or that occur in some arbitrary calendar day.
+  """ ;
+    rdfs:subClassOf xsd:anyAtomicType .
+
+xsd:unsignedByte a rdfs:Datatype ;
+    rdfs:label "unsignedByte" ;
+    rdfs:comment """
+      `unsignedByte` is _derived_ from `unsignedShort` by setting the value of
+      `maxInclusive` to be `255`. The _base type_ of `unsignedByte` is
+      `unsignedShort`.
+    """ ;
+    rdfs:subClassOf xsd:unsignedShort .
+
+xsd:yearMonthDuration a rdfs:Datatype ;
+    rdfs:label "yearMonthDuration" ;
+    rdfs:comment """
+     `yearMonthDuration` is a datatype _derived_ from `duration` by restricting its
+     _lexical representations_ to instances of `yearMonthDurationLexicalRep`. The
+     _value space_ of `yearMonthDuration` is therefore that of `duration`
+     restricted to those whose `seconds` property is `0`. This results in a
+     `duration` datatype which is totally ordered.
+  """ ;
+    rdfs:subClassOf xsd:duration .
+
+xsd:Name a rdfs:Datatype ;
+    rdfs:label "Name" ;
+    rdfs:comment """
+    `Name` represents XML Names. The _value space_ of `Name` is the set of all
+    strings which match the `Name` production of [XML]. The _lexical space_ of
+    `Name` is the set of all strings which match the `Name` production of [XML].
+    The _base type_ of `Name` is `token`.
+  """ ;
+    rdfs:subClassOf xsd:token .
+
+xsd:dateTime a rdfs:Datatype ;
+    rdfs:label "dateTime" ;
+    rdfs:comment """
+    `dateTime` represents instants of time, optionally marked with a particular
+    time zone offset. Values representing the same instant but having different
+    time zone offsets are equal but not identical.
+  """ ;
+    rdfs:subClassOf xsd:anyAtomicType .
+
+xsd:decimal a rdfs:Datatype ;
+    rdfs:label "decimal" ;
+    rdfs:comment """
+    `decimal` represents a subset of the real numbers, which can be represented
+    by decimal numerals. The _value space_ of decimal is the set of numbers
+    that can be obtained by dividing an integer by a non-negative power of ten,
+    i.e., expressible as `i / 10n` where `i` and `n` are integers and `n ≥ 0`.
+    Precision is not reflected in this value space; the number `2.0` is not
+    distinct from the number `2.00`. The order relation on `decimal` is the order
+    relation on real numbers, restricted to this subset.
+  """ ;
+    rdfs:subClassOf xsd:anyAtomicType .
+
+xsd:int a rdfs:Datatype ;
+    rdfs:label "int" ;
+    rdfs:comment """
+      `int` is _derived_ from `long` by setting the value of `maxInclusive` to be
+      `2147483647` and `minInclusive` to be `-2147483648`. The _base type_ of `int`
+      is `long`.
+  """ ;
+    rdfs:subClassOf xsd:long .
+
+xsd:long a rdfs:Datatype ;
+    rdfs:label "long" ;
+    rdfs:comment """
+     `long` is _derived_ from `integer` by setting the value of `maxInclusive` to
+     be `9223372036854775807` and `minInclusive` to be `-9223372036854775808`. The
+     _base type_ of `long` is `integer`.
+  """ ;
+    rdfs:subClassOf xsd:integer .
+
+xsd:nonPositiveInteger a rdfs:Datatype ;
+    rdfs:label "nonPositiveInteger" ;
+    rdfs:comment """
+    `nonPositiveInteger` is _derived_ from `integer` by setting the value of
+    `maxInclusive` to be `0`. This results in the standard mathematical concept
+    of the non-positive integers. The _value space_ of `nonPositiveInteger` is
+    the infinite set `{...,-2,-1,0}`. The _base type_ of `nonPositiveInteger` is
+    `integer`.
+  """ ;
+    rdfs:subClassOf xsd:integer .
+
+xsd:normalizedString a rdfs:Datatype ;
+    rdfs:label "normalizedString" ;
+    rdfs:comment """
+    `normalizedString` represents white space normalized strings. The _value
+    space_ of `normalizedString` is the set of strings that do not contain the
+    carriage return (`#xD`), line feed (`#xA`) nor tab (`#x9`) characters. The
+    _lexical space_ of `normalizedString` is the set of strings that do not
+    contain the carriage return (`#xD`), line feed (`#xA`) nor tab (`#x9`)
+    characters. The _base type_ of `normalizedString` is `string`.
+  """ ;
+    rdfs:subClassOf xsd:string .
+
+xsd:short a rdfs:Datatype ;
+    rdfs:label "short" ;
+    rdfs:comment """
+    `short` is _derived_ from `int` by setting the value of `maxInclusive` to be
+    `32767` and `minInclusive` to be `-32768`. The _base type_ of `short` is `int`.
+  """ ;
+    rdfs:subClassOf xsd:int .
+
+xsd:string a rdfs:Datatype ;
+    rdfs:label "string" ;
+    rdfs:comment """
+    The `string` datatype represents character strings in XML.
+  """ ;
+    rdfs:subClassOf xsd:anyAtomicType .
+
+xsd:unsignedInt a rdfs:Datatype ;
+    rdfs:label "unsignedInt" ;
+    rdfs:comment """
+    `unsignedInt` is _derived_ from `unsignedLong` by setting the value of
+    `maxInclusive` to be `4294967295`. The _base type_ of `unsignedInt` is
+    `unsignedLong`.
+  """ ;
+    rdfs:subClassOf xsd:unsignedLong .
+
+xsd:unsignedLong a rdfs:Datatype ;
+    rdfs:label "unsignedLong" ;
+    rdfs:comment """
+     `unsignedLong` is _derived_ from `nonNegativeInteger` by setting the value of
+     `maxInclusive` to be `18446744073709551615`. The _base type_ of `unsignedLong`
+     is `nonNegativeInteger`.
+  """ ;
+    rdfs:subClassOf xsd:nonNegativeInteger .
+
+xsd:unsignedShort a rdfs:Datatype ;
+    rdfs:label "unsignedShort" ;
+    rdfs:comment """
+       `unsignedShort` is _derived_ from `unsignedInt` by setting the value of
+       `maxInclusive` to be `65535`. The _base type_ of `unsignedShort` is
+       `unsignedInt`.
+    """ ;
+    rdfs:subClassOf xsd:unsignedInt .
+
+xsd:anyType a rdfs:Datatype ;
+    rdfs:label "anyType" ;
+    rdfs:comment """
+    The root of the [XML Schema 1.1] datatype heirarchy.
+  """ .
+
+xsd:duration a rdfs:Datatype ;
+    rdfs:label "duration" ;
+    rdfs:comment """
+    `duration` is a datatype that represents durations of time. The concept of
+    duration being captured is drawn from those of [ISO 8601], specifically
+    durations without fixed endpoints. For example, "15 days" (whose most
+    common lexical representation in duration is `"'P15D'"`) is a duration value;
+    "15 days beginning 12 July 1995" and "15 days ending 12 July 1995" are not
+    duration values. duration can provide addition and subtraction operations
+    between duration values and between duration/dateTime value pairs, and can
+    be the result of subtracting dateTime values. However, only addition to
+    `dateTime` is required for XML Schema processing and is defined in the
+    function `dateTimePlusDuration`.
+  """ ;
+    rdfs:subClassOf xsd:anyAtomicType .
+
+xsd:nonNegativeInteger a rdfs:Datatype ;
+    rdfs:label "nonNegativeInteger" ;
+    rdfs:comment """
+     `nonNegativeInteger` is _derived_ from `integer` by setting the value of
+     `minInclusive` to be `0`. This results in the standard mathematical concept
+     of the non-negative integers. The _value space_ of `nonNegativeInteger` is
+     the infinite set `{0,1,2,...}`. The _base type_ of `nonNegativeInteger` is
+     `integer`.
+  """ ;
+    rdfs:subClassOf xsd:integer .
+
+xsd:NCName a rdfs:Datatype ;
+    rdfs:label "NCName" ;
+    rdfs:comment """
+     `NCName` represents XML "non-colonized" Names. The _value space_ of `NCName`
+     is the set of all strings which match the `NCName` production of
+     [Namespaces in XML]. The _lexical space_ of `NCName` is the set of all
+     strings which match the `NCName` production of [Namespaces in XML]. The
+     _base type_ of `NCName` is `Name`.
+  """ ;
+    rdfs:subClassOf xsd:Name .
+
+xsd:anySimpleType a rdfs:Datatype ;
+    rdfs:label "anySimpleType" ;
+    rdfs:comment """
+    The definition of `anySimpleType` is a special _restriction_ of `anyType`. The
+    _lexical space_ of a`nySimpleType` is the set of all sequences of Unicode
+    characters, and its _value space_ includes all _atomic values_ and all
+    finite-length lists of zero or more _atomic values_.
+  """ ;
+    rdfs:subClassOf xsd:anyType .
+
+xsd:integer a rdfs:Datatype ;
+    rdfs:label "integer" ;
+    rdfs:comment """
+     `integer` is _derived_ from `decimal` by fixing the value of `fractionDigits`
+     to be `0` and disallowing the trailing decimal point. This results in the
+     standard mathematical concept of the integer numbers. The _value space_ of
+     `integer` is the infinite set `{...,-2,-1,0,1,2,...}`. The _base type_ of
+     `integer` is `decimal`.
+  """ ;
+    rdfs:subClassOf xsd:decimal .
+
+xsd:token a rdfs:Datatype ;
+    rdfs:label "token" ;
+    rdfs:comment """
+     `token` represents tokenized strings. The _value space_ of `token` is the set
+     of strings that do not contain the carriage return (`#xD`), line feed (`#xA`)
+     nor tab (`#x9`) characters, that have no leading or trailing spaces (`#x20`)
+     and that have no internal sequences of two or more spaces. The _lexical
+     space_ of `token` is the set of strings that do not contain the carriage
+     return (`#xD`), line feed (`#xA`) nor tab (`#x9`) characters, that have no
+     leading or trailing spaces (`#x20`) and that have no internal sequences of
+     two or more spaces. The _base type_ of `token` is `normalizedString`.
+  """ ;
+    rdfs:subClassOf xsd:normalizedString .
+
+xsd:anyAtomicType a rdfs:Datatype ;
+    rdfs:label "anySimpleType" ;
+    rdfs:comment """
+    `anyAtomicType` is a special _restriction_ of `anySimpleType`. The _value_ and
+    _lexical spaces_ of `anyAtomicType` are the unions of the _value_ and
+    _lexical spaces_ of all the _primitive_ datatypes, and `anyAtomicType` is
+    their _base type_.
+  """ ;
+    rdfs:subClassOf xsd:anyType .
+

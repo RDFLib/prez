@@ -1,0 +1,67 @@
+@prefix cc: <http://web.resource.org/cc/> .
+@prefix dcmitype: <http://purl.org/dc/dcmitype/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix vann: <http://purl.org/vocab/vann/> .
+
+<file:///home/david/PycharmProjects/prez/prez/reference_data/annotations/vann-vocab-20100607.rdf> a cc:Work ;
+    dcterms:type dcmitype:Text ;
+    cc:license <http://creativecommons.org/licenses/by/1.0/> .
+
+vann:changes a owl:AnnotationProperty ;
+    rdfs:label "Changes"@en ;
+    rdfs:comment "A reference to a resource that describes changes between this version of a vocabulary and the previous."@en ;
+    rdfs:isDefinedBy vann: ;
+    rdfs:subPropertyOf rdfs:seeAlso .
+
+vann:example a owl:AnnotationProperty ;
+    rdfs:label "Example"@en ;
+    rdfs:comment "A reference to a resource that provides an example of how this resource can be used."@en ;
+    rdfs:isDefinedBy vann: ;
+    rdfs:subPropertyOf rdfs:seeAlso .
+
+vann:preferredNamespacePrefix a owl:AnnotationProperty ;
+    rdfs:label "Preferred Namespace Prefix"@en ;
+    rdfs:comment "The preferred namespace prefix to use when using terms from this vocabulary in an XML document."@en ;
+    rdfs:isDefinedBy vann: .
+
+vann:preferredNamespaceUri a owl:AnnotationProperty ;
+    rdfs:label "Preferred Namespace Uri"@en ;
+    rdfs:comment "The preferred namespace URI to use when using terms from this vocabulary in an XML document."@en ;
+    rdfs:isDefinedBy vann: .
+
+vann:termGroup a owl:AnnotationProperty ;
+    rdfs:label "Term Group"@en ;
+    rdfs:comment "A group of related terms in a vocabulary."@en ;
+    rdfs:isDefinedBy vann: .
+
+vann:usageNote a owl:AnnotationProperty ;
+    rdfs:label "Usage Note"@en ;
+    rdfs:comment "A reference to a resource that provides information on how this resource is to be used."@en ;
+    rdfs:isDefinedBy vann: ;
+    rdfs:subPropertyOf rdfs:seeAlso .
+
+<http://creativecommons.org/licenses/by/1.0/> a cc:License ;
+    cc:permits cc:DerivativeWorks,
+        cc:Distribution,
+        cc:Reproduction ;
+    cc:requires cc:Attribution,
+        cc:Notice .
+
+<http://iandavis.com/id/me> a foaf:Person ;
+    foaf:name "Ian Davis" .
+
+vann: a owl:Ontology ;
+    dcterms:creator <http://iandavis.com/id/me> ;
+    dcterms:date "2010-06-07" ;
+    dcterms:description "This document describes a vocabulary for annotating descriptions of vocabularies with examples and usage notes."@en ;
+    dcterms:identifier "http://purl.org/vocab/vann/vann-vocab-20050401" ;
+    dcterms:isVersionOf vann: ;
+    dcterms:replaces vann:vann-vocab-20040305 ;
+    dcterms:rights "Copyright © 2005 Ian Davis" ;
+    dcterms:title "VANN: A vocabulary for annotating vocabulary descriptions"@en ;
+    vann:preferredNamespacePrefix "vann" ;
+    vann:preferredNamespaceUri "http://purl.org/vocab/vann/" .
+

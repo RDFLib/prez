@@ -1,0 +1,102 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ns1: <http://purl.org/linked-data/registry#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://linked.data.gov.au/def/vocdermods/subsetting-and-extension> a skos:Concept ;
+    dcterms:provenance "Created for the MER catalogue upgrade project, 2022"@en ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/original> ;
+    rdfs:isDefinedBy <https://linked.data.gov.au/def/vocdermods> ;
+    skos:broader <https://linked.data.gov.au/def/vocdermods/extension>,
+        <https://linked.data.gov.au/def/vocdermods/subsetting> ;
+    skos:definition "Derivation with subsetting and extension"@en ;
+    skos:inScheme <https://linked.data.gov.au/def/vocdermods> ;
+    skos:prefLabel "Subset & Extension"@en ;
+    skos:scopeNote "Use this Concept if the reusing vocabulary both extends and subsets the original vocabulary" .
+
+<https://kurrawong.ai> a schema:Organization ;
+    schema:name "KurrawongAI" ;
+    schema:url "https://kurrawong.ai"^^xsd:anyURI .
+
+<https://linked.data.gov.au/def/vocdermods/direct> a skos:Concept ;
+    dcterms:provenance "Created for the MER catalogue upgrade project, 2022"@en ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/original> ;
+    rdfs:isDefinedBy <https://linked.data.gov.au/def/vocdermods> ;
+    skos:definition "Derivation without alteration"@en ;
+    skos:inScheme <https://linked.data.gov.au/def/vocdermods> ;
+    skos:prefLabel "Direct"@en ;
+    skos:topConceptOf <https://linked.data.gov.au/def/vocdermods> .
+
+<https://linked.data.gov.au/def/vocdermods/none> a skos:Concept ;
+    dcterms:provenance "Added to this vocabulary for multiple projects in 2023"@en ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/original> ;
+    rdfs:isDefinedBy <https://linked.data.gov.au/def/vocdermods> ;
+    skos:definition "This vocabulary does not derive from another"@en ;
+    skos:inScheme <https://linked.data.gov.au/def/vocdermods> ;
+    skos:prefLabel "None"@en ;
+    skos:scopeNote "Use this Concept if the vocabulary is known to not reuse any other vocabularies" ;
+    skos:topConceptOf <https://linked.data.gov.au/def/vocdermods> .
+
+<https://linked.data.gov.au/def/vocdermods/not-applicable> a skos:Concept ;
+    dcterms:provenance "Created for the MER catalogue upgrade project, 2022"@en ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/original> ;
+    rdfs:isDefinedBy <https://linked.data.gov.au/def/vocdermods> ;
+    skos:definition "Derivation mode is not applicable to this vocabulary"@en ;
+    skos:inScheme <https://linked.data.gov.au/def/vocdermods> ;
+    skos:prefLabel "Not Applicable"@en ;
+    skos:scopeNote "Use this Concept if the vocabulary is known not to reuse any other vocabularies" ;
+    skos:topConceptOf <https://linked.data.gov.au/def/vocdermods> .
+
+<https://linked.data.gov.au/def/vocdermods/relabelling> a skos:Concept ;
+    dcterms:provenance "Created for the MER catalogue upgrade project, 2022"@en ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/original> ;
+    rdfs:isDefinedBy <https://linked.data.gov.au/def/vocdermods> ;
+    skos:definition "Derivation with relabelling"@en ;
+    skos:inScheme <https://linked.data.gov.au/def/vocdermods> ;
+    skos:prefLabel "Relabelling"@en ;
+    skos:scopeNote "Use this Concept if the reusing vocabulary only relabels Concepts in the original vocabulary but does not alter their place in the Concept hierarchy or their definitions" ;
+    skos:topConceptOf <https://linked.data.gov.au/def/vocdermods> .
+
+<https://linked.data.gov.au/org/mer> a schema:Organization ;
+    schema:name "SA Minerals and Energy Resources" ;
+    schema:url "https://www.energymining.sa.gov.au/industry/geological-survey"^^xsd:anyURI .
+
+<https://linked.data.gov.au/def/vocdermods/extension> a skos:Concept ;
+    dcterms:provenance "Created for the MER catalogue upgrade project, 2022"@en ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/original> ;
+    rdfs:isDefinedBy <https://linked.data.gov.au/def/vocdermods> ;
+    skos:definition "Derivation with extension"@en ;
+    skos:inScheme <https://linked.data.gov.au/def/vocdermods> ;
+    skos:prefLabel "Extension"@en ;
+    skos:scopeNote "Use this Concept if the reusing vocabulary extends the original vocabulary but does not subset it" ;
+    skos:topConceptOf <https://linked.data.gov.au/def/vocdermods> .
+
+<https://linked.data.gov.au/def/vocdermods/subsetting> a skos:Concept ;
+    dcterms:provenance "Created for the MER catalogue upgrade project, 2022"@en ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/original> ;
+    rdfs:isDefinedBy <https://linked.data.gov.au/def/vocdermods> ;
+    skos:definition "Derivation with subsetting"@en ;
+    skos:inScheme <https://linked.data.gov.au/def/vocdermods> ;
+    skos:prefLabel "Subsetting"@en ;
+    skos:scopeNote "Use this Concept if the reusing vocabulary only subsets the original but does not extend it" ;
+    skos:topConceptOf <https://linked.data.gov.au/def/vocdermods> .
+
+<https://linked.data.gov.au/def/vocdermods> a skos:ConceptScheme ;
+    dcterms:contributor <http://def.isotc211.org/org/tc211> ;
+    dcterms:created "2022-12-05"^^xsd:date ;
+    dcterms:creator <https://kurrawong.ai> ;
+    dcterms:issued "2022-12-05"^^xsd:date ;
+    dcterms:modified "2023-05-22"^^xsd:date ;
+    dcterms:provenance "Created for the MER catalogue upgrade project, 2022"@en ;
+    dcterms:publisher <https://linked.data.gov.au/org/mer> ;
+    ns1:status <https://linked.data.gov.au/def/reg-statuses/stable> ;
+    skos:definition "The modes by which one vocabulary may derive from another"@en ;
+    skos:hasTopConcept <https://linked.data.gov.au/def/vocdermods/direct>,
+        <https://linked.data.gov.au/def/vocdermods/extension>,
+        <https://linked.data.gov.au/def/vocdermods/none>,
+        <https://linked.data.gov.au/def/vocdermods/not-applicable>,
+        <https://linked.data.gov.au/def/vocdermods/relabelling>,
+        <https://linked.data.gov.au/def/vocdermods/subsetting> ;
+    skos:prefLabel "Vocabulary Derivation Modes"@en .
