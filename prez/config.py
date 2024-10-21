@@ -86,7 +86,7 @@ class Settings(BaseSettings):
     temporal_predicate: Optional[URIRef] = SDO.temporal
     endpoint_to_template_query_filename: Optional[Dict[str, str]] = {}
     prez_ui_url: Optional[str] = None
-    search_method: SearchMethod = SearchMethod.default
+    search_method: SearchMethod = SearchMethod.DEFAULT
 
     @field_validator("prez_version")
     @classmethod

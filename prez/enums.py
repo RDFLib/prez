@@ -37,7 +37,5 @@ class FilterLangEnum(Enum):
 
 
 class SearchMethod(str, Enum):
-    """Search Methods"""
-
-    default = "default"
-    fts_fuseki = "fts_fuseki"
+    DEFAULT = "default"
+    FTS_FUSEKI = "fts_fuseki"

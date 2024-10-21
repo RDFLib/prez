@@ -205,7 +205,7 @@ async def generate_search_query(request: Request):
                 limit=limit,
                 offset=offset,
             )
-        elif settings.search_method == SearchMethod.fts_fuseki:
+        elif settings.search_method == SearchMethod.FTS_FUSEKI:
             return SearchQueryFusekiFTS(
                 term=escaped_term, predicates=predicates, limit=limit, offset=offset
             )
