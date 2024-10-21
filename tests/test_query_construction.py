@@ -44,7 +44,7 @@ from sparql_grammar_pydantic import (
 from prez.services.query_generation.classes import ClassesSelectQuery
 from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQuery
 from prez.services.query_generation.prefixes import PrefixQuery
-from prez.services.query_generation.search import (
+from prez.services.query_generation.search_default import (
     SearchQueryRegex,
 )
 from prez.services.query_generation.umbrella import PrezQueryConstructor
