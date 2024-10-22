@@ -198,7 +198,7 @@ async def generate_search_query(request: Request):
         limit = int(limit) if limit else settings.search_count_limit
         offset = limit * (int(page) - 1)
 
-        if settings.search_method == SearchMethod.default:
+        if settings.search_method == SearchMethod.DEFAULT:
             return SearchQueryRegex(
                 term=escaped_term,
                 predicates=predicates,
