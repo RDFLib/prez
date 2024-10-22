@@ -56,6 +56,11 @@ logger = logging.getLogger(__name__)
 class SearchQueryFusekiFTS:
     """Full-text search query generation for Fuseki FTS Index
 
+    :param term: the seach term or phrase
+    :param limit: sparql limit clause
+    :param offset: sparql offset clause
+    :param predicates: list of predicates to search over (must be indexed)
+
     generates a query of the form
 
     .. code:: sparql
@@ -77,6 +82,10 @@ class SearchQueryFusekiFTS:
         limit <limit>
         offset <offset>
 
+    NOTE:
+        By default the search phrase given by `term` will be split by whitespace and concatenated together with '+' as this
+        gives better results in most scenarios.
+
     """
 
     def __init__(
@@ -86,14 +95,9 @@ class SearchQueryFusekiFTS:
         offset: int,
         predicates: list[str] | None = None,
     ):
-        """Initialize a full text search SPARQL query
-
-        :param term: the search term
-        :param limit: sparql limit directive
-        :param offset: sparql offset directive
-        :param predicates: a list of indexed predicates or text:propListProps to search on.
-        """
         limit += 1  # increase the limit by one, so we know if there are further pages of results.
+        # join search terms with '+' for better results
+        term = "+".join(term.split(" "))
 
         sr_uri: Var = Var(value="focus_node")
         weight: Var = Var(value="weight")
