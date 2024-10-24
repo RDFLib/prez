@@ -1,0 +1,23 @@
+PREFIX dcat:    <http://www.w3.org/ns/dcat#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX ex:      <http://example.org/>
+PREFIX geo:     <http://www.opengis.net/ont/geosparql#>
+PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX sdo:     <https://schema.org/>
+PREFIX sosa:    <http://www.w3.org/ns/sosa/>
+
+ex:cat  a                dcat:Catalog;
+        rdfs:label       "a catalog";
+        dcterms:hasPart  ex:res .
+
+ex:res  a                           dcat:Resource;
+        rdfs:label                  "a resource";
+        sosa:isFeatureOfInterestOf  [ a               sosa:Observation;
+                                      sosa:hasResult  [ a           sosa:Result;
+                                                        rdfs:label  "a result";
+                                                        sdo:value   ex:feat
+                                                      ]
+                                    ] .
+
+ex:feat  a          geo:Feature;
+        rdfs:label  "a feature" .
