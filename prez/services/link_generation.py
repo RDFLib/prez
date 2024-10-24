@@ -78,6 +78,10 @@ async def _link_generation(
                 URIRef("http://example.org/ns#Search"),
                 URIRef("http://example.org/ns#TopConcepts"),
                 URIRef("http://example.org/ns#Narrowers"),
+                URIRef("http://example.org/ns#QueryablesGlobal"),
+                URIRef("http://example.org/ns#QueryablesLocal"),
+                URIRef("http://example.org/ns#Feature"),  # creation of these links is hardcoded in the OGC Features API
+                URIRef("http://example.org/ns#FeatureCollections"),  # creation of these links is hardcoded in the OGC Features API
             ]
         ]
         # run queries for available nodeshapes to get link components
