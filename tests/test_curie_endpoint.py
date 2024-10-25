@@ -26,7 +26,7 @@ def test_iri(iri: str, expected_status_code: int, client: TestClient):
     [
         ["d", 400],
         ["ns1", 400],
-        ["nmspc:test", 200],
+        ["namespace:test", 200],
     ],
 )
 def test_curie(curie: str, expected_status_code: int, client: TestClient, setup):
