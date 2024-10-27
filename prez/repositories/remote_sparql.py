@@ -62,16 +62,21 @@ class RemoteSparqlRepo(Repo):
     ):
         """Sends a starlette Request object (containing a SPARQL query in the URL parameters) to a proxied SPARQL
         endpoint."""
-        # TODO: This only supports SPARQL GET requests because the query is sent as a query parameter.
 
-        query_escaped_as_bytes = f"query={quote_plus(query)}".encode("utf-8")
-
-        # TODO: Global app settings should be passed in as a function argument.
-        url = httpx.URL(url=settings.sparql_endpoint, query=query_escaped_as_bytes)
         headers = []
         for header in raw_headers:
             if header[0] != b"host":
                 headers.append(header)
+
+        # TODO: Global app settings should be passed in as a function argument.
+        if method == 'GET':
+            query_escaped_as_bytes = f"query={quote_plus(query)}".encode("utf-8")
+            url = httpx.URL(url=settings.sparql_endpoint, query=query_escaped_as_bytes)
+            rp_req = self.async_client.build_request(method, url, headers=headers)
+        else:
+            url = httpx.URL(url=settings.sparql_endpoint)
+            rp_req = self.async_client.build_request(method, url, headers=headers, data={'query': query})
+
         headers.append((b"host", str(url.host).encode("utf-8")))
-        rp_req = self.async_client.build_request(method, url, headers=headers)
+
         return await self.async_client.send(rp_req, stream=True)

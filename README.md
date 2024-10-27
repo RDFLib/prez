@@ -97,6 +97,7 @@ Alternatively, set them directly in the environment from which Prez is run.
 - **`sparql_endpoint`**: Read-only SPARQL endpoint for Prez. Default is `None`.
 - **`sparql_username`**: A username for the Prez SPARQL endpoint, if required by the RDF DB. Default is `None`.
 - **`sparql_password`**: A password for the Prez SPARQL endpoint, if required by the RDF DB. Default is `None`.
+- **`enable_sparql_endpoint`**: Whether to enable the SPARQL endpoint. I.e. whether prez exposes the remote repository's SPARQL endpoint (typically a triplestore). Default is `False`. NB the SPARQL endpoint when enabled supports POST requests. Prez itself does not make any updates to the remote repository (e.g. the remote Triplestore), however, if the remote SPARQL endpoint is enabled it is then possible that users can make updates to the remote repository using the SPARQL endpoint.
 
 #### Network Configuration
 
@@ -192,10 +193,6 @@ Used in conjunction with the Pyoxigraph repo. Specifies a directory (from the re
 
 - **`listing_count_limit`**: The maximum number of items to count for a listing endpoint. Counts greater than this limit will be returned as ">N" where N is the limit. Default is `100`.
 - **`search_count_limit`**: The maximum number of items to return in a search result. Default is `10`.
-
-#### SPARQL Endpoint
-
-- **`enable_sparql_endpoint`**: Whether to enable the SPARQL endpoint. Default is `False`.
 
 #### Temporal Configuration
 
