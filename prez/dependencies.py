@@ -256,7 +256,7 @@ async def generate_concept_hierarchy_query(
 async def get_unprefixed_url_path(
     request: Request,
 ) -> str:
-    root_path = request.scope.get("root_path", "")
+    root_path = request.scope.get("app_root_path", request.scope.get("root_path", ""))
     return request.url.path[len(root_path):]
 
 
