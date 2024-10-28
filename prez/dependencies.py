@@ -253,9 +253,17 @@ async def generate_concept_hierarchy_query(
     )
 
 
+async def get_unprefixed_url_path(
+    request: Request,
+) -> str:
+    root_path = request.scope.get("root_path", "")
+    return request.url.path[len(root_path):]
+
+
 async def get_focus_node(
     request: Request,
     endpoint_uri_type: tuple[URIRef, URIRef] = Depends(get_endpoint_uri_type),
+    url_path: str = Depends(get_unprefixed_url_path),
 ):
     """
     Either a variable or IRI depending on whether an object or listing endpoint is being used.
@@ -266,7 +274,7 @@ async def get_focus_node(
         uri = request.query_params.get("uri")
         return IRI(value=uri)
     elif ep_type == ONT.ObjectEndpoint:
-        object_curie = request.url.path.split("/")[-1]
+        object_curie = url_path.split("/")[-1]
         focus_node_uri = await get_uri_for_curie_id(object_curie)
         return IRI(value=focus_node_uri)
     else:  # listing endpoints
@@ -320,6 +328,7 @@ async def get_endpoint_nodeshapes(
     system_repo: Repo = Depends(get_system_repo),
     endpoint_uri_type: tuple[URIRef, URIRef] = Depends(get_endpoint_uri_type),
     focus_node: IRI | Var = Depends(get_focus_node),
+    url_path: str = Depends(get_unprefixed_url_path),
 ):
     """
     Determines the relevant endpoint nodeshape which will be used to list items at the endpoint.
@@ -336,13 +345,13 @@ async def get_endpoint_nodeshapes(
         return handle_special_cases(ep_uri, focus_node)
 
     path_node_curies = [
-        i for i in request.url.path.split("/")[:-1] if i in request.path_params.values()
+        i for i in url_path.split("/")[:-1] if i in request.path_params.values()
     ]
     path_nodes = {
         f"path_node_{i + 1}": IRI(value=await get_uri_for_curie_id(value))
         for i, value in enumerate(reversed(path_node_curies))
     }
-    hierarchy_level = int(len(request.url.path.split("/")) / 2)
+    hierarchy_level = int(len(url_path.split("/")) / 2)
     """
     Determines the relevant nodeshape based on the endpoint, hierarchy level, and parent URI
     """
@@ -413,6 +422,7 @@ async def get_negotiated_pmts(
     system_repo: Repo = Depends(get_system_repo),
     endpoint_uri_type: URIRef = Depends(get_endpoint_uri_type),
     focus_node: IRI | Var = Depends(get_focus_node),
+    url_path: str = Depends(get_unprefixed_url_path),
 ) -> NegotiatedPMTs:
     # Use endpoint_nodeshapes in constructing NegotiatedPMTs
     ep_type = endpoint_uri_type[1]
@@ -429,7 +439,7 @@ async def get_negotiated_pmts(
         classes=klasses,
         listing=listing,
         system_repo=system_repo,
-        current_path=request.url.path,
+        current_path=url_path,
     )
     await pmts.setup()
     return pmts
@@ -453,6 +463,7 @@ async def get_profile_nodeshape(
     request: Request,
     pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
     endpoint_uri_type: URIRef = Depends(get_endpoint_uri_type),
+    url_path: str = Depends(get_unprefixed_url_path),
 ):
     profile = pmts.selected.get("profile")
     if profile == ALTREXT["alt-profile"]:
@@ -461,7 +472,7 @@ async def get_profile_nodeshape(
         uri = request.query_params.get("uri")
         focus_node = IRI(value=uri)
     elif endpoint_uri_type[1] == ONT.ObjectEndpoint:
-        object_curie = request.url.path.split("/")[-1]
+        object_curie = url_path.split("/")[-1]
         focus_node_uri = await get_uri_for_curie_id(object_curie)
         focus_node = IRI(value=focus_node_uri)
     else:  # listing
