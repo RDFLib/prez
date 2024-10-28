@@ -261,4 +261,5 @@ if __name__ == "__main__":
         import sys
 
         sys.exit(1)
-    uvicorn.run(assemble_app, factory=True, port=settings.port, host=settings.host)
+    uvicorn.run(assemble_app, factory=True, port=settings.port, host=settings.host,
+                proxy_headers=True, forwarded_allow_ips='*')
