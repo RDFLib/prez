@@ -1,0 +1,46 @@
+@prefix fts: <https://prez.dev/ont/fts#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix dwc: <http://rs.tdwg.org/dwc/terms/> .
+@prefix ex: <http://example.com/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix sname: <https://fake-scientific-name-id.com/name/afd/> .
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix prez: <https://prez.dev/> .
+
+
+ex:FTSSequenceShape
+    a sh:PropertyShape ;
+    a fts:PropertyShape ;
+    sh:path
+        (
+            ex:hasSimpleResult ex:hasFeatureOfInterest ex:testProp ex:testProp2
+        ) ;
+.
+
+ex:FTSInverseShape
+    a sh:PropertyShape ;
+    a fts:PropertyShape ;
+    sh:path [ sh:inversePath ex:hasFeatureOfInterest ] ;
+    sh:name "Inverse" ;
+    dcterms:identifier "inv" ;
+.
+
+ex:FTSSequenceShape
+    a sh:PropertyShape ;
+    a fts:PropertyShape ;
+    sh:path
+        (
+            ex:hasSimpleResult ex:hasFeatureOfInterest ex:testProp ex:testProp2
+        ) ;
+    sh:name "Sequence" ;
+    dcterms:identifier "seq" ;
+.
+
+ex:FTSInverseSequenceShape
+    a sh:PropertyShape ;
+    a fts:PropertyShape ;
+    sh:path ( ex:hasSimpleResult [ sh:inversePath ex:hasFeatureOfInterest ] ) ;
+    sh:name "Sequence Inverse" ;
+    dcterms:identifier "seqinv" ;
+.

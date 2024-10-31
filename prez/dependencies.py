@@ -35,7 +35,7 @@ from prez.services.curie_functions import get_uri_for_curie_id
 from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQuery
 from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.search_default import SearchQueryRegex
-from prez.services.query_generation.search_fts import SearchQueryFusekiFTS
+from prez.services.query_generation.search_fuseki_fts import SearchQueryFusekiFTS
 from prez.services.query_generation.shacl import NodeShape
 from prez.services.query_generation.sparql_escaping import escape_for_lucene_and_sparql
 
@@ -188,7 +188,10 @@ async def cql_get_parser_dependency(
             )
 
 
-async def generate_search_query(request: Request):
+async def generate_search_query(
+        request: Request,
+        system_repo: Repo = Depends(get_system_repo),
+):
     term = request.query_params.get("q")
     if term:
         escaped_term = escape_for_lucene_and_sparql(term)
@@ -206,8 +209,26 @@ async def generate_search_query(request: Request):
                 offset=offset,
             )
         elif settings.search_method == SearchMethod.FTS_FUSEKI:
+            predicates = predicates if predicates else settings.search_predicates
+            shacl_shape_predicates = []
+            non_shacl_predicates = []
+            for pred in predicates:
+                try:
+                    URIRef(pred)
+                    non_shacl_predicates.append(pred)
+                except ValueError:
+                    shacl_shape_predicates.append(pred)
+                # print('9')
+                # shacl_pred_query = f"""
+                # DESCRIBE ?shape {{
+                #     ?shape a <https://prez.dev/ont/fts#> ;
+                #       <http://purl.org/dc/terms/identifier> {}.
+                # }}"""
+                # for predicate in shacl_shape_predicates:
+                #     pass
+            fts_gpnt = []
             return SearchQueryFusekiFTS(
-                term=escaped_term, predicates=predicates, limit=limit, offset=offset
+                term=escaped_term, predicates=predicates, limit=limit, offset=offset, fts_gpnt=fts_gpnt
             )
         else:
             raise NotImplementedError(

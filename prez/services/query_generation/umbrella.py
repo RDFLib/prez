@@ -30,7 +30,7 @@ from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQue
 from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.datetime_filter import generate_datetime_filter
 from prez.services.query_generation.search_default import SearchQueryRegex
-from prez.services.query_generation.search_fts import SearchQueryFusekiFTS
+from prez.services.query_generation.search_fuseki_fts import SearchQueryFusekiFTS
 from prez.services.query_generation.shacl import NodeShape
 
 
