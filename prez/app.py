@@ -31,7 +31,7 @@ from prez.exceptions.model_exceptions import (
     PrefixNotFoundException,
     NoEndpointNodeshapeException
 )
-from prez.middleware import create_validate_header_middleware
+from prez.middleware import ValidateHeaderMiddleware
 from prez.repositories import RemoteSparqlRepo, PyoxigraphRepo, OxrdflibRepo
 from prez.routers.base_router import router as base_prez_router
 from prez.routers.custom_endpoints import create_dynamic_router
@@ -220,10 +220,11 @@ def assemble_app(
         allow_headers=["*"],
         expose_headers=["*"],
     )
-    validate_header_middleware = create_validate_header_middleware(
-        settings.required_header
-    )
-    app.middleware("http")(validate_header_middleware)
+    # validate_header_middleware = create_validate_header_middleware(
+    #     settings.required_header
+    # )
+    # app.middleware("http")(validate_header_middleware)
+    app.add_middleware(ValidateHeaderMiddleware, required_header=settings.required_header)
 
     return app
 

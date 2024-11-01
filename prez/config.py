@@ -89,9 +89,7 @@ class Settings(BaseSettings):
     temporal_predicate: Optional[URIRef] = SDO.temporal
     endpoint_to_template_query_filename: Optional[Dict[str, str]] = {}
     prez_ui_url: Optional[str] = None
-    required_header: dict[str, str] | None = Field(
-        default=None, description="Format: {'header_name': 'expected_value'}"
-    )
+    required_header: dict[str, str] | None = None
 
     @field_validator("prez_version")
     @classmethod
