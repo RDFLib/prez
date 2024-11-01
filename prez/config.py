@@ -54,6 +54,8 @@ class Settings(BaseSettings):
     search_predicates: list = [
         RDFS.label,
         SKOS.prefLabel,
+        SKOS.altLabel,
+        SKOS.hiddenLabel,
         SDO.name,
         DCTERMS.title,
     ]
