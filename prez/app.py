@@ -29,7 +29,7 @@ from prez.exceptions.model_exceptions import (
     NoProfilesException,
     InvalidSPARQLQueryException,
     PrefixNotFoundException,
-    NoEndpointNodeshapeException
+    NoEndpointNodeshapeException,
 )
 from prez.middleware import create_validate_header_middleware
 from prez.repositories import RemoteSparqlRepo, PyoxigraphRepo, OxrdflibRepo
@@ -272,4 +272,11 @@ if __name__ == "__main__":
         import sys
 
         sys.exit(1)
-    uvicorn.run(assemble_app, factory=True, port=settings.port, host=settings.host)
+    uvicorn.run(
+        assemble_app,
+        factory=True,
+        port=settings.port,
+        host=settings.host,
+        proxy_headers=settings.proxy_headers,
+        forwarded_allow_ips=settings.forwarded_allow_ips,
+    )

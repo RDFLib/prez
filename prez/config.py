@@ -90,6 +90,8 @@ class Settings(BaseSettings):
     endpoint_to_template_query_filename: Optional[Dict[str, str]] = {}
     prez_ui_url: Optional[str] = None
     required_header: dict[str, str] | None = None
+    proxy_headers: bool = False
+    forwarded_allow_ips: str = "127.0.0.1"
 
     @field_validator("prez_version")
     @classmethod
