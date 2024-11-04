@@ -1,7 +1,7 @@
 import logging
-from pathlib import Path
 from contextlib import asynccontextmanager
 from functools import partial
+from pathlib import Path
 from textwrap import dedent
 from typing import Optional, Dict, Union, Any
 
@@ -28,14 +28,16 @@ from prez.exceptions.model_exceptions import (
     URINotFoundException,
     NoProfilesException,
     InvalidSPARQLQueryException,
-    PrefixNotFoundException, NoEndpointNodeshapeException,
+    PrefixNotFoundException,
+    NoEndpointNodeshapeException
 )
+from prez.middleware import create_validate_header_middleware
 from prez.repositories import RemoteSparqlRepo, PyoxigraphRepo, OxrdflibRepo
+from prez.routers.base_router import router as base_prez_router
 from prez.routers.custom_endpoints import create_dynamic_router
 from prez.routers.identifier import router as identifier_router
 from prez.routers.management import router as management_router, config_router
 from prez.routers.ogc_features_router import features_subapi
-from prez.routers.base_router import router as base_prez_router
 from prez.routers.sparql import router as sparql_router
 from prez.services.app_service import (
     healthcheck_sparql_endpoints,
@@ -54,7 +56,8 @@ from prez.services.exception_catchers import (
     catch_uri_not_found_exception,
     catch_no_profiles_exception,
     catch_invalid_sparql_query,
-    catch_prefix_not_found_exception, catch_no_endpoint_nodeshape_exception,
+    catch_prefix_not_found_exception,
+    catch_no_endpoint_nodeshape_exception,
 )
 from prez.services.generate_profiles import create_profiles_graph
 from prez.services.prez_logging import setup_logger
@@ -186,7 +189,11 @@ def assemble_app(
         app.include_router(sparql_router)
     if _settings.configuration_mode:
         app.include_router(config_router)
-        app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
+        app.mount(
+            "/static",
+            StaticFiles(directory=Path(__file__).parent / "static"),
+            name="static",
+        )
     if _settings.enable_ogc_features:
         app.mount(
             _settings.ogc_features_mount_path,
@@ -213,6 +220,10 @@ def assemble_app(
         allow_headers=["*"],
         expose_headers=["*"],
     )
+    validate_header_middleware = create_validate_header_middleware(
+        settings.required_header
+    )
+    app.middleware("http")(validate_header_middleware)
 
     return app
 

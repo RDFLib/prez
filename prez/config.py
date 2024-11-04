@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import toml
-from pydantic import field_validator
+from pydantic import field_validator, Field
 from pydantic_settings import BaseSettings
 from rdflib import DCTERMS, RDFS, SDO, URIRef
 from rdflib.namespace import SKOS
@@ -54,6 +54,8 @@ class Settings(BaseSettings):
     search_predicates: list = [
         RDFS.label,
         SKOS.prefLabel,
+        SKOS.altLabel,
+        SKOS.hiddenLabel,
         SDO.name,
         DCTERMS.title,
     ]
@@ -79,12 +81,15 @@ class Settings(BaseSettings):
     ]
     enable_sparql_endpoint: bool = False
     enable_ogc_features: bool = True
-    ogc_features_mount_path: str = "/catalogs/{catalogId}/collections/{recordsCollectionId}/features"
+    ogc_features_mount_path: str = (
+        "/catalogs/{catalogId}/collections/{recordsCollectionId}/features"
+    )
     custom_endpoints: bool = False
     configuration_mode: bool = False
     temporal_predicate: Optional[URIRef] = SDO.temporal
     endpoint_to_template_query_filename: Optional[Dict[str, str]] = {}
     prez_ui_url: Optional[str] = None
+    required_header: dict[str, str] | None = None
 
     @field_validator("prez_version")
     @classmethod
