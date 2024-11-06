@@ -1,7 +1,6 @@
-import json
 from pathlib import Path
 
-from rdflib import Graph, Namespace, RDF, Literal, RDFS, SH, URIRef, BNode
+from rdflib import RDF, RDFS, SH, BNode, Graph, Literal, Namespace, URIRef
 from rdflib.collection import Collection
 
 from prez.reference_data.prez_ns import ONT
@@ -31,7 +30,6 @@ def create_endpoint_metadata(data, g):
         for i in range(len(components)):
             name = components[i] if i % 2 == 0 else components[i - 1]
             api_path = f"/{'/'.join(components[:i + 1])}"
-            shapes_name = name.title()
 
             if i % 2 == 0:
                 add_endpoint(g, "listing", name, api_path, i, route_num)

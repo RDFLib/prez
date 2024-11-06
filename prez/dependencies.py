@@ -2,32 +2,35 @@ import json
 from pathlib import Path
 
 import httpx
-from fastapi import Depends, Request, HTTPException
+from fastapi import Depends, HTTPException, Request
 from pyoxigraph import Store
-from rdflib import Dataset, URIRef, Graph, SKOS, RDF
+from rdflib import RDF, SKOS, Dataset, URIRef
 from sparql_grammar_pydantic import IRI, Var
 
 from prez.cache import (
-    store,
-    oxrdflib_store,
-    system_store,
-    profiles_graph_cache,
-    endpoints_graph_cache,
     annotations_store,
+    endpoints_graph_cache,
+    oxrdflib_store,
     prez_system_graph,
+    profiles_graph_cache,
     queryable_props,
+    store,
+    system_store,
 )
 from prez.config import settings
 from prez.enums import (
+    GeoJSONMediaType,
+    JSONMediaType,
     NonAnnotatedRDFMediaType,
     SPARQLQueryMediaType,
-    JSONMediaType,
-    GeoJSONMediaType,
 )
-from prez.exceptions.model_exceptions import NoEndpointNodeshapeException, URINotFoundException
+from prez.exceptions.model_exceptions import (
+    NoEndpointNodeshapeException,
+    URINotFoundException,
+)
 from prez.models.query_params import QueryParams
-from prez.reference_data.prez_ns import ALTREXT, ONT, EP, OGCE, OGCFEAT
-from prez.repositories import PyoxigraphRepo, RemoteSparqlRepo, OxrdflibRepo, Repo
+from prez.reference_data.prez_ns import ALTREXT, EP, OGCE, OGCFEAT, ONT
+from prez.repositories import OxrdflibRepo, PyoxigraphRepo, RemoteSparqlRepo, Repo
 from prez.services.classes import get_classes_single
 from prez.services.connegp_service import NegotiatedPMTs
 from prez.services.curie_functions import get_uri_for_curie_id
@@ -180,7 +183,7 @@ async def cql_get_parser_dependency(
             return cql_parser
         except json.JSONDecodeError:
             raise HTTPException(status_code=400, detail="Invalid JSON format.")
-        except Exception as e:
+        except Exception:
             raise HTTPException(
                 status_code=400, detail="Invalid CQL format: Parsing failed."
             )
@@ -257,7 +260,7 @@ async def get_unprefixed_url_path(
     request: Request,
 ) -> str:
     root_path = request.scope.get("app_root_path", request.scope.get("root_path", ""))
-    return request.url.path[len(root_path):]
+    return request.url.path[len(root_path) :]
 
 
 async def get_focus_node(
@@ -357,7 +360,7 @@ async def get_endpoint_nodeshapes(
     """
     node_selection_shape_uri = None
     relevant_ns_query = f"""SELECT ?ns ?tc
-                            WHERE {{ 
+                            WHERE {{
                                 {ep_uri.n3()} <https://prez.dev/ont/relevantShapes> ?ns .
                                 ?ns <http://www.w3.org/ns/shacl#targetClass> ?tc ;
                                     <https://prez.dev/ont/hierarchyLevel> {hierarchy_level} .

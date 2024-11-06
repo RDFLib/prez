@@ -1,9 +1,9 @@
 from aiocache import caches
 from rdflib import URIRef
+from sparql_grammar_pydantic import IRI
 
 from prez.repositories import Repo
 from prez.services.query_generation.classes import ClassesSelectQuery
-from sparql_grammar_pydantic import IRI
 
 
 async def get_classes_single(uri: URIRef, repo: Repo):

@@ -1,15 +1,13 @@
 import logging
-from typing import List, FrozenSet, Set, Tuple
+from typing import FrozenSet, List, Set, Tuple
 
 from aiocache import caches
-from rdflib import Graph, URIRef, Literal
+from rdflib import Graph, Literal, URIRef
 from sparql_grammar_pydantic import IRI
 
 from prez.dependencies import get_annotations_repo
 from prez.repositories import Repo
-from prez.services.query_generation.annotations import (
-    AnnotationsConstructQuery,
-)
+from prez.services.query_generation.annotations import AnnotationsConstructQuery
 
 log = logging.getLogger(__name__)
 

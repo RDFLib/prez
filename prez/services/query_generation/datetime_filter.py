@@ -1,17 +1,14 @@
 from datetime import datetime
 from typing import List, Optional
-from prez.config import settings
 
 from sparql_grammar_pydantic import (
+    IRI,
     GraphPatternNotTriples,
     TriplesSameSubjectPath,
-    Filter,
-    PrimaryExpression,
     Var,
-    IRI,
-    RDFLiteral,
 )
 
+from prez.config import settings
 from prez.models.query_params import DateTimeOrUnbounded
 from prez.services.query_generation.cql import create_temporal_filter_gpnt
 

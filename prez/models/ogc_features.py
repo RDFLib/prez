@@ -1,10 +1,9 @@
-from typing import List
-from typing import Optional
+from enum import Enum
+from typing import List, Literal, Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import AnyUrl, BaseModel, Field
 
 from prez.config import settings
-
 
 ########################################################################################################################
 # Landing Page
@@ -172,10 +171,6 @@ class Collections(BaseModel):
 
 ########################################################################################################################
 # Queryables
-
-from pydantic import BaseModel, Field, AnyUrl
-from typing import Optional, List, Union, Literal
-from enum import Enum
 
 
 class GeometryType(str, Enum):

@@ -1,10 +1,9 @@
 import asyncio
 import logging
 from abc import ABC, abstractmethod
-from typing import List
-from typing import Tuple
+from typing import List, Tuple
 
-from rdflib import Namespace, Graph, URIRef
+from rdflib import Graph, Namespace, URIRef
 
 from prez.cache import prefix_graph
 

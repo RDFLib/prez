@@ -4,11 +4,10 @@ from enum import Enum
 from textwrap import dedent
 
 from pydantic import BaseModel
-from rdflib import Graph, Namespace, URIRef, SH
+from rdflib import SH, Graph, Namespace, URIRef
 
 from prez.cache import endpoints_graph_cache
 from prez.config import settings
-from prez.exceptions.model_exceptions import NoProfilesException
 from prez.repositories.base import Repo
 from prez.services.curie_functions import get_curie_id_for_uri, get_uri_for_curie_id
 
@@ -107,7 +106,7 @@ class NegotiatedPMTs(BaseModel):
         PREFIX dcterms: <http://purl.org/dc/terms/>
         PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
         PREFIX prof: <http://www.w3.org/ns/dx/prof/>
-    
+
         SELECT ?profile
         WHERE {
             ?profile a prof:Profile .
@@ -272,15 +271,15 @@ class NegotiatedPMTs(BaseModel):
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             PREFIX sh: <http://www.w3.org/ns/shacl#>
-        
+
             SELECT ?profile ?title ?class (count(?mid) as ?distance) ?req_profile ?def_profile ?format ?req_format ?def_format ?alt_prof
-        
+
             WHERE {{
               VALUES ?class {{{" ".join('<' + str(klass) + '>' for klass in self.classes)}}}
               ?class rdfs:subClassOf* ?mid .
               ?mid rdfs:subClassOf* ?base_class .
               VALUES ?base_class {{ {" ".join(klass.n3() for klass in query_klasses)}
-               prof:Profile prez:SPARQLQuery 
+               prof:Profile prez:SPARQLQuery
               prez:SearchResult prez:CQLObjectList prez:Object rdfs:Resource }}
               ?profile altr-ext:constrainsClass ?class ;
                        altr-ext:hasResourceFormat ?format ;
@@ -352,7 +351,7 @@ class NegotiatedPMTs(BaseModel):
                 "Format",
                 "Requested Format",
                 "Default Format",
-                "Alternate Profile"
+                "Alternate Profile",
             ]
 
             # Render as a table

@@ -2,23 +2,23 @@ from typing import List
 
 from rdflib.namespace import GEO
 from sparql_grammar_pydantic import (
-    ArgList,
-    FunctionCall,
     IRI,
-    Var,
-    GraphPatternNotTriples,
-    Expression,
-    PrimaryExpression,
-    TriplesSameSubjectPath,
-    RDFLiteral,
-    Filter,
+    ArgList,
     Constraint,
+    Expression,
+    Filter,
+    FunctionCall,
+    GraphPatternNotTriples,
+    PrimaryExpression,
+    RDFLiteral,
+    TriplesSameSubjectPath,
+    Var,
 )
 
 from prez.reference_data.cql.geo_function_mapping import GEOF
 from prez.services.query_generation.cql import (
-    get_wkt_from_coords,
     format_coordinates_as_wkt,
+    get_wkt_from_coords,
 )
 
 
