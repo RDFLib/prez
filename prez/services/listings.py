@@ -37,7 +37,7 @@ from prez.reference_data.prez_ns import PREZ, ALTREXT, ONT, OGCFEAT
 from prez.renderers.renderer import return_from_graph, return_annotated_rdf
 from prez.repositories import Repo
 from prez.services.connegp_service import RDF_MEDIATYPES
-from prez.services.curie_functions import get_uri_for_curie_id, get_curie_id_for_uri
+from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.generate_queryables import generate_queryables_json
 from prez.services.link_generation import add_prez_links
 from prez.services.query_generation.count import CountQuery
@@ -274,7 +274,11 @@ async def ogc_features_listing_function(
     if count_query:
         count_g, _ = await data_repo.send_queries([count_query], [])
         if count_g:
-            count = int(next(iter(count_g.objects())))
+            count = str(next(iter(count_g.objects())))
+            if count.startswith(">"):
+                count = int(count[1:])  # TODO increment maximum counts based on current page.
+            else:
+                count = int(count)
 
     if selected_mediatype == "application/json":
         if endpoint_uri_type[0] in [
@@ -343,7 +347,7 @@ def _add_inbound_triple_pattern_match(construct_tss_list):
 
 
 def create_collections_json(
-    item_graph, annotations_graph, url, selected_mediatype, query_params, count
+    item_graph, annotations_graph, url, selected_mediatype, query_params, count: str
 ):
     collections_list = []
     for s, p, o in item_graph.triples((None, RDF.type, GEO.FeatureCollection)):
