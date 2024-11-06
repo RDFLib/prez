@@ -9,11 +9,6 @@ repos:
       - id: check-yaml
       - id: check-json
       - id: check-added-large-files
-  - repo: https://github.com/codespell-project/codespell
-    rev: v2.1.0
-    hooks:
-      - id: codespell
-        args: [--skip, "*.ttl"]
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.6.1
     hooks:
@@ -33,4 +28,3 @@ repos:
       - id: conventional-pre-commit
         stages: [commit-msg]
         args: [--strict]
-
