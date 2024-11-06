@@ -178,7 +178,11 @@ async def create_endpoints_graph(app_state):
         updated_hl_g = Graph()
         for f in (endpoints_root / "features").glob("*.ttl"):
             features_g.parse(f)
-        segments = [seg for seg in app_state.settings.ogc_features_mount_path.strip('/').split('/') if seg.startswith("{")]
+        segments = [
+            seg
+            for seg in app_state.settings.ogc_features_mount_path.strip("/").split("/")
+            if seg.startswith("{")
+        ]
         mount_delta = len(segments)
         if mount_delta > 0:
             for s, p, o in features_g.triples((None, ONT.hierarchyLevel, None)):
