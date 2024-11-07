@@ -139,7 +139,7 @@ async def generate_prefixes(repo: Repo):
         _, rows = await repo.send_queries([], [(None, query)])
         iris = [tup["iri"]["value"] for tup in rows[0][1]]
         len_iris = len(iris)
-        log.info(f"Generating prefixes for {len_iris} IRIs.")
+        log.info(f"Generating prefixes for {len_iris:,} IRIs.")
         skipped_count = 0
         skipped = []
         for iri in iris:
@@ -150,7 +150,7 @@ async def generate_prefixes(repo: Repo):
                 skipped.append(iri)
 
         log.info(
-            f"Generated prefixes for {len(iris)} IRIs. Skipped {skipped_count} IRIs."
+            f"Generated prefixes for {len(iris):,} IRIs. Skipped {skipped_count:,} IRIs."
         )
         for skipped_iri in skipped:
             log.info(f"Skipped IRI {skipped_iri}")
