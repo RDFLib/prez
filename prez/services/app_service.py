@@ -139,7 +139,7 @@ async def generate_prefixes(repo: Repo):
         _, rows = await repo.send_queries([], [(None, query)])
         iris = [tup["iri"]["value"] for tup in rows[0][1]]
         len_iris = len(iris)
-        log.info(f"Generating prefixes for {len_iris} IRIs.")
+        log.info(f"Generating prefixes for {len_iris:,} IRIs.")
         skipped_count = 0
         skipped = []
         for iri in iris:
@@ -150,7 +150,7 @@ async def generate_prefixes(repo: Repo):
                 skipped.append(iri)
 
         log.info(
-            f"Generated prefixes for {len(iris)} IRIs. Skipped {skipped_count} IRIs."
+            f"Generated prefixes for {len(iris):,} IRIs. Skipped {skipped_count:,} IRIs."
         )
         for skipped_iri in skipped:
             log.info(f"Skipped IRI {skipped_iri}")
@@ -172,25 +172,10 @@ async def _add_prefixes_from_graph(g):
 
 async def create_endpoints_graph(app_state):
     endpoints_root = Path(__file__).parent.parent / "reference_data/endpoints"
-    # OGC Features endpoints
-    if app_state.settings.enable_ogc_features:
-        features_g = Graph()
-        updated_hl_g = Graph()
-        for f in (endpoints_root / "features").glob("*.ttl"):
-            features_g.parse(f)
-        segments = [seg for seg in app_state.settings.ogc_features_mount_path.strip('/').split('/') if seg.startswith("{")]
-        mount_delta = len(segments)
-        if mount_delta > 0:
-            for s, p, o in features_g.triples((None, ONT.hierarchyLevel, None)):
-                new_o = Literal(int(o) + mount_delta)
-                features_g.remove((s, p, o))
-                updated_hl_g.add((s, p, new_o))
-        endpoints_graph_cache.__iadd__(features_g)
-        endpoints_graph_cache.__iadd__(updated_hl_g)
     # Custom data endpoints
     if app_state.settings.custom_endpoints:
         # first try remote, if endpoints are found, use these
-        g = await get_remote_endpoint_definitions(app_state.repo)
+        g = await get_remote_endpoint_definitions(app_state.repo, ONT.DynamicEndpoint)
         if g:
             endpoints_graph_cache.__iadd__(g)
         else:
@@ -204,22 +189,47 @@ async def create_endpoints_graph(app_state):
     # Base endpoints
     for f in (endpoints_root / "base").glob("*.ttl"):
         endpoints_graph_cache.parse(f)
+    # OGC Features endpoints
+    if app_state.settings.enable_ogc_features:
+        features_g = Graph()
+        updated_hl_g = Graph()
+        # check data repo for any OGC Features endpoint definitions
+        remote_feat_ep_g = await get_remote_endpoint_definitions(app_state.repo, ONT.OGCFeaturesEndpoint)
+        if remote_feat_ep_g:
+            features_g = remote_feat_ep_g
+        else:  # none found, use local defaults in Prez.
+            for f in (endpoints_root / "features").glob("*.ttl"):
+                features_g.parse(f)
+        segments = [seg for seg in app_state.settings.ogc_features_mount_path.strip('/').split('/') if
+                    seg.startswith("{")]
+        mount_delta = len(segments)
+        if mount_delta > 0:
+            for s, p, o in features_g.triples((None, ONT.hierarchyLevel, None)):
+                new_o = Literal(int(str(o)) + mount_delta)
+                features_g.remove((s, p, o))
+                updated_hl_g.add((s, p, new_o))
+        endpoints_graph_cache.__iadd__(features_g)
+        endpoints_graph_cache.__iadd__(updated_hl_g)
 
 
-async def get_remote_endpoint_definitions(repo):
-    listing_ep_query = f"DESCRIBE ?ep {{ ?ep a {ONT['ListingEndpoint'].n3()} }}"
-    object_ep_query = f"DESCRIBE ?ep {{ ?ep a {ONT['ObjectEndpoint'].n3()} }}"
+async def get_remote_endpoint_definitions(repo, ep_type: URIRef):
+    ep_query = f"DESCRIBE ?ep {{ ?ep a {ep_type.n3()} }}"
+    # listing_ep_query = f"DESCRIBE ?ep {{ ?ep a {ONT['ListingEndpoint'].n3()} }}"
+    # object_ep_query = f"DESCRIBE ?ep {{ ?ep a {ONT['ObjectEndpoint'].n3()} }}"
     ep_nodeshape_query = (
         f"DESCRIBE ?shape {{ ?shape {ONT['hierarchyLevel'].n3()} ?obj }}"
     )
     g, _ = await repo.send_queries(
-        [listing_ep_query, object_ep_query, ep_nodeshape_query], []
+        [ep_query], []
     )
     if len(g) > 0:
-        log.info(f"Remote endpoint definition(s) found and added")
+        # get ep nodeshapes for these endpoints
+        ns_g, _ = await repo.send_queries([ep_nodeshape_query], [])
+        g.__iadd__(ns_g)
+        log.info(f"Remote endpoint definitions found and added for type {str(ep_type)}")
         return g
     else:
-        log.info("No remote endpoint definitions found")
+        log.info(f"No remote endpoint definitions found for type {str(ep_type)}")
 
 
 async def retrieve_remote_queryable_definitions(app_state, system_store):

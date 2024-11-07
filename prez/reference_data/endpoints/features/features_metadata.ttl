@@ -6,31 +6,31 @@
 @prefix sys: <https://prez.dev/endpoint/system/> .
 
 ogcfeat:feature-collections
-    a ont:ListingEndpoint ;
+    a ont:ListingEndpoint , ont:OGCFeaturesEndpoint ;
     ont:relevantShapes ex:FeatureCollections ;
 .
 
 ogcfeat:feature-collection
-    a ont:ObjectEndpoint ;
+    a ont:ObjectEndpoint , ont:OGCFeaturesEndpoint ;
     ont:relevantShapes ex:FeatureCollections ;
 .
 
 ogcfeat:features
-    a ont:ListingEndpoint ;
+    a ont:ListingEndpoint , ont:OGCFeaturesEndpoint ;
     ont:relevantShapes ex:Feature ;
 .
 
 ogcfeat:feature
-    a ont:ObjectEndpoint ;
+    a ont:ObjectEndpoint , ont:OGCFeaturesEndpoint ;
     ont:relevantShapes ex:Feature ;
 .
 
 ogcfeat:queryables-global
-    a ont:ListingEndpoint ;
+    a ont:ListingEndpoint , ont:OGCFeaturesEndpoint ;
     ont:relevantShapes ex:QueryablesGlobal ;
 .
 
 ogcfeat:queryables-local
-    a ont:ListingEndpoint ;
+    a ont:ListingEndpoint , ont:OGCFeaturesEndpoint ;
     ont:relevantShapes ex:QueryablesLocal ;
 .
