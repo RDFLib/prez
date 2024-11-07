@@ -274,7 +274,11 @@ async def ogc_features_listing_function(
     if count_query:
         count_g, _ = await data_repo.send_queries([count_query], [])
         if count_g:
-            count = int(next(iter(count_g.objects())))
+            count = str(next(iter(count_g.objects())))
+            if count.startswith(">"):
+                count = int(count[1:])  # TODO increment maximum counts based on current page.
+            else:
+                count = int(count)
 
     if selected_mediatype == "application/json":
         if endpoint_uri_type[0] in [
@@ -343,7 +347,7 @@ def _add_inbound_triple_pattern_match(construct_tss_list):
 
 
 def create_collections_json(
-    item_graph, annotations_graph, url, selected_mediatype, query_params, count
+    item_graph, annotations_graph, url, selected_mediatype, query_params, count: str
 ):
     collections_list = []
     for s, p, o in item_graph.triples((None, RDF.type, GEO.FeatureCollection)):
