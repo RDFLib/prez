@@ -172,25 +172,6 @@ async def _add_prefixes_from_graph(g):
 
 async def create_endpoints_graph(app_state):
     endpoints_root = Path(__file__).parent.parent / "reference_data/endpoints"
-    # OGC Features endpoints
-    if app_state.settings.enable_ogc_features:
-        features_g = Graph()
-        updated_hl_g = Graph()
-        for f in (endpoints_root / "features").glob("*.ttl"):
-            features_g.parse(f)
-        segments = [
-            seg
-            for seg in app_state.settings.ogc_features_mount_path.strip("/").split("/")
-            if seg.startswith("{")
-        ]
-        mount_delta = len(segments)
-        if mount_delta > 0:
-            for s, p, o in features_g.triples((None, ONT.hierarchyLevel, None)):
-                new_o = Literal(int(o) + mount_delta)
-                features_g.remove((s, p, o))
-                updated_hl_g.add((s, p, new_o))
-        endpoints_graph_cache.__iadd__(features_g)
-        endpoints_graph_cache.__iadd__(updated_hl_g)
     # Custom data endpoints
     if app_state.settings.custom_endpoints:
         # first try remote, if endpoints are found, use these
@@ -233,8 +214,6 @@ async def create_endpoints_graph(app_state):
 
 async def get_remote_endpoint_definitions(repo, ep_type: URIRef):
     ep_query = f"DESCRIBE ?ep {{ ?ep a {ep_type.n3()} }}"
-    # listing_ep_query = f"DESCRIBE ?ep {{ ?ep a {ONT['ListingEndpoint'].n3()} }}"
-    # object_ep_query = f"DESCRIBE ?ep {{ ?ep a {ONT['ObjectEndpoint'].n3()} }}"
     ep_nodeshape_query = (
         f"DESCRIBE ?shape {{ ?shape {ONT['hierarchyLevel'].n3()} ?obj }}"
     )
