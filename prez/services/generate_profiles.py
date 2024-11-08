@@ -20,7 +20,7 @@ async def create_profiles_graph(repo) -> Graph:
     remote_profiles_query = """
         PREFIX prof: <http://www.w3.org/ns/dx/prof/>
         PREFIX prez: <https://prez.dev/>
-        
+
         DESCRIBE ?prof {
             VALUES ?prof_class { prez:ListingProfile prez:ObjectProfile prez:IndexProfile }
             ?prof a ?prof_class
@@ -29,6 +29,6 @@ async def create_profiles_graph(repo) -> Graph:
     g, _ = await repo.send_queries([remote_profiles_query], [])
     if len(g) > 0:
         profiles_graph_cache.__iadd__(g)
-        log.info(f"Remote profile(s) found and added")
+        log.info("Remote profile(s) found and added")
     else:
         log.info("No remote profiles found")

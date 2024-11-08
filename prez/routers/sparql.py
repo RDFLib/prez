@@ -1,9 +1,10 @@
 import io
 from typing import Annotated
 
+import httpx
 from fastapi import APIRouter, Depends, Form
 from fastapi.responses import JSONResponse, Response
-from rdflib import Namespace, Graph
+from rdflib import Graph, Namespace
 from starlette.background import BackgroundTask
 from starlette.datastructures import Headers
 from starlette.requests import Request
@@ -78,7 +79,7 @@ async def sparql_endpoint_handler(
             media_type=non_anot_mediatype,
             headers=pmts.generate_response_headers(),
         )
-    query_result: "httpx.Response" = await repo.sparql(
+    query_result: httpx.Response = await repo.sparql(
         query, request.headers.raw, method=method
     )
     if isinstance(query_result, dict):

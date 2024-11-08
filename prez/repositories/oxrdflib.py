@@ -1,7 +1,7 @@
 import logging
 
 from fastapi.concurrency import run_in_threadpool
-from rdflib import Namespace, Graph, URIRef, Literal, BNode
+from rdflib import BNode, Graph, Literal, Namespace, URIRef
 
 from prez.repositories.base import Repo
 

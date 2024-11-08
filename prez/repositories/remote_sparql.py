@@ -2,7 +2,7 @@ import logging
 from urllib.parse import quote_plus
 
 import httpx
-from rdflib import Namespace, Graph, URIRef
+from rdflib import Graph, Namespace, URIRef
 
 from prez.config import settings
 from prez.repositories.base import Repo
@@ -58,13 +58,17 @@ class RemoteSparqlRepo(Repo):
         return context, response.json()["results"]["bindings"]
 
     async def sparql(
-            self, query: str, raw_headers: list[tuple[bytes, bytes]], method: str = "GET"
+        self, query: str, raw_headers: list[tuple[bytes, bytes]], method: str = "GET"
     ):
         """Sends a request (containing a SPARQL query in the URL parameters) to a proxied SPARQL endpoint."""
         # Convert raw_headers to a dict, excluding the 'host' header
-        headers = {k.decode('utf-8'): v.decode('utf-8') for k, v in raw_headers if k.lower() != b'host'}
+        headers = {
+            k.decode("utf-8"): v.decode("utf-8")
+            for k, v in raw_headers
+            if k.lower() != b"host"
+        }
 
-        if method == 'GET':
+        if method == "GET":
             query_escaped = quote_plus(query)
             url = f"{settings.sparql_endpoint}?query={query_escaped}"
             request = httpx.Request(method, url, headers=headers)
@@ -74,18 +78,15 @@ class RemoteSparqlRepo(Repo):
             form_data = f"query={quote_plus(query)}"
 
             # Set correct headers for form data
-            headers['content-type'] = 'application/x-www-form-urlencoded'
-            headers['content-length'] = str(len(form_data))
+            headers["content-type"] = "application/x-www-form-urlencoded"
+            headers["content-length"] = str(len(form_data))
 
             request = httpx.Request(
-                method,
-                url,
-                headers=headers,
-                content=form_data.encode('utf-8')
+                method, url, headers=headers, content=form_data.encode("utf-8")
             )
 
         # Add the correct 'host' header
-        request.headers['host'] = httpx.URL(url).host
+        request.headers["host"] = httpx.URL(url).host
 
         response = await self.async_client.send(request, stream=True)
         try:
@@ -96,7 +97,7 @@ class RemoteSparqlRepo(Repo):
             raise httpx.HTTPStatusError(
                 f"HTTP Error {response.status_code}: {response.text}",
                 request=request,
-                response=response
+                response=response,
             ) from e
 
         return response

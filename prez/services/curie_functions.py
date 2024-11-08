@@ -61,10 +61,8 @@ def generate_new_prefix(uri):
         path_part = split_prefix_path[-1]
         # generate a prefix using the last part of the path prior to the fragment or 'identifier'
         # converts to lowercase and removes punctuation characters
-        proposed_prefix = (
-            path_part
-            .lower()
-            .translate(str.maketrans("", "", string.punctuation))
+        proposed_prefix = path_part.lower().translate(
+            str.maketrans("", "", string.punctuation)
         )
         if not valid_prefix(proposed_prefix):
             # if the generated prefix is not valid use an ugly but valid one by hashing the last part of the uri

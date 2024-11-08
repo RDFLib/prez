@@ -1,6 +1,6 @@
 from prez.config import settings
 from prez.models.ogc_features import QueryableProperty, Queryables
-from prez.reference_data.prez_ns import PREZ, OGCFEAT
+from prez.reference_data.prez_ns import OGCFEAT, PREZ
 
 
 def generate_queryables_json(item_graph, annotations_graph, url, endpoint_uri):

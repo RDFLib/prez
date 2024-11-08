@@ -1,4 +1,4 @@
-from rdflib import Graph, URIRef, RDF, SH
+from rdflib import RDF, SH, Graph, URIRef
 from rdflib.term import Node
 
 from prez.cache import profiles_graph_cache
@@ -77,13 +77,20 @@ async def render_json_dropdown(
         "iri": "@id",
     }
 
-    (
-        child_to_focus_predicates,
-        parent_to_focus,
-        focus_to_child_predicates,
-        focus_to_parent_predicates,
-        relative_predicates,
-    ) = get_listing_predicates(profile, selected_class)
+    # BUG: get_listing_predicates is undefined
+    # (
+    #     child_to_focus_predicates,
+    #     parent_to_focus,
+    #     focus_to_child_predicates,
+    #     focus_to_parent_predicates,
+    #     relative_predicates,
+    # ) = get_listing_predicates(profile, selected_class)
+
+    # see above ^
+    child_to_focus_predicates = None
+    focus_to_parent_predicates = None
+    focus_to_child_predicates = None
+    relative_predicates = None
 
     if (
         not child_to_focus_predicates

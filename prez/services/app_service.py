@@ -3,16 +3,16 @@ import time
 from pathlib import Path
 
 import httpx
-from rdflib import URIRef, Literal, Graph, RDF, BNode, DCTERMS
+from rdflib import DCTERMS, RDF, BNode, Graph, Literal, URIRef
 
 from prez.cache import (
-    prez_system_graph,
     counts_graph,
-    prefix_graph,
     endpoints_graph_cache,
+    prefix_graph,
+    prez_system_graph,
 )
 from prez.config import settings
-from prez.reference_data.prez_ns import PREZ, ONT
+from prez.reference_data.prez_ns import ONT, PREZ
 from prez.repositories import Repo
 from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.query_generation.count import startup_count_objects
@@ -39,7 +39,7 @@ async def healthcheck_sparql_endpoints():
             )
             response.raise_for_status()
             if response.status_code == 200:
-                log.info(f"Successfully connected to triplestore SPARQL endpoint")
+                log.info("Successfully connected to triplestore SPARQL endpoint")
                 connected_to_triplestore = True
         except httpx.HTTPError as exc:
             log.error(f"HTTP Exception for {exc.request.url} - {exc}")
@@ -61,7 +61,7 @@ async def populate_api_info():
     prez_system_graph.add(
         (URIRef(settings.system_uri), PREZ.version, Literal(settings.prez_version))
     )
-    log.info(f"Populated API info")
+    log.info("Populated API info")
 
 
 async def prefix_initialisation(repo: Repo):
@@ -97,7 +97,7 @@ async def retrieve_remote_template_queries(repo: Repo):
             prez_system_graph.add((bn, RDF.type, ONT.TemplateQuery))
             prez_system_graph.add((bn, RDF.value, Literal(query)))
             prez_system_graph.add((bn, ONT.forEndpoint, URIRef(endpoint)))
-        log.info(f"Remote template query(ies) found and added")
+        log.info("Remote template query(ies) found and added")
     else:
         log.info("No remote template queries found")
 
@@ -159,9 +159,9 @@ async def generate_prefixes(repo: Repo):
 async def _add_prefixes_from_graph(g):
     i = 0
     for i, (s, prefix) in enumerate(
-            g.subject_objects(
-                predicate=URIRef("http://purl.org/vocab/vann/preferredNamespacePrefix")
-            )
+        g.subject_objects(
+            predicate=URIRef("http://purl.org/vocab/vann/preferredNamespacePrefix")
+        )
     ):
         namespace = g.value(
             s, URIRef("http://purl.org/vocab/vann/preferredNamespaceUri")
@@ -214,8 +214,6 @@ async def create_endpoints_graph(app_state):
 
 async def get_remote_endpoint_definitions(repo, ep_type: URIRef):
     ep_query = f"DESCRIBE ?ep {{ ?ep a {ep_type.n3()} }}"
-    # listing_ep_query = f"DESCRIBE ?ep {{ ?ep a {ONT['ListingEndpoint'].n3()} }}"
-    # object_ep_query = f"DESCRIBE ?ep {{ ?ep a {ONT['ObjectEndpoint'].n3()} }}"
     ep_nodeshape_query = (
         f"DESCRIBE ?shape {{ ?shape {ONT['hierarchyLevel'].n3()} ?obj }}"
     )

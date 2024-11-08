@@ -1,56 +1,49 @@
 from __future__ import annotations
 
 from string import Template
-from typing import (
-    List,
-    Optional,
-    Any,
-    Dict,
-    Literal as TypingLiteral,
-    Union,
-    Tuple,
-    Type,
-)
+from typing import Any, Dict, List
+from typing import Literal as TypingLiteral
+from typing import Optional, Tuple, Type, Union
 
 from pydantic import BaseModel
-from rdflib import URIRef, BNode, Graph, RDFS
+from rdflib import RDFS, BNode, Graph, URIRef
 from rdflib.collection import Collection
-from rdflib.namespace import SH, RDF
+from rdflib.namespace import RDF, SH
 from rdflib.term import Node
 from sparql_grammar_pydantic import (
-    InlineData,
+    IRI,
+    BuiltInCall,
+    Constraint,
     DataBlock,
-    InlineDataOneVar,
     DataBlockValue,
     Filter,
-    Constraint,
-    OptionalGraphPattern,
-    IRIOrFunction,
-    IRI,
-    Var,
+    GraphNodePath,
     GraphPatternNotTriples,
-    PrimaryExpression,
-    BuiltInCall,
-    TriplesSameSubject,
+    GraphTerm,
     GroupGraphPattern,
     GroupGraphPatternSub,
-    TriplesBlock,
-    TriplesSameSubjectPath,
-    PropertyListPathNotEmpty,
-    VerbPath,
-    SG_Path,
-    PathAlternative,
+    GroupOrUnionGraphPattern,
+    InlineData,
+    InlineDataOneVar,
+    IRIOrFunction,
     ObjectListPath,
     ObjectPath,
-    GraphNodePath,
-    VarOrTerm,
-    GraphTerm,
-    GroupOrUnionGraphPattern,
+    OptionalGraphPattern,
+    PathAlternative,
     PathElt,
     PathEltOrInverse,
+    PathMod,
     PathPrimary,
     PathSequence,
-    PathMod,
+    PrimaryExpression,
+    PropertyListPathNotEmpty,
+    SG_Path,
+    TriplesBlock,
+    TriplesSameSubject,
+    TriplesSameSubjectPath,
+    Var,
+    VarOrTerm,
+    VerbPath,
 )
 
 from prez.reference_data.prez_ns import ONT, SHEXT
@@ -165,7 +158,7 @@ class NodeShape(Shape):
                     content=InlineData(
                         data_block=DataBlock(
                             block=InlineDataOneVar(
-                                variable=Var(value=f"focus_classes"),
+                                variable=Var(value="focus_classes"),
                                 datablockvalues=dbvs,
                             )
                         )

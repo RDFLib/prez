@@ -10,31 +10,31 @@ from zoneinfo import ZoneInfo
 from fastapi import Depends
 from fastapi.responses import PlainTextResponse
 from rdf2geojson import convert
-from rdflib import URIRef, Literal
-from rdflib.namespace import RDF, Namespace, GEO
+from rdflib import Literal, URIRef
+from rdflib.namespace import GEO, RDF, Namespace
 from sparql_grammar_pydantic import (
     IRI,
-    Var,
-    TriplesSameSubject,
-    TriplesSameSubjectPath,
-    PrimaryExpression,
-    GraphPatternNotTriples,
     Bind,
     Expression,
-    IRIOrFunction,
-    OptionalGraphPattern,
+    GraphPatternNotTriples,
     GroupGraphPattern,
     GroupGraphPatternSub,
+    IRIOrFunction,
+    OptionalGraphPattern,
+    PrimaryExpression,
     TriplesBlock,
+    TriplesSameSubject,
+    TriplesSameSubjectPath,
+    Var,
 )
 
 from prez.cache import endpoints_graph_cache
 from prez.config import settings
-from prez.dependencies import get_url, get_endpoint_uri, get_system_repo
+from prez.dependencies import get_endpoint_uri, get_system_repo, get_url
 from prez.enums import NonAnnotatedRDFMediaType
-from prez.models.ogc_features import Collection, Link, Collections, Links, Queryables
-from prez.reference_data.prez_ns import PREZ, ALTREXT, ONT, OGCFEAT
-from prez.renderers.renderer import return_from_graph, return_annotated_rdf
+from prez.models.ogc_features import Collection, Collections, Link, Links, Queryables
+from prez.reference_data.prez_ns import ALTREXT, OGCFEAT, ONT, PREZ
+from prez.renderers.renderer import return_annotated_rdf, return_from_graph
 from prez.repositories import Repo
 from prez.services.connegp_service import RDF_MEDIATYPES
 from prez.services.curie_functions import get_curie_id_for_uri
@@ -43,8 +43,8 @@ from prez.services.link_generation import add_prez_links
 from prez.services.query_generation.count import CountQuery
 from prez.services.query_generation.shacl import NodeShape
 from prez.services.query_generation.umbrella import (
-    merge_listing_query_grammar_inputs,
     PrezQueryConstructor,
+    merge_listing_query_grammar_inputs,
 )
 
 log = logging.getLogger(__name__)

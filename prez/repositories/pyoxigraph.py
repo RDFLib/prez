@@ -2,7 +2,7 @@ import logging
 
 import pyoxigraph
 from fastapi.concurrency import run_in_threadpool
-from rdflib import Namespace, Graph, URIRef
+from rdflib import Graph, Namespace, URIRef
 
 from prez.exceptions.model_exceptions import InvalidSPARQLQueryException
 from prez.repositories.base import Repo

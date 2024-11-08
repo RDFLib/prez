@@ -1,26 +1,22 @@
 import logging
-from pathlib import Path as PLPath
 from typing import List
-import os
-from fastapi import APIRouter, Depends
-from fastapi import Path
-from rdflib import Graph, RDF, RDFS
+
+from fastapi import APIRouter, Depends, Path
+from rdflib import RDF, RDFS
 from sparql_grammar_pydantic import ConstructQuery
-from httpx import Client
+
 from prez.cache import endpoints_graph_cache
 from prez.dependencies import (
-    get_data_repo,
-    get_system_repo,
-    generate_search_query,
     cql_get_parser_dependency,
+    generate_concept_hierarchy_query,
+    generate_search_query,
+    get_data_repo,
     get_endpoint_nodeshapes,
+    get_endpoint_structure,
     get_negotiated_pmts,
     get_profile_nodeshape,
-    get_endpoint_structure,
-    generate_concept_hierarchy_query,
+    get_system_repo,
 )
-from urllib.parse import urlencode
-
 from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import ONT
 from prez.repositories import Repo
@@ -30,7 +26,6 @@ from prez.services.objects import object_function
 from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQuery
 from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.shacl import NodeShape
-import sys
 
 logger = logging.getLogger(__name__)
 
