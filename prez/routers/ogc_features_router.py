@@ -1,33 +1,34 @@
-from typing import Optional, List
+from typing import List, Optional
 
 from fastapi import Depends, FastAPI, APIRouter
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from starlette import status
 from starlette.requests import Request
-from starlette.responses import StreamingResponse, JSONResponse
+from starlette.responses import JSONResponse, StreamingResponse
 
 from prez.dependencies import (
-    get_data_repo,
-    cql_get_parser_dependency,
-    get_url,
-    get_ogc_features_mediatype,
-    get_system_repo,
-    get_endpoint_nodeshapes,
-    get_profile_nodeshape,
-    get_ogc_features_path_params,
-    get_template_query,
     check_unknown_params,
+    cql_get_parser_dependency,
+    get_data_repo,
+    get_endpoint_nodeshapes,
     get_endpoint_uri_type,
+    get_ogc_features_mediatype,
+    get_ogc_features_path_params,
+    get_profile_nodeshape,
+    get_system_repo,
+    get_template_query,
+    get_url,
 )
 from prez.exceptions.model_exceptions import (
     ClassNotFoundException,
-    URINotFoundException,
     InvalidSPARQLQueryException,
+    NoEndpointNodeshapeException,
+    NoProfilesException,
     PrefixNotFoundException,
-    NoProfilesException, NoEndpointNodeshapeException,
+    URINotFoundException,
 )
-from prez.models.ogc_features import generate_landing_page_links, OGCFeaturesLandingPage
+from prez.models.ogc_features import OGCFeaturesLandingPage, generate_landing_page_links
 from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import OGCFEAT
 from prez.repositories import Repo
@@ -38,12 +39,13 @@ from prez.services.exception_catchers import (
     catch_404,
     catch_500,
     catch_class_not_found_exception,
-    catch_uri_not_found_exception,
     catch_invalid_sparql_query,
+    catch_no_endpoint_nodeshape_exception,
+    catch_no_profiles_exception,
     catch_prefix_not_found_exception,
-    catch_no_profiles_exception, catch_no_endpoint_nodeshape_exception,
+    catch_uri_not_found_exception,
 )
-from prez.services.listings import ogc_features_listing_function, generate_link_headers
+from prez.services.listings import generate_link_headers, ogc_features_listing_function
 from prez.services.objects import ogc_features_object_function
 from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.shacl import NodeShape

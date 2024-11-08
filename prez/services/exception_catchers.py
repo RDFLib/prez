@@ -4,10 +4,11 @@ from starlette.requests import Request
 
 from prez.exceptions.model_exceptions import (
     ClassNotFoundException,
-    URINotFoundException,
-    NoProfilesException,
     InvalidSPARQLQueryException,
-    PrefixNotFoundException, NoEndpointNodeshapeException,
+    NoEndpointNodeshapeException,
+    NoProfilesException,
+    PrefixNotFoundException,
+    URINotFoundException,
 )
 
 

@@ -4,59 +4,55 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Generator
 
-from fastapi import Depends
 from pyld import jsonld
 from rdf2geojson.contrib.geomet.util import flatten_multi_dim
 from rdf2geojson.contrib.geomet.wkt import dumps
-from rdflib import URIRef, Namespace
+from rdflib import Namespace, URIRef
 from rdflib.namespace import GEO
 from sparql_grammar_pydantic import (
-    ArgList,
-    FunctionCall,
-    ConstructQuery,
     IRI,
-    Var,
-    GraphPatternNotTriples,
-    Expression,
-    PrimaryExpression,
+    AdditiveExpression,
+    ArgList,
+    BooleanLiteral,
+    BrackettedExpression,
     BuiltInCall,
+    ConditionalAndExpression,
+    ConditionalOrExpression,
+    Constraint,
+    ConstructQuery,
     ConstructTemplate,
     ConstructTriples,
-    TriplesSameSubject,
-    WhereClause,
+    DataBlock,
+    DataBlockValue,
+    Expression,
+    Filter,
+    FunctionCall,
+    GraphPatternNotTriples,
     GroupGraphPattern,
     GroupGraphPatternSub,
-    TriplesBlock,
-    TriplesSameSubjectPath,
-    SolutionModifier,
     GroupOrUnionGraphPattern,
-    NumericLiteral,
-    RegexExpression,
     InlineData,
-    DataBlock,
     InlineDataOneVar,
-    DataBlockValue,
-    RDFLiteral,
-    Filter,
-    Constraint,
-    ConditionalAndExpression,
-    ValueLogical,
-    RelationalExpression,
-    NumericExpression,
-    AdditiveExpression,
     MultiplicativeExpression,
+    NumericExpression,
+    NumericLiteral,
+    PrimaryExpression,
+    RDFLiteral,
+    RegexExpression,
+    RelationalExpression,
+    SolutionModifier,
+    TriplesBlock,
+    TriplesSameSubject,
+    TriplesSameSubjectPath,
     UnaryExpression,
-    BrackettedExpression,
-    ConditionalOrExpression,
-    BooleanLiteral,
+    ValueLogical,
+    Var,
+    WhereClause,
 )
 
 from prez.cache import prez_system_graph
 from prez.models.query_params import parse_datetime
-from prez.reference_data.cql.geo_function_mapping import (
-    cql_sparql_spatial_mapping,
-)
-from prez.repositories import Repo
+from prez.reference_data.cql.geo_function_mapping import cql_sparql_spatial_mapping
 from prez.services.query_generation.shacl import PropertyShape
 
 CQL = Namespace("http://www.opengis.net/doc/IS/cql2/1.0/")
@@ -152,7 +148,6 @@ class CQLParser:
         ggps = existing_ggps if existing_ggps is not None else GroupGraphPatternSub()
 
         if operator == "and":
-            and_components = []
             for arg in args:
                 # Process each argument and update the same ggps without yielding
                 list(self.parse_logical_operators(arg, ggps))

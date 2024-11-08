@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import toml
-from pydantic import field_validator, Field
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 from rdflib import DCTERMS, RDFS, SDO, URIRef
 from rdflib.namespace import SKOS

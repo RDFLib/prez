@@ -1,10 +1,10 @@
-from fastapi import APIRouter, HTTPException, status, Request, Depends
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import PlainTextResponse, RedirectResponse
 from rdflib import URIRef
 from rdflib.term import _is_valid_uri
 
 from prez.dependencies import get_data_repo
-from prez.services.curie_functions import get_uri_for_curie_id, get_curie_id_for_uri
+from prez.services.curie_functions import get_curie_id_for_uri, get_uri_for_curie_id
 from prez.services.query_generation.identifier import get_foaf_homepage_query
 
 router = APIRouter(tags=["Identifier Resolution"])
