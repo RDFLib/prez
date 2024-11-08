@@ -82,7 +82,7 @@ class Settings(BaseSettings):
     enable_sparql_endpoint: bool = False
     enable_ogc_features: bool = True
     ogc_features_mount_path: str = (
-        "/catalogs/{catalogId}/collections/{recordsCollectionId}/features"
+        "/catalogs/{catalogId}/collections/{recordsCollectionId}"
     )
     custom_endpoints: bool = False
     configuration_mode: bool = False

@@ -321,7 +321,11 @@ async def ogc_features_listing_function(
         geojson["links"] = all_links_dict["links"]
         geojson["timeStamp"] = get_brisbane_timestamp()
         geojson["numberMatched"] = count
-        geojson["numberReturned"] = len(geojson["features"])
+        if geojson.get("features"):
+            number_returned = len(geojson.get("features"))
+            geojson["numberReturned"] = number_returned
+        else:
+            geojson["numberMatched"] = 0
         content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
     elif selected_mediatype in NonAnnotatedRDFMediaType:
         content = io.BytesIO(

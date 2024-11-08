@@ -1,6 +1,6 @@
 from typing import Optional, List
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, APIRouter
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from starlette import status
@@ -63,8 +63,13 @@ features_subapi = FastAPI(
         InvalidSPARQLQueryException: catch_invalid_sparql_query,
         NoEndpointNodeshapeException: catch_no_endpoint_nodeshape_exception,
     },
+    openapi_url="/features/openapi.json",
+    docs_url="/features/docs",
+    redoc_url="/features/redoc",
 )
-features_subapi.include_router(conformance_router)
+features_subapi.include_router(conformance_router, prefix="/features")
+
+features_router = APIRouter(tags=["OGC Features API"], prefix="/features")
 
 
 @features_subapi.exception_handler(RequestValidationError)
@@ -85,8 +90,8 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
-@features_subapi.api_route(
-    "/",
+@features_router.api_route(
+    "",
     summary="OGC Features API",
     methods=ALLOWED_METHODS,
 )
@@ -114,23 +119,23 @@ async def ogc_features_api(
 ########################################################################################################################
 
 
-@features_subapi.api_route(
+@features_router.api_route(
     "/queryables",
     methods=ALLOWED_METHODS,
     name=OGCFEAT["queryables-global"],
 )
-@features_subapi.api_route(
+@features_router.api_route(
     "/collections/{collectionId}/queryables",
     methods=ALLOWED_METHODS,
     name=OGCFEAT["queryables-local"],
     openapi_extra=ogc_features_openapi_extras.get("feature-collection"),
 )
-@features_subapi.api_route(
+@features_router.api_route(
     "/collections",
     methods=ALLOWED_METHODS,
     name=OGCFEAT["feature-collections"],
 )
-@features_subapi.api_route(
+@features_router.api_route(
     "/collections/{collectionId}/items",
     methods=ALLOWED_METHODS,
     name=OGCFEAT["features"],
@@ -175,13 +180,13 @@ async def listings_with_feature_collection(
 ########################################################################################################################
 
 
-@features_subapi.api_route(
+@features_router.api_route(
     path="/collections/{collectionId}",
     methods=ALLOWED_METHODS,
     name=OGCFEAT["feature-collection"],
     openapi_extra=ogc_features_openapi_extras.get("feature-collection"),
 )
-@features_subapi.api_route(
+@features_router.api_route(
     path="/collections/{collectionId}/items/{featureId}",
     methods=ALLOWED_METHODS,
     name=OGCFEAT["feature"],
@@ -207,3 +212,5 @@ async def objects(
     except Exception as e:
         raise e
     return StreamingResponse(content=content, media_type=mediatype, headers=headers)
+
+features_subapi.include_router(features_router)

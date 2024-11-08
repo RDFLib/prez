@@ -596,6 +596,7 @@ async def check_unknown_params(request: Request):
         "filter",
         "order_by",
         "order_by_direction",
+        "subscription-key",
     }
     unknown_params = set(request.query_params.keys()) - known_params
     if unknown_params:
