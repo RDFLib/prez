@@ -160,6 +160,11 @@ class QueryParams:
             default=None,
             description="Optional: Order direction, must be 'ASC' or 'DESC'",
         ),
+        subscription_key: str = Query(
+            default=None,
+            description="An optional API Subscription key",
+            alias="subscription-key",
+        ),
     ):
         self.q = q
         self.page = page
@@ -172,6 +177,7 @@ class QueryParams:
         self.order_by_direction = order_by_direction
         self.filter = filter
         self.mediatype = mediatype
+        self.subscription_key = subscription_key
         self.validate_filter()
 
     def validate_filter(self):
