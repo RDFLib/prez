@@ -89,12 +89,12 @@ def a_spaceprez_dataset_link(client, a_spaceprez_catalog_link):
 
 @pytest.fixture()
 def an_fc_link(client, a_spaceprez_dataset_link):
-    return f"{a_spaceprez_dataset_link}/features/collections/spcprz:FeatureCollection"
+    return f"{a_spaceprez_dataset_link}/features/collections/spaceprez:FeatureCollection"
 
 
 @pytest.fixture()
 def a_feature_link(client, an_fc_link):
-    return f"{an_fc_link}/items/spcprz:Feature1"
+    return f"{an_fc_link}/items/spaceprez:Feature1"
 
 
 @pytest.fixture()

@@ -21,9 +21,11 @@ class URINotFoundException(Exception):
 
     def __init__(self, uri: URIRef = None, curie: str = None):
         if uri:
-            self.message = f"URI \"{uri}\" not found at endpoint {settings.sparql_endpoint}."
+            self.message = (
+                f'URI "{uri}" not found at endpoint {settings.sparql_endpoint}.'
+            )
         if curie:
-            self.message = f"URI for curie \"{curie}\" not found at endpoint {settings.sparql_endpoint}."
+            self.message = f'URI for curie "{curie}" not found at endpoint {settings.sparql_endpoint}.'
         super().__init__(self.message)
 
 
@@ -73,4 +75,3 @@ class NoEndpointNodeshapeException(Exception):
             f"{hierarchy_level}, and parent URI"
         )
         super().__init__(self.message)
-

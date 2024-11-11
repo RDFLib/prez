@@ -3,15 +3,15 @@ import time
 from string import Template
 
 from rdflib import Graph, Literal, URIRef
-from rdflib.namespace import SH, RDF
+from rdflib.namespace import RDF, SH
 from sparql_grammar_pydantic import (
     IRI,
-    WhereClause,
     GroupGraphPattern,
     GroupGraphPatternSub,
-    TriplesBlock,
     SelectClause,
     SubSelect,
+    TriplesBlock,
+    WhereClause,
 )
 
 from prez.cache import endpoints_graph_cache, links_ids_graph_cache
@@ -25,7 +25,9 @@ from prez.services.query_generation.shacl import NodeShape
 log = logging.getLogger(__name__)
 
 
-async def add_prez_links(graph: Graph, repo: Repo, endpoint_structure, uris: list[URIRef] | None = None):
+async def add_prez_links(
+    graph: Graph, repo: Repo, endpoint_structure, uris: list[URIRef] | None = None
+):
     """
     Adds internal links to the given graph for all URIRefs that have a class and endpoint associated with them.
     """
@@ -80,8 +82,12 @@ async def _link_generation(
                 URIRef("http://example.org/ns#Narrowers"),
                 URIRef("http://example.org/ns#QueryablesGlobal"),
                 URIRef("http://example.org/ns#QueryablesLocal"),
-                URIRef("http://example.org/ns#Feature"),  # creation of these links is hardcoded in the OGC Features API
-                URIRef("http://example.org/ns#FeatureCollections"),  # creation of these links is hardcoded in the OGC Features API
+                URIRef(
+                    "http://example.org/ns#Feature"
+                ),  # creation of these links is hardcoded in the OGC Features API
+                URIRef(
+                    "http://example.org/ns#FeatureCollections"
+                ),  # creation of these links is hardcoded in the OGC Features API
             ]
         ]
         # run queries for available nodeshapes to get link components

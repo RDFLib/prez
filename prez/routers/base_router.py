@@ -2,24 +2,24 @@ from fastapi import APIRouter, Depends
 from sparql_grammar_pydantic import ConstructQuery
 
 from prez.dependencies import (
-    get_data_repo,
-    get_system_repo,
-    generate_search_query,
     cql_get_parser_dependency,
+    cql_post_parser_dependency,
+    generate_concept_hierarchy_query,
+    generate_search_query,
+    get_data_repo,
     get_endpoint_nodeshapes,
+    get_endpoint_structure,
     get_negotiated_pmts,
     get_profile_nodeshape,
-    get_endpoint_structure,
-    generate_concept_hierarchy_query,
-    cql_post_parser_dependency,
+    get_system_repo,
 )
 from prez.models.query_params import QueryParams
-from prez.reference_data.prez_ns import EP, ONT, OGCE
+from prez.reference_data.prez_ns import EP, OGCE, ONT
 from prez.repositories import Repo
 from prez.routers.api_extras_examples import (
-    responses,
     cql_examples,
     ogc_extended_openapi_extras,
+    responses,
 )
 from prez.services.connegp_service import NegotiatedPMTs
 from prez.services.listings import listing_function

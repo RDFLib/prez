@@ -3,18 +3,18 @@ import logging
 from rdflib.namespace import RDF
 from sparql_grammar_pydantic import (
     IRI,
-    Var,
     DataBlock,
-    InlineDataOneVar,
     DataBlockValue,
-    WhereClause,
     GroupGraphPattern,
     GroupGraphPatternSub,
+    InlineDataOneVar,
+    SelectClause,
+    SubSelect,
     TriplesBlock,
     TriplesSameSubjectPath,
-    SubSelect,
-    SelectClause,
     ValuesClause,
+    Var,
+    WhereClause,
 )
 
 log = logging.getLogger(__name__)

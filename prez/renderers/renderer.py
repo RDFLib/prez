@@ -7,11 +7,11 @@ from fastapi import status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
 from rdf2geojson import convert
-from rdflib import Graph, URIRef, RDF
+from rdflib import RDF, Graph, URIRef
 
 from prez.cache import prefix_graph
 from prez.renderers.csv_renderer import render_csv_dropdown
-from prez.renderers.json_renderer import render_json_dropdown, NotFoundError
+from prez.renderers.json_renderer import NotFoundError, render_json_dropdown
 from prez.repositories import Repo
 from prez.services.annotations import get_annotation_properties
 from prez.services.connegp_service import RDF_MEDIATYPES, RDF_SERIALIZER_TYPES_MAP

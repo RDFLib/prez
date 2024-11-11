@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 
-from prez.models.ogc_features import ConformanceDeclaration, CONFORMANCE_CLASSES
+from prez.models.ogc_features import CONFORMANCE_CLASSES, ConformanceDeclaration
 
 router = APIRouter(tags=["Conformance"])
 

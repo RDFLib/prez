@@ -1,27 +1,27 @@
-from typing import Union, Optional, List, Tuple
+from typing import List, Optional, Tuple, Union
 
 from sparql_grammar_pydantic import (
     ConstructQuery,
-    Var,
-    GraphPatternNotTriples,
-    Expression,
     ConstructTemplate,
     ConstructTriples,
-    TriplesSameSubject,
-    WhereClause,
+    Expression,
+    GraphPatternNotTriples,
     GroupGraphPattern,
     GroupGraphPatternSub,
-    TriplesBlock,
-    TriplesSameSubjectPath,
-    SolutionModifier,
-    SelectClause,
-    LimitOffsetClauses,
-    LimitClause,
-    OffsetClause,
     GroupOrUnionGraphPattern,
+    LimitClause,
+    LimitOffsetClauses,
+    OffsetClause,
     OrderClause,
     OrderCondition,
+    SelectClause,
+    SolutionModifier,
     SubSelect,
+    TriplesBlock,
+    TriplesSameSubject,
+    TriplesSameSubjectPath,
+    Var,
+    WhereClause,
 )
 
 from prez.models.query_params import QueryParams

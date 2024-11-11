@@ -1,13 +1,13 @@
 from sparql_grammar_pydantic import (
     IRI,
-    Var,
-    WhereClause,
     GroupGraphPattern,
     GroupGraphPatternSub,
-    TriplesBlock,
-    TriplesSameSubjectPath,
     SelectClause,
     SubSelect,
+    TriplesBlock,
+    TriplesSameSubjectPath,
+    Var,
+    WhereClause,
 )
 
 

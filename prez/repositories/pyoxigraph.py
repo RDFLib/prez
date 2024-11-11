@@ -2,7 +2,7 @@ import logging
 
 import pyoxigraph
 from fastapi.concurrency import run_in_threadpool
-from rdflib import Namespace, Graph, URIRef
+from rdflib import Graph, Namespace, URIRef
 
 from prez.exceptions.model_exceptions import InvalidSPARQLQueryException
 from prez.repositories.base import Repo
@@ -70,8 +70,8 @@ class PyoxigraphRepo(Repo):
         elif isinstance(results, pyoxigraph.QueryTriples):  # a CONSTRUCT query result
             result_graph = self._handle_query_triples_results(results)
             return result_graph
-        elif isinstance(results, bool):
-            results_dict = {"head": {}, "boolean": results}
+        elif isinstance(results, pyoxigraph.QueryBoolean):
+            results_dict = {"head": {}, "boolean": bool(results)}
             return results_dict
         else:
             raise TypeError(f"Unexpected result class {type(results)}")

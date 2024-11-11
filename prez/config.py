@@ -55,6 +55,8 @@ class Settings(BaseSettings):
     search_predicates: list = [
         RDFS.label,
         SKOS.prefLabel,
+        SKOS.altLabel,
+        SKOS.hiddenLabel,
         SDO.name,
         DCTERMS.title,
     ]
@@ -80,13 +82,18 @@ class Settings(BaseSettings):
     ]
     enable_sparql_endpoint: bool = False
     enable_ogc_features: bool = True
-    ogc_features_mount_path: str = "/catalogs/{catalogId}/collections/{recordsCollectionId}/features"
+    ogc_features_mount_path: str = (
+        "/catalogs/{catalogId}/collections/{recordsCollectionId}/features"
+    )
     custom_endpoints: bool = False
     configuration_mode: bool = False
     temporal_predicate: Optional[URIRef] = SDO.temporal
     endpoint_to_template_query_filename: Optional[Dict[str, str]] = {}
     prez_ui_url: Optional[str] = None
     search_method: SearchMethod = SearchMethod.DEFAULT
+    required_header: dict[str, str] | None = None
+    proxy_headers: bool = False
+    forwarded_allow_ips: str = "127.0.0.1"
 
     @field_validator("prez_version")
     @classmethod

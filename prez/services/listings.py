@@ -7,44 +7,45 @@ from typing import Dict
 from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
 
+from aiocache import cached
 from fastapi import Depends
 from fastapi.responses import PlainTextResponse
 from rdf2geojson import convert
-from rdflib import URIRef, Literal
-from rdflib.namespace import RDF, Namespace, GEO
+from rdflib import Literal, URIRef
+from rdflib.namespace import GEO, RDF, Namespace
 from sparql_grammar_pydantic import (
     IRI,
-    Var,
-    TriplesSameSubject,
-    TriplesSameSubjectPath,
-    PrimaryExpression,
-    GraphPatternNotTriples,
     Bind,
     Expression,
-    IRIOrFunction,
-    OptionalGraphPattern,
+    GraphPatternNotTriples,
     GroupGraphPattern,
     GroupGraphPatternSub,
+    IRIOrFunction,
+    OptionalGraphPattern,
+    PrimaryExpression,
     TriplesBlock,
+    TriplesSameSubject,
+    TriplesSameSubjectPath,
+    Var,
 )
 
 from prez.cache import endpoints_graph_cache
 from prez.config import settings
-from prez.dependencies import get_url, get_endpoint_uri, get_system_repo
+from prez.dependencies import get_endpoint_uri, get_system_repo, get_url
 from prez.enums import NonAnnotatedRDFMediaType
-from prez.models.ogc_features import Collection, Link, Collections, Links, Queryables
-from prez.reference_data.prez_ns import PREZ, ALTREXT, ONT, OGCFEAT
-from prez.renderers.renderer import return_from_graph, return_annotated_rdf
+from prez.models.ogc_features import Collection, Collections, Link, Links, Queryables
+from prez.reference_data.prez_ns import ALTREXT, OGCFEAT, ONT, PREZ
+from prez.renderers.renderer import return_annotated_rdf, return_from_graph
 from prez.repositories import Repo
 from prez.services.connegp_service import RDF_MEDIATYPES
-from prez.services.curie_functions import get_uri_for_curie_id, get_curie_id_for_uri
+from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.generate_queryables import generate_queryables_json
 from prez.services.link_generation import add_prez_links
 from prez.services.query_generation.count import CountQuery
 from prez.services.query_generation.shacl import NodeShape
 from prez.services.query_generation.umbrella import (
-    merge_listing_query_grammar_inputs,
     PrezQueryConstructor,
+    merge_listing_query_grammar_inputs,
 )
 
 log = logging.getLogger(__name__)
@@ -175,6 +176,7 @@ async def ogc_features_listing_function(
         construct_tss_list.extend(profile_nodeshape.tss_list)
 
     queries = []
+    fc_item_graph = None
     if endpoint_uri_type[0] in [
         OGCFEAT["queryables-local"],
         OGCFEAT["queryables-global"],
@@ -259,7 +261,10 @@ async def ogc_features_listing_function(
             limit=1,
             offset=0,
         ).to_string()
-        queries.append(feature_collection_query)
+        # queries.append(feature_collection_query)
+        # run the feature_collection_query by itself with caching as it will be the same for all paginated sets of features
+
+        fc_item_graph = await _cached_feature_collection_query(collection_uri, data_repo, feature_collection_query)
 
     link_headers = None
     if selected_mediatype == "application/sparql-query":
@@ -270,11 +275,17 @@ async def ogc_features_listing_function(
         return content, link_headers
 
     item_graph, _ = await data_repo.send_queries(queries, [])
+    if fc_item_graph:
+        item_graph += fc_item_graph
     annotations_graph = await return_annotated_rdf(item_graph, data_repo, system_repo)
     if count_query:
         count_g, _ = await data_repo.send_queries([count_query], [])
         if count_g:
-            count = int(next(iter(count_g.objects())))
+            count = str(next(iter(count_g.objects())))
+            if count.startswith(">"):
+                count = int(count[1:])  # TODO increment maximum counts based on current page.
+            else:
+                count = int(count)
 
     if selected_mediatype == "application/json":
         if endpoint_uri_type[0] in [
@@ -343,7 +354,7 @@ def _add_inbound_triple_pattern_match(construct_tss_list):
 
 
 def create_collections_json(
-    item_graph, annotations_graph, url, selected_mediatype, query_params, count
+    item_graph, annotations_graph, url, selected_mediatype, query_params, count: str
 ):
     collections_list = []
     for s, p, o in item_graph.triples((None, RDF.type, GEO.FeatureCollection)):
@@ -520,3 +531,12 @@ async def generate_queryables_from_shacl_definition(
         "properties": queryable_props,
     }
     return Queryables(**queryable_params)
+
+
+@cached(ttl=600, key=lambda collection_uri: collection_uri)
+async def _cached_feature_collection_query(collection_uri, data_repo, feature_collection_query):
+    """cache the feature collection information for 10 minutes as it is an expensive query at present"""
+    fc_item_graph, _ = await data_repo.send_queries(
+        [feature_collection_query], []
+    )
+    return fc_item_graph

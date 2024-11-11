@@ -10,26 +10,24 @@ from fastapi.responses import PlainTextResponse, RedirectResponse
 from rdf2geojson import convert
 from rdflib import RDF, URIRef
 from rdflib.namespace import GEO
-from sparql_grammar_pydantic import TriplesSameSubject, IRI, Var, TriplesSameSubjectPath
+from sparql_grammar_pydantic import IRI, TriplesSameSubject, TriplesSameSubjectPath, Var
 
 from prez.config import settings
 from prez.exceptions.model_exceptions import URINotFoundException
-from prez.models.ogc_features import Link, Collection, Links
+from prez.models.ogc_features import Collection, Link, Links
 from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import ALTREXT, ONT, PREZ
-from prez.renderers.renderer import return_from_graph, return_annotated_rdf
+from prez.renderers.renderer import return_annotated_rdf, return_from_graph
 from prez.services.connegp_service import RDF_MEDIATYPES
-from prez.services.curie_functions import get_uri_for_curie_id, get_curie_id_for_uri
+from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.link_generation import add_prez_links
 from prez.services.listings import (
-    listing_function,
-    generate_link_headers,
     create_self_alt_links,
+    generate_link_headers,
     get_brisbane_timestamp,
+    listing_function,
 )
-from prez.services.query_generation.umbrella import (
-    PrezQueryConstructor,
-)
+from prez.services.query_generation.umbrella import PrezQueryConstructor
 
 log = logging.getLogger(__name__)
 
@@ -93,15 +91,19 @@ async def object_function(
     log.debug(f"Query time: {time.time() - query_start_time}")
     if settings.prez_ui_url:
         # If HTML or no specific media type requested
-        if pmts.requested_mediatypes[0][0] in ('text/html', '*/*'):
+        if pmts.requested_mediatypes[0][0] in ("text/html", "*/*"):
             item_uri = URIRef(profile_nodeshape.focus_node.value)
             await add_prez_links(item_graph, data_repo, endpoint_structure, [item_uri])
-            prez_link = item_graph.value(subject=item_uri, predicate=URIRef("https://prez.dev/link"), any=True)
-            prez_ui_url = re.sub(r'/+$', '', settings.prez_ui_url)
+            prez_link = item_graph.value(
+                subject=item_uri, predicate=URIRef("https://prez.dev/link"), any=True
+            )
+            prez_ui_url = re.sub(r"/+$", "", settings.prez_ui_url)
             if prez_link:
                 return RedirectResponse(prez_ui_url + str(prez_link))
             else:
-                return RedirectResponse(prez_ui_url + '/404?uri=' + urllib.parse.quote_plus(item_uri))
+                return RedirectResponse(
+                    prez_ui_url + "/404?uri=" + urllib.parse.quote_plus(item_uri)
+                )
     if "anot+" in pmts.selected["mediatype"]:
         await add_prez_links(item_graph, data_repo, endpoint_structure)
     return await return_from_graph(

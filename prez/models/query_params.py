@@ -1,8 +1,8 @@
 import json
 from datetime import datetime
-from typing import Optional, List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
-from fastapi import HTTPException, Query, Depends
+from fastapi import Depends, HTTPException, Query
 
 from prez.enums import FilterLangEnum, OrderByDirectionEnum
 
@@ -66,7 +66,7 @@ def validate_datetime(
         None,
         description=""" Either a date-time or an interval. Date and time expressions adhere to RFC 3339.
   Intervals may be bounded or half-bounded (double-dots at start or end).
-  
+
   Temporal geometries are either a date-time value or a time interval. The parameter value SHALL conform to the following syntax (using ABNF):
 
     interval-bounded            = date-time "/" date-time
@@ -160,6 +160,11 @@ class QueryParams:
             default=None,
             description="Optional: Order direction, must be 'ASC' or 'DESC'",
         ),
+        subscription_key: str = Query(
+            default=None,
+            description="An optional API Subscription key",
+            alias="subscription-key",
+        ),
     ):
         self.q = q
         self.page = page
@@ -172,6 +177,7 @@ class QueryParams:
         self.order_by_direction = order_by_direction
         self.filter = filter
         self.mediatype = mediatype
+        self.subscription_key = subscription_key
         self.validate_filter()
 
     def validate_filter(self):

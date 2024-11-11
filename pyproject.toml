@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "prez"
-version = "0.1.0.dev0"
+version = "4.1.2"
 description = "A python application for displaying linked data on the web"
 authors = ["Jamie Feiss <jamie.feiss@gmail.com>", "Nicholas Car <nick@kurrawong.net>", "David Habgood <dcchabgood@gmail.com>"]
 packages = [
@@ -31,13 +31,10 @@ pydantic-settings = "^2.5.0"
 pyld = "^2.0.4"
 aiocache = "^0.12.2"
 sparql-grammar-pydantic = "^0.1.2"
-rdf2geojson = {git = "https://github.com/ashleysommer/rdf2geojson.git", rev = "v0.2.1"}
+rdf2geojson = {git = "https://github.com/Kurrawong/rdf2geojson.git", rev = "v0.3.0"}
 python-multipart = "^0.0.9"
-pyoxigraph = "^0.3.22"
-oxrdflib = "^0.3.7"
-
-[tool.poetry.extras]
-server = ["uvicorn"]
+pyoxigraph = "^0.4.2"
+oxrdflib = {git = "https://github.com/oxigraph/oxrdflib.git", rev = "main"}
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.1"
@@ -50,9 +47,8 @@ coverage = "^7.3.2"
 tabulate = "^0.9.0"
 ogctests = "^0.1.15"
 
-[build-system]
-requires = ["poetry-core>=1.9.0"]
-build-backend = "poetry.core.masonry.api"
+[tool.poetry.extras]
+server = ["uvicorn"]
 
 [tool.black]
 line-length = 88
@@ -60,5 +56,14 @@ line-length = 88
 [tool.isort]
 profile = "black"
 
-[tool.pytest.ini_options]
+[tool.semantic_release]
+version_toml = ["pyproject.toml:tool.poetry.version"]
+
+[pytest]
+pythonpath = ["prez"]
 testpaths = ["tests"]
+
+[build-system]
+requires = ["poetry-core>=1.9.0"]
+build-backend = "poetry.core.masonry.api"
+

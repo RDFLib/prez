@@ -2,33 +2,33 @@ import json
 from pathlib import Path
 
 import httpx
-from fastapi import Depends, Request, HTTPException
+from fastapi import Depends, HTTPException, Request
 from pyoxigraph import Store
-from rdflib import Dataset, URIRef, SKOS, RDF
+from rdflib import RDF, SKOS, Dataset, URIRef
 from sparql_grammar_pydantic import IRI, Var
 
 from prez.cache import (
-    store,
-    oxrdflib_store,
-    system_store,
-    profiles_graph_cache,
-    endpoints_graph_cache,
     annotations_store,
+    endpoints_graph_cache,
+    oxrdflib_store,
     prez_system_graph,
+    profiles_graph_cache,
     queryable_props,
+    store,
+    system_store,
 )
 from prez.config import settings
 from prez.enums import (
+    GeoJSONMediaType,
+    JSONMediaType,
     NonAnnotatedRDFMediaType,
     SPARQLQueryMediaType,
-    JSONMediaType,
-    GeoJSONMediaType,
 )
 from prez.exceptions.model_exceptions import NoEndpointNodeshapeException, URINotFoundException
 from prez.enums import SearchMethod
 from prez.models.query_params import QueryParams
-from prez.reference_data.prez_ns import ALTREXT, ONT, EP, OGCE, OGCFEAT
-from prez.repositories import PyoxigraphRepo, RemoteSparqlRepo, OxrdflibRepo, Repo
+from prez.reference_data.prez_ns import ALTREXT, EP, OGCE, OGCFEAT, ONT
+from prez.repositories import OxrdflibRepo, PyoxigraphRepo, RemoteSparqlRepo, Repo
 from prez.services.classes import get_classes_single
 from prez.services.connegp_service import NegotiatedPMTs
 from prez.services.curie_functions import get_uri_for_curie_id
@@ -182,7 +182,7 @@ async def cql_get_parser_dependency(
             return cql_parser
         except json.JSONDecodeError:
             raise HTTPException(status_code=400, detail="Invalid JSON format.")
-        except Exception as e:
+        except Exception:
             raise HTTPException(
                 status_code=400, detail="Invalid CQL format: Parsing failed."
             )
@@ -285,9 +285,17 @@ async def generate_concept_hierarchy_query(
     )
 
 
+async def get_unprefixed_url_path(
+    request: Request,
+) -> str:
+    root_path = request.scope.get("app_root_path", request.scope.get("root_path", ""))
+    return request.url.path[len(root_path) :]
+
+
 async def get_focus_node(
     request: Request,
     endpoint_uri_type: tuple[URIRef, URIRef] = Depends(get_endpoint_uri_type),
+    url_path: str = Depends(get_unprefixed_url_path),
 ):
     """
     Either a variable or IRI depending on whether an object or listing endpoint is being used.
@@ -298,7 +306,7 @@ async def get_focus_node(
         uri = request.query_params.get("uri")
         return IRI(value=uri)
     elif ep_type == ONT.ObjectEndpoint:
-        object_curie = request.url.path.split("/")[-1]
+        object_curie = url_path.split("/")[-1]
         focus_node_uri = await get_uri_for_curie_id(object_curie)
         return IRI(value=focus_node_uri)
     else:  # listing endpoints
@@ -352,6 +360,7 @@ async def get_endpoint_nodeshapes(
     system_repo: Repo = Depends(get_system_repo),
     endpoint_uri_type: tuple[URIRef, URIRef] = Depends(get_endpoint_uri_type),
     focus_node: IRI | Var = Depends(get_focus_node),
+    url_path: str = Depends(get_unprefixed_url_path),
 ):
     """
     Determines the relevant endpoint nodeshape which will be used to list items at the endpoint.
@@ -368,19 +377,19 @@ async def get_endpoint_nodeshapes(
         return handle_special_cases(ep_uri, focus_node)
 
     path_node_curies = [
-        i for i in request.url.path.split("/")[:-1] if i in request.path_params.values()
+        i for i in url_path.split("/")[:-1] if i in request.path_params.values()
     ]
     path_nodes = {
         f"path_node_{i + 1}": IRI(value=await get_uri_for_curie_id(value))
         for i, value in enumerate(reversed(path_node_curies))
     }
-    hierarchy_level = int(len(request.url.path.split("/")) / 2)
+    hierarchy_level = int(len(url_path.split("/")) / 2)
     """
     Determines the relevant nodeshape based on the endpoint, hierarchy level, and parent URI
     """
     node_selection_shape_uri = None
     relevant_ns_query = f"""SELECT ?ns ?tc
-                            WHERE {{ 
+                            WHERE {{
                                 {ep_uri.n3()} <https://prez.dev/ont/relevantShapes> ?ns .
                                 ?ns <http://www.w3.org/ns/shacl#targetClass> ?tc ;
                                     <https://prez.dev/ont/hierarchyLevel> {hierarchy_level} .
@@ -445,6 +454,7 @@ async def get_negotiated_pmts(
     system_repo: Repo = Depends(get_system_repo),
     endpoint_uri_type: URIRef = Depends(get_endpoint_uri_type),
     focus_node: IRI | Var = Depends(get_focus_node),
+    url_path: str = Depends(get_unprefixed_url_path),
 ) -> NegotiatedPMTs:
     # Use endpoint_nodeshapes in constructing NegotiatedPMTs
     ep_type = endpoint_uri_type[1]
@@ -461,7 +471,7 @@ async def get_negotiated_pmts(
         classes=klasses,
         listing=listing,
         system_repo=system_repo,
-        current_path=request.url.path,
+        current_path=url_path,
     )
     await pmts.setup()
     return pmts
@@ -485,6 +495,7 @@ async def get_profile_nodeshape(
     request: Request,
     pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
     endpoint_uri_type: URIRef = Depends(get_endpoint_uri_type),
+    url_path: str = Depends(get_unprefixed_url_path),
 ):
     profile = pmts.selected.get("profile")
     if profile == ALTREXT["alt-profile"]:
@@ -493,7 +504,7 @@ async def get_profile_nodeshape(
         uri = request.query_params.get("uri")
         focus_node = IRI(value=uri)
     elif endpoint_uri_type[1] == ONT.ObjectEndpoint:
-        object_curie = request.url.path.split("/")[-1]
+        object_curie = url_path.split("/")[-1]
         focus_node_uri = await get_uri_for_curie_id(object_curie)
         focus_node = IRI(value=focus_node_uri)
     else:  # listing
@@ -617,6 +628,7 @@ async def check_unknown_params(request: Request):
         "filter",
         "order_by",
         "order_by_direction",
+        "subscription-key",
     }
     unknown_params = set(request.query_params.keys()) - known_params
     if unknown_params:

@@ -5,13 +5,12 @@ import pickle
 from typing import Optional
 
 from aiocache import caches
-from fastapi import APIRouter, Depends, Query, HTTPException, Body
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from pydantic import ValidationError
-from rdflib import BNode, VANN
-from rdflib import Graph, URIRef, Literal
+from rdflib import VANN, BNode, Graph, Literal, URIRef
 from rdflib.collection import Collection
 from starlette.requests import Request
-from starlette.responses import PlainTextResponse, StreamingResponse, Response
+from starlette.responses import PlainTextResponse, Response, StreamingResponse
 
 from prez.cache import endpoints_graph_cache, prefix_graph
 from prez.config import settings
@@ -19,7 +18,7 @@ from prez.dependencies import get_system_repo
 from prez.enums import JSONMediaType, NonAnnotatedRDFMediaType
 from prez.models.endpoint_config import RootModel, configure_endpoings_example
 from prez.reference_data.prez_ns import PREZ
-from prez.renderers.renderer import return_rdf, return_from_graph
+from prez.renderers.renderer import return_from_graph, return_rdf
 from prez.repositories import Repo
 from prez.services.connegp_service import RDF_MEDIATYPES, NegotiatedPMTs
 from prez.services.generate_endpoint_rdf import create_endpoint_rdf
@@ -44,6 +43,7 @@ async def index(request: Request, system_repo: Repo = Depends(get_system_repo)):
     g.bind("prez", "https://prez.dev/")
     g.bind("ont", "https://prez.dev/ont/")
     g.add((URIRef(settings.system_uri), PREZ.version, Literal(settings.prez_version)))
+    g.add((URIRef(settings.system_uri), PREZ.sparqlEndpointEnabled, Literal(settings.enable_sparql_endpoint, datatype=URIRef("http://www.w3.org/2001/XMLSchema#boolean"))))
     g += endpoints_graph_cache
     g += await return_annotation_predicates()
     return await return_from_graph(

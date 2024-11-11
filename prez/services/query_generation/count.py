@@ -1,37 +1,37 @@
 from sparql_grammar_pydantic import (
     IRI,
-    Var,
-    TriplesSameSubject,
-    SubSelect,
-    SelectClause,
-    WhereClause,
+    AdditiveExpression,
+    Aggregate,
+    Anon,
+    Bind,
+    BlankNode,
+    BuiltInCall,
+    ConditionalAndExpression,
+    ConditionalOrExpression,
+    ConstructQuery,
+    ConstructTemplate,
+    ConstructTriples,
+    Expression,
+    GraphPatternNotTriples,
     GroupGraphPattern,
     GroupGraphPatternSub,
-    SolutionModifier,
-    LimitOffsetClauses,
-    LimitClause,
-    Expression,
-    PrimaryExpression,
-    BuiltInCall,
-    Aggregate,
-    ConditionalOrExpression,
-    ConditionalAndExpression,
-    ValueLogical,
-    RelationalExpression,
-    NumericExpression,
-    AdditiveExpression,
-    MultiplicativeExpression,
-    UnaryExpression,
-    NumericLiteral,
-    RDFLiteral,
-    Bind,
-    GraphPatternNotTriples,
     GroupOrUnionGraphPattern,
-    ConstructTemplate,
-    BlankNode,
-    Anon,
-    ConstructTriples,
-    ConstructQuery,
+    LimitClause,
+    LimitOffsetClauses,
+    MultiplicativeExpression,
+    NumericExpression,
+    NumericLiteral,
+    PrimaryExpression,
+    RDFLiteral,
+    RelationalExpression,
+    SelectClause,
+    SolutionModifier,
+    SubSelect,
+    TriplesSameSubject,
+    UnaryExpression,
+    ValueLogical,
+    Var,
+    WhereClause,
 )
 
 from prez.config import settings
@@ -199,6 +199,6 @@ def startup_count_objects():
     """
     Retrieves hardcoded counts for collections in the repository (Feature Collections, Catalogs etc.)
     """
-    return f"""PREFIX prez: <https://prez.dev/>
-                CONSTRUCT {{ ?collection prez:count ?count }}
-                WHERE {{ ?collection prez:count ?count }}"""
+    return """PREFIX prez: <https://prez.dev/>
+                CONSTRUCT { ?collection prez:count ?count }
+                WHERE { ?collection prez:count ?count }"""
