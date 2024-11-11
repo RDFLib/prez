@@ -1,4 +1,4 @@
-@prefix fts: <https://prez.dev/ont/fts#> .
+@prefix ont: <https://prez.dev/ont/> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
 @prefix dwc: <http://rs.tdwg.org/dwc/terms/> .
 @prefix ex: <http://example.com/> .
@@ -9,18 +9,9 @@
 @prefix prez: <https://prez.dev/> .
 
 
-ex:FTSSequenceShape
-    a sh:PropertyShape ;
-    a fts:PropertyShape ;
-    sh:path
-        (
-            ex:hasSimpleResult ex:hasFeatureOfInterest ex:testProp ex:testProp2
-        ) ;
-.
-
 ex:FTSInverseShape
     a sh:PropertyShape ;
-    a fts:PropertyShape ;
+    a ont:JenaFTSPropertyShape ;
     sh:path [ sh:inversePath ex:hasFeatureOfInterest ] ;
     sh:name "Inverse" ;
     dcterms:identifier "inv" ;
@@ -28,10 +19,10 @@ ex:FTSInverseShape
 
 ex:FTSSequenceShape
     a sh:PropertyShape ;
-    a fts:PropertyShape ;
+    a ont:JenaFTSPropertyShape ;
     sh:path
         (
-            ex:hasSimpleResult ex:hasFeatureOfInterest ex:testProp ex:testProp2
+            ex:prop1 ex:prop2 ex:labelProp
         ) ;
     sh:name "Sequence" ;
     dcterms:identifier "seq" ;
@@ -39,7 +30,7 @@ ex:FTSSequenceShape
 
 ex:FTSInverseSequenceShape
     a sh:PropertyShape ;
-    a fts:PropertyShape ;
+    a ont:JenaFTSPropertyShape ;
     sh:path ( ex:hasSimpleResult [ sh:inversePath ex:hasFeatureOfInterest ] ) ;
     sh:name "Sequence Inverse" ;
     dcterms:identifier "seqinv" ;

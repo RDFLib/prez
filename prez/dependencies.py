@@ -4,6 +4,7 @@ from pathlib import Path
 import httpx
 from fastapi import Depends, HTTPException, Request
 from pyoxigraph import Store
+from rdflib import Dataset, URIRef, SKOS, RDF, DCTERMS
 from rdflib import RDF, SKOS, Dataset, URIRef
 from sparql_grammar_pydantic import IRI, Var
 
@@ -188,6 +189,12 @@ async def cql_get_parser_dependency(
             )
 
 
+async def get_jena_fts_shacl_predicates(
+    system_repo: Repo = Depends(get_system_repo),
+):
+    query = """DESCRIBE ?fts_shape WHERE {?fts_shape a <https://prez.dev/ont/JenaFTSPropertyShape}"""
+    return await system_repo.rdf_query_to_graph(query)
+
 async def generate_search_query(
         request: Request,
         system_repo: Repo = Depends(get_system_repo),
@@ -210,6 +217,8 @@ async def generate_search_query(
             )
         elif settings.search_method == SearchMethod.FTS_FUSEKI:
             predicates = predicates if predicates else settings.search_predicates
+            shacl_shapes = await get_jena_fts_shacl_predicates()
+            shacl_shape_ids = list(shacl_shapes.objects(subject=None, predicate=DCTERMS.identifier))
             shacl_shape_predicates = []
             non_shacl_predicates = []
             for pred in predicates:
@@ -228,7 +237,7 @@ async def generate_search_query(
                 #     pass
             fts_gpnt = []
             return SearchQueryFusekiFTS(
-                term=escaped_term, predicates=predicates, limit=limit, offset=offset, fts_gpnt=fts_gpnt
+                term=escaped_term, predicates=non_shacl_predicates, limit=limit, offset=offset, fts_gpnt=fts_gpnt
             )
         else:
             raise NotImplementedError(
