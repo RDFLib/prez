@@ -127,6 +127,9 @@ async def load_system_data_to_oxigraph(store: Store):
     endpoints_bytes = endpoints_graph_cache.serialize(format="nt", encoding="utf-8")
     store.load(endpoints_bytes, "application/n-triples")
 
+    prez_system_graph_bytes = prez_system_graph.serialize(format="nt", encoding="utf-8")
+    store.load(prez_system_graph_bytes, "application/n-triples")
+
 
 async def load_annotations_data_to_oxigraph(store: Store):
     """
@@ -190,9 +193,9 @@ async def cql_get_parser_dependency(
 
 
 async def get_jena_fts_shacl_predicates(
-    system_repo: Repo = Depends(get_system_repo),
+    system_repo: Repo
 ):
-    query = """DESCRIBE ?fts_shape WHERE {?fts_shape a <https://prez.dev/ont/JenaFTSPropertyShape}"""
+    query = "DESCRIBE ?fts_shape WHERE {?fts_shape a <https://prez.dev/ont/JenaFTSPropertyShape>}"
     return await system_repo.rdf_query_to_graph(query)
 
 async def generate_search_query(
@@ -217,27 +220,21 @@ async def generate_search_query(
             )
         elif settings.search_method == SearchMethod.FTS_FUSEKI:
             predicates = predicates if predicates else settings.search_predicates
-            shacl_shapes = await get_jena_fts_shacl_predicates()
-            shacl_shape_ids = list(shacl_shapes.objects(subject=None, predicate=DCTERMS.identifier))
-            shacl_shape_predicates = []
+            shacl_shapes = await get_jena_fts_shacl_predicates(system_repo)
+            shacl_shape_ids = list([str(x) for x in shacl_shapes.objects(subject=None, predicate=DCTERMS.identifier)])
+            shacl_predicates = []
             non_shacl_predicates = []
             for pred in predicates:
-                try:
-                    URIRef(pred)
+                if pred in shacl_shape_ids:
+                    shacl_predicates.append(pred)
+                else:
                     non_shacl_predicates.append(pred)
-                except ValueError:
-                    shacl_shape_predicates.append(pred)
-                # print('9')
-                # shacl_pred_query = f"""
-                # DESCRIBE ?shape {{
-                #     ?shape a <https://prez.dev/ont/fts#> ;
-                #       <http://purl.org/dc/terms/identifier> {}.
-                # }}"""
-                # for predicate in shacl_shape_predicates:
-                #     pass
-            fts_gpnt = []
             return SearchQueryFusekiFTS(
-                term=escaped_term, predicates=non_shacl_predicates, limit=limit, offset=offset, fts_gpnt=fts_gpnt
+                term=escaped_term,
+                non_shacl_predicates=non_shacl_predicates,
+                shacl_predicates=shacl_predicates,
+                limit=limit,
+                offset=offset
             )
         else:
             raise NotImplementedError(

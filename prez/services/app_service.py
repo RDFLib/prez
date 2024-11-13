@@ -3,7 +3,7 @@ import time
 from pathlib import Path
 
 import httpx
-from rdflib import DCTERMS, RDF, BNode, Graph, Literal, URIRef
+from rdflib import DCTERMS, RDF, BNode, Graph, Literal, URIRef, SH
 
 from prez.cache import (
     counts_graph,
@@ -100,6 +100,21 @@ async def retrieve_remote_template_queries(repo: Repo):
         log.info("Remote template query(ies) found and added")
     else:
         log.info("No remote template queries found")
+
+
+async def retrieve_remote_jena_fts_shapes(repo: Repo):
+    query = "DESCRIBE ?fts_shape WHERE {?fts_shape a <https://prez.dev/ont/JenaFTSPropertyShape>}"
+    g, _ = await repo.send_queries([query], [])
+    if len(g) > 0:
+        prez_system_graph.__iadd__(g)
+        n_shapes = len(list(g.subjects(RDF.type, ONT.JenaFTSPropertyShape)))
+        names_list = list(g.objects(subject=None, predicate=SH.name))
+        while len(names_list) < n_shapes:
+            names_list.append("(no label)")
+        names = ", ".join(names_list)
+        log.info(f"Found and added {n_shapes} Jena FTS shapes from remote repo: {names}")
+    else:
+        log.info("No remote Jena FTS shapes found")
 
 
 async def add_remote_prefixes(repo: Repo):

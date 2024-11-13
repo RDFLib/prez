@@ -60,7 +60,7 @@ class SearchQueryFusekiFTS(ConstructQuery):
     :param term: the seach term or phrase
     :param limit: sparql limit clause
     :param offset: sparql offset clause
-    :param predicates: list of predicates to search over (must be indexed)
+    :param non_shacl_predicates: list of predicates to search over (must be indexed)
 
     generates a query of the form
 
@@ -94,7 +94,8 @@ class SearchQueryFusekiFTS(ConstructQuery):
             term: str,
             limit: int,
             offset: int,
-            predicates: list[str] | None = None,
+            non_shacl_predicates: list[str] | None = None,
+            shacl_predicates: list[str] | None = None
     ):
         limit += 1  # increase the limit by one, so we know if there are further pages of results.
         # join search terms with '+' for better results
@@ -200,7 +201,7 @@ class SearchQueryFusekiFTS(ConstructQuery):
                                                                                    )
                                                                                )
                                                                                for predicate in
-                                                                               predicates
+                                                                               non_shacl_predicates
                                                                            ]
                                                                            + [
                                                                                GraphNodePath(
@@ -362,5 +363,5 @@ if __name__ == "__main__":
         term="test",
         limit=10,
         offset=0,
-        predicates=[RDFS.label, RDFS.comment],
+        non_shacl_predicates=[RDFS.label, RDFS.comment],
     )
