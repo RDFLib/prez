@@ -288,6 +288,8 @@ class CQLParser:
 
         coordinates_list = args[1].get("http://example.com/vocab/coordinates")
         coordinates, geom_type = self._extract_spatial_info(coordinates_list, args)
+        if geom_type in ["Polygon", "MultiPolygon"]:
+            coordinates = [coordinates]
 
         if coordinates:
             wkt = get_wkt_from_coords(coordinates, geom_type)
@@ -366,7 +368,7 @@ class CQLParser:
         geom_type = None
         if coordinates_list:
             coordinates = [
-                (coordinates_list[i]["@value"], coordinates_list[i + 1]["@value"])
+                [coordinates_list[i]["@value"], coordinates_list[i + 1]["@value"]]
                 for i in range(0, len(coordinates_list), 2)
             ]
             geom_type = args[1]["http://www.opengis.net/ont/sf#type"][0]["@value"]
