@@ -95,7 +95,8 @@ class SearchQueryFusekiFTS(ConstructQuery):
             limit: int,
             offset: int,
             non_shacl_predicates: list[str] | None = None,
-            shacl_predicates: list[str] | None = None
+            shacl_gougp: GroupOrUnionGraphPattern | None = None,
+            shacl_tss_list: list[TriplesSameSubject] | None = None
     ):
         limit += 1  # increase the limit by one, so we know if there are further pages of results.
         # join search terms with '+' for better results
@@ -125,10 +126,20 @@ class SearchQueryFusekiFTS(ConstructQuery):
             for p, v in ct_map.items()
         ]
 
+        if shacl_tss_list:
+            construct_tss_list.extend(shacl_tss_list)
+
         construct_template = ConstructTemplate(
             construct_triples=ConstructTriples.from_tss_list(construct_tss_list)
         )
-        gpnt_or_triples_list = [TriplesBlock(
+
+        gpnt_or_triples_list = []
+        if shacl_gougp:
+            gpnt = GraphPatternNotTriples(
+                content=shacl_gougp
+            )
+            gpnt_or_triples_list.append(gpnt)
+        gpnt_or_triples_list.extend([TriplesBlock(
             triples=TriplesSameSubjectPath(
                 content=(
                     TriplesNodePath(
@@ -225,10 +236,7 @@ class SearchQueryFusekiFTS(ConstructQuery):
                     ),
                 )
             )
-        )]
-        # if property_shape:
-        #     pass
-        #     # if property_shape.
+        )])
         where_clause = WhereClause(
             group_graph_pattern=GroupGraphPattern(
                 content=SubSelect(
@@ -313,7 +321,7 @@ class SearchQueryFusekiFTS(ConstructQuery):
             )
         )
 
-        # logger.debug(f"constructed Fuseki FTS query:\n{self.query}")
+        # logger.debug(f"constructed Fuseki FTS query:\n{self}")
         super().__init__(
             construct_template=construct_template,
             where_clause=where_clause,
@@ -330,26 +338,26 @@ class SearchQueryFusekiFTS(ConstructQuery):
 
     @property
     def limit(self):
-        return self.query.solution_modifier.limit_offset.limit_clause.limit
+        return self.solution_modifier.limit_offset.limit_clause.limit
 
     @property
     def offset(self):
-        return self.query.solution_modifier.limit_offset.offset_clause.offset
+        return self.solution_modifier.limit_offset.offset_clause.offset
 
     @property
     def tss_list(self):
-        return self.query.construct_template.construct_triples.to_tss_list()
+        return self.construct_template.construct_triples.to_tss_list()
 
     @property
     def inner_select_vars(self):
         return (
-            self.query.where_clause.group_graph_pattern.content.select_clause.variables_or_all
+            self.where_clause.group_graph_pattern.content.select_clause.variables_or_all
         )
 
     @property
     def inner_select_gpnt(self):
         inner_ggp = (
-            self.query.where_clause.group_graph_pattern.content.where_clause.group_graph_pattern
+            self.where_clause.group_graph_pattern.content.where_clause.group_graph_pattern
         )
         return GraphPatternNotTriples(
             content=GroupOrUnionGraphPattern(group_graph_patterns=[inner_ggp])

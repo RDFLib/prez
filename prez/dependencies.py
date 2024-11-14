@@ -4,9 +4,10 @@ from pathlib import Path
 import httpx
 from fastapi import Depends, HTTPException, Request
 from pyoxigraph import Store
-from rdflib import Dataset, URIRef, SKOS, RDF, DCTERMS
+from rdflib import Dataset, URIRef, SKOS, RDF, DCTERMS, Literal
 from rdflib import RDF, SKOS, Dataset, URIRef
-from sparql_grammar_pydantic import IRI, Var
+from sparql_grammar_pydantic import IRI, Var, GroupGraphPattern, GroupGraphPatternSub, TriplesBlock, \
+    GroupOrUnionGraphPattern
 
 from prez.cache import (
     annotations_store,
@@ -37,7 +38,7 @@ from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQue
 from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.search_default import SearchQueryRegex
 from prez.services.query_generation.search_fuseki_fts import SearchQueryFusekiFTS
-from prez.services.query_generation.shacl import NodeShape
+from prez.services.query_generation.shacl import NodeShape, PropertyShape
 from prez.services.query_generation.sparql_escaping import escape_for_lucene_and_sparql
 
 
@@ -222,17 +223,43 @@ async def generate_search_query(
             predicates = predicates if predicates else settings.search_predicates
             shacl_shapes = await get_jena_fts_shacl_predicates(system_repo)
             shacl_shape_ids = list([str(x) for x in shacl_shapes.objects(subject=None, predicate=DCTERMS.identifier)])
-            shacl_predicates = []
+            tssp_lists = []
+            tss_list = []
             non_shacl_predicates = []
+            i = 0
             for pred in predicates:
                 if pred in shacl_shape_ids:
-                    shacl_predicates.append(pred)
+                    shacl_shape_uri = shacl_shapes.value(subject=None, predicate=DCTERMS.identifier, object=Literal(pred))
+                    shacl_shape_g = shacl_shapes.cbd(shacl_shape_uri)
+                    ps = PropertyShape(
+                        uri=shacl_shape_uri,
+                        graph=shacl_shape_g,
+                        kind="fts",
+                        focus_node=Var(value="focus_node"),
+                        shape_number=i
+                    )
+                    tssp_lists.append(ps.tssp_list)
+                    tss_list.extend(ps.tss_list)
+                    i += 1
                 else:
                     non_shacl_predicates.append(pred)
+
+            ggp_list = []
+            for inner_list in tssp_lists:
+                ggp_list.append(
+                    GroupGraphPattern(
+                        content=GroupGraphPatternSub(
+                            triples_block=TriplesBlock.from_tssp_list(inner_list)
+                        )
+                    )
+                )
+            gougp = GroupOrUnionGraphPattern(group_graph_patterns=ggp_list)
+
             return SearchQueryFusekiFTS(
                 term=escaped_term,
                 non_shacl_predicates=non_shacl_predicates,
-                shacl_predicates=shacl_predicates,
+                shacl_gougp=gougp,
+                shacl_tss_list=tss_list,
                 limit=limit,
                 offset=offset
             )
