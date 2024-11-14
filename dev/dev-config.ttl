@@ -127,6 +127,12 @@ ja:DatasetRDFS  rdfs:subClassOf  ja:RDFDataset .
                  [ text:field "historyNote" ;
                    text:predicate skos:historyNote ;
                     ]
+                  [ text:field "sdodescription" ;
+                   text:predicate sdo:description ;
+                    ]
+                 [ text:field "headline" ;
+                   text:predicate sdo:headline ;
+                    ]
          ) .
 
 # TDB2 dataset

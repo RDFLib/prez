@@ -1,3 +1,4 @@
+@prefix schema: <http://schema.org/> .
 @prefix ont: <https://prez.dev/ont/> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
 @prefix dwc: <http://rs.tdwg.org/dwc/terms/> .
@@ -34,4 +35,13 @@ ex:FTSInverseSequenceShape
     sh:path ( ex:hasSimpleResult [ sh:inversePath ex:hasFeatureOfInterest ] ) ;
     sh:name "Sequence Inverse" ;
     dcterms:identifier "seqinv" ;
+.
+
+ex:RealExample
+    a sh:PropertyShape ;
+    a ont:JenaFTSPropertyShape ;
+    sh:path ( sosa:isFeatureOfInterestOf sosa:hasResult ) ;
+    sh:name "Real Example" ;
+    dcterms:identifier "real" ;
+    ont:searchPredicate schema:description ;
 .

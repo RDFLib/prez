@@ -1,0 +1,44 @@
+@prefix iam: <https://anufncatalogue.anu.edu.au/pid/vocab/iam/> .
+@prefix ilm: <https://data.idnau.org/pid/ilm/feature/> .
+@prefix schema: <https://schema.org/> .
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+
+<https://anufncatalogue.anu.edu.au/david-different-uri> sosa:isFeatureOfInterestOf _:Ne7fb721e13d643e4a6d5b9cd2a06cfea .
+
+_:Ne7fb721e13d643e4a6d5b9cd2a06cfea a sosa:Observation ;
+	sosa:hasResult _:Nf0b4feb4ba064a39b6bd373d65a22abc ;
+	sosa:observedProperty iam:MentionsIndigenousPlaceName .
+
+_:Nf0b4feb4ba064a39b6bd373d65a22abc a sosa:Result ;
+	schema:description "yuendumu" ;
+	schema:value <https://data.idnau.org/pid/apt/yuendumu> .
+
+<https://anufncatalogue.anu.edu.au/catalog/caepr/10f2333d-5fa8-45d1-8e5a-5f2cc49bfc0c> sosa:isFeatureOfInterestOf _:N9fc31556bca74a4d963ed93a5b912f0f .
+
+_:N9fc31556bca74a4d963ed93a5b912f0f a sosa:Observation ;
+	sosa:hasResult _:N0086e670ba384871a1cbf11b48836cbb ;
+	sosa:observedProperty iam:MentionsIndigenousPlaceName .
+
+_:N0086e670ba384871a1cbf11b48836cbb a sosa:Result ;
+	schema:description "murdi paaki" ;
+	schema:value <https://data.idnau.org/pid/apt/murdi-paaki-bourke> .
+
+<https://anufncatalogue.anu.edu.au/catalog/caepr/17b7b492-96ab-4f87-9cee-e9285fe135b5> sosa:isFeatureOfInterestOf _:N57b531df78954db3ba9f27ee84102b3e .
+
+_:N57b531df78954db3ba9f27ee84102b3e a sosa:Observation ;
+	sosa:hasResult _:N158974fc772e44919f58bf23b1febee6 ;
+	sosa:observedProperty iam:MentionsIndigenousPlaceName .
+
+_:N158974fc772e44919f58bf23b1febee6 a sosa:Result ;
+	schema:description "kuranda" ;
+	schema:value <https://data.idnau.org/pid/apt/kuranda> .
+
+<https://anufncatalogue.anu.edu.au/catalog/caepr/26d30f9b-93b0-4f54-a093-c864409d618f> sosa:isFeatureOfInterestOf _:Nf0e1dbe9e76f437f8e820020f8e67c59 .
+
+_:Nf0e1dbe9e76f437f8e820020f8e67c59 a sosa:Observation ;
+	sosa:hasResult _:N63268e068cf149f0b5ac1e7d9cacf671 ;
+	sosa:observedProperty iam:MentionsIndigenousPlaceName .
+
+_:N63268e068cf149f0b5ac1e7d9cacf671 a sosa:Result ;
+	schema:description "tangentyere" ;
+	schema:value <https://data.idnau.org/pid/apt/tangentyere> .
