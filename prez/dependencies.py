@@ -205,7 +205,7 @@ async def generate_search_query(
 ):
     term = request.query_params.get("q")
     if term:
-        escaped_term = escape_for_lucene_and_sparql(term)
+        # escaped_term = escape_for_lucene_and_sparql(term)
         predicates = request.query_params.getlist("predicates")
         page = request.query_params.get("page", 1)
         limit = request.query_params.get("limit")
@@ -214,7 +214,7 @@ async def generate_search_query(
 
         if settings.search_method == SearchMethod.DEFAULT:
             return SearchQueryRegex(
-                term=escaped_term,
+                term=term,
                 predicates=predicates,
                 limit=limit,
                 offset=offset,
@@ -226,11 +226,12 @@ async def generate_search_query(
             tssp_lists = []
             tss_list = []
             non_shacl_predicates = []
-            i = 0
+            i = 100
             for pred in predicates:
                 if pred in shacl_shape_ids:
                     shacl_shape_uri = shacl_shapes.value(subject=None, predicate=DCTERMS.identifier, object=Literal(pred))
                     shacl_shape_g = shacl_shapes.cbd(shacl_shape_uri)
+                    search_preds = list(shacl_shape_g.objects(subject=None, predicate=ONT.searchPredicate))
                     ps = PropertyShape(
                         uri=shacl_shape_uri,
                         graph=shacl_shape_g,
@@ -238,28 +239,17 @@ async def generate_search_query(
                         focus_node=Var(value="focus_node"),
                         shape_number=i
                     )
-                    tssp_lists.append(ps.tssp_list)
+                    tssp_lists.append((ps.tssp_list, search_preds))
                     tss_list.extend(ps.tss_list)
                     i += 1
                 else:
                     non_shacl_predicates.append(pred)
 
-            ggp_list = []
-            for inner_list in tssp_lists:
-                ggp_list.append(
-                    GroupGraphPattern(
-                        content=GroupGraphPatternSub(
-                            triples_block=TriplesBlock.from_tssp_list(inner_list)
-                        )
-                    )
-                )
-            gougp = GroupOrUnionGraphPattern(group_graph_patterns=ggp_list)
-
             return SearchQueryFusekiFTS(
-                term=escaped_term,
+                term=term,
                 non_shacl_predicates=non_shacl_predicates,
-                shacl_gougp=gougp,
-                shacl_tss_list=tss_list,
+                shacl_tssp_preds=tssp_lists,
+                tss_list=tss_list,
                 limit=limit,
                 offset=offset
             )

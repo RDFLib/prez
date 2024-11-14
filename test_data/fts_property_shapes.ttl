@@ -1,4 +1,4 @@
-@prefix schema: <http://schema.org/> .
+@prefix sdo: <https://schema.org/> .
 @prefix ont: <https://prez.dev/ont/> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
 @prefix dwc: <http://rs.tdwg.org/dwc/terms/> .
@@ -43,5 +43,5 @@ ex:RealExample
     sh:path ( sosa:isFeatureOfInterestOf sosa:hasResult ) ;
     sh:name "Real Example" ;
     dcterms:identifier "real" ;
-    ont:searchPredicate schema:description ;
+    ont:searchPredicate sdo:description ;
 .

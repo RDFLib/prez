@@ -3,7 +3,9 @@
 @prefix schema: <https://schema.org/> .
 @prefix sosa: <http://www.w3.org/ns/sosa/> .
 
-<https://anufncatalogue.anu.edu.au/david-different-uri> sosa:isFeatureOfInterestOf _:Ne7fb721e13d643e4a6d5b9cd2a06cfea .
+<https://anufncatalogue.anu.edu.au/david-different-uri> sosa:isFeatureOfInterestOf _:Ne7fb721e13d643e4a6d5b9cd2a06cfea ;
+	a <https://david/Class> ;
+	.
 
 _:Ne7fb721e13d643e4a6d5b9cd2a06cfea a sosa:Observation ;
 	sosa:hasResult _:Nf0b4feb4ba064a39b6bd373d65a22abc ;
