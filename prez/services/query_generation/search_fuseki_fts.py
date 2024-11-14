@@ -338,11 +338,13 @@ class SearchQueryFusekiFTS(ConstructQuery):
 
     @property
     def limit(self):
-        return self.solution_modifier.limit_offset.limit_clause.limit
+        return self.where_clause.group_graph_pattern.content.solution_modifier.limit_offset.limit_clause.limit
 
     @property
     def offset(self):
-        return self.solution_modifier.limit_offset.offset_clause.offset
+        return (
+            self.where_clause.group_graph_pattern.content.solution_modifier.limit_offset.offset_clause.offset
+        )
 
     @property
     def tss_list(self):
