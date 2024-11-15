@@ -1,10 +1,10 @@
 CONSTRUCT {
-?focus_node <liftOff> ?dt_1_end .
-?focus_node <touchdown> ?dt_1_start
+?focus_node <http://example.com/liftOff> ?dt_1_end .
+?focus_node <http://example.com/touchdown> ?dt_1_start
 }
 WHERE {
-?focus_node <liftOff> ?dt_1_end .
-?focus_node <touchdown> ?dt_1_start
+?focus_node <http://example.com/liftOff> ?dt_1_end .
+?focus_node <http://example.com/touchdown> ?dt_1_start
 
 FILTER (?dt_1_start > "1969-07-16T13:32:00+00:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> && ?dt_1_end < "1969-07-24T16:50:35+00:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>)
 }
