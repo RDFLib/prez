@@ -7,6 +7,7 @@ from typing import Dict
 from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
 
+from aiocache import cached
 from fastapi import Depends
 from fastapi.responses import PlainTextResponse
 from rdf2geojson import convert
@@ -175,6 +176,7 @@ async def ogc_features_listing_function(
         construct_tss_list.extend(profile_nodeshape.tss_list)
 
     queries = []
+    fc_item_graph = None
     if endpoint_uri_type[0] in [
         OGCFEAT["queryables-local"],
         OGCFEAT["queryables-global"],
@@ -259,7 +261,10 @@ async def ogc_features_listing_function(
             limit=1,
             offset=0,
         ).to_string()
-        queries.append(feature_collection_query)
+        # queries.append(feature_collection_query)
+        # run the feature_collection_query by itself with caching as it will be the same for all paginated sets of features
+
+        fc_item_graph = await _cached_feature_collection_query(collection_uri, data_repo, feature_collection_query)
 
     link_headers = None
     if selected_mediatype == "application/sparql-query":
@@ -270,6 +275,8 @@ async def ogc_features_listing_function(
         return content, link_headers
 
     item_graph, _ = await data_repo.send_queries(queries, [])
+    if fc_item_graph:
+        item_graph += fc_item_graph
     annotations_graph = await return_annotated_rdf(item_graph, data_repo, system_repo)
     if count_query:
         count_g, _ = await data_repo.send_queries([count_query], [])
@@ -524,3 +531,12 @@ async def generate_queryables_from_shacl_definition(
         "properties": queryable_props,
     }
     return Queryables(**queryable_params)
+
+
+@cached(ttl=600, key=lambda collection_uri: collection_uri)
+async def _cached_feature_collection_query(collection_uri, data_repo, feature_collection_query):
+    """cache the feature collection information for 10 minutes as it is an expensive query at present"""
+    fc_item_graph, _ = await data_repo.send_queries(
+        [feature_collection_query], []
+    )
+    return fc_item_graph

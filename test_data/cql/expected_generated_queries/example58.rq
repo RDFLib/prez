@@ -1,7 +1,7 @@
 CONSTRUCT {
-?focus_node <updated_at> ?dt_1_instant
+?focus_node <http://example.com/updated_at> ?dt_1_instant
 }
 WHERE {
-?focus_node <updated_at> ?dt_1_instant
+?focus_node <http://example.com/updated_at> ?dt_1_instant
 FILTER (?dt_1_instant = "1851-04-29T00:00:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>)
 }
