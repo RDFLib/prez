@@ -5,12 +5,18 @@ from rdflib import Namespace
 from rdflib.namespace import RDF, RDFS
 from sparql_grammar_pydantic import (
     IRI,
+    AdditiveExpression,
+    BrackettedExpression,
     BuiltInCall,
     CollectionPath,
+    ConditionalAndExpression,
+    ConditionalOrExpression,
+    Constraint,
     ConstructQuery,
     ConstructTemplate,
     ConstructTriples,
     Expression,
+    Filter,
     GraphNodePath,
     GraphPatternNotTriples,
     GraphTerm,
@@ -19,6 +25,8 @@ from sparql_grammar_pydantic import (
     GroupOrUnionGraphPattern,
     LimitClause,
     LimitOffsetClauses,
+    MultiplicativeExpression,
+    NumericExpression,
     ObjectListPath,
     ObjectPath,
     OffsetClause,
@@ -33,6 +41,7 @@ from sparql_grammar_pydantic import (
     PropertyListPath,
     PropertyListPathNotEmpty,
     RDFLiteral,
+    RelationalExpression,
     SelectClause,
     SG_Path,
     SolutionModifier,
@@ -41,6 +50,8 @@ from sparql_grammar_pydantic import (
     TriplesNodePath,
     TriplesSameSubject,
     TriplesSameSubjectPath,
+    UnaryExpression,
+    ValueLogical,
     Var,
     VarOrTerm,
     VerbPath,
@@ -59,27 +70,41 @@ class SearchQueryFusekiFTS(ConstructQuery):
     :param limit: sparql limit clause
     :param offset: sparql offset clause
     :param non_shacl_predicates: list of predicates to search over (must be indexed)
+    :param shacl_tssp_preds: list of triples same subject paths and search predicate
+                             (typically generated from a <https://prez.dev/ont/JenaFTSPropertyShape>)
+    :param tss_list: list of triples same subject paths
+                     (typically generated from a <https://prez.dev/ont/JenaFTSPropertyShape>)
 
     generates a query of the form
 
     .. code:: sparql
 
-        construct {
+        CONSTRUCT {
+            ?prof_101_node_1 <http://www.w3.org/ns/sosa/hasResult> ?fts_search_node .
+            ?focus_node <http://www.w3.org/ns/sosa/isFeatureOfInterestOf> ?prof_101_node_1 .
             ?hashID <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://prez.dev/SearchResult> .
             ?hashID <https://prez.dev/searchResultURI> ?focus_node .
             ?hashID <https://prez.dev/searchResultMatch> ?match .
             ?hashID <https://prez.dev/searchResultPredicate> ?pred .
             ?hashID <https://prez.dev/searchResultWeight> ?weight
         }
-        where {
-            select ?focus_node ?pred ?match ?weight (URI(CONCAT("urn:hash:", SHA256(CONCAT(STR(?focus_node), STR(?pred), STR(?match), STR(?weight))))) as ?hashID)
-            where {
-                (?focus_node ?weight ?match ?g ?pred) text:query ( <search_predicates> "<search_term>")
+        WHERE {
+            SELECT ?focus_node ?pred ?match ?weight (URI(CONCAT("urn:hash:", SHA256(CONCAT(STR(?focus_node), STR(?pred), STR(?match), STR(?weight))))) AS ?hashID)
+            WHERE {
+                {
+                    (?focus_node ?weight ?match ?g ?pred) <http://jena.apache.org/text#query> ( <searchProp1> <searchProp2> "search+term")
+                }
+                UNION
+                {
+                    (?fts_search_node ?weight ?match ?g ?pred) <http://jena.apache.org/text#query> (<shaclSearchProp> "search+term") .
+                    ?prof_101_node_1 <shaclPathPart1> ?fts_search_node .
+                    ?focus_node <shaclPathPart2> ?prof_101_node_1
+                }
             }
+            ORDER BY DESC( ?weight )
+            LIMIT <limit>
+            OFFSET <offset>
         }
-        order by desc(?weight)
-        limit <limit>
-        offset <offset>
 
     NOTE:
         By default the search phrase given by `term` will be split by whitespace and concatenated together with '+' as this
@@ -98,6 +123,10 @@ class SearchQueryFusekiFTS(ConstructQuery):
         ) = None,
         tss_list: list[TriplesSameSubjectPath] | None = None,
     ):
+        if not any([bool(non_shacl_predicates), bool(shacl_tssp_preds)]):
+            raise ValueError(
+                "At least one of `non_shacl_predicates` and `shacl_tssp_preds` must be given"
+            )
         limit += 1  # increase the limit by one, so we know if there are further pages of results.
         # join search terms with '+' for better results
         term = "+".join(term.split(" "))
@@ -235,21 +264,70 @@ class SearchQueryFusekiFTS(ConstructQuery):
             )
 
         ggp_list = []
+        bnode_filter = Filter(
+            constraint=Constraint(
+                content=BrackettedExpression(
+                    expression=Expression(
+                        conditional_or_expression=ConditionalOrExpression(
+                            conditional_and_expressions=[
+                                ConditionalAndExpression(
+                                    value_logicals=[
+                                        ValueLogical(
+                                            relational_expression=RelationalExpression(
+                                                left=NumericExpression(
+                                                    additive_expression=AdditiveExpression(
+                                                        base_expression=MultiplicativeExpression(
+                                                            base_expression=UnaryExpression(
+                                                                operator="!",
+                                                                primary_expression=PrimaryExpression(
+                                                                    content=BuiltInCall(
+                                                                        function_name="isBLANK",
+                                                                        arguments=[
+                                                                            sr_uri
+                                                                        ],
+                                                                    )
+                                                                ),
+                                                            )
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    ]
+                                )
+                            ]
+                        )
+                    )
+                )
+            )
+        )
         if non_shacl_predicates:
             direct_preds_tb = _generate_fts_triples_block(non_shacl_predicates)
             direct_preds_ggp = GroupGraphPattern(
-                content=GroupGraphPatternSub(triples_block=direct_preds_tb)
+                content=GroupGraphPatternSub(
+                    graph_patterns_or_triples_blocks=[
+                        direct_preds_tb,
+                        GraphPatternNotTriples(content=bnode_filter),
+                    ]
+                )
             )
             ggp_list.append(direct_preds_ggp)
-        for tssp_list, preds in shacl_tssp_preds:
-            path_preds_tb = _generate_fts_triples_block(
-                preds, Var(value="fts_search_node")
-            )
-            path_preds_tb.triples_block = TriplesBlock.from_tssp_list(tssp_list)
-            path_preds_ggp = GroupGraphPattern(
-                content=GroupGraphPatternSub(triples_block=path_preds_tb)
-            )
-            ggp_list.append(path_preds_ggp)
+        if shacl_tssp_preds:
+            for tssp_list, preds in shacl_tssp_preds:
+                path_preds_tb = _generate_fts_triples_block(
+                    preds, Var(value="fts_search_node")
+                )
+                path_preds_tb.triples_block = TriplesBlock.from_tssp_list(tssp_list)
+                path_preds_ggp = GroupGraphPattern(
+                    content=GroupGraphPatternSub(
+                        graph_patterns_or_triples_blocks=[
+                            path_preds_tb,
+                            GraphPatternNotTriples(content=bnode_filter),
+                        ]
+                    )
+                )
+                ggp_list.append(path_preds_ggp)
+
         gpnt = GraphPatternNotTriples(
             content=GroupOrUnionGraphPattern(group_graph_patterns=ggp_list)
         )
@@ -337,8 +415,6 @@ class SearchQueryFusekiFTS(ConstructQuery):
                 )
             )
         )
-
-        # logger.debug(f"constructed Fuseki FTS query:\n{self}")
         super().__init__(
             construct_template=construct_template,
             where_clause=where_clause,
@@ -394,3 +470,4 @@ if __name__ == "__main__":
         offset=0,
         non_shacl_predicates=[RDFS.label, RDFS.comment],
     )
+    logger.debug(fts_query)
