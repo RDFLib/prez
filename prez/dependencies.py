@@ -1,4 +1,5 @@
 import json
+import logging
 from pathlib import Path
 
 import httpx
@@ -38,6 +39,8 @@ from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.search_default import SearchQueryRegex
 from prez.services.query_generation.search_fuseki_fts import SearchQueryFusekiFTS
 from prez.services.query_generation.shacl import NodeShape, PropertyShape
+
+logger = logging.getLogger(__name__)
 
 
 async def get_async_http_client():
@@ -210,7 +213,7 @@ async def generate_search_query(
         offset = limit * (int(page) - 1)
 
         if settings.search_method == SearchMethod.DEFAULT:
-            return SearchQueryRegex(
+            search_query = SearchQueryRegex(
                 term=term,
                 predicates=predicates,
                 limit=limit,
@@ -232,7 +235,7 @@ async def generate_search_query(
             non_shacl_predicates = []
             i = 100
             for pred in predicates:
-                if pred in shacl_shape_ids:
+                if str(pred) in shacl_shape_ids:
                     shacl_shape_uri = shacl_shapes.value(
                         subject=None, predicate=DCTERMS.identifier, object=Literal(pred)
                     )
@@ -255,7 +258,7 @@ async def generate_search_query(
                 else:
                     non_shacl_predicates.append(pred)
 
-            return SearchQueryFusekiFTS(
+            search_query = SearchQueryFusekiFTS(
                 term=term,
                 non_shacl_predicates=non_shacl_predicates,
                 shacl_tssp_preds=tssp_lists,
@@ -267,6 +270,8 @@ async def generate_search_query(
             raise NotImplementedError(
                 f"Search method {settings.search_method} not implemented"
             )
+        logger.debug(f"Generated search query: {search_query}")
+        return search_query
 
 
 async def get_endpoint_uri_type(
