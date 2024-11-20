@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import toml
 from pydantic import field_validator
 from pydantic_settings import BaseSettings
-from rdflib import DCTERMS, RDFS, SDO, URIRef
+from rdflib import DCTERMS, RDFS, SDO, Graph, URIRef
 from rdflib.namespace import SKOS
 
 from prez.reference_data.prez_ns import EP, REG
@@ -130,14 +130,20 @@ class Settings(BaseSettings):
         "other_predicates",
     )
     def validate_predicates(cls, v):
+        nm = Graph().namespace_manager
+        predicates = []
         try:
-            v = [URIRef(predicate) for predicate in v]
+            for predicate in v:
+                if predicate.startswith("http"):
+                    predicates.append(URIRef(predicate))
+                else:
+                    predicates.append(URIRef(nm.expand_curie(predicate)))
         except ValueError as e:
             raise ValueError(
-                "Could not parse predicates. predicates must be valid URIs no prefixes allowed "
+                "Could not parse predicates. All predicates must be valid URIs\n"
                 f"original message: {e}"
             )
-        return v
+        return predicates
 
 
 settings = Settings()

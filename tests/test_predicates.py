@@ -1,4 +1,5 @@
 import pytest
+from pydantic import ValidationError
 
 from prez.config import Settings
 
@@ -7,8 +8,8 @@ from prez.config import Settings
     "label_predicates, error",
     [
         [["https://schema.org/name"], None],
-        [["1", "2", "3"], None],
-        [[1], TypeError],
+        [["1", "2", "3"], ValidationError],
+        [[1], AttributeError],
         ["not a list", ValueError],
     ],
 )
@@ -24,8 +25,8 @@ def test_label_predicates(label_predicates, error):
     "description_predicates, error",
     [
         [["https://schema.org/description"], None],
-        [["1", "2", "3"], None],
-        [[1], TypeError],
+        [["1", "2", "3"], ValidationError],
+        [[1], AttributeError],
         ["not a list", ValueError],
     ],
 )
@@ -41,8 +42,8 @@ def test_description_predicates(description_predicates, error):
     "provenance_predicates, error",
     [
         [["https://schema.org/provenance"], None],
-        [["1", "2", "3"], None],
-        [[1], TypeError],
+        [["1", "2", "3"], ValidationError],
+        [[1], AttributeError],
         ["not a list", ValueError],
     ],
 )
@@ -58,8 +59,8 @@ def test_provenance_predicates(provenance_predicates, error):
     "search_predicates, error",
     [
         [["https://schema.org/search"], None],
-        [["1", "2", "3"], None],
-        [[1], TypeError],
+        [["1", "2", "3"], ValidationError],
+        [[1], AttributeError],
         ["not a list", ValueError],
     ],
 )
@@ -75,8 +76,8 @@ def test_search_predicates(search_predicates, error):
     "other_predicates, error",
     [
         [["https://schema.org/other"], None],
-        [["1", "2", "3"], None],
-        [[1], TypeError],
+        [["1", "2", "3"], ValidationError],
+        [[1], AttributeError],
         ["not a list", ValueError],
     ],
 )
