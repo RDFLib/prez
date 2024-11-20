@@ -15,7 +15,7 @@ from prez.services.query_generation.shacl import PropertyShape
 
 def test_query_gen():
     query_obj = SearchQueryFusekiFTS(
-        term="test", limit=10, offset=0, predicates=[RDFS.label, RDFS.comment]
+        term="test", limit=10, offset=0, non_shacl_predicates=[RDFS.label, RDFS.comment]
     )
     query_string = query_obj.to_string()
     print(query_string)
