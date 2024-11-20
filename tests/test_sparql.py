@@ -17,16 +17,19 @@ def test_construct(client):
     assert r.status_code == 200
 
 
-@pytest.mark.parametrize("query,expected_result", [
-    (
+@pytest.mark.parametrize(
+    "query,expected_result",
+    [
+        (
             "/sparql?query=PREFIX%20ex%3A%20%3Chttp%3A%2F%2Fexample.com%2Fdatasets%2F%3E%0APREFIX%20dcterms%3A%20%3Chttp%3A%2F%2Fpurl.org%2Fdc%2Fterms%2F%3E%0A%0AASK%0AWHERE%20%7B%0A%20%20%3Fsubject%20dcterms%3Atitle%20%3Ftitle%20.%0A%20%20FILTER%20CONTAINS(LCASE(%3Ftitle)%2C%20%22sandgate%22)%0A%7D",
-            True
-    ),
-    (
+            True,
+        ),
+        (
             "/sparql?query=ASK%20%7B%20%3Chttps%3A%2F%2Ffake%3E%20%3Fp%20%3Fo%20%7D",
-            False
-    )
-])
+            False,
+        ),
+    ],
+)
 def test_ask(client, query, expected_result):
     """Check that valid ASK queries return a 200 response with the expected boolean result."""
     r = client.get(query)

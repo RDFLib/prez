@@ -4,10 +4,8 @@ from pathlib import Path
 import httpx
 from fastapi import Depends, HTTPException, Request
 from pyoxigraph import Store
-from rdflib import Dataset, URIRef, SKOS, RDF, DCTERMS, Literal
-from rdflib import RDF, SKOS, Dataset, URIRef
-from sparql_grammar_pydantic import IRI, Var, GroupGraphPattern, GroupGraphPatternSub, TriplesBlock, \
-    GroupOrUnionGraphPattern
+from rdflib import DCTERMS, RDF, SKOS, Dataset, Literal, URIRef
+from sparql_grammar_pydantic import IRI, Var
 
 from prez.cache import (
     annotations_store,
@@ -24,6 +22,7 @@ from prez.enums import (
     GeoJSONMediaType,
     JSONMediaType,
     NonAnnotatedRDFMediaType,
+    SearchMethod,
     SPARQLQueryMediaType,
 )
 from prez.exceptions.model_exceptions import NoEndpointNodeshapeException, URINotFoundException
@@ -39,7 +38,6 @@ from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.search_default import SearchQueryRegex
 from prez.services.query_generation.search_fuseki_fts import SearchQueryFusekiFTS
 from prez.services.query_generation.shacl import NodeShape, PropertyShape
-from prez.services.query_generation.sparql_escaping import escape_for_lucene_and_sparql
 
 
 async def get_async_http_client():
@@ -193,15 +191,14 @@ async def cql_get_parser_dependency(
             )
 
 
-async def get_jena_fts_shacl_predicates(
-    system_repo: Repo
-):
+async def get_jena_fts_shacl_predicates(system_repo: Repo):
     query = "DESCRIBE ?fts_shape WHERE {?fts_shape a <https://prez.dev/ont/JenaFTSPropertyShape>}"
     return await system_repo.rdf_query_to_graph(query)
 
+
 async def generate_search_query(
-        request: Request,
-        system_repo: Repo = Depends(get_system_repo),
+    request: Request,
+    system_repo: Repo = Depends(get_system_repo),
 ):
     term = request.query_params.get("q")
     if term:
@@ -222,22 +219,35 @@ async def generate_search_query(
         elif settings.search_method == SearchMethod.FTS_FUSEKI:
             predicates = predicates if predicates else settings.search_predicates
             shacl_shapes = await get_jena_fts_shacl_predicates(system_repo)
-            shacl_shape_ids = list([str(x) for x in shacl_shapes.objects(subject=None, predicate=DCTERMS.identifier)])
+            shacl_shape_ids = list(
+                [
+                    str(x)
+                    for x in shacl_shapes.objects(
+                        subject=None, predicate=DCTERMS.identifier
+                    )
+                ]
+            )
             tssp_lists = []
             tss_list = []
             non_shacl_predicates = []
             i = 100
             for pred in predicates:
                 if pred in shacl_shape_ids:
-                    shacl_shape_uri = shacl_shapes.value(subject=None, predicate=DCTERMS.identifier, object=Literal(pred))
+                    shacl_shape_uri = shacl_shapes.value(
+                        subject=None, predicate=DCTERMS.identifier, object=Literal(pred)
+                    )
                     shacl_shape_g = shacl_shapes.cbd(shacl_shape_uri)
-                    search_preds = list(shacl_shape_g.objects(subject=None, predicate=ONT.searchPredicate))
+                    search_preds = list(
+                        shacl_shape_g.objects(
+                            subject=None, predicate=ONT.searchPredicate
+                        )
+                    )
                     ps = PropertyShape(
                         uri=shacl_shape_uri,
                         graph=shacl_shape_g,
                         kind="fts",
                         focus_node=Var(value="focus_node"),
-                        shape_number=i
+                        shape_number=i,
                     )
                     tssp_lists.append((ps.tssp_list, search_preds))
                     tss_list.extend(ps.tss_list)
@@ -251,7 +261,7 @@ async def generate_search_query(
                 shacl_tssp_preds=tssp_lists,
                 tss_list=tss_list,
                 limit=limit,
-                offset=offset
+                offset=offset,
             )
         else:
             raise NotImplementedError(

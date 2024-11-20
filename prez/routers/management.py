@@ -43,7 +43,16 @@ async def index(request: Request, system_repo: Repo = Depends(get_system_repo)):
     g.bind("prez", "https://prez.dev/")
     g.bind("ont", "https://prez.dev/ont/")
     g.add((URIRef(settings.system_uri), PREZ.version, Literal(settings.prez_version)))
-    g.add((URIRef(settings.system_uri), PREZ.sparqlEndpointEnabled, Literal(settings.enable_sparql_endpoint, datatype=URIRef("http://www.w3.org/2001/XMLSchema#boolean"))))
+    g.add(
+        (
+            URIRef(settings.system_uri),
+            PREZ.sparqlEndpointEnabled,
+            Literal(
+                settings.enable_sparql_endpoint,
+                datatype=URIRef("http://www.w3.org/2001/XMLSchema#boolean"),
+            ),
+        )
+    )
     g += endpoints_graph_cache
     g += await return_annotation_predicates()
     return await return_from_graph(

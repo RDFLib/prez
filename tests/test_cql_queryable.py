@@ -5,8 +5,8 @@ from sparql_grammar_pydantic import Var
 
 from prez.services.query_generation.shacl import PropertyShape
 
-test_file_1 = Path(__file__).parent.parent / f"test_data/cql_queryable_shapes.ttl"
-test_file_2 = Path(__file__).parent.parent / f"test_data/cql_queryable_shapes_bdr.ttl"
+test_file_1 = Path(__file__).parent.parent / "test_data/cql_queryable_shapes.ttl"
+test_file_2 = Path(__file__).parent.parent / "test_data/cql_queryable_shapes_bdr.ttl"
 data = Graph().parse(test_file_1, format="turtle")
 data.parse(test_file_2, format="turtle")
 

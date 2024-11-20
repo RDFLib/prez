@@ -4,12 +4,13 @@ from urllib.parse import urlencode
 import pytest
 from fastapi.testclient import TestClient
 from pyoxigraph.pyoxigraph import Store
-from rdflib import Literal, URIRef, Graph
+from rdflib import Graph, Literal, URIRef
 from rdflib.compare import isomorphic
 
 from prez.app import app
 from prez.dependencies import get_data_repo
-from prez.repositories import Repo, PyoxigraphRepo
+from prez.enums import SearchMethod
+from prez.repositories import PyoxigraphRepo, Repo
 
 
 @pytest.fixture(scope="session")
@@ -168,7 +169,8 @@ def test_search_focus_to_filter_multiple(client: TestClient):
     ],
 )
 def test_extract_qsa_params(qsas, expected_focus_to_filter, expected_filter_to_focus):
-    focus_to_filter_params, filter_to_focus_params = extract_qsa_params(qsas)
-
-    assert focus_to_filter_params == expected_focus_to_filter
-    assert filter_to_focus_params == expected_filter_to_focus
+    assert False
+    # focus_to_filter_params, filter_to_focus_params = extract_qsa_params(qsas)
+    #
+    # assert focus_to_filter_params == expected_focus_to_filter
+    # assert filter_to_focus_params == expected_filter_to_focus

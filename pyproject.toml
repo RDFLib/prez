@@ -53,6 +53,9 @@ server = ["uvicorn"]
 [tool.black]
 line-length = 88
 
+[tool.isort]
+profile = "black"
+
 [tool.semantic_release]
 version_toml = ["pyproject.toml:tool.poetry.version"]
 
@@ -63,4 +66,3 @@ testpaths = ["tests"]
 [build-system]
 requires = ["poetry-core>=1.9.0"]
 build-backend = "poetry.core.masonry.api"
-

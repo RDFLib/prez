@@ -46,8 +46,9 @@ from prez.services.app_service import (
     healthcheck_sparql_endpoints,
     populate_api_info,
     prefix_initialisation,
+    retrieve_remote_jena_fts_shapes,
     retrieve_remote_queryable_definitions,
-    retrieve_remote_template_queries, retrieve_remote_jena_fts_shapes,
+    retrieve_remote_template_queries,
 )
 from prez.services.exception_catchers import (
     catch_400,

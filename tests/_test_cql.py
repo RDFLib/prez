@@ -4,7 +4,6 @@ from urllib.parse import quote_plus
 
 import pytest
 
-
 cql_filenames = [
     "example01.json",
     "example02.json",
@@ -61,7 +60,7 @@ def test_simple_get(client, cql_json_filename):
 
 def test_intersects_get(client):
     cql_json_path = (
-        Path(__file__).parent.parent / f"test_data/cql/input/geo_intersects.json"
+        Path(__file__).parent.parent / "test_data/cql/input/geo_intersects.json"
     )
     cql_json = json.loads(cql_json_path.read_text())
     query_string = quote_plus(json.dumps(cql_json))

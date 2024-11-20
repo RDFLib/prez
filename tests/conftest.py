@@ -1,7 +1,6 @@
 import os
 
-from rdflib import Graph, URIRef, RDF
-from rdflib.namespace import GEO
+from rdflib import Graph, URIRef
 from starlette.routing import Mount
 
 # comment / uncomment for the CQL tests - cannot figure out how to get a different conftest picked up.
@@ -19,7 +18,7 @@ from pyoxigraph.pyoxigraph import Store
 
 from prez.app import assemble_app
 from prez.dependencies import get_data_repo
-from prez.repositories import Repo, PyoxigraphRepo
+from prez.repositories import PyoxigraphRepo, Repo
 
 
 @pytest.fixture(scope="session")
@@ -74,7 +73,7 @@ def a_spaceprez_catalog_link(client):
     r = client.get("/catalogs")
     g = Graph().parse(data=r.text)
     cat_uri = URIRef("https://example.com/spaceprez/SpacePrezCatalog")
-    link = g.value(cat_uri, URIRef(f"https://prez.dev/link", None))
+    link = g.value(cat_uri, URIRef("https://prez.dev/link", None))
     return link
 
 
@@ -83,13 +82,15 @@ def a_spaceprez_dataset_link(client, a_spaceprez_catalog_link):
     r = client.get(f"{a_spaceprez_catalog_link}/collections")
     g = Graph().parse(data=r.text)
     ds_uri = URIRef("https://example.com/spaceprez/SpacePrezDataset")
-    link = g.value(ds_uri, URIRef(f"https://prez.dev/link", None))
+    link = g.value(ds_uri, URIRef("https://prez.dev/link", None))
     return link
 
 
 @pytest.fixture()
 def an_fc_link(client, a_spaceprez_dataset_link):
-    return f"{a_spaceprez_dataset_link}/features/collections/spaceprez:FeatureCollection"
+    return (
+        f"{a_spaceprez_dataset_link}/features/collections/spaceprez:FeatureCollection"
+    )
 
 
 @pytest.fixture()
@@ -103,7 +104,7 @@ def a_catprez_catalog_link(client):
     r = client.get("/catalogs")
     g = Graph().parse(data=r.text)
     member_uri = URIRef("https://example.com/CatalogOne")
-    link = g.value(member_uri, URIRef(f"https://prez.dev/link", None))
+    link = g.value(member_uri, URIRef("https://prez.dev/link", None))
     return link
 
 
@@ -111,7 +112,7 @@ def a_catprez_catalog_link(client):
 def a_resource_link(client, a_catprez_catalog_link):
     r = client.get(a_catprez_catalog_link)
     g = Graph().parse(data=r.text)
-    links = g.objects(subject=None, predicate=URIRef(f"https://prez.dev/link"))
+    links = g.objects(subject=None, predicate=URIRef("https://prez.dev/link"))
     for link in links:
         if link != a_catprez_catalog_link:
             return link

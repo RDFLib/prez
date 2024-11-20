@@ -283,7 +283,9 @@ async def ogc_features_listing_function(
         if count_g:
             count = str(next(iter(count_g.objects())))
             if count.startswith(">"):
-                count = int(count[1:])  # TODO increment maximum counts based on current page.
+                count = int(
+                    count[1:]
+                )  # TODO increment maximum counts based on current page.
             else:
                 count = int(count)
 

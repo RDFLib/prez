@@ -1,5 +1,5 @@
 from rdflib import Graph, URIRef
-from rdflib.namespace import RDF, PROF
+from rdflib.namespace import PROF, RDF
 
 
 def test_profile(client_no_override):
