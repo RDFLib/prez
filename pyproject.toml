@@ -56,9 +56,6 @@ line-length = 88
 [tool.isort]
 profile = "black"
 
-[tool.semantic_release]
-version_toml = ["pyproject.toml:tool.poetry.version"]
-
 [pytest]
 pythonpath = ["prez"]
 testpaths = ["tests"]
