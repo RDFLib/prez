@@ -1,5 +1,5 @@
 from rdflib import Graph, URIRef
-from rdflib.namespace import RDF, DCAT, GEO
+from rdflib.namespace import DCAT, GEO, RDF
 
 
 def test_dataset_anot(client, a_spaceprez_catalog_link):

@@ -8,6 +8,7 @@ from pydantic_settings import BaseSettings
 from rdflib import DCTERMS, RDFS, SDO, URIRef
 from rdflib.namespace import SKOS
 
+from prez.enums import SearchMethod
 from prez.reference_data.prez_ns import EP, REG
 
 
@@ -89,6 +90,7 @@ class Settings(BaseSettings):
     temporal_predicate: Optional[URIRef] = SDO.temporal
     endpoint_to_template_query_filename: Optional[Dict[str, str]] = {}
     prez_ui_url: Optional[str] = None
+    search_method: SearchMethod = SearchMethod.DEFAULT
     required_header: dict[str, str] | None = None
     proxy_headers: bool = False
     forwarded_allow_ips: str = "127.0.0.1"

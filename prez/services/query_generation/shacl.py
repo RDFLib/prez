@@ -262,7 +262,7 @@ class NodeShape(Shape):
 class PropertyShape(Shape):
     uri: URIRef | BNode  # URI of the shape
     graph: Graph
-    kind: TypingLiteral["endpoint", "profile"]
+    kind: TypingLiteral["endpoint", "profile", "fts"]
     focus_node: Union[IRI, Var]
     # inputs
     shape_number: int = 0
@@ -378,7 +378,7 @@ class PropertyShape(Shape):
         # label nodes in the inner select and profile part of the query differently for clarity.
         if self.kind == "endpoint":
             path_or_prop = "path"
-        elif self.kind == "profile":
+        elif (self.kind == "profile") or (self.kind == "fts"):
             path_or_prop = f"prof_{self.shape_number + 1}"
 
         # set up the path nodes - either from supplied values or set as variables
@@ -507,17 +507,167 @@ class PropertyShape(Shape):
             )
             self.gpnt_list.append(gpnt)
 
+    # def process_property_paths(self, property_paths, path_or_prop, tssp_list, pp_i):
+    #     for property_path in property_paths:
+    #         if f"{path_or_prop}_node_{pp_i + 1}" in self.path_nodes:
+    #             path_node_1 = self.path_nodes[f"{path_or_prop}_node_{pp_i + 1}"]
+    #         else:
+    #             path_node_1 = Var(value=f"{path_or_prop}_node_{pp_i + 1}")
+    #
+    #         if f"{path_or_prop}_node_{pp_i + 2}" in self.path_nodes:
+    #             path_node_2 = self.path_nodes[f"{path_or_prop}_node_{pp_i + 2}"]
+    #         else:
+    #             path_node_2 = Var(value=f"{path_or_prop}_node_{pp_i + 2}")
+    #
+    #         current_tssp = []
+    #
+    #         if isinstance(property_path, Path):
+    #             if property_path.value == SHEXT.allPredicateValues:
+    #                 pred = Var(value="preds")
+    #                 obj = Var(value="vals")
+    #             else:
+    #                 pred = IRI(value=property_path.value)
+    #                 obj = path_node_1
+    #             if self.kind == "fts":
+    #                 triple = (self.focus_node, pred, Var(value="fts_search_node"))
+    #             else:
+    #                 triple = (self.focus_node, pred, obj)
+    #             self.tss_list.append(TriplesSameSubject.from_spo(*triple))
+    #             current_tssp.append(TriplesSameSubjectPath.from_spo(*triple))
+    #             pp_i += 1
+    #
+    #         elif isinstance(property_path, InversePath):
+    #             if self.kind == "fts":
+    #                 triple = (
+    #                     Var(value="fts_search_node"),
+    #                     IRI(value=property_path.value.value),
+    #                     self.focus_node,
+    #                 )
+    #             else:
+    #                 triple = (
+    #                     path_node_1,
+    #                     IRI(value=property_path.value.value),
+    #                     self.focus_node,
+    #                 )
+    #             self.tss_list.append(TriplesSameSubject.from_spo(*triple))
+    #             current_tssp.append(TriplesSameSubjectPath.from_spo(*triple))
+    #             pp_i += 1
+    #
+    #         elif isinstance(
+    #             property_path, Union[ZeroOrMorePath, OneOrMorePath, ZeroOrOnePath]
+    #         ):
+    #             # triple = (self.focus_node, IRI(value=property_path.value), path_node_1)
+    #             # self.tss_list.append(TriplesSameSubject.from_spo(*triple))
+    #             # remove TSS as it cannot capture the full set of triples possibly created by the path expression
+    #             self.tssp_list.append(
+    #                 _tssp_for_pathmods(
+    #                     self.focus_node,
+    #                     IRI(value=property_path.value.value),
+    #                     path_node_1,
+    #                     property_path.operand,
+    #                 )
+    #             )
+    #             pp_i += 1
+    #
+    #         elif isinstance(property_path, SequencePath):
+    #             preds_pathmods_inverse = []
+    #             seq_path_len = len(property_path.value)
+    #             inner_path_type = None
+    #             for j, path in enumerate(property_path.value):
+    #                 if isinstance(path, Path):
+    #                     inner_path_type = "path"
+    #                     if self.kind == "endpoint":
+    #                         preds_pathmods_inverse.append(
+    #                             (IRI(value=path.value), None, False)
+    #                         )
+    #                     elif (self.kind == "profile") or (self.kind == "fts"):
+    #                         if j == 0:
+    #                             triple = (
+    #                                 self.focus_node,
+    #                                 IRI(value=path.value),
+    #                                 path_node_1,
+    #                             )
+    #                         else:
+    #                             triple = (
+    #                                 path_node_1,
+    #                                 IRI(value=path.value),
+    #                                 path_node_2,
+    #                             )
+    #                 elif isinstance(path, InversePath):
+    #                     inner_path_type = "inverse"
+    #                     if self.kind == "endpoint":
+    #                         preds_pathmods_inverse.append(
+    #                             (IRI(value=path.value.value), None, True)
+    #                         )
+    #                     elif (self.kind == "profile") or (self.kind == "fts"):
+    #                         if j == 0:
+    #                             triple = (
+    #                                 path_node_1,
+    #                                 IRI(value=path.value.value),
+    #                                 self.focus_node,
+    #                             )
+    #                         else:
+    #                             triple = (
+    #                                 path_node_2,
+    #                                 IRI(value=path.value.value),
+    #                                 path_node_1,
+    #                             )
+    #                 elif isinstance(
+    #                     path, Union[ZeroOrMorePath, OneOrMorePath, ZeroOrOnePath]
+    #                 ):
+    #                     inner_path_type = "zero_one_more"
+    #                     if isinstance(path.value, Path):
+    #                         preds_pathmods_inverse.append(
+    #                             (IRI(value=path.value.value), path.operand, False)
+    #                         )
+    #                     elif isinstance(path.value, InversePath):
+    #                         preds_pathmods_inverse.append(
+    #                             (IRI(value=path.value.value.value), path.operand, True)
+    #                         )
+    #                 if self.kind == "profile":
+    #                     self.tss_list.append(TriplesSameSubject.from_spo(*triple))
+    #                     current_tssp.append(TriplesSameSubjectPath.from_spo(*triple))
+    #                 elif self.kind == "fts":
+    #                     if j == seq_path_len - 1:  # we're at the end of the sequence path
+    #                         if inner_path_type != "inverse":
+    #                             new_triple = triple[:2] + (Var(value="fts_search_node"),)
+    #                         else:
+    #                             new_triple = (Var(value="fts_search_node"),) + triple[1:]
+    #                         self.tss_list.append(TriplesSameSubject.from_spo(*new_triple))
+    #                         current_tssp.append(TriplesSameSubjectPath.from_spo(*new_triple))
+    #                     else:
+    #                         self.tss_list.append(TriplesSameSubject.from_spo(*triple))
+    #                         current_tssp.append(TriplesSameSubjectPath.from_spo(*triple))
+    #             pp_i += len(property_path.value)
+    #             if self.kind == "endpoint":
+    #                 tssp = _tssp_for_sequence(
+    #                     self.focus_node, preds_pathmods_inverse, path_node_2
+    #                 )
+    #                 current_tssp.append(tssp)
+    #
+    #         if current_tssp:
+    #             tssp_list.append(current_tssp)
+    #
+    #     return pp_i
+
     def process_property_paths(self, property_paths, path_or_prop, tssp_list, pp_i):
         for property_path in property_paths:
+            # Always create path_node_1 as it's needed everywhere
             if f"{path_or_prop}_node_{pp_i + 1}" in self.path_nodes:
                 path_node_1 = self.path_nodes[f"{path_or_prop}_node_{pp_i + 1}"]
             else:
                 path_node_1 = Var(value=f"{path_or_prop}_node_{pp_i + 1}")
 
-            if f"{path_or_prop}_node_{pp_i + 2}" in self.path_nodes:
-                path_node_2 = self.path_nodes[f"{path_or_prop}_node_{pp_i + 2}"]
-            else:
-                path_node_2 = Var(value=f"{path_or_prop}_node_{pp_i + 2}")
+            # Create additional nodes only if we have a sequence path
+            path_nodes = {0: path_node_1}  # Start with path_node_1
+            if isinstance(property_path, SequencePath):
+                seq_path_len = len(property_path.value)
+                for i in range(1, seq_path_len):
+                    node_key = f"{path_or_prop}_node_{pp_i + i + 1}"
+                    if node_key in self.path_nodes:
+                        path_nodes[i] = self.path_nodes[node_key]
+                    else:
+                        path_nodes[i] = Var(value=node_key)
 
             current_tssp = []
 
@@ -528,17 +678,27 @@ class PropertyShape(Shape):
                 else:
                     pred = IRI(value=property_path.value)
                     obj = path_node_1
-                triple = (self.focus_node, pred, obj)
+                if self.kind == "fts":
+                    triple = (self.focus_node, pred, Var(value="fts_search_node"))
+                else:
+                    triple = (self.focus_node, pred, obj)
                 self.tss_list.append(TriplesSameSubject.from_spo(*triple))
                 current_tssp.append(TriplesSameSubjectPath.from_spo(*triple))
                 pp_i += 1
 
             elif isinstance(property_path, InversePath):
-                triple = (
-                    path_node_1,
-                    IRI(value=property_path.value.value),
-                    self.focus_node,
-                )
+                if self.kind == "fts":
+                    triple = (
+                        Var(value="fts_search_node"),
+                        IRI(value=property_path.value.value),
+                        self.focus_node,
+                    )
+                else:
+                    triple = (
+                        path_node_1,
+                        IRI(value=property_path.value.value),
+                        self.focus_node,
+                    )
                 self.tss_list.append(TriplesSameSubject.from_spo(*triple))
                 current_tssp.append(TriplesSameSubjectPath.from_spo(*triple))
                 pp_i += 1
@@ -546,9 +706,6 @@ class PropertyShape(Shape):
             elif isinstance(
                 property_path, Union[ZeroOrMorePath, OneOrMorePath, ZeroOrOnePath]
             ):
-                # triple = (self.focus_node, IRI(value=property_path.value), path_node_1)
-                # self.tss_list.append(TriplesSameSubject.from_spo(*triple))
-                # remove TSS as it cannot capture the full set of triples possibly created by the path expression
                 self.tssp_list.append(
                     _tssp_for_pathmods(
                         self.focus_node,
@@ -561,46 +718,51 @@ class PropertyShape(Shape):
 
             elif isinstance(property_path, SequencePath):
                 preds_pathmods_inverse = []
+                seq_path_len = len(property_path.value)
+                inner_path_type = None
                 for j, path in enumerate(property_path.value):
                     if isinstance(path, Path):
+                        inner_path_type = "path"
                         if self.kind == "endpoint":
                             preds_pathmods_inverse.append(
                                 (IRI(value=path.value), None, False)
                             )
-                        elif self.kind == "profile":
+                        elif (self.kind == "profile") or (self.kind == "fts"):
                             if j == 0:
                                 triple = (
                                     self.focus_node,
                                     IRI(value=path.value),
-                                    path_node_1,
+                                    path_nodes[0],  # This is path_node_1
                                 )
                             else:
                                 triple = (
-                                    path_node_1,
+                                    path_nodes[j - 1],  # Previous node
                                     IRI(value=path.value),
-                                    path_node_2,
+                                    path_nodes[j],  # Current node
                                 )
                     elif isinstance(path, InversePath):
+                        inner_path_type = "inverse"
                         if self.kind == "endpoint":
                             preds_pathmods_inverse.append(
                                 (IRI(value=path.value.value), None, True)
                             )
-                        elif self.kind == "profile":
+                        elif (self.kind == "profile") or (self.kind == "fts"):
                             if j == 0:
                                 triple = (
-                                    path_node_1,
-                                    IRI(value=path.value),
+                                    path_nodes[0],  # path_node_1
+                                    IRI(value=path.value.value),
                                     self.focus_node,
                                 )
                             else:
                                 triple = (
-                                    path_node_2,
-                                    IRI(value=path.value),
-                                    path_node_1,
+                                    path_nodes[j],  # Current node
+                                    IRI(value=path.value.value),
+                                    path_nodes[j - 1],  # Previous node
                                 )
                     elif isinstance(
                         path, Union[ZeroOrMorePath, OneOrMorePath, ZeroOrOnePath]
                     ):
+                        inner_path_type = "zero_one_more"
                         if isinstance(path.value, Path):
                             preds_pathmods_inverse.append(
                                 (IRI(value=path.value.value), path.operand, False)
@@ -612,10 +774,35 @@ class PropertyShape(Shape):
                     if self.kind == "profile":
                         self.tss_list.append(TriplesSameSubject.from_spo(*triple))
                         current_tssp.append(TriplesSameSubjectPath.from_spo(*triple))
+                    elif self.kind == "fts":
+                        if (
+                            j == seq_path_len - 1
+                        ):  # we're at the end of the sequence path
+                            if inner_path_type != "inverse":
+                                new_triple = triple[:2] + (
+                                    Var(value="fts_search_node"),
+                                )
+                            else:
+                                new_triple = (Var(value="fts_search_node"),) + triple[
+                                    1:
+                                ]
+                            self.tss_list.append(
+                                TriplesSameSubject.from_spo(*new_triple)
+                            )
+                            current_tssp.append(
+                                TriplesSameSubjectPath.from_spo(*new_triple)
+                            )
+                        else:
+                            self.tss_list.append(TriplesSameSubject.from_spo(*triple))
+                            current_tssp.append(
+                                TriplesSameSubjectPath.from_spo(*triple)
+                            )
                 pp_i += len(property_path.value)
                 if self.kind == "endpoint":
                     tssp = _tssp_for_sequence(
-                        self.focus_node, preds_pathmods_inverse, path_node_2
+                        self.focus_node,
+                        preds_pathmods_inverse,
+                        path_nodes[seq_path_len - 1],  # Last node
                     )
                     current_tssp.append(tssp)
 

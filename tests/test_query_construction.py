@@ -5,48 +5,46 @@ from rdflib import RDF, RDFS, SKOS
 from rdflib.namespace import GEO
 from sparql_grammar_pydantic import (
     IRI,
-    Var,
-    TriplesSameSubject,
-    TriplesSameSubjectPath,
-    SubSelect,
-    SelectClause,
-    WhereClause,
+    AdditiveExpression,
+    Aggregate,
+    Anon,
+    Bind,
+    BlankNode,
+    BuiltInCall,
+    ConditionalAndExpression,
+    ConditionalOrExpression,
+    ConstructQuery,
+    ConstructTemplate,
+    ConstructTriples,
+    Expression,
+    GraphPatternNotTriples,
     GroupGraphPattern,
     GroupGraphPatternSub,
-    TriplesBlock,
-    SolutionModifier,
-    LimitOffsetClauses,
-    LimitClause,
-    Expression,
-    PrimaryExpression,
-    BuiltInCall,
-    Aggregate,
-    ConditionalOrExpression,
-    ConditionalAndExpression,
-    ValueLogical,
-    RelationalExpression,
-    NumericExpression,
-    AdditiveExpression,
-    MultiplicativeExpression,
-    UnaryExpression,
-    NumericLiteral,
-    RDFLiteral,
-    Bind,
-    GraphPatternNotTriples,
     GroupOrUnionGraphPattern,
-    ConstructTemplate,
-    BlankNode,
-    Anon,
-    ConstructTriples,
-    ConstructQuery,
+    LimitClause,
+    LimitOffsetClauses,
+    MultiplicativeExpression,
+    NumericExpression,
+    NumericLiteral,
+    PrimaryExpression,
+    RDFLiteral,
+    RelationalExpression,
+    SelectClause,
+    SolutionModifier,
+    SubSelect,
+    TriplesBlock,
+    TriplesSameSubject,
+    TriplesSameSubjectPath,
+    UnaryExpression,
+    ValueLogical,
+    Var,
+    WhereClause,
 )
 
 from prez.services.query_generation.classes import ClassesSelectQuery
 from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQuery
 from prez.services.query_generation.prefixes import PrefixQuery
-from prez.services.query_generation.search import (
-    SearchQueryRegex,
-)
+from prez.services.query_generation.search_default import SearchQueryRegex
 from prez.services.query_generation.umbrella import PrezQueryConstructor
 
 
@@ -98,7 +96,7 @@ def test_basic_listing():
         order_by=Var(value="label"),
         order_by_direction="ASC",
     )
-    print("")
+    assert test
 
 
 def test_search_query_regex():

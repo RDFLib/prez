@@ -46,6 +46,7 @@ from prez.services.app_service import (
     healthcheck_sparql_endpoints,
     populate_api_info,
     prefix_initialisation,
+    retrieve_remote_jena_fts_shapes,
     retrieve_remote_queryable_definitions,
     retrieve_remote_template_queries,
 )
@@ -119,6 +120,7 @@ async def lifespan(app: FastAPI):
 
     await prefix_initialisation(app.state.repo)
     await retrieve_remote_template_queries(app.state.repo)
+    await retrieve_remote_jena_fts_shapes(app.state.repo)
     await create_profiles_graph(app.state.repo)
     await create_endpoints_graph(app.state)
     await count_objects(app.state.repo)

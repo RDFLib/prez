@@ -1,9 +1,9 @@
 from rdflib import Graph, URIRef
-from rdflib.namespace import RDF, DCAT
+from rdflib.namespace import DCAT, RDF
 
 
 def test_catalog_listing_anot(client):
-    r = client.get(f"/catalogs?_mediatype=text/turtle&_profile=prez:OGCListingProfile")
+    r = client.get("/catalogs?_mediatype=text/turtle&_profile=prez:OGCListingProfile")
     response_graph = Graph().parse(data=r.text)
     expected_response_1 = (
         URIRef("https://example.com/CatalogOne"),

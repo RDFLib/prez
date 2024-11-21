@@ -1,6 +1,6 @@
 import pytest
 from rdflib import Graph, URIRef
-from rdflib.namespace import RDF, DCAT
+from rdflib.namespace import DCAT, RDF
 
 from prez.reference_data.prez_ns import PREZ
 
@@ -11,7 +11,7 @@ def a_catalog_link(client):
     r = client.get("/catalogs")
     g = Graph().parse(data=r.text)
     member_uri = g.value(None, RDF.type, DCAT.Catalog)
-    link = g.value(member_uri, URIRef(f"https://prez.dev/link", None))
+    link = g.value(member_uri, URIRef("https://prez.dev/link", None))
     return link
 
 
@@ -19,14 +19,14 @@ def a_catalog_link(client):
 def a_resource_link(client, a_catalog_link):
     r = client.get(a_catalog_link)
     g = Graph().parse(data=r.text)
-    links = g.objects(subject=None, predicate=URIRef(f"https://prez.dev/link"))
+    links = g.objects(subject=None, predicate=URIRef("https://prez.dev/link"))
     for link in links:
         if link != a_catalog_link:
             return link
 
 
 def test_listing_alt_profile(client):
-    r = client.get(f"/catalogs?_profile=altr-ext:alt-profile")
+    r = client.get("/catalogs?_profile=altr-ext:alt-profile")
     response_graph = Graph().parse(data=r.text)
     assert (
         URIRef("http://www.w3.org/ns/dx/connegp/altr-ext#alt-profile"),

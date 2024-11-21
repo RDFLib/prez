@@ -2,11 +2,9 @@ from pathlib import Path
 
 import pytest
 from rdflib import Graph, URIRef
-
-from prez.services.query_generation.shacl import (
-    NodeShape,
-)
 from sparql_grammar_pydantic import Var
+
+from prez.services.query_generation.shacl import NodeShape
 
 endpoints_graph = Graph().parse(
     Path(__file__).parent.parent
@@ -43,4 +41,5 @@ def test_nodeshape_to_grammar(nodeshape_uri):
         kind="endpoint",
         focus_node=Var(value="focus_node"),
     )
+    assert ns
     ...

@@ -1,0 +1,56 @@
+@prefix bibf: <http://id.loc.gov/ontologies/bibframe/> .
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix schema: <https://schema.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://anufncatalogue.anu.edu.au/catalog/caepr> a dcat:Catalog ;
+	dcterms:created "2024-10-02"^^xsd:date ;
+	dcterms:creator <https://linked.data.gov.au/org/anu> ;
+	dcterms:description "Automated scrape of publications from the Centre for Aboriginal Economic Policy Research website." ;
+	dcterms:hasPart <https://anufncatalogue.anu.edu.au/catalog/caepr/0109bf89-7182-4b22-ad30-5096c7603e0d>,
+		<https://anufncatalogue.anu.edu.au/catalog/caepr/075c9e7a-69c0-4eb3-8bdc-28a0dff10951>,
+		<https://anufncatalogue.anu.edu.au/catalog/caepr/10f2333d-5fa8-45d1-8e5a-5f2cc49bfc0c>,
+		<https://anufncatalogue.anu.edu.au/catalog/caepr/17b7b492-96ab-4f87-9cee-e9285fe135b5>,
+		<https://anufncatalogue.anu.edu.au/catalog/caepr/26d30f9b-93b0-4f54-a093-c864409d618f>;
+	dcterms:modified "2024-10-02"^^xsd:date ;
+	dcterms:publisher <https://linked.data.gov.au/org/anu> ;
+	dcterms:title "CAEPR publications" .
+
+<https://anufncatalogue.anu.edu.au/catalog/caepr/075c9e7a-69c0-4eb3-8bdc-28a0dff10951> a dcat:Resource,
+		schema:CreativeWork ;
+	schema:author "Musharbash, Y"^^xsd:string ;
+	schema:datePublished "2001"^^xsd:gYear ;
+	schema:headline "Indigenous families and the welfare system: The Yuendumu community case study, Stage Two"^^xsd:string ;
+	schema:issueNumber "217"^^xsd:string ;
+	schema:url "https://caepr.cass.anu.edu.au/research/publications/indigenous-families-and-welfare-system-yuendumu-community-case-study-stage-two"^^xsd:anyURI .
+
+<https://anufncatalogue.anu.edu.au/catalog/caepr/10f2333d-5fa8-45d1-8e5a-5f2cc49bfc0c> a dcat:Resource,
+		schema:CreativeWork ;
+	schema:author "O'Bryan, M, Markham, F & Harrington, M"^^xsd:string ;
+	schema:datePublished "2022"^^xsd:gYear ;
+	schema:headline "OCHRE Local Decision Making Stage 2 Accords Negotiation: Murdi Paaki Regional Assembly Accord II Negotiation Evaluation Report"^^xsd:string ;
+	schema:identifier "https://doi.org/10.25911/Y21G-T931"^^bibf:doi ;
+	schema:issueNumber "2"^^xsd:string ;
+	schema:url "https://caepr.cass.anu.edu.au/research/publications/ochre-local-decision-making-stage-2-accords-negotiation-murdi-paaki-regional-0"^^xsd:anyURI .
+
+<https://anufncatalogue.anu.edu.au/catalog/caepr/17b7b492-96ab-4f87-9cee-e9285fe135b5> a dcat:Resource,
+		schema:CreativeWork ;
+	schema:author "Henry, R, Daly, A"^^xsd:string ;
+	schema:datePublished "2001"^^xsd:gYear ;
+	schema:headline "Indigenous families and the welfare system: The Kuranda community case study, Stage Two"^^xsd:string ;
+	schema:issueNumber "216"^^xsd:string ;
+	schema:url "https://caepr.cass.anu.edu.au/research/publications/indigenous-families-and-welfare-system-kuranda-community-case-study-stage-two"^^xsd:anyURI .
+
+<https://anufncatalogue.anu.edu.au/catalog/caepr/26d30f9b-93b0-4f54-a093-c864409d618f> a dcat:Resource,
+		schema:CreativeWork ;
+	schema:author "McDonnell, S"^^xsd:string ;
+	schema:datePublished "2003"^^xsd:gYear ;
+	schema:headline "Chasing the money story: An evaluation of the Tangentyere Bank Pilot Project and its relevance to Indigenous communities in central Australia"^^xsd:string ;
+	schema:issueNumber "21"^^xsd:string ;
+	schema:url "https://caepr.cass.anu.edu.au/research/publications/chasing-money-story-evaluation-tangentyere-bank-pilot-project-and-its"^^xsd:anyURI .
+
+<https://linked.data.gov.au/org/anu> a schema:Organization ;
+	schema:name "Australian National University" ;
+	schema:url "https://www.anu.edu.au/"^^xsd:anyURI .
+

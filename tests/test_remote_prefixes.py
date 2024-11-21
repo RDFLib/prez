@@ -4,11 +4,11 @@ import pytest
 from fastapi.testclient import TestClient
 from pyoxigraph import Store
 from rdflib import Graph, URIRef
-from rdflib.namespace import RDF, DCAT
+from rdflib.namespace import DCAT, RDF
 
 from prez.app import assemble_app
 from prez.dependencies import get_data_repo
-from prez.repositories import Repo, PyoxigraphRepo
+from prez.repositories import PyoxigraphRepo, Repo
 
 
 @pytest.fixture(scope="session")
@@ -53,5 +53,5 @@ def test_catalog_link(client):
     r = client.get("/c/catalogs")
     g = Graph().parse(data=r.text)
     member_uri = g.value(None, RDF.type, DCAT.Catalog)
-    link = str(g.value(member_uri, URIRef(f"https://prez.dev/link", None)))
+    link = str(g.value(member_uri, URIRef("https://prez.dev/link", None)))
     assert link == "/c/catalogs/davo:bogusCatalogous"

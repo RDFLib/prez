@@ -1,16 +1,16 @@
 import pytest
-from rdflib import Graph, URIRef, SH, RDF, PROV, DCTERMS
+from rdflib import DCTERMS, PROV, RDF, SH, Graph, URIRef
+from sparql_grammar_pydantic import (
+    IRI,
+    Filter,
+    OptionalGraphPattern,
+    TriplesSameSubject,
+    TriplesSameSubjectPath,
+    Var,
+)
 
 from prez.reference_data.prez_ns import REG
 from prez.services.query_generation.shacl import PropertyShape
-from sparql_grammar_pydantic import (
-    Var,
-    IRI,
-    OptionalGraphPattern,
-    Filter,
-    TriplesSameSubjectPath,
-    TriplesSameSubject,
-)
 
 
 def test_simple_path():
@@ -86,7 +86,7 @@ def test_union():
           )
         ]
     .
-     
+
     """
     )
     path_bn = g.value(subject=URIRef("http://example-profile"), predicate=SH.property)
@@ -176,7 +176,7 @@ def test_complex_optional_props():
 
     <http://example-profile> sh:property [
         sh:minCount 0 ;
-        sh:path dcterms:publisher , ( prov:qualifiedDerivation prov:hadRole ) 
+        sh:path dcterms:publisher , ( prov:qualifiedDerivation prov:hadRole )
         ]
     .
 

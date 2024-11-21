@@ -1,27 +1,27 @@
 import pytest
 from rdflib import DCAT
 from sparql_grammar_pydantic import (
-    ConstructQuery,
     IRI,
-    Var,
-    GraphPatternNotTriples,
-    Expression,
-    PrimaryExpression,
+    Aggregate,
+    Bind,
     BuiltInCall,
+    ConstructQuery,
     ConstructTemplate,
     ConstructTriples,
-    TriplesSameSubject,
-    WhereClause,
+    Expression,
+    Filter,
+    GraphPatternNotTriples,
     GroupGraphPattern,
     GroupGraphPatternSub,
-    SolutionModifier,
-    Bind,
     NumericLiteral,
-    RegexExpression,
-    Aggregate,
+    PrimaryExpression,
     RDFLiteral,
-    Filter,
+    RegexExpression,
+    SolutionModifier,
     SubSelectString,
+    TriplesSameSubject,
+    Var,
+    WhereClause,
 )
 
 from prez.reference_data.prez_ns import PREZ
@@ -262,6 +262,7 @@ def test_count_query():
         where_clause=where_clause,
         solution_modifier=SolutionModifier(),  # Assuming no specific modifiers
     )
+    assert construct_query
 
 
 @pytest.mark.parametrize(

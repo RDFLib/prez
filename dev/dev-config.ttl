@@ -4,6 +4,12 @@
 @prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix tdb2:   <http://jena.apache.org/2016/tdb#> .
+@prefix text:  <http://jena.apache.org/text#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix sdo:      <https://schema.org/> .
+@prefix ex:        <http://www.example.org/resources#> .
+
 
 tdb2:GraphTDB  rdfs:subClassOf  ja:Model .
 
@@ -42,7 +48,7 @@ ja:DatasetRDFS  rdfs:subClassOf  ja:RDFDataset .
 
 :service  rdf:type  fuseki:Service ;
         rdfs:label       "myds" ;
-        fuseki:dataset   :dataset_readwrite ;
+        fuseki:dataset   <#textds> ;
         fuseki:endpoint  [ fuseki:operation  fuseki:update ] ;
         fuseki:endpoint  [ fuseki:name       "update" ;
                            fuseki:operation  fuseki:update
@@ -63,7 +69,74 @@ ja:DatasetRDFS  rdfs:subClassOf  ja:RDFDataset .
         fuseki:endpoint  [ fuseki:operation  fuseki:query ] ;
         fuseki:name      "myds" .
 
-:dataset_readwrite
-        rdf:type       tdb2:DatasetTDB2 ;
-        tdb2:unionDefaultGraph true ;
-        tdb2:location  "/fuseki/databases/myds" .
+<#textds> rdf:type text:TextDataset ;
+    text:dataset   <#myds> ;
+    text:index     <#indexLucene> ;
+    .
+
+# Text index description
+<#indexLucene> a text:TextIndexLucene ;
+   text:analyzer: [ a text:StandardAnalyzer ];
+   text:directory "databases/text-index-with-rdfs" ;
+   text:storeValues true ;
+   text:entityMap <#entMap> ;
+   text:propLists (
+    [ text:propListProp ex:NameProps ;
+      text:props ( rdfs:label
+                   sdo:name
+                   sdo:alternateName
+                 ) ;
+    ]
+    [ text:propListProp ex:DescriptiveProps ;
+      text:props ( sdo:description
+                   rdfs:comment
+                    ) ;
+    ]
+) ;
+    .
+
+<#entMap> a text:EntityMap ;
+    text:entityField      "uri" ;
+    text:graphField       "graph" ;
+    text:defaultField     "preflabel" ;        ## Should be defined in the text:map.
+    text:map (
+                 [ text:field "definition" ;
+                   text:predicate skos:definition ;
+                    ]
+                 [ text:field "preflabel" ;
+                   text:predicate skos:prefLabel ;
+                    ]
+                 [ text:field "altlabel" ;
+                   text:predicate skos:altLabel ;
+                    ]
+                 [ text:field "rdfslabel" ;
+                   text:predicate rdfs:label ;
+                    ]
+                 [ text:field "identifier" ;
+                   text:predicate dcterms:identifier ;
+                    ]
+                 [ text:field "description" ;
+                   text:predicate dcterms:description ;
+                    ]
+            	 [ text:field "comment" ;
+                   text:predicate rdfs:comment ;
+                    ]
+                 [ text:field "type" ;
+                   text:predicate rdf:type ;
+                    ]
+                 [ text:field "historyNote" ;
+                   text:predicate skos:historyNote ;
+                    ]
+                  [ text:field "sdodescription" ;
+                   text:predicate sdo:description ;
+                    ]
+                 [ text:field "headline" ;
+                   text:predicate sdo:headline ;
+                    ]
+         ) .
+
+# TDB2 dataset
+<#myds> rdf:type tdb2:DatasetTDB2 ;
+    tdb2:unionDefaultGraph true ;
+    tdb2:location "fuseki/databases/myds" ;
+    .

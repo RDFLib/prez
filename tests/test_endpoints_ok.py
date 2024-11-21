@@ -2,7 +2,6 @@ import logging
 import time
 from typing import Optional, Set
 
-from fastapi.testclient import TestClient
 from rdflib import Graph
 
 from prez.reference_data.prez_ns import PREZ

@@ -1,7 +1,7 @@
 import os
 import time
-
 import requests
+import glob
 
 os.system("docker context use default")
 response = os.system(
@@ -13,158 +13,41 @@ time.sleep(15)
 
 def setup():
     url = "http://localhost:3030/myds"
-
-    payload = {}
-    files = [
-        (
-            "myfile",
-            (
-                "geofabric_small.ttl",
-                open("tests/data/spaceprez/input/geofabric_small.ttl", "rb"),
-                "application/octet-stream",
-            ),
-        ),
-        (
-            "myfile2",
-            (
-                "gnaf_small.ttl",
-                open("tests/data/spaceprez/input/gnaf_small.ttl", "rb"),
-                "application/octet-stream",
-            ),
-        ),
-        (
-            "myfile3",
-            (
-                "labels.ttl",
-                open("tests/data/spaceprez/input/labels.ttl", "rb"),
-                "application/octet-stream",
-            ),
-        ),
-        (
-            "myfile4",
-            (
-                "sandgate.ttl",
-                open("tests/data/spaceprez/input/sandgate.ttl", "rb"),
-                "application/octet-stream",
-            ),
-        ),
-        (
-            "myfile5",
-            (
-                "multiple_object.ttl",
-                open("tests/data/spaceprez/input/multiple_object.ttl", "rb"),
-                "application/octet-stream",
-            ),
-        ),
-        (
-            "myfile6",
-            (
-                "dublin_core_terms.ttl",
-                open("tests/data/vocprez/input/dublin_core_terms.ttl", "rb"),
-                "application/octet-stream",
-            ),
-        ),
-        (
-            "myfile7",
-            (
-                "remote_profile.ttl",
-                open("tests/data/profiles/remote_profile.ttl", "rb"),
-                "application/octet-stream",
-            ),
-        ),
-        (
-            "myfile8",
-            (
-                "alteration-types.ttl",
-                open("tests/data/vocprez/input/alteration-types.ttl", "rb"),
-                "application/octet-stream",
-            ),
-        ),
-        (
-            "myfile9",
-            (
-                "contacttype.ttl",
-                open("tests/data/vocprez/input/contacttype.ttl", "rb"),
-                "application/octet-stream",
-            ),
-        ),
-        (
-            "myfile10",
-            (
-                "dublin_core_terms.ttl",
-                open("tests/data/vocprez/input/dublin_core_terms.ttl", "rb"),
-                "application/octet-stream",
-            ),
-        ),
-        (
-            "myfile11",
-            (
-                "_idn-ac.ttl",
-                open("tests/data/catprez/input/_idn-ac.ttl", "rb"),
-                "application/octet-stream",
-            ),
-        ),
-        (
-            "myfile12",
-            (
-                "_idn-dc.ttl",
-                open("tests/data/catprez/input/_idn-dc.ttl", "rb"),
-                "application/octet-stream",
-            ),
-        ),
-        (
-            "myfile13",
-            (
-                "_system-catalog.ttl",
-                open("tests/data/catprez/input/_system-catalog.ttl", "rb"),
-                "application/octet-stream",
-            ),
-        ),
-        (
-            "myfile14",
-            (
-                "AAC-SA.ttl",
-                open("tests/data/catprez/input/AAC-SA.ttl", "rb"),
-                "application/octet-stream",
-            ),
-        ),
-        (
-            "myfile15",
-            (
-                "agents.ttl",
-                open("tests/data/catprez/input/agents.ttl", "rb"),
-                "application/octet-stream",
-            ),
-        ),
-        (
-            "myfile17",
-            (
-                "agents.ttl",
-                open("tests/data/catprez/input/pd_democat.ttl", "rb"),
-                "application/octet-stream",
-            ),
-        ),
-        (
-            "myfile16",
-            (
-                "dublin_core_terms.ttl",
-                open("tests/data/vocprez/input/dublin_core_terms.ttl", "rb"),
-                "application/octet-stream",
-            ),
-        ),
-    ]
     headers = {}
 
-    response = requests.request(
-        "POST",
-        url,
-        headers=headers,
-        data=payload,
-        files=files,
-        params={"graph": "http://exampledatagraph"},
-    )
+    # Get all TTL files from test_data directory
+    ttl_files = glob.glob("test_data/*.ttl")
 
-    print(response.text)
+    # Process each file sequentially
+    for i, file_path in enumerate(ttl_files, 1):
+        file_name = os.path.basename(file_path)
+        print(f"Loading file {i}/{len(ttl_files)}: {file_name}")
+
+        files = [
+            (
+                "file",
+                (
+                    file_name,
+                    open(file_path, "rb"),
+                    "application/octet-stream",
+                ),
+            )
+        ]
+
+        response = requests.request(
+            "POST",
+            url,
+            headers=headers,
+            data={},
+            files=files,
+            params={"graph": "http://exampledatagraph"},
+        )
+
+        if response.status_code != 200:
+            print(f"Error loading {file_name}: {response.status_code}")
+            print(response.text)
+        else:
+            print(f"Successfully loaded {file_name}")
 
 
 setup()

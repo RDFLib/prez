@@ -3,7 +3,7 @@ import time
 from pathlib import Path
 
 import httpx
-from rdflib import DCTERMS, RDF, BNode, Graph, Literal, URIRef
+from rdflib import DCTERMS, RDF, SH, BNode, Graph, Literal, URIRef
 
 from prez.cache import (
     counts_graph,
@@ -102,6 +102,23 @@ async def retrieve_remote_template_queries(repo: Repo):
         log.info("No remote template queries found")
 
 
+async def retrieve_remote_jena_fts_shapes(repo: Repo):
+    query = "DESCRIBE ?fts_shape WHERE {?fts_shape a <https://prez.dev/ont/JenaFTSPropertyShape>}"
+    g, _ = await repo.send_queries([query], [])
+    if len(g) > 0:
+        prez_system_graph.__iadd__(g)
+        n_shapes = len(list(g.subjects(RDF.type, ONT.JenaFTSPropertyShape)))
+        names_list = list(g.objects(subject=None, predicate=SH.name))
+        while len(names_list) < n_shapes:
+            names_list.append("(no label)")
+        names = ", ".join(names_list)
+        log.info(
+            f"Found and added {n_shapes} Jena FTS shapes from remote repo: {names}"
+        )
+    else:
+        log.info("No remote Jena FTS shapes found")
+
+
 async def add_remote_prefixes(repo: Repo):
     # TODO allow mediatype specification in repo queries
     query = PrefixQuery().to_string()
@@ -194,14 +211,19 @@ async def create_endpoints_graph(app_state):
         features_g = Graph()
         updated_hl_g = Graph()
         # check data repo for any OGC Features endpoint definitions
-        remote_feat_ep_g = await get_remote_endpoint_definitions(app_state.repo, ONT.OGCFeaturesEndpoint)
+        remote_feat_ep_g = await get_remote_endpoint_definitions(
+            app_state.repo, ONT.OGCFeaturesEndpoint
+        )
         if remote_feat_ep_g:
             features_g = remote_feat_ep_g
         else:  # none found, use local defaults in Prez.
             for f in (endpoints_root / "features").glob("*.ttl"):
                 features_g.parse(f)
-        segments = [seg for seg in app_state.settings.ogc_features_mount_path.strip('/').split('/') if
-                    seg.startswith("{")]
+        segments = [
+            seg
+            for seg in app_state.settings.ogc_features_mount_path.strip("/").split("/")
+            if seg.startswith("{")
+        ]
         mount_delta = len(segments)
         if mount_delta > 0:
             for s, p, o in features_g.triples((None, ONT.hierarchyLevel, None)):
@@ -217,9 +239,7 @@ async def get_remote_endpoint_definitions(repo, ep_type: URIRef):
     ep_nodeshape_query = (
         f"DESCRIBE ?shape {{ ?shape {ONT['hierarchyLevel'].n3()} ?obj }}"
     )
-    g, _ = await repo.send_queries(
-        [ep_query], []
-    )
+    g, _ = await repo.send_queries([ep_query], [])
     if len(g) > 0:
         # get ep nodeshapes for these endpoints
         ns_g, _ = await repo.send_queries([ep_nodeshape_query], [])

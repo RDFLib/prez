@@ -1,12 +1,12 @@
-from rdflib import Graph, URIRef, SKOS, Literal, XSD
-from rdflib.namespace import RDF, DCAT
+from rdflib import SKOS, XSD, Graph, Literal, URIRef
+from rdflib.namespace import RDF
 
 from prez.reference_data.prez_ns import PREZ
 
 
 def test_concept_hierarchy_top_concepts(client):
     r = client.get(
-        f"/concept-hierarchy/exm:SchemingConceptScheme/top-concepts?_mediatype=text/turtle"
+        "/concept-hierarchy/exm:SchemingConceptScheme/top-concepts?_mediatype=text/turtle"
     )
     response_graph = Graph().parse(data=r.text)
     expected_response_1 = (
@@ -25,7 +25,7 @@ def test_concept_hierarchy_top_concepts(client):
 
 def test_concept_hierarchy_narrowers(client):
     r = client.get(
-        f"/concept-hierarchy/exm:TopLevelConcept/narrowers?_mediatype=text/turtle"
+        "/concept-hierarchy/exm:TopLevelConcept/narrowers?_mediatype=text/turtle"
     )
     response_graph = Graph().parse(data=r.text)
     expected_response_1 = (

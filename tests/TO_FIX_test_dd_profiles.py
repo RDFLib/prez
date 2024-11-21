@@ -8,7 +8,7 @@ from pyoxigraph.pyoxigraph import Store
 
 from prez.app import app
 from prez.dependencies import get_data_repo
-from prez.repositories import Repo, PyoxigraphRepo
+from prez.repositories import PyoxigraphRepo, Repo
 
 
 @pytest.fixture(scope="session")

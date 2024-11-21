@@ -1,10 +1,10 @@
 from rdflib import Graph, URIRef
-from rdflib.namespace import RDF, GEO
+from rdflib.namespace import GEO, RDF
 
 
 def test_feature_collection(client):
     r = client.get(
-        f"/object?uri=https://example.com/spaceprez/FeatureCollection&_mediatype=text/turtle"
+        "/object?uri=https://example.com/spaceprez/FeatureCollection&_mediatype=text/turtle"
     )
     response_graph = Graph().parse(data=r.text)
     assert (
@@ -16,7 +16,7 @@ def test_feature_collection(client):
 
 def test_feature(client):
     r = client.get(
-        f"/object?uri=https://example.com/spaceprez/Feature1&_mediatype=text/turtle"
+        "/object?uri=https://example.com/spaceprez/Feature1&_mediatype=text/turtle"
     )
     response_graph = Graph().parse(data=r.text)
     assert (

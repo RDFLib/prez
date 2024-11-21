@@ -1,0 +1,47 @@
+@prefix sdo: <https://schema.org/> .
+@prefix ont: <https://prez.dev/ont/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix dwc: <http://rs.tdwg.org/dwc/terms/> .
+@prefix ex: <http://example.com/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix sname: <https://fake-scientific-name-id.com/name/afd/> .
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix prez: <https://prez.dev/> .
+
+
+ex:FTSInverseShape
+    a sh:PropertyShape ;
+    a ont:JenaFTSPropertyShape ;
+    sh:path [ sh:inversePath ex:hasFeatureOfInterest ] ;
+    sh:name "Inverse" ;
+    dcterms:identifier "inv" ;
+.
+
+ex:FTSSequenceShape
+    a sh:PropertyShape ;
+    a ont:JenaFTSPropertyShape ;
+    sh:path
+        (
+            ex:prop1 ex:prop2 ex:labelProp
+        ) ;
+    sh:name "Sequence" ;
+    dcterms:identifier "seq" ;
+.
+
+ex:FTSInverseSequenceShape
+    a sh:PropertyShape ;
+    a ont:JenaFTSPropertyShape ;
+    sh:path ( ex:hasSimpleResult [ sh:inversePath ex:hasFeatureOfInterest ] ) ;
+    sh:name "Sequence Inverse" ;
+    dcterms:identifier "seqinv" ;
+.
+
+ex:RealExample
+    a sh:PropertyShape ;
+    a ont:JenaFTSPropertyShape ;
+    sh:path ( sosa:isFeatureOfInterestOf sosa:hasResult ) ;
+    sh:name "Real Example" ;
+    dcterms:identifier "real" ;
+    ont:searchPredicate sdo:description ;
+.

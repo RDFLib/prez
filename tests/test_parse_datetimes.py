@@ -1,6 +1,7 @@
-import pytest
 from datetime import datetime, timezone
-from typing import Tuple, Optional
+from typing import Optional, Tuple
+
+import pytest
 
 from prez.models.query_params import parse_datetime
 
