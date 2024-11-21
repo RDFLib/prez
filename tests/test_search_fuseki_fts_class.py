@@ -6,7 +6,7 @@ from sparql_grammar_pydantic import (
     GroupGraphPatternSub,
     GroupOrUnionGraphPattern,
     TriplesBlock,
-    Var,
+    Var, TriplesSameSubjectPath, IRI,
 )
 
 from prez.services.query_generation.search_fuseki_fts import SearchQueryFusekiFTS
@@ -52,3 +52,30 @@ def test_combo_query_gen():
         )
     gougp = GroupOrUnionGraphPattern(group_graph_patterns=ggp_list)
     assert gougp
+
+
+def test_bnode_filter():
+    tssp_list = [
+        TriplesSameSubjectPath.from_spo(
+            Var(value="focus_node"),
+            IRI(value="http://example.com/hasFeatureOfInterest"),
+            Var(value="path_node_1"),
+        ),
+        TriplesSameSubjectPath.from_spo(
+            Var(value="path_node_1"),
+            IRI(value="http://example.com/hasMember"),
+            Var(value="path_node_2"),
+        ),
+        TriplesSameSubjectPath.from_spo(
+            Var(value="path_node_2"),
+            IRI(value="http://www.w3.org/2000/01/rdf-schema#label"),
+            Var(value="fts_search_node"),
+        ),
+    ]
+    query_obj = SearchQueryFusekiFTS(
+        term="test", limit=10, offset=0,
+        non_shacl_predicates=[RDFS.label, RDFS.comment],
+        shacl_tssp_preds=[(tssp_list, [RDFS.label])]
+    )
+    query_string = query_obj.to_string()
+    assert "FILTER (! isBLANK(?focus_node))" in query_string
