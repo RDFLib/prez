@@ -4,7 +4,7 @@
     {
       "op": "like",
       "args": [
-        { "property": "owner" },
+        { "property": "ex:owner" },
         "%Mike%"
       ]
     }

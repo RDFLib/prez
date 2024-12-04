@@ -6,7 +6,9 @@ from sparql_grammar_pydantic import (
     GroupGraphPatternSub,
     GroupOrUnionGraphPattern,
     TriplesBlock,
-    Var, TriplesSameSubjectPath, IRI,
+    Var,
+    TriplesSameSubjectPath,
+    IRI,
 )
 
 from prez.services.query_generation.search_fuseki_fts import SearchQueryFusekiFTS
@@ -73,9 +75,11 @@ def test_bnode_filter():
         ),
     ]
     query_obj = SearchQueryFusekiFTS(
-        term="test", limit=10, offset=0,
+        term="test",
+        limit=10,
+        offset=0,
         non_shacl_predicates=[RDFS.label, RDFS.comment],
-        shacl_tssp_preds=[(tssp_list, [RDFS.label])]
+        shacl_tssp_preds=[(tssp_list, [RDFS.label])],
     )
     query_string = query_obj.to_string()
     assert "FILTER (! isBLANK(?focus_node))" in query_string

@@ -52,9 +52,9 @@
       "op": "=",
       "args": [
         {
-          "property": "^http://www.w3.org/2000/01/rdf-schema#member"
+          "property": "http://www.w3.org/2000/01/rdf-schema#member"
         },
-        { "@id": "http://example.com/datasets/sandgate/facilities" }
+        "http://example.com/datasets/sandgate/facilities"
       ]
     }
   ]

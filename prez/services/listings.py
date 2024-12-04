@@ -264,7 +264,9 @@ async def ogc_features_listing_function(
         # queries.append(feature_collection_query)
         # run the feature_collection_query by itself with caching as it will be the same for all paginated sets of features
 
-        fc_item_graph = await _cached_feature_collection_query(collection_uri, data_repo, feature_collection_query)
+        fc_item_graph = await _cached_feature_collection_query(
+            collection_uri, data_repo, feature_collection_query
+        )
 
     link_headers = None
     if selected_mediatype == "application/sparql-query":
@@ -536,9 +538,9 @@ async def generate_queryables_from_shacl_definition(
 
 
 @cached(ttl=600, key=lambda collection_uri: collection_uri)
-async def _cached_feature_collection_query(collection_uri, data_repo, feature_collection_query):
+async def _cached_feature_collection_query(
+    collection_uri, data_repo, feature_collection_query
+):
     """cache the feature collection information for 10 minutes as it is an expensive query at present"""
-    fc_item_graph, _ = await data_repo.send_queries(
-        [feature_collection_query], []
-    )
+    fc_item_graph, _ = await data_repo.send_queries([feature_collection_query], [])
     return fc_item_graph

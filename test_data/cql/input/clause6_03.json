@@ -3,7 +3,7 @@
   "args": [
     {
       "op": "isNull",
-      "args": [ { "property": "geometry" } ]
+      "args": [ { "property": "ex:geometry" } ]
     }
   ]
 }

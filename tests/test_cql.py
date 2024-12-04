@@ -57,10 +57,25 @@ def test_simple_get(client, cql_json_filename):
 #     response = client.post("/cql", json=cql_json, headers=headers)
 #     assert response.status_code == 200
 
+cql_geo_filenames = [
+    "geo_contains",
+    "geo_contains_filter",
+    "geo_contains_inverse",
+    "geo_contains_like",
+    "geo_crosses",
+    "geo_disjoint",
+    "geo_equals",
+    "geo_intersects",
+    "geo_overlaps",
+    "geo_touches",
+    "geo_within",
+]
 
-def test_intersects_get(client):
+
+@pytest.mark.parametrize("cql_geo_filename", cql_geo_filenames)
+def test_intersects_get(client, cql_geo_filename):
     cql_json_path = (
-        Path(__file__).parent.parent / "test_data/cql/input/geo_intersects.json"
+        Path(__file__).parent.parent / f"prez/examples/cql/{cql_geo_filename}.json"
     )
     cql_json = json.loads(cql_json_path.read_text())
     query_string = quote_plus(json.dumps(cql_json))

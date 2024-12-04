@@ -1,7 +1,7 @@
 {
   "op": "a_containedBy",
   "args": [
-    { "property": "values" },
+    { "property": "ex:values" },
     [ "a", "b", "c" ]
   ]
 }

@@ -66,7 +66,7 @@ def client(test_repo: Repo) -> TestClient:
         ),
         "errorconditions",
         "feature",
-                pytest.param(
+        pytest.param(
             "features",
             marks=pytest.mark.xfail(
                 reason="endpoint that causes an error in pytest works manually with the same data in Fuseki"

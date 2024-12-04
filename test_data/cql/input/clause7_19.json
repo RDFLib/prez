@@ -1,11 +1,11 @@
 {
   "op": ">",
   "args": [
-    { "property": "vehicle_height" },
+    { "property": "ex:vehicle_height" },
     {
       "op": "-",
       "args": [
-        { "property": "bridge_clearance" },
+        { "property": "ex:bridge_clearance" },
         1
       ]
     }

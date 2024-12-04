@@ -7,14 +7,14 @@
         {
           "op": "like",
           "args": [
-            { "property": "owner" },
+            { "property": "ex:owner" },
             "mike%"
           ]
         },
         {
           "op": "like",
           "args": [
-            { "property": "owner" },
+            { "property": "ex:owner" },
             "Mike%"
           ]
         }
@@ -23,7 +23,7 @@
     {
       "op": "<",
       "args": [
-        { "property": "floors" },
+        { "property": "ex:floors" },
         4
       ]
     }

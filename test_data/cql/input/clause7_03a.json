@@ -1,7 +1,7 @@
 {
   "op": "in",
   "args": [
-    { "property": "cityName" },
+    { "property": "ex:cityName" },
     [ "Toronto", "Frankfurt", "Tokyo", "New York" ]
   ]
 }

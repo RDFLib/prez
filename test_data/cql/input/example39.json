@@ -1,7 +1,7 @@
 {
   "op": "in",
   "args": [
-    { "property": "value" },
+    { "property": "ex:value" },
     [ 1.0, 2.0, 3.0 ]
   ]
 }

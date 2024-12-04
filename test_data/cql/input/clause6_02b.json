@@ -3,7 +3,7 @@
   "args": [
     {
       "op": "avg",
-      "args": [ { "property": "windSpeed" } ]
+      "args": [ { "property": "ex:windSpeed" } ]
     },
     4
   ]

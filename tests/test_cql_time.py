@@ -49,13 +49,7 @@ def test_time_funcs(cql_json_filename, output_query_filename):
         Path(__file__).parent.parent
         / f"test_data/cql/expected_generated_queries/{output_query_filename}"
     ).read_text()
-    context = json.load(
-        (
-            Path(__file__).parent.parent
-            / "prez/reference_data/cql/default_context.json"
-        ).open()
-    )
-    cql_parser = CQLParser(cql=cql_json, context=context)
+    cql_parser = CQLParser(cql=cql_json)
     cql_parser.generate_jsonld()
     cql_parser.parse()
     if not cql_parser.query_str == reference_query:
