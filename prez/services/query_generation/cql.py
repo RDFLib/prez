@@ -250,12 +250,7 @@ class CQLParser:
     def _handle_like(self, args, existing_ggps=None):
         ggps, object = self._add_tss_tssp(args, existing_ggps)
 
-        value = (
-            args[1]
-            .replace("%", ".*")
-            .replace("_", ".")
-            .replace("\\", "\\\\")
-        )
+        value = args[1].replace("%", ".*").replace("_", ".").replace("\\", "\\\\")
 
         filter_gpnt = GraphPatternNotTriples(
             content=Filter(
@@ -414,11 +409,7 @@ class CQLParser:
                 continue
 
             # check if the arg is a date
-            date = (
-                arg.get("date")
-                or arg.get("datetime")
-                or arg.get("timestamp")
-            )
+            date = arg.get("date") or arg.get("datetime") or arg.get("timestamp")
             if date:
                 self._dt_to_rdf_literal(i, date, label, operands)
 
@@ -485,7 +476,6 @@ class CQLParser:
         var = Var(value=f"dt_{i}_{label}")
         operands[f"t{i}_{label}"] = var
         self._add_triple(ggps, Var(value="focus_node"), value, var)
-
 
     def _dt_to_rdf_literal(self, i, dt_str, label, operands):
         if dt_str == "..":

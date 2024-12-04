@@ -27,17 +27,14 @@ class Repo(ABC):
         tabular_queries: List[Tuple[URIRef | None, str]] = None,
     ) -> Tuple[Graph, List]:
         # Common logic to send both query types in parallel
-        try:
-            results = await asyncio.gather(
-                *[self.rdf_query_to_graph(query) for query in rdf_queries if query],
-                *[
-                    self.tabular_query_to_table(query, context)
-                    for context, query in tabular_queries
-                    if query
-                ],
-            )
-        except Exception as e:
-            print(e)
+        results = await asyncio.gather(
+            *[self.rdf_query_to_graph(query) for query in rdf_queries if query],
+            *[
+                self.tabular_query_to_table(query, context)
+                for context, query in tabular_queries
+                if query
+            ],
+        )
         g = Graph(namespace_manager=prefix_graph.namespace_manager)
         tabular_results = []
         for result in results:

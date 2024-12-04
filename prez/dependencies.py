@@ -26,7 +26,10 @@ from prez.enums import (
     SearchMethod,
     SPARQLQueryMediaType,
 )
-from prez.exceptions.model_exceptions import NoEndpointNodeshapeException, URINotFoundException
+from prez.exceptions.model_exceptions import (
+    NoEndpointNodeshapeException,
+    URINotFoundException,
+)
 from prez.enums import SearchMethod
 from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import ALTREXT, EP, OGCE, OGCFEAT, ONT
@@ -150,9 +153,7 @@ async def cql_post_parser_dependency(
 ) -> CQLParser:
     try:
         body = await request.json()
-        cql_parser = CQLParser(
-            cql=body, queryable_props=queryable_props
-        )
+        cql_parser = CQLParser(cql=body, queryable_props=queryable_props)
         cql_parser.generate_jsonld()
         cql_parser.parse()
         return cql_parser
@@ -172,9 +173,7 @@ async def cql_get_parser_dependency(
         try:
             crs = query_params.filter_crs
             query = json.loads(query_params.filter)
-            cql_parser = CQLParser(
-                cql=query, crs=crs, queryable_props=queryable_props
-            )
+            cql_parser = CQLParser(cql=query, crs=crs, queryable_props=queryable_props)
             cql_parser.generate_jsonld()
             try:
                 cql_parser.parse()

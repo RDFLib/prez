@@ -68,8 +68,9 @@ cql_geo_filenames = [
     "geo_intersects",
     "geo_overlaps",
     "geo_touches",
-    "geo_within"
+    "geo_within",
 ]
+
 
 @pytest.mark.parametrize("cql_geo_filename", cql_geo_filenames)
 def test_intersects_get(client, cql_geo_filename):

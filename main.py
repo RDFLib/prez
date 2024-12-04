@@ -10,5 +10,11 @@ if __name__ == "__main__":
 
     port = int(environ.get("PREZ_DEV_SERVER_PORT", 8000))
 
-    uvicorn.run("prez.app:assemble_app", factory=True, port=port, reload=True,
-                proxy_headers=True, forwarded_allow_ips='*')
+    uvicorn.run(
+        "prez.app:assemble_app",
+        factory=True,
+        port=port,
+        reload=True,
+        proxy_headers=True,
+        forwarded_allow_ips="*",
+    )
