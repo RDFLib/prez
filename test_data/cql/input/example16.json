@@ -4,7 +4,7 @@
     {
       "op": "=",
       "args": [
-        { "property": "swimming_pool" },
+        { "property": "ex:swimming_pool" },
         true
       ]
     },
@@ -14,21 +14,21 @@
         {
           "op": ">",
           "args": [
-            { "property": "floors" },
+            { "property": "ex:floors" },
             5
           ]
         },
         {
           "op": "like",
           "args": [
-            { "property": "material" },
+            { "property": "ex:material" },
             "brick%"
           ]
         },
         {
           "op": "like",
           "args": [
-            { "property": "material" },
+            { "property": "ex:material" },
             "%brick"
           ]
         }

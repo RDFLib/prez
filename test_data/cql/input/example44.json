@@ -3,12 +3,12 @@
   "args": [
     {
       "op": "isNull",
-      "args": [ { "property": "value" } ]
+      "args": [ { "property": "ex:value" } ]
     },
     {
       "op": "between",
       "args": [
-        { "property": "value" },
+        { "property": "ex:value" },
         10, 20
       ]
     }

@@ -4,14 +4,14 @@
     {
       "op": ">",
       "args": [
-        { "property": "floors" },
+        { "property": "ex:floors" },
         5
       ]
     },
     {
       "op": "=",
       "args": [
-        { "property": "swimming_pool" },
+        { "property": "ex:swimming_pool" },
         true
       ]
     }

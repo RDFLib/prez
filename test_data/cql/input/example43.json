@@ -7,7 +7,7 @@
         {
           "op": "like",
           "args": [
-            { "property": "name" },
+            { "property": "ex:name" },
             "foo%"
           ]
         }
@@ -16,7 +16,7 @@
     {
       "op": ">",
       "args": [
-        { "property": "value" },
+        { "property": "ex:value" },
         10
       ]
     }
