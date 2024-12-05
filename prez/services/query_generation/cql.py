@@ -349,16 +349,16 @@ class CQLParser:
         yield ggps
 
     def _handle_shacl_defined_prop(self, prop):
-        tssp_list, object = self.queryable_id_to_tssp(self.queryable_props[prop])
-        tss_triple = (
-            Var(value="focus_node"),
-            IRI(value=SHACL_FILTER_NAMESPACE[prop]),
-            object,
-        )
-        self.tss_list.append(TriplesSameSubject.from_spo(*tss_triple))
+        tssp_list, obj = self.queryable_id_to_tssp(self.queryable_props[prop])
+        # tss_triple = (
+        #     Var(value="focus_node"),
+        #     IRI(value=SHACL_FILTER_NAMESPACE[prop]),
+        #     object,
+        # )
+        # self.tss_list.append(TriplesSameSubject.from_spo(*tss_triple))
         self.tssp_list.extend(tssp_list)
-        self.inner_select_vars.append(object)
-        return object
+        self.inner_select_vars.append(obj)
+        return obj
 
     def _extract_spatial_info(self, coordinates_list, args):
         coordinates = []
@@ -407,7 +407,8 @@ class CQLParser:
             prop = arg.get("property")
             if prop:
                 if prop in self.queryable_props:
-                    object = self._handle_shacl_defined_prop(prop)
+                    obj = self._handle_shacl_defined_prop(prop)
+                    operands[f"t{i}_{label}"] = obj
                 else:
                     self._triple_for_time_prop(ggps, i, label, prop, operands)
                 continue
