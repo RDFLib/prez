@@ -238,7 +238,7 @@ class CQLParser:
         self.var_counter += 1
         ggps = existing_ggps if existing_ggps is not None else GroupGraphPatternSub()
         prop = args[0].get("property")
-        if prop in self.queryable_props:
+        if self.queryable_props and prop in self.queryable_props:
             object = self._handle_shacl_defined_prop(prop)
         else:
             subject = Var(value="focus_node")
@@ -406,7 +406,7 @@ class CQLParser:
             # check if the arg is a property
             prop = arg.get("property")
             if prop:
-                if prop in self.queryable_props:
+                if self.queryable_props and prop in self.queryable_props:
                     obj = self._handle_shacl_defined_prop(prop)
                     operands[f"t{i}_{label}"] = obj
                 else:
