@@ -47,7 +47,7 @@ from sparql_grammar_pydantic import (
     UnaryExpression,
     ValueLogical,
     Var,
-    WhereClause,
+    WhereClause, IRIOrFunction,
 )
 
 from prez.cache import prez_system_graph
@@ -203,28 +203,20 @@ class CQLParser:
             ggps.triples_block = TriplesBlock(triples=tssp)
 
     def _handle_comparison(self, operator, args, existing_ggps=None):
-        ggps, object = self._add_tss_tssp(args, existing_ggps)
 
         val = args[1]
-        if not val:  # then should be an IRI
-            val = args[1]
+        if isinstance(val, str) and val.startswith("http"):  # hack
             value = IRI(value=val)
-        elif isinstance(val, str) and val.startswith("http"):  # hack
-            value = IRI(value=val)
-        elif isinstance(val, str):  # literal string
-            value = RDFLiteral(value=val)
         elif isinstance(val, (int, float)):  # literal numeric
             value = NumericLiteral(value=val)
+        else:  # literal string
+            value = RDFLiteral(value=val)
 
-        object_pe = PrimaryExpression(content=object)
-        if operator == "=":
-            iri_db_vals = [DataBlockValue(value=value)]
-            ildov = InlineDataOneVar(variable=object, datablockvalues=iri_db_vals)
-            gpnt = GraphPatternNotTriples(
-                content=InlineData(data_block=DataBlock(block=ildov))
-            )
-            ggps.add_pattern(gpnt)
-        else:
+        if operator == "=" and isinstance(value, IRI):  # use a triple pattern match rather than FILTER
+            ggps, obj = self._add_tss_tssp(args, existing_ggps, value)
+        else:  # use a FILTER
+            ggps, obj = self._add_tss_tssp(args, existing_ggps)
+            object_pe = PrimaryExpression(content=obj)
             value_pe = PrimaryExpression(content=value)
             values_constraint = Filter.filter_relational(
                 focus=object_pe, comparators=value_pe, operator=operator
@@ -234,18 +226,22 @@ class CQLParser:
 
         yield ggps
 
-    def _add_tss_tssp(self, args, existing_ggps):
+    def _add_tss_tssp(self, args, existing_ggps, obj=None):
         self.var_counter += 1
         ggps = existing_ggps if existing_ggps is not None else GroupGraphPatternSub()
         prop = args[0].get("property")
         if self.queryable_props and prop in self.queryable_props:
-            object = self._handle_shacl_defined_prop(prop)
+            shacl_defined_obj = self._handle_shacl_defined_prop(prop)
+            if not obj:
+                obj = shacl_defined_obj
         else:
             subject = Var(value="focus_node")
             predicate = IRI(value=prop)
-            object = Var(value=f"var_{self.var_counter}")
-            self._add_triple(ggps, subject, predicate, object)
-        return ggps, object
+            var_obj = Var(value=f"var_{self.var_counter}")
+            if not obj:
+                obj = var_obj
+            self._add_triple(ggps, subject, predicate, obj)
+        return ggps, obj
 
     def _handle_like(self, args, existing_ggps=None):
         ggps, object = self._add_tss_tssp(args, existing_ggps)
