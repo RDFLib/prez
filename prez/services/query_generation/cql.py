@@ -378,6 +378,7 @@ class CQLParser:
         return coordinates, geom_type
 
     def _handle_temporal(self, comp_func, args, existing_ggps=None):
+        """For temporal filtering within CQL JSON expressions, NOT within the temporal query parameter."""
         ggps = existing_ggps if existing_ggps is not None else GroupGraphPatternSub()
 
         if len(args) != 2:
@@ -405,7 +406,10 @@ class CQLParser:
             # check if the arg is a property
             prop = arg.get("property")
             if prop:
-                self._triple_for_time_prop(ggps, i, label, prop, operands)
+                if prop in self.queryable_props:
+                    object = self._handle_shacl_defined_prop(prop)
+                else:
+                    self._triple_for_time_prop(ggps, i, label, prop, operands)
                 continue
 
             # check if the arg is a date
@@ -545,23 +549,23 @@ def get_wkt_from_coords(coordinates, geom_type: str):
     return dumps({"type": geom_type, "coordinates": coordinates}, max_decimals)
 
 
-def create_temporal_filter_gpnt(dt: datetime, op: str) -> GraphPatternNotTriples:
-    if op not in ["=", "<=", ">=", "<", ">"]:
-        raise ValueError(f"Invalid operator: {op}")
-    return GraphPatternNotTriples(
-        content=Filter.filter_relational(
-            focus=PrimaryExpression(
-                content=Var(value="datetime"),
-            ),
-            comparators=PrimaryExpression(
-                content=RDFLiteral(
-                    value=dt.isoformat(),
-                    datatype=IRI(value="http://www.w3.org/2001/XMLSchema#dateTime"),
-                )
-            ),
-            operator=op,
-        )
-    )
+# def create_temporal_filter_gpnt(dt: datetime, op: str) -> GraphPatternNotTriples:
+#     if op not in ["=", "<=", ">=", "<", ">"]:
+#         raise ValueError(f"Invalid operator: {op}")
+#     return GraphPatternNotTriples(
+#         content=Filter.filter_relational(
+#             focus=PrimaryExpression(
+#                 content=Var(value="datetime"),
+#             ),
+#             comparators=PrimaryExpression(
+#                 content=RDFLiteral(
+#                     value=dt.isoformat(),
+#                     datatype=IRI(value="http://www.w3.org/2001/XMLSchema#dateTime"),
+#                 )
+#             ),
+#             operator=op,
+#         )
+#     )
 
 
 def create_temporal_or_gpnt(
