@@ -5,7 +5,10 @@ from sparql_grammar_pydantic import (
     IRI,
     GraphPatternNotTriples,
     TriplesSameSubjectPath,
-    Var, PrimaryExpression, Filter, RDFLiteral,
+    Var,
+    PrimaryExpression,
+    Filter,
+    RDFLiteral,
 )
 
 from prez.config import settings
@@ -32,7 +35,7 @@ def create_temporal_filter_gpnt(dt: datetime, op: str) -> GraphPatternNotTriples
 
 
 def generate_datetime_filter(
-        datetime_1: DateTimeOrUnbounded, datetime_2: Optional[DateTimeOrUnbounded]
+    datetime_1: DateTimeOrUnbounded, datetime_2: Optional[DateTimeOrUnbounded]
 ) -> (GraphPatternNotTriples, List[TriplesSameSubjectPath]):
     # tssp
     tssp_list = [

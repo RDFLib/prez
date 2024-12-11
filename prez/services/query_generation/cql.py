@@ -1,10 +1,8 @@
 import json
-from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Generator
 
-from pyld import jsonld
 from rdf2geojson.contrib.geomet.util import flatten_multi_dim
 from rdf2geojson.contrib.geomet.wkt import dumps
 from rdflib import Namespace, URIRef
@@ -47,7 +45,7 @@ from sparql_grammar_pydantic import (
     UnaryExpression,
     ValueLogical,
     Var,
-    WhereClause, IRIOrFunction,
+    WhereClause,
 )
 
 from prez.cache import prez_system_graph
@@ -212,7 +210,9 @@ class CQLParser:
         else:  # literal string
             value = RDFLiteral(value=val)
 
-        if operator == "=" and isinstance(value, IRI):  # use a triple pattern match rather than FILTER
+        if operator == "=" and isinstance(
+            value, IRI
+        ):  # use a triple pattern match rather than FILTER
             ggps, obj = self._add_tss_tssp(args, existing_ggps, value)
         else:  # use a FILTER
             ggps, obj = self._add_tss_tssp(args, existing_ggps)

@@ -186,9 +186,10 @@ async def ogc_features_listing_function(
         )
         if queryables:  # from shacl definitions
             content = io.BytesIO(
-                queryables.model_dump_json(exclude_none=True, by_alias=True).encode(
-                    "utf-8"
-                )
+                queryables.model_dump_json(
+                    exclude_none=True,
+                    by_alias=True,
+                ).encode("utf-8")
             )
         else:
             queryable_var = Var(value="queryable")
@@ -486,14 +487,16 @@ async def generate_queryables_from_shacl_definition(
     CONSTRUCT {
     ?queryable cql:id ?id ;
     	cql:name ?title ;
+    	cql:description ?description ;
     	cql:datatype ?type ;
     	cql:enum ?enums .
     }
     WHERE {?queryable a cql:Queryable ;
         dcterms:identifier ?id ;
         sh:name ?title ;
-        sh:datatype ?type ;
-        sh:in/rdf:rest*/rdf:first ?enums ;
+        sh:description ?description ;
+        sh:datatype ?type .
+        OPTIONAL { ?queryable sh:in/rdf:rest*/rdf:first ?enums }
     }
     """
     g, _ = await system_repo.send_queries([query], [])
@@ -513,11 +516,15 @@ async def generate_queryables_from_shacl_definition(
             ].split("#")[
                 -1
             ],  # hack
-            "enum": [
-                enum_item["@id"]
-                for enum_item in item["http://www.opengis.net/doc/IS/cql2/1.0/enum"]
-            ],
+            "description": item["http://www.opengis.net/doc/IS/cql2/1.0/description"][
+                0
+            ]["@value"],
         }
+        enum = item.get(
+            "http://www.opengis.net/doc/IS/cql2/1.0/enum"
+        )  # enums are optional.
+        if enum:
+            queryable_props[id_value]["enum"] = [enum_item["@id"] for enum_item in enum]
     if endpoint_uri == OGCFEAT["queryables-global"]:
         title = "Global Queryables"
         description = (
