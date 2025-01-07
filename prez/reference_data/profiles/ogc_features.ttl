@@ -87,7 +87,14 @@ prez:OGCFeaturesAllProps a
         "application/rdf+xml",
         "text/anot+turtle",
         "text/turtle" ;
-    sh:property [ sh:path shext:allPredicateValues ] ;
+    sh:property [
+        sh:path (
+            sh:union (
+                     shext:allPredicateValues
+                     ( geo:hasGeometry geo:asWKT )
+                   )
+          )
+        ] ;
     shext:bnode-depth 2 ;
 .
 
