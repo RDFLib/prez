@@ -30,6 +30,11 @@ def test_catalog_anot(client, a_catprez_catalog_link):
     assert next(response_graph.triples(expected_response))
 
 
+def test_catalog_no_mediatype(client, a_catprez_catalog_link):
+    r = client.get(f"{a_catprez_catalog_link}", headers={"Accept": ""})
+    assert r.status_code == 200
+
+
 def test_lower_level_listing_anot(client, a_catprez_catalog_link):
     r = client.get(f"{a_catprez_catalog_link}/collections?_mediatype=text/turtle")
     response_graph = Graph().parse(data=r.text)
