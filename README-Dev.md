@@ -687,7 +687,7 @@ PREFIX prez: <https://prez.dev/ont/>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 INSERT DATA { GRAPH <https://prez/system> {
     [ a prez:TemplateQuery ;
-        rdf:value """<template_query>
+        rdf:value """<template_queries>
 """ ;
         prez:forEndpoint "http://www.opengis.net/ogcapi-features-1/1.0/feature" ;
     ]

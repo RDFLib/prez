@@ -17,7 +17,7 @@ from prez.dependencies import (
     get_ogc_features_path_params,
     get_profile_nodeshape,
     get_system_repo,
-    get_template_query,
+    get_template_queries,
     get_url,
 )
 from prez.exceptions.model_exceptions import (
@@ -190,7 +190,7 @@ async def listings_with_feature_collection(
     openapi_extra=ogc_features_openapi_extras.get("feature"),
 )
 async def objects(
-    template_query: Optional[str] = Depends(get_template_query),
+    template_queries: Optional[str] = Depends(get_template_queries),
     mediatype: str = Depends(get_ogc_features_mediatype),
     url: str = Depends(get_url),
     path_params: dict = Depends(get_ogc_features_path_params),
@@ -199,7 +199,7 @@ async def objects(
 ):
     try:
         content, headers = await ogc_features_object_function(
-            template_query,
+            template_queries,
             mediatype,
             url,
             data_repo,

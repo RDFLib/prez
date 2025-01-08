@@ -626,24 +626,20 @@ async def get_ogc_features_mediatype(
     return default_mt
 
 
-async def get_template_query(
+async def get_template_queries(
     endpoint_uri_type: tuple[URIRef, URIRef] = Depends(get_endpoint_uri_type),
-):
+) -> list[str] | None:
     endpoint_uri = endpoint_uri_type[0]
-    filename = settings.endpoint_to_template_query_filename.get(str(endpoint_uri))
 
-    # check local files
-    if filename:
-        return (
-            Path(__file__).parent / "reference_data/template_queries" / filename
-        ).read_text()
-
+    template_queries = []
     # check prez_system_graph
     for s in prez_system_graph.subjects(RDF.type, ONT.TemplateQuery):
         endpoint_in_sys_graph = prez_system_graph.value(s, ONT.forEndpoint, None)
         if str(endpoint_uri) == str(endpoint_in_sys_graph):
             template_query = prez_system_graph.value(s, RDF.value, None)
-            return str(template_query)
+            template_queries.append(str(template_query))
+    if template_queries:
+        return template_queries
     return None
 
 

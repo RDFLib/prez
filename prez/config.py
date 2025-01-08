@@ -88,7 +88,6 @@ class Settings(BaseSettings):
     custom_endpoints: bool = False
     configuration_mode: bool = False
     temporal_predicate: Optional[URIRef] = SDO.temporal
-    endpoint_to_template_query_filename: Optional[Dict[str, str]] = {}
     prez_ui_url: Optional[str] = None
     search_method: SearchMethod = SearchMethod.DEFAULT
     required_header: dict[str, str] | None = None
