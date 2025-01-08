@@ -6,11 +6,32 @@ from sparql_grammar_pydantic import (
     GraphPatternNotTriples,
     TriplesSameSubjectPath,
     Var,
+    PrimaryExpression,
+    Filter,
+    RDFLiteral,
 )
 
 from prez.config import settings
 from prez.models.query_params import DateTimeOrUnbounded
-from prez.services.query_generation.cql import create_temporal_filter_gpnt
+
+
+def create_temporal_filter_gpnt(dt: datetime, op: str) -> GraphPatternNotTriples:
+    if op not in ["=", "<=", ">=", "<", ">"]:
+        raise ValueError(f"Invalid operator: {op}")
+    return GraphPatternNotTriples(
+        content=Filter.filter_relational(
+            focus=PrimaryExpression(
+                content=Var(value="datetime"),
+            ),
+            comparators=PrimaryExpression(
+                content=RDFLiteral(
+                    value=dt.isoformat(),
+                    datatype=IRI(value="http://www.w3.org/2001/XMLSchema#dateTime"),
+                )
+            ),
+            operator=op,
+        )
+    )
 
 
 def generate_datetime_filter(

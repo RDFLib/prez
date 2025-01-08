@@ -1,10 +1,8 @@
 import json
-from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Generator
 
-from pyld import jsonld
 from rdf2geojson.contrib.geomet.util import flatten_multi_dim
 from rdf2geojson.contrib.geomet.wkt import dumps
 from rdflib import Namespace, URIRef
@@ -89,7 +87,6 @@ class CQLParser:
     def __init__(
         self,
         cql=None,
-        context: dict = None,
         cql_json: dict = None,
         crs=None,
         queryable_props=None,
@@ -98,7 +95,6 @@ class CQLParser:
         self.inner_select_gpnt_list = None
         self.inner_select_vars: list[Var] = []
         self.cql: dict = cql
-        self.context = context
         self.cql_json = cql_json
         self.var_counter = 0
         self.query_object = None
@@ -110,8 +106,7 @@ class CQLParser:
         self.queryable_props = queryable_props
 
     def generate_jsonld(self):
-        combined = {"@context": self.context, **self.cql}
-        self.cql_json = jsonld.expand(combined, options={"base": "h"})[0]
+        self.cql_json = self.cql
 
     def parse(self):
         root = self.cql_json
@@ -142,8 +137,8 @@ class CQLParser:
     def parse_logical_operators(
         self, element, existing_ggps=None
     ) -> Generator[GroupGraphPatternSub, None, None]:
-        operator = element.get(str(CQL.operator))[0].get("@value")
-        args = element.get(str(CQL.args))
+        operator = element.get("op")
+        args = element.get("args")
 
         ggps = existing_ggps if existing_ggps is not None else GroupGraphPatternSub()
 
@@ -206,28 +201,22 @@ class CQLParser:
             ggps.triples_block = TriplesBlock(triples=tssp)
 
     def _handle_comparison(self, operator, args, existing_ggps=None):
-        ggps, object = self._add_tss_tssp(args, existing_ggps)
 
-        val = args[1].get("@value")
-        if not val:  # then should be an IRI
-            val = args[1].get("@id")
+        val = args[1]
+        if isinstance(val, str) and val.startswith("http"):  # hack
             value = IRI(value=val)
-        elif val.startswith("http"):  # hack
-            value = IRI(value=val)
-        elif isinstance(val, str):  # literal string
-            value = RDFLiteral(value=val)
         elif isinstance(val, (int, float)):  # literal numeric
             value = NumericLiteral(value=val)
+        else:  # literal string
+            value = RDFLiteral(value=val)
 
-        object_pe = PrimaryExpression(content=object)
-        if operator == "=":
-            iri_db_vals = [DataBlockValue(value=value)]
-            ildov = InlineDataOneVar(variable=object, datablockvalues=iri_db_vals)
-            gpnt = GraphPatternNotTriples(
-                content=InlineData(data_block=DataBlock(block=ildov))
-            )
-            ggps.add_pattern(gpnt)
-        else:
+        if operator == "=" and isinstance(
+            value, IRI
+        ):  # use a triple pattern match rather than FILTER
+            ggps, obj = self._add_tss_tssp(args, existing_ggps, value)
+        else:  # use a FILTER
+            ggps, obj = self._add_tss_tssp(args, existing_ggps)
+            object_pe = PrimaryExpression(content=obj)
             value_pe = PrimaryExpression(content=value)
             values_constraint = Filter.filter_relational(
                 focus=object_pe, comparators=value_pe, operator=operator
@@ -237,29 +226,27 @@ class CQLParser:
 
         yield ggps
 
-    def _add_tss_tssp(self, args, existing_ggps):
+    def _add_tss_tssp(self, args, existing_ggps, obj=None):
         self.var_counter += 1
         ggps = existing_ggps if existing_ggps is not None else GroupGraphPatternSub()
-        prop = args[0].get(str(CQL.property))[0].get("@id")
-        if prop in self.queryable_props:
-            object = self._handle_shacl_defined_prop(prop)
+        prop = args[0].get("property")
+        if self.queryable_props and prop in self.queryable_props:
+            shacl_defined_obj = self._handle_shacl_defined_prop(prop)
+            if not obj:
+                obj = shacl_defined_obj
         else:
             subject = Var(value="focus_node")
             predicate = IRI(value=prop)
-            object = Var(value=f"var_{self.var_counter}")
-            self._add_triple(ggps, subject, predicate, object)
-        return ggps, object
+            var_obj = Var(value=f"var_{self.var_counter}")
+            if not obj:
+                obj = var_obj
+            self._add_triple(ggps, subject, predicate, obj)
+        return ggps, obj
 
     def _handle_like(self, args, existing_ggps=None):
         ggps, object = self._add_tss_tssp(args, existing_ggps)
 
-        value = (
-            args[1]
-            .get("@value")
-            .replace("%", ".*")
-            .replace("_", ".")
-            .replace("\\", "\\\\")
-        )
+        value = args[1].replace("%", ".*").replace("_", ".").replace("\\", "\\\\")
 
         filter_gpnt = GraphPatternNotTriples(
             content=Filter(
@@ -286,16 +273,16 @@ class CQLParser:
         self.var_counter += 1
         ggps = existing_ggps if existing_ggps is not None else GroupGraphPatternSub()
 
-        coordinates_list = args[1].get("http://example.com/vocab/coordinates")
-        coordinates, geom_type = self._extract_spatial_info(coordinates_list, args)
-        if geom_type in ["Polygon", "MultiPolygon"]:
-            coordinates = [coordinates]
+        coordinates = args[1].get("coordinates")
+        geom_type = args[1].get("type")
+        if args[1].get("bbox"):
+            geom_type = "Polygon"
 
         if coordinates:
             wkt = get_wkt_from_coords(coordinates, geom_type)
             wkt_with_crs = f"<{self.crs}> {wkt}"
-            prop = args[0].get(str(CQL.property))[0].get("@id")
-            if prop == "http://example.com/geometry":
+            prop = args[0].get("property")
+            if prop == "geometry":
                 subject = Var(value="focus_node")
             else:
                 subject = IRI(value=prop)
@@ -327,11 +314,17 @@ class CQLParser:
     def _handle_in(self, args, existing_ggps=None):
         ggps, object = self._add_tss_tssp(args, existing_ggps)
 
-        literal_values = [item["@value"] for item in args if "@value" in item]
-        uri_values = [item["@id"] for item in args if "@id" in item]
-        for i, lit_val in enumerate(literal_values):
-            if lit_val.startswith("http"):  # hack
-                uri_values.append(literal_values.pop(i))
+        uri_values = []
+        literal_values = []
+        numeric_values = []
+        for arg in args[1]:
+            if isinstance(arg, str) and arg.startswith("http"):
+                uri_values.append(arg)
+            elif isinstance(arg, (int, float)):
+                numeric_values.append(arg)
+            else:
+                literal_values.append(arg)
+
         grammar_uri_values = [IRI(value=URIRef(value)) for value in uri_values]
         grammar_literal_values = []
         for val in literal_values:
@@ -352,34 +345,36 @@ class CQLParser:
         yield ggps
 
     def _handle_shacl_defined_prop(self, prop):
-        tssp_list, object = self.queryable_id_to_tssp(self.queryable_props[prop])
-        tss_triple = (
-            Var(value="focus_node"),
-            IRI(value=SHACL_FILTER_NAMESPACE[prop]),
-            object,
-        )
-        self.tss_list.append(TriplesSameSubject.from_spo(*tss_triple))
+        tssp_list, obj = self.queryable_id_to_tssp(self.queryable_props[prop])
+        # tss_triple = (
+        #     Var(value="focus_node"),
+        #     IRI(value=SHACL_FILTER_NAMESPACE[prop]),
+        #     object,
+        # )
+        # self.tss_list.append(TriplesSameSubject.from_spo(*tss_triple))
         self.tssp_list.extend(tssp_list)
-        self.inner_select_vars.append(object)
-        return object
+        self.inner_select_vars.append(obj)
+        return obj
 
     def _extract_spatial_info(self, coordinates_list, args):
         coordinates = []
         geom_type = None
         if coordinates_list:
-            coordinates = [
-                [coordinates_list[i]["@value"], coordinates_list[i + 1]["@value"]]
-                for i in range(0, len(coordinates_list), 2)
-            ]
-            geom_type = args[1]["http://www.opengis.net/ont/sf#type"][0]["@value"]
-        bbox_list = args[1].get("http://example.com/vocab/bbox")
+            # coordinates = [
+            #     [coordinates_list[i], coordinates_list[i + 1]]
+            #     for i in range(0, len(coordinates_list), 2)
+            # ]
+            coordinates = coordinates_list
+            geom_type = args[1].get("type")
+        bbox_list = args[1].get("bbox")
         if bbox_list:
             geom_type = "Polygon"
-            bbox_values = [item["@value"] for item in bbox_list]
+            bbox_values = [item for item in bbox_list]
             coordinates = format_coordinates_as_wkt(bbox_values, coordinates)
         return coordinates, geom_type
 
     def _handle_temporal(self, comp_func, args, existing_ggps=None):
+        """For temporal filtering within CQL JSON expressions, NOT within the temporal query parameter."""
         ggps = existing_ggps if existing_ggps is not None else GroupGraphPatternSub()
 
         if len(args) != 2:
@@ -390,35 +385,34 @@ class CQLParser:
         operands = {}
         for i, arg in enumerate(args, start=1):
             # check if the arg is an interval
-            interval_list = arg.get(str(CQL.interval))
+            interval_list = arg.get("interval")
             if interval_list:
                 for n, item in enumerate(interval_list):
                     label = "start" if n == 0 else "end"
-                    prop = item.get(str(CQL.property))
-                    if prop:
-                        self._triple_for_time_prop(ggps, i, label, prop, operands)
-                    date_val = item.get("@value")
-                    if date_val:
-                        self._dt_to_rdf_literal(i, date_val, label, operands)
+                    if isinstance(item, dict):
+                        prop = item.get("property")
+                        if prop:
+                            self._triple_for_time_prop(ggps, i, label, prop, operands)
+                    elif isinstance(item, str):
+                        self._dt_to_rdf_literal(i, item, label, operands)
                 continue
 
             # handle instants - prop and date
             label = "instant"
             # check if the arg is a property
-            prop = arg.get(str(CQL.property))
+            prop = arg.get("property")
             if prop:
-                self._triple_for_time_prop(ggps, i, label, prop, operands)
+                if self.queryable_props and prop in self.queryable_props:
+                    obj = self._handle_shacl_defined_prop(prop)
+                    operands[f"t{i}_{label}"] = obj
+                else:
+                    self._triple_for_time_prop(ggps, i, label, prop, operands)
                 continue
 
             # check if the arg is a date
-            date = (
-                arg.get(str(CQL.date))
-                or arg.get(str(CQL.datetime))
-                or arg.get(str(CQL.timestamp))
-            )
+            date = arg.get("date") or arg.get("datetime") or arg.get("timestamp")
             if date:
-                date_val = date[0].get("@value")
-                self._dt_to_rdf_literal(i, date_val, label, operands)
+                self._dt_to_rdf_literal(i, date, label, operands)
 
         gpnt = self.process_temporal_function(comp_func, operands)
 
@@ -479,28 +473,10 @@ class CQLParser:
             )
 
     def _triple_for_time_prop(self, ggps, i, label, prop, operands):
-        prop_uri = prop[0].get("@id")
-        value = IRI(value=prop_uri)
+        value = IRI(value=prop)
         var = Var(value=f"dt_{i}_{label}")
         operands[f"t{i}_{label}"] = var
         self._add_triple(ggps, Var(value="focus_node"), value, var)
-
-    def _handle_interval_list(self, all_args, comparator_args, interval_list):
-        for item in interval_list:
-            if item.get(str(CQL.property)):
-                prop = item.get(str(CQL.property))[0].get("@id")
-                comparator_args.append(IRI(value=prop))
-            elif item.get("@value"):
-                val = item.get("@value")
-                # self._dt_to_rdf_literal(comparator_args, val)
-                dt, _ = parse_datetime(val)
-                comparator_args.append(
-                    RDFLiteral(
-                        value=dt.isoformat(),
-                        datatype=IRI(value="http://www.w3.org/2001/XMLSchema#dateTime"),
-                    )
-                )
-        all_args.append(comparator_args)
 
     def _dt_to_rdf_literal(self, i, dt_str, label, operands):
         if dt_str == "..":
@@ -570,23 +546,23 @@ def get_wkt_from_coords(coordinates, geom_type: str):
     return dumps({"type": geom_type, "coordinates": coordinates}, max_decimals)
 
 
-def create_temporal_filter_gpnt(dt: datetime, op: str) -> GraphPatternNotTriples:
-    if op not in ["=", "<=", ">=", "<", ">"]:
-        raise ValueError(f"Invalid operator: {op}")
-    return GraphPatternNotTriples(
-        content=Filter.filter_relational(
-            focus=PrimaryExpression(
-                content=Var(value="datetime"),
-            ),
-            comparators=PrimaryExpression(
-                content=RDFLiteral(
-                    value=dt.isoformat(),
-                    datatype=IRI(value="http://www.w3.org/2001/XMLSchema#dateTime"),
-                )
-            ),
-            operator=op,
-        )
-    )
+# def create_temporal_filter_gpnt(dt: datetime, op: str) -> GraphPatternNotTriples:
+#     if op not in ["=", "<=", ">=", "<", ">"]:
+#         raise ValueError(f"Invalid operator: {op}")
+#     return GraphPatternNotTriples(
+#         content=Filter.filter_relational(
+#             focus=PrimaryExpression(
+#                 content=Var(value="datetime"),
+#             ),
+#             comparators=PrimaryExpression(
+#                 content=RDFLiteral(
+#                     value=dt.isoformat(),
+#                     datatype=IRI(value="http://www.w3.org/2001/XMLSchema#dateTime"),
+#                 )
+#             ),
+#             operator=op,
+#         )
+#     )
 
 
 def create_temporal_or_gpnt(

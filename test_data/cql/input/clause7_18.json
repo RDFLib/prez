@@ -1,11 +1,11 @@
 {
   "op": "s_within",
   "args": [
-    { "property": "road" },
+    { "property": "ex:road" },
     {
       "op": "Buffer",
       "args": [
-        { "property": "geometry" },
+        { "property": "ex:geometry" },
         10,
         "m"
       ]

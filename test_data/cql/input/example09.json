@@ -1,7 +1,7 @@
 {
   "op": ">",
   "args": [
-    { "property": "floors" },
+    { "property": "ex:floors" },
     5
   ]
 }

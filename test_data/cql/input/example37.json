@@ -1,7 +1,7 @@
 {
   "op": "between",
   "args": [
-    { "property": "value" },
+    { "property": "ex:value" },
     10, 20
   ]
 }

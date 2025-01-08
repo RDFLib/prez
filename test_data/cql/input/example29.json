@@ -1,7 +1,7 @@
 {
   "op": "=",
   "args": [
-    { "property": "id" },
+    { "property": "ex:id" },
     "fa7e1920-9107-422d-a3db-c468cbc5d6df"
   ]
 }

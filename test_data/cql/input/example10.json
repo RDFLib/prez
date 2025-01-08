@@ -1,7 +1,7 @@
 {
   "op": "<=",
   "args": [
-    { "property": "taxes" },
+    { "property": "ex:taxes" },
     500
   ]
 }

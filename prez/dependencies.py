@@ -26,7 +26,10 @@ from prez.enums import (
     SearchMethod,
     SPARQLQueryMediaType,
 )
-from prez.exceptions.model_exceptions import NoEndpointNodeshapeException, URINotFoundException
+from prez.exceptions.model_exceptions import (
+    NoEndpointNodeshapeException,
+    URINotFoundException,
+)
 from prez.enums import SearchMethod
 from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import ALTREXT, EP, OGCE, OGCFEAT, ONT
@@ -150,12 +153,7 @@ async def cql_post_parser_dependency(
 ) -> CQLParser:
     try:
         body = await request.json()
-        context = json.load(
-            (Path(__file__).parent / "reference_data/cql/default_context.json").open()
-        )
-        cql_parser = CQLParser(
-            cql=body, context=context, queryable_props=queryable_props
-        )
+        cql_parser = CQLParser(cql=body, queryable_props=queryable_props)
         cql_parser.generate_jsonld()
         cql_parser.parse()
         return cql_parser
@@ -175,16 +173,12 @@ async def cql_get_parser_dependency(
         try:
             crs = query_params.filter_crs
             query = json.loads(query_params.filter)
-            context = json.load(
-                (
-                    Path(__file__).parent / "reference_data/cql/default_context.json"
-                ).open()
-            )
-            cql_parser = CQLParser(
-                cql=query, context=context, crs=crs, queryable_props=queryable_props
-            )
+            cql_parser = CQLParser(cql=query, crs=crs, queryable_props=queryable_props)
             cql_parser.generate_jsonld()
-            cql_parser.parse()
+            try:
+                cql_parser.parse()
+            except Exception as e:
+                raise e
             return cql_parser
         except json.JSONDecodeError:
             raise HTTPException(status_code=400, detail="Invalid JSON format.")

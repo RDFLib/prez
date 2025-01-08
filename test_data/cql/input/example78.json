@@ -4,7 +4,7 @@
     1,
     {
       "op": "div",
-      "args": [ { "property": "foo" }, 2 ]
+      "args": [ { "property": "ex:foo" }, 2 ]
     }
   ]
 }

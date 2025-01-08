@@ -186,9 +186,10 @@ async def ogc_features_listing_function(
         )
         if queryables:  # from shacl definitions
             content = io.BytesIO(
-                queryables.model_dump_json(exclude_none=True, by_alias=True).encode(
-                    "utf-8"
-                )
+                queryables.model_dump_json(
+                    exclude_none=True,
+                    by_alias=True,
+                ).encode("utf-8")
             )
         else:
             queryable_var = Var(value="queryable")
@@ -264,7 +265,9 @@ async def ogc_features_listing_function(
         # queries.append(feature_collection_query)
         # run the feature_collection_query by itself with caching as it will be the same for all paginated sets of features
 
-        fc_item_graph = await _cached_feature_collection_query(collection_uri, data_repo, feature_collection_query)
+        fc_item_graph = await _cached_feature_collection_query(
+            collection_uri, data_repo, feature_collection_query
+        )
 
     link_headers = None
     if selected_mediatype == "application/sparql-query":
@@ -484,14 +487,16 @@ async def generate_queryables_from_shacl_definition(
     CONSTRUCT {
     ?queryable cql:id ?id ;
     	cql:name ?title ;
+    	cql:description ?description ;
     	cql:datatype ?type ;
     	cql:enum ?enums .
     }
     WHERE {?queryable a cql:Queryable ;
         dcterms:identifier ?id ;
         sh:name ?title ;
-        sh:datatype ?type ;
-        sh:in/rdf:rest*/rdf:first ?enums ;
+        sh:description ?description ;
+        sh:datatype ?type .
+        OPTIONAL { ?queryable sh:in/rdf:rest*/rdf:first ?enums }
     }
     """
     g, _ = await system_repo.send_queries([query], [])
@@ -511,11 +516,15 @@ async def generate_queryables_from_shacl_definition(
             ].split("#")[
                 -1
             ],  # hack
-            "enum": [
-                enum_item["@id"]
-                for enum_item in item["http://www.opengis.net/doc/IS/cql2/1.0/enum"]
-            ],
+            "description": item["http://www.opengis.net/doc/IS/cql2/1.0/description"][
+                0
+            ]["@value"],
         }
+        enum = item.get(
+            "http://www.opengis.net/doc/IS/cql2/1.0/enum"
+        )  # enums are optional.
+        if enum:
+            queryable_props[id_value]["enum"] = [enum_item["@id"] for enum_item in enum]
     if endpoint_uri == OGCFEAT["queryables-global"]:
         title = "Global Queryables"
         description = (
@@ -536,9 +545,9 @@ async def generate_queryables_from_shacl_definition(
 
 
 @cached(ttl=600, key=lambda collection_uri: collection_uri)
-async def _cached_feature_collection_query(collection_uri, data_repo, feature_collection_query):
+async def _cached_feature_collection_query(
+    collection_uri, data_repo, feature_collection_query
+):
     """cache the feature collection information for 10 minutes as it is an expensive query at present"""
-    fc_item_graph, _ = await data_repo.send_queries(
-        [feature_collection_query], []
-    )
+    fc_item_graph, _ = await data_repo.send_queries([feature_collection_query], [])
     return fc_item_graph

@@ -11,7 +11,7 @@
     {
       "op": "s_intersects",
       "args": [
-        { "property": "footprint" },
+        { "property": "ex:footprint" },
         {
           "type": "Polygon",
           "coordinates": [
