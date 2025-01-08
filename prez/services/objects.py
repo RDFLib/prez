@@ -84,14 +84,14 @@ async def object_function(
         construct_tss_list=profile_nodeshape.tss_list,
     ).to_string()
 
-    if pmts.requested_mediatypes[0][0] == "application/sparql-query":
+    if pmts.requested_mediatypes and (pmts.requested_mediatypes[0][0] == "application/sparql-query"):
         return PlainTextResponse(query, media_type="application/sparql-query")
     query_start_time = time.time()
     item_graph, _ = await data_repo.send_queries([query], [])
     log.debug(f"Query time: {time.time() - query_start_time}")
     if settings.prez_ui_url:
         # If HTML or no specific media type requested
-        if pmts.requested_mediatypes[0][0] in ("text/html", "*/*"):
+        if pmts.requested_mediatypes and (pmts.requested_mediatypes[0][0] in ("text/html", "*/*")):
             item_uri = URIRef(profile_nodeshape.focus_node.value)
             await add_prez_links(item_graph, data_repo, endpoint_structure, [item_uri])
             prez_link = item_graph.value(
