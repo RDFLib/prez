@@ -33,11 +33,11 @@ log = logging.getLogger(__name__)
 
 
 async def object_function(
-    data_repo,
-    system_repo,
-    endpoint_structure,
-    pmts,
-    profile_nodeshape,
+        data_repo,
+        system_repo,
+        endpoint_structure,
+        pmts,
+        profile_nodeshape,
 ):
     if pmts.selected["profile"] == ALTREXT["alt-profile"]:
         none_keys = [
@@ -126,23 +126,27 @@ def create_parent_link(url):
 
 
 async def ogc_features_object_function(
-    template_query,
-    selected_mediatype,
-    url,
-    data_repo,
-    system_repo,
-    path_params,
+        template_queries,
+        selected_mediatype,
+        url,
+        data_repo,
+        system_repo,
+        path_params,
 ):
     collection_uri = path_params.get("collection_uri")
     feature_uri = path_params.get("feature_uri")
-    if template_query:
+    queries = []
+    if template_queries:
         if feature_uri:
             focus_uri = feature_uri
         else:
             focus_uri = collection_uri
-        query = template_query.replace(
-            "VALUES ?focusNode { UNDEF }", f"VALUES ?focusNode {{ {focus_uri.n3()} }}"
-        )
+        for query in template_queries:
+            queries.append(
+                query.replace(
+                    "VALUES ?focusNode { UNDEF }", f"VALUES ?focusNode {{ {focus_uri.n3()} }}"
+                )
+            )
     else:
         if feature_uri is None:  # feature collection
             collection_iri = IRI(value=collection_uri)
@@ -167,13 +171,15 @@ async def ogc_features_object_function(
             construct_tss_list = [
                 TriplesSameSubject.from_spo(*triple) for triple in triples
             ]
-        query = PrezQueryConstructor(
-            construct_tss_list=construct_tss_list,
-            profile_triples=tssp_list,
-        ).to_string()
+        queries.append(
+            PrezQueryConstructor(
+                construct_tss_list=construct_tss_list,
+                profile_triples=tssp_list,
+            ).to_string()
+        )
 
     query_start_time = time.time()
-    item_graph, _ = await data_repo.send_queries([query], [])
+    item_graph, _ = await data_repo.send_queries(queries, [])
     if len(item_graph) == 0:
         uri = feature_uri if feature_uri else collection_uri
         raise URINotFoundException(uri=uri)
@@ -182,7 +188,7 @@ async def ogc_features_object_function(
 
     link_headers = None
     if selected_mediatype == "application/sparql-query":
-        content = io.BytesIO(query.encode("utf-8"))
+        content = io.BytesIO("\n".join(queries).encode("utf-8"))
     elif selected_mediatype == "application/json":
         collectionId = get_curie_id_for_uri(collection_uri)
         collection = create_collection_json(
