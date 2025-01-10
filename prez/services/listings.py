@@ -229,31 +229,12 @@ async def ogc_features_listing_function(
                 **subselect_kwargs,
             ).to_string()
             queries.append(query)
-    elif (
-        not collection_uri
-    ):  # list Feature Collections OR Features within a Feature Collection
-        if any(
-            [query_params._filter, query_params.datetime, query_params.bbox]
-        ):  # list Features within a Feature Collection
-            # create the tssp for a Feature rather than FC
-            feat_path_nodes = {
-                k: v
-                for k, v in endpoint_nodeshape.path_nodes.items()
-                if k == "path_node_2"
-            }
-            feat_ep_ns = NodeShape(
-                uri=URIRef("http://example.org/ns#Feature"),
-                graph=endpoints_graph_cache,
-                kind="endpoint",
-                focus_node=Var(value="focus_node"),
-                path_nodes=feat_path_nodes,
-            )
-        else:
-            query = PrezQueryConstructor(
-                construct_tss_list=construct_tss_list,
-                profile_triples=profile_nodeshape.tssp_list,
-                **subselect_kwargs,
-            )
+    elif not collection_uri:  # list Feature Collections
+        query = PrezQueryConstructor(
+            construct_tss_list=construct_tss_list,
+            profile_triples=profile_nodeshape.tssp_list,
+            **subselect_kwargs,
+        )
         queries.append(query.to_string())
         # add the count query
         subselect = copy.deepcopy(query.inner_select)
