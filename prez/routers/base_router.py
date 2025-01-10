@@ -11,7 +11,7 @@ from prez.dependencies import (
     get_endpoint_structure,
     get_negotiated_pmts,
     get_profile_nodeshape,
-    get_system_repo,
+    get_system_repo, get_url,
 )
 from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import EP, OGCE, ONT
@@ -68,6 +68,7 @@ async def listings(
     ),
     data_repo: Repo = Depends(get_data_repo),
     system_repo: Repo = Depends(get_system_repo),
+    url: str = Depends(get_url),
 ):
     return await listing_function(
         data_repo=data_repo,
@@ -81,6 +82,7 @@ async def listings(
         profile_nodeshape=profile_nodeshape,
         query_params=query_params,
         original_endpoint_type=ONT["ListingEndpoint"],
+        url=url
     )
 
 
@@ -103,6 +105,7 @@ async def cql_post_listings(
     search_query: ConstructQuery = Depends(generate_search_query),
     data_repo: Repo = Depends(get_data_repo),
     system_repo: Repo = Depends(get_system_repo),
+    url: str = Depends(get_url),
 ):
     return await listing_function(
         data_repo=data_repo,
@@ -116,6 +119,7 @@ async def cql_post_listings(
         profile_nodeshape=profile_nodeshape,
         query_params=query_params,
         original_endpoint_type=ONT["ListingEndpoint"],
+        url=url
     )
 
 
@@ -143,6 +147,7 @@ async def objects(
     profile_nodeshape: NodeShape = Depends(get_profile_nodeshape),
     data_repo: Repo = Depends(get_data_repo),
     system_repo: Repo = Depends(get_system_repo),
+    url: str = Depends(get_url),
 ):
     return await object_function(
         data_repo=data_repo,
@@ -150,4 +155,5 @@ async def objects(
         endpoint_structure=endpoint_structure,
         pmts=pmts,
         profile_nodeshape=profile_nodeshape,
+        url=url
     )

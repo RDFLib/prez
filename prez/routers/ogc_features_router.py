@@ -31,6 +31,7 @@ from prez.exceptions.model_exceptions import (
 from prez.models.ogc_features import OGCFeaturesLandingPage, generate_landing_page_links
 from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import OGCFEAT
+from prez.renderers.renderer import generate_link_headers
 from prez.repositories import Repo
 from prez.routers.api_extras_examples import ogc_features_openapi_extras
 from prez.routers.conformance import router as conformance_router
@@ -45,7 +46,7 @@ from prez.services.exception_catchers import (
     catch_prefix_not_found_exception,
     catch_uri_not_found_exception,
 )
-from prez.services.listings import generate_link_headers, ogc_features_listing_function
+from prez.services.listings import ogc_features_listing_function
 from prez.services.objects import ogc_features_object_function
 from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.shacl import NodeShape

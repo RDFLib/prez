@@ -63,23 +63,23 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 
 <https://prez.dev/profile/cqlgeo>
-    a prof:Profile , prez:ListingProfile;
+    a prof:Profile , prez:ListingProfile ;
     dcterms:identifier "cqlgeo"^^xsd:token ;
     dcterms:description "A CQL profile targeted towards listing CQL results, including geospatial information." ;
     dcterms:title "CQL Geo profile" ;
     altr-ext:constrainsClass rdfs:Resource ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
-    altr-ext:hasResourceFormat "application/ld+json" ,
+    altr-ext:hasResourceFormat "application/geo+json" ,
         "application/ld+json" ,
         "application/anot+ld+json" ,
         "application/rdf+xml" ,
         "text/anot+turtle" ,
         "text/turtle" ;
+    shext:bnode-depth 2 ;
     sh:property [
-        sh:minCount 0 ;
         sh:path (
             sh:union (
-              rdf:type
+              shext:allPredicateValues
               ( geo:hasGeometry geo:asWKT )
             )
           )
