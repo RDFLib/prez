@@ -22,9 +22,18 @@ from sparql_grammar_pydantic import (
 from prez.cache import endpoints_graph_cache
 from prez.enums import NonAnnotatedRDFMediaType
 from prez.reference_data.prez_ns import ALTREXT, OGCFEAT, PREZ
-from prez.renderers.renderer import return_annotated_rdf, return_from_graph, generate_geojson_extras, \
-    handle_alt_profile, generate_queryables_from_shacl_definition, _add_inbound_triple_pattern_match, \
-    _cached_feature_collection_query, create_collections_json, generate_link_headers, get_geojson_int_count
+from prez.renderers.renderer import (
+    return_annotated_rdf,
+    return_from_graph,
+    generate_geojson_extras,
+    handle_alt_profile,
+    generate_queryables_from_shacl_definition,
+    _add_inbound_triple_pattern_match,
+    _cached_feature_collection_query,
+    create_collections_json,
+    generate_link_headers,
+    get_geojson_int_count,
+)
 from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.generate_queryables import generate_queryables_json
 from prez.services.link_generation import add_prez_links
@@ -42,7 +51,7 @@ DWC = Namespace("http://rs.tdwg.org/dwc/terms/")
 
 def _add_geom_triple_pattern_match(tssp_list: list[TriplesSameSubjectPath]):
     triples = [
-        (Var(value="focus_node"), IRI(value=GEO.hasGeometry),Var(value="bn")),
+        (Var(value="focus_node"), IRI(value=GEO.hasGeometry), Var(value="bn")),
         (Var(value="bn"), IRI(value=GEO.asWKT), Var(value="wkt")),
     ]
     tssp_list.extend([TriplesSameSubjectPath.from_spo(*triple) for triple in triples])
@@ -60,7 +69,7 @@ async def listing_function(
     profile_nodeshape,
     query_params,
     original_endpoint_type,
-    url
+    url,
 ):
     if (
         pmts.selected["profile"] == ALTREXT["alt-profile"]
@@ -74,7 +83,9 @@ async def listing_function(
         concept_hierarchy_query=concept_hierarchy_query,
         query_params=query_params,
     )
-    if pmts.selected["mediatype"] == "application/geo+json":  # Ensure the focus nodes have a geometry in the SPARQL
+    if (
+        pmts.selected["mediatype"] == "application/geo+json"
+    ):  # Ensure the focus nodes have a geometry in the SPARQL
         # subselect. If they are missing, the subsequent GeoJSON conversion will drop any Features without geometries.
         _add_geom_triple_pattern_match(subselect_kwargs["inner_select_tssp_list"])
 
@@ -112,8 +123,9 @@ async def listing_function(
         return PlainTextResponse(queries[0], media_type="application/sparql-query")
 
     # add a count query if it's an annotated mediatype
-    if ("anot+" in pmts.selected["mediatype"] and not search_query) or \
-            (pmts.selected["mediatype"] == "application/geo+json"):
+    if ("anot+" in pmts.selected["mediatype"] and not search_query) or (
+        pmts.selected["mediatype"] == "application/geo+json"
+    ):
         subselect = copy.deepcopy(main_query.inner_select)
         count_query = CountQuery(original_subselect=subselect).to_string()
         queries.append(count_query)
@@ -145,7 +157,7 @@ async def listing_function(
         data_repo,
         system_repo,
         query_params,
-        url
+        url,
     )
 
 
@@ -217,16 +229,24 @@ async def ogc_features_listing_function(
                 **subselect_kwargs,
             ).to_string()
             queries.append(query)
-    elif not collection_uri:  # list Feature Collections OR Features within a Feature Collection
-        if any([query_params._filter, query_params.datetime, query_params.bbox]):  # list Features within a Feature Collection
+    elif (
+        not collection_uri
+    ):  # list Feature Collections OR Features within a Feature Collection
+        if any(
+            [query_params._filter, query_params.datetime, query_params.bbox]
+        ):  # list Features within a Feature Collection
             # create the tssp for a Feature rather than FC
-            feat_path_nodes = {k: v for k, v in endpoint_nodeshape.path_nodes.items() if k == "path_node_2"}
+            feat_path_nodes = {
+                k: v
+                for k, v in endpoint_nodeshape.path_nodes.items()
+                if k == "path_node_2"
+            }
             feat_ep_ns = NodeShape(
                 uri=URIRef("http://example.org/ns#Feature"),
                 graph=endpoints_graph_cache,
                 kind="endpoint",
                 focus_node=Var(value="focus_node"),
-                path_nodes=feat_path_nodes
+                path_nodes=feat_path_nodes,
             )
         else:
             query = PrezQueryConstructor(
@@ -299,7 +319,6 @@ async def ogc_features_listing_function(
         if count_g:
             count = str(next(iter(count_g.objects())))
             count = get_geojson_int_count(count)
-
 
     if selected_mediatype == "application/json":
         if endpoint_uri_type[0] in [

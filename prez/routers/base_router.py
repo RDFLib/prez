@@ -11,7 +11,8 @@ from prez.dependencies import (
     get_endpoint_structure,
     get_negotiated_pmts,
     get_profile_nodeshape,
-    get_system_repo, get_url,
+    get_system_repo,
+    get_url,
 )
 from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import EP, OGCE, ONT
@@ -82,7 +83,7 @@ async def listings(
         profile_nodeshape=profile_nodeshape,
         query_params=query_params,
         original_endpoint_type=ONT["ListingEndpoint"],
-        url=url
+        url=url,
     )
 
 
@@ -119,7 +120,7 @@ async def cql_post_listings(
         profile_nodeshape=profile_nodeshape,
         query_params=query_params,
         original_endpoint_type=ONT["ListingEndpoint"],
-        url=url
+        url=url,
     )
 
 
@@ -155,5 +156,5 @@ async def objects(
         endpoint_structure=endpoint_structure,
         pmts=pmts,
         profile_nodeshape=profile_nodeshape,
-        url=url
+        url=url,
     )

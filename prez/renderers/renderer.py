@@ -56,7 +56,7 @@ async def return_from_graph(
     repo: Repo,
     system_repo: Repo,
     query_params: Optional[QueryParams] = None,
-    url: str = None
+    url: str = None,
 ):
     profile_headers["Content-Disposition"] = "inline"
 
@@ -96,11 +96,15 @@ async def return_from_graph(
     elif str(mediatype) == "application/geo+json":
         geojson = convert(g=graph, do_validate=False, iri2id=get_curie_id_for_uri)
         count = None  # for an object; no count query.
-        s_o = graph.subject_objects(predicate=PREZ["count"])  # for a list; graph will contain a count.
+        s_o = graph.subject_objects(
+            predicate=PREZ["count"]
+        )  # for a list; graph will contain a count.
         for tup in s_o:
             str_count = str(tup[1])
             count = get_geojson_int_count(str_count)
-        headers, geojson = await generate_geojson_extras(count, geojson, query_params, "application/geo+json", url)
+        headers, geojson = await generate_geojson_extras(
+            count, geojson, query_params, "application/geo+json", url
+        )
         content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
         return StreamingResponse(content=content, media_type=mediatype)
 
@@ -120,6 +124,7 @@ async def return_from_graph(
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST, f"Unsupported mediatype: {mediatype}."
         )
+
 
 def get_geojson_int_count(count_str: str):
     if count_str.startswith(">"):
@@ -158,7 +163,9 @@ async def return_annotated_rdf(
     return annotations_graph
 
 
-async def generate_geojson_extras(count, geojson, query_params, selected_mediatype, url):
+async def generate_geojson_extras(
+    count, geojson, query_params, selected_mediatype, url
+):
     all_links = create_self_alt_links(selected_mediatype, url, query_params, count)
     all_links_dict = Links(links=all_links).model_dump(exclude_none=True)
     link_headers = generate_link_headers(all_links)

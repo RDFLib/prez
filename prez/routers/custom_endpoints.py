@@ -15,7 +15,8 @@ from prez.dependencies import (
     get_endpoint_structure,
     get_negotiated_pmts,
     get_profile_nodeshape,
-    get_system_repo, get_url,
+    get_system_repo,
+    get_url,
 )
 from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import ONT
@@ -52,7 +53,6 @@ def create_dynamic_route_handler(route_type: str):
             data_repo: Repo = Depends(get_data_repo),
             system_repo: Repo = Depends(get_system_repo),
             url: str = Depends(get_url),
-
         ):
             return await listing_function(
                 data_repo=data_repo,
@@ -66,7 +66,7 @@ def create_dynamic_route_handler(route_type: str):
                 profile_nodeshape=profile_nodeshape,
                 query_params=query_params,
                 original_endpoint_type=ONT["ListingEndpoint"],
-                url=url
+                url=url,
             )
 
         return dynamic_list_handler
@@ -86,7 +86,7 @@ def create_dynamic_route_handler(route_type: str):
                 endpoint_structure=endpoint_structure,
                 pmts=pmts,
                 profile_nodeshape=profile_nodeshape,
-                url=url
+                url=url,
             )
 
         return dynamic_object_handler

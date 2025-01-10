@@ -152,11 +152,11 @@ class QueryParams:
         ),
         q: Optional[str] = Query(None, description="Search query", example="building"),
         _filter: Optional[str] = Query(
-            default=None,
-            description="CQL JSON expression.",
-            alias="filter"
+            default=None, description="CQL JSON expression.", alias="filter"
         ),
-        order_by: Optional[str] = Query(default=None, description="Optional: Field to order by"),
+        order_by: Optional[str] = Query(
+            default=None, description="Optional: Field to order by"
+        ),
         order_by_direction: Optional[OrderByDirectionEnum] = Query(
             default=None,
             description="Optional: Order direction, must be 'ASC' or 'DESC'",
