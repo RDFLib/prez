@@ -5,7 +5,7 @@ import logging
 
 from fastapi.responses import PlainTextResponse
 from rdf2geojson import convert
-from rdflib import Literal, URIRef
+from rdflib import Literal
 from rdflib.namespace import GEO, RDF, Namespace
 from sparql_grammar_pydantic import (
     IRI,
@@ -19,7 +19,6 @@ from sparql_grammar_pydantic import (
     Var,
 )
 
-from prez.cache import endpoints_graph_cache
 from prez.enums import NonAnnotatedRDFMediaType
 from prez.reference_data.prez_ns import ALTREXT, OGCFEAT, PREZ
 from prez.renderers.renderer import (
@@ -38,7 +37,6 @@ from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.generate_queryables import generate_queryables_json
 from prez.services.link_generation import add_prez_links
 from prez.services.query_generation.count import CountQuery
-from prez.services.query_generation.shacl import NodeShape
 from prez.services.query_generation.umbrella import (
     PrezQueryConstructor,
     merge_listing_query_grammar_inputs,

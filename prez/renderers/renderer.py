@@ -6,14 +6,15 @@ from datetime import datetime
 from typing import Dict, Optional
 from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
-from httpx import URL
+
 from aiocache import cached
 from fastapi import Depends
 from fastapi import status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
+from httpx import URL
 from rdf2geojson import convert
-from rdflib import Graph, Literal
+from rdflib import Graph
 from rdflib import URIRef
 from rdflib.namespace import GEO, RDF
 from sparql_grammar_pydantic import (
@@ -379,7 +380,7 @@ async def generate_queryables_from_shacl_definition(
     return Queryables(**queryable_params)
 
 
-@cached(ttl=600, key=lambda collection_uri: collection_uri)
+@cached(ttl=600, key_builder=lambda *args, **kwargs: args[1])  # first arg is function; subsequent are actual args.
 async def _cached_feature_collection_query(
     collection_uri, data_repo, feature_collection_query
 ):
