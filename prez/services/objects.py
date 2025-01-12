@@ -21,35 +21,24 @@ from prez.renderers.renderer import return_annotated_rdf, return_from_graph
 from prez.services.connegp_service import RDF_MEDIATYPES
 from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.link_generation import add_prez_links
-from prez.services.listings import (
+from prez.renderers.renderer import (
     create_self_alt_links,
     generate_link_headers,
     get_brisbane_timestamp,
-    listing_function,
 )
+from prez.services.listings import listing_function
 from prez.services.query_generation.umbrella import PrezQueryConstructor
 
 log = logging.getLogger(__name__)
 
 
 async def object_function(
-        data_repo,
-        system_repo,
-        endpoint_structure,
-        pmts,
-        profile_nodeshape,
+    data_repo, system_repo, endpoint_structure, pmts, profile_nodeshape, url
 ):
     if pmts.selected["profile"] == ALTREXT["alt-profile"]:
-        none_keys = [
-            "endpoint_nodeshape",
-            "concept_hierarchy_query",
-            "cql_parser",
-            "search_query",
-        ]
-        none_kwargs = {key: None for key in none_keys}
         query_params = QueryParams(
             mediatype=pmts.selected["mediatype"],
-            filter=None,
+            _filter=None,
             q=None,
             page=1,
             limit=100,
@@ -68,7 +57,11 @@ async def object_function(
             profile_nodeshape=profile_nodeshape,
             query_params=query_params,
             original_endpoint_type=ONT["ObjectEndpoint"],
-            **none_kwargs,
+            url=url,
+            endpoint_nodeshape=None,
+            concept_hierarchy_query=None,
+            cql_parser=None,
+            search_query=None,
         )
     if "anot+" in pmts.selected["mediatype"]:
         profile_nodeshape.tss_list.append(
@@ -84,14 +77,18 @@ async def object_function(
         construct_tss_list=profile_nodeshape.tss_list,
     ).to_string()
 
-    if pmts.requested_mediatypes and (pmts.requested_mediatypes[0][0] == "application/sparql-query"):
+    if pmts.requested_mediatypes and (
+        pmts.requested_mediatypes[0][0] == "application/sparql-query"
+    ):
         return PlainTextResponse(query, media_type="application/sparql-query")
     query_start_time = time.time()
     item_graph, _ = await data_repo.send_queries([query], [])
     log.debug(f"Query time: {time.time() - query_start_time}")
     if settings.prez_ui_url:
         # If HTML or no specific media type requested
-        if pmts.requested_mediatypes and (pmts.requested_mediatypes[0][0] in ("text/html", "*/*")):
+        if pmts.requested_mediatypes and (
+            pmts.requested_mediatypes[0][0] in ("text/html", "*/*")
+        ):
             item_uri = URIRef(profile_nodeshape.focus_node.value)
             await add_prez_links(item_graph, data_repo, endpoint_structure, [item_uri])
             prez_link = item_graph.value(
@@ -114,6 +111,7 @@ async def object_function(
         pmts.selected["class"],
         data_repo,
         system_repo,
+        url=url,
     )
 
 
@@ -126,12 +124,12 @@ def create_parent_link(url):
 
 
 async def ogc_features_object_function(
-        template_queries,
-        selected_mediatype,
-        url,
-        data_repo,
-        system_repo,
-        path_params,
+    template_queries,
+    selected_mediatype,
+    url,
+    data_repo,
+    system_repo,
+    path_params,
 ):
     collection_uri = path_params.get("collection_uri")
     feature_uri = path_params.get("feature_uri")
@@ -144,7 +142,8 @@ async def ogc_features_object_function(
         for query in template_queries:
             queries.append(
                 query.replace(
-                    "VALUES ?focusNode { UNDEF }", f"VALUES ?focusNode {{ {focus_uri.n3()} }}"
+                    "VALUES ?focusNode { UNDEF }",
+                    f"VALUES ?focusNode {{ {focus_uri.n3()} }}",
                 )
             )
     else:

@@ -141,22 +141,23 @@ class QueryParams:
         ),
         datetime: Optional[tuple] = Depends(validate_datetime),
         bbox: List[float] = Depends(reformat_bbox),
-        filter_lang: FilterLangEnum = Query(
+        filter_lang: Optional[FilterLangEnum] = Query(
             default="cql2-json",
             description="Language of the filter expression",
             alias="filter-lang",
         ),
-        filter_crs: str = Query(
+        filter_crs: Optional[str] = Query(
             "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
             description="CRS used for the filter expression",
         ),
-        q: str = Query(None, description="Search query", example="building"),
-        filter: str = Query(
-            default=None,
-            description="CQL JSON expression.",
+        q: Optional[str] = Query(None, description="Search query", example="building"),
+        _filter: Optional[str] = Query(
+            default=None, description="CQL JSON expression.", alias="filter"
         ),
-        order_by: str = Query(default=None, description="Optional: Field to order by"),
-        order_by_direction: OrderByDirectionEnum = Query(
+        order_by: Optional[str] = Query(
+            default=None, description="Optional: Field to order by"
+        ),
+        order_by_direction: Optional[OrderByDirectionEnum] = Query(
             default=None,
             description="Optional: Order direction, must be 'ASC' or 'DESC'",
         ),
@@ -175,15 +176,15 @@ class QueryParams:
         self.datetime = datetime
         self.order_by = order_by
         self.order_by_direction = order_by_direction
-        self.filter = filter
+        self._filter = _filter
         self.mediatype = mediatype
         self.subscription_key = subscription_key
         self.validate_filter()
 
     def validate_filter(self):
-        if self.filter:
+        if self._filter:
             try:
-                json.loads(self.filter)
+                json.loads(self._filter)
             except json.JSONDecodeError:
                 raise HTTPException(
                     status_code=400, detail="Filter criteria must be valid JSON."

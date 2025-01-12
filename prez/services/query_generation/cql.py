@@ -92,7 +92,7 @@ class CQLParser:
         queryable_props=None,
     ):
         self.ggps_inner_select = None
-        self.inner_select_gpnt_list = None
+        self.inner_select_gpnt_list: list[GraphPatternNotTriples] = []
         self.inner_select_vars: list[Var] = []
         self.cql: dict = cql
         self.cql_json = cql_json
@@ -127,12 +127,15 @@ class CQLParser:
         )
         self.query_str = self.query_object.to_string()
         gpotb = self.query_object.where_clause.group_graph_pattern.content
-        gpnt_list = [
-            i
-            for i in gpotb.graph_patterns_or_triples_blocks
-            if isinstance(i, GraphPatternNotTriples)
-        ]
-        self.inner_select_gpnt_list = gpnt_list
+        gpnt_list = []
+        if gpotb.graph_patterns_or_triples_blocks:
+            gpnt_list = [
+                i
+                for i in gpotb.graph_patterns_or_triples_blocks
+                if isinstance(i, GraphPatternNotTriples)
+            ]
+        if gpnt_list:
+            self.inner_select_gpnt_list = gpnt_list
 
     def parse_logical_operators(
         self, element, existing_ggps=None

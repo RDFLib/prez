@@ -169,10 +169,10 @@ async def cql_get_parser_dependency(
     query_params: QueryParams = Depends(),
     queryable_props: list = Depends(get_queryable_props),
 ) -> CQLParser:
-    if query_params.filter:
+    if query_params._filter:
         try:
             crs = query_params.filter_crs
-            query = json.loads(query_params.filter)
+            query = json.loads(query_params._filter)
             cql_parser = CQLParser(cql=query, crs=crs, queryable_props=queryable_props)
             cql_parser.generate_jsonld()
             try:
@@ -182,7 +182,7 @@ async def cql_get_parser_dependency(
             return cql_parser
         except json.JSONDecodeError:
             raise HTTPException(status_code=400, detail="Invalid JSON format.")
-        except Exception:
+        except Exception as e:
             raise HTTPException(
                 status_code=400, detail="Invalid CQL format: Parsing failed."
             )
