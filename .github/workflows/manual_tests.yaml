@@ -1,13 +1,9 @@
-name: Run integration tests
+name: Manually run Test Suite
 
 on:
-  pull_request:
-    types:
-      - opened
-      - edited
-      - synchronize
-    branches:
-      - main
+  push:
+#    branches:
+#      - feature/**
   workflow_dispatch:
 
 # based on https://github.com/snok/install-poetry
@@ -22,7 +18,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Set up python
         id: setup-python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
           python-version: '3.12'
       #----------------------------------------------
@@ -61,19 +57,3 @@ jobs:
       - name: Run tests
         run: poetry run pytest tests
 
-  lint-pr-title:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
-      - name: Install Commitlint
-        run: npm install --global @commitlint/{cli,config-conventional}
-
-      - name: Lint PR Title
-        run: echo "${{ github.event.pull_request.title }}" | commitlint
