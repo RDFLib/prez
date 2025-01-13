@@ -1,7 +1,7 @@
 name: Manually run Test Suite
 
 on:
-  push:
+#  push:
 #    branches:
 #      - feature/**
   workflow_dispatch:
