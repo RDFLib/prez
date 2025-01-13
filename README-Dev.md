@@ -31,6 +31,7 @@ This documentation is to assist developers of Prez, not users or installers.
   - [High Level Sequence `/object` endpoint](#high-level-sequence-object-endpoint)
   - [High Level Sequence listing and individual object endpoints](#high-level-sequence-listing-and-individual-object-endpoints)
   - [Caching](#caching)
+  - [Release Process](#release-process)
 
 ## Contributing
 
