@@ -31,6 +31,7 @@ This documentation is to assist developers of Prez, not users or installers.
   - [High Level Sequence `/object` endpoint](#high-level-sequence-object-endpoint)
   - [High Level Sequence listing and individual object endpoints](#high-level-sequence-listing-and-individual-object-endpoints)
   - [Caching](#caching)
+  - [Release Process](#release-process)
 
 ## Contributing
 
@@ -738,3 +739,6 @@ Prez caches the following things using aiocache:
 There is no other caching of "instance" data in Prez.
 
 
+## Release Process
+
+Semantic-release has been set up on this repository. Conventional Commit messages should be used for all commits (https://www.conventionalcommits.org/en/v1.0.0/), though it is not currently enforced with any actions etc. Releases are automatically made when PRs are merged to main, based on the commit messages. NB if squashing commits when merging a PR, the commit messages are merged, and the PR title will be included at the start of the commit message. This means the PR title needs to follow conventional commit conventions in order for the release process to be triggered.
