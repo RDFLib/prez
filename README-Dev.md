@@ -736,3 +736,8 @@ Prez caches the following things using aiocache:
 3. Internal links generated for items  
 3. Feature Collection information *at the feature listing endpoint only*. These are cached for 10 minutes only.   
 There is no other caching of "instance" data in Prez.
+
+
+## Release Process
+
+Semantic-release has been set up on this repository. Conventional Commit messages should be used for all commits (https://www.conventionalcommits.org/en/v1.0.0/), though it is not currently enforced with any actions etc. Releases are automatically made when PRs are merged to main, based on the commit messages. NB if squashing commits when merging a PR, the commit messages are merged, and the PR title will be included at the start of the commit message. This means the PR title needs to follow conventional commit conventions in order for the release process to be triggered.
