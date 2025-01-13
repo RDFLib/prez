@@ -741,4 +741,21 @@ There is no other caching of "instance" data in Prez.
 
 ## Release Process
 
-Semantic-release has been set up on this repository. Conventional Commit messages should be used for all commits (https://www.conventionalcommits.org/en/v1.0.0/), though it is not currently enforced with any actions etc. Releases are automatically made when PRs are merged to main, based on the commit messages. NB if squashing commits when merging a PR, the commit messages are merged, and the PR title will be included at the start of the commit message. This means the PR title needs to follow conventional commit conventions in order for the release process to be triggered.
+[Semantic Release](https://github.com/cycjimmy/semantic-release-action) has been set up to automate the release process for this repository, based on [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). Conventional Commit messages should preferably be used for all commits, and MUST be used for PR titles (which become commit headers). PR Titles are validated using [commitlint](https://www.npmjs.com/package/commitlint), and if failing, will prevent a merge of the PR to main.
+
+The release rules, i.e. how Semantic Release increments the version based on the commit messages, are as follows:
+
+```yaml
+- type: "feat"
+  release: "minor"
+- type: "fix"
+  release: "patch"
+- type: "perf"
+  release: "patch"
+- type: "docs"
+  release: "patch"
+- type: "revert"
+  release: "patch"
+- breaking: true
+  release: "major"
+```

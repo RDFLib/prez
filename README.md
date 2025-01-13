@@ -214,7 +214,7 @@ poetry run python main.py
 
 ### Running in a Container
 
-Prez container images are built using a Github Action and are available [here](https://github.com/RDFLib/prez/pkgs/container/prez).
+Prez container images are built using a GitHub Action and are available [here](https://github.com/RDFLib/prez/pkgs/container/prez).
 
 The Dockerfile in the repository can also be used to build a Docker image.
 
@@ -222,7 +222,7 @@ The Dockerfile in the repository can also be used to build a Docker image.
 
 The image name is `ghcr.io/rdflib/prez`.
 
-The `latest` tag points to the latest stable release of Prez. All latest stable releases have a major, major and minor, and major, minor and patch tag pointing to it.
+The `latest` tag points to the latest stable release of Prez. All latest stable releases have a `major`, `major.minor`, and `major.minor.patch` tag pointing to it.
 
 For example, for a release with a git tag of 3.2.4, the following tags will be on the container image:
 
@@ -231,21 +231,8 @@ For example, for a release with a git tag of 3.2.4, the following tags will be o
 - `3.2.4`
 - `latest`
 
-New commits to the `main` branch creates a rolling dev image with the `dev` tag. The dev builds will also include a tag in the form of major.minor.{patch+1}-dev.{commits-since-last-release}.{short-commit-sha}. This conforms to semantic versioning and will be recognized by orchestration systems to perform automatic releases.
-
-For example, if the latest release is 3.2.4 and there have been 7 new commits since the release and the short commit SHA is fc82562, then the container image tag will be:
-
-- `3.2.5-dev.7.fc82562`
-
-To run the pulled docker image:
-
-```
-docker run -p 8000:8000 \
-    -e SPARQL_ENDPOINT=<your_sparql_endpoint> \
-    <your_image_id>
-```
-
-The above command starts a Docker container running Prez on port 8000, connected to the specified sparql endpoint.
+The full version is automatically created/incremented using the [Semantic Release GitHub Action](https://github.com/cycjimmy/semantic-release-action), which automatically increments the version based on commits to the `main`
+branch.
 
 ### Testing
 
