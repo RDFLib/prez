@@ -4,6 +4,8 @@ on:
   pull_request:
     types:
       - opened
+      - edited
+      - synchronize
     branches:
       - main
   workflow_dispatch:
@@ -58,3 +60,20 @@ jobs:
       #----------------------------------------------
       - name: Run tests
         run: poetry run pytest tests
+
+  lint-pr-title:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Commitlint
+        run: npm install --global @commitlint/{cli,config-conventional}
+
+      - name: Lint PR Title
+        run: echo "${{ github.event.pull_request.title }}" | commitlint
