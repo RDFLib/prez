@@ -8,7 +8,7 @@ from prez.exceptions.model_exceptions import (
     NoEndpointNodeshapeException,
     NoProfilesException,
     PrefixNotFoundException,
-    URINotFoundException,
+    URINotFoundException, MissingFilterQueryError,
 )
 
 
@@ -82,6 +82,17 @@ async def catch_invalid_sparql_query(
 
 async def catch_no_endpoint_nodeshape_exception(
     request: Request, exc: NoEndpointNodeshapeException
+):
+    return JSONResponse(
+        status_code=400,
+        content={
+            "error": "Bad Request",
+            "detail": exc.message,
+        },
+    )
+
+async def catch_missing_filter_query_param(
+    request: Request, exc: MissingFilterQueryError
 ):
     return JSONResponse(
         status_code=400,
