@@ -234,12 +234,17 @@ async def create_endpoints_graph(app_state):
         endpoints_graph_cache.__iadd__(updated_hl_g)
 
 
-async def get_remote_endpoint_definitions(repo, ep_type: URIRef):
+async def get_remote_endpoint_definitions(repo: Repo, ep_type: URIRef):
     ep_query = f"DESCRIBE ?ep {{ ?ep a {ep_type.n3()} }}"
-    ep_nodeshape_query = (
-        f"DESCRIBE ?shape {{ ?shape {ONT['hierarchyLevel'].n3()} ?obj }}"
-    )
     g, _ = await repo.send_queries([ep_query], [])
+    ep_uris = list(g.subjects(RDF.type, ep_type))
+    ep_nodeshape_query = (
+        f"DESCRIBE ?shape {{ "
+        f"VALUES ?endpoint {{ {" ".join(ep_uri.n3() for ep_uri in ep_uris)} }} "
+        f"?endpoint {ONT['relevantShapes'].n3()} ?shape . "
+        f"?shape {ONT['hierarchyLevel'].n3()} ?obj "
+        f"}}"
+    )
     if len(g) > 0:
         # get ep nodeshapes for these endpoints
         ns_g, _ = await repo.send_queries([ep_nodeshape_query], [])
