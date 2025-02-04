@@ -26,7 +26,7 @@ from prez.exceptions.model_exceptions import (
     NoEndpointNodeshapeException,
     NoProfilesException,
     PrefixNotFoundException,
-    URINotFoundException,
+    URINotFoundException, MissingFilterQueryError,
 )
 from prez.models.ogc_features import OGCFeaturesLandingPage, generate_landing_page_links
 from prez.models.query_params import QueryParams
@@ -44,7 +44,7 @@ from prez.services.exception_catchers import (
     catch_no_endpoint_nodeshape_exception,
     catch_no_profiles_exception,
     catch_prefix_not_found_exception,
-    catch_uri_not_found_exception,
+    catch_uri_not_found_exception, catch_missing_filter_query_param,
 )
 from prez.services.listings import ogc_features_listing_function
 from prez.services.objects import ogc_features_object_function
