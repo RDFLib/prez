@@ -25,6 +25,7 @@ prez:OGCRecordsProfile
     altr-ext:hasResourceFormat
         "application/json",
         "application/ld+json",
+        "application/anot+ld+json",
         "application/rdf+xml",
         "text/anot+turtle",
         "text/turtle" ;
