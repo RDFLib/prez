@@ -24,6 +24,7 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     altr-ext:hasResourceFormat
         "application/json" ,
         "application/ld+json" ,
+        "application/anot+ld+json" ,
         "application/rdf+xml" ,
         "text/anot+turtle" ,
         "text/turtle" ;
@@ -50,7 +51,6 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     altr-ext:constrainsClass prez:SPARQLQuery , prof:Profile , prez:SearchResult , prez:Object ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat "application/ld+json" ,
-        "application/ld+json" ,
         "application/anot+ld+json" ,
         "application/rdf+xml" ,
         "text/anot+turtle" ,
@@ -104,6 +104,7 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     altr-ext:hasResourceFormat
         "application/json" ,
         "application/ld+json" ,
+        "application/anot+ld+json" ,
         "application/rdf+xml" ,
         "text/anot+turtle" ,
         "text/turtle" ;
