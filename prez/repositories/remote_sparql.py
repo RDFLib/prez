@@ -22,7 +22,7 @@ class RemoteSparqlRepo(Repo):
                 "the environment variable or the config file."
             )
 
-    async def _send_query(self, query: str, mediatype="text/turtle"):
+    async def _send_query(self, query: str, mediatype="application/n-triples"):
         """Sends a SPARQL query asynchronously.
         Args: query: str: A SPARQL query to be sent asynchronously.
         Returns: httpx.Response: A httpx.Response object
@@ -45,7 +45,7 @@ class RemoteSparqlRepo(Repo):
         response = await self._send_query(query)
         g = Graph()
         await response.aread()
-        return g.parse(data=response.text, format="turtle")
+        return g.parse(data=response.text, format="nt")
 
     async def tabular_query_to_table(self, query: str, context: URIRef = None):
         """

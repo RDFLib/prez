@@ -182,11 +182,15 @@ class AnnotationsConstructQuery(ConstructQuery):
             (provenance_prop, PREZ.provenance)
             for provenance_prop in settings.provenance_predicates
         ]
+        value_tuples = [
+            (value_prop, PREZ.value)
+            for value_prop in settings.value_predicates
+        ]
         # other is different - the ORIGINAL property is returned as the predicate; not prez:x
         other_tuples = [
             (other_prop, other_prop) for other_prop in settings.other_predicates
         ]
         all_tuples = (
-            label_tuples + description_tuples + provenance_tuples + other_tuples
+            label_tuples + description_tuples + provenance_tuples + value_tuples + other_tuples
         )
         return all_tuples

@@ -24,7 +24,7 @@ from prez.enums import (
     JSONMediaType,
     NonAnnotatedRDFMediaType,
     SearchMethod,
-    SPARQLQueryMediaType,
+    SPARQLQueryMediaType, AnnotatedRDFMediaType,
 )
 from prez.exceptions.model_exceptions import (
     NoEndpointNodeshapeException,
@@ -594,13 +594,18 @@ async def get_ogc_features_mediatype(
     ]:
         allowed_mts = [
             mt.value
-            for mt in [*NonAnnotatedRDFMediaType, *SPARQLQueryMediaType, *JSONMediaType]
+            for mt in [
+                *AnnotatedRDFMediaType,
+                *NonAnnotatedRDFMediaType,
+                *SPARQLQueryMediaType,
+                *JSONMediaType]
         ]
         default_mt = JSONMediaType.JSON.value
     elif endpoint_uri in [OGCFEAT["feature"], OGCFEAT["features"]]:
         allowed_mts = [
             mt.value
             for mt in [
+                *AnnotatedRDFMediaType,
                 *NonAnnotatedRDFMediaType,
                 *SPARQLQueryMediaType,
                 *GeoJSONMediaType,

@@ -5,7 +5,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import toml
 from pydantic import field_validator
 from pydantic_settings import BaseSettings
-from rdflib import DCTERMS, RDFS, SDO, URIRef
+from rdf2geojson.convert import TERN
+from rdflib import DCTERMS, RDFS, SDO, URIRef, RDF, SOSA
 from rdflib.namespace import SKOS
 
 from prez.enums import SearchMethod
@@ -52,6 +53,11 @@ class Settings(BaseSettings):
         SDO.description,
     ]
     provenance_predicates: list = [DCTERMS.provenance]
+    value_predicates: list = [
+        SOSA.hasSimpleResult,
+        TERN.hasSimpleValue,
+        RDF.value
+    ]
     search_predicates: list = [
         RDFS.label,
         SKOS.prefLabel,

@@ -5,7 +5,7 @@ import logging
 
 from fastapi.responses import PlainTextResponse
 from rdf2geojson import convert
-from rdflib import Literal
+from rdflib import Literal, Graph
 from rdflib.namespace import GEO, RDF, Namespace
 from sparql_grammar_pydantic import (
     IRI,
@@ -19,7 +19,7 @@ from sparql_grammar_pydantic import (
     Var,
 )
 
-from prez.enums import NonAnnotatedRDFMediaType
+from prez.enums import NonAnnotatedRDFMediaType, AnnotatedRDFMediaType
 from prez.reference_data.prez_ns import ALTREXT, OGCFEAT, PREZ
 from prez.renderers.renderer import (
     return_annotated_rdf,
@@ -56,21 +56,21 @@ def _add_geom_triple_pattern_match(tssp_list: list[TriplesSameSubjectPath]):
 
 
 async def listing_function(
-    data_repo,
-    system_repo,
-    endpoint_nodeshape,
-    endpoint_structure,
-    search_query,
-    concept_hierarchy_query,
-    cql_parser,
-    pmts,
-    profile_nodeshape,
-    query_params,
-    original_endpoint_type,
-    url,
+        data_repo,
+        system_repo,
+        endpoint_nodeshape,
+        endpoint_structure,
+        search_query,
+        concept_hierarchy_query,
+        cql_parser,
+        pmts,
+        profile_nodeshape,
+        query_params,
+        original_endpoint_type,
+        url,
 ):
     if (
-        pmts.selected["profile"] == ALTREXT["alt-profile"]
+            pmts.selected["profile"] == ALTREXT["alt-profile"]
     ):  # recalculate the endpoint node shape
         endpoint_nodeshape = await handle_alt_profile(original_endpoint_type, pmts)
 
@@ -82,7 +82,7 @@ async def listing_function(
         query_params=query_params,
     )
     if (
-        pmts.selected["mediatype"] == "application/geo+json"
+            pmts.selected["mediatype"] == "application/geo+json"
     ):  # Ensure the focus nodes have a geometry in the SPARQL
         # subselect. If they are missing, the subsequent GeoJSON conversion will drop any Features without geometries.
         _add_geom_triple_pattern_match(subselect_kwargs["inner_select_tssp_list"])
@@ -115,14 +115,14 @@ async def listing_function(
     queries.append(main_query.to_string())
 
     if (
-        pmts.requested_mediatypes is not None
-        and pmts.requested_mediatypes[0][0] == "application/sparql-query"
+            pmts.requested_mediatypes is not None
+            and pmts.requested_mediatypes[0][0] == "application/sparql-query"
     ):
         return PlainTextResponse(queries[0], media_type="application/sparql-query")
 
     # add a count query if it's an annotated mediatype
     if ("anot+" in pmts.selected["mediatype"] and not search_query) or (
-        pmts.selected["mediatype"] == "application/geo+json"
+            pmts.selected["mediatype"] == "application/geo+json"
     ):
         subselect = copy.deepcopy(main_query.inner_select)
         count_query = CountQuery(original_subselect=subselect).to_string()
@@ -160,16 +160,16 @@ async def listing_function(
 
 
 async def ogc_features_listing_function(
-    endpoint_uri_type,
-    endpoint_nodeshape,
-    profile_nodeshape,
-    selected_mediatype,
-    url,
-    data_repo,
-    system_repo,
-    cql_parser,
-    query_params,
-    path_params,
+        endpoint_uri_type,
+        endpoint_nodeshape,
+        profile_nodeshape,
+        selected_mediatype,
+        url,
+        data_repo,
+        system_repo,
+        cql_parser,
+        query_params,
+        path_params,
 ):
     count_query = None
     count = 0
@@ -292,13 +292,18 @@ async def ogc_features_listing_function(
     item_graph, _ = await data_repo.send_queries(queries, [])
     if fc_item_graph:
         item_graph += fc_item_graph
-    annotations_graph = await return_annotated_rdf(item_graph, data_repo, system_repo)
     if count_query:
         count_g, _ = await data_repo.send_queries([count_query], [])
         if count_g:
             count = str(next(iter(count_g.objects())))
             count = get_geojson_int_count(count)
 
+    # only need the annotations for mediatypes of application/json or annotated mediatypes
+    annotations_graph = None
+    if (selected_mediatype in AnnotatedRDFMediaType) or (selected_mediatype == "application/json"):
+        annotations_graph = Graph()
+        if selected_mediatype not in NonAnnotatedRDFMediaType:
+            annotations_graph = await return_annotated_rdf(item_graph, data_repo, system_repo)
     if selected_mediatype == "application/json":
         if endpoint_uri_type[0] in [
             OGCFEAT["queryables-local"],
@@ -341,5 +346,11 @@ async def ogc_features_listing_function(
     elif selected_mediatype in NonAnnotatedRDFMediaType:
         content = io.BytesIO(
             item_graph.serialize(format=selected_mediatype, encoding="utf-8")
+        )
+    elif selected_mediatype in AnnotatedRDFMediaType:
+        item_graph += annotations_graph
+        non_anot_mt = selected_mediatype.replace("anot+", "")
+        content = io.BytesIO(
+            item_graph.serialize(format=non_anot_mt, encoding="utf-8")
         )
     return content, link_headers

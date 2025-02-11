@@ -13,6 +13,7 @@ from rdflib.namespace import GEO
 from sparql_grammar_pydantic import IRI, TriplesSameSubject, TriplesSameSubjectPath, Var
 
 from prez.config import settings
+from prez.enums import NonAnnotatedRDFMediaType, AnnotatedRDFMediaType
 from prez.exceptions.model_exceptions import URINotFoundException
 from prez.models.ogc_features import Collection, Link, Links
 from prez.models.query_params import QueryParams
@@ -207,9 +208,15 @@ async def ogc_features_object_function(
         geojson["links"] = all_links_dict["links"]
         geojson["timeStamp"] = get_brisbane_timestamp()
         content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
-    else:
+    elif selected_mediatype in NonAnnotatedRDFMediaType:
         content = io.BytesIO(
             item_graph.serialize(format=selected_mediatype, encoding="utf-8")
+        )
+    elif selected_mediatype in AnnotatedRDFMediaType:
+        item_graph += annotations_graph
+        non_anot_mt = selected_mediatype.replace("anot+", "")
+        content = io.BytesIO(
+            item_graph.serialize(format=non_anot_mt, encoding="utf-8")
         )
     return content, link_headers
 
