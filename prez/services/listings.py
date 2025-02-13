@@ -300,12 +300,10 @@ async def ogc_features_listing_function(
 
     # only need the annotations for mediatypes of application/json or annotated mediatypes
     annotations_graph = None
-    if (selected_mediatype in AnnotatedRDFMediaType) or\
-        (selected_mediatype == "application/json") or\
-            (selected_mediatype == "application/geo+json" and "human" in profile_nodeshape.uri.lower() ):
-        annotations_graph = Graph()
-        if selected_mediatype not in NonAnnotatedRDFMediaType:
-            annotations_graph = await return_annotated_rdf(item_graph, data_repo, system_repo)
+    if (selected_mediatype in AnnotatedRDFMediaType) or \
+            (selected_mediatype == "application/json") or \
+            (selected_mediatype == "application/geo+json" and "human" in profile_nodeshape.uri.lower()):
+        annotations_graph = await return_annotated_rdf(item_graph, data_repo, system_repo)
     if selected_mediatype == "application/json":
         if endpoint_uri_type[0] in [
             OGCFEAT["queryables-local"],

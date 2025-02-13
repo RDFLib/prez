@@ -414,7 +414,9 @@ async def get_endpoint_nodeshapes(
         f"path_node_{i + 1}": IRI(value=await get_uri_for_curie_id(value))
         for i, value in enumerate(reversed(path_node_curies))
     }
-    hierarchy_level = int(len(url_path.split("/")) / 2)
+    # A hierarchy level covers a listing and an item endpoint. Path segment maths is: int({2,3}/2) -> 1; int({4,5}/2) -> 2 etc.
+    # For Features API mounted as "features", remove extra level when counting to get correct hierarchy level.
+    hierarchy_level = int(len(url_path.replace("features/collections", "features").split("/")) / 2)
     """
     Determines the relevant nodeshape based on the endpoint, hierarchy level, and parent URI
     """

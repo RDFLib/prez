@@ -4,6 +4,7 @@ from rdflib import URIRef
 from rdflib.term import _is_valid_uri
 
 from prez.dependencies import get_data_repo
+from prez.exceptions.model_exceptions import PrefixNotBoundException
 from prez.services.curie_functions import get_curie_id_for_uri, get_uri_for_curie_id
 from prez.services.query_generation.identifier import get_foaf_homepage_query
 
@@ -77,7 +78,7 @@ def get_curie_route(iri: str):
 async def get_iri_route(curie: str):
     try:
         return await get_uri_for_curie_id(curie)
-    except ValueError as err:
+    except PrefixNotBoundException as err:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST, f"Invalid input '{curie}'. {err}"
         ) from err

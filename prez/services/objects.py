@@ -18,15 +18,15 @@ from prez.exceptions.model_exceptions import URINotFoundException
 from prez.models.ogc_features import Collection, Link, Links
 from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import ALTREXT, ONT, PREZ
-from prez.renderers.renderer import return_annotated_rdf, return_from_graph
-from prez.services.connegp_service import RDF_MEDIATYPES
-from prez.services.curie_functions import get_curie_id_for_uri
-from prez.services.link_generation import add_prez_links
 from prez.renderers.renderer import (
     create_self_alt_links,
     generate_link_headers,
     get_brisbane_timestamp,
 )
+from prez.renderers.renderer import return_annotated_rdf, return_from_graph
+from prez.services.connegp_service import RDF_MEDIATYPES
+from prez.services.curie_functions import get_curie_id_for_uri
+from prez.services.link_generation import add_prez_links
 from prez.services.listings import listing_function
 from prez.services.query_generation.umbrella import PrezQueryConstructor
 
@@ -34,7 +34,7 @@ log = logging.getLogger(__name__)
 
 
 async def object_function(
-    data_repo, system_repo, endpoint_structure, pmts, profile_nodeshape, url
+        data_repo, system_repo, endpoint_structure, pmts, profile_nodeshape, url
 ):
     if pmts.selected["profile"] == ALTREXT["alt-profile"]:
         query_params = QueryParams(
@@ -79,7 +79,7 @@ async def object_function(
     ).to_string()
 
     if pmts.requested_mediatypes and (
-        pmts.requested_mediatypes[0][0] == "application/sparql-query"
+            pmts.requested_mediatypes[0][0] == "application/sparql-query"
     ):
         return PlainTextResponse(query, media_type="application/sparql-query")
     query_start_time = time.time()
@@ -88,7 +88,7 @@ async def object_function(
     if settings.prez_ui_url:
         # If HTML or no specific media type requested
         if pmts.requested_mediatypes and (
-            pmts.requested_mediatypes[0][0] in ("text/html", "*/*")
+                pmts.requested_mediatypes[0][0] in ("text/html", "*/*")
         ):
             item_uri = URIRef(profile_nodeshape.focus_node.value)
             await add_prez_links(item_graph, data_repo, endpoint_structure, [item_uri])
@@ -125,12 +125,13 @@ def create_parent_link(url):
 
 
 async def ogc_features_object_function(
-    template_queries,
-    selected_mediatype,
-    url,
-    data_repo,
-    system_repo,
-    path_params,
+        template_queries,
+        selected_mediatype,
+        profile_nodeshape,
+        url,
+        data_repo,
+        system_repo,
+        path_params,
 ):
     collection_uri = path_params.get("collection_uri")
     feature_uri = path_params.get("feature_uri")
@@ -180,11 +181,17 @@ async def ogc_features_object_function(
 
     query_start_time = time.time()
     item_graph, _ = await data_repo.send_queries(queries, [])
+    log.debug(f"Query time: {time.time() - query_start_time}")
+
     if len(item_graph) == 0:
         uri = feature_uri if feature_uri else collection_uri
         raise URINotFoundException(uri=uri)
-    annotations_graph = await return_annotated_rdf(item_graph, data_repo, system_repo)
-    log.debug(f"Query time: {time.time() - query_start_time}")
+
+    annotations_graph = None
+    if (selected_mediatype in AnnotatedRDFMediaType) or \
+            (selected_mediatype == "application/json") or \
+            (selected_mediatype == "application/geo+json" and "human" in profile_nodeshape.uri.lower()):
+        annotations_graph = await return_annotated_rdf(item_graph, data_repo, system_repo)
 
     link_headers = None
     if selected_mediatype == "application/sparql-query":

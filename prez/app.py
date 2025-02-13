@@ -28,7 +28,7 @@ from prez.exceptions.model_exceptions import (
     InvalidSPARQLQueryException,
     NoEndpointNodeshapeException,
     NoProfilesException,
-    PrefixNotFoundException,
+    PrefixNotBoundException,
     URINotFoundException,
 )
 from prez.middleware import create_validate_header_middleware
@@ -177,7 +177,7 @@ def assemble_app(
             500: catch_500,
             ClassNotFoundException: catch_class_not_found_exception,
             URINotFoundException: catch_uri_not_found_exception,
-            PrefixNotFoundException: catch_prefix_not_found_exception,
+            PrefixNotBoundException: catch_prefix_not_found_exception,
             NoProfilesException: catch_no_profiles_exception,
             InvalidSPARQLQueryException: catch_invalid_sparql_query,
             NoEndpointNodeshapeException: catch_no_endpoint_nodeshape_exception,

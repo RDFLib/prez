@@ -8,6 +8,7 @@ from rdflib import SH, Graph, Namespace, URIRef
 
 from prez.cache import endpoints_graph_cache
 from prez.config import settings
+from prez.exceptions.model_exceptions import PrefixNotBoundException
 from prez.repositories.base import Repo
 from prez.services.curie_functions import get_curie_id_for_uri, get_uri_for_curie_id
 
@@ -145,7 +146,7 @@ class NegotiatedPMTs(BaseModel):
                     result = await get_uri_for_curie_id(parts[0])
                     result = str(result)
                     parts[0] = "<" + result + ">"
-                except ValueError as e:
+                except PrefixNotBoundException:
                     parts[0] = (
                         ""  # if curie resolution failed, then the profile is invalid
                     )
