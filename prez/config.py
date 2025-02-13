@@ -5,12 +5,11 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import toml
 from pydantic import field_validator
 from pydantic_settings import BaseSettings
-from rdf2geojson.convert import TERN
 from rdflib import DCTERMS, RDFS, SDO, URIRef, RDF, SOSA
 from rdflib.namespace import SKOS
 
 from prez.enums import SearchMethod
-from prez.reference_data.prez_ns import EP, REG
+from prez.reference_data.prez_ns import EP, REG, TERN
 
 
 class Settings(BaseSettings):

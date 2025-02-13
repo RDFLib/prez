@@ -300,7 +300,9 @@ async def ogc_features_listing_function(
 
     # only need the annotations for mediatypes of application/json or annotated mediatypes
     annotations_graph = None
-    if (selected_mediatype in AnnotatedRDFMediaType) or (selected_mediatype == "application/json"):
+    if (selected_mediatype in AnnotatedRDFMediaType) or\
+        (selected_mediatype == "application/json") or\
+            (selected_mediatype == "application/geo+json" and "human" in profile_nodeshape.uri.lower() ):
         annotations_graph = Graph()
         if selected_mediatype not in NonAnnotatedRDFMediaType:
             annotations_graph = await return_annotated_rdf(item_graph, data_repo, system_repo)
@@ -338,7 +340,11 @@ async def ogc_features_listing_function(
             )
 
     elif selected_mediatype == "application/geo+json":
-        geojson = convert(g=item_graph, do_validate=False, iri2id=get_curie_id_for_uri)
+        if "human" in profile_nodeshape.uri.lower():  # human readable profile
+            item_graph += annotations_graph
+            geojson = convert(g=item_graph, do_validate=False, iri2id=get_curie_id_for_uri, kind="human")
+        else:
+            geojson = convert(g=item_graph, do_validate=False, iri2id=get_curie_id_for_uri, kind="machine")
         link_headers, geojson = await generate_geojson_extras(
             count, geojson, query_params, selected_mediatype, url
         )

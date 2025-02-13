@@ -285,7 +285,7 @@ class NegotiatedPMTs(BaseModel):
                        altr-ext:hasResourceFormat ?format ;
                        dcterms:title ?title .\
               {f'?profile a {profile_class.n3()} .'}
-              {f'BIND(?profile={requested_profile} as ?req_profile)' if requested_profile else ''}
+              {f'BIND(?profile={requested_profile} as ?req_profile)' if requested_profile else 'BIND(false as ?req_profile)'}
               BIND(EXISTS {{ ?shape sh:targetClass ?class ;
                                    altr-ext:hasDefaultProfile ?profile }} AS ?def_profile)
               {self._generate_mediatype_if_statements()}
@@ -333,6 +333,7 @@ class NegotiatedPMTs(BaseModel):
                     item["class"]["value"],
                     item["distance"]["value"],
                     item["def_profile"]["value"],
+                    item["req_profile"]["value"],
                     item["format"]["value"],
                     item["req_format"]["value"],
                     item["def_format"]["value"],
@@ -348,6 +349,7 @@ class NegotiatedPMTs(BaseModel):
                 "Class",
                 "Distance",
                 "Default Profile",
+                "Requested Profile",
                 "Format",
                 "Requested Format",
                 "Default Format",

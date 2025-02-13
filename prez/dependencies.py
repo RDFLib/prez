@@ -23,14 +23,13 @@ from prez.enums import (
     GeoJSONMediaType,
     JSONMediaType,
     NonAnnotatedRDFMediaType,
-    SearchMethod,
-    SPARQLQueryMediaType, AnnotatedRDFMediaType,
+    SPARQLQueryMediaType, AnnotatedRDFMediaType
 )
+from prez.enums import SearchMethod
 from prez.exceptions.model_exceptions import (
     NoEndpointNodeshapeException,
     URINotFoundException,
 )
-from prez.enums import SearchMethod
 from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import ALTREXT, EP, OGCE, OGCFEAT, ONT
 from prez.repositories import OxrdflibRepo, PyoxigraphRepo, RemoteSparqlRepo, Repo
@@ -651,6 +650,7 @@ async def get_template_queries(
 async def check_unknown_params(request: Request):
     known_params = {
         "_mediatype",
+        "_profile",
         "page",
         "limit",
         "datetime",

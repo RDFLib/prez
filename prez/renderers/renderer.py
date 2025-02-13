@@ -95,7 +95,22 @@ async def return_from_graph(
             raise HTTPException(status.HTTP_404_NOT_FOUND, str(err))
 
     elif str(mediatype) == "application/geo+json":
-        geojson = convert(g=graph, do_validate=False, iri2id=get_curie_id_for_uri)
+        if "human" in profile.lower():
+            kind = "human"
+            annotations_graph = await return_annotated_rdf(graph, repo, system_repo)
+            graph.__iadd__(annotations_graph)
+        else:
+            kind = "machine"
+        collection_label = None
+        if len(list(graph.subjects(RDF.type, GEO["Feature"]))) > 0:
+            collection_label="FeatureCollection containing Features from listing query"
+        geojson = convert(
+            g=graph,
+            do_validate=False,
+            iri2id=get_curie_id_for_uri,
+            collection_label=collection_label,
+            kind=kind
+        )
         count = None  # for an object; no count query.
         s_o = graph.subject_objects(
             predicate=PREZ["count"]

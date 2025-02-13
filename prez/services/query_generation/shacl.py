@@ -735,11 +735,18 @@ class PropertyShape(Shape):
                                     path_nodes[0],  # This is path_node_1
                                 )
                             else:
-                                triple = (
-                                    path_nodes[j - 1],  # Previous node
-                                    IRI(value=path.value),
-                                    path_nodes[j],  # Current node
+                                if path.value == SHEXT.allPredicateValues:
+                                    triple = (
+                                        path_nodes[j - 1],  # Previous node
+                                        Var(value="sequence_all_preds"),
+                                        path_nodes[j],
                                 )
+                                else:
+                                    triple = (
+                                        path_nodes[j - 1],  # Previous node
+                                        IRI(value=path.value),
+                                        path_nodes[j],  # Current node
+                                    )
                     elif isinstance(path, InversePath):
                         inner_path_type = "inverse"
                         if self.kind == "endpoint":
