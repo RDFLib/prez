@@ -206,7 +206,11 @@ async def ogc_features_object_function(
             collection.model_dump_json(exclude_none=True).encode("utf-8")
         )
     elif selected_mediatype == "application/geo+json":
-        geojson = convert(g=item_graph, do_validate=False, iri2id=get_curie_id_for_uri)
+        if "human" in profile_nodeshape.uri.lower():  # human readable profile
+            item_graph += annotations_graph
+            geojson = convert(g=item_graph, do_validate=False, iri2id=get_curie_id_for_uri, kind="human")
+        else:
+            geojson = convert(g=item_graph, do_validate=False, iri2id=get_curie_id_for_uri, kind="machine")
         self_alt_links = create_self_alt_links(selected_mediatype, url)
         parent_link = create_parent_link(url)
         all_links = [*self_alt_links, parent_link]

@@ -75,6 +75,11 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
         "application/rdf+xml" ,
         "text/anot+turtle" ,
         "text/turtle" ;
+    altr-ext:hasNodeShape [
+        a sh:NodeShape ;
+        sh:targetClass rdfs:Resource ;
+        altr-ext:hasDefaultProfile <https://prez.dev/profile/cqlgeo>
+    ] ;
     shext:bnode-depth 2 ;
     sh:property [
         sh:path (

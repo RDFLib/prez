@@ -154,7 +154,10 @@ async def cql_post_parser_dependency(
         body = await request.json()
         cql_parser = CQLParser(cql=body, queryable_props=queryable_props)
         cql_parser.generate_jsonld()
-        cql_parser.parse()
+        try:
+            cql_parser.parse()
+        except Exception as e:
+            raise (e.args[0] if e.args else "Error parsing CQL.")
         return cql_parser
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON format.")

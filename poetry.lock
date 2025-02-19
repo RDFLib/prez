@@ -1526,53 +1526,53 @@ test = ["pytest", "pytest-cov"]
 
 [[package]]
 name = "pyoxigraph"
-version = "0.4.7"
+version = "0.4.8"
 description = "Python bindings of Oxigraph, a SPARQL database and RDF toolkit"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "pyoxigraph-0.4.7-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:61adb06d43afc5c0fe04726d5e0dff6524b958a1fa6f627569a4844196418004"},
-    {file = "pyoxigraph-0.4.7-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ab1cfa857e7058c17d68fcff7d951d378b5052ffa171b72d41a364a180644a85"},
-    {file = "pyoxigraph-0.4.7-cp310-cp310-musllinux_1_2_aarch64.whl", hash = "sha256:a892a0a713ee19bfebafd6a194363a3f7091378c69e19ba5551bda283a10f076"},
-    {file = "pyoxigraph-0.4.7-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:e1ec95e50dbcf9602df71d7e5acbcad22bdf178df3c7d38ab6d901f8395fcb58"},
-    {file = "pyoxigraph-0.4.7-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:bbbb1dce9acf46bb09d1f391ceeede24dfcf23eccfb2e62116e812d27d59ba74"},
-    {file = "pyoxigraph-0.4.7-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9a1cf9c7dba05b7b0c18e3d429eef5f4bc2416ee716d767be4b5bf2c334f3252"},
-    {file = "pyoxigraph-0.4.7-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:4d2da34f7a973b1ec1fb56b0ed8ad9c72066f3c3ed76d40dccb7aeb49c59e27f"},
-    {file = "pyoxigraph-0.4.7-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:bb02c279057eccdae95d230c5b17dc6c618ea77ce916e7c1c1477e6c2ac5310e"},
-    {file = "pyoxigraph-0.4.7-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:6837156071e4f583c21d5d4e56a0f066554b0c7f775312ee8144c3acd7ebbc07"},
-    {file = "pyoxigraph-0.4.7-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7c5a075d6082c94c5cbb42ea782bbb8ae7a8f2d262b2b33af14754cfeb95a5a3"},
-    {file = "pyoxigraph-0.4.7-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:7e77fd7798c0a68d70ba65f095b65b2d7d92bb90ce80bd6f3df75299a3980373"},
-    {file = "pyoxigraph-0.4.7-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:09d93659af18043112968092355368ce5b6661ebb8d3bf3ed82148e589519eac"},
-    {file = "pyoxigraph-0.4.7-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:3a8e00402200269d24c68d821d8c4a700bff596530e39e42932cf1ccbf3db1a6"},
-    {file = "pyoxigraph-0.4.7-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c9b2fb7292abe40453ac94c78b468625ef819efc0da83f980c8e62d5c8cf38dc"},
-    {file = "pyoxigraph-0.4.7-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:67f68d642de27862deefbdda9cb7a056a4adfa8a051dd8a7243b60fe78fd2f40"},
-    {file = "pyoxigraph-0.4.7-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:651c83952e932a1082c6734d631726f9a4e089b8f94df5cbb96a8833dd643abe"},
-    {file = "pyoxigraph-0.4.7-cp313-cp313t-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:96f02b2fedebf955ba817ee9ba2bf73e2c948acb9cbf8949c076d2e6ffd55dab"},
-    {file = "pyoxigraph-0.4.7-cp313-cp313t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9ffda162661ded1dc310063e778cd4b74f083c8c6a66dbd4747837b97a7176d7"},
-    {file = "pyoxigraph-0.4.7-cp313-cp313t-musllinux_1_2_aarch64.whl", hash = "sha256:a64fe2bc5a6f2579aa61f02f39025bd58c2a6cbfb8902ad618f2cb732fee409d"},
-    {file = "pyoxigraph-0.4.7-cp313-cp313t-musllinux_1_2_x86_64.whl", hash = "sha256:310938a2132e00e9a65c6554f6339765d2aff675ad3fd31669a700cb4ad0ddb2"},
-    {file = "pyoxigraph-0.4.7-cp38-abi3-macosx_10_14_x86_64.macosx_11_0_arm64.macosx_10_14_universal2.whl", hash = "sha256:64415614fbff86ce14958fc13dcc0ffa9c10f5a0f8af94dfd98702614249eb03"},
-    {file = "pyoxigraph-0.4.7-cp38-abi3-macosx_10_14_x86_64.whl", hash = "sha256:8bcc6369deec4f26e757093980f1cbcc2562509f6e30a5447fc7667071d0ad4e"},
-    {file = "pyoxigraph-0.4.7-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:325798e904e709fa2af0994e1d8b90e3bdba4b02a773bcff0996ee16a19b24be"},
-    {file = "pyoxigraph-0.4.7-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:aefbb1cae85ef2267d72b4ad06e1c5ba06c8b1be055a968f786daa135015bbb1"},
-    {file = "pyoxigraph-0.4.7-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:805f8ce6c0f82ba610b8d00b9f0e768708aad893ee83f4d77a2663682e467d7d"},
-    {file = "pyoxigraph-0.4.7-cp38-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:4e15552453ade14f7d47cec44878e99e59b1ef9b4c3f4f881c88ce8eaa658231"},
-    {file = "pyoxigraph-0.4.7-cp38-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:b7d31b289b49fbe9af287de15f5edac850029616168ea1be6ebe7c265bd6d51a"},
-    {file = "pyoxigraph-0.4.7-cp38-abi3-win_amd64.whl", hash = "sha256:0b79ff36c4ea50f33e7c4cfff38e9bab6b1314b0c8f241f99655cbb03e827ec2"},
-    {file = "pyoxigraph-0.4.7-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:c8e049b04d858be0eb4debdcb081761e6832c0a22fb150fb5baa6f8958f4eb98"},
-    {file = "pyoxigraph-0.4.7-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:52fc21d312175cfb5ea10a775f7ac965ecab010b7d4703d7e27389dc21a90e83"},
-    {file = "pyoxigraph-0.4.7-cp38-cp38-musllinux_1_2_aarch64.whl", hash = "sha256:1cf121a8d8c17c6fb09d7185bbb0f422ba535ef11ed2e8a02df9a7126b93f3bb"},
-    {file = "pyoxigraph-0.4.7-cp38-cp38-musllinux_1_2_x86_64.whl", hash = "sha256:78af91fd67f7788d8cb86b2062cd5fedc7f86ff9be54a7bfca51640dd096f105"},
-    {file = "pyoxigraph-0.4.7-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5d8f21bc7097fb444eb1ed2c991e69740c590c2e89cdc8cf6b36c5af9e6bd017"},
-    {file = "pyoxigraph-0.4.7-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6e3d737bbfdfe7b3e6583bb4232979d25172c372dcf5b76d50b332f9fa289f59"},
-    {file = "pyoxigraph-0.4.7-cp39-cp39-musllinux_1_2_aarch64.whl", hash = "sha256:c06265e8095c0af9d17dd075b63c9d898103f535f947581dd70664fd119f1f60"},
-    {file = "pyoxigraph-0.4.7-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:b46aa84e9173f89526ab76284f8ce6fc2fd28bc7d3158fc922d09cacbe53b13c"},
-    {file = "pyoxigraph-0.4.7-pp310-pypy310_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:0b25d8ff3f5a357e12b2231fb38d80780571acb9d8a28b1c164deb0f9e673617"},
-    {file = "pyoxigraph-0.4.7-pp310-pypy310_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:242066fd6f8ed8721bad028b9969765a7950de2fa10ba052d35f4f9484694b38"},
-    {file = "pyoxigraph-0.4.7-pp39-pypy39_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:367dd1778421d467cfdedf4fdff026ddb9055daaa376df57d1e0bdae2b47dbb2"},
-    {file = "pyoxigraph-0.4.7-pp39-pypy39_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:adce55a2a3917bd72e6e96172922b7d41d6ba1d0a1a1aa006481468f3c19f436"},
-    {file = "pyoxigraph-0.4.7.tar.gz", hash = "sha256:9ca876a92401515901f2dfe54d0714acebbacadba3a71b6d17d87d69e55aa067"},
+    {file = "pyoxigraph-0.4.8-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:3dc15cc462fce3b8f64e9be1a763ef578128366ac333408ea958e056bc5755e4"},
+    {file = "pyoxigraph-0.4.8-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c104516629b92f5f80e4b9e740fbfa35b180d828a2c9fb3b79e95c88c2d04c27"},
+    {file = "pyoxigraph-0.4.8-cp310-cp310-musllinux_1_2_aarch64.whl", hash = "sha256:556d2b9246f92700d3858cff4192216b6a3a0765a884213907679b5517be8bfd"},
+    {file = "pyoxigraph-0.4.8-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:551efc50dd3b816c75d9d5163660531ac7d57f10c12da4be4edf0a20f3d564de"},
+    {file = "pyoxigraph-0.4.8-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b892c742031654bc44ac9fe84782ae10d9a30ce0ac229a870332e5f7dca9ba8a"},
+    {file = "pyoxigraph-0.4.8-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c5a6b907d5c997c04a5fe1e9a06c6b442371cde0c8eb16c3a44f6a1220115124"},
+    {file = "pyoxigraph-0.4.8-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:2ecb07a1792ad1db0a128c7ed655e08327e02a18c28d0e528549791a08c45755"},
+    {file = "pyoxigraph-0.4.8-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:73a5951314cc184bd929d79e4635de075a75591d44506d51f987b06857e47a55"},
+    {file = "pyoxigraph-0.4.8-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:70b03690422fbbd6218689f22a2e8a25f942e8123620d63e9f4f0cd326ae08e3"},
+    {file = "pyoxigraph-0.4.8-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d5a207a276a3b9397604eb755c46e09f05ddcf15cf575bb203826187c7d3c25f"},
+    {file = "pyoxigraph-0.4.8-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:efabb46252346a486835059f142158a5bd78ba8fbb27949b2523508140c0d8dd"},
+    {file = "pyoxigraph-0.4.8-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:677d88da07f9c890b3256c2be51db69bd69c0d12672964c9401d5b99eb0bb93a"},
+    {file = "pyoxigraph-0.4.8-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:655d61af9f9cd13484cd9d5a07c15315c82b77eddd110726af680fa480289e94"},
+    {file = "pyoxigraph-0.4.8-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:334f8b3c652493125b4e7472b61d4671a5f3dc937e60ec2bba2e13194d361c37"},
+    {file = "pyoxigraph-0.4.8-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:e71d0d63a2936df4188fb4ff66733afdec081811715900c0979ccf684735cce2"},
+    {file = "pyoxigraph-0.4.8-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:0d6857b566482280d06109b285b6102450f08781fb0b1a08ab8cce28ddc131b1"},
+    {file = "pyoxigraph-0.4.8-cp313-cp313t-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:23c2808759bdfb49e2d84436f59f1e70a2ab81b30e744e1673a01363d5bf506f"},
+    {file = "pyoxigraph-0.4.8-cp313-cp313t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9c84a873db68aabd85b8509fd953fbf87ac5d8324829d6ea48b890d99cff11b5"},
+    {file = "pyoxigraph-0.4.8-cp313-cp313t-musllinux_1_2_aarch64.whl", hash = "sha256:8e22eeff9b2359bc07ee6e662a792e2ca0b081ed3e76c5f5eb144145b4f84edb"},
+    {file = "pyoxigraph-0.4.8-cp313-cp313t-musllinux_1_2_x86_64.whl", hash = "sha256:615e60b4534eaf5a6fd0b73e9764923719e037480bb868875bb39995c314b7b3"},
+    {file = "pyoxigraph-0.4.8-cp38-abi3-macosx_10_14_x86_64.macosx_11_0_arm64.macosx_10_14_universal2.whl", hash = "sha256:013d11ba025ae89898ff45c2ad83f65b467397c0f140e7bd76ce357da775e164"},
+    {file = "pyoxigraph-0.4.8-cp38-abi3-macosx_10_14_x86_64.whl", hash = "sha256:dddfacbb5db5a22be62cebcbd761abeb54b18e0a892b0982bf4916953e47bea3"},
+    {file = "pyoxigraph-0.4.8-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:1cf15c7f0776daa1bda8aa24e8951cf4eb3f8f66c3ba5bf716c6d4efb8a81be0"},
+    {file = "pyoxigraph-0.4.8-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:fd586be8f1c9dc1aeb18c0ef4a935b3a4329686bbc239067ac413cd0e9b0e419"},
+    {file = "pyoxigraph-0.4.8-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1cd2796c8c89f8c62015befc3fb8a0140f95f63c44acf21785c49be0b1b7b6eb"},
+    {file = "pyoxigraph-0.4.8-cp38-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:c169cc98843f0cee5a464368666ee709ad87e4c16be53ba7eebf0d5f2a24fcd2"},
+    {file = "pyoxigraph-0.4.8-cp38-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:a6914a8376907c046de12fd5233287de170594ea3e8b74e6675637e10fa39aae"},
+    {file = "pyoxigraph-0.4.8-cp38-abi3-win_amd64.whl", hash = "sha256:7e1f92012d8879322e9dcba038bd2d6690eafce355c75a35a653324e49333792"},
+    {file = "pyoxigraph-0.4.8-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:c46dfdb7a2439c4bfed62643ab027e42763a5758446e2c49c16e640c6bb7f9af"},
+    {file = "pyoxigraph-0.4.8-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1b2861612c99e18fdff2acfc7bbe6489db7c039d41d41724d0b97a2e464110a5"},
+    {file = "pyoxigraph-0.4.8-cp38-cp38-musllinux_1_2_aarch64.whl", hash = "sha256:a120c6160e2ffd8d9d8587e4579c7ffbbee2c015072d5d83f93fd7ed7bbb193c"},
+    {file = "pyoxigraph-0.4.8-cp38-cp38-musllinux_1_2_x86_64.whl", hash = "sha256:127fddad6746e19d79d5bf9017380e5ee7b92494bf047c5457b73e9bb473dde6"},
+    {file = "pyoxigraph-0.4.8-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:26abc37c337878a7d66febd161913aa4382f5c396aa4e2bd15134f597448c138"},
+    {file = "pyoxigraph-0.4.8-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7c1ffe7c83eaecdbcd1f55fbc6906a121319c416984912cceebfc185b5bd2eec"},
+    {file = "pyoxigraph-0.4.8-cp39-cp39-musllinux_1_2_aarch64.whl", hash = "sha256:d93ae9faea4c108304967ee38ee20bec29facd5632539bb2853f0e945c4a6f31"},
+    {file = "pyoxigraph-0.4.8-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:9560cf9eba703981a8c89917ee314951ee7e616d9527b95415aa04e800023c90"},
+    {file = "pyoxigraph-0.4.8-pp310-pypy310_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ac2c3e5014e0c1b250130d926f99f9fccd6dd460a3386ca40fce6444925c5ebf"},
+    {file = "pyoxigraph-0.4.8-pp310-pypy310_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1866e18aea29d8833843df48c6d39fd88a0c0f071bb7732a22f548fe542511c0"},
+    {file = "pyoxigraph-0.4.8-pp39-pypy39_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:66056e8d6a87513864483db652d1a5bb1b73d4fbb61d38fdf2dbd8690f4a93ad"},
+    {file = "pyoxigraph-0.4.8-pp39-pypy39_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9e83286ed32738c12464762e6ffc3fd6741547f14a99bed953113d3c79e3d1a5"},
+    {file = "pyoxigraph-0.4.8.tar.gz", hash = "sha256:7f420e5b89c9710c331f580f355dfab99819b233ad4e2c159715b3acc94f1083"},
 ]
 
 [[package]]
@@ -1592,37 +1592,45 @@ diagrams = ["jinja2", "railroad-diagrams"]
 
 [[package]]
 name = "pyproj"
-version = "3.7.0"
+version = "3.7.1"
 description = "Python interface to PROJ (cartographic projections and coordinate transformations library)"
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "pyproj-3.7.0-cp310-cp310-macosx_12_0_x86_64.whl", hash = "sha256:d5c7e7d24b967e328a5efd013f466804a1f226d1106ac7efc47dcc99360dbc8f"},
-    {file = "pyproj-3.7.0-cp310-cp310-macosx_14_0_arm64.whl", hash = "sha256:448958c46bd3fe2da91c89ba551ac5835e63073ca861422c6eb1af89979dfab1"},
-    {file = "pyproj-3.7.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:f673ca345bb92afc93d4235938ca0c9a76237aa7addf42a95965c8dc8cad9b49"},
-    {file = "pyproj-3.7.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ee60895f60cbd1a9c903ab2bc22adea63004296a1c28b8775a11cf50905cf085"},
-    {file = "pyproj-3.7.0-cp310-cp310-win32.whl", hash = "sha256:0dd31b0740ee010934234f848d2d092c66146cb8d0ba009a64e41d192caa7686"},
-    {file = "pyproj-3.7.0-cp310-cp310-win_amd64.whl", hash = "sha256:7943d85ba39e89c51b920339ff63162d63bf89da161f0acb6206b0d39b11661e"},
-    {file = "pyproj-3.7.0-cp311-cp311-macosx_12_0_x86_64.whl", hash = "sha256:e66d8d42dbdf232e121546c5a1dec097caf0454e4885c09a8e03cdcee0753c03"},
-    {file = "pyproj-3.7.0-cp311-cp311-macosx_14_0_arm64.whl", hash = "sha256:7764b64a0aefe40134a2828b3a40be88f6c8b7832c45d8a9f2bd592ace4b2a3b"},
-    {file = "pyproj-3.7.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:53c442c5081dc95346996f5c4323fde2caafc69c6e60b4707aa46e88244f1e04"},
-    {file = "pyproj-3.7.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:bc5b305d4d5d7697885681d9b660623e328227612823d5c660e0a9566cb48838"},
-    {file = "pyproj-3.7.0-cp311-cp311-win32.whl", hash = "sha256:de2b47d748dc41cccb6b3b713d4d7dc9aa1046a82141c8665026908726426abc"},
-    {file = "pyproj-3.7.0-cp311-cp311-win_amd64.whl", hash = "sha256:38cba7c4c5679e40242dd959133e95b908d3b912dd66291094fd13510e8517ff"},
-    {file = "pyproj-3.7.0-cp312-cp312-macosx_12_0_x86_64.whl", hash = "sha256:8cbec92bdd6e9933ca08795c12717d1384e9b51cf4b1acf0d753db255a75c51e"},
-    {file = "pyproj-3.7.0-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:8c4a8e4d3ba76c3adac3c087544cf92f7f9a19ea34946904a13fca48cc1c0106"},
-    {file = "pyproj-3.7.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:82624fb42aa31f6b1a860fbc0316babd07fd712642bc31022df4e9b4056bf463"},
-    {file = "pyproj-3.7.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:34e1bbb3f89c68d4a6835c40b2da8b27680eec60e8cc7cdb08c09bcc725b2b62"},
-    {file = "pyproj-3.7.0-cp312-cp312-win32.whl", hash = "sha256:952515d5592167ad4436b355485f82acebed2a49b46722159e4584b75a763dd3"},
-    {file = "pyproj-3.7.0-cp312-cp312-win_amd64.whl", hash = "sha256:0692f806224e8ed82fe4acfa57268ff444fdaf9f330689f24c0d96e59480cce1"},
-    {file = "pyproj-3.7.0-cp313-cp313-macosx_12_0_x86_64.whl", hash = "sha256:94e8b903a9e83448fd2379c49dec3e8cd83c9ed36f54354e68b601cef56d5426"},
-    {file = "pyproj-3.7.0-cp313-cp313-macosx_14_0_arm64.whl", hash = "sha256:64cb5c17d6f6305a8b978a40f95560c87c5b363fcac40632337955664437875a"},
-    {file = "pyproj-3.7.0-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:2c54e9bdda7ab9c4a5af50f9d6e6ee7704e05fafd504896b96ed1208c7aea098"},
-    {file = "pyproj-3.7.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:24fa4e9e0abba875f9524808410cc520067eaf38fd5549ed0ef7c43ac39923c9"},
-    {file = "pyproj-3.7.0-cp313-cp313-win32.whl", hash = "sha256:b9e8353fc3c79dc14d1f5ac758a1a6e4eee04102c3c0b138670f121f5ac52eb4"},
-    {file = "pyproj-3.7.0-cp313-cp313-win_amd64.whl", hash = "sha256:10a8dc6ec61af97c89ff032647d743f8dc023645773da42ef43f7ae1125b3509"},
-    {file = "pyproj-3.7.0.tar.gz", hash = "sha256:bf658f4aaf815d9d03c8121650b6f0b8067265c36e31bc6660b98ef144d81813"},
+    {file = "pyproj-3.7.1-cp310-cp310-macosx_13_0_x86_64.whl", hash = "sha256:bf09dbeb333c34e9c546364e7df1ff40474f9fddf9e70657ecb0e4f670ff0b0e"},
+    {file = "pyproj-3.7.1-cp310-cp310-macosx_14_0_arm64.whl", hash = "sha256:6575b2e53cc9e3e461ad6f0692a5564b96e7782c28631c7771c668770915e169"},
+    {file = "pyproj-3.7.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:8cb516ee35ed57789b46b96080edf4e503fdb62dbb2e3c6581e0d6c83fca014b"},
+    {file = "pyproj-3.7.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1e47c4e93b88d99dd118875ee3ca0171932444cdc0b52d493371b5d98d0f30ee"},
+    {file = "pyproj-3.7.1-cp310-cp310-musllinux_1_2_aarch64.whl", hash = "sha256:3e8d276caeae34fcbe4813855d0d97b9b825bab8d7a8b86d859c24a6213a5a0d"},
+    {file = "pyproj-3.7.1-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:f173f851ee75e54acdaa053382b6825b400cb2085663a9bb073728a59c60aebb"},
+    {file = "pyproj-3.7.1-cp310-cp310-win32.whl", hash = "sha256:f550281ed6e5ea88fcf04a7c6154e246d5714be495c50c9e8e6b12d3fb63e158"},
+    {file = "pyproj-3.7.1-cp310-cp310-win_amd64.whl", hash = "sha256:3537668992a709a2e7f068069192138618c00d0ba113572fdd5ee5ffde8222f3"},
+    {file = "pyproj-3.7.1-cp311-cp311-macosx_13_0_x86_64.whl", hash = "sha256:a94e26c1a4950cea40116775588a2ca7cf56f1f434ff54ee35a84718f3841a3d"},
+    {file = "pyproj-3.7.1-cp311-cp311-macosx_14_0_arm64.whl", hash = "sha256:263b54ba5004b6b957d55757d846fc5081bc02980caa0279c4fc95fa0fff6067"},
+    {file = "pyproj-3.7.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:f6d6a2ccd5607cd15ef990c51e6f2dd27ec0a741e72069c387088bba3aab60fa"},
+    {file = "pyproj-3.7.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8c5dcf24ede53d8abab7d8a77f69ff1936c6a8843ef4fcc574646e4be66e5739"},
+    {file = "pyproj-3.7.1-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:3c2e7449840a44ce860d8bea2c6c1c4bc63fa07cba801dcce581d14dcb031a02"},
+    {file = "pyproj-3.7.1-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:0829865c1d3a3543f918b3919dc601eea572d6091c0dd175e1a054db9c109274"},
+    {file = "pyproj-3.7.1-cp311-cp311-win32.whl", hash = "sha256:6181960b4b812e82e588407fe5c9c68ada267c3b084db078f248db5d7f45d18a"},
+    {file = "pyproj-3.7.1-cp311-cp311-win_amd64.whl", hash = "sha256:5ad0ff443a785d84e2b380869fdd82e6bfc11eba6057d25b4409a9bbfa867970"},
+    {file = "pyproj-3.7.1-cp312-cp312-macosx_13_0_x86_64.whl", hash = "sha256:2781029d90df7f8d431e29562a3f2d8eafdf233c4010d6fc0381858dc7373217"},
+    {file = "pyproj-3.7.1-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:d61bf8ab04c73c1da08eedaf21a103b72fa5b0a9b854762905f65ff8b375d394"},
+    {file = "pyproj-3.7.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:04abc517a8555d1b05fcee768db3280143fe42ec39fdd926a2feef31631a1f2f"},
+    {file = "pyproj-3.7.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:084c0a475688f934d386c2ab3b6ce03398a473cd48adfda70d9ab8f87f2394a0"},
+    {file = "pyproj-3.7.1-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:a20727a23b1e49c7dc7fe3c3df8e56a8a7acdade80ac2f5cca29d7ca5564c145"},
+    {file = "pyproj-3.7.1-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:bf84d766646f1ebd706d883755df4370aaf02b48187cedaa7e4239f16bc8213d"},
+    {file = "pyproj-3.7.1-cp312-cp312-win32.whl", hash = "sha256:5f0da2711364d7cb9f115b52289d4a9b61e8bca0da57f44a3a9d6fc9bdeb7274"},
+    {file = "pyproj-3.7.1-cp312-cp312-win_amd64.whl", hash = "sha256:aee664a9d806612af30a19dba49e55a7a78ebfec3e9d198f6a6176e1d140ec98"},
+    {file = "pyproj-3.7.1-cp313-cp313-macosx_13_0_x86_64.whl", hash = "sha256:5f8d02ef4431dee414d1753d13fa82a21a2f61494737b5f642ea668d76164d6d"},
+    {file = "pyproj-3.7.1-cp313-cp313-macosx_14_0_arm64.whl", hash = "sha256:0b853ae99bda66cbe24b4ccfe26d70601d84375940a47f553413d9df570065e0"},
+    {file = "pyproj-3.7.1-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:83db380c52087f9e9bdd8a527943b2e7324f275881125e39475c4f9277bdeec4"},
+    {file = "pyproj-3.7.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b35ed213892e211a3ce2bea002aa1183e1a2a9b79e51bb3c6b15549a831ae528"},
+    {file = "pyproj-3.7.1-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:a8b15b0463d1303bab113d1a6af2860a0d79013c3a66fcc5475ce26ef717fd4f"},
+    {file = "pyproj-3.7.1-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:87229e42b75e89f4dad6459200f92988c5998dfb093c7c631fb48524c86cd5dc"},
+    {file = "pyproj-3.7.1-cp313-cp313-win32.whl", hash = "sha256:d666c3a3faaf3b1d7fc4a544059c4eab9d06f84a604b070b7aa2f318e227798e"},
+    {file = "pyproj-3.7.1-cp313-cp313-win_amd64.whl", hash = "sha256:d3caac7473be22b6d6e102dde6c46de73b96bc98334e577dfaee9886f102ea2e"},
+    {file = "pyproj-3.7.1.tar.gz", hash = "sha256:60d72facd7b6b79853f19744779abcd3f804c4e0d4fa8815469db20c9f640a47"},
 ]
 
 [package.dependencies]
@@ -1829,8 +1837,8 @@ rdflib = "^7.0.0"
 [package.source]
 type = "git"
 url = "https://github.com/Kurrawong/rdf2geojson.git"
-reference = "v0.4.2"
-resolved_reference = "5e9f80ad83aebdab3e1be3923da0a0f05281745a"
+reference = "43fd7ecc96e806e87ba8c495cf28dd866c35d480"
+resolved_reference = "43fd7ecc96e806e87ba8c495cf28dd866c35d480"
 
 [[package]]
 name = "rdflib"
@@ -2294,4 +2302,4 @@ server = ["uvicorn"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "0ae871de2d2ed1a224b21c1c3c1f7c4c555bb618948a2e2bb6c456e4d6b77e84"
+content-hash = "04b77a82e34b0e16a2b24a131cfe2eeea61efcbb138095307c567fe84eb811fd"

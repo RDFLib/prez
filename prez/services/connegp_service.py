@@ -310,7 +310,7 @@ class NegotiatedPMTs(BaseModel):
                 IF(?format="image/apng", "0.7", ""))) AS ?req_format)
         """
         if not self.requested_mediatypes:
-            return ""
+            return "BIND(false as ?req_format)"
         line_join = "," + "\n"
         ifs = (
             f"BIND(\n"
