@@ -29,7 +29,7 @@ from prez.exceptions.model_exceptions import (
     NoEndpointNodeshapeException,
     NoProfilesException,
     PrefixNotBoundException,
-    URINotFoundException,
+    URINotFoundException
 )
 from prez.middleware import create_validate_header_middleware
 from prez.repositories import OxrdflibRepo, PyoxigraphRepo, RemoteSparqlRepo
@@ -59,7 +59,7 @@ from prez.services.exception_catchers import (
     catch_no_endpoint_nodeshape_exception,
     catch_no_profiles_exception,
     catch_prefix_not_found_exception,
-    catch_uri_not_found_exception,
+    catch_uri_not_found_exception, catch_missing_filter_query_param,
 )
 from prez.services.generate_profiles import create_profiles_graph
 from prez.services.prez_logging import setup_logger
@@ -182,6 +182,7 @@ def assemble_app(
             NoProfilesException: catch_no_profiles_exception,
             InvalidSPARQLQueryException: catch_invalid_sparql_query,
             NoEndpointNodeshapeException: catch_no_endpoint_nodeshape_exception,
+            MissingFilterQueryError: catch_missing_filter_query_param
         },
         **kwargs
     )

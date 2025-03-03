@@ -28,7 +28,7 @@ from prez.enums import (
 from prez.enums import SearchMethod
 from prez.exceptions.model_exceptions import (
     NoEndpointNodeshapeException,
-    URINotFoundException,
+    URINotFoundException, MissingFilterQueryError,
 )
 from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import ALTREXT, EP, OGCE, OGCFEAT, ONT
@@ -146,6 +146,29 @@ async def load_annotations_data_to_oxigraph(store: Store):
     store.load(file_bytes, "application/n-triples")
 
 
+
+async def get_endpoint_uri_type(
+    request: Request,
+    system_repo: Repo = Depends(get_system_repo),
+) -> tuple[URIRef, URIRef]:
+    """
+    Returns the URI of the endpoint and its type (ObjectEndpoint or ListingEndpoint)
+    """
+    endpoint_uri = URIRef(request.scope.get("route").name)
+    ep_type_fs = await get_classes_single(endpoint_uri, system_repo)
+    ep_types = list(ep_type_fs)
+
+    # Iterate over each item in ep_types
+    for ep_type in ep_types:
+        # Check if the current ep_type is either ObjectEndpoint or ListingEndpoint
+        if ep_type in [ONT.ObjectEndpoint, ONT.ListingEndpoint]:
+            return endpoint_uri, ep_type
+    raise ValueError(
+        "Endpoint must be declared as either a 'https://prez.dev/ont/ObjectEndpoint' or a "
+        "'https://prez.dev/ont/ListingEndpoint' in order for the appropriate profile to be determined."
+    )
+
+
 async def cql_post_parser_dependency(
     request: Request,
     queryable_props: list = Depends(get_queryable_props),
@@ -170,6 +193,7 @@ async def cql_post_parser_dependency(
 async def cql_get_parser_dependency(
     query_params: QueryParams = Depends(),
     queryable_props: list = Depends(get_queryable_props),
+    endpoint_uri_type: str = Depends(get_endpoint_uri_type),
 ) -> CQLParser:
     if query_params._filter:
         try:
@@ -188,6 +212,9 @@ async def cql_get_parser_dependency(
             raise HTTPException(
                 status_code=400, detail="Invalid CQL format: Parsing failed."
             )
+    elif endpoint_uri_type[0] == URIRef('https://prez.dev/endpoint/extended-ogc-records/cql-get'):
+        raise MissingFilterQueryError("filter query parameter with a valid CQL JSON expression must be provided when "
+                                      "using the /cql endpoint.")
 
 
 async def get_jena_fts_shacl_predicates(system_repo: Repo):
@@ -268,28 +295,6 @@ async def generate_search_query(
             )
         logger.debug(f"Generated search query: {search_query}")
         return search_query
-
-
-async def get_endpoint_uri_type(
-    request: Request,
-    system_repo: Repo = Depends(get_system_repo),
-) -> tuple[URIRef, URIRef]:
-    """
-    Returns the URI of the endpoint and its type (ObjectEndpoint or ListingEndpoint)
-    """
-    endpoint_uri = URIRef(request.scope.get("route").name)
-    ep_type_fs = await get_classes_single(endpoint_uri, system_repo)
-    ep_types = list(ep_type_fs)
-
-    # Iterate over each item in ep_types
-    for ep_type in ep_types:
-        # Check if the current ep_type is either ObjectEndpoint or ListingEndpoint
-        if ep_type in [ONT.ObjectEndpoint, ONT.ListingEndpoint]:
-            return endpoint_uri, ep_type
-    raise ValueError(
-        "Endpoint must be declared as either a 'https://prez.dev/ont/ObjectEndpoint' or a "
-        "'https://prez.dev/ont/ListingEndpoint' in order for the appropriate profile to be determined."
-    )
 
 
 async def generate_concept_hierarchy_query(

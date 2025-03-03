@@ -75,3 +75,12 @@ class NoEndpointNodeshapeException(Exception):
             f"{hierarchy_level}, and parent URI"
         )
         super().__init__(self.message)
+
+
+class MissingFilterQueryError(ValueError):
+    """
+    Raised when a filter query is missing.
+    """
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
