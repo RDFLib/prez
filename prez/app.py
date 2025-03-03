@@ -155,6 +155,7 @@ def assemble_app(
     **kwargs
 ):
     _settings = local_settings if local_settings is not None else settings
+    actual_root_path = root_path or _settings.root_path or ""
 
     if title is None:
         title = _settings.prez_title
@@ -165,7 +166,7 @@ def assemble_app(
     contact = _settings.prez_contact
 
     app = FastAPI(
-        root_path=root_path,
+        root_path=actual_root_path,
         title=title,
         version=version,
         description=description,

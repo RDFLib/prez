@@ -98,6 +98,7 @@ class Settings(BaseSettings):
     required_header: dict[str, str] | None = None
     proxy_headers: bool = False
     forwarded_allow_ips: str = "127.0.0.1"
+    root_path: str = ""
 
     @field_validator("prez_version")
     @classmethod
