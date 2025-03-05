@@ -29,7 +29,7 @@ from prez.exceptions.model_exceptions import (
     NoEndpointNodeshapeException,
     NoProfilesException,
     PrefixNotBoundException,
-    URINotFoundException
+    URINotFoundException, MissingFilterQueryError
 )
 from prez.middleware import create_validate_header_middleware
 from prez.repositories import OxrdflibRepo, PyoxigraphRepo, RemoteSparqlRepo

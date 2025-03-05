@@ -8,7 +8,7 @@ from prez.exceptions.model_exceptions import (
     NoEndpointNodeshapeException,
     NoProfilesException,
     PrefixNotBoundException,
-    URINotFoundException
+    URINotFoundException, MissingFilterQueryError
 )
 
 
