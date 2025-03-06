@@ -5,11 +5,11 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import toml
 from pydantic import field_validator
 from pydantic_settings import BaseSettings
-from rdflib import DCTERMS, RDFS, SDO, URIRef
+from rdflib import DCTERMS, RDFS, SDO, URIRef, RDF, SOSA
 from rdflib.namespace import SKOS
 
 from prez.enums import SearchMethod
-from prez.reference_data.prez_ns import EP, REG
+from prez.reference_data.prez_ns import EP, REG, TERN
 
 
 class Settings(BaseSettings):
@@ -52,6 +52,11 @@ class Settings(BaseSettings):
         SDO.description,
     ]
     provenance_predicates: list = [DCTERMS.provenance]
+    value_predicates: list = [
+        SOSA.hasSimpleResult,
+        TERN.hasSimpleValue,
+        RDF.value
+    ]
     search_predicates: list = [
         RDFS.label,
         SKOS.prefLabel,
@@ -93,6 +98,7 @@ class Settings(BaseSettings):
     required_header: dict[str, str] | None = None
     proxy_headers: bool = False
     forwarded_allow_ips: str = "127.0.0.1"
+    root_path: str = ""
 
     @field_validator("prez_version")
     @classmethod

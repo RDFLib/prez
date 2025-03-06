@@ -23,13 +23,6 @@ prez:OGCFeaturesProfile a prof:Profile , prez:IndexProfile ;
                 geo:FeatureCollection,
                 prez:CQLObjectList,
                 prez:SearchResult
-        ],
-        [
-            a sh:NodeShape ;
-            altr-ext:hasDefaultProfile prez:OGCFeaturesAllProps ;
-            sh:targetClass
-                geo:Feature ,
-                rdf:Resource
         ] ;
     altr-ext:hasResourceFormat
         "application/json",

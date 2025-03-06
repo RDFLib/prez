@@ -29,14 +29,14 @@ class URINotFoundException(Exception):
         super().__init__(self.message)
 
 
-class PrefixNotFoundException(Exception):
+class PrefixNotBoundException(Exception):
     """
-    Raised when a requested prefix is not found in the triplestore.
+    Raised when a requested prefix is not bound in Prez's namespace manager.
     """
 
     def __init__(self, prefix: str):
         self.message = (
-            f'Prefix "{prefix}" not found at endpoint {settings.sparql_endpoint}.'
+            f'Prefix "{prefix}" not bound to a namespace in Prez.'
         )
         super().__init__(self.message)
 

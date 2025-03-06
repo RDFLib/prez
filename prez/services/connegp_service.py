@@ -8,6 +8,7 @@ from rdflib import SH, Graph, Namespace, URIRef
 
 from prez.cache import endpoints_graph_cache
 from prez.config import settings
+from prez.exceptions.model_exceptions import PrefixNotBoundException
 from prez.repositories.base import Repo
 from prez.services.curie_functions import get_curie_id_for_uri, get_uri_for_curie_id
 
@@ -145,7 +146,7 @@ class NegotiatedPMTs(BaseModel):
                     result = await get_uri_for_curie_id(parts[0])
                     result = str(result)
                     parts[0] = "<" + result + ">"
-                except ValueError as e:
+                except PrefixNotBoundException:
                     parts[0] = (
                         ""  # if curie resolution failed, then the profile is invalid
                     )
@@ -285,7 +286,7 @@ class NegotiatedPMTs(BaseModel):
                        altr-ext:hasResourceFormat ?format ;
                        dcterms:title ?title .\
               {f'?profile a {profile_class.n3()} .'}
-              {f'BIND(?profile={requested_profile} as ?req_profile)' if requested_profile else ''}
+              {f'BIND(?profile={requested_profile} as ?req_profile)' if requested_profile else 'BIND(false as ?req_profile)'}
               BIND(EXISTS {{ ?shape sh:targetClass ?class ;
                                    altr-ext:hasDefaultProfile ?profile }} AS ?def_profile)
               {self._generate_mediatype_if_statements()}
@@ -309,7 +310,7 @@ class NegotiatedPMTs(BaseModel):
                 IF(?format="image/apng", "0.7", ""))) AS ?req_format)
         """
         if not self.requested_mediatypes:
-            return ""
+            return "BIND(false as ?req_format)"
         line_join = "," + "\n"
         ifs = (
             f"BIND(\n"
@@ -333,6 +334,7 @@ class NegotiatedPMTs(BaseModel):
                     item["class"]["value"],
                     item["distance"]["value"],
                     item["def_profile"]["value"],
+                    item["req_profile"]["value"],
                     item["format"]["value"],
                     item["req_format"]["value"],
                     item["def_format"]["value"],
@@ -348,6 +350,7 @@ class NegotiatedPMTs(BaseModel):
                 "Class",
                 "Distance",
                 "Default Profile",
+                "Requested Profile",
                 "Format",
                 "Requested Format",
                 "Default Format",

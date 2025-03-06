@@ -25,8 +25,8 @@ from prez.exceptions.model_exceptions import (
     InvalidSPARQLQueryException,
     NoEndpointNodeshapeException,
     NoProfilesException,
-    PrefixNotFoundException,
-    URINotFoundException, MissingFilterQueryError,
+    PrefixNotBoundException,
+    URINotFoundException
 )
 from prez.models.ogc_features import OGCFeaturesLandingPage, generate_landing_page_links
 from prez.models.query_params import QueryParams
@@ -62,7 +62,7 @@ features_subapi = FastAPI(
         NoProfilesException: catch_no_profiles_exception,
         ClassNotFoundException: catch_class_not_found_exception,
         URINotFoundException: catch_uri_not_found_exception,
-        PrefixNotFoundException: catch_prefix_not_found_exception,
+        PrefixNotBoundException: catch_prefix_not_found_exception,
         InvalidSPARQLQueryException: catch_invalid_sparql_query,
         NoEndpointNodeshapeException: catch_no_endpoint_nodeshape_exception,
     },
@@ -193,6 +193,7 @@ async def listings_with_feature_collection(
 async def objects(
     template_queries: Optional[str] = Depends(get_template_queries),
     mediatype: str = Depends(get_ogc_features_mediatype),
+    profile_nodeshape: NodeShape = Depends(get_profile_nodeshape),
     url: str = Depends(get_url),
     path_params: dict = Depends(get_ogc_features_path_params),
     data_repo: Repo = Depends(get_data_repo),
@@ -202,6 +203,7 @@ async def objects(
         content, headers = await ogc_features_object_function(
             template_queries,
             mediatype,
+            profile_nodeshape,
             url,
             data_repo,
             system_repo,

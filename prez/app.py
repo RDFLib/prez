@@ -28,8 +28,8 @@ from prez.exceptions.model_exceptions import (
     InvalidSPARQLQueryException,
     NoEndpointNodeshapeException,
     NoProfilesException,
-    PrefixNotFoundException,
-    URINotFoundException, MissingFilterQueryError,
+    PrefixNotBoundException,
+    URINotFoundException, MissingFilterQueryError
 )
 from prez.middleware import create_validate_header_middleware
 from prez.repositories import OxrdflibRepo, PyoxigraphRepo, RemoteSparqlRepo
@@ -155,6 +155,7 @@ def assemble_app(
     **kwargs
 ):
     _settings = local_settings if local_settings is not None else settings
+    actual_root_path = root_path or _settings.root_path or ""
 
     if title is None:
         title = _settings.prez_title
@@ -165,7 +166,7 @@ def assemble_app(
     contact = _settings.prez_contact
 
     app = FastAPI(
-        root_path=root_path,
+        root_path=actual_root_path,
         title=title,
         version=version,
         description=description,
@@ -177,7 +178,7 @@ def assemble_app(
             500: catch_500,
             ClassNotFoundException: catch_class_not_found_exception,
             URINotFoundException: catch_uri_not_found_exception,
-            PrefixNotFoundException: catch_prefix_not_found_exception,
+            PrefixNotBoundException: catch_prefix_not_found_exception,
             NoProfilesException: catch_no_profiles_exception,
             InvalidSPARQLQueryException: catch_invalid_sparql_query,
             NoEndpointNodeshapeException: catch_no_endpoint_nodeshape_exception,

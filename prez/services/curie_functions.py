@@ -8,6 +8,7 @@ from rdflib import URIRef
 
 from prez.cache import prefix_graph
 from prez.config import settings
+from prez.exceptions.model_exceptions import PrefixNotBoundException
 
 log = logging.getLogger(__name__)
 
@@ -111,6 +112,6 @@ async def get_uri_for_curie_id(curie_id: str):
         try:
             uri = prefix_graph.namespace_manager.expand_curie(curie)
         except ValueError:
-            raise
+            raise PrefixNotBoundException(prefix=curie.split(':')[0])
         await curie_cache.set(curie_id, uri)
         return uri

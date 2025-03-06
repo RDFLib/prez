@@ -23,14 +23,13 @@ from prez.enums import (
     GeoJSONMediaType,
     JSONMediaType,
     NonAnnotatedRDFMediaType,
-    SearchMethod,
-    SPARQLQueryMediaType,
+    SPARQLQueryMediaType, AnnotatedRDFMediaType
 )
+from prez.enums import SearchMethod
 from prez.exceptions.model_exceptions import (
     NoEndpointNodeshapeException,
     URINotFoundException, MissingFilterQueryError,
 )
-from prez.enums import SearchMethod
 from prez.models.query_params import QueryParams
 from prez.reference_data.prez_ns import ALTREXT, EP, OGCE, OGCFEAT, ONT
 from prez.repositories import OxrdflibRepo, PyoxigraphRepo, RemoteSparqlRepo, Repo
@@ -178,7 +177,10 @@ async def cql_post_parser_dependency(
         body = await request.json()
         cql_parser = CQLParser(cql=body, queryable_props=queryable_props)
         cql_parser.generate_jsonld()
-        cql_parser.parse()
+        try:
+            cql_parser.parse()
+        except Exception as e:
+            raise (e.args[0] if e.args else "Error parsing CQL.")
         return cql_parser
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON format.")
@@ -420,7 +422,9 @@ async def get_endpoint_nodeshapes(
         f"path_node_{i + 1}": IRI(value=await get_uri_for_curie_id(value))
         for i, value in enumerate(reversed(path_node_curies))
     }
-    hierarchy_level = int(len(url_path.split("/")) / 2)
+    # A hierarchy level covers a listing and an item endpoint. Path segment maths is: int({2,3}/2) -> 1; int({4,5}/2) -> 2 etc.
+    # For Features API mounted as "features", remove extra level when counting to get correct hierarchy level.
+    hierarchy_level = int(len(url_path.replace("features/collections", "features").split("/")) / 2)
     """
     Determines the relevant nodeshape based on the endpoint, hierarchy level, and parent URI
     """
@@ -599,13 +603,18 @@ async def get_ogc_features_mediatype(
     ]:
         allowed_mts = [
             mt.value
-            for mt in [*NonAnnotatedRDFMediaType, *SPARQLQueryMediaType, *JSONMediaType]
+            for mt in [
+                *AnnotatedRDFMediaType,
+                *NonAnnotatedRDFMediaType,
+                *SPARQLQueryMediaType,
+                *JSONMediaType]
         ]
         default_mt = JSONMediaType.JSON.value
     elif endpoint_uri in [OGCFEAT["feature"], OGCFEAT["features"]]:
         allowed_mts = [
             mt.value
             for mt in [
+                *AnnotatedRDFMediaType,
                 *NonAnnotatedRDFMediaType,
                 *SPARQLQueryMediaType,
                 *GeoJSONMediaType,
@@ -651,6 +660,7 @@ async def get_template_queries(
 async def check_unknown_params(request: Request):
     known_params = {
         "_mediatype",
+        "_profile",
         "page",
         "limit",
         "datetime",
