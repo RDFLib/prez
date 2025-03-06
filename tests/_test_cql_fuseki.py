@@ -60,7 +60,7 @@ def client_fuseki() -> TestClient:
 #     cql_filenames
 # )
 def test_spatial_contains(client_fuseki):
-    file = Path(__file__).parent.parent / "prez/examples/cql/geo_contains.json"
+    file = Path(__file__).parent.parent / "docs/examples/cql/geo_contains.json"
     with file.open() as f:
         cql = json.load(f)
     cql_str = json.dumps(cql)
@@ -72,7 +72,7 @@ def test_spatial_contains(client_fuseki):
 
 
 def test_spatial_contains_filter(client_fuseki):
-    file = Path(__file__).parent.parent / "prez/examples/cql/geo_contains_filter.json"
+    file = Path(__file__).parent.parent / "docs/examples/cql/geo_contains_filter.json"
     with file.open() as f:
         cql = json.load(f)
     cql_str = json.dumps(cql)
@@ -83,7 +83,7 @@ def test_spatial_contains_filter(client_fuseki):
 
 
 def test_spatial_contains_like(client_fuseki):
-    file = Path(__file__).parent.parent / "prez/examples/cql/geo_contains_like.json"
+    file = Path(__file__).parent.parent / "docs/examples/cql/geo_contains_like.json"
     with file.open() as f:
         cql = json.load(f)
     cql_str = json.dumps(cql)
@@ -94,7 +94,7 @@ def test_spatial_contains_like(client_fuseki):
 
 
 def test_spatial_contains_inverse(client_fuseki):
-    file = Path(__file__).parent.parent / "prez/examples/cql/geo_contains_inverse.json"
+    file = Path(__file__).parent.parent / "docs/examples/cql/geo_contains_inverse.json"
     with file.open() as f:
         cql = json.load(f)
     cql_str = json.dumps(cql)

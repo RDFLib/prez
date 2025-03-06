@@ -1,5 +1,5 @@
 {
-    "op": "s_intersects",
+    "op": "s_within",
     "args": [
         {
             "property": "geometry"

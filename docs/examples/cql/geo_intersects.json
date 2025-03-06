@@ -1,5 +1,5 @@
 {
-    "op": "s_disjoint",
+    "op": "s_intersects",
     "args": [
         {
             "property": "geometry"

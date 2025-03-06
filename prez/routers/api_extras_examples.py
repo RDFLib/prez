@@ -3,7 +3,7 @@ from pathlib import Path
 
 responses_json = Path(__file__).parent / "rdf_response_examples.json"
 responses = json.loads(responses_json.read_text())
-cql_json_examples_dir = Path(__file__).parent.parent / "examples/cql"
+cql_json_examples_dir = Path(__file__).parent.parent.parent / "docs/examples/cql"
 cql_examples = {
     file.stem: {"summary": file.stem, "value": json.loads(file.read_text())}
     for file in cql_json_examples_dir.glob("*.json")

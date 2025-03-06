@@ -42,7 +42,7 @@ ex:BDRScientificNameQueryableShape
 It is recommended that templated SPARQL queries are used to periodically update the `sh:in` values, which correspond to enumerations.
 
 When Prez starts, it will query the remote repository (typically a triplestore) for all Queryables.
-It queries for them using a CONSTRUCT query, serializes this as JSON-LD, and does a minimal transformation to produce the OGC Features compliant response. 
+It queries for them using a CONSTRUCT query, serializes this as JSON-LD, and does a minimal transformation to produce the OGC Features compliant response.
 The query is:
 ```
 """
