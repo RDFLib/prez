@@ -1,0 +1,179 @@
+@prefix ex: <http://example.org/> .
+@prefix ont: <https://prez.dev/ont/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix schema: <https://schema.org/> .
+@prefix prez: <https://prez.dev/> .
+
+# The following is a comprehensive example of a custom endpoint definition for Prez
+#
+# It defines four levels of hierachy with listing and object endpoints.
+# See the comments along the way to get an understanding of what each part is doing.
+#
+# The data must be loaded into the <https://prez.dev/SystemGraph> so that Prez will pick it up.
+#
+# The endpoints will be loaded at startup if the CUSTOM_ENDPOINTS environment variable is
+# set to true.
+
+prez:SystemGraph {
+
+    # Custom API Endpoints
+    # ------------------------------------------------------------
+
+    # For each endpoint you msut specify if it is an ont:ListingEndpoint if
+    # the endpoint should return a list of items. Or it can be an ont:ObjectEndpoint
+    # if the endpoint should return the details of a single item.
+
+    ex:catalogs a ont:DynamicEndpoint,
+            ont:ListingEndpoint ;
+        rdfs:label "Catalogs" ;
+        ont:apiPath "/catalogs" ;
+        ont:relevantShapes ex:shape-level-1 .
+
+    ex:catalog a ont:DynamicEndpoint,
+            ont:ObjectEndpoint ;
+        rdfs:label "Catalog" ;
+        ont:apiPath "/catalogs/{catalogId}" ;
+        ont:relevantShapes ex:shape-level-1 .
+
+    ex:schemes a ont:DynamicEndpoint,
+            ont:ListingEndpoint ;
+        rdfs:label "Schemes" ;
+        ont:apiPath "/catalogs/{catalogId}/schemes" ;
+        ont:relevantShapes ex:shape-level-2 .
+
+    ex:scheme a ont:DynamicEndpoint,
+            ont:ObjectEndpoint ;
+        rdfs:label "Scheme" ;
+        ont:apiPath "/catalogs/{catalogId}/schemes/{schemeId}" ;
+        ont:relevantShapes ex:shape-level-2 .
+
+    ex:collections a ont:DynamicEndpoint,
+            ont:ListingEndpoint ;
+        rdfs:label "Collections" ;
+        ont:apiPath "/catalogs/{catalogId}/schemes/{schemeId}/collections" ;
+        ont:relevantShapes ex:shape-level-3 .
+
+    ex:collection a ont:DynamicEndpoint,
+            ont:ObjectEndpoint ;
+        rdfs:label "Collection" ;
+        ont:apiPath "/catalogs/{catalogId}/schemes/{schemeId}/collections/{collectionId}" ;
+        ont:relevantShapes ex:shape-level-3 .
+
+    ex:concepts a ont:DynamicEndpoint,
+            ont:ListingEndpoint ;
+        rdfs:label "Concepts" ;
+        ont:apiPath "/catalogs/{catalogId}/schemes/{schemeId}/collections/{collectionId}/concepts" ;
+        ont:relevantShapes ex:shape-level-4 .
+
+    ex:concept a ont:DynamicEndpoint,
+            ont:ObjectEndpoint ;
+        rdfs:label "Concept" ;
+        ont:apiPath "/catalogs/{catalogId}/schemes/{schemeId}/collections/{collectionId}/concepts/{conceptId}" ;
+        ont:relevantShapes ex:shape-level-4 .
+
+    # Endpoint Shapes
+    # ------------------------------------------------------------
+
+    # sh:targetClass denotes the class(es) of thing to show at the given hierarchy level
+
+    ex:shape-level-1 a sh:NodeShape ;
+        sh:targetClass schema:DataCatalog ;
+        ont:hierarchyLevel 1 .
+
+    # sh:property tells Prez how one level in the hierachy is is related to another.
+    # In this case, level 2 shows Concept Schemes and level 1 shows Catalogs.
+    # The property path below says that a Concept Scheme must be connected to the Catalog
+    # via the schema:hasPart predicate.
+
+    # Noting that the traversal happens from the bottom up so the path is given in that direction.
+
+    ex:shape-level-2 a sh:NodeShape ;
+        sh:property [
+            sh:class schema:DataCatalog ;
+            sh:path [
+                sh:inversePath schema:hasPart
+            ]
+        ] ;
+        sh:targetClass skos:ConceptScheme ;
+        ont:hierarchyLevel 2 .
+
+    # Prez needs to know the full path all the way back to the top of the hierachy
+    # thus, if we are at level 3 in the hierachy, then we need to specify a path from level 3
+    # back to level 2, and a path from level 3 all the way back to level 1.
+    #
+    # in the shape below, we can see that level 3 in the hierachy shows Concepts and Collections
+    # again, this is given by the sh:targetClass property.
+    #
+    # the path from level 3 back to level 2 is given as
+    #
+    #        [
+    #            sh:class skos:ConceptScheme ;
+    #            sh:path skos:inScheme
+    #        ] ;
+    #
+    # which says that the concept or collection must be declared as being skos:inScheme the ConceptScheme.
+    #
+    # the path from level 3 back to level 1 is given as
+    #
+    #        [
+    #            sh:class schema:DataCatalog ;
+    #            sh:path ( skos:inScheme [ sh:inversePath schema:hasPart ] )
+    #        ],
+    #
+    # which builds on the above path using a SHACL sequence path to say that the concept or collection at level 3
+    # must be connected to something on level 2 via the inScheme predicate, and that something must be connected to
+    # a DataCatalog at level 1 via the inverse of hasPart.
+
+    ex:shape-level-3 a sh:NodeShape ;
+        sh:property [
+            sh:class schema:DataCatalog ;
+            sh:path ( skos:inScheme [ sh:inversePath schema:hasPart ] )
+        ],
+        [
+            sh:class skos:ConceptScheme ;
+            sh:path skos:inScheme
+        ] ;
+        sh:targetClass skos:Concept, skos:Collection ;
+        ont:hierarchyLevel 3 .
+
+    # The last shape designates that level 4 should return Concepts only.
+    # You can see that a property path is given to connect the Concept at level 4 back to
+    # level 3, 2, and 1.
+    #
+    # In general, the number of paths given in an endpoint nodeshape will need to be equal to the current
+    # hierachy level - 1.
+
+    ex:shape-level-4 a sh:NodeShape ;
+        sh:property
+        [
+            sh:class schema:DataCatalog ;
+            sh:path ( [ sh:inversePath skos:member ] skos:inScheme [ sh:inversePath schema:hasPart ] )
+        ],
+        [
+            sh:class skos:ConceptScheme ;
+            sh:path ( [ sh:inversePath skos:member ] skos:inScheme )
+        ],
+        [
+            sh:class skos:Collection ;
+            sh:path [ sh:inversePath skos:member ]
+        ] ;
+        sh:targetClass skos:Concept ;
+        ont:hierarchyLevel 4 .
+
+    # If you are familiar with SPARQL sequence paths then it may help to visualiez the above SHACL sequence path
+    # in the equivalant SPARQL form.
+    #
+    # that is to say that the SHACL sequence path
+    #
+    #     sh:path ( [ sh:inversePath skos:member ] skos:inScheme [ sh:inversePath schema:hasPart ] )
+    #
+    # in SPARQL would appear as
+    #
+    #     ?myConcept ^skos:member/skos:inScheme/^schema:hasPart ?dataCatalog
+    #
+    # where ?myConcept is a skos:Concept at level 4, which is related to a schema:DataCatalog at level 1 via
+    # the specified path.
+
+}

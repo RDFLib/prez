@@ -707,35 +707,35 @@ export ENDPOINT_TO_TEMPLATE_QUERY_FILENAME='{"http://www.opengis.net/ogcapi-feat
 
 Prez follows the following logic to determine what information to return, based on a profile, and in what mediatype to return it.
 
-1. Determine the URI for an object or listing of objects:  
+1. Determine the URI for an object or listing of objects:
 
-- For objects:  
-  - Directly supplied through the /object?uri=<abc> query string argument  
-  - From the URL path the object is requested from, for example /catalogs/<abc>. abc is a curie, which is expanded to a URI.  
+- For objects:
+  - Directly supplied through the /object?uri=<abc> query string argument
+  - From the URL path the object is requested from, for example /catalogs/<abc>. abc is a curie, which is expanded to a URI.
 
-2. Get all classes for the object or object listing  
-3. Determine the profile and mediatype to use for the object. This is implemented as a SPARQL query and takes into account:  
-   1. The classes of the object  
-   2. Available profiles and mediatypes  
-   3. Requested profiles and mediatypes  
-   4. Default profiles and mediatypes  
-      The logic used to determine the profile and mediatype is detailed in section x.  
-4. Build a SPARQL query.  
-5. Execute the SPARQL query.  
-6. If the mediatype requested is NOT annotated RDF (`text/anot+turtle`), return the results of 5, else retrieve the annotations:  
-   1. Check Prez cache for annotations  
-   2. For terms without annotations in the cache, query the triplestore for annotations  
-   3. Cache any annotations returned from the triplestore  
-   4. Return the annotations merged with the results of the SPARQL query in step 5.  
+2. Get all classes for the object or object listing
+3. Determine the profile and mediatype to use for the object. This is implemented as a SPARQL query and takes into account:
+   1. The classes of the object
+   2. Available profiles and mediatypes
+   3. Requested profiles and mediatypes
+   4. Default profiles and mediatypes
+      The logic used to determine the profile and mediatype is detailed in section x.
+4. Build a SPARQL query.
+5. Execute the SPARQL query.
+6. If the mediatype requested is NOT annotated RDF (`text/anot+turtle`), return the results of 5, else retrieve the annotations:
+   1. Check Prez cache for annotations
+   2. For terms without annotations in the cache, query the triplestore for annotations
+   3. Cache any annotations returned from the triplestore
+   4. Return the annotations merged with the results of the SPARQL query in step 5.
 
 
 ## Caching
 
 Prez caches the following things using aiocache:
-1. Classes  
-2. Annotations - those predicates listed under `label_predicates`, `description_predicates`, and `provenance_predicates` in the settings.  
-3. Internal links generated for items  
-3. Feature Collection information *at the feature listing endpoint only*. These are cached for 10 minutes only.   
+1. Classes
+2. Annotations - those predicates listed under `label_predicates`, `description_predicates`, and `provenance_predicates` in the settings.
+3. Internal links generated for items
+3. Feature Collection information *at the feature listing endpoint only*. These are cached for 10 minutes only.
 There is no other caching of "instance" data in Prez.
 
 

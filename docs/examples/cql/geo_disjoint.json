@@ -1,5 +1,5 @@
 {
-    "op": "s_within",
+    "op": "s_disjoint",
     "args": [
         {
             "property": "geometry"

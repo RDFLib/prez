@@ -75,7 +75,7 @@ cql_geo_filenames = [
 @pytest.mark.parametrize("cql_geo_filename", cql_geo_filenames)
 def test_intersects_get(client, cql_geo_filename):
     cql_json_path = (
-        Path(__file__).parent.parent / f"prez/examples/cql/{cql_geo_filename}.json"
+        Path(__file__).parent.parent / f"docs/examples/cql/{cql_geo_filename}.json"
     )
     cql_json = json.loads(cql_json_path.read_text())
     query_string = quote_plus(json.dumps(cql_json))
