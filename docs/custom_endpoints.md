@@ -19,7 +19,7 @@ of course the [default endpoint definitions](../prez/reference_data/endpoints/da
 Firstly, refer to the examples above, to get an idea of what an endpoint definition file
 looks like. In particular [this one](./examples/custom_endpoints/example_4_levels.trig)
 
-The definitions are just RDF so can be stored in any RDF serialization format.
+The definitions are just RDF so can be stored in any RDF serialisation format.
 They can be written by hand, and there is also a UI to create them via a form.
 
 The form is sufficient for the simple case, but for more advanced definitions you may
@@ -27,7 +27,7 @@ prefer to write them by hand.
 
 To access the form:
 
-1. Set the CONFIGURATION_MODE environment variable to "true"
+1. Set the `CONFIGURATION_MODE` environment variable to "true"
 2. Start Prez
 3. Go to the `/configure-endpoints` page and complete the form
 4. Save your work
@@ -38,17 +38,15 @@ tell Prez to use it.
 
 ## using Custom Endpoint definitions
 
-To set up custom endpoints:
+Custom endpoints are defined in RDF. Prez detects them in a specific location in the codebase (useful for development, where the Prez git repo has been cloned), or can retrieve them from a remote repository (useful for production, or when using the docker image). To set up Prez to read custom endpoints using the first method, where the Prez repo has been cloned:
 
-If you cannot add data to the SPARQL_ENDPOINT
-
-1. Set the CUSTOM_ENDPOINTS environment variable to "true"
-2. Copy your endpoint definition file to `prez/reference_data/endpoints/custom_endpoints`
+1. Set the `CUSTOM_ENDPOINTS` environment variable to "true"
+2. Copy your endpoint definition file to `prez/reference_data/endpoints/custom_endpoints/`
 3. Start / restart Prez. You should see the dynamic endpoints being created in the logs.
 
-If you can add data to the SPARQL_ENDPOINT
+To set up Prez to read custom endpoints from a repository (typically a SPARQL endpoint, but can also be Pyoxigraph reading from a local directory):
 
-1. Set the CUSTOM_ENDPOINTS environment variable to "true"
+1. Set the `CUSTOM_ENDPOINTS` environment variable to "true"
 2. upload your endpoint definition file to the triplestore into the `<https://prez.dev/SystemGraph>` named graph.
 3. Start / restart Prez. You should see the dynamic endpoints being created in the logs.
 
