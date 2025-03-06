@@ -1,4 +1,4 @@
-# Custom Data Endpoint Configuration
+# Custom Endpoints
 
 Prez allows the configuration of custom endpoints.
 
@@ -10,11 +10,10 @@ And then specify which classes these endpoints deliver, and what the RDF relatio
 
 ## Examples
 
-For a fully worked example of a custom endpoint definition see the [examples](./examples/custom_endpoints) and
-of course the [default endpoint definitions](../prez/reference_data/endpoints/data_endpoints_default/default_endpoints.ttl)
+For example custom endpoint definitions see the [examples](./examples/custom_endpoints) and
+of the [defaults](../prez/reference_data/endpoints/data_endpoints_default/default_endpoints.ttl).
 
-## Creating custom endpoint definitions
-
+## Creating custom endpoints
 
 Firstly, refer to the examples above, to get an idea of what an endpoint definition file
 looks like. In particular [this one](./examples/custom_endpoints/example_4_levels.trig)
@@ -27,48 +26,71 @@ prefer to write them by hand.
 
 To access the form:
 
-1. Set the CONFIGURATION_MODE environment variable to "true"
+1. Set the `CONFIGURATION_MODE` environment variable to "true"
 2. Start Prez
 3. Go to the `/configure-endpoints` page and complete the form
 4. Save your work
 5. turn off CONFIGURATION_MODE
 
-Once you have a custom endpoint definition file refer to the next section to see how to
-tell Prez to use it.
+Once you have your endpoint definitions refer to the next section on how to use it.
 
-## using Custom Endpoint definitions
+## Using Custom Endpoints
 
 To set up custom endpoints:
 
-If you cannot add data to the SPARQL_ENDPOINT
+1. Set the `CUSTOM_ENDPOINTS` environment variable to "true"
+2. Update the `ENDPOINT_STRUCTURE` environment variable to reflect the apiPaths you have
+   specified.
 
-1. Set the CUSTOM_ENDPOINTS environment variable to "true"
-2. Copy your endpoint definition file to `prez/reference_data/endpoints/custom_endpoints`
-3. Start / restart Prez. You should see the dynamic endpoints being created in the logs.
+   > For example, if you have defined the following apiPath
+   >
+   > `/books/{bookId}/chapters/{chapterId}/paragraphs/{paragraphId}/sentences/{sentenceId}`
+   >
+   > then you would need to set
+   >
+   > ENDPOINT_STRUCTURE='["books", "chapters", "paragraphs", "sentences"]'
+   >
+   > The default configuration is
+   >
+   > `/catalogs/{catalogId}/collections/{collectionId}/items/{itemId}`
+   >
+   > with
+   >
+   > ENDPOINT_STRUCTURE='["catalogs", "collections", "items"]'
 
-If you can add data to the SPARQL_ENDPOINT
+3. - **If you cannot add data to the SPARQL_ENDPOINT:**
 
-1. Set the CUSTOM_ENDPOINTS environment variable to "true"
-2. upload your endpoint definition file to the triplestore into the `<https://prez.dev/SystemGraph>` named graph.
-3. Start / restart Prez. You should see the dynamic endpoints being created in the logs.
+     Copy the endpoint definition file to `prez/reference_data/endpoints/custom_endpoints/myDefinitionFile.ttl`
+
+   - **If you can:**
+
+     Add your endpoint definitions to the triplestore under the `<https://prez.dev/SystemGraph>` named graph.
+
+4. Start / restart Prez. You should see the custom endpoints being created in the logs.
 
 ## Limitations
 
 The following limitations apply at present:
 
-- The endpoint structure must be specified in the config to match what is input through the form.
-  related to this:
-- Only one route can be specified (though multiple class hierarchies which use that one route can be specified)
-  i.e. you can specify
-  `/catalogs/{catalogId}/products/{productId}`
-  but not
-  `/catalogs/{catalogId}/products/{productId}`
-  and
-  `/datasets/{datasetId}/items/{itemsId}
-  on the one prez instance.
-- This limitation is only due to link generation, which looks up the (currently) single endpoint structure variable in the config file.
-- This should be resolvable with a small amount of work. At link generation time, an endpoint nodeshape is in context, and endpoint nodeshapes are mapped to a route structure.
+- Only one route can be specified
 
-- The number of hierarchy levels within a route must be two or three (i.e. 2 or 3 levels of classes = 4-6 listing/object endpoints)
-  - The lower limit of two is because prez uses the relationships between classes to identify which objects to list. A single level of hierarchy has no reference to another level. A small amount of dev work would resolve this. The endpoint nodeshapes can be specified in the case of N=1 to not look for relationships to other classes.
-  - The higher limit of three is because the SHACL parsing is not completely recursive. It could be manually extended to N levels, however it would be better to write a general SHACL parsing library.
+  i.e. you can specify
+
+  `/catalogs/{catalogId}/products/{productId}`
+
+  but not
+
+  `/catalogs/{catalogId}/products/{productId}` and
+  `/datasets/{datasetId}/items/{itemsId}`
+
+- The number of hierarchy levels within a route must be two or three
+
+  - The lower limit of two is because prez uses the relationships between classes
+    to identify which objects to list. A single level of hierarchy has no reference
+    to another level. A small amount of dev work would resolve this.
+    The endpoint nodeshapes can be specified in the case of N=1 to not look for
+    relationships to other classes.
+
+  - The higher limit of three is because the SHACL parsing is not completely recursive.
+    It could be manually extended to N levels, however it would be better to write
+    a general SHACL parsing library.
