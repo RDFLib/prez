@@ -27,12 +27,12 @@ def test_simple_path():
         uri=path_bn, graph=g, kind="profile", focus_node=Var(value="focus_node")
     )
     assert (
-        TriplesSameSubjectPath.from_spo(
-            subject=Var(value="focus_node"),
-            predicate=IRI(value=RDF.type),
-            object=Var(value="prof_1_node_1"),
-        )
-        in ps.tssp_list
+            TriplesSameSubjectPath.from_spo(
+                subject=Var(value="focus_node"),
+                predicate=IRI(value=RDF.type),
+                object=Var(value="prof_1_node_1"),
+            )
+            in ps.tssp_list
     )
 
 
@@ -50,20 +50,20 @@ def test_sequence_path():
         uri=path_bn, graph=g, kind="profile", focus_node=Var(value="focus_node")
     )
     assert (
-        TriplesSameSubjectPath.from_spo(
-            subject=Var(value="focus_node"),
-            predicate=IRI(value=PROV.qualifiedDerivation),
-            object=Var(value="prof_1_node_1"),
-        )
-        in ps.tssp_list
+            TriplesSameSubjectPath.from_spo(
+                subject=Var(value="focus_node"),
+                predicate=IRI(value=PROV.qualifiedDerivation),
+                object=Var(value="prof_1_node_1"),
+            )
+            in ps.tssp_list
     )
     assert (
-        TriplesSameSubjectPath.from_spo(
-            subject=Var(value="prof_1_node_1"),
-            predicate=IRI(value=PROV.hadRole),
-            object=Var(value="prof_1_node_2"),
-        )
-        in ps.tssp_list
+            TriplesSameSubjectPath.from_spo(
+                subject=Var(value="prof_1_node_1"),
+                predicate=IRI(value=PROV.hadRole),
+                object=Var(value="prof_1_node_2"),
+            )
+            in ps.tssp_list
     )
 
 
@@ -94,52 +94,52 @@ def test_union():
         uri=path_bn, graph=g, kind="profile", focus_node=Var(value="focus_node")
     )
     assert (
-        TriplesSameSubject.from_spo(
-            subject=Var(value="focus_node"),
-            predicate=IRI(value=PROV.qualifiedDerivation),
-            object=Var(value="prof_1_node_3"),
-        )
-        in ps.tss_list
+            TriplesSameSubject.from_spo(
+                subject=Var(value="focus_node"),
+                predicate=IRI(value=PROV.qualifiedDerivation),
+                object=Var(value="prof_1_node_3"),
+            )
+            in ps.tss_list
     )
     assert (
-        TriplesSameSubject.from_spo(
-            subject=Var(value="prof_1_node_3"),
-            predicate=IRI(value=PROV.hadRole),
-            object=Var(value="prof_1_node_4"),
-        )
-        in ps.tss_list
+            TriplesSameSubject.from_spo(
+                subject=Var(value="prof_1_node_3"),
+                predicate=IRI(value=PROV.hadRole),
+                object=Var(value="prof_1_node_4"),
+            )
+            in ps.tss_list
     )
     assert (
-        TriplesSameSubject.from_spo(
-            subject=Var(value="focus_node"),
-            predicate=IRI(value=PROV.qualifiedDerivation),
-            object=Var(value="prof_1_node_5"),
-        )
-        in ps.tss_list
+            TriplesSameSubject.from_spo(
+                subject=Var(value="focus_node"),
+                predicate=IRI(value=PROV.qualifiedDerivation),
+                object=Var(value="prof_1_node_5"),
+            )
+            in ps.tss_list
     )
     assert (
-        TriplesSameSubject.from_spo(
-            subject=Var(value="prof_1_node_5"),
-            predicate=IRI(value=PROV.entity),
-            object=Var(value="prof_1_node_6"),
-        )
-        in ps.tss_list
+            TriplesSameSubject.from_spo(
+                subject=Var(value="prof_1_node_5"),
+                predicate=IRI(value=PROV.entity),
+                object=Var(value="prof_1_node_6"),
+            )
+            in ps.tss_list
     )
     assert (
-        TriplesSameSubject.from_spo(
-            subject=Var(value="focus_node"),
-            predicate=IRI(value=DCTERMS.publisher),
-            object=Var(value="prof_1_node_1"),
-        )
-        in ps.tss_list
+            TriplesSameSubject.from_spo(
+                subject=Var(value="focus_node"),
+                predicate=IRI(value=DCTERMS.publisher),
+                object=Var(value="prof_1_node_1"),
+            )
+            in ps.tss_list
     )
     assert (
-        TriplesSameSubject.from_spo(
-            subject=Var(value="focus_node"),
-            predicate=IRI(value=REG.status),
-            object=Var(value="prof_1_node_2"),
-        )
-        in ps.tss_list
+            TriplesSameSubject.from_spo(
+                subject=Var(value="focus_node"),
+                predicate=IRI(value=REG.status),
+                object=Var(value="prof_1_node_2"),
+            )
+            in ps.tss_list
     )
 
 
@@ -211,12 +211,12 @@ def test_excluded_props():
         uri=path_bn, graph=g, kind="profile", focus_node=Var(value="focus_node")
     )
     assert (
-        TriplesSameSubjectPath.from_spo(
-            subject=Var(value="focus_node"),
-            predicate=Var(value="preds"),
-            object=Var(value="excluded_pred_vals"),
-        )
-        in ps.tssp_list
+            TriplesSameSubjectPath.from_spo(
+                subject=Var(value="focus_node"),
+                predicate=Var(value="preds"),
+                object=Var(value="excluded_pred_vals"),
+            )
+            in ps.tssp_list
     )
     assert isinstance(ps.gpnt_list[0].content, Filter)
 
@@ -225,16 +225,16 @@ def test_excluded_props():
     ["cardinality_type", "expected_result"],
     [
         (
-            "sh:zeroOrMorePath",
-            "?focus_node <http://purl.org/dc/terms/publisher>* ?prof_1_node_1",
+                "sh:zeroOrMorePath",
+                "?focus_node <http://purl.org/dc/terms/publisher>* ?prof_1_node_1",
         ),
         (
-            "sh:oneOrMorePath",
-            "?focus_node <http://purl.org/dc/terms/publisher>+ ?prof_1_node_1",
+                "sh:oneOrMorePath",
+                "?focus_node <http://purl.org/dc/terms/publisher>+ ?prof_1_node_1",
         ),
         (
-            "sh:zeroOrOnePath",
-            "?focus_node <http://purl.org/dc/terms/publisher>? ?prof_1_node_1",
+                "sh:zeroOrOnePath",
+                "?focus_node <http://purl.org/dc/terms/publisher>? ?prof_1_node_1",
         ),
     ],
 )
@@ -256,3 +256,101 @@ def test_cardinality_props(cardinality_type, expected_result):
         uri=path_bn, graph=g, kind="profile", focus_node=Var(value="focus_node")
     )
     assert ps.tssp_list[0].to_string() == expected_result
+
+
+def test_bnode_depth_union():
+    g = Graph().parse(
+        data="""
+    PREFIX dcterms: <http://purl.org/dc/terms/>
+    PREFIX reg: <http://purl.org/linked-data/registry#>
+    PREFIX sh: <http://www.w3.org/ns/shacl#>
+    PREFIX prov: <http://www.w3.org/ns/prov#>
+    PREFIX shext: <http://example.com/shacl-extension#>
+
+    <http://example-profile> sh:property [
+        sh:path (
+            sh:union (
+              [ shext:bNodeDepth "2" ]
+              dcterms:publisher
+            )
+          )
+        ]
+    .
+    """)
+    path_bn = g.value(subject=URIRef("http://example-profile"), predicate=SH.property)
+    ps = PropertyShape(
+        uri=path_bn, graph=g, kind="profile", focus_node=Var(value="focus_node")
+    )
+    expected_output = "".join("""
+    {
+        ?focus_node <http://purl.org/dc/terms/publisher> ?prof_1_node_1
+    }
+    UNION
+    {
+        ?focus_node ?bn_p_1 ?bn_o_1
+        FILTER isBLANK(?bn_o_1)
+    }
+    UNION
+    {
+        ?bn_o_1 ?bn_p_2 ?bn_o_2 .
+        ?focus_node ?bn_p_1 ?bn_o_1
+        FILTER isBLANK(?bn_o_1)
+        FILTER isBLANK(?bn_o_2)
+    }""".split())
+    actual_output = "".join(ps.gpnt_list[0].to_string().split())
+    assert actual_output == expected_output
+
+
+def test_bnode_depth_direct():
+    g = Graph().parse(
+        data="""
+    PREFIX dcterms: <http://purl.org/dc/terms/>
+    PREFIX reg: <http://purl.org/linked-data/registry#>
+    PREFIX sh: <http://www.w3.org/ns/shacl#>
+    PREFIX prov: <http://www.w3.org/ns/prov#>
+    PREFIX shext: <http://example.com/shacl-extension#>
+
+    <http://example-profile> sh:property [
+        sh:path [ shext:bNodeDepth "2" ]
+        ]
+    .
+    """)
+    path_bn = g.value(subject=URIRef("http://example-profile"), predicate=SH.property)
+    ps = PropertyShape(
+        uri=path_bn, graph=g, kind="profile", focus_node=Var(value="focus_node")
+    )
+    expected_output = "".join("""
+    {
+        ?focus_node ?bn_p_1 ?bn_o_1
+        FILTER isBLANK(?bn_o_1)
+    }
+    UNION
+    {
+        ?bn_o_1 ?bn_p_2 ?bn_o_2 .
+        ?focus_node ?bn_p_1 ?bn_o_1
+        FILTER isBLANK(?bn_o_1)
+        FILTER isBLANK(?bn_o_2)
+    }""".split())
+    actual_output = "".join(ps.gpnt_list[0].to_string().split())
+    assert actual_output == expected_output
+
+
+def test_bnode_depth_profile_depth():
+    g = Graph().parse(
+        data="""
+    PREFIX dcterms: <http://purl.org/dc/terms/>
+    PREFIX reg: <http://purl.org/linked-data/registry#>
+    PREFIX sh: <http://www.w3.org/ns/shacl#>
+    PREFIX prov: <http://www.w3.org/ns/prov#>
+    PREFIX shext: <http://example.com/shacl-extension#>
+
+    <http://example-profile> sh:property [
+        sh:path [ shext:bNodeDepth "25" ]
+        ]
+    .
+    """)
+    path_bn = g.value(subject=URIRef("http://example-profile"), predicate=SH.property)
+    ps = PropertyShape(
+        uri=path_bn, graph=g, kind="profile", focus_node=Var(value="focus_node")
+    )
+    # output is extremely long, just attempt to generate the property shape; syntax is tested in two prior tests.

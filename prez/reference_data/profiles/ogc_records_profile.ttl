@@ -105,13 +105,18 @@ prez:OGCItemProfile
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     sh:property
         [
-            sh:path shext:allPredicateValues ;
+            sh:path
+                (
+                    sh:union (
+                                 [ shext:bNodeDepth "2" ]
+                                 shext:allPredicateValues
+                             )
+                )
         ],
         [
             sh:maxCount 0 ;
             sh:path dcterms:hasPart , rdfs:member , skos:member ;
         ] ;
-    shext:bnode-depth 2 ;
     altr-ext:constrainsClass
         dcat:Dataset,
         dcat:Catalog,
@@ -166,11 +171,16 @@ prez:OGCSchemesObjectProfile
     altr-ext:constrainsClass skos:ConceptScheme ;
     sh:property
         [
-            sh:path shext:allPredicateValues
+            sh:path
+                (
+                    sh:union (
+                                 [ shext:bNodeDepth "2" ]
+                                 shext:allPredicateValues
+                             )
+                )
         ],
         [
             sh:maxCount 0 ;
             sh:path skos:hasTopConcept ;
         ] ;
-    shext:bnode-depth 2 ;
 .

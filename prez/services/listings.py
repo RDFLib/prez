@@ -5,20 +5,16 @@ import logging
 
 from fastapi.responses import PlainTextResponse
 from rdf2geojson import convert
-from rdflib import Literal, Graph
+from rdflib import Literal
 from rdflib.namespace import GEO, RDF, Namespace
 from sparql_grammar_pydantic import (
     IRI,
-    Bind,
-    Expression,
-    GraphPatternNotTriples,
-    IRIOrFunction,
-    PrimaryExpression,
     TriplesSameSubject,
     TriplesSameSubjectPath,
     Var,
 )
 
+from prez.config import settings
 from prez.enums import NonAnnotatedRDFMediaType, AnnotatedRDFMediaType
 from prez.reference_data.prez_ns import ALTREXT, OGCFEAT, PREZ
 from prez.renderers.renderer import (
@@ -27,8 +23,6 @@ from prez.renderers.renderer import (
     generate_geojson_extras,
     handle_alt_profile,
     generate_queryables_from_shacl_definition,
-    _add_inbound_triple_pattern_match,
-    _cached_feature_collection_query,
     create_collections_json,
     generate_link_headers,
     get_geojson_int_count,
@@ -73,6 +67,10 @@ async def listing_function(
             pmts.selected["profile"] == ALTREXT["alt-profile"]
     ):  # recalculate the endpoint node shape
         endpoint_nodeshape = await handle_alt_profile(original_endpoint_type, pmts)
+        # set the query repo
+        query_repo = system_repo
+    else:
+        query_repo = data_repo
 
     subselect_kwargs = merge_listing_query_grammar_inputs(
         cql_parser=cql_parser,
@@ -128,12 +126,6 @@ async def listing_function(
         count_query = CountQuery(original_subselect=subselect).to_string()
         queries.append(count_query)
 
-    # TODO absorb this up the top of function
-    if pmts.selected["profile"] == ALTREXT["alt-profile"]:
-        query_repo = system_repo
-    else:
-        query_repo = data_repo
-
     item_graph, _ = await query_repo.send_queries(queries, [])
     if "anot+" in pmts.selected["mediatype"]:
         await add_prez_links(item_graph, query_repo, endpoint_structure)
@@ -188,7 +180,6 @@ async def ogc_features_listing_function(
         construct_tss_list.extend(profile_nodeshape.tss_list)
 
     queries = []
-    fc_item_graph = None
     if endpoint_uri_type[0] in [
         OGCFEAT["queryables-local"],
         OGCFEAT["queryables-global"],
@@ -214,7 +205,7 @@ async def ogc_features_listing_function(
                 TriplesSameSubjectPath.from_spo(*innser_select_triple)
             )
             subselect_kwargs["inner_select_vars"] = [queryable_var]
-            subselect_kwargs["limit"] = 100
+            subselect_kwargs["limit"] = settings.listing_count_limit
             construct_triple = (
                 queryable_var,
                 IRI(value=RDF.type),
@@ -231,6 +222,7 @@ async def ogc_features_listing_function(
         query = PrezQueryConstructor(
             construct_tss_list=construct_tss_list,
             profile_triples=profile_nodeshape.tssp_list,
+            profile_gpnt=profile_nodeshape.gpnt_list,
             **subselect_kwargs,
         )
         queries.append(query.to_string())
@@ -238,10 +230,6 @@ async def ogc_features_listing_function(
         subselect = copy.deepcopy(query.inner_select)
         count_query = CountQuery(original_subselect=subselect).to_string()
     else:  # list items in a Feature Collection
-        # add inbound links - not currently possible via profiles
-        opt_inbound_gpnt = _add_inbound_triple_pattern_match(construct_tss_list)
-        profile_nodeshape.gpnt_list.append(opt_inbound_gpnt)
-
         feature_list_query = PrezQueryConstructor(
             construct_tss_list=construct_tss_list,
             profile_triples=profile_nodeshape.tssp_list,
@@ -254,44 +242,14 @@ async def ogc_features_listing_function(
         subselect = copy.deepcopy(feature_list_query.inner_select)
         count_query = CountQuery(original_subselect=subselect).to_string()
 
-        # Features listing requires CBD of the Feature Collection as well; reuse items profile to get all props/bns to
-        # depth two.
-        gpnt = GraphPatternNotTriples(
-            content=Bind(
-                expression=Expression.from_primary_expression(
-                    PrimaryExpression(
-                        content=IRIOrFunction(iri=IRI(value=collection_uri))
-                    )
-                ),
-                var=Var(value="focus_node"),
-            )
-        )
-        feature_collection_query = PrezQueryConstructor(
-            construct_tss_list=construct_tss_list,
-            profile_triples=profile_nodeshape.tssp_list,
-            profile_gpnt=profile_nodeshape.gpnt_list,
-            inner_select_gpnt=[gpnt],  # BIND(<fc_uri> AS ?focus_node)
-            limit=1,
-            offset=0,
-        ).to_string()
-        # queries.append(feature_collection_query)
-        # run the feature_collection_query by itself with caching as it will be the same for all paginated sets of features
-
-        fc_item_graph = await _cached_feature_collection_query(
-            collection_uri, data_repo, feature_collection_query
-        )
-
     link_headers = None
     if selected_mediatype == "application/sparql-query":
-        # queries_dict = {f"query_{i}": query for i, query in enumerate(queries)}
         # just do the first query for now:
         content = io.BytesIO(queries[0].encode("utf-8"))
-        # content = io.BytesIO(json.dumps(queries_dict).encode("utf-8"))
         return content, link_headers
 
     item_graph, _ = await data_repo.send_queries(queries, [])
-    if fc_item_graph:
-        item_graph += fc_item_graph
+
     if count_query:
         count_g, _ = await data_repo.send_queries([count_query], [])
         if count_g:

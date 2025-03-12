@@ -54,7 +54,15 @@ prez:OGCFeaturesMinimalProps a
         "text/anot+turtle",
         "text/turtle" ;
     sh:property
-        [ sh:path rdf:type ] ;
+        [ sh:path
+                  (
+                      sh:union (
+                                   rdf:type
+                                   ( [ sh:inversePath rdfs:member ] rdf:type )
+                                   ( [ sh:inversePath rdfs:member ] [ sh:inversePath dcterms:isPartOf ] )
+                               )
+                  )
+        ] ;
 .
 
 prez:OGCFeaturesAllProps a
@@ -83,12 +91,14 @@ prez:OGCFeaturesAllProps a
     sh:property [
         sh:path (
             sh:union (
+                     [ shext:bNodeDepth "2" ]
                      shext:allPredicateValues
                      ( geo:hasGeometry geo:asWKT )
+                     ( [ sh:inversePath rdfs:member ] rdf:type )
+                     ( [ sh:inversePath rdfs:member ] [ sh:inversePath dcterms:isPartOf ] )
                    )
           )
         ] ;
-    shext:bnode-depth 2 ;
 .
 
 
