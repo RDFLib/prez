@@ -271,7 +271,6 @@ def test_bnode_depth_union():
         sh:path (
             sh:union (
               [ shext:bNodeDepth "2" ]
-              dcterms:publisher
             )
           )
         ]
@@ -283,17 +282,15 @@ def test_bnode_depth_union():
     )
     expected_output = "".join("""
     {
-        ?focus_node <http://purl.org/dc/terms/publisher> ?prof_1_node_1
-    }
-    UNION
-    {
-        ?focus_node ?bn_p_1 ?bn_o_1
+        ?focus_node ?bn_p_1 ?bn_o_1 .
+        ?bn_o_1 ?bn_p_2 ?bn_o_2
         FILTER isBLANK(?bn_o_1)
     }
     UNION
     {
+        ?focus_node ?bn_p_1 ?bn_o_1 .
         ?bn_o_1 ?bn_p_2 ?bn_o_2 .
-        ?focus_node ?bn_p_1 ?bn_o_1
+        ?bn_o_2 ?bn_p_3 ?bn_o_3
         FILTER isBLANK(?bn_o_1)
         FILTER isBLANK(?bn_o_2)
     }""".split())
@@ -321,13 +318,15 @@ def test_bnode_depth_direct():
     )
     expected_output = "".join("""
     {
-        ?focus_node ?bn_p_1 ?bn_o_1
+        ?focus_node ?bn_p_1 ?bn_o_1 .
+        ?bn_o_1 ?bn_p_2 ?bn_o_2
         FILTER isBLANK(?bn_o_1)
     }
     UNION
     {
+        ?focus_node ?bn_p_1 ?bn_o_1 .
         ?bn_o_1 ?bn_p_2 ?bn_o_2 .
-        ?focus_node ?bn_p_1 ?bn_o_1
+        ?bn_o_2 ?bn_p_3 ?bn_o_3
         FILTER isBLANK(?bn_o_1)
         FILTER isBLANK(?bn_o_2)
     }""".split())

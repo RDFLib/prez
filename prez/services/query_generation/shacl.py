@@ -683,20 +683,19 @@ class PropertyShape(Shape):
             )
 
             # Add the next triple in the chain (except for the first one which was already added)
-            if depth > 1:
-                all_triples.append(
-                    (
-                        Var(value=f"bn_o_{depth - 1}"),
-                        Var(value=f"bn_p_{depth}"),
-                        Var(value=f"bn_o_{depth}"),
-                    )
+            all_triples.append(
+                (
+                    Var(value=f"bn_o_{depth}"),
+                    Var(value=f"bn_p_{depth + 1}"),
+                    Var(value=f"bn_o_{depth + 1}"),
                 )
+            )
 
         # Create Triples Same Subject Path for WHERE clause
-        tssp_list = [TriplesSameSubjectPath.from_spo(*triple) for triple in all_triples]
+        tssp_list = [TriplesSameSubjectPath.from_spo(*triple) for triple in all_triples[::-1]]
 
         # Create Triples Same Subject for CONSTRUCT TRIPLES clause
-        tss_list = [TriplesSameSubject.from_spo(*triple) for triple in all_triples]
+        tss_list = [TriplesSameSubject.from_spo(*triple) for triple in all_triples[::-1]]
         self.tss_list.extend(tss_list)
 
         # Create the group graph pattern with all triples and filters
