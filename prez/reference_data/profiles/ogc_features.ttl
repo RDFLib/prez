@@ -59,7 +59,7 @@ prez:OGCFeaturesMinimalProps a
                       sh:union (
                                    rdf:type
                                    ( [ sh:inversePath rdfs:member ] rdf:type )
-                                   ( [ sh:inversePath rdfs:member ] [ sh:inversePath dcterms:isPartOf ] )
+                                   ( [ sh:inversePath rdfs:member ] dcterms:isPartOf )
                                )
                   )
         ] ;
@@ -95,7 +95,7 @@ prez:OGCFeaturesAllProps a
                      shext:allPredicateValues
                      ( geo:hasGeometry geo:asWKT )
                      ( [ sh:inversePath rdfs:member ] rdf:type )
-                     ( [ sh:inversePath rdfs:member ] [ sh:inversePath dcterms:isPartOf ] )
+                     ( [ sh:inversePath rdfs:member ] dcterms:isPartOf )
                    )
           )
         ] ;
