@@ -22,8 +22,10 @@ async def create_profiles_graph(repo) -> Graph:
         PREFIX prez: <https://prez.dev/>
 
         DESCRIBE ?prof {
+            SELECT DISTINCT ?prof {
             VALUES ?prof_class { prez:ListingProfile prez:ObjectProfile prez:IndexProfile }
             ?prof a ?prof_class
+            }
         }
         """
     g, _ = await repo.send_queries([remote_profiles_query], [])
