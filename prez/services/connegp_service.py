@@ -14,6 +14,11 @@ from prez.services.curie_functions import get_curie_id_for_uri, get_uri_for_curi
 
 log = logging.getLogger(__name__)
 
+# used to reduce the amount of RDF formats "advertised" for OGC Features API links
+MINIMAL_OGC_FEATURES_RDF_FORMATS = [
+    "text/turtle"
+]
+
 RDF_MEDIATYPES = [
     "text/turtle",
     "application/rdf+xml",

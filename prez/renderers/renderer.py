@@ -19,13 +19,6 @@ from rdflib import URIRef
 from rdflib.namespace import GEO, RDF
 from sparql_grammar_pydantic import (
     IRI,
-    GraphPatternNotTriples,
-    GroupGraphPattern,
-    GroupGraphPatternSub,
-    OptionalGraphPattern,
-    TriplesBlock,
-    TriplesSameSubject,
-    TriplesSameSubjectPath,
     Var,
 )
 
@@ -40,7 +33,7 @@ from prez.renderers.csv_renderer import render_csv_dropdown
 from prez.renderers.json_renderer import NotFoundError, render_json_dropdown
 from prez.repositories import Repo
 from prez.services.annotations import get_annotation_properties
-from prez.services.connegp_service import RDF_MEDIATYPES
+from prez.services.connegp_service import RDF_MEDIATYPES, MINIMAL_OGC_FEATURES_RDF_FORMATS
 from prez.services.connegp_service import RDF_SERIALIZER_TYPES_MAP
 from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.query_generation.shacl import NodeShape
@@ -216,7 +209,7 @@ def create_collections_json(
                         rel="items",
                         type=mt,
                     )
-                    for mt in ["application/geo+json", *RDF_MEDIATYPES]
+                    for mt in ["application/geo+json", *MINIMAL_OGC_FEATURES_RDF_FORMATS]
                 ],
             )
         )
