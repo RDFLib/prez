@@ -288,7 +288,9 @@ async def ogc_features_listing_function(
                 count,
             )
             all_links = collections.links
-            for coll in collections.collections:
+            # all_links is used to generate link headers - to minimise the size, only use first 10 feature collections.
+            # this is allowed in the spec: https://docs.ogc.org/is/17-069r4/17-069r4.html#_link_headers
+            for coll in collections.collections[:10]:
                 all_links.extend(coll.links)
             link_headers = generate_link_headers(all_links)
             content = io.BytesIO(
