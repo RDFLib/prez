@@ -76,14 +76,14 @@ def test_union():
     PREFIX prov: <http://www.w3.org/ns/prov#>
 
     <http://example-profile> sh:property [
-        sh:path (
+        sh:path [
             sh:union (
               dcterms:publisher
               reg:status
               ( prov:qualifiedDerivation prov:hadRole )
               ( prov:qualifiedDerivation prov:entity )
             )
-          )
+          ]
         ]
     .
 
@@ -268,11 +268,11 @@ def test_bnode_depth_union():
     PREFIX shext: <http://example.com/shacl-extension#>
 
     <http://example-profile> sh:property [
-        sh:path (
+        sh:path [
             sh:union (
               [ shext:bNodeDepth "2" ]
             )
-          )
+          ]
         ]
     .
     """)

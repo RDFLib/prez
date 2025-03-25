@@ -258,8 +258,8 @@ class PropertyShape(Shape):
 
             bn_pred, bn_obj = pred_objects[0]
 
-            if bn_obj == SH.union:
-                self._process_union(pp, union)
+            if bn_pred == SH.union:
+                self._process_union(bn_obj, union)
             elif bn_pred in PRED_TO_PATH_CLASS:
                 path_class = PRED_TO_PATH_CLASS[bn_pred]
                 if path_class == BNodeDepth:
@@ -271,10 +271,7 @@ class PropertyShape(Shape):
 
     def _process_union(self, pp, union: bool):
         union_list = list(Collection(self.graph, pp))
-        if union_list != [SH.union]:
-            union_list_bnode = union_list[1]
-        union_items = list(Collection(self.graph, union_list_bnode))
-        for item in union_items:
+        for item in union_list:
             self._process_property_path(item, True)
 
     def _process_sequence(self, pp, union: bool):
@@ -413,7 +410,6 @@ class PropertyShape(Shape):
             )
 
         if self.minCount == 0:
-            # triples = self.tssp_list.copy()
             self.gpnt_list.append(
                 GraphPatternNotTriples(
                     content=OptionalGraphPattern(
