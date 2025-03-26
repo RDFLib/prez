@@ -106,12 +106,12 @@ prez:OGCItemProfile
     sh:property
         [
             sh:path
-                (
+                [
                     sh:union (
                                  [ shext:bNodeDepth "2" ]
                                  shext:allPredicateValues
                              )
-                )
+                ]
         ],
         [
             sh:maxCount 0 ;
@@ -143,7 +143,7 @@ prez:OGCSchemesListProfile
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:constrainsClass skos:ConceptScheme ;
     sh:property [
-        sh:path (
+        sh:path [
             sh:union (
                   rdf:type
                   dcterms:publisher
@@ -151,7 +151,7 @@ prez:OGCSchemesListProfile
                   ( prov:qualifiedDerivation prov:hadRole )
                   ( prov:qualifiedDerivation prov:entity )
             )
-        )
+        ]
     ] ;
 .
 
@@ -172,12 +172,12 @@ prez:OGCSchemesObjectProfile
     sh:property
         [
             sh:path
-                (
+                [
                     sh:union (
                                  [ shext:bNodeDepth "2" ]
                                  shext:allPredicateValues
                              )
-                )
+                ]
         ],
         [
             sh:maxCount 0 ;

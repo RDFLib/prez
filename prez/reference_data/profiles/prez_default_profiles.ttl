@@ -58,12 +58,12 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     sh:property
         [
             sh:path
-                (
+                [
                     sh:union (
                                  [ shext:bNodeDepth "2" ]
                                  shext:allPredicateValues
                              )
-                )
+                ]
         ] ;
     .
 
@@ -87,13 +87,13 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
         altr-ext:hasDefaultProfile <https://prez.dev/profile/cqlgeo>
     ] ;
     sh:property [
-        sh:path (
+        sh:path [
             sh:union (
              [ shext:bNodeDepth "2" ]
               shext:allPredicateValues
               ( geo:hasGeometry geo:asWKT )
             )
-          )
+          ]
         ] ;
     .
 
@@ -148,7 +148,7 @@ altr-ext:alt-profile
         rdf:Resource ,
         prof:Profile ;
     sh:property [
-        sh:path (
+        sh:path [
                     sh:union (
                             rdf:type
                             altr-ext:hasResourceFormat
@@ -157,7 +157,7 @@ altr-ext:alt-profile
                             dcterms:title
                             dcterms:identifier
                     )
-                )
+                ]
     ] ;
 .
 
@@ -176,7 +176,7 @@ altr-ext:alt-profile
     altr-ext:constrainsClass
         prof:Profile ;
         sh:property [
-        sh:path (
+        sh:path [
                     sh:union (
                             [ shext:bNodeDepth "25" ]
                             rdf:type
@@ -186,6 +186,6 @@ altr-ext:alt-profile
                             dcterms:title
                             dcterms:identifier
                     )
-                )
+                ]
     ] ;
     .

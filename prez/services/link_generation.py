@@ -35,10 +35,7 @@ async def add_prez_links(
     # get all URIRefs - if Prez can find a class and endpoint for them, an internal link will be generated.
     if uris is None:
         uris = [uri for uri in graph.all_nodes() if isinstance(uri, URIRef)]
-    uri_to_klasses = {}
     t = time.time()
-    # for uri in uris:
-    #     uri_to_klasses[uri] = await get_classes(uri, repo)
     uri_to_klasses = await get_classes(uris, repo)
     log.debug(f"Time taken to get classes: {time.time() - t}")
 
