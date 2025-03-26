@@ -12,9 +12,10 @@ from sparql_grammar_pydantic import (
     SubSelect,
     TriplesBlock,
     TriplesSameSubjectPath,
-    ValuesClause,
     Var,
     WhereClause,
+    GraphPatternNotTriples,
+    InlineData,
 )
 
 log = logging.getLogger(__name__)
@@ -45,20 +46,23 @@ class ClassesSelectQuery(SubSelect):
                             predicate=IRI(value=RDF.type),
                             object=class_var,
                         )
-                    )
-                )
-            )
-        )
-        values_clause = ValuesClause(
-            data_block=DataBlock(
-                block=InlineDataOneVar(
-                    variable=uris_var,
-                    datablockvalues=[DataBlockValue(value=uri) for uri in iris],
+                    ),
+                    graph_patterns_or_triples_blocks=[
+                        GraphPatternNotTriples(
+                            content=InlineData(
+                                data_block=DataBlock(
+                                    block=InlineDataOneVar(
+                                        variable=uris_var,
+                                        datablockvalues=[DataBlockValue(value=uri) for uri in iris],
+                                    )
+                                )
+                            )
+                        )
+                    ]
                 )
             )
         )
         super().__init__(
             select_clause=select_clause,
             where_clause=where_clause,
-            values_clause=values_clause,
         )
