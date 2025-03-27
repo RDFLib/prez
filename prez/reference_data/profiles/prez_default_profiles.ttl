@@ -48,7 +48,7 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     dcterms:identifier "openobj"^^xsd:token ;
     dcterms:description "An open profile for objects which will return all direct properties for a resource." ;
     dcterms:title "Open profile" ;
-    altr-ext:constrainsClass prez:SPARQLQuery , prof:Profile , prez:SearchResult , prez:Object ;
+    altr-ext:constrainsClass prez:SPARQLQuery , prof:Profile , prez:SearchResult , prez:Object , prez:CQLFilterResult ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat "application/ld+json" ,
         "application/anot+ld+json" ,
@@ -83,7 +83,7 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
         "text/turtle" ;
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
-        sh:targetClass rdfs:Resource ;
+        sh:targetClass prez:CQLFilterResult ;
         altr-ext:hasDefaultProfile <https://prez.dev/profile/cqlgeo>
     ] ;
     sh:property [
@@ -108,7 +108,7 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
                              dcat:Catalog ,
                              skos:ConceptScheme ,
                              skos:Collection ,
-                             prez:CQLObjectList ,
+                             prez:CQLFilterResult ,
                              prez:QueryablesList ,
                              prof:Profile ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
