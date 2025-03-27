@@ -127,6 +127,7 @@ class QueryParams:
         mediatype: str = Query(
             default="text/turtle", alias="_mediatype", description="Requested mediatype"
         ),
+        profile: Optional[str] = Query(default=None, alias="_profile", description="Requested profile"),
         page: int = Query(
             default=1, ge=1, description="Page number, must be greater than 0"
         ),
@@ -168,6 +169,7 @@ class QueryParams:
         ),
     ):
         self.q = q
+        self.profile = profile
         self.page = page
         self.limit = limit
         self.bbox = bbox
