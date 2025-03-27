@@ -69,17 +69,17 @@ class ConceptHierarchyQuery(ConstructQuery):
     """
 
     def __init__(
-        self,
-        parent_uri: IRI,
-        parent_child_predicates: tuple[IRI, IRI],
-        limit: int = 10,
-        offset: int = 0,
-        has_children_var: Var = Var(
-            value="hasChildren"
-        ),  # whether the focus nodes have children
-        label_predicate: IRI = IRI(value=SKOS.prefLabel),
-        child_grandchild_predicates: Optional[tuple[IRI, IRI]] = None,
-        label_var=Var(value="label"),
+            self,
+            parent_uri: IRI,
+            parent_child_predicates: tuple[IRI, IRI],
+            limit: int = 10,
+            offset: int = 0,
+            has_children_var: Var = Var(
+                value="hasChildren"
+            ),  # whether the focus nodes have children
+            label_predicate: IRI = IRI(value=SKOS.prefLabel),
+            child_grandchild_predicates: Optional[tuple[IRI, IRI]] = None,
+            label_var=Var(value="label"),
     ):
         if not child_grandchild_predicates:
             child_grandchild_predicates = parent_child_predicates
@@ -216,50 +216,15 @@ class ConceptHierarchyQuery(ConstructQuery):
             )
         )
 
-        ###
-        tb2 = TriplesBlock(
-            triples=TriplesSameSubjectPath(
-                content=(
-                    VarOrTerm(varorterm=focus_node_var),
-                    PropertyListPathNotEmpty(
-                        first_pair=(
-                            VerbPath(
-                                path=SG_Path(
-                                    path_alternative=PathAlternative(
-                                        sequence_paths=[
-                                            PathSequence(
-                                                list_path_elt_or_inverse=[
-                                                    PathEltOrInverse(
-                                                        path_elt=PathElt(
-                                                            path_primary=PathPrimary(
-                                                                value=label_predicate,
-                                                            )
-                                                        )
-                                                    )
-                                                ]
-                                            )
-                                        ]
-                                    )
-                                )
-                            ),
-                            ObjectListPath(
-                                object_paths=[
-                                    ObjectPath(
-                                        graph_node_path=GraphNodePath(
-                                            varorterm_or_triplesnodepath=VarOrTerm(
-                                                varorterm=label_var
-                                            )
-                                        )
-                                    )
-                                ]
-                            ),
-                        )
-                    ),
+        tb2 = TriplesBlock.from_tssp_list(
+            [
+                TriplesSameSubjectPath.from_spo(
+                    Var(value="focus_node"),
+                    label_predicate,
+                    label_var
                 )
-            )
+            ]
         )
-
-        # join the triples blocks
         tb1.triples_block = tb2
 
         sc = SelectClause(
@@ -358,10 +323,8 @@ class ConceptHierarchyQuery(ConstructQuery):
     @property
     def order_by(self):
         return (
-            self.where_clause.group_graph_pattern.content.graph_patterns_or_triples_blocks[
-                0
-            ]
-            .content.group_graph_patterns[0]
-            .content.solution_modifier.order_by.conditions[0]
-            .var
+            self.where_clause.group_graph_pattern.content.graph_patterns_or_triples_blocks[0]
+            .content.group_graph_patterns[0].content.where_clause.group_graph_pattern.content.
+            graph_patterns_or_triples_blocks[0].triples_block.triples.content[1].first_pair[0].path.path_alternative.
+            sequence_paths[0].list_path_elt_or_inverse[0].path_elt.path_primary.value
         )
