@@ -93,10 +93,12 @@ def test_basic_listing():
         ],
         limit=10,
         offset=0,
-        order_by=Var(value="label"),
+        order_by=IRI(value=RDFS.label),
         order_by_direction="ASC",
     )
-    assert test
+    query_string = test.to_string()
+    assert "?focus_node <http://www.w3.org/2000/01/rdf-schema#label> ?order_by_val" in query_string
+    assert "ORDER BY ASC( ?order_by_val )" in query_string
 
 
 def test_search_query_regex():
