@@ -33,14 +33,13 @@ prez:OGCRecordsProfile
         [
             a sh:NodeShape ;
             sh:targetClass
-                dcat:Catalog,
-                dcat:Resource,
-                skos:Concept
-            ,
-                skos:Collection,
-                rdf:Resource,
-                prez:SearchResult,
-                prez:CQLObjectList ;
+                dcat:Catalog ,
+                dcat:Resource ,
+                skos:Concept ,
+                skos:Collection ,
+                rdf:Resource ,
+                prez:SearchResult ,
+                prez:CQLFilterResult ;
             altr-ext:hasDefaultProfile prez:OGCListingProfile
         ],
         [
@@ -78,13 +77,13 @@ prez:OGCListingProfile
         "text/turtle" ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:constrainsClass
-        dcat:Catalog,
-        skos:Collection,
-        skos:Concept,
-        dcat:Resource,
-        prof:Profile,
-        prez:SearchResult,
-        prez:CQLObjectList,
+        dcat:Catalog ,
+        skos:Collection ,
+        skos:Concept ,
+        dcat:Resource ,
+        prof:Profile ,
+        prez:SearchResult ,
+        prez:CQLFilterResult ,
         rdf:Resource ;
     sh:property [ sh:path rdf:type ]
 .

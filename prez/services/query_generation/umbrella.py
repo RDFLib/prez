@@ -1,5 +1,6 @@
 from typing import List, Optional, Tuple, Union
 
+from rdflib import URIRef
 from sparql_grammar_pydantic import (
     ConstructQuery,
     ConstructTemplate,
@@ -241,8 +242,12 @@ def merge_listing_query_grammar_inputs(
         kwargs["inner_select_gpnt"].extend(cql_parser.inner_select_gpnt_list)
 
     if endpoint_nodeshape:
-        kwargs["inner_select_tssp_list"].extend(endpoint_nodeshape.tssp_list)
-        kwargs["inner_select_gpnt"].extend(endpoint_nodeshape.gpnt_list)
+        # endpoint nodeshape will constrain the focus nodes selected - undesirable for plain search/CQL. However, if
+        # search/CQL is used on a generic listing endpoint, then we do want both the endpoint nodeshape (which
+        # constrains the focus nodes) + the search/CQL query.
+        if endpoint_nodeshape.uri not in [URIRef('http://example.org/ns#Search'), URIRef('http://example.org/ns#CQL')]:
+            kwargs["inner_select_tssp_list"].extend(endpoint_nodeshape.tssp_list)
+            kwargs["inner_select_gpnt"].extend(endpoint_nodeshape.gpnt_list)
 
     if bbox:
         gpnt, tssp_list = generate_bbox_filter(bbox, filter_crs)

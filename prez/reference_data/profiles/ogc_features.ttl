@@ -21,8 +21,8 @@ prez:OGCFeaturesProfile a prof:Profile , prez:IndexProfile ;
             altr-ext:hasDefaultProfile prez:OGCFeaturesMinimalProps ;
             sh:targetClass
                 geo:FeatureCollection,
-                prez:CQLObjectList,
-                prez:SearchResult
+                prez:SearchResult ,
+                prez:CQLFilterResult
         ] ;
     altr-ext:hasResourceFormat
         "application/json",
@@ -78,8 +78,8 @@ prez:OGCFeaturesAllProps a
         geo:FeatureCollection,
         rdf:Resource,
         prof:Profile,
-        prez:CQLObjectList,
-        prez:SearchResult ;
+        prez:SearchResult ,
+        prez:CQLFilterResult ;
     altr-ext:hasDefaultResourceFormat "application/geo+json" ;
     altr-ext:hasResourceFormat
         "application/geo+json",

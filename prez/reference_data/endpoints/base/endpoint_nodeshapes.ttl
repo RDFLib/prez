@@ -55,12 +55,12 @@ ex:Narrowers
 
 ex:CQL
     a sh:NodeShape ;
-    sh:targetClass rdfs:Resource ;
+    sh:targetClass prez:CQLFilterResult ;
     ont:hierarchyLevel 1 ;
     .
 
 ex:Search
     a sh:NodeShape ;
-    sh:targetClass rdfs:Resource ;
+    sh:targetClass prez:SearchResult ;
     ont:hierarchyLevel 1 ;
     .
