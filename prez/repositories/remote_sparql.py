@@ -43,9 +43,10 @@ class RemoteSparqlRepo(Repo):
         Returns: rdflib.Graph: An RDFLib Graph object
         """
         response = await self._send_query(query)
+        format = response.headers.get("content-type", "nt")
         g = Graph()
         await response.aread()
-        return g.parse(data=response.text, format="nt")
+        return g.parse(data=response.text, format=format)
 
     async def tabular_query_to_table(self, query: str, context: URIRef = None):
         """
