@@ -23,6 +23,7 @@ from sparql_grammar_pydantic import (
     TriplesSameSubjectPath,
     Var,
     WhereClause,
+    IRI,
 )
 
 from prez.models.query_params import QueryParams
@@ -70,7 +71,7 @@ class PrezQueryConstructor(ConstructQuery):
         inner_select_gpnt: Optional[List[GraphPatternNotTriples]] = [],
         limit: Optional[int] = None,
         offset: Optional[int] = None,
-        order_by: Optional[Var] = None,
+        order_by: Optional[IRI] = None,
         order_by_direction: Optional[str] = None,
     ):
         # where clause triples and GraphPatternNotTriples - set up first as in the case of a listing query, the inner
@@ -89,14 +90,24 @@ class PrezQueryConstructor(ConstructQuery):
         # order condition
         oc = None
         if order_by:
+            order_by_val = Var(value="order_by_val")
             oc = OrderClause(
                 conditions=[
                     OrderCondition(
-                        var=order_by,  # ORDER BY
+                        var=order_by_val,  # ORDER BY
                         direction=order_by_direction,  # DESC/ASC
                     )
                 ]
             )
+            tssp = TriplesSameSubjectPath.from_spo(
+                        subject=Var(value="focus_node"),
+                        predicate=order_by,
+                        object=order_by_val
+                    )
+            if inner_select_tssp_list:
+                inner_select_tssp_list.append(tssp)
+            else:
+                inner_select_tssp_list = [tssp]
 
         # for listing queries only, add an inner select to the where clause
         ss_gpotb = []
@@ -208,14 +219,13 @@ def merge_listing_query_grammar_inputs(
         kwargs["construct_tss_list"] = concept_hierarchy_query.tss_list
         kwargs["inner_select_vars"] = concept_hierarchy_query.inner_select_vars
         if order_by:
-            kwargs["order_by"] = Var(value=order_by)
+            kwargs["order_by"] = IRI(value=order_by)
         else:
             kwargs["order_by"] = concept_hierarchy_query.order_by
         if order_by_direction:
             kwargs["order_by_direction"] = order_by_direction
         else:
             kwargs["order_by_direction"] = "ASC"
-            # kwargs["order_by_direction"] = concept_hierarchy_query.order_by_direction  # not implemented
         kwargs["inner_select_gpnt"] = [concept_hierarchy_query.inner_select_gpnt]
 
     # TODO can remove limit/offset/order by from search query - apply from QSA or defaults.
@@ -229,7 +239,7 @@ def merge_listing_query_grammar_inputs(
         kwargs["inner_select_gpnt"].extend([search_query.inner_select_gpnt])
     else:
         if order_by:
-            kwargs["order_by"] = Var(value=order_by)
+            kwargs["order_by"] = IRI(value=order_by)
             if order_by_direction:
                 kwargs["order_by_direction"] = order_by_direction
             else:
