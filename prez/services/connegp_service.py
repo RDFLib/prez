@@ -286,7 +286,7 @@ class NegotiatedPMTs(BaseModel):
               ?mid rdfs:subClassOf* ?base_class .
               VALUES ?base_class {{ {" ".join(klass.n3() for klass in query_klasses)}
                prof:Profile prez:SPARQLQuery
-              prez:SearchResult prez:CQLObjectList prez:Object rdfs:Resource }}
+              prez:SearchResult prez:CQLFilterResult prez:Object rdfs:Resource }}
               ?profile altr-ext:constrainsClass ?class ;
                        altr-ext:hasResourceFormat ?format ;
                        dcterms:title ?title .\

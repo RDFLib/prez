@@ -136,7 +136,7 @@ prez:OGCRecordsProfile
     altr-ext:hasNodeShape [
         a sh:NodeShape ;
         sh:targetClass prof:Profile , dcat:Catalog , dcat:Resource , skos:Concept , geo:Feature , geo:FeatureCollection
-                               , skos:Collection , rdf:Resource , prez:SearchResult , prez:CQLObjectList ;
+                               , skos:Collection , rdf:Resource , prez:SearchResult , prez:CQLFilterResult ;
         altr-ext:hasDefaultProfile prez:OGCListingProfile
     ] , [
         a sh:NodeShape ;
