@@ -61,7 +61,17 @@ class CountQuery(ConstructQuery):
     """
 
     def __init__(self, original_subselect: SubSelect):
-        limit = settings.listing_count_limit
+        """
+        Handles pagination limits by comparing the requested range (offset + limit) against a configured maximum.
+        Preserves the original range if it already exceeds the maximum, otherwise defaults to the system-defined limit.
+        This limit then has one added so that the UI knows if there is more data available.
+        """
+        current_offset = original_subselect.solution_modifier.limit_offset.offset_clause.offset
+        current_limit = original_subselect.solution_modifier.limit_offset.limit_clause.limit
+        if (current_offset + current_limit) > settings.listing_count_limit:
+            limit = current_offset + current_limit
+        else:
+            limit = settings.listing_count_limit
         limit_plus_one = limit + 1
         inner_ss = SubSelect(
             select_clause=SelectClause(
