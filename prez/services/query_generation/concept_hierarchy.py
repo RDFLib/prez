@@ -241,7 +241,7 @@ class ConceptHierarchyQuery(ConstructQuery):
         )
 
         inner_sm = SolutionModifier(
-            order_by=OrderClause(conditions=[OrderCondition(var=label_var)]),
+            order_by=OrderClause(conditions=[OrderCondition(constraint_or_var=label_var)]),
             limit_offset=LimitOffsetClauses(
                 limit_clause=LimitClause(limit=limit),
                 offset_clause=OffsetClause(offset=offset),

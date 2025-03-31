@@ -2,6 +2,7 @@ from typing import List, Optional, Tuple, Union
 
 from rdflib import URIRef
 from sparql_grammar_pydantic import (
+    Constraint,
     ConstructQuery,
     ConstructTemplate,
     ConstructTriples,
@@ -24,6 +25,8 @@ from sparql_grammar_pydantic import (
     Var,
     WhereClause,
     IRI,
+    BuiltInCall,
+    PrimaryExpression
 )
 
 from prez.models.query_params import QueryParams
@@ -94,7 +97,13 @@ class PrezQueryConstructor(ConstructQuery):
             oc = OrderClause(
                 conditions=[
                     OrderCondition(
-                        var=order_by_val,  # ORDER BY
+                        constraint_or_var=Constraint(
+                            content=BuiltInCall.create_with_one_expr(
+                                function_name="STR",
+                                expression=PrimaryExpression(
+                                    content=order_by_val)
+                            )
+                        ),
                         direction=order_by_direction,  # DESC/ASC
                     )
                 ]

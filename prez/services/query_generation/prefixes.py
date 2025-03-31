@@ -7,7 +7,7 @@ from sparql_grammar_pydantic import (
     TriplesBlock,
     TriplesSameSubjectPath,
     Var,
-    WhereClause,
+    WhereClause, SolutionModifier, ValuesClause,
 )
 
 
@@ -52,4 +52,5 @@ class PrefixQuery(SubSelect):
         super().__init__(
             select_clause=select_clause,
             where_clause=where_clause,
+            solution_modifier=SolutionModifier(),
         )

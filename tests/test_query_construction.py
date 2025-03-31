@@ -67,6 +67,13 @@ def test_basic_object():
 
 def test_basic_listing():
     test = PrezQueryConstructor(
+        construct_tss_list=[
+            TriplesSameSubject.from_spo(
+                subject=Var(value="focus_node"),
+                predicate=IRI(value=str(RDF.type)),
+                object=IRI(value=str(GEO.Feature)),
+            )
+        ],
         profile_triples=[
             TriplesSameSubjectPath.from_spo(
                 subject=Var(value="focus_node"),
@@ -98,7 +105,7 @@ def test_basic_listing():
     )
     query_string = test.to_string()
     assert "?focus_node <http://www.w3.org/2000/01/rdf-schema#label> ?order_by_val" in query_string
-    assert "ORDER BY ASC( ?order_by_val )" in query_string
+    assert "ORDER BY ASC( STR( ?order_by_val ) )" in query_string
 
 
 def test_search_query_regex():
