@@ -370,7 +370,7 @@ class SearchQueryRegex(ConstructQuery):
         )
 
     @property
-    def order_by(self):
+    def order_by_val(self):
         return Var(value="weight")
 
     @property

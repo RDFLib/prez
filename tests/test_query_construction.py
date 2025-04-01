@@ -100,7 +100,7 @@ def test_basic_listing():
         ],
         limit=10,
         offset=0,
-        order_by=IRI(value=RDFS.label),
+        order_by_predicate=IRI(value=RDFS.label),
         order_by_direction="ASC",
     )
     query_string = test.to_string()
@@ -133,7 +133,7 @@ def test_search_query_regex():
         inner_select_gpnt=[sq.inner_select_gpnt],
         limit=sq.limit,
         offset=sq.offset,
-        order_by=sq.order_by,
+        order_by_predicate=sq.order_by_val,
         order_by_direction=sq.order_by_direction,
     )
     print(test)
