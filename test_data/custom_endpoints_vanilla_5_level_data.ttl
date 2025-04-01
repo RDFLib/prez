@@ -1,0 +1,29 @@
+@prefix ex: <http://example.org/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Level One instance
+ex:lvl1 a ex:One ;
+    rdfs:label "Level One Item" ;
+    ex:one-to-two ex:lvl2 ;
+    ex:alternative-one-to-two ex:lvl2 .
+
+# Level Two instance
+ex:lvl2 a ex:Two ;
+    rdfs:label "Level Two Item" ;
+    ex:two-to-three ex:lvl3 .
+
+# Level Three instance
+ex:lvl3 a ex:Three ;
+    rdfs:label "Level Three Item" ;
+    ex:three-to-four ex:lvl4 .
+
+# Level Four instance
+ex:lvl4 a ex:Four ;
+    rdfs:label "Level Four Item" ;
+    ex:four-to-five ex:lvl5 .
+
+# Level Five instance
+ex:lvl5 a ex:Five ;
+    rdfs:label "Level Five Item" .
