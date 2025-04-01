@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from string import Template
 from typing import Any, Dict, List
 from typing import Literal as TypingLiteral
@@ -47,6 +48,8 @@ from sparql_grammar_pydantic import (
 )
 
 from prez.reference_data.prez_ns import ONT, SHEXT
+
+log = logging.getLogger(__name__)
 
 
 class Shape(BaseModel):
@@ -248,63 +251,77 @@ class PropertyShape(Shape):
             self.and_property_paths, key=lambda x: len(x), reverse=True
         )
 
-    def _process_property_path(self, pp, union: bool = False):
+    def _parse_property_path(self, pp: Node) -> PropertyPath:
+        """Recursively parses a SHACL path node (URIRef or BNode) into a PropertyPath object."""
         if isinstance(pp, URIRef):
-            self._add_path(Path(value=pp), union)
+            return Path(value=pp)
         elif isinstance(pp, BNode):
+            # Check for sequence first (RDF list structure)
+            if self.graph.value(pp, RDF.first):
+                path_elements = []
+                current = pp
+                while current != RDF.nil:
+                    first = self.graph.value(current, RDF.first)
+                    if first:
+                        path_elements.append(self._parse_property_path(first))
+                    else:
+                        raise ValueError(f"Malformed RDF list structure at {current}")
+                    current = self.graph.value(current, RDF.rest)
+                    if not current:
+                        raise ValueError(f"Malformed RDF list structure: missing rdf:rest from {pp}")
+                return SequencePath(value=path_elements)
+
+            # If not a sequence, check for other SHACL path constructs
             pred_objects = list(self.graph.predicate_objects(subject=pp))
             if not pred_objects:
-                return
+                raise ValueError(f"BNode {pp} has no predicate-objects in SHACL path.")
 
-            bn_pred, bn_obj = pred_objects[0]
+            if len(pred_objects) == 1:
+                bn_pred, bn_obj = pred_objects[0]
 
-            if bn_pred == SH.union:
-                self._process_union(bn_obj, union)
-            elif bn_pred in PRED_TO_PATH_CLASS:
-                path_class = PRED_TO_PATH_CLASS[bn_pred]
-                if path_class == BNodeDepth:
-                    self._add_path(BNodeDepth(value=bn_obj), union)
+                if bn_pred == SH.union:
+                    # Handle sh:union - process each item and add to union paths
+                    # Note: This path itself doesn't return a single PropertyPath object,
+                    # instead it triggers processing of its members which are added via _add_path.
+                    # We return None here to signal that _process_property_path should not call _add_path for the sh:union BNode itself.
+                    union_list = list(Collection(self.graph, bn_obj))
+                    for item in union_list:
+                        self._process_property_path(item, union=True) # Force union=True
+                    return None # Signal that the union BNode itself doesn't represent a single path to add
+                elif bn_pred == SH.alternativePath:
+                    alt_list = list(Collection(self.graph, bn_obj))
+                    return AlternativePath(value=[self._parse_property_path(item) for item in alt_list])
+                elif bn_pred in PRED_TO_PATH_CLASS:
+                    path_class = PRED_TO_PATH_CLASS[bn_pred]
+                    if path_class == BNodeDepth:
+                        return BNodeDepth(value=bn_obj) # Assumes bn_obj is Literal
+                    elif path_class in [InversePath, ZeroOrMorePath, OneOrMorePath, ZeroOrOnePath]:
+                        # These take another path as their value
+                        inner_path = self._parse_property_path(bn_obj)
+                        return path_class(value=inner_path)
+                    else:
+                        raise ValueError(f"Unhandled path class {path_class} for predicate {bn_pred}")
                 else:
-                    self._add_path(path_class(value=Path(value=bn_obj)), union)
-            else:  # sequence paths
-                self._process_sequence(pp, union)
+                    raise ValueError(f"Unsupported SHACL path construct for BNode {pp} with predicate {bn_pred}")
+            else:
+                raise ValueError(f"BNode {pp} has multiple predicate-objects in SHACL path context.")
+        else:
+            raise ValueError(f"Unexpected node type in SHACL path: {type(pp)}")
 
-    def _process_union(self, pp, union: bool):
-        union_list = list(Collection(self.graph, pp))
-        for item in union_list:
-            self._process_property_path(item, True)
-
-    def _process_sequence(self, pp, union: bool):
-        paths = list(Collection(self.graph, pp))
-        sp_list = []
-
-        def process_path(path, parent_path_class=None):
-            if isinstance(path, BNode):
-                pred_objects = list(self.graph.predicate_objects(subject=path))
-                if pred_objects:
-                    bn_pred, bn_obj = pred_objects[0]
-                    if bn_pred in PRED_TO_PATH_CLASS:
-                        path_class = PRED_TO_PATH_CLASS[bn_pred]
-                        if isinstance(bn_obj, URIRef):
-                            if not parent_path_class:
-                                sp_list.append(path_class(value=Path(value=bn_obj)))
-                            else:
-                                sp_list.append(
-                                    parent_path_class(
-                                        value=path_class(value=Path(value=bn_obj))
-                                    )
-                                )
-                        elif isinstance(bn_obj, BNode):
-                            process_path(bn_obj, path_class)
-            elif isinstance(path, URIRef):
-                sp_list.append(Path(value=path))
-
-        for path in paths:
-            process_path(path)
-
-        self._add_path(SequencePath(value=sp_list), union)
+    def _process_property_path(self, pp: Node, union: bool = False):
+        """Processes a SHACL path node by parsing it and adding it to the appropriate list."""
+        try:
+            path_object = self._parse_property_path(pp)
+            # Check if path_object is None (e.g., handled by sh:union) before adding
+            if path_object is not None:
+                 self._add_path(path_object, union)
+        except ValueError as e:
+            # Log or handle parsing errors appropriately
+            log.debug(f"Could not parse property path {pp}. Error: {e}")
+            # Decide if you want to skip this path or raise the error further
 
     def _add_path(self, path: PropertyPath, union: bool):
+        """Adds a parsed PropertyPath object to the appropriate list."""
         if union:
             self.union_property_paths.append(path)
         else:
@@ -489,6 +506,16 @@ class PropertyShape(Shape):
 
             elif isinstance(property_path, BNodeDepth):
                 self.bnode_depth = int(property_path.value)
+
+            elif isinstance(property_path, AlternativePath):
+                # Handle AlternativePath - generate SPARQL using '|'
+                tssp = _tssp_for_alternative(
+                    self.focus_node,
+                    property_path.value, # List of paths
+                    path_node_1
+                )
+                current_tssp.append(tssp)
+                pp_i += 1 # Increment once for the whole alternative path
 
             elif isinstance(property_path, InversePath):
                 if self.kind == "fts":
@@ -752,6 +779,84 @@ def _tssp_for_pathmods(focus_node: IRI | Var, pred, obj, pathmod):
     )
 
 
+def _build_path_elt_or_inverse(path_item: PropertyPath) -> PathEltOrInverse:
+    """Helper function to build PathEltOrInverse from different PropertyPath types."""
+    inverse = False
+    path_mod = None
+    primary_value = None
+
+    if isinstance(path_item, InversePath):
+        inverse = True
+        # Unwrap the InversePath to get the actual path element
+        path_item = path_item.value
+
+    if isinstance(path_item, (ZeroOrMorePath, OneOrMorePath, ZeroOrOnePath)):
+        path_mod = PathMod(pathmod=path_item.operand)
+        # Unwrap to get the base path
+        path_item = path_item.value
+
+    if isinstance(path_item, Path):
+        primary_value = IRI(value=path_item.value)
+    # Add handling for other potential path types if necessary
+
+    if primary_value is None:
+        # This case should ideally be handled based on expected path structures
+        # For now, raise an error or handle default case
+        raise ValueError(f"Unsupported path type in alternative/sequence: {type(path_item)}")
+
+    return PathEltOrInverse(
+        path_elt=PathElt(
+            path_primary=PathPrimary(value=primary_value),
+            path_mod=path_mod,
+        ),
+        inverse=inverse,
+    )
+
+
+def _tssp_for_alternative(focus_node, alternative_paths: list[PropertyPath], obj):
+    """Creates TSSP for Alternative Paths using '|'."""
+    if isinstance(focus_node, IRI):
+        focus_node = GraphTerm(content=focus_node)
+    if isinstance(obj, IRI):
+        obj = GraphTerm(content=obj)
+
+    sequence_paths = []
+    for alt_path in alternative_paths:
+        # Each alternative is treated as a sequence of one element for PathAlternative structure
+        # We need to handle potentially complex paths within each alternative
+        # Using _build_path_elt_or_inverse helps encapsulate this logic
+        list_path_elt_or_inverse = [_build_path_elt_or_inverse(alt_path)]
+        sequence_paths.append(PathSequence(list_path_elt_or_inverse=list_path_elt_or_inverse))
+
+    return TriplesSameSubjectPath(
+        content=(
+            VarOrTerm(varorterm=focus_node),
+            PropertyListPathNotEmpty(
+                first_pair=(
+                    VerbPath(
+                        path=SG_Path(
+                            path_alternative=PathAlternative(
+                                sequence_paths=sequence_paths # This creates the path1 | path2 structure
+                            )
+                        )
+                    ),
+                    ObjectListPath(
+                        object_paths=[
+                            ObjectPath(
+                                graph_node_path=GraphNodePath(
+                                    varorterm_or_triplesnodepath=VarOrTerm(
+                                        varorterm=obj
+                                    )
+                                )
+                            )
+                        ]
+                    ),
+                )
+            ),
+        )
+    )
+
+
 def _tssp_for_sequence(
         focus_node, preds_pathmods_inverse: list[tuple[IRI, str | None, bool]], obj
 ):
@@ -762,31 +867,28 @@ def _tssp_for_sequence(
         focus_node = GraphTerm(content=focus_node)
     if isinstance(obj, IRI):
         obj = GraphTerm(content=obj)
+    # Refactored to use the helper function _build_path_elt_or_inverse
     list_path_elt_or_inverse = []
-    for pred, pathmod, inverse in preds_pathmods_inverse:
-        if pathmod:
-            list_path_elt_or_inverse.append(
-                PathEltOrInverse(
-                    path_elt=PathElt(
-                        path_primary=PathPrimary(
-                            value=pred,
-                        ),
-                        path_mod=PathMod(pathmod=pathmod),
-                    ),
-                    inverse=inverse,
-                )
-            )
-        else:
-            list_path_elt_or_inverse.append(
-                PathEltOrInverse(
-                    path_elt=PathElt(
-                        path_primary=PathPrimary(
-                            value=pred,
-                        ),
-                    ),
-                    inverse=inverse,
-                )
-            )
+    # The input format preds_pathmods_inverse needs to be adapted or the helper used differently.
+    # Assuming preds_pathmods_inverse provides enough info to construct PropertyPath objects or similar structure.
+    # This part requires careful adaptation based on how preds_pathmods_inverse is populated.
+    # For demonstration, let's assume we can map it:
+    for pred_iri, pathmod_operand, inverse_flag in preds_pathmods_inverse:
+        # Construct a temporary simple Path or modified path based on input
+        # This is a simplification; the actual structure might be more complex
+        base_path = Path(value=pred_iri.value) # Assuming pred is IRI here
+        current_path = base_path
+        if pathmod_operand == "*":
+            current_path = ZeroOrMorePath(value=base_path)
+        elif pathmod_operand == "+":
+            current_path = OneOrMorePath(value=base_path)
+        elif pathmod_operand == "?":
+            current_path = ZeroOrOnePath(value=base_path)
+
+        if inverse_flag:
+            current_path = InversePath(value=current_path)
+
+        list_path_elt_or_inverse.append(_build_path_elt_or_inverse(current_path))
 
     return TriplesSameSubjectPath(
         content=(
