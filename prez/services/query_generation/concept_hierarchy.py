@@ -321,10 +321,5 @@ class ConceptHierarchyQuery(ConstructQuery):
         )
 
     @property
-    def order_by(self):
-        return (
-            self.where_clause.group_graph_pattern.content.graph_patterns_or_triples_blocks[0]
-            .content.group_graph_patterns[0].content.where_clause.group_graph_pattern.content.
-            graph_patterns_or_triples_blocks[0].triples_block.triples.content[1].first_pair[0].path.path_alternative.
-            sequence_paths[0].list_path_elt_or_inverse[0].path_elt.path_primary.value
-        )
+    def order_by_val(self):
+        return Var(value="label")
