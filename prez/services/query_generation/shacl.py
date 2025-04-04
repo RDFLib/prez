@@ -967,7 +967,7 @@ class AlternativePath(PropertyPath):
     value: List[PropertyPath]
 
     def __len__(self):
-        return len(self.value)
+        return 1
 
 
 class BNodeDepth(PropertyPath):
