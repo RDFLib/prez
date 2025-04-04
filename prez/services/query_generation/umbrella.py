@@ -2,6 +2,7 @@ from typing import List, Optional, Tuple, Union
 
 from rdflib import URIRef
 from sparql_grammar_pydantic import (
+    Constraint,
     ConstructQuery,
     ConstructTemplate,
     ConstructTriples,
@@ -23,6 +24,9 @@ from sparql_grammar_pydantic import (
     TriplesSameSubjectPath,
     Var,
     WhereClause,
+    IRI,
+    BuiltInCall,
+    PrimaryExpression
 )
 
 from prez.models.query_params import QueryParams
@@ -49,8 +53,9 @@ class PrezQueryConstructor(ConstructQuery):
             WHERE {
                 <inner_select_tssp_list>
                 <inner_select_gpnt>
+                ?focus_node <order_by_predicate> <order_by_value>  # where order_by is specified
             }
-            ORDER BY <order_by_direction>(<order_by>)
+            ORDER BY <order_by_direction>(<order_by_value>)
             LIMIT <limit>
             OFFSET <offset>
         }
@@ -70,7 +75,8 @@ class PrezQueryConstructor(ConstructQuery):
         inner_select_gpnt: Optional[List[GraphPatternNotTriples]] = [],
         limit: Optional[int] = None,
         offset: Optional[int] = None,
-        order_by: Optional[Var] = None,
+        order_by_predicate: Optional[IRI] = None,
+        order_by_value: Optional[Var] = None,
         order_by_direction: Optional[str] = None,
     ):
         # where clause triples and GraphPatternNotTriples - set up first as in the case of a listing query, the inner
@@ -88,15 +94,44 @@ class PrezQueryConstructor(ConstructQuery):
 
         # order condition
         oc = None
-        if order_by:
+        if order_by_predicate and not order_by_value:
+            # this scenario should only occur if the PrezQueryConstructor is called directly e.g. in tests. When using
+            # the merge inputs function, either both or only order_by_value will be set AND where only
+            # order_by_predicate is set (e.g. search queries), the order_by_value (=?weight) is bound in the GPNT.
+            order_by_value = Var(value="order_by_val")
+
+        if order_by_value:
+            if order_by_value.value == "weight":
+                constraint_or_var = order_by_value  # NO string function to get correct numerical ordering
+            elif order_by_value.value in ("label", "order_by_val"):  # STR function in order to "ignore" langtags
+                constraint_or_var = Constraint(
+                            content=BuiltInCall.create_with_one_expr(
+                                function_name="STR",
+                                expression=PrimaryExpression(
+                                    content=order_by_value)
+                            )
+                        )
+            else:
+                raise ValueError("order by value must be \"label\", \"order_by_val\", or \"weight\" to work with "
+                                 "automated query generation")
             oc = OrderClause(
                 conditions=[
                     OrderCondition(
-                        var=order_by,  # ORDER BY
+                        constraint_or_var=constraint_or_var,
                         direction=order_by_direction,  # DESC/ASC
                     )
                 ]
             )
+        if order_by_predicate:
+            tssp = TriplesSameSubjectPath.from_spo(
+                        subject=Var(value="focus_node"),
+                        predicate=order_by_predicate,
+                        object=order_by_value
+                    )
+            if inner_select_tssp_list:
+                inner_select_tssp_list.append(tssp)
+            else:
+                inner_select_tssp_list = [tssp]
 
         # for listing queries only, add an inner select to the where clause
         ss_gpotb = []
@@ -196,7 +231,8 @@ def merge_listing_query_grammar_inputs(
         "inner_select_gpnt": [],
         "limit": None,
         "offset": None,
-        "order_by": order_by,
+        "order_by_predicate": order_by,
+        "order_by_value": None,
         "order_by_direction": order_by_direction,
     }
 
@@ -208,14 +244,13 @@ def merge_listing_query_grammar_inputs(
         kwargs["construct_tss_list"] = concept_hierarchy_query.tss_list
         kwargs["inner_select_vars"] = concept_hierarchy_query.inner_select_vars
         if order_by:
-            kwargs["order_by"] = Var(value=order_by)
+            kwargs["order_by_predicate"] = IRI(value=order_by)  # from QSA
         else:
-            kwargs["order_by"] = concept_hierarchy_query.order_by
+            kwargs["order_by_value"] = concept_hierarchy_query.order_by_val  # from query itself, hardcoded to "?label"
         if order_by_direction:
             kwargs["order_by_direction"] = order_by_direction
         else:
             kwargs["order_by_direction"] = "ASC"
-            # kwargs["order_by_direction"] = concept_hierarchy_query.order_by_direction  # not implemented
         kwargs["inner_select_gpnt"] = [concept_hierarchy_query.inner_select_gpnt]
 
     # TODO can remove limit/offset/order by from search query - apply from QSA or defaults.
@@ -224,16 +259,9 @@ def merge_listing_query_grammar_inputs(
         kwargs["inner_select_vars"].extend(search_query.inner_select_vars)
         kwargs["limit"] = search_query.limit
         kwargs["offset"] = search_query.offset
-        kwargs["order_by"] = search_query.order_by
+        kwargs["order_by_value"] = search_query.order_by_val
         kwargs["order_by_direction"] = search_query.order_by_direction
         kwargs["inner_select_gpnt"].extend([search_query.inner_select_gpnt])
-    else:
-        if order_by:
-            kwargs["order_by"] = Var(value=order_by)
-            if order_by_direction:
-                kwargs["order_by_direction"] = order_by_direction
-            else:
-                kwargs["order_by_direction"] = "ASC"
 
     if cql_parser:
         kwargs["inner_select_vars"].extend(cql_parser.inner_select_vars)
@@ -258,5 +286,11 @@ def merge_listing_query_grammar_inputs(
         gpnt_list, tssp_list = generate_datetime_filter(*datetime)
         kwargs["inner_select_gpnt"].extend(gpnt_list)
         kwargs["inner_select_tssp_list"].extend(tssp_list)
+
+    if order_by:  # order by comes from query param - this will override the default order by in search and concept
+        # hierarchy queries
+        kwargs["order_by_predicate"] = IRI(value=order_by)
+        kwargs["order_by_value"] = Var(value="order_by_val")
+        kwargs["order_by_direction"] = order_by_direction or "ASC"
 
     return kwargs

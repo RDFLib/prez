@@ -140,10 +140,11 @@ prez:OGCSchemesListProfile
         "text/anot+turtle",
         "text/turtle" ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
-    altr-ext:constrainsClass skos:ConceptScheme ;
+    altr-ext:constrainsClass skos:ConceptScheme , prez:CQLFilterResult ;
     sh:property [
         sh:path [
             sh:union (
+                  skos:prefLabel
                   rdf:type
                   dcterms:publisher
                   reg:status

@@ -15,7 +15,7 @@ from sparql_grammar_pydantic import (
     Var,
     WhereClause,
     GraphPatternNotTriples,
-    InlineData,
+    InlineData, SolutionModifier,
 )
 
 log = logging.getLogger(__name__)
@@ -65,4 +65,5 @@ class ClassesSelectQuery(SubSelect):
         super().__init__(
             select_clause=select_clause,
             where_clause=where_clause,
+            solution_modifier=SolutionModifier(),
         )

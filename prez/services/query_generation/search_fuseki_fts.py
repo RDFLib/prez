@@ -405,7 +405,7 @@ class SearchQueryFusekiFTS(ConstructQuery):
                     ),
                     solution_modifier=SolutionModifier(
                         order_by=OrderClause(
-                            conditions=[OrderCondition(var=weight, direction="DESC")]
+                            conditions=[OrderCondition(constraint_or_var=weight, direction="DESC")]
                         ),
                         limit_offset=LimitOffsetClauses(
                             limit_clause=LimitClause(limit=limit),
@@ -422,7 +422,7 @@ class SearchQueryFusekiFTS(ConstructQuery):
         )
 
     @property
-    def order_by(self):
+    def order_by_val(self):
         return Var(value="weight")
 
     @property
