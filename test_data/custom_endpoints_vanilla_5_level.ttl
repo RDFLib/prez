@@ -76,7 +76,7 @@ ex:level-five-object a ont:DynamicEndpoint,
 # NodeShapes
 ex:shape-R0-HL1 a sh:NodeShape ;
     sh:property [
-        sh:class ex:Two ;
+        sh:or ( [ sh:class ex:Two ] [ sh:class ex:TwoOtherClass ] ) ;
         sh:path [ sh:alternativePath ( ex:one-to-two ex:alternative-one-to-two ) ]
     ] ;
     sh:targetClass ex:One ;
@@ -87,7 +87,7 @@ ex:shape-R0-HL2 a sh:NodeShape ;
         sh:class ex:One ;
         sh:path [ sh:alternativePath ( [ sh:inversePath ex:one-to-two ] [ sh:inversePath ex:alternative-one-to-two ] ) ]
     ] ;
-    sh:targetClass ex:Two ;
+    sh:targetClass ex:Two , ex:TwoOtherClass ;
     ont:hierarchyLevel 2 .
 
 ex:shape-R0-HL3 a sh:NodeShape ;
