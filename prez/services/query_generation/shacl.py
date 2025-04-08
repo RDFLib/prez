@@ -243,9 +243,13 @@ class PropertyShape(Shape):
             or_triples = list(self.graph.triples_choices((or_bns, SH["class"], None)))
             self.or_klasses = [URIRef(klass) for _, _, klass in or_triples]
 
+        # Get the path alias defined directly on the property shape node, if any
+        shape_level_path_alias = next(self.graph.objects(self.uri, SHEXT.pathAlias), None)
+
         pps = list(self.graph.objects(self.uri, SH.path))
         for pp in pps:
-            self._process_property_path(pp)
+            # Pass the shape-level alias down
+            self._process_property_path(pp, shape_level_alias=shape_level_path_alias)
         # get the longest property path first - for endpoints this will be the path any path_nodes apply to
         self.and_property_paths = sorted(
             self.and_property_paths, key=lambda x: len(x), reverse=True
@@ -308,20 +312,47 @@ class PropertyShape(Shape):
         else:
             raise ValueError(f"Unexpected node type in SHACL path: {type(pp)}")
 
-    def _process_property_path(self, pp: Node, union: bool = False):
+    def _process_property_path(self, pp: Node, union: bool = False, shape_level_alias: Optional[URIRef] = None):
         """Processes a SHACL path node by parsing it and adding it to the appropriate list."""
+        path_to_parse = pp # Default to the original node
+        path_alias_value = shape_level_alias # Start with the alias from the parent shape
+
+        # Check if pp is a BNode which might contain its own pathAlias (e.g., inside sh:union)
+        # or a nested sh:path.
+        if isinstance(pp, BNode):
+            # Check for an alias specific to this BNode, overriding the shape-level one if found.
+            bnode_alias = next(self.graph.objects(subject=pp, predicate=SHEXT.pathAlias), None)
+            if bnode_alias:
+                path_alias_value = bnode_alias # Use BNode-specific alias
+
+            # Check for nested sh:path (common in sh:union/sh:alternativePath list items)
+            # This logic needs refinement based on structure. If sh:path is *inside* the BNode `pp`,
+            # we parse that inner path but associate the alias found on `pp`.
+            nested_path_node = next(self.graph.objects(subject=pp, predicate=SH.path), None)
+            if nested_path_node:
+                # Parse the inner path, but keep the alias determined from pp (or shape_level_alias)
+                path_to_parse = nested_path_node
+
         try:
-            path_object = self._parse_property_path(pp)
-            # Check if path_object is None (e.g., handled by sh:union) before adding
+            # Parse the determined path node (original pp or nested_path_node)
+            path_object = self._parse_property_path(path_to_parse)
+            # Check if path_object is None (e.g., handled by sh:union itself) before adding
             if path_object is not None:
-                 self._add_path(path_object, union)
+                 log.debug(f"Path object before alias set: {path_object!r}, Alias to set: {path_alias_value!r}")
+                 # Assign the determined path_alias (either from shape or BNode) if it exists
+                 if path_alias_value:
+                     path_object.path_alias = path_alias_value
+                     log.debug(f"Path object AFTER alias set: {path_object!r}")
+                 self._add_path(path_object, union) # Pass the original 'union' flag
+                 log.debug(f"Path object added to list: {path_object!r}")
         except ValueError as e:
             # Log or handle parsing errors appropriately
-            log.debug(f"Could not parse property path {pp}. Error: {e}")
+            log.debug(f"Could not parse property path {path_to_parse} (original node: {pp}). Error: {e}")
             # Decide if you want to skip this path or raise the error further
 
     def _add_path(self, path: PropertyPath, union: bool):
         """Adds a parsed PropertyPath object to the appropriate list."""
+        log.debug(f"Adding path to {'union' if union else 'and'} list: {path!r}, Current alias: {path.path_alias!r}")
         if union:
             self.union_property_paths.append(path)
         else:
@@ -928,6 +959,7 @@ class PropertyPath(BaseModel):
         arbitrary_types_allowed = True
 
     uri: Optional[URIRef] = None
+    path_alias: Optional[URIRef] = None
 
     def __len__(self):
         return 1  # Default length for all PropertyPath subclasses
