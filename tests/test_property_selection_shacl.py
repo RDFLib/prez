@@ -1,5 +1,7 @@
+from unittest.mock import patch
+
 import pytest
-from rdflib import DCTERMS, PROV, RDF, SH, Graph, URIRef
+from rdflib import DCTERMS, PROV, RDF, SH, Graph, URIRef, SKOS
 from sparql_grammar_pydantic import (
     IRI,
     Filter,
@@ -364,7 +366,7 @@ def test_union_nested_bnode():
     PREFIX reg: <http://purl.org/linked-data/registry#>
     PREFIX sh: <http://www.w3.org/ns/shacl#>
     PREFIX prov: <http://www.w3.org/ns/prov#>
-    PREFIX shext: <https://linked.data.gov.au/def/shacl-extensions/>
+    PREFIX shext: <http://example.com/shacl-extension#>
 
     <http://example-profile> sh:property [
         sh:path [
@@ -487,3 +489,138 @@ def test_union_nested_bnode():
 ?prof_1_node_5 <http://purl.org/dc/terms/creator> ?focus_node
 }"""
     assert union_pattern.group_graph_patterns[3].to_string().strip() == expected_pattern_4.strip()
+
+@patch("prez.services.query_generation.shacl.settings")
+def test_sh_class_in_bnode_path(mock_settings):
+    mock_settings.use_path_aliases = True
+    """Tests sh:class defined within a BNode path structure (e.g., inside sh:union)."""
+    g = Graph().parse(
+        data="""
+    PREFIX dcterms: <http://purl.org/dc/terms/>
+    PREFIX sh: <http://www.w3.org/ns/shacl#>
+    PREFIX prov: <http://www.w3.org/ns/prov#>
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    PREFIX ex: <http://example.com/>
+    PREFIX shext: <http://example.com/shacl-extension#>
+
+    <http://example-profile> sh:property [
+        sh:path [
+            sh:union (
+              # BNode with sequence path and sh:class on the BNode
+              [
+                sh:path ( prov:qualifiedDerivation prov:hadRole ) ;
+                sh:class ex:DerivationRole ; # Class applies to the BNode defining the path segment
+                shext:pathAlias <http://alias.com/role> ; # Alias should still work
+              ]
+              # BNode with simple path and sh:class
+              [
+                sh:path skos:prefLabel ;
+                sh:class ex:LabelType ;
+              ]
+              # Simple path for comparison
+              dcterms:title
+            )
+          ]
+        ]
+    .
+    """
+    )
+    path_bn = g.value(subject=URIRef("http://example-profile"), predicate=SH.property)
+    ps = PropertyShape(
+        uri=path_bn, graph=g, kind="profile", focus_node=Var(value="focus_node")
+    )
+
+    # Expected variables based on processing order (can be fragile)
+    # Path 1: ( prov:qualifiedDerivation prov:hadRole ) -> nodes 1, 2
+    # Path 2: skos:prefLabel -> node 3
+    # Path 3: dcterms:title -> node 4
+
+    # --- Check CONSTRUCT Triples (tss_list) ---
+    # Convert actual tss_list objects to strings for comparison
+    actual_tss_strings = {tss.to_string() for tss in ps.tss_list}
+
+    # Path 1: Sequence path (prov:qualifiedDerivation prov:hadRole)
+    # Alias is present, so only the alias triple should be in tss_list for the main path
+    expected_tss_1_alias = TriplesSameSubject.from_spo(
+        subject=Var(value="focus_node"),
+        predicate=IRI(value="http://alias.com/role"),
+        object=Var(value="prof_1_node_2"), # Object is the *end* node of the sequence
+    ).to_string()
+    assert expected_tss_1_alias in actual_tss_strings
+
+    # Check that the original sequence path triples are NOT in tss_list due to alias
+    assert not any(
+        IRI(value=PROV.qualifiedDerivation).to_string() in tss_str for tss_str in actual_tss_strings
+    )
+    assert not any(
+        IRI(value=PROV.hadRole).to_string() in tss_str for tss_str in actual_tss_strings if "?focus_node" not in tss_str # Avoid matching the class triple's subject
+    )
+
+
+    # Path 1: sh:class triple (ex:DerivationRole) - Should be present REGARDLESS of alias
+    # The class applies to the node reached by the *first* step of the sequence path in this BNode context
+    expected_tss_1_class = TriplesSameSubject.from_spo(
+        subject=Var(value="prof_1_node_2"), # Node reached by prov:qualifiedDerivation
+        predicate=IRI(value=RDF.type),
+        object=IRI(value="http://example.com/DerivationRole"),
+    ).to_string()
+    assert expected_tss_1_class in actual_tss_strings
+
+
+    # Path 2: Simple path (skos:prefLabel)
+    expected_tss_2_path = TriplesSameSubject.from_spo(
+        subject=Var(value="focus_node"),
+        predicate=IRI(value=SKOS.prefLabel),
+        object=Var(value="prof_1_node_3"),
+    ).to_string()
+    assert expected_tss_2_path in actual_tss_strings
+
+    # Path 2: sh:class triple (ex:LabelType)
+    expected_tss_2_class = TriplesSameSubject.from_spo(
+        subject=Var(value="prof_1_node_3"), # Node reached by skos:prefLabel
+        predicate=IRI(value=RDF.type),
+        object=IRI(value="http://example.com/LabelType"),
+    ).to_string()
+    assert expected_tss_2_class in actual_tss_strings
+
+    # Path 3: Simple path (dcterms:title) - No class
+    expected_tss_3_path = TriplesSameSubject.from_spo(
+        subject=Var(value="focus_node"),
+        predicate=IRI(value=DCTERMS.title),
+        object=Var(value="prof_1_node_4"),
+    ).to_string()
+    assert expected_tss_3_path in actual_tss_strings
+
+
+    # --- Check WHERE Clause Triples (via gpnt_list containing the UNION) ---
+    assert len(ps.gpnt_list) == 1
+    assert isinstance(ps.gpnt_list[0].content, GroupOrUnionGraphPattern)
+
+    # Helper function to normalize SPARQL strings for comparison
+    def normalize_sparql(sparql_string):
+        return "".join(sparql_string.split())
+
+    expected_sparql = """
+    {
+    ?prof_1_node_2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/DerivationRole> .
+    ?prof_1_node_1 <http://www.w3.org/ns/prov#hadRole> ?prof_1_node_2 .
+    ?focus_node <http://www.w3.org/ns/prov#qualifiedDerivation> ?prof_1_node_1
+    }
+    UNION
+    {
+    ?prof_1_node_3 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/LabelType> .
+    ?focus_node <http://www.w3.org/2004/02/skos/core#prefLabel> ?prof_1_node_3
+    }
+    UNION
+    {
+    ?focus_node <http://purl.org/dc/terms/title> ?prof_1_node_4
+    }
+    """
+
+    actual_sparql = ps.gpnt_list[0].to_string()
+
+    # Debugging print statements (optional, can be removed after verification)
+    # print("Expected Normalized:\n", normalize_sparql(expected_sparql))
+    # print("Actual Normalized:\n", normalize_sparql(actual_sparql))
+
+    assert normalize_sparql(actual_sparql) == normalize_sparql(expected_sparql)
