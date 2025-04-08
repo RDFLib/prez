@@ -47,6 +47,7 @@ from sparql_grammar_pydantic import (
     VerbPath,
 )
 
+from prez.config import settings
 from prez.reference_data.prez_ns import ONT, SHEXT
 
 log = logging.getLogger(__name__)
@@ -338,16 +339,13 @@ class PropertyShape(Shape):
             path_object = self._parse_property_path(path_to_parse)
             # Check if path_object is None (e.g., handled by sh:union itself) before adding
             if path_object is not None:
-                 log.debug(f"Path object before alias set: {path_object!r}, Alias to set: {path_alias_value!r}")
-                 # Assign the determined path_alias (either from shape or BNode) if it exists
+                 # Always assign the determined path_alias if it exists. The setting controls its *use* later.
                  if path_alias_value:
                      path_object.path_alias = path_alias_value
-                     log.debug(f"Path object AFTER alias set: {path_object!r}")
                  self._add_path(path_object, union) # Pass the original 'union' flag
-                 log.debug(f"Path object added to list: {path_object!r}")
         except ValueError as e:
             # Log or handle parsing errors appropriately
-            log.debug(f"Could not parse property path {path_to_parse} (original node: {pp}). Error: {e}")
+            log.warning(f"Could not parse property path {path_to_parse} (original node: {pp}). Error: {e}")
             # Decide if you want to skip this path or raise the error further
 
     def _add_path(self, path: PropertyPath, union: bool):
@@ -501,6 +499,9 @@ class PropertyShape(Shape):
 
     def process_property_paths(self, property_paths, path_or_prop, tssp_list, pp_i):
         for property_path in property_paths:
+            # Determine if we should use the path alias for CONSTRUCT triples
+            use_alias = settings.use_path_aliases and hasattr(property_path, 'path_alias') and property_path.path_alias
+
             # Always create path_node_1 as it's needed everywhere
             if f"{path_or_prop}_node_{pp_i + 1}" in self.path_nodes:
                 path_node_1 = self.path_nodes[f"{path_or_prop}_node_{pp_i + 1}"]
@@ -527,15 +528,22 @@ class PropertyShape(Shape):
                 else:
                     pred = IRI(value=property_path.value)
                     obj = path_node_1
-                if self.kind == "fts":
-                    triple = (self.focus_node, pred, Var(value="fts_search_node"))
-                else:
-                    triple = (self.focus_node, pred, obj)
-                self.tss_list.append(TriplesSameSubject.from_spo(*triple))
-                current_tssp.append(TriplesSameSubjectPath.from_spo(*triple))
-                pp_i += 1
+                # WHERE clause triple (always added)
+                where_triple = (self.focus_node, pred, obj)
+                current_tssp.append(TriplesSameSubjectPath.from_spo(*where_triple))
+
+                # CONSTRUCT clause triple (conditional on alias)
+                if not use_alias:
+                    if self.kind == "fts":
+                        construct_triple = (self.focus_node, pred, Var(value="fts_search_node"))
+                    else:
+                        construct_triple = (self.focus_node, pred, obj)
+                    self.tss_list.append(TriplesSameSubject.from_spo(*construct_triple))
+                # pp_i increment and alias handling happens at the end or in the 'if use_alias:' block
 
             elif isinstance(property_path, BNodeDepth):
+                # BNodeDepth doesn't directly generate triples here, just sets the depth
+                # Alias logic (if use_alias is True) will handle pp_i increment and continue below
                 self.bnode_depth = int(property_path.value)
 
             elif isinstance(property_path, AlternativePath):
@@ -546,43 +554,47 @@ class PropertyShape(Shape):
                     path_node_1
                 )
                 current_tssp.append(tssp)
-                pp_i += 1 # Increment once for the whole alternative path
+                # pp_i increment and alias handling happens at the end or in the 'if use_alias:' block
 
             elif isinstance(property_path, InversePath):
-                if self.kind == "fts":
-                    triple = (
-                        Var(value="fts_search_node"),
-                        IRI(value=property_path.value.value),
-                        self.focus_node,
-                    )
-                elif property_path.value.value == SHEXT.allPredicateValues:
-                    triple = (
-                        path_node_1,
-                        Var(value="inbound_props"),
-                        self.focus_node,
-                    )
+                # Determine subject and object for WHERE clause triple
+                if property_path.value.value == SHEXT.allPredicateValues:
+                    subj = path_node_1
+                    pred = Var(value="inbound_props")
+                    obj = self.focus_node
                 else:
-                    triple = (
-                        path_node_1,
-                        IRI(value=property_path.value.value),
-                        self.focus_node,
-                    )
-                self.tss_list.append(TriplesSameSubject.from_spo(*triple))
-                current_tssp.append(TriplesSameSubjectPath.from_spo(*triple))
-                pp_i += 1
+                    subj = path_node_1
+                    pred = IRI(value=property_path.value.value)
+                    obj = self.focus_node
+
+                # WHERE clause triple (always added)
+                where_triple = (subj, pred, obj)
+                current_tssp.append(TriplesSameSubjectPath.from_spo(*where_triple))
+
+                # CONSTRUCT clause triple (conditional on alias)
+                if not use_alias:
+                    if self.kind == "fts":
+                        # FTS replaces the focus node in the construct triple
+                        construct_triple = (subj, pred, Var(value="fts_search_node"))
+                    else:
+                        construct_triple = where_triple # Use the same triple structure
+                    self.tss_list.append(TriplesSameSubject.from_spo(*construct_triple))
+                # pp_i increment and alias handling happens at the end or in the 'if use_alias:' block
 
             elif isinstance(
                     property_path, Union[ZeroOrMorePath, OneOrMorePath, ZeroOrOnePath]
             ):
-                self.tssp_list.append(
-                    _tssp_for_pathmods(
-                        self.focus_node,
-                        IRI(value=property_path.value.value),
-                        path_node_1,
-                        property_path.operand,
-                    )
+                # WHERE clause uses path mods (always added)
+                tssp = _tssp_for_pathmods(
+                    self.focus_node,
+                    IRI(value=property_path.value.value),
+                    path_node_1,
+                    property_path.operand,
                 )
-                pp_i += 1
+                self.tssp_list.append(tssp) # Note: Appends directly to self.tssp_list, not current_tssp
+                # CONSTRUCT clause triple (conditional on alias) - Path mods usually don't add simple TSS triples directly,
+                # but if an alias exists, we add the simplified alias triple. This is handled by the 'if use_alias:' block.
+                # pp_i increment and alias handling happens at the end or in the 'if use_alias:' block
 
             elif isinstance(property_path, SequencePath):
                 preds_pathmods_inverse = []
@@ -646,41 +658,77 @@ class PropertyShape(Shape):
                             preds_pathmods_inverse.append(
                                 (IRI(value=path.value.value.value), path.operand, True)
                             )
-                    if self.kind == "profile":
-                        self.tss_list.append(TriplesSameSubject.from_spo(*triple))
-                        current_tssp.append(TriplesSameSubjectPath.from_spo(*triple))
-                    elif self.kind == "fts":
+                    # WHERE clause triple (always added for profile/fts)
+                    if (self.kind == "profile") or (self.kind == "fts"):
                         if (
-                                j == seq_path_len - 1
-                        ):  # we're at the end of the sequence path
+                                j == seq_path_len - 1 and self.kind == "fts"
+                        ):  # we're at the end of the sequence path for FTS
                             if inner_path_type != "inverse":
-                                new_triple = triple[:2] + (
+                                where_triple = triple[:2] + (
                                     Var(value="fts_search_node"),
                                 )
                             else:
-                                new_triple = (Var(value="fts_search_node"),) + triple[
-                                                                               1:
-                                                                               ]
-                            self.tss_list.append(
-                                TriplesSameSubject.from_spo(*new_triple)
-                            )
-                            current_tssp.append(
-                                TriplesSameSubjectPath.from_spo(*new_triple)
-                            )
+                                where_triple = (Var(value="fts_search_node"),) + triple[1:]
                         else:
-                            self.tss_list.append(TriplesSameSubject.from_spo(*triple))
-                            current_tssp.append(
-                                TriplesSameSubjectPath.from_spo(*triple)
-                            )
-                pp_i += len(property_path.value)
+                            where_triple = triple
+
+                        current_tssp.append(TriplesSameSubjectPath.from_spo(*where_triple))
+
+                        # CONSTRUCT clause triple (conditional on alias)
+                        if not use_alias:
+                            self.tss_list.append(TriplesSameSubject.from_spo(*where_triple))
+
+                # Sequence path WHERE clause for endpoints (always added if endpoint kind)
                 if self.kind == "endpoint":
-                    tssp = _tssp_for_sequence(
+                    # This generates the complex path expression for the WHERE clause
+                    tssp_seq = _tssp_for_sequence(
                         self.focus_node,
                         preds_pathmods_inverse,
                         path_nodes[seq_path_len - 1],  # Last node
                     )
-                    current_tssp.append(tssp)
+                    current_tssp.append(tssp_seq)
+                # pp_i increment and alias handling happens at the end or in the 'if use_alias:' block
 
+            # --- Alias Handling and pp_i Increment ---
+            if use_alias:
+                # Determine the correct object node for the alias triple
+                if isinstance(property_path, SequencePath):
+                    seq_path_len = len(property_path.value)
+                    # The final node is the last one in the sequence path's node dictionary
+                    obj_node = path_nodes[seq_path_len - 1]
+                elif isinstance(property_path, BNodeDepth):
+                    # BNodeDepth doesn't map to a specific node, skip alias TSS generation
+                    obj_node = None # Signal to skip adding triple
+                else:
+                    # For Path, InversePath, AlternativePath, Modifiers - use path_node_1
+                    obj_node = path_node_1
+
+                # Add the simplified alias triple to TSS list if obj_node is valid
+                if obj_node:
+                    alias_triple = (self.focus_node, IRI(value=property_path.path_alias), obj_node)
+                    self.tss_list.append(TriplesSameSubject.from_spo(*alias_triple))
+
+                # Increment pp_i based on the path length and continue
+                if isinstance(property_path, SequencePath):
+                    pp_i += len(property_path.value)
+                elif isinstance(property_path, BNodeDepth):
+                    pass # BNodeDepth doesn't consume a node index
+                else:
+                    pp_i += 1 # Increment by 1 for other path types
+                # Continue to the next property_path, skipping original TSS logic below this point
+                # (Note: WHERE clause TSSP logic above this point was already executed)
+                # REMOVED continue statement to ensure tssp_list is always appended below
+
+            else:
+                # If not using alias, increment pp_i based on the path type processed by original logic
+                if isinstance(property_path, SequencePath):
+                    pp_i += len(property_path.value)
+                elif isinstance(property_path, BNodeDepth):
+                     pass # BNodeDepth doesn't consume a node index
+                else:
+                    pp_i += 1 # Increment by 1 for other path types
+
+            # Add the collected WHERE clause triples for this path to the main list
             if current_tssp:
                 tssp_list.append(current_tssp)
 
