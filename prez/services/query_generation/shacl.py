@@ -318,13 +318,17 @@ class PropertyShape(Shape):
         path_to_parse = pp # Default to the original node
         path_alias_value = shape_level_alias # Start with the alias from the parent shape
 
-        # Check if pp is a BNode which might contain its own pathAlias (e.g., inside sh:union)
+        # Check if pp is a BNode which might contain its own pathAlias, sh:class,
         # or a nested sh:path.
+        bnode_class = None # Initialize
         if isinstance(pp, BNode):
             # Check for an alias specific to this BNode, overriding the shape-level one if found.
             bnode_alias = next(self.graph.objects(subject=pp, predicate=SHEXT.pathAlias), None)
             if bnode_alias:
                 path_alias_value = bnode_alias # Use BNode-specific alias
+
+            # Check for sh:class specific to this BNode
+            bnode_class = next(self.graph.objects(subject=pp, predicate=SH["class"]), None)
 
             # Check for nested sh:path (common in sh:union/sh:alternativePath list items)
             # This logic needs refinement based on structure. If sh:path is *inside* the BNode `pp`,
@@ -342,6 +346,9 @@ class PropertyShape(Shape):
                  # Always assign the determined path_alias if it exists. The setting controls its *use* later.
                  if path_alias_value:
                      path_object.path_alias = path_alias_value
+                 # Assign the extracted sh:class if found
+                 if bnode_class:
+                     path_object.sh_class = bnode_class
                  self._add_path(path_object, union) # Pass the original 'union' flag
         except ValueError as e:
             # Log or handle parsing errors appropriately
@@ -541,6 +548,18 @@ class PropertyShape(Shape):
                     self.tss_list.append(TriplesSameSubject.from_spo(*construct_triple))
                 # pp_i increment and alias handling happens at the end or in the 'if use_alias:' block
 
+                # check for sh:class
+                if property_path.sh_class:
+                    type_triple = (
+                        path_node_1,
+                        IRI(value=RDF.type),
+                        IRI(value=property_path.sh_class)
+                    )
+                    # Add to WHERE and CONSTRUCT clauses
+                    current_tssp.append(TriplesSameSubjectPath.from_spo(*type_triple))
+                    self.tss_list.append(TriplesSameSubject.from_spo(*type_triple))
+
+
             elif isinstance(property_path, BNodeDepth):
                 # BNodeDepth doesn't directly generate triples here, just sets the depth
                 # Alias logic (if use_alias is True) will handle pp_i increment and continue below
@@ -677,6 +696,21 @@ class PropertyShape(Shape):
                         # CONSTRUCT clause triple (conditional on alias)
                         if not use_alias:
                             self.tss_list.append(TriplesSameSubject.from_spo(*where_triple))
+
+                        # Add sh:class triple if present on the path segment
+                        if (j == seq_path_len - 1) and property_path.sh_class:
+                            # Determine the subject node for the type triple
+                            type_subj_node = path_nodes[j] # Current node in sequence
+
+                            type_triple = (
+                                type_subj_node,
+                                IRI(value=RDF.type),
+                                IRI(value=property_path.sh_class)
+                            )
+                            # Add to WHERE and CONSTRUCT clauses
+                            current_tssp.append(TriplesSameSubjectPath.from_spo(*type_triple))
+                            self.tss_list.append(TriplesSameSubject.from_spo(*type_triple))
+
 
                 # Sequence path WHERE clause for endpoints (always added if endpoint kind)
                 if self.kind == "endpoint":
@@ -1008,6 +1042,7 @@ class PropertyPath(BaseModel):
 
     uri: Optional[URIRef] = None
     path_alias: Optional[URIRef] = None
+    sh_class: Optional[URIRef] = None
 
     def __len__(self):
         return 1  # Default length for all PropertyPath subclasses
