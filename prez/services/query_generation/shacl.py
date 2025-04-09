@@ -13,10 +13,12 @@ from rdflib.namespace import RDF, SH
 from rdflib.term import Node, Literal
 from sparql_grammar_pydantic import (
     IRI,
+    Bind, # Added
     BuiltInCall,
     Constraint,
     DataBlock,
     DataBlockValue,
+    Expression, # Added
     Filter,
     GraphNodePath,
     GraphPatternNotTriples,
@@ -212,11 +214,12 @@ class PropertyShape(Shape):
     grammar: Optional[GroupGraphPatternSub] = None
     tss_list: Optional[List[TriplesSameSubject]] = []
     tssp_list: Optional[List[TriplesSameSubjectPath]] = []
-    gpnt_list: Optional[List[GraphPatternNotTriples]] = None
+    gpnt_list: Optional[List[GraphPatternNotTriples]] = [] # Initialize as list
     path_nodes: Optional[Dict[str, Var | IRI]] = {}
     classes_at_len: Optional[Dict[str, List[URIRef]]] = {}
     _select_vars: Optional[List[Var]] = None
     bnode_depth: Optional[int] = None
+    union_tssps_binds: Optional[List[Dict[str, Any]]] = [] # New attribute
 
     @property
     def minCount(self):
@@ -255,6 +258,49 @@ class PropertyShape(Shape):
         self.and_property_paths = sorted(
             self.and_property_paths, key=lambda x: len(x), reverse=True
         )
+
+    def _create_facet_binds(self, property_path: PropertyPath, value_var: Union[Var, IRI]) -> List[GraphPatternNotTriples]:
+        """Creates BIND clauses for facetName and facetValue based on path alias or simple path predicate."""
+        binds = []
+        facet_name_iri = None
+        # Ensure value_var is wrapped correctly for Expression
+        if isinstance(value_var, Var):
+            facet_value_expr_content = value_var
+        elif isinstance(value_var, IRI):
+            facet_value_expr_content = IRIOrFunction(iri=value_var)
+        else: # Handle other potential types like Literal if needed, or raise error
+             raise TypeError(f"Unsupported type for facet value variable: {type(value_var)}")
+
+        facet_value_expr = PrimaryExpression(content=facet_value_expr_content)
+
+        if hasattr(property_path, 'path_alias') and property_path.path_alias:
+            facet_name_iri = IRI(value=property_path.path_alias)
+        elif isinstance(property_path, Path):
+            # Only create binds if it's a simple Path and no alias exists
+            facet_name_iri = IRI(value=property_path.value)
+
+        if facet_name_iri:
+            # Bind for facetName
+            bind_name_gpnt = GraphPatternNotTriples(
+                content=Bind(
+                    expression=Expression.from_primary_expression(
+                        PrimaryExpression(content=IRIOrFunction(iri=facet_name_iri))
+                    ),
+                    var=Var(value="facetName"),
+                )
+            )
+            binds.append(bind_name_gpnt)
+
+            # Bind for facetValue
+            bind_value_gpnt = GraphPatternNotTriples(
+                content=Bind(
+                    expression=Expression.from_primary_expression(facet_value_expr),
+                    var=Var(value="facetValue"),
+                )
+            )
+            binds.append(bind_value_gpnt)
+
+        return binds
 
     def _parse_property_path(self, pp: Node) -> PropertyPath:
         """Recursively parses a SHACL path node (URIRef or BNode) into a PropertyPath object."""
@@ -426,37 +472,50 @@ class PropertyShape(Shape):
                     )
 
         pp_i = 0
-        tssp_list_for_and = []
-        tssp_list_for_union = []
+        # Process AND paths
         if self.and_property_paths:
-            self.process_property_paths(
-                self.and_property_paths, path_or_prop, tssp_list_for_and, pp_i
+            and_paths_data, pp_i = self.process_property_paths(
+                self.and_property_paths, path_or_prop, pp_i
             )
-        for inner_list in tssp_list_for_and:
-            self.tssp_list.extend(inner_list)
+            for item in and_paths_data:
+                self.tssp_list.extend(item["tssp_list"])
+
+        # Process UNION paths
         if self.union_property_paths:
-            self.process_property_paths(
-                self.union_property_paths, path_or_prop, tssp_list_for_union, pp_i
+            union_paths_data, pp_i = self.process_property_paths(
+                self.union_property_paths, path_or_prop, pp_i
             )
-            ggp_list = []
-            for inner_list in tssp_list_for_union:
-                ggp_list.append(
-                    GroupGraphPattern(
-                        content=GroupGraphPatternSub(
-                            triples_block=TriplesBlock.from_tssp_list(inner_list)
-                        )
+            # Store the processed data (including TSSP lists and facet binds) for union paths
+            self.union_tssps_binds = union_paths_data
+
+            ggp_list = [] # Initialize list for patterns from union paths
+            for item in union_paths_data:
+                # Only add a group pattern if there are triples for it
+                # This prevents adding {} for paths like bNodeDepth that don't generate direct triples here
+                if item["tssp_list"]:
+                    ggps_content = GroupGraphPatternSub(
+                        triples_block=TriplesBlock.from_tssp_list(item["tssp_list"]),
+                        # TODO: Incorporate facet binds if needed
+                    )
+                    ggp_list.append(GroupGraphPattern(content=ggps_content))
+
+            # Add BNode blocks if bnode_depth was set (potentially by one of the union paths)
+            if self.bnode_depth:
+                bnode_blocks = self._build_bnode_blocks()
+                if bnode_blocks: # Ensure it's not empty
+                    ggp_list.extend(bnode_blocks)
+
+            # Only add the UNION if there are patterns to union
+            if ggp_list:
+                self.gpnt_list.append(
+                    GraphPatternNotTriples(
+                        content=GroupOrUnionGraphPattern(group_graph_patterns=ggp_list)
                     )
                 )
-            if self.bnode_depth:
-                ggp_list.extend(self._build_bnode_blocks())
-            self.gpnt_list.append(
-                GraphPatternNotTriples(
-                    content=GroupOrUnionGraphPattern(group_graph_patterns=ggp_list)
-                )
-            )
 
-        if self.bnode_depth and not self.union_property_paths:
-            self.gpnt_list.append(
+        # Handle BNode depth separately if there were no union paths but bnode depth is set
+        elif self.bnode_depth: # Changed from 'if self.bnode_depth and not self.union_property_paths:'
+             self.gpnt_list.append(
                 GraphPatternNotTriples(
                     content=GroupOrUnionGraphPattern(group_graph_patterns=self._build_bnode_blocks())
                 )
@@ -504,7 +563,10 @@ class PropertyShape(Shape):
             )
             self.gpnt_list.append(gpnt)
 
-    def process_property_paths(self, property_paths, path_or_prop, tssp_list, pp_i):
+    def process_property_paths(self, property_paths, path_or_prop, start_pp_i) -> Tuple[List[Dict[str, Any]], int]:
+        """Processes property paths, generating TSSP lists and facet binds."""
+        processed_paths_data = []
+        pp_i = start_pp_i
         for property_path in property_paths:
             # Determine if we should use the path alias for CONSTRUCT triples
             use_alias = settings.use_path_aliases and hasattr(property_path, 'path_alias') and property_path.path_alias
@@ -517,6 +579,7 @@ class PropertyShape(Shape):
 
             # Create additional nodes only if we have a sequence path
             path_nodes = {0: path_node_1}  # Start with path_node_1
+            obj_node = path_node_1 # Default object node for simple paths, inverse, etc.
             if isinstance(property_path, SequencePath):
                 seq_path_len = len(property_path.value)
                 for i in range(1, seq_path_len):
@@ -525,8 +588,14 @@ class PropertyShape(Shape):
                         path_nodes[i] = self.path_nodes[node_key]
                     else:
                         path_nodes[i] = Var(value=node_key)
+                obj_node = path_nodes[seq_path_len - 1] # Object node is the last in sequence
+            elif isinstance(property_path, BNodeDepth):
+                obj_node = None # BNodeDepth doesn't have a specific object node for binding
 
             current_tssp = []
+            current_facet_binds = []
+            if obj_node: # Only create binds if we have a valid object node
+                current_facet_binds = self._create_facet_binds(property_path, obj_node)
 
             if isinstance(property_path, Path):
                 if property_path.value == SHEXT.allPredicateValues:
@@ -762,11 +831,10 @@ class PropertyShape(Shape):
                 else:
                     pp_i += 1 # Increment by 1 for other path types
 
-            # Add the collected WHERE clause triples for this path to the main list
-            if current_tssp:
-                tssp_list.append(current_tssp)
+            # Add the collected WHERE clause triples and facet binds for this path
+            processed_paths_data.append({"tssp_list": current_tssp, "facet_binds": current_facet_binds})
 
-        return pp_i
+        return processed_paths_data, pp_i
 
     def _build_bnode_blocks(self):
         """
