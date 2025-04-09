@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends, Query
 from sparql_grammar_pydantic import ConstructQuery
 
@@ -153,6 +155,10 @@ async def objects(
     uri: str = Query(None, description="The URI of the object to retrieve. Use 'iri' instead. This will be "
                                        "deprecated in a future version. Functionally the same as the 'iri' query "
                                        "parameter.", include_in_schema=True, deprecated=True),
+    mediatype: str = Query(
+            default="text/anot+turtle", alias="_mediatype", description="Requested mediatype"
+        ),
+    profile: Optional[str] = Query(default=None, alias="_profile", description="Requested profile"),
 ):
     return await object_function(
         data_repo=data_repo,
