@@ -342,10 +342,10 @@ async def get_focus_node(
     ep_uri = endpoint_uri_type[0]
     ep_type = endpoint_uri_type[1]
     if ep_uri == EP["system/object"]:
-        uri = request.query_params.get("uri")
-        if not uri:
+        iri = request.query_params.get("iri") or request.query_params.get("uri")
+        if not iri:
             raise HTTPException(status_code=400, detail="Missing required query parameter: 'iri' or 'uri' ('uri' is marked for deprecation)")
-        return IRI(value=uri)
+        return IRI(value=iri)
     elif ep_type == ONT.ObjectEndpoint:
         object_curie = url_path.split("/")[-1]
         focus_node_uri = await get_uri_for_curie_id(object_curie)
