@@ -151,7 +151,8 @@ async def objects(
     data_repo: Repo = Depends(get_data_repo),
     system_repo: Repo = Depends(get_system_repo),
     url: str = Depends(get_url),
-    iri: str = Query(None, description="The IRI of the object to retrieve.", include_in_schema=True),
+    iri: str = Query(None, description="The IRI of the object to retrieve.", include_in_schema=True,
+                     example="https://example.com/demo-vocabs/image-test/apron-image"),
     uri: str = Query(None, description="The URI of the object to retrieve. Use 'iri' instead. This will be "
                                        "deprecated in a future version. Functionally the same as the 'iri' query "
                                        "parameter.", include_in_schema=True, deprecated=True),
