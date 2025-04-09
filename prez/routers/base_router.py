@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Query
 from sparql_grammar_pydantic import ConstructQuery
 
 from prez.dependencies import (
@@ -161,10 +163,19 @@ async def objects(
     query_params: ObjectQueryParams = Depends(),
     pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
     endpoint_structure: tuple[str, ...] = Depends(get_endpoint_structure),
-    profile_nodeshape: NodeShape = Depends(get_profile_nodeshape),
+    profile_nodeshape: NodeShape = Depends(get_profile_nodeshape),  # iri for object endpoint is used here
     data_repo: Repo = Depends(get_data_repo),
     system_repo: Repo = Depends(get_system_repo),
     url: str = Depends(get_url),
+    iri: str = Query(None, description="The IRI of the object to retrieve.", include_in_schema=True,
+                     example="https://example.com/demo-vocabs/image-test/apron-image"),
+    uri: str = Query(None, description="The URI of the object to retrieve. Use 'iri' instead. This will be "
+                                       "deprecated in a future version. Functionally the same as the 'iri' query "
+                                       "parameter.", include_in_schema=True, deprecated=True),
+    mediatype: str = Query(
+            default="text/anot+turtle", alias="_mediatype", description="Requested mediatype"
+        ),
+    profile: Optional[str] = Query(default=None, alias="_profile", description="Requested profile"),
 ):
     return await object_function(
         query_params=query_params,
