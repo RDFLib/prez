@@ -5,7 +5,7 @@ import logging
 
 from fastapi.responses import PlainTextResponse
 from rdf2geojson import convert
-from rdflib import Literal, DCTERMS, XSD, Namespace
+from rdflib import Literal, DCTERMS, XSD, Namespace, URIRef
 from rdflib.namespace import GEO, RDF, PROF
 from sparql_grammar_pydantic import (
     IRI,
@@ -34,7 +34,7 @@ from prez.services.generate_queryables import generate_queryables_json
 from prez.services.link_generation import add_prez_links
 from prez.services.query_generation.count import CountQuery
 from prez.services.query_generation.facet import FacetQuery
-from prez.services.query_generation.shacl import PropertyShape
+from prez.services.query_generation.shacl import PropertyShape, NodeShape
 from prez.services.query_generation.umbrella import (
     PrezQueryConstructor,
     merge_listing_query_grammar_inputs,
@@ -186,30 +186,7 @@ async def listing_function(
         count_query = CountQuery(original_subselect=subselect).to_string()
         queries.append(count_query)
     if query_params.facet_profile:
-        profile_uri = next(
-            profiles_graph_cache.subjects(
-                predicate=DCTERMS.identifier,
-                object=Literal(query_params.facet_profile)
-            ),
-            None
-        ) or next(
-            profiles_graph_cache.subjects(
-                predicate=DCTERMS.identifier,
-                object=Literal(query_params.facet_profile, datatype=XSD.token)
-            ),
-            None
-        )
-        facet_property_shape = PropertyShape(
-            uri=profile_uri,
-            graph=profiles_graph_cache,
-            kind="profile",
-            focus_node=Var(value="focus_node")
-        )
-        subselect_for_faceting = copy.deepcopy(main_query.inner_select)
-        facets_query = FacetQuery(
-            original_subselect=subselect_for_faceting,
-            property_shape=facet_property_shape
-        )
+        facets_query = await _create_facets_query(main_query, query_params)
         queries.append(facets_query)
     item_graph, _ = await query_repo.send_queries(queries, [])
     if "anot+" in pmts.selected["mediatype"]:
@@ -234,6 +211,35 @@ async def listing_function(
         query_params,
         url,
     )
+
+
+async def _create_facets_query(main_query, query_params):
+    profile_uri = next(
+        profiles_graph_cache.subjects(
+            predicate=DCTERMS.identifier,
+            object=Literal(query_params.facet_profile)
+        ),
+        None
+    ) or next(
+        profiles_graph_cache.subjects(
+            predicate=DCTERMS.identifier,
+            object=Literal(query_params.facet_profile, datatype=XSD.token)
+        ),
+        None
+    )
+    facet_nodeshape = NodeShape(
+        uri=profile_uri,
+        graph=profiles_graph_cache,
+        kind="profile",
+        focus_node=Var(value="focus_node")
+    )
+    facet_property_shape = facet_nodeshape.propertyShapes[0]
+    subselect_for_faceting = copy.deepcopy(main_query.inner_select)
+    facets_query = FacetQuery(
+        original_subselect=subselect_for_faceting,
+        property_shape=facet_property_shape
+    )
+    return facets_query
 
 
 async def ogc_features_listing_function(
