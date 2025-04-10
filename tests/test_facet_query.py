@@ -42,6 +42,8 @@ def gswa_property_shape_fixture(mock_settings):
     PREFIX schema: <https://schema.org/>
     PREFIX sosa: <http://www.w3.org/ns/sosa/>
     PREFIX ex: <https://example.com/dataset/gswa/>
+    PREFIX gswa: <https://www.gswa.com/>
+
 
     <https://prez.dev/profile/formation-top>
         a prof:Profile , prez:ListingProfile ;
@@ -64,61 +66,26 @@ def gswa_property_shape_fixture(mock_settings):
     sh:property [
         sh:path [
                 sh:union (
-                        [
-                            sh:path ( sosa:isSampleOf [ sh:inversePath dcterms:hasPart ] ) ;
-                            shext:pathAlias <https://example.com/sample-parent> ;
-                        ]
-                        [
-                            sh:path ( sosa:isSampleOf [ sh:inversePath dcterms:hasPart ] schema:identifier ) ;
-                            shext:pathAlias <https://example.com/sample-parent-identifier> ;
-                        ]
-                        sosa:isSampleOf
-                        [
-                            sh:path ( sosa:isSampleOf schema:identifier ) ;
-                            shext:pathAlias <https://example.com/sample-identifier> ;
-                        ]
-                        [
-                            sh:path ( sosa:isSampleOf [ sh:inversePath dcterms:hasPart ] geo:sfWithin ) ;
-                            shext:pathAlias <https://example.com/sample-parent-location> ;
-                        ]
-                        [
-                            sh:path ( sosa:isSampleOf [ sh:inversePath dcterms:hasPart ] ex:originatesFrom ) ;
-                            shext:pathAlias <https://example.com/sample-parent-origin> ;
-                        ]
-                        [
-                            sh:path ( sosa:isSampleOf schema:depth ex:topDepth ) ;
-                            shext:pathAlias <https://my_prop_path> ;
-                            sh:facet true
-                        ]
-                        [
-                            sh:path ( sosa:isSampleOf schema:depth ex:bottomDepth ) ;
-                            shext:pathAlias <https://example.com/sample-bottom-depth> ;
-                        ]
-                        schema:name
-                        [
-                            sh:path ( [ sh:inversePath sosa:hasFeatureOfInterest ] sosa:observedProperty ) ;
-                            shext:pathAlias <https://example.com/feature-observed-property> ;
-                        ]
-                        [
-                            sh:path ( [ sh:inversePath sosa:hasFeatureOfInterest ] sosa:hasResult schema:minValue ex:hasAgeName ) ;
-                            shext:pathAlias <https://example.com/feature-result-min-age-name> ;
-                        ]
-                        [
-                            sh:path ( [ sh:inversePath sosa:hasFeatureOfInterest ] sosa:hasResult schema:minValue ex:hasAgeName schema:value) ;
-                            shext:pathAlias <https://example.com/feature-result-min-age-value> ;
-                        ]
-                        [
-                            sh:path ( [ sh:inversePath sosa:hasFeatureOfInterest ] sosa:hasResult schema:maxValue ex:hasAgeName ) ;
-                            shext:pathAlias <https://example.com/feature-result-max-age-name> ;
-                        ]
-                        [
-                            sh:path ( [ sh:inversePath sosa:hasFeatureOfInterest ] sosa:hasResult schema:maxValue ex:hasAgeName schema:value) ;
-                            shext:pathAlias <https://example.com/feature-result-max-age-value> ;
-                        ]
-                        [
-                            sh:path ( [ sh:inversePath sosa:hasFeatureOfInterest ] sosa:hasResult schema:comment ) ;
-                            shext:pathAlias <https://example.com/feature-result-comment> ;
-                        ]
+                            [
+                                sh:path ( [ sh:inversePath dcterms:isPartOf ] ) ;
+                                shext:pathAlias <https://example.org/well> ;
+                            ]
+                            [
+                                sh:path ( schema:identifier ) ;
+                                shext:pathAlias <https://example.org/UBHI> ;
+                            ]
+                            [
+                                sh:path ( schema:name ) ;
+                                shext:pathAlias <https://example.org/borehole-name> ;
+                            ]
+                            [
+                                sh:path ( gswa:hasRig ) ;
+                                shext:pathAlias <https://example.org/rigs> ;
+                            ]
+                            [
+                                sh:path ( gswa:hasGasShow ) ;
+                                shext:pathAlias <https://example.org/gas-show> ;
+                            ]
                         schema:citation
                         schema:comment
                 )
@@ -150,7 +117,7 @@ def test_facet_query_skeleton_instantiation(gswa_property_shape_fixture): # Adde
                         TriplesSameSubjectPath.from_spo(
                             Var(value="focus_node"),
                             IRI(value="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
-                            Var(value="type"),
+                            IRI(value="https://linked.data.gov.au/def/borehole/Borehole"),
                         )
                     ]
                 )
@@ -167,7 +134,13 @@ def test_facet_query_skeleton_instantiation(gswa_property_shape_fixture): # Adde
 
     # Instantiate FacetQuery with empty facet properties for now
     facet_query = FacetQuery(
-        original_subselect=original_subselect, facet_properties=[], property_shape=gswa_property_shape_fixture
+        original_subselect=original_subselect,
+        facet_properties=[
+            URIRef("https://example.org/well"),
+            URIRef("https://example.org/rigs"),
+            URIRef("https://example.org/gas-show")
+        ],
+        property_shape=gswa_property_shape_fixture
     )
 
     # Assert that the object was created

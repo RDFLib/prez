@@ -140,6 +140,9 @@ class QueryParams:
             style="form",
             explode=False,
         ),
+        facet_profile: Optional[str] = Query(
+            default=None, description="IRIs of the profile to use for faceting"
+        ),
         datetime: Optional[tuple] = Depends(validate_datetime),
         bbox: List[float] = Depends(reformat_bbox),
         filter_lang: Optional[FilterLangEnum] = Query(
@@ -172,6 +175,7 @@ class QueryParams:
         self.profile = profile
         self.page = page
         self.limit = limit
+        self.facet_profile = facet_profile
         self.bbox = bbox
         self.filter_lang = filter_lang
         self.filter_crs = filter_crs

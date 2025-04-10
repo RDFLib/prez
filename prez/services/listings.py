@@ -5,7 +5,7 @@ import logging
 
 from fastapi.responses import PlainTextResponse
 from rdf2geojson import convert
-from rdflib import Literal
+from rdflib import Literal, URIRef, DCTERMS, XSD
 from rdflib.namespace import GEO, RDF, Namespace
 from sparql_grammar_pydantic import (
     IRI,
@@ -14,6 +14,7 @@ from sparql_grammar_pydantic import (
     Var,
 )
 
+from prez.cache import profiles_graph_cache
 from prez.config import settings
 from prez.enums import NonAnnotatedRDFMediaType, AnnotatedRDFMediaType
 from prez.reference_data.prez_ns import ALTREXT, OGCFEAT, PREZ
@@ -31,6 +32,8 @@ from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.generate_queryables import generate_queryables_json
 from prez.services.link_generation import add_prez_links
 from prez.services.query_generation.count import CountQuery
+from prez.services.query_generation.facet import FacetQuery
+from prez.services.query_generation.shacl import PropertyShape
 from prez.services.query_generation.umbrella import (
     PrezQueryConstructor,
     merge_listing_query_grammar_inputs,
@@ -125,6 +128,33 @@ async def listing_function(
         subselect = copy.deepcopy(main_query.inner_select)
         count_query = CountQuery(original_subselect=subselect).to_string()
         queries.append(count_query)
+    if query_params.facet_profile:
+        profile_uri = next(
+            profiles_graph_cache.subjects(
+                predicate=DCTERMS.identifier,
+                object=Literal(query_params.facet_profile)
+            ),
+            None
+        ) or next(
+            profiles_graph_cache.subjects(
+                predicate=DCTERMS.identifier,
+                object=Literal(query_params.facet_profile, datatype=XSD.token)
+            ),
+            None
+        )
+        facet_property_shape = PropertyShape(
+            uri=profile_uri,
+            graph=profiles_graph_cache,
+            kind="profile",
+            focus_node=Var(value="focus_node")
+        )
+        subselect_for_faceting = copy.deepcopy(main_query.inner_select)
+        facets_query = FacetQuery(
+            original_subselect=subselect_for_faceting,
+            property_shape=facet_property_shape
+        )
+        queries.append(facets_query)
+        log.debug(str(facets_query))
 
     item_graph, _ = await query_repo.send_queries(queries, [])
     if "anot+" in pmts.selected["mediatype"]:
