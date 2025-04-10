@@ -832,7 +832,18 @@ class PropertyShape(Shape):
                     pp_i += 1 # Increment by 1 for other path types
 
             # Add the collected WHERE clause triples and facet binds for this path
-            processed_paths_data.append({"tssp_list": current_tssp, "facet_binds": current_facet_binds})
+            # Determine the value for path_alias_or_path
+            path_alias_or_path_value = None
+            if property_path.path_alias:
+                path_alias_or_path_value = property_path.path_alias
+            elif isinstance(property_path, Path):
+                path_alias_or_path_value = property_path.value
+
+            processed_paths_data.append({
+                "tssp_list": current_tssp,
+                "facet_binds": current_facet_binds,
+                "path_alias_or_path": path_alias_or_path_value
+            })
 
         return processed_paths_data, pp_i
 
