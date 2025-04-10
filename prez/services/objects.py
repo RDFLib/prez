@@ -43,6 +43,7 @@ async def object_function(
             q=None,
             page=1,
             limit=100,
+            facet_profile=None,
             datetime=None,
             bbox=[],
             filter_crs=None,

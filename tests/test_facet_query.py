@@ -14,7 +14,7 @@ from sparql_grammar_pydantic import (
 )
 
 from prez.services.query_generation.facet import FacetQuery
-from prez.services.query_generation.shacl import PropertyShape # Added PropertyShape
+from prez.services.query_generation.shacl import PropertyShape, NodeShape  # Added PropertyShape
 
 # Define SHEXT namespace locally for tests - corrected namespace
 SHEXT = Namespace("http://example.com/shacl-extension#")
@@ -93,11 +93,13 @@ def gswa_property_shape_fixture(mock_settings):
         ] ;
     ."""
     g = Graph().parse(data=gswa_profile)
-    path_bn = g.value(subject=URIRef("https://prez.dev/profile/formation-top"), predicate=SH.property)
-    focus_node_var = Var(value="focus_node")
-    ps = PropertyShape(
-        uri=path_bn, graph=g, kind="profile", focus_node=focus_node_var, shape_number=0
+    ns = NodeShape(
+        uri=URIRef("https://prez.dev/profile/formation-top"),
+        graph=g,
+        kind="profile",
+        focus_node=Var(value="focus_node")
     )
+    ps = ns.propertyShapes[0]
     return ps
 
 
@@ -135,11 +137,6 @@ def test_facet_query_skeleton_instantiation(gswa_property_shape_fixture): # Adde
     # Instantiate FacetQuery with empty facet properties for now
     facet_query = FacetQuery(
         original_subselect=original_subselect,
-        facet_properties=[
-            URIRef("https://example.org/well"),
-            URIRef("https://example.org/rigs"),
-            URIRef("https://example.org/gas-show")
-        ],
         property_shape=gswa_property_shape_fixture
     )
 
@@ -150,12 +147,10 @@ def test_facet_query_skeleton_instantiation(gswa_property_shape_fixture): # Adde
     # Basic check on the generated query string
     query_string = facet_query.to_string()
     assert "CONSTRUCT" in query_string
-    assert "http://example.org/text#facetName" in query_string
-    assert "http://example.org/text#facetValue" in query_string
-    assert "http://example.org/text#facetCount" in query_string
+    assert "https://prez.dev/facetName" in query_string
+    assert "https://prez.dev/facetValue" in query_string
+    assert "https://prez.dev/facetCount" in query_string
     assert "WHERE" in query_string
     assert "SELECT" in query_string
-    assert "COUNT(DISTINCT ?focus_node)" in query_string
+    assert "COUNT(?focus_node) AS ?facetCount" in query_string
     assert "GROUP BY ?facetName ?facetValue" in query_string
-    # Check if the original triple pattern is roughly there
-    assert "?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type" in query_string

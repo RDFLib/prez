@@ -3,6 +3,7 @@ import io
 import json
 import logging
 
+from fastapi import Query
 from fastapi.responses import PlainTextResponse
 from rdf2geojson import convert
 from rdflib import Literal, URIRef, DCTERMS, XSD
