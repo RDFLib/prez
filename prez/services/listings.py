@@ -3,11 +3,10 @@ import io
 import json
 import logging
 
-from fastapi import Query
 from fastapi.responses import PlainTextResponse
 from rdf2geojson import convert
-from rdflib import Literal, URIRef, DCTERMS, XSD
-from rdflib.namespace import GEO, RDF, Namespace
+from rdflib import Literal, DCTERMS, XSD, Namespace
+from rdflib.namespace import GEO, RDF, PROF
 from sparql_grammar_pydantic import (
     IRI,
     TriplesSameSubject,
@@ -18,7 +17,8 @@ from sparql_grammar_pydantic import (
 from prez.cache import profiles_graph_cache
 from prez.config import settings
 from prez.enums import NonAnnotatedRDFMediaType, AnnotatedRDFMediaType
-from prez.reference_data.prez_ns import ALTREXT, OGCFEAT, PREZ
+from prez.reference_data.prez_ns import ALTREXT, OGCFEAT
+from prez.reference_data.prez_ns import PREZ  # Added PREZ import
 from prez.renderers.renderer import (
     return_annotated_rdf,
     return_from_graph,
@@ -43,6 +43,62 @@ from prez.services.query_generation.umbrella import (
 log = logging.getLogger(__name__)
 
 DWC = Namespace("http://rs.tdwg.org/dwc/terms/")
+
+
+async def listing_profiles(
+    data_repo,
+    system_repo,
+    query_params,
+    pmts,
+):
+    """
+    Optimized listing function specifically for profiles.
+    Uses DESCRIBE for data fetching and a separate query for counting.
+    """
+    limit = query_params.limit
+    offset = limit * (int(query_params.page) - 1)
+
+    # Query to get the profiles within the limit/offset using DESCRIBE on selected nodes
+    describe_query_template = """
+        DESCRIBE ?focus_node
+        WHERE {{
+            {{
+                SELECT DISTINCT ?focus_node
+                WHERE {{
+                    ?focus_node a <{profile_class}> .
+                }}
+                LIMIT {limit} OFFSET {offset}
+            }}
+        }}
+    """
+    describe_query = describe_query_template.format(
+        profile_class=PROF.Profile, limit=limit, offset=offset
+    )
+
+    count_query_template = """
+        CONSTRUCT {{ [] <https://prez.dev/count> ?count }}
+        {{
+            SELECT (COUNT(DISTINCT ?profile) as ?count)
+            WHERE {{
+                ?profile a <{profile_class}> .
+            }}
+        }}
+    """
+    count_query = count_query_template.format(profile_class=PROF.Profile)
+    profiles_g, _ = await system_repo.send_queries([describe_query, count_query], [])
+
+    response = await return_from_graph(
+        profiles_g,
+        pmts.selected["mediatype"],
+        pmts.selected["profile"],
+        pmts.generate_response_headers(),
+        PROF.Profile,
+        data_repo,
+        system_repo,
+        query_params,
+    )
+    return response
+
 
 
 def _add_geom_triple_pattern_match(tssp_list: list[TriplesSameSubjectPath]):
@@ -155,8 +211,6 @@ async def listing_function(
             property_shape=facet_property_shape
         )
         queries.append(facets_query)
-        log.debug(str(facets_query))
-
     item_graph, _ = await query_repo.send_queries(queries, [])
     if "anot+" in pmts.selected["mediatype"]:
         await add_prez_links(item_graph, query_repo, endpoint_structure)

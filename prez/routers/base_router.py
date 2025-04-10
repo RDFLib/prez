@@ -23,7 +23,7 @@ from prez.routers.api_extras_examples import (
     responses,
 )
 from prez.services.connegp_service import NegotiatedPMTs
-from prez.services.listings import listing_function
+from prez.services.listings import listing_function, listing_profiles
 from prez.services.objects import object_function
 from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQuery
 from prez.services.query_generation.cql import CQLParser
@@ -32,13 +32,28 @@ from prez.services.query_generation.shacl import NodeShape
 router = APIRouter(tags=["ogcprez"])
 
 
-@router.get(path="/search", summary="Search", name=OGCE["search"], responses=responses)
+
 @router.get(
     "/profiles",
     summary="List Profiles",
     name=EP["system/profile-listing"],
     responses=responses,
 )
+async def listing_for_profiles(
+    query_params: QueryParams = Depends(),
+    pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
+    data_repo: Repo = Depends(get_data_repo),
+    system_repo: Repo = Depends(get_system_repo)
+):
+    return await listing_profiles(
+        data_repo,
+        system_repo,
+        query_params,
+        pmts
+    )
+
+
+@router.get(path="/search", summary="Search", name=OGCE["search"], responses=responses)
 @router.get(
     path="/cql", summary="CQL GET endpoint", name=OGCE["cql-get"], responses=responses
 )
