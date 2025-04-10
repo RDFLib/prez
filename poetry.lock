@@ -2135,14 +2135,14 @@ files = [
 
 [[package]]
 name = "sparql-grammar-pydantic"
-version = "0.1.5"
+version = "0.1.6"
 description = "Pydantic models for the SPARQL Grammar."
 optional = false
 python-versions = "<4.0,>=3.11"
 groups = ["main"]
 files = [
-    {file = "sparql_grammar_pydantic-0.1.5-py3-none-any.whl", hash = "sha256:8eadd635d149d6e5ccd3e0db3c6b0d7913f5cd25c4636d4110e16d0c2282af68"},
-    {file = "sparql_grammar_pydantic-0.1.5.tar.gz", hash = "sha256:8b17e62aaaad9b999f9c608176b09dcb16f78de38fc1fb89fb1b16a0c1583ed5"},
+    {file = "sparql_grammar_pydantic-0.1.6-py3-none-any.whl", hash = "sha256:eb173bd6a215e012687fbe42dc2764c3811b66a1715557a184a048ce1507567a"},
+    {file = "sparql_grammar_pydantic-0.1.6.tar.gz", hash = "sha256:b1da4700bc50fb043e7bcfce25335ce02df374f0c843c8a69421c91e7442bc33"},
 ]
 
 [package.dependencies]
@@ -2323,4 +2323,4 @@ server = ["uvicorn"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "ac97039315fa8dbb2a5bfd18a87a98fb5ea35f58c3ce5bcae30329c635782f8a"
+content-hash = "8fc6732176dcab33f126403281940421f9beb3bfd829787a4190398f8c7864f3"
