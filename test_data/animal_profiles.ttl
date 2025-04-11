@@ -1,0 +1,49 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix prof: <http://www.w3.org/ns/dx/prof/> .
+@prefix prez: <https://prez.dev/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/animals/> .
+@prefix schema: <https://schema.org/> .
+@prefix shext: <http://example.com/shacl-extension#> .
+
+<https://prez.dev/profile/animal-facets>
+    a prof:Profile , prez:ListingProfile ;
+    dcterms:identifier "animal-facets"^^xsd:token ;
+    dcterms:title "Animal Faceting Profile" ;
+    dcterms:description "Profile defining properties for faceting animal data, including nested conservation info." ;
+    sh:property [
+        sh:path [
+            sh:union (
+                rdfs:label
+                ex:species
+                ex:habitat
+                ex:diet
+                [
+                    sh:path ( ex:conservationInfo ex:status ) ;
+                    shext:pathAlias <http://example.org/animals/conservationStatus> ;
+                ]
+                [
+                    sh:path ( ex:conservationInfo ex:region ) ;
+                    shext:pathAlias <http://example.org/animals/conservationRegion> ;
+                ]
+            )
+        ]
+    ] .
+
+<https://prez.dev/profile/animal-search>
+    a prof:Profile , prez:ListingProfile ;
+    dcterms:identifier "animal-search"^^xsd:token ;
+    dcterms:title "Animal Search Results Profile" ;
+    dcterms:description "Profile defining properties to return for animal search results (class, label, description)." ;
+    sh:property [
+        sh:path [
+            sh:union (
+                rdf:type
+                rdfs:label
+                dcterms:description
+            )
+        ]
+    ] .

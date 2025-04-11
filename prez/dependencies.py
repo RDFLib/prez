@@ -225,9 +225,21 @@ async def get_jena_fts_shacl_predicates(system_repo: Repo):
 async def generate_search_query(
     request: Request,
     system_repo: Repo = Depends(get_system_repo),
+    endpoint_uri_type: tuple[URIRef, URIRef] = Depends(get_endpoint_uri_type),
 ):
     term = request.query_params.get("q")
-    if term:
+    # Check if the search term 'q' is provided
+    if not term:
+        # If 'q' is missing or empty, only raise error if it's the search endpoint
+        if endpoint_uri_type[0] == EP["extended-ogc-records/search"]:
+            raise HTTPException(
+                status_code=400,
+                detail="Search query parameter 'q' must be provided.",
+            )
+        else:
+            # For other endpoints, 'q' is optional, return None if not provided
+            return None
+    else:
         # escaped_term = escape_for_lucene_and_sparql(term)
         predicates = request.query_params.getlist("predicates")
         page = request.query_params.get("page", 1)
