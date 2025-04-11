@@ -187,7 +187,8 @@ async def listing_function(
         queries.append(count_query)
     if query_params.facet_profile:
         facets_query = await _create_facets_query(main_query, query_params)
-        queries.append(facets_query)
+        if facets_query:
+            queries.append(facets_query)
     item_graph, _ = await query_repo.send_queries(queries, [])
     if "anot+" in pmts.selected["mediatype"]:
         await add_prez_links(item_graph, query_repo, endpoint_structure)
@@ -227,19 +228,22 @@ async def _create_facets_query(main_query, query_params):
         ),
         None
     )
-    facet_nodeshape = NodeShape(
-        uri=profile_uri,
-        graph=profiles_graph_cache,
-        kind="profile",
-        focus_node=Var(value="focus_node")
-    )
-    facet_property_shape = facet_nodeshape.propertyShapes[0]
-    subselect_for_faceting = copy.deepcopy(main_query.inner_select)
-    facets_query = FacetQuery(
-        original_subselect=subselect_for_faceting,
-        property_shape=facet_property_shape
-    )
-    return facets_query
+    if not profile_uri:
+        return None
+    else:
+        facet_nodeshape = NodeShape(
+            uri=profile_uri,
+            graph=profiles_graph_cache,
+            kind="profile",
+            focus_node=Var(value="focus_node")
+        )
+        facet_property_shape = facet_nodeshape.propertyShapes[0]
+        subselect_for_faceting = copy.deepcopy(main_query.inner_select)
+        facets_query = FacetQuery(
+            original_subselect=subselect_for_faceting,
+            property_shape=facet_property_shape
+        )
+        return facets_query
 
 
 async def ogc_features_listing_function(
