@@ -3,18 +3,10 @@ from unittest.mock import patch
 from rdflib import DCTERMS, PROV, RDFS, SH, SKOS, Graph, Namespace, URIRef
 from sparql_grammar_pydantic import (
     IRI,
-    PathAlternative,
     PathSequence,
-    PropertyListPathNotEmpty,
-    SG_Path,
     TriplesSameSubject,
     TriplesSameSubjectPath,
     Var,
-    VarOrTerm,
-    VerbPath,
-    ObjectListPath,
-    ObjectPath,
-    GraphNodePath,
 )
 
 from prez.services.query_generation.shacl import (

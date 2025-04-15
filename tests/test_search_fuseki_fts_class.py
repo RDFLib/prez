@@ -1,6 +1,8 @@
+from unittest.mock import patch
+
 from pathlib import Path
 
-from rdflib import RDFS, Graph, URIRef
+from rdflib import RDFS, Graph, URIRef, DCTERMS, RDF
 from sparql_grammar_pydantic import (
     GroupGraphPattern,
     GroupGraphPatternSub,
@@ -11,6 +13,7 @@ from sparql_grammar_pydantic import (
     IRI,
 )
 
+from prez.enums import SearchMethod
 from prez.services.query_generation.search_fuseki_fts import SearchQueryFusekiFTS
 from prez.services.query_generation.shacl import PropertyShape
 
@@ -83,3 +86,38 @@ def test_bnode_filter():
     )
     query_string = query_obj.to_string()
     assert "FILTER (! isBLANK(?focus_node))" in query_string
+
+
+def test_oomp():
+    tssp_list = [
+        TriplesSameSubjectPath.from_spo(
+            Var(value="focus_node"),
+            IRI(value=DCTERMS.hasPart),
+            Var(value="path_node_1"),
+        ),
+        TriplesSameSubjectPath.from_spo(
+            Var(value="path_node_1"),
+            IRI(value=DCTERMS.hasPart),
+            Var(value="path_node_2"),
+        ),
+        TriplesSameSubjectPath.from_spo(
+            Var(value="path_node_2"),
+            IRI(value=RDF.value),
+            Var(value="fts_search_node"),
+        ),
+    ]
+    query_obj = SearchQueryFusekiFTS(
+        term="test",
+        limit=10,
+        offset=0,
+        shacl_tssp_preds=[(tssp_list, [RDF.value])],
+    )
+    query_string = query_obj.to_string()
+    assert "FILTER (! isBLANK(?focus_node))" in query_string
+
+
+@patch("prez.dependencies.settings")
+def test_one_or_more_path(client, mock_settings):
+    mock_settings.search_method = SearchMethod.FTS_FUSEKI
+    r = client.get("/search?q=test&predicates=oomp&_mediatype=application/sparql-query")
+    assert r.status_code == 200

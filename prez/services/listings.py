@@ -86,6 +86,10 @@ async def listing_profiles(
     """
     count_query = count_query_template.format(profile_class=PROF.Profile)
     profiles_g, _ = await system_repo.send_queries([describe_query, count_query], [])
+    for profile_uri in profiles_g.subjects(predicate=RDF.type, object=PROF.Profile):
+        profiles_g.add((profile_uri, RDF.type, PREZ.FocusNode))
+        curie = get_curie_id_for_uri(profile_uri)
+        profiles_g.add((profile_uri, PREZ.link, Literal(f"/profiles/{curie}")))
 
     response = await return_from_graph(
         profiles_g,
