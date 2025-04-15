@@ -1,3 +1,4 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix sdo: <https://schema.org/> .
 @prefix ont: <https://prez.dev/ont/> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
@@ -44,4 +45,13 @@ ex:RealExample
     sh:name "Real Example" ;
     dcterms:identifier "real" ;
     ont:searchPredicate sdo:description ;
+.
+
+ex:OOMP
+    a sh:PropertyShape ;
+    a ont:JenaFTSPropertyShape ;
+    sh:path [ sh:oneOrMorePath dcterms:hasPart ] ;
+    sh:name "one ore more path" ;
+    dcterms:identifier "oomp" ;
+    ont:searchPredicate rdf:value ;
 .

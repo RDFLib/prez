@@ -572,7 +572,9 @@ class PropertyShape(Shape):
             use_alias = settings.use_path_aliases and hasattr(property_path, 'path_alias') and property_path.path_alias
 
             # Always create path_node_1 as it's needed everywhere
-            if f"{path_or_prop}_node_{pp_i + 1}" in self.path_nodes:
+            if self.kind == "fts":
+                path_node_1 = Var(value="fts_search_node")
+            elif f"{path_or_prop}_node_{pp_i + 1}" in self.path_nodes:
                 path_node_1 = self.path_nodes[f"{path_or_prop}_node_{pp_i + 1}"]
             else:
                 path_node_1 = Var(value=f"{path_or_prop}_node_{pp_i + 1}")

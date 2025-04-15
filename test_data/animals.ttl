@@ -4,6 +4,20 @@
 @prefix ex: <http://example.org/animals/> .
 @prefix schema: <https://schema.org/> .
 
+ex:species rdfs:label "Species" .
+ex:habitat rdfs:label "Habitat" .
+ex:diet rdfs:label "Diet" .
+ex:conservationInfo rdfs:label "Conservation Info" .
+ex:status rdfs:label "Status" .
+ex:conservationStatus rdfs:label "Conservation Status" .
+ex:conservationRegion rdfs:label "Conservation Region" .
+
+schema:Animal rdfs:label "Animal" .
+schema:Fish rdfs:label "Fish" .
+schema:Bird rdfs:label "Bird" .
+schema:Reptile rdfs:label "Reptile" .
+schema:Amphibian rdfs:label "Amphibian" .
+
 ex:lion a schema:Animal ;
     rdfs:label "Lion" ;
     dcterms:description "A large carnivorous cat native to Africa and India." ;
