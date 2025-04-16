@@ -17,7 +17,6 @@
     sh:property [
         sh:path [
             sh:union (
-                rdfs:label
                 ex:species
                 ex:habitat
                 ex:diet
@@ -47,3 +46,10 @@
             )
         ]
     ] .
+
+<https://prez.dev/profile/facet-by-type>
+    a prof:Profile , prez:ListingProfile ;
+    dcterms:identifier "facet-type"^^xsd:token ;
+    dcterms:title "Facet things by type" ;
+    dcterms:description "Allows faceting by rdf:type" ;
+    sh:property [ sh:path [ sh:union ( rdf:type ) ] ] .
