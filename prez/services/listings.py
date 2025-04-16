@@ -192,7 +192,7 @@ async def listing_function(
     if query_params.facet_profile:
         facets_query = await _create_facets_query(main_query, query_params)
         if facets_query:
-            queries.append(facets_query)
+            queries.append(facets_query.to_string())
     item_graph, _ = await query_repo.send_queries(queries, [])
     if "anot+" in pmts.selected["mediatype"]:
         await add_prez_links(item_graph, query_repo, endpoint_structure)

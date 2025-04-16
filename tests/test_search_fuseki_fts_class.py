@@ -117,7 +117,7 @@ def test_oomp():
 
 
 @patch("prez.dependencies.settings")
-def test_one_or_more_path(client, mock_settings):
+def test_one_or_more_path(mock_settings, client):
     mock_settings.search_method = SearchMethod.FTS_FUSEKI
     r = client.get("/search?q=test&predicates=oomp&_mediatype=application/sparql-query")
     assert r.status_code == 200
