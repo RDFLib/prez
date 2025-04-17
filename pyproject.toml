@@ -31,7 +31,7 @@ pydantic-settings = "^2.5.0"
 pyld = "^2.0.4"
 aiocache = "^0.12.2"
 sparql-grammar-pydantic = "^0.1.6"
-rdf2geojson = {git = "https://github.com/Kurrawong/rdf2geojson.git", rev = "v0.5.0"}
+rdf2geojson = {git = "https://github.com/Kurrawong/rdf2geojson.git", rev = "v0.5.1"}
 python-multipart = "^0.0.20"
 pyoxigraph = "^0.4.4"
 oxrdflib = {git = "https://github.com/oxigraph/oxrdflib.git", rev = "main"}
