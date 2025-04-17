@@ -5,8 +5,8 @@ import logging
 
 from fastapi.responses import PlainTextResponse
 from rdf2geojson import convert
-from rdflib import Literal
-from rdflib.namespace import GEO, RDF, Namespace
+from rdflib import Literal, DCTERMS, XSD, Namespace
+from rdflib.namespace import GEO, RDF, PROF
 from sparql_grammar_pydantic import (
     IRI,
     TriplesSameSubject,
@@ -14,6 +14,7 @@ from sparql_grammar_pydantic import (
     Var,
 )
 
+from prez.cache import profiles_graph_cache
 from prez.config import settings
 from prez.enums import NonAnnotatedRDFMediaType, AnnotatedRDFMediaType
 from prez.reference_data.prez_ns import ALTREXT, OGCFEAT, PREZ
@@ -31,6 +32,8 @@ from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.generate_queryables import generate_queryables_json
 from prez.services.link_generation import add_prez_links
 from prez.services.query_generation.count import CountQuery
+from prez.services.query_generation.facet import FacetQuery
+from prez.services.query_generation.shacl import NodeShape
 from prez.services.query_generation.umbrella import (
     PrezQueryConstructor,
     merge_listing_query_grammar_inputs,
@@ -39,6 +42,66 @@ from prez.services.query_generation.umbrella import (
 log = logging.getLogger(__name__)
 
 DWC = Namespace("http://rs.tdwg.org/dwc/terms/")
+
+
+async def listing_profiles(
+    data_repo,
+    system_repo,
+    query_params,
+    pmts,
+):
+    """
+    Optimized listing function specifically for profiles.
+    Uses DESCRIBE for data fetching and a separate query for counting.
+    """
+    limit = query_params.limit
+    offset = limit * (int(query_params.page) - 1)
+
+    # Query to get the profiles within the limit/offset using DESCRIBE on selected nodes
+    describe_query_template = """
+        DESCRIBE ?focus_node
+        WHERE {{
+            {{
+                SELECT DISTINCT ?focus_node
+                WHERE {{
+                    ?focus_node a <{profile_class}> .
+                }}
+                LIMIT {limit} OFFSET {offset}
+            }}
+        }}
+    """
+    describe_query = describe_query_template.format(
+        profile_class=PROF.Profile, limit=limit, offset=offset
+    )
+
+    count_query_template = """
+        CONSTRUCT {{ [] <https://prez.dev/count> ?count }}
+        {{
+            SELECT (COUNT(DISTINCT ?profile) as ?count)
+            WHERE {{
+                ?profile a <{profile_class}> .
+            }}
+        }}
+    """
+    count_query = count_query_template.format(profile_class=PROF.Profile)
+    profiles_g, _ = await system_repo.send_queries([describe_query, count_query], [])
+    for profile_uri in profiles_g.subjects(predicate=RDF.type, object=PROF.Profile):
+        profiles_g.add((profile_uri, RDF.type, PREZ.FocusNode))
+        curie = get_curie_id_for_uri(profile_uri)
+        profiles_g.add((profile_uri, PREZ.link, Literal(f"/profiles/{curie}")))
+
+    response = await return_from_graph(
+        profiles_g,
+        pmts.selected["mediatype"],
+        pmts.selected["profile"],
+        pmts.generate_response_headers(),
+        PROF.Profile,
+        data_repo,
+        system_repo,
+        query_params,
+    )
+    return response
+
 
 
 def _add_geom_triple_pattern_match(tssp_list: list[TriplesSameSubjectPath]):
@@ -125,7 +188,10 @@ async def listing_function(
         subselect = copy.deepcopy(main_query.inner_select)
         count_query = CountQuery(original_subselect=subselect).to_string()
         queries.append(count_query)
-
+    if query_params.facet_profile:
+        facets_query = await _create_facets_query(main_query, query_params)
+        if facets_query:
+            queries.append(facets_query.to_string())
     item_graph, _ = await query_repo.send_queries(queries, [])
     if "anot+" in pmts.selected["mediatype"]:
         await add_prez_links(item_graph, query_repo, endpoint_structure)
@@ -149,6 +215,38 @@ async def listing_function(
         query_params,
         url,
     )
+
+
+async def _create_facets_query(main_query, query_params):
+    profile_uri = next(
+        profiles_graph_cache.subjects(
+            predicate=DCTERMS.identifier,
+            object=Literal(query_params.facet_profile)
+        ),
+        None
+    ) or next(
+        profiles_graph_cache.subjects(
+            predicate=DCTERMS.identifier,
+            object=Literal(query_params.facet_profile, datatype=XSD.token)
+        ),
+        None
+    )
+    if not profile_uri:
+        return None
+    else:
+        facet_nodeshape = NodeShape(
+            uri=profile_uri,
+            graph=profiles_graph_cache,
+            kind="profile",
+            focus_node=Var(value="focus_node")
+        )
+        facet_property_shape = facet_nodeshape.propertyShapes[0]
+        subselect_for_faceting = copy.deepcopy(main_query.inner_select)
+        facets_query = FacetQuery(
+            original_subselect=subselect_for_faceting,
+            property_shape=facet_property_shape
+        )
+        return facets_query
 
 
 async def ogc_features_listing_function(

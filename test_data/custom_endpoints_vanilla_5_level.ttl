@@ -1,0 +1,139 @@
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <http://example.org/> .
+@prefix ont: <https://prez.dev/ont/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+
+# Level One Endpoints
+ex:level-one-listing a ont:DynamicEndpoint,
+        ont:ListingEndpoint ;
+    rdfs:label "Level One Listing" ;
+    ont:apiPath "/level-one" ;
+    ont:relevantShapes ex:shape-R0-HL1 .
+
+ex:level-one-object a ont:DynamicEndpoint,
+        ont:ObjectEndpoint ;
+    rdfs:label "Level One Object" ;
+    ont:apiPath "/level-one/{levelOneId}" ;
+    ont:relevantShapes ex:shape-R0-HL1 .
+
+# Level Two Endpoints
+ex:level-two-listing a ont:DynamicEndpoint,
+        ont:ListingEndpoint ;
+    rdfs:label "Level Two Listing" ;
+    ont:apiPath "/level-one/{levelOneId}/level-two" ;
+    ont:relevantShapes ex:shape-R0-HL2 .
+
+ex:level-two-object a ont:DynamicEndpoint,
+        ont:ObjectEndpoint ;
+    rdfs:label "Level Two Object" ;
+    ont:apiPath "/level-one/{levelOneId}/level-two/{levelTwoId}" ;
+    ont:relevantShapes ex:shape-R0-HL2 .
+
+# Level Three Endpoints
+ex:level-three-listing a ont:DynamicEndpoint,
+        ont:ListingEndpoint ;
+    rdfs:label "Level Three Listing" ;
+    ont:apiPath "/level-one/{levelOneId}/level-two/{levelTwoId}/level-three" ;
+    ont:relevantShapes ex:shape-R0-HL3 .
+
+ex:level-three-object a ont:DynamicEndpoint,
+        ont:ObjectEndpoint ;
+    rdfs:label "Level Three Object" ;
+    ont:apiPath "/level-one/{levelOneId}/level-two/{levelTwoId}/level-three/{levelThreeId}" ;
+    ont:relevantShapes ex:shape-R0-HL3 .
+
+# Level Four Endpoints
+ex:level-four-listing a ont:DynamicEndpoint,
+        ont:ListingEndpoint ;
+    rdfs:label "Level Four Listing" ;
+    ont:apiPath "/level-one/{levelOneId}/level-two/{levelTwoId}/level-three/{levelThreeId}/level-four" ;
+    ont:relevantShapes ex:shape-R0-HL4 .
+
+ex:level-four-object a ont:DynamicEndpoint,
+        ont:ObjectEndpoint ;
+    rdfs:label "Level Four Object" ;
+    ont:apiPath "/level-one/{levelOneId}/level-two/{levelTwoId}/level-three/{levelThreeId}/level-four/{levelFourId}" ;
+    ont:relevantShapes ex:shape-R0-HL4 .
+
+# Level Five Endpoints
+ex:level-five-listing a ont:DynamicEndpoint,
+        ont:ListingEndpoint ;
+    rdfs:label "Level Five Listing" ;
+    ont:apiPath "/level-one/{levelOneId}/level-two/{levelTwoId}/level-three/{levelThreeId}/level-four/{levelFourId}/level-five" ;
+    ont:relevantShapes ex:shape-R0-HL5 .
+
+ex:level-five-object a ont:DynamicEndpoint,
+        ont:ObjectEndpoint ;
+    rdfs:label "Level Five Object" ;
+    ont:apiPath "/level-one/{levelOneId}/level-two/{levelTwoId}/level-three/{levelThreeId}/level-four/{levelFourId}/level-five/{levelFiveId}" ;
+    ont:relevantShapes ex:shape-R0-HL5 .
+
+# NodeShapes
+ex:shape-R0-HL1 a sh:NodeShape ;
+    sh:property [
+        sh:or ( [ sh:class ex:Two ] [ sh:class ex:TwoOtherClass ] ) ;
+        sh:path [ sh:alternativePath ( ex:one-to-two ex:alternative-one-to-two ) ]
+    ] ;
+    sh:targetClass ex:One ;
+    ont:hierarchyLevel 1 .
+
+ex:shape-R0-HL2 a sh:NodeShape ;
+    sh:property [
+        sh:class ex:One ;
+        sh:path [ sh:alternativePath ( [ sh:inversePath ex:one-to-two ] [ sh:inversePath ex:alternative-one-to-two ] ) ]
+    ] ;
+    sh:targetClass ex:Two , ex:TwoOtherClass ;
+    ont:hierarchyLevel 2 .
+
+ex:shape-R0-HL3 a sh:NodeShape ;
+    sh:property [
+        sh:class ex:Two ;
+        sh:path [ sh:inversePath ex:two-to-three ]
+    ],
+    [
+        sh:class ex:One ;
+        sh:path ( [ sh:inversePath ex:two-to-three ] [ sh:inversePath ex:one-to-two ] )
+    ] ;
+    sh:targetClass ex:Three ;
+    ont:hierarchyLevel 3 .
+
+ex:shape-R0-HL4 a sh:NodeShape ;
+    sh:property [
+        sh:class ex:Three ;
+        sh:path [ sh:inversePath ex:three-to-four ]
+    ],
+    [
+        sh:class ex:Two ;
+        sh:path ( [ sh:inversePath ex:three-to-four ] [ sh:inversePath ex:two-to-three ] )
+    ],
+    [
+        sh:class ex:One ;
+        sh:path ( [ sh:inversePath ex:three-to-four ] [ sh:inversePath ex:two-to-three ] [ sh:inversePath ex:one-to-two ] )
+    ] ;
+    sh:targetClass ex:Four ;
+    ont:hierarchyLevel 4 .
+
+ex:shape-R0-HL5 a sh:NodeShape ;
+    sh:property [
+        sh:class ex:Four ;
+        sh:path [ sh:inversePath ex:four-to-five ]
+    ],
+    [
+        sh:class ex:Three ;
+        sh:path ( [ sh:inversePath ex:four-to-five ] [ sh:inversePath ex:three-to-four ] )
+    ],
+    [
+        sh:class ex:Two ;
+        sh:path ( [ sh:inversePath ex:four-to-five ] [ sh:inversePath ex:three-to-four ] [ sh:inversePath ex:two-to-three ] )
+    ],
+    [
+        sh:class ex:One ;
+        sh:path ( [ sh:inversePath ex:four-to-five ] [ sh:inversePath ex:three-to-four ] [ sh:inversePath ex:two-to-three ] [ sh:inversePath ex:one-to-two ] )
+    ] ;
+    sh:targetClass ex:Five ;
+    ont:hierarchyLevel 5 .

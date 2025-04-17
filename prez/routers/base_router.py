@@ -14,7 +14,7 @@ from prez.dependencies import (
     get_system_repo,
     get_url,
 )
-from prez.models.query_params import QueryParams
+from prez.models.query_params import ListingQueryParams, ObjectQueryParams
 from prez.reference_data.prez_ns import EP, OGCE, ONT
 from prez.repositories import Repo
 from prez.routers.api_extras_examples import (
@@ -23,7 +23,7 @@ from prez.routers.api_extras_examples import (
     responses,
 )
 from prez.services.connegp_service import NegotiatedPMTs
-from prez.services.listings import listing_function
+from prez.services.listings import listing_function, listing_profiles
 from prez.services.objects import object_function
 from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQuery
 from prez.services.query_generation.cql import CQLParser
@@ -32,13 +32,28 @@ from prez.services.query_generation.shacl import NodeShape
 router = APIRouter(tags=["ogcprez"])
 
 
-@router.get(path="/search", summary="Search", name=OGCE["search"], responses=responses)
+
 @router.get(
     "/profiles",
     summary="List Profiles",
     name=EP["system/profile-listing"],
     responses=responses,
 )
+async def listing_for_profiles(
+    query_params: ListingQueryParams = Depends(),
+    pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
+    data_repo: Repo = Depends(get_data_repo),
+    system_repo: Repo = Depends(get_system_repo)
+):
+    return await listing_profiles(
+        data_repo,
+        system_repo,
+        query_params,
+        pmts
+    )
+
+
+@router.get(path="/search", summary="Search", name=OGCE["search"], responses=responses)
 @router.get(
     path="/cql", summary="CQL GET endpoint", name=OGCE["cql-get"], responses=responses
 )
@@ -57,7 +72,7 @@ router = APIRouter(tags=["ogcprez"])
     responses=responses,
 )
 async def listings(
-    query_params: QueryParams = Depends(),
+    query_params: ListingQueryParams = Depends(),
     endpoint_nodeshape: NodeShape = Depends(get_endpoint_nodeshapes),
     pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
     endpoint_structure: tuple[str, ...] = Depends(get_endpoint_structure),
@@ -97,7 +112,7 @@ async def listings(
     responses=responses,
 )
 async def cql_post_listings(
-    query_params: QueryParams = Depends(),
+    query_params: ListingQueryParams = Depends(),
     endpoint_nodeshape: NodeShape = Depends(get_endpoint_nodeshapes),
     pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
     endpoint_structure: tuple[str, ...] = Depends(get_endpoint_structure),
@@ -143,6 +158,7 @@ async def cql_post_listings(
     responses=responses,
 )
 async def objects(
+    query_params: ObjectQueryParams = Depends(),
     pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
     endpoint_structure: tuple[str, ...] = Depends(get_endpoint_structure),
     profile_nodeshape: NodeShape = Depends(get_profile_nodeshape),
@@ -151,6 +167,7 @@ async def objects(
     url: str = Depends(get_url),
 ):
     return await object_function(
+        query_params=query_params,
         data_repo=data_repo,
         system_repo=system_repo,
         endpoint_structure=endpoint_structure,

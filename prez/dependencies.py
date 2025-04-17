@@ -30,7 +30,7 @@ from prez.exceptions.model_exceptions import (
     NoEndpointNodeshapeException,
     URINotFoundException, MissingFilterQueryError,
 )
-from prez.models.query_params import QueryParams
+from prez.models.query_params import ListingQueryParams
 from prez.reference_data.prez_ns import ALTREXT, EP, OGCE, OGCFEAT, ONT
 from prez.repositories import OxrdflibRepo, PyoxigraphRepo, RemoteSparqlRepo, Repo
 from prez.services.classes import get_classes_single
@@ -191,7 +191,7 @@ async def cql_post_parser_dependency(
 
 
 async def cql_get_parser_dependency(
-    query_params: QueryParams = Depends(),
+    query_params: ListingQueryParams = Depends(),
     queryable_props: list = Depends(get_queryable_props),
     endpoint_uri_type: str = Depends(get_endpoint_uri_type),
 ) -> CQLParser:
@@ -225,9 +225,21 @@ async def get_jena_fts_shacl_predicates(system_repo: Repo):
 async def generate_search_query(
     request: Request,
     system_repo: Repo = Depends(get_system_repo),
+    endpoint_uri_type: tuple[URIRef, URIRef] = Depends(get_endpoint_uri_type),
 ):
     term = request.query_params.get("q")
-    if term:
+    # Check if the search term 'q' is provided
+    if not term:
+        # If 'q' is missing or empty, only raise error if it's the search endpoint
+        if endpoint_uri_type[0] == EP["extended-ogc-records/search"]:
+            raise HTTPException(
+                status_code=400,
+                detail="Search query parameter 'q' must be provided.",
+            )
+        else:
+            # For other endpoints, 'q' is optional, return None if not provided
+            return None
+    else:
         # escaped_term = escape_for_lucene_and_sparql(term)
         predicates = request.query_params.getlist("predicates")
         page = request.query_params.get("page", 1)
@@ -663,6 +675,7 @@ async def check_unknown_params(request: Request):
         "_profile",
         "page",
         "limit",
+        "facet_profile",
         "datetime",
         "bbox",
         "filter-lang",
