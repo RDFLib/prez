@@ -16,7 +16,7 @@ from prez.config import settings
 from prez.enums import NonAnnotatedRDFMediaType, AnnotatedRDFMediaType
 from prez.exceptions.model_exceptions import URINotFoundException
 from prez.models.ogc_features import Collection, Link, Links
-from prez.models.query_params import QueryParams
+from prez.models.query_params import ListingQueryParams
 from prez.reference_data.prez_ns import ALTREXT, ONT, PREZ
 from prez.renderers.renderer import (
     create_self_alt_links,
@@ -34,10 +34,10 @@ log = logging.getLogger(__name__)
 
 
 async def object_function(
-        data_repo, system_repo, endpoint_structure, pmts, profile_nodeshape, url
+        data_repo, system_repo, endpoint_structure, pmts, profile_nodeshape, url, query_params
 ):
     if pmts.selected["profile"] == ALTREXT["alt-profile"]:
-        query_params = QueryParams(
+        list_query_params = ListingQueryParams(
             mediatype=pmts.selected["mediatype"],
             _filter=None,
             q=None,
@@ -50,6 +50,7 @@ async def object_function(
             filter_lang=None,
             order_by=None,
             order_by_direction=None,
+            subscription_key=query_params.subscription_key
         )
         return await listing_function(
             data_repo=data_repo,
@@ -57,7 +58,7 @@ async def object_function(
             endpoint_structure=endpoint_structure,
             pmts=pmts,
             profile_nodeshape=profile_nodeshape,
-            query_params=query_params,
+            query_params=list_query_params,
             original_endpoint_type=ONT["ObjectEndpoint"],
             url=url,
             endpoint_nodeshape=None,

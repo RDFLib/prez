@@ -79,13 +79,7 @@ def validate_datetime(
   * A date-time: "2018-02-12T23:20:50Z"
   * A bounded interval: "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z"
   * Half-bounded intervals: "2018-02-12T00:00:00Z/.." or "../2018-03-18T12:31:12Z"
-
-  Only features that have a temporal property that intersects the value of
-  `datetime` are selected.
-
-  If a feature has multiple temporal properties, it is the decision of the
-  server whether only a single temporal property is used to determine
-  the extent or all relevant temporal properties.""",
+""",
         alias="datetime",
         openapi_extra={
             "name": "datetime",
@@ -113,9 +107,9 @@ def validate_datetime(
     return None
 
 
-class QueryParams:
+class ListingQueryParams:
     """
-    Not using Pydantic as cannot pass descriptions through to OpenAPI docs when using Pydantic.
+    Query parameters for Listing endpoints. Not using Pydantic as cannot pass descriptions through to OpenAPI docs when using Pydantic.
     See: https://stackoverflow.com/a/64366434/15371702
 
     For bbox, require workaround as Pydantic does not support lists of query parameters in the form ?bbox=1,2,3,4
@@ -195,3 +189,29 @@ class QueryParams:
                 raise HTTPException(
                     status_code=400, detail="Filter criteria must be valid JSON."
                 )
+
+
+class ObjectQueryParams:
+    """
+    Query parameters specific to Object endpoints.
+    """
+
+    def __init__(
+        self,
+        mediatype: str = Query(
+            default="text/turtle", alias="_mediatype", description="Requested mediatype"
+        ),
+        profile: Optional[str] = Query(default=None, alias="_profile", description="Requested profile"),
+        facet_profile: Optional[str] = Query(
+            default=None, description="IRIs of the profile to use for faceting"
+        ),
+        subscription_key: str = Query(
+            default=None,
+            description="An optional API Subscription key",
+            alias="subscription-key",
+        ),
+    ):
+        self.mediatype = mediatype
+        self.profile = profile
+        self.facet_profile = facet_profile
+        self.subscription_key = subscription_key

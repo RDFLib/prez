@@ -14,7 +14,7 @@ from prez.dependencies import (
     get_system_repo,
     get_url,
 )
-from prez.models.query_params import QueryParams
+from prez.models.query_params import ListingQueryParams, ObjectQueryParams
 from prez.reference_data.prez_ns import EP, OGCE, ONT
 from prez.repositories import Repo
 from prez.routers.api_extras_examples import (
@@ -40,7 +40,7 @@ router = APIRouter(tags=["ogcprez"])
     responses=responses,
 )
 async def listing_for_profiles(
-    query_params: QueryParams = Depends(),
+    query_params: ListingQueryParams = Depends(),
     pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
     data_repo: Repo = Depends(get_data_repo),
     system_repo: Repo = Depends(get_system_repo)
@@ -72,7 +72,7 @@ async def listing_for_profiles(
     responses=responses,
 )
 async def listings(
-    query_params: QueryParams = Depends(),
+    query_params: ListingQueryParams = Depends(),
     endpoint_nodeshape: NodeShape = Depends(get_endpoint_nodeshapes),
     pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
     endpoint_structure: tuple[str, ...] = Depends(get_endpoint_structure),
@@ -112,7 +112,7 @@ async def listings(
     responses=responses,
 )
 async def cql_post_listings(
-    query_params: QueryParams = Depends(),
+    query_params: ListingQueryParams = Depends(),
     endpoint_nodeshape: NodeShape = Depends(get_endpoint_nodeshapes),
     pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
     endpoint_structure: tuple[str, ...] = Depends(get_endpoint_structure),
@@ -158,6 +158,7 @@ async def cql_post_listings(
     responses=responses,
 )
 async def objects(
+    query_params: ObjectQueryParams = Depends(),
     pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
     endpoint_structure: tuple[str, ...] = Depends(get_endpoint_structure),
     profile_nodeshape: NodeShape = Depends(get_profile_nodeshape),
@@ -166,6 +167,7 @@ async def objects(
     url: str = Depends(get_url),
 ):
     return await object_function(
+        query_params=query_params,
         data_repo=data_repo,
         system_repo=system_repo,
         endpoint_structure=endpoint_structure,

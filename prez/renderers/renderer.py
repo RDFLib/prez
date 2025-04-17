@@ -27,7 +27,7 @@ from prez.cache import prefix_graph
 from prez.config import settings
 from prez.dependencies import get_endpoint_uri, get_system_repo, get_url
 from prez.models.ogc_features import Collection, Collections, Link, Links, Queryables
-from prez.models.query_params import QueryParams
+from prez.models.query_params import ListingQueryParams
 from prez.reference_data.prez_ns import OGCFEAT, ONT, PREZ
 from prez.renderers.csv_renderer import render_csv_dropdown
 from prez.renderers.json_renderer import NotFoundError, render_json_dropdown
@@ -49,7 +49,7 @@ async def return_from_graph(
     selected_class: URIRef,
     repo: Repo,
     system_repo: Repo,
-    query_params: Optional[QueryParams] = None,
+    query_params: Optional[ListingQueryParams] = None,
     url: str = None,
 ):
     profile_headers["Content-Disposition"] = "inline"
