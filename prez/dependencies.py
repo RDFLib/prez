@@ -30,7 +30,7 @@ from prez.exceptions.model_exceptions import (
     NoEndpointNodeshapeException,
     URINotFoundException, MissingFilterQueryError,
 )
-from prez.models.query_params import QueryParams
+from prez.models.query_params import ListingQueryParams
 from prez.reference_data.prez_ns import ALTREXT, EP, OGCE, OGCFEAT, ONT
 from prez.repositories import OxrdflibRepo, PyoxigraphRepo, RemoteSparqlRepo, Repo
 from prez.services.classes import get_classes_single
@@ -191,7 +191,7 @@ async def cql_post_parser_dependency(
 
 
 async def cql_get_parser_dependency(
-    query_params: QueryParams = Depends(),
+    query_params: ListingQueryParams = Depends(),
     queryable_props: list = Depends(get_queryable_props),
     endpoint_uri_type: str = Depends(get_endpoint_uri_type),
 ) -> CQLParser:
