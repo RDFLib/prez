@@ -90,4 +90,4 @@ jobs:
           build-args: PREZ_VERSION=${{ needs.release.outputs.new_release_version }}
           tags: ${{ steps.metadata.outputs.tags }}
           provenance: false
-          platforms: linux/amd64 #,linux/arm64
+          platforms: linux/amd64,linux/arm64
