@@ -276,20 +276,20 @@ All the profiles listed above provide validators that can be used with RDF data 
 
 The profiles' validators are all available from the profiles themselves (navigate to the listings of other profile resources via the specification links above) and they are also loaded into the _KurrawongAI SHACL Validator_ online tool which you can use without downloading or installing anything:
 
-- <http://rdftools.kurrawong.net/validate>
+- <https://tools.dev.kurrawong.ai/validate>
 
 Look for the _VocPrez Compounded_ and similar validators. The 'compounded' bit means that validator will validate data against all VocPrez and inherited requirements.
 
 ## Contact
 
-> **NOTE**: This open source tool is actively developed and supported by [KurrawongAI](https://kurrawong.net), a small Australian Knowledge Graph company, developers at the [University of Melbourne](https://www.unimelb.edu.au) and by open source contributors too.
+> **NOTE**: This open source tool is actively developed and supported by [KurrawongAI](https://kurrawong.ai), a small Australian Knowledge Graph company, developers at the [University of Melbourne](https://www.unimelb.edu.au) and by open source contributors too.
 >
 > To flag problems or raise questions, please create issues in the [Issue Tracker](https://github.com/RDFLib/prez/issues) or you can contact developers using their details below.
 
 Here are the lead developers:
 
 **KurrawongAI**
-<https://kurrawong.net>
+<https://kurrawong.ai>
 
 _David Habgood_
 <david@kurrawong.ai>
