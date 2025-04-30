@@ -274,7 +274,7 @@ For Prez to deliver data via its various subsystems, the data needs to conform t
 
 All the profiles listed above provide validators that can be used with RDF data to test to see if it's valid. If it is, Prez will be just fine with it.
 
-The profiles' validators are all available from the profiles themselves (navigate to the listings of other profile resources via the specification links above) and they are also loaded into the _RDFTools_ online tool which you can use without downloading or installing anything:
+The profiles' validators are all available from the profiles themselves (navigate to the listings of other profile resources via the specification links above) and they are also loaded into the _KurrawongAI SHACL Validator_ online tool which you can use without downloading or installing anything:
 
 - <http://rdftools.kurrawong.net/validate>
 
