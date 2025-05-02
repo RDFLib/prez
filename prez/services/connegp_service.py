@@ -11,6 +11,7 @@ from prez.config import settings
 from prez.exceptions.model_exceptions import PrefixNotBoundException
 from prez.repositories.base import Repo
 from prez.services.curie_functions import get_curie_id_for_uri, get_uri_for_curie_id
+from prez.services.validate_iri import validate_iri
 
 log = logging.getLogger(__name__)
 
@@ -128,8 +129,7 @@ class NegotiatedPMTs(BaseModel):
             result: str = results[0][1][0]["profile"]["value"]
         except (KeyError, IndexError, ValueError):
             raise TokenError(f"Token: '{token}' could not be resolved to URI")
-        uri = "<" + result + ">"
-        return uri
+        return URIRef(result)
 
     async def _tupilize(
         self, string: str, is_profile: bool = False
@@ -138,24 +138,24 @@ class NegotiatedPMTs(BaseModel):
         parts[0] = parts[0].strip(
             " ;"
         )  # remove the seperator character, and any whitespace characters
-        if is_profile and not re.search(
-            r"^<.*>$", parts[0]
-        ):  # If it doesn't look like a URI ...
+        if is_profile:
             try:
                 parts[0] = await self._resolve_token(
                     parts[0]
                 )  # then try to resolve the token to a URI
             except TokenError as e:
-                log.error(e.args[0])
                 try:  # if token resolution fails, try to resolve as a curie
                     result = await get_uri_for_curie_id(parts[0])
-                    result = str(result)
-                    parts[0] = "<" + result + ">"
+                    parts[0] = URIRef(result)
                 except PrefixNotBoundException:
-                    parts[0] = (
-                        ""  # if curie resolution failed, then the profile is invalid
-                    )
-                    log.error(e.args[0])
+                    try:
+                        if validate_iri(parts[0]):
+                            parts[0] = URIRef(parts[0])
+                        else:
+                            raise ValueError(f"{parts[0]} could not be resolved to URI")
+                    except Exception as e:
+                        parts[0] = None
+                        log.error(e.args[0])
         if len(parts) == 1:
             parts.append(self.default_weighting)  # If no weight given, set the default
         else:
@@ -168,10 +168,10 @@ class NegotiatedPMTs(BaseModel):
         return parts[0], parts[1]
 
     @staticmethod
-    def _prioritize(types: list[tuple[str, float]]) -> list[tuple[str, float]]:
+    def _prioritize(types: list[tuple[URIRef, float]]) -> list[tuple[URIRef, float]]:
         return sorted(types, key=lambda x: x[1], reverse=True)
 
-    async def _get_requested_profiles(self) -> list[tuple[str, float]] | None:
+    async def _get_requested_profiles(self) -> list[tuple[URIRef, float]] | None:
         raw_profiles: str = self.params.get(
             "_profile", ""
         )  # Prefer profiles declared in the QSA, as per the spec.
@@ -291,7 +291,7 @@ class NegotiatedPMTs(BaseModel):
                        altr-ext:hasResourceFormat ?format ;
                        dcterms:title ?title .\
               {f'?profile a {profile_class.n3()} .'}
-              {f'BIND(?profile={requested_profile} as ?req_profile)' if requested_profile else 'BIND(false as ?req_profile)'}
+              {f'BIND(?profile={requested_profile.n3()} as ?req_profile)' if requested_profile else 'BIND(false as ?req_profile)'}
               BIND(EXISTS {{ ?shape sh:targetClass ?class ;
                                    altr-ext:hasDefaultProfile ?profile }} AS ?def_profile)
               {self._generate_mediatype_if_statements()}

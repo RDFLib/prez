@@ -51,3 +51,7 @@ PREFIX sdoprof: <https://schema.org>
 [ vann:preferredNamespacePrefix "exm" ;
  vann:preferredNamespaceUri <https://example.com/>
 ] .
+
+ [ vann:preferredNamespacePrefix "prfl" ;
+ vann:preferredNamespaceUri <https://w3id.org/profile/>
+] .
