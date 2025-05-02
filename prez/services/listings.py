@@ -225,7 +225,7 @@ async def listing_function(
 async def _create_facets_query(main_query, query_params):
     profile_uri = await get_facet_profile_uri_from_qsa(query_params.facet_profile)
     if not profile_uri:
-        return None
+        return None, None
     else:
         facet_nodeshape = NodeShape(
             uri=profile_uri,

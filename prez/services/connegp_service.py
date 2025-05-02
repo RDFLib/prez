@@ -1,12 +1,13 @@
 import logging
 import re
+import time
 from enum import Enum
 from textwrap import dedent
 
 from pydantic import BaseModel
 from rdflib import SH, Graph, Namespace, URIRef
 
-from prez.cache import endpoints_graph_cache
+from prez.cache import endpoints_graph_cache, profiles_graph_cache
 from prez.config import settings
 from prez.exceptions.model_exceptions import PrefixNotBoundException
 from prez.repositories.base import Repo
@@ -149,10 +150,10 @@ class NegotiatedPMTs(BaseModel):
                     parts[0] = URIRef(result)
                 except PrefixNotBoundException:
                     try:
-                        if validate_iri(parts[0]):
+                        if (URIRef(parts[0]), None, None) in profiles_graph_cache:
                             parts[0] = URIRef(parts[0])
                         else:
-                            raise ValueError(f"{parts[0]} could not be resolved to URI")
+                            raise ValueError(f"{parts[0]} could not be resolved to a profile")
                     except Exception as e:
                         parts[0] = None
                         log.error(e.args[0])
