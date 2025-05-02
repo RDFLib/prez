@@ -5,7 +5,7 @@ import logging
 
 from fastapi.responses import PlainTextResponse
 from rdf2geojson import convert
-from rdflib import Literal, DCTERMS, XSD, Namespace
+from rdflib import Literal, DCTERMS, XSD, Namespace, URIRef, BNode
 from rdflib.namespace import GEO, RDF, PROF
 from sparql_grammar_pydantic import (
     IRI,
@@ -17,6 +17,7 @@ from sparql_grammar_pydantic import (
 from prez.cache import profiles_graph_cache
 from prez.config import settings
 from prez.enums import NonAnnotatedRDFMediaType, AnnotatedRDFMediaType
+from prez.exceptions.model_exceptions import PrefixNotBoundException
 from prez.reference_data.prez_ns import ALTREXT, OGCFEAT, PREZ
 from prez.renderers.renderer import (
     return_annotated_rdf,
@@ -28,7 +29,7 @@ from prez.renderers.renderer import (
     generate_link_headers,
     get_geojson_int_count,
 )
-from prez.services.curie_functions import get_curie_id_for_uri
+from prez.services.curie_functions import get_curie_id_for_uri, get_uri_for_curie_id
 from prez.services.generate_queryables import generate_queryables_json
 from prez.services.link_generation import add_prez_links
 from prez.services.query_generation.count import CountQuery
@@ -188,12 +189,16 @@ async def listing_function(
         subselect = copy.deepcopy(main_query.inner_select)
         count_query = CountQuery(original_subselect=subselect).to_string()
         queries.append(count_query)
+    facet_profile_uri = None
     if query_params.facet_profile:
-        facets_query = await _create_facets_query(main_query, query_params)
+        facet_profile_uri, facets_query = await _create_facets_query(main_query, query_params)
         if facets_query:
             queries.append(facets_query.to_string())
     item_graph, _ = await query_repo.send_queries(queries, [])
+    if facet_profile_uri:
+        item_graph.add((BNode(), PREZ.facetProfile, facet_profile_uri))
     if "anot+" in pmts.selected["mediatype"]:
+        item_graph.add((BNode(), PREZ.currentProfile, pmts.selected["profile"]))
         await add_prez_links(item_graph, query_repo, endpoint_structure)
 
     # count search results - hard to do in SPARQL as the SELECT part of the query is NOT aggregated
@@ -218,19 +223,7 @@ async def listing_function(
 
 
 async def _create_facets_query(main_query, query_params):
-    profile_uri = next(
-        profiles_graph_cache.subjects(
-            predicate=DCTERMS.identifier,
-            object=Literal(query_params.facet_profile)
-        ),
-        None
-    ) or next(
-        profiles_graph_cache.subjects(
-            predicate=DCTERMS.identifier,
-            object=Literal(query_params.facet_profile, datatype=XSD.token)
-        ),
-        None
-    )
+    profile_uri = await get_facet_profile_uri_from_qsa(query_params.facet_profile)
     if not profile_uri:
         return None
     else:
@@ -246,7 +239,42 @@ async def _create_facets_query(main_query, query_params):
             original_subselect=subselect_for_faceting,
             property_shape=facet_property_shape
         )
-        return facets_query
+        return profile_uri, facets_query
+
+
+async def get_facet_profile_uri_from_qsa(facet_profile_qsa):
+    requested_facet_profile = facet_profile_qsa
+    profile_uri = next(  # check if QSA is identifier
+        profiles_graph_cache.subjects(
+            predicate=DCTERMS.identifier,
+            object=Literal(requested_facet_profile)
+        ),
+        None
+    ) or next(
+        profiles_graph_cache.subjects(
+            predicate=DCTERMS.identifier,
+            object=Literal(requested_facet_profile, datatype=XSD.token)
+        ),
+        None
+    )
+    if not profile_uri:  # check if QSA is uri
+        try:
+            uri_ref = URIRef(requested_facet_profile)
+            # Check if this URI exists as a subject in any triple
+            if (uri_ref, None, None) in profiles_graph_cache:
+                profile_uri = uri_ref
+        except ValueError:
+            pass
+
+    if not profile_uri:  # check if QSA is curie
+        try:
+            requested_facet_profile_uri = await get_uri_for_curie_id(requested_facet_profile)
+            if requested_facet_profile_uri:
+                if (requested_facet_profile_uri, None, None) in profiles_graph_cache:
+                    profile_uri = requested_facet_profile_uri
+        except PrefixNotBoundException:
+            pass
+    return profile_uri
 
 
 async def ogc_features_listing_function(

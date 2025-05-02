@@ -8,7 +8,7 @@ from urllib.parse import urlencode
 
 from fastapi.responses import PlainTextResponse, RedirectResponse
 from rdf2geojson import convert
-from rdflib import RDF, URIRef
+from rdflib import RDF, URIRef, BNode
 from rdflib.namespace import GEO
 from sparql_grammar_pydantic import IRI, TriplesSameSubject, TriplesSameSubjectPath, Var
 
@@ -105,6 +105,7 @@ async def object_function(
                     prez_ui_url + "/404?uri=" + urllib.parse.quote_plus(item_uri)
                 )
     if "anot+" in pmts.selected["mediatype"]:
+        item_graph.add((BNode(), PREZ.currentProfile, pmts.selected["profile"]))
         await add_prez_links(item_graph, data_repo, endpoint_structure)
     return await return_from_graph(
         item_graph,
