@@ -25,19 +25,24 @@ There are two main ways to apply an alias:
     PREFIX prov: <http://www.w3.org/ns/prov#>
     PREFIX shext: <http://example.com/shacl-extension#>
 
-    <http://example-profile>
-        a sh:NodeShape ;
-        sh:property [
-            # Simple Path Example
-            sh:path dcterms:title ;
-            shext:pathAlias <https://alias/title> ;
-        ] ,
+    <http://example-profile> a sh:NodeShape ;
+    sh:property
         [
-            # Sequence Path Example
-            sh:path ( prov:qualifiedDerivation prov:hadRole ) ;
-            shext:pathAlias <https://alias/derivation-role> ;
-        ] .
-
+            sh:union
+                (
+                    [
+                    # Simple Path Example
+                        sh:path dcterms:title ;
+                        shext:pathAlias <https://alias/title> ;
+                    ]
+                    [
+                    # Sequence Path Example
+                        sh:path ( prov:qualifiedDerivation prov:hadRole ) ;
+                        shext:pathAlias <https://alias/derivation-role> ;
+                    ]
+                )
+        ] ;
+    .
     ```
 
 2.  **Adjacent to Nested `sh:path` (within `sh:union`, `sh:alternativePath`, etc.):**
@@ -104,4 +109,4 @@ The use of path aliases in the `CONSTRUCT` clause is controlled by a setting, ty
 -   `use_path_aliases = True`: Enables the use of defined aliases in the `CONSTRUCT` clause.
 -   `use_path_aliases = False`: Disables aliases; the original paths are used in the `CONSTRUCT` clause.
 
-This allows administrators to choose whether they want the simplified output structure provided by aliases or the structure that directly mirrors the SHACL paths.
+This allows users to choose whether they want the simplified output structure provided by aliases or the structure that directly mirrors the SHACL paths.
