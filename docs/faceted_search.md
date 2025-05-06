@@ -32,10 +32,7 @@ A minimal facet profile demonstrating both a direct property to facet on and one
         sh:path [ 
             sh:union (
                          rdf:type 
-                         [
-                            sh:path ( sosa:isSampleOf [ sh:inversePath dcterms:hasPart ] ) ;
-                            shext:pathAlias <https://example.com/sample-parent> ;
-                         ]
+                         <https://schema.org/material>
                      )
                 ]
                 ] .
