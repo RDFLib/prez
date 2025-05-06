@@ -8,7 +8,7 @@ from urllib.parse import urlencode
 
 from fastapi.responses import PlainTextResponse, RedirectResponse
 from rdf2geojson import convert
-from rdflib import RDF, URIRef
+from rdflib import RDF, URIRef, BNode
 from rdflib.namespace import GEO
 from sparql_grammar_pydantic import IRI, TriplesSameSubject, TriplesSameSubjectPath, Var
 
@@ -16,7 +16,7 @@ from prez.config import settings
 from prez.enums import NonAnnotatedRDFMediaType, AnnotatedRDFMediaType
 from prez.exceptions.model_exceptions import URINotFoundException
 from prez.models.ogc_features import Collection, Link, Links
-from prez.models.query_params import QueryParams
+from prez.models.query_params import ListingQueryParams
 from prez.reference_data.prez_ns import ALTREXT, ONT, PREZ
 from prez.renderers.renderer import (
     create_self_alt_links,
@@ -34,21 +34,23 @@ log = logging.getLogger(__name__)
 
 
 async def object_function(
-        data_repo, system_repo, endpoint_structure, pmts, profile_nodeshape, url
+        data_repo, system_repo, endpoint_structure, pmts, profile_nodeshape, url, query_params
 ):
     if pmts.selected["profile"] == ALTREXT["alt-profile"]:
-        query_params = QueryParams(
+        list_query_params = ListingQueryParams(
             mediatype=pmts.selected["mediatype"],
             _filter=None,
             q=None,
             page=1,
             limit=100,
+            facet_profile=None,
             datetime=None,
             bbox=[],
             filter_crs=None,
             filter_lang=None,
             order_by=None,
             order_by_direction=None,
+            subscription_key=query_params.subscription_key
         )
         return await listing_function(
             data_repo=data_repo,
@@ -56,7 +58,7 @@ async def object_function(
             endpoint_structure=endpoint_structure,
             pmts=pmts,
             profile_nodeshape=profile_nodeshape,
-            query_params=query_params,
+            query_params=list_query_params,
             original_endpoint_type=ONT["ObjectEndpoint"],
             url=url,
             endpoint_nodeshape=None,
@@ -103,6 +105,7 @@ async def object_function(
                     prez_ui_url + "/404?uri=" + urllib.parse.quote_plus(item_uri)
                 )
     if "anot+" in pmts.selected["mediatype"]:
+        item_graph.add((BNode(), PREZ.currentProfile, pmts.selected["profile"]))
         await add_prez_links(item_graph, data_repo, endpoint_structure)
     return await return_from_graph(
         item_graph,

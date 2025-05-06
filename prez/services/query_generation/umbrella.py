@@ -29,7 +29,7 @@ from sparql_grammar_pydantic import (
     PrimaryExpression
 )
 
-from prez.models.query_params import QueryParams
+from prez.models.query_params import ListingQueryParams
 from prez.services.query_generation.bbox_filter import generate_bbox_filter
 from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQuery
 from prez.services.query_generation.cql import CQLParser
@@ -212,7 +212,7 @@ def merge_listing_query_grammar_inputs(
     endpoint_nodeshape: Optional[NodeShape] = None,
     search_query: Optional[SearchQueryRegex | SearchQueryFusekiFTS] = None,
     concept_hierarchy_query: Optional[ConceptHierarchyQuery] = None,
-    query_params: Optional[QueryParams] = None,
+    query_params: Optional[ListingQueryParams] = None,
 ) -> dict:
     page = query_params.page
     limit = query_params.limit

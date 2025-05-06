@@ -111,7 +111,7 @@ from prez.services.connegp_service import NegotiatedPMTs
         ],
         [
             {
-                "accept-profile": "<http://www.w3.org/ns/dx/prof/Profile>"
+                "accept-profile": "http://www.w3.org/ns/dx/prof/Profile"
             },  # Test that a valid profile is resolved
             {},
             [URIRef("http://www.w3.org/ns/dcat#Catalog")],

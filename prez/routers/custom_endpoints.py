@@ -18,7 +18,7 @@ from prez.dependencies import (
     get_system_repo,
     get_url,
 )
-from prez.models.query_params import QueryParams
+from prez.models.query_params import ObjectQueryParams, ListingQueryParams
 from prez.reference_data.prez_ns import ONT
 from prez.repositories import Repo
 from prez.services.connegp_service import NegotiatedPMTs
@@ -40,7 +40,7 @@ def create_dynamic_route_handler(route_type: str):
     if route_type == "ListingEndpoint":
 
         async def dynamic_list_handler(
-            query_params: QueryParams = Depends(),
+            query_params: ListingQueryParams = Depends(),
             endpoint_nodeshape: NodeShape = Depends(get_endpoint_nodeshapes),
             pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
             endpoint_structure: tuple[str, ...] = Depends(get_endpoint_structure),
@@ -73,6 +73,7 @@ def create_dynamic_route_handler(route_type: str):
     elif route_type == "ObjectEndpoint":
 
         async def dynamic_object_handler(
+            query_params: ObjectQueryParams = Depends(),
             pmts: NegotiatedPMTs = Depends(get_negotiated_pmts),
             endpoint_structure: tuple[str, ...] = Depends(get_endpoint_structure),
             profile_nodeshape: NodeShape = Depends(get_profile_nodeshape),
@@ -87,6 +88,7 @@ def create_dynamic_route_handler(route_type: str):
                 pmts=pmts,
                 profile_nodeshape=profile_nodeshape,
                 url=url,
+                query_params=query_params,
             )
 
         return dynamic_object_handler

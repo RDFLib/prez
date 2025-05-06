@@ -1,0 +1,1328 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex: <http://example.org/animals/> .
+@prefix schema: <https://schema.org/> .
+
+ex:species rdfs:label "Species" .
+ex:habitat rdfs:label "Habitat" .
+ex:diet rdfs:label "Diet" .
+ex:conservationInfo rdfs:label "Conservation Info" .
+ex:status rdfs:label "Status" .
+ex:conservationStatus rdfs:label "Conservation Status" .
+ex:conservationRegion rdfs:label "Conservation Region" .
+
+schema:Animal rdfs:label "Animal" .
+schema:Fish rdfs:label "Fish" .
+schema:Bird rdfs:label "Bird" .
+schema:Reptile rdfs:label "Reptile" .
+schema:Amphibian rdfs:label "Amphibian" .
+
+ex:lion a schema:Animal ;
+    rdfs:label "Lion" ;
+    dcterms:description "A large carnivorous cat native to Africa and India." ;
+    ex:species "Panthera leo" ;
+    ex:habitat "Savannah" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Vulnerable" ;
+        ex:region "Africa"
+    ] .
+
+ex:zebra a schema:Animal ;
+    rdfs:label "Zebra" ;
+    dcterms:description "An African equine known for its distinctive black and white stripes." ;
+    ex:species "Equus quagga" ;
+    ex:habitat "Grassland" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Near Threatened" ;
+        ex:region "Africa"
+    ] .
+
+ex:elephant a schema:Animal ;
+    rdfs:label "Elephant" ;
+    dcterms:description "The largest land animal, known for its trunk and large ears." ;
+    ex:species "Loxodonta africana" ;
+    ex:habitat "Savannah" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Endangered" ;
+        ex:region "Africa"
+    ] .
+
+ex:tiger a schema:Animal ;
+    rdfs:label "Tiger" ;
+    dcterms:description "A large striped cat native to Asia, the largest cat species." ;
+    ex:species "Panthera tigris" ;
+    ex:habitat "Jungle" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Endangered" ;
+        ex:region "Asia"
+    ] .
+
+ex:giraffe a schema:Animal ;
+    rdfs:label "Giraffe" ;
+    dcterms:description "The tallest mammal, native to Africa, known for its long neck." ;
+    ex:species "Giraffa camelopardalis" ;
+    ex:habitat "Savannah" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Vulnerable" ;
+        ex:region "Africa"
+    ] .
+
+ex:mountain_lion a schema:Animal ;
+    rdfs:label "Mountain Lion" ;
+    dcterms:description "A large cat native to the Americas, also known as a cougar or puma." ;
+    ex:species "Puma concolor" ;
+    ex:habitat "Mountains" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ;
+        ex:region "Americas"
+    ] .
+
+ex:tiger_shark a schema:Fish ; # Different type
+    rdfs:label "Tiger Shark" ;
+    dcterms:description "A large predatory shark found in tropical and temperate waters." ;
+    ex:species "Galeocerdo cuvier" ;
+    ex:habitat "Ocean" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Near Threatened" ;
+        ex:region "Global Tropical Waters"
+    ] .
+
+ex:elephant_seal a schema:Animal ; # Marine Mammal
+    rdfs:label "Elephant Seal" ;
+    dcterms:description "A large marine mammal known for the male's large proboscis." ;
+    ex:species "Mirounga angustirostris" ; # Northern Elephant Seal
+    ex:habitat "Ocean" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ;
+        ex:region "North Pacific"
+    ] .
+
+ex:grevys_zebra a schema:Animal ;
+    rdfs:label "Grevy's Zebra" ;
+    dcterms:description "The largest zebra species, found in Kenya and Ethiopia." ;
+    ex:species "Equus grevyi" ;
+    ex:habitat "Grassland" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Endangered" ;
+        ex:region "Africa"
+    ] .
+
+ex:okapi a schema:Animal ;
+    rdfs:label "Okapi" ;
+    dcterms:description "A mammal native to the Congo rainforest, related to the giraffe." ;
+    ex:species "Okapia johnstoni" ;
+    ex:habitat "Rainforest" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Endangered" ;
+        ex:region "Central Africa"
+    ] .
+
+ex:snow_leopard a schema:Animal ;
+    rdfs:label "Snow Leopard" ;
+    dcterms:description "A large cat native to the mountain ranges of Central and South Asia." ;
+    ex:species "Panthera uncia" ;
+    ex:habitat "Mountains" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Vulnerable" ;
+        ex:region "Asia"
+    ] .
+
+ex:african_wild_dog a schema:Animal ;
+    rdfs:label "African Wild Dog" ;
+    dcterms:description "A canine native to sub-Saharan Africa, known for its painted coat." ;
+    ex:species "Lycaon pictus" ;
+    ex:habitat "Savannah" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Endangered" ;
+        ex:region "Africa"
+    ] .
+
+ex:grizzly_bear a schema:Animal ;
+    rdfs:label "Grizzly Bear" ;
+    dcterms:description "A large subspecies of brown bear inhabiting North America." ;
+    ex:species "Ursus arctos horribilis" ;
+    ex:habitat "Forest" ;
+    ex:diet "Omnivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ; # Varies by region
+        ex:region "North America"
+    ] .
+
+ex:polar_bear a schema:Animal ;
+    rdfs:label "Polar Bear" ;
+    dcterms:description "A large bear native to the Arctic region, adapted to cold environments." ;
+    ex:species "Ursus maritimus" ;
+    ex:habitat "Arctic" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Vulnerable" ;
+        ex:region "Arctic Circle"
+    ] .
+
+ex:grey_wolf a schema:Animal ;
+    rdfs:label "Grey Wolf" ;
+    dcterms:description "A large canine native to Eurasia and North America, ancestor of the domestic dog." ;
+    ex:species "Canis lupus" ;
+    ex:habitat "Forest" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ; # Globally, varies locally
+        ex:region "Northern Hemisphere"
+    ] .
+
+ex:cheetah a schema:Animal ;
+    rdfs:label "Cheetah" ;
+    dcterms:description "The fastest land animal, known for its spotted coat." ;
+    ex:species "Acinonyx jubatus" ;
+    ex:habitat "Grassland" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Vulnerable" ;
+        ex:region "Africa"
+    ] .
+
+ex:jaguar a schema:Animal ;
+    rdfs:label "Jaguar" ;
+    dcterms:description "A large cat native to the Americas, known for its powerful bite." ;
+    ex:species "Panthera onca" ;
+    ex:habitat "Rainforest" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Near Threatened" ;
+        ex:region "Americas"
+    ] .
+
+ex:leopard a schema:Animal ;
+    rdfs:label "Leopard" ;
+    dcterms:description "A large cat known for its adaptability and spotted coat." ;
+    ex:species "Panthera pardus" ;
+    ex:habitat "Various" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Vulnerable" ;
+        ex:region "Africa, Asia"
+    ] .
+
+ex:hippopotamus a schema:Animal ;
+    rdfs:label "Hippopotamus" ;
+    dcterms:description "A large, semi-aquatic mammal native to sub-Saharan Africa." ;
+    ex:species "Hippopotamus amphibius" ;
+    ex:habitat "Rivers, Lakes" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Vulnerable" ;
+        ex:region "Africa"
+    ] .
+
+ex:rhinoceros a schema:Animal ;
+    rdfs:label "Rhinoceros" ;
+    dcterms:description "A large herbivorous mammal known for its horned snout." ;
+    ex:species "Rhinocerotidae" ; # Family
+    ex:habitat "Grassland, Savannah" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Critically Endangered to Near Threatened)" ;
+        ex:region "Africa, Asia"
+    ] .
+
+ex:gorilla a schema:Animal ;
+    rdfs:label "Gorilla" ;
+    dcterms:description "The largest living primate, native to African forests." ;
+    ex:species "Gorilla gorilla" ; # Western Gorilla
+    ex:habitat "Forest" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Critically Endangered" ;
+        ex:region "Africa"
+    ] .
+
+ex:orangutan a schema:Animal ;
+    rdfs:label "Orangutan" ;
+    dcterms:description "An arboreal ape native to the rainforests of Borneo and Sumatra." ;
+    ex:species "Pongo" ; # Genus
+    ex:habitat "Rainforest" ;
+    ex:diet "Frugivore" ;
+    ex:conservationInfo [
+        ex:status "Critically Endangered" ;
+        ex:region "Asia"
+    ] .
+
+ex:chimpanzee a schema:Animal ;
+    rdfs:label "Chimpanzee" ;
+    dcterms:description "A species of great ape native to the forests and savannahs of tropical Africa." ;
+    ex:species "Pan troglodytes" ;
+    ex:habitat "Forest, Savannah" ;
+    ex:diet "Omnivore" ;
+    ex:conservationInfo [
+        ex:status "Endangered" ;
+        ex:region "Africa"
+    ] .
+
+ex:kangaroo a schema:Animal ;
+    rdfs:label "Kangaroo" ;
+    dcterms:description "A large marsupial native to Australia, known for hopping." ;
+    ex:species "Macropus" ; # Genus
+    ex:habitat "Various" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ; # Varies
+        ex:region "Australia"
+    ] .
+
+ex:koala a schema:Animal ;
+    rdfs:label "Koala" ;
+    dcterms:description "An arboreal marsupial native to Australia, feeds on eucalyptus." ;
+    ex:species "Phascolarctos cinereus" ;
+    ex:habitat "Eucalyptus Forest" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Vulnerable" ;
+        ex:region "Australia"
+    ] .
+
+ex:panda a schema:Animal ;
+    rdfs:label "Giant Panda" ;
+    dcterms:description "A bear native to South Central China, known for its black-and-white coat." ;
+    ex:species "Ailuropoda melanoleuca" ;
+    ex:habitat "Bamboo Forest" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Vulnerable" ;
+        ex:region "Asia"
+    ] .
+
+ex:red_panda a schema:Animal ;
+    rdfs:label "Red Panda" ;
+    dcterms:description "A small arboreal mammal native to the eastern Himalayas and southwestern China." ;
+    ex:species "Ailurus fulgens" ;
+    ex:habitat "Temperate Forest" ;
+    ex:diet "Omnivore" ;
+    ex:conservationInfo [
+        ex:status "Endangered" ;
+        ex:region "Asia"
+    ] .
+
+ex:sloth a schema:Animal ;
+    rdfs:label "Sloth" ;
+    dcterms:description "A slow-moving arboreal mammal native to Central and South America." ;
+    ex:species "Folivora" ; # Suborder
+    ex:habitat "Rainforest" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Critically Endangered)" ;
+        ex:region "Americas"
+    ] .
+
+ex:armadillo a schema:Animal ;
+    rdfs:label "Armadillo" ;
+    dcterms:description "A New World placental mammal with a leathery armor shell." ;
+    ex:species "Dasypodidae" ; # Family
+    ex:habitat "Various" ;
+    ex:diet "Insectivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Vulnerable)" ;
+        ex:region "Americas"
+    ] .
+
+ex:anteater a schema:Animal ;
+    rdfs:label "Anteater" ;
+    dcterms:description "A mammal known for eating ants and termites." ;
+    ex:species "Vermilingua" ; # Suborder
+    ex:habitat "Grassland, Rainforest" ;
+    ex:diet "Insectivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Vulnerable)" ;
+        ex:region "Americas"
+    ] .
+
+ex:meerkat a schema:Animal ;
+    rdfs:label "Meerkat" ;
+    dcterms:description "A small mongoose found in southern Africa, known for standing upright." ;
+    ex:species "Suricata suricatta" ;
+    ex:habitat "Desert, Savannah" ;
+    ex:diet "Insectivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ;
+        ex:region "Africa"
+    ] .
+
+ex:wombat a schema:Animal ;
+    rdfs:label "Wombat" ;
+    dcterms:description "A short-legged, muscular quadrupedal marsupial native to Australia." ;
+    ex:species "Vombatidae" ; # Family
+    ex:habitat "Forest, Mountain" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ; # Northern hairy-nosed is Critically Endangered
+        ex:region "Australia"
+    ] .
+
+ex:tasmanian_devil a schema:Animal ;
+    rdfs:label "Tasmanian Devil" ;
+    dcterms:description "A carnivorous marsupial native to Tasmania, Australia." ;
+    ex:species "Sarcophilus harrisii" ;
+    ex:habitat "Forest, Woodland" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Endangered" ;
+        ex:region "Australia"
+    ] .
+
+ex:platypus a schema:Animal ;
+    rdfs:label "Platypus" ;
+    dcterms:description "A semiaquatic egg-laying mammal endemic to eastern Australia." ;
+    ex:species "Ornithorhynchus anatinus" ;
+    ex:habitat "Rivers, Lakes" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Near Threatened" ;
+        ex:region "Australia"
+    ] .
+
+ex:echidna a schema:Animal ;
+    rdfs:label "Echidna" ;
+    dcterms:description "An egg-laying mammal covered in coarse hair and spines." ;
+    ex:species "Tachyglossidae" ; # Family
+    ex:habitat "Various" ;
+    ex:diet "Insectivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ; # Long-beaked species are Critically Endangered
+        ex:region "Australia, New Guinea"
+    ] .
+
+ex:bald_eagle a schema:Bird ;
+    rdfs:label "Bald Eagle" ;
+    dcterms:description "A large bird of prey found in North America, the national bird of the USA." ;
+    ex:species "Haliaeetus leucocephalus" ;
+    ex:habitat "Near Water" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ;
+        ex:region "North America"
+    ] .
+
+ex:penguin a schema:Bird ;
+    rdfs:label "Penguin" ;
+    dcterms:description "A group of aquatic flightless birds living almost exclusively in the Southern Hemisphere." ;
+    ex:species "Spheniscidae" ; # Family
+    ex:habitat "Ocean, Coast" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Endangered)" ;
+        ex:region "Southern Hemisphere"
+    ] .
+
+ex:ostrich a schema:Bird ;
+    rdfs:label "Ostrich" ;
+    dcterms:description "A large flightless bird native to certain large areas of Africa." ;
+    ex:species "Struthio camelus" ;
+    ex:habitat "Savannah, Desert" ;
+    ex:diet "Omnivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ;
+        ex:region "Africa"
+    ] .
+
+ex:emu a schema:Bird ;
+    rdfs:label "Emu" ;
+    dcterms:description "The second-largest living bird by height, native to Australia." ;
+    ex:species "Dromaius novaehollandiae" ;
+    ex:habitat "Various" ;
+    ex:diet "Omnivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ;
+        ex:region "Australia"
+    ] .
+
+ex:kiwi a schema:Bird ;
+    rdfs:label "Kiwi" ;
+    dcterms:description "A flightless bird endemic to New Zealand." ;
+    ex:species "Apteryx" ; # Genus
+    ex:habitat "Forest" ;
+    ex:diet "Omnivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Vulnerable to Critically Endangered)" ;
+        ex:region "New Zealand"
+    ] .
+
+ex:crocodile a schema:Reptile ;
+    rdfs:label "Crocodile" ;
+    dcterms:description "A large predatory semiaquatic reptile." ;
+    ex:species "Crocodylidae" ; # Family
+    ex:habitat "Rivers, Lakes, Estuaries" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Critically Endangered)" ;
+        ex:region "Tropics"
+    ] .
+
+ex:alligator a schema:Reptile ;
+    rdfs:label "Alligator" ;
+    dcterms:description "A large reptile closely related to crocodiles." ;
+    ex:species "Alligator" ; # Genus
+    ex:habitat "Freshwater Wetlands" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ; # Chinese alligator is Critically Endangered
+        ex:region "Americas, China"
+    ] .
+
+ex:komodo_dragon a schema:Reptile ;
+    rdfs:label "Komodo Dragon" ;
+    dcterms:description "The largest living species of lizard, found in the Indonesian islands." ;
+    ex:species "Varanus komodoensis" ;
+    ex:habitat "Forest, Savannah" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Endangered" ;
+        ex:region "Indonesia"
+    ] .
+
+ex:cobra a schema:Reptile ;
+    rdfs:label "Cobra" ;
+    dcterms:description "A venomous snake known for its hood." ;
+    ex:species "Naja" ; # Genus (True Cobras)
+    ex:habitat "Various" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Vulnerable)" ;
+        ex:region "Africa, Asia"
+    ] .
+
+ex:python a schema:Reptile ;
+    rdfs:label "Python" ;
+    dcterms:description "A non-venomous constrictor snake." ;
+    ex:species "Pythonidae" ; # Family
+    ex:habitat "Rainforest, Savannah" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Vulnerable)" ;
+        ex:region "Africa, Asia, Australia"
+    ] .
+
+ex:sea_turtle a schema:Reptile ;
+    rdfs:label "Sea Turtle" ;
+    dcterms:description "A marine reptile requiring air to breathe." ;
+    ex:species "Chelonioidea" ; # Superfamily
+    ex:habitat "Ocean" ;
+    ex:diet "Varies (Herbivore, Carnivore, Omnivore)" ;
+    ex:conservationInfo [
+        ex:status "Varies (Vulnerable to Critically Endangered)" ;
+        ex:region "Global Oceans"
+    ] .
+
+ex:frog a schema:Amphibian ;
+    rdfs:label "Frog" ;
+    dcterms:description "A diverse group of short-bodied, tailless amphibians." ;
+    ex:species "Anura" ; # Order
+    ex:habitat "Various (Near Water)" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Varies Widely" ;
+        ex:region "Global (except Antarctica)"
+    ] .
+
+ex:salamander a schema:Amphibian ;
+    rdfs:label "Salamander" ;
+    dcterms:description "An amphibian characterized by a lizard-like appearance." ;
+    ex:species "Caudata" ; # Order
+    ex:habitat "Forest, Streams" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Varies Widely" ;
+        ex:region "Northern Hemisphere, South America"
+    ] .
+
+ex:great_white_shark a schema:Fish ;
+    rdfs:label "Great White Shark" ;
+    dcterms:description "A large predatory shark known for its size and power." ;
+    ex:species "Carcharodon carcharias" ;
+    ex:habitat "Coastal Waters" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Vulnerable" ;
+        ex:region "Global Temperate Waters"
+    ] .
+
+ex:salmon a schema:Fish ;
+    rdfs:label "Salmon" ;
+    dcterms:description "A migratory fish known for returning to its birthplace to spawn." ;
+    ex:species "Salmonidae" ; # Family (includes trout)
+    ex:habitat "Rivers, Ocean" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Endangered)" ;
+        ex:region "North Atlantic, Pacific"
+    ] .
+
+ex:tuna a schema:Fish ;
+    rdfs:label "Tuna" ;
+    dcterms:description "A saltwater fish important for commercial fishing." ;
+    ex:species "Thunnini" ; # Tribe
+    ex:habitat "Ocean" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Critically Endangered)" ;
+        ex:region "Global Oceans"
+    ] .
+
+ex:dolphin a schema:Animal ; # Marine Mammal
+    rdfs:label "Dolphin" ;
+    dcterms:description "An intelligent marine mammal known for its playful behavior." ;
+    ex:species "Delphinidae" ; # Family (Oceanic Dolphins)
+    ex:habitat "Ocean" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Critically Endangered)" ;
+        ex:region "Global Oceans"
+    ] .
+
+ex:whale a schema:Animal ; # Marine Mammal
+    rdfs:label "Whale" ;
+    dcterms:description "A large marine mammal." ;
+    ex:species "Cetacea" ; # Order (includes dolphins, porpoises)
+    ex:habitat "Ocean" ;
+    ex:diet "Varies (Carnivore, Filter Feeder)" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Endangered)" ;
+        ex:region "Global Oceans"
+    ] .
+
+ex:seal a schema:Animal ; # Marine Mammal
+    rdfs:label "Seal" ;
+    dcterms:description "A fin-footed marine mammal." ;
+    ex:species "Pinnipedia" ; # Clade (includes seals, sea lions, walrus)
+    ex:habitat "Ocean, Coast" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Endangered)" ;
+        ex:region "Global Oceans, some freshwater"
+    ] .
+
+ex:walrus a schema:Animal ; # Marine Mammal
+    rdfs:label "Walrus" ;
+    dcterms:description "A large marine mammal known for its tusks." ;
+    ex:species "Odobenus rosmarus" ;
+    ex:habitat "Arctic Ocean" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Vulnerable" ;
+        ex:region "Arctic"
+    ] .
+
+ex:otter a schema:Animal ;
+    rdfs:label "Otter" ;
+    dcterms:description "A semiaquatic mammal known for its playful behavior." ;
+    ex:species "Lutrinae" ; # Subfamily
+    ex:habitat "Rivers, Lakes, Coast" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Endangered)" ;
+        ex:region "Global (except Australia, Antarctica)"
+    ] .
+
+ex:beaver a schema:Animal ;
+    rdfs:label "Beaver" ;
+    dcterms:description "A large rodent known for building dams." ;
+    ex:species "Castor" ; # Genus
+    ex:habitat "Rivers, Lakes, Ponds" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ;
+        ex:region "North America, Eurasia"
+    ] .
+
+ex:raccoon a schema:Animal ;
+    rdfs:label "Raccoon" ;
+    dcterms:description "A medium-sized mammal native to North America, known for its masked face." ;
+    ex:species "Procyon lotor" ;
+    ex:habitat "Various (often near water)" ;
+    ex:diet "Omnivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ;
+        ex:region "North America"
+    ] .
+
+ex:skunk a schema:Animal ;
+    rdfs:label "Skunk" ;
+    dcterms:description "A mammal known for its ability to spray a foul-smelling liquid." ;
+    ex:species "Mephitidae" ; # Family
+    ex:habitat "Various" ;
+    ex:diet "Omnivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ;
+        ex:region "Americas"
+    ] .
+
+ex:badger a schema:Animal ;
+    rdfs:label "Badger" ;
+    dcterms:description "A short-legged omnivore in the weasel family." ;
+    ex:species "Mustelidae" ; # Family (includes badgers, otters, weasels)
+    ex:habitat "Various" ;
+    ex:diet "Omnivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern)" ;
+        ex:region "North America, Europe, Asia"
+    ] .
+
+ex:fox a schema:Animal ;
+    rdfs:label "Fox" ;
+    dcterms:description "A small to medium-sized omnivorous mammal belonging to the dog family." ;
+    ex:species "Vulpes" ; # Genus (True Foxes)
+    ex:habitat "Various" ;
+    ex:diet "Omnivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ; # Varies
+        ex:region "Global (except Antarctica)"
+    ] .
+
+ex:coyote a schema:Animal ;
+    rdfs:label "Coyote" ;
+    dcterms:description "A canine native to North America." ;
+    ex:species "Canis latrans" ;
+    ex:habitat "Various" ;
+    ex:diet "Omnivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ;
+        ex:region "North America"
+    ] .
+
+ex:hyena a schema:Animal ;
+    rdfs:label "Hyena" ;
+    dcterms:description "A carnivorous mammal native to Africa and Asia." ;
+    ex:species "Hyaenidae" ; # Family
+    ex:habitat "Savannah, Grassland, Woodland" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Near Threatened)" ;
+        ex:region "Africa, Asia"
+    ] .
+
+ex:camel a schema:Animal ;
+    rdfs:label "Camel" ;
+    dcterms:description "An even-toed ungulate known for its fatty deposit 'hump'." ;
+    ex:species "Camelus" ; # Genus
+    ex:habitat "Desert" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern (Domesticated), Critically Endangered (Wild Bactrian)" ;
+        ex:region "Asia, Africa (Domesticated)"
+    ] .
+
+ex:llama a schema:Animal ;
+    rdfs:label "Llama" ;
+    dcterms:description "A domesticated South American camelid, used as a pack animal." ;
+    ex:species "Lama glama" ;
+    ex:habitat "Mountains (Andes)" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Domesticated" ;
+        ex:region "South America"
+    ] .
+
+ex:alpaca a schema:Animal ;
+    rdfs:label "Alpaca" ;
+    dcterms:description "A domesticated species of South American camelid, bred for its fiber." ;
+    ex:species "Vicugna pacos" ;
+    ex:habitat "Mountains (Andes)" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Domesticated" ;
+        ex:region "South America"
+    ] .
+
+ex:moose a schema:Animal ;
+    rdfs:label "Moose" ;
+    dcterms:description "The largest species in the deer family, known for its palmate antlers (males)." ;
+    ex:species "Alces alces" ;
+    ex:habitat "Boreal Forest, Temperate Forest" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ;
+        ex:region "Northern Hemisphere"
+    ] .
+
+ex:reindeer a schema:Animal ;
+    rdfs:label "Reindeer" ;
+    dcterms:description "A species of deer native to Arctic, subarctic, tundra, boreal, and mountainous regions." ;
+    ex:species "Rangifer tarandus" ; # Also known as Caribou in North America
+    ex:habitat "Arctic Tundra, Boreal Forest" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Vulnerable" ;
+        ex:region "Northern Hemisphere"
+    ] .
+
+ex:bison a schema:Animal ;
+    rdfs:label "Bison" ;
+    dcterms:description "A large bovine native to North America and Europe." ;
+    ex:species "Bison bison" ; # American Bison
+    ex:habitat "Grassland, Plains" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Near Threatened" ; # American Bison
+        ex:region "North America, Europe"
+    ] .
+
+ex:buffalo a schema:Animal ;
+    rdfs:label "Buffalo" ;
+    dcterms:description "Often refers to the African Buffalo or the Water Buffalo." ;
+    ex:species "Syncerus caffer" ; # African Buffalo
+    ex:habitat "Savannah, Woodland" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Near Threatened" ; # African Buffalo
+        ex:region "Africa, Asia (Water Buffalo)"
+    ] .
+
+ex:yak a schema:Animal ;
+    rdfs:label "Yak" ;
+    dcterms:description "A long-haired domesticated bovine found throughout the Himalayan region." ;
+    ex:species "Bos grunniens" ; # Domestic Yak
+    ex:habitat "Mountains" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Vulnerable (Wild Yak)" ;
+        ex:region "Asia"
+    ] .
+
+ex:wildebeest a schema:Animal ;
+    rdfs:label "Wildebeest" ;
+    dcterms:description "An antelope known for its large migrations across the Serengeti." ;
+    ex:species "Connochaetes" ; # Genus
+    ex:habitat "Savannah, Grassland" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ;
+        ex:region "Africa"
+    ] .
+
+ex:gazelle a schema:Animal ;
+    rdfs:label "Gazelle" ;
+    dcterms:description "A swift antelope found mostly in Africa and Asia." ;
+    ex:species "Gazella" ; # Genus (and others)
+    ex:habitat "Grassland, Savannah, Desert" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Endangered)" ;
+        ex:region "Africa, Asia"
+    ] .
+
+ex:antelope a schema:Animal ;
+    rdfs:label "Antelope" ;
+    dcterms:description "A diverse group of ruminant mammals native to Africa and Eurasia." ;
+    ex:species "Bovidae" ; # Family (many species)
+    ex:habitat "Various" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Varies Widely" ;
+        ex:region "Africa, Asia"
+    ] .
+
+ex:ibex a schema:Animal ;
+    rdfs:label "Ibex" ;
+    dcterms:description "A species of wild goat that lives in the mountains." ;
+    ex:species "Capra ibex" ; # Alpine Ibex
+    ex:habitat "Mountains" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ; # Varies by species
+        ex:region "Europe, Asia, Africa"
+    ] .
+
+ex:chamois a schema:Animal ;
+    rdfs:label "Chamois" ;
+    dcterms:description "A goat-antelope species native to mountains in Europe." ;
+    ex:species "Rupicapra rupicapra" ;
+    ex:habitat "Mountains" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ;
+        ex:region "Europe"
+    ] .
+
+ex:lynx a schema:Animal ;
+    rdfs:label "Lynx" ;
+    dcterms:description "A medium-sized wild cat known for its tufted ears." ;
+    ex:species "Lynx" ; # Genus
+    ex:habitat "Forest" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Endangered)" ;
+        ex:region "North America, Eurasia"
+    ] .
+
+ex:bobcat a schema:Animal ;
+    rdfs:label "Bobcat" ;
+    dcterms:description "A North American wild cat, related to the lynx." ;
+    ex:species "Lynx rufus" ;
+    ex:habitat "Various" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ;
+        ex:region "North America"
+    ] .
+
+ex:ocelot a schema:Animal ;
+    rdfs:label "Ocelot" ;
+    dcterms:description "A wild cat native to the southwestern United States, Mexico, Central and South America." ;
+    ex:species "Leopardus pardalis" ;
+    ex:habitat "Forest, Scrubland" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ;
+        ex:region "Americas"
+    ] .
+
+ex:serval a schema:Animal ;
+    rdfs:label "Serval" ;
+    dcterms:description "A wild cat native to Africa, known for its long legs and large ears." ;
+    ex:species "Leptailurus serval" ;
+    ex:habitat "Savannah (near water)" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ;
+        ex:region "Africa"
+    ] .
+
+ex:caracal a schema:Animal ;
+    rdfs:label "Caracal" ;
+    dcterms:description "A medium-sized wild cat native to Africa, the Middle East, Central Asia, and India." ;
+    ex:species "Caracal caracal" ;
+    ex:habitat "Savannah, Scrubland, Forest" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ;
+        ex:region "Africa, Asia"
+    ] .
+
+ex:manatee a schema:Animal ; # Marine Mammal
+    rdfs:label "Manatee" ;
+    dcterms:description "A large, fully aquatic, mostly herbivorous marine mammal." ;
+    ex:species "Trichechus" ; # Genus
+    ex:habitat "Shallow Coastal Waters, Rivers" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Vulnerable" ;
+        ex:region "Americas, Africa"
+    ] .
+
+ex:dugong a schema:Animal ; # Marine Mammal
+    rdfs:label "Dugong" ;
+    dcterms:description "A marine mammal, related to the manatee." ;
+    ex:species "Dugong dugon" ;
+    ex:habitat "Coastal Waters" ;
+    ex:diet "Herbivore (Seagrass)" ;
+    ex:conservationInfo [
+        ex:status "Vulnerable" ;
+        ex:region "Indo-Pacific"
+    ] .
+
+ex:porcupine a schema:Animal ;
+    rdfs:label "Porcupine" ;
+    dcterms:description "A rodent with a coat of sharp spines, or quills." ;
+    ex:species "Hystricidae (Old World), Erethizontidae (New World)" ; # Families
+    ex:habitat "Various" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ; # Varies
+        ex:region "Americas, Africa, Asia, Europe"
+    ] .
+
+ex:hedgehog a schema:Animal ;
+    rdfs:label "Hedgehog" ;
+    dcterms:description "A spiny mammal known for rolling into a ball." ;
+    ex:species "Erinaceinae" ; # Subfamily
+    ex:habitat "Woodland, Grassland, Gardens" ;
+    ex:diet "Insectivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ; # Varies
+        ex:region "Europe, Asia, Africa"
+    ] .
+
+ex:ferret a schema:Animal ;
+    rdfs:label "Ferret" ;
+    dcterms:description "A domesticated form of the European polecat." ;
+    ex:species "Mustela putorius furo" ;
+    ex:habitat "Domesticated" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Domesticated" ;
+        ex:region "Global (Domesticated)"
+    ] .
+
+ex:mink a schema:Animal ;
+    rdfs:label "Mink" ;
+    dcterms:description "A semiaquatic species of mustelid." ;
+    ex:species "Neovison vison (American), Mustela lutreola (European)" ;
+    ex:habitat "Near Water" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern (American), Critically Endangered (European)" ;
+        ex:region "North America, Europe"
+    ] .
+
+ex:weasel a schema:Animal ;
+    rdfs:label "Weasel" ;
+    dcterms:description "A small carnivorous mammal with a long, slender body." ;
+    ex:species "Mustela" ; # Genus
+    ex:habitat "Various" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ; # Varies
+        ex:region "Global (except Australia, Antarctica)"
+    ] .
+
+ex:stoat a schema:Animal ;
+    rdfs:label "Stoat" ;
+    dcterms:description "A small mammal of the weasel family, also known as the ermine." ;
+    ex:species "Mustela erminea" ;
+    ex:habitat "Various" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ;
+        ex:region "Northern Hemisphere"
+    ] .
+
+ex:mongoose a schema:Animal ;
+    rdfs:label "Mongoose" ;
+    dcterms:description "A small carnivorous mammal known for fighting snakes." ;
+    ex:species "Herpestidae" ; # Family
+    ex:habitat "Various" ;
+    ex:diet "Carnivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ; # Varies
+        ex:region "Africa, Asia, Europe"
+    ] .
+
+ex:lemur a schema:Animal ;
+    rdfs:label "Lemur" ;
+    dcterms:description "A primate endemic to the island of Madagascar." ;
+    ex:species "Lemuroidea" ; # Superfamily
+    ex:habitat "Forest" ;
+    ex:diet "Varies (Herbivore, Frugivore, Insectivore)" ;
+    ex:conservationInfo [
+        ex:status "Varies (Critically Endangered to Near Threatened)" ;
+        ex:region "Madagascar"
+    ] .
+
+ex:aye_aye a schema:Animal ;
+    rdfs:label "Aye-aye" ;
+    dcterms:description "A long-fingered lemur native to Madagascar." ;
+    ex:species "Daubentonia madagascariensis" ;
+    ex:habitat "Rainforest" ;
+    ex:diet "Insectivore" ;
+    ex:conservationInfo [
+        ex:status "Endangered" ;
+        ex:region "Madagascar"
+    ] .
+
+ex:tapir a schema:Animal ;
+    rdfs:label "Tapir" ;
+    dcterms:description "A large, herbivorous mammal, similar in shape to a pig, with a short, prehensile nose trunk." ;
+    ex:species "Tapirus" ; # Genus
+    ex:habitat "Jungle, Forest" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Endangered to Vulnerable)" ;
+        ex:region "South America, Central America, Southeast Asia"
+    ] .
+
+ex:peccary a schema:Animal ;
+    rdfs:label "Peccary" ;
+    dcterms:description "A medium-sized pig-like mammal of the Americas." ;
+    ex:species "Tayassuidae" ; # Family
+    ex:habitat "Various" ;
+    ex:diet "Omnivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Endangered)" ;
+        ex:region "Americas"
+    ] .
+
+ex:warthog a schema:Animal ;
+    rdfs:label "Warthog" ;
+    dcterms:description "A wild member of the pig family found in grassland, savanna, and woodland in sub-Saharan Africa." ;
+    ex:species "Phacochoerus africanus" ;
+    ex:habitat "Grassland, Savannah, Woodland" ;
+    ex:diet "Omnivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ;
+        ex:region "Africa"
+    ] .
+
+ex:wild_boar a schema:Animal ;
+    rdfs:label "Wild Boar" ;
+    dcterms:description "A suid native to much of Eurasia and North Africa, ancestor of the domestic pig." ;
+    ex:species "Sus scrofa" ;
+    ex:habitat "Woodland, Forest" ;
+    ex:diet "Omnivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ;
+        ex:region "Eurasia, North Africa"
+    ] .
+
+ex:baboon a schema:Animal ;
+    rdfs:label "Baboon" ;
+    dcterms:description "A large Old World monkey." ;
+    ex:species "Papio" ; # Genus
+    ex:habitat "Savannah, Woodland" ;
+    ex:diet "Omnivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ; # Varies
+        ex:region "Africa, Arabia"
+    ] .
+
+ex:mandrill a schema:Animal ;
+    rdfs:label "Mandrill" ;
+    dcterms:description "A primate of the Old World monkey family, closely related to the baboon." ;
+    ex:species "Mandrillus sphinx" ;
+    ex:habitat "Rainforest" ;
+    ex:diet "Omnivore" ;
+    ex:conservationInfo [
+        ex:status "Vulnerable" ;
+        ex:region "Africa"
+    ] .
+
+ex:macaque a schema:Animal ;
+    rdfs:label "Macaque" ;
+    dcterms:description "A genus of Old World monkeys." ;
+    ex:species "Macaca" ; # Genus
+    ex:habitat "Various" ;
+    ex:diet "Omnivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Critically Endangered)" ;
+        ex:region "Asia, North Africa"
+    ] .
+
+ex:howler_monkey a schema:Animal ;
+    rdfs:label "Howler Monkey" ;
+    dcterms:description "A New World monkey known for its loud howls." ;
+    ex:species "Alouatta" ; # Genus
+    ex:habitat "Forest" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Critically Endangered)" ;
+        ex:region "Americas"
+    ] .
+
+ex:spider_monkey a schema:Animal ;
+    rdfs:label "Spider Monkey" ;
+    dcterms:description "A New World monkey known for its long limbs and prehensile tail." ;
+    ex:species "Ateles" ; # Genus
+    ex:habitat "Rainforest" ;
+    ex:diet "Frugivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Vulnerable to Critically Endangered)" ;
+        ex:region "Americas"
+    ] .
+
+ex:capuchin_monkey a schema:Animal ;
+    rdfs:label "Capuchin Monkey" ;
+    dcterms:description "A New World monkey known for its intelligence." ;
+    ex:species "Cebinae" ; # Subfamily
+    ex:habitat "Forest" ;
+    ex:diet "Omnivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Critically Endangered)" ;
+        ex:region "Americas"
+    ] .
+
+ex:marmoset a schema:Animal ;
+    rdfs:label "Marmoset" ;
+    dcterms:description "A small New World monkey." ;
+    ex:species "Callithrix" ; # Genus (and others)
+    ex:habitat "Forest" ;
+    ex:diet "Omnivore (Insects, Gum, Fruit)" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Endangered)" ;
+        ex:region "South America"
+    ] .
+
+ex:tamarin a schema:Animal ;
+    rdfs:label "Tamarin" ;
+    dcterms:description "A small New World monkey related to marmosets." ;
+    ex:species "Saguinus, Leontopithecus" ; # Genera
+    ex:habitat "Forest" ;
+    ex:diet "Omnivore (Fruit, Insects)" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Critically Endangered)" ;
+        ex:region "South America"
+    ] .
+
+ex:colobus_monkey a schema:Animal ;
+    rdfs:label "Colobus Monkey" ;
+    dcterms:description "An Old World monkey native to Africa." ;
+    ex:species "Colobus, Piliocolobus, Procolobus" ; # Genera
+    ex:habitat "Forest" ;
+    ex:diet "Herbivore (Leaves)" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Critically Endangered)" ;
+        ex:region "Africa"
+    ] .
+
+ex:langur a schema:Animal ;
+    rdfs:label "Langur" ;
+    dcterms:description "An Old World monkey native to the Indian subcontinent." ;
+    ex:species "Semnopithecus, Trachypithecus" ; # Genera
+    ex:habitat "Forest, Urban" ;
+    ex:diet "Herbivore (Leaves)" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Critically Endangered)" ;
+        ex:region "Asia"
+    ] .
+
+ex:gibbon a schema:Animal ;
+    rdfs:label "Gibbon" ;
+    dcterms:description "An ape native to Asia, known for its long arms and brachiating locomotion." ;
+    ex:species "Hylobatidae" ; # Family
+    ex:habitat "Rainforest" ;
+    ex:diet "Frugivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Endangered to Critically Endangered)" ;
+        ex:region "Asia"
+    ] .
+
+ex:siamang a schema:Animal ;
+    rdfs:label "Siamang" ;
+    dcterms:description "A large gibbon native to Indonesia, Malaysia, and Thailand." ;
+    ex:species "Symphalangus syndactylus" ;
+    ex:habitat "Forest" ;
+    ex:diet "Frugivore, Folivore" ;
+    ex:conservationInfo [
+        ex:status "Endangered" ;
+        ex:region "Asia"
+    ] .
+
+ex:flying_fox a schema:Animal ; # Bat
+    rdfs:label "Flying Fox" ;
+    dcterms:description "A large bat (megabat) that feeds on fruit." ;
+    ex:species "Pteropus" ; # Genus
+    ex:habitat "Forest, Swamps, Urban" ;
+    ex:diet "Frugivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Critically Endangered)" ;
+        ex:region "Tropics/Subtropics (Asia, Australia, Africa)"
+    ] .
+
+ex:vampire_bat a schema:Animal ; # Bat
+    rdfs:label "Vampire Bat" ;
+    dcterms:description "A bat that feeds on blood." ;
+    ex:species "Desmodontinae" ; # Subfamily
+    ex:habitat "Various" ;
+    ex:diet "Sanguivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ;
+        ex:region "Americas"
+    ] .
+
+ex:hare a schema:Animal ;
+    rdfs:label "Hare" ;
+    dcterms:description "A fast-running mammal similar to a rabbit, but typically larger." ;
+    ex:species "Lepus" ; # Genus
+    ex:habitat "Grassland, Open Woodland" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ; # Varies
+        ex:region "Global (except Antarctica, Australia)"
+    ] .
+
+ex:rabbit a schema:Animal ;
+    rdfs:label "Rabbit" ;
+    dcterms:description "A small mammal known for burrowing and long ears." ;
+    ex:species "Oryctolagus cuniculus (European)" ; # and others
+    ex:habitat "Various" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Endangered)" ;
+        ex:region "Global (introduced widely)"
+    ] .
+
+ex:pika a schema:Animal ;
+    rdfs:label "Pika" ;
+    dcterms:description "A small mountain-dwelling mammal related to rabbits and hares." ;
+    ex:species "Ochotona" ; # Genus
+    ex:habitat "Mountains, Cold Regions" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Vulnerable)" ;
+        ex:region "Asia, North America"
+    ] .
+
+ex:chinchilla a schema:Animal ;
+    rdfs:label "Chinchilla" ;
+    dcterms:description "A rodent native to the Andes mountains, known for its soft fur." ;
+    ex:species "Chinchilla" ; # Genus
+    ex:habitat "Mountains" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Endangered (Wild)" ;
+        ex:region "South America"
+    ] .
+
+ex:guinea_pig a schema:Animal ;
+    rdfs:label "Guinea Pig" ;
+    dcterms:description "A species of rodent belonging to the cavy family." ;
+    ex:species "Cavia porcellus" ;
+    ex:habitat "Domesticated (Originally Andes)" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Domesticated" ;
+        ex:region "Global (Domesticated)"
+    ] .
+
+ex:capybara a schema:Animal ;
+    rdfs:label "Capybara" ;
+    dcterms:description "The largest living rodent in the world." ;
+    ex:species "Hydrochoerus hydrochaeris" ;
+    ex:habitat "Savannah, Forest (near water)" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ;
+        ex:region "South America"
+    ] .
+
+ex:prairie_dog a schema:Animal ;
+    rdfs:label "Prairie Dog" ;
+    dcterms:description "A burrowing rodent native to the grasslands of North America." ;
+    ex:species "Cynomys" ; # Genus
+    ex:habitat "Grassland" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Endangered)" ;
+        ex:region "North America"
+    ] .
+
+ex:groundhog a schema:Animal ;
+    rdfs:label "Groundhog" ;
+    dcterms:description "A rodent of the marmot family, also known as a woodchuck." ;
+    ex:species "Marmota monax" ;
+    ex:habitat "Woodland, Fields" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Least Concern" ;
+        ex:region "North America"
+    ] .
+
+ex:marmot a schema:Animal ;
+    rdfs:label "Marmot" ;
+    dcterms:description "A large squirrel, typically living in mountainous areas." ;
+    ex:species "Marmota" ; # Genus
+    ex:habitat "Mountains, Grassland" ;
+    ex:diet "Herbivore" ;
+    ex:conservationInfo [
+        ex:status "Varies (Least Concern to Endangered)" ;
+        ex:region "Northern Hemisphere"
+    ] .

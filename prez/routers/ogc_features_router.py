@@ -29,7 +29,7 @@ from prez.exceptions.model_exceptions import (
     URINotFoundException
 )
 from prez.models.ogc_features import OGCFeaturesLandingPage, generate_landing_page_links
-from prez.models.query_params import QueryParams
+from prez.models.query_params import ListingQueryParams
 from prez.reference_data.prez_ns import OGCFEAT
 from prez.renderers.renderer import generate_link_headers
 from prez.repositories import Repo
@@ -147,7 +147,7 @@ async def listings_with_feature_collection(
     url: str = Depends(get_url),
     mediatype: str = Depends(get_ogc_features_mediatype),
     path_params: dict = Depends(get_ogc_features_path_params),
-    query_params: QueryParams = Depends(),
+    query_params: ListingQueryParams = Depends(),
     cql_parser: CQLParser = Depends(cql_get_parser_dependency),
     data_repo: Repo = Depends(get_data_repo),
     system_repo: Repo = Depends(get_system_repo),

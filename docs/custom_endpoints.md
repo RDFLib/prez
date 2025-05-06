@@ -47,7 +47,7 @@ Custom endpoints are defined in RDF. Prez detects them in a specific location in
 To set up Prez to read custom endpoints from a repository (typically a SPARQL endpoint, but can also be Pyoxigraph reading from a local directory):
 
 1. Set the `CUSTOM_ENDPOINTS` environment variable to "true"
-2. upload your endpoint definition file to the triplestore into the `<https://prez.dev/SystemGraph>` named graph.
+2. upload your endpoint definition file to the triplestore into the `<https://prez.dev/SystemGraph>` named graph. The endpoints must be of type `https://prez.dev/ont/OGCFeaturesEndpoint` or `ont:DynamicEndpoint`, AND also a `https://prez.dev/ont/ListingEndpoint` or `https://prez.dev/ont/ObjectEndpoint`.
 3. Start / restart Prez. You should see the dynamic endpoints being created in the logs.
 
 ## Limitations
