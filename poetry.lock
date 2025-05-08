@@ -1037,7 +1037,7 @@ rdflib = ">=6.0.2"
 
 [[package]]
 name = "oxrdflib"
-version = "0.4.1.dev5+g1f7aef9"
+version = "0.4.1.dev7+g70d99ac"
 description = "rdflib stores based on pyoxigraph"
 optional = false
 python-versions = ">=3.8"
@@ -1830,8 +1830,8 @@ rdflib = "^7.0.0"
 [package.source]
 type = "git"
 url = "https://github.com/Kurrawong/rdf2geojson.git"
-reference = "target_feature_collection"
-resolved_reference = "710958cd45ac9e0cb7cd49d0e1b9882d0202d239"
+reference = "v0.6.0"
+resolved_reference = "4c92382ad71e6c1f5a64de2ce3c57dae4fc1e0c3"
 
 [[package]]
 name = "rdflib"
@@ -2320,4 +2320,4 @@ server = ["uvicorn"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "0477952c1ff90ee815cdf7f60c0093f6da1addfd4621ff221726079ac47debd4"
+content-hash = "a7a46c29853fc6b3b6b43d4cd25c144f1ebb9df544770e8f8f6511688e858ea9"
