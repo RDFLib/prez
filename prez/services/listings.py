@@ -46,10 +46,10 @@ DWC = Namespace("http://rs.tdwg.org/dwc/terms/")
 
 
 async def listing_profiles(
-    data_repo,
-    system_repo,
-    query_params,
-    pmts,
+        data_repo,
+        system_repo,
+        query_params,
+        pmts,
 ):
     """
     Optimized listing function specifically for profiles.
@@ -102,7 +102,6 @@ async def listing_profiles(
         query_params,
     )
     return response
-
 
 
 def _add_geom_triple_pattern_match(tssp_list: list[TriplesSameSubjectPath]):
@@ -426,9 +425,16 @@ async def ogc_features_listing_function(
     elif selected_mediatype == "application/geo+json":
         if "human" in profile_nodeshape.uri.lower():  # human readable profile
             item_graph += annotations_graph
-            geojson = convert(g=item_graph, do_validate=False, iri2id=get_curie_id_for_uri, kind="human")
+            kind = "human"
         else:
-            geojson = convert(g=item_graph, do_validate=False, iri2id=get_curie_id_for_uri, kind="machine")
+            kind = "machine"
+        geojson = convert(
+            g=item_graph,
+            do_validate=False,
+            iri2id=get_curie_id_for_uri,
+            kind=kind,
+            fc_uri=collection_uri
+        )
         link_headers, geojson = await generate_geojson_extras(
             count, geojson, query_params, selected_mediatype, url
         )
