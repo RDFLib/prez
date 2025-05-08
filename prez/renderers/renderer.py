@@ -182,7 +182,10 @@ async def generate_geojson_extras(
     geojson["timeStamp"] = get_brisbane_timestamp()
     if count:  # listing
         geojson["numberMatched"] = count
-        geojson["numberReturned"] = len(geojson["features"])
+        if geojson.get("features"):
+            geojson["numberReturned"] = len(geojson["features"])
+        else:
+            geojson["numberReturned"] = 0
     return link_headers, geojson
 
 
