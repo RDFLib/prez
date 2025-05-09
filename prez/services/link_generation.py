@@ -213,23 +213,25 @@ async def get_link_components(ns, repo):
     }
     """
     link_queries = []
-    link_queries.append(
-        (
-            ns.uri,
-            SubSelect(
-                select_clause=SelectClause(variables_or_all=ns.path_nodes.values()),
-                where_clause=WhereClause(
-                    group_graph_pattern=GroupGraphPattern(
-                        content=GroupGraphPatternSub(
-                            triples_block=TriplesBlock.from_tssp_list(
-                                ns.tssp_list[::-1]
-                            ),  # reversed for performance
-                            graph_patterns_or_triples_blocks=ns.gpnt_list,
+    if ns.path_nodes:
+        link_queries.append(
+            (
+                ns.uri,
+                SubSelect(
+                    select_clause=SelectClause(variables_or_all=ns.path_nodes.values()),
+                    where_clause=WhereClause(
+                        group_graph_pattern=GroupGraphPattern(
+                            content=GroupGraphPatternSub(
+                                triples_block=TriplesBlock.from_tssp_list(
+                                    ns.tssp_list[::-1]
+                                ),  # reversed for performance
+                                graph_patterns_or_triples_blocks=ns.gpnt_list,
+                            )
                         )
-                    )
-                ),
-            ).to_string(),
+                    ),
+                ).to_string(),
+            )
         )
-    )
-    _, results = await repo.send_queries([], link_queries)
-    return results
+        _, results = await repo.send_queries([], link_queries)
+        return results
+    return []
