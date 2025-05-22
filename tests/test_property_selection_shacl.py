@@ -624,3 +624,59 @@ def test_sh_class_in_bnode_path(mock_settings):
     # print("Actual Normalized:\n", normalize_sparql(actual_sparql))
 
     assert normalize_sparql(actual_sparql) == normalize_sparql(expected_sparql)
+
+
+def test_multiple_all_predicate_values():
+    g = Graph().parse(
+        data="""
+        @prefix sosa: <http://www.w3.org/ns/sosa/> .
+        @prefix prez: <https://prez.dev/> .
+        @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+        @prefix sh: <http://www.w3.org/ns/shacl#> .
+        @prefix shext: <http://example.com/shacl-extension#> .
+        @prefix schema: <https://schema.org/> .
+        
+        prez:testprof sh:property
+                [
+                    sh:path
+                        [
+                            sh:union
+                                (
+                                    shext:allPredicateValues
+                                    [ shext:bNodeDepth "2" ]
+                                    ( schema:temporal shext:allPredicateValues )
+                                    ( [ sh:inversePath sosa:hasFeatureOfInterest ] sosa:hasMember rdf:type )
+                                    (
+                                        [ sh:inversePath sosa:hasFeatureOfInterest ] sosa:hasMember sosa:phenomenonTime
+                                        shext:allPredicateValues
+                                    )
+                                    (
+                                        [ sh:inversePath sosa:hasFeatureOfInterest ] sosa:hasMember schema:temporal
+                                        shext:allPredicateValues
+                                    )
+                                    ( [ sh:inversePath sosa:hasFeatureOfInterest ] sosa:phenomenonTime shext:allPredicateValues )
+                                    ( [ sh:inversePath sosa:hasFeatureOfInterest ] schema:temporal shext:allPredicateValues )
+                                )
+                        ]
+                ] ;
+            ."""
+    )
+    path_bn = g.value(subject=URIRef("https://prez.dev/testprof"), predicate=SH.property)
+    ps = PropertyShape(
+        uri=path_bn, graph=g, kind="profile", focus_node=Var(value="focus_node")
+    )
+    triple_strings = []
+    for tss in ps.tss_list:
+        triple_strings.append(tss.to_string())
+    preds_var_count = 0
+    for triple_string in triple_strings:
+        preds_var_count += 1 if "?preds" in triple_string else 0
+    assert preds_var_count == 1
+    sequences = []
+    for s in triple_strings:
+        if "?sequence_all_preds" in s:
+            parts = s.split("?sequence_all_preds_")
+            if len(parts) > 1:
+                seq_num = parts[1].split()[0].rstrip("'\"")
+                sequences.append(seq_num)
+    assert len(sequences) == len(set(sequences))

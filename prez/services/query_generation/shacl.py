@@ -220,6 +220,7 @@ class PropertyShape(Shape):
     _select_vars: Optional[List[Var]] = None
     bnode_depth: Optional[int] = None
     union_tssps_binds: Optional[List[Dict[str, Any]]] = [] # New attribute
+    all_predicate_values_counter: int = 0
 
     @property
     def minCount(self):
@@ -705,16 +706,18 @@ class PropertyShape(Shape):
                                     path_nodes[0],  # This is path_node_1
                                 )
                             else:
-                                if path.value == SHEXT.allPredicateValues:
-                                    triple = (
-                                        path_nodes[j - 1],  # Previous node
-                                        Var(value="sequence_all_preds"),
-                                        path_nodes[j],
-                                    )
-                                else:
-                                    triple = (
-                                        path_nodes[j - 1],  # Previous node
-                                        IRI(value=path.value),
+                                    if path.value == SHEXT.allPredicateValues:
+                                        var_name = f"sequence_all_preds_{self.all_predicate_values_counter}"
+                                        self.all_predicate_values_counter += 1
+                                        triple = (
+                                            path_nodes[j - 1],  # Previous node
+                                            Var(value=var_name),
+                                            path_nodes[j],
+                                        )
+                                    else:
+                                        triple = (
+                                            path_nodes[j - 1],  # Previous node
+                                            IRI(value=path.value),
                                         path_nodes[j],  # Current node
                                     )
                     elif isinstance(path, InversePath):
