@@ -106,8 +106,6 @@ async def object_function(
                 return RedirectResponse(
                     prez_ui_url + "/404?uri=" + urllib.parse.quote_plus(item_uri)
                 )
-    if not len(item_graph):
-        raise URINotFoundException(uri=profile_nodeshape.focus_node.value)
     if "anot+" in pmts.selected["mediatype"]:
         item_graph.add((BNode(), PREZ.currentProfile, pmts.selected["profile"]))
         await add_prez_links(item_graph, data_repo, endpoint_structure)
