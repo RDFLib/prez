@@ -47,6 +47,7 @@ from sparql_grammar_pydantic import (
     Var,
     VarOrTerm,
     VerbPath,
+    VerbSimple, # Added
 )
 
 from prez.config import settings
@@ -755,15 +756,64 @@ class PropertyShape(Shape):
                         
                         elif isinstance(path_segment, AlternativePath):
                             inner_path_type = "alternative"
-                            tssp_alt_segment = _tssp_for_alternative(
-                                focus_node=segment_subject_node,
-                                alternative_paths=path_segment.value,
-                                obj=segment_object_node
-                            )
-                            current_tssp.append(tssp_alt_segment)
-                            # `triple` remains None.
+                            # For profile/fts, AlternativePath within a sequence needs to generate a UNION block.
+                            
+                            group_graph_patterns_for_union = []
+                            for alt_path_item in path_segment.value:
+                                # Each alt_path_item is a PropertyPath (e.g., Path, InversePath)
+                                # We need to generate a simple TSSP for it.
+                                tssp_for_alt = _tssp_for_path_segment(
+                                    segment_subject_node,
+                                    alt_path_item,
+                                    segment_object_node
+                                )
+                                group_graph_patterns_for_union.append(
+                                    GroupGraphPattern(
+                                        content=GroupGraphPatternSub(
+                                            triples_block=TriplesBlock.from_tssp_list([tssp_for_alt])
+                                        )
+                                    )
+                                )
+                                # For CONSTRUCT, add individual triples for each alternative if not aliased
+                                if not use_alias:
+                                    # Need to get the correct predicate for the CONSTRUCT
+                                    construct_pred_iri = None
+                                    construct_subj = segment_subject_node
+                                    construct_obj = segment_object_node
+                                    if isinstance(alt_path_item, Path):
+                                        construct_pred_iri = IRI(value=alt_path_item.value)
+                                    elif isinstance(alt_path_item, InversePath) and isinstance(alt_path_item.value, Path):
+                                        construct_pred_iri = IRI(value=alt_path_item.value.value)
+                                        construct_subj, construct_obj = construct_obj, construct_subj # Swap for inverse
+                                    elif isinstance(alt_path_item, (ZeroOrMorePath, OneOrMorePath, ZeroOrOnePath)) and isinstance(alt_path_item.value, Path):
+                                         construct_pred_iri = IRI(value=alt_path_item.value.value) # Use base predicate for construct
 
+                                    if construct_pred_iri:
+                                        self.tss_list.append(
+                                            TriplesSameSubject.from_spo(
+                                                construct_subj,
+                                                construct_pred_iri,
+                                                construct_obj
+                                            )
+                                        )
+                            
+                            if group_graph_patterns_for_union:
+                                union_gp = GroupGraphPattern(
+                                    content=GroupGraphPatternSub(
+                                        graph_patterns_or_triples_blocks=[
+                                            GraphPatternNotTriples(
+                                                content=GroupOrUnionGraphPattern(
+                                                    group_graph_patterns=group_graph_patterns_for_union
+                                                )
+                                            )
+                                        ]
+                                    )
+                                )
+                                self.gpnt_list.append(union_gp)
+                            # `triple` remains None, as it's handled by the union_gp and tss_list additions.
+                        
                         # Process the generated simple triple (if any) for this segment (profile/fts)
+                        # This block is for simple Path, InversePath, and ZeroOrOneMorePath that result in a 'triple'
                         if triple:
                             # Adjust object for FTS if it's the last segment
                             if (j == seq_path_len - 1 and self.kind == "fts"):
@@ -924,12 +974,71 @@ class PropertyShape(Shape):
         return ggp
 
 
-def _tssp_for_pathmods(focus_node: IRI | Var, pred, obj, pathmod):
+def _get_base_predicate_iri(path_segment: PropertyPath) -> IRI:
+    """Extracts the base IRI from a PropertyPath segment for use as a predicate."""
+    if isinstance(path_segment, Path):
+        if path_segment.value == SHEXT.allPredicateValues:
+            # This case should ideally be handled before calling this,
+            # as allPredicateValues doesn't map to a single IRI.
+            raise ValueError("Cannot get a single base IRI for SHEXT.allPredicateValues")
+        return IRI(value=path_segment.value)
+    elif isinstance(path_segment, (InversePath, ZeroOrMorePath, OneOrMorePath, ZeroOrOnePath)):
+        # For these, the 'value' is another PropertyPath, so recursively get its base IRI
+        return _get_base_predicate_iri(path_segment.value)
+    # AlternativePath does not have a single base predicate.
+    # SequencePath also does not have a single base predicate.
+    else:
+        raise ValueError(f"Unsupported PropertyPath type for base predicate extraction: {type(path_segment)}")
+
+
+def _tssp_for_path_segment(subject: Var | IRI | BNode, path_segment: PropertyPath, obj: Var | IRI | BNode) -> TriplesSameSubjectPath:
+    """
+    Creates a TriplesSameSubjectPath for a single PropertyPath segment.
+    Handles simple paths, inverse paths, and paths with cardinality modifiers.
+    """
+    # Ensure subject and obj are GraphTerm if they are IRIs for TriplesSameSubjectPath.from_spo
+    # However, _tssp_for_pathmods handles this internally.
+    # TriplesSameSubjectPath.from_spo also handles this.
+
+    if isinstance(path_segment, Path):
+        if path_segment.value == SHEXT.allPredicateValues:
+            # This is a special case, from_spo expects Var or IRI for predicate
+            return TriplesSameSubjectPath.from_spo(subject, Var(value="preds_seq_val"), obj)
+        else:
+            return TriplesSameSubjectPath.from_spo(subject, IRI(value=path_segment.value), obj)
+    elif isinstance(path_segment, InversePath):
+        # For inverse, subject and object are swapped in the triple
+        # The predicate of the inverse path's value must be a simple Path.
+        if not isinstance(path_segment.value, Path):
+            raise ValueError(f"InversePath's value must be a Path, got {type(path_segment.value)}")
+        if path_segment.value.value == SHEXT.allPredicateValues:
+            return TriplesSameSubjectPath.from_spo(obj, Var(value="preds_seq_inv_val"), subject)
+        else:
+            return TriplesSameSubjectPath.from_spo(obj, IRI(value=path_segment.value.value), subject)
+    elif isinstance(path_segment, (ZeroOrMorePath, OneOrMorePath, ZeroOrOnePath)):
+        # These use path modifiers in the TSSP
+        # The predicate of the pathmod's value must be a simple Path.
+        if not isinstance(path_segment.value, Path):
+             raise ValueError(f"Path modifier's value must be a Path, got {type(path_segment.value)}")
+        return _tssp_for_pathmods(subject, IRI(value=path_segment.value.value), obj, path_segment.operand)
+    # AlternativePath is handled by creating a UNION of GroupGraphPatterns, not a single TSSP.
+    # SequencePath is handled by iterating its elements.
+    else:
+        raise ValueError(f"Unsupported PropertyPath type for _tssp_for_path_segment: {type(path_segment)}")
+
+
+def _tssp_for_pathmods(focus_node: IRI | Var, pred: IRI, obj: Var | IRI, pathmod: str):
     """
     Creates path modifier TriplesSameSubjectPath objects.
     """
     if isinstance(focus_node, IRI):
         focus_node = GraphTerm(content=focus_node)
+    # Ensure obj is GraphTerm if it's an IRI for VarOrTerm
+    if isinstance(obj, IRI):
+        obj_term = GraphTerm(content=obj)
+    else:
+        obj_term = obj
+
     return TriplesSameSubjectPath(
         content=(
             VarOrTerm(varorterm=focus_node),
@@ -944,7 +1053,7 @@ def _tssp_for_pathmods(focus_node: IRI | Var, pred, obj, pathmod):
                                             PathEltOrInverse(
                                                 path_elt=PathElt(
                                                     path_primary=PathPrimary(
-                                                        value=pred,
+                                                        value=pred, # pred is already an IRI
                                                     ),
                                                     path_mod=PathMod(pathmod=pathmod),
                                                 )
@@ -960,7 +1069,7 @@ def _tssp_for_pathmods(focus_node: IRI | Var, pred, obj, pathmod):
                             ObjectPath(
                                 graph_node_path=GraphNodePath(
                                     varorterm_or_triplesnodepath=VarOrTerm(
-                                        varorterm=obj
+                                        varorterm=obj_term # Use the potentially wrapped obj_term
                                     )
                                 )
                             )
@@ -1038,7 +1147,10 @@ def _tssp_for_alternative(focus_node, alternative_paths: list[PropertyPath], obj
     if isinstance(focus_node, IRI):
         focus_node = GraphTerm(content=focus_node)
     if isinstance(obj, IRI):
-        obj = GraphTerm(content=obj)
+        obj_term = GraphTerm(content=obj)
+    else:
+        obj_term = obj
+
 
     sequence_paths = []
     for alt_path in alternative_paths:
@@ -1065,7 +1177,7 @@ def _tssp_for_alternative(focus_node, alternative_paths: list[PropertyPath], obj
                             ObjectPath(
                                 graph_node_path=GraphNodePath(
                                     varorterm_or_triplesnodepath=VarOrTerm(
-                                        varorterm=obj
+                                        varorterm=obj_term
                                     )
                                 )
                             )
@@ -1087,7 +1199,9 @@ def _tssp_for_sequence(
     if isinstance(focus_node, IRI):
         focus_node = GraphTerm(content=focus_node)
     if isinstance(obj, IRI):
-        obj = GraphTerm(content=obj)
+        obj_term = GraphTerm(content=obj)
+    else:
+        obj_term = obj
 
     list_path_elt_or_inverse = []
     for path_element in sequence_elements:
@@ -1114,7 +1228,7 @@ def _tssp_for_sequence(
                             ObjectPath(
                                 graph_node_path=GraphNodePath(
                                     varorterm_or_triplesnodepath=VarOrTerm(
-                                        varorterm=obj
+                                        varorterm=obj_term
                                     )
                                 )
                             )
