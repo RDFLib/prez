@@ -91,13 +91,6 @@ def test_cql_or_operator_fix():
     within the UNION clause and not in the main self.tssp_list.
     """
     from prez.services.query_generation.cql import CQLParser
-    from sparql_grammar_pydantic import (
-        GroupGraphPattern,
-        GroupOrUnionGraphPattern,
-        GraphPatternNotTriples,
-        TriplesSameSubjectPath,
-        Var,
-    )
 
     cql_json_data = {
         "op": "or",
@@ -121,79 +114,355 @@ def test_cql_or_operator_fix():
 
     parser = CQLParser(cql_json=cql_json_data)
     parser.parse()
+    where_content = parser.query_object.where_clause.group_graph_pattern.content
 
-    # 1. self.tssp_list should be empty because all triples are within OR branches
-    assert len(parser.tssp_list) == 0, "tssp_list should be empty for OR query"
+    expected_inner_select_gpntotb_list_str = [
+        """
+{
+?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/sosa/Sample>
+}
+UNION
+{
+?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://linked.data.gov.au/def/borehole/Bore>
+}"""
+    ]
+    assert len(parser.inner_select_gpntotb_list) == len(expected_inner_select_gpntotb_list_str)
+    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace("\n", "") == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
 
-    # 2. Check the structure of the ggps_inner_select for the UNION
-    assert parser.ggps_inner_select is not None
-    assert (
-        parser.ggps_inner_select.graph_patterns_or_triples_blocks is not None
-    ), "ggps_inner_select should have graph_patterns_or_triples_blocks"
-    assert (
-        len(parser.ggps_inner_select.graph_patterns_or_triples_blocks) == 1
-    ), "ggps_inner_select should contain one GraphPatternNotTriples for the UNION"
 
-    gpnt = parser.ggps_inner_select.graph_patterns_or_triples_blocks[0]
-    assert isinstance(
-        gpnt, GraphPatternNotTriples
-    ), "The item should be a GraphPatternNotTriples"
-    assert isinstance(
-        gpnt.content, GroupOrUnionGraphPattern
-    ), "Content of GPNT should be GroupOrUnionGraphPattern"
+def test_cql_nested_and_operator():
+    """
+    Tests a nested 'and' CQL query to ensure all conditions
+    are correctly translated into triples in the tss_list.
+    """
+    from prez.services.query_generation.cql import CQLParser
 
-    union_pattern = gpnt.content
-    assert (
-        len(union_pattern.group_graph_patterns) == 2
-    ), "GroupOrUnionGraphPattern should have two branches"
+    cql_json_data = {
+        "op": "and",
+        "args": [
+            {
+                "op": "and",
+                "args": [
+                    {
+                        "op": "=",
+                        "args": [
+                            {
+                                "property": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+                            },
+                            "http://example.org/vocab#Report",
+                        ],
+                    },
+                    {
+                        "op": "=",
+                        "args": [
+                            {"property": "http://purl.org/dc/terms/subject"},
+                            "http://example.org/subjects#Geology",
+                        ],
+                    },
+                ],
+            },
+            {
+                "op": "and",
+                "args": [
+                    {
+                        "op": "=",
+                        "args": [
+                            {"property": "http://purl.org/dc/terms/format"},
+                            "http://example.org/formats#PDF",
+                        ],
+                    },
+                    {
+                        "op": "=",
+                        "args": [
+                            {"property": "http://purl.org/dc/terms/creator"},
+                            "http://example.org/organizations#GeologicalSurvey",
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
 
-    # Check first branch of the UNION
-    branch1_ggp = union_pattern.group_graph_patterns[0]
-    assert isinstance(
-        branch1_ggp, GroupGraphPattern
-    ), "Branch 1 should be a GroupGraphPattern"
-    assert branch1_ggp.content is not None
-    assert branch1_ggp.content.triples_block is not None
-    branch1_tssp = branch1_ggp.content.triples_block.triples
-    assert isinstance(
-        branch1_tssp, TriplesSameSubjectPath
-    ), "Branch 1 triple should be TriplesSameSubjectPath"
-    assert branch1_tssp.varorterm == Var(value="focus_node")
-    assert (
-        branch1_tssp.propertylist.first_pair[0].verb.iri.value
-        == "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+    parser = CQLParser(cql_json=cql_json_data)
+    parser.parse()
+
+    expected_inner_select_gpntotb_list_str = [
+        """?focus_node <http://purl.org/dc/terms/creator> <http://example.org/organizations#GeologicalSurvey> .
+?focus_node <http://purl.org/dc/terms/format> <http://example.org/formats#PDF> .
+?focus_node <http://purl.org/dc/terms/subject> <http://example.org/subjects#Geology> .
+?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/vocab#Report>"""
+    ]
+    assert len(parser.inner_select_gpntotb_list) == len(expected_inner_select_gpntotb_list_str)
+    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace("\n", "") == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
+
+
+# --- Tests for nested AND/OR operators ---
+
+# Helper properties and values
+PROP_A = "http://example.org/propA"
+VAL_A = "http://example.org/valA"
+PROP_B = "http://example.org/propB"
+VAL_B = "http://example.org/valB"
+PROP_C = "http://example.org/propC"
+VAL_C = "http://example.org/valC"
+PROP_D = "http://example.org/propD"
+VAL_D = "http://example.org/valD"
+
+def _create_eq_cql(prop, val_str):
+    return {"op": "=", "args": [{"property": prop}, val_str]}
+
+def _create_tssp(prop_uri, val_uri):
+    from sparql_grammar_pydantic import IRI, TriplesSameSubjectPath, Var
+    return TriplesSameSubjectPath.from_spo(
+        Var(value="focus_node"),
+        IRI(value=prop_uri),
+        IRI(value=val_uri)
     )
-    assert (
-        branch1_tssp.propertylist.first_pair[1].object_list.first_object.iri.value
-        == "http://www.w3.org/ns/sosa/Sample"
-    )
 
-    # Check second branch of the UNION
-    branch2_ggp = union_pattern.group_graph_patterns[1]
-    assert isinstance(
-        branch2_ggp, GroupGraphPattern
-    ), "Branch 2 should be a GroupGraphPattern"
-    assert branch2_ggp.content is not None
-    assert branch2_ggp.content.triples_block is not None
-    branch2_tssp = branch2_ggp.content.triples_block.triples
-    assert isinstance(
-        branch2_tssp, TriplesSameSubjectPath
-    ), "Branch 2 triple should be TriplesSameSubjectPath"
-    assert branch2_tssp.varorterm == Var(value="focus_node")
-    assert (
-        branch2_tssp.propertylist.first_pair[0].verb.iri.value
-        == "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
-    )
-    assert (
-        branch2_tssp.propertylist.first_pair[1].object_list.first_object.iri.value
-        == "https://linked.data.gov.au/def/borehole/Bore"
-    )
+def _get_all_tssp_from_triples_block(triples_block):
+    """Helper to extract all TriplesSameSubjectPath from a linked list of TriplesBlock."""
+    from sparql_grammar_pydantic import TriplesBlock, TriplesSameSubjectPath
+    all_tssp = []
+    current_block = triples_block
+    while current_block:
+        if isinstance(current_block, TriplesBlock) and isinstance(current_block.triples, TriplesSameSubjectPath):
+            all_tssp.append(current_block.triples)
+        elif isinstance(current_block, TriplesSameSubjectPath):
+            all_tssp.append(current_block)
+        current_block = getattr(current_block, 'triples_block', None)
+    return all_tssp
 
-    # Also check self.tss_list for CONSTRUCT part (should contain both)
-    assert len(parser.tss_list) == 2, "tss_list should contain two triples for CONSTRUCT"
-    # Detailed check for tss_list can be added if necessary, but length check is a good start.
-    # Example for one:
-    # tss1 = parser.tss_list[0]
-    # assert tss1.varorterm == Var(value="focus_node")
-    # assert tss1.propertylist.first_pair[0].verb.iri.value == "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
-    # assert tss1.propertylist.first_pair[1].object_list.first_object.iri.value == "http://www.w3.org/ns/sosa/Sample"
+
+def test_cql_and_of_A_or_BC():
+    """Tests AND(A, OR(B, C))"""
+    from prez.services.query_generation.cql import CQLParser
+
+    cql_A = _create_eq_cql(PROP_A, VAL_A)
+    cql_B = _create_eq_cql(PROP_B, VAL_B)
+    cql_C = _create_eq_cql(PROP_C, VAL_C)
+
+    cql_json_data = {
+        "op": "and",
+        "args": [
+            cql_A,
+            {
+                "op": "or",
+                "args": [cql_B, cql_C]
+            }
+        ]
+    }
+    parser = CQLParser(cql_json=cql_json_data)
+    parser.parse()
+
+    where_content = parser.query_object.where_clause.group_graph_pattern.content
+
+    expected_inner_select_gpntotb_list_str = [
+        """?focus_node <http://example.org/propA> <http://example.org/valA>""",
+        """
+{
+{
+?focus_node <http://example.org/propB> <http://example.org/valB>
+}
+UNION
+{
+?focus_node <http://example.org/propC> <http://example.org/valC>
+}
+}"""
+    ]
+    assert len(parser.inner_select_gpntotb_list) == len(expected_inner_select_gpntotb_list_str)
+    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace("\n", "") == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
+    assert parser.inner_select_gpntotb_list[1].to_string().replace(" ", "").replace("\n", "") == expected_inner_select_gpntotb_list_str[1].replace(" ", "").replace("\n", "")
+
+
+def test_cql_or_of_A_and_BC():
+    """Tests OR(A, AND(B, C))"""
+    from prez.services.query_generation.cql import CQLParser
+
+    cql_A = _create_eq_cql(PROP_A, VAL_A)
+    cql_B = _create_eq_cql(PROP_B, VAL_B)
+    cql_C = _create_eq_cql(PROP_C, VAL_C)
+
+    cql_json_data = {
+        "op": "or",
+        "args": [
+            cql_A,
+            {
+                "op": "and",
+                "args": [cql_B, cql_C]
+            }
+        ]
+    }
+    parser = CQLParser(cql_json=cql_json_data)
+    parser.parse()
+
+    expected_inner_select_gpntotb_list_str = [
+        """
+
+{
+?focus_node <http://example.org/propA> <http://example.org/valA>
+}
+UNION
+{
+?focus_node <http://example.org/propC> <http://example.org/valC> .
+?focus_node <http://example.org/propB> <http://example.org/valB>
+
+}"""
+    ]
+    assert len(parser.inner_select_gpntotb_list) == len(expected_inner_select_gpntotb_list_str)
+    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace("\n", "") == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
+
+
+def test_cql_and_of_and_AB_C():
+    """Tests AND(AND(A, B), C)"""
+    from prez.services.query_generation.cql import CQLParser
+
+    cql_A = _create_eq_cql(PROP_A, VAL_A)
+    cql_B = _create_eq_cql(PROP_B, VAL_B)
+    cql_C = _create_eq_cql(PROP_C, VAL_C)
+
+    cql_json_data = {
+        "op": "and",
+        "args": [
+            {
+                "op": "and",
+                "args": [cql_A, cql_B]
+            },
+            cql_C
+        ]
+    }
+    parser = CQLParser(cql_json=cql_json_data)
+    parser.parse()
+
+    expected_inner_select_gpntotb_list_str = [
+        """?focus_node <http://example.org/propC> <http://example.org/valC> .
+?focus_node <http://example.org/propB> <http://example.org/valB> .
+?focus_node <http://example.org/propA> <http://example.org/valA>"""
+    ]
+    assert len(parser.inner_select_gpntotb_list) == len(expected_inner_select_gpntotb_list_str)
+    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace("\n", "") == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
+
+
+def test_cql_or_of_or_AB_C():
+    """Tests OR(OR(A, B), C)"""
+    from prez.services.query_generation.cql import CQLParser
+
+    cql_A = _create_eq_cql(PROP_A, VAL_A)
+    cql_B = _create_eq_cql(PROP_B, VAL_B)
+    cql_C = _create_eq_cql(PROP_C, VAL_C)
+
+    cql_json_data = {
+        "op": "or",
+        "args": [
+            {
+                "op": "or",
+                "args": [cql_A, cql_B]
+            },
+            cql_C
+        ]
+    }
+    parser = CQLParser(cql_json=cql_json_data)
+    parser.parse()
+
+    expected_inner_select_gpntotb_list_str = [
+        """
+{
+{
+?focus_node <http://example.org/propA> <http://example.org/valA>
+}
+UNION
+{
+?focus_node <http://example.org/propB> <http://example.org/valB>
+}
+}
+UNION
+{
+?focus_node <http://example.org/propC> <http://example.org/valC>
+}
+"""
+    ]
+    assert len(parser.inner_select_gpntotb_list) == len(expected_inner_select_gpntotb_list_str)
+    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace("\n", "") == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
+
+
+def test_cql_and_of_or_AB_or_CD():
+    """Tests AND(OR(A,B), OR(C,D))"""
+    from prez.services.query_generation.cql import CQLParser
+
+    cql_A = _create_eq_cql(PROP_A, VAL_A)
+    cql_B = _create_eq_cql(PROP_B, VAL_B)
+    cql_C = _create_eq_cql(PROP_C, VAL_C)
+    cql_D = _create_eq_cql(PROP_D, VAL_D)
+
+    cql_json_data = {
+        "op": "and",
+        "args": [
+            {"op": "or", "args": [cql_A, cql_B]},
+            {"op": "or", "args": [cql_C, cql_D]}
+        ]
+    }
+    parser = CQLParser(cql_json=cql_json_data)
+    parser.parse()
+    where_content = parser.query_object.where_clause.group_graph_pattern.content
+
+    expected_inner_select_gpntotb_list_str = [
+        """
+{
+{
+?focus_node <http://example.org/propA> <http://example.org/valA>
+}
+UNION
+{
+?focus_node <http://example.org/propB> <http://example.org/valB>
+}
+}""",
+        """
+{
+{
+?focus_node <http://example.org/propC> <http://example.org/valC>
+}
+UNION
+{
+?focus_node <http://example.org/propD> <http://example.org/valD>
+}
+}"""
+    ]
+    assert len(parser.inner_select_gpntotb_list) == len(expected_inner_select_gpntotb_list_str)
+    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace("\n", "") == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
+    assert parser.inner_select_gpntotb_list[1].to_string().replace(" ", "").replace("\n", "") == expected_inner_select_gpntotb_list_str[1].replace(" ", "").replace("\n", "")
+
+
+def test_cql_or_of_and_AB_and_CD():
+    """Tests OR(AND(A,B), AND(C,D))"""
+    from prez.services.query_generation.cql import CQLParser
+
+    cql_A = _create_eq_cql(PROP_A, VAL_A)
+    cql_B = _create_eq_cql(PROP_B, VAL_B)
+    cql_C = _create_eq_cql(PROP_C, VAL_C)
+    cql_D = _create_eq_cql(PROP_D, VAL_D)
+
+    cql_json_data = {
+        "op": "or",
+        "args": [
+            {"op": "and", "args": [cql_A, cql_B]},
+            {"op": "and", "args": [cql_C, cql_D]}
+        ]
+    }
+    parser = CQLParser(cql_json=cql_json_data)
+    parser.parse()
+    where_content = parser.query_object.where_clause.group_graph_pattern.content
+
+    expected_inner_select_gpntotb_list_str = [
+        """
+{
+?focus_node <http://example.org/propB> <http://example.org/valB> .
+?focus_node <http://example.org/propA> <http://example.org/valA>
+}
+UNION
+{
+?focus_node <http://example.org/propD> <http://example.org/valD> .
+?focus_node <http://example.org/propC> <http://example.org/valC>
+}
+"""
+    ]
+    assert len(parser.inner_select_gpntotb_list) == len(expected_inner_select_gpntotb_list_str)
+    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace("\n", "") == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
