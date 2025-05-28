@@ -1,8 +1,7 @@
 import json
 from decimal import Decimal
 from pathlib import Path
-from typing import Generator
-from prez.config import settings
+from typing import Generator, Literal
 
 from rdf2geojson.contrib.geomet.util import flatten_multi_dim
 from rdf2geojson.contrib.geomet.wkt import dumps
@@ -48,10 +47,14 @@ from sparql_grammar_pydantic import (
     Var,
     WhereClause,
 )
+from sparql_grammar_pydantic.grammar import ServiceGraphPattern, VarOrIri, VarOrTerm, PropertyListPathNotEmpty, \
+    GraphTerm, BlankNode, BlankNodeLabel, VerbPath, SG_Path, PathAlternative, PathSequence, \
+    PathEltOrInverse, PathElt, PathPrimary, ObjectListPath, ObjectPath, GraphNodePath, ObjectList, Object, GraphNode
 
 from prez.cache import prez_system_graph
+from prez.config import settings
 from prez.models.query_params import parse_datetime
-from prez.reference_data.cql.geo_function_mapping import cql_sparql_spatial_mapping
+from prez.reference_data.cql.geo_function_mapping import cql_sparql_spatial_mapping, cql_qlever_spatial_mapping, QLSS
 from prez.services.query_generation.shacl import PropertyShape
 
 CQL = Namespace("http://www.opengis.net/doc/IS/cql2/1.0/")
@@ -86,11 +89,11 @@ SHACL_FILTER_NAMESPACE = Namespace("https://cql-shacl-filter/")
 
 class CQLParser:
     def __init__(
-        self,
-        cql=None,
-        cql_json: dict = None,
-        crs=None,
-        queryable_props=None,
+            self,
+            cql=None,
+            cql_json: dict = None,
+            crs=None,
+            queryable_props=None,
     ):
         self.ggps_inner_select = None
         self.inner_select_gpnt_list: list[GraphPatternNotTriples] = []
@@ -139,7 +142,7 @@ class CQLParser:
             self.inner_select_gpnt_list = gpnt_list
 
     def parse_logical_operators(
-        self, element, existing_ggps=None
+            self, element, existing_ggps=None
     ) -> Generator[GroupGraphPatternSub, None, None]:
         operator = element.get("op")
         args = element.get("args")
@@ -188,21 +191,30 @@ class CQLParser:
         else:
             raise NotImplementedError(f"Operator {operator} not implemented.")
 
-    def _add_triple(self, ggps, subject, predicate, object):
-        tssp = TriplesSameSubjectPath.from_spo(
-            subject=subject, predicate=predicate, object=object
-        )
-        tss = TriplesSameSubject.from_spo(
-            subject=subject, predicate=predicate, object=object
-        )
-        self.tss_list.append(tss)
-        self.tssp_list.append(tssp)
-        if ggps.triples_block:
-            ggps.triples_block = TriplesBlock(
-                triples=tssp, triples_block=ggps.triples_block
+    def _add_triple(
+            self,
+            ggps,
+            subject,
+            predicate,
+            obj,
+            to: Literal["tss_and_tssp", "tss", "tssp"] = "tss_and_tssp"
+    ):
+        if to in ["tss_and_tssp", "tss"]:
+            tss = TriplesSameSubject.from_spo(
+                subject=subject, predicate=predicate, object=obj
             )
-        else:
-            ggps.triples_block = TriplesBlock(triples=tssp)
+            self.tss_list.append(tss)
+        if to in ["tss_and_tssp", "tssp"]:
+            tssp = TriplesSameSubjectPath.from_spo(
+                subject=subject, predicate=predicate, object=obj
+            )
+            self.tssp_list.append(tssp)
+            if ggps.triples_block:
+                ggps.triples_block = TriplesBlock(
+                    triples=tssp, triples_block=ggps.triples_block
+                )
+            else:
+                ggps.triples_block = TriplesBlock(triples=tssp)
 
     def _handle_comparison(self, operator, args, existing_ggps=None):
 
@@ -215,7 +227,7 @@ class CQLParser:
             value = RDFLiteral(value=val)
 
         if operator == "=" and isinstance(
-            value, IRI
+                value, IRI
         ):  # use a triple pattern match rather than FILTER
             ggps, obj = self._add_tss_tssp(args, existing_ggps, value)
         else:  # use a FILTER
@@ -244,7 +256,7 @@ class CQLParser:
             var_obj = Var(value=f"var_{self.var_counter}")
             if not obj:
                 obj = var_obj
-            self._add_triple(ggps, subject, predicate, obj)
+            self._add_triple(ggps, subject, predicate, obj, "tss_and_tssp")
         return ggps, obj
 
     def _handle_like(self, args, existing_ggps=None):
@@ -293,29 +305,158 @@ class CQLParser:
             geom_bn_var = Var(value="geom_bnode")
             geom_lit_var = Var(value="geom_var")
             if settings.spatial_query_format == "geosparql":
-                self._add_triple(ggps, subject, IRI(value=GEO.hasGeometry), geom_bn_var)
-                self._add_triple(ggps, geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var)
-
-                geom_func_iri = IRI(value=cql_sparql_spatial_mapping[operator])
-                geom_1_exp = Expression.from_primary_expression(
-                    primary_expression=PrimaryExpression(content=geom_lit_var)
-                )
-                geom_2_datatype = IRI(
-                    value="http://www.opengis.net/ont/geosparql#wktLiteral"
-                )
-                geom_2_exp = Expression.from_primary_expression(
-                    primary_expression=PrimaryExpression(
-                        content=RDFLiteral(value=wkt_with_crs, datatype=geom_2_datatype)
+                self._add_triple(ggps, subject, IRI(value=GEO.hasGeometry), geom_bn_var, "tss_and_tssp")
+                self._add_triple(ggps, geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var, "tss_and_tssp")
+                filter_gpnt = GraphPatternNotTriples(
+                    content=Filter(
+                        constraint=Constraint(
+                            content=FunctionCall(
+                                iri=IRI(
+                                    value=cql_sparql_spatial_mapping[operator]
+                                ),
+                                arg_list=ArgList(
+                                    expressions=[
+                                        Expression.from_primary_expression(
+                                            primary_expression=PrimaryExpression(
+                                                content=geom_lit_var)
+                                        ),
+                                        Expression.from_primary_expression(
+                                            primary_expression=PrimaryExpression(
+                                                content=RDFLiteral(
+                                                    value=wkt_with_crs,
+                                                    datatype=IRI(
+                                                        value=str(GEO.wktLiteral)
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    ]
+                                )
+                            )
+                        )
                     )
                 )
-                arg_list = ArgList(expressions=[geom_1_exp, geom_2_exp])
-                fc = FunctionCall(iri=geom_func_iri, arg_list=arg_list)
-
-                spatial_filter = Filter(constraint=Constraint(content=fc))
-                filter_gpnt = GraphPatternNotTriples(content=spatial_filter)
                 ggps.add_pattern(filter_gpnt)
             elif settings.spatial_query_format == "qlever":
-                pass
+                self._add_triple(ggps, subject, IRI(value=GEO.hasGeometry), geom_bn_var, "tss")
+                self._add_triple(ggps, geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var, "tss")
+                geom_func_iri = IRI(value=cql_qlever_spatial_mapping[operator])
+                values_clause = GraphPatternNotTriples(
+                    content=InlineData(
+                        data_block=DataBlock(
+                            block=InlineDataOneVar(
+                                variable=Var(
+                                    value="wkt"
+                                ),
+                                datablockvalues=[
+                                    DataBlockValue(
+                                        value=RDFLiteral(
+                                            value=wkt
+                                        )
+                                    )
+                                ]
+                            )
+                        )
+                    )
+                )
+                qlever_spatial_filter_gpnt = GraphPatternNotTriples(
+                    content=ServiceGraphPattern(
+                        var_or_iri=VarOrIri(
+                            varoriri=IRI(
+                                value=str(QLSS)
+                            )
+                        ),
+                        group_graph_pattern=GroupGraphPattern(
+                            content=GroupGraphPatternSub(
+                                graph_patterns_or_triples_blocks=[
+                                    TriplesBlock(
+                                        triples=TriplesSameSubjectPath(
+                                            content=(
+                                                VarOrTerm(
+                                                    varorterm=GraphTerm(
+                                                        content=BlankNode(
+                                                            value=BlankNodeLabel(
+                                                                part_1="config"
+                                                            )
+                                                        )
+                                                    )
+                                                ),
+                                                PropertyListPathNotEmpty(
+                                                    first_pair=(
+                                                        _verb_path_for_iri(str(QLSS.algorithm)),
+                                                        ObjectListPath(
+                                                            object_paths=[
+                                                                ObjectPath(
+                                                                    graph_node_path=GraphNodePath(
+                                                                        varorterm_or_triplesnodepath=VarOrTerm(
+                                                                            varorterm=GraphTerm(
+                                                                                content=IRI(
+                                                                                    value=str(QLSS.libspatialjoin)
+                                                                                )
+                                                                            )
+                                                                        )
+                                                                    )
+                                                                )
+                                                            ]
+
+                                                        )
+                                                    ),
+                                                    other_pairs=[
+                                                        (
+                                                            _verb_path_for_iri(str(QLSS.left)),
+                                                            _object_list_for_iri_or_var_or_lit(Var(value="wkt"))
+                                                        ),
+                                                        (
+                                                            _verb_path_for_iri(str(QLSS.right)),
+                                                            _object_list_for_iri_or_var_or_lit(geom_lit_var)
+                                                        ),
+                                                        (
+                                                            _verb_path_for_iri(str(QLSS.payload)),
+                                                            _object_list_for_iri_or_var_or_lit(subject)
+                                                        ),
+                                                        (
+                                                            _verb_path_for_iri(str(QLSS.joinType)),
+                                                            _object_list_for_iri_or_var_or_lit(geom_func_iri)
+                                                        )
+                                                    ]
+
+                                                )
+                                            )
+                                        )
+                                    ),
+                                    GraphPatternNotTriples(
+                                        content=GroupOrUnionGraphPattern(
+                                            group_graph_patterns=[
+                                                GroupGraphPattern(
+                                                    content=GroupGraphPatternSub(
+                                                        graph_patterns_or_triples_blocks=[
+                                                            TriplesBlock.from_tssp_list(
+                                                                [
+                                                                    TriplesSameSubjectPath.from_spo(
+                                                                        subject=subject,
+                                                                        predicate=IRI(value=str(GEO.hasGeometry)),
+                                                                        object=geom_bn_var
+                                                                    ),
+                                                                    TriplesSameSubjectPath.from_spo(
+                                                                        subject=geom_bn_var,
+                                                                        predicate=IRI(value=str(GEO.asWKT)),
+                                                                        object=geom_lit_var
+                                                                    )
+                                                                ]
+                                                            )
+                                                        ]
+                                                    )
+                                                )
+                                            ]
+                                        )
+                                    )
+                                ]
+                            )
+                        )
+                    )
+                )
+                ggps.add_pattern(values_clause)
+                ggps.add_pattern(qlever_spatial_filter_gpnt)
             elif settings.spatial_query_format == "graphdb":
                 pass
             else:
@@ -487,7 +628,7 @@ class CQLParser:
         value = IRI(value=prop)
         var = Var(value=f"dt_{i}_{label}")
         operands[f"t{i}_{label}"] = var
-        self._add_triple(ggps, Var(value="focus_node"), value, var)
+        self._add_triple(ggps, Var(value="focus_node"), value, var, "tss_and_tssp")
 
     def _dt_to_rdf_literal(self, i, dt_str, label, operands):
         if dt_str == "..":
@@ -500,8 +641,8 @@ class CQLParser:
             )
 
     def queryable_id_to_tssp(
-        self,
-        queryable_uri,
+            self,
+            queryable_uri,
     ):
         queryable_shape = prez_system_graph.cbd(URIRef(queryable_uri))
         ps = PropertyShape(
@@ -577,7 +718,7 @@ def get_wkt_from_coords(coordinates, geom_type: str):
 
 
 def create_temporal_or_gpnt(
-    comparisons: list[tuple[Var | RDFLiteral, str, Var | RDFLiteral]], negated=False
+        comparisons: list[tuple[Var | RDFLiteral, str, Var | RDFLiteral]], negated=False
 ) -> GraphPatternNotTriples:
     """
     Create a FILTER with multiple conditions joined by OR (||).
@@ -704,7 +845,7 @@ def create_filter_bool_gpnt(boolean: bool) -> GraphPatternNotTriples:
 
 
 def create_temporal_and_gpnt(
-    comparisons: list[tuple[Var | RDFLiteral, str, Var | RDFLiteral]]
+        comparisons: list[tuple[Var | RDFLiteral, str, Var | RDFLiteral]]
 ) -> GraphPatternNotTriples:
     """
     Create a FILTER with multiple conditions joined by AND.
@@ -765,4 +906,46 @@ def create_temporal_and_gpnt(
                 )
             )
         )
+    )
+
+
+def _verb_path_for_iri(iri: str) -> VerbPath:
+    return VerbPath(
+        path=SG_Path(
+            path_alternative=PathAlternative(
+                sequence_paths=[
+                    PathSequence(
+                        list_path_elt_or_inverse=[
+                            PathEltOrInverse(
+                                path_elt=PathElt(
+                                    path_primary=PathPrimary(
+                                        value=IRI(
+                                            value=iri
+                                        )
+                                    )
+                                )
+                            )
+                        ]
+                    )
+                ]
+            )
+        )
+    )
+
+
+def _object_list_for_iri_or_var_or_lit(iri_or_var_or_lit: IRI | Var | RDFLiteral) -> ObjectList:
+    if isinstance(iri_or_var_or_lit, (IRI, RDFLiteral)):
+        vot = VarOrTerm(varorterm=GraphTerm(content=iri_or_var_or_lit))
+    elif isinstance(iri_or_var_or_lit, Var):
+        vot = VarOrTerm(varorterm=iri_or_var_or_lit)
+    else:
+        raise ValueError
+    return ObjectList(
+        list_object=[
+            Object(
+                graphnode=GraphNode(
+                    varorterm_or_triplesnode=vot
+                )
+            )
+        ]
     )
