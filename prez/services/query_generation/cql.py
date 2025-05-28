@@ -2,6 +2,7 @@ import json
 from decimal import Decimal
 from pathlib import Path
 from typing import Generator
+from prez.config import settings
 
 from rdf2geojson.contrib.geomet.util import flatten_multi_dim
 from rdf2geojson.contrib.geomet.wkt import dumps
@@ -291,27 +292,34 @@ class CQLParser:
                 subject = IRI(value=prop)
             geom_bn_var = Var(value="geom_bnode")
             geom_lit_var = Var(value="geom_var")
-            self._add_triple(ggps, subject, IRI(value=GEO.hasGeometry), geom_bn_var)
-            self._add_triple(ggps, geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var)
+            if settings.spatial_query_format == "geosparql":
+                self._add_triple(ggps, subject, IRI(value=GEO.hasGeometry), geom_bn_var)
+                self._add_triple(ggps, geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var)
 
-            geom_func_iri = IRI(value=cql_sparql_spatial_mapping[operator])
-            geom_1_exp = Expression.from_primary_expression(
-                primary_expression=PrimaryExpression(content=geom_lit_var)
-            )
-            geom_2_datatype = IRI(
-                value="http://www.opengis.net/ont/geosparql#wktLiteral"
-            )
-            geom_2_exp = Expression.from_primary_expression(
-                primary_expression=PrimaryExpression(
-                    content=RDFLiteral(value=wkt_with_crs, datatype=geom_2_datatype)
+                geom_func_iri = IRI(value=cql_sparql_spatial_mapping[operator])
+                geom_1_exp = Expression.from_primary_expression(
+                    primary_expression=PrimaryExpression(content=geom_lit_var)
                 )
-            )
-            arg_list = ArgList(expressions=[geom_1_exp, geom_2_exp])
-            fc = FunctionCall(iri=geom_func_iri, arg_list=arg_list)
+                geom_2_datatype = IRI(
+                    value="http://www.opengis.net/ont/geosparql#wktLiteral"
+                )
+                geom_2_exp = Expression.from_primary_expression(
+                    primary_expression=PrimaryExpression(
+                        content=RDFLiteral(value=wkt_with_crs, datatype=geom_2_datatype)
+                    )
+                )
+                arg_list = ArgList(expressions=[geom_1_exp, geom_2_exp])
+                fc = FunctionCall(iri=geom_func_iri, arg_list=arg_list)
 
-            spatial_filter = Filter(constraint=Constraint(content=fc))
-            filter_gpnt = GraphPatternNotTriples(content=spatial_filter)
-            ggps.add_pattern(filter_gpnt)
+                spatial_filter = Filter(constraint=Constraint(content=fc))
+                filter_gpnt = GraphPatternNotTriples(content=spatial_filter)
+                ggps.add_pattern(filter_gpnt)
+            elif settings.spatial_query_format == "qlever":
+                pass
+            elif settings.spatial_query_format == "graphdb":
+                pass
+            else:
+                raise NotImplementedError
         yield ggps
 
     def _handle_in(self, args, existing_ggps=None):
