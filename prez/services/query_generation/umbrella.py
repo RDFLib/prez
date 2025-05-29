@@ -278,8 +278,8 @@ def merge_listing_query_grammar_inputs(
             kwargs["inner_select_gpnt"].extend(endpoint_nodeshape.gpnt_list)
 
     if bbox:
-        gpnt, tssp_list = generate_bbox_filter(bbox, filter_crs)
-        kwargs["inner_select_gpnt"].append(gpnt)
+        gpnt_list, tssp_list = generate_bbox_filter(bbox, filter_crs)
+        kwargs["inner_select_gpnt"].extend(gpnt_list)
         kwargs["inner_select_tssp_list"].extend(tssp_list)
 
     if datetime:

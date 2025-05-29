@@ -89,8 +89,11 @@ CONFORMANCE_CLASSES = [
 # Collection and Collections
 
 
+class Spatial(BaseModel):
+    bbox: List[List[float]]
+
 class Extent(BaseModel):
-    pass
+    spatial: Spatial
 
 
 class Collection(BaseModel):
@@ -120,6 +123,18 @@ class Collection(BaseModel):
                 "id": "address",
                 "title": "address",
                 "description": "An address.",
+                "extent": {
+                    "spatial": {
+                        "bbox": [
+                            [
+                                7.01,
+                                50.63,
+                                7.22,
+                                50.78
+                            ]
+                        ]
+                    }
+                },
                 "links": [
                     {"href": "http://data.example.com/buildings", "rel": "item"},
                     {

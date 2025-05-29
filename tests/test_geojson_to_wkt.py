@@ -1,6 +1,6 @@
 import pytest
 
-from prez.services.query_generation.cql import get_wkt_from_coords
+from prez.services.query_generation.bbox_filter import get_wkt_from_coords
 
 
 @pytest.mark.parametrize(
