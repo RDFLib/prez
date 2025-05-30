@@ -200,11 +200,12 @@ def create_collections_json(
             extent_geom = item_graph.value(subject=extent_bnode, predicate=GEO.asWKT, default=None)
             bbox_obj = wkt.loads(str(extent_geom))
             if bbox_obj["type"] != "Polygon":
-                continue
-            coordinates_array = bbox_obj["coordinates"]
-            coords = coordinates_array[0]
-            bbox = [coords[0][0], coords[0][1], coords[2][0], coords[2][1]]
-            json_extent = Extent(spatial=Spatial(bbox=[bbox]))
+                json_extent = None
+            else:
+                coordinates_array = bbox_obj["coordinates"]
+                coords = coordinates_array[0]
+                bbox = [coords[0][0], coords[0][1], coords[2][0], coords[2][1]]
+                json_extent = Extent(spatial=Spatial(bbox=[bbox]))
         else:
             json_extent = None
         curie_id = get_curie_id_for_uri(s)

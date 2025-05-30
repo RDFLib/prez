@@ -216,6 +216,7 @@ def merge_listing_query_grammar_inputs(
 ) -> dict:
     page = query_params.page
     limit = query_params.limit
+    startindex = query_params.startindex
     order_by = query_params.order_by
     order_by_direction = query_params.order_by_direction
     bbox = query_params.bbox
@@ -237,7 +238,10 @@ def merge_listing_query_grammar_inputs(
     }
 
     limit = int(limit)
-    offset = limit * (int(page) - 1)
+    if startindex:
+        offset = startindex
+    else:
+        offset = limit * (int(page) - 1)
     kwargs["limit"] = limit
     kwargs["offset"] = offset
     if concept_hierarchy_query:

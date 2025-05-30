@@ -164,6 +164,11 @@ class ListingQueryParams:
             description="An optional API Subscription key",
             alias="subscription-key",
         ),
+        startindex: int = Query(
+            default=None,
+            description="Optional: Starting index",
+            alias="startindex",
+        )
     ):
         self.q = q
         self.profile = profile
@@ -179,6 +184,7 @@ class ListingQueryParams:
         self._filter = _filter
         self.mediatype = mediatype
         self.subscription_key = subscription_key
+        self.startindex = startindex
         self.validate_filter()
 
     def validate_filter(self):
