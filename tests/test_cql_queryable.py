@@ -20,7 +20,7 @@ def test_ps_1():
     )
     assert (
         ps.tssp_list[0].to_string()
-        == "?focus_node ^<http://example.com/hasFeatureOfInterest>/^<http://example.com/hasMember>*/<http://example.com/hasSimpleResult> ?path_node_3"
+        == "?focus_node ^<http://example.com/hasFeatureOfInterest>/(^<http://example.com/hasMember>)*/<http://example.com/hasSimpleResult> ?path_node_3"
     )
 
 

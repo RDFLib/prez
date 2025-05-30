@@ -267,7 +267,7 @@ def merge_listing_query_grammar_inputs(
         kwargs["inner_select_vars"].extend(cql_parser.inner_select_vars)
         kwargs["construct_tss_list"].extend(cql_parser.tss_list)
         kwargs["inner_select_tssp_list"].extend(cql_parser.tssp_list)
-        kwargs["inner_select_gpnt"].extend(cql_parser.inner_select_gpnt_list)
+        kwargs["inner_select_gpnt"].extend(cql_parser.inner_select_gpntotb_list)
 
     if endpoint_nodeshape:
         # endpoint nodeshape will constrain the focus nodes selected - undesirable for plain search/CQL. However, if
