@@ -144,7 +144,9 @@ def test_sequence_with_alternative_containing_complex_elements(focus_node_var, g
     # ?prof_0_node_2 ex:p2 ?prof_0_node_3 .
 
     actual_gpnt_string = ps.gpnt_list[0].to_string()
-    expected_gpnt_string = """{
+    expected_gpnt_string = """
+
+{
 
 
 {
