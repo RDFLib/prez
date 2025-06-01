@@ -164,7 +164,7 @@ class ListingQueryParams:
             description="An optional API Subscription key",
             alias="subscription-key",
         ),
-        startindex: int = Query(
+        startindex: Optional[int] = Query(
             default=None,
             description="Optional: Starting index",
             alias="startindex",

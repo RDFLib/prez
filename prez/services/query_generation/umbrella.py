@@ -30,7 +30,7 @@ from sparql_grammar_pydantic import (
 )
 
 from prez.models.query_params import ListingQueryParams
-from prez.services.query_generation.bbox_filter import generate_bbox_filter
+from prez.services.query_generation.spatial_filter import generate_bbox_filter
 from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQuery
 from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.datetime_filter import generate_datetime_filter

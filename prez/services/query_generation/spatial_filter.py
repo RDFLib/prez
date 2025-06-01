@@ -129,7 +129,6 @@ def format_coordinates_as_wkt(bbox_values):
 
 def generate_spatial_filter_clause(
     wkt_value: str, # The plain WKT string, e.g. "POLYGON((...))"
-    crs_uri: str, # The CRS URI, e.g. "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
     subject_var: Var, # The SPARQL variable for the subject, e.g. Var(value="focus_node")
     geom_bnode_var: Var,
     geom_wkt_lit_var: Var,
@@ -140,8 +139,6 @@ def generate_spatial_filter_clause(
     Generates SPARQL spatial filter clauses (FILTER or SERVICE block).
     Returns a list of GraphPatternNotTriples.
     """
-    wkt_with_crs_for_filter = f"<{crs_uri}> {wkt_value}"
-
     if target_system == "geosparql":
         if cql_operator not in cql_sparql_spatial_mapping:
             raise NotImplementedError(f"CQL operator {cql_operator} not supported for GeoSPARQL")
@@ -159,7 +156,7 @@ def generate_spatial_filter_clause(
                                 Expression.from_primary_expression(
                                     primary_expression=PrimaryExpression(
                                         content=RDFLiteral(
-                                            value=wkt_with_crs_for_filter,
+                                            value=wkt_value,  # Use wkt_value directly
                                             datatype=IRI(value=str(GEO.wktLiteral))
                                         )
                                     )
@@ -317,7 +314,6 @@ def generate_bbox_filter(
 
     filter_gpnts = generate_spatial_filter_clause(
         wkt_value=wkt,
-        crs_uri=filter_crs,
         subject_var=subject,
         geom_bnode_var=geom_bn_var,
         geom_wkt_lit_var=geom_lit_var,

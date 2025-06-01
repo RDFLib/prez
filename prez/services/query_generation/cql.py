@@ -46,8 +46,11 @@ from sparql_grammar_pydantic import (
 from prez.cache import prez_system_graph
 from prez.config import settings
 from prez.models.query_params import parse_datetime
-from prez.reference_data.cql.geo_function_mapping import cql_sparql_spatial_mapping
-from prez.services.query_generation.bbox_filter import generate_spatial_filter_clause, get_wkt_from_coords
+from prez.reference_data.cql.geo_function_mapping import (
+    cql_sparql_spatial_mapping,
+    cql_graphdb_spatial_properties,
+)
+from prez.services.query_generation.spatial_filter import generate_spatial_filter_clause, get_wkt_from_coords
 from prez.services.query_generation.shacl import PropertyShape
 
 CQL = Namespace("http://www.opengis.net/doc/IS/cql2/1.0/")
@@ -297,31 +300,52 @@ class CQLParser:
             geom_bn_var = Var(value="geom_bnode")
             geom_lit_var = Var(value="geom_var")
 
-            # Add the geo:hasGeometry and geo:asWKT triples.
-            # These are fundamental and needed for the CONSTRUCT part (tss_list)
-            # and the WHERE part (tssp_list which populates ggps.triples_block).
-            # The generate_spatial_filter_clause will also include these within QLever's SERVICE call.
             self._add_triple(ggps, subject, IRI(value=GEO.hasGeometry), geom_bn_var, "tss_and_tssp")
             self._add_triple(ggps, geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var, "tss_and_tssp")
 
             target_system = settings.spatial_query_format
-            if target_system not in ["geosparql", "qlever"]:
+            if target_system not in ["geosparql", "qlever", "graphdb"]:
                 raise NotImplementedError(f"Spatial query format '{target_system}' not supported for CQL.")
 
-            # Call the unified function.
-            # wkt is the plain WKT string. self.crs is the CRS URI string.
-            filter_gpnt_list = generate_spatial_filter_clause(
-                wkt_value=wkt,
-                crs_uri=self.crs,
-                subject_var=subject,
-                geom_bnode_var=geom_bn_var,
-                geom_wkt_lit_var=geom_lit_var,
-                cql_operator=operator,
-                target_system=target_system,
-            )
+            # Prepare WKT string based on target system and CRS presence
+            processed_wkt = wkt
+            if self.crs and target_system in ["geosparql", "graphdb"]:
+                processed_wkt = f"<{self.crs}> {wkt}"
+            # For QLever, plain wkt is used (either no self.crs, or target_system is qlever)
 
-            for gpnt_item in filter_gpnt_list:
-                ggps.add_pattern(gpnt_item)
+            if target_system == "graphdb":
+                if operator not in cql_graphdb_spatial_properties:
+                    raise NotImplementedError(
+                        f"CQL operator {operator} not supported for GraphDB target"
+                    )
+                predicate_iri = IRI(value=str(cql_graphdb_spatial_properties[operator]))
+                object_wkt_literal = RDFLiteral(
+                    value=processed_wkt,  # Use centrally processed WKT
+                    datatype=IRI(value=str(GEO.wktLiteral))
+                )
+                self._add_triple(ggps, subject, predicate_iri, object_wkt_literal, to="tssp")
+            elif target_system == "geosparql":
+                filter_gpnt_list = generate_spatial_filter_clause(
+                    wkt_value=processed_wkt,  # Pass centrally processed WKT (will have CRS if self.crs was present)
+                    subject_var=subject,
+                    geom_bnode_var=geom_bn_var,
+                    geom_wkt_lit_var=geom_lit_var,
+                    cql_operator=operator,
+                    target_system=target_system,
+                )
+                for gpnt_item in filter_gpnt_list:
+                    ggps.add_pattern(gpnt_item)
+            elif target_system == "qlever": # QLever needs plain WKT
+                filter_gpnt_list = generate_spatial_filter_clause(
+                    wkt_value=wkt, # Pass original plain wkt
+                    subject_var=subject,
+                    geom_bnode_var=geom_bn_var,
+                    geom_wkt_lit_var=geom_lit_var,
+                    cql_operator=operator,
+                    target_system=target_system,
+                )
+                for gpnt_item in filter_gpnt_list:
+                    ggps.add_pattern(gpnt_item)
             
         yield ggps
 
