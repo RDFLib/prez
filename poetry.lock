@@ -2141,22 +2141,19 @@ files = [
 
 [[package]]
 name = "sparql-grammar-pydantic"
-version = "0.1.8"
+version = "0.1.9"
 description = "Pydantic models for the SPARQL Grammar."
 optional = false
-python-versions = ">=3.11,<4.0"
+python-versions = "<4.0,>=3.11"
 groups = ["main"]
 files = [
-    {file = "sparql_grammar_pydantic-0.1.8-py3-none-any.whl", hash = "sha256:3d2ab0db93633bdeee7d80970df61ec19d93fe1f9f73dda972e1a08182a48833"},
+    {file = "sparql_grammar_pydantic-0.1.9-py3-none-any.whl", hash = "sha256:3e35df1e5775955ec62406ebd00345ba858ff61d83f4f5b663a619d0df0ab7f1"},
+    {file = "sparql_grammar_pydantic-0.1.9.tar.gz", hash = "sha256:d93b1133933c14256b1a9e3c83eca9cab46409eeb6338dbca5564cd690298f11"},
 ]
 
 [package.dependencies]
 pydantic = ">=2.11.1,<3.0.0"
 rdflib = ">=7.0.0,<8.0.0"
-
-[package.source]
-type = "file"
-url = "../sparql_grammar_pydantic/dist/sparql_grammar_pydantic-0.1.8-py3-none-any.whl"
 
 [[package]]
 name = "starlette"
@@ -2332,4 +2329,4 @@ server = ["uvicorn"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "71834f11899acb89ba9edc2fe4a480573192a498044e581ca0a7504e2a8d5faa"
+content-hash = "1fd5c264c4a7ddc6cec340dedd297528e49a3c71c6a3c1195fd046795adc21a7"
