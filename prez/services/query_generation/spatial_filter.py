@@ -304,12 +304,13 @@ def generate_bbox_filter(
     geom_lit_var = Var(value="geom_var_bbox")
 
     target_system = settings.spatial_query_format
-    if target_system not in ["geosparql", "qlever"]:
+    if target_system not in ["geosparql", "qlever", "graphdb"]:
         raise NotImplementedError(f"Spatial query format '{target_system}' not supported for CQL.")
 
     # Triples to define the geometry path
     tssp_list = []
-    if target_system == "geosparql":
+    filter_gpnts = []
+    if target_system in ["geosparql", "graphdb"]:
         tssp_list.append(
             TriplesSameSubjectPath.from_spo(
                 subject, IRI(value=GEO.hasGeometry), geom_bn_var
@@ -318,16 +319,26 @@ def generate_bbox_filter(
         tssp_list.append(
             TriplesSameSubjectPath.from_spo(geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var)
         )
+    if target_system == "graphdb":
+        # add the filter predicate
+        tssp_list.append(
+            TriplesSameSubjectPath.from_spo(
+                geom_bn_var,  # graphdb supports the subject being a geo:Feature or geo:Geometry; geo:Geometry used here, performance not tested.
+                IRI(value=GEO.sfIntersects),
+                RDFLiteral(value=wkt, datatype=IRI(value=str(GEO.wktLiteral))),
+            )
+        )
 
-    filter_gpnts = generate_spatial_filter_clause(
-        wkt_value=wkt,
-        subject_var=subject,
-        geom_bnode_var=geom_bn_var,
-        geom_wkt_lit_var=geom_lit_var,
-        cql_operator="s_intersects",
-        target_system=target_system
-    )
-    if not filter_gpnts:
-        raise ValueError("generate_spatial_filter_clause returned no patterns for GeoSPARQL bbox.")
+    if target_system in ["geosparql", "qlever"]:
+        filter_gpnts = generate_spatial_filter_clause(
+            wkt_value=wkt,
+            subject_var=subject,
+            geom_bnode_var=geom_bn_var,
+            geom_wkt_lit_var=geom_lit_var,
+            cql_operator="s_intersects",
+            target_system=target_system
+        )
+        if not filter_gpnts:
+            raise ValueError("generate_spatial_filter_clause returned no patterns for GeoSPARQL bbox.")
     
     return filter_gpnts, tssp_list

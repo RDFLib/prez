@@ -324,20 +324,9 @@ class CQLParser:
                     datatype=IRI(value=str(GEO.wktLiteral))
                 )
                 self._add_triple(ggps, subject, predicate_iri, object_wkt_literal, to="tssp")
-            elif target_system == "geosparql":
+            else:
                 filter_gpnt_list = generate_spatial_filter_clause(
-                    wkt_value=processed_wkt,  # Pass centrally processed WKT (will have CRS if self.crs was present)
-                    subject_var=subject,
-                    geom_bnode_var=geom_bn_var,
-                    geom_wkt_lit_var=geom_lit_var,
-                    cql_operator=operator,
-                    target_system=target_system,
-                )
-                for gpnt_item in filter_gpnt_list:
-                    ggps.add_pattern(gpnt_item)
-            elif target_system == "qlever": # QLever needs plain WKT
-                filter_gpnt_list = generate_spatial_filter_clause(
-                    wkt_value=wkt, # Pass original plain wkt
+                    wkt_value=processed_wkt,
                     subject_var=subject,
                     geom_bnode_var=geom_bn_var,
                     geom_wkt_lit_var=geom_lit_var,

@@ -44,6 +44,7 @@ async def object_function(
             page=1,
             limit=100,
             startindex=None,
+            offset=None,
             facet_profile=None,
             datetime=None,
             bbox=[],

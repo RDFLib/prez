@@ -100,7 +100,7 @@ class Settings(BaseSettings):
     forwarded_allow_ips: str = "127.0.0.1"
     root_path: str = ""
     use_path_aliases: bool = False
-    spatial_query_format: Literal["geosparql", "qlever"] = "geosparql"
+    spatial_query_format: Literal["geosparql", "qlever", "graphdb"] = "geosparql"
 
     @field_validator("prez_version")
     @classmethod
