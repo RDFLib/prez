@@ -181,7 +181,14 @@ def generate_spatial_filter_clause(
                     block=InlineDataOneVar(
                         variable=Var(value="wkt_input_for_qlever"), # Dedicated var for QLever input WKT
                         datablockvalues=[
-                            DataBlockValue(value=RDFLiteral(value=wkt_value)) # QLever expects plain WKT
+                            DataBlockValue(
+                                value=RDFLiteral(
+                                    value=wkt_value,
+                                    datatype=IRI(
+                                        value=str(GEO.wktLiteral)  # Qlever ignores the datatype at present.
+                                    )
+                                )
+                            )
                         ]
                     )
                 )
