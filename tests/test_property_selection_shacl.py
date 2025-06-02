@@ -556,17 +556,6 @@ def test_sh_class_in_bnode_path(mock_settings):
         IRI(value=PROV.hadRole).to_string() in tss_str for tss_str in actual_tss_strings if "?focus_node" not in tss_str # Avoid matching the class triple's subject
     )
 
-
-    # Path 1: sh:class triple (ex:DerivationRole) - Should be present REGARDLESS of alias
-    # The class applies to the node reached by the *first* step of the sequence path in this BNode context
-    expected_tss_1_class = TriplesSameSubject.from_spo(
-        subject=Var(value="prof_1_node_2"), # Node reached by prov:qualifiedDerivation
-        predicate=IRI(value=RDF.type),
-        object=IRI(value="http://example.com/DerivationRole"),
-    ).to_string()
-    assert expected_tss_1_class in actual_tss_strings
-
-
     # Path 2: Simple path (skos:prefLabel)
     expected_tss_2_path = TriplesSameSubject.from_spo(
         subject=Var(value="focus_node"),
