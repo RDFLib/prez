@@ -24,7 +24,7 @@ def test_cql_spatial_graphdb_intersects():
             }
         ]
     }
-    parser = CQLParser(cql_json=cql_json)
+    parser = CQLParser(cql_json=cql_json, crs="http://www.opengis.net/def/crs/OGC/1.3/CRS84")
     parser.parse()
 
     expected_tssp1 = TriplesSameSubjectPath.from_spo(

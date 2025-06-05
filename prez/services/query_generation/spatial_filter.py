@@ -103,9 +103,19 @@ def find_max_decimals(coordinates):
     return max_decimals
 
 
-def get_wkt_from_coords(coordinates, geom_type: str):
+def get_wkt_from_coords(coordinates, geom_type: str, filter_crs):
     max_decimals = find_max_decimals([(geom_type, coordinates, None)])
-    return dumps({"type": geom_type, "coordinates": coordinates}, max_decimals)
+    if filter_crs == "http://www.opengis.net/def/crs/OGC/1.3/CRS84":
+        srid = "CRS84"
+    else:
+        srid = filter_crs  # axes will be reorded by geomet if anything other than CRS84
+    wkt_with_srid = dumps({"type": geom_type, "coordinates": coordinates, "meta": {"srid": srid}}, max_decimals)
+    srid_wkt = wkt_with_srid.split(";")
+    if len(srid_wkt) == 1 and filter_crs == "http://www.opengis.net/def/crs/OGC/1.3/CRS84":
+        return filter_crs, srid_wkt[0]
+    else:
+        srid = srid_wkt[0].split("=")[1]
+        return srid, srid_wkt[1]
 
 
 def format_coordinates_as_wkt(bbox_values):
@@ -296,7 +306,7 @@ def generate_bbox_filter(
     Can be refactored/deprecated later.
     """
     coordinates = format_coordinates_as_wkt(bbox)
-    wkt = get_wkt_from_coords(coordinates, "Polygon")
+    srid, wkt = get_wkt_from_coords(coordinates, "Polygon", filter_crs)
 
     # Variables for the query
     subject = Var(value="focus_node")
@@ -306,6 +316,10 @@ def generate_bbox_filter(
     target_system = settings.spatial_query_format
     if target_system not in ["geosparql", "qlever", "graphdb"]:
         raise NotImplementedError(f"Spatial query format '{target_system}' not supported for CQL.")
+
+    processed_wkt = wkt
+    if target_system in ["geosparql", "graphdb"]:  # For QLever, plain wkt is used
+        processed_wkt = f"<{srid}> {wkt}"
 
     # Triples to define the geometry path
     tssp_list = []
@@ -325,13 +339,13 @@ def generate_bbox_filter(
             TriplesSameSubjectPath.from_spo(
                 geom_bn_var,  # graphdb supports the subject being a geo:Feature or geo:Geometry; geo:Geometry used here, performance not tested.
                 IRI(value=GEO.sfIntersects),
-                RDFLiteral(value=wkt, datatype=IRI(value=str(GEO.wktLiteral))),
+                RDFLiteral(value=processed_wkt, datatype=IRI(value=str(GEO.wktLiteral))),
             )
         )
 
-    if target_system in ["geosparql", "qlever"]:
+    elif target_system in ["geosparql", "qlever"]:
         filter_gpnts = generate_spatial_filter_clause(
-            wkt_value=wkt,
+            wkt_value=processed_wkt,
             subject_var=subject,
             geom_bnode_var=geom_bn_var,
             geom_wkt_lit_var=geom_lit_var,

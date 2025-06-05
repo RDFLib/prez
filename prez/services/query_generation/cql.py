@@ -291,7 +291,7 @@ class CQLParser:
             geom_type = "Polygon"
 
         if coordinates:
-            wkt = get_wkt_from_coords(coordinates, geom_type)
+            srid, wkt = get_wkt_from_coords(coordinates, geom_type, self.crs)
             prop = args[0].get("property")
             if prop == "geometry":
                 subject = Var(value="focus_node")
@@ -309,9 +309,8 @@ class CQLParser:
 
             # Prepare WKT string based on target system and CRS presence
             processed_wkt = wkt
-            if self.crs and target_system in ["geosparql", "graphdb"]:
-                processed_wkt = f"<{self.crs}> {wkt}"
-            # For QLever, plain wkt is used (either no self.crs, or target_system is qlever)
+            if target_system in ["geosparql", "graphdb"]:  # For QLever, plain wkt is used
+                processed_wkt = f"<{srid}> {wkt}"
 
             if target_system == "graphdb":
                 if operator not in cql_graphdb_spatial_properties:
