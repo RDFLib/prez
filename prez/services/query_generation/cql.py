@@ -91,17 +91,16 @@ class CQLParser:
             crs=None,
             queryable_props=None,
     ):
-        self.ggps_inner_select = None
-        self.inner_select_gpnt_list: list[GraphPatternNotTriples] = []
+        self.inner_select_gpntotb_list: list[GraphPatternNotTriples] = []
         self.inner_select_vars: list[Var] = []
         self.cql: dict = cql
         self.cql_json = cql_json
         self.var_counter = 0
         self.query_object = None
         self.query_str = None
-        self.gpnt_list = []
         self.tss_list = []
         self.tssp_list = []
+        self._parsing_or_branch_depth = 0  # New state variable
         self.crs = crs
         self.queryable_props = queryable_props
 
@@ -110,9 +109,10 @@ class CQLParser:
 
     def parse(self):
         root = self.cql_json
-        self.ggps_inner_select = next(self.parse_logical_operators(root))
         where = WhereClause(
-            group_graph_pattern=GroupGraphPattern(content=self.ggps_inner_select)
+            group_graph_pattern=GroupGraphPattern(
+                content=next(self.parse_logical_operators(root))
+            )
         )
         if self.tss_list:
             construct_triples = ConstructTriples.from_tss_list(self.tss_list)
@@ -127,15 +127,15 @@ class CQLParser:
         )
         self.query_str = self.query_object.to_string()
         gpotb = self.query_object.where_clause.group_graph_pattern.content
-        gpnt_list = []
+        # gpnt_list = []
+        # if gpotb.graph_patterns_or_triples_blocks:
+        #     gpnt_list = [
+        #         i
+        #         for i in gpotb.graph_patterns_or_triples_blocks
+        #         if isinstance(i, GraphPatternNotTriples)
+        #     ]
         if gpotb.graph_patterns_or_triples_blocks:
-            gpnt_list = [
-                i
-                for i in gpotb.graph_patterns_or_triples_blocks
-                if isinstance(i, GraphPatternNotTriples)
-            ]
-        if gpnt_list:
-            self.inner_select_gpnt_list = gpnt_list
+            self.inner_select_gpntotb_list = gpotb.graph_patterns_or_triples_blocks
 
     def parse_logical_operators(
             self, element, existing_ggps=None
@@ -154,37 +154,83 @@ class CQLParser:
                 yield ggps
 
         elif operator == "or":
-            # Collect components and then yield a GroupOrUnionGraphPattern
-            # ggps = existing_ggps if existing_ggps is not None else GroupGraphPatternSub()
-            or_components = []
-            for arg in args:
-                # If the result is not a GroupGraphPatternSub, wrap it.
-                component = next(self.parse_logical_operators(arg), None)
-                if isinstance(component, GroupGraphPatternSub):
-                    component = GroupGraphPattern(content=component)
-                or_components.append(component)
+            self._parsing_or_branch_depth += 1
+            try:
+                or_components = []
+                for arg in args:
+                    # Recursive call for "or" branch arguments
+                    # existing_ggps is intentionally not passed to create a new scope for the component
+                    component = next(self.parse_logical_operators(arg), None)
+                    if isinstance(component, GroupGraphPatternSub):
+                        component = GroupGraphPattern(content=component)
+                    or_components.append(component)
 
-            gpnt = GraphPatternNotTriples(
-                content=GroupOrUnionGraphPattern(group_graph_patterns=or_components)
-            )
-            if ggps.graph_patterns_or_triples_blocks:
-                ggps.graph_patterns_or_triples_blocks.append(gpnt)
-            else:
-                ggps.graph_patterns_or_triples_blocks = [gpnt]
-            if existing_ggps is None:
+                # This GPNT represents the "{A} UNION {B}" structure
+                or_expression_as_gpnt = GraphPatternNotTriples(
+                    content=GroupOrUnionGraphPattern(
+                        group_graph_patterns=or_components
+                    )
+                )
+
+                # 'ggps' here is the context we are adding to.
+                # If existing_ggps was passed (not None), then ggps is existing_ggps (e.g. the AND's GGPS).
+                # If existing_ggps was None, ggps is a new GGPS created for this current OR call.
+
+                if existing_ggps is not None:
+                    # This OR is nested (e.g., inside an AND).
+                    # Wrap its GPNT (which is the GroupOrUnionGraphPattern) in a GGP
+                    # to make it an explicit { {A} UNION {B} } block in the outer scope.
+                    item_for_gpntotb_list = GraphPatternNotTriples(
+                        content=GroupOrUnionGraphPattern(
+                            group_graph_patterns=[
+                                GroupGraphPattern(
+                                    content=GroupGraphPatternSub(
+                                        graph_patterns_or_triples_blocks=[or_expression_as_gpnt]
+                                    )
+                                )
+                            ]
+                        )
+                    )
+                else:
+                    # This OR is top-level for this recursive call. Its GPNT is the pattern.
+                    # The calling 'parse()' method will wrap the final GGPS in a GGP for the WHERE clause.
+                    item_for_gpntotb_list = or_expression_as_gpnt
+
+                if ggps.graph_patterns_or_triples_blocks:
+                    ggps.graph_patterns_or_triples_blocks.append(item_for_gpntotb_list)
+                else:
+                    ggps.graph_patterns_or_triples_blocks = [item_for_gpntotb_list]
+
+            finally:
+                self._parsing_or_branch_depth -= 1
+
+            if existing_ggps is None:  # If this OR was top-level for this call and created its own ggps
                 yield ggps
 
-        if operator in ["<", "=", ">", "<=", ">="]:
-            yield from self._handle_comparison(operator, args, ggps)
+        # ... other operators like "<", "=", ">", "like", spatial, "in", temporal ...
+        # (These parts of the method remain unchanged in terms of this specific fix)
+        elif operator in ["<", "=", ">", "<=", ">="]:
+            self._handle_comparison(operator, args, ggps)
+            if existing_ggps is None:
+                yield ggps
         elif operator == "like":
-            yield from self._handle_like(args, ggps)
+            self._handle_like(args, ggps)
+            if existing_ggps is None:
+                yield ggps
         elif operator in cql_sparql_spatial_mapping:
-            yield from self._handle_spatial(operator, args, ggps)
+            self._handle_spatial(operator, args, ggps)
+            if existing_ggps is None:
+                yield ggps
         elif operator == "in":
-            yield from self._handle_in(args, ggps)
+            self._handle_in(args, ggps)
+            if existing_ggps is None:
+                yield ggps
         elif operator in SUPPORTED_CQL_TIME_OPERATORS:
-            yield from self._handle_temporal(operator, args, ggps)
+            self._handle_temporal(operator, args, ggps)
+            if existing_ggps is None:
+                yield ggps
         else:
+            # This else is reached if operator is not 'and', 'or', or any of the handled elementary operators.
             raise NotImplementedError(f"Operator {operator} not implemented.")
 
     def _add_triple(
@@ -200,18 +246,38 @@ class CQLParser:
                 subject=subject, predicate=predicate, object=obj
             )
             self.tss_list.append(tss)
+
         if to in ["tss_and_tssp", "tssp"]:
             tssp = TriplesSameSubjectPath.from_spo(
                 subject=subject, predicate=predicate, object=obj
             )
             self.tssp_list.append(tssp)
-            if ggps.triples_block:
-                ggps.triples_block = TriplesBlock(
-                    triples=tssp, triples_block=ggps.triples_block
-                )
-            else:
-                ggps.triples_block = TriplesBlock(triples=tssp)
 
+            new_tb_for_this_tssp = TriplesBlock(triples=tssp)
+
+            if not ggps.graph_patterns_or_triples_blocks:
+                ggps.graph_patterns_or_triples_blocks = [new_tb_for_this_tssp]
+            else:
+                # Find if there's already a TriplesBlock to nest under the new one
+                existing_tb = None
+                existing_tb_index = None
+
+                for i, gpnt_or_tb in enumerate(ggps.graph_patterns_or_triples_blocks):
+                    if isinstance(gpnt_or_tb, TriplesBlock):
+                        existing_tb = gpnt_or_tb
+                        existing_tb_index = i
+                        break
+
+                if existing_tb:
+                    # Create new TriplesBlock with current tssp and nest the existing one
+                    nested_tb = TriplesBlock(triples=tssp, triples_block=existing_tb)
+                    # Replace the existing TriplesBlock with the new nested one
+                    ggps.graph_patterns_or_triples_blocks[existing_tb_index] = nested_tb
+                else:
+                    # No existing TriplesBlock, just append the new one
+                    ggps.graph_patterns_or_triples_blocks.append(new_tb_for_this_tssp)
+
+            # All patterns are channeled into the graph_patterns_or_triples_blocks list.
     def _handle_comparison(self, operator, args, existing_ggps=None):
 
         val = args[1]
@@ -235,8 +301,6 @@ class CQLParser:
             )
             gpnt = GraphPatternNotTriples(content=values_constraint)
             ggps.add_pattern(gpnt)
-
-        yield ggps
 
     def _add_tss_tssp(self, args, existing_ggps, obj=None):
         self.var_counter += 1
@@ -279,7 +343,6 @@ class CQLParser:
             )
         )
         ggps.add_pattern(filter_gpnt)
-        yield ggps
 
     def _handle_spatial(self, operator, args, existing_ggps=None):
         self.var_counter += 1
@@ -334,8 +397,6 @@ class CQLParser:
                 )
                 for gpnt_item in filter_gpnt_list:
                     ggps.add_pattern(gpnt_item)
-            
-        yield ggps
 
     def _handle_in(self, args, existing_ggps=None):
         ggps, object = self._add_tss_tssp(args, existing_ggps)
@@ -368,7 +429,6 @@ class CQLParser:
             content=InlineData(data_block=DataBlock(block=ildov))
         )
         ggps.add_pattern(gpnt)
-        yield ggps
 
     def _handle_shacl_defined_prop(self, prop):
         tssp_list, obj = self.queryable_id_to_tssp(self.queryable_props[prop])
@@ -426,7 +486,6 @@ class CQLParser:
         gpnt = self.process_temporal_function(comp_func, operands)
 
         ggps.add_pattern(gpnt)
-        yield ggps
 
     def get_type_and_bound(self, operands, prefix):
         """
