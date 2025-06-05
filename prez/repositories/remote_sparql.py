@@ -22,7 +22,7 @@ class RemoteSparqlRepo(Repo):
                 "the environment variable or the config file."
             )
 
-    async def _send_query(self, query: str, mediatype="application/n-triples"):
+    async def _send_query(self, query: str, mediatype="text/turtle"):
         """Sends a SPARQL query asynchronously.
         Args: query: str: A SPARQL query to be sent asynchronously.
         Returns: httpx.Response: A httpx.Response object

@@ -14,6 +14,7 @@ from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
 from httpx import URL
 from rdf2geojson import convert
+from rdf2geojson.contrib.geomet import wkt
 from rdflib import Graph
 from rdflib import URIRef
 from rdflib.namespace import GEO, RDF
@@ -26,7 +27,7 @@ from prez.cache import endpoints_graph_cache
 from prez.cache import prefix_graph
 from prez.config import settings
 from prez.dependencies import get_endpoint_uri, get_system_repo, get_url
-from prez.models.ogc_features import Collection, Collections, Link, Links, Queryables
+from prez.models.ogc_features import Collection, Collections, Link, Links, Queryables, Spatial, Extent
 from prez.models.query_params import ListingQueryParams
 from prez.reference_data.prez_ns import OGCFEAT, ONT, PREZ
 from prez.renderers.csv_renderer import render_csv_dropdown
@@ -194,6 +195,19 @@ def create_collections_json(
 ):
     collections_list = []
     for s, p, o in item_graph.triples((None, RDF.type, GEO.FeatureCollection)):
+        extent_bnode = item_graph.value(subject=s, predicate=GEO.hasBoundingBox, default=None)
+        if extent_bnode:
+            extent_geom = item_graph.value(subject=extent_bnode, predicate=GEO.asWKT, default=None)
+            bbox_obj = wkt.loads(str(extent_geom))
+            if bbox_obj["type"] != "Polygon":
+                json_extent = None
+            else:
+                coordinates_array = bbox_obj["coordinates"]
+                coords = coordinates_array[0]
+                bbox = [coords[0][0], coords[0][1], coords[2][0], coords[2][1]]
+                json_extent = Extent(spatial=Spatial(bbox=[bbox]))
+        else:
+            json_extent = None
         curie_id = get_curie_id_for_uri(s)
         collections_list.append(
             Collection(
@@ -204,6 +218,7 @@ def create_collections_json(
                 description=annotations_graph.value(
                     subject=s, predicate=PREZ.description, default=None
                 ),
+                extent=json_extent,
                 links=[
                     Link(
                         href=URIRef(

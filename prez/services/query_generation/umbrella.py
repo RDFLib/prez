@@ -30,7 +30,7 @@ from sparql_grammar_pydantic import (
 )
 
 from prez.models.query_params import ListingQueryParams
-from prez.services.query_generation.bbox_filter import generate_bbox_filter
+from prez.services.query_generation.spatial_filter import generate_bbox_filter
 from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQuery
 from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.datetime_filter import generate_datetime_filter
@@ -216,6 +216,8 @@ def merge_listing_query_grammar_inputs(
 ) -> dict:
     page = query_params.page
     limit = query_params.limit
+    offset = query_params.offset
+    startindex = query_params.startindex
     order_by = query_params.order_by
     order_by_direction = query_params.order_by_direction
     bbox = query_params.bbox
@@ -237,7 +239,12 @@ def merge_listing_query_grammar_inputs(
     }
 
     limit = int(limit)
-    offset = limit * (int(page) - 1)
+    if offset:
+        kwargs["offset"] = offset
+    elif startindex:
+        offset = startindex
+    else:
+        offset = limit * (int(page) - 1)
     kwargs["limit"] = limit
     kwargs["offset"] = offset
     if concept_hierarchy_query:
@@ -278,8 +285,8 @@ def merge_listing_query_grammar_inputs(
             kwargs["inner_select_gpnt"].extend(endpoint_nodeshape.gpnt_list)
 
     if bbox:
-        gpnt, tssp_list = generate_bbox_filter(bbox, filter_crs)
-        kwargs["inner_select_gpnt"].append(gpnt)
+        gpnt_list, tssp_list = generate_bbox_filter(bbox, filter_crs)
+        kwargs["inner_select_gpnt"].extend(gpnt_list)
         kwargs["inner_select_tssp_list"].extend(tssp_list)
 
     if datetime:

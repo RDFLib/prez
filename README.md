@@ -116,7 +116,7 @@ An example .env file with the minimum required variables is in the repo as [`.en
 
 #### System URI
 
-- **`SYSTEM_URI`**: An IRI for the Prez system as a whole. This value appears in the landing page RDF delivered by Prez (`"/"`). Default is `f"{protocol}://{host}:{port}"`.
+- **`SYSTEM_URI`**: The URL where prez is deployed. This is utilised only by the OGC Features API to generate links. Non OGC Features endpoints provided by prez provide prez:link relative links and so do not use this SYSTEM_URI. Default is `f"{protocol}://{host}:{port}"`.
 
 #### Logging Configuration
 
