@@ -680,6 +680,7 @@ async def check_unknown_params(request: Request):
         "_profile",
         "page",
         "limit",
+        "offset",
         "facet_profile",
         "datetime",
         "bbox",
