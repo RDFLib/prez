@@ -251,7 +251,7 @@ class CQLParser:
             tssp = TriplesSameSubjectPath.from_spo(
                 subject=subject, predicate=predicate, object=obj
             )
-            self.tssp_list.append(tssp)
+            # Note: tssp goes to ggps.graph_patterns_or_triples_blocks, NOT self.tssp_list
 
             new_tb_for_this_tssp = TriplesBlock(triples=tssp)
 
@@ -278,6 +278,7 @@ class CQLParser:
                     ggps.graph_patterns_or_triples_blocks.append(new_tb_for_this_tssp)
 
             # All patterns are channeled into the graph_patterns_or_triples_blocks list.
+
     def _handle_comparison(self, operator, args, existing_ggps=None):
 
         val = args[1]

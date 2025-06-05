@@ -40,11 +40,12 @@ def test_cql_spatial_graphdb_intersects():
     expected_tssp3 = TriplesSameSubjectPath.from_spo(
         subject=Var(value="focus_node"),
         predicate=IRI(value=str(GEO.sfIntersects)),
-        object=RDFLiteral(value="POINT (150.0 -30.0)", datatype=IRI(value=str(GEO.wktLiteral)))
+        object=RDFLiteral(value="<http://www.opengis.net/def/crs/OGC/1.3/CRS84> POINT (150.0 -30.0)", datatype=IRI(value=str(GEO.wktLiteral)))
     )
-    expected_tssp_list = {expected_tssp1, expected_tssp2, expected_tssp3}
-    for tssp in parser.inner_select_gpnt_list:
-        assert tssp in expected_tssp_list
+    expected_tssp_list = {expected_tssp1.to_string(), expected_tssp2.to_string(), expected_tssp3.to_string()}
+    for tssp in parser.tssp_list:
+        tssp_string = tssp.to_string()
+        assert tssp_string in expected_tssp_list
 
 
 def test_cql_spatial_graphdb_within_with_crs():
@@ -79,10 +80,10 @@ def test_cql_spatial_graphdb_within_with_crs():
         object=RDFLiteral(value=expected_wkt, datatype=IRI(value=str(GEO.wktLiteral)))
     )
     expected_tssp_list = [expected_tssp1, expected_tssp2, expected_tssp3]
-    for tssp in parser.inner_select_gpnt_list:
+    for tssp in parser.tssp_list:
         assert tssp in expected_tssp_list
 
-    assert not parser.inner_select_gpnt_list
+    assert not parser.tssp_list
 
 
 def test_cql_spatial_graphdb_unsupported_operator():
