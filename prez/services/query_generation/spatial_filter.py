@@ -103,19 +103,29 @@ def find_max_decimals(coordinates):
     return max_decimals
 
 
+def extract_crs_code(crs_uri):
+    if not crs_uri:
+        return None
+
+    if crs_uri.startswith('urn:'):
+        parts = crs_uri.split(':')
+        return parts[-1] if parts else None
+    else:
+        parts = crs_uri.rstrip('/').split('/')
+        return parts[-1] if parts else None
+
+
 def get_wkt_from_coords(coordinates, geom_type: str, filter_crs):
     max_decimals = find_max_decimals([(geom_type, coordinates, None)])
-    if filter_crs == "http://www.opengis.net/def/crs/OGC/1.3/CRS84":
-        srid = "CRS84"
-    else:
-        srid = filter_crs  # axes will be reorded by geomet if anything other than CRS84
+    srid = extract_crs_code(filter_crs)
+
     wkt_with_srid = dumps({"type": geom_type, "coordinates": coordinates, "meta": {"srid": srid}}, max_decimals)
     srid_wkt = wkt_with_srid.split(";")
-    if len(srid_wkt) == 1 and filter_crs == "http://www.opengis.net/def/crs/OGC/1.3/CRS84":
+
+    if len(srid_wkt) == 1:
         return filter_crs, srid_wkt[0]
     else:
-        srid = srid_wkt[0].split("=")[1]
-        return srid, srid_wkt[1]
+        return filter_crs, srid_wkt[1]
 
 
 def format_coordinates_as_wkt(bbox_values):
