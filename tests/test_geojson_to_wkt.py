@@ -1,6 +1,6 @@
 import pytest
 
-from prez.services.query_generation.cql import get_wkt_from_coords
+from prez.services.query_generation.spatial_filter import get_wkt_from_coords
 
 
 @pytest.mark.parametrize(
@@ -128,7 +128,7 @@ def test_get_wkt_from_coords_valid(
     geom_type, coordinates, expected_wkt, expected_wkt_alternative
 ):
     assert (
-        get_wkt_from_coords(coordinates, geom_type) == expected_wkt
+        get_wkt_from_coords(coordinates, geom_type, filter_crs="http://www.opengis.net/def/crs/OGC/1.3/CRS84")[1] == expected_wkt
         or expected_wkt_alternative
     )
 

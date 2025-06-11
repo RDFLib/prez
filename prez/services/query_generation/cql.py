@@ -1,16 +1,12 @@
 import json
-from decimal import Decimal
 from pathlib import Path
-from typing import Generator
+from typing import Generator, Literal
 
-from rdf2geojson.contrib.geomet.util import flatten_multi_dim
-from rdf2geojson.contrib.geomet.wkt import dumps
 from rdflib import Namespace, URIRef
 from rdflib.namespace import GEO
 from sparql_grammar_pydantic import (
     IRI,
     AdditiveExpression,
-    ArgList,
     BooleanLiteral,
     BrackettedExpression,
     BuiltInCall,
@@ -24,7 +20,6 @@ from sparql_grammar_pydantic import (
     DataBlockValue,
     Expression,
     Filter,
-    FunctionCall,
     GraphPatternNotTriples,
     GroupGraphPattern,
     GroupGraphPatternSub,
@@ -49,8 +44,13 @@ from sparql_grammar_pydantic import (
 )
 
 from prez.cache import prez_system_graph
+from prez.config import settings
 from prez.models.query_params import parse_datetime
-from prez.reference_data.cql.geo_function_mapping import cql_sparql_spatial_mapping
+from prez.reference_data.cql.geo_function_mapping import (
+    cql_sparql_spatial_mapping,
+    cql_graphdb_spatial_properties,
+)
+from prez.services.query_generation.spatial_filter import generate_spatial_filter_clause, get_wkt_from_coords
 from prez.services.query_generation.shacl import PropertyShape
 
 CQL = Namespace("http://www.opengis.net/doc/IS/cql2/1.0/")
@@ -233,40 +233,51 @@ class CQLParser:
             # This else is reached if operator is not 'and', 'or', or any of the handled elementary operators.
             raise NotImplementedError(f"Operator {operator} not implemented.")
 
-    def _add_triple(self, ggps, subject, predicate, object):
-        tssp = TriplesSameSubjectPath.from_spo(
-            subject=subject, predicate=predicate, object=object
-        )
-        tss = TriplesSameSubject.from_spo(
-            subject=subject, predicate=predicate, object=object
-        )
-        self.tss_list.append(tss)
+    def _add_triple(
+            self,
+            ggps,
+            subject,
+            predicate,
+            obj,
+            to: Literal["tss_and_tssp", "tss", "tssp"] = "tss_and_tssp"
+    ):
+        if to in ["tss_and_tssp", "tss"]:
+            tss = TriplesSameSubject.from_spo(
+                subject=subject, predicate=predicate, object=obj
+            )
+            self.tss_list.append(tss)
 
-        new_tb_for_this_tssp = TriplesBlock(triples=tssp)
+        if to in ["tss_and_tssp", "tssp"]:
+            tssp = TriplesSameSubjectPath.from_spo(
+                subject=subject, predicate=predicate, object=obj
+            )
+            # Note: tssp goes to ggps.graph_patterns_or_triples_blocks, NOT self.tssp_list
 
-        if not ggps.graph_patterns_or_triples_blocks:
-            ggps.graph_patterns_or_triples_blocks = [new_tb_for_this_tssp]
-        else:
-            # Find if there's already a TriplesBlock to nest under the new one
-            existing_tb = None
-            existing_tb_index = None
+            new_tb_for_this_tssp = TriplesBlock(triples=tssp)
 
-            for i, gpnt_or_tb in enumerate(ggps.graph_patterns_or_triples_blocks):
-                if isinstance(gpnt_or_tb, TriplesBlock):
-                    existing_tb = gpnt_or_tb
-                    existing_tb_index = i
-                    break
-
-            if existing_tb:
-                # Create new TriplesBlock with current tssp and nest the existing one
-                nested_tb = TriplesBlock(triples=tssp, triples_block=existing_tb)
-                # Replace the existing TriplesBlock with the new nested one
-                ggps.graph_patterns_or_triples_blocks[existing_tb_index] = nested_tb
+            if not ggps.graph_patterns_or_triples_blocks:
+                ggps.graph_patterns_or_triples_blocks = [new_tb_for_this_tssp]
             else:
-                # No existing TriplesBlock, just append the new one
-                ggps.graph_patterns_or_triples_blocks.append(new_tb_for_this_tssp)
+                # Find if there's already a TriplesBlock to nest under the new one
+                existing_tb = None
+                existing_tb_index = None
 
-        # All patterns are channeled into the graph_patterns_or_triples_blocks list.
+                for i, gpnt_or_tb in enumerate(ggps.graph_patterns_or_triples_blocks):
+                    if isinstance(gpnt_or_tb, TriplesBlock):
+                        existing_tb = gpnt_or_tb
+                        existing_tb_index = i
+                        break
+
+                if existing_tb:
+                    # Create new TriplesBlock with current tssp and nest the existing one
+                    nested_tb = TriplesBlock(triples=tssp, triples_block=existing_tb)
+                    # Replace the existing TriplesBlock with the new nested one
+                    ggps.graph_patterns_or_triples_blocks[existing_tb_index] = nested_tb
+                else:
+                    # No existing TriplesBlock, just append the new one
+                    ggps.graph_patterns_or_triples_blocks.append(new_tb_for_this_tssp)
+
+            # All patterns are channeled into the graph_patterns_or_triples_blocks list.
 
     def _handle_comparison(self, operator, args, existing_ggps=None):
 
@@ -306,7 +317,7 @@ class CQLParser:
             var_obj = Var(value=f"var_{self.var_counter}")
             if not obj:
                 obj = var_obj
-            self._add_triple(ggps, subject, predicate, obj)
+            self._add_triple(ggps, subject, predicate, obj, "tss_and_tssp")
         return ggps, obj
 
     def _handle_like(self, args, existing_ggps=None):
@@ -344,8 +355,7 @@ class CQLParser:
             geom_type = "Polygon"
 
         if coordinates:
-            wkt = get_wkt_from_coords(coordinates, geom_type)
-            wkt_with_crs = f"<{self.crs}> {wkt}"
+            srid, wkt = get_wkt_from_coords(coordinates, geom_type, self.crs)
             prop = args[0].get("property")
             if prop == "geometry":
                 subject = Var(value="focus_node")
@@ -353,27 +363,41 @@ class CQLParser:
                 subject = IRI(value=prop)
             geom_bn_var = Var(value="geom_bnode")
             geom_lit_var = Var(value="geom_var")
-            self._add_triple(ggps, subject, IRI(value=GEO.hasGeometry), geom_bn_var)
-            self._add_triple(ggps, geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var)
 
-            geom_func_iri = IRI(value=cql_sparql_spatial_mapping[operator])
-            geom_1_exp = Expression.from_primary_expression(
-                primary_expression=PrimaryExpression(content=geom_lit_var)
-            )
-            geom_2_datatype = IRI(
-                value="http://www.opengis.net/ont/geosparql#wktLiteral"
-            )
-            geom_2_exp = Expression.from_primary_expression(
-                primary_expression=PrimaryExpression(
-                    content=RDFLiteral(value=wkt_with_crs, datatype=geom_2_datatype)
+            self._add_triple(ggps, subject, IRI(value=GEO.hasGeometry), geom_bn_var, "tss_and_tssp")
+            self._add_triple(ggps, geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var, "tss_and_tssp")
+
+            target_system = settings.spatial_query_format
+            if target_system not in ["geosparql", "qlever", "graphdb"]:
+                raise NotImplementedError(f"Spatial query format '{target_system}' not supported for CQL.")
+
+            # Prepare WKT string based on target system and CRS presence
+            processed_wkt = wkt
+            if target_system in ["geosparql", "graphdb"]:  # For QLever, plain wkt is used
+                processed_wkt = f"<{srid}> {wkt}"
+
+            if target_system == "graphdb":
+                if operator not in cql_graphdb_spatial_properties:
+                    raise NotImplementedError(
+                        f"CQL operator {operator} not supported for GraphDB target"
+                    )
+                predicate_iri = IRI(value=str(cql_graphdb_spatial_properties[operator]))
+                object_wkt_literal = RDFLiteral(
+                    value=processed_wkt,  # Use centrally processed WKT
+                    datatype=IRI(value=str(GEO.wktLiteral))
                 )
-            )
-            arg_list = ArgList(expressions=[geom_1_exp, geom_2_exp])
-            fc = FunctionCall(iri=geom_func_iri, arg_list=arg_list)
-
-            spatial_filter = Filter(constraint=Constraint(content=fc))
-            filter_gpnt = GraphPatternNotTriples(content=spatial_filter)
-            ggps.add_pattern(filter_gpnt)
+                self._add_triple(ggps, subject, predicate_iri, object_wkt_literal, to="tssp")
+            else:
+                filter_gpnt_list = generate_spatial_filter_clause(
+                    wkt_value=processed_wkt,
+                    subject_var=subject,
+                    geom_bnode_var=geom_bn_var,
+                    geom_wkt_lit_var=geom_lit_var,
+                    cql_operator=operator,
+                    target_system=target_system,
+                )
+                for gpnt_item in filter_gpnt_list:
+                    ggps.add_pattern(gpnt_item)
 
     def _handle_in(self, args, existing_ggps=None):
         ggps, object = self._add_tss_tssp(args, existing_ggps)
@@ -418,23 +442,6 @@ class CQLParser:
         self.tssp_list.extend(tssp_list)
         self.inner_select_vars.append(obj)
         return obj
-
-    def _extract_spatial_info(self, coordinates_list, args):
-        coordinates = []
-        geom_type = None
-        if coordinates_list:
-            # coordinates = [
-            #     [coordinates_list[i], coordinates_list[i + 1]]
-            #     for i in range(0, len(coordinates_list), 2)
-            # ]
-            coordinates = coordinates_list
-            geom_type = args[1].get("type")
-        bbox_list = args[1].get("bbox")
-        if bbox_list:
-            geom_type = "Polygon"
-            bbox_values = [item for item in bbox_list]
-            coordinates = format_coordinates_as_wkt(bbox_values, coordinates)
-        return coordinates, geom_type
 
     def _handle_temporal(self, comp_func, args, existing_ggps=None):
         """For temporal filtering within CQL JSON expressions, NOT within the temporal query parameter."""
@@ -538,7 +545,7 @@ class CQLParser:
         value = IRI(value=prop)
         var = Var(value=f"dt_{i}_{label}")
         operands[f"t{i}_{label}"] = var
-        self._add_triple(ggps, Var(value="focus_node"), value, var)
+        self._add_triple(ggps, Var(value="focus_node"), value, var, "tss_and_tssp")
 
     def _dt_to_rdf_literal(self, i, dt_str, label, operands):
         if dt_str == "..":
@@ -569,62 +576,6 @@ class CQLParser:
             .graph_node_path.varorterm_or_triplesnodepath.varorterm
         )
         return ps.tssp_list, obj_var_name
-
-
-def format_coordinates_as_wkt(bbox_values):
-    if len(bbox_values) == 4:
-        coordinates = [
-            [
-                [bbox_values[0], bbox_values[1]],
-                [bbox_values[0], bbox_values[3]],
-                [bbox_values[2], bbox_values[3]],
-                [bbox_values[2], bbox_values[1]],
-                [bbox_values[0], bbox_values[1]],
-            ]
-        ]
-    else:
-        if len(bbox_values) == 6:
-            raise NotImplementedError("XYZ bbox not yet supported.")
-        else:
-            raise ValueError(f"Invalid number of values in bbox ({len(bbox_values)}).")
-    return coordinates
-
-
-def count_decimal_places(num):
-    return abs(Decimal(str(num)).as_tuple().exponent)
-
-
-def find_max_decimals(coordinates):
-    max_decimals = 0
-    flattened = flatten_multi_dim(coordinates)
-    for value in flattened:
-        if isinstance(value, (int, float)):
-            max_decimals = max(max_decimals, count_decimal_places(value))
-    return max_decimals
-
-
-def get_wkt_from_coords(coordinates, geom_type: str):
-    max_decimals = find_max_decimals([(geom_type, coordinates, None)])
-    return dumps({"type": geom_type, "coordinates": coordinates}, max_decimals)
-
-
-# def create_temporal_filter_gpnt(dt: datetime, op: str) -> GraphPatternNotTriples:
-#     if op not in ["=", "<=", ">=", "<", ">"]:
-#         raise ValueError(f"Invalid operator: {op}")
-#     return GraphPatternNotTriples(
-#         content=Filter.filter_relational(
-#             focus=PrimaryExpression(
-#                 content=Var(value="datetime"),
-#             ),
-#             comparators=PrimaryExpression(
-#                 content=RDFLiteral(
-#                     value=dt.isoformat(),
-#                     datatype=IRI(value="http://www.w3.org/2001/XMLSchema#dateTime"),
-#                 )
-#             ),
-#             operator=op,
-#         )
-#     )
 
 
 def create_temporal_or_gpnt(
@@ -815,5 +766,5 @@ def create_temporal_and_gpnt(
                     )
                 )
             )
-        )
     )
+)

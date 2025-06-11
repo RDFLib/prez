@@ -164,11 +164,20 @@ class ListingQueryParams:
             description="An optional API Subscription key",
             alias="subscription-key",
         ),
+        startindex: Optional[int] = Query(
+            default=None,
+            description="Optional: Starting index"
+        ),
+        offset: Optional[int] = Query(
+            default=None,
+            description="Optional: Pagination offset",
+        )
     ):
         self.q = q
         self.profile = profile
         self.page = page
         self.limit = limit
+        self.offset = offset
         self.facet_profile = facet_profile
         self.bbox = bbox
         self.filter_lang = filter_lang
@@ -179,6 +188,7 @@ class ListingQueryParams:
         self._filter = _filter
         self.mediatype = mediatype
         self.subscription_key = subscription_key
+        self.startindex = startindex
         self.validate_filter()
 
     def validate_filter(self):

@@ -58,6 +58,7 @@ prez:OGCFeaturesMinimalProps a
                   [
                       sh:union (
                                    rdf:type
+                                   ( geo:hasBoundingBox geo:asWKT )
                                    ( [ sh:inversePath rdfs:member ] rdf:type )
                                    ( [ sh:inversePath rdfs:member ] dcterms:isPartOf )
                                )
