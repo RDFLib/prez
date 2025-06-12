@@ -428,10 +428,6 @@ class PropertyShape(Shape):
 
             bnode_class = next(self.graph.objects(subject=pp, predicate=SH["class"]), None)
 
-            bnode_filter_shape_uri = next(self.graph.objects(subject=pp, predicate=SH.filterShape), None)
-            if bnode_filter_shape_uri:
-                final_filter_shape_tssp_list.extend(self._parse_filter_shape(bnode_filter_shape_uri))
-
             nested_path_node = next(self.graph.objects(subject=pp, predicate=SH.path), None)
             if nested_path_node:
                 path_to_parse = nested_path_node
