@@ -7,7 +7,7 @@ from typing import Literal as TypingLiteral
 from typing import Optional, Tuple, Type, Union
 
 from pydantic import BaseModel
-from rdflib import RDFS, BNode, Graph, URIRef
+from rdflib import RDFS, BNode, Graph, URIRef, XSD
 from rdflib.collection import Collection
 from rdflib.namespace import RDF, SH
 from rdflib.term import Node, Literal
@@ -46,7 +46,7 @@ from sparql_grammar_pydantic import (
     TriplesSameSubjectPath,
     Var,
     VarOrTerm,
-    VerbPath
+    VerbPath, RDFLiteral, BooleanLiteral, NumericLiteral
 )
 
 from prez.config import settings
@@ -235,27 +235,45 @@ class PropertyShape(Shape):
             return int(maxc)
 
     def from_graph(self):
+        # Context Guard: Check if this PropertyShape is inside a sh:filterShape.
+        # This checks for both direct and nested sh:property within the filter.
+        parents = list(self.graph.subjects(SH.property, self.uri))
+        for parent in parents:
+            grandparents = list(self.graph.subjects(SH.filterShape, parent))
+            if grandparents:
+                return  # This is a direct child of a filter shape's property.
+            great_grandparents = list(self.graph.subjects(SH.property, parent))
+            for great_grandparent in great_grandparents:
+                if list(self.graph.subjects(SH.filterShape, great_grandparent)):
+                    return # This is a nested child of a filter shape's property.
+
         self.and_property_paths = []
         self.union_property_paths = []
         _single_class = next(self.graph.objects(self.uri, SH["class"]), None)
         if _single_class:
             self.or_klasses = [URIRef(_single_class)]
 
-        # look for sh:or statements and process classes from these NB only sh:or / sh:class is handled at present.
         or_classes = next(self.graph.objects(self.uri, SH["or"]), None)
         if or_classes:
             or_bns = list(Collection(self.graph, or_classes))
             or_triples = list(self.graph.triples_choices((or_bns, SH["class"], None)))
             self.or_klasses = [URIRef(klass) for _, _, klass in or_triples]
 
-        # Get the path alias defined directly on the property shape node, if any
         shape_level_path_alias = next(self.graph.objects(self.uri, SHEXT.pathAlias), None)
+
+        filter_shape_uri = next(self.graph.objects(self.uri, SH.filterShape), None)
+        filter_shape_tssp_list = []
+        if filter_shape_uri:
+            filter_shape_tssp_list = self._parse_filter_shape(filter_shape_uri)
 
         pps = list(self.graph.objects(self.uri, SH.path))
         for pp in pps:
-            # Pass the shape-level alias down
-            self._process_property_path(pp, shape_level_alias=shape_level_path_alias)
-        # get the longest property path first - for endpoints this will be the path any path_nodes apply to
+            self._add_path_to_shape(
+                pp,
+                shape_level_alias=shape_level_path_alias,
+                filter_shape_tssp_list=filter_shape_tssp_list,
+            )
+
         self.and_property_paths = sorted(
             self.and_property_paths, key=lambda x: len(x), reverse=True
         )
@@ -339,7 +357,7 @@ class PropertyShape(Shape):
                     # We return None here to signal that _process_property_path should not call _add_path for the sh:union BNode itself.
                     union_list = list(Collection(self.graph, bn_obj))
                     for item in union_list:
-                        self._process_property_path(item, union=True)  # Force union=True
+                        self._add_path_to_shape(item, union=True)  # Force union=True
                     return None  # Signal that the union BNode itself doesn't represent a single path to add
                 elif bn_pred == SH.alternativePath:
                     alt_list = list(Collection(self.graph, bn_obj))
@@ -361,47 +379,87 @@ class PropertyShape(Shape):
         else:
             raise ValueError(f"Unexpected node type in SHACL path: {type(pp)}")
 
-    def _process_property_path(self, pp: Node, union: bool = False, shape_level_alias: Optional[URIRef] = None):
-        """Processes a SHACL path node by parsing it and adding it to the appropriate list."""
-        path_to_parse = pp  # Default to the original node
-        path_alias_value = shape_level_alias  # Start with the alias from the parent shape
+    def _parse_filter_shape(self, filter_shape_uri: Node) -> List[TriplesSameSubjectPath]:
+        """
+        Parses a sh:filterShape structure and returns the corresponding triple patterns.
+        This is a narrow implementation based on the specific use case described in the documentation.
+        """
+        patterns = []
+        # sh:filterShape -> sh:property
+        prop_bnode = next(self.graph.objects(filter_shape_uri, SH.property))
+        # sh:property -> sh:property (sibling)
+        sibling_prop_bnode = next(self.graph.objects(prop_bnode, SH.property))
+        # sibling sh:property -> sh:path
+        sibling_path = next(self.graph.objects(sibling_prop_bnode, SH.path))
+        # sibling sh:property -> sh:hasValue
+        sibling_has_value = list(self.graph.objects(sibling_prop_bnode, SH.hasValue))
+        if sibling_has_value:
+            val = sibling_has_value[0]
+            iri_or_lit = None
+            if isinstance(val, URIRef):
+                iri_or_lit = IRI(value=str(val))
+            elif isinstance(val, Literal):
+                if val.datatype:
+                    if val.datatype == XSD.boolean:
+                        iri_or_lit = BooleanLiteral(value=bool(val))
+                    elif val.datatype in [XSD.integer, XSD.int]:
+                        val = int(val)
+                        iri_or_lit = NumericLiteral(value=val)
+                    elif val.datatype in [XSD.decimal, XSD.double, XSD.float]:
+                        val = float(val)
+                        iri_or_lit = NumericLiteral(value=val)
+                else:
+                    iri_or_lit = RDFLiteral(value=str(val))
+            patterns.append(
+                TriplesSameSubjectPath.from_spo(
+                    self.focus_node, IRI(value=str(sibling_path)), iri_or_lit
+                )
+            )
+        else:  # check for sh:in
+            sibling_in_bn = next(self.graph.objects(sibling_prop_bnode, SH["in"]))
+            # sibling_in_vals = list(Collection(self.graph, sibling_in_bn))
+            if sibling_in_bn:
+                raise NotImplementedError()
+            else:
+                raise ValueError("Expected sh:hasValue or sh:in for the filterShape values.")
+        return patterns
 
-        # Check if pp is a BNode which might contain its own pathAlias, sh:class,
-        # or a nested sh:path.
-        bnode_class = None  # Initialize
+    def _add_path_to_shape(
+        self,
+        pp: Node,
+        union: bool = False,
+        shape_level_alias: Optional[URIRef] = None,
+        filter_shape_tssp_list: Optional[List[TriplesSameSubjectPath]] = None,
+    ):
+        """Processes a SHACL path node by parsing it and adding it to the appropriate list."""
+        path_to_parse = pp
+        path_alias_value = shape_level_alias
+        bnode_class = None
+        final_filter_shape_tssp_list = filter_shape_tssp_list or []
+
         if isinstance(pp, BNode):
-            # Check for an alias specific to this BNode, overriding the shape-level one if found.
             bnode_alias = next(self.graph.objects(subject=pp, predicate=SHEXT.pathAlias), None)
             if bnode_alias:
-                path_alias_value = bnode_alias  # Use BNode-specific alias
+                path_alias_value = bnode_alias
 
-            # Check for sh:class specific to this BNode
             bnode_class = next(self.graph.objects(subject=pp, predicate=SH["class"]), None)
 
-            # Check for nested sh:path (common in sh:union/sh:alternativePath list items)
-            # This logic needs refinement based on structure. If sh:path is *inside* the BNode `pp`,
-            # we parse that inner path but associate the alias found on `pp`.
             nested_path_node = next(self.graph.objects(subject=pp, predicate=SH.path), None)
             if nested_path_node:
-                # Parse the inner path, but keep the alias determined from pp (or shape_level_alias)
                 path_to_parse = nested_path_node
 
         try:
-            # Parse the determined path node (original pp or nested_path_node)
             path_object = self._parse_property_path(path_to_parse)
-            # Check if path_object is None (e.g., handled by sh:union itself) before adding
             if path_object is not None:
-                # Always assign the determined path_alias if it exists. The setting controls its *use* later.
                 if path_alias_value:
                     path_object.path_alias = path_alias_value
-                # Assign the extracted sh:class if found
                 if bnode_class:
                     path_object.sh_class = bnode_class
-                self._add_path(path_object, union)  # Pass the original 'union' flag
+                if final_filter_shape_tssp_list:
+                    path_object.filter_shape_tssp_list = final_filter_shape_tssp_list
+                self._add_path(path_object, union)
         except ValueError as e:
-            # Log or handle parsing errors appropriately
             log.warning(f"Could not parse property path {path_to_parse} (original node: {pp}). Error: {e}")
-            # Decide if you want to skip this path or raise the error further
 
     def _add_path(self, path: PropertyPath, union: bool):
         """Adds a parsed PropertyPath object to the appropriate list."""
@@ -476,7 +534,7 @@ class PropertyShape(Shape):
         pp_i = 0
         # Process AND paths
         if self.and_property_paths:
-            and_paths_data, pp_i = self.process_property_paths(
+            and_paths_data, pp_i = self._generate_sparql_for_paths(
                 self.and_property_paths, path_or_prop, pp_i
             )
             for item in and_paths_data:
@@ -484,7 +542,7 @@ class PropertyShape(Shape):
 
         # Process UNION paths
         if self.union_property_paths:
-            union_paths_data, pp_i = self.process_property_paths(
+            union_paths_data, pp_i = self._generate_sparql_for_paths(
                 self.union_property_paths, path_or_prop, pp_i
             )
             # Store the processed data (including TSSP lists and facet binds) for union paths
@@ -565,7 +623,7 @@ class PropertyShape(Shape):
             )
             self.gpnt_list.append(gpnt)
 
-    def process_property_paths(self, property_paths, path_or_prop, start_pp_i) -> Tuple[List[Dict[str, Any]], int]:
+    def _generate_sparql_for_paths(self, property_paths, path_or_prop, start_pp_i) -> Tuple[List[Dict[str, Any]], int]:
         """Processes property paths, generating TSSP lists and facet binds."""
         processed_paths_data = []
         pp_i = start_pp_i
@@ -600,6 +658,9 @@ class PropertyShape(Shape):
             current_facet_binds = []
             if obj_node:  # Only create binds if we have a valid object node
                 current_facet_binds = self._create_facet_binds(property_path, obj_node)
+
+            if property_path.filter_shape_tssp_list:
+                current_tssp.extend(property_path.filter_shape_tssp_list)
 
             if isinstance(property_path, Path):
                 if property_path.value == SHEXT.allPredicateValues:
@@ -1256,6 +1317,7 @@ class PropertyPath(BaseModel):
     uri: Optional[URIRef] = None
     path_alias: Optional[URIRef] = None
     sh_class: Optional[URIRef] = None
+    filter_shape_tssp_list: Optional[List[TriplesSameSubjectPath]] = []
 
     def __len__(self):
         return 1  # Default length for all PropertyPath subclasses
