@@ -7,7 +7,7 @@ from typing import Literal as TypingLiteral
 from typing import Optional, Tuple, Type, Union
 
 from pydantic import BaseModel
-from rdflib import RDFS, BNode, Graph, URIRef
+from rdflib import RDFS, BNode, Graph, URIRef, XSD
 from rdflib.collection import Collection
 from rdflib.namespace import RDF, SH
 from rdflib.term import Node, Literal
@@ -46,7 +46,7 @@ from sparql_grammar_pydantic import (
     TriplesSameSubjectPath,
     Var,
     VarOrTerm,
-    VerbPath
+    VerbPath, RDFLiteral, BooleanLiteral, NumericLiteral
 )
 
 from prez.config import settings
@@ -394,9 +394,25 @@ class PropertyShape(Shape):
         # sibling sh:property -> sh:hasValue
         sibling_has_value = list(self.graph.objects(sibling_prop_bnode, SH.hasValue))
         if sibling_has_value:
+            val = sibling_has_value[0]
+            iri_or_lit = None
+            if isinstance(val, URIRef):
+                iri_or_lit = IRI(value=str(val))
+            elif isinstance(val, Literal):
+                if val.datatype:
+                    if val.datatype == XSD.boolean:
+                        iri_or_lit = BooleanLiteral(value=bool(val))
+                    elif val.datatype in [XSD.integer, XSD.int]:
+                        val = int(val)
+                        iri_or_lit = NumericLiteral(value=val)
+                    elif val.datatype in [XSD.decimal, XSD.double, XSD.float]:
+                        val = float(val)
+                        iri_or_lit = NumericLiteral(value=val)
+                else:
+                    iri_or_lit = RDFLiteral(value=str(val))
             patterns.append(
                 TriplesSameSubjectPath.from_spo(
-                    self.focus_node, IRI(value=str(sibling_path)), IRI(value=str(sibling_has_value[0]))
+                    self.focus_node, IRI(value=str(sibling_path)), iri_or_lit
                 )
             )
         else:  # check for sh:in
