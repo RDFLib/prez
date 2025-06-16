@@ -150,11 +150,11 @@ def test_sequence_with_alternative_containing_complex_elements(focus_node_var, g
 
 
 {
-?prof_1_node_2 <http://example.com/ns#invAlt> ?prof_1_node_1
+?prof_1_node_2 <http://example.com/ns#invAlt> ?prof_1_node_1 .
 }
 UNION
 {
-?prof_1_node_1 <http://example.com/ns#cardAlt>* ?prof_1_node_2
+?prof_1_node_1 <http://example.com/ns#cardAlt>* ?prof_1_node_2 .
 }
 }"""
     assert actual_gpnt_string == expected_gpnt_string

@@ -122,11 +122,11 @@ def test_cql_or_operator_fix():
     expected_inner_select_gpntotb_list_str = [
         """
 {
-?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/sosa/Sample>
+?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/sosa/Sample> .
 }
 UNION
 {
-?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://linked.data.gov.au/def/borehole/Bore>
+?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://linked.data.gov.au/def/borehole/Bore> .
 }"""
     ]
     assert len(parser.inner_select_gpntotb_list) == len(expected_inner_select_gpntotb_list_str)
@@ -193,7 +193,7 @@ def test_cql_nested_and_operator():
         """?focus_node <http://purl.org/dc/terms/creator> <http://example.org/organizations#GeologicalSurvey> .
 ?focus_node <http://purl.org/dc/terms/format> <http://example.org/formats#PDF> .
 ?focus_node <http://purl.org/dc/terms/subject> <http://example.org/subjects#Geology> .
-?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/vocab#Report>"""
+?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/vocab#Report> ."""
     ]
     assert len(parser.inner_select_gpntotb_list) == len(expected_inner_select_gpntotb_list_str)
     assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace("\n", "") == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
@@ -260,15 +260,15 @@ def test_cql_and_of_A_or_BC():
     where_content = parser.query_object.where_clause.group_graph_pattern.content
 
     expected_inner_select_gpntotb_list_str = [
-        """?focus_node <http://example.org/propA> <http://example.org/valA>""",
+        """?focus_node <http://example.org/propA> <http://example.org/valA> .""",
         """
 {
 {
-?focus_node <http://example.org/propB> <http://example.org/valB>
+?focus_node <http://example.org/propB> <http://example.org/valB> .
 }
 UNION
 {
-?focus_node <http://example.org/propC> <http://example.org/valC>
+?focus_node <http://example.org/propC> <http://example.org/valC> .
 }
 }"""
     ]
@@ -302,12 +302,12 @@ def test_cql_or_of_A_and_BC():
         """
 
 {
-?focus_node <http://example.org/propA> <http://example.org/valA>
+?focus_node <http://example.org/propA> <http://example.org/valA> .
 }
 UNION
 {
 ?focus_node <http://example.org/propC> <http://example.org/valC> .
-?focus_node <http://example.org/propB> <http://example.org/valB>
+?focus_node <http://example.org/propB> <http://example.org/valB> .
 
 }"""
     ]
@@ -339,7 +339,7 @@ def test_cql_and_of_and_AB_C():
     expected_inner_select_gpntotb_list_str = [
         """?focus_node <http://example.org/propC> <http://example.org/valC> .
 ?focus_node <http://example.org/propB> <http://example.org/valB> .
-?focus_node <http://example.org/propA> <http://example.org/valA>"""
+?focus_node <http://example.org/propA> <http://example.org/valA> ."""
     ]
     assert len(parser.inner_select_gpntotb_list) == len(expected_inner_select_gpntotb_list_str)
     assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace("\n", "") == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
@@ -370,16 +370,16 @@ def test_cql_or_of_or_AB_C():
         """
 {
 {
-?focus_node <http://example.org/propA> <http://example.org/valA>
+?focus_node <http://example.org/propA> <http://example.org/valA> .
 }
 UNION
 {
-?focus_node <http://example.org/propB> <http://example.org/valB>
+?focus_node <http://example.org/propB> <http://example.org/valB> .
 }
 }
 UNION
 {
-?focus_node <http://example.org/propC> <http://example.org/valC>
+?focus_node <http://example.org/propC> <http://example.org/valC> .
 }
 """
     ]
@@ -411,21 +411,21 @@ def test_cql_and_of_or_AB_or_CD():
         """
 {
 {
-?focus_node <http://example.org/propA> <http://example.org/valA>
+?focus_node <http://example.org/propA> <http://example.org/valA> .
 }
 UNION
 {
-?focus_node <http://example.org/propB> <http://example.org/valB>
+?focus_node <http://example.org/propB> <http://example.org/valB> .
 }
 }""",
         """
 {
 {
-?focus_node <http://example.org/propC> <http://example.org/valC>
+?focus_node <http://example.org/propC> <http://example.org/valC> .
 }
 UNION
 {
-?focus_node <http://example.org/propD> <http://example.org/valD>
+?focus_node <http://example.org/propD> <http://example.org/valD> .
 }
 }"""
     ]
@@ -458,12 +458,12 @@ def test_cql_or_of_and_AB_and_CD():
         """
 {
 ?focus_node <http://example.org/propB> <http://example.org/valB> .
-?focus_node <http://example.org/propA> <http://example.org/valA>
+?focus_node <http://example.org/propA> <http://example.org/valA> .
 }
 UNION
 {
 ?focus_node <http://example.org/propD> <http://example.org/valD> .
-?focus_node <http://example.org/propC> <http://example.org/valC>
+?focus_node <http://example.org/propC> <http://example.org/valC> .
 }
 """
     ]
