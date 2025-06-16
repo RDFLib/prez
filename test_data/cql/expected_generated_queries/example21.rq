@@ -2,6 +2,6 @@ CONSTRUCT {
 ?focus_node <ex:built> ?dt_1_instant
 }
 WHERE {
-?focus_node <ex:built> ?dt_1_instant
+?focus_node <ex:built> ?dt_1_instant .
 FILTER (?dt_1_instant > "2012-06-05T00:00:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>)
 }

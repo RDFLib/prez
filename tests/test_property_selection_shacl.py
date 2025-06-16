@@ -286,14 +286,14 @@ def test_bnode_depth_union():
     expected_output = "".join("""
     {
         ?focus_node ?bn_p_1 ?bn_o_1 .
-        ?bn_o_1 ?bn_p_2 ?bn_o_2
+        ?bn_o_1 ?bn_p_2 ?bn_o_2 .
         FILTER isBLANK(?bn_o_1)
     }
     UNION
     {
         ?focus_node ?bn_p_1 ?bn_o_1 .
         ?bn_o_1 ?bn_p_2 ?bn_o_2 .
-        ?bn_o_2 ?bn_p_3 ?bn_o_3
+        ?bn_o_2 ?bn_p_3 ?bn_o_3 .
         FILTER isBLANK(?bn_o_1)
         FILTER isBLANK(?bn_o_2)
     }""".split())
@@ -322,14 +322,14 @@ def test_bnode_depth_direct():
     expected_output = "".join("""
     {
         ?focus_node ?bn_p_1 ?bn_o_1 .
-        ?bn_o_1 ?bn_p_2 ?bn_o_2
+        ?bn_o_1 ?bn_p_2 ?bn_o_2 .
         FILTER isBLANK(?bn_o_1)
     }
     UNION
     {
         ?focus_node ?bn_p_1 ?bn_o_1 .
         ?bn_o_1 ?bn_p_2 ?bn_o_2 .
-        ?bn_o_2 ?bn_p_3 ?bn_o_3
+        ?bn_o_2 ?bn_p_3 ?bn_o_3 .
         FILTER isBLANK(?bn_o_1)
         FILTER isBLANK(?bn_o_2)
     }""".split())
@@ -466,27 +466,26 @@ def test_union_nested_bnode():
 
     # Pattern 1: dcterms:publisher
     expected_pattern_1 = """{
-?focus_node <http://purl.org/dc/terms/publisher> ?prof_1_node_1
+?focus_node <http://purl.org/dc/terms/publisher> ?prof_1_node_1 .
 }"""
     assert union_pattern.group_graph_patterns[0].to_string().strip() == expected_pattern_1.strip()
 
     # Pattern 2: reg:status
     expected_pattern_2 = """{
-?focus_node <http://purl.org/linked-data/registry#status> ?prof_1_node_2
+?focus_node <http://purl.org/linked-data/registry#status> ?prof_1_node_2 .
 }"""
     assert union_pattern.group_graph_patterns[1].to_string().strip() == expected_pattern_2.strip()
 
     # Pattern 3: ( prov:qualifiedDerivation prov:hadRole )
     expected_pattern_3 = """{
 ?prof_1_node_3 <http://www.w3.org/ns/prov#hadRole> ?prof_1_node_4 .
-?focus_node <http://www.w3.org/ns/prov#qualifiedDerivation> ?prof_1_node_3
-
+?focus_node <http://www.w3.org/ns/prov#qualifiedDerivation> ?prof_1_node_3 .
 }"""
     assert union_pattern.group_graph_patterns[2].to_string().strip() == expected_pattern_3.strip()
 
     # Pattern 4: inverse(dcterms:creator)
     expected_pattern_4 = """{
-?prof_1_node_5 <http://purl.org/dc/terms/creator> ?focus_node
+?prof_1_node_5 <http://purl.org/dc/terms/creator> ?focus_node .
 }"""
     assert union_pattern.group_graph_patterns[3].to_string().strip() == expected_pattern_4.strip()
 
@@ -593,16 +592,16 @@ def test_sh_class_in_bnode_path(mock_settings):
     {
     ?prof_1_node_2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/DerivationRole> .
     ?prof_1_node_1 <http://www.w3.org/ns/prov#hadRole> ?prof_1_node_2 .
-    ?focus_node <http://www.w3.org/ns/prov#qualifiedDerivation> ?prof_1_node_1
+    ?focus_node <http://www.w3.org/ns/prov#qualifiedDerivation> ?prof_1_node_1 .
     }
     UNION
     {
     ?prof_1_node_3 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/LabelType> .
-    ?focus_node <http://www.w3.org/2004/02/skos/core#prefLabel> ?prof_1_node_3
+    ?focus_node <http://www.w3.org/2004/02/skos/core#prefLabel> ?prof_1_node_3 .
     }
     UNION
     {
-    ?focus_node <http://purl.org/dc/terms/title> ?prof_1_node_4
+    ?focus_node <http://purl.org/dc/terms/title> ?prof_1_node_4 .
     }
     """
 
