@@ -30,7 +30,7 @@ pydantic = "^2.10.6"
 pydantic-settings = "^2.5.0"
 pyld = "^2.0.4"
 aiocache = "^0.12.2"
-sparql-grammar-pydantic = "^0.1.9"
+sparql-grammar-pydantic = "^0.1.10"
 rdf2geojson = {git = "https://github.com/Kurrawong/rdf2geojson.git", rev = "v0.7.2"}
 python-multipart = "^0.0.20"
 pyoxigraph = "^0.4.4"
