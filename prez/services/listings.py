@@ -46,10 +46,10 @@ DWC = Namespace("http://rs.tdwg.org/dwc/terms/")
 
 
 async def listing_profiles(
-        data_repo,
-        system_repo,
-        query_params,
-        pmts,
+    data_repo,
+    system_repo,
+    query_params,
+    pmts,
 ):
     """
     Optimized listing function specifically for profiles.
@@ -113,21 +113,21 @@ def _add_geom_triple_pattern_match(tssp_list: list[TriplesSameSubjectPath]):
 
 
 async def listing_function(
-        data_repo,
-        system_repo,
-        endpoint_nodeshape,
-        endpoint_structure,
-        search_query,
-        concept_hierarchy_query,
-        cql_parser,
-        pmts,
-        profile_nodeshape,
-        query_params,
-        original_endpoint_type,
-        url,
+    data_repo,
+    system_repo,
+    endpoint_nodeshape,
+    endpoint_structure,
+    search_query,
+    concept_hierarchy_query,
+    cql_parser,
+    pmts,
+    profile_nodeshape,
+    query_params,
+    original_endpoint_type,
+    url,
 ):
     if (
-            pmts.selected["profile"] == ALTREXT["alt-profile"]
+        pmts.selected["profile"] == ALTREXT["alt-profile"]
     ):  # recalculate the endpoint node shape
         endpoint_nodeshape = await handle_alt_profile(original_endpoint_type, pmts)
         # set the query repo
@@ -143,7 +143,7 @@ async def listing_function(
         query_params=query_params,
     )
     if (
-            pmts.selected["mediatype"] == "application/geo+json"
+        pmts.selected["mediatype"] == "application/geo+json"
     ):  # Ensure the focus nodes have a geometry in the SPARQL
         # subselect. If they are missing, the subsequent GeoJSON conversion will drop any Features without geometries.
         _add_geom_triple_pattern_match(subselect_kwargs["inner_select_tssp_list"])
@@ -176,21 +176,23 @@ async def listing_function(
     queries.append(main_query.to_string())
 
     if (
-            pmts.requested_mediatypes is not None
-            and pmts.requested_mediatypes[0][0] == "application/sparql-query"
+        pmts.requested_mediatypes is not None
+        and pmts.requested_mediatypes[0][0] == "application/sparql-query"
     ):
         return PlainTextResponse(queries[0], media_type="application/sparql-query")
 
     # add a count query if it's an annotated mediatype
     if ("anot+" in pmts.selected["mediatype"] and not search_query) or (
-            pmts.selected["mediatype"] == "application/geo+json"
+        pmts.selected["mediatype"] == "application/geo+json"
     ):
         subselect = copy.deepcopy(main_query.inner_select)
         count_query = CountQuery(original_subselect=subselect).to_string()
         queries.append(count_query)
     facet_profile_uri = None
     if query_params.facet_profile:
-        facet_profile_uri, facets_query = await _create_facets_query(main_query, query_params)
+        facet_profile_uri, facets_query = await _create_facets_query(
+            main_query, query_params
+        )
         if facets_query:
             queries.append(facets_query.to_string())
     item_graph, _ = await query_repo.send_queries(queries, [])
@@ -230,13 +232,13 @@ async def _create_facets_query(main_query, query_params):
             uri=profile_uri,
             graph=profiles_graph_cache,
             kind="profile",
-            focus_node=Var(value="focus_node")
+            focus_node=Var(value="focus_node"),
         )
         facet_property_shape = facet_nodeshape.propertyShapes[0]
         subselect_for_faceting = copy.deepcopy(main_query.inner_select)
         facets_query = FacetQuery(
             original_subselect=subselect_for_faceting,
-            property_shape=facet_property_shape
+            property_shape=facet_property_shape,
         )
         return profile_uri, facets_query
 
@@ -245,16 +247,15 @@ async def get_facet_profile_uri_from_qsa(facet_profile_qsa):
     requested_facet_profile = facet_profile_qsa
     profile_uri = next(  # check if QSA is identifier
         profiles_graph_cache.subjects(
-            predicate=DCTERMS.identifier,
-            object=Literal(requested_facet_profile)
+            predicate=DCTERMS.identifier, object=Literal(requested_facet_profile)
         ),
-        None
+        None,
     ) or next(
         profiles_graph_cache.subjects(
             predicate=DCTERMS.identifier,
-            object=Literal(requested_facet_profile, datatype=XSD.token)
+            object=Literal(requested_facet_profile, datatype=XSD.token),
         ),
-        None
+        None,
     )
     if not profile_uri:  # check if QSA is uri
         try:
@@ -267,7 +268,9 @@ async def get_facet_profile_uri_from_qsa(facet_profile_qsa):
 
     if not profile_uri:  # check if QSA is curie
         try:
-            requested_facet_profile_uri = await get_uri_for_curie_id(requested_facet_profile)
+            requested_facet_profile_uri = await get_uri_for_curie_id(
+                requested_facet_profile
+            )
             if requested_facet_profile_uri:
                 if (requested_facet_profile_uri, None, None) in profiles_graph_cache:
                     profile_uri = requested_facet_profile_uri
@@ -277,16 +280,16 @@ async def get_facet_profile_uri_from_qsa(facet_profile_qsa):
 
 
 async def ogc_features_listing_function(
-        endpoint_uri_type,
-        endpoint_nodeshape,
-        profile_nodeshape,
-        selected_mediatype,
-        url,
-        data_repo,
-        system_repo,
-        cql_parser,
-        query_params,
-        path_params,
+    endpoint_uri_type,
+    endpoint_nodeshape,
+    profile_nodeshape,
+    selected_mediatype,
+    url,
+    data_repo,
+    system_repo,
+    cql_parser,
+    query_params,
+    path_params,
 ):
     count_query = None
     count = 0
@@ -383,10 +386,17 @@ async def ogc_features_listing_function(
 
     # only need the annotations for mediatypes of application/json or annotated mediatypes
     annotations_graph = None
-    if (selected_mediatype in AnnotatedRDFMediaType) or \
-            (selected_mediatype == "application/json") or \
-            (selected_mediatype == "application/geo+json" and "human" in profile_nodeshape.uri.lower()):
-        annotations_graph = await return_annotated_rdf(item_graph, data_repo, system_repo)
+    if (
+        (selected_mediatype in AnnotatedRDFMediaType)
+        or (selected_mediatype == "application/json")
+        or (
+            selected_mediatype == "application/geo+json"
+            and "human" in profile_nodeshape.uri.lower()
+        )
+    ):
+        annotations_graph = await return_annotated_rdf(
+            item_graph, data_repo, system_repo
+        )
     if selected_mediatype == "application/json":
         if endpoint_uri_type[0] in [
             OGCFEAT["queryables-local"],
@@ -433,7 +443,7 @@ async def ogc_features_listing_function(
             do_validate=False,
             iri2id=get_curie_id_for_uri,
             kind=kind,
-            fc_uri=collection_uri
+            fc_uri=collection_uri,
         )
         link_headers, geojson = await generate_geojson_extras(
             count, geojson, query_params, selected_mediatype, url
@@ -446,7 +456,5 @@ async def ogc_features_listing_function(
     elif selected_mediatype in AnnotatedRDFMediaType:
         item_graph += annotations_graph
         non_anot_mt = selected_mediatype.replace("anot+", "")
-        content = io.BytesIO(
-            item_graph.serialize(format=non_anot_mt, encoding="utf-8")
-        )
+        content = io.BytesIO(item_graph.serialize(format=non_anot_mt, encoding="utf-8"))
     return content, link_headers
