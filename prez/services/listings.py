@@ -4,8 +4,9 @@ import json
 import logging
 
 from fastapi.responses import PlainTextResponse
+from pyoxigraph import Store as OxiStore, Quad as OxiQuad, NamedNode as OxiNamedNode, BlankNode as OxiBlankNode, Literal as OxiLiteral, DefaultGraph as OxiDefaultGraph
 from rdf2geojson import convert
-from rdflib import Literal, DCTERMS, XSD, Namespace, URIRef, BNode
+from rdflib import Graph, Literal, DCTERMS, XSD, Namespace, URIRef, BNode
 from rdflib.namespace import GEO, RDF, PROF
 from sparql_grammar_pydantic import (
     IRI,
@@ -17,6 +18,7 @@ from sparql_grammar_pydantic import (
 from prez.cache import profiles_graph_cache
 from prez.config import settings
 from prez.enums import NonAnnotatedRDFMediaType, AnnotatedRDFMediaType
+from prez.repositories import Repo
 from prez.exceptions.model_exceptions import PrefixNotBoundException
 from prez.reference_data.prez_ns import ALTREXT, OGCFEAT, PREZ
 from prez.renderers.renderer import (
@@ -31,7 +33,7 @@ from prez.renderers.renderer import (
 )
 from prez.services.curie_functions import get_curie_id_for_uri, get_uri_for_curie_id
 from prez.services.generate_queryables import generate_queryables_json
-from prez.services.link_generation import add_prez_links
+from prez.services.link_generation import add_prez_links, add_prez_links_for_oxigraph
 from prez.services.query_generation.count import CountQuery
 from prez.services.query_generation.facet import FacetQuery
 from prez.services.query_generation.shacl import NodeShape
@@ -113,8 +115,8 @@ def _add_geom_triple_pattern_match(tssp_list: list[TriplesSameSubjectPath]):
 
 
 async def listing_function(
-    data_repo,
-    system_repo,
+    data_repo: Repo,
+    system_repo: Repo,
     endpoint_nodeshape,
     endpoint_structure,
     search_query,
@@ -131,9 +133,11 @@ async def listing_function(
     ):  # recalculate the endpoint node shape
         endpoint_nodeshape = await handle_alt_profile(original_endpoint_type, pmts)
         # set the query repo
-        query_repo = system_repo
+        query_repo: Repo = system_repo
+        use_oxigraph = False
     else:
         query_repo = data_repo
+        use_oxigraph = True
 
     subselect_kwargs = merge_listing_query_grammar_inputs(
         cql_parser=cql_parser,
@@ -195,32 +199,63 @@ async def listing_function(
         )
         if facets_query:
             queries.append(facets_query.to_string())
-    item_graph, _ = await query_repo.send_queries(queries, [])
-    if facet_profile_uri:
-        item_graph.add((BNode(), PREZ.facetProfile, facet_profile_uri))
-    if "anot+" in pmts.selected["mediatype"]:
-        item_graph.add((BNode(), PREZ.currentProfile, pmts.selected["profile"]))
-        await add_prez_links(item_graph, query_repo, endpoint_structure)
+    if use_oxigraph:
+        item_store: OxiStore
+        item_store, _ = await query_repo.send_queries(queries, [], return_oxigraph_store=True)
+        default = OxiDefaultGraph()
+        if facet_profile_uri:
+            item_store.add(OxiQuad(OxiBlankNode(), OxiNamedNode(PREZ.facetProfile), OxiNamedNode(facet_profile_uri), default))
+        if "anot+" in pmts.selected["mediatype"]:
+            item_store.add(OxiQuad(OxiBlankNode(), OxiNamedNode(PREZ.currentProfile), OxiNamedNode(pmts.selected["profile"]), default))
+            await add_prez_links_for_oxigraph(item_store, query_repo, endpoint_structure)
 
-    # count search results - hard to do in SPARQL as the SELECT part of the query is NOT aggregated
-    if search_query:
-        count = len(list(item_graph.subjects(RDF.type, PREZ.SearchResult)))
-        if count == search_query.limit:
-            count_literal = f">{count - 1}"
-        else:
-            count_literal = f"{count}"
-        item_graph.add((PREZ.SearchResult, PREZ["count"], Literal(count_literal)))
-    return await return_from_graph(
-        item_graph,
-        pmts.selected["mediatype"],
-        pmts.selected["profile"],
-        pmts.generate_response_headers(),
-        pmts.selected["class"],
-        data_repo,
-        system_repo,
-        query_params,
-        url,
-    )
+        # count search results - hard to do in SPARQL as the SELECT part of the query is NOT aggregated
+        if search_query:
+            count = len(list(item_store.quads_for_pattern(None, OxiNamedNode(RDF.type), OxiNamedNode(PREZ.SearchResult), None)))
+            if count == search_query.limit:
+                count_literal = f">{count - 1}"
+            else:
+                count_literal = f"{count}"
+            item_store.add(OxiQuad(OxiNamedNode(PREZ.SearchResult), OxiNamedNode(PREZ["count"]), OxiLiteral(count_literal), default))
+        return await return_from_graph(
+            item_store,
+            pmts.selected["mediatype"],
+            pmts.selected["profile"],
+            pmts.generate_response_headers(),
+            pmts.selected["class"],
+            data_repo,
+            system_repo,
+            query_params,
+            url,
+        )
+    else:
+        item_graph: Graph
+        item_graph, _ = await query_repo.send_queries(queries, [])
+        if facet_profile_uri:
+            item_graph.add((BNode(), PREZ.facetProfile, facet_profile_uri))
+        if "anot+" in pmts.selected["mediatype"]:
+            item_graph.add((BNode(), PREZ.currentProfile, pmts.selected["profile"]))
+            await add_prez_links(item_graph, query_repo, endpoint_structure)
+
+        # count search results - hard to do in SPARQL as the SELECT part of the query is NOT aggregated
+        if search_query:
+            count = len(list(item_graph.subjects(RDF.type, PREZ.SearchResult)))
+            if count == search_query.limit:
+                count_literal = f">{count - 1}"
+            else:
+                count_literal = f"{count}"
+            item_graph.add((PREZ.SearchResult, PREZ["count"], Literal(count_literal)))
+        return await return_from_graph(
+            item_graph,
+            pmts.selected["mediatype"],
+            pmts.selected["profile"],
+            pmts.generate_response_headers(),
+            pmts.selected["class"],
+            data_repo,
+            system_repo,
+            query_params,
+            url,
+        )
 
 
 async def _create_facets_query(main_query, query_params):
