@@ -3,6 +3,7 @@ from typing import FrozenSet, List, Set, Tuple
 
 from aiocache import caches
 from rdflib import Graph, Literal, URIRef
+from pyoxigraph import Store as OxiStore, NamedNode as OxiNamedNode, Literal as OxiLiteral
 from sparql_grammar_pydantic import IRI
 
 from prez.dependencies import get_annotations_repo
@@ -151,5 +152,45 @@ async def get_annotation_properties(
     if not terms_and_types:
         return Graph()
 
+    annotations_g = await get_annotations(terms_and_types, repo, system_repo)
+    return annotations_g
+
+
+async def get_annotation_properties_for_oxigraph(
+    item_store: OxiStore,
+    repo: Repo,
+    system_repo: Repo,
+) -> Graph:
+    """
+    Gets annotation data used for HTML display.
+    This includes the label, description, and provenance, if available.
+    Note the following three default predicates are always included. This allows context, i.e. background ontologies,
+    which are often diverse in the predicates they use, to be aligned with the default predicates used by Prez. The full
+    range of predicates used can be manually included via profiles.
+    
+    Note, this is the oxigraph version, it finds all terms and datatypes from the item oxigraph store,
+    and retrieves annotations for them.
+    But the response is still an rdflib Graph, so it can be used in the same way as the rdflib version.
+    This is because the annotations cache and all annotations logic are still based on URIRefs and rdflib Graphs. 
+    """
+    # get all terms and datatypes for which we want to retrieve annotations
+    unique_predicates = set()
+    unique_objects = set()
+    unique_subjects = set()
+    for quad in item_store:
+        unique_subjects.add(quad[0])
+        unique_predicates.add(quad[1])
+        unique_objects.add(quad[2])
+    all_terms = unique_objects.union(unique_predicates).union(unique_subjects)
+
+    all_uris = set(URIRef(term.value) for term in all_terms if isinstance(term, OxiNamedNode))
+    all_dtypes = set(
+        URIRef(term.datatype.value)
+        for term in all_terms
+        if isinstance(term, OxiLiteral) and (term.datatype is not None)
+    )
+    if len(all_uris) == 0 and len(all_dtypes) == 0:
+        return Graph() 
+    terms_and_types = all_uris.union(all_dtypes)
     annotations_g = await get_annotations(terms_and_types, repo, system_repo)
     return annotations_g

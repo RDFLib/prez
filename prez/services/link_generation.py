@@ -2,6 +2,8 @@ import logging
 import time
 from string import Template
 
+from pyoxigraph import Store as OxiStore, Quad as OxiQuad, NamedNode as OxiNamedNode, DefaultGraph as OxiDefaultGraph
+from oxrdflib._converter import to_ox
 from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import RDF, SH
 from sparql_grammar_pydantic import (
@@ -44,25 +46,58 @@ async def add_prez_links(
             await _link_generation(uri, repo, klasses, graph, endpoint_structure)
     log.debug(f"Time taken to add links: {time.time() - t_start}")
 
+async def add_prez_links_for_oxigraph(
+    store: OxiStore, repo: Repo, endpoint_structure, uris: list[URIRef] | None = None
+):
+    """
+    Adds internal links to the given store for all URIRefs that have a class and endpoint associated with them.
+    """
+    t_start = time.time()
+    # get all URIRefs - if Prez can find a class and endpoint for them, an internal link will be generated.
+    if uris is None:
+        # TODO: Is there a faster way to get all unique subjects and objects in Oxigraph?
+        unique_subjects: set[str] = set()
+        unique_objects: set[str] = set()
+        for (s,p,o,c) in store:
+            if isinstance(s, OxiNamedNode):
+                unique_subjects.add(s.value)
+            if isinstance(o, OxiNamedNode):
+                unique_objects.add(o.value)
+        uris = [URIRef(uri) for uri in unique_subjects.union(unique_objects)]
+    t = time.time()
+    uri_to_klasses = await get_classes(uris, repo)
+    log.debug(f"Time taken to get classes: {time.time() - t}")
+
+    for uri, klasses in uri_to_klasses.items():
+        if klasses:  # need class to know which endpoints can deliver the class
+            await _link_generation(uri, repo, klasses, store, endpoint_structure)
+    log.debug(f"Time taken to add links: {time.time() - t_start}")
 
 async def _link_generation(
     uri: URIRef,
     repo: Repo,
     klasses,
-    graph: Graph,
+    graph: Graph|OxiStore,
     endpoint_structure: str = settings.endpoint_structure,
 ):
     """
     Generates links for the given URI if it is not already cached.
     """
+    is_oxigraph = isinstance(graph, OxiStore)
     # check the cache
     quads = list(
         links_ids_graph_cache.quads((None, None, None, uri))
     )  # context required as not all triples that relate to links or identifiers for a particular object have that
     # object's URI as the subject
     if quads:
-        for quad in quads:
-            graph.add(quad[:3])
+        if is_oxigraph:
+            store: OxiStore = graph
+            default = OxiDefaultGraph()
+            for q in quads:
+                store.add(OxiQuad(to_ox(q[0]), to_ox(q[1]), to_ox(q[2]), default))
+        else:
+            for quad in quads:
+                graph.add(quad[:3])
     # get the endpoints that can deliver the class
     # many node shapes to one endpoint; multiple node shapes can point to the endpoint
     else:  # generate links
@@ -148,7 +183,12 @@ async def get_nodeshapes_constraining_class(klasses, uri):
 
 
 async def add_links_to_graph_and_cache(
-    curie_for_uri, graph, members_link, object_link, uri, identifiers: dict
+    curie_for_uri,
+    graph: Graph | OxiStore,
+    members_link,
+    object_link,
+    uri: URIRef,
+    identifiers: dict
 ):
     """
     Adds links and identifiers to the given graph and cache.
@@ -168,9 +208,15 @@ async def add_links_to_graph_and_cache(
         )
         if not existing_members_link:
             quads.append((uri, PREZ["members"], Literal(members_link), uri))
-    for quad in quads:
-        graph.add(quad[:3])
-        links_ids_graph_cache.add(quad)
+    if isinstance(graph, OxiStore):
+        default = OxiDefaultGraph()
+        for q in quads:
+            graph.add(OxiQuad(to_ox(q[0]), to_ox(q[1]), to_ox(q[2]), default))
+            links_ids_graph_cache.add(q)
+    else:
+        for quad in quads:
+            graph.add(quad[:3])
+            links_ids_graph_cache.add(quad)
 
 
 async def create_link_strings(hierarchy_level, solution, uri, endpoint_structure):

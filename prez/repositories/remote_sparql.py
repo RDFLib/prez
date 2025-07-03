@@ -9,6 +9,7 @@ from rdflib import Graph, Namespace, URIRef
 
 from prez.config import settings
 from prez.repositories.base import Repo
+from prez.services.connegp_service import OXIGRAPH_SERIALIZER_TYPES_MAP
 
 PREZ = Namespace("https://prez.dev/")
 
@@ -77,7 +78,7 @@ class RemoteSparqlRepo(Repo):
         else:
             s = Store()
         content_bytes = await response.aread()
-        oxigraph_format = sparql_response_mimetype_to_oxigraph_format(response_format)
+        oxigraph_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(response_format, RdfFormat.N_TRIPLES)
         s.bulk_load(content_bytes, oxigraph_format)
         return s
 
@@ -138,24 +139,3 @@ class RemoteSparqlRepo(Repo):
 
         return response
 
-
-def sparql_response_mimetype_to_oxigraph_format(mimetype: str) -> RdfFormat:
-    """Converts a SPARQL response mimetype to an Oxigraph RdfFormat."""
-    if mimetype == "application/n-triples":
-        return RdfFormat.N_TRIPLES
-    elif mimetype == "application/rdf+xml":
-        return RdfFormat.RDF_XML
-    elif mimetype == "text/turtle":
-        return RdfFormat.TURTLE
-    elif mimetype == "application/ld+json":
-        return RdfFormat.JSON_LD
-    elif mimetype == "turtle" or mimetype == "ttl":
-        return RdfFormat.TURTLE
-    elif mimetype == "xml" or mimetype == "application/xml":
-        return RdfFormat.RDF_XML
-    elif mimetype == "application/json" or mimetype == "json":
-        return RdfFormat.JSON_LD
-    elif mimetype == "ntriples" or mimetype == "nt":
-        return RdfFormat.N_TRIPLES
-    else:
-        raise ValueError(f"Unsupported SPARQL response mimetype: {mimetype}")
