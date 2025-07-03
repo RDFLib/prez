@@ -34,7 +34,13 @@ log = logging.getLogger(__name__)
 
 
 async def object_function(
-        data_repo, system_repo, endpoint_structure, pmts, profile_nodeshape, url, query_params
+    data_repo,
+    system_repo,
+    endpoint_structure,
+    pmts,
+    profile_nodeshape,
+    url,
+    query_params,
 ):
     if pmts.selected["profile"] == ALTREXT["alt-profile"]:
         list_query_params = ListingQueryParams(
@@ -52,7 +58,7 @@ async def object_function(
             filter_lang=None,
             order_by=None,
             order_by_direction=None,
-            subscription_key=query_params.subscription_key
+            subscription_key=query_params.subscription_key,
         )
         return await listing_function(
             data_repo=data_repo,
@@ -83,7 +89,7 @@ async def object_function(
     ).to_string()
 
     if pmts.requested_mediatypes and (
-            pmts.requested_mediatypes[0][0] == "application/sparql-query"
+        pmts.requested_mediatypes[0][0] == "application/sparql-query"
     ):
         return PlainTextResponse(query, media_type="application/sparql-query")
     query_start_time = time.time()
@@ -92,7 +98,7 @@ async def object_function(
     if settings.prez_ui_url:
         # If HTML or no specific media type requested
         if pmts.requested_mediatypes and (
-                pmts.requested_mediatypes[0][0] in ("text/html", "*/*")
+            pmts.requested_mediatypes[0][0] in ("text/html", "*/*")
         ):
             item_uri = URIRef(profile_nodeshape.focus_node.value)
             await add_prez_links(item_graph, data_repo, endpoint_structure, [item_uri])
@@ -103,7 +109,9 @@ async def object_function(
             if prez_link:
                 return RedirectResponse(prez_ui_url + str(prez_link))
             elif len(item_graph):
-                return RedirectResponse(prez_ui_url + "/object?uri=" + urllib.parse.quote_plus(item_uri))
+                return RedirectResponse(
+                    prez_ui_url + "/object?uri=" + urllib.parse.quote_plus(item_uri)
+                )
             else:
                 return RedirectResponse(
                     prez_ui_url + "/404?uri=" + urllib.parse.quote_plus(item_uri)
@@ -132,13 +140,13 @@ def create_parent_link(url):
 
 
 async def ogc_features_object_function(
-        template_queries,
-        selected_mediatype,
-        profile_nodeshape,
-        url,
-        data_repo,
-        system_repo,
-        path_params,
+    template_queries,
+    selected_mediatype,
+    profile_nodeshape,
+    url,
+    data_repo,
+    system_repo,
+    path_params,
 ):
     collection_uri = path_params.get("collection_uri")
     feature_uri = path_params.get("feature_uri")
@@ -195,10 +203,17 @@ async def ogc_features_object_function(
         raise URINotFoundException(uri=uri)
 
     annotations_graph = None
-    if (selected_mediatype in AnnotatedRDFMediaType) or \
-            (selected_mediatype == "application/json") or \
-            (selected_mediatype == "application/geo+json" and "human" in profile_nodeshape.uri.lower()):
-        annotations_graph = await return_annotated_rdf(item_graph, data_repo, system_repo)
+    if (
+        (selected_mediatype in AnnotatedRDFMediaType)
+        or (selected_mediatype == "application/json")
+        or (
+            selected_mediatype == "application/geo+json"
+            and "human" in profile_nodeshape.uri.lower()
+        )
+    ):
+        annotations_graph = await return_annotated_rdf(
+            item_graph, data_repo, system_repo
+        )
 
     link_headers = None
     if selected_mediatype == "application/sparql-query":
@@ -215,9 +230,19 @@ async def ogc_features_object_function(
     elif selected_mediatype == "application/geo+json":
         if "human" in profile_nodeshape.uri.lower():  # human readable profile
             item_graph += annotations_graph
-            geojson = convert(g=item_graph, do_validate=False, iri2id=get_curie_id_for_uri, kind="human")
+            geojson = convert(
+                g=item_graph,
+                do_validate=False,
+                iri2id=get_curie_id_for_uri,
+                kind="human",
+            )
         else:
-            geojson = convert(g=item_graph, do_validate=False, iri2id=get_curie_id_for_uri, kind="machine")
+            geojson = convert(
+                g=item_graph,
+                do_validate=False,
+                iri2id=get_curie_id_for_uri,
+                kind="machine",
+            )
         self_alt_links = create_self_alt_links(selected_mediatype, url)
         parent_link = create_parent_link(url)
         all_links = [*self_alt_links, parent_link]
@@ -233,9 +258,7 @@ async def ogc_features_object_function(
     elif selected_mediatype in AnnotatedRDFMediaType:
         item_graph += annotations_graph
         non_anot_mt = selected_mediatype.replace("anot+", "")
-        content = io.BytesIO(
-            item_graph.serialize(format=non_anot_mt, encoding="utf-8")
-        )
+        content = io.BytesIO(item_graph.serialize(format=non_anot_mt, encoding="utf-8"))
     return content, link_headers
 
 

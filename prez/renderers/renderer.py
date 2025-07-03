@@ -18,6 +18,8 @@ from rdf2geojson.contrib.geomet import wkt
 from rdflib import Graph
 from rdflib import URIRef
 from rdflib.namespace import GEO, RDF
+from pyoxigraph import RdfFormat, Store as OxiStore, Quad as OxiQuad, DefaultGraph as OxiDefaultGraph
+from oxrdflib._converter import to_ox
 from sparql_grammar_pydantic import (
     IRI,
     Var,
@@ -33,8 +35,8 @@ from prez.reference_data.prez_ns import OGCFEAT, ONT, PREZ
 from prez.renderers.csv_renderer import render_csv_dropdown
 from prez.renderers.json_renderer import NotFoundError, render_json_dropdown
 from prez.repositories import Repo
-from prez.services.annotations import get_annotation_properties
-from prez.services.connegp_service import RDF_MEDIATYPES, MINIMAL_OGC_FEATURES_RDF_FORMATS
+from prez.services.annotations import get_annotation_properties, get_annotation_properties_for_oxigraph
+from prez.services.connegp_service import OXIGRAPH_SERIALIZER_TYPES_MAP, RDF_MEDIATYPES, MINIMAL_OGC_FEATURES_RDF_FORMATS
 from prez.services.connegp_service import RDF_SERIALIZER_TYPES_MAP
 from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.query_generation.shacl import NodeShape
@@ -43,7 +45,7 @@ log = logging.getLogger(__name__)
 
 
 async def return_from_graph(
-    graph,
+    graph: Graph|OxiStore,
     mediatype,
     profile,
     profile_headers,
@@ -55,12 +57,28 @@ async def return_from_graph(
 ):
     profile_headers["Content-Disposition"] = "inline"
 
+    is_oxigraph = isinstance(graph, OxiStore)
+
     if str(mediatype) in RDF_MEDIATYPES:
-        return await return_rdf(graph, mediatype, profile_headers)
+        if is_oxigraph:
+            assert isinstance(graph, OxiStore)
+            store: OxiStore = graph
+            oxigraph_prefixes = {p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()}
+            return await return_rdf_from_oxigraph(store, mediatype, profile_headers, prefixes=oxigraph_prefixes)
+        else:
+            return await return_rdf(graph, mediatype, profile_headers)
 
     elif profile == URIRef("https://w3id.org/profile/dd"):
-        annotations_graph = await return_annotated_rdf(graph, profile, repo)
-        graph.__iadd__(annotations_graph)
+        if is_oxigraph:
+            store: OxiStore = graph
+            # This still returns an RDFlib graph of anotations, even when the store is an Oxigraph Store.
+            annotations_graph = await return_annotated_rdf_for_oxigraph(store, repo, system_repo)
+            default = OxiDefaultGraph()
+            for s, p, o in annotations_graph.triples((None, None, None)):
+                store.add(OxiQuad(to_ox(s), to_ox(p), to_ox(o), default))
+        else:
+            annotations_graph = await return_annotated_rdf(graph, repo, system_repo)
+            graph.__iadd__(annotations_graph)
 
         try:
             # TODO: Currently, data is generated in memory, instead of in a streaming manner.
@@ -91,8 +109,16 @@ async def return_from_graph(
     elif str(mediatype) == "application/geo+json":
         if "human" in profile.lower():
             kind = "human"
-            annotations_graph = await return_annotated_rdf(graph, repo, system_repo)
-            graph.__iadd__(annotations_graph)
+            if is_oxigraph:
+                store: OxiStore = graph
+                # This still returns an RDFlib graph of anotations, even when the store is an Oxigraph Store.
+                annotations_graph = await return_annotated_rdf_for_oxigraph(store, repo, system_repo)
+                default = OxiDefaultGraph()
+                for s, p, o in annotations_graph.triples((None, None, None)):
+                    store.add(OxiQuad(to_ox(s), to_ox(p), to_ox(o), default))
+            else:
+                annotations_graph = await return_annotated_rdf(graph, repo, system_repo)
+                graph.__iadd__(annotations_graph)
         else:
             kind = "machine"
         collection_label = None
@@ -121,12 +147,26 @@ async def return_from_graph(
     else:
         if "anot+" in mediatype:
             non_anot_mediatype = mediatype.replace("anot+", "")
-            annotations_graph = await return_annotated_rdf(graph, repo, system_repo)
-            graph.__iadd__(annotations_graph)
-            graph.namespace_manager = prefix_graph.namespace_manager
-            content = io.BytesIO(
-                graph.serialize(format=non_anot_mediatype, encoding="utf-8")
-            )
+            if is_oxigraph:
+                store: OxiStore = graph
+                # This still returns an RDFlib graph of anotations, even when the store is an Oxigraph Store.
+                annotations_graph: Graph = await return_annotated_rdf_for_oxigraph(store, repo, system_repo)
+                default = OxiDefaultGraph()
+                for s, p, o in annotations_graph.triples((None, None, None)):
+                    store.add(OxiQuad(to_ox(s), to_ox(p), to_ox(o), default))
+                oxigraph_prefixes = {p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()}
+                content = io.BytesIO()
+                oxigraph_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(non_anot_mediatype, RdfFormat.N_TRIPLES)
+                # TODO, what happens if the store has content in a named graph? This can only dump the default graph.
+                store.dump(content, oxigraph_format, from_graph=default, prefixes=oxigraph_prefixes)
+                content.seek(0)  # Reset the stream position to the beginning
+            else:
+                annotations_graph = await return_annotated_rdf(graph, repo, system_repo)
+                graph.__iadd__(annotations_graph)
+                graph.namespace_manager = prefix_graph.namespace_manager
+                content = io.BytesIO(
+                    graph.serialize(format=non_anot_mediatype, encoding="utf-8")
+                )
             return StreamingResponse(
                 content=content, media_type=non_anot_mediatype, headers=profile_headers
             )
@@ -156,6 +196,20 @@ async def return_rdf(graph: Graph, mediatype, profile_headers):
     profile_headers["Content-Disposition"] = "inline"
     return StreamingResponse(content=obj, media_type=mediatype, headers=profile_headers)
 
+async def return_rdf_from_oxigraph(store: OxiStore, mediatype, profile_headers, prefixes: dict[str, str] = None):
+    
+    if mediatype == "text/anot+turtle":
+        serializer_format = RdfFormat.TURTLE
+    else:
+        serializer_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(str(mediatype), RdfFormat.N_TRIPLES)
+
+    io_obj = io.BytesIO()
+    # TODO, what happens if the store has content in a named graph? This can only dump the default graph.
+    store.dump(io_obj, serializer_format, from_graph=OxiDefaultGraph(), prefixes=prefixes)
+    io_obj.seek(0)  # Reset the stream position to the beginning
+    profile_headers["Content-Disposition"] = "inline"
+    return StreamingResponse(content=io_obj, media_type=mediatype, headers=profile_headers)
+
 
 async def return_annotated_rdf(
     graph: Graph,
@@ -164,6 +218,21 @@ async def return_annotated_rdf(
 ) -> Graph:
     t_start = time.time()
     annotations_graph = await get_annotation_properties(graph, repo, system_repo)
+    # get annotations for annotations - no need to do this recursively
+    annotations_graph += await get_annotation_properties(
+        annotations_graph, repo, system_repo
+    )
+    log.debug(f"Time to get annotations: {time.time() - t_start}")
+    # return graph.__iadd__(annotations_graph)
+    return annotations_graph
+
+async def return_annotated_rdf_for_oxigraph(
+    store: OxiStore,
+    repo: Repo,
+    system_repo: Repo,
+) -> Graph:
+    t_start = time.time()
+    annotations_graph = await get_annotation_properties_for_oxigraph(store, repo, system_repo)
     # get annotations for annotations - no need to do this recursively
     annotations_graph += await get_annotation_properties(
         annotations_graph, repo, system_repo

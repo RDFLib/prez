@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from pyoxigraph import Store
+from pyoxigraph import Store, RdfFormat
 from rdflib import Graph, URIRef
 from rdflib.namespace import DCAT, RDF
 
@@ -17,7 +17,7 @@ def test_store() -> Store:
     store = Store()
 
     for file in Path(__file__).parent.glob("../tests/data/prefixes/*.ttl"):
-        store.load(file.read_bytes(), "text/turtle")
+        store.load(file.read_bytes(), RdfFormat.TURTLE)
 
     return store
 
