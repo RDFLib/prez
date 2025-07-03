@@ -181,9 +181,16 @@ prez:OGCSchemesObjectProfile
                                  [ shext:bNodeDepth "2" ]
                                  shext:allPredicateValues
                                  [
-                                    sh:path [ sh:inversePath skos:inScheme ] ;
+                                    sh:path [
+                                        sh:union (
+                                            (
+                                                [ sh:inversePath skos:inScheme ]
+                                                rdf:type
+                                            )
+                                        )
+                                    ] ;
                                     sh:class skos:Collection
-                                 ]
+                                ]
                              )
                 ]
         ],
