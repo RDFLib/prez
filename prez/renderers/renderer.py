@@ -59,7 +59,7 @@ async def return_from_graph(
         return await return_rdf(graph, mediatype, profile_headers)
 
     elif profile == URIRef("https://w3id.org/profile/dd"):
-        annotations_graph = await return_annotated_rdf(graph, profile, repo)
+        annotations_graph = await return_annotated_rdf(graph, repo, system_repo)
         graph.__iadd__(annotations_graph)
 
         try:
