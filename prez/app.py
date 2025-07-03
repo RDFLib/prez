@@ -48,6 +48,7 @@ from prez.services.app_service import (
     prefix_initialisation,
     retrieve_remote_jena_fts_shapes,
     retrieve_remote_queryable_definitions,
+    retrieve_local_queryable_definitions,
     retrieve_remote_template_queries,
 )
 from prez.services.exception_catchers import (
@@ -130,6 +131,7 @@ async def lifespan(app: FastAPI):
     app.state.pyoxi_system_store = get_system_store()
     app.state.annotations_store = get_annotations_store()
     await retrieve_remote_queryable_definitions(app.state, app.state.pyoxi_system_store)
+    await retrieve_local_queryable_definitions(app.state, app.state.pyoxi_system_store)
     await load_system_data_to_oxigraph(app.state.pyoxi_system_store)
     await load_annotations_data_to_oxigraph(app.state.annotations_store)
 
