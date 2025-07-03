@@ -26,6 +26,12 @@ def test_skos_concept_scheme_object_profile_returns_incoming_in_scheme_from_skos
         URIRef("https://linked.data.gov.au/def/road-types"),
     ) in response_graph
 
+    # /qld contains a prez:link
+    assert response_graph.value(
+        URIRef("https://linked.data.gov.au/def/road-types/qld"),
+        PREZ.link,
+    )
+
     # /yard is a skos:Concept, it should not exist in the response.
     assert (
         URIRef("https://linked.data.gov.au/def/road-types/yard"),
