@@ -180,13 +180,17 @@ prez:OGCSchemesObjectProfile
                     sh:union (
                                  [ shext:bNodeDepth "2" ]
                                  shext:allPredicateValues
+                                 [
+                                    sh:path [ sh:inversePath skos:inScheme ] ;
+                                    sh:class skos:Collection
+                                 ]
                              )
                 ]
         ],
         [
             sh:maxCount 0 ;
             sh:path skos:hasTopConcept ;
-        ] ;
+        ]
 .
 
 prez:OGCSKOSCollectionObjectProfile
@@ -213,6 +217,6 @@ prez:OGCSKOSCollectionObjectProfile
                 ]
         ],
         [
-            sh:path skos:member ;
+            sh:path skos:member
         ]
 .
