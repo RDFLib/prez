@@ -90,6 +90,7 @@ class SearchQueryRegex(ConstructQuery):
                     #   SHA256(CONCAT(STR(?focus_node), STR(?predicate), STR(?match), STR(?weight))))) AS ?hashID)
                     select_clause=SelectClause(
                         variables_or_all=[
+                            sr_uri,
                             pred,
                             match,
                             weight,
