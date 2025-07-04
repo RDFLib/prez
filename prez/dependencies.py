@@ -57,7 +57,20 @@ async def get_async_http_client():
 
 
 def get_pyoxi_store():
-    return store
+    # Memory store
+    if settings.pyoxigraph_data_dir is None:
+        logger.info("Using in-memory pyoxigraph data store")
+        return store
+
+    # On-disk store
+    oxigraph_data_dir = Path(settings.pyoxigraph_data_dir)
+    if not oxigraph_data_dir.exists():
+        raise FileNotFoundError(
+            f"Pyoxigraph data directory {oxigraph_data_dir} does not exist"
+        )
+
+    logger.info(f"Using pyoxigraph data store {oxigraph_data_dir}")
+    return Store(path=str(oxigraph_data_dir))
 
 
 def get_system_store():
