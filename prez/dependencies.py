@@ -41,6 +41,7 @@ from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQue
 from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.search_default import SearchQueryRegex
 from prez.services.query_generation.search_fuseki_fts import SearchQueryFusekiFTS
+from prez.services.query_generation.search_qlever_fts import SearchQueryQleverFTS
 from prez.services.query_generation.shacl import NodeShape, PropertyShape
 
 logger = logging.getLogger(__name__)
@@ -321,6 +322,14 @@ async def generate_search_query(
                 tss_list=tss_list,
                 limit=limit,
                 offset=offset,
+            )
+        elif settings.search_method == SearchMethod.FTS_QLEVER:
+            predicates = predicates if predicates else settings.search_predicates
+            search_query = SearchQueryQleverFTS(
+                term=term,
+                predicates=predicates,
+                limit=limit,
+                offset=offset
             )
         else:
             raise NotImplementedError(
