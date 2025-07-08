@@ -1,3 +1,4 @@
+from enum import Enum
 from os import environ
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union, Literal
@@ -10,6 +11,17 @@ from rdflib.namespace import SKOS
 
 from prez.enums import SearchMethod
 from prez.reference_data.prez_ns import EP, REG, TERN
+
+
+class SparqlRepoType(str, Enum):
+    #: SPARQL endpoint
+    remote: str = "remote"
+    #: Pyoxigraph store with persistent on-disk storage
+    pyoxigraph_persistent: str = "pyoxigraph_persistent"
+    #: Pyoxigraph store in memory with optional loading of RDF from Turtle files
+    pyoxigraph_memory: str = "pyoxigraph_memory"
+    #: oxrdflib store in memory with optional loading of RDF from Turtle files
+    oxrdflib: str = "oxrdflib"
 
 
 class Settings(BaseSettings):
@@ -52,11 +64,7 @@ class Settings(BaseSettings):
         SDO.description,
     ]
     provenance_predicates: list = [DCTERMS.provenance]
-    value_predicates: list = [
-        SOSA.hasSimpleResult,
-        TERN.hasSimpleValue,
-        RDF.value
-    ]
+    value_predicates: list = [SOSA.hasSimpleResult, TERN.hasSimpleValue, RDF.value]
     search_predicates: list = [
         RDFS.label,
         SKOS.prefLabel,
@@ -66,9 +74,9 @@ class Settings(BaseSettings):
         DCTERMS.title,
     ]
     other_predicates: list = [SDO.color, REG.status]
-    sparql_repo_type: str = "remote"
+    sparql_repo_type: SparqlRepoType = SparqlRepoType.remote
     sparql_timeout: int = 30
-    pyoxigraph_data_dir: Optional[str] = None
+    pyoxigraph_data_dir: str = "pyoxigraph_data_dir"
     log_level: str = "INFO"
     log_output: str = "stdout"
     prez_title: Optional[str] = "Prez"
@@ -80,7 +88,6 @@ class Settings(BaseSettings):
     prez_contact: Optional[Dict[str, Union[str, Any]]] = None
     disable_prefix_generation: bool = False
     default_language: str = "en"
-    local_rdf_dir: str = "rdf"
     endpoint_structure: Optional[Tuple[str, ...]] = ("catalogs", "collections", "items")
     system_endpoints: Optional[List[URIRef]] = [
         EP["system/profile-listing"],

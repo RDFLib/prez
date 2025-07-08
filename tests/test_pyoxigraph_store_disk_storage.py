@@ -20,6 +20,7 @@ def tmp_path():
 @pytest.fixture(autouse=True)
 def setup_settings(tmp_path: Path):
     settings.pyoxigraph_data_dir = str(tmp_path)
+    settings.sparql_repo_type = "pyoxigraph_persistent"
 
 
 @pytest.fixture(scope="function")
