@@ -51,13 +51,19 @@ def generate_new_prefix(uri):
     """
     Generates a new prefix for a uri
     """
-    parsed_url = urlparse(uri)
-    if bool(parsed_url.fragment):
-        ns = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}#"
+    if uri.startswith("urn:"):
+        # Special handling for URNs
+        ns = uri.rsplit(":", 1)[0] + ":"
+        split_prefix_path = ns[:-1].rsplit(":", 1)
     else:
-        ns = f'{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path.rsplit("/", 1)[0]}/'
-
-    split_prefix_path = ns[:-1].rsplit("/", 1)
+        parsed_url = urlparse(uri)
+        if not parsed_url.scheme:
+            raise ValueError("The URI must have a scheme (e.g., http, https, file, urn, etc)")
+        if bool(parsed_url.fragment):
+            ns = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}#"
+        else:
+            ns = f'{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path.rsplit("/", 1)[0]}/'
+        split_prefix_path = ns[:-1].rsplit("/", 1)
     if len(split_prefix_path) > 1:
         path_part = split_prefix_path[-1]
         # generate a prefix using the last part of the path prior to the fragment or 'identifier'
