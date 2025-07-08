@@ -18,7 +18,7 @@ from rdf2geojson.contrib.geomet import wkt
 from rdflib import Graph
 from rdflib import URIRef
 from rdflib.namespace import GEO, RDF
-from pyoxigraph import RdfFormat, Store as OxiStore, Quad as OxiQuad, DefaultGraph as OxiDefaultGraph
+from pyoxigraph import RdfFormat, Store as OxiStore, NamedNode as OxiNamedNode, Quad as OxiQuad, DefaultGraph as OxiDefaultGraph
 from oxrdflib._converter import to_ox
 from sparql_grammar_pydantic import (
     IRI,
@@ -64,7 +64,11 @@ async def return_from_graph(
             assert isinstance(graph, OxiStore)
             store: OxiStore = graph
             oxigraph_prefixes = {p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()}
-            return await return_rdf_from_oxigraph(store, mediatype, profile_headers, prefixes=oxigraph_prefixes)
+            try:
+                return await return_rdf_from_oxigraph(store, mediatype, profile_headers, prefixes=oxigraph_prefixes)
+            except Exception as e:
+                log.error(f"Error serializing graph to {mediatype}: {e}")
+                raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, f"Error serializing graph to {mediatype}: {e}")         
         else:
             return await return_rdf(graph, mediatype, profile_headers)
 
@@ -122,21 +126,43 @@ async def return_from_graph(
         else:
             kind = "machine"
         collection_label = None
-        if len(list(graph.subjects(RDF.type, GEO["Feature"]))) > 0:
-            collection_label="FeatureCollection containing Features from listing query"
-        geojson = convert(
-            g=graph,
-            do_validate=False,
-            iri2id=get_curie_id_for_uri,
-            collection_label=collection_label,
-            kind=kind
-        )
         count = None  # for an object; no count query.
-        s_o = graph.subject_objects(
-            predicate=PREZ["count"]
-        )  # for a list; graph will contain a count.
-        for tup in s_o:
-            str_count = str(tup[1])
+        str_count = None
+        if is_oxigraph:
+            if len(list(graph.quads_for_pattern(OxiNamedNode(RDF.type), OxiNamedNode(GEO["Feature"]), None))) > 0:
+               collection_label="FeatureCollection containing Features from listing query"
+            store: OxiStore = graph
+            geojson = convert(
+                g=store,
+                do_validate=False,
+                iri2id=get_curie_id_for_uri,
+                collection_label=collection_label,
+                kind=kind,
+                namespace_manager=prefix_graph.namespace_manager
+            )
+
+            for q in store.quads_for_pattern(
+                None, OxiNamedNode(PREZ["count"]), None, OxiDefaultGraph()
+            ):
+                str_count = str(q[2].value)
+                break
+        else:
+            if len(list(graph.subjects(RDF.type, GEO["Feature"]))) > 0:
+                collection_label="FeatureCollection containing Features from listing query"
+            geojson = convert(
+                g=graph,
+                do_validate=False,
+                iri2id=get_curie_id_for_uri,
+                collection_label=collection_label,
+                kind=kind
+            )
+            s_o = graph.subject_objects(
+                predicate=PREZ["count"]
+            )  # for a list; graph will contain a count.
+            for tup in s_o:
+                str_count = str(tup[1])
+                break
+        if str_count is not None:
             count = get_geojson_int_count(str_count)
         headers, geojson = await generate_geojson_extras(
             count, geojson, query_params, "application/geo+json", url
@@ -158,7 +184,13 @@ async def return_from_graph(
                 content = io.BytesIO()
                 oxigraph_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(non_anot_mediatype, RdfFormat.N_TRIPLES)
                 # TODO, what happens if the store has content in a named graph? This can only dump the default graph.
-                store.dump(content, oxigraph_format, from_graph=default, prefixes=oxigraph_prefixes)
+                try:
+                    store.dump(content, oxigraph_format, from_graph=default, prefixes=oxigraph_prefixes)
+                except Exception as e:
+                    for p, n in oxigraph_prefixes.items():
+                        print(f"{p} = {n}")
+                    print(f"Error serializing graph to {non_anot_mediatype}: {e}")
+                    raise
                 content.seek(0)  # Reset the stream position to the beginning
             else:
                 annotations_graph = await return_annotated_rdf(graph, repo, system_repo)
@@ -260,24 +292,64 @@ async def generate_geojson_extras(
 
 
 def create_collections_json(
-    item_graph, annotations_graph, url, selected_mediatype, query_params, count: str
+    item_graph: Graph|OxiStore, annotations_graph: Graph, url, selected_mediatype, query_params, count: int|None = None,
 ):
     collections_list = []
-    for s, p, o in item_graph.triples((None, RDF.type, GEO.FeatureCollection)):
-        extent_bnode = item_graph.value(subject=s, predicate=GEO.hasBoundingBox, default=None)
-        if extent_bnode:
-            extent_geom = item_graph.value(subject=extent_bnode, predicate=GEO.asWKT, default=None)
-            bbox_obj = wkt.loads(str(extent_geom))
-            if bbox_obj["type"] != "Polygon":
-                json_extent = None
+    if isinstance(item_graph, OxiStore):
+        item_store: OxiStore = item_graph
+        for q in item_store.quads_for_pattern(None, OxiNamedNode(RDF.type), OxiNamedNode(GEO.FeatureCollection)):
+            s = q[0]
+            for bbox_q in item_store.quads_for_pattern(s, OxiNamedNode(GEO.hasBoundingBox), None, None):
+                extent_bnode = bbox_q[2]
+                break
             else:
-                coordinates_array = bbox_obj["coordinates"]
-                coords = coordinates_array[0]
-                bbox = [coords[0][0], coords[0][1], coords[2][0], coords[2][1]]
-                json_extent = Extent(spatial=Spatial(bbox=[bbox]))
+                extent_bnode = None
+            if extent_bnode:
+                for geom_q in item_store.quads_for_pattern(extent_bnode, OxiNamedNode(GEO.asWKT), None, None):
+                    extent_geom = geom_q[2]
+                    break
+                else:
+                    extent_geom = None
+                if extent_geom:
+                    bbox_obj = wkt.loads(str(extent_geom.value))
+                    if bbox_obj["type"] != "Polygon":
+                        json_extent = None
+                    else:
+                        coordinates_array = bbox_obj["coordinates"]
+                        coords = coordinates_array[0]
+                        bbox = [coords[0][0], coords[0][1], coords[2][0], coords[2][1]]
+                        json_extent = Extent(spatial=Spatial(bbox=[bbox]))
+                else:
+                    json_extent = None
+            else:
+                json_extent = None
+            curie_id = get_curie_id_for_uri(URIRef(s.value))
+            break
         else:
-            json_extent = None
-        curie_id = get_curie_id_for_uri(s)
+            curie_id = None
+    else:
+        for s, p, o in item_graph.triples((None, RDF.type, GEO.FeatureCollection)):
+            extent_bnode = item_graph.value(subject=s, predicate=GEO.hasBoundingBox, default=None)
+            if extent_bnode:
+                extent_geom = item_graph.value(subject=extent_bnode, predicate=GEO.asWKT, default=None)
+                if extent_geom:
+                    bbox_obj = wkt.loads(str(extent_geom))
+                    if bbox_obj["type"] != "Polygon":
+                        json_extent = None
+                    else:
+                        coordinates_array = bbox_obj["coordinates"]
+                        coords = coordinates_array[0]
+                        bbox = [coords[0][0], coords[0][1], coords[2][0], coords[2][1]]
+                        json_extent = Extent(spatial=Spatial(bbox=[bbox]))
+                else:
+                    json_extent = None
+            else:
+                json_extent = None
+            curie_id = get_curie_id_for_uri(s)
+            break
+        else:
+            curie_id = None
+    if curie_id is not None:
         collections_list.append(
             Collection(
                 id=curie_id,
@@ -307,8 +379,7 @@ def create_collections_json(
     )
     return collections
 
-
-def create_self_alt_links(selected_mediatype, url, query_params=None, count=None):
+def create_self_alt_links(selected_mediatype, url, query_params=None, count: int|None=None):
     self_alt_links = []
     for mt in [selected_mediatype, *RDF_MEDIATYPES]:
         self_alt_links.append(
@@ -321,7 +392,7 @@ def create_self_alt_links(selected_mediatype, url, query_params=None, count=None
                 title="this document",
             )
         )
-    if count:  # only for listings; add prev/next links
+    if count is not None:  # only for listings; add prev/next links
         page = query_params.page
         limit = query_params.limit
         if page != 1:
