@@ -228,7 +228,7 @@ def merge_listing_query_grammar_inputs(
     """
     kwargs = {
         "construct_tss_list": [],
-        "inner_select_vars": [Var(value="focus_node")],
+        "inner_select_vars": [],
         "inner_select_tssp_list": [],
         "inner_select_gpnt": [],
         "limit": None,
