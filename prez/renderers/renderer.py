@@ -32,8 +32,6 @@ from prez.dependencies import get_endpoint_uri, get_system_repo, get_url
 from prez.models.ogc_features import Collection, Collections, Link, Links, Queryables, Spatial, Extent
 from prez.models.query_params import ListingQueryParams
 from prez.reference_data.prez_ns import OGCFEAT, ONT, PREZ
-from prez.renderers.csv_renderer import render_csv_dropdown
-from prez.renderers.json_renderer import NotFoundError, render_json_dropdown
 from prez.repositories import Repo
 from prez.services.annotations import get_annotation_properties, get_annotation_properties_for_oxigraph
 from prez.services.connegp_service import OXIGRAPH_SERIALIZER_TYPES_MAP, RDF_MEDIATYPES, MINIMAL_OGC_FEATURES_RDF_FORMATS
@@ -68,44 +66,9 @@ async def return_from_graph(
                 return await return_rdf_from_oxigraph(store, mediatype, profile_headers, prefixes=oxigraph_prefixes)
             except Exception as e:
                 log.error(f"Error serializing graph to {mediatype}: {e}")
-                raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, f"Error serializing graph to {mediatype}: {e}")         
+                raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, f"Error serializing graph to {mediatype}: {e}")
         else:
             return await return_rdf(graph, mediatype, profile_headers)
-
-    elif profile == URIRef("https://w3id.org/profile/dd"):
-        if is_oxigraph:
-            store: OxiStore = graph
-            annotations_store: OxiStore = await return_annotated_rdf_for_oxigraph(store, repo, system_repo)
-            store.bulk_extend(annotations_store)
-        else:
-            annotations_graph = await return_annotated_rdf(graph, repo, system_repo)
-            graph.__iadd__(annotations_graph)
-
-        try:
-            # TODO: Currently, data is generated in memory, instead of in a streaming manner.
-            #       Not possible to do a streaming response yet since we are reading the RDF
-            #       data into an in-memory graph.
-            jsonld_data = await render_json_dropdown(graph, profile, selected_class)
-
-            if str(mediatype) == "text/csv":
-                iri = graph.value(None, RDF.type, selected_class)
-                if iri:
-                    filename = get_curie_id_for_uri(URIRef(str(iri)))
-                else:
-                    filename = selected_class.split("#")[-1].split("/")[-1]
-                stream = render_csv_dropdown(jsonld_data["@graph"])
-                response = StreamingResponse(stream, media_type=mediatype)
-                response.headers["Content-Disposition"] = (
-                    f"attachment;filename={filename}.csv"
-                )
-                return response
-
-            # application/json
-            stream = io.StringIO(json.dumps(jsonld_data))
-            return StreamingResponse(stream, media_type=mediatype)
-
-        except NotFoundError as err:
-            raise HTTPException(status.HTTP_404_NOT_FOUND, str(err))
 
     elif str(mediatype) == "application/geo+json":
         if "human" in profile.lower():
@@ -222,7 +185,7 @@ async def return_rdf(graph: Graph, mediatype, profile_headers):
     return StreamingResponse(content=obj, media_type=mediatype, headers=profile_headers)
 
 async def return_rdf_from_oxigraph(store: OxiStore, mediatype, profile_headers, prefixes: dict[str, str] = None):
-    
+
     if mediatype == "text/anot+turtle":
         serializer_format = RdfFormat.TURTLE
     else:
@@ -340,13 +303,13 @@ def create_collections_json(
                 json_extent = None
             curie_id = get_curie_id_for_uri(s)
             collection_properties_map[s] = (curie_id, json_extent)
-    
+
     for s, (curie_id, json_extent) in collection_properties_map.items():
         if isinstance(annotations_graph, OxiStore):
             for q in annotations_graph.quads_for_pattern(
                 to_ox(s), OxiNamedNode(PREZ.description), None, None
             ):
-                collection_description = q[2].value  
+                collection_description = q[2].value
                 break
             else:
                 collection_description = None
@@ -362,7 +325,7 @@ def create_collections_json(
                 subject=s, predicate=PREZ.description, default=None)
             collection_title = annotations_graph.value(
                 subject=s, predicate=PREZ.label, default=None)
-        
+
         collections_list.append(
             Collection(
                 id=curie_id,
