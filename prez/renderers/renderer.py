@@ -75,11 +75,8 @@ async def return_from_graph(
     elif profile == URIRef("https://w3id.org/profile/dd"):
         if is_oxigraph:
             store: OxiStore = graph
-            # This still returns an RDFlib graph of anotations, even when the store is an Oxigraph Store.
-            annotations_graph = await return_annotated_rdf_for_oxigraph(store, repo, system_repo)
-            default = OxiDefaultGraph()
-            for s, p, o in annotations_graph.triples((None, None, None)):
-                store.add(OxiQuad(to_ox(s), to_ox(p), to_ox(o), default))
+            annotations_store: OxiStore = await return_annotated_rdf_for_oxigraph(store, repo, system_repo)
+            store.bulk_extend(annotations_store)
         else:
             annotations_graph = await return_annotated_rdf(graph, repo, system_repo)
             graph.__iadd__(annotations_graph)
@@ -116,10 +113,8 @@ async def return_from_graph(
             if is_oxigraph:
                 store: OxiStore = graph
                 # This still returns an RDFlib graph of anotations, even when the store is an Oxigraph Store.
-                annotations_graph = await return_annotated_rdf_for_oxigraph(store, repo, system_repo)
-                default = OxiDefaultGraph()
-                for s, p, o in annotations_graph.triples((None, None, None)):
-                    store.add(OxiQuad(to_ox(s), to_ox(p), to_ox(o), default))
+                annotations_store: OxiStore = await return_annotated_rdf_for_oxigraph(store, repo, system_repo)
+                store.bulk_extend(annotations_store)
             else:
                 annotations_graph = await return_annotated_rdf(graph, repo, system_repo)
                 graph.__iadd__(annotations_graph)
@@ -176,16 +171,14 @@ async def return_from_graph(
             if is_oxigraph:
                 store: OxiStore = graph
                 # This still returns an RDFlib graph of anotations, even when the store is an Oxigraph Store.
-                annotations_graph: Graph = await return_annotated_rdf_for_oxigraph(store, repo, system_repo)
-                default = OxiDefaultGraph()
-                for s, p, o in annotations_graph.triples((None, None, None)):
-                    store.add(OxiQuad(to_ox(s), to_ox(p), to_ox(o), default))
+                annotations_store: OxiStore = await return_annotated_rdf_for_oxigraph(store, repo, system_repo)
+                store.bulk_extend(annotations_store)
                 oxigraph_prefixes = {p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()}
                 content = io.BytesIO()
                 oxigraph_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(non_anot_mediatype, RdfFormat.N_TRIPLES)
                 # TODO, what happens if the store has content in a named graph? This can only dump the default graph.
                 try:
-                    store.dump(content, oxigraph_format, from_graph=default, prefixes=oxigraph_prefixes)
+                    store.dump(content, oxigraph_format, from_graph=OxiDefaultGraph(), prefixes=oxigraph_prefixes)
                 except Exception as e:
                     for p, n in oxigraph_prefixes.items():
                         print(f"{p} = {n}")
@@ -262,16 +255,16 @@ async def return_annotated_rdf_for_oxigraph(
     store: OxiStore,
     repo: Repo,
     system_repo: Repo,
-) -> Graph:
+) -> OxiStore:
     t_start = time.time()
-    annotations_graph = await get_annotation_properties_for_oxigraph(store, repo, system_repo)
+    annotations_store = await get_annotation_properties_for_oxigraph(store, repo, system_repo)
     # get annotations for annotations - no need to do this recursively
-    annotations_graph += await get_annotation_properties(
-        annotations_graph, repo, system_repo
+    annotations_store_2 = await get_annotation_properties_for_oxigraph(
+        annotations_store, repo, system_repo
     )
+    annotations_store.bulk_extend(annotations_store_2)
     log.debug(f"Time to get annotations: {time.time() - t_start}")
-    # return graph.__iadd__(annotations_graph)
-    return annotations_graph
+    return annotations_store
 
 
 async def generate_geojson_extras(
@@ -292,13 +285,15 @@ async def generate_geojson_extras(
 
 
 def create_collections_json(
-    item_graph: Graph|OxiStore, annotations_graph: Graph, url, selected_mediatype, query_params, count: int|None = None,
+    item_graph: Graph|OxiStore, annotations_graph: Graph|OxiStore, url, selected_mediatype, query_params, count: int|None = None,
 ):
     collections_list = []
+    collection_properties_map: dict[URIRef, tuple] = {}
     if isinstance(item_graph, OxiStore):
         item_store: OxiStore = item_graph
         for q in item_store.quads_for_pattern(None, OxiNamedNode(RDF.type), OxiNamedNode(GEO.FeatureCollection)):
             s = q[0]
+            s_uriref = URIRef(s.value)
             for bbox_q in item_store.quads_for_pattern(s, OxiNamedNode(GEO.hasBoundingBox), None, None):
                 extent_bnode = bbox_q[2]
                 break
@@ -323,10 +318,8 @@ def create_collections_json(
                     json_extent = None
             else:
                 json_extent = None
-            curie_id = get_curie_id_for_uri(URIRef(s.value))
-            break
-        else:
-            curie_id = None
+            curie_id = get_curie_id_for_uri(s_uriref)
+            collection_properties_map[s_uriref] = (curie_id, json_extent)
     else:
         for s, p, o in item_graph.triples((None, RDF.type, GEO.FeatureCollection)):
             extent_bnode = item_graph.value(subject=s, predicate=GEO.hasBoundingBox, default=None)
@@ -346,19 +339,35 @@ def create_collections_json(
             else:
                 json_extent = None
             curie_id = get_curie_id_for_uri(s)
-            break
+            collection_properties_map[s] = (curie_id, json_extent)
+    
+    for s, (curie_id, json_extent) in collection_properties_map.items():
+        if isinstance(annotations_graph, OxiStore):
+            for q in annotations_graph.quads_for_pattern(
+                to_ox(s), OxiNamedNode(PREZ.description), None, None
+            ):
+                collection_description = q[2].value  
+                break
+            else:
+                collection_description = None
+            for q in annotations_graph.quads_for_pattern(
+                to_ox(s), OxiNamedNode(PREZ.label), None, None
+            ):
+                collection_title = q[2].value
+                break
+            else:
+                collection_title = None
         else:
-            curie_id = None
-    if curie_id is not None:
+            collection_description = annotations_graph.value(
+                subject=s, predicate=PREZ.description, default=None)
+            collection_title = annotations_graph.value(
+                subject=s, predicate=PREZ.label, default=None)
+        
         collections_list.append(
             Collection(
                 id=curie_id,
-                title=annotations_graph.value(
-                    subject=s, predicate=PREZ.label, default=None
-                ),
-                description=annotations_graph.value(
-                    subject=s, predicate=PREZ.description, default=None
-                ),
+                title=collection_title,
+                description=collection_description,
                 extent=json_extent,
                 links=[
                     Link(

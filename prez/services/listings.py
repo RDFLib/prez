@@ -1,3 +1,4 @@
+import asyncio
 import copy
 import io
 import json
@@ -5,6 +6,7 @@ import logging
 
 from fastapi.responses import PlainTextResponse
 from pyoxigraph import RdfFormat, Store as OxiStore, Quad as OxiQuad, NamedNode as OxiNamedNode, BlankNode as OxiBlankNode, Literal as OxiLiteral, DefaultGraph as OxiDefaultGraph
+from oxrdflib._converter import to_ox
 from rdf2geojson import convert
 from rdflib import Graph, Literal, DCTERMS, XSD, Namespace, URIRef, BNode
 from rdflib.namespace import GEO, RDF, PROF
@@ -409,7 +411,6 @@ async def ogc_features_listing_function(
         # add the count query
         subselect = copy.deepcopy(feature_list_query.inner_select)
         count_query = CountQuery(original_subselect=subselect).to_string()
-
     link_headers = None
     if selected_mediatype == "application/sparql-query":
         # just do the first query for now:
@@ -418,16 +419,26 @@ async def ogc_features_listing_function(
     count: int
     if use_oxigraph:
         item_store: OxiStore
-        item_store, _ = await data_repo.send_queries(queries, [], return_oxigraph_store=True)
+        main_query_task = asyncio.ensure_future(data_repo.send_queries(queries, [], return_oxigraph_store=True))
         if count_query:
+            # send this in parallel to the main query
+            count_query_task = asyncio.ensure_future(data_repo.send_queries([count_query], [], return_oxigraph_store=True))
+        else:
+            count_query_task = None
+        await asyncio.sleep(0)  # Yield control to allow the parallel tasks to start
+        item_store, _ = await main_query_task
+        if count_query_task is not None:
             count_store: OxiStore
-            count_store, _ = await data_repo.send_queries([count_query], [], return_oxigraph_store=True)
+            count_store, _ = await count_query_task
             if count_store is not None:
                 for q in count_store.quads_for_pattern(None, None, None, None):
                     count_str = str(q[2].value)
                     count = get_geojson_int_count(count_str)
                     break
+                else:
+                    count = 0
         # only need the annotations for mediatypes of application/json or annotated mediatypes
+        annotations_store = None
         annotations_graph = None
         if (
             (selected_mediatype in AnnotatedRDFMediaType)
@@ -438,21 +449,28 @@ async def ogc_features_listing_function(
             )
         ):
             # This still returns an RDFlib graph of anotations, even when the store is an Oxigraph Store.
-            annotations_graph = await return_annotated_rdf_for_oxigraph(
+            annotations_store = await return_annotated_rdf_for_oxigraph(
                 item_store, data_repo, system_repo
             )
         item_graph = item_store # treat the Oxigraph Store as a graph
     else:
-        item_graph, _ = await data_repo.send_queries(queries, [])
-
+        main_query_task = asyncio.ensure_future(data_repo.send_queries(queries, []))
         if count_query:
-            count_g, _ = await data_repo.send_queries([count_query], [])
+            # send this in parallel to the main query
+            count_query_task = asyncio.ensure_future(data_repo.send_queries([count_query], []))
+        else:
+            count_query_task = None
+        await asyncio.sleep(0)  # Yield control to allow the parallel tasks to start
+        item_graph, _ = await main_query_task
+        if count_query_task is not None:
+            count_g, _ = await count_query_task
             if count_g:
                 count_str = str(next(iter(count_g.objects())))
                 count = get_geojson_int_count(count_str)
 
         # only need the annotations for mediatypes of application/json or annotated mediatypes
         annotations_graph = None
+        annotations_store = None
         if (
             (selected_mediatype in AnnotatedRDFMediaType)
             or (selected_mediatype == "application/json")
@@ -483,7 +501,7 @@ async def ogc_features_listing_function(
         else:
             collections = create_collections_json(
                 item_graph,
-                annotations_graph,
+                annotations_store if annotations_store is not None else annotations_graph,
                 url,
                 selected_mediatype,
                 query_params,
@@ -503,9 +521,12 @@ async def ogc_features_listing_function(
         if use_oxigraph:
             if "human" in profile_nodeshape.uri.lower():  # human readable profile
                 item_store: OxiStore = item_graph
-                default = OxiDefaultGraph()
-                for s, p, o in annotations_graph.triples((None, None, None)):
-                    item_store.add(OxiQuad(to_ox(s), to_ox(p), to_ox(o), default))
+                if annotations_store is not None:
+                    item_store.bulk_extend(annotations_store)
+                elif annotations_graph is not None:
+                    default = OxiDefaultGraph()
+                    for s, p, o in annotations_graph.triples((None, None, None)):
+                        item_store.add(OxiQuad(to_ox(s), to_ox(p), to_ox(o), default))
                 kind = "human"
             else:
                 kind = "machine"
@@ -519,7 +540,8 @@ async def ogc_features_listing_function(
             )
         else:
             if "human" in profile_nodeshape.uri.lower():  # human readable profile
-                item_graph += annotations_graph
+                if annotations_graph is not None:
+                    item_graph += annotations_graph
                 kind = "human"
             else:
                 kind = "machine"
@@ -552,8 +574,12 @@ async def ogc_features_listing_function(
         if use_oxigraph:
             item_store: OxiStore = item_graph
             default = OxiDefaultGraph()
-            for s, p, o in annotations_graph.triples((None, None, None)):
-                item_store.add(OxiQuad(to_ox(s), to_ox(p), to_ox(o), default))
+            if annotations_store is not None:
+                item_store.bulk_extend(annotations_store)
+            elif annotations_graph is not None:
+                # Add the annotations to the store
+                for s, p, o in annotations_graph.triples((None, None, None)):
+                    item_store.add(OxiQuad(to_ox(s), to_ox(p), to_ox(o), default))
             serializer_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(str(non_anot_mt), RdfFormat.N_TRIPLES)
             oxigraph_prefixes = {p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()}
             content = io.BytesIO()
