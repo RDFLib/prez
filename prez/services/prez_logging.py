@@ -32,7 +32,6 @@ def setup_logger(settings):
         stdout_handler.setLevel(5)
         stdout_handler.setFormatter(formatter)
         handlers.append(stdout_handler)
-    logger.propagate = False
 
     # add ch to logger
     logger.handlers = handlers
