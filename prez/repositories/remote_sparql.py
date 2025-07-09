@@ -1,11 +1,15 @@
+from io import BytesIO
 import logging
+from typing import Any
 from urllib.parse import quote_plus
 
 import httpx
+from pyoxigraph import RdfFormat, Store
 from rdflib import Graph, Namespace, URIRef
 
 from prez.config import settings
 from prez.repositories.base import Repo
+from prez.services.connegp_service import OXIGRAPH_SERIALIZER_TYPES_MAP
 
 PREZ = Namespace("https://prez.dev/")
 
@@ -22,7 +26,7 @@ class RemoteSparqlRepo(Repo):
                 "the environment variable or the config file."
             )
 
-    async def _send_query(self, query: str, mediatype="text/turtle"):
+    async def _send_query(self, query: str, mediatype="text/turtle") -> httpx.Response:
         """Sends a SPARQL query asynchronously.
         Args: query: str: A SPARQL query to be sent asynchronously.
         Returns: httpx.Response: A httpx.Response object
@@ -36,20 +40,51 @@ class RemoteSparqlRepo(Repo):
         response = await self.async_client.send(query_rq, stream=True)
         return response
 
-    async def rdf_query_to_graph(self, query: str) -> Graph:
+    async def rdf_query_to_rdflib_graph(
+        self, query: str, into_graph: Graph | None = None
+    ) -> Graph:
         """
         Sends a SPARQL query asynchronously and parses the response into an RDFLib Graph.
         Args: query: str: A SPARQL query to be sent asynchronously.
         Returns: rdflib.Graph: An RDFLib Graph object
         """
-        response = await self._send_query(query)
-        response_format = response.headers.get("content-type", "nt")
-        response_format = response_format.split(";")[0]  # handle cases like 'application/n-triples;charset=UTF-8' from GraphDB
-        g = Graph()
-        await response.aread()
-        return g.parse(data=response.text, format=response_format)
+        response: httpx.Response = await self._send_query(query)
+        response_format = response.headers.get("content-type", "application/n-triples")
+        response_format = response_format.split(";")[
+            0
+        ]  # handle cases like 'application/n-triples;charset=UTF-8' from GraphDB
+        if into_graph is not None:
+            g = into_graph
+        else:
+            g = Graph()
+        content_bytes = await response.aread()
+        return g.parse(data=content_bytes, format=response_format)
 
-    async def tabular_query_to_table(self, query: str, context: URIRef = None):
+    async def rdf_query_to_oxigraph_store(
+        self, query: str, into_store: Store | None = None
+    ) -> Store:
+        """
+        Sends a SPARQL query asynchronously and parses the response into a PyOxigraph Store.
+        Args: query: str: A SPARQL query to be sent asynchronously.
+        Returns: pyoxigraph.Store: An pyoxigraph Store object
+        """
+        response: httpx.Response = await self._send_query(query)
+        response_format = response.headers.get("content-type", "application/n-triples")
+        response_format = response_format.split(";")[
+            0
+        ]  # handle cases like 'application/n-triples;charset=UTF-8' from GraphDB
+        if into_store is not None:
+            s = into_store
+        else:
+            s = Store()
+        content_bytes = await response.aread()
+        oxigraph_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(response_format, RdfFormat.N_TRIPLES)
+        s.bulk_load(content_bytes, oxigraph_format)
+        return s
+
+    async def tabular_query_to_table(
+        self, query: str, context: URIRef | None = None
+    ) -> tuple[URIRef | None, list[dict[str, Any]]]:
         """
         Sends a SPARQL query asynchronously and parses the response into a table format.
         The optional context parameter allows an identifier to be supplied with the query, such that multiple results can be
@@ -103,3 +138,4 @@ class RemoteSparqlRepo(Repo):
             ) from e
 
         return response
+

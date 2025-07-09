@@ -1,6 +1,7 @@
 import asyncio
 from pathlib import Path
 
+from pyoxigraph import RdfFormat
 import pytest
 from fastapi.testclient import TestClient
 from ogctests.main import run_ogctests
@@ -17,7 +18,7 @@ def test_store() -> Store:
     store = Store()
 
     file = Path(__file__).parent.parent / "test_data/ogc_features.ttl"
-    store.load(file.read_bytes(), "text/turtle")
+    store.load(file.read_bytes(), RdfFormat.TURTLE)
 
     return store
 
