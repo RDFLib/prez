@@ -30,8 +30,6 @@ from prez.dependencies import get_endpoint_uri, get_system_repo, get_url
 from prez.models.ogc_features import Collection, Collections, Link, Links, Queryables, Spatial, Extent
 from prez.models.query_params import ListingQueryParams
 from prez.reference_data.prez_ns import OGCFEAT, ONT, PREZ
-from prez.renderers.csv_renderer import render_csv_dropdown
-from prez.renderers.json_renderer import NotFoundError, render_json_dropdown
 from prez.repositories import Repo
 from prez.services.annotations import get_annotation_properties
 from prez.services.connegp_service import RDF_MEDIATYPES, MINIMAL_OGC_FEATURES_RDF_FORMATS
@@ -57,36 +55,6 @@ async def return_from_graph(
 
     if str(mediatype) in RDF_MEDIATYPES:
         return await return_rdf(graph, mediatype, profile_headers)
-
-    elif profile == URIRef("https://w3id.org/profile/dd"):
-        annotations_graph = await return_annotated_rdf(graph, repo, system_repo)
-        graph.__iadd__(annotations_graph)
-
-        try:
-            # TODO: Currently, data is generated in memory, instead of in a streaming manner.
-            #       Not possible to do a streaming response yet since we are reading the RDF
-            #       data into an in-memory graph.
-            jsonld_data = await render_json_dropdown(graph, profile, selected_class)
-
-            if str(mediatype) == "text/csv":
-                iri = graph.value(None, RDF.type, selected_class)
-                if iri:
-                    filename = get_curie_id_for_uri(URIRef(str(iri)))
-                else:
-                    filename = selected_class.split("#")[-1].split("/")[-1]
-                stream = render_csv_dropdown(jsonld_data["@graph"])
-                response = StreamingResponse(stream, media_type=mediatype)
-                response.headers["Content-Disposition"] = (
-                    f"attachment;filename={filename}.csv"
-                )
-                return response
-
-            # application/json
-            stream = io.StringIO(json.dumps(jsonld_data))
-            return StreamingResponse(stream, media_type=mediatype)
-
-        except NotFoundError as err:
-            raise HTTPException(status.HTTP_404_NOT_FOUND, str(err))
 
     elif str(mediatype) == "application/geo+json":
         if "human" in profile.lower():
