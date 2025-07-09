@@ -60,7 +60,7 @@ class RemoteSparqlRepo(Repo):
         content_bytes = await response.aread()
         return g.parse(data=content_bytes, format=response_format)
 
-    async def rdf_query_to_pyoxigraph_store(
+    async def rdf_query_to_oxigraph_store(
         self, query: str, into_store: Store | None = None
     ) -> Store:
         """

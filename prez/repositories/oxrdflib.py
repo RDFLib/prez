@@ -44,11 +44,10 @@ class OxrdflibRepo(Repo):
         if results.graph is None:
             return store
         default = DefaultGraph()
-        quads = [
-            Quad(to_ox(t.subject), to_ox(t.predicate), to_ox(t.object), default)
-            for t in results.graph.triples((None, None, None))
-        ]
-        store.extend(quads)
+        store.bulk_extend(
+              Quad(to_ox(t.subject), to_ox(t.predicate), to_ox(t.object), default)
+              for t in results.graph.triples((None, None, None))
+            )
         return store
 
     def _sync_tabular_query_to_table(

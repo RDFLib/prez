@@ -56,10 +56,7 @@ class PyoxigraphRepo(Repo):
             # Into an oxigraph store
             default = pyoxigraph.DefaultGraph()
             # If the target is a Store, we can directly load the triples into it.
-            quads = [
-                Quad(t.subject, t.predicate, t.object, default) for t in list(results)
-            ]
-            into_.extend(quads)
+            into_.bulk_extend(Quad(t.subject, t.predicate, t.object, default) for t in results)
             return into_
         ntriples_bytes = results.serialize(None, format=RdfFormat.N_TRIPLES)
         if ntriples_bytes is None:
