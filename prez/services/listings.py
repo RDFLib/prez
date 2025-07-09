@@ -182,8 +182,10 @@ async def listing_function(
         return PlainTextResponse(queries[0], media_type="application/sparql-query")
 
     # add a count query if it's an annotated mediatype
-    if ("anot+" in pmts.selected["mediatype"] and not search_query) or (
-            pmts.selected["mediatype"] == "application/geo+json"
+    if (
+            ("anot+" in pmts.selected["mediatype"] and not search_query) or
+            (pmts.selected["mediatype"] == "application/geo+json") or
+            (search_query and settings.search_result_count_limit != 0)
     ):
         subselect = copy.deepcopy(main_query.inner_select)
         count_query = CountQuery(original_subselect=subselect).to_string()
@@ -201,7 +203,7 @@ async def listing_function(
         await add_prez_links(item_graph, query_repo, endpoint_structure)
 
     # count search results - hard to do in SPARQL as the SELECT part of the query is NOT aggregated
-    if search_query:
+    if search_query and settings.search_result_count_limit == 0:
         count = len(list(item_graph.subjects(RDF.type, PREZ.SearchResult)))
         if count == search_query.limit:
             count_literal = f">{count - 1}"
