@@ -10,7 +10,8 @@ from fastapi.openapi.utils import get_openapi
 from rdflib import Graph
 from starlette.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
-
+from starlette.applications import Starlette
+from starlette.routing import Mount
 from prez.config import Settings, settings
 from prez.dependencies import (
     get_annotations_store,
@@ -102,33 +103,53 @@ async def lifespan(app: FastAPI):
     log = logging.getLogger("prez")
     log.info("Starting up")
 
+    mounted_apps = []
+    # Find mounted sub-apps
+    for r in app.router.routes:
+        # assume all of the sub-apps do not have their own lifespan to set up their state
+        if isinstance(r, Mount):
+            mount_app = r.app
+            if isinstance(mount_app, (Starlette, FastAPI)) and mount_app is not app:
+                mounted_apps.append(mount_app)
     if app.state.settings.sparql_repo_type == "pyoxigraph":
-        app.state.pyoxi_store = get_pyoxi_store()
-        app.state.repo = PyoxigraphRepo(app.state.pyoxi_store)
-        await load_local_data_to_oxigraph(app.state.pyoxi_store)
+        app.state.pyoxi_store = pyoxi_store = get_pyoxi_store()
+        for mounted_app in mounted_apps:
+            mounted_app.state.pyoxi_store = pyoxi_store
+        app.state.repo = repo = PyoxigraphRepo(pyoxi_store)
+        await load_local_data_to_oxigraph(pyoxi_store)
     elif app.state.settings.sparql_repo_type == "oxrdflib":
-        app.state.oxrdflib_store = get_oxrdflib_store()
-        app.state.repo = OxrdflibRepo(app.state.oxrdflib_store)
+        app.state.oxrdflib_store = oxrdflib_store = get_oxrdflib_store()
+        for mounted_app in mounted_apps:
+            mounted_app.state.oxrdflib_store = oxrdflib_store
+        app.state.repo = repo = OxrdflibRepo(oxrdflib_store)
     elif app.state.settings.sparql_repo_type == "remote":
-        app.state.http_async_client = await get_async_http_client()
-        app.state.repo = RemoteSparqlRepo(app.state.http_async_client)
+        app.state.http_async_client = c = await get_async_http_client()
+        for mounted_app in mounted_apps:
+            mounted_app.state.http_async_client = c
+        app.state.repo = repo = RemoteSparqlRepo(c)
         await healthcheck_sparql_endpoints()
     else:
         raise ValueError(
             "SPARQL_REPO_TYPE must be one of 'pyoxigraph', 'oxrdflib' or 'remote'"
         )
 
-    await prefix_initialisation(app.state.repo)
-    await retrieve_remote_template_queries(app.state.repo)
-    await retrieve_remote_jena_fts_shapes(app.state.repo)
-    await create_profiles_graph(app.state.repo)
+    await prefix_initialisation(repo)
+    await retrieve_remote_template_queries(repo)
+    await retrieve_remote_jena_fts_shapes(repo)
+    await create_profiles_graph(repo)
     await create_endpoints_graph(app.state)
-    await count_objects(app.state.repo)
+    await count_objects(repo)
     await populate_api_info()
 
     app.state.queryable_props = get_queryable_props()
-    app.state.pyoxi_system_store = get_system_store()
-    app.state.annotations_store = get_annotations_store()
+    app.state.pyoxi_system_store = system = get_system_store()
+    app.state.annotations_store = anno = get_annotations_store()
+        
+    for mounted_app in mounted_apps:
+        mounted_app.state.repo = repo
+        mounted_app.state.pyoxi_system_store = system
+        mounted_app.state.annotations_store = anno
+
     await retrieve_remote_queryable_definitions(app.state, app.state.pyoxi_system_store)
     await load_system_data_to_oxigraph(app.state.pyoxi_system_store)
     await load_annotations_data_to_oxigraph(app.state.annotations_store)
@@ -200,6 +221,7 @@ def assemble_app(
             name="static",
         )
     if _settings.enable_ogc_features:
+        features_subapi.state.settings = _settings
         app.mount(
             _settings.ogc_features_mount_path,
             features_subapi,

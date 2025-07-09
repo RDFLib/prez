@@ -80,17 +80,25 @@ def get_queryable_props():
 
 async def get_data_repo(
     request: Request,
-    http_async_client: httpx.AsyncClient = Depends(get_async_http_client),
     pyoxi_data_store: Store = Depends(get_pyoxi_store),
     pyoxi_system_store: Store = Depends(get_system_store),
 ) -> Repo:
     if URIRef(request.scope.get("route").name) in settings.system_endpoints:
         return PyoxigraphRepo(pyoxi_system_store)
+    try:
+        data_repo = request.app.state.repo
+        return data_repo
+    except (AttributeError, LookupError):
+        pass
     if settings.sparql_repo_type == "pyoxigraph":
         return PyoxigraphRepo(pyoxi_data_store)
     elif settings.sparql_repo_type == "oxrdflib":
         return OxrdflibRepo(oxrdflib_store)
     elif settings.sparql_repo_type == "remote":
+        try:
+            http_async_client = request.app.state.http_async_client
+        except (AttributeError, LookupError):
+            http_async_client = await get_async_http_client()
         return RemoteSparqlRepo(http_async_client)
 
 
