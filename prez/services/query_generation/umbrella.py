@@ -30,6 +30,7 @@ from sparql_grammar_pydantic import (
 )
 
 from prez.models.query_params import ListingQueryParams
+from prez.services.query_generation.search_qlever_fts import SearchQueryQleverFTS
 from prez.services.query_generation.spatial_filter import generate_bbox_filter
 from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQuery
 from prez.services.query_generation.cql import CQLParser
@@ -210,7 +211,7 @@ class PrezQueryConstructor(ConstructQuery):
 def merge_listing_query_grammar_inputs(
     cql_parser: Optional[CQLParser] = None,
     endpoint_nodeshape: Optional[NodeShape] = None,
-    search_query: Optional[SearchQueryRegex | SearchQueryFusekiFTS] = None,
+    search_query: Optional[SearchQueryRegex | SearchQueryFusekiFTS | SearchQueryQleverFTS] = None,
     concept_hierarchy_query: Optional[ConceptHierarchyQuery] = None,
     query_params: Optional[ListingQueryParams] = None,
 ) -> dict:

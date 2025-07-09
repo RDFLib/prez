@@ -39,3 +39,4 @@ class FilterLangEnum(Enum):
 class SearchMethod(str, Enum):
     DEFAULT = "default"
     FTS_FUSEKI = "fts_fuseki"
+    FTS_QLEVER = "fts_qlever"
