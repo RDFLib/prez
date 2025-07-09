@@ -108,7 +108,7 @@ async def get_data_repo(
         return data_repo
     except (AttributeError, LookupError):
         pass
-    if settings.sparql_repo_type == "pyoxigraph":
+    if settings.sparql_repo_type == "pyoxigraph_memory" or settings.sparql_repo_type == "pyoxigraph_persistent":
         return PyoxigraphRepo(pyoxi_data_store)
     elif settings.sparql_repo_type == "oxrdflib":
         return OxrdflibRepo(oxrdflib_store)
