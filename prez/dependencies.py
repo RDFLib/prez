@@ -17,6 +17,7 @@ from prez.cache import (
     queryable_props,
     store,
     system_store,
+    persistent_store,
 )
 from prez.config import settings
 from prez.enums import (
@@ -62,13 +63,16 @@ def get_pyoxi_memory_store():
 
 
 def get_pyoxi_persistent_store():
-    oxigraph_data_dir = Path(settings.pyoxigraph_data_dir)
-    if not oxigraph_data_dir.exists():
-        raise FileNotFoundError(
-            f"Pyoxigraph data directory {oxigraph_data_dir} does not exist"
-        )
-    logger.info(f"Using pyoxigraph data store {oxigraph_data_dir}")
-    return Store(path=str(oxigraph_data_dir))
+    global persistent_store
+    if persistent_store is None:
+        oxigraph_data_dir = Path(settings.pyoxigraph_data_dir)
+        if not oxigraph_data_dir.exists():
+            raise FileNotFoundError(
+                f"Pyoxigraph data directory {oxigraph_data_dir} does not exist"
+            )
+        logger.info(f"Using pyoxigraph data store {oxigraph_data_dir}")
+        persistent_store = Store(path=str(oxigraph_data_dir))
+    return persistent_store
 
 
 def get_pyoxi_store():
