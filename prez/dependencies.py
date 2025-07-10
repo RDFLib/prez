@@ -76,12 +76,9 @@ def get_pyoxi_persistent_store():
 
 
 def get_pyoxi_store():
-    if settings.sparql_repo_type == "pyoxigraph_memory":
-        return get_pyoxi_memory_store()
-    elif settings.sparql_repo_type == "pyoxigraph_persistent":
+    if settings.sparql_repo_type == "pyoxigraph_persistent":
         return get_pyoxi_persistent_store()
-    else:
-        raise ValueError(f"Invalid pyoxigraph repo type: {settings.sparql_repo_type}")
+    return get_pyoxi_memory_store()
 
 
 def get_system_store():
