@@ -17,6 +17,7 @@ from prez.cache import (
     queryable_props,
     store,
     system_store,
+    persistent_store,
 )
 from prez.config import settings
 from prez.enums import (
@@ -56,8 +57,28 @@ async def get_async_http_client():
     )
 
 
-def get_pyoxi_store():
+def get_pyoxi_memory_store():
+    logger.info("Using in-memory pyoxigraph data store")
     return store
+
+
+def get_pyoxi_persistent_store():
+    global persistent_store
+    if persistent_store is None:
+        oxigraph_data_dir = Path(settings.pyoxigraph_data_dir)
+        if not oxigraph_data_dir.exists():
+            raise FileNotFoundError(
+                f"Pyoxigraph data directory {oxigraph_data_dir} does not exist"
+            )
+        logger.info(f"Using pyoxigraph data store {oxigraph_data_dir}")
+        persistent_store = Store(path=str(oxigraph_data_dir))
+    return persistent_store
+
+
+def get_pyoxi_store():
+    if settings.sparql_repo_type == "pyoxigraph_persistent":
+        return get_pyoxi_persistent_store()
+    return get_pyoxi_memory_store()
 
 
 def get_system_store():
@@ -84,7 +105,7 @@ async def get_data_repo(
 ) -> Repo:
     if URIRef(request.scope.get("route").name) in settings.system_endpoints:
         return PyoxigraphRepo(pyoxi_system_store)
-    if settings.sparql_repo_type == "pyoxigraph":
+    if settings.sparql_repo_type == "pyoxigraph_memory" or settings.sparql_repo_type == "pyoxigraph_persistent":
         return PyoxigraphRepo(pyoxi_data_store)
     elif settings.sparql_repo_type == "oxrdflib":
         return OxrdflibRepo(oxrdflib_store)
@@ -114,7 +135,7 @@ async def load_local_data_to_oxigraph(store: Store):
     """
     Loads all the data from the local data directory into the local SPARQL endpoint
     """
-    for file in (Path(__file__).parent.parent / settings.local_rdf_dir).glob("*.ttl"):
+    for file in (Path(__file__).parent.parent / settings.pyoxigraph_data_dir).glob("**/*.ttl"):
         try:
             store.load(file.read_bytes(), "text/turtle")
         except SyntaxError as e:

@@ -102,10 +102,13 @@ async def lifespan(app: FastAPI):
     log = logging.getLogger("prez")
     log.info("Starting up")
 
-    if app.state.settings.sparql_repo_type == "pyoxigraph":
+    if app.state.settings.sparql_repo_type == "pyoxigraph_memory":
         app.state.pyoxi_store = get_pyoxi_store()
         app.state.repo = PyoxigraphRepo(app.state.pyoxi_store)
         await load_local_data_to_oxigraph(app.state.pyoxi_store)
+    elif app.state.settings.sparql_repo_type == "pyoxigraph_persistent":
+        app.state.pyoxi_store = get_pyoxi_store()
+        app.state.repo = PyoxigraphRepo(app.state.pyoxi_store)
     elif app.state.settings.sparql_repo_type == "oxrdflib":
         app.state.oxrdflib_store = get_oxrdflib_store()
         app.state.repo = OxrdflibRepo(app.state.oxrdflib_store)
@@ -115,7 +118,7 @@ async def lifespan(app: FastAPI):
         await healthcheck_sparql_endpoints()
     else:
         raise ValueError(
-            "SPARQL_REPO_TYPE must be one of 'pyoxigraph', 'oxrdflib' or 'remote'"
+            "SPARQL_REPO_TYPE must be one of 'pyoxigraph_memory', 'pyoxigraph_persistent', 'oxrdflib' or 'remote'"
         )
 
     await prefix_initialisation(app.state.repo)
