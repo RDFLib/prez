@@ -66,7 +66,7 @@ ex:shape-R0-HL3 a sh:NodeShape ;
             sh:path ( skos:inScheme [ sh:inversePath dcterms:hasPart ] ) ],
         [ sh:class skos:ConceptScheme ;
             sh:path skos:inScheme ] ;
-    sh:targetClass skos:Concept ;
+    sh:targetClass skos:Concept, skos:Collection ;
     ont:hierarchyLevel 3 .
 
 ex:shape-R0-HL3-1 a sh:NodeShape ;
