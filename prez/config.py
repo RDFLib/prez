@@ -109,6 +109,7 @@ class Settings(BaseSettings):
     root_path: str = ""
     use_path_aliases: bool = False
     spatial_query_format: Literal["geosparql", "qlever", "graphdb"] = "geosparql"
+    search_uses_listing_count_limit: bool = False
 
     @field_validator("prez_version")
     @classmethod
