@@ -1,3 +1,5 @@
+pyoxigraph_data_dir/
+
 venv/
 __pycache__/
 .venv/
