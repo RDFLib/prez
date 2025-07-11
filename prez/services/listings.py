@@ -208,8 +208,8 @@ async def listing_function(
         if count == search_query.limit:
             count_literal = f">{(count - 1) * query_params.page}"
         else:
-            # last page, this is the actual count = (complete pages) * per_page + count
-            count_literal = f"{(query_params.per_page * (query_params.page - 1)) + count}"
+            # last page, this is the actual count = (complete pages) * limit + count
+            count_literal = f"{(query_params.limit * (query_params.page - 1)) + count}"
         item_graph.add((PREZ.SearchResult, PREZ["count"], Literal(count_literal)))
     return await return_from_graph(
         item_graph,
