@@ -4,7 +4,7 @@ from pathlib import Path
 
 import httpx
 from fastapi import Depends, HTTPException, Request
-from pyoxigraph import Store, RdfFormat
+from pyoxigraph import Store, RdfFormat, DefaultGraph as OxiDefaultGraph
 from rdflib import DCTERMS, RDF, SKOS, Dataset, Literal, URIRef, Graph
 from sparql_grammar_pydantic import IRI, Var
 
@@ -146,10 +146,11 @@ async def load_local_data_to_oxigraph(store: Store):
     """
     Loads all the data from the local data directory into the local SPARQL endpoint
     """
+    default = OxiDefaultGraph()
     for file in (Path(__file__).parent.parent / settings.pyoxigraph_data_dir).glob("**/*.ttl"):
         try:
-            store.load(file.read_bytes(), "text/turtle")
-        except SyntaxError as e:
+            store.bulk_load(None, RdfFormat.TURTLE, path=str(file), to_graph=default)
+        except Exception as e:
             raise SyntaxError(f"Error parsing file {file}: {e}")
 
 
@@ -171,13 +172,15 @@ async def load_annotations_data_to_oxigraph(store: Store):
     """
     Loads all the data from the local data directory into the local SPARQL endpoint
     """
-    g = Dataset(default_union=True)
-    for file in (Path(__file__).parent / "reference_data/annotations").glob("*"):
-        g.parse(file)
-    # Whats the point of loading this into an RDFLib dataset them serializing it again
-    # to then load it into the oxigraph store?
-    file_bytes = g.serialize(format="nt", encoding="utf-8")
-    store.load(file_bytes, RdfFormat.N_TRIPLES)
+    default = OxiDefaultGraph()
+    for file in (Path(__file__).parent / "reference_data/annotations").glob("*.nt"):
+        store.bulk_load(None, RdfFormat.N_TRIPLES, path=str(file), to_graph=default)
+    for file in (Path(__file__).parent / "reference_data/annotations").glob("*.ttl"):
+        store.bulk_load(None, RdfFormat.TURTLE, path=str(file), to_graph=default)
+    for file in (Path(__file__).parent / "reference_data/annotations").glob("*.nq"):
+        store.bulk_load(None, RdfFormat.N_QUADS, path=str(file))
+    for file in (Path(__file__).parent / "reference_data/annotations").glob("*.trig"):
+        store.bulk_load(None, RdfFormat.TRIG, path=str(file))
 
 
 async def get_endpoint_uri_type(
