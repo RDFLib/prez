@@ -21,6 +21,8 @@ links_ids_graph_cache.bind("prez", "https://prez.dev/")
 
 store = Store()
 
+persistent_store = None
+
 system_store = Store()
 
 annotations_store = Store()
