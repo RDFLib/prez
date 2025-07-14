@@ -23,7 +23,6 @@ prez:OGCRecordsProfile
     altr-ext:constrainsClass prez:CatPrez ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
-        "application/json",
         "application/ld+json",
         "application/anot+ld+json",
         "application/rdf+xml",

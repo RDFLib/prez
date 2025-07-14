@@ -22,7 +22,6 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     dcterms:title "Prez profile" ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
-        "application/json" ,
         "application/ld+json" ,
         "application/anot+ld+json" ,
         "application/rdf+xml" ,
@@ -113,7 +112,6 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
                              prof:Profile ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
-        "application/json" ,
         "application/ld+json" ,
         "application/anot+ld+json" ,
         "application/rdf+xml" ,

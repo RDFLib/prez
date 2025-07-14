@@ -265,7 +265,6 @@ def merge_listing_query_grammar_inputs(
         kwargs["construct_tss_list"].extend(search_query.tss_list)
         kwargs["inner_select_vars"].extend(search_query.inner_select_vars)
         kwargs["limit"] = search_query.limit
-        kwargs["offset"] = search_query.offset
         kwargs["order_by_value"] = search_query.order_by_val
         kwargs["order_by_direction"] = search_query.order_by_direction
         kwargs["inner_select_gpnt"].extend([search_query.inner_select_gpnt])
