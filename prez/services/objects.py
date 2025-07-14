@@ -11,7 +11,8 @@ from rdf2geojson import convert
 from rdflib import RDF, URIRef, BNode
 from rdflib.namespace import GEO
 from sparql_grammar_pydantic import IRI, TriplesSameSubject, TriplesSameSubjectPath, Var
-from pyoxigraph import RdfFormat, Store as OxiStore, NamedNode as OxiNamedNode, BlankNode as OxiBlankNode, Quad as OxiQuad, DefaultGraph as OxiDefaultGraph
+from pyoxigraph import RdfFormat, Store as OxiStore, NamedNode as OxiNamedNode, BlankNode as OxiBlankNode, \
+    Quad as OxiQuad, DefaultGraph as OxiDefaultGraph, NamedNode
 from oxrdflib._converter import to_ox
 from prez.config import settings
 from prez.cache import prefix_graph
@@ -281,15 +282,30 @@ async def ogc_features_object_function(
     return content, link_headers
 
 
-def create_collection_json(collection_curie, collection_uri, annotations_graph, url):
+def create_collection_json(
+        collection_curie,
+        collection_uri,
+        annotations_store: OxiStore,
+        url
+):
+    title_quad = next(
+        annotations_store.quads_for_pattern(
+            subject=NamedNode(collection_uri), predicate=NamedNode(PREZ.label), object=None
+        ),
+        None
+    )
+    title = title_quad[2].value if title_quad else None
+    description = next(
+        annotations_store.quads_for_pattern(
+            subject=NamedNode(collection_uri), predicate=NamedNode(PREZ.description), object=None
+        ),
+        None
+    )
+    description = description[2].value if description else None
     return Collection(
         id=collection_curie,
-        title=annotations_graph.value(
-            subject=collection_uri, predicate=PREZ.label, default=None
-        ),
-        description=annotations_graph.value(
-            subject=collection_uri, predicate=PREZ.description, default=None
-        ),
+        title=title,
+        description=description,
         links=[
             Link(
                 href=URIRef(
