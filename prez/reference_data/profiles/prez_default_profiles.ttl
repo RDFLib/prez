@@ -1,12 +1,10 @@
+@prefix sdo: <https://schema.org/> .
 PREFIX altr-ext: <http://www.w3.org/ns/dx/connegp/altr-ext#>
 PREFIX dcat: <http://www.w3.org/ns/dcat#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX geo: <http://www.opengis.net/ont/geosparql#>
-PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX prez: <https://prez.dev/>
 PREFIX prof: <http://www.w3.org/ns/dx/prof/>
-PREFIX prov: <http://www.w3.org/ns/prov#>
-PREFIX reg: <http://purl.org/linked-data/registry#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
@@ -109,11 +107,14 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
                              skos:Collection ,
                              prez:CQLFilterResult ,
                              prez:QueryablesList ,
+                             sdo:DataCatalog ,
                              prof:Profile ;
     altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
     altr-ext:hasResourceFormat
         "application/ld+json" ,
         "application/anot+ld+json" ,
+        "application/n-triples" ,
+        "application/anot+n-triples" ,
         "application/rdf+xml" ,
         "text/anot+turtle" ,
         "text/turtle" ;
