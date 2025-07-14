@@ -26,7 +26,7 @@ def test_store() -> Store:
     # Create a new pyoxigraph Store
     store = Store()
 
-    for file in (Path(__file__).parent.parent / "test_data").glob("*.ttl"):
+    for file in (Path(__file__).parent.parent / "test_data").glob("**/*.ttl"):
         store.load(file.read_bytes(), RdfFormat.TURTLE)
 
     return store
