@@ -1,6 +1,5 @@
 import logging
 import re
-import time
 from enum import Enum
 from textwrap import dedent
 
@@ -212,22 +211,51 @@ class NegotiatedPMTs(BaseModel):
             }
             for result in repo_response[1][0][1]
         ]
+
         if not available:
+            if self.requested_mediatypes is not None and len(self.requested_mediatypes) > 0:
+                fallback_mediatype = self.requested_mediatypes[0][0]
+            else:
+                fallback_mediatype = None
             if self.listing:
+                # known available mediatypes for the 'mem' profile
+                _available_mem_types = [
+                    "application/ld+json" ,
+                    "application/anot+ld+json" ,
+                    "application/rdf+xml" ,
+                    "text/anot+turtle" ,
+                    "text/turtle"
+                ]
+                if fallback_mediatype is None or fallback_mediatype not in _available_mem_types:
+                    _use_mediatype = "text/anot+turtle"
+                else:
+                    _use_mediatype = fallback_mediatype
                 return [
                     {
                         "profile": URIRef("https://w3id.org/profile/mem"),
                         "title": "Members",
-                        "mediatype": "text/anot+turtle",
+                        "mediatype": _use_mediatype,
                         "class": "http://www.w3.org/2000/01/rdf-schema#Resource",
                     }
                 ]
             else:
+                # known available profiles for the 'open-object' profile
+                _available_open_types = [
+                    "application/ld+json" ,
+                    "application/anot+ld+json" ,
+                    "application/rdf+xml" ,
+                    "text/anot+turtle" ,
+                    "text/turtle"
+                ]
+                if fallback_mediatype is None or fallback_mediatype not in _available_open_types:
+                    _use_mediatype = "text/anot+turtle"
+                else:
+                    _use_mediatype = fallback_mediatype
                 return [
                     {
                         "profile": URIRef("https://prez.dev/profile/open-object"),
                         "title": "Open profile",
-                        "mediatype": "text/anot+turtle",
+                        "mediatype": _use_mediatype,
                         "class": "http://www.w3.org/2000/01/rdf-schema#Resource",
                     }
                 ]
