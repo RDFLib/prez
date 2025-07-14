@@ -11,7 +11,7 @@ endpoints_graph_cache.bind("prez", "https://prez.dev/")
 prez_system_graph = Graph()
 prez_system_graph.bind("prez", "https://prez.dev/")
 
-prefix_graph = Graph(bind_namespaces="rdflib")
+prefix_graph = Graph(bind_namespaces="none")
 
 # TODO can probably merge counts graph
 counts_graph = Graph()
