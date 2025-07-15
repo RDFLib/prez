@@ -469,3 +469,25 @@ UNION
     ]
     assert len(parser.inner_select_gpntotb_list) == len(expected_inner_select_gpntotb_list_str)
     assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace("\n", "") == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
+
+
+def test_focus_node_in_subquery():
+    """
+    Tests that ?focus_node is always included in the inner select variables,
+    even for a simple query.
+    """
+    from prez.services.query_generation.cql import CQLParser
+    from sparql_grammar_pydantic import Var
+
+    cql_json_data = {
+        "op": "=",
+        "args": [
+            {"property": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"},
+            "http://www.w3.org/ns/sosa/Sample",
+        ],
+    }
+
+    parser = CQLParser(cql_json=cql_json_data)
+    parser.parse()
+
+    assert Var(value="focus_node") in parser.inner_select_vars

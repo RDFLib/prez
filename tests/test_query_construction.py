@@ -334,3 +334,32 @@ def test_count_query():
         solution_modifier=SolutionModifier(),
     )
     print(query)
+
+
+def test_umbrella_cql_query():
+    """
+    Tests that a CQL query handled by the umbrella PrezQueryConstructor
+    correctly includes ?focus_node in its subquery.
+    """
+    from prez.services.query_generation.cql import CQLParser
+    from prez.services.query_generation.umbrella import (
+        merge_listing_query_grammar_inputs,
+    )
+    from prez.models.query_params import ListingQueryParams
+
+    cql_json_data = {
+        "op": "=",
+        "args": [
+            {"property": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"},
+            "http://www.w3.org/ns/sosa/Sample",
+        ],
+    }
+    parser = CQLParser(cql_json=cql_json_data)
+    parser.parse()
+    qp = ListingQueryParams(limit=1, page=1, offset=1, _filter=None, bbox = [], datetime=None, order_by=None)
+    kwargs = merge_listing_query_grammar_inputs(
+        cql_parser=parser, query_params=qp
+    )
+    query = PrezQueryConstructor(**kwargs)
+    query_string = query.to_string()
+    assert "SELECT DISTINCT ?focus_node" in query_string
