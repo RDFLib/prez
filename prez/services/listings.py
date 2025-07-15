@@ -355,7 +355,7 @@ async def ogc_features_listing_function(
         OGCFEAT["queryables-local"],
         OGCFEAT["queryables-global"],
     ]:
-        use_oxigraph = False
+        use_oxigraph = True
         queryables = await generate_queryables_from_shacl_definition(
             url, endpoint_uri_type[0], system_repo
         )
@@ -495,7 +495,7 @@ async def ogc_features_listing_function(
                 pass
             else:  # generate them from the data
                 queryables = generate_queryables_json(
-                    item_graph, annotations_graph, url, endpoint_uri_type[0]
+                    item_store, annotations_store, url, endpoint_uri_type[0]
                 )
                 content = io.BytesIO(
                     queryables.model_dump_json(exclude_none=True, by_alias=True).encode(
