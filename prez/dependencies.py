@@ -106,7 +106,6 @@ async def get_data_repo(
 ) -> Repo:
     if URIRef(request.scope.get("route").name) in settings.system_endpoints:
         return PyoxigraphRepo(pyoxi_system_store)
-
     try:
         data_repo = request.app.state.repo
         return data_repo

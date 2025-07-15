@@ -12,6 +12,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
 from starlette.applications import Starlette
 from starlette.routing import Mount
+
 from prez.config import Settings, settings
 from prez.dependencies import (
     get_annotations_store,
@@ -149,17 +150,17 @@ async def lifespan(app: FastAPI):
     await populate_api_info()
 
     app.state.queryable_props = get_queryable_props()
-    app.state.pyoxi_system_store = system = get_system_store()
-    app.state.annotations_store = anno = get_annotations_store()
-        
+    app.state.pyoxi_system_store = system_store = get_system_store()
+    app.state.annotations_store = anno_store = get_annotations_store()
+
     for mounted_app in mounted_apps:
         mounted_app.state.repo = repo
-        mounted_app.state.pyoxi_system_store = system
-        mounted_app.state.annotations_store = anno
+        mounted_app.state.pyoxi_system_store = system_store
+        mounted_app.state.annotations_store = anno_store
 
-    await retrieve_remote_queryable_definitions(app.state, app.state.pyoxi_system_store)
-    await load_system_data_to_oxigraph(app.state.pyoxi_system_store)
-    await load_annotations_data_to_oxigraph(app.state.annotations_store)
+    await retrieve_remote_queryable_definitions(app.state, system_store)
+    await load_system_data_to_oxigraph(system_store)
+    await load_annotations_data_to_oxigraph(anno_store)
 
     # dynamic routes are either: custom routes if enabled, else default prez "data" routes are added dynamically
     app.include_router(create_dynamic_router())
