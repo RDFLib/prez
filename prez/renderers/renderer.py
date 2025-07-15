@@ -87,9 +87,9 @@ async def return_from_graph(
         count = None  # for an object; no count query.
         str_count = None
         if is_oxigraph:
-            if len(list(graph.quads_for_pattern(OxiNamedNode(RDF.type), OxiNamedNode(GEO["Feature"]), None))) > 0:
-               collection_label="FeatureCollection containing Features from listing query"
             store: OxiStore = graph
+            if len(list(store.quads_for_pattern(None, OxiNamedNode(RDF.type), OxiNamedNode(GEO["Feature"]), None))) > 0:
+               collection_label="FeatureCollection containing Features from listing query"
             geojson = convert(
                 g=store,
                 do_validate=False,
@@ -254,7 +254,7 @@ def create_collections_json(
     collection_properties_map: dict[URIRef, tuple] = {}
     if isinstance(item_graph, OxiStore):
         item_store: OxiStore = item_graph
-        for q in item_store.quads_for_pattern(None, OxiNamedNode(RDF.type), OxiNamedNode(GEO.FeatureCollection)):
+        for q in item_store.quads_for_pattern(None, OxiNamedNode(RDF.type), OxiNamedNode(GEO.FeatureCollection), None):
             s = q[0]
             s_uriref = URIRef(s.value)
             for bbox_q in item_store.quads_for_pattern(s, OxiNamedNode(GEO.hasBoundingBox), None, None):
