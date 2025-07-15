@@ -12,7 +12,7 @@ from rdflib import RDF, URIRef, BNode
 from rdflib.namespace import GEO
 from sparql_grammar_pydantic import IRI, TriplesSameSubject, TriplesSameSubjectPath, Var
 from pyoxigraph import RdfFormat, Store as OxiStore, NamedNode as OxiNamedNode, BlankNode as OxiBlankNode, \
-    Quad as OxiQuad, DefaultGraph as OxiDefaultGraph, NamedNode
+    Quad as OxiQuad, DefaultGraph as OxiDefaultGraph
 from oxrdflib._converter import to_ox
 from prez.config import settings
 from prez.cache import prefix_graph
@@ -290,14 +290,14 @@ def create_collection_json(
 ):
     title_quad = next(
         annotations_store.quads_for_pattern(
-            subject=NamedNode(collection_uri), predicate=NamedNode(PREZ.label), object=None
+            OxiNamedNode(collection_uri), OxiNamedNode(PREZ.label), None, None
         ),
         None
     )
     title = title_quad[2].value if title_quad else None
     description = next(
         annotations_store.quads_for_pattern(
-            subject=NamedNode(collection_uri), predicate=NamedNode(PREZ.description), object=None
+            OxiNamedNode(collection_uri), OxiNamedNode(PREZ.description), None, None
         ),
         None
     )
