@@ -92,7 +92,8 @@ class CQLParser:
             queryable_props=None,
     ):
         self.inner_select_gpntotb_list: list[GraphPatternNotTriples] = []
-        self.inner_select_vars: list[Var] = []
+        # Always include at least ?focus_node SELECT var
+        self.inner_select_vars: list[Var] = [Var(value="focus_node")]
         self.cql: dict = cql
         self.cql_json = cql_json
         self.var_counter = 0
