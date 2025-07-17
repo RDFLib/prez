@@ -11,6 +11,7 @@ from pyoxigraph import (
     Quad,
 )
 from fastapi.concurrency import run_in_threadpool
+from threading import Lock
 from rdflib import Graph, Namespace, URIRef
 
 from prez.exceptions.model_exceptions import InvalidSPARQLQueryException
@@ -24,6 +25,7 @@ log = logging.getLogger(__name__)
 class PyoxigraphRepo(Repo):
     def __init__(self, pyoxi_store: Store):
         self.pyoxi_store = pyoxi_store
+        self.into_store_write_locks = {}
 
     @staticmethod
     def _handle_query_solution_results(results: QuerySolutions) -> dict[str, Any]:
@@ -72,10 +74,18 @@ class PyoxigraphRepo(Repo):
         results = self.pyoxi_store.query(query)
         if into_graph is not None:
             g = into_graph
+            graph_lock = self.into_store_write_locks.get(id(into_graph), None)
+            if graph_lock is not None:
+                graph_lock.acquire()
         else:
             g = Graph()
             g.bind("prez", URIRef("https://prez.dev/"))
-        result_graph = self._handle_query_triples_results(results, into_=g)
+            graph_lock = None
+        try:
+            result_graph = self._handle_query_triples_results(results, into_=g)
+        finally:
+            if graph_lock is not None:
+                graph_lock.release()
         return result_graph
 
     def _sync_rdf_query_to_oxigraph_store(
@@ -84,9 +94,17 @@ class PyoxigraphRepo(Repo):
         results = self.pyoxi_store.query(query)
         if into_store is not None:
             s = into_store
+            store_lock = self.into_store_write_locks.get(id(into_store), None)
+            if store_lock is not None:
+                store_lock.acquire()
         else:
             s = Store()
-        result_store = self._handle_query_triples_results(results, into_=s)
+            store_lock = None
+        try:
+            result_store = self._handle_query_triples_results(results, into_=s)
+        finally:
+            if store_lock is not None:
+                store_lock.release()
         return result_store
 
     def _sync_tabular_query_to_table(
@@ -121,16 +139,46 @@ class PyoxigraphRepo(Repo):
     async def rdf_query_to_rdflib_graph(
         self, query: str, into_graph: Graph | None = None
     ) -> Graph:
-        return await run_in_threadpool(
-            self._sync_rdf_query_to_rdflib_graph, query, into_graph
-        )
+        if into_graph is not None:
+            graph_lock = self.into_store_write_locks.get(id(into_graph), None)
+            do_delete_lock = graph_lock is not None
+            if graph_lock is None:
+                graph_lock = Lock()
+                self.into_store_write_locks[id(into_graph)] = graph_lock
+        else:
+            graph_lock = None
+            do_delete_lock = False
+        try:
+            return await run_in_threadpool(
+                self._sync_rdf_query_to_rdflib_graph, query, into_graph
+            )
+        finally:
+            if graph_lock is not None and do_delete_lock:
+                # The Lock might still be acquired by a different thread, but doesn't matter,
+                # we can still delete the lock reference from the dict.
+                del self.into_store_write_locks[id(into_graph)]
 
     async def rdf_query_to_oxigraph_store(
         self, query: str, into_store: Store | None = None
     ) -> Store:
-        return await run_in_threadpool(
-            self._sync_rdf_query_to_oxigraph_store, query, into_store
-        )
+        if into_store is not None:
+            store_lock = self.into_store_write_locks.get(id(into_store), None)
+            do_delete_lock = store_lock is not None
+            if store_lock is None:
+                store_lock = Lock()
+                self.into_store_write_locks[id(into_store)] = store_lock
+        else:
+            store_lock = None
+            do_delete_lock = False
+        try:
+            return await run_in_threadpool(
+                self._sync_rdf_query_to_oxigraph_store, query, into_store
+            )
+        finally:
+            if store_lock is not None and do_delete_lock:
+                # The Lock might still be acquired by a different thread, but doesn't matter,
+                # we can still delete the lock reference from the dict.
+                del self.into_store_write_locks[id(into_store)]
 
     async def tabular_query_to_table(
         self, query: str, context: URIRef | None = None
