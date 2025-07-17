@@ -105,9 +105,10 @@ async def object_function(
         if pmts.requested_mediatypes and (
             pmts.requested_mediatypes[0][0] in ("text/html", "*/*")
         ):
-            item_uri = URIRef(profile_nodeshape.focus_node.value)
-            await add_prez_links_for_oxigraph(item_store, data_repo, endpoint_structure, [item_uri])
-            for q in item_store.quads_for_pattern(to_ox(item_uri), OxiNamedNode("https://prez.dev/link"), None, None):
+            item_node = profile_nodeshape.focus_node
+            item_uri_str = item_node.value
+            await add_prez_links_for_oxigraph(item_store, data_repo, endpoint_structure, [item_node])
+            for q in item_store.quads_for_pattern(item_node, OxiNamedNode("https://prez.dev/link"), None, None):
                 prez_link = q.object
             else:
                 prez_link = None
@@ -116,11 +117,11 @@ async def object_function(
                 return RedirectResponse(prez_ui_url + str(prez_link.value))
             elif len(item_store):
                 return RedirectResponse(
-                    prez_ui_url + "/object?uri=" + urllib.parse.quote_plus(item_uri)
+                    prez_ui_url + "/object?uri=" + urllib.parse.quote_plus(item_uri_str)
                 )
             else:
                 return RedirectResponse(
-                    prez_ui_url + "/404?uri=" + urllib.parse.quote_plus(item_uri)
+                    prez_ui_url + "/404?uri=" + urllib.parse.quote_plus(item_uri_str)
                 )
     if "anot+" in pmts.selected["mediatype"]:
         item_store.add(OxiQuad(OxiBlankNode(), OxiNamedNode(PREZ.currentProfile), OxiNamedNode(pmts.selected["profile"]), OxiDefaultGraph()))
