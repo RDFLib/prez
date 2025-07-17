@@ -1,10 +1,9 @@
-from io import BytesIO
 import logging
 from typing import Any
 from urllib.parse import quote_plus
 
 import httpx
-from pyoxigraph import RdfFormat, Store
+from pyoxigraph import RdfFormat, Quad, parse
 from rdflib import Graph, Namespace, URIRef
 
 from prez.config import settings
@@ -60,27 +59,24 @@ class RemoteSparqlRepo(Repo):
         content_bytes = await response.aread()
         return g.parse(data=content_bytes, format=response_format)
 
-    async def rdf_query_to_oxigraph_store(
-        self, query: str, into_store: Store | None = None
-    ) -> Store:
+    async def rdf_query_to_pyoxi_quads(self, query: str) -> list[Quad]:
         """
-        Sends a SPARQL query asynchronously and parses the response into a PyOxigraph Store.
+        Sends a SPARQL CONSTRUCT query asynchronously and parses the response into a list of pyoxigraph Quads.
         Args: query: str: A SPARQL query to be sent asynchronously.
-        Returns: pyoxigraph.Store: An pyoxigraph Store object
+        Returns: list[pyoxigraph.Quad]: A list of pyoxigraph Quad objects
         """
         response: httpx.Response = await self._send_query(query)
         response_format = response.headers.get("content-type", "application/n-triples")
         response_format = response_format.split(";")[
             0
         ]  # handle cases like 'application/n-triples;charset=UTF-8' from GraphDB
-        if into_store is not None:
-            s = into_store
-        else:
-            s = Store()
+
         content_bytes = await response.aread()
-        oxigraph_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(response_format, RdfFormat.N_TRIPLES)
-        s.bulk_load(content_bytes, oxigraph_format)
-        return s
+        oxigraph_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(
+            response_format, RdfFormat.N_TRIPLES
+        )
+        quads = parse(content_bytes, format=oxigraph_format)
+        return list(quads)
 
     async def tabular_query_to_table(
         self, query: str, context: URIRef | None = None
@@ -138,4 +134,3 @@ class RemoteSparqlRepo(Repo):
             ) from e
 
         return response
-

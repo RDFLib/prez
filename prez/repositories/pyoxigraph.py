@@ -1,7 +1,7 @@
 import logging
 from typing import Any
-from io import BytesIO
-import pyoxigraph
+
+from fastapi.concurrency import run_in_threadpool
 from pyoxigraph import (
     RdfFormat,
     Store,
@@ -9,14 +9,15 @@ from pyoxigraph import (
     QuerySolutions,
     QueryBoolean,
     Quad,
+    DefaultGraph,
+    Literal as OxiLiteral,
+    NamedNode as OxiNamedNode,
+    BlankNode as OxiBlankNode,
 )
-from fastapi.concurrency import run_in_threadpool
-from rdflib import Graph, Namespace, URIRef
+from rdflib import Graph, URIRef
 
 from prez.exceptions.model_exceptions import InvalidSPARQLQueryException
 from prez.repositories.base import Repo
-
-PREZ = Namespace("https://prez.dev/")
 
 log = logging.getLogger(__name__)
 
@@ -54,7 +55,7 @@ class PyoxigraphRepo(Repo):
         """Parse the query results into a rdflib.Graph or pyoxigraph.Store."""
         if isinstance(into_, Store):
             # Into an oxigraph store
-            default = pyoxigraph.DefaultGraph()
+            default = DefaultGraph()
             # If the target is a Store, we can directly load the triples into it.
             into_.bulk_extend(Quad(t.subject, t.predicate, t.object, default) for t in results)
             return into_
@@ -78,16 +79,14 @@ class PyoxigraphRepo(Repo):
         result_graph = self._handle_query_triples_results(results, into_=g)
         return result_graph
 
-    def _sync_rdf_query_to_oxigraph_store(
-        self, query: str, into_store: Store | None
-    ) -> Store:
+    def _sync_rdf_query_to_pyoxi_quads(self, query: str) -> list[Quad]:
         results = self.pyoxi_store.query(query)
-        if into_store is not None:
-            s = into_store
-        else:
-            s = Store()
-        result_store = self._handle_query_triples_results(results, into_=s)
-        return result_store
+        if isinstance(results, QueryTriples):
+            default = DefaultGraph()
+            return [
+                Quad(t.subject, t.predicate, t.object, default) for t in results
+            ]
+        return []
 
     def _sync_tabular_query_to_table(
         self, query: str, context: URIRef | None = None
@@ -125,12 +124,8 @@ class PyoxigraphRepo(Repo):
             self._sync_rdf_query_to_rdflib_graph, query, into_graph
         )
 
-    async def rdf_query_to_oxigraph_store(
-        self, query: str, into_store: Store | None = None
-    ) -> Store:
-        return await run_in_threadpool(
-            self._sync_rdf_query_to_oxigraph_store, query, into_store
-        )
+    async def rdf_query_to_pyoxi_quads(self, query: str) -> list[Quad]:
+        return await run_in_threadpool(self._sync_rdf_query_to_pyoxi_quads, query)
 
     async def tabular_query_to_table(
         self, query: str, context: URIRef | None = None
@@ -146,11 +141,11 @@ class PyoxigraphRepo(Repo):
 
 
 def _pyoxi_result_type(term) -> str:
-    if isinstance(term, pyoxigraph.Literal):
+    if isinstance(term, OxiLiteral):
         return "literal"
-    elif isinstance(term, pyoxigraph.NamedNode):
+    elif isinstance(term, OxiNamedNode):
         return "uri"
-    elif isinstance(term, pyoxigraph.BlankNode):
+    elif isinstance(term, OxiBlankNode):
         return "bnode"
     else:
         raise ValueError(f"Unknown type: {type(term)}")

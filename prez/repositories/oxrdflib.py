@@ -2,8 +2,8 @@ import logging
 from typing import Any
 
 from fastapi.concurrency import run_in_threadpool
-from pyoxigraph import Store, DefaultGraph, Quad
 from oxrdflib._converter import to_ox
+from pyoxigraph import DefaultGraph, Quad
 from rdflib import BNode, Graph, Literal, Namespace, URIRef
 
 from prez.repositories.base import Repo
@@ -31,24 +31,16 @@ class OxrdflibRepo(Repo):
             into_graph += results.graph
             return into_graph
 
-    def _sync_rdf_query_to_oxigraph_store(
-        self, query: str, into_store: Store | None = None
-    ) -> Store:
-        # TODO, replace this rdflib sparql query with the
-        # equivalent pyoxigraph query + results handling
+    def _sync_rdf_query_to_pyoxi_quads(self, query: str) -> list[Quad]:
         results = self.oxrdflib_graph.query(query)
-        if into_store is None:
-            store = Store()
-        else:
-            store = into_store
         if results.graph is None:
-            return store
-        default = DefaultGraph()
-        store.bulk_extend(
-              Quad(to_ox(t.subject), to_ox(t.predicate), to_ox(t.object), default)
-              for t in results.graph.triples((None, None, None))
-            )
-        return store
+            return []
+
+        quads = [
+            Quad(to_ox(t.subject), to_ox(t.predicate), to_ox(t.object), DefaultGraph())
+            for t in results.graph.triples((None, None, None))
+        ]
+        return quads
 
     def _sync_tabular_query_to_table(
         self, query: str, context: URIRef | None = None
@@ -72,12 +64,8 @@ class OxrdflibRepo(Repo):
             self._sync_rdf_query_to_rdflib_graph, query, into_graph
         )
 
-    async def rdf_query_to_oxigraph_store(
-        self, query: str, into_store: Store | None = None
-    ) -> Store:
-        return await run_in_threadpool(
-            self._sync_rdf_query_to_oxigraph_store, query, into_store
-        )
+    async def rdf_query_to_pyoxi_quads(self, query: str) -> list[Quad]:
+        return await run_in_threadpool(self._sync_rdf_query_to_pyoxi_quads, query)
 
     async def tabular_query_to_table(
         self, query: str, context: URIRef | None = None

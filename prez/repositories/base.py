@@ -2,7 +2,8 @@ import asyncio
 import logging
 from abc import ABC, abstractmethod
 from typing import List, Tuple, Any
-from pyoxigraph import Store
+
+from pyoxigraph import Store, Quad
 from rdflib import Graph, Namespace, URIRef
 
 from prez.cache import prefix_graph
@@ -20,9 +21,7 @@ class Repo(ABC):
         pass
 
     @abstractmethod
-    async def rdf_query_to_oxigraph_store(
-        self, query: str, into_store: Store | None = None
-    ) -> Store:
+    async def rdf_query_to_pyoxi_quads(self, query: str) -> list[Quad]:
         pass
 
     @abstractmethod
@@ -39,13 +38,11 @@ class Repo(ABC):
     ) -> Tuple[Graph | Store, List]:
         # Common logic to send both query types in parallel
         if return_oxigraph_store:
-            s = Store()
             graph_queries = [
-                self.rdf_query_to_oxigraph_store(query, into_store=s)
+                self.rdf_query_to_pyoxi_quads(query)
                 for query in rdf_queries
                 if query
             ]
-            retstore = s
         else:
             g = Graph(namespace_manager=prefix_graph.namespace_manager)
             graph_queries = [
@@ -63,13 +60,19 @@ class Repo(ABC):
                 if query
             ],
         )
-
+        rdf_results = []
         tabular_results = []
         for result in results:
-            if isinstance(result, (Graph, Store)):
+            if isinstance(result, Graph):
                 pass
+            elif isinstance(result, list):  # Quads
+                rdf_results.extend(result)
             else:
                 tabular_results.append(result)
+
+        if return_oxigraph_store:
+            retstore = Store()
+            retstore.bulk_extend(rdf_results)
         return retstore, tabular_results
 
     @abstractmethod
