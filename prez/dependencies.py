@@ -4,8 +4,8 @@ from pathlib import Path
 
 import httpx
 from fastapi import Depends, HTTPException, Request
-from pyoxigraph import Store
-from rdflib import DCTERMS, RDF, SKOS, Dataset, Literal, URIRef
+from pyoxigraph import Store, RdfFormat, DefaultGraph as OxiDefaultGraph
+from rdflib import DCTERMS, RDF, SKOS, Dataset, Literal, URIRef, Graph
 from sparql_grammar_pydantic import IRI, Var
 
 from prez.cache import (
@@ -24,12 +24,14 @@ from prez.enums import (
     GeoJSONMediaType,
     JSONMediaType,
     NonAnnotatedRDFMediaType,
-    SPARQLQueryMediaType, AnnotatedRDFMediaType
+    SPARQLQueryMediaType,
+    AnnotatedRDFMediaType,
 )
 from prez.enums import SearchMethod
 from prez.exceptions.model_exceptions import (
     NoEndpointNodeshapeException,
-    URINotFoundException, MissingFilterQueryError,
+    URINotFoundException,
+    MissingFilterQueryError,
 )
 from prez.models.query_params import ListingQueryParams
 from prez.reference_data.prez_ns import ALTREXT, EP, OGCE, OGCFEAT, ONT
@@ -143,10 +145,11 @@ async def load_local_data_to_oxigraph(store: Store):
     """
     Loads all the data from the local data directory into the local SPARQL endpoint
     """
+    default = OxiDefaultGraph()
     for file in (Path(__file__).parent.parent / settings.pyoxigraph_data_dir).glob("**/*.ttl"):
         try:
-            store.load(file.read_bytes(), "text/turtle")
-        except SyntaxError as e:
+            store.bulk_load(None, RdfFormat.TURTLE, path=str(file), to_graph=default)
+        except Exception as e:
             raise SyntaxError(f"Error parsing file {file}: {e}")
 
 
@@ -155,25 +158,28 @@ async def load_system_data_to_oxigraph(store: Store):
     Loads all the data from the local data directory into the local SPARQL endpoint
     """
     profiles_bytes = profiles_graph_cache.serialize(format="nt", encoding="utf-8")
-    store.load(profiles_bytes, "application/n-triples")
+    store.load(profiles_bytes, RdfFormat.N_TRIPLES)
 
     endpoints_bytes = endpoints_graph_cache.serialize(format="nt", encoding="utf-8")
-    store.load(endpoints_bytes, "application/n-triples")
+    store.load(endpoints_bytes, RdfFormat.N_TRIPLES)
 
     prez_system_graph_bytes = prez_system_graph.serialize(format="nt", encoding="utf-8")
-    store.load(prez_system_graph_bytes, "application/n-triples")
+    store.load(prez_system_graph_bytes, RdfFormat.N_TRIPLES)
 
 
 async def load_annotations_data_to_oxigraph(store: Store):
     """
     Loads all the data from the local data directory into the local SPARQL endpoint
     """
-    g = Dataset(default_union=True)
-    for file in (Path(__file__).parent / "reference_data/annotations").glob("*"):
-        g.parse(file)
-    file_bytes = g.serialize(format="nt", encoding="utf-8")
-    store.load(file_bytes, "application/n-triples")
-
+    default = OxiDefaultGraph()
+    for file in (Path(__file__).parent / "reference_data/annotations").glob("*.nt"):
+        store.bulk_load(None, RdfFormat.N_TRIPLES, path=str(file), to_graph=default)
+    for file in (Path(__file__).parent / "reference_data/annotations").glob("*.ttl"):
+        store.bulk_load(None, RdfFormat.TURTLE, path=str(file), to_graph=default)
+    for file in (Path(__file__).parent / "reference_data/annotations").glob("*.nq"):
+        store.bulk_load(None, RdfFormat.N_QUADS, path=str(file))
+    for file in (Path(__file__).parent / "reference_data/annotations").glob("*.trig"):
+        store.bulk_load(None, RdfFormat.TRIG, path=str(file))
 
 
 async def get_endpoint_uri_type(
@@ -241,14 +247,18 @@ async def cql_get_parser_dependency(
             raise HTTPException(
                 status_code=400, detail="Invalid CQL format: Parsing failed."
             )
-    elif endpoint_uri_type[0] == URIRef('https://prez.dev/endpoint/extended-ogc-records/cql-get'):
-        raise MissingFilterQueryError("filter query parameter with a valid CQL JSON expression must be provided when "
-                                      "using the /cql endpoint.")
+    elif endpoint_uri_type[0] == URIRef(
+        "https://prez.dev/endpoint/extended-ogc-records/cql-get"
+    ):
+        raise MissingFilterQueryError(
+            "filter query parameter with a valid CQL JSON expression must be provided when "
+            "using the /cql endpoint."
+        )
 
 
-async def get_jena_fts_shacl_predicates(system_repo: Repo):
+async def get_jena_fts_shacl_predicates(system_repo: Repo) -> Graph:
     query = "DESCRIBE ?fts_shape WHERE {?fts_shape a <https://prez.dev/ont/JenaFTSPropertyShape>}"
-    return await system_repo.rdf_query_to_graph(query)
+    return await system_repo.rdf_query_to_rdflib_graph(query)
 
 
 async def generate_search_query(
@@ -385,7 +395,10 @@ async def get_focus_node(
     if ep_uri == EP["system/object"]:
         iri = request.query_params.get("iri") or request.query_params.get("uri")
         if not iri:
-            raise HTTPException(status_code=400, detail="Missing required query parameter: 'iri' or 'uri' ('uri' is marked for deprecation)")
+            raise HTTPException(
+                status_code=400,
+                detail="Missing required query parameter: 'iri' or 'uri' ('uri' is marked for deprecation)",
+            )
         return IRI(value=iri)
     elif ep_type == ONT.ObjectEndpoint:
         object_curie = url_path.split("/")[-1]
@@ -467,7 +480,9 @@ async def get_endpoint_nodeshapes(
     }
     # A hierarchy level covers a listing and an item endpoint. Path segment maths is: int({2,3}/2) -> 1; int({4,5}/2) -> 2 etc.
     # For Features API mounted as "features", remove extra level when counting to get correct hierarchy level.
-    hierarchy_level = int(len(url_path.replace("/features/collections", "/features").split("/")) / 2)
+    hierarchy_level = int(
+        len(url_path.replace("/features/collections", "/features").split("/")) / 2
+    )
     """
     Determines the relevant nodeshape based on the endpoint, hierarchy level, and parent URI
     """
@@ -586,9 +601,14 @@ async def get_profile_nodeshape(
         focus_node = Var(value="focus_node")
     elif endpoint_uri_type[0] == EP["system/object"]:
         # Allow 'uri' for backwards compatibility
-        identifier_value = request.query_params.get("iri") or request.query_params.get("uri")
+        identifier_value = request.query_params.get("iri") or request.query_params.get(
+            "uri"
+        )
         if not identifier_value:
-            raise HTTPException(status_code=400, detail="Missing required query parameter: 'iri' or 'uri' ('uri' is marked for deprecation)")
+            raise HTTPException(
+                status_code=400,
+                detail="Missing required query parameter: 'iri' or 'uri' ('uri' is marked for deprecation)",
+            )
         focus_node = IRI(value=identifier_value)
     elif endpoint_uri_type[1] == ONT.ObjectEndpoint:
         object_curie = url_path.split("/")[-1]
@@ -653,7 +673,8 @@ async def get_ogc_features_mediatype(
                 *AnnotatedRDFMediaType,
                 *NonAnnotatedRDFMediaType,
                 *SPARQLQueryMediaType,
-                *JSONMediaType]
+                *JSONMediaType,
+            ]
         ]
         default_mt = JSONMediaType.JSON.value
     elif endpoint_uri in [OGCFEAT["feature"], OGCFEAT["features"]]:
@@ -721,7 +742,7 @@ async def check_unknown_params(request: Request):
         "order_by_direction",
         "subscription-key",
         "startindex",
-        "f"
+        "f",
     }
     unknown_params = set(request.query_params.keys()) - known_params
     if unknown_params:

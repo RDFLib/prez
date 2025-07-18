@@ -110,7 +110,9 @@ async def lifespan(app: FastAPI):
         # assume all of the sub-apps do not have their own lifespan to set up their state
         if isinstance(r, Mount):
             mount_app = r.app
-            if isinstance(mount_app, (Starlette, FastAPI)) and mount_app is not app:
+            if isinstance(mount_app, (Starlette, FastAPI)) and \
+                    mount_app is not app and \
+                    mount_app not in mounted_apps:
                 mounted_apps.append(mount_app)
     if app.state.settings.sparql_repo_type == "pyoxigraph_memory":
         app.state.pyoxi_store = pyoxi_store = get_pyoxi_store()
@@ -150,7 +152,7 @@ async def lifespan(app: FastAPI):
     app.state.queryable_props = get_queryable_props()
     app.state.pyoxi_system_store = system_store = get_system_store()
     app.state.annotations_store = anno_store = get_annotations_store()
-        
+
     for mounted_app in mounted_apps:
         mounted_app.state.repo = repo
         mounted_app.state.pyoxi_system_store = system_store

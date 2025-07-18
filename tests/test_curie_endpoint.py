@@ -12,6 +12,7 @@ def setup(client):
     "iri, expected_status_code",
     [
         ["d", 400],
+        ["urn:uprez:test", 200],
         ["http://!", 400],
         ["http://example.com/namespace", 200],
     ],
@@ -25,6 +26,7 @@ def test_iri(iri: str, expected_status_code: int, client: TestClient):
     "curie, expected_status_code",
     [
         ["d", 400],
+        ["uprez:test", 200],
         ["ns1", 400],
         ["namespace:test", 200],
     ],

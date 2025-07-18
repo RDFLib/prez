@@ -11,8 +11,11 @@ from rdf2geojson import convert
 from rdflib import RDF, URIRef, BNode
 from rdflib.namespace import GEO
 from sparql_grammar_pydantic import IRI, TriplesSameSubject, TriplesSameSubjectPath, Var
-
+from pyoxigraph import RdfFormat, Store as OxiStore, NamedNode as OxiNamedNode, BlankNode as OxiBlankNode, \
+    Quad as OxiQuad, DefaultGraph as OxiDefaultGraph
+from oxrdflib._converter import to_ox
 from prez.config import settings
+from prez.cache import prefix_graph
 from prez.enums import NonAnnotatedRDFMediaType, AnnotatedRDFMediaType
 from prez.exceptions.model_exceptions import URINotFoundException
 from prez.models.ogc_features import Collection, Link, Links
@@ -23,10 +26,11 @@ from prez.renderers.renderer import (
     generate_link_headers,
     get_brisbane_timestamp,
 )
-from prez.renderers.renderer import return_annotated_rdf, return_from_graph
-from prez.services.connegp_service import RDF_MEDIATYPES
+from prez.renderers.renderer import return_annotated_rdf, return_annotated_rdf_for_oxigraph, return_from_graph
+from prez.repositories.base import Repo
+from prez.services.connegp_service import OXIGRAPH_SERIALIZER_TYPES_MAP, RDF_MEDIATYPES
 from prez.services.curie_functions import get_curie_id_for_uri
-from prez.services.link_generation import add_prez_links
+from prez.services.link_generation import add_prez_links, add_prez_links_for_oxigraph
 from prez.services.listings import listing_function
 from prez.services.query_generation.umbrella import PrezQueryConstructor
 
@@ -34,7 +38,13 @@ log = logging.getLogger(__name__)
 
 
 async def object_function(
-        data_repo, system_repo, endpoint_structure, pmts, profile_nodeshape, url, query_params
+    data_repo: Repo,
+    system_repo: Repo,
+    endpoint_structure,
+    pmts,
+    profile_nodeshape,
+    url,
+    query_params,
 ):
     if pmts.selected["profile"] == ALTREXT["alt-profile"]:
         list_query_params = ListingQueryParams(
@@ -52,7 +62,7 @@ async def object_function(
             filter_lang=None,
             order_by=None,
             order_by_direction=None,
-            subscription_key=query_params.subscription_key
+            subscription_key=query_params.subscription_key,
         )
         return await listing_function(
             data_repo=data_repo,
@@ -83,36 +93,41 @@ async def object_function(
     ).to_string()
 
     if pmts.requested_mediatypes and (
-            pmts.requested_mediatypes[0][0] == "application/sparql-query"
+        pmts.requested_mediatypes[0][0] == "application/sparql-query"
     ):
         return PlainTextResponse(query, media_type="application/sparql-query")
     query_start_time = time.time()
-    item_graph, _ = await data_repo.send_queries([query], [])
+    item_store: OxiStore
+    item_store, _ = await data_repo.send_queries([query], [], return_oxigraph_store=True)
     log.debug(f"Query time: {time.time() - query_start_time}")
     if settings.prez_ui_url:
         # If HTML or no specific media type requested
         if pmts.requested_mediatypes and (
-                pmts.requested_mediatypes[0][0] in ("text/html", "*/*")
+            pmts.requested_mediatypes[0][0] in ("text/html", "*/*")
         ):
-            item_uri = URIRef(profile_nodeshape.focus_node.value)
-            await add_prez_links(item_graph, data_repo, endpoint_structure, [item_uri])
-            prez_link = item_graph.value(
-                subject=item_uri, predicate=URIRef("https://prez.dev/link"), any=True
-            )
+            item_node = profile_nodeshape.focus_node
+            item_uri_str = item_node.value
+            await add_prez_links_for_oxigraph(item_store, data_repo, endpoint_structure, [item_node])
+            for q in item_store.quads_for_pattern(item_node, OxiNamedNode("https://prez.dev/link"), None, None):
+                prez_link = q.object
+            else:
+                prez_link = None
             prez_ui_url = re.sub(r"/+$", "", settings.prez_ui_url)
             if prez_link:
-                return RedirectResponse(prez_ui_url + str(prez_link))
-            elif len(item_graph):
-                return RedirectResponse(prez_ui_url + "/object?uri=" + urllib.parse.quote_plus(item_uri))
+                return RedirectResponse(prez_ui_url + str(prez_link.value))
+            elif len(item_store):
+                return RedirectResponse(
+                    prez_ui_url + "/object?uri=" + urllib.parse.quote_plus(item_uri_str)
+                )
             else:
                 return RedirectResponse(
-                    prez_ui_url + "/404?uri=" + urllib.parse.quote_plus(item_uri)
+                    prez_ui_url + "/404?uri=" + urllib.parse.quote_plus(item_uri_str)
                 )
     if "anot+" in pmts.selected["mediatype"]:
-        item_graph.add((BNode(), PREZ.currentProfile, pmts.selected["profile"]))
-        await add_prez_links(item_graph, data_repo, endpoint_structure)
+        item_store.add(OxiQuad(OxiBlankNode(), OxiNamedNode(PREZ.currentProfile), OxiNamedNode(pmts.selected["profile"]), OxiDefaultGraph()))
+        await add_prez_links_for_oxigraph(item_store, data_repo, endpoint_structure)
     return await return_from_graph(
-        item_graph,
+        item_store,
         pmts.selected["mediatype"],
         pmts.selected["profile"],
         pmts.generate_response_headers(),
@@ -132,13 +147,13 @@ def create_parent_link(url):
 
 
 async def ogc_features_object_function(
-        template_queries,
-        selected_mediatype,
-        profile_nodeshape,
-        url,
-        data_repo,
-        system_repo,
-        path_params,
+    template_queries,
+    selected_mediatype,
+    profile_nodeshape,
+    url,
+    data_repo: Repo,
+    system_repo: Repo,
+    path_params,
 ):
     collection_uri = path_params.get("collection_uri")
     feature_uri = path_params.get("feature_uri")
@@ -187,18 +202,27 @@ async def ogc_features_object_function(
         )
 
     query_start_time = time.time()
-    item_graph, _ = await data_repo.send_queries(queries, [])
+    oxi_default = OxiDefaultGraph()
+    item_store: OxiStore
+    item_store, _ = await data_repo.send_queries(queries, [], return_oxigraph_store=True)
     log.debug(f"Query time: {time.time() - query_start_time}")
 
-    if len(item_graph) == 0:
+    if len(item_store) == 0:
         uri = feature_uri if feature_uri else collection_uri
         raise URINotFoundException(uri=uri)
 
-    annotations_graph = None
-    if (selected_mediatype in AnnotatedRDFMediaType) or \
-            (selected_mediatype == "application/json") or \
-            (selected_mediatype == "application/geo+json" and "human" in profile_nodeshape.uri.lower()):
-        annotations_graph = await return_annotated_rdf(item_graph, data_repo, system_repo)
+    annotations_store = None
+    if (
+        (selected_mediatype in AnnotatedRDFMediaType)
+        or (selected_mediatype == "application/json")
+        or (
+            selected_mediatype == "application/geo+json"
+            and "human" in profile_nodeshape.uri.lower()
+        )
+    ):
+        annotations_store = await return_annotated_rdf_for_oxigraph(
+            item_store, data_repo, system_repo
+        )
 
     link_headers = None
     if selected_mediatype == "application/sparql-query":
@@ -206,7 +230,7 @@ async def ogc_features_object_function(
     elif selected_mediatype == "application/json":
         collectionId = get_curie_id_for_uri(collection_uri)
         collection = create_collection_json(
-            collectionId, collection_uri, annotations_graph, url
+            collectionId, collection_uri, annotations_store, url
         )
         link_headers = generate_link_headers(collection.links)
         content = io.BytesIO(
@@ -214,10 +238,23 @@ async def ogc_features_object_function(
         )
     elif selected_mediatype == "application/geo+json":
         if "human" in profile_nodeshape.uri.lower():  # human readable profile
-            item_graph += annotations_graph
-            geojson = convert(g=item_graph, do_validate=False, iri2id=get_curie_id_for_uri, kind="human")
+            if annotations_store is not None:
+                item_store.bulk_extend(annotations_store)
+            geojson = convert(
+                g=item_store,
+                do_validate=False,
+                iri2id=get_curie_id_for_uri,
+                kind="human",
+                namespace_manager=prefix_graph.namespace_manager,
+            )
         else:
-            geojson = convert(g=item_graph, do_validate=False, iri2id=get_curie_id_for_uri, kind="machine")
+            geojson = convert(
+                g=item_store,
+                do_validate=False,
+                iri2id=get_curie_id_for_uri,
+                kind="machine",
+                namespace_manager=prefix_graph.namespace_manager,
+            )
         self_alt_links = create_self_alt_links(selected_mediatype, url)
         parent_link = create_parent_link(url)
         all_links = [*self_alt_links, parent_link]
@@ -227,27 +264,49 @@ async def ogc_features_object_function(
         geojson["timeStamp"] = get_brisbane_timestamp()
         content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
     elif selected_mediatype in NonAnnotatedRDFMediaType:
-        content = io.BytesIO(
-            item_graph.serialize(format=selected_mediatype, encoding="utf-8")
-        )
+        serializer_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(str(selected_mediatype), RdfFormat.N_TRIPLES)
+        oxigraph_prefixes = {p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()}
+        content = io.BytesIO()
+        # TODO, what happens if the store has content in a named graph? This can only dump the default graph.
+        item_store.dump(content, serializer_format, from_graph=oxi_default, prefixes=oxigraph_prefixes)
+        content.seek(0)  # Reset the stream position to the beginning
     elif selected_mediatype in AnnotatedRDFMediaType:
-        item_graph += annotations_graph
+        if annotations_store is not None:
+            item_store.bulk_extend(annotations_store)
         non_anot_mt = selected_mediatype.replace("anot+", "")
-        content = io.BytesIO(
-            item_graph.serialize(format=non_anot_mt, encoding="utf-8")
-        )
+        serializer_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(str(non_anot_mt), RdfFormat.N_TRIPLES)
+        oxigraph_prefixes = {p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()}
+        content = io.BytesIO()
+        # TODO, what happens if the store has content in a named graph? This can only dump the default graph.
+        item_store.dump(content, serializer_format, from_graph=oxi_default, prefixes=oxigraph_prefixes)
+        content.seek(0)  # Reset the stream position to the beginning
     return content, link_headers
 
 
-def create_collection_json(collection_curie, collection_uri, annotations_graph, url):
+def create_collection_json(
+        collection_curie,
+        collection_uri,
+        annotations_store: OxiStore,
+        url
+):
+    title_quad = next(
+        annotations_store.quads_for_pattern(
+            OxiNamedNode(collection_uri), OxiNamedNode(PREZ.label), None, None
+        ),
+        None
+    )
+    title = title_quad[2].value if title_quad else None
+    description = next(
+        annotations_store.quads_for_pattern(
+            OxiNamedNode(collection_uri), OxiNamedNode(PREZ.description), None, None
+        ),
+        None
+    )
+    description = description[2].value if description else None
     return Collection(
         id=collection_curie,
-        title=annotations_graph.value(
-            subject=collection_uri, predicate=PREZ.label, default=None
-        ),
-        description=annotations_graph.value(
-            subject=collection_uri, predicate=PREZ.description, default=None
-        ),
+        title=title,
+        description=description,
         links=[
             Link(
                 href=URIRef(
