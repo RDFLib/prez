@@ -86,7 +86,7 @@ class OxrdflibRepo(Repo):
     ) -> Graph:
         if into_graph is not None:
             graph_lock = self.into_store_write_locks.get(id(into_graph), None)
-            do_delete_lock = graph_lock is not None
+            do_delete_lock = graph_lock is None
             if graph_lock is None:
                 graph_lock = Lock()
                 self.into_store_write_locks[id(into_graph)] = graph_lock
@@ -101,14 +101,15 @@ class OxrdflibRepo(Repo):
             if graph_lock is not None and do_delete_lock:
                 # The Lock might still be acquired by a different thread, but doesn't matter,
                 # we can still delete the lock reference from the dict.
-                del self.into_store_write_locks[id(into_graph)]
+                if id(into_graph) in self.into_store_write_locks and graph_lock is self.into_store_write_locks[id(into_graph)]:
+                    del self.into_store_write_locks[id(into_graph)]
 
     async def rdf_query_to_oxigraph_store(
         self, query: str, into_store: Store | None = None
     ) -> Store:
         if into_store is not None:
             store_lock = self.into_store_write_locks.get(id(into_store), None)
-            do_delete_lock = store_lock is not None
+            do_delete_lock = store_lock is None
             if store_lock is None:
                 store_lock = Lock()
                 self.into_store_write_locks[id(into_store)] = store_lock
@@ -123,8 +124,8 @@ class OxrdflibRepo(Repo):
             if store_lock is not None and do_delete_lock:
                 # The Lock might still be acquired by a different thread, but doesn't matter,
                 # we can still delete the lock reference from the dict.
-                del self.into_store_write_locks[id(into_store)]
-
+                if id(into_store) in self.into_store_write_locks and store_lock is self.into_store_write_locks[id(into_store)]:
+                    del self.into_store_write_locks[id(into_store)]
     async def tabular_query_to_table(
         self, query: str, context: URIRef | None = None
     ) -> tuple[URIRef | None, list[dict[str, Any]]]:
