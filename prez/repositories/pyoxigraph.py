@@ -176,10 +176,9 @@ class PyoxigraphRepo(Repo):
             )
         finally:
             if store_lock is not None and do_delete_lock:
-                # Only delete if it's still there and it's the same lock
-                if (id(into_store) in self.into_store_write_locks and
-                        self.into_store_write_locks[id(into_store)] is store_lock):
-                    del self.into_store_write_locks[id(into_store)]
+                # The Lock might still be acquired by a different thread, but doesn't matter,
+                # we can still delete the lock reference from the dict.
+                del self.into_store_write_locks[id(into_store)]
 
     async def tabular_query_to_table(
         self, query: str, context: URIRef | None = None
