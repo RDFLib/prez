@@ -5,6 +5,7 @@ from enum import Enum
 from textwrap import dedent
 
 from pydantic import BaseModel
+from pyoxigraph import RdfFormat
 from rdflib import SH, Graph, Namespace, URIRef
 
 from prez.cache import endpoints_graph_cache, profiles_graph_cache
@@ -45,6 +46,31 @@ RDF_SERIALIZER_TYPES_MAP = {
     "text/plain": "nt",  # text/plain is the old/deprecated mimetype for n-triples
 }
 
+OXIGRAPH_SERIALIZER_TYPES_MAP = {
+    "text/turtle": RdfFormat.TURTLE,
+    "text/n3": RdfFormat.N3,
+    "application/n-triples": RdfFormat.N_TRIPLES,
+    "application/ld+json": RdfFormat.JSON_LD,
+    "application/rdf+xml": RdfFormat.RDF_XML,
+    # Some common but incorrect mimetypes
+    "application/rdf": RdfFormat.RDF_XML,
+    "application/rdf xml": RdfFormat.RDF_XML,
+    "application/json": RdfFormat.JSON_LD,
+    "application/ld json": RdfFormat.JSON_LD,
+    "text/ttl": RdfFormat.TURTLE,
+    "text/ntriples": RdfFormat.N_TRIPLES,
+    "text/n-triples": RdfFormat.N_TRIPLES,
+    "text/plain": RdfFormat.N_TRIPLES,
+    # plain names
+    "turtle": RdfFormat.TURTLE,
+    "n3": RdfFormat.N3,
+    "nt": RdfFormat.N_TRIPLES,
+    "json-ld": RdfFormat.JSON_LD,
+    "xml": RdfFormat.RDF_XML,
+    "rdf-xml": RdfFormat.RDF_XML,
+    "rdf": RdfFormat.RDF_XML,
+    "json": RdfFormat.JSON_LD,
+}
 
 class MediaType(str, Enum):
     turtle = "text/turtle"

@@ -16,8 +16,7 @@ prefix_graph = Graph(bind_namespaces="none")
 # TODO can probably merge counts graph
 counts_graph = Graph()
 
-links_ids_graph_cache = Dataset()
-links_ids_graph_cache.bind("prez", "https://prez.dev/")
+links_ids_graph_cache = Store()
 
 store = Store()
 
