@@ -40,7 +40,7 @@ from sparql_grammar_pydantic import (
     UnaryExpression,
     ValueLogical,
     Var,
-    WhereClause,
+    WhereClause, IRIOrFunction,
 )
 
 from prez.cache import prez_system_graph
@@ -50,8 +50,8 @@ from prez.reference_data.cql.geo_function_mapping import (
     cql_sparql_spatial_mapping,
     cql_graphdb_spatial_properties,
 )
-from prez.services.query_generation.spatial_filter import generate_spatial_filter_clause, get_wkt_from_coords
 from prez.services.query_generation.shacl import PropertyShape
+from prez.services.query_generation.spatial_filter import generate_spatial_filter_clause, get_wkt_from_coords
 
 CQL = Namespace("http://www.opengis.net/doc/IS/cql2/1.0/")
 
@@ -210,7 +210,9 @@ class CQLParser:
 
         # ... other operators like "<", "=", ">", "like", spatial, "in", temporal ...
         # (These parts of the method remain unchanged in terms of this specific fix)
-        elif operator in ["<", "=", ">", "<=", ">="]:
+        elif operator in ["<", "=", ">", "<=", ">=", "<>"]:
+            if operator == "<>":
+                operator = "!=" # CQL -> SPARQL equivalent
             self._handle_comparison(operator, args, ggps)
             if existing_ggps is None:
                 yield ggps
@@ -290,18 +292,32 @@ class CQLParser:
         else:  # literal string
             value = RDFLiteral(value=val)
 
+        use_filter_statement = True
         if operator == "=" and isinstance(
                 value, IRI
-        ):  # use a triple pattern match rather than FILTER
-            ggps, obj = self._add_tss_tssp(args, existing_ggps, value)
-        else:  # use a FILTER
+        ):
+            prop = args[0].get("property")
+            if self.queryable_props and prop in self.queryable_props: # the shacl paths can be complicated, so we just
+                # get back a var and then use filter
+                value = IRIOrFunction(iri=value)
+                use_filter_statement = True
+            else:  # non shacl
+                use_filter_statement = False
+                self._add_tss_tssp(args, existing_ggps, value)
+
+        if use_filter_statement:  # use a FILTER
             ggps, obj = self._add_tss_tssp(args, existing_ggps)
-            object_pe = PrimaryExpression(content=obj)
-            value_pe = PrimaryExpression(content=value)
-            values_constraint = Filter.filter_relational(
-                focus=object_pe, comparators=value_pe, operator=operator
+            gpnt = GraphPatternNotTriples(
+                content=Filter.filter_relational(
+                    focus=PrimaryExpression(
+                        content=obj
+                    ),
+                    comparators=PrimaryExpression(
+                        content=value
+                    ),
+                    operator=operator
+                )
             )
-            gpnt = GraphPatternNotTriples(content=values_constraint)
             ggps.add_pattern(gpnt)
 
     def _add_tss_tssp(self, args, existing_ggps, obj=None):
@@ -433,7 +449,7 @@ class CQLParser:
         ggps.add_pattern(gpnt)
 
     def _handle_shacl_defined_prop(self, prop):
-        tssp_list, obj = self.queryable_id_to_tssp(self.queryable_props[prop])
+        tssp_list, obj_var = self.queryable_id_to_tssp(self.queryable_props[prop])
         # tss_triple = (
         #     Var(value="focus_node"),
         #     IRI(value=SHACL_FILTER_NAMESPACE[prop]),
@@ -441,8 +457,8 @@ class CQLParser:
         # )
         # self.tss_list.append(TriplesSameSubject.from_spo(*tss_triple))
         self.tssp_list.extend(tssp_list)
-        self.inner_select_vars.append(obj)
-        return obj
+        self.inner_select_vars.append(obj_var)
+        return obj_var
 
     def _handle_temporal(self, comp_func, args, existing_ggps=None):
         """For temporal filtering within CQL JSON expressions, NOT within the temporal query parameter."""
@@ -767,5 +783,5 @@ def create_temporal_and_gpnt(
                     )
                 )
             )
+        )
     )
-)
