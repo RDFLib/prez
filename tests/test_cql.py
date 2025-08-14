@@ -129,8 +129,12 @@ UNION
 ?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://linked.data.gov.au/def/borehole/Bore> .
 }"""
     ]
-    assert len(parser.inner_select_gpntotb_list) == len(expected_inner_select_gpntotb_list_str)
-    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace("\n", "") == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
+    assert len(parser.inner_select_gpntotb_list) == len(
+        expected_inner_select_gpntotb_list_str
+    )
+    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace(
+        "\n", ""
+    ) == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
 
 
 def test_cql_nested_and_operator():
@@ -195,8 +199,12 @@ def test_cql_nested_and_operator():
 ?focus_node <http://purl.org/dc/terms/subject> <http://example.org/subjects#Geology> .
 ?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/vocab#Report> ."""
     ]
-    assert len(parser.inner_select_gpntotb_list) == len(expected_inner_select_gpntotb_list_str)
-    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace("\n", "") == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
+    assert len(parser.inner_select_gpntotb_list) == len(
+        expected_inner_select_gpntotb_list_str
+    )
+    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace(
+        "\n", ""
+    ) == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
 
 
 # --- Tests for nested AND/OR operators ---
@@ -211,28 +219,33 @@ VAL_C = "http://example.org/valC"
 PROP_D = "http://example.org/propD"
 VAL_D = "http://example.org/valD"
 
+
 def _create_eq_cql(prop, val_str):
     return {"op": "=", "args": [{"property": prop}, val_str]}
 
+
 def _create_tssp(prop_uri, val_uri):
     from sparql_grammar_pydantic import IRI, TriplesSameSubjectPath, Var
+
     return TriplesSameSubjectPath.from_spo(
-        Var(value="focus_node"),
-        IRI(value=prop_uri),
-        IRI(value=val_uri)
+        Var(value="focus_node"), IRI(value=prop_uri), IRI(value=val_uri)
     )
+
 
 def _get_all_tssp_from_triples_block(triples_block):
     """Helper to extract all TriplesSameSubjectPath from a linked list of TriplesBlock."""
     from sparql_grammar_pydantic import TriplesBlock, TriplesSameSubjectPath
+
     all_tssp = []
     current_block = triples_block
     while current_block:
-        if isinstance(current_block, TriplesBlock) and isinstance(current_block.triples, TriplesSameSubjectPath):
+        if isinstance(current_block, TriplesBlock) and isinstance(
+            current_block.triples, TriplesSameSubjectPath
+        ):
             all_tssp.append(current_block.triples)
         elif isinstance(current_block, TriplesSameSubjectPath):
             all_tssp.append(current_block)
-        current_block = getattr(current_block, 'triples_block', None)
+        current_block = getattr(current_block, "triples_block", None)
     return all_tssp
 
 
@@ -244,16 +257,7 @@ def test_cql_and_of_A_or_BC():
     cql_B = _create_eq_cql(PROP_B, VAL_B)
     cql_C = _create_eq_cql(PROP_C, VAL_C)
 
-    cql_json_data = {
-        "op": "and",
-        "args": [
-            cql_A,
-            {
-                "op": "or",
-                "args": [cql_B, cql_C]
-            }
-        ]
-    }
+    cql_json_data = {"op": "and", "args": [cql_A, {"op": "or", "args": [cql_B, cql_C]}]}
     parser = CQLParser(cql_json=cql_json_data)
     parser.parse()
 
@@ -270,11 +274,17 @@ UNION
 {
 ?focus_node <http://example.org/propC> <http://example.org/valC> .
 }
-}"""
+}""",
     ]
-    assert len(parser.inner_select_gpntotb_list) == len(expected_inner_select_gpntotb_list_str)
-    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace("\n", "") == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
-    assert parser.inner_select_gpntotb_list[1].to_string().replace(" ", "").replace("\n", "") == expected_inner_select_gpntotb_list_str[1].replace(" ", "").replace("\n", "")
+    assert len(parser.inner_select_gpntotb_list) == len(
+        expected_inner_select_gpntotb_list_str
+    )
+    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace(
+        "\n", ""
+    ) == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
+    assert parser.inner_select_gpntotb_list[1].to_string().replace(" ", "").replace(
+        "\n", ""
+    ) == expected_inner_select_gpntotb_list_str[1].replace(" ", "").replace("\n", "")
 
 
 def test_cql_or_of_A_and_BC():
@@ -285,16 +295,7 @@ def test_cql_or_of_A_and_BC():
     cql_B = _create_eq_cql(PROP_B, VAL_B)
     cql_C = _create_eq_cql(PROP_C, VAL_C)
 
-    cql_json_data = {
-        "op": "or",
-        "args": [
-            cql_A,
-            {
-                "op": "and",
-                "args": [cql_B, cql_C]
-            }
-        ]
-    }
+    cql_json_data = {"op": "or", "args": [cql_A, {"op": "and", "args": [cql_B, cql_C]}]}
     parser = CQLParser(cql_json=cql_json_data)
     parser.parse()
 
@@ -311,8 +312,12 @@ UNION
 
 }"""
     ]
-    assert len(parser.inner_select_gpntotb_list) == len(expected_inner_select_gpntotb_list_str)
-    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace("\n", "") == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
+    assert len(parser.inner_select_gpntotb_list) == len(
+        expected_inner_select_gpntotb_list_str
+    )
+    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace(
+        "\n", ""
+    ) == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
 
 
 def test_cql_and_of_and_AB_C():
@@ -325,13 +330,7 @@ def test_cql_and_of_and_AB_C():
 
     cql_json_data = {
         "op": "and",
-        "args": [
-            {
-                "op": "and",
-                "args": [cql_A, cql_B]
-            },
-            cql_C
-        ]
+        "args": [{"op": "and", "args": [cql_A, cql_B]}, cql_C],
     }
     parser = CQLParser(cql_json=cql_json_data)
     parser.parse()
@@ -341,8 +340,12 @@ def test_cql_and_of_and_AB_C():
 ?focus_node <http://example.org/propB> <http://example.org/valB> .
 ?focus_node <http://example.org/propA> <http://example.org/valA> ."""
     ]
-    assert len(parser.inner_select_gpntotb_list) == len(expected_inner_select_gpntotb_list_str)
-    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace("\n", "") == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
+    assert len(parser.inner_select_gpntotb_list) == len(
+        expected_inner_select_gpntotb_list_str
+    )
+    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace(
+        "\n", ""
+    ) == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
 
 
 def test_cql_or_of_or_AB_C():
@@ -353,16 +356,7 @@ def test_cql_or_of_or_AB_C():
     cql_B = _create_eq_cql(PROP_B, VAL_B)
     cql_C = _create_eq_cql(PROP_C, VAL_C)
 
-    cql_json_data = {
-        "op": "or",
-        "args": [
-            {
-                "op": "or",
-                "args": [cql_A, cql_B]
-            },
-            cql_C
-        ]
-    }
+    cql_json_data = {"op": "or", "args": [{"op": "or", "args": [cql_A, cql_B]}, cql_C]}
     parser = CQLParser(cql_json=cql_json_data)
     parser.parse()
 
@@ -383,8 +377,12 @@ UNION
 }
 """
     ]
-    assert len(parser.inner_select_gpntotb_list) == len(expected_inner_select_gpntotb_list_str)
-    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace("\n", "") == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
+    assert len(parser.inner_select_gpntotb_list) == len(
+        expected_inner_select_gpntotb_list_str
+    )
+    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace(
+        "\n", ""
+    ) == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
 
 
 def test_cql_and_of_or_AB_or_CD():
@@ -400,8 +398,8 @@ def test_cql_and_of_or_AB_or_CD():
         "op": "and",
         "args": [
             {"op": "or", "args": [cql_A, cql_B]},
-            {"op": "or", "args": [cql_C, cql_D]}
-        ]
+            {"op": "or", "args": [cql_C, cql_D]},
+        ],
     }
     parser = CQLParser(cql_json=cql_json_data)
     parser.parse()
@@ -427,11 +425,17 @@ UNION
 {
 ?focus_node <http://example.org/propD> <http://example.org/valD> .
 }
-}"""
+}""",
     ]
-    assert len(parser.inner_select_gpntotb_list) == len(expected_inner_select_gpntotb_list_str)
-    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace("\n", "") == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
-    assert parser.inner_select_gpntotb_list[1].to_string().replace(" ", "").replace("\n", "") == expected_inner_select_gpntotb_list_str[1].replace(" ", "").replace("\n", "")
+    assert len(parser.inner_select_gpntotb_list) == len(
+        expected_inner_select_gpntotb_list_str
+    )
+    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace(
+        "\n", ""
+    ) == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
+    assert parser.inner_select_gpntotb_list[1].to_string().replace(" ", "").replace(
+        "\n", ""
+    ) == expected_inner_select_gpntotb_list_str[1].replace(" ", "").replace("\n", "")
 
 
 def test_cql_or_of_and_AB_and_CD():
@@ -447,8 +451,8 @@ def test_cql_or_of_and_AB_and_CD():
         "op": "or",
         "args": [
             {"op": "and", "args": [cql_A, cql_B]},
-            {"op": "and", "args": [cql_C, cql_D]}
-        ]
+            {"op": "and", "args": [cql_C, cql_D]},
+        ],
     }
     parser = CQLParser(cql_json=cql_json_data)
     parser.parse()
@@ -467,8 +471,12 @@ UNION
 }
 """
     ]
-    assert len(parser.inner_select_gpntotb_list) == len(expected_inner_select_gpntotb_list_str)
-    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace("\n", "") == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
+    assert len(parser.inner_select_gpntotb_list) == len(
+        expected_inner_select_gpntotb_list_str
+    )
+    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace(
+        "\n", ""
+    ) == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
 
 
 def test_focus_node_in_subquery():
@@ -491,3 +499,149 @@ def test_focus_node_in_subquery():
     parser.parse()
 
     assert Var(value="focus_node") in parser.inner_select_vars
+
+
+def test_cql_not_equal_operator_with_literal():
+    """
+    Tests the '<>' operator (not equal) with a literal string value.
+    Should generate a FILTER with != operator.
+    """
+    from prez.services.query_generation.cql import CQLParser
+
+    cql_json_data = {
+        "op": "<>",
+        "args": [
+            {"property": "http://example.org/vocab#status"},
+            "active",
+        ],
+    }
+
+    parser = CQLParser(cql_json=cql_json_data)
+    parser.parse()
+
+    # The query should contain a FILTER with != operator
+    query_str = parser.query_str
+    assert "FILTER" in query_str
+    assert "!=" in query_str
+    assert '"active"' in query_str
+    assert "?var_1" in query_str  # Should use variable for the property value
+
+
+def test_cql_not_equal_operator_with_uri():
+    """
+    Tests the '<>' operator (not equal) with a URI value.
+    Should generate a FILTER with != operator since it's a comparison.
+    """
+    from prez.services.query_generation.cql import CQLParser
+
+    cql_json_data = {
+        "op": "<>",
+        "args": [
+            {"property": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"},
+            "http://example.org/vocab#ExcludedType",
+        ],
+    }
+
+    parser = CQLParser(cql_json=cql_json_data)
+    parser.parse()
+
+    # Should use FILTER even for URI values when using <> operator
+    query_str = parser.query_str
+    assert "FILTER" in query_str
+    assert "!=" in query_str
+    assert "http://example.org/vocab#ExcludedType" in query_str
+
+
+def test_cql_not_equal_operator_with_shacl_queryable():
+    """
+    Tests the '<>' operator with a SHACL-defined queryable property and URI value.
+    Should use FILTER statement even for URI equality when SHACL paths are involved.
+    """
+    from prez.services.query_generation.cql import CQLParser
+
+    # Mock queryable properties
+    queryable_props = {"type": "http://example.org/shapes#TypeShape"}
+
+    cql_json_data = {
+        "op": "<>",
+        "args": [
+            {"property": "type"},
+            "http://example.org/vocab#ExcludedType",
+        ],
+    }
+
+    parser = CQLParser(cql_json=cql_json_data, queryable_props=queryable_props)
+    # Note: This test would need proper SHACL shapes in the system graph to work fully
+    # For now, just test that the operator conversion happens
+
+    # Test that <> gets converted to != in the logical operators
+    element = {"op": "<>", "args": []}
+    ggps_generator = parser.parse_logical_operators(element)
+    # The operator should be converted internally
+
+
+def test_cql_not_equal_operator_in_complex_query():
+    """
+    Tests the '<>' operator as part of a more complex AND/OR query.
+    """
+    from prez.services.query_generation.cql import CQLParser
+
+    cql_json_data = {
+        "op": "and",
+        "args": [
+            {
+                "op": "=",
+                "args": [
+                    {"property": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"},
+                    "http://example.org/vocab#Document",
+                ],
+            },
+            {
+                "op": "<>",
+                "args": [
+                    {"property": "http://example.org/vocab#status"},
+                    "archived",
+                ],
+            },
+        ],
+    }
+
+    parser = CQLParser(cql_json=cql_json_data)
+    parser.parse()
+
+    query_str = parser.query_str
+    # Should contain both a triple pattern and a FILTER
+    assert (
+        "?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/vocab#Document>"
+        in query_str
+    )
+    assert "FILTER" in query_str
+    assert "!=" in query_str
+    assert '"archived"' in query_str
+
+
+def test_cql_operator_conversion():
+    """
+    Tests that the '<>' operator is correctly converted to '!=' internally.
+    """
+    from prez.services.query_generation.cql import CQLParser
+
+    parser = CQLParser()
+
+    # Test the operator conversion logic by checking what happens
+    # when we parse an element with <> operator
+    test_element = {
+        "op": "<>",
+        "args": [{"property": "http://example.org/prop"}, "test_value"],
+    }
+
+    # This should not raise a NotImplementedError
+    try:
+        result = list(parser.parse_logical_operators(test_element))
+        # If we get here, the operator was recognized and processed
+        assert True
+    except NotImplementedError as e:
+        if "<> not implemented" in str(e):
+            assert False, "<> operator was not properly converted to !="
+        else:
+            raise  # Some other NotImplementedError

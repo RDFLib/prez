@@ -210,8 +210,7 @@ async def cql_post_parser_dependency(
 ) -> CQLParser:
     try:
         body = await request.json()
-        cql_parser = CQLParser(cql=body, queryable_props=queryable_props)
-        cql_parser.generate_jsonld()
+        cql_parser = CQLParser(cql_json=body, queryable_props=queryable_props)
         try:
             cql_parser.parse()
         except Exception as e:
@@ -234,8 +233,7 @@ async def cql_get_parser_dependency(
         try:
             crs = query_params.filter_crs
             query = json.loads(query_params._filter)
-            cql_parser = CQLParser(cql=query, crs=crs, queryable_props=queryable_props)
-            cql_parser.generate_jsonld()
+            cql_parser = CQLParser(cql_json=query, crs=crs, queryable_props=queryable_props)
             try:
                 cql_parser.parse()
             except Exception as e:
