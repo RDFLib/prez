@@ -239,7 +239,7 @@ def merge_listing_query_grammar_inputs(
     }
 
     limit = int(limit)
-    if offset:
+    if offset is not None:
         kwargs["offset"] = offset
     elif startindex:
         offset = startindex
@@ -298,5 +298,18 @@ def merge_listing_query_grammar_inputs(
         kwargs["order_by_predicate"] = IRI(value=order_by)
         kwargs["order_by_value"] = Var(value="order_by_val")
         kwargs["order_by_direction"] = order_by_direction or "ASC"
+
+    # include at least one triple in the subselect, for the focus node class, which will match the class selection
+    # always included in profiles.
+    if not kwargs["inner_select_tssp_list"]:
+        triple = (
+            Var(value="focus_node"),
+            IRI(value="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+            Var(value="prof_1_node_1")
+        )
+        tss = TriplesSameSubject.from_spo(*triple)
+        tssp = TriplesSameSubjectPath.from_spo(*triple)
+        kwargs["construct_tss_list"].append(tss)
+        kwargs["inner_select_tssp_list"] = [tssp]
 
     return kwargs

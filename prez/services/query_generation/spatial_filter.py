@@ -48,6 +48,7 @@ from prez.reference_data.cql.geo_function_mapping import (  # Updated import
     cql_qlever_spatial_mapping,
     QLSS,
 )
+from prez.services.query_generation.grammar_helpers import create_filter_exists
 
 
 def _verb_path_for_iri(iri: str) -> VerbPath:
@@ -312,8 +313,7 @@ def generate_bbox_filter(
     bbox: List[float], filter_crs: str
 ) -> (List[GraphPatternNotTriples], List[TriplesSameSubjectPath]):
     """
-    Original function, wrapper for GeoSPARQL intersection.
-    Can be refactored/deprecated later.
+    Generates spatial filter for a bounding box query parameter, wrapped in a FILTER EXISTS statement.
     """
     coordinates = format_coordinates_as_wkt(bbox)
     srid, wkt = get_wkt_from_coords(coordinates, "Polygon", filter_crs)
@@ -331,30 +331,50 @@ def generate_bbox_filter(
     if target_system in ["geosparql", "graphdb"]:  # For QLever, plain wkt is used
         processed_wkt = f"<{srid}> {wkt}"
 
-    # Triples to define the geometry path
-    tssp_list = []
-    filter_gpnts = []
+    # Create patterns to be wrapped in FILTER EXISTS
+    combined_patterns = GroupGraphPatternSub()
+    
+    # Add geometry triples
     if target_system in ["geosparql", "graphdb"]:
-        tssp_list.append(
-            TriplesSameSubjectPath.from_spo(
-                subject, IRI(value=GEO.hasGeometry), geom_bn_var
-            )
+        combined_patterns.add_pattern(
+            TriplesBlock.from_tssp_list([
+                TriplesSameSubjectPath.from_spo(
+                    subject, IRI(value=GEO.hasGeometry), geom_bn_var
+                ),
+                TriplesSameSubjectPath.from_spo(
+                    geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var
+                )
+            ])
         )
-        tssp_list.append(
-            TriplesSameSubjectPath.from_spo(geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var)
-        )
+        
     if target_system == "graphdb":
-        # add the filter predicate
-        tssp_list.append(
-            TriplesSameSubjectPath.from_spo(
-                geom_bn_var,  # graphdb supports the subject being a geo:Feature or geo:Geometry; geo:Geometry used here, performance not tested.
-                IRI(value=GEO.sfIntersects),
-                RDFLiteral(value=processed_wkt, datatype=IRI(value=str(GEO.wktLiteral))),
+        # Add the filter predicate triple for GraphDB
+        combined_patterns.add_pattern(
+            TriplesBlock(
+                triples=TriplesSameSubjectPath.from_spo(
+                    geom_bn_var,
+                    IRI(value=GEO.sfIntersects),
+                    RDFLiteral(value=processed_wkt, datatype=IRI(value=str(GEO.wktLiteral))),
+                )
             )
         )
 
     elif target_system in ["geosparql", "qlever"]:
-        filter_gpnts = generate_spatial_filter_clause(
+        # Add geometry triples first
+        if target_system == "geosparql":
+            combined_patterns.add_pattern(
+                TriplesBlock.from_tssp_list([
+                    TriplesSameSubjectPath.from_spo(
+                        subject, IRI(value=GEO.hasGeometry), geom_bn_var
+                    ),
+                    TriplesSameSubjectPath.from_spo(
+                        geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var
+                    )
+                ])
+            )
+        
+        # Add spatial filter patterns
+        spatial_filter_gpnts = generate_spatial_filter_clause(
             wkt_value=processed_wkt,
             subject_var=subject,
             geom_bnode_var=geom_bn_var,
@@ -362,7 +382,13 @@ def generate_bbox_filter(
             cql_operator="s_intersects",
             target_system=target_system
         )
-        if not filter_gpnts:
+        if not spatial_filter_gpnts:
             raise ValueError("generate_spatial_filter_clause returned no patterns for GeoSPARQL bbox.")
+        
+        for gpnt in spatial_filter_gpnts:
+            combined_patterns.add_pattern(gpnt)
     
-    return filter_gpnts, tssp_list
+    # Wrap all patterns in FILTER EXISTS
+    filter_exists_gpnt = create_filter_exists(combined_patterns)
+    
+    return [filter_exists_gpnt], []
