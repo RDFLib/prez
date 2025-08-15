@@ -194,7 +194,6 @@ class ListingQueryParams:
         self.profile = profile
         self.page = page
         self.limit = limit
-        # Handle Query objects that may be passed when not explicitly set
         self.offset = offset if not hasattr(offset, 'default') else offset.default
         self.facet_profile = facet_profile
         self.bbox = bbox
@@ -207,8 +206,7 @@ class ListingQueryParams:
         self.mediatype = mediatype
         self.subscription_key = subscription_key
         self.startindex = startindex if not hasattr(startindex, 'default') else startindex.default
-        # Temporarily disable pagination validation for testing
-        # self.validate_pagination_params()
+        self.validate_pagination_params()
         self.validate_filter()
 
     def validate_pagination_params(self):

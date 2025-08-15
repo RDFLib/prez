@@ -360,19 +360,6 @@ def generate_bbox_filter(
         )
 
     elif target_system in ["geosparql", "qlever"]:
-        # Add geometry triples first
-        if target_system == "geosparql":
-            combined_patterns.add_pattern(
-                TriplesBlock.from_tssp_list([
-                    TriplesSameSubjectPath.from_spo(
-                        subject, IRI(value=GEO.hasGeometry), geom_bn_var
-                    ),
-                    TriplesSameSubjectPath.from_spo(
-                        geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var
-                    )
-                ])
-            )
-        
         # Add spatial filter patterns
         spatial_filter_gpnts = generate_spatial_filter_clause(
             wkt_value=processed_wkt,
