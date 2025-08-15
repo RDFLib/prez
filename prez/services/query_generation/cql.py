@@ -6,39 +6,19 @@ from rdflib import Namespace, URIRef
 from rdflib.namespace import GEO
 from sparql_grammar_pydantic import (
     IRI,
-    AdditiveExpression,
-    BooleanLiteral,
-    BrackettedExpression,
-    BuiltInCall,
-    ConditionalAndExpression,
-    ConditionalOrExpression,
-    Constraint,
     ConstructQuery,
     ConstructTemplate,
     ConstructTriples,
-    DataBlock,
-    DataBlockValue,
-    Expression,
-    Filter,
     GraphPatternNotTriples,
     GroupGraphPattern,
     GroupGraphPatternSub,
     GroupOrUnionGraphPattern,
-    InlineData,
-    InlineDataOneVar,
-    MultiplicativeExpression,
-    NumericExpression,
-    NumericLiteral,
-    PrimaryExpression,
+    IRIOrFunction,
     RDFLiteral,
-    RegexExpression,
-    RelationalExpression,
     SolutionModifier,
     TriplesBlock,
     TriplesSameSubject,
     TriplesSameSubjectPath,
-    UnaryExpression,
-    ValueLogical,
     Var,
     WhereClause,
 )
@@ -50,8 +30,20 @@ from prez.reference_data.cql.geo_function_mapping import (
     cql_sparql_spatial_mapping,
     cql_graphdb_spatial_properties,
 )
-from prez.services.query_generation.spatial_filter import generate_spatial_filter_clause, get_wkt_from_coords
+from prez.services.query_generation.spatial_filter import (
+    generate_spatial_filter_clause,
+    get_wkt_from_coords,
+)
 from prez.services.query_generation.shacl import PropertyShape
+from prez.services.query_generation.grammar_helpers import (
+    convert_value_to_rdf_term,
+    create_regex_filter,
+    create_relational_filter,
+    create_values_constraint,
+    create_temporal_or_gpnt,
+    create_filter_bool_gpnt,
+    create_temporal_and_gpnt,
+)
 
 CQL = Namespace("http://www.opengis.net/doc/IS/cql2/1.0/")
 
@@ -76,7 +68,7 @@ SUPPORTED_CQL_TIME_OPERATORS = {
 UNBOUNDED = "unbounded"
 
 relations_path = Path(__file__).parent.parent.parent / (
-    "reference_data/cql/bounded_temporal_interval_relation_matrix" ".json"
+    "reference_data/cql/bounded_temporal_interval_relation_matrix.json"
 )
 relations = json.loads(relations_path.read_text())
 
@@ -85,28 +77,22 @@ SHACL_FILTER_NAMESPACE = Namespace("https://cql-shacl-filter/")
 
 class CQLParser:
     def __init__(
-            self,
-            cql=None,
-            cql_json: dict = None,
-            crs=None,
-            queryable_props=None,
+        self,
+        cql_json: dict | None = None,
+        crs: str | None = None,
+        queryable_props: dict[str, str] | None = None,
     ):
         self.inner_select_gpntotb_list: list[GraphPatternNotTriples] = []
         # Always include at least ?focus_node SELECT var
         self.inner_select_vars: list[Var] = [Var(value="focus_node")]
-        self.cql: dict = cql
-        self.cql_json = cql_json
-        self.var_counter = 0
-        self.query_object = None
-        self.query_str = None
-        self.tss_list = []
-        self.tssp_list = []
-        self._parsing_or_branch_depth = 0  # New state variable
-        self.crs = crs
-        self.queryable_props = queryable_props
-
-    def generate_jsonld(self):
-        self.cql_json = self.cql
+        self.cql_json: dict | None = cql_json
+        self.var_counter: int = 0
+        self.query_object: ConstructQuery | None = None
+        self.query_str: str | None = None
+        self.tss_list: list[TriplesSameSubject] = []
+        self.tssp_list: list[TriplesSameSubjectPath] = []
+        self.crs: str | None = crs
+        self.queryable_props: dict[str, str] | None = queryable_props
 
     def parse(self):
         root = self.cql_json
@@ -128,18 +114,11 @@ class CQLParser:
         )
         self.query_str = self.query_object.to_string()
         gpotb = self.query_object.where_clause.group_graph_pattern.content
-        # gpnt_list = []
-        # if gpotb.graph_patterns_or_triples_blocks:
-        #     gpnt_list = [
-        #         i
-        #         for i in gpotb.graph_patterns_or_triples_blocks
-        #         if isinstance(i, GraphPatternNotTriples)
-        #     ]
         if gpotb.graph_patterns_or_triples_blocks:
             self.inner_select_gpntotb_list = gpotb.graph_patterns_or_triples_blocks
 
     def parse_logical_operators(
-            self, element, existing_ggps=None
+        self, element: dict, existing_ggps: GroupGraphPatternSub | None = None
     ) -> Generator[GroupGraphPatternSub, None, None]:
         operator = element.get("op")
         args = element.get("args")
@@ -147,70 +126,14 @@ class CQLParser:
         ggps = existing_ggps if existing_ggps is not None else GroupGraphPatternSub()
 
         if operator == "and":
-            for arg in args:
-                # Process each argument and update the same ggps without yielding
-                list(self.parse_logical_operators(arg, ggps))
-            # If a new ggps was created (not passed from outside), yield it
-            if existing_ggps is None:
-                yield ggps
-
+            yield from self._handle_and_operator(args, ggps, existing_ggps)
         elif operator == "or":
-            self._parsing_or_branch_depth += 1
-            try:
-                or_components = []
-                for arg in args:
-                    # Recursive call for "or" branch arguments
-                    # existing_ggps is intentionally not passed to create a new scope for the component
-                    component = next(self.parse_logical_operators(arg), None)
-                    if isinstance(component, GroupGraphPatternSub):
-                        component = GroupGraphPattern(content=component)
-                    or_components.append(component)
-
-                # This GPNT represents the "{A} UNION {B}" structure
-                or_expression_as_gpnt = GraphPatternNotTriples(
-                    content=GroupOrUnionGraphPattern(
-                        group_graph_patterns=or_components
-                    )
-                )
-
-                # 'ggps' here is the context we are adding to.
-                # If existing_ggps was passed (not None), then ggps is existing_ggps (e.g. the AND's GGPS).
-                # If existing_ggps was None, ggps is a new GGPS created for this current OR call.
-
-                if existing_ggps is not None:
-                    # This OR is nested (e.g., inside an AND).
-                    # Wrap its GPNT (which is the GroupOrUnionGraphPattern) in a GGP
-                    # to make it an explicit { {A} UNION {B} } block in the outer scope.
-                    item_for_gpntotb_list = GraphPatternNotTriples(
-                        content=GroupOrUnionGraphPattern(
-                            group_graph_patterns=[
-                                GroupGraphPattern(
-                                    content=GroupGraphPatternSub(
-                                        graph_patterns_or_triples_blocks=[or_expression_as_gpnt]
-                                    )
-                                )
-                            ]
-                        )
-                    )
-                else:
-                    # This OR is top-level for this recursive call. Its GPNT is the pattern.
-                    # The calling 'parse()' method will wrap the final GGPS in a GGP for the WHERE clause.
-                    item_for_gpntotb_list = or_expression_as_gpnt
-
-                if ggps.graph_patterns_or_triples_blocks:
-                    ggps.graph_patterns_or_triples_blocks.append(item_for_gpntotb_list)
-                else:
-                    ggps.graph_patterns_or_triples_blocks = [item_for_gpntotb_list]
-
-            finally:
-                self._parsing_or_branch_depth -= 1
-
-            if existing_ggps is None:  # If this OR was top-level for this call and created its own ggps
-                yield ggps
+            yield from self._handle_or_operator(args, ggps, existing_ggps)
 
         # ... other operators like "<", "=", ">", "like", spatial, "in", temporal ...
-        # (These parts of the method remain unchanged in terms of this specific fix)
-        elif operator in ["<", "=", ">", "<=", ">="]:
+        elif operator in ["<", "=", ">", "<=", ">=", "<>"]:
+            if operator == "<>":
+                operator = "!="  # CQL -> SPARQL equivalent
             self._handle_comparison(operator, args, ggps)
             if existing_ggps is None:
                 yield ggps
@@ -234,14 +157,89 @@ class CQLParser:
             # This else is reached if operator is not 'and', 'or', or any of the handled elementary operators.
             raise NotImplementedError(f"Operator {operator} not implemented.")
 
+    def _handle_and_operator(
+        self,
+        args: list[dict],
+        ggps: GroupGraphPatternSub,
+        existing_ggps: GroupGraphPatternSub | None,
+    ) -> Generator[GroupGraphPatternSub, None, None]:
+        """Handle AND logical operator."""
+        for arg in args:
+            # Process each argument and update the same ggps without yielding
+            list(self.parse_logical_operators(arg, ggps))
+        # If a new ggps was created (not passed from outside), yield it
+        if existing_ggps is None:
+            yield ggps
+
+    def _handle_or_operator(
+        self,
+        args: list[dict],
+        ggps: GroupGraphPatternSub,
+        existing_ggps: GroupGraphPatternSub | None,
+    ) -> Generator[GroupGraphPatternSub, None, None]:
+        """Handle OR logical operator."""
+        try:
+            or_components = []
+            for arg in args:
+                # Recursive call for "or" branch arguments
+                # existing_ggps is intentionally not passed to create a new scope for the component
+                component = next(self.parse_logical_operators(arg), None)
+                if isinstance(component, GroupGraphPatternSub):
+                    component = GroupGraphPattern(content=component)
+                or_components.append(component)
+
+            # This GPNT represents the "{A} UNION {B}" structure
+            or_expression_as_gpnt = GraphPatternNotTriples(
+                content=GroupOrUnionGraphPattern(group_graph_patterns=or_components)
+            )
+
+            # 'ggps' here is the context we are adding to.
+            # If existing_ggps was passed (not None), then ggps is existing_ggps (e.g. the AND's GGPS).
+            # If existing_ggps was None, ggps is a new GGPS created for this current OR call.
+
+            if existing_ggps is not None:
+                # This OR is nested (e.g., inside an AND).
+                # Wrap its GPNT (which is the GroupOrUnionGraphPattern) in a GGP
+                # to make it an explicit { {A} UNION {B} } block in the outer scope.
+                item_for_gpntotb_list = GraphPatternNotTriples(
+                    content=GroupOrUnionGraphPattern(
+                        group_graph_patterns=[
+                            GroupGraphPattern(
+                                content=GroupGraphPatternSub(
+                                    graph_patterns_or_triples_blocks=[
+                                        or_expression_as_gpnt
+                                    ]
+                                )
+                            )
+                        ]
+                    )
+                )
+            else:
+                # This OR is top-level for this recursive call. Its GPNT is the pattern.
+                # The calling 'parse()' method will wrap the final GGPS in a GGP for the WHERE clause.
+                item_for_gpntotb_list = or_expression_as_gpnt
+
+            if ggps.graph_patterns_or_triples_blocks:
+                ggps.graph_patterns_or_triples_blocks.append(item_for_gpntotb_list)
+            else:
+                ggps.graph_patterns_or_triples_blocks = [item_for_gpntotb_list]
+
+        finally:
+            pass  # Cleanup if needed
+
+        if (
+            existing_ggps is None
+        ):  # If this OR was top-level for this call and created its own ggps
+            yield ggps
+
     def _add_triple(
-            self,
-            ggps,
-            subject,
-            predicate,
-            obj,
-            to: Literal["tss_and_tssp", "tss", "tssp"] = "tss_and_tssp"
-    ):
+        self,
+        ggps: GroupGraphPatternSub,
+        subject: Var | IRI,
+        predicate: IRI,
+        obj: Var | IRI | RDFLiteral,
+        to: Literal["tss_and_tssp", "tss", "tssp"] = "tss_and_tssp",
+    ) -> None:
         if to in ["tss_and_tssp", "tss"]:
             tss = TriplesSameSubject.from_spo(
                 subject=subject, predicate=predicate, object=obj
@@ -280,31 +278,36 @@ class CQLParser:
 
             # All patterns are channeled into the graph_patterns_or_triples_blocks list.
 
-    def _handle_comparison(self, operator, args, existing_ggps=None):
+    def _handle_comparison(
+        self,
+        operator: str,
+        args: list[dict],
+        existing_ggps: GroupGraphPatternSub | None = None,
+    ) -> None:
+        value = convert_value_to_rdf_term(args[1])
 
-        val = args[1]
-        if isinstance(val, str) and val.startswith("http"):  # hack
-            value = IRI(value=val)
-        elif isinstance(val, (int, float)):  # literal numeric
-            value = NumericLiteral(value=val)
-        else:  # literal string
-            value = RDFLiteral(value=val)
+        use_filter_statement = True
+        if operator == "=" and isinstance(value, IRI):
+            prop = args[0].get("property")
+            if self.queryable_props and prop in self.queryable_props:
+                # the shacl paths can be complicated, so we just get back a var and then use filter
+                value = IRIOrFunction(iri=value)
+                use_filter_statement = True
+            else:  # non shacl - use a triple pattern match rather than FILTER
+                use_filter_statement = False
+                ggps, obj = self._add_tss_tssp(args, existing_ggps, value)
 
-        if operator == "=" and isinstance(
-                value, IRI
-        ):  # use a triple pattern match rather than FILTER
-            ggps, obj = self._add_tss_tssp(args, existing_ggps, value)
-        else:  # use a FILTER
+        if use_filter_statement:  # use a FILTER
             ggps, obj = self._add_tss_tssp(args, existing_ggps)
-            object_pe = PrimaryExpression(content=obj)
-            value_pe = PrimaryExpression(content=value)
-            values_constraint = Filter.filter_relational(
-                focus=object_pe, comparators=value_pe, operator=operator
-            )
-            gpnt = GraphPatternNotTriples(content=values_constraint)
-            ggps.add_pattern(gpnt)
+            filter_gpnt = create_relational_filter(obj, operator, value)
+            ggps.add_pattern(filter_gpnt)
 
-    def _add_tss_tssp(self, args, existing_ggps, obj=None):
+    def _add_tss_tssp(
+        self,
+        args: list[dict],
+        existing_ggps: GroupGraphPatternSub | None,
+        obj: Var | IRI | RDFLiteral | None = None,
+    ) -> tuple[GroupGraphPatternSub, Var | IRI | RDFLiteral]:
         self.var_counter += 1
         ggps = existing_ggps if existing_ggps is not None else GroupGraphPatternSub()
         prop = args[0].get("property")
@@ -321,32 +324,21 @@ class CQLParser:
             self._add_triple(ggps, subject, predicate, obj, "tss_and_tssp")
         return ggps, obj
 
-    def _handle_like(self, args, existing_ggps=None):
-        ggps, object = self._add_tss_tssp(args, existing_ggps)
+    def _handle_like(
+        self, args: list[dict], existing_ggps: GroupGraphPatternSub | None = None
+    ) -> None:
+        ggps, obj = self._add_tss_tssp(args, existing_ggps)
 
-        value = args[1].replace("%", ".*").replace("_", ".").replace("\\", "\\\\")
-
-        filter_gpnt = GraphPatternNotTriples(
-            content=Filter(
-                constraint=Constraint(
-                    content=BuiltInCall(
-                        other_expressions=RegexExpression(
-                            text_expression=Expression.from_primary_expression(
-                                primary_expression=PrimaryExpression(content=object)
-                            ),
-                            pattern_expression=Expression.from_primary_expression(
-                                primary_expression=PrimaryExpression(
-                                    content=RDFLiteral(value=value)
-                                )
-                            ),
-                        )
-                    )
-                )
-            )
-        )
+        pattern = args[1].replace("%", ".*").replace("_", ".").replace("\\", "\\\\")
+        filter_gpnt = create_regex_filter(obj, pattern)
         ggps.add_pattern(filter_gpnt)
 
-    def _handle_spatial(self, operator, args, existing_ggps=None):
+    def _handle_spatial(
+        self,
+        operator: str,
+        args: list[dict],
+        existing_ggps: GroupGraphPatternSub | None = None,
+    ) -> None:
         self.var_counter += 1
         ggps = existing_ggps if existing_ggps is not None else GroupGraphPatternSub()
 
@@ -365,16 +357,25 @@ class CQLParser:
             geom_bn_var = Var(value="geom_bnode")
             geom_lit_var = Var(value="geom_var")
 
-            self._add_triple(ggps, subject, IRI(value=GEO.hasGeometry), geom_bn_var, "tss_and_tssp")
-            self._add_triple(ggps, geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var, "tss_and_tssp")
+            self._add_triple(
+                ggps, subject, IRI(value=GEO.hasGeometry), geom_bn_var, "tss_and_tssp"
+            )
+            self._add_triple(
+                ggps, geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var, "tss_and_tssp"
+            )
 
             target_system = settings.spatial_query_format
             if target_system not in ["geosparql", "qlever", "graphdb"]:
-                raise NotImplementedError(f"Spatial query format '{target_system}' not supported for CQL.")
+                raise NotImplementedError(
+                    f"Spatial query format '{target_system}' not supported for CQL."
+                )
 
             # Prepare WKT string based on target system and CRS presence
             processed_wkt = wkt
-            if target_system in ["geosparql", "graphdb"]:  # For QLever, plain wkt is used
+            if target_system in [
+                "geosparql",
+                "graphdb",
+            ]:  # For QLever, plain wkt is used
                 processed_wkt = f"<{srid}> {wkt}"
 
             if target_system == "graphdb":
@@ -385,9 +386,11 @@ class CQLParser:
                 predicate_iri = IRI(value=str(cql_graphdb_spatial_properties[operator]))
                 object_wkt_literal = RDFLiteral(
                     value=processed_wkt,  # Use centrally processed WKT
-                    datatype=IRI(value=str(GEO.wktLiteral))
+                    datatype=IRI(value=str(GEO.wktLiteral)),
                 )
-                self._add_triple(ggps, subject, predicate_iri, object_wkt_literal, to="tssp")
+                self._add_triple(
+                    ggps, subject, predicate_iri, object_wkt_literal, to="tssp"
+                )
             else:
                 filter_gpnt_list = generate_spatial_filter_clause(
                     wkt_value=processed_wkt,
@@ -400,51 +403,26 @@ class CQLParser:
                 for gpnt_item in filter_gpnt_list:
                     ggps.add_pattern(gpnt_item)
 
-    def _handle_in(self, args, existing_ggps=None):
-        ggps, object = self._add_tss_tssp(args, existing_ggps)
+    def _handle_in(
+        self, args: list[dict], existing_ggps: GroupGraphPatternSub | None = None
+    ) -> None:
+        ggps, obj = self._add_tss_tssp(args, existing_ggps)
 
-        uri_values = []
-        literal_values = []
-        numeric_values = []
-        for arg in args[1]:
-            if isinstance(arg, str) and arg.startswith("http"):
-                uri_values.append(arg)
-            elif isinstance(arg, (int, float)):
-                numeric_values.append(arg)
-            else:
-                literal_values.append(arg)
-
-        grammar_uri_values = [IRI(value=URIRef(value)) for value in uri_values]
-        grammar_literal_values = []
-        for val in literal_values:
-            if isinstance(val, str):
-                value = RDFLiteral(value=val)
-            elif isinstance(val, (int, float)):
-                value = NumericLiteral(value=val)
-            grammar_literal_values.append(value)
-        all_values = grammar_literal_values + grammar_uri_values
-
-        iri_db_vals = [DataBlockValue(value=p) for p in all_values]
-        ildov = InlineDataOneVar(variable=object, datablockvalues=iri_db_vals)
-
-        gpnt = GraphPatternNotTriples(
-            content=InlineData(data_block=DataBlock(block=ildov))
-        )
-        ggps.add_pattern(gpnt)
+        values_constraint = create_values_constraint(obj, args[1])
+        ggps.add_pattern(values_constraint)
 
     def _handle_shacl_defined_prop(self, prop):
-        tssp_list, obj = self.queryable_id_to_tssp(self.queryable_props[prop])
-        # tss_triple = (
-        #     Var(value="focus_node"),
-        #     IRI(value=SHACL_FILTER_NAMESPACE[prop]),
-        #     object,
-        # )
-        # self.tss_list.append(TriplesSameSubject.from_spo(*tss_triple))
+        tssp_list, obj_var = self.queryable_id_to_tssp(self.queryable_props[prop])
         self.tssp_list.extend(tssp_list)
-        self.inner_select_vars.append(obj)
-        return obj
+        self.inner_select_vars.append(obj_var)
+        return obj_var
 
-    def _handle_temporal(self, comp_func, args, existing_ggps=None):
+    def _handle_temporal(
+        self,
+        comp_func: str,
+        args: list[dict],
+        existing_ggps: GroupGraphPatternSub | None = None,
+    ) -> None:
         """For temporal filtering within CQL JSON expressions, NOT within the temporal query parameter."""
         ggps = existing_ggps if existing_ggps is not None else GroupGraphPatternSub()
 
@@ -489,7 +467,8 @@ class CQLParser:
 
         ggps.add_pattern(gpnt)
 
-    def get_type_and_bound(self, operands, prefix):
+    @staticmethod
+    def get_type_and_bound(operands: dict, prefix: str) -> tuple[str, str]:
         """
         Get the type label and abbreviation for a temporal operand.
         Options are "instant" with "I", or "interval" with "U" (unbounded) or "B" (bounded).
@@ -548,7 +527,8 @@ class CQLParser:
         operands[f"t{i}_{label}"] = var
         self._add_triple(ggps, Var(value="focus_node"), value, var, "tss_and_tssp")
 
-    def _dt_to_rdf_literal(self, i, dt_str, label, operands):
+    @staticmethod
+    def _dt_to_rdf_literal(i: int, dt_str: str, label: str, operands: dict) -> None:
         if dt_str == "..":
             operands[f"t{i}_{label}"] = UNBOUNDED
         else:
@@ -559,9 +539,9 @@ class CQLParser:
             )
 
     def queryable_id_to_tssp(
-            self,
-            queryable_uri,
-    ):
+        self,
+        queryable_uri: str,
+    ) -> tuple[list[TriplesSameSubjectPath], Var]:
         queryable_shape = prez_system_graph.cbd(URIRef(queryable_uri))
         ps = PropertyShape(
             uri=URIRef(queryable_uri),
@@ -577,195 +557,3 @@ class CQLParser:
             .graph_node_path.varorterm_or_triplesnodepath.varorterm
         )
         return ps.tssp_list, obj_var_name
-
-
-def create_temporal_or_gpnt(
-        comparisons: list[tuple[Var | RDFLiteral, str, Var | RDFLiteral]], negated=False
-) -> GraphPatternNotTriples:
-    """
-    Create a FILTER with multiple conditions joined by OR (||).
-
-    Format: FILTER ( comp1 op1 comp2 || comp3 op2 comp4 || ... )
-
-    if negated:
-    Format: FILTER (! (comp1 op1 comp2 || comp3 op2 comp4 || ...) )
-    """
-    _and_expressions = []
-    for left_comp, op, right_comp in comparisons:
-        if op not in ["=", "<=", ">=", "<", ">"]:
-            raise ValueError(f"Invalid operator: {op}")
-        _and_expressions.append(
-            ConditionalAndExpression(
-                value_logicals=[
-                    ValueLogical(
-                        relational_expression=RelationalExpression(
-                            left=NumericExpression(
-                                additive_expression=AdditiveExpression(
-                                    base_expression=MultiplicativeExpression(
-                                        base_expression=UnaryExpression(
-                                            primary_expression=PrimaryExpression(
-                                                content=left_comp
-                                            )
-                                        )
-                                    )
-                                )
-                            ),
-                            operator=op,
-                            right=NumericExpression(
-                                additive_expression=AdditiveExpression(
-                                    base_expression=MultiplicativeExpression(
-                                        base_expression=UnaryExpression(
-                                            primary_expression=PrimaryExpression(
-                                                content=right_comp
-                                            )
-                                        )
-                                    )
-                                )
-                            ),
-                        )
-                    )
-                ]
-            )
-        )
-    if not negated:
-        return GraphPatternNotTriples(
-            content=Filter(
-                constraint=Constraint(
-                    content=BrackettedExpression(
-                        expression=Expression(
-                            conditional_or_expression=ConditionalOrExpression(
-                                conditional_and_expressions=_and_expressions
-                            )
-                        )
-                    )
-                )
-            )
-        )
-    else:
-        return GraphPatternNotTriples(
-            content=Filter(
-                constraint=Constraint(
-                    content=BrackettedExpression(
-                        expression=Expression(
-                            conditional_or_expression=ConditionalOrExpression(
-                                conditional_and_expressions=[
-                                    ConditionalAndExpression(
-                                        value_logicals=[
-                                            ValueLogical(
-                                                relational_expression=RelationalExpression(
-                                                    left=NumericExpression(
-                                                        additive_expression=AdditiveExpression(
-                                                            base_expression=MultiplicativeExpression(
-                                                                base_expression=UnaryExpression(
-                                                                    operator="!",
-                                                                    primary_expression=PrimaryExpression(
-                                                                        content=BrackettedExpression(
-                                                                            expression=Expression(
-                                                                                conditional_or_expression=ConditionalOrExpression(
-                                                                                    conditional_and_expressions=_and_expressions
-                                                                                )
-                                                                            )
-                                                                        )
-                                                                    ),
-                                                                )
-                                                            )
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                        ]
-                                    )
-                                ]
-                            )
-                        )
-                    )
-                )
-            )
-        )
-
-
-def create_filter_bool_gpnt(boolean: bool) -> GraphPatternNotTriples:
-    """
-    For filtering out all results in scenarios where the input arguments are valid but logically determine that the
-    filter will filter out all results.
-
-    generates FILTER(false) or FILTER(true)
-    """
-    return GraphPatternNotTriples(
-        content=Filter(
-            constraint=Constraint(
-                content=BrackettedExpression(
-                    expression=Expression.from_primary_expression(
-                        primary_expression=PrimaryExpression(
-                            content=BooleanLiteral(value=boolean)
-                        )
-                    )
-                )
-            )
-        )
-    )
-
-
-def create_temporal_and_gpnt(
-        comparisons: list[tuple[Var | RDFLiteral, str, Var | RDFLiteral]]
-) -> GraphPatternNotTriples:
-    """
-    Create a FILTER with multiple conditions joined by AND.
-
-    :param comparisons: List of tuples, each containing (left_comp, operator, right_comp)
-    :return: GraphPatternNotTriples
-
-    Format:
-    FILTER ( comp1 op1 comp2 && comp3 op2 comp4 && ... )
-    """
-    _vl_expressions = []
-
-    for left_comp, op, right_comp in comparisons:
-        if op not in ["=", "<=", ">=", "<", ">"]:
-            raise ValueError(f"Invalid operator: {op}")
-
-        _vl_expressions.append(
-            ValueLogical(
-                relational_expression=RelationalExpression(
-                    left=NumericExpression(
-                        additive_expression=AdditiveExpression(
-                            base_expression=MultiplicativeExpression(
-                                base_expression=UnaryExpression(
-                                    primary_expression=PrimaryExpression(
-                                        content=left_comp
-                                    )
-                                )
-                            )
-                        )
-                    ),
-                    operator=op,
-                    right=NumericExpression(
-                        additive_expression=AdditiveExpression(
-                            base_expression=MultiplicativeExpression(
-                                base_expression=UnaryExpression(
-                                    primary_expression=PrimaryExpression(
-                                        content=right_comp
-                                    )
-                                )
-                            )
-                        )
-                    ),
-                )
-            )
-        )
-
-    return GraphPatternNotTriples(
-        content=Filter(
-            constraint=Constraint(
-                content=BrackettedExpression(
-                    expression=Expression(
-                        conditional_or_expression=ConditionalOrExpression(
-                            conditional_and_expressions=[
-                                ConditionalAndExpression(value_logicals=_vl_expressions)
-                            ]
-                        )
-                    )
-                )
-            )
-    )
-)

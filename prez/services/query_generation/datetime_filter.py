@@ -16,7 +16,7 @@ from prez.models.query_params import DateTimeOrUnbounded
 
 
 def create_temporal_filter_gpnt(dt: datetime, op: str) -> GraphPatternNotTriples:
-    if op not in ["=", "<=", ">=", "<", ">"]:
+    if op not in ["=", "<=", ">=", "<", ">", "!="]:
         raise ValueError(f"Invalid operator: {op}")
     return GraphPatternNotTriples(
         content=Filter.filter_relational(
