@@ -19,9 +19,12 @@ from sparql_grammar_pydantic import (
     Constraint,
     DataBlock,
     DataBlockValue,
+    ExistsFunc,
     Expression,
     Filter,
     GraphPatternNotTriples,
+    GroupGraphPattern,
+    GroupGraphPatternSub,
     InlineData,
     InlineDataOneVar,
     MultiplicativeExpression,
@@ -33,7 +36,7 @@ from sparql_grammar_pydantic import (
     RelationalExpression,
     UnaryExpression,
     ValueLogical,
-    Var,
+    Var, NotExistsFunc,
 )
 
 
@@ -319,6 +322,56 @@ def create_temporal_and_gpnt(
                                 ConditionalAndExpression(value_logicals=_vl_expressions)
                             ]
                         )
+                    )
+                )
+            )
+        )
+    )
+
+
+def create_filter_exists(patterns: GroupGraphPatternSub) -> GraphPatternNotTriples:
+    """Create a FILTER EXISTS wrapper around a group of patterns.
+    
+    This wraps the given patterns in FILTER EXISTS { ... } which improves
+    query performance.
+    
+    Args:
+        patterns: The GroupGraphPatternSub containing all patterns to wrap
+        
+    Returns:
+        GraphPatternNotTriples containing the FILTER EXISTS
+    """
+    return GraphPatternNotTriples(
+        content=Filter(
+            constraint=Constraint(
+                content=BuiltInCall(
+                    other_expressions=ExistsFunc(
+                        group_graph_pattern=GroupGraphPattern(content=patterns)
+                    )
+                )
+            )
+        )
+    )
+
+
+def create_filter_not_exists(patterns: GroupGraphPatternSub) -> GraphPatternNotTriples:
+    """Create a FILTER NOT EXISTS wrapper around a group of patterns.
+
+    This wraps the given patterns in FILTER NOT EXISTS { ... } which improves
+    query performance.
+
+    Args:
+        patterns: The GroupGraphPatternSub containing all patterns to wrap
+
+    Returns:
+        GraphPatternNotTriples containing the FILTER NOT EXISTS
+    """
+    return GraphPatternNotTriples(
+        content=Filter(
+            constraint=Constraint(
+                content=BuiltInCall(
+                    other_expressions=NotExistsFunc(
+                        group_graph_pattern=GroupGraphPattern(content=patterns)
                     )
                 )
             )
