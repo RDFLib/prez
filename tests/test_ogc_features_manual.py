@@ -80,3 +80,20 @@ def test_bbox_graphdb_200_4326_crs(client):
         assert r.status_code == 200
     finally:
         settings.spatial_query_format = original_format
+
+
+def test_ogc_features_listing_annotated(client):
+    # General regression test that would have caught the bug fixed in #413
+    r = client.get(
+        "/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/collections?_profile=mem&_mediatype=text/anot%2Bturtle"
+    )
+    assert r.status_code == 200
+    assert len(r.content) > 0
+
+def test_ogc_features_object_annotated(client):
+    # General regression test
+    r = client.get(
+        "/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/collections/ex:FeatureCollection?_mediatype=text/anot%2Bturtle&_profile=ogcfeat-minimal"
+    )
+    assert r.status_code == 200
+    assert len(r.content) > 0

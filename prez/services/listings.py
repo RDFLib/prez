@@ -508,5 +508,4 @@ async def ogc_features_listing_function(
         # TODO, what happens if the store has content in a named graph? This can only dump the default graph.
         item_store.dump(content, serializer_format, from_graph=default, prefixes=oxigraph_prefixes)
         content.seek(0)  # Reset the stream position to the beginning
-        content = io.BytesIO(item_graph.serialize(format=non_anot_mt, encoding="utf-8"))
     return content, link_headers
