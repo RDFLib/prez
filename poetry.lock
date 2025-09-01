@@ -1858,7 +1858,7 @@ files = [
 
 [[package]]
 name = "rdf2geojson"
-version = "0.8.0"
+version = "0.8.1"
 description = "A Python package that converts any RDF to GeoJSON"
 optional = false
 python-versions = "^3.11"
@@ -1878,8 +1878,8 @@ oxigraph = ["pyoxigraph (>=0.4.11)"]
 [package.source]
 type = "git"
 url = "https://github.com/Kurrawong/rdf2geojson.git"
-reference = "v0.8.0"
-resolved_reference = "aa635a271bec935debebfff41a92fef468ae729e"
+reference = "v0.8.1"
+resolved_reference = "8ff4cbe42817822fe66334951f5197363ebb0216"
 
 [[package]]
 name = "rdflib"
@@ -2410,4 +2410,4 @@ server = ["uvicorn"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "96d5b74696a52b9645b938b73324f4b46fc18692035f2d81a0d944a46b406b7c"
+content-hash = "9678e64d2fedc357b994fea5ca52a8e75eb0e7b5c159440d06e811f8f362a458"
