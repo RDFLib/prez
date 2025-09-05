@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union, Literal
 
 import toml
-from pydantic import field_validator
+from pydantic import field_validator, Field
 from pydantic_settings import BaseSettings
 from rdflib import DCTERMS, RDFS, SDO, URIRef, RDF, SOSA
 from rdflib.namespace import SKOS
@@ -110,6 +110,10 @@ class Settings(BaseSettings):
     use_path_aliases: bool = False
     spatial_query_format: Literal["geosparql", "qlever", "graphdb"] = "geosparql"
     search_uses_listing_count_limit: bool = False
+    gzip_min_size: int = Field(
+        default=1000,
+        description="Minimum size in bytes for gzip compression. Use -1 to disable compression altogether."
+    )
 
     @field_validator("prez_version")
     @classmethod
