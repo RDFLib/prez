@@ -3,10 +3,7 @@ CONSTRUCT {
 ?focus_node <ex:starts_at> ?dt_1_start
 }
 WHERE {
-
-FILTER EXISTS{
 ?focus_node <ex:ends_at> ?dt_1_end .
 ?focus_node <ex:starts_at> ?dt_1_start .
 FILTER (?dt_1_start > "1991-10-07T00:00:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> && ?dt_1_end = "2010-02-10T05:29:20.073225+00:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>)
-}
 }

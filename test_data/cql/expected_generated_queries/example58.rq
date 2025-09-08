@@ -2,9 +2,6 @@ CONSTRUCT {
 ?focus_node <ex:updated_at> ?dt_1_instant
 }
 WHERE {
-
-FILTER EXISTS{
 ?focus_node <ex:updated_at> ?dt_1_instant .
 FILTER (?dt_1_instant = "1851-04-29T00:00:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>)
-}
 }

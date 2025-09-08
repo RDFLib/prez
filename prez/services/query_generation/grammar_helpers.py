@@ -377,3 +377,28 @@ def create_filter_not_exists(patterns: GroupGraphPatternSub) -> GraphPatternNotT
             )
         )
     )
+
+
+def _create_filter_in(variable: Var, values: list) -> GraphPatternNotTriples:
+    """Create a FILTER(?var IN (<val1>, "val2", ...)) constraint."""
+    # Convert values to appropriate RDF terms and wrap in PrimaryExpression
+    right_primary_expressions = []
+    for value in values:
+        rdf_term = convert_value_to_rdf_term(value)
+        right_primary_expressions.append(
+            PrimaryExpression(content=rdf_term)
+        )
+
+    in_expr = Expression.create_in_expression(
+        left_primary_expression=PrimaryExpression(content=variable),
+        operator="IN",
+        right_primary_expressions=right_primary_expressions,
+    )
+
+    return GraphPatternNotTriples(
+        content=Filter(
+            constraint=Constraint(
+                content=BrackettedExpression(expression=in_expr)
+            )
+        )
+    )

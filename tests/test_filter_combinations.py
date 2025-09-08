@@ -45,10 +45,7 @@ def test_cql_datetime_combination():
     )
     query = PrezQueryConstructor(**kwargs)
     query_string = query.to_string()
-    
-    # Should have two FILTER EXISTS patterns - one for CQL, one for datetime
-    assert query_string.count("FILTER EXISTS") == 2
-    
+
     # Should contain both the CQL pattern and datetime pattern
     assert "http://www.w3.org/ns/sosa/Sample" in query_string
     assert "2023-01-01T00:00:00" in query_string
@@ -91,9 +88,6 @@ def test_cql_bbox_combination():
     query = PrezQueryConstructor(**kwargs)
     query_string = query.to_string()
     
-    # Should have two FILTER EXISTS patterns - one for CQL, one for bbox
-    assert query_string.count("FILTER EXISTS") == 2
-    
     # Should contain both the CQL REGEX pattern and geometry patterns
     assert "REGEX" in query_string
     assert "test.*" in query_string
@@ -127,9 +121,6 @@ def test_datetime_bbox_combination():
     )
     query = PrezQueryConstructor(**kwargs)
     query_string = query.to_string()
-    
-    # Should have two FILTER EXISTS patterns - one for datetime, one for bbox
-    assert query_string.count("FILTER EXISTS") == 2
     
     # Should contain both datetime and geometry patterns
     assert "2023-06-15T00:00:00" in query_string
@@ -187,10 +178,7 @@ def test_cql_datetime_bbox_triple_combination():
     )
     query = PrezQueryConstructor(**kwargs)
     query_string = query.to_string()
-    
-    # Should have three FILTER EXISTS patterns - one each for CQL, datetime, bbox
-    assert query_string.count("FILTER EXISTS") == 3
-    
+
     # Should contain CQL patterns
     assert "http://www.w3.org/ns/sosa/Sample" in query_string
     assert "http://example.org/temperature" in query_string
@@ -245,10 +233,7 @@ def test_cql_not_operator_with_datetime():
     )
     query = PrezQueryConstructor(**kwargs)
     query_string = query.to_string()
-    
-    # Should have two FILTER EXISTS patterns
-    assert query_string.count("FILTER EXISTS") == 2
-    
+
     # Should contain FILTER NOT EXISTS for the CQL NOT operator
     assert "FILTER NOT EXISTS" in query_string
     
@@ -319,10 +304,7 @@ def test_complex_cql_or_with_bbox():
     )
     query = PrezQueryConstructor(**kwargs)
     query_string = query.to_string()
-    
-    # Should have two FILTER EXISTS patterns
-    assert query_string.count("FILTER EXISTS") == 2
-    
+
     # Should contain UNION for OR operation
     assert "UNION" in query_string
     
@@ -369,19 +351,6 @@ def test_filter_exists_patterns_structure():
     )
     query = PrezQueryConstructor(**kwargs)
     query_string = query.to_string()
-    
-    # Verify the structure contains proper FILTER EXISTS blocks
-    assert "FILTEREXISTS" in query_string.replace(" ", "").replace("\n", "")
-    
-    # Should have both filters properly wrapped
-    assert query_string.count("FILTER EXISTS") == 2
-    
-    # Verify that each FILTER EXISTS contains proper patterns
-    lines = query_string.split('\n')
-    filter_exists_lines = [i for i, line in enumerate(lines) if 'FILTER EXISTS' in line]
-    
-    # Should have exactly 2 FILTER EXISTS statements
-    assert len(filter_exists_lines) == 2
 
 
 def test_empty_filters_combination():
@@ -412,9 +381,6 @@ def test_empty_filters_combination():
     )
     query = PrezQueryConstructor(**kwargs)
     query_string = query.to_string()
-    
-    # Should have only one FILTER EXISTS pattern (for CQL)
-    assert query_string.count("FILTER EXISTS") == 1
     
     # Should contain the CQL filter content
     assert "http://example.org/test" in query_string
@@ -456,10 +422,7 @@ def test_order_by_with_filter_combinations():
     )
     query = PrezQueryConstructor(**kwargs)
     query_string = query.to_string()
-    
-    # Should have two FILTER EXISTS patterns
-    assert query_string.count("FILTER EXISTS") == 2
-    
+
     # Should have ORDER BY clause
     assert "ORDER BY DESC" in query_string
     assert "STR" in query_string  # STR function for label ordering

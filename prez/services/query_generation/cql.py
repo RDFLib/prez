@@ -13,14 +13,13 @@ from sparql_grammar_pydantic import (
     GroupGraphPattern,
     GroupGraphPatternSub,
     GroupOrUnionGraphPattern,
-    IRIOrFunction,
     RDFLiteral,
     SolutionModifier,
     TriplesBlock,
     TriplesSameSubject,
     TriplesSameSubjectPath,
     Var,
-    WhereClause,
+    WhereClause, IRIOrFunction,
 )
 
 from prez.cache import prez_system_graph
@@ -39,12 +38,10 @@ from prez.services.query_generation.grammar_helpers import (
     convert_value_to_rdf_term,
     create_regex_filter,
     create_relational_filter,
-    create_values_constraint,
     create_temporal_or_gpnt,
     create_filter_bool_gpnt,
     create_temporal_and_gpnt,
-    create_filter_exists,
-    create_filter_not_exists,
+    create_filter_not_exists, _create_filter_in,
 )
 
 CQL = Namespace("http://www.opengis.net/doc/IS/cql2/1.0/")
@@ -94,7 +91,6 @@ class CQLParser:
         self.tss_list: list[TriplesSameSubject] = []
         self.tssp_list: list[TriplesSameSubjectPath] = []
         self.focus_node_tssp_list: list[TriplesSameSubjectPath] = []
-        self.non_focus_tssp_list: list[TriplesSameSubjectPath] = []
         self.crs: str | None = crs
         self.queryable_props: dict[str, str] | None = queryable_props
 
@@ -173,9 +169,8 @@ class CQLParser:
         ggps: GroupGraphPatternSub,
         existing_ggps: GroupGraphPatternSub | None,
     ) -> Generator[GroupGraphPatternSub, None, None]:
-        """Handle AND logical operator with focus_node optimization."""
-        # Apply focus_node optimization to AND arguments
-        self._apply_focus_node_optimization_to_args(args, ggps)
+        for arg in args:
+            next(self.parse_logical_operators(arg, ggps), None)
         
         if existing_ggps is None:
             yield ggps
@@ -293,19 +288,7 @@ class CQLParser:
             tssp = TriplesSameSubjectPath.from_spo(
                 subject=subject, predicate=predicate, object=obj
             )
-            
-            # Check if this is a focus_node triple for optimization
-            is_focus_node_triple = isinstance(subject, Var) and subject.value == "focus_node"
-            
-            if is_focus_node_triple:
-                # Add focus_node triples to separate tracking
-                self.focus_node_tssp_list.append(tssp)
-                # Also add to GGPS for immediate use
-                self._add_tssp_to_ggps(ggps, tssp)
-            else:
-                # Non-focus_node triples go to separate list and GGPS
-                self.non_focus_tssp_list.append(tssp)
-                self._add_tssp_to_ggps(ggps, tssp)
+            self._add_tssp_to_ggps(ggps, tssp)
     
     def _add_tssp_to_ggps(self, ggps: GroupGraphPatternSub, tssp: TriplesSameSubjectPath) -> None:
         """Add a TSSP as a TriplesBlock to the GGPS."""
@@ -459,18 +442,18 @@ class CQLParser:
                     ggps.add_pattern(gpnt_item)
 
     def _handle_in(
-        self, args: list[dict], existing_ggps: GroupGraphPatternSub | None = None
+        self, args: list[dict | list], existing_ggps: GroupGraphPatternSub | None = None
     ) -> None:
+        """Handle CQL 'in' operator using FILTER with IN for semantic consistency."""
         ggps, obj = self._add_tss_tssp(args, existing_ggps)
-
-        values_constraint = create_values_constraint(obj, args[1])
-        ggps.add_pattern(values_constraint)
+        # Create FILTER with IN. This enables term comparison semantics available in FILTER. The previous implementation
+        # using VALUES clauses was thought to be more performant but could cause issues with date, number comparisons
+        filter_in_gpnt = _create_filter_in(obj, args[1])
+        ggps.add_pattern(filter_in_gpnt)
 
     def _handle_shacl_defined_prop(self, prop):
         tssp_list, obj_var = self.queryable_id_to_tssp(self.queryable_props[prop])
-        # SHACL patterns are typically non-focus_node, so add to non_focus list
-        self.non_focus_tssp_list.extend(tssp_list)
-        self.tssp_list.extend(tssp_list)  # Keep for backwards compatibility
+        self.tssp_list.extend(tssp_list)
         self.inner_select_vars.append(obj_var)
         return obj_var
 
@@ -641,94 +624,3 @@ class CQLParser:
                 combined_ggps.add_pattern(pattern)
         
         return combined_ggps
-
-    def _apply_focus_node_optimization_to_args(self, args: list[dict], ggps: GroupGraphPatternSub) -> None:
-        """Apply focus_node optimization to a list of arguments.
-        
-        Mirrors the approach used in _handle_not_operator but for optimization.
-        Extracts focus_node triples to current level, wraps others in FILTER EXISTS.
-        """
-        focus_node_triples_blocks = []
-        non_focus_patterns = GroupGraphPatternSub()
-        
-        # Save current parser state (mirroring negation approach)
-        temp_tssp_list = self.tssp_list.copy()
-        temp_focus_node_tssp_list = self.focus_node_tssp_list.copy()
-        temp_non_focus_tssp_list = self.non_focus_tssp_list.copy()
-        
-        for arg in args:
-            # Clear tracking lists for this argument's parsing
-            self.tssp_list = []
-            self.focus_node_tssp_list = []
-            self.non_focus_tssp_list = []
-            
-            # Parse the argument to collect its patterns
-            arg_ggps = next(self.parse_logical_operators(arg), None)
-            
-            if arg_ggps:
-                # Extract focus_node patterns from the parsed result
-                focus_blocks, other_patterns = self._extract_focus_node_patterns_from_ggps(arg_ggps)
-                focus_node_triples_blocks.extend(focus_blocks)
-                
-                # Add non-focus patterns to collection
-                if other_patterns.graph_patterns_or_triples_blocks:
-                    for pattern in other_patterns.graph_patterns_or_triples_blocks:
-                        non_focus_patterns.add_pattern(pattern)
-            
-            # Add any SHACL TSSP patterns collected during parsing
-            if self.focus_node_tssp_list:
-                # Focus node SHACL patterns - add as TriplesBlocks directly
-                for tssp in self.focus_node_tssp_list:
-                    focus_node_triples_blocks.append(TriplesBlock(triples=tssp))
-            
-            if self.non_focus_tssp_list:
-                # Non-focus SHACL patterns - add to FILTER EXISTS collection
-                tb = TriplesBlock.from_tssp_list(self.non_focus_tssp_list)
-                non_focus_patterns.add_pattern(tb)
-        
-        # Restore original parser state
-        self.tssp_list = temp_tssp_list
-        self.focus_node_tssp_list = temp_focus_node_tssp_list
-        self.non_focus_tssp_list = temp_non_focus_tssp_list
-        
-        # Build the optimized structure
-        # 1. Add focus_node triples directly to current level
-        for focus_block in focus_node_triples_blocks:
-            ggps.add_pattern(focus_block)
-        
-        # 2. Wrap non-focus patterns in FILTER EXISTS if they exist
-        if non_focus_patterns.graph_patterns_or_triples_blocks:
-            filter_exists_gpnt = create_filter_exists(non_focus_patterns)
-            ggps.add_pattern(filter_exists_gpnt)
-    
-    def _extract_focus_node_patterns_from_ggps(self, ggps: GroupGraphPatternSub) -> tuple[list[TriplesBlock], GroupGraphPatternSub]:
-        """Extract focus_node TriplesBlocks from a GroupGraphPatternSub.
-        
-        Returns:
-            Tuple of (focus_node_triple_blocks, other_patterns_ggps)
-        """
-        focus_node_blocks = []
-        other_patterns = GroupGraphPatternSub()
-        
-        if ggps.graph_patterns_or_triples_blocks:
-            for pattern in ggps.graph_patterns_or_triples_blocks:
-                if isinstance(pattern, TriplesBlock) and self._is_focus_node_triple_block(pattern):
-                    focus_node_blocks.append(pattern)
-                else:
-                    other_patterns.add_pattern(pattern)
-        
-        return focus_node_blocks, other_patterns
-    
-    def _is_focus_node_triple_block(self, tb: TriplesBlock) -> bool:
-        """Check if a TriplesBlock contains only triples with ?focus_node as subject."""
-        current_block = tb
-        while current_block:
-            if hasattr(current_block, 'triples') and current_block.triples:
-                triple = current_block.triples
-                if hasattr(triple, 'content') and len(triple.content) > 0:
-                    # Get the subject from the triple
-                    subject = triple.content[0].varorterm
-                    if not (isinstance(subject, Var) and subject.value == "focus_node"):
-                        return False
-            current_block = getattr(current_block, 'triples_block', None)
-        return True
