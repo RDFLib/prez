@@ -331,25 +331,29 @@ def generate_bbox_filter(
     if target_system in ["geosparql", "graphdb"]:  # For QLever, plain wkt is used
         processed_wkt = f"<{srid}> {wkt}"
 
-    # Create patterns to be wrapped in FILTER EXISTS
-    combined_patterns = GroupGraphPatternSub()
+    # BGP to keep outside the FILTER EXISTS
+    bgp_list = []
+
+    # Create GGPS which can be used with or without FILTER EXISTS
+    ggps = GroupGraphPatternSub()
+    final_gpnt = None
     
     # Add geometry triples
     if target_system in ["geosparql", "graphdb"]:
-        combined_patterns.add_pattern(
-            TriplesBlock.from_tssp_list([
+        bgp_list.extend(
+            [
                 TriplesSameSubjectPath.from_spo(
                     subject, IRI(value=GEO.hasGeometry), geom_bn_var
                 ),
                 TriplesSameSubjectPath.from_spo(
                     geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var
                 )
-            ])
+            ]
         )
         
     if target_system == "graphdb":
         # Add the filter predicate triple for GraphDB
-        combined_patterns.add_pattern(
+        ggps.add_pattern(
             TriplesBlock(
                 triples=TriplesSameSubjectPath.from_spo(
                     geom_bn_var,
@@ -358,6 +362,8 @@ def generate_bbox_filter(
                 )
             )
         )
+        # use a FILTER EXISTS, in most but not all cases this is more performant with the GraphDB special predicates
+        final_gpnt = create_filter_exists(ggps)
 
     elif target_system in ["geosparql", "qlever"]:
         # Add spatial filter patterns
@@ -373,9 +379,17 @@ def generate_bbox_filter(
             raise ValueError("generate_spatial_filter_clause returned no patterns for GeoSPARQL bbox.")
         
         for gpnt in spatial_filter_gpnts:
-            combined_patterns.add_pattern(gpnt)
-    
-    # Wrap all patterns in FILTER EXISTS
-    filter_exists_gpnt = create_filter_exists(combined_patterns)
-    
-    return [filter_exists_gpnt], []
+            ggps.add_pattern(gpnt)
+
+        # do not use a FILTER EXISTS, assume the triplestore query optimiser will execute performantly
+        final_gpnt = GraphPatternNotTriples(
+            content=GroupOrUnionGraphPattern(
+                group_graph_patterns=[
+                    GroupGraphPattern(
+                        content=ggps
+                    )
+                ]
+            )
+        )
+
+    return [final_gpnt], bgp_list
