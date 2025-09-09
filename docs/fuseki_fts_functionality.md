@@ -50,7 +50,7 @@ The `predicates` parameter accepts:
 
 1. **RDF predicate URIs** - Direct references to Lucene indexed properties (e.g., `rdfs:label`, `skos:definition`)
 2. **Property shape identifiers** - The `dcterms:identifier` value of FTS property shapes (e.g., `ocr`)
-3. **PropList URIs** - References to Fuseki text index property lists (e.g., `ex:label`, `ex:fulltext`)
+3. **PropList URIs** - References to Fuseki text index property lists (e.g., `ex:label` in the example below)
 
 ## Fuseki Configuration Example
 
