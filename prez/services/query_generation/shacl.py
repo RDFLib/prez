@@ -633,7 +633,11 @@ class PropertyShape(Shape):
 
             # Always create path_node_1 as it's needed everywhere
             if self.kind == "fts":
-                path_node_1 = Var(value="fts_search_node")
+                if isinstance(property_path, SequencePath):
+                    # For FTS sequence paths, intermediate nodes are numbered, final node is fts_search_node
+                    path_node_1 = Var(value=f"fts_search_node_{pp_i + 1}")
+                else:
+                    path_node_1 = Var(value="fts_search_node")
             elif f"{path_or_prop}_node_{pp_i + 1}" in self.path_nodes:
                 path_node_1 = self.path_nodes[f"{path_or_prop}_node_{pp_i + 1}"]
             else:
@@ -645,11 +649,18 @@ class PropertyShape(Shape):
             if isinstance(property_path, SequencePath):
                 seq_path_len = len(property_path.value)
                 for i in range(1, seq_path_len):
-                    node_key = f"{path_or_prop}_node_{pp_i + i + 1}"
-                    if node_key in self.path_nodes:
-                        path_nodes[i] = self.path_nodes[node_key]
+                    if self.kind == "fts":
+                        # For FTS sequence paths: intermediate nodes are numbered, final node is fts_search_node
+                        if i == seq_path_len - 1:  # Last node in sequence
+                            path_nodes[i] = Var(value="fts_search_node")
+                        else:  # Intermediate nodes
+                            path_nodes[i] = Var(value=f"fts_search_node_{pp_i + i + 1}")
                     else:
-                        path_nodes[i] = Var(value=node_key)
+                        node_key = f"{path_or_prop}_node_{pp_i + i + 1}"
+                        if node_key in self.path_nodes:
+                            path_nodes[i] = self.path_nodes[node_key]
+                        else:
+                            path_nodes[i] = Var(value=node_key)
                 obj_node = path_nodes[seq_path_len - 1]  # Object node is the last in sequence
             elif isinstance(property_path, BNodeDepth):
                 obj_node = None  # BNodeDepth doesn't have a specific object node for binding
@@ -888,10 +899,12 @@ class PropertyShape(Shape):
                         if triple:
                             # Adjust object for FTS if it's the last segment
                             if j == seq_path_len - 1 and self.kind == "fts":
+                                # Use the actual final segment object node variable name for FTS
+                                final_fts_var = segment_object_node
                                 if inner_path_type != "inverse":  # s P o -> s P fts_node
-                                    where_triple = triple[:2] + (Var(value="fts_search_node"),)
+                                    where_triple = triple[:2] + (final_fts_var,)
                                 else:  # o P s -> fts_node P s (subject of inverse is fts_node)
-                                    where_triple = (Var(value="fts_search_node"),) + triple[1:]
+                                    where_triple = (final_fts_var,) + triple[1:]
                             else:
                                 where_triple = triple
 
@@ -952,6 +965,7 @@ class PropertyShape(Shape):
                     pass  # BNodeDepth doesn't consume a node index
                 else:
                     pp_i += 1  # Increment by 1 for other path types
+
 
             # Add the collected WHERE clause triples and facet binds for this path
             # Determine the value for path_alias_or_path
