@@ -9,32 +9,48 @@ sparql-grammar-pydantic library itself.
 
 from rdflib import URIRef
 from sparql_grammar_pydantic import (
-    IRI,
     AdditiveExpression,
     BooleanLiteral,
     BrackettedExpression,
-    BuiltInCall,
     ConditionalAndExpression,
     ConditionalOrExpression,
     Constraint,
     DataBlock,
     DataBlockValue,
-    Expression,
     Filter,
-    GraphPatternNotTriples,
     InlineData,
     InlineDataOneVar,
     MultiplicativeExpression,
     NumericExpression,
     NumericLiteral,
-    PrimaryExpression,
-    RDFLiteral,
     RegexExpression,
     RelationalExpression,
     UnaryExpression,
     ValueLogical,
+    BuiltInCall,
+    Expression,
+    GraphNodePath,
+    ObjectListPath,
+    ObjectPath,
+    PathAlternative,
+    PathElt,
+    PathEltOrInverse,
+    PathPrimary,
+    PathSequence,
+    PrimaryExpression,
+    PropertyListPathNotEmpty,
+    SG_Path,
+    VerbPath,
+    IRI,
+    GraphPatternNotTriples,
+    GroupGraphPattern,
+    GroupGraphPatternSub,
+    GroupOrUnionGraphPattern,
+    RDFLiteral,
+    TriplesBlock,
+    TriplesSameSubjectPath,
     Var,
-)
+    VarOrTerm, )
 
 
 def convert_value_to_rdf_term(val) -> IRI | NumericLiteral | RDFLiteral:
@@ -78,7 +94,7 @@ def create_regex_filter(variable: Var, pattern: str) -> GraphPatternNotTriples:
 
 
 def create_relational_filter(
-    left_var: Var, operator: str, right_value: IRI | NumericLiteral | RDFLiteral
+        left_var: Var, operator: str, right_value: IRI | NumericLiteral | RDFLiteral
 ) -> GraphPatternNotTriples:
     """Create a SPARQL FILTER with relational comparison.
 
@@ -91,15 +107,15 @@ def create_relational_filter(
         GraphPatternNotTriples containing the FILTER
     """
     from sparql_grammar_pydantic import IRIOrFunction
-    
+
     object_pe = PrimaryExpression(content=left_var)
-    
+
     # Handle IRI objects by wrapping them in IRIOrFunction
     if isinstance(right_value, IRI):
         value_content = IRIOrFunction(iri=right_value)
     else:
         value_content = right_value
-        
+
     value_pe = PrimaryExpression(content=value_content)
     return GraphPatternNotTriples(
         content=Filter.filter_relational(
@@ -135,7 +151,7 @@ def create_values_constraint(variable: Var, values: list) -> GraphPatternNotTrip
 
 
 def create_temporal_or_gpnt(
-    comparisons: list[tuple[Var | RDFLiteral, str, Var | RDFLiteral]], negated=False
+        comparisons: list[tuple[Var | RDFLiteral, str, Var | RDFLiteral]], negated=False
 ) -> GraphPatternNotTriples:
     """
     Create a FILTER with multiple conditions joined by OR (||).
@@ -262,7 +278,7 @@ def create_filter_bool_gpnt(boolean: bool) -> GraphPatternNotTriples:
 
 
 def create_temporal_and_gpnt(
-    comparisons: list[tuple[Var | RDFLiteral, str, Var | RDFLiteral]]
+        comparisons: list[tuple[Var | RDFLiteral, str, Var | RDFLiteral]]
 ) -> GraphPatternNotTriples:
     """
     Create a FILTER with multiple conditions joined by AND.
@@ -322,5 +338,142 @@ def create_temporal_and_gpnt(
                     )
                 )
             )
+        )
+    )
+
+
+def create_tssp_alt_or_alt_inverse(
+        subject: VarOrTerm,
+        first_pred: IRI,
+        second_pred: IRI,
+        obj: VarOrTerm,
+        inverse_second_prop: bool = False,
+) -> TriplesSameSubjectPath:
+    """
+    with inverse_second_prop = False
+    ?subject first_pred|second_pred ?obj
+    or
+    with inverse_second_prop = True
+    ?subject first_pred|^second_pred ?obj
+    """
+    return TriplesSameSubjectPath(
+        content=(
+            subject,
+            PropertyListPathNotEmpty(
+                first_pair=(
+                    VerbPath(
+                        path=SG_Path(
+                            path_alternative=PathAlternative(
+                                sequence_paths=[
+                                    PathSequence(
+                                        list_path_elt_or_inverse=[
+                                            PathEltOrInverse(
+                                                path_elt=PathElt(
+                                                    path_primary=PathPrimary(
+                                                        value=first_pred,
+                                                    )
+                                                )
+                                            )
+                                        ]
+                                    ),
+                                    PathSequence(
+                                        list_path_elt_or_inverse=[
+                                            PathEltOrInverse(
+                                                path_elt=PathElt(
+                                                    path_primary=PathPrimary(
+                                                        value=second_pred,
+                                                    )
+                                                ),
+                                                inverse=inverse_second_prop,
+                                            )
+                                        ]
+                                    )
+                                ]
+                            )
+                        )
+                    ),
+                    ObjectListPath(
+                        object_paths=[
+                            ObjectPath(
+                                graph_node_path=GraphNodePath(
+                                    varorterm_or_triplesnodepath=obj
+                                )
+                            )
+                        ]
+                    ),
+                )
+            ),
+        )
+    )
+
+
+def create_tssp_sequence(
+        subject: VarOrTerm,
+        pred_1: IRI,
+        pred_2: IRI,
+        obj: VarOrTerm
+) -> TriplesSameSubjectPath:
+    """
+     ?subject pred_1/pred_2 ?obj
+     """
+    return TriplesSameSubjectPath(
+        content=(
+            subject,
+            PropertyListPathNotEmpty(
+                first_pair=(
+                    VerbPath(
+                        path=SG_Path(
+                            path_alternative=PathAlternative(
+                                sequence_paths=[
+                                    PathSequence(
+                                        list_path_elt_or_inverse=[
+                                            PathEltOrInverse(
+                                                path_elt=PathElt(
+                                                    path_primary=PathPrimary(
+                                                        value=pred_1,
+                                                    )
+                                                )
+                                            ),
+                                            PathEltOrInverse(
+                                                path_elt=PathElt(
+                                                    path_primary=PathPrimary(
+                                                        value=pred_2,
+                                                    )
+                                                )
+                                            )
+                                        ]
+                                    )
+                                ]
+                            )
+                        )
+                    ),
+                    ObjectListPath(
+                        object_paths=[
+                            ObjectPath(
+                                graph_node_path=GraphNodePath(
+                                    varorterm_or_triplesnodepath=obj
+                                )
+                            )
+                        ]
+                    ),
+                )
+            ),
+        )
+    )
+
+
+def create_union_gpnt_from_tssps(tssps: list[TriplesSameSubjectPath]) -> GraphPatternNotTriples:
+    return GraphPatternNotTriples(
+        content=GroupOrUnionGraphPattern(
+            group_graph_patterns=[
+                GroupGraphPattern(
+                    content=GroupGraphPatternSub(
+                        triples_block=TriplesBlock.from_tssp_list(
+                            [tssp]
+                        )
+                    )
+                )
+                for tssp in tssps
+            ]
         )
     )

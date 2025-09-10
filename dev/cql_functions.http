@@ -1,0 +1,84 @@
+### observationFilterSimpleResult
+GET {{baseUrl}}/cql
+    ?filter={
+      "op": "observationFilterSimpleResult",
+      "args": ["http://www.w3.org/ns/sosa/usedProcedure", "http://example.org/field-name-procedure", "http://www.w3.org/ns/sosa/hasSimpleResult", "rabbit"]
+    }
+Accept: application/sparql-query
+
+### observationFilterSimpleResult
+GET {{baseUrl}}/cql
+    ?filter={
+      "op": "in",
+      "args": [
+        { "property": "eo:sun_elevation" },
+        ["one","two","three"]
+      ]
+    }
+Accept: application/sparql-query
+
+### hasObservation single values
+GET {{baseUrl}}/cql
+    ?filter={
+      "op": "hasObservation",
+      "args": [
+        ["https://example.org/vocab/prop1"],
+        ["val1"]
+      ]
+    }
+Accept: application/sparql-query
+
+### hasObservation multiple values
+GET {{baseUrl}}/cql
+    ?filter={
+      "op": "hasObservation",
+      "args": [
+        ["https://example.org/vocab/prop1", "https://example.org/vocab/prop2"],
+        ["val1", "val2"]
+      ]
+    }
+Accept: application/sparql-query
+
+### hasAttribute single values
+GET {{baseUrl}}/cql
+    ?filter={
+      "op": "hasAttribute",
+      "args": [
+        ["https://example.org/vocab/prop1"],
+        ["val1"]
+      ]
+    }
+Accept: application/sparql-query
+
+### hasAttribute multiple values
+GET {{baseUrl}}/cql
+    ?filter={
+      "op": "hasAttribute",
+      "args": [
+        ["https://example.org/vocab/prop1", "https://example.org/vocab/prop2"],
+        ["val1", "val2"]
+      ]
+    }
+Accept: application/sparql-query
+
+### hasAdditional single values
+GET {{baseUrl}}/cql
+    ?filter={
+      "op": "hasAdditional",
+      "args": [
+        ["https://example.org/vocab/prop1"],
+        ["val1"]
+      ]
+    }
+Accept: application/sparql-query
+
+### hasAdditional multiple values
+GET {{baseUrl}}/cql
+    ?filter={
+      "op": "hasAdditional",
+      "args": [
+        ["https://example.org/vocab/prop1", "https://example.org/vocab/prop2"],
+        ["val1", "val2"]
+      ]
+    }
+Accept: application/sparql-query
