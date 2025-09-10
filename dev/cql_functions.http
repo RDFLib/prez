@@ -1,19 +1,16 @@
-### observationFilterSimpleResult
+### FOIObservationFilterDirect
 GET {{baseUrl}}/cql
     ?filter={
-      "op": "observationFilterSimpleResult",
+      "op": "FOIObservationFilterDirect",
       "args": ["http://www.w3.org/ns/sosa/usedProcedure", "http://example.org/field-name-procedure", "http://www.w3.org/ns/sosa/hasSimpleResult", "rabbit"]
     }
 Accept: application/sparql-query
 
-### observationFilterSimpleResult
+### FOIObservationFilterSequence
 GET {{baseUrl}}/cql
     ?filter={
-      "op": "in",
-      "args": [
-        { "property": "eo:sun_elevation" },
-        ["one","two","three"]
-      ]
+      "op": "FOIObservationFilterSequence",
+      "args": ["http://www.w3.org/ns/sosa/usedProcedure", "http://example.org/field-name-procedure", "http://www.w3.org/ns/sosa/hasResult", "http://www.w3.org/1999/02/22-rdf-syntax-ns#value", "rabbit"]
     }
 Accept: application/sparql-query
 
