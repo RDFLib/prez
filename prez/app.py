@@ -5,6 +5,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Any, Dict, Optional, Union
 
+import httpx
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from rdflib import Graph
@@ -58,6 +59,7 @@ from prez.services.exception_catchers import (
     catch_404,
     catch_500,
     catch_class_not_found_exception,
+    catch_httpx_error,
     catch_invalid_sparql_query,
     catch_no_endpoint_nodeshape_exception,
     catch_no_profiles_exception,
@@ -213,7 +215,8 @@ def assemble_app(
             NoProfilesException: catch_no_profiles_exception,
             InvalidSPARQLQueryException: catch_invalid_sparql_query,
             NoEndpointNodeshapeException: catch_no_endpoint_nodeshape_exception,
-            MissingFilterQueryError: catch_missing_filter_query_param
+            MissingFilterQueryError: catch_missing_filter_query_param,
+            httpx.HTTPError: catch_httpx_error,
         },
         **kwargs
     )
