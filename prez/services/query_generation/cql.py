@@ -157,7 +157,9 @@ class CQLParser:
             if existing_ggps is None:
                 yield ggps
         elif operator in REGISTERED_CQL_FUNCTIONS:
-            handle_custom_functions(operator, args, ggps)
+            self.var_counter += 1
+            suffix = f"_{self.var_counter}"
+            handle_custom_functions(operator, args, ggps, suffix=suffix)
             if existing_ggps is None:
                 yield ggps
         else:

@@ -79,3 +79,52 @@ GET {{baseUrl}}/cql
       ]
     }
 Accept: application/sparql-query
+
+### add datetime query param
+### hasAdditional multiple values
+GET {{baseUrl}}/cql
+    ?filter={
+      "op": "hasAdditional",
+      "args": [
+        ["https://example.org/vocab/prop1", "https://example.org/vocab/prop2"],
+        ["val1", "val2"]
+      ]
+    }
+    &datetime=2021-01-01T00:00:00Z/2021-01-02T00:00:00Z
+Accept: application/sparql-query
+
+### check or logic variable separation
+### hasAdditional multiple values
+GET {{baseUrl}}/cql
+    ?filter={
+        "op": "or",
+        "args": [
+            {
+                "op": "hasAdditional",
+                "args": [
+                    [
+                        "https://example.org/vocab/prop1",
+                        "https://example.org/vocab/prop2"
+                    ],
+                    [
+                        "val1",
+                        "val2"
+                    ]
+                ]
+            },
+            {
+                "op": "hasAttribute",
+                "args": [
+                    [
+                        "https://example.org/vocab/prop3",
+                        "https://example.org/vocab/prop4"
+                    ],
+                    [
+                        "val3",
+                        "val4"
+                    ]
+                ]
+            }
+        ]
+    }
+Accept: application/sparql-query

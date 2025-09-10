@@ -6,6 +6,9 @@ from sparql_grammar_pydantic import (
     Var,
     VarOrTerm, GraphTerm,
 )
+from rdflib import Namespace
+from rdflib.namespace import SOSA, RDF, SDO
+TERN = Namespace("https://w3id.org/tern/ontologies/tern/")
 
 from prez.services.query_generation.grammar_helpers import (
     convert_value_to_rdf_term,
@@ -22,15 +25,20 @@ REGISTERED_CQL_FUNCTIONS = [
 ]
 
 
-def handle_custom_functions(operator, args, existing_ggps: GroupGraphPatternSub | None = None, ):
+def handle_custom_functions(
+    operator,
+    args,
+    existing_ggps: GroupGraphPatternSub | None = None,
+    suffix: str = "",
+):
     ggps = existing_ggps if existing_ggps is not None else GroupGraphPatternSub()
     focus_node_vot = VarOrTerm(varorterm=Var(value="focus_node"))
     if operator in ["FOIObservationFilterDirect", "FOIObservationFilterSequence", "hasObservation"]:
-        obj = VarOrTerm(varorterm=Var(value="observation"))
+        obj = VarOrTerm(varorterm=Var(value=f"observation{suffix}"))
         foi_to_obs_tssp = create_tssp_alt_or_alt_inverse(
             subject=focus_node_vot,
-            first_pred=IRI(value="http://www.w3.org/ns/sosa/isFeatureOfInterestOf"),
-            second_pred=IRI(value="http://www.w3.org/ns/sosa/hasFeatureOfInterest"),
+            first_pred=IRI(value=str(SOSA.isFeatureOfInterestOf)),
+            second_pred=IRI(value=str(SOSA.hasFeatureOfInterest)),
             obj=obj,
             inverse_second_prop=True
         )
@@ -70,29 +78,29 @@ def handle_custom_functions(operator, args, existing_ggps: GroupGraphPatternSub 
                 VALUES $arg2 { "val1" }
                 VALUES $arg1 { <https://example.org/vocab/prop1> }
             }"""
-            obs_prop_var = Var(value="obs_prop")
-            result_var = Var(value="result")
+            obs_prop_var = Var(value=f"obs_prop{suffix}")
+            result_var = Var(value=f"result{suffix}")
             obs_filter_1 = TriplesSameSubjectPath.from_spo(
                 subject=obj.varorterm,  # ?observation
-                predicate=IRI(value="http://www.w3.org/ns/sosa/observedProperty"),
+                predicate=IRI(value=str(SOSA.observedProperty)),
                 object=obs_prop_var  # ?obs_prop
             )
             arg_1_values_gpnt = create_values_constraint(obs_prop_var, args[0])  # args[0] is array for ?obs_prop
             arg_2_values_gpnt = create_values_constraint(result_var, args[1])  # args[1] is array for ?result
             tssp_1 = TriplesSameSubjectPath.from_spo(
                 subject=obj.varorterm,
-                predicate=IRI(value="http://www.w3.org/ns/sosa/hasSimpleResult"),
+                predicate=IRI(value=str(SOSA.hasSimpleResult)),
                 object=result_var
             )
             tssp_2 = TriplesSameSubjectPath.from_spo(
                 subject=obj.varorterm,
-                predicate=IRI(value="http://www.w3.org/ns/sosa/hasResult"),
+                predicate=IRI(value=str(SOSA.hasResult)),
                 object=result_var
             )
             tssp_3 = create_tssp_sequence(
                 subject=obj,
-                pred_1=IRI(value="http://www.w3.org/ns/sosa/hasResult"),
-                pred_2=IRI(value="http://www.w3.org/1999/02/22-rdf-syntax-ns#value"),
+                pred_1=IRI(value=str(SOSA.hasResult)),
+                pred_2=IRI(value=str(RDF.value)),
                 obj=VarOrTerm(varorterm=result_var)
             )
             union_gpnt = create_union_gpnt_from_tssps([tssp_1, tssp_2, tssp_3])
@@ -114,33 +122,33 @@ def handle_custom_functions(operator, args, existing_ggps: GroupGraphPatternSub 
             VALUES $arg1 { <https://example.org/vocab/attr1> }
         }
         """
-        attr_bn_var = Var(value="attr_bn_var")
-        attr_name_var = Var(value="attr_name_var")
-        result_var = Var(value="result")
+        attr_bn_var = Var(value=f"attr_bn_var{suffix}")
+        attr_name_var = Var(value=f"attr_name_var{suffix}")
+        result_var = Var(value=f"result{suffix}")
         focus_to_attr_tssp = TriplesSameSubjectPath.from_spo(
             subject=focus_node_vot.varorterm,
-            predicate=IRI(value="https://w3id.org/tern/ontologies/tern/hasAttribute"),
+            predicate=IRI(value=str(TERN.hasAttribute)),
             object=attr_bn_var
         )
         attr_bn_to_attr_var_tssp = TriplesSameSubjectPath.from_spo(
             subject=attr_bn_var,
-            predicate=IRI(value="https://w3id.org/tern/ontologies/tern/attribute"),
+            predicate=IRI(value=str(TERN.attribute)),
             object=attr_name_var
         )
         tssp_1 = TriplesSameSubjectPath.from_spo(
             subject=attr_bn_var,
-            predicate=IRI(value="https://w3id.org/tern/ontologies/tern/hasSimpleValue"),
+            predicate=IRI(value=str(TERN.hasSimpleValue)),
             object=result_var
         )
         tssp_2 = TriplesSameSubjectPath.from_spo(
             subject=attr_bn_var,
-            predicate=IRI(value="https://w3id.org/tern/ontologies/tern/hasValue"),
+            predicate=IRI(value=str(TERN.hasValue)),
             object=result_var
         )
         tssp_3 = create_tssp_sequence(
             subject=VarOrTerm(varorterm=attr_bn_var),
-            pred_1=IRI(value="https://w3id.org/tern/ontologies/tern/hasValue"),
-            pred_2=IRI(value="http://www.w3.org/1999/02/22-rdf-syntax-ns#value"),
+            pred_1=IRI(value=str(TERN.hasValue)),
+            pred_2=IRI(value=str(RDF.value)),
             obj=VarOrTerm(varorterm=result_var)
         )
         union_gpnt = create_union_gpnt_from_tssps([tssp_1, tssp_2, tssp_3])
@@ -164,34 +172,34 @@ def handle_custom_functions(operator, args, existing_ggps: GroupGraphPatternSub 
             VALUES $arg1 { "attr1" }
         }
         """
-        aprop_bn_var = Var(value="aprop_bn_var")
-        aprop_name_or_id_var = Var(value="aprop_name_or_id_var")
-        value_var = Var(value="value")
+        aprop_bn_var = Var(value=f"aprop_bn_var{suffix}")
+        aprop_name_or_id_var = Var(value=f"aprop_name_or_id_var{suffix}")
+        value_var = Var(value=f"value{suffix}")
         focus_to_aprop_tssp = TriplesSameSubjectPath.from_spo(
             subject=focus_node_vot.varorterm,
-            predicate=IRI(value="https://schema.org/additionalProperty"),
+            predicate=IRI(value=str(SDO.additionalProperty)),
             object=aprop_bn_var
         )
         aprop_name_or_id_tssp = create_tssp_alt_or_alt_inverse(
             subject=focus_node_vot,
-            first_pred=IRI(value="https://schema.org/propertyID"),
-            second_pred=IRI(value="https://schema.org/name"),
+            first_pred=IRI(value=str(SDO.propertyID)),
+            second_pred=IRI(value=str(SDO.name)),
             obj=VarOrTerm(varorterm=aprop_name_or_id_var)
         )
         tssp_1 = TriplesSameSubjectPath.from_spo(
             subject=aprop_bn_var,
-            predicate=IRI(value="https://schema.org/value"),
+            predicate=IRI(value=str(SDO.value)),
             object=value_var
         )
         tssp_2 = TriplesSameSubjectPath.from_spo(
             subject=aprop_bn_var,
-            predicate=IRI(value="http://www.w3.org/1999/02/22-rdf-syntax-ns#value"),
+            predicate=IRI(value=str(RDF.value)),
             object=value_var
         )
         tssp_3 = create_tssp_sequence(
             subject=VarOrTerm(varorterm=aprop_bn_var),
-            pred_1=IRI(value="https://schema.org/value"),
-            pred_2=IRI(value="http://www.w3.org/1999/02/22-rdf-syntax-ns#value"),
+            pred_1=IRI(value=str(SDO.value)),
+            pred_2=IRI(value=str(RDF.value)),
             obj=VarOrTerm(varorterm=value_var)
         )
         union_gpnt = create_union_gpnt_from_tssps([tssp_1, tssp_2, tssp_3])
