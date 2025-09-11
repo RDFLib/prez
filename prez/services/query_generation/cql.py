@@ -5,22 +5,23 @@ from typing import Generator, Literal
 from rdflib import Namespace, URIRef
 from rdflib.namespace import GEO
 from sparql_grammar_pydantic import (
-    IRI,
     ConstructQuery,
     ConstructTemplate,
     ConstructTriples,
     GraphPatternNotTriples,
     GroupGraphPattern,
-    GroupGraphPatternSub,
     GroupOrUnionGraphPattern,
     IRIOrFunction,
     RDFLiteral,
     SolutionModifier,
-    TriplesBlock,
     TriplesSameSubject,
+    WhereClause, )
+from sparql_grammar_pydantic import (
+    IRI,
+    GroupGraphPatternSub,
+    TriplesBlock,
     TriplesSameSubjectPath,
     Var,
-    WhereClause,
 )
 
 from prez.cache import prez_system_graph
@@ -30,19 +31,21 @@ from prez.reference_data.cql.geo_function_mapping import (
     cql_sparql_spatial_mapping,
     cql_graphdb_spatial_properties,
 )
+from prez.services.query_generation.cql_functions import REGISTERED_CQL_FUNCTIONS, handle_custom_functions
+from prez.services.query_generation.grammar_helpers import (
+    convert_value_to_rdf_term,
+    create_values_constraint,
+)
+from prez.services.query_generation.grammar_helpers import (
+    create_regex_filter,
+    create_relational_filter,
+    create_temporal_or_gpnt,
+    create_filter_bool_gpnt,
+    create_temporal_and_gpnt, )
+from prez.services.query_generation.shacl import PropertyShape
 from prez.services.query_generation.spatial_filter import (
     generate_spatial_filter_clause,
     get_wkt_from_coords,
-)
-from prez.services.query_generation.shacl import PropertyShape
-from prez.services.query_generation.grammar_helpers import (
-    convert_value_to_rdf_term,
-    create_regex_filter,
-    create_relational_filter,
-    create_values_constraint,
-    create_temporal_or_gpnt,
-    create_filter_bool_gpnt,
-    create_temporal_and_gpnt,
 )
 
 CQL = Namespace("http://www.opengis.net/doc/IS/cql2/1.0/")
@@ -77,10 +80,10 @@ SHACL_FILTER_NAMESPACE = Namespace("https://cql-shacl-filter/")
 
 class CQLParser:
     def __init__(
-        self,
-        cql_json: dict | None = None,
-        crs: str | None = None,
-        queryable_props: dict[str, str] | None = None,
+            self,
+            cql_json: dict | None = None,
+            crs: str | None = None,
+            queryable_props: dict[str, str] | None = None,
     ):
         self.inner_select_gpntotb_list: list[GraphPatternNotTriples] = []
         # Always include at least ?focus_node SELECT var
@@ -118,7 +121,7 @@ class CQLParser:
             self.inner_select_gpntotb_list = gpotb.graph_patterns_or_triples_blocks
 
     def parse_logical_operators(
-        self, element: dict, existing_ggps: GroupGraphPatternSub | None = None
+            self, element: dict, existing_ggps: GroupGraphPatternSub | None = None
     ) -> Generator[GroupGraphPatternSub, None, None]:
         operator = element.get("op")
         args = element.get("args")
@@ -153,15 +156,21 @@ class CQLParser:
             self._handle_temporal(operator, args, ggps)
             if existing_ggps is None:
                 yield ggps
+        elif operator in REGISTERED_CQL_FUNCTIONS:
+            self.var_counter += 1
+            suffix = f"_{self.var_counter}"
+            handle_custom_functions(operator, args, ggps, suffix=suffix)
+            if existing_ggps is None:
+                yield ggps
         else:
             # This else is reached if operator is not 'and', 'or', or any of the handled elementary operators.
             raise NotImplementedError(f"Operator {operator} not implemented.")
 
     def _handle_and_operator(
-        self,
-        args: list[dict],
-        ggps: GroupGraphPatternSub,
-        existing_ggps: GroupGraphPatternSub | None,
+            self,
+            args: list[dict],
+            ggps: GroupGraphPatternSub,
+            existing_ggps: GroupGraphPatternSub | None,
     ) -> Generator[GroupGraphPatternSub, None, None]:
         """Handle AND logical operator."""
         for arg in args:
@@ -172,10 +181,10 @@ class CQLParser:
             yield ggps
 
     def _handle_or_operator(
-        self,
-        args: list[dict],
-        ggps: GroupGraphPatternSub,
-        existing_ggps: GroupGraphPatternSub | None,
+            self,
+            args: list[dict],
+            ggps: GroupGraphPatternSub,
+            existing_ggps: GroupGraphPatternSub | None,
     ) -> Generator[GroupGraphPatternSub, None, None]:
         """Handle OR logical operator."""
         try:
@@ -228,17 +237,17 @@ class CQLParser:
             pass  # Cleanup if needed
 
         if (
-            existing_ggps is None
+                existing_ggps is None
         ):  # If this OR was top-level for this call and created its own ggps
             yield ggps
 
     def _add_triple(
-        self,
-        ggps: GroupGraphPatternSub,
-        subject: Var | IRI,
-        predicate: IRI,
-        obj: Var | IRI | RDFLiteral,
-        to: Literal["tss_and_tssp", "tss", "tssp"] = "tss_and_tssp",
+            self,
+            ggps: GroupGraphPatternSub,
+            subject: Var | IRI,
+            predicate: IRI,
+            obj: Var | IRI | RDFLiteral,
+            to: Literal["tss_and_tssp", "tss", "tssp"] = "tss_and_tssp",
     ) -> None:
         if to in ["tss_and_tssp", "tss"]:
             tss = TriplesSameSubject.from_spo(
@@ -279,10 +288,10 @@ class CQLParser:
             # All patterns are channeled into the graph_patterns_or_triples_blocks list.
 
     def _handle_comparison(
-        self,
-        operator: str,
-        args: list[dict],
-        existing_ggps: GroupGraphPatternSub | None = None,
+            self,
+            operator: str,
+            args: list[dict],
+            existing_ggps: GroupGraphPatternSub | None = None,
     ) -> None:
         value = convert_value_to_rdf_term(args[1])
 
@@ -303,10 +312,10 @@ class CQLParser:
             ggps.add_pattern(filter_gpnt)
 
     def _add_tss_tssp(
-        self,
-        args: list[dict],
-        existing_ggps: GroupGraphPatternSub | None,
-        obj: Var | IRI | RDFLiteral | None = None,
+            self,
+            args: list[dict],
+            existing_ggps: GroupGraphPatternSub | None,
+            obj: Var | IRI | RDFLiteral | None = None,
     ) -> tuple[GroupGraphPatternSub, Var | IRI | RDFLiteral]:
         self.var_counter += 1
         ggps = existing_ggps if existing_ggps is not None else GroupGraphPatternSub()
@@ -325,7 +334,7 @@ class CQLParser:
         return ggps, obj
 
     def _handle_like(
-        self, args: list[dict], existing_ggps: GroupGraphPatternSub | None = None
+            self, args: list[dict], existing_ggps: GroupGraphPatternSub | None = None
     ) -> None:
         ggps, obj = self._add_tss_tssp(args, existing_ggps)
 
@@ -334,10 +343,10 @@ class CQLParser:
         ggps.add_pattern(filter_gpnt)
 
     def _handle_spatial(
-        self,
-        operator: str,
-        args: list[dict],
-        existing_ggps: GroupGraphPatternSub | None = None,
+            self,
+            operator: str,
+            args: list[dict],
+            existing_ggps: GroupGraphPatternSub | None = None,
     ) -> None:
         self.var_counter += 1
         ggps = existing_ggps if existing_ggps is not None else GroupGraphPatternSub()
@@ -404,7 +413,7 @@ class CQLParser:
                     ggps.add_pattern(gpnt_item)
 
     def _handle_in(
-        self, args: list[dict], existing_ggps: GroupGraphPatternSub | None = None
+            self, args: list[dict | list], existing_ggps: GroupGraphPatternSub | None = None
     ) -> None:
         ggps, obj = self._add_tss_tssp(args, existing_ggps)
 
@@ -418,10 +427,10 @@ class CQLParser:
         return obj_var
 
     def _handle_temporal(
-        self,
-        comp_func: str,
-        args: list[dict],
-        existing_ggps: GroupGraphPatternSub | None = None,
+            self,
+            comp_func: str,
+            args: list[dict],
+            existing_ggps: GroupGraphPatternSub | None = None,
     ) -> None:
         """For temporal filtering within CQL JSON expressions, NOT within the temporal query parameter."""
         ggps = existing_ggps if existing_ggps is not None else GroupGraphPatternSub()
@@ -539,8 +548,8 @@ class CQLParser:
             )
 
     def queryable_id_to_tssp(
-        self,
-        queryable_uri: str,
+            self,
+            queryable_uri: str,
     ) -> tuple[list[TriplesSameSubjectPath], Var]:
         queryable_shape = prez_system_graph.cbd(URIRef(queryable_uri))
         ps = PropertyShape(

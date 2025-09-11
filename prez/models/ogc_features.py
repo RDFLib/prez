@@ -264,6 +264,67 @@ class Queryables(BaseModel):
 
 
 ########################################################################################################################
+# Functions
+
+
+class FunctionArgumentType(str, Enum):
+    STRING = "string"
+    NUMBER = "number" 
+    INTEGER = "integer"
+    DATETIME = "datetime"
+    GEOMETRY = "geometry"
+    BOOLEAN = "boolean"
+    ARRAY = "array"
+
+
+class FunctionArgument(BaseModel):
+    title: Optional[str] = Field(None, description="Title of the argument")
+    description: Optional[str] = Field(None, description="Description of the argument")
+    type: List[FunctionArgumentType] = Field(..., description="Data types accepted for this argument")
+
+
+class Function(BaseModel):
+    name: str = Field(..., description="Name of the function")
+    description: Optional[str] = Field(None, description="Description of the function")
+    metadataUrl: Optional[str] = Field(None, description="URL to metadata about the function")
+    arguments: Optional[List[FunctionArgument]] = Field(None, description="Arguments accepted by the function")
+    returns: List[FunctionArgumentType] = Field(..., description="Data types returned by the function")
+
+
+class FunctionsResponse(BaseModel):
+    functions: List[Function] = Field(..., description="List of functions supported by the server")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "functions": [
+                    {
+                        "name": "min",
+                        "arguments": [
+                            {"type": ["string", "number", "datetime"]},
+                            {"type": ["string", "number", "datetime"]},
+                        ],
+                        "returns": ["string", "number", "datetime"],
+                    },
+                    {
+                        "name": "max",
+                        "arguments": [
+                            {"type": ["string", "number", "datetime"]},
+                            {"type": ["string", "number", "datetime"]},
+                        ],
+                        "returns": ["string", "number", "datetime"],
+                    },
+                    {
+                        "name": "geometryType",
+                        "arguments": [{"type": ["geometry"]}],
+                        "returns": ["string"],
+                    },
+                ]
+            }
+        }
+
+
+########################################################################################################################
 # generate link headers
 
 
