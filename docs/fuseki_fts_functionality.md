@@ -7,7 +7,7 @@ Prez integrates with Apache Jena Fuseki's full-text search capabilities to enabl
 Use the `predicates` URL query parameter to specify which indexed properties or property shapes to search:
 
 ```
-/search?q=geological&predicates=rdfs:label,skos:definition,ocr
+/search?q=geological&predicates=http://www.w3.org/2000/01/rdf-schema#label,http://www.w3.org/2004/02/skos/core#definition,ocr
 ```
 
 ## Property Shapes for Complex Paths
