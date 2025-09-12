@@ -24,7 +24,7 @@ If you don't want the search result IRI to be immediately on the search term tri
 @prefix po: <http://www.essepuntato.it/2008/12/pattern#> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 
-ex:GSWA-OCR
+ex:OCR
     a sh:PropertyShape ;
     a ont:JenaFTSPropertyShape ;
     sh:path ( po:contains po:contains ) ;
@@ -48,13 +48,17 @@ This will search for "geology" in `rdf:value` literals, but return search result
 
 The `predicates` parameter accepts:
 
-1. **RDF predicate URIs** - Direct references to Lucene indexed properties (e.g., `rdfs:label`, `skos:definition`)
+1. **RDF predicate IRIs** - Direct references to Lucene indexed properties (e.g., `http://www.w3.org/2000/01/rdf-schema#label`, `http://www.w3.org/2004/02/skos/core#definition`)
 2. **Property shape identifiers** - The `dcterms:identifier` value of FTS property shapes (e.g., `ocr`)
-3. **PropList URIs** - References to Fuseki text index property lists (e.g., `ex:label` in the example below)
+3. **PropList IRIs** - References to Fuseki text index property lists, as IRIs (e.g., `http://example.com/label` in the example below)
 
 ## Fuseki Configuration Example
 
 ```turtle
+@prefix sdo: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 <#indexLucene> a text:TextIndexLucene ;
     text:directory "/fuseki/databases/ds/lucene" ;
     text:entityMap <#entMap> ;
@@ -69,9 +73,11 @@ The `predicates` parameter accepts:
 <#entMap> a text:EntityMap ;
     text:map (
          [ text:field "label" ; text:predicate rdfs:label ]
-         [ text:field "fulltext" ; text:predicate rdf:value ]
+         [ text:field "name" ; text:predicate sdo:name ]
+         [ text:field "preflabel" ; text:predicate skos:prefLabel ]
+         [ text:field "title" ; text:predicate dcterms:title ]
          # ... other mappings
     ) .
 ```
 
-With this configuration, you can use `ex:label` or `rdf:value` in the predicates parameter to search across multiple related properties.
+With this configuration, you can use `http://example.com/label` or `http://www.w3.org/1999/02/22-rdf-syntax-ns#value` in the predicates parameter to search across multiple related properties.
