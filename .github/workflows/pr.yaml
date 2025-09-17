@@ -51,10 +51,15 @@ jobs:
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction --no-root
       #----------------------------------------------
-      # install your root project, if required
+      #              install project
       #----------------------------------------------
       - name: Install project
         run: poetry install --no-interaction --extras "server"
+      #----------------------------------------------
+      #              run black check
+      #----------------------------------------------
+      - name: Check code formatting with black
+        run: poetry run black --check --diff .
       #----------------------------------------------
       #              run test suite
       #----------------------------------------------
