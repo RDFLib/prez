@@ -32,7 +32,8 @@ from prez.exceptions.model_exceptions import (
     NoEndpointNodeshapeException,
     NoProfilesException,
     PrefixNotBoundException,
-    URINotFoundException, MissingFilterQueryError
+    URINotFoundException,
+    MissingFilterQueryError,
 )
 from prez.middleware import create_validate_header_middleware
 from prez.repositories import OxrdflibRepo, PyoxigraphRepo, RemoteSparqlRepo
@@ -64,7 +65,8 @@ from prez.services.exception_catchers import (
     catch_no_endpoint_nodeshape_exception,
     catch_no_profiles_exception,
     catch_prefix_not_found_exception,
-    catch_uri_not_found_exception, catch_missing_filter_query_param,
+    catch_uri_not_found_exception,
+    catch_missing_filter_query_param,
 )
 from prez.services.generate_profiles import create_profiles_graph
 from prez.services.prez_logging import setup_logger
@@ -113,9 +115,11 @@ async def lifespan(app: FastAPI):
         # assume all of the sub-apps do not have their own lifespan to set up their state
         if isinstance(r, Mount):
             mount_app = r.app
-            if isinstance(mount_app, (Starlette, FastAPI)) and \
-                    mount_app is not app and \
-                    mount_app not in mounted_apps:
+            if (
+                isinstance(mount_app, (Starlette, FastAPI))
+                and mount_app is not app
+                and mount_app not in mounted_apps
+            ):
                 mounted_apps.append(mount_app)
     if app.state.settings.sparql_repo_type == "pyoxigraph_memory":
         app.state.pyoxi_store = pyoxi_store = get_pyoxi_store()

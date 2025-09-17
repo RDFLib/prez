@@ -92,6 +92,7 @@ CONFORMANCE_CLASSES = [
 class Spatial(BaseModel):
     bbox: List[List[float]]
 
+
 class Extent(BaseModel):
     spatial: Spatial
 
@@ -123,18 +124,7 @@ class Collection(BaseModel):
                 "id": "address",
                 "title": "address",
                 "description": "An address.",
-                "extent": {
-                    "spatial": {
-                        "bbox": [
-                            [
-                                7.01,
-                                50.63,
-                                7.22,
-                                50.78
-                            ]
-                        ]
-                    }
-                },
+                "extent": {"spatial": {"bbox": [[7.01, 50.63, 7.22, 50.78]]}},
                 "links": [
                     {"href": "http://data.example.com/buildings", "rel": "item"},
                     {
@@ -269,7 +259,7 @@ class Queryables(BaseModel):
 
 class FunctionArgumentType(str, Enum):
     STRING = "string"
-    NUMBER = "number" 
+    NUMBER = "number"
     INTEGER = "integer"
     DATETIME = "datetime"
     GEOMETRY = "geometry"
@@ -280,19 +270,29 @@ class FunctionArgumentType(str, Enum):
 class FunctionArgument(BaseModel):
     title: Optional[str] = Field(None, description="Title of the argument")
     description: Optional[str] = Field(None, description="Description of the argument")
-    type: List[FunctionArgumentType] = Field(..., description="Data types accepted for this argument")
+    type: List[FunctionArgumentType] = Field(
+        ..., description="Data types accepted for this argument"
+    )
 
 
 class Function(BaseModel):
     name: str = Field(..., description="Name of the function")
     description: Optional[str] = Field(None, description="Description of the function")
-    metadataUrl: Optional[str] = Field(None, description="URL to metadata about the function")
-    arguments: Optional[List[FunctionArgument]] = Field(None, description="Arguments accepted by the function")
-    returns: List[FunctionArgumentType] = Field(..., description="Data types returned by the function")
+    metadataUrl: Optional[str] = Field(
+        None, description="URL to metadata about the function"
+    )
+    arguments: Optional[List[FunctionArgument]] = Field(
+        None, description="Arguments accepted by the function"
+    )
+    returns: List[FunctionArgumentType] = Field(
+        ..., description="Data types returned by the function"
+    )
 
 
 class FunctionsResponse(BaseModel):
-    functions: List[Function] = Field(..., description="List of functions supported by the server")
+    functions: List[Function] = Field(
+        ..., description="List of functions supported by the server"
+    )
 
     class Config:
         json_schema_extra = {

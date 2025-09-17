@@ -2,7 +2,13 @@ import logging
 import time
 from string import Template
 
-from pyoxigraph import Store as OxiStore, Quad as OxiQuad, NamedNode as OxiNamedNode, Literal as OxiLiteral, DefaultGraph as OxiDefaultGraph
+from pyoxigraph import (
+    Store as OxiStore,
+    Quad as OxiQuad,
+    NamedNode as OxiNamedNode,
+    Literal as OxiLiteral,
+    DefaultGraph as OxiDefaultGraph,
+)
 from oxrdflib._converter import to_ox, from_ox
 from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import RDF, SH
@@ -47,12 +53,18 @@ async def add_prez_links(
     uriref_to_klasses = await get_classes(uris, repo)
     log.debug(f"Time taken to get classes: {time.time() - t}")
     # Convert the URIRefs to OxiNamedNode because the link cache uses Oxigraph nodes as keys
-    urinode_to_klasses = {OxiNamedNode(uri): klasses for uri, klasses in uriref_to_klasses.items()}
+    urinode_to_klasses = {
+        OxiNamedNode(uri): klasses for uri, klasses in uriref_to_klasses.items()
+    }
     await _link_generation_many(urinode_to_klasses, repo, graph, endpoint_structure)
     log.debug(f"Time taken to add links: {time.time() - t_start}")
 
+
 async def add_prez_links_for_oxigraph(
-    store: OxiStore, repo: Repo, endpoint_structure, uris: list[OxiNamedNode] | None = None
+    store: OxiStore,
+    repo: Repo,
+    endpoint_structure,
+    uris: list[OxiNamedNode] | None = None,
 ):
     """
     Adds internal links to the given store for all URIRefs that have a class and endpoint associated with them.
@@ -63,7 +75,7 @@ async def add_prez_links_for_oxigraph(
         # TODO: Is there a faster way to get all unique subjects and objects in Oxigraph?
         unique_subjects: set[OxiNamedNode] = set()
         unique_objects: set[OxiNamedNode] = set()
-        for (s,p,o,c) in store:
+        for s, p, o, c in store:
             if isinstance(s, OxiNamedNode):
                 unique_subjects.add(s)
             if isinstance(o, OxiNamedNode):
@@ -75,15 +87,18 @@ async def add_prez_links_for_oxigraph(
     uriref_to_klasses = await get_classes(uriref_keys, repo)
     log.debug(f"Time taken to get classes: {time.time() - t}")
     # Convert the URIRefs to OxiNamedNode because the link cache uses Oxigraph nodes as keys
-    urinode_to_klasses = {OxiNamedNode(uri): klasses for uri, klasses in uriref_to_klasses.items()}
+    urinode_to_klasses = {
+        OxiNamedNode(uri): klasses for uri, klasses in uriref_to_klasses.items()
+    }
     await _link_generation_many(urinode_to_klasses, repo, store, endpoint_structure)
     log.debug(f"Time taken to add links: {time.time() - t_start}")
+
 
 async def _link_generation(
     uri_node: OxiNamedNode,
     repo: Repo,
     klasses,
-    graph: Graph|OxiStore,
+    graph: Graph | OxiStore,
     endpoint_structure: tuple = settings.endpoint_structure,
 ):
     """
@@ -159,13 +174,19 @@ async def _link_generation(
                     )
                 )
                 await add_links_to_graph_and_cache(
-                    curie_for_uri, graph, members_link, object_link, uri_node, identifiers
+                    curie_for_uri,
+                    graph,
+                    members_link,
+                    object_link,
+                    uri_node,
+                    identifiers,
                 )
+
 
 async def _link_generation_many(
     uris_klasses: dict[OxiNamedNode, list[URIRef]],
     repo: Repo,
-    graph: Graph|OxiStore,
+    graph: Graph | OxiStore,
     endpoint_structure: tuple = settings.endpoint_structure,
 ):
     """
@@ -198,7 +219,9 @@ async def _link_generation_many(
     # many node shapes to one endpoint; multiple node shapes can point to the endpoint
     if klasses_to_get_for_uris:  # generate links
         for klass, uri_nodes in klasses_to_get_for_uris.items():
-            available_nodeshapes = await get_nodeshapes_constraining_class([klass], Var(value="_link_focus_node"))
+            available_nodeshapes = await get_nodeshapes_constraining_class(
+                [klass], Var(value="_link_focus_node")
+            )
             # ignore CQL and Search nodeshapes as we do not want to generate links for these.
             available_nodeshapes = [
                 ns
@@ -229,11 +252,16 @@ async def _link_generation_many(
                         # part of the link. e.g. ?path_node_1 will have result(s) but is not part of the link.
                         solution: dict
                         for solution in result[1]:
-                            uri = URIRef(solution.pop("_link_focus_node")["value"])  # remove the link's focus node variable
+                            uri = URIRef(
+                                solution.pop("_link_focus_node")["value"]
+                            )  # remove the link's focus node variable
                             # create link strings
                             (curie_for_uri, members_link, object_link, identifiers) = (
                                 await create_link_strings(
-                                    ns.hierarchy_level, solution, uri, endpoint_structure
+                                    ns.hierarchy_level,
+                                    solution,
+                                    uri,
+                                    endpoint_structure,
                                 )
                             )
                             uri_node = OxiNamedNode(uri)
@@ -250,11 +278,19 @@ async def _link_generation_many(
                     for uri_node in uri_nodes:
                         curie_for_uri, members_link, object_link, identifiers = (
                             await create_link_strings(
-                                ns.hierarchy_level, {}, URIRef(uri_node.value), endpoint_structure
+                                ns.hierarchy_level,
+                                {},
+                                URIRef(uri_node.value),
+                                endpoint_structure,
                             )
                         )
                         await add_links_to_graph_and_cache(
-                            curie_for_uri, graph, members_link, object_link, uri_node, identifiers
+                            curie_for_uri,
+                            graph,
+                            members_link,
+                            object_link,
+                            uri_node,
+                            identifiers,
                         )
 
 
@@ -290,28 +326,44 @@ async def get_nodeshapes_constraining_class(klasses, focus_uri_or_var: URIRef | 
 async def add_links_to_graph_and_cache(
     curie_for_uri,
     graph: Graph | OxiStore,
-    members_link: str|None,
+    members_link: str | None,
     object_link: str,
     uri_node: OxiNamedNode,
-    identifiers: dict
+    identifiers: dict,
 ):
     """
     Adds links and identifiers to the given graph and cache.
     """
     quads: list[OxiQuad] = []
-    quads.append(OxiQuad(uri_node, OxiNamedNode(PREZ["link"]), OxiLiteral(object_link), uri_node))
+    quads.append(
+        OxiQuad(uri_node, OxiNamedNode(PREZ["link"]), OxiLiteral(object_link), uri_node)
+    )
     for uri_in_link_string, curie_in_link_string in identifiers.items():
         quads.append(
-            OxiQuad(OxiNamedNode(uri_in_link_string), OxiNamedNode(PREZ.identifier), OxiLiteral(curie_in_link_string), uri_node)
+            OxiQuad(
+                OxiNamedNode(uri_in_link_string),
+                OxiNamedNode(PREZ.identifier),
+                OxiLiteral(curie_in_link_string),
+                uri_node,
+            )
         )
-    if (members_link):
+    if members_link:
         # TODO need to confirm the link value doesn't match the existing link value, as multiple endpoints can deliver
         # the same class/have different links for the same URI
         existing_members_link = list(
-            links_ids_graph_cache.quads_for_pattern(uri_node, OxiNamedNode(PREZ["members"]), None, uri_node)
+            links_ids_graph_cache.quads_for_pattern(
+                uri_node, OxiNamedNode(PREZ["members"]), None, uri_node
+            )
         )
         if not existing_members_link:
-            quads.append(OxiQuad(uri_node, OxiNamedNode(PREZ["members"]), OxiLiteral(members_link), uri_node))
+            quads.append(
+                OxiQuad(
+                    uri_node,
+                    OxiNamedNode(PREZ["members"]),
+                    OxiLiteral(members_link),
+                    uri_node,
+                )
+            )
     links_ids_graph_cache.bulk_extend(quads)
     if isinstance(graph, OxiStore):
         store: OxiStore = graph
@@ -322,7 +374,9 @@ async def add_links_to_graph_and_cache(
             graph.add((from_ox(q[0]), from_ox(q[1]), from_ox(q[2])))
 
 
-async def create_link_strings(hierarchy_level, solution, uri: URIRef, endpoint_structure: list|tuple):
+async def create_link_strings(
+    hierarchy_level, solution, uri: URIRef, endpoint_structure: list | tuple
+):
     """
     Creates link strings based on the hierarchy level and solution provided.
     """
@@ -385,7 +439,10 @@ async def get_link_components(ns: NodeShape, repo: Repo):
         return results
     return []
 
-async def get_link_components_many(ns: NodeShape, for_focus_nodes: list[OxiNamedNode], repo: Repo):
+
+async def get_link_components_many(
+    ns: NodeShape, for_focus_nodes: list[OxiNamedNode], repo: Repo
+):
     """
     Retrieves link components for the given node shape.
 
@@ -407,25 +464,29 @@ async def get_link_components_many(ns: NodeShape, for_focus_nodes: list[OxiNamed
                     block=InlineDataOneVar(
                         variable=link_focus_var,
                         datablockvalues=[
-                            DataBlockValue(value=IRI(value=n.value)) for n in for_focus_nodes
-                            ],
+                            DataBlockValue(value=IRI(value=n.value))
+                            for n in for_focus_nodes
+                        ],
                     )
                 )
             )
         )
         subselect_string = SubSelect(
-                    select_clause=SelectClause(variables_or_all=[link_focus_var]+list(ns.path_nodes.values())),
-                    where_clause=WhereClause(
-                        group_graph_pattern=GroupGraphPattern(
-                            content=GroupGraphPatternSub(
-                                triples_block=TriplesBlock.from_tssp_list(
-                                    ns.tssp_list[::-1]
-                                ),  # reversed for performance
-                                graph_patterns_or_triples_blocks=ns.gpnt_list+[_link_focus_gpnt],
-                            )
-                        )
-                    ),
-                ).to_string()
+            select_clause=SelectClause(
+                variables_or_all=[link_focus_var] + list(ns.path_nodes.values())
+            ),
+            where_clause=WhereClause(
+                group_graph_pattern=GroupGraphPattern(
+                    content=GroupGraphPatternSub(
+                        triples_block=TriplesBlock.from_tssp_list(
+                            ns.tssp_list[::-1]
+                        ),  # reversed for performance
+                        graph_patterns_or_triples_blocks=ns.gpnt_list
+                        + [_link_focus_gpnt],
+                    )
+                )
+            ),
+        ).to_string()
         link_queries.append((ns.uri, subselect_string))
         _, results = await repo.send_queries([], link_queries)
         return results

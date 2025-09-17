@@ -9,7 +9,8 @@ from prez.exceptions.model_exceptions import (
     NoEndpointNodeshapeException,
     NoProfilesException,
     PrefixNotBoundException,
-    URINotFoundException, MissingFilterQueryError
+    URINotFoundException,
+    MissingFilterQueryError,
 )
 
 
@@ -92,6 +93,7 @@ async def catch_no_endpoint_nodeshape_exception(
         },
     )
 
+
 async def catch_missing_filter_query_param(
     request: Request, exc: MissingFilterQueryError
 ):
@@ -115,7 +117,7 @@ async def catch_httpx_error(request: Request, exc: httpx.HTTPError):
     else:
         status_code = 502  # Bad Gateway
         error_type = "SPARQL_ERROR"
-    
+
     return JSONResponse(
         status_code=status_code,
         content={

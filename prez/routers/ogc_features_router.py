@@ -26,7 +26,7 @@ from prez.exceptions.model_exceptions import (
     NoEndpointNodeshapeException,
     NoProfilesException,
     PrefixNotBoundException,
-    URINotFoundException
+    URINotFoundException,
 )
 from prez.models.ogc_features import (
     FunctionsResponse,

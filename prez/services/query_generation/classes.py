@@ -15,7 +15,8 @@ from sparql_grammar_pydantic import (
     Var,
     WhereClause,
     GraphPatternNotTriples,
-    InlineData, SolutionModifier,
+    InlineData,
+    SolutionModifier,
 )
 
 log = logging.getLogger(__name__)
@@ -53,12 +54,14 @@ class ClassesSelectQuery(SubSelect):
                                 data_block=DataBlock(
                                     block=InlineDataOneVar(
                                         variable=uris_var,
-                                        datablockvalues=[DataBlockValue(value=uri) for uri in iris],
+                                        datablockvalues=[
+                                            DataBlockValue(value=uri) for uri in iris
+                                        ],
                                     )
                                 )
                             )
                         )
-                    ]
+                    ],
                 )
             )
         )

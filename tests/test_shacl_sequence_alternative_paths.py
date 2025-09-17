@@ -39,7 +39,9 @@ def graph_with_prefixes():
     return g
 
 
-def test_sequence_with_mid_alternative_endpoint_kind(focus_node_var, graph_with_prefixes):
+def test_sequence_with_mid_alternative_endpoint_kind(
+    focus_node_var, graph_with_prefixes
+):
     """
     Tests a sequence path with an alternative path segment in the middle for 'endpoint' kind.
     sh:path ( ex:p1 (ex:altA | ex:altB) ex:p2 )
@@ -64,7 +66,7 @@ def test_sequence_with_mid_alternative_endpoint_kind(focus_node_var, graph_with_
     expected_tssp_string = normalize_sparql(
         f"{focus_node_var.to_string()} <{EX.p1}>/(<{EX.altA}>|<{EX.altB}>)/<{EX.p2}> ?path_node_3"
     )
-    
+
     assert len(ps.tssp_list) == 1
     actual_tssp_string = normalize_sparql(ps.tssp_list[0].to_string())
     assert actual_tssp_string == expected_tssp_string
@@ -74,7 +76,9 @@ def test_sequence_with_mid_alternative_endpoint_kind(focus_node_var, graph_with_
 
 
 @patch("prez.services.query_generation.shacl.settings")
-def test_sequence_with_alternative_and_path_alias(mock_settings, focus_node_var, graph_with_prefixes):
+def test_sequence_with_alternative_and_path_alias(
+    mock_settings, focus_node_var, graph_with_prefixes
+):
     """
     Tests a sequence path with an alternative path segment and shext:pathAlias on the overall property shape.
     sh:property [ sh:path ( ex:p1 (ex:altA | ex:altB) ex:p2 ); shext:pathAlias ex:mySeqAlias ]
@@ -102,22 +106,40 @@ def test_sequence_with_alternative_and_path_alias(mock_settings, focus_node_var,
     expected_alias_tss = TriplesSameSubject.from_spo(
         subject=focus_node_var,
         predicate=IRI(value=EX.mySeqAlias),
-        object=Var(value="prof_1_node_3"), # Final node of the sequence
+        object=Var(value="prof_1_node_3"),  # Final node of the sequence
     )
     assert expected_alias_tss in ps.tss_list
 
     # Ensure individual components of the sequence are NOT in CONSTRUCT due to alias
-    assert not any(IRI(value=EX.p1).to_string() in str(tss) for tss in ps.tss_list if tss != expected_alias_tss)
-    assert not any(IRI(value=EX.altA).to_string() in str(tss) for tss in ps.tss_list if tss != expected_alias_tss)
-    assert not any(IRI(value=EX.altB).to_string() in str(tss) for tss in ps.tss_list if tss != expected_alias_tss)
-    assert not any(IRI(value=EX.p2).to_string() in str(tss) for tss in ps.tss_list if tss != expected_alias_tss)
+    assert not any(
+        IRI(value=EX.p1).to_string() in str(tss)
+        for tss in ps.tss_list
+        if tss != expected_alias_tss
+    )
+    assert not any(
+        IRI(value=EX.altA).to_string() in str(tss)
+        for tss in ps.tss_list
+        if tss != expected_alias_tss
+    )
+    assert not any(
+        IRI(value=EX.altB).to_string() in str(tss)
+        for tss in ps.tss_list
+        if tss != expected_alias_tss
+    )
+    assert not any(
+        IRI(value=EX.p2).to_string() in str(tss)
+        for tss in ps.tss_list
+        if tss != expected_alias_tss
+    )
 
     # WHERE clause: should still expand the sequence with the alternative correctly
     # This is implicitly tested by the first test case, but we can add a quick check for the overall structure.
     assert len(ps.gpnt_list) == 1
 
 
-def test_sequence_with_alternative_containing_complex_elements(focus_node_var, graph_with_prefixes):
+def test_sequence_with_alternative_containing_complex_elements(
+    focus_node_var, graph_with_prefixes
+):
     """
     Tests a sequence path with an alternative path segment containing inverse and cardinality paths.
     sh:path ( ex:p1 [ sh:alternativePath ( [ sh:inversePath ex:invAlt ] [ sh:zeroOrMorePath ex:cardAlt ] ) ] ex:p2 )
@@ -160,13 +182,21 @@ UNION
     assert actual_gpnt_string == expected_gpnt_string
 
     # Check CONSTRUCT for individual triples (no alias)
-    assert TriplesSameSubject.from_spo(
-        subject=Var(value="prof_1_node_2"),
-        predicate=IRI(value=EX.invAlt),
-        object=Var(value="prof_1_node_1"),
-    ) in ps.tss_list
-    assert TriplesSameSubject.from_spo(
-        subject=Var(value="prof_1_node_1"),
-        predicate=IRI(value=EX.cardAlt), # Note: for *+? paths, the construct usually adds the simple predicate
-        object=Var(value="prof_1_node_2"),
-    ) in ps.tss_list
+    assert (
+        TriplesSameSubject.from_spo(
+            subject=Var(value="prof_1_node_2"),
+            predicate=IRI(value=EX.invAlt),
+            object=Var(value="prof_1_node_1"),
+        )
+        in ps.tss_list
+    )
+    assert (
+        TriplesSameSubject.from_spo(
+            subject=Var(value="prof_1_node_1"),
+            predicate=IRI(
+                value=EX.cardAlt
+            ),  # Note: for *+? paths, the construct usually adds the simple predicate
+            object=Var(value="prof_1_node_2"),
+        )
+        in ps.tss_list
+    )

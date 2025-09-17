@@ -35,9 +35,7 @@ class PrefixNotBoundException(Exception):
     """
 
     def __init__(self, prefix: str):
-        self.message = (
-            f'Prefix "{prefix}" not bound to a namespace in Prez.'
-        )
+        self.message = f'Prefix "{prefix}" not bound to a namespace in Prez.'
         super().__init__(self.message)
 
 
@@ -81,6 +79,7 @@ class MissingFilterQueryError(ValueError):
     """
     Raised when a filter query is missing.
     """
+
     def __init__(self, message):
         self.message = message
         super().__init__(self.message)

@@ -34,7 +34,7 @@ class RemoteSparqlRepo(Repo):
         data = {"query": query}
         if settings.sparql_timeout_param_name:
             data[settings.sparql_timeout_param_name] = str(settings.sparql_timeout)
-        
+
         query_rq = self.async_client.build_request(
             "POST",
             url=settings.sparql_endpoint,
@@ -45,7 +45,9 @@ class RemoteSparqlRepo(Repo):
             response = await self.async_client.send(query_rq, stream=True)
             return response
         except httpx.TimeoutException as e:
-            timeout_msg = f"SPARQL query timed out after {settings.sparql_timeout} seconds"
+            timeout_msg = (
+                f"SPARQL query timed out after {settings.sparql_timeout} seconds"
+            )
             if settings.sparql_timeout_param_name:
                 timeout_msg += f" (sent '{settings.sparql_timeout_param_name}={settings.sparql_timeout}' to remote endpoint)"
             log.error(timeout_msg)
@@ -89,7 +91,9 @@ class RemoteSparqlRepo(Repo):
         else:
             s = Store()
         content_bytes = await response.aread()
-        oxigraph_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(response_format, RdfFormat.N_TRIPLES)
+        oxigraph_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(
+            response_format, RdfFormat.N_TRIPLES
+        )
         s.bulk_load(content_bytes, oxigraph_format)
         return s
 
@@ -120,14 +124,18 @@ class RemoteSparqlRepo(Repo):
             query_escaped = quote_plus(query)
             url = f"{settings.sparql_endpoint}?query={query_escaped}"
             if settings.sparql_timeout_param_name:
-                url += f"&{settings.sparql_timeout_param_name}={settings.sparql_timeout}"
+                url += (
+                    f"&{settings.sparql_timeout_param_name}={settings.sparql_timeout}"
+                )
             request = httpx.Request(method, url, headers=headers)
         else:
             url = settings.sparql_endpoint
             # Prepare form data
             form_data = f"query={quote_plus(query)}"
             if settings.sparql_timeout_param_name:
-                form_data += f"&{settings.sparql_timeout_param_name}={settings.sparql_timeout}"
+                form_data += (
+                    f"&{settings.sparql_timeout_param_name}={settings.sparql_timeout}"
+                )
 
             # Set correct headers for form data
             headers["content-type"] = "application/x-www-form-urlencoded"
@@ -153,4 +161,3 @@ class RemoteSparqlRepo(Repo):
             ) from e
 
         return response
-

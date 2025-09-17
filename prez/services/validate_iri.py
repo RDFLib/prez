@@ -15,6 +15,7 @@ from rdflib import URIRef
 sparql_iri_pattern_str = r'^[^<>"{}|^`\\\x00-\x20]*$'
 sparql_iri_re = re.compile(sparql_iri_pattern_str)
 
+
 def validate_iri(iri: str | URIRef):
     if isinstance(iri, URIRef):
         iri = str(iri)

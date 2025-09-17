@@ -231,7 +231,11 @@ class SearchQueryRegex(ConstructQuery):
                     ),
                     solution_modifier=SolutionModifier(
                         order_by=OrderClause(
-                            conditions=[OrderCondition(constraint_or_var=weight, direction="DESC")]
+                            conditions=[
+                                OrderCondition(
+                                    constraint_or_var=weight, direction="DESC"
+                                )
+                            ]
                         ),
                         limit_offset=LimitOffsetClauses(
                             limit_clause=LimitClause(limit=limit),

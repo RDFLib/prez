@@ -111,7 +111,10 @@ async def get_data_repo(
         return data_repo
     except (AttributeError, LookupError):
         pass
-    if settings.sparql_repo_type == "pyoxigraph_memory" or settings.sparql_repo_type == "pyoxigraph_persistent":
+    if (
+        settings.sparql_repo_type == "pyoxigraph_memory"
+        or settings.sparql_repo_type == "pyoxigraph_persistent"
+    ):
         return PyoxigraphRepo(pyoxi_data_store)
     elif settings.sparql_repo_type == "oxrdflib":
         return OxrdflibRepo(oxrdflib_store)
@@ -146,7 +149,9 @@ async def load_local_data_to_oxigraph(store: Store):
     Loads all the data from the local data directory into the local SPARQL endpoint
     """
     default = OxiDefaultGraph()
-    for file in (Path(__file__).parent.parent / settings.pyoxigraph_data_dir).glob("**/*.ttl"):
+    for file in (Path(__file__).parent.parent / settings.pyoxigraph_data_dir).glob(
+        "**/*.ttl"
+    ):
         try:
             store.bulk_load(None, RdfFormat.TURTLE, path=str(file), to_graph=default)
         except Exception as e:
@@ -212,7 +217,7 @@ async def cql_post_parser_dependency(
         body = await request.json()
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON format.")
-    
+
     try:
         cql_parser = CQLParser(cql_json=body, queryable_props=queryable_props)
         cql_parser.parse()
@@ -231,7 +236,9 @@ async def cql_get_parser_dependency(
         try:
             crs = query_params.filter_crs
             query = json.loads(query_params._filter)
-            cql_parser = CQLParser(cql_json=query, crs=crs, queryable_props=queryable_props)
+            cql_parser = CQLParser(
+                cql_json=query, crs=crs, queryable_props=queryable_props
+            )
             try:
                 cql_parser.parse()
             except Exception as e:

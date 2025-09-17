@@ -58,7 +58,9 @@ def generate_new_prefix(uri):
     else:
         parsed_url = urlparse(uri)
         if not parsed_url.scheme:
-            raise ValueError("The URI must have a scheme (e.g., http, https, file, urn, etc)")
+            raise ValueError(
+                "The URI must have a scheme (e.g., http, https, file, urn, etc)"
+            )
         if bool(parsed_url.fragment):
             ns = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}#"
         else:
@@ -118,6 +120,6 @@ async def get_uri_for_curie_id(curie_id: str):
         try:
             uri = prefix_graph.namespace_manager.expand_curie(curie)
         except ValueError:
-            raise PrefixNotBoundException(prefix=curie.split(':')[0])
+            raise PrefixNotBoundException(prefix=curie.split(":")[0])
         await curie_cache.set(curie_id, uri)
         return uri
