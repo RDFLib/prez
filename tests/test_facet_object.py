@@ -50,10 +50,14 @@ def test_site_object_property_shape(mock_settings):
         focus_node=Var(value="focus_node"),
     )
     ps = ns.propertyShapes[0]
-    fq = FacetQuery(original_subselect = None,
+    fq = FacetQuery(
+        original_subselect=None,
         property_shape=ps,
-        focus_node_uri="http://example.org/Site1")
-    assert str(fq) == """CONSTRUCT {
+        focus_node_uri="http://example.org/Site1",
+    )
+    assert (
+        str(fq)
+        == """CONSTRUCT {
 [<https://prez.dev/facetName> ?facetName;<https://prez.dev/facetValue> ?facetValue;<https://prez.dev/facetCount> ?facetCount] 
 }
 WHERE {
@@ -84,3 +88,4 @@ BIND(?prof_1_node_6 AS ?facetValue)
 }GROUP BY ?facetName ?facetValue
 
 }"""
+    )
