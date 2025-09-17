@@ -261,11 +261,17 @@ def handle_custom_functions(
             object=agent_var,
         )
 
-        role_values_gpnt = create_values_constraint(role_var, args[0])  # args[0] is array for roles
-        agent_values_gpnt = create_values_constraint(agent_var, args[1])  # args[1] is array for agents
+        role_values_gpnt = create_values_constraint(
+            role_var, args[0]
+        )  # args[0] is array for roles
+        agent_values_gpnt = create_values_constraint(
+            agent_var, args[1]
+        )  # args[1] is array for agents
 
         ggps.add_pattern(
-            TriplesBlock.from_tssp_list([qa_to_agent_tssp, qa_to_role_tssp, focus_to_qa_tssp])
+            TriplesBlock.from_tssp_list(
+                [qa_to_agent_tssp, qa_to_role_tssp, focus_to_qa_tssp]
+            )
         )
         ggps.add_pattern(role_values_gpnt)
         ggps.add_pattern(agent_values_gpnt)
