@@ -64,7 +64,9 @@ def test_path_alias_sequence_path_on_shape():
         uri=path_bn, graph=g, kind="profile", focus_node=Var(value="focus_node")
     )
     assert len(ps.and_property_paths) == 1
-    assert ps.and_property_paths[0].path_alias == URIRef("https://alias/derivation-role")
+    assert ps.and_property_paths[0].path_alias == URIRef(
+        "https://alias/derivation-role"
+    )
     assert isinstance(ps.and_property_paths[0], SequencePath)
     assert len(ps.and_property_paths[0].value) == 2
 
@@ -98,8 +100,22 @@ def test_path_alias_in_union_simple_path():
     assert len(ps.union_property_paths) == 2
 
     # Find the paths based on their value
-    title_path = next((p for p in ps.union_property_paths if isinstance(p, Path) and p.value == DCTERMS.title), None)
-    label_path = next((p for p in ps.union_property_paths if isinstance(p, Path) and p.value == SKOS.prefLabel), None)
+    title_path = next(
+        (
+            p
+            for p in ps.union_property_paths
+            if isinstance(p, Path) and p.value == DCTERMS.title
+        ),
+        None,
+    )
+    label_path = next(
+        (
+            p
+            for p in ps.union_property_paths
+            if isinstance(p, Path) and p.value == SKOS.prefLabel
+        ),
+        None,
+    )
 
     assert title_path is not None
     assert title_path.path_alias is None
@@ -137,8 +153,17 @@ def test_path_alias_in_union_sequence_path():
     assert len(ps.union_property_paths) == 2
 
     # Find the paths
-    label_path = next((p for p in ps.union_property_paths if isinstance(p, Path) and p.value == SKOS.prefLabel), None)
-    sequence_path = next((p for p in ps.union_property_paths if isinstance(p, SequencePath)), None)
+    label_path = next(
+        (
+            p
+            for p in ps.union_property_paths
+            if isinstance(p, Path) and p.value == SKOS.prefLabel
+        ),
+        None,
+    )
+    sequence_path = next(
+        (p for p in ps.union_property_paths if isinstance(p, SequencePath)), None
+    )
 
     assert label_path is not None
     assert label_path.path_alias is None
@@ -185,8 +210,8 @@ def test_alias_triples_simple_path(mock_settings):
 
     # Expected WHERE triple (using original path)
     expected_tssp = TriplesSameSubjectPath.from_spo(
-            focus_node_var, IRI(value=DCTERMS.title), path_node_1_var
-        )
+        focus_node_var, IRI(value=DCTERMS.title), path_node_1_var
+    )
 
     # Compare string representations due to potential object equality issues
     assert str(expected_tss) in [str(tss) for tss in ps.tss_list]
@@ -220,14 +245,16 @@ def test_alias_triples_sequence_path(mock_settings):
     focus_node_var = Var(value="focus_node")
     path_node_1_var = Var(value="prof_1_node_1")
     path_node_2_var = Var(value="prof_1_node_2")
-    path_node_3_var = Var(value="prof_1_node_3") # Final node in sequence
+    path_node_3_var = Var(value="prof_1_node_3")  # Final node in sequence
     ps = PropertyShape(
         uri=path_bn, graph=g, kind="profile", focus_node=focus_node_var, shape_number=0
     )
 
     # Expected CONSTRUCT triple (using alias and final node)
     expected_tss = TriplesSameSubject.from_spo(
-        focus_node_var, IRI(value="https://alias/derivation-role-label"), path_node_3_var
+        focus_node_var,
+        IRI(value="https://alias/derivation-role-label"),
+        path_node_3_var,
     )
 
     # Expected WHERE triples (using original sequence)
@@ -244,9 +271,21 @@ def test_alias_triples_sequence_path(mock_settings):
     # Compare string representations
     assert str(expected_tss) in [str(tss) for tss in ps.tss_list]
     # Ensure original path triples are NOT in tss_list
-    assert str(TriplesSameSubject.from_spo(focus_node_var, IRI(value=PROV.qualifiedDerivation), path_node_1_var)) not in [str(tss) for tss in ps.tss_list]
-    assert str(TriplesSameSubject.from_spo(path_node_1_var, IRI(value=PROV.hadRole), path_node_2_var)) not in [str(tss) for tss in ps.tss_list]
-    assert str(TriplesSameSubject.from_spo(path_node_2_var, IRI(value=RDFS.label), path_node_3_var)) not in [str(tss) for tss in ps.tss_list]
+    assert str(
+        TriplesSameSubject.from_spo(
+            focus_node_var, IRI(value=PROV.qualifiedDerivation), path_node_1_var
+        )
+    ) not in [str(tss) for tss in ps.tss_list]
+    assert str(
+        TriplesSameSubject.from_spo(
+            path_node_1_var, IRI(value=PROV.hadRole), path_node_2_var
+        )
+    ) not in [str(tss) for tss in ps.tss_list]
+    assert str(
+        TriplesSameSubject.from_spo(
+            path_node_2_var, IRI(value=RDFS.label), path_node_3_var
+        )
+    ) not in [str(tss) for tss in ps.tss_list]
 
     assert len(ps.tssp_list) == 3
     # Compare strings for TSSP list contents
@@ -284,8 +323,8 @@ def test_alias_triples_inverse_path(mock_settings):
 
     # Expected WHERE triple (using original inverse path)
     expected_tssp = TriplesSameSubjectPath.from_spo(
-            path_node_1_var, IRI(value=DCTERMS.subject), focus_node_var
-        )
+        path_node_1_var, IRI(value=DCTERMS.subject), focus_node_var
+    )
 
     # Compare string representations
     assert str(expected_tss) in [str(tss) for tss in ps.tss_list]
@@ -329,18 +368,31 @@ def test_alias_triples_alternative_path(mock_settings):
 
     # Expected WHERE triple (using original alternative path SPARQL grammar)
     # Manually construct the complex TSSP object for skos:prefLabel | rdfs:label
-    alt_path_obj = AlternativePath(value=[Path(value=SKOS.prefLabel), Path(value=RDFS.label)])
+    alt_path_obj = AlternativePath(
+        value=[Path(value=SKOS.prefLabel), Path(value=RDFS.label)]
+    )
     sequence_paths = []
     for alt_path_item in alt_path_obj.value:
         list_path_elt_or_inverse = [_build_path_elt_or_inverse(alt_path_item)]
-        sequence_paths.append(PathSequence(list_path_elt_or_inverse=list_path_elt_or_inverse))
+        sequence_paths.append(
+            PathSequence(list_path_elt_or_inverse=list_path_elt_or_inverse)
+        )
     # Compare string representations
     assert str(expected_tss) in [str(tss) for tss in ps.tss_list]
     # Ensure original path triples are NOT in tss_list (simple paths within alternative)
-    assert str(TriplesSameSubject.from_spo(focus_node_var, IRI(value=SKOS.prefLabel), path_node_1_var)) not in [str(tss) for tss in ps.tss_list]
-    assert str(TriplesSameSubject.from_spo(focus_node_var, IRI(value=RDFS.label), path_node_1_var)) not in [str(tss) for tss in ps.tss_list]
+    assert str(
+        TriplesSameSubject.from_spo(
+            focus_node_var, IRI(value=SKOS.prefLabel), path_node_1_var
+        )
+    ) not in [str(tss) for tss in ps.tss_list]
+    assert str(
+        TriplesSameSubject.from_spo(
+            focus_node_var, IRI(value=RDFS.label), path_node_1_var
+        )
+    ) not in [str(tss) for tss in ps.tss_list]
 
     # Removed checks for tssp_list content as per user request
+
 
 @patch("prez.services.query_generation.shacl.settings")
 def test_gswa_like_profile(mock_settings):
@@ -447,7 +499,9 @@ def test_gswa_like_profile(mock_settings):
         ] ;
     ."""
     g = Graph().parse(data=gswa_profile)
-    path_bn = g.value(subject=URIRef("https://prez.dev/profile/formation-top"), predicate=SH.property)
+    path_bn = g.value(
+        subject=URIRef("https://prez.dev/profile/formation-top"), predicate=SH.property
+    )
     focus_node_var = Var(value="focus_node")
     path_node_1_var = Var(value="prof_1_node_1")
     ps = PropertyShape(

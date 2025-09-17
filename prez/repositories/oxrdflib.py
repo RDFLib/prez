@@ -28,7 +28,7 @@ class OxrdflibRepo(Repo):
         if into_graph is None:
             return results.graph
         if results.graph is None:
-           return into_graph
+            return into_graph
         graph_lock = self.into_store_write_locks.get(id(into_graph), None)
         if graph_lock is not None:
             graph_lock.acquire()
@@ -60,7 +60,7 @@ class OxrdflibRepo(Repo):
             store.bulk_extend(
                 Quad(to_ox(t.subject), to_ox(t.predicate), to_ox(t.object), default)
                 for t in results.graph.triples((None, None, None))
-                )
+            )
         finally:
             if store_lock is not None:
                 store_lock.release()
@@ -101,7 +101,10 @@ class OxrdflibRepo(Repo):
             if graph_lock is not None and do_delete_lock:
                 # The Lock might still be acquired by a different thread, but doesn't matter,
                 # we can still delete the lock reference from the dict.
-                if id(into_graph) in self.into_store_write_locks and graph_lock is self.into_store_write_locks[id(into_graph)]:
+                if (
+                    id(into_graph) in self.into_store_write_locks
+                    and graph_lock is self.into_store_write_locks[id(into_graph)]
+                ):
                     del self.into_store_write_locks[id(into_graph)]
 
     async def rdf_query_to_oxigraph_store(
@@ -124,8 +127,12 @@ class OxrdflibRepo(Repo):
             if store_lock is not None and do_delete_lock:
                 # The Lock might still be acquired by a different thread, but doesn't matter,
                 # we can still delete the lock reference from the dict.
-                if id(into_store) in self.into_store_write_locks and store_lock is self.into_store_write_locks[id(into_store)]:
+                if (
+                    id(into_store) in self.into_store_write_locks
+                    and store_lock is self.into_store_write_locks[id(into_store)]
+                ):
                     del self.into_store_write_locks[id(into_store)]
+
     async def tabular_query_to_table(
         self, query: str, context: URIRef | None = None
     ) -> tuple[URIRef | None, list[dict[str, Any]]]:

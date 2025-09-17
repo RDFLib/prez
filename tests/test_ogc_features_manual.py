@@ -90,6 +90,7 @@ def test_ogc_features_listing_annotated(client):
     assert r.status_code == 200
     assert len(r.content) > 0
 
+
 def test_ogc_features_object_annotated(client):
     # General regression test
     r = client.get(

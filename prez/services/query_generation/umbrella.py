@@ -26,7 +26,7 @@ from sparql_grammar_pydantic import (
     WhereClause,
     IRI,
     BuiltInCall,
-    PrimaryExpression
+    PrimaryExpression,
 )
 
 from prez.models.query_params import ListingQueryParams
@@ -103,17 +103,21 @@ class PrezQueryConstructor(ConstructQuery):
         if order_by_value:
             if order_by_value.value == "weight":
                 constraint_or_var = order_by_value  # NO string function to get correct numerical ordering
-            elif order_by_value.value in ("label", "order_by_val"):  # STR function in order to "ignore" langtags
+            elif order_by_value.value in (
+                "label",
+                "order_by_val",
+            ):  # STR function in order to "ignore" langtags
                 constraint_or_var = Constraint(
-                            content=BuiltInCall.create_with_one_expr(
-                                function_name="STR",
-                                expression=PrimaryExpression(
-                                    content=order_by_value)
-                            )
-                        )
+                    content=BuiltInCall.create_with_one_expr(
+                        function_name="STR",
+                        expression=PrimaryExpression(content=order_by_value),
+                    )
+                )
             else:
-                raise ValueError("order by value must be \"label\", \"order_by_val\", or \"weight\" to work with "
-                                 "automated query generation")
+                raise ValueError(
+                    'order by value must be "label", "order_by_val", or "weight" to work with '
+                    "automated query generation"
+                )
             oc = OrderClause(
                 conditions=[
                     OrderCondition(
@@ -124,10 +128,10 @@ class PrezQueryConstructor(ConstructQuery):
             )
         if order_by_predicate:
             tssp = TriplesSameSubjectPath.from_spo(
-                        subject=Var(value="focus_node"),
-                        predicate=order_by_predicate,
-                        object=order_by_value
-                    )
+                subject=Var(value="focus_node"),
+                predicate=order_by_predicate,
+                object=order_by_value,
+            )
             if inner_select_tssp_list:
                 inner_select_tssp_list.append(tssp)
             else:
@@ -253,7 +257,9 @@ def merge_listing_query_grammar_inputs(
         if order_by:
             kwargs["order_by_predicate"] = IRI(value=order_by)  # from QSA
         else:
-            kwargs["order_by_value"] = concept_hierarchy_query.order_by_val  # from query itself, hardcoded to "?label"
+            kwargs["order_by_value"] = (
+                concept_hierarchy_query.order_by_val
+            )  # from query itself, hardcoded to "?label"
         if order_by_direction:
             kwargs["order_by_direction"] = order_by_direction
         else:
@@ -279,7 +285,10 @@ def merge_listing_query_grammar_inputs(
         # endpoint nodeshape will constrain the focus nodes selected - undesirable for plain search/CQL. However, if
         # search/CQL is used on a generic listing endpoint, then we do want both the endpoint nodeshape (which
         # constrains the focus nodes) + the search/CQL query.
-        if endpoint_nodeshape.uri not in [URIRef('http://example.org/ns#Search'), URIRef('http://example.org/ns#CQL')]:
+        if endpoint_nodeshape.uri not in [
+            URIRef("http://example.org/ns#Search"),
+            URIRef("http://example.org/ns#CQL"),
+        ]:
             kwargs["inner_select_tssp_list"].extend(endpoint_nodeshape.tssp_list)
             kwargs["inner_select_gpnt"].extend(endpoint_nodeshape.gpnt_list)
 
@@ -293,7 +302,9 @@ def merge_listing_query_grammar_inputs(
         kwargs["inner_select_gpnt"].extend(gpnt_list)
         kwargs["inner_select_tssp_list"].extend(tssp_list)
 
-    if order_by:  # order by comes from query param - this will override the default order by in search and concept
+    if (
+        order_by
+    ):  # order by comes from query param - this will override the default order by in search and concept
         # hierarchy queries
         kwargs["order_by_predicate"] = IRI(value=order_by)
         kwargs["order_by_value"] = Var(value="order_by_val")

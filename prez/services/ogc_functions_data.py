@@ -5,7 +5,12 @@ This module provides the functions list for the /functions endpoint,
 based on the actual CQL functions implemented in cql_functions.py.
 """
 
-from prez.models.ogc_features import Function, FunctionArgument, FunctionArgumentType, FunctionsResponse
+from prez.models.ogc_features import (
+    Function,
+    FunctionArgument,
+    FunctionArgumentType,
+    FunctionsResponse,
+)
 from rdflib import URIRef
 
 from prez.services.query_generation.cql_functions import REGISTERED_CQL_FUNCTIONS
@@ -23,7 +28,7 @@ def get_ogc_functions_response() -> FunctionsResponse:
     function_metadata = {
         "FOIObservationFilterDirect": {
             "description": "Filter observations related to a Feature of Interest by specifying two direct "
-                           "property values on an observation.",
+            "property values on an observation.",
             "arguments": [
                 FunctionArgument(
                     title="Property one predicate",
@@ -50,7 +55,7 @@ def get_ogc_functions_response() -> FunctionsResponse:
         },
         "FOIObservationFilterSequence": {
             "description": "Filter observations related to a Feature of Interest by specifying one direct"
-                           " property value and one sequence path property value.",
+            " property value and one sequence path property value.",
             "arguments": [
                 FunctionArgument(
                     title="Property one predicate",
@@ -65,13 +70,13 @@ def get_ogc_functions_response() -> FunctionsResponse:
                 FunctionArgument(
                     title="Sequence path first predicate",
                     description="First IRI in the sequence path of the second observation property chain"
-                                " to filter on",
+                    " to filter on",
                     type=[FunctionArgumentType.STRING],
                 ),
                 FunctionArgument(
                     title="Sequence path second predicate",
                     description="Second IRI in the sequence path of the second observation property chain"
-                                " to filter on",
+                    " to filter on",
                     type=[FunctionArgumentType.STRING],
                 ),
                 FunctionArgument(
@@ -84,8 +89,8 @@ def get_ogc_functions_response() -> FunctionsResponse:
         },
         "hasObservation": {
             "description": "Filter focus nodes by sosa observed properties (sosa:observedProperty) and their "
-                           "corresponding values (union of sosa:hasSimpleResult, sosa:hasResult, and "
-                           "sosa:hasResult/rdf:value).",
+            "corresponding values (union of sosa:hasSimpleResult, sosa:hasResult, and "
+            "sosa:hasResult/rdf:value).",
             "arguments": [
                 FunctionArgument(
                     title="Observed Property IRIs",
@@ -102,7 +107,7 @@ def get_ogc_functions_response() -> FunctionsResponse:
         },
         "hasAttribute": {
             "description": "Filter focus nodes by tern attributes (tern:attribute) and their corresponding "
-                           "values (union of tern:hasSimpleValue, tern:hasValue, and tern:hasValue/rdf:value).",
+            "values (union of tern:hasSimpleValue, tern:hasValue, and tern:hasValue/rdf:value).",
             "arguments": [
                 FunctionArgument(
                     title="Attribute Names",
@@ -128,7 +133,7 @@ def get_ogc_functions_response() -> FunctionsResponse:
                 FunctionArgument(
                     title="Attribute Values",
                     description="Array of any of schema:value, rdf:value, or schema:value/rdf:value values "
-                                "(passed as CQL arrayLiteral)",
+                    "(passed as CQL arrayLiteral)",
                     type=[FunctionArgumentType.ARRAY],
                 ),
             ],

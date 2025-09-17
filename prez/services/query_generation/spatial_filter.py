@@ -39,7 +39,11 @@ from sparql_grammar_pydantic import (
     PathPrimary,
     ObjectList,
     Object,
-    GraphNode, GroupOrUnionGraphPattern, ObjectListPath, ObjectPath, GraphNodePath,
+    GraphNode,
+    GroupOrUnionGraphPattern,
+    ObjectListPath,
+    ObjectPath,
+    GraphNodePath,
 )
 
 from prez.config import settings
@@ -59,11 +63,7 @@ def _verb_path_for_iri(iri: str) -> VerbPath:
                         list_path_elt_or_inverse=[
                             PathEltOrInverse(
                                 path_elt=PathElt(
-                                    path_primary=PathPrimary(
-                                        value=IRI(
-                                            value=iri
-                                        )
-                                    )
+                                    path_primary=PathPrimary(value=IRI(value=iri))
                                 )
                             )
                         ]
@@ -73,7 +73,10 @@ def _verb_path_for_iri(iri: str) -> VerbPath:
         )
     )
 
-def _object_list_for_iri_or_var_or_lit(iri_or_var_or_lit: IRI | Var | RDFLiteral) -> ObjectList:
+
+def _object_list_for_iri_or_var_or_lit(
+    iri_or_var_or_lit: IRI | Var | RDFLiteral,
+) -> ObjectList:
     if isinstance(iri_or_var_or_lit, (IRI, RDFLiteral)):
         vot = VarOrTerm(varorterm=GraphTerm(content=iri_or_var_or_lit))
     elif isinstance(iri_or_var_or_lit, Var):
@@ -81,14 +84,9 @@ def _object_list_for_iri_or_var_or_lit(iri_or_var_or_lit: IRI | Var | RDFLiteral
     else:
         raise ValueError("Unsupported type for _object_list_for_iri_or_var_or_lit")
     return ObjectList(
-        list_object=[
-            Object(
-                graphnode=GraphNode(
-                    varorterm_or_triplesnode=vot
-                )
-            )
-        ]
+        list_object=[Object(graphnode=GraphNode(varorterm_or_triplesnode=vot))]
     )
+
 
 def count_decimal_places(num):
     return abs(Decimal(str(num)).as_tuple().exponent)
@@ -107,11 +105,11 @@ def extract_crs_code(crs_uri):
     if not crs_uri:
         return None
 
-    if crs_uri.startswith('urn:'):
-        parts = crs_uri.split(':')
+    if crs_uri.startswith("urn:"):
+        parts = crs_uri.split(":")
         return parts[-1] if parts else None
     else:
-        parts = crs_uri.rstrip('/').split('/')
+        parts = crs_uri.rstrip("/").split("/")
         return parts[-1] if parts else None
 
 
@@ -119,7 +117,10 @@ def get_wkt_from_coords(coordinates, geom_type: str, filter_crs):
     max_decimals = find_max_decimals([(geom_type, coordinates, None)])
     srid = extract_crs_code(filter_crs)
 
-    wkt_with_srid = dumps({"type": geom_type, "coordinates": coordinates, "meta": {"srid": srid}}, max_decimals)
+    wkt_with_srid = dumps(
+        {"type": geom_type, "coordinates": coordinates, "meta": {"srid": srid}},
+        max_decimals,
+    )
     srid_wkt = wkt_with_srid.split(";")
 
     if len(srid_wkt) == 1:
@@ -148,8 +149,8 @@ def format_coordinates_as_wkt(bbox_values):
 
 
 def generate_spatial_filter_clause(
-    wkt_value: str, # The plain WKT string, e.g. "POLYGON((...))"
-    subject_var: Var, # The SPARQL variable for the subject, e.g. Var(value="focus_node")
+    wkt_value: str,  # The plain WKT string, e.g. "POLYGON((...))"
+    subject_var: Var,  # The SPARQL variable for the subject, e.g. Var(value="focus_node")
     geom_bnode_var: Var,
     geom_wkt_lit_var: Var,
     cql_operator: str,
@@ -161,8 +162,10 @@ def generate_spatial_filter_clause(
     """
     if target_system == "geosparql":
         if cql_operator not in cql_sparql_spatial_mapping:
-            raise NotImplementedError(f"CQL operator {cql_operator} not supported for GeoSPARQL")
-        
+            raise NotImplementedError(
+                f"CQL operator {cql_operator} not supported for GeoSPARQL"
+            )
+
         filter_gpnt = GraphPatternNotTriples(
             content=Filter(
                 constraint=Constraint(
@@ -171,18 +174,20 @@ def generate_spatial_filter_clause(
                         arg_list=ArgList(
                             expressions=[
                                 Expression.from_primary_expression(
-                                    primary_expression=PrimaryExpression(content=geom_wkt_lit_var)
+                                    primary_expression=PrimaryExpression(
+                                        content=geom_wkt_lit_var
+                                    )
                                 ),
                                 Expression.from_primary_expression(
                                     primary_expression=PrimaryExpression(
                                         content=RDFLiteral(
                                             value=wkt_value,  # Use wkt_value directly
-                                            datatype=IRI(value=str(GEO.wktLiteral))
+                                            datatype=IRI(value=str(GEO.wktLiteral)),
                                         )
                                     )
-                                )
+                                ),
                             ]
-                        )
+                        ),
                     )
                 )
             )
@@ -191,7 +196,9 @@ def generate_spatial_filter_clause(
 
     elif target_system == "qlever":
         if cql_operator not in cql_qlever_spatial_mapping:
-            raise NotImplementedError(f"CQL operator {cql_operator} not supported for QLever")
+            raise NotImplementedError(
+                f"CQL operator {cql_operator} not supported for QLever"
+            )
 
         qlever_function_iri = IRI(value=cql_qlever_spatial_mapping[cql_operator])
 
@@ -199,17 +206,21 @@ def generate_spatial_filter_clause(
             content=InlineData(
                 data_block=DataBlock(
                     block=InlineDataOneVar(
-                        variable=Var(value="wkt_input_for_qlever"), # Dedicated var for QLever input WKT
+                        variable=Var(
+                            value="wkt_input_for_qlever"
+                        ),  # Dedicated var for QLever input WKT
                         datablockvalues=[
                             DataBlockValue(
                                 value=RDFLiteral(
                                     value=wkt_value,
                                     datatype=IRI(
-                                        value=str(GEO.wktLiteral)  # Qlever ignores the datatype at present.
-                                    )
+                                        value=str(
+                                            GEO.wktLiteral
+                                        )  # Qlever ignores the datatype at present.
+                                    ),
                                 )
                             )
-                        ]
+                        ],
                     )
                 )
             )
@@ -221,7 +232,13 @@ def generate_spatial_filter_clause(
                 TriplesBlock(
                     triples=TriplesSameSubjectPath(
                         content=(
-                            VarOrTerm(varorterm=GraphTerm(content=BlankNode(value=BlankNodeLabel(part_1="config")))),
+                            VarOrTerm(
+                                varorterm=GraphTerm(
+                                    content=BlankNode(
+                                        value=BlankNodeLabel(part_1="config")
+                                    )
+                                )
+                            ),
                             PropertyListPathNotEmpty(
                                 first_pair=(
                                     _verb_path_for_iri(str(QLSS.algorithm)),
@@ -232,23 +249,42 @@ def generate_spatial_filter_clause(
                                                     varorterm_or_triplesnodepath=VarOrTerm(
                                                         varorterm=GraphTerm(
                                                             content=IRI(
-                                                                value=str(QLSS.libspatialjoin)
+                                                                value=str(
+                                                                    QLSS.libspatialjoin
+                                                                )
                                                             )
                                                         )
                                                     )
                                                 )
                                             )
                                         ]
-
-                                    )
+                                    ),
                                 ),
                                 other_pairs=[
-                                    (_verb_path_for_iri(str(QLSS.left)), _object_list_for_iri_or_var_or_lit(Var(value="wkt_input_for_qlever"))),
-                                    (_verb_path_for_iri(str(QLSS.right)), _object_list_for_iri_or_var_or_lit(geom_wkt_lit_var)),
-                                    (_verb_path_for_iri(str(QLSS.payload)), _object_list_for_iri_or_var_or_lit(subject_var)),
-                                    (_verb_path_for_iri(str(QLSS.joinType)), _object_list_for_iri_or_var_or_lit(qlever_function_iri))
-                                ]
-                            )
+                                    (
+                                        _verb_path_for_iri(str(QLSS.left)),
+                                        _object_list_for_iri_or_var_or_lit(
+                                            Var(value="wkt_input_for_qlever")
+                                        ),
+                                    ),
+                                    (
+                                        _verb_path_for_iri(str(QLSS.right)),
+                                        _object_list_for_iri_or_var_or_lit(
+                                            geom_wkt_lit_var
+                                        ),
+                                    ),
+                                    (
+                                        _verb_path_for_iri(str(QLSS.payload)),
+                                        _object_list_for_iri_or_var_or_lit(subject_var),
+                                    ),
+                                    (
+                                        _verb_path_for_iri(str(QLSS.joinType)),
+                                        _object_list_for_iri_or_var_or_lit(
+                                            qlever_function_iri
+                                        ),
+                                    ),
+                                ],
+                            ),
                         )
                     )
                 ),
@@ -263,14 +299,16 @@ def generate_spatial_filter_clause(
                                             [
                                                 TriplesSameSubjectPath.from_spo(
                                                     subject=subject_var,
-                                                    predicate=IRI(value=str(GEO.hasGeometry)),
-                                                    object=geom_bnode_var
+                                                    predicate=IRI(
+                                                        value=str(GEO.hasGeometry)
+                                                    ),
+                                                    object=geom_bnode_var,
                                                 ),
                                                 TriplesSameSubjectPath.from_spo(
                                                     subject=geom_bnode_var,
                                                     predicate=IRI(value=str(GEO.asWKT)),
-                                                    object=geom_wkt_lit_var
-                                                )
+                                                    object=geom_wkt_lit_var,
+                                                ),
                                             ]
                                         )
                                     ]
@@ -278,14 +316,14 @@ def generate_spatial_filter_clause(
                             )
                         ]
                     )
-                )
+                ),
             ]
         )
-        
+
         qlever_service_gpnt = GraphPatternNotTriples(
             content=ServiceGraphPattern(
                 var_or_iri=VarOrIri(varoriri=IRI(value=str(QLSS))),
-                group_graph_pattern=GroupGraphPattern(content=qlever_internal_ggps)
+                group_graph_pattern=GroupGraphPattern(content=qlever_internal_ggps),
             )
         )
         combined_gpnt = GraphPatternNotTriples(
@@ -295,7 +333,7 @@ def generate_spatial_filter_clause(
                         content=GroupGraphPatternSub(
                             graph_patterns_or_triples_blocks=[
                                 values_clause_for_input_wkt,
-                                qlever_service_gpnt
+                                qlever_service_gpnt,
                             ]
                         )
                     )
@@ -320,12 +358,16 @@ def generate_bbox_filter(
 
     # Variables for the query
     subject = Var(value="focus_node")
-    geom_bn_var = Var(value="geom_bnode_bbox") # Make var names unique if used alongside others
+    geom_bn_var = Var(
+        value="geom_bnode_bbox"
+    )  # Make var names unique if used alongside others
     geom_lit_var = Var(value="geom_var_bbox")
 
     target_system = settings.spatial_query_format
     if target_system not in ["geosparql", "qlever", "graphdb"]:
-        raise NotImplementedError(f"Spatial query format '{target_system}' not supported for CQL.")
+        raise NotImplementedError(
+            f"Spatial query format '{target_system}' not supported for CQL."
+        )
 
     processed_wkt = wkt
     if target_system in ["geosparql", "graphdb"]:  # For QLever, plain wkt is used
@@ -341,7 +383,9 @@ def generate_bbox_filter(
             )
         )
         tssp_list.append(
-            TriplesSameSubjectPath.from_spo(geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var)
+            TriplesSameSubjectPath.from_spo(
+                geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var
+            )
         )
     if target_system == "graphdb":
         # add the filter predicate
@@ -349,7 +393,9 @@ def generate_bbox_filter(
             TriplesSameSubjectPath.from_spo(
                 geom_bn_var,  # graphdb supports the subject being a geo:Feature or geo:Geometry; geo:Geometry used here, performance not tested.
                 IRI(value=GEO.sfIntersects),
-                RDFLiteral(value=processed_wkt, datatype=IRI(value=str(GEO.wktLiteral))),
+                RDFLiteral(
+                    value=processed_wkt, datatype=IRI(value=str(GEO.wktLiteral))
+                ),
             )
         )
 
@@ -360,9 +406,11 @@ def generate_bbox_filter(
             geom_bnode_var=geom_bn_var,
             geom_wkt_lit_var=geom_lit_var,
             cql_operator="s_intersects",
-            target_system=target_system
+            target_system=target_system,
         )
         if not filter_gpnts:
-            raise ValueError("generate_spatial_filter_clause returned no patterns for GeoSPARQL bbox.")
-    
+            raise ValueError(
+                "generate_spatial_filter_clause returned no patterns for GeoSPARQL bbox."
+            )
+
     return filter_gpnts, tssp_list

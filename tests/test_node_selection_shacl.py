@@ -156,16 +156,23 @@ def test_alternative_path():
     for tssp in ns.tssp_list:
         # Check if the verb part matches the structure of an alternative path
         if (
-            isinstance(tssp.content[1], PropertyListPathNotEmpty) and
-            isinstance(tssp.content[1].first_pair[0], VerbPath) and
-            isinstance(tssp.content[1].first_pair[0].path.path_alternative, PathAlternative) and
-            len(tssp.content[1].first_pair[0].path.path_alternative.sequence_paths) == 2 # Check for two alternatives
+            isinstance(tssp.content[1], PropertyListPathNotEmpty)
+            and isinstance(tssp.content[1].first_pair[0], VerbPath)
+            and isinstance(
+                tssp.content[1].first_pair[0].path.path_alternative, PathAlternative
+            )
+            and len(tssp.content[1].first_pair[0].path.path_alternative.sequence_paths)
+            == 2  # Check for two alternatives
         ):
             alternative_path_tssp = tssp
             break
 
-    assert alternative_path_tssp is not None, "Alternative path TSSP not found in NodeShape tssp_list"
-    assert alternative_path_tssp == expected_tssp, "Generated TSSP for alternative path does not match expected structure"
+    assert (
+        alternative_path_tssp is not None
+    ), "Alternative path TSSP not found in NodeShape tssp_list"
+    assert (
+        alternative_path_tssp == expected_tssp
+    ), "Generated TSSP for alternative path does not match expected structure"
 
 
 def test_alternative_with_inverse_path():
@@ -228,7 +235,7 @@ def test_alternative_with_inverse_path():
                                                     ),
                                                     path_mod=None,
                                                 ),
-                                                inverse=True, # Inverse path flag
+                                                inverse=True,  # Inverse path flag
                                             )
                                         ]
                                     ),
@@ -256,32 +263,53 @@ def test_alternative_with_inverse_path():
     alternative_inv_path_tssp = None
     for tssp in ns.tssp_list:
         if (
-            isinstance(tssp.content[1], PropertyListPathNotEmpty) and
-            isinstance(tssp.content[1].first_pair[0], VerbPath) and
-            isinstance(tssp.content[1].first_pair[0].path.path_alternative, PathAlternative) and
-            len(tssp.content[1].first_pair[0].path.path_alternative.sequence_paths) == 2
+            isinstance(tssp.content[1], PropertyListPathNotEmpty)
+            and isinstance(tssp.content[1].first_pair[0], VerbPath)
+            and isinstance(
+                tssp.content[1].first_pair[0].path.path_alternative, PathAlternative
+            )
+            and len(tssp.content[1].first_pair[0].path.path_alternative.sequence_paths)
+            == 2
         ):
             # Further check if one path is inverse and the other is not
             seq1 = tssp.content[1].first_pair[0].path.path_alternative.sequence_paths[0]
             seq2 = tssp.content[1].first_pair[0].path.path_alternative.sequence_paths[1]
-            if len(seq1.list_path_elt_or_inverse) == 1 and len(seq2.list_path_elt_or_inverse) == 1:
-                 path1_inverse = seq1.list_path_elt_or_inverse[0].inverse
-                 path2_inverse = seq2.list_path_elt_or_inverse[0].inverse
-                 # Check if one is inverse and the other is not (order might vary)
-                 if path1_inverse != path2_inverse:
-                     alternative_inv_path_tssp = tssp
-                     break
+            if (
+                len(seq1.list_path_elt_or_inverse) == 1
+                and len(seq2.list_path_elt_or_inverse) == 1
+            ):
+                path1_inverse = seq1.list_path_elt_or_inverse[0].inverse
+                path2_inverse = seq2.list_path_elt_or_inverse[0].inverse
+                # Check if one is inverse and the other is not (order might vary)
+                if path1_inverse != path2_inverse:
+                    alternative_inv_path_tssp = tssp
+                    break
 
-    assert alternative_inv_path_tssp is not None, "Alternative path with inverse TSSP not found"
+    assert (
+        alternative_inv_path_tssp is not None
+    ), "Alternative path with inverse TSSP not found"
     # We need to compare content carefully as the order of alternatives might not be guaranteed
     # Check the structure and properties of the found TSSP against the expected one
-    assert alternative_inv_path_tssp.content[0] == expected_tssp.content[0] # Same subject
-    assert isinstance(alternative_inv_path_tssp.content[1].first_pair[1], ObjectListPath) # Same object structure
-    assert alternative_inv_path_tssp.content[1].first_pair[1] == expected_tssp.content[1].first_pair[1] # Same object variable
+    assert (
+        alternative_inv_path_tssp.content[0] == expected_tssp.content[0]
+    )  # Same subject
+    assert isinstance(
+        alternative_inv_path_tssp.content[1].first_pair[1], ObjectListPath
+    )  # Same object structure
+    assert (
+        alternative_inv_path_tssp.content[1].first_pair[1]
+        == expected_tssp.content[1].first_pair[1]
+    )  # Same object variable
 
     # Check the alternative paths themselves (order insensitive)
-    found_paths = alternative_inv_path_tssp.content[1].first_pair[0].path.path_alternative.sequence_paths
-    expected_paths = expected_tssp.content[1].first_pair[0].path.path_alternative.sequence_paths
+    found_paths = (
+        alternative_inv_path_tssp.content[1]
+        .first_pair[0]
+        .path.path_alternative.sequence_paths
+    )
+    expected_paths = (
+        expected_tssp.content[1].first_pair[0].path.path_alternative.sequence_paths
+    )
 
     # Convert paths to a comparable representation (e.g., tuple of (IRI, inverse_flag))
     def get_path_repr(seq_path):
@@ -291,4 +319,6 @@ def test_alternative_with_inverse_path():
     found_reprs = {get_path_repr(p) for p in found_paths}
     expected_reprs = {get_path_repr(p) for p in expected_paths}
 
-    assert found_reprs == expected_reprs, "Generated alternative paths (with inverse) do not match expected"
+    assert (
+        found_reprs == expected_reprs
+    ), "Generated alternative paths (with inverse) do not match expected"

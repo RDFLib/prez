@@ -4,7 +4,13 @@ from typing import FrozenSet, List, Set, Tuple
 
 from aiocache import caches
 from rdflib import Graph, Literal, URIRef
-from pyoxigraph import Store as OxiStore, NamedNode as OxiNamedNode, Literal as OxiLiteral, Quad as OxiQuad, DefaultGraph as OxiDefaultGraph
+from pyoxigraph import (
+    Store as OxiStore,
+    NamedNode as OxiNamedNode,
+    Literal as OxiLiteral,
+    Quad as OxiQuad,
+    DefaultGraph as OxiDefaultGraph,
+)
 from oxrdflib._converter import to_ox, from_ox
 from sparql_grammar_pydantic import IRI
 
@@ -15,7 +21,9 @@ from prez.services.query_generation.annotations import AnnotationsConstructQuery
 log = logging.getLogger(__name__)
 
 
-async def get_annotations(terms_and_dtypes: Set[URIRef], repo: Repo, system_repo: Repo) -> Graph:
+async def get_annotations(
+    terms_and_dtypes: Set[URIRef], repo: Repo, system_repo: Repo
+) -> Graph:
     """
     This function processes the terms and their data types. It first retrieves the cached results for the given terms
     and data types. Then, it processes the terms that are not cached. The results are added to a graph which is then
@@ -44,7 +52,9 @@ async def get_annotations(terms_and_dtypes: Set[URIRef], repo: Repo, system_repo
     return annotations_g
 
 
-async def get_annotations_for_oxigraph(terms_and_dtypes: Set[OxiNamedNode], repo: Repo, system_repo: Repo) -> OxiStore:
+async def get_annotations_for_oxigraph(
+    terms_and_dtypes: Set[OxiNamedNode], repo: Repo, system_repo: Repo
+) -> OxiStore:
     """
     This function processes the terms and their data types. It first retrieves the cached results for the given terms
     and data types. Then, it processes the terms that are not cached. The results are added to a graph which is then
@@ -74,13 +84,18 @@ async def get_annotations_for_oxigraph(terms_and_dtypes: Set[OxiNamedNode], repo
                 if po_pair is not None and len(po_pair) == 2:
                     predicate = to_ox(po_pair[0])
                     object_ = to_ox(po_pair[1])
-                    annotations_store.add(OxiQuad(subject, predicate, object_, oxi_default_graph))
+                    annotations_store.add(
+                        OxiQuad(subject, predicate, object_, oxi_default_graph)
+                    )
 
     uncached = [z[0] for z in zipped if z[1] is None]
     if uncached:
-        await process_uncached_terms_for_oxigraph(uncached, repo, system_repo, annotations_store)
+        await process_uncached_terms_for_oxigraph(
+            uncached, repo, system_repo, annotations_store
+        )
 
     return annotations_store
+
 
 async def add_cached_entries(
     annotations_g: Graph, cached: List[Tuple[URIRef, FrozenSet[Tuple[URIRef, Literal]]]]
@@ -128,17 +143,29 @@ async def process_uncached_terms(
     annotations_query = AnnotationsConstructQuery(
         terms=[IRI(value=term) for term in terms]
     ).to_string()
-    data_repo_query_task = asyncio.ensure_future(data_repo.send_queries(
-        rdf_queries=[annotations_query], tabular_queries=[], return_oxigraph_store=False
-    ))
-    annotation_repo_query_task = asyncio.ensure_future(annotations_repo.send_queries(
-        rdf_queries=[annotations_query], tabular_queries=[], return_oxigraph_store=False
-    ))
+    data_repo_query_task = asyncio.ensure_future(
+        data_repo.send_queries(
+            rdf_queries=[annotations_query],
+            tabular_queries=[],
+            return_oxigraph_store=False,
+        )
+    )
+    annotation_repo_query_task = asyncio.ensure_future(
+        annotations_repo.send_queries(
+            rdf_queries=[annotations_query],
+            tabular_queries=[],
+            return_oxigraph_store=False,
+        )
+    )
 
-    system_repo_query_task = asyncio.ensure_future(system_repo.send_queries(
-        rdf_queries=[annotations_query], tabular_queries=[], return_oxigraph_store=False
-    ))
-    await asyncio.sleep(0) # Yield control to allow the parallel tasks to kick-start
+    system_repo_query_task = asyncio.ensure_future(
+        system_repo.send_queries(
+            rdf_queries=[annotations_query],
+            tabular_queries=[],
+            return_oxigraph_store=False,
+        )
+    )
+    await asyncio.sleep(0)  # Yield control to allow the parallel tasks to kick-start
     all_results = Graph()
     # Wait the local ones first, annotation repo and system repo queries
     system_repo_results = await system_repo_query_task
@@ -154,7 +181,7 @@ async def process_uncached_terms(
 
     for s, p, o in all_results:
         subjects_map[s].add((p, o))
-        
+
     # Prepare subjects_list, only converting to frozenset where there are actual results
     subjects_list = [
         (subject, frozenset(po_pairs)) if po_pairs else (subject, frozenset())
@@ -168,8 +195,12 @@ async def process_uncached_terms(
     # Add all results to annotations_g
     annotations_g += all_results
 
+
 async def process_uncached_terms_for_oxigraph(
-    terms: List[OxiNamedNode], data_repo: Repo, system_repo: Repo, annotations_store: OxiStore
+    terms: List[OxiNamedNode],
+    data_repo: Repo,
+    system_repo: Repo,
+    annotations_store: OxiStore,
 ):
     """
     This function processes the terms that are not cached. It sends queries to the annotations repository and the
@@ -188,39 +219,59 @@ async def process_uncached_terms_for_oxigraph(
     annotations_query = AnnotationsConstructQuery(
         terms=[IRI(value=term.value) for term in terms]
     ).to_string()
-    data_repo_query_task = asyncio.ensure_future(data_repo.send_queries(
-        rdf_queries=[annotations_query], tabular_queries=[], return_oxigraph_store=True
-    ))
-    annotation_repo_query_task = asyncio.ensure_future(annotations_repo.send_queries(
-        rdf_queries=[annotations_query], tabular_queries=[], return_oxigraph_store=True
-    ))
+    data_repo_query_task = asyncio.ensure_future(
+        data_repo.send_queries(
+            rdf_queries=[annotations_query],
+            tabular_queries=[],
+            return_oxigraph_store=True,
+        )
+    )
+    annotation_repo_query_task = asyncio.ensure_future(
+        annotations_repo.send_queries(
+            rdf_queries=[annotations_query],
+            tabular_queries=[],
+            return_oxigraph_store=True,
+        )
+    )
 
-    system_repo_query_task = asyncio.ensure_future(system_repo.send_queries(
-        rdf_queries=[annotations_query], tabular_queries=[], return_oxigraph_store=True
-    ))
-    await asyncio.sleep(0) # Yield control to allow the parallel tasks to kick-start
+    system_repo_query_task = asyncio.ensure_future(
+        system_repo.send_queries(
+            rdf_queries=[annotations_query],
+            tabular_queries=[],
+            return_oxigraph_store=True,
+        )
+    )
+    await asyncio.sleep(0)  # Yield control to allow the parallel tasks to kick-start
 
     # Initialize subjects_map with each term having an empty set to start with
-    uriref_subjects_map: dict[URIRef,set] = {URIRef(term.value): set() for term in terms}
+    uriref_subjects_map: dict[URIRef, set] = {
+        URIRef(term.value): set() for term in terms
+    }
 
     # Wait the local ones first, annotation repo and system repo queries
     system_repo_results = await system_repo_query_task
     system_repo_result_store: OxiStore = system_repo_results[0]
     for quad in system_repo_result_store.quads_for_pattern(None, None, None, None):
-        uriref_subjects_map[URIRef(quad[0].value)].add((from_ox(quad[1]), from_ox(quad[2])))
+        uriref_subjects_map[URIRef(quad[0].value)].add(
+            (from_ox(quad[1]), from_ox(quad[2]))
+        )
         annotations_store.add(quad)
 
     annotation_repo_results = await annotation_repo_query_task
     annotation_repo_result_store: OxiStore = annotation_repo_results[0]
     for quad in annotation_repo_result_store.quads_for_pattern(None, None, None, None):
-        uriref_subjects_map[URIRef(quad[0].value)].add((from_ox(quad[1]), from_ox(quad[2])))
+        uriref_subjects_map[URIRef(quad[0].value)].add(
+            (from_ox(quad[1]), from_ox(quad[2]))
+        )
         annotations_store.add(quad)
 
     # now wait for the data repo (might be remote)
     data_repo_results = await data_repo_query_task
     data_repo_result_store: OxiStore = data_repo_results[0]
     for quad in data_repo_result_store.quads_for_pattern(None, None, None, None):
-        uriref_subjects_map[URIRef(quad[0].value)].add((from_ox(quad[1]), from_ox(quad[2])))
+        uriref_subjects_map[URIRef(quad[0].value)].add(
+            (from_ox(quad[1]), from_ox(quad[2]))
+        )
         annotations_store.add(quad)
 
     # Prepare subjects_list, only converting to frozenset where there are actual results
@@ -277,11 +328,11 @@ async def get_annotation_properties_for_oxigraph(
     Note the following three default predicates are always included. This allows context, i.e. background ontologies,
     which are often diverse in the predicates they use, to be aligned with the default predicates used by Prez. The full
     range of predicates used can be manually included via profiles.
-    
+
     Note, this is the oxigraph version, it finds all terms and datatypes from the item oxigraph store,
     and retrieves annotations for them.
     But the response is still an rdflib Graph, so it can be used in the same way as the rdflib version.
-    This is because the annotations cache and all annotations logic are still based on URIRefs and rdflib Graphs. 
+    This is because the annotations cache and all annotations logic are still based on URIRefs and rdflib Graphs.
     """
     # get all terms and datatypes for which we want to retrieve annotations
     all_uris: set[OxiNamedNode] = set()
@@ -303,7 +354,9 @@ async def get_annotation_properties_for_oxigraph(
             if quad[2].datatype is not None:
                 all_dtypes.add(quad[2].datatype)
     if len(all_uris) == 0 and len(all_dtypes) == 0:
-        return OxiStore() 
+        return OxiStore()
     terms_and_types: set[OxiNamedNode] = all_uris.union(all_dtypes)
-    annotations_store = await get_annotations_for_oxigraph(terms_and_types, repo, system_repo)
+    annotations_store = await get_annotations_for_oxigraph(
+        terms_and_types, repo, system_repo
+    )
     return annotations_store

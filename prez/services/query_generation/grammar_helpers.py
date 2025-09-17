@@ -50,7 +50,8 @@ from sparql_grammar_pydantic import (
     TriplesBlock,
     TriplesSameSubjectPath,
     Var,
-    VarOrTerm, )
+    VarOrTerm,
+)
 
 
 def convert_value_to_rdf_term(val) -> IRI | NumericLiteral | RDFLiteral:
@@ -94,7 +95,7 @@ def create_regex_filter(variable: Var, pattern: str) -> GraphPatternNotTriples:
 
 
 def create_relational_filter(
-        left_var: Var, operator: str, right_value: IRI | NumericLiteral | RDFLiteral
+    left_var: Var, operator: str, right_value: IRI | NumericLiteral | RDFLiteral
 ) -> GraphPatternNotTriples:
     """Create a SPARQL FILTER with relational comparison.
 
@@ -151,7 +152,7 @@ def create_values_constraint(variable: Var, values: list) -> GraphPatternNotTrip
 
 
 def create_temporal_or_gpnt(
-        comparisons: list[tuple[Var | RDFLiteral, str, Var | RDFLiteral]], negated=False
+    comparisons: list[tuple[Var | RDFLiteral, str, Var | RDFLiteral]], negated=False
 ) -> GraphPatternNotTriples:
     """
     Create a FILTER with multiple conditions joined by OR (||).
@@ -278,7 +279,7 @@ def create_filter_bool_gpnt(boolean: bool) -> GraphPatternNotTriples:
 
 
 def create_temporal_and_gpnt(
-        comparisons: list[tuple[Var | RDFLiteral, str, Var | RDFLiteral]]
+    comparisons: list[tuple[Var | RDFLiteral, str, Var | RDFLiteral]]
 ) -> GraphPatternNotTriples:
     """
     Create a FILTER with multiple conditions joined by AND.
@@ -343,11 +344,11 @@ def create_temporal_and_gpnt(
 
 
 def create_tssp_alt_or_alt_inverse(
-        subject: VarOrTerm,
-        first_pred: IRI,
-        second_pred: IRI,
-        obj: VarOrTerm,
-        inverse_second_prop: bool = False,
+    subject: VarOrTerm,
+    first_pred: IRI,
+    second_pred: IRI,
+    obj: VarOrTerm,
+    inverse_second_prop: bool = False,
 ) -> TriplesSameSubjectPath:
     """
     with inverse_second_prop = False
@@ -387,7 +388,7 @@ def create_tssp_alt_or_alt_inverse(
                                                 inverse=inverse_second_prop,
                                             )
                                         ]
-                                    )
+                                    ),
                                 ]
                             )
                         )
@@ -408,14 +409,11 @@ def create_tssp_alt_or_alt_inverse(
 
 
 def create_tssp_sequence(
-        subject: VarOrTerm,
-        pred_1: IRI,
-        pred_2: IRI,
-        obj: VarOrTerm
+    subject: VarOrTerm, pred_1: IRI, pred_2: IRI, obj: VarOrTerm
 ) -> TriplesSameSubjectPath:
     """
-     ?subject pred_1/pred_2 ?obj
-     """
+    ?subject pred_1/pred_2 ?obj
+    """
     return TriplesSameSubjectPath(
         content=(
             subject,
@@ -440,7 +438,7 @@ def create_tssp_sequence(
                                                         value=pred_2,
                                                     )
                                                 )
-                                            )
+                                            ),
                                         ]
                                     )
                                 ]
@@ -462,15 +460,15 @@ def create_tssp_sequence(
     )
 
 
-def create_union_gpnt_from_tssps(tssps: list[TriplesSameSubjectPath]) -> GraphPatternNotTriples:
+def create_union_gpnt_from_tssps(
+    tssps: list[TriplesSameSubjectPath],
+) -> GraphPatternNotTriples:
     return GraphPatternNotTriples(
         content=GroupOrUnionGraphPattern(
             group_graph_patterns=[
                 GroupGraphPattern(
                     content=GroupGraphPatternSub(
-                        triples_block=TriplesBlock.from_tssp_list(
-                            [tssp]
-                        )
+                        triples_block=TriplesBlock.from_tssp_list([tssp])
                     )
                 )
                 for tssp in tssps

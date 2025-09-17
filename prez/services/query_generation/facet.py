@@ -32,7 +32,7 @@ from sparql_grammar_pydantic import (
     VarOrIri,
     GraphNode,
     Var,
-    TriplesNode
+    TriplesNode,
 )
 from sparql_grammar_pydantic.grammar import PropertyList
 
@@ -91,7 +91,7 @@ class FacetQuery(ConstructQuery):
                 distinct=True,
             ),
             where_clause=original_subselect.where_clause,
-            solution_modifier=SolutionModifier()
+            solution_modifier=SolutionModifier(),
         )
 
         count_expression = Expression.from_primary_expression(
@@ -101,7 +101,7 @@ class FacetQuery(ConstructQuery):
                         function_name="COUNT",
                         expression=Expression.from_primary_expression(
                             PrimaryExpression(content=focus_node_var)
-                        )
+                        ),
                     )
                 )
             )
@@ -111,9 +111,7 @@ class FacetQuery(ConstructQuery):
         inner_gpnts_or_tb = [
             GraphPatternNotTriples(
                 content=GroupOrUnionGraphPattern(
-                    group_graph_patterns=
-                    [GroupGraphPattern(content=inner_ss)
-                     ]
+                    group_graph_patterns=[GroupGraphPattern(content=inner_ss)]
                 )
             )
         ]
@@ -126,15 +124,19 @@ class FacetQuery(ConstructQuery):
                 union_ggps.append(
                     GroupGraphPattern(
                         content=GroupGraphPatternSub(
-                            triples_block=TriplesBlock.from_tssp_list(utb.get("tssp_list")),
-                            graph_patterns_or_triples_blocks=utb.get("facet_binds")
+                            triples_block=TriplesBlock.from_tssp_list(
+                                utb.get("tssp_list")
+                            ),
+                            graph_patterns_or_triples_blocks=utb.get("facet_binds"),
                         )
                     )
                 )
             if union_ggps:
                 inner_gpnts_or_tb.append(
                     GraphPatternNotTriples(
-                        content=GroupOrUnionGraphPattern(group_graph_patterns=union_ggps)
+                        content=GroupOrUnionGraphPattern(
+                            group_graph_patterns=union_ggps
+                        )
                     )
                 )
 
@@ -151,7 +153,7 @@ class FacetQuery(ConstructQuery):
                         variables_or_all=[
                             facet_name_var,
                             facet_value_var,
-                            (count_expression, facet_count_var)
+                            (count_expression, facet_count_var),
                         ],
                     ),
                     where_clause=WhereClause(
@@ -165,10 +167,10 @@ class FacetQuery(ConstructQuery):
                         group_by=GroupClause(
                             group_conditions=[
                                 GroupCondition(condition=facet_name_var),
-                                GroupCondition(condition=facet_value_var)
+                                GroupCondition(condition=facet_value_var),
                             ]
                         )
-                    )
+                    ),
                 )
             )
         )
@@ -182,15 +184,12 @@ class FacetQuery(ConstructQuery):
         ]
         vol_list = []
         for prop, val in props_vals:
-            verb_inner = Verb(varoriri=VarOrIri(
-                varoriri=prop))
+            verb_inner = Verb(varoriri=VarOrIri(varoriri=prop))
             object_list1_inner = ObjectList(
                 list_object=[
                     Object(
                         graphnode=GraphNode(
-                            varorterm_or_triplesnode=VarOrTerm(
-                                varorterm=val
-                            )
+                            varorterm_or_triplesnode=VarOrTerm(varorterm=val)
                         )
                     )
                 ]
@@ -201,12 +200,10 @@ class FacetQuery(ConstructQuery):
             content=(
                 TriplesNode(
                     coll_or_bnpl=BlankNodePropertyList(
-                        plne=PropertyListNotEmpty(
-                            verb_objectlist=vol_list
-                        )
+                        plne=PropertyListNotEmpty(verb_objectlist=vol_list)
                     )
                 ),
-                PropertyList()
+                PropertyList(),
             )
         )
 
@@ -218,5 +215,5 @@ class FacetQuery(ConstructQuery):
         super().__init__(
             construct_template=construct_template,
             where_clause=outer_where_clause,
-            solution_modifier=SolutionModifier()
+            solution_modifier=SolutionModifier(),
         )

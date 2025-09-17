@@ -128,7 +128,12 @@ def test_get_wkt_from_coords_valid(
     geom_type, coordinates, expected_wkt, expected_wkt_alternative
 ):
     assert (
-        get_wkt_from_coords(coordinates, geom_type, filter_crs="http://www.opengis.net/def/crs/OGC/1.3/CRS84")[1] == expected_wkt
+        get_wkt_from_coords(
+            coordinates,
+            geom_type,
+            filter_crs="http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+        )[1]
+        == expected_wkt
         or expected_wkt_alternative
     )
 

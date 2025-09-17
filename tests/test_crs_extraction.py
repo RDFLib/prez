@@ -1,4 +1,7 @@
-from prez.services.query_generation.spatial_filter import extract_crs_code, get_wkt_from_coords
+from prez.services.query_generation.spatial_filter import (
+    extract_crs_code,
+    get_wkt_from_coords,
+)
 
 
 def test_extract_crs_code():
@@ -28,7 +31,9 @@ def test_extract_crs_code():
 
 def test_get_wkt_from_coords():
     # Test EPSG:4326 - should always return full URL
-    srid, wkt = get_wkt_from_coords([1.0, 2.0], "Point", "http://www.opengis.net/def/crs/EPSG/0/4326")
+    srid, wkt = get_wkt_from_coords(
+        [1.0, 2.0], "Point", "http://www.opengis.net/def/crs/EPSG/0/4326"
+    )
     assert srid == "http://www.opengis.net/def/crs/EPSG/0/4326"
     assert "POINT" in wkt
 
@@ -38,7 +43,9 @@ def test_get_wkt_from_coords():
     assert "POINT" in wkt
 
     # Test CRS84 - should always return full URL
-    srid, wkt = get_wkt_from_coords([1.0, 2.0], "Point", "https://www.opengis.net/def/crs/OGC/1.3/CRS84")
+    srid, wkt = get_wkt_from_coords(
+        [1.0, 2.0], "Point", "https://www.opengis.net/def/crs/OGC/1.3/CRS84"
+    )
     assert srid == "https://www.opengis.net/def/crs/OGC/1.3/CRS84"
     assert "POINT" in wkt
 
