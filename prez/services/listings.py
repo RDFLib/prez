@@ -205,7 +205,7 @@ async def listing_function(
         queries.append(count_query)
     facet_profile_uri = None
     if query_params.facet_profile:
-        facet_profile_uri, facets_query = await _create_facets_query(
+        facet_profile_uri, facets_query = await FacetQuery.create_facets_query(
             main_query, query_params
         )
         if facets_query:
@@ -269,62 +269,6 @@ async def listing_function(
         query_params,
         url,
     )
-
-
-async def _create_facets_query(main_query, query_params):
-    profile_uri = await get_facet_profile_uri_from_qsa(query_params.facet_profile)
-    if not profile_uri:
-        return None, None
-    else:
-        facet_nodeshape = NodeShape(
-            uri=profile_uri,
-            graph=profiles_graph_cache,
-            kind="profile",
-            focus_node=Var(value="focus_node"),
-        )
-        facet_property_shape = facet_nodeshape.propertyShapes[0]
-        subselect_for_faceting = copy.deepcopy(main_query.inner_select)
-        facets_query = FacetQuery(
-            original_subselect=subselect_for_faceting,
-            property_shape=facet_property_shape,
-        )
-        return profile_uri, facets_query
-
-
-async def get_facet_profile_uri_from_qsa(facet_profile_qsa):
-    requested_facet_profile = facet_profile_qsa
-    profile_uri = next(  # check if QSA is identifier
-        profiles_graph_cache.subjects(
-            predicate=DCTERMS.identifier, object=Literal(requested_facet_profile)
-        ),
-        None,
-    ) or next(
-        profiles_graph_cache.subjects(
-            predicate=DCTERMS.identifier,
-            object=Literal(requested_facet_profile, datatype=XSD.token),
-        ),
-        None,
-    )
-    if not profile_uri:  # check if QSA is uri
-        try:
-            uri_ref = URIRef(requested_facet_profile)
-            # Check if this URI exists as a subject in any triple
-            if (uri_ref, None, None) in profiles_graph_cache:
-                profile_uri = uri_ref
-        except ValueError:
-            pass
-
-    if not profile_uri:  # check if QSA is curie
-        try:
-            requested_facet_profile_uri = await get_uri_for_curie_id(
-                requested_facet_profile
-            )
-            if requested_facet_profile_uri:
-                if (requested_facet_profile_uri, None, None) in profiles_graph_cache:
-                    profile_uri = requested_facet_profile_uri
-        except PrefixNotBoundException:
-            pass
-    return profile_uri
 
 
 async def ogc_features_listing_function(
