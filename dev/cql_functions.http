@@ -93,6 +93,28 @@ GET {{baseUrl}}/cql
     &datetime=2021-01-01T00:00:00Z/2021-01-02T00:00:00Z
 Accept: application/sparql-query
 
+### qualifiedAttribution single values
+GET {{baseUrl}}/cql
+    ?filter={
+      "op": "qualifiedAttribution",
+      "args": [
+        ["https://example.org/vocab/role/contributor"],
+        ["https://example.org/vocab/org/org2"]
+      ]
+    }
+Accept: application/sparql-query
+
+### qualifiedAttribution multiple values
+GET {{baseUrl}}/cql
+    ?filter={
+      "op": "qualifiedAttribution",
+      "args": [
+        ["https://example.org/vocab/role/creator", "https://example.org/vocab/role/contributor"],
+        ["https://example.org/vocab/org/org1", "https://example.org/vocab/org/org2"]
+      ]
+    }
+Accept: application/sparql-query
+
 ### check or logic variable separation
 ### hasAdditional multiple values
 GET {{baseUrl}}/cql
