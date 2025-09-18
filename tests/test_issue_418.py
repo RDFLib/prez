@@ -9,7 +9,7 @@ def test_issue_418(monkeypatch):
     # Mock the queryable properties to simulate SHACL queryable
     mock_queryable_props = {
         "nsl-name-usage": "https://prez/queryables/TaxonNameUsageQueryable",
-        "nsl-name-id": "https://prez/queryables/TaxonNameIDQueryable"
+        "nsl-name-id": "https://prez/queryables/TaxonNameIDQueryable",
     }
 
     # Mock the system graph with SHACL shape
