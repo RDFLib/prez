@@ -322,14 +322,14 @@ class CQLParser:
         existing_ggps: GroupGraphPatternSub | None,
         obj: Var | IRI | RDFLiteral | None = None,
     ) -> tuple[GroupGraphPatternSub, Var | IRI | RDFLiteral]:
-        self.var_counter += 1
         ggps = existing_ggps if existing_ggps is not None else GroupGraphPatternSub()
         prop = args[0].get("property")
         if self.queryable_props and prop in self.queryable_props:
-            shacl_defined_obj = self._handle_shacl_defined_prop(prop)
+            shacl_defined_obj = self._handle_shacl_defined_prop(prop, ggps)
             if not obj:
                 obj = shacl_defined_obj
         else:
+            self.var_counter += 1
             subject = Var(value="focus_node")
             predicate = IRI(value=prop)
             var_obj = Var(value=f"var_{self.var_counter}")
@@ -425,11 +425,32 @@ class CQLParser:
         values_constraint = create_values_constraint(obj, args[1])
         ggps.add_pattern(values_constraint)
 
-    def _handle_shacl_defined_prop(self, prop):
-        tssp_list, obj_var = self.queryable_id_to_tssp(self.queryable_props[prop])
-        self.tssp_list.extend(tssp_list)
+    def _handle_shacl_defined_prop(self, prop: str, ggps: GroupGraphPatternSub) -> Var:
+        property_shape, obj_var = self.queryable_id_to_tssp(self.queryable_props[prop])
+
+        if property_shape.tss_list:
+            self.tss_list.extend(property_shape.tss_list)
+
+        self._append_property_shape_patterns(ggps, property_shape)
+
         self.inner_select_vars.append(obj_var)
+        # Increment after processing so next SHACL queryable gets a unique counter
+        self.var_counter += 1
         return obj_var
+
+    def _append_property_shape_patterns(
+        self, ggps: GroupGraphPatternSub, property_shape: PropertyShape
+    ) -> None:
+        tssp_list = property_shape.tssp_list or []
+        if tssp_list:
+            triples_block = TriplesBlock.from_tssp_list(tssp_list)
+            if ggps.graph_patterns_or_triples_blocks:
+                ggps.graph_patterns_or_triples_blocks.append(triples_block)
+            else:
+                ggps.graph_patterns_or_triples_blocks = [triples_block]
+
+        for gpnt in property_shape.gpnt_list or []:
+            ggps.add_pattern(gpnt)
 
     def _handle_temporal(
         self,
@@ -466,7 +487,7 @@ class CQLParser:
             prop = arg.get("property")
             if prop:
                 if self.queryable_props and prop in self.queryable_props:
-                    obj = self._handle_shacl_defined_prop(prop)
+                    obj = self._handle_shacl_defined_prop(prop, ggps)
                     operands[f"t{i}_{label}"] = obj
                 else:
                     self._triple_for_time_prop(ggps, i, label, prop, operands)
@@ -555,13 +576,14 @@ class CQLParser:
     def queryable_id_to_tssp(
         self,
         queryable_uri: str,
-    ) -> tuple[list[TriplesSameSubjectPath], Var]:
+    ) -> tuple[PropertyShape, Var]:
         queryable_shape = prez_system_graph.cbd(URIRef(queryable_uri))
         ps = PropertyShape(
             uri=URIRef(queryable_uri),
             graph=queryable_shape,
             kind="endpoint",  # could be renamed - originally only endpoint nodeshapes filtered the nodes to be selected
             focus_node=Var(value="focus_node"),
+            var_counter_offset=self.var_counter,  # Pass current var_counter to ensure unique variables
         )
         obj_var_name = (
             ps.tssp_list[0]
@@ -570,4 +592,4 @@ class CQLParser:
             .object_paths[0]
             .graph_node_path.varorterm_or_triplesnodepath.varorterm
         )
-        return ps.tssp_list, obj_var_name
+        return ps, obj_var_name
