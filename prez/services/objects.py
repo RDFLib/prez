@@ -42,6 +42,7 @@ from prez.services.connegp_service import OXIGRAPH_SERIALIZER_TYPES_MAP, RDF_MED
 from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.link_generation import add_prez_links, add_prez_links_for_oxigraph
 from prez.services.listings import listing_function
+from prez.services.query_generation.facet import FacetQuery
 from prez.services.query_generation.umbrella import PrezQueryConstructor
 
 log = logging.getLogger(__name__)
@@ -96,22 +97,44 @@ async def object_function(
                 object=IRI(value="https://prez.dev/FocusNode"),
             )
         )
-    query = PrezQueryConstructor(
+    main_query = PrezQueryConstructor(
         profile_triples=profile_nodeshape.tssp_list,
         profile_gpnt=profile_nodeshape.gpnt_list,
         construct_tss_list=profile_nodeshape.tss_list,
-    ).to_string()
+    )
+    queries = [main_query.to_string()]
 
     if pmts.requested_mediatypes and (
         pmts.requested_mediatypes[0][0] == "application/sparql-query"
     ):
-        return PlainTextResponse(query, media_type="application/sparql-query")
+        return PlainTextResponse(queries[0], media_type="application/sparql-query")
+
+    facet_profile_uri = None
+    if query_params.facet_profile:
+        # For object queries, we pass the focus node URI instead of main_query
+        focus_node_uri = profile_nodeshape.focus_node.value
+        facet_profile_uri, facets_query = await FacetQuery.create_facets_query(
+            None, query_params, focus_node_uri
+        )
+        if facets_query:
+            queries.append(facets_query.to_string())
+
     query_start_time = time.time()
     item_store: OxiStore
     item_store, _ = await data_repo.send_queries(
-        [query], [], return_oxigraph_store=True
+        queries, [], return_oxigraph_store=True
     )
     log.debug(f"Query time: {time.time() - query_start_time}")
+    default = OxiDefaultGraph()
+    if facet_profile_uri:
+        item_store.add(
+            OxiQuad(
+                OxiBlankNode(),
+                OxiNamedNode(PREZ.facetProfile),
+                OxiNamedNode(facet_profile_uri),
+                default,
+            )
+        )
     if settings.prez_ui_url:
         # If HTML or no specific media type requested
         if pmts.requested_mediatypes and (
