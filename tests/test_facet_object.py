@@ -1,4 +1,3 @@
-from rdflib import Graph, URIRef, Namespace
 from unittest.mock import patch
 
 from rdflib import Graph, URIRef, Namespace

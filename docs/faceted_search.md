@@ -1,8 +1,12 @@
-Prez supports faceted search on listing endpoints, this includes:
+Prez supports faceted search on all listing and object endpoints:
 
+**Listing endpoints:**
 `/cql`
 `/search`
 all endpoints declared a prez:ListingEndpoint. With default settings this includes `/catalogs` `/catalogs/{catalogId}/collections` etc.
+
+**Object endpoints:**
+Faceted search can also be performed on all object endpoints (prez:ObjectEndpoint) by providing the focus node IRI directly. In this case, no subselect is performed and faceting works the same way for the properties of the single object.
 
 > Note: At this point faceting is only supported for categorical properties (though faceting will correctly produce / execute queries on properties with continuous values the output is probably not desirable).
 
@@ -51,6 +55,7 @@ WHERE {
   SELECT ?facetName ?facetValue (COUNT(?focus_node) AS ?facetCount)
   WHERE {
     {
+        # for listing, CQL, and search, a subselect is included
       SELECT DISTINCT ?focus_node
       WHERE {
         ?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://linked.data.gov.au/def/borehole/Borehole> .
