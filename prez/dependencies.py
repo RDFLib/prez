@@ -270,14 +270,36 @@ async def generate_search_query(
     endpoint_uri_type: tuple[URIRef, URIRef] = Depends(get_endpoint_uri_type),
 ):
     term = request.query_params.get("q")
+
+    # Check for filtering/faceting parameters that allow empty search terms
+    def has_filtering_params():
+        params = request.query_params
+        # Check for faceting
+        if params.get("facet_profile"):
+            return True
+        # Check for CQL filter
+        if params.get("filter"):
+            return True
+        # Check for spatial filtering
+        if params.get("bbox"):
+            return True
+        # Check for temporal filtering
+        if params.get("datetime"):
+            return True
+        return False
+
     # Check if the search term 'q' is provided
     if not term:
-        # If 'q' is missing or empty, only raise error if it's the search endpoint
+        # If 'q' is missing or empty, check if we're on the search endpoint
         if endpoint_uri_type[0] == EP["extended-ogc-records/search"]:
-            raise HTTPException(
-                status_code=400,
-                detail="Search query parameter 'q' must be provided.",
-            )
+            # Allow empty search term if filtering/faceting parameters are present
+            if has_filtering_params():
+                return None  # generate query without FTS component
+            else:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Search query parameter 'q' must be provided, or use filtering parameters (facet_profile, filter, bbox, datetime).",
+                )
         else:
             # For other endpoints, 'q' is optional, return None if not provided
             return None
