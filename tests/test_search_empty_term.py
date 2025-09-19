@@ -5,14 +5,20 @@ def test_search_empty_term_no_filters(client: TestClient):
     """Test that empty search term without filters returns 400 error (BEFORE behavior)."""
     response = client.get("/search?q=")
     assert response.status_code == 400
-    assert "Search query parameter 'q' must be provided, or use filtering parameters" in response.json()["detail"]
+    assert (
+        "Search query parameter 'q' must be provided, or use filtering parameters"
+        in response.json()["detail"]
+    )
 
 
 def test_search_missing_term_no_filters(client: TestClient):
     """Test that missing search term without filters returns 400 error (BEFORE behavior)."""
     response = client.get("/search")
     assert response.status_code == 400
-    assert "Search query parameter 'q' must be provided, or use filtering parameters" in response.json()["detail"]
+    assert (
+        "Search query parameter 'q' must be provided, or use filtering parameters"
+        in response.json()["detail"]
+    )
 
 
 def test_search_empty_term_with_facet_profile(client: TestClient, monkeypatch):
@@ -45,9 +51,15 @@ def test_search_empty_term_with_facet_profile(client: TestClient, monkeypatch):
 
     prez_system_graph += mock_system_graph
 
-    response = client.get("/search?q=&facet_profile=https://prez.dev/profile/facet-by-type&_mediatype=application/sparql-query")
+    response = client.get(
+        "/search?q=&facet_profile=https://prez.dev/profile/facet-by-type&_mediatype=application/sparql-query"
+    )
     # Should not return 400 error about missing search term
-    assert response.status_code != 400 or "Search query parameter 'q' must be provided" not in response.json().get("detail", "")
+    assert (
+        response.status_code != 400
+        or "Search query parameter 'q' must be provided"
+        not in response.json().get("detail", "")
+    )
 
 
 def test_search_empty_term_with_cql_filter(client: TestClient):
@@ -55,21 +67,37 @@ def test_search_empty_term_with_cql_filter(client: TestClient):
     cql_filter = '{"op":"=","args":[{"property":"http://www.w3.org/1999/02/22-rdf-syntax-ns#type"},"https://myclass"]}'
     response = client.get(f"/search?q=&filter={cql_filter}")
     # Should not return 400 error about missing search term
-    assert response.status_code != 400 or "Search query parameter 'q' must be provided" not in response.json().get("detail", "")
+    assert (
+        response.status_code != 400
+        or "Search query parameter 'q' must be provided"
+        not in response.json().get("detail", "")
+    )
 
 
 def test_search_empty_term_with_bbox(client: TestClient):
     """Test that empty search term with bbox is allowed (AFTER behavior)."""
-    response = client.get("/search?q=&bbox=113.338953078,-43.6345972634,153.569469029,-10.6681857235")
+    response = client.get(
+        "/search?q=&bbox=113.338953078,-43.6345972634,153.569469029,-10.6681857235"
+    )
     # Should not return 400 error about missing search term
-    assert response.status_code != 400 or "Search query parameter 'q' must be provided" not in response.json().get("detail", "")
+    assert (
+        response.status_code != 400
+        or "Search query parameter 'q' must be provided"
+        not in response.json().get("detail", "")
+    )
 
 
 def test_search_empty_term_with_datetime(client: TestClient):
     """Test that empty search term with datetime is allowed (AFTER behavior)."""
-    response = client.get("/search?q=&datetime=2018-02-12T23:20:50Z/2018-03-18T12:31:12Z")
+    response = client.get(
+        "/search?q=&datetime=2018-02-12T23:20:50Z/2018-03-18T12:31:12Z"
+    )
     # Should not return 400 error about missing search term
-    assert response.status_code != 400 or "Search query parameter 'q' must be provided" not in response.json().get("detail", "")
+    assert (
+        response.status_code != 400
+        or "Search query parameter 'q' must be provided"
+        not in response.json().get("detail", "")
+    )
 
 
 def test_search_missing_term_with_facet_profile(client: TestClient, monkeypatch):
@@ -102,9 +130,15 @@ def test_search_missing_term_with_facet_profile(client: TestClient, monkeypatch)
 
     prez_system_graph += mock_system_graph
 
-    response = client.get("/search?facet_profile=https://prez.dev/profile/facet-by-type&_mediatype=text/turtle")
+    response = client.get(
+        "/search?facet_profile=https://prez.dev/profile/facet-by-type&_mediatype=text/turtle"
+    )
     # Should not return 400 error about missing search term
-    assert response.status_code != 400 or "Search query parameter 'q' must be provided" not in response.json().get("detail", "")
+    assert (
+        response.status_code != 400
+        or "Search query parameter 'q' must be provided"
+        not in response.json().get("detail", "")
+    )
 
 
 def test_search_missing_term_with_cql_filter(client: TestClient):
@@ -112,4 +146,8 @@ def test_search_missing_term_with_cql_filter(client: TestClient):
     cql_filter = '{"op":"=","args":[{"property":"http://www.w3.org/1999/02/22-rdf-syntax-ns#type"},"feature"]}'
     response = client.get(f"/search?filter={cql_filter}")
     # Should not return 400 error about missing search term
-    assert response.status_code != 400 or "Search query parameter 'q' must be provided" not in response.json().get("detail", "")
+    assert (
+        response.status_code != 400
+        or "Search query parameter 'q' must be provided"
+        not in response.json().get("detail", "")
+    )
