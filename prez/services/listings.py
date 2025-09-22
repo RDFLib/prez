@@ -16,19 +16,28 @@ from pyoxigraph import (
     DefaultGraph as OxiDefaultGraph,
 )
 from rdf2geojson import convert
-from rdflib import Literal, DCTERMS, XSD, Namespace, URIRef
+from rdflib import Literal, Namespace
 from rdflib.namespace import GEO, RDF, PROF
 from sparql_grammar_pydantic import (
     IRI,
     TriplesSameSubject,
-    TriplesSameSubjectPath,
     Var,
+    SelectClause,
+    WhereClause,
+    GroupGraphPattern,
+    GroupGraphPatternSub,
+    TriplesBlock,
+    TriplesSameSubjectPath,
+    SolutionModifier,
+    SubSelect,
+    LimitOffsetClauses,
+    LimitClause,
+    OffsetClause,
 )
 
-from prez.cache import profiles_graph_cache, prefix_graph
+from prez.cache import prefix_graph
 from prez.config import settings
 from prez.enums import NonAnnotatedRDFMediaType, AnnotatedRDFMediaType
-from prez.exceptions.model_exceptions import PrefixNotBoundException
 from prez.reference_data.prez_ns import ALTREXT, OGCFEAT, PREZ
 from prez.renderers.renderer import (
     return_annotated_rdf_for_oxigraph,
@@ -42,12 +51,11 @@ from prez.renderers.renderer import (
 )
 from prez.repositories import Repo
 from prez.services.connegp_service import OXIGRAPH_SERIALIZER_TYPES_MAP
-from prez.services.curie_functions import get_curie_id_for_uri, get_uri_for_curie_id
+from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.generate_queryables import generate_queryables_json
 from prez.services.link_generation import add_prez_links_for_oxigraph
 from prez.services.query_generation.count import CountQuery
 from prez.services.query_generation.facet import FacetQuery
-from prez.services.query_generation.shacl import NodeShape
 from prez.services.query_generation.umbrella import (
     PrezQueryConstructor,
     merge_listing_query_grammar_inputs,
@@ -197,8 +205,58 @@ async def listing_function(
     # add faceting query if requested
     facet_profile_uri = None
     if query_params.facet_profile:
-        #TODO check if main query has a subselect, if not, create one with the `?focus_node a ?type` triple, the facet query itself will then no longer need to do this.
+        # Check if main query has a subselect, if not, create one with the `?focus_node a ?type` triple
         # This will allow the count query below to reuse the subselect preventing an error.
+        if not hasattr(main_query, "inner_select") or main_query.inner_select is None:
+            # Create the ?focus_node a ?type triple
+            basic_triple = TriplesSameSubjectPath.from_spo(
+                subject=Var(value="focus_node"),
+                predicate=IRI(value="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+                object=Var(value="type"),
+            )
+
+            # Create a new subselect with this triple
+            basic_subselect = SubSelect(
+                select_clause=SelectClause(
+                    variables_or_all=[Var(value="focus_node")],
+                    distinct=True,
+                ),
+                where_clause=WhereClause(
+                    group_graph_pattern=GroupGraphPattern(
+                        content=GroupGraphPatternSub(
+                            triples_block=TriplesBlock.from_tssp_list([basic_triple])
+                        )
+                    )
+                ),
+                solution_modifier=SolutionModifier(
+                    limit_offset=LimitOffsetClauses(
+                        limit_clause=LimitClause(limit=settings.listing_count_limit),
+                        offset_clause=OffsetClause(offset=0),
+                    )
+                ),
+            )
+
+            # Add the subselect to the main query's where clause
+            from sparql_grammar_pydantic import (
+                GraphPatternNotTriples,
+                GroupOrUnionGraphPattern,
+            )
+
+            subselect_gpnt = GraphPatternNotTriples(
+                content=GroupOrUnionGraphPattern(
+                    group_graph_patterns=[GroupGraphPattern(content=basic_subselect)]
+                )
+            )
+
+            # Insert the subselect at the beginning of the where clause
+            if hasattr(
+                main_query.where_clause.group_graph_pattern.content,
+                "graph_patterns_or_triples_blocks",
+            ):
+                main_query.where_clause.group_graph_pattern.content.graph_patterns_or_triples_blocks.insert(
+                    0, subselect_gpnt
+                )
+
         facet_profile_uri, facets_query = await FacetQuery.create_facets_query(
             main_query, query_params
         )
@@ -214,7 +272,6 @@ async def listing_function(
         subselect = copy.deepcopy(main_query.inner_select)
         count_query = CountQuery(original_subselect=subselect).to_string()
         queries.append(count_query)
-
 
     item_store: OxiStore
     item_store, _ = await query_repo.send_queries(
