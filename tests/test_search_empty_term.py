@@ -53,7 +53,7 @@ def test_search_empty_term_with_facet_profile(client: TestClient, monkeypatch):
     profiles_graph_cache += mock_profiles_graph
 
     response = client.get(
-        "/search?q=&facet_profile=https://prez.dev/profile/facet-by-type&_mediatype=application/sparql-query"
+        "/search?q=&facet_profile=https://prez.dev/profile/facet-by-type&_mediatype=text/anot+turtle"
     )
     # Should not return 400 error about missing search term
     assert (
@@ -133,7 +133,7 @@ def test_search_missing_term_with_facet_profile(client: TestClient, monkeypatch)
     profiles_graph_cache += mock_profiles_graph
 
     response = client.get(
-        "/search?facet_profile=https://prez.dev/profile/facet-by-type&_mediatype=text/turtle"
+        "/search?facet_profile=https://prez.dev/profile/facet-by-type&_mediatype=text/anot+turtle"
     )
     # Should not return 400 error about missing search term
     assert (

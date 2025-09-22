@@ -194,6 +194,17 @@ async def listing_function(
     ):
         return PlainTextResponse(queries[0], media_type="application/sparql-query")
 
+    # add faceting query if requested
+    facet_profile_uri = None
+    if query_params.facet_profile:
+        #TODO check if main query has a subselect, if not, create one with the `?focus_node a ?type` triple, the facet query itself will then no longer need to do this.
+        # This will allow the count query below to reuse the subselect preventing an error.
+        facet_profile_uri, facets_query = await FacetQuery.create_facets_query(
+            main_query, query_params
+        )
+        if facets_query:
+            queries.append(facets_query.to_string())
+
     # add a count query if it's an annotated mediatype or counted search
     if (
         ("anot+" in pmts.selected["mediatype"] and not search_query)
@@ -203,13 +214,7 @@ async def listing_function(
         subselect = copy.deepcopy(main_query.inner_select)
         count_query = CountQuery(original_subselect=subselect).to_string()
         queries.append(count_query)
-    facet_profile_uri = None
-    if query_params.facet_profile:
-        facet_profile_uri, facets_query = await FacetQuery.create_facets_query(
-            main_query, query_params
-        )
-        if facets_query:
-            queries.append(facets_query.to_string())
+
 
     item_store: OxiStore
     item_store, _ = await query_repo.send_queries(
