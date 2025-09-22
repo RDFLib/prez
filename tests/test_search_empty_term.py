@@ -25,11 +25,12 @@ def test_search_empty_term_with_facet_profile(client: TestClient, monkeypatch):
     """Test that empty search term with facet_profile is allowed (AFTER behavior)."""
     from rdflib import Graph
 
-    # Mock the system graph with facet profile
-    mock_system_graph = Graph()
-    mock_system_graph.parse(
+    # Mock the profiles graph with facet profile
+    mock_profiles_graph = Graph()
+    mock_profiles_graph.parse(
         data="""
             @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+            @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
             @prefix sh: <http://www.w3.org/ns/shacl#> .
             @prefix dcterms: <http://purl.org/dc/terms/> .
             @prefix prof: <http://www.w3.org/ns/dx/prof/> .
@@ -40,16 +41,16 @@ def test_search_empty_term_with_facet_profile(client: TestClient, monkeypatch):
                 a prof:Profile , prez:ListingProfile ;
                 dcterms:identifier "facet-type"^^xsd:token ;
                 dcterms:title "Facet things by type" ;
-                dcterms:description "Allows faceting by rdf:type" ;
-                sh:property [ sh:path [ sh:union ( rdf:type ) ] ] .
+                dcterms:description "Allows faceting by rdf:type rdfs:label" ;
+                sh:property [ sh:path [ sh:union ( rdf:type rdfs:label ) ] ] .
         """,
         format="turtle",
     )
 
-    # Add the mock data to the actual system graph
-    from prez.cache import prez_system_graph
+    # Add the mock data to the profiles graph cache
+    from prez.cache import profiles_graph_cache
 
-    prez_system_graph += mock_system_graph
+    profiles_graph_cache += mock_profiles_graph
 
     response = client.get(
         "/search?q=&facet_profile=https://prez.dev/profile/facet-by-type&_mediatype=application/sparql-query"
@@ -105,10 +106,11 @@ def test_search_missing_term_with_facet_profile(client: TestClient, monkeypatch)
     from rdflib import Graph
 
     # Mock the system graph with facet profile
-    mock_system_graph = Graph()
-    mock_system_graph.parse(
+    mock_profiles_graph = Graph()
+    mock_profiles_graph.parse(
         data="""
             @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+            @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
             @prefix sh: <http://www.w3.org/ns/shacl#> .
             @prefix dcterms: <http://purl.org/dc/terms/> .
             @prefix prof: <http://www.w3.org/ns/dx/prof/> .
@@ -119,16 +121,16 @@ def test_search_missing_term_with_facet_profile(client: TestClient, monkeypatch)
                 a prof:Profile , prez:ListingProfile ;
                 dcterms:identifier "facet-type"^^xsd:token ;
                 dcterms:title "Facet things by type" ;
-                dcterms:description "Allows faceting by rdf:type" ;
-                sh:property [ sh:path [ sh:union ( rdf:type ) ] ] .
+                dcterms:description "Allows faceting by rdf:type rdfs:label" ;
+                sh:property [ sh:path [ sh:union ( rdf:type rdfs:label ) ] ] .
         """,
         format="turtle",
     )
 
     # Add the mock data to the actual system graph
-    from prez.cache import prez_system_graph
+    from prez.cache import profiles_graph_cache
 
-    prez_system_graph += mock_system_graph
+    profiles_graph_cache += mock_profiles_graph
 
     response = client.get(
         "/search?facet_profile=https://prez.dev/profile/facet-by-type&_mediatype=text/turtle"
