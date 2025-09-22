@@ -33,7 +33,11 @@ from sparql_grammar_pydantic import (
     Var,
     TriplesNode,
 )
-from sparql_grammar_pydantic.grammar import PropertyList, IRIOrFunction, TriplesSameSubjectPath
+from sparql_grammar_pydantic.grammar import (
+    PropertyList,
+    IRIOrFunction,
+    TriplesSameSubjectPath,
+)
 
 from prez.cache import profiles_graph_cache
 from prez.exceptions.model_exceptions import PrefixNotBoundException
@@ -76,18 +80,16 @@ class FacetQuery(ConstructQuery):
     """
 
     def __init__(
-            self,
-            original_subselect: SubSelect = None,
-            property_shape=None,
-            focus_node_uri=None,
-            open_facet: bool = False,
+        self,
+        original_subselect: SubSelect = None,
+        property_shape=None,
+        focus_node_uri=None,
+        open_facet: bool = False,
     ):
         # Validate that exactly one of the three modes is specified
-        modes_specified = sum([
-            original_subselect is not None,
-            focus_node_uri is not None,
-            open_facet
-        ])
+        modes_specified = sum(
+            [original_subselect is not None, focus_node_uri is not None, open_facet]
+        )
         if modes_specified != 1:
             raise ValueError(
                 "Exactly one of 'original_subselect', 'focus_node_uri', or 'open_facet=True' must be specified"
@@ -147,7 +149,9 @@ class FacetQuery(ConstructQuery):
                     [
                         TriplesSameSubjectPath.from_spo(
                             subject=Var(value="focus_node"),
-                            predicate=IRI(value="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+                            predicate=IRI(
+                                value="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+                            ),
                             object=Var(value="type"),
                         )
                     ]
