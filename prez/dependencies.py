@@ -17,6 +17,7 @@ from prez.cache import (
     queryable_props,
     store,
     system_store,
+    persistent_store
 )
 from prez.config import settings
 from prez.enums import (
