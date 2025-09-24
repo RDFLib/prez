@@ -1,6 +1,6 @@
 from aiocache import caches
 from pyoxigraph.pyoxigraph import Store
-from rdflib import ConjunctiveGraph, Dataset, Graph
+from rdflib import ConjunctiveGraph, Graph
 
 profiles_graph_cache = Graph()
 profiles_graph_cache.bind("prez", "https://prez.dev/")

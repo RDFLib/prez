@@ -16,7 +16,7 @@ from pyoxigraph import (
     DefaultGraph as OxiDefaultGraph,
 )
 from rdf2geojson import convert
-from rdflib import Literal, DCTERMS, XSD, Namespace, URIRef
+from rdflib import Literal, Namespace
 from rdflib.namespace import GEO, RDF, PROF
 from sparql_grammar_pydantic import (
     IRI,
@@ -25,10 +25,9 @@ from sparql_grammar_pydantic import (
     Var,
 )
 
-from prez.cache import profiles_graph_cache, prefix_graph
+from prez.cache import prefix_graph
 from prez.config import settings
 from prez.enums import NonAnnotatedRDFMediaType, AnnotatedRDFMediaType
-from prez.exceptions.model_exceptions import PrefixNotBoundException
 from prez.reference_data.prez_ns import ALTREXT, OGCFEAT, PREZ
 from prez.renderers.renderer import (
     return_annotated_rdf_for_oxigraph,
@@ -42,12 +41,11 @@ from prez.renderers.renderer import (
 )
 from prez.repositories import Repo
 from prez.services.connegp_service import OXIGRAPH_SERIALIZER_TYPES_MAP
-from prez.services.curie_functions import get_curie_id_for_uri, get_uri_for_curie_id
+from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.generate_queryables import generate_queryables_json
 from prez.services.link_generation import add_prez_links_for_oxigraph
 from prez.services.query_generation.count import CountQuery
 from prez.services.query_generation.facet import FacetQuery
-from prez.services.query_generation.shacl import NodeShape
 from prez.services.query_generation.umbrella import (
     PrezQueryConstructor,
     merge_listing_query_grammar_inputs,

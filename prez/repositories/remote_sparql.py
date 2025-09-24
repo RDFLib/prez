@@ -1,4 +1,3 @@
-from io import BytesIO
 import logging
 from typing import Any
 from urllib.parse import quote_plus

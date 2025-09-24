@@ -5,7 +5,7 @@ from pathlib import Path
 import httpx
 from fastapi import Depends, HTTPException, Request
 from pyoxigraph import Store, RdfFormat, DefaultGraph as OxiDefaultGraph
-from rdflib import DCTERMS, RDF, SKOS, Dataset, Literal, URIRef, Graph
+from rdflib import DCTERMS, RDF, SKOS, Literal, URIRef, Graph
 from sparql_grammar_pydantic import IRI, Var
 
 from prez.cache import (
@@ -17,7 +17,6 @@ from prez.cache import (
     queryable_props,
     store,
     system_store,
-    persistent_store,
 )
 from prez.config import settings
 from prez.enums import (

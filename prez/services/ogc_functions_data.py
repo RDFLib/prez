@@ -11,7 +11,6 @@ from prez.models.ogc_features import (
     FunctionArgumentType,
     FunctionsResponse,
 )
-from rdflib import URIRef
 
 from prez.services.query_generation.cql_functions import REGISTERED_CQL_FUNCTIONS
 
