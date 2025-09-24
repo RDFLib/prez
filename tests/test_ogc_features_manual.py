@@ -21,7 +21,7 @@ def mock_queryables():
     """
 
     # Add the mock queryables to the system store
-    system_store.load(queryables_ttl.encode('utf-8'), RdfFormat.TURTLE)
+    system_store.load(queryables_ttl.encode("utf-8"), RdfFormat.TURTLE)
     return queryables_ttl
 
 
@@ -53,6 +53,7 @@ def test_ogc_features_queryables_turtle(client, mock_queryables):
 
     # Check for queryable type triples
     from rdflib import URIRef, RDF
+
     queryable_type = URIRef("http://www.opengis.net/doc/IS/cql2/1.0/Queryable")
     queryables = list(response_graph.subjects(RDF.type, queryable_type))
     assert len(queryables) > 0
@@ -74,6 +75,7 @@ def test_ogc_features_queryables_annotated_turtle(client, mock_queryables):
 
     # Check for queryable type triples
     from rdflib import URIRef, RDF
+
     queryable_type = URIRef("http://www.opengis.net/doc/IS/cql2/1.0/Queryable")
     queryables = list(response_graph.subjects(RDF.type, queryable_type))
     assert len(queryables) > 0
@@ -89,6 +91,7 @@ def test_ogc_features_queryables_rdf_xml(client, mock_queryables):
 
     # Verify it's valid RDF that can be parsed
     from rdflib import Graph
+
     response_graph = Graph().parse(data=r.text, format="xml")
     assert len(response_graph) > 0
 
@@ -103,6 +106,7 @@ def test_ogc_features_queryables_global_turtle(client, mock_queryables):
 
     # Verify it's valid RDF that can be parsed
     from rdflib import Graph
+
     response_graph = Graph().parse(data=r.text, format="turtle")
     assert len(response_graph) > 0
 
