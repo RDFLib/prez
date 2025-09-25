@@ -501,6 +501,25 @@ def test_focus_node_in_subquery():
     assert Var(value="focus_node") in parser.inner_select_vars
 
 
+def test_cql_boolean_equals_filter():
+    """Ensure boolean literals in CQL become boolean literals in the SPARQL FILTER."""
+    from prez.services.query_generation.cql import CQLParser
+
+    cql_json_data = {
+        "op": "=",
+        "args": [
+            {"property": "http://example.org/flag"},
+            True,
+        ],
+    }
+
+    parser = CQLParser(cql_json=cql_json_data)
+    parser.parse()
+
+    query_str = parser.query_str
+    assert "FILTER (?var_1 = true)" in query_str
+
+
 def test_cql_not_equal_operator_with_literal():
     """
     Tests the '<>' operator (not equal) with a literal string value.

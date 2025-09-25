@@ -54,10 +54,14 @@ from sparql_grammar_pydantic import (
 )
 
 
-def convert_value_to_rdf_term(val) -> IRI | NumericLiteral | RDFLiteral:
+def convert_value_to_rdf_term(
+    val,
+) -> IRI | NumericLiteral | RDFLiteral | BooleanLiteral:
     """Convert a Python value to the appropriate RDF term."""
     if isinstance(val, str) and val.startswith("http"):
         return IRI(value=val)
+    elif isinstance(val, bool):
+        return BooleanLiteral(value=val)
     elif isinstance(val, (int, float)):
         return NumericLiteral(value=val)
     else:
@@ -95,7 +99,9 @@ def create_regex_filter(variable: Var, pattern: str) -> GraphPatternNotTriples:
 
 
 def create_relational_filter(
-    left_var: Var, operator: str, right_value: IRI | NumericLiteral | RDFLiteral
+    left_var: Var,
+    operator: str,
+    right_value: IRI | NumericLiteral | RDFLiteral | BooleanLiteral,
 ) -> GraphPatternNotTriples:
     """Create a SPARQL FILTER with relational comparison.
 
