@@ -9,10 +9,10 @@ import httpx
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from rdflib import Graph
-from starlette.middleware.cors import CORSMiddleware
-from starlette.staticfiles import StaticFiles
 from starlette.applications import Starlette
+from starlette.middleware.cors import CORSMiddleware
 from starlette.routing import Mount
+from starlette.staticfiles import StaticFiles
 
 from prez.config import Settings, settings
 from prez.dependencies import (

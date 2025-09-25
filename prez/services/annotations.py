@@ -3,7 +3,7 @@ import logging
 from typing import FrozenSet, List, Set, Tuple
 
 from aiocache import caches
-from rdflib import Graph, Literal, URIRef
+from oxrdflib._converter import to_ox, from_ox
 from pyoxigraph import (
     Store as OxiStore,
     NamedNode as OxiNamedNode,
@@ -11,7 +11,7 @@ from pyoxigraph import (
     Quad as OxiQuad,
     DefaultGraph as OxiDefaultGraph,
 )
-from oxrdflib._converter import to_ox, from_ox
+from rdflib import Graph, Literal, URIRef
 from sparql_grammar_pydantic import IRI
 
 from prez.dependencies import get_annotations_repo

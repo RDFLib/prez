@@ -1,5 +1,4 @@
 import logging
-import re
 from enum import Enum
 from textwrap import dedent
 
@@ -12,7 +11,6 @@ from prez.config import settings
 from prez.exceptions.model_exceptions import PrefixNotBoundException
 from prez.repositories.base import Repo
 from prez.services.curie_functions import get_curie_id_for_uri, get_uri_for_curie_id
-from prez.services.validate_iri import validate_iri
 
 log = logging.getLogger(__name__)
 

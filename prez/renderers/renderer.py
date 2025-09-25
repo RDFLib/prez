@@ -13,19 +13,18 @@ from fastapi import status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
 from httpx import URL
+from oxrdflib._converter import to_ox
+from pyoxigraph import (
+    RdfFormat,
+    Store as OxiStore,
+    NamedNode as OxiNamedNode,
+    DefaultGraph as OxiDefaultGraph,
+)
 from rdf2geojson import convert
 from rdf2geojson.contrib.geomet import wkt
 from rdflib import Graph
 from rdflib import URIRef
 from rdflib.namespace import GEO, RDF
-from pyoxigraph import (
-    RdfFormat,
-    Store as OxiStore,
-    NamedNode as OxiNamedNode,
-    Quad as OxiQuad,
-    DefaultGraph as OxiDefaultGraph,
-)
-from oxrdflib._converter import to_ox
 from sparql_grammar_pydantic import (
     IRI,
     Var,

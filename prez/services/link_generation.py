@@ -2,6 +2,7 @@ import logging
 import time
 from string import Template
 
+from oxrdflib._converter import from_ox
 from pyoxigraph import (
     Store as OxiStore,
     Quad as OxiQuad,
@@ -9,8 +10,7 @@ from pyoxigraph import (
     Literal as OxiLiteral,
     DefaultGraph as OxiDefaultGraph,
 )
-from oxrdflib._converter import to_ox, from_ox
-from rdflib import Graph, Literal, URIRef
+from rdflib import Graph, URIRef
 from rdflib.namespace import RDF, SH
 from sparql_grammar_pydantic import (
     IRI,
