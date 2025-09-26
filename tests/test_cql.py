@@ -484,8 +484,9 @@ def test_focus_node_in_subquery():
     Tests that ?focus_node is always included in the inner select variables,
     even for a simple query.
     """
-    from prez.services.query_generation.cql import CQLParser
     from sparql_grammar_pydantic import Var
+
+    from prez.services.query_generation.cql import CQLParser
 
     cql_json_data = {
         "op": "=",
@@ -664,3 +665,76 @@ def test_cql_operator_conversion():
             assert False, "<> operator was not properly converted to !="
         else:
             raise  # Some other NotImplementedError
+
+
+@pytest.mark.parametrize(
+    "filter_value,expected_class,expected_datatype",
+    [
+        ["term", "RDFLiteral", None],
+        ["multi term phrase", "RDFLiteral", None],
+        ['"quotedTermNoDatatype"', "RDFLiteral", None],
+        ['"quoted phrase no datatype"', "RDFLiteral", None],
+        [
+            '"quotedTermWithDatatype"^^<http://my/datatype>',
+            "RDFLiteral",
+            "http://my/datatype",
+        ],
+        [
+            "unquotedTermWithDatatype^^<http://my/datatype>",
+            "RDFLiteral",
+            "http://my/datatype",
+        ],
+        [
+            "'singleQuotedTermWithDatatype'^^<http://my/datatype>",
+            "RDFLiteral",
+            "http://my/datatype",
+        ],
+        ['"some-identifier"^^<invalid uri>', "RDFLiteral", None],
+        ['"some-identifier"^^<https://valid/uri>', "RDFLiteral", "https://valid/uri"],
+        ['"some-identifier"^<https://valid/uri>', "RDFLiteral", None],
+        [
+            '"idEntifIER_with lots!of$craz3y charac^#@ters"^^<https://valid/uri>',
+            "RDFLiteral",
+            "https://valid/uri",
+        ],
+        [1, "NumericLiteral", None],
+        [9999999999999999999999999999999999, "NumericLiteral", None],
+        [True, "BooleanLiteral", None],
+        [False, "BooleanLiteral", None],
+        ["False", "RDFLiteral", None],
+    ],
+)
+def test_cql_typed_literal(
+    filter_value: str, expected_class: str, expected_datatype: str | None
+):
+    from rdflib import URIRef
+    from sparql_grammar_pydantic import (  # noqa
+        IRI,
+        BooleanLiteral,
+        NumericLiteral,
+        RDFLiteral,
+    )
+
+    from prez.services.query_generation.cql import CQLParser
+
+    expected_class = eval(expected_class)
+    parser = CQLParser()
+    test_element = {
+        "op": "=",
+        "args": [{"property": "http://example.org/prop"}, filter_value],
+    }
+    ggps_iterator = parser.parse_logical_operators(test_element)
+    ggps = next(ggps_iterator)
+    parsed_term = (
+        ggps.graph_patterns_or_triples_blocks[1]
+        .content.constraint.content.expression.conditional_or_expression.conditional_and_expressions[
+            0
+        ]
+        .value_logicals[0]
+        .relational_expression.right.additive_expression.base_expression.base_expression.primary_expression.content
+    )
+    assert isinstance(parsed_term, expected_class)
+    if expected_class == RDFLiteral:
+        if expected_datatype is not None:
+            expected_datatype = IRI(value=URIRef(expected_datatype))
+        assert parsed_term.datatype == expected_datatype
