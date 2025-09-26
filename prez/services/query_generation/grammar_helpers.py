@@ -76,7 +76,7 @@ def convert_value_to_rdf_term(
 
     # check if it is a datatyped literal
     # search for a term or phrase enclosed in double quotes with an rdf style datatype declaration at the end
-    datatype_pattern = r'(.*)\^\^<(\S+)>$'
+    datatype_pattern = r"(.*)\^\^<(\S+)>$"
     capture_groups = re.findall(datatype_pattern, val)
     if capture_groups and len(capture_groups) == 1:
         value_str, datatype_str = capture_groups[0]
