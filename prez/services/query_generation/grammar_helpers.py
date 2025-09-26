@@ -63,32 +63,54 @@ def convert_value_to_rdf_term(
     val,
 ) -> IRI | NumericLiteral | RDFLiteral | BooleanLiteral:
     """Convert a Python value to the appropriate RDF term."""
+    # handle booleans
     if isinstance(val, bool):
         return BooleanLiteral(value=val)
-    elif isinstance(val, (int, float)):
+
+    # handle numbers
+    if isinstance(val, (int, float)):
         return NumericLiteral(value=val)
-    elif isinstance(val, str):
-        # search for a term or phrase enclosed in double quotes with an rdf style datatype declaration at the end
-        datatype_pattern = r'"(.*)"\^\^<(\S+)>$'
-        capture_groups = re.findall(datatype_pattern, val)
-        if capture_groups and len(capture_groups) == 1:
-            value_str, datatype_str = capture_groups[0]
-            datatype_uri = URIRef(datatype_str)
-            try:
-                datatype_uri.n3()
-                datatype_iri = IRI(value=datatype_uri)
-                return RDFLiteral(value=value_str, datatype=datatype_iri)
-            except Exception as e:
-                logger.warning(
-                    f"Exception during rdf_term conversion, provided datatype {datatype_str} is not a valid uri, "
-                    f"defaulting to RDFLiteral with no datatype"
-                    f"{e.args[0]}"
-                )
-                return RDFLiteral(value=val)
-        elif val.startswith("http"):
-            return IRI(value=val)
-    else:
-        return RDFLiteral(value=val)
+
+    # sanitize leading and trailing quotes
+    val = val.strip("'\"")
+
+    # check if it is a datatyped literal
+    # search for a term or phrase enclosed in double quotes with an rdf style datatype declaration at the end
+    datatype_pattern = r'(.*)\^\^<(\S+)>$'
+    capture_groups = re.findall(datatype_pattern, val)
+    if capture_groups and len(capture_groups) == 1:
+        value_str, datatype_str = capture_groups[0]
+        datatype_uri = URIRef(datatype_str)
+        # sanitize leading and trailing quotes
+        value_str = value_str.strip("'\"")
+        try:
+            datatype_uri.n3()
+            datatype_iri = IRI(value=datatype_uri)
+            return RDFLiteral(value=value_str, datatype=datatype_iri)
+        except Exception as e:
+            logger.warning(
+                f"Exception during rdf_term conversion, provided datatype {datatype_str} is not a valid uri, "
+                f"defaulting to RDFLiteral with no datatype"
+                f"{e.args[0]}"
+            )
+            return RDFLiteral(value=val)
+
+    # check if it is a uri
+    elif val.startswith("http"):
+        datatype_uri = URIRef(val)
+        try:
+            datatype_uri.n3()
+            return IRI(value=datatype_uri)
+        except Exception as e:
+            logger.warning(
+                f"Exception during rdf_term conversion, provided term {datatype_str} is not a valid uri, "
+                f"defaulting to RDFLiteral with no datatype"
+                f"{e.args[0]}"
+            )
+            return RDFLiteral(value=val)
+
+    # just return a literal if nothing else matched
+    return RDFLiteral(value=val)
 
 
 def create_regex_filter(variable: Var, pattern: str) -> GraphPatternNotTriples:
