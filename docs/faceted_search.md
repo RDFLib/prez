@@ -78,3 +78,23 @@ WHERE {
   }GROUP BY ?facetName ?facetValue
 }
 ```
+
+## Open Faceting
+
+Open faceting is allowed, meaning you can perform faceted search without providing a search term by using only the `facet_profile` parameter:
+
+```
+/search?facet_profile=xyz
+```
+
+When no search term is provided, Prez automatically injects a `?focus_node a ?type` triple in the subselect query. This ensures that only instances of classes are faceted on, rather than attempting to facet across all nodes in the dataset.
+
+**Performance Considerations:**
+
+Open faceting works well for smaller datasets, but performance can become an issue with larger datasets since it needs to process all class instances without any filtering constraints.
+
+For larger datasets, it is recommended to:
+- Perform a search first to narrow the result set
+- Add additional filters or search terms to reduce the scope (using parameters: filter, bbox, datetime, q)
+- Use a separate full text search/faceting implementation designed for large-scale operations such as open search or lucene
+```
