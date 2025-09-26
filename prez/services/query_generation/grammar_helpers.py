@@ -7,29 +7,33 @@ grammar construction patterns. The intention is to move these to the
 sparql-grammar-pydantic library itself.
 """
 
+import logging
+import re
+
 from rdflib import URIRef
 from sparql_grammar_pydantic import (
+    IRI,
     AdditiveExpression,
     BooleanLiteral,
     BrackettedExpression,
+    BuiltInCall,
     ConditionalAndExpression,
     ConditionalOrExpression,
     Constraint,
     DataBlock,
     DataBlockValue,
+    Expression,
     Filter,
+    GraphNodePath,
+    GraphPatternNotTriples,
+    GroupGraphPattern,
+    GroupGraphPatternSub,
+    GroupOrUnionGraphPattern,
     InlineData,
     InlineDataOneVar,
     MultiplicativeExpression,
     NumericExpression,
     NumericLiteral,
-    RegexExpression,
-    RelationalExpression,
-    UnaryExpression,
-    ValueLogical,
-    BuiltInCall,
-    Expression,
-    GraphNodePath,
     ObjectListPath,
     ObjectPath,
     PathAlternative,
@@ -39,31 +43,50 @@ from sparql_grammar_pydantic import (
     PathSequence,
     PrimaryExpression,
     PropertyListPathNotEmpty,
-    SG_Path,
-    VerbPath,
-    IRI,
-    GraphPatternNotTriples,
-    GroupGraphPattern,
-    GroupGraphPatternSub,
-    GroupOrUnionGraphPattern,
     RDFLiteral,
+    RegexExpression,
+    RelationalExpression,
+    SG_Path,
     TriplesBlock,
     TriplesSameSubjectPath,
+    UnaryExpression,
+    ValueLogical,
     Var,
     VarOrTerm,
+    VerbPath,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def convert_value_to_rdf_term(
     val,
 ) -> IRI | NumericLiteral | RDFLiteral | BooleanLiteral:
     """Convert a Python value to the appropriate RDF term."""
-    if isinstance(val, str) and val.startswith("http"):
-        return IRI(value=val)
-    elif isinstance(val, bool):
+    if isinstance(val, bool):
         return BooleanLiteral(value=val)
     elif isinstance(val, (int, float)):
         return NumericLiteral(value=val)
+    elif isinstance(val, str):
+        # search for a term or phrase enclosed in double quotes with an rdf style datatype declaration at the end
+        datatype_pattern = r'"(.*)"\^\^<(\S+)>$'
+        capture_groups = re.findall(datatype_pattern, val)
+        if capture_groups and len(capture_groups) == 1:
+            value_str, datatype_str = capture_groups[0]
+            datatype_uri = URIRef(datatype_str)
+            try:
+                datatype_uri.n3()
+                datatype_iri = IRI(value=datatype_uri)
+                return RDFLiteral(value=value_str, datatype=datatype_iri)
+            except Exception as e:
+                logger.warning(
+                    f"Exception during rdf_term conversion, provided datatype {datatype_str} is not a valid uri, "
+                    f"defaulting to RDFLiteral with no datatype"
+                    f"{e.args[0]}"
+                )
+                return RDFLiteral(value=val)
+        elif val.startswith("http"):
+            return IRI(value=val)
     else:
         return RDFLiteral(value=val)
 
