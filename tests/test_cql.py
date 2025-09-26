@@ -702,6 +702,7 @@ def test_cql_operator_conversion():
         [True, "BooleanLiteral", None],
         [False, "BooleanLiteral", None],
         ["False", "RDFLiteral", None],
+        ['"normal_value"^^<http://example.org/type> ) { SELECT * {?s ?p ?o} } FILTER(', "RDFLiteral", None],
     ],
 )
 def test_cql_typed_literal(
