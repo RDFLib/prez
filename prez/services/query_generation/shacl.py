@@ -210,6 +210,7 @@ class PropertyShape(Shape):
     focus_node: Union[IRI, Var]
     # inputs
     shape_number: int = 0
+    var_counter_offset: int = 0  # Offset for variable numbering to ensure uniqueness
     and_property_paths: Optional[List[PropertyPath]] = None
     union_property_paths: Optional[List[PropertyPath]] = None
     or_klasses: Optional[List[URIRef]] = None
@@ -685,10 +686,17 @@ class PropertyShape(Shape):
                     path_node_1 = Var(value=f"fts_search_node_{pp_i + 1}")
                 else:
                     path_node_1 = Var(value="fts_search_node")
-            elif f"{path_or_prop}_node_{pp_i + 1}" in self.path_nodes:
-                path_node_1 = self.path_nodes[f"{path_or_prop}_node_{pp_i + 1}"]
+            elif (
+                f"{path_or_prop}_node_{pp_i + 1 + self.var_counter_offset}"
+                in self.path_nodes
+            ):
+                path_node_1 = self.path_nodes[
+                    f"{path_or_prop}_node_{pp_i + 1 + self.var_counter_offset}"
+                ]
             else:
-                path_node_1 = Var(value=f"{path_or_prop}_node_{pp_i + 1}")
+                path_node_1 = Var(
+                    value=f"{path_or_prop}_node_{pp_i + 1 + self.var_counter_offset}"
+                )
 
             # Create additional nodes only if we have a sequence path
             path_nodes = {0: path_node_1}  # Start with path_node_1
