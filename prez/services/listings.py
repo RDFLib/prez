@@ -56,6 +56,18 @@ log = logging.getLogger(__name__)
 DWC = Namespace("http://rs.tdwg.org/dwc/terms/")
 
 
+async def extract_queryables_rdf(system_repo: Repo):
+    """
+    Extract queryables RDF from the system store using a DESCRIBE query.
+    Returns an Oxigraph store containing all queryables and their property shapes.
+    """
+    describe_query = "DESCRIBE ?queryable WHERE { ?queryable a <http://www.opengis.net/doc/IS/cql2/1.0/Queryable> }"
+    queryables_store, _ = await system_repo.send_queries(
+        [describe_query], [], return_oxigraph_store=True
+    )
+    return queryables_store
+
+
 async def listing_profiles(
     data_repo,
     system_repo,
@@ -405,6 +417,48 @@ async def ogc_features_listing_function(
             item_store, data_repo, system_repo
         )
     item_graph = item_store  # treat the Oxigraph Store as a graph
+
+    # Handle queryables RDF responses
+    if endpoint_uri_type[0] in [
+        OGCFEAT["queryables-local"],
+        OGCFEAT["queryables-global"],
+    ] and (
+        selected_mediatype in NonAnnotatedRDFMediaType
+        or selected_mediatype in AnnotatedRDFMediaType
+    ):
+        # Extract queryables RDF from the system store using DESCRIBE query
+        queryables_store = await extract_queryables_rdf(system_repo)
+
+        # Handle annotated vs non-annotated RDF
+        if selected_mediatype in AnnotatedRDFMediaType:
+            serialization_format = selected_mediatype.replace("anot+", "")
+            # Get specific annotations for the queryables data (not the entire annotations store)
+            specific_annotations_store = await return_annotated_rdf_for_oxigraph(
+                queryables_store, data_repo, system_repo
+            )
+            queryables_store.bulk_extend(specific_annotations_store)
+        else:
+            serialization_format = selected_mediatype
+
+        # Get the Oxigraph serializer format
+        serializer_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(
+            serialization_format, RdfFormat.N_TRIPLES
+        )
+
+        # Get prefixes for serialization
+        oxigraph_prefixes = {
+            p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()
+        }
+
+        content = io.BytesIO()
+        queryables_store.dump(
+            content,
+            serializer_format,
+            from_graph=OxiDefaultGraph(),
+            prefixes=oxigraph_prefixes,
+        )
+        content.seek(0)
+        return content, link_headers
 
     if selected_mediatype == "application/json":
         if endpoint_uri_type[0] in [
