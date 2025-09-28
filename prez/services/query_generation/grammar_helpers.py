@@ -73,6 +73,8 @@ def convert_value_to_rdf_term(
 
     # sanitize leading and trailing quotes
     val = val.strip("'\"")
+    # escape double quotes to prevent sparql injection
+    val = val.replace('"', r"\"")
 
     # check if it is a datatyped literal
     datatype_pattern = r"(.*)\^\^<(\S+)>$"

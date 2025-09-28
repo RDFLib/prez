@@ -702,13 +702,21 @@ def test_cql_operator_conversion():
         [True, "BooleanLiteral", None],
         [False, "BooleanLiteral", None],
         ["False", "RDFLiteral", None],
-        ['"normal_value"^^<http://example.org/type> ) { SELECT * {?s ?p ?o} } FILTER(', "RDFLiteral", None],
+        [
+            '"normal_value"^^<http://example.org/type> ) { SELECT * {?s ?p ?o} } FILTER(',
+            "RDFLiteral",
+            None,
+        ],
+        [
+            '"normal_value""^^<http://example.org/type> ) { SELECT * {?s ?p ?o} } FILTER(',
+            "RDFLiteral",
+            None,
+        ],
     ],
 )
 def test_cql_typed_literal(
     filter_value: str, expected_class: str, expected_datatype: str | None
 ):
-    from rdflib import URIRef
     from sparql_grammar_pydantic import (  # noqa
         IRI,
         BooleanLiteral,
@@ -737,5 +745,5 @@ def test_cql_typed_literal(
     assert isinstance(parsed_term, expected_class)
     if expected_class == RDFLiteral:
         if expected_datatype is not None:
-            expected_datatype = IRI(value=URIRef(expected_datatype))
+            expected_datatype = IRI(value=expected_datatype)
         assert parsed_term.datatype == expected_datatype
