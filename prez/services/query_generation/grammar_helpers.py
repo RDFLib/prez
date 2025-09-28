@@ -75,39 +75,17 @@ def convert_value_to_rdf_term(
     val = val.strip("'\"")
 
     # check if it is a datatyped literal
-    # search for a term or phrase enclosed in double quotes with an rdf style datatype declaration at the end
     datatype_pattern = r"(.*)\^\^<(\S+)>$"
     capture_groups = re.findall(datatype_pattern, val)
     if capture_groups and len(capture_groups) == 1:
         value_str, datatype_str = capture_groups[0]
-        datatype_uri = URIRef(datatype_str)
-        # sanitize leading and trailing quotes
         value_str = value_str.strip("'\"")
-        try:
-            datatype_uri.n3()
-            datatype_iri = IRI(value=datatype_uri)
-            return RDFLiteral(value=value_str, datatype=datatype_iri)
-        except Exception as e:
-            logger.warning(
-                f"Exception during rdf_term conversion, provided datatype {datatype_str} is not a valid uri, "
-                f"defaulting to RDFLiteral with no datatype"
-                f"{e.args[0]}"
-            )
-            return RDFLiteral(value=val)
+        datatype_iri = IRI(value=datatype_str)
+        return RDFLiteral(value=value_str, datatype=datatype_iri)
 
     # check if it is a uri
     elif val.startswith("http"):
-        datatype_uri = URIRef(val)
-        try:
-            datatype_uri.n3()
-            return IRI(value=datatype_uri)
-        except Exception as e:
-            logger.warning(
-                f"Exception during rdf_term conversion, provided term {datatype_str} is not a valid uri, "
-                f"defaulting to RDFLiteral with no datatype"
-                f"{e.args[0]}"
-            )
-            return RDFLiteral(value=val)
+        return IRI(value=val)
 
     # just return a literal if nothing else matched
     return RDFLiteral(value=val)
