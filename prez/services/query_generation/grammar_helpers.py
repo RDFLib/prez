@@ -7,29 +7,33 @@ grammar construction patterns. The intention is to move these to the
 sparql-grammar-pydantic library itself.
 """
 
+import logging
+import re
+
 from rdflib import URIRef
 from sparql_grammar_pydantic import (
+    IRI,
     AdditiveExpression,
     BooleanLiteral,
     BrackettedExpression,
+    BuiltInCall,
     ConditionalAndExpression,
     ConditionalOrExpression,
     Constraint,
     DataBlock,
     DataBlockValue,
+    Expression,
     Filter,
+    GraphNodePath,
+    GraphPatternNotTriples,
+    GroupGraphPattern,
+    GroupGraphPatternSub,
+    GroupOrUnionGraphPattern,
     InlineData,
     InlineDataOneVar,
     MultiplicativeExpression,
     NumericExpression,
     NumericLiteral,
-    RegexExpression,
-    RelationalExpression,
-    UnaryExpression,
-    ValueLogical,
-    BuiltInCall,
-    Expression,
-    GraphNodePath,
     ObjectListPath,
     ObjectPath,
     PathAlternative,
@@ -39,33 +43,54 @@ from sparql_grammar_pydantic import (
     PathSequence,
     PrimaryExpression,
     PropertyListPathNotEmpty,
-    SG_Path,
-    VerbPath,
-    IRI,
-    GraphPatternNotTriples,
-    GroupGraphPattern,
-    GroupGraphPatternSub,
-    GroupOrUnionGraphPattern,
     RDFLiteral,
+    RegexExpression,
+    RelationalExpression,
+    SG_Path,
     TriplesBlock,
     TriplesSameSubjectPath,
+    UnaryExpression,
+    ValueLogical,
     Var,
     VarOrTerm,
+    VerbPath,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def convert_value_to_rdf_term(
     val,
 ) -> IRI | NumericLiteral | RDFLiteral | BooleanLiteral:
     """Convert a Python value to the appropriate RDF term."""
-    if isinstance(val, str) and val.startswith("http"):
-        return IRI(value=val)
-    elif isinstance(val, bool):
+    # handle booleans
+    if isinstance(val, bool):
         return BooleanLiteral(value=val)
-    elif isinstance(val, (int, float)):
+
+    # handle numbers
+    if isinstance(val, (int, float)):
         return NumericLiteral(value=val)
-    else:
-        return RDFLiteral(value=val)
+
+    # sanitize leading and trailing quotes
+    val = val.strip("'\"")
+    # escape double quotes to prevent sparql injection
+    val = val.replace('"', r"\"")
+
+    # check if it is a datatyped literal
+    datatype_pattern = r"(.*)\^\^<(\S+)>$"
+    capture_groups = re.findall(datatype_pattern, val)
+    if capture_groups and len(capture_groups) == 1:
+        value_str, datatype_str = capture_groups[0]
+        value_str = value_str.strip("'\"")
+        datatype_iri = IRI(value=datatype_str)
+        return RDFLiteral(value=value_str, datatype=datatype_iri)
+
+    # check if it is a uri
+    elif val.startswith("http"):
+        return IRI(value=val)
+
+    # just return a literal if nothing else matched
+    return RDFLiteral(value=val)
 
 
 def create_regex_filter(variable: Var, pattern: str) -> GraphPatternNotTriples:
