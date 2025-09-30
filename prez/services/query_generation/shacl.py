@@ -7,13 +7,14 @@ from typing import Literal as TypingLiteral
 from typing import Optional, Tuple, Type, Union
 
 from pydantic import BaseModel
-from rdflib import RDFS, BNode, Graph, URIRef, XSD
+from rdflib import RDFS, XSD, BNode, Graph, URIRef
 from rdflib.collection import Collection
 from rdflib.namespace import RDF, SH
-from rdflib.term import Node, Literal
+from rdflib.term import Literal, Node
 from sparql_grammar_pydantic import (
     IRI,
     Bind,
+    BooleanLiteral,
     BuiltInCall,
     Constraint,
     DataBlock,
@@ -29,6 +30,7 @@ from sparql_grammar_pydantic import (
     InlineData,
     InlineDataOneVar,
     IRIOrFunction,
+    NumericLiteral,
     ObjectListPath,
     ObjectPath,
     OptionalGraphPattern,
@@ -40,6 +42,7 @@ from sparql_grammar_pydantic import (
     PathSequence,
     PrimaryExpression,
     PropertyListPathNotEmpty,
+    RDFLiteral,
     SG_Path,
     TriplesBlock,
     TriplesSameSubject,
@@ -47,9 +50,6 @@ from sparql_grammar_pydantic import (
     Var,
     VarOrTerm,
     VerbPath,
-    RDFLiteral,
-    BooleanLiteral,
-    NumericLiteral,
 )
 
 from prez.config import settings
@@ -224,6 +224,7 @@ class PropertyShape(Shape):
     bnode_depth: Optional[int] = None
     union_tssps_binds: Optional[List[Dict[str, Any]]] = []  # New attribute
     all_predicate_values_counter: int = 0
+    _pkids: dict() = {}
 
     @property
     def minCount(self):
@@ -270,6 +271,19 @@ class PropertyShape(Shape):
         filter_shape_tssp_list = []
         if filter_shape_uri:
             filter_shape_tssp_list = self._parse_filter_shape(filter_shape_uri)
+
+        pivot_shape_uri = next(self.graph.objects(self.uri, SHEXT.pivotShape), None)
+        if pivot_shape_uri:
+            pivot_path = next(self.graph.objects(pivot_shape_uri, SH.path), None)
+            # order matters here. key then value. reflected in _generate_sparql_for_paths
+            for pred in [SHEXT.pivotKey, SHEXT.pivotValue]:
+                pred_path = next(self.graph.objects(pivot_shape_uri, pred), None)
+                combined_path = Collection(self.graph, BNode(), [pivot_path, pred_path])
+                self._add_path_to_shape(
+                    combined_path.uri,
+                    shape_level_alias=shape_level_path_alias,
+                    filter_shape_tssp_list=filter_shape_tssp_list,
+                )
 
         pps = list(self.graph.objects(self.uri, SH.path))
         for pp in pps:
@@ -330,10 +344,12 @@ class PropertyShape(Shape):
 
         return binds
 
-    def _parse_property_path(self, pp: Node) -> PropertyPath:
+    def _parse_property_path(
+        self, pp: Node, uri: Optional[URIRef] = None
+    ) -> PropertyPath:
         """Recursively parses a SHACL path node (URIRef or BNode) into a PropertyPath object."""
         if isinstance(pp, URIRef):
-            return Path(value=pp)
+            return Path(value=pp, uri=uri)
         elif isinstance(pp, BNode):
             # Check for sequence first (RDF list structure)
             if self.graph.value(pp, RDF.first):
@@ -350,7 +366,7 @@ class PropertyShape(Shape):
                         raise ValueError(
                             f"Malformed RDF list structure: missing rdf:rest from {pp}"
                         )
-                return SequencePath(value=path_elements)
+                return SequencePath(value=path_elements, uri=uri)
 
             # If not a sequence, check for other SHACL path constructs
             pred_objects = list(self.graph.predicate_objects(subject=pp))
@@ -455,6 +471,7 @@ class PropertyShape(Shape):
         self,
         pp: Node,
         union: bool = False,
+        uri: Optional[URIRef] = None,
         shape_level_alias: Optional[URIRef] = None,
         filter_shape_tssp_list: Optional[List[TriplesSameSubjectPath]] = None,
     ):
@@ -482,7 +499,7 @@ class PropertyShape(Shape):
                 path_to_parse = nested_path_node
 
         try:
-            path_object = self._parse_property_path(path_to_parse)
+            path_object = self._parse_property_path(path_to_parse, uri)
             if path_object is not None:
                 if path_alias_value:
                     path_object.path_alias = path_alias_value
@@ -670,6 +687,14 @@ class PropertyShape(Shape):
         """Processes property paths, generating TSSP lists and facet binds."""
         processed_paths_data = []
         pp_i = start_pp_i
+
+        pivot_profile = (
+            next(self.graph.objects(self.uri, SHEXT.pivotShape), None) is not None
+        )
+        if pivot_profile:
+            pivot_node_var = None
+            pivot_key_var = None
+            pivot_value_var = None
         for property_path in property_paths:
             # Determine if we should use the path alias for CONSTRUCT triples
             use_alias = (
@@ -713,6 +738,7 @@ class PropertyShape(Shape):
                 obj_node = path_nodes[
                     seq_path_len - 1
                 ]  # Object node is the last in sequence
+
             elif isinstance(property_path, BNodeDepth):
                 obj_node = (
                     None  # BNodeDepth doesn't have a specific object node for binding
@@ -859,6 +885,28 @@ class PropertyShape(Shape):
                         # (path_nodes[0] is path_node_1, path_nodes[1] is path_node_2, etc.)
                         segment_object_node = path_nodes[j]
 
+                        # pivot profile special handling
+                        last_segment = (j + 1) == len(property_path.value)
+                        if pivot_profile:
+                            if last_segment and not pivot_key_var:
+                                pivot_node_var = segment_subject_node
+                                pivot_key_var = segment_object_node
+                            elif not last_segment and pivot_key_var:
+                                # only add the last segment segment for the pivot_value_path
+                                continue
+                            elif last_segment and pivot_key_var:
+                                # adjust the subject node to be the same as for the pivot_key_path
+                                segment_subject_node = pivot_node_var
+                                pivot_value_var = segment_object_node
+                                pivot_triple = (
+                                    self.focus_node,
+                                    pivot_key_var,
+                                    pivot_value_var,
+                                )
+                                self.tss_list.append(
+                                    TriplesSameSubject.from_spo(*pivot_triple)
+                                )
+
                         if isinstance(path_segment, Path):
                             inner_path_type = "path"
                             if path_segment.value == SHEXT.allPredicateValues:
@@ -1002,7 +1050,7 @@ class PropertyShape(Shape):
                                 TriplesSameSubjectPath.from_spo(*where_triple)
                             )
                             # Add to CONSTRUCT only if the entire SequencePath is NOT aliased
-                            if not use_alias:
+                            if not use_alias and not pivot_profile:
                                 self.tss_list.append(
                                     TriplesSameSubject.from_spo(*where_triple)
                                 )
