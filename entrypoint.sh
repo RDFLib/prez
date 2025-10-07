@@ -1,39 +1,32 @@
 #!/bin/bash
 set -e
 
-# Define paths
-REFERENCE_DATA_DIR="/app/reference_data"
-REFERENCE_DATA_DEFAULTS="${VIRTUAL_ENV}/lib/python*/site-packages/prez/reference_data"
-REFERENCE_DATA_CUSTOM="/app/reference_data-custom"
-
 echo "Prez config merge entrypoint"
 
-# Create the working reference_data directory
-mkdir -p "${REFERENCE_DATA_DIR}"
+DEFAULTS_DIR=$(find "${VIRTUAL_ENV}/lib" -path "*/prez/reference_data" -type d 2>/dev/null | head -1)
+CUSTOM_DIR="/app/reference_data"     # read-only, user-supplied
+TARGET_DIR="/data/reference_data"    # writable, merged
 
-# Find the actual path to the installed prez package reference_data
-INSTALLED_REF_DATA=$(find ${VIRTUAL_ENV}/lib -path "*/prez/reference_data" -type d 2>/dev/null | head -1)
+rm -rf "${TARGET_DIR}"
+mkdir -p "${TARGET_DIR}"
 
-if [ -n "${INSTALLED_REF_DATA}" ] && [ -d "${INSTALLED_REF_DATA}" ]; then
-    echo "Copying default reference_data from ${INSTALLED_REF_DATA}..."
-    cp -r "${INSTALLED_REF_DATA}"/* "${REFERENCE_DATA_DIR}/"
-    echo "Default reference_data loaded"
+# 1. Copy defaults first
+if [ -d "${DEFAULTS_DIR}" ]; then
+  echo "Copying defaults from ${DEFAULTS_DIR}"
+  cp -a "${DEFAULTS_DIR}/." "${TARGET_DIR}/"
 else
-    echo "Warning: Could not find installed prez reference_data"
+  echo "⚠️  No defaults found at ${DEFAULTS_DIR}"
 fi
 
-# Overlay custom config if mounted
-if [ -d "${REFERENCE_DATA_CUSTOM}" ] && [ "$(ls -A ${REFERENCE_DATA_CUSTOM})" ]; then
-    echo "Applying custom reference_data configuration..."
-    # Use cp with no-clobber flag removed, so files with same names override
-    cp -rf "${REFERENCE_DATA_CUSTOM}"/* "${REFERENCE_DATA_DIR}/"
-    echo "Custom reference_data applied"
+# 2. Overlay user config (override on same filename, keep others)
+if [ -d "${CUSTOM_DIR}" ] && [ "$(ls -A "${CUSTOM_DIR}")" ]; then
+  echo "Merging custom config from ${CUSTOM_DIR}"
+  rsync -a --ignore-times --update --checksum "${CUSTOM_DIR}/" "${TARGET_DIR}/"
 else
-    echo "No custom reference_data mounted at ${REFERENCE_DATA_CUSTOM}"
+  echo "No custom config provided at ${CUSTOM_DIR}"
 fi
 
-echo "Reference data configuration complete"
-echo "Starting Prez..."
+export PREZ_REFERENCE_DATA_DIR="${TARGET_DIR}"
+echo "Reference data merged at ${PREZ_REFERENCE_DATA_DIR}"
 
-# Execute the actual application command
 exec "$@"
