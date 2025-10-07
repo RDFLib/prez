@@ -15,7 +15,9 @@ async def create_profiles_graph(repo) -> Graph:
     ):  # pytest imports app.py multiple times, so this is needed. Not sure why cache is
         # not cleared between calls
         return
-    for f in (get_reference_data_dir() / "profiles").glob("*.ttl"):
+    files = list((get_reference_data_dir() / "profiles").glob("*.ttl")) + \
+            list((get_reference_data_dir() / "facet_profiles").glob("*.ttl"))
+    for f in files:
         profiles_graph_cache.parse(f)
     log.info("Prez default profiles loaded")
     remote_profiles_query = """
