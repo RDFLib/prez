@@ -4,6 +4,7 @@ from pathlib import Path
 from rdflib import Graph
 
 from prez.cache import profiles_graph_cache
+from prez.config import get_reference_data_dir
 
 log = logging.getLogger(__name__)
 
@@ -14,7 +15,7 @@ async def create_profiles_graph(repo) -> Graph:
     ):  # pytest imports app.py multiple times, so this is needed. Not sure why cache is
         # not cleared between calls
         return
-    for f in (Path(__file__).parent.parent / "reference_data/profiles").glob("*.ttl"):
+    for f in (get_reference_data_dir() / "profiles").glob("*.ttl"):
         profiles_graph_cache.parse(f)
     log.info("Prez default profiles loaded")
     remote_profiles_query = """

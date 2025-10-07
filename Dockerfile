@@ -53,9 +53,15 @@ WORKDIR /app
 # prez module is already built as a package and installed in $VIRTUAL_ENV as a library
 COPY main.py pyproject.toml ./
 
-ENTRYPOINT uvicorn prez.app:assemble_app --factory \
-  --host=${HOST:-0.0.0.0} \
-  --port=${PORT:-8000} \
-  $( [ "$(echo "$PROXY_HEADERS" | tr '[:upper:]' '[:lower:]')" = "true" ] || [ "$PROXY_HEADERS" = "1" ] && echo "--proxy-headers" ) \
-  --forwarded-allow-ips=${FORWARDED_ALLOW_IPS:-127.0.0.1} \
-  --root-path "${APP_ROOT_PATH}"
+# Add entrypoint script for config merging
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Create directory for merged reference_data (populated at runtime by entrypoint)
+RUN mkdir -p /app/reference_data
+
+# Set environment variable so prez code knows where to find reference_data
+ENV PREZ_REFERENCE_DATA_DIR=/app/reference_data
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["sh", "-c", "uvicorn prez.app:assemble_app --factory --host=${HOST:-0.0.0.0} --port=${PORT:-8000} $([ \"$(echo \"$PROXY_HEADERS\" | tr '[:upper:]' '[:lower:]')\" = \"true\" ] || [ \"$PROXY_HEADERS\" = \"1\" ] && echo \"--proxy-headers\") --forwarded-allow-ips=${FORWARDED_ALLOW_IPS:-127.0.0.1} --root-path \"${APP_ROOT_PATH}\""]

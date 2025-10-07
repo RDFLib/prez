@@ -1,0 +1,1 @@
+Allows specification of Jena FTS shapes to have focus nodes other than the node directly attached to the literals being searched. Refer to docs/fuseki_fts_functionality.md.
