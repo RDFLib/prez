@@ -33,7 +33,11 @@ from sparql_grammar_pydantic import (
     Var,
     TriplesNode,
 )
-from sparql_grammar_pydantic.grammar import PropertyList, IRIOrFunction
+from sparql_grammar_pydantic.grammar import (
+    PropertyList,
+    IRIOrFunction,
+    TriplesSameSubjectPath,
+)
 
 from prez.cache import profiles_graph_cache
 from prez.exceptions.model_exceptions import PrefixNotBoundException
@@ -81,6 +85,15 @@ class FacetQuery(ConstructQuery):
         property_shape=None,
         focus_node_uri=None,
     ):
+        # Validate that exactly one of the two modes is specified
+        modes_specified = sum(
+            [original_subselect is not None, focus_node_uri is not None]
+        )
+        if modes_specified != 1:
+            raise ValueError(
+                "Exactly one of 'original_subselect' or 'focus_node_uri' must be specified"
+            )
+
         # Define variables used
         if focus_node_uri:
             focus_node_var_or_iri = IRI(value=focus_node_uri)
@@ -111,7 +124,7 @@ class FacetQuery(ConstructQuery):
         # inner subselect or direct patterns
         inner_gpnts_or_tb = []
 
-        if not focus_node_uri:
+        if original_subselect is not None:
             # For listing queries with original subselect
             inner_ss = SubSelect(
                 select_clause=SelectClause(
@@ -255,7 +268,7 @@ class FacetQuery(ConstructQuery):
                     focus_node_uri=focus_node_uri,
                 )
             else:
-                # For listing queries with subselect
+                # For listing queries with subselect, or open facet queries
                 subselect_for_faceting = copy.deepcopy(main_query.inner_select)
                 facets_query = FacetQuery(
                     original_subselect=subselect_for_faceting,
