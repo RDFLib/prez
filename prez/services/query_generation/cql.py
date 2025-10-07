@@ -75,7 +75,9 @@ SUPPORTED_CQL_TIME_OPERATORS = {
 
 UNBOUNDED = "unbounded"
 
-relations_path = get_reference_data_dir() / "cql/bounded_temporal_interval_relation_matrix.json"
+relations_path = (
+    get_reference_data_dir() / "cql/bounded_temporal_interval_relation_matrix.json"
+)
 relations = json.loads(relations_path.read_text())
 
 SHACL_FILTER_NAMESPACE = Namespace("https://cql-shacl-filter/")

@@ -165,10 +165,10 @@ settings = Settings()
 def get_reference_data_dir() -> Path:
     """
     Get the reference_data directory path.
-    
+
     Returns the path from PREZ_REFERENCE_DATA_DIR environment variable if set,
     otherwise returns the default location relative to this file.
-    
+
     This allows for runtime configuration merging in Docker containers where
     custom reference_data can be mounted and merged with defaults.
     """

@@ -116,9 +116,7 @@ async def retrieve_jena_fts_shapes(repo: Repo):
         while len(names_list) < n_shapes:
             names_list.append("(no label)")
         names = ", ".join(names_list)
-        log.info(
-            f"Found and added {n_shapes} remote Jena FTS shapes: {names}"
-        )
+        log.info(f"Found and added {n_shapes} remote Jena FTS shapes: {names}")
     else:
         log.info("No remote Jena FTS shapes found")
 
@@ -134,9 +132,7 @@ async def retrieve_jena_fts_shapes(repo: Repo):
         while len(names_list) < n_shapes:
             names_list.append("(no label)")
         names = ", ".join(names_list)
-        log.info(
-            f"Found and added {n_shapes} local Jena FTS shapes: {names}"
-        )
+        log.info(f"Found and added {n_shapes} local Jena FTS shapes: {names}")
     else:
         log.info("No local Jena FTS shapes found")
 
