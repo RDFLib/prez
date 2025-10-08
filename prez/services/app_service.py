@@ -308,8 +308,9 @@ async def retrieve_local_queryable_definitions(app_state, system_store):
     """
     queryables_dir = get_reference_data_dir() / "queryables"
     g = Graph()
-    for f in queryables_dir.glob("*.ttl"):
-        g.parse(f, format="turtle")
+    files = list(queryables_dir.glob("*.ttl")) + list(queryables_dir.glob("*.rdf"))
+    for f in files:
+        g.parse(f)
     if len(g) > 0:
         prez_system_graph.__iadd__(g)
         queryable_bytes = g.serialize(format="nt", encoding="utf-8")
