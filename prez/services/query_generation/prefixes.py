@@ -7,7 +7,9 @@ from sparql_grammar_pydantic import (
     TriplesBlock,
     TriplesSameSubjectPath,
     Var,
-    WhereClause, SolutionModifier, ValuesClause,
+    WhereClause,
+    SolutionModifier,
+    ValuesClause,
 )
 
 

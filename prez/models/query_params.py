@@ -138,7 +138,9 @@ class ListingQueryParams:
         mediatype: str = Query(
             default="text/turtle", alias="_mediatype", description="Requested mediatype"
         ),
-        profile: Optional[str] = Query(default=None, alias="_profile", description="Requested profile"),
+        profile: Optional[str] = Query(
+            default=None, alias="_profile", description="Requested profile"
+        ),
         page: int = Query(
             default=1, ge=1, description="Page number, must be greater than 0"
         ),
@@ -182,13 +184,12 @@ class ListingQueryParams:
             alias="subscription-key",
         ),
         startindex: Optional[int] = Query(
-            default=None,
-            description="Optional: Starting index"
+            default=None, description="Optional: Starting index"
         ),
         offset: Optional[int] = Query(
             default=None,
             description="Optional: Pagination offset",
-        )
+        ),
     ):
         self.q = q
         self.profile = profile
@@ -251,7 +252,9 @@ class ObjectQueryParams:
         mediatype: str = Query(
             default="text/turtle", alias="_mediatype", description="Requested mediatype"
         ),
-        profile: Optional[str] = Query(default=None, alias="_profile", description="Requested profile"),
+        profile: Optional[str] = Query(
+            default=None, alias="_profile", description="Requested profile"
+        ),
         facet_profile: Optional[str] = Query(
             default=None, description="IRIs of the profile to use for faceting"
         ),

@@ -5,13 +5,14 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Any, Dict, Optional, Union
 
+import httpx
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from rdflib import Graph
-from starlette.middleware.cors import CORSMiddleware
-from starlette.staticfiles import StaticFiles
 from starlette.applications import Starlette
+from starlette.middleware.cors import CORSMiddleware
 from starlette.routing import Mount
+from starlette.staticfiles import StaticFiles
 
 from prez.config import Settings, settings
 from prez.dependencies import (
@@ -31,7 +32,8 @@ from prez.exceptions.model_exceptions import (
     NoEndpointNodeshapeException,
     NoProfilesException,
     PrefixNotBoundException,
-    URINotFoundException, MissingFilterQueryError
+    URINotFoundException,
+    MissingFilterQueryError,
 )
 from prez.middleware import create_validate_header_middleware
 from prez.repositories import OxrdflibRepo, PyoxigraphRepo, RemoteSparqlRepo
@@ -58,11 +60,13 @@ from prez.services.exception_catchers import (
     catch_404,
     catch_500,
     catch_class_not_found_exception,
+    catch_httpx_error,
     catch_invalid_sparql_query,
     catch_no_endpoint_nodeshape_exception,
     catch_no_profiles_exception,
     catch_prefix_not_found_exception,
-    catch_uri_not_found_exception, catch_missing_filter_query_param,
+    catch_uri_not_found_exception,
+    catch_missing_filter_query_param,
 )
 from prez.services.generate_profiles import create_profiles_graph
 from prez.services.prez_logging import setup_logger
@@ -111,9 +115,11 @@ async def lifespan(app: FastAPI):
         # assume all of the sub-apps do not have their own lifespan to set up their state
         if isinstance(r, Mount):
             mount_app = r.app
-            if isinstance(mount_app, (Starlette, FastAPI)) and \
-                    mount_app is not app and \
-                    mount_app not in mounted_apps:
+            if (
+                isinstance(mount_app, (Starlette, FastAPI))
+                and mount_app is not app
+                and mount_app not in mounted_apps
+            ):
                 mounted_apps.append(mount_app)
     if app.state.settings.sparql_repo_type == "pyoxigraph_memory":
         app.state.pyoxi_store = pyoxi_store = get_pyoxi_store()
@@ -213,7 +219,8 @@ def assemble_app(
             NoProfilesException: catch_no_profiles_exception,
             InvalidSPARQLQueryException: catch_invalid_sparql_query,
             NoEndpointNodeshapeException: catch_no_endpoint_nodeshape_exception,
-            MissingFilterQueryError: catch_missing_filter_query_param
+            MissingFilterQueryError: catch_missing_filter_query_param,
+            httpx.HTTPError: catch_httpx_error,
         },
         **kwargs
     )

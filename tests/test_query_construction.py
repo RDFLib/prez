@@ -104,7 +104,10 @@ def test_basic_listing():
         order_by_direction="ASC",
     )
     query_string = test.to_string()
-    assert "?focus_node <http://www.w3.org/2000/01/rdf-schema#label> ?order_by_val" in query_string
+    assert (
+        "?focus_node <http://www.w3.org/2000/01/rdf-schema#label> ?order_by_val"
+        in query_string
+    )
     assert "ORDER BY ASC( STR( ?order_by_val ) )" in query_string
 
 
@@ -356,10 +359,10 @@ def test_umbrella_cql_query():
     }
     parser = CQLParser(cql_json=cql_json_data)
     parser.parse()
-    qp = ListingQueryParams(limit=1, page=1, offset=1, _filter=None, bbox = [], datetime=None, order_by=None)
-    kwargs = merge_listing_query_grammar_inputs(
-        cql_parser=parser, query_params=qp
+    qp = ListingQueryParams(
+        limit=1, page=1, offset=1, _filter=None, bbox=[], datetime=None, order_by=None
     )
+    kwargs = merge_listing_query_grammar_inputs(cql_parser=parser, query_params=qp)
     query = PrezQueryConstructor(**kwargs)
     query_string = query.to_string()
     assert "SELECT DISTINCT ?focus_node" in query_string

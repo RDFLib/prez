@@ -13,13 +13,18 @@ from fastapi import status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
 from httpx import URL
+from oxrdflib._converter import to_ox
+from pyoxigraph import (
+    RdfFormat,
+    Store as OxiStore,
+    NamedNode as OxiNamedNode,
+    DefaultGraph as OxiDefaultGraph,
+)
 from rdf2geojson import convert
 from rdf2geojson.contrib.geomet import wkt
 from rdflib import Graph
 from rdflib import URIRef
 from rdflib.namespace import GEO, RDF
-from pyoxigraph import RdfFormat, Store as OxiStore, NamedNode as OxiNamedNode, Quad as OxiQuad, DefaultGraph as OxiDefaultGraph
-from oxrdflib._converter import to_ox
 from sparql_grammar_pydantic import (
     IRI,
     Var,
@@ -29,12 +34,27 @@ from prez.cache import endpoints_graph_cache
 from prez.cache import prefix_graph
 from prez.config import settings
 from prez.dependencies import get_endpoint_uri, get_system_repo, get_url
-from prez.models.ogc_features import Collection, Collections, Link, Links, Queryables, Spatial, Extent
+from prez.models.ogc_features import (
+    Collection,
+    Collections,
+    Link,
+    Links,
+    Queryables,
+    Spatial,
+    Extent,
+)
 from prez.models.query_params import ListingQueryParams
 from prez.reference_data.prez_ns import OGCFEAT, ONT, PREZ
 from prez.repositories import Repo
-from prez.services.annotations import get_annotation_properties, get_annotation_properties_for_oxigraph
-from prez.services.connegp_service import OXIGRAPH_SERIALIZER_TYPES_MAP, RDF_MEDIATYPES, MINIMAL_OGC_FEATURES_RDF_FORMATS
+from prez.services.annotations import (
+    get_annotation_properties,
+    get_annotation_properties_for_oxigraph,
+)
+from prez.services.connegp_service import (
+    OXIGRAPH_SERIALIZER_TYPES_MAP,
+    RDF_MEDIATYPES,
+    MINIMAL_OGC_FEATURES_RDF_FORMATS,
+)
 from prez.services.connegp_service import RDF_SERIALIZER_TYPES_MAP
 from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.query_generation.shacl import NodeShape
@@ -43,7 +63,7 @@ log = logging.getLogger(__name__)
 
 
 async def return_from_graph(
-    graph: Graph|OxiStore,
+    graph: Graph | OxiStore,
     mediatype,
     profile,
     profile_headers,
@@ -61,12 +81,19 @@ async def return_from_graph(
         if is_oxigraph:
             assert isinstance(graph, OxiStore)
             store: OxiStore = graph
-            oxigraph_prefixes = {p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()}
+            oxigraph_prefixes = {
+                p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()
+            }
             try:
-                return await return_rdf_from_oxigraph(store, mediatype, profile_headers, prefixes=oxigraph_prefixes)
+                return await return_rdf_from_oxigraph(
+                    store, mediatype, profile_headers, prefixes=oxigraph_prefixes
+                )
             except Exception as e:
                 log.error(f"Error serializing graph to {mediatype}: {e}")
-                raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, f"Error serializing graph to {mediatype}: {e}")
+                raise HTTPException(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    f"Error serializing graph to {mediatype}: {e}",
+                )
         else:
             return await return_rdf(graph, mediatype, profile_headers)
 
@@ -76,7 +103,9 @@ async def return_from_graph(
             if is_oxigraph:
                 store: OxiStore = graph
                 # This still returns an RDFlib graph of anotations, even when the store is an Oxigraph Store.
-                annotations_store: OxiStore = await return_annotated_rdf_for_oxigraph(store, repo, system_repo)
+                annotations_store: OxiStore = await return_annotated_rdf_for_oxigraph(
+                    store, repo, system_repo
+                )
                 store.bulk_extend(annotations_store)
             else:
                 annotations_graph = await return_annotated_rdf(graph, repo, system_repo)
@@ -88,15 +117,29 @@ async def return_from_graph(
         str_count = None
         if is_oxigraph:
             store: OxiStore = graph
-            if len(list(store.quads_for_pattern(None, OxiNamedNode(RDF.type), OxiNamedNode(GEO["Feature"]), None))) > 0:
-               collection_label="FeatureCollection containing Features from listing query"
+            if (
+                len(
+                    list(
+                        store.quads_for_pattern(
+                            None,
+                            OxiNamedNode(RDF.type),
+                            OxiNamedNode(GEO["Feature"]),
+                            None,
+                        )
+                    )
+                )
+                > 0
+            ):
+                collection_label = (
+                    "FeatureCollection containing Features from listing query"
+                )
             geojson = convert(
                 g=store,
                 do_validate=False,
                 iri2id=get_curie_id_for_uri,
                 collection_label=collection_label,
                 kind=kind,
-                namespace_manager=prefix_graph.namespace_manager
+                namespace_manager=prefix_graph.namespace_manager,
             )
 
             for q in store.quads_for_pattern(
@@ -106,13 +149,15 @@ async def return_from_graph(
                 break
         else:
             if len(list(graph.subjects(RDF.type, GEO["Feature"]))) > 0:
-                collection_label="FeatureCollection containing Features from listing query"
+                collection_label = (
+                    "FeatureCollection containing Features from listing query"
+                )
             geojson = convert(
                 g=graph,
                 do_validate=False,
                 iri2id=get_curie_id_for_uri,
                 collection_label=collection_label,
-                kind=kind
+                kind=kind,
             )
             s_o = graph.subject_objects(
                 predicate=PREZ["count"]
@@ -134,14 +179,25 @@ async def return_from_graph(
             if is_oxigraph:
                 store: OxiStore = graph
                 # This still returns an RDFlib graph of anotations, even when the store is an Oxigraph Store.
-                annotations_store: OxiStore = await return_annotated_rdf_for_oxigraph(store, repo, system_repo)
+                annotations_store: OxiStore = await return_annotated_rdf_for_oxigraph(
+                    store, repo, system_repo
+                )
                 store.bulk_extend(annotations_store)
-                oxigraph_prefixes = {p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()}
+                oxigraph_prefixes = {
+                    p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()
+                }
                 content = io.BytesIO()
-                oxigraph_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(non_anot_mediatype, RdfFormat.N_TRIPLES)
+                oxigraph_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(
+                    non_anot_mediatype, RdfFormat.N_TRIPLES
+                )
                 # TODO, what happens if the store has content in a named graph? This can only dump the default graph.
                 try:
-                    store.dump(content, oxigraph_format, from_graph=OxiDefaultGraph(), prefixes=oxigraph_prefixes)
+                    store.dump(
+                        content,
+                        oxigraph_format,
+                        from_graph=OxiDefaultGraph(),
+                        prefixes=oxigraph_prefixes,
+                    )
                 except Exception as e:
                     for p, n in oxigraph_prefixes.items():
                         print(f"{p} = {n}")
@@ -184,19 +240,28 @@ async def return_rdf(graph: Graph, mediatype, profile_headers):
     profile_headers["Content-Disposition"] = "inline"
     return StreamingResponse(content=obj, media_type=mediatype, headers=profile_headers)
 
-async def return_rdf_from_oxigraph(store: OxiStore, mediatype, profile_headers, prefixes: dict[str, str] = None):
+
+async def return_rdf_from_oxigraph(
+    store: OxiStore, mediatype, profile_headers, prefixes: dict[str, str] = None
+):
 
     if mediatype == "text/anot+turtle":
         serializer_format = RdfFormat.TURTLE
     else:
-        serializer_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(str(mediatype), RdfFormat.N_TRIPLES)
+        serializer_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(
+            str(mediatype), RdfFormat.N_TRIPLES
+        )
 
     io_obj = io.BytesIO()
     # TODO, what happens if the store has content in a named graph? This can only dump the default graph.
-    store.dump(io_obj, serializer_format, from_graph=OxiDefaultGraph(), prefixes=prefixes)
+    store.dump(
+        io_obj, serializer_format, from_graph=OxiDefaultGraph(), prefixes=prefixes
+    )
     io_obj.seek(0)  # Reset the stream position to the beginning
     profile_headers["Content-Disposition"] = "inline"
-    return StreamingResponse(content=io_obj, media_type=mediatype, headers=profile_headers)
+    return StreamingResponse(
+        content=io_obj, media_type=mediatype, headers=profile_headers
+    )
 
 
 async def return_annotated_rdf(
@@ -214,13 +279,16 @@ async def return_annotated_rdf(
     # return graph.__iadd__(annotations_graph)
     return annotations_graph
 
+
 async def return_annotated_rdf_for_oxigraph(
     store: OxiStore,
     repo: Repo,
     system_repo: Repo,
 ) -> OxiStore:
     t_start = time.time()
-    annotations_store = await get_annotation_properties_for_oxigraph(store, repo, system_repo)
+    annotations_store = await get_annotation_properties_for_oxigraph(
+        store, repo, system_repo
+    )
     # get annotations for annotations - no need to do this recursively
     annotations_store_2 = await get_annotation_properties_for_oxigraph(
         annotations_store, repo, system_repo
@@ -248,22 +316,33 @@ async def generate_geojson_extras(
 
 
 def create_collections_json(
-    item_graph: Graph|OxiStore, annotations_graph: Graph|OxiStore, url, selected_mediatype, query_params, count: int|None = None,
+    item_graph: Graph | OxiStore,
+    annotations_graph: Graph | OxiStore,
+    url,
+    selected_mediatype,
+    query_params,
+    count: int | None = None,
 ):
     collections_list = []
     collection_properties_map: dict[URIRef, tuple] = {}
     if isinstance(item_graph, OxiStore):
         item_store: OxiStore = item_graph
-        for q in item_store.quads_for_pattern(None, OxiNamedNode(RDF.type), OxiNamedNode(GEO.FeatureCollection), None):
+        for q in item_store.quads_for_pattern(
+            None, OxiNamedNode(RDF.type), OxiNamedNode(GEO.FeatureCollection), None
+        ):
             s = q[0]
             s_uriref = URIRef(s.value)
-            for bbox_q in item_store.quads_for_pattern(s, OxiNamedNode(GEO.hasBoundingBox), None, None):
+            for bbox_q in item_store.quads_for_pattern(
+                s, OxiNamedNode(GEO.hasBoundingBox), None, None
+            ):
                 extent_bnode = bbox_q[2]
                 break
             else:
                 extent_bnode = None
             if extent_bnode:
-                for geom_q in item_store.quads_for_pattern(extent_bnode, OxiNamedNode(GEO.asWKT), None, None):
+                for geom_q in item_store.quads_for_pattern(
+                    extent_bnode, OxiNamedNode(GEO.asWKT), None, None
+                ):
                     extent_geom = geom_q[2]
                     break
                 else:
@@ -285,9 +364,13 @@ def create_collections_json(
             collection_properties_map[s_uriref] = (curie_id, json_extent)
     else:
         for s, p, o in item_graph.triples((None, RDF.type, GEO.FeatureCollection)):
-            extent_bnode = item_graph.value(subject=s, predicate=GEO.hasBoundingBox, default=None)
+            extent_bnode = item_graph.value(
+                subject=s, predicate=GEO.hasBoundingBox, default=None
+            )
             if extent_bnode:
-                extent_geom = item_graph.value(subject=extent_bnode, predicate=GEO.asWKT, default=None)
+                extent_geom = item_graph.value(
+                    subject=extent_bnode, predicate=GEO.asWKT, default=None
+                )
                 if extent_geom:
                     bbox_obj = wkt.loads(str(extent_geom))
                     if bbox_obj["type"] != "Polygon":
@@ -322,9 +405,11 @@ def create_collections_json(
                 collection_title = None
         else:
             collection_description = annotations_graph.value(
-                subject=s, predicate=PREZ.description, default=None)
+                subject=s, predicate=PREZ.description, default=None
+            )
             collection_title = annotations_graph.value(
-                subject=s, predicate=PREZ.label, default=None)
+                subject=s, predicate=PREZ.label, default=None
+            )
 
         collections_list.append(
             Collection(
@@ -340,7 +425,10 @@ def create_collections_json(
                         rel="items",
                         type=mt,
                     )
-                    for mt in ["application/geo+json", *MINIMAL_OGC_FEATURES_RDF_FORMATS]
+                    for mt in [
+                        "application/geo+json",
+                        *MINIMAL_OGC_FEATURES_RDF_FORMATS,
+                    ]
                 ],
             )
         )
@@ -351,7 +439,10 @@ def create_collections_json(
     )
     return collections
 
-def create_self_alt_links(selected_mediatype, url, query_params=None, count: int|None=None):
+
+def create_self_alt_links(
+    selected_mediatype, url, query_params=None, count: int | None = None
+):
     self_alt_links = []
     for mt in [selected_mediatype, *RDF_MEDIATYPES]:
         self_alt_links.append(
@@ -502,7 +593,9 @@ async def generate_queryables_from_shacl_definition(
     return Queryables(**queryable_params)
 
 
-@cached(ttl=600, key_builder=lambda *args, **kwargs: args[1])  # first arg is function; subsequent are actual args.
+@cached(
+    ttl=600, key_builder=lambda *args, **kwargs: args[1]
+)  # first arg is function; subsequent are actual args.
 async def _cached_feature_collection_query(
     collection_uri, data_repo, feature_collection_query
 ):

@@ -1,6 +1,6 @@
 import pytest
-from rdflib import URIRef, Graph, SH, Namespace # Added Graph, SH, Namespace
-from unittest.mock import patch # Added patch
+from rdflib import URIRef, Graph, SH, Namespace  # Added Graph, SH, Namespace
+from unittest.mock import patch  # Added patch
 from sparql_grammar_pydantic import (
     GroupGraphPattern,
     GroupGraphPatternSub,
@@ -14,16 +14,20 @@ from sparql_grammar_pydantic import (
 )
 
 from prez.services.query_generation.facet import FacetQuery
-from prez.services.query_generation.shacl import PropertyShape, NodeShape  # Added PropertyShape
+from prez.services.query_generation.shacl import (
+    PropertyShape,
+    NodeShape,
+)  # Added PropertyShape
 
 # Define SHEXT namespace locally for tests - corrected namespace
 SHEXT = Namespace("http://example.com/shacl-extension#")
 
+
 @pytest.fixture(scope="module")
-@patch("prez.services.query_generation.shacl.settings") # Mock settings for the fixture
+@patch("prez.services.query_generation.shacl.settings")  # Mock settings for the fixture
 def gswa_property_shape_fixture(mock_settings):
     """Provides a PropertyShape instance based on the gswa_like_profile."""
-    mock_settings.use_path_aliases = True # Set the required setting for the test case
+    mock_settings.use_path_aliases = True  # Set the required setting for the test case
     gswa_profile = """PREFIX altr-ext: <http://www.w3.org/ns/dx/connegp/altr-ext#>
     PREFIX dcat: <http://www.w3.org/ns/dcat#>
     PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -97,14 +101,15 @@ def gswa_property_shape_fixture(mock_settings):
         uri=URIRef("https://prez.dev/profile/formation-top"),
         graph=g,
         kind="profile",
-        focus_node=Var(value="focus_node")
+        focus_node=Var(value="focus_node"),
     )
     ps = ns.propertyShapes[0]
     return ps
 
 
-
-def test_facet_query_skeleton_instantiation(gswa_property_shape_fixture): # Added fixture argument
+def test_facet_query_skeleton_instantiation(
+    gswa_property_shape_fixture,
+):  # Added fixture argument
     """
     Tests that the basic FacetQuery skeleton can be instantiated
     with a minimal original SubSelect.
@@ -118,15 +123,18 @@ def test_facet_query_skeleton_instantiation(gswa_property_shape_fixture): # Adde
                     [
                         TriplesSameSubjectPath.from_spo(
                             Var(value="focus_node"),
-                            IRI(value="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
-                            IRI(value="https://linked.data.gov.au/def/borehole/Borehole"),
+                            IRI(
+                                value="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+                            ),
+                            IRI(
+                                value="https://linked.data.gov.au/def/borehole/Borehole"
+                            ),
                         )
                     ]
                 )
             )
         )
     )
-
 
     # Minimal original SubSelect
     original_subselect = SubSelect(
@@ -137,7 +145,7 @@ def test_facet_query_skeleton_instantiation(gswa_property_shape_fixture): # Adde
     # Instantiate FacetQuery with empty facet properties for now
     facet_query = FacetQuery(
         original_subselect=original_subselect,
-        property_shape=gswa_property_shape_fixture
+        property_shape=gswa_property_shape_fixture,
     )
 
     # Assert that the object was created

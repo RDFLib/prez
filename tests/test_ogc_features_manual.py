@@ -1,3 +1,30 @@
+import pytest
+
+
+@pytest.fixture
+def mock_queryables():
+    """Fixture to add mock queryables data to the system store for testing"""
+    from pyoxigraph import RdfFormat
+    from prez.cache import system_store
+
+    queryables_ttl = """
+        @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+        @prefix cql: <http://www.opengis.net/doc/IS/cql2/1.0/> .
+        @prefix dcterms: <http://purl.org/dc/terms/> .
+        @prefix sh: <http://www.w3.org/ns/shacl#> .
+
+        <https://prez/queryables/TestRDFType> a cql:Queryable, sh:PropertyShape ;
+            dcterms:identifier "test-type" ;
+            sh:description "Filter by RDF type (test data)" ;
+            sh:name "Test RDF Type" ;
+            sh:path rdf:type .
+    """
+
+    # Add the mock queryables to the system store
+    system_store.load(queryables_ttl.encode("utf-8"), RdfFormat.TURTLE)
+    return queryables_ttl
+
+
 def test_ogc_features_root(client):
     r = client.get("/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features")
     assert r.status_code == 200
@@ -8,6 +35,80 @@ def test_ogc_features_queryables(client):
         "/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/queryables"
     )
     assert r.status_code == 200
+
+
+def test_ogc_features_queryables_turtle(client, mock_queryables):
+    """Test queryables endpoint returns RDF Turtle format"""
+    from rdflib import Graph
+
+    r = client.get(
+        "/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/queryables?_mediatype=text/turtle"
+    )
+    assert r.status_code == 200
+    assert "text/turtle" in r.headers.get("content-type", "")
+
+    # Verify it's valid RDF that can be parsed
+    response_graph = Graph().parse(data=r.text, format="turtle")
+    assert len(response_graph) > 0
+
+    # Check for queryable type triples
+    from rdflib import URIRef, RDF
+
+    queryable_type = URIRef("http://www.opengis.net/doc/IS/cql2/1.0/Queryable")
+    queryables = list(response_graph.subjects(RDF.type, queryable_type))
+    assert len(queryables) > 0
+
+
+def test_ogc_features_queryables_annotated_turtle(client, mock_queryables):
+    """Test queryables endpoint returns annotated RDF Turtle format"""
+    from rdflib import Graph
+
+    r = client.get(
+        "/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/queryables?_mediatype=text/anot%2Bturtle"
+    )
+    assert r.status_code == 200
+    assert "text/anot+turtle" in r.headers.get("content-type", "")
+
+    # Verify it's valid RDF that can be parsed
+    response_graph = Graph().parse(data=r.text, format="turtle")
+    assert len(response_graph) > 0
+
+    # Check for queryable type triples
+    from rdflib import URIRef, RDF
+
+    queryable_type = URIRef("http://www.opengis.net/doc/IS/cql2/1.0/Queryable")
+    queryables = list(response_graph.subjects(RDF.type, queryable_type))
+    assert len(queryables) > 0
+
+
+def test_ogc_features_queryables_rdf_xml(client, mock_queryables):
+    """Test queryables endpoint returns RDF/XML format"""
+    r = client.get(
+        "/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/queryables?_mediatype=application/rdf%2Bxml"
+    )
+    assert r.status_code == 200
+    assert "application/rdf+xml" in r.headers.get("content-type", "")
+
+    # Verify it's valid RDF that can be parsed
+    from rdflib import Graph
+
+    response_graph = Graph().parse(data=r.text, format="xml")
+    assert len(response_graph) > 0
+
+
+def test_ogc_features_queryables_global_turtle(client, mock_queryables):
+    """Test global queryables endpoint returns RDF Turtle format"""
+    r = client.get(
+        "/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/queryables?_mediatype=text/turtle"
+    )
+    assert r.status_code == 200
+    assert "text/turtle" in r.headers.get("content-type", "")
+
+    # Verify it's valid RDF that can be parsed
+    from rdflib import Graph
+
+    response_graph = Graph().parse(data=r.text, format="turtle")
+    assert len(response_graph) > 0
 
 
 def test_bbox_200(client):
@@ -80,3 +181,21 @@ def test_bbox_graphdb_200_4326_crs(client):
         assert r.status_code == 200
     finally:
         settings.spatial_query_format = original_format
+
+
+def test_ogc_features_listing_annotated(client):
+    # General regression test that would have caught the bug fixed in #413
+    r = client.get(
+        "/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/collections?_profile=mem&_mediatype=text/anot%2Bturtle"
+    )
+    assert r.status_code == 200
+    assert len(r.content) > 0
+
+
+def test_ogc_features_object_annotated(client):
+    # General regression test
+    r = client.get(
+        "/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/collections/ex:FeatureCollection?_mediatype=text/anot%2Bturtle&_profile=ogcfeat-minimal"
+    )
+    assert r.status_code == 200
+    assert len(r.content) > 0

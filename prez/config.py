@@ -75,7 +75,8 @@ class Settings(BaseSettings):
     ]
     other_predicates: list = [SDO.color, REG.status]
     sparql_repo_type: SparqlRepoType = SparqlRepoType.remote
-    sparql_timeout: int = 30
+    sparql_timeout: int = 60
+    sparql_timeout_param_name: Optional[str] = "timeout"
     pyoxigraph_data_dir: str = "pyoxigraph_data_dir"
     log_level: str = "INFO"
     log_output: str = "stdout"

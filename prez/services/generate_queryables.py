@@ -5,7 +5,9 @@ from prez.models.ogc_features import QueryableProperty, Queryables
 from prez.reference_data.prez_ns import OGCFEAT, PREZ
 
 
-def generate_queryables_json(item_store: OxiStore, annotations_store: OxiStore, url, endpoint_uri):
+def generate_queryables_json(
+    item_store: OxiStore, annotations_store: OxiStore, url, endpoint_uri
+):
     queryable_props = {}
 
     # Get all unique subjects from the item store
@@ -19,7 +21,7 @@ def generate_queryables_json(item_store: OxiStore, annotations_store: OxiStore, 
             annotations_store.quads_for_pattern(
                 subject=queryable, predicate=OxiNamedNode(PREZ.label), object=None
             ),
-            None
+            None,
         )
         title = title_quad[2].value if title_quad else None
 
@@ -28,7 +30,7 @@ def generate_queryables_json(item_store: OxiStore, annotations_store: OxiStore, 
             annotations_store.quads_for_pattern(
                 subject=queryable, predicate=OxiNamedNode(PREZ.description), object=None
             ),
-            None
+            None,
         )
         description = description_quad[2].value if description_quad else None
 

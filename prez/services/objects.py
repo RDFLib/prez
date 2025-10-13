@@ -7,15 +7,21 @@ import urllib.parse
 from urllib.parse import urlencode
 
 from fastapi.responses import PlainTextResponse, RedirectResponse
+from pyoxigraph import (
+    RdfFormat,
+    Store as OxiStore,
+    NamedNode as OxiNamedNode,
+    BlankNode as OxiBlankNode,
+    Quad as OxiQuad,
+    DefaultGraph as OxiDefaultGraph,
+)
 from rdf2geojson import convert
-from rdflib import RDF, URIRef, BNode
+from rdflib import RDF, URIRef
 from rdflib.namespace import GEO
 from sparql_grammar_pydantic import IRI, TriplesSameSubject, TriplesSameSubjectPath, Var
-from pyoxigraph import RdfFormat, Store as OxiStore, NamedNode as OxiNamedNode, BlankNode as OxiBlankNode, \
-    Quad as OxiQuad, DefaultGraph as OxiDefaultGraph
-from oxrdflib._converter import to_ox
-from prez.config import settings
+
 from prez.cache import prefix_graph
+from prez.config import settings
 from prez.enums import NonAnnotatedRDFMediaType, AnnotatedRDFMediaType
 from prez.exceptions.model_exceptions import URINotFoundException
 from prez.models.ogc_features import Collection, Link, Links
@@ -26,12 +32,16 @@ from prez.renderers.renderer import (
     generate_link_headers,
     get_brisbane_timestamp,
 )
-from prez.renderers.renderer import return_annotated_rdf, return_annotated_rdf_for_oxigraph, return_from_graph
+from prez.renderers.renderer import (
+    return_annotated_rdf_for_oxigraph,
+    return_from_graph,
+)
 from prez.repositories.base import Repo
 from prez.services.connegp_service import OXIGRAPH_SERIALIZER_TYPES_MAP, RDF_MEDIATYPES
 from prez.services.curie_functions import get_curie_id_for_uri
-from prez.services.link_generation import add_prez_links, add_prez_links_for_oxigraph
+from prez.services.link_generation import add_prez_links_for_oxigraph
 from prez.services.listings import listing_function
+from prez.services.query_generation.facet import FacetQuery
 from prez.services.query_generation.umbrella import PrezQueryConstructor
 
 log = logging.getLogger(__name__)
@@ -86,20 +96,44 @@ async def object_function(
                 object=IRI(value="https://prez.dev/FocusNode"),
             )
         )
-    query = PrezQueryConstructor(
+    main_query = PrezQueryConstructor(
         profile_triples=profile_nodeshape.tssp_list,
         profile_gpnt=profile_nodeshape.gpnt_list,
         construct_tss_list=profile_nodeshape.tss_list,
-    ).to_string()
+    )
+    queries = [main_query.to_string()]
 
     if pmts.requested_mediatypes and (
         pmts.requested_mediatypes[0][0] == "application/sparql-query"
     ):
-        return PlainTextResponse(query, media_type="application/sparql-query")
+        return PlainTextResponse(queries[0], media_type="application/sparql-query")
+
+    facet_profile_uri = None
+    if query_params.facet_profile:
+        # For object queries, we pass the focus node URI instead of main_query
+        focus_node_uri = profile_nodeshape.focus_node.value
+        facet_profile_uri, facets_query = await FacetQuery.create_facets_query(
+            None, query_params, focus_node_uri
+        )
+        if facets_query:
+            queries.append(facets_query.to_string())
+
     query_start_time = time.time()
     item_store: OxiStore
-    item_store, _ = await data_repo.send_queries([query], [], return_oxigraph_store=True)
+    item_store, _ = await data_repo.send_queries(
+        queries, [], return_oxigraph_store=True
+    )
     log.debug(f"Query time: {time.time() - query_start_time}")
+    default = OxiDefaultGraph()
+    if facet_profile_uri:
+        item_store.add(
+            OxiQuad(
+                OxiBlankNode(),
+                OxiNamedNode(PREZ.facetProfile),
+                OxiNamedNode(facet_profile_uri),
+                default,
+            )
+        )
     if settings.prez_ui_url:
         # If HTML or no specific media type requested
         if pmts.requested_mediatypes and (
@@ -107,8 +141,12 @@ async def object_function(
         ):
             item_node = profile_nodeshape.focus_node
             item_uri_str = item_node.value
-            await add_prez_links_for_oxigraph(item_store, data_repo, endpoint_structure, [item_node])
-            for q in item_store.quads_for_pattern(item_node, OxiNamedNode("https://prez.dev/link"), None, None):
+            await add_prez_links_for_oxigraph(
+                item_store, data_repo, endpoint_structure, [item_node]
+            )
+            for q in item_store.quads_for_pattern(
+                item_node, OxiNamedNode("https://prez.dev/link"), None, None
+            ):
                 prez_link = q.object
             else:
                 prez_link = None
@@ -124,7 +162,14 @@ async def object_function(
                     prez_ui_url + "/404?uri=" + urllib.parse.quote_plus(item_uri_str)
                 )
     if "anot+" in pmts.selected["mediatype"]:
-        item_store.add(OxiQuad(OxiBlankNode(), OxiNamedNode(PREZ.currentProfile), OxiNamedNode(pmts.selected["profile"]), OxiDefaultGraph()))
+        item_store.add(
+            OxiQuad(
+                OxiBlankNode(),
+                OxiNamedNode(PREZ.currentProfile),
+                OxiNamedNode(pmts.selected["profile"]),
+                OxiDefaultGraph(),
+            )
+        )
         await add_prez_links_for_oxigraph(item_store, data_repo, endpoint_structure)
     return await return_from_graph(
         item_store,
@@ -204,7 +249,9 @@ async def ogc_features_object_function(
     query_start_time = time.time()
     oxi_default = OxiDefaultGraph()
     item_store: OxiStore
-    item_store, _ = await data_repo.send_queries(queries, [], return_oxigraph_store=True)
+    item_store, _ = await data_repo.send_queries(
+        queries, [], return_oxigraph_store=True
+    )
     log.debug(f"Query time: {time.time() - query_start_time}")
 
     if len(item_store) == 0:
@@ -264,43 +311,58 @@ async def ogc_features_object_function(
         geojson["timeStamp"] = get_brisbane_timestamp()
         content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
     elif selected_mediatype in NonAnnotatedRDFMediaType:
-        serializer_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(str(selected_mediatype), RdfFormat.N_TRIPLES)
-        oxigraph_prefixes = {p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()}
+        serializer_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(
+            str(selected_mediatype), RdfFormat.N_TRIPLES
+        )
+        oxigraph_prefixes = {
+            p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()
+        }
         content = io.BytesIO()
         # TODO, what happens if the store has content in a named graph? This can only dump the default graph.
-        item_store.dump(content, serializer_format, from_graph=oxi_default, prefixes=oxigraph_prefixes)
+        item_store.dump(
+            content,
+            serializer_format,
+            from_graph=oxi_default,
+            prefixes=oxigraph_prefixes,
+        )
         content.seek(0)  # Reset the stream position to the beginning
     elif selected_mediatype in AnnotatedRDFMediaType:
         if annotations_store is not None:
             item_store.bulk_extend(annotations_store)
         non_anot_mt = selected_mediatype.replace("anot+", "")
-        serializer_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(str(non_anot_mt), RdfFormat.N_TRIPLES)
-        oxigraph_prefixes = {p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()}
+        serializer_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(
+            str(non_anot_mt), RdfFormat.N_TRIPLES
+        )
+        oxigraph_prefixes = {
+            p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()
+        }
         content = io.BytesIO()
         # TODO, what happens if the store has content in a named graph? This can only dump the default graph.
-        item_store.dump(content, serializer_format, from_graph=oxi_default, prefixes=oxigraph_prefixes)
+        item_store.dump(
+            content,
+            serializer_format,
+            from_graph=oxi_default,
+            prefixes=oxigraph_prefixes,
+        )
         content.seek(0)  # Reset the stream position to the beginning
     return content, link_headers
 
 
 def create_collection_json(
-        collection_curie,
-        collection_uri,
-        annotations_store: OxiStore,
-        url
+    collection_curie, collection_uri, annotations_store: OxiStore, url
 ):
     title_quad = next(
         annotations_store.quads_for_pattern(
             OxiNamedNode(collection_uri), OxiNamedNode(PREZ.label), None, None
         ),
-        None
+        None,
     )
     title = title_quad[2].value if title_quad else None
     description = next(
         annotations_store.quads_for_pattern(
             OxiNamedNode(collection_uri), OxiNamedNode(PREZ.description), None, None
         ),
-        None
+        None,
     )
     description = description[2].value if description else None
     return Collection(

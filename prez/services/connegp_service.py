@@ -1,5 +1,4 @@
 import logging
-import re
 from enum import Enum
 from textwrap import dedent
 
@@ -12,14 +11,11 @@ from prez.config import settings
 from prez.exceptions.model_exceptions import PrefixNotBoundException
 from prez.repositories.base import Repo
 from prez.services.curie_functions import get_curie_id_for_uri, get_uri_for_curie_id
-from prez.services.validate_iri import validate_iri
 
 log = logging.getLogger(__name__)
 
 # used to reduce the amount of RDF formats "advertised" for OGC Features API links
-MINIMAL_OGC_FEATURES_RDF_FORMATS = [
-    "text/turtle"
-]
+MINIMAL_OGC_FEATURES_RDF_FORMATS = ["text/turtle"]
 
 RDF_MEDIATYPES = [
     "text/turtle",
@@ -70,6 +66,7 @@ OXIGRAPH_SERIALIZER_TYPES_MAP = {
     "rdf": RdfFormat.RDF_XML,
     "json": RdfFormat.JSON_LD,
 }
+
 
 class MediaType(str, Enum):
     turtle = "text/turtle"
@@ -178,7 +175,9 @@ class NegotiatedPMTs(BaseModel):
                         if (URIRef(parts[0]), None, None) in profiles_graph_cache:
                             parts[0] = URIRef(parts[0])
                         else:
-                            raise ValueError(f"{parts[0]} could not be resolved to a profile")
+                            raise ValueError(
+                                f"{parts[0]} could not be resolved to a profile"
+                            )
                     except Exception as e:
                         parts[0] = None
                         log.error(e.args[0])
@@ -239,20 +238,26 @@ class NegotiatedPMTs(BaseModel):
         ]
 
         if not available:
-            if self.requested_mediatypes is not None and len(self.requested_mediatypes) > 0:
+            if (
+                self.requested_mediatypes is not None
+                and len(self.requested_mediatypes) > 0
+            ):
                 fallback_mediatype = self.requested_mediatypes[0][0]
             else:
                 fallback_mediatype = None
             if self.listing:
                 # known available mediatypes for the 'mem' profile
                 _available_mem_types = [
-                    "application/ld+json" ,
-                    "application/anot+ld+json" ,
-                    "application/rdf+xml" ,
-                    "text/anot+turtle" ,
-                    "text/turtle"
+                    "application/ld+json",
+                    "application/anot+ld+json",
+                    "application/rdf+xml",
+                    "text/anot+turtle",
+                    "text/turtle",
                 ]
-                if fallback_mediatype is None or fallback_mediatype not in _available_mem_types:
+                if (
+                    fallback_mediatype is None
+                    or fallback_mediatype not in _available_mem_types
+                ):
                     _use_mediatype = "text/anot+turtle"
                 else:
                     _use_mediatype = fallback_mediatype
@@ -267,13 +272,16 @@ class NegotiatedPMTs(BaseModel):
             else:
                 # known available profiles for the 'open-object' profile
                 _available_open_types = [
-                    "application/ld+json" ,
-                    "application/anot+ld+json" ,
-                    "application/rdf+xml" ,
-                    "text/anot+turtle" ,
-                    "text/turtle"
+                    "application/ld+json",
+                    "application/anot+ld+json",
+                    "application/rdf+xml",
+                    "text/anot+turtle",
+                    "text/turtle",
                 ]
-                if fallback_mediatype is None or fallback_mediatype not in _available_open_types:
+                if (
+                    fallback_mediatype is None
+                    or fallback_mediatype not in _available_open_types
+                ):
                     _use_mediatype = "text/anot+turtle"
                 else:
                     _use_mediatype = fallback_mediatype

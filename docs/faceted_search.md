@@ -1,8 +1,12 @@
-Prez supports faceted search on listing endpoints, this includes:
+Prez supports faceted search on all listing and object endpoints:
 
+**Listing endpoints:**
 `/cql`
 `/search`
 all endpoints declared a prez:ListingEndpoint. With default settings this includes `/catalogs` `/catalogs/{catalogId}/collections` etc.
+
+**Object endpoints:**
+Faceted search can also be performed on all object endpoints (prez:ObjectEndpoint) by providing the focus node IRI directly. In this case, no subselect is performed and faceting works the same way for the properties of the single object.
 
 > Note: At this point faceting is only supported for categorical properties (though faceting will correctly produce / execute queries on properties with continuous values the output is probably not desirable).
 
@@ -51,6 +55,7 @@ WHERE {
   SELECT ?facetName ?facetValue (COUNT(?focus_node) AS ?facetCount)
   WHERE {
     {
+        # for listing, CQL, and search, a subselect is included
       SELECT DISTINCT ?focus_node
       WHERE {
         ?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://linked.data.gov.au/def/borehole/Borehole> .
@@ -72,4 +77,24 @@ WHERE {
     }
   }GROUP BY ?facetName ?facetValue
 }
+```
+
+## Open Faceting
+
+Open faceting is allowed, meaning you can perform faceted search without providing a search term by using only the `facet_profile` parameter:
+
+```
+/search?facet_profile=xyz
+```
+
+When no search term is provided, Prez automatically injects a `?focus_node a ?type` triple in the subselect query. This ensures that only instances of classes are faceted on, rather than attempting to facet across all nodes in the dataset.
+
+**Performance Considerations:**
+
+Open faceting works well for smaller datasets, but performance can become an issue with larger datasets since it needs to process all class instances without any filtering constraints.
+
+For larger datasets, it is recommended to:
+- Perform a search first to narrow the result set
+- Add additional filters or search terms to reduce the scope (using parameters: filter, bbox, datetime, q)
+- Use a separate full text search/faceting implementation designed for large-scale operations such as open search or lucene
 ```

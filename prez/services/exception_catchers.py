@@ -1,3 +1,4 @@
+import httpx
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from starlette.requests import Request
@@ -8,7 +9,8 @@ from prez.exceptions.model_exceptions import (
     NoEndpointNodeshapeException,
     NoProfilesException,
     PrefixNotBoundException,
-    URINotFoundException, MissingFilterQueryError
+    URINotFoundException,
+    MissingFilterQueryError,
 )
 
 
@@ -91,6 +93,7 @@ async def catch_no_endpoint_nodeshape_exception(
         },
     )
 
+
 async def catch_missing_filter_query_param(
     request: Request, exc: MissingFilterQueryError
 ):
@@ -99,5 +102,26 @@ async def catch_missing_filter_query_param(
         content={
             "error": "Bad Request",
             "detail": exc.message,
+        },
+    )
+
+
+async def catch_httpx_error(request: Request, exc: httpx.HTTPError):
+    # Determine appropriate status code based on exception type
+    if isinstance(exc, httpx.ConnectError):
+        status_code = 503  # Service Unavailable
+        error_type = "SPARQL_CONNECTION_ERROR"
+    elif isinstance(exc, httpx.TimeoutException):
+        status_code = 504  # Gateway Timeout
+        error_type = "SPARQL_TIMEOUT_ERROR"
+    else:
+        status_code = 502  # Bad Gateway
+        error_type = "SPARQL_ERROR"
+
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "error": error_type,
+            "detail": str(exc),
         },
     )

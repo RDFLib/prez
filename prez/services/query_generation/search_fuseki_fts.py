@@ -128,8 +128,7 @@ class SearchQueryFusekiFTS(ConstructQuery):
                 "At least one of `non_shacl_predicates` and `shacl_tssp_preds` must be given"
             )
         limit += 1  # increase the limit by one, so we know if there are further pages of results.
-        # join search terms with '+' for better results
-        term = "+".join(term.split(" "))
+        term = term.replace('"', '\\"')
 
         sr_uri: Var = Var(value="focus_node")
         weight: Var = Var(value="weight")
@@ -405,7 +404,11 @@ class SearchQueryFusekiFTS(ConstructQuery):
                     ),
                     solution_modifier=SolutionModifier(
                         order_by=OrderClause(
-                            conditions=[OrderCondition(constraint_or_var=weight, direction="DESC")]
+                            conditions=[
+                                OrderCondition(
+                                    constraint_or_var=weight, direction="DESC"
+                                )
+                            ]
                         ),
                         limit_offset=LimitOffsetClauses(
                             limit_clause=LimitClause(limit=limit),

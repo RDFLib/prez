@@ -23,12 +23,14 @@ OXIGRAPH_SERIALIZER_TYPES_MAP = {
 
 # --- Synchronous Worker Functions (to be run in thread pool) ---
 
+
 def _sync_get_quad_list(data: bytes) -> List[Quad]:
     """Parses data using pyoxigraph.parse and returns a list of Quads."""
     if not data:
         return []
     quads = parse(data, format=RdfFormat.N_TRIPLES)
     return list(quads)
+
 
 def _sync_populate_store_with_bulk_load(data: bytes, store: Store, lock: Lock):
     """Loads raw RDF data into a store using store.bulk_load within a thread lock."""
@@ -38,11 +40,14 @@ def _sync_populate_store_with_bulk_load(data: bytes, store: Store, lock: Lock):
     with lock:
         store.bulk_load(data, RdfFormat.N_TRIPLES)
 
+
 # --- Asynchronous Methods (mimicking the repository pattern) ---
+
 
 async def get_quad_list_from_data(mock_data: bytes) -> List[Quad]:
     """Parses data and returns a list of quads from a thread pool."""
     return await run_in_threadpool(_sync_get_quad_list, mock_data)
+
 
 async def query_and_populate_store(
     mock_data: bytes, store: Store, locks: Dict[int, Lock]
@@ -51,7 +56,9 @@ async def query_and_populate_store(
     lock = locks.setdefault(id(store), Lock())
     await run_in_threadpool(_sync_populate_store_with_bulk_load, mock_data, store, lock)
 
+
 # --- Benchmark Execution ---
+
 
 async def run_quads_benchmark(mock_data_slices):
     """Runs the benchmark for the 'list of quads' method, followed by store population."""
@@ -71,17 +78,20 @@ async def run_quads_benchmark(mock_data_slices):
     end_time = time.time()
     return end_time - start_time
 
+
 async def run_store_benchmark(mock_data_slices):
     """Runs the benchmark for the 'bulk_load to store' method."""
     start_time = time.time()
     store = Store()
     locks = {}
     tasks = [
-        query_and_populate_store(data_slice, store, locks) for data_slice in mock_data_slices
+        query_and_populate_store(data_slice, store, locks)
+        for data_slice in mock_data_slices
     ]
     await asyncio.gather(*tasks)
     end_time = time.time()
     return end_time - start_time
+
 
 async def fetch_mock_data():
     """Fetches a large dataset once to be used as a mock response source."""
@@ -90,17 +100,21 @@ async def fetch_mock_data():
         try:
             response = await client.post(
                 TEST_ENDPOINT,
-                headers={"Accept": "application/n-triples", "Content-Type": "application/sparql-query"},
+                headers={
+                    "Accept": "application/n-triples",
+                    "Content-Type": "application/sparql-query",
+                },
                 data="CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o } LIMIT 30000",
                 timeout=60.0,
-                auth=BasicAuth(SPARQL_USERNAME, SPARQL_PASSWORD)
+                auth=BasicAuth(SPARQL_USERNAME, SPARQL_PASSWORD),
             )
             response.raise_for_status()
             print("--- Mock data fetched successfully. ---")
-            return (await response.aread()).decode('utf-8').splitlines()
+            return (await response.aread()).decode("utf-8").splitlines()
         except httpx.HTTPStatusError as e:
             print(f"Fatal: Could not fetch mock data. Error: {e.response.status_code}")
             return None
+
 
 async def main():
     """Main function to run the benchmark."""
@@ -117,10 +131,13 @@ async def main():
         run_data = {"quads": {}, "stores": {}}
 
         # Run all quads tests
-        print("\nBenchmarking 'Quads List' (pyoxigraph.parse -> list -> store.bulk_extend)...")
+        print(
+            "\nBenchmarking 'Quads List' (pyoxigraph.parse -> list -> store.bulk_extend)..."
+        )
         for limit in limits:
             mock_data_slices = [
-                "\n".join(mock_data_lines[j*limit:(j+1)*limit]).encode('utf-8') for j in range(3)
+                "\n".join(mock_data_lines[j * limit : (j + 1) * limit]).encode("utf-8")
+                for j in range(3)
             ]
             quads_time = await run_quads_benchmark(mock_data_slices)
             run_data["quads"][limit] = quads_time
@@ -130,17 +147,18 @@ async def main():
         print("\nBenchmarking 'Single Store' (store.bulk_load)...")
         for limit in limits:
             mock_data_slices = [
-                "\n".join(mock_data_lines[j*limit:(j+1)*limit]).encode('utf-8') for j in range(3)
+                "\n".join(mock_data_lines[j * limit : (j + 1) * limit]).encode("utf-8")
+                for j in range(3)
             ]
             store_time = await run_store_benchmark(mock_data_slices)
             run_data["stores"][limit] = store_time
             print(f"  LIMIT {limit}: {store_time:.3f}s")
-        
+
         run_results.append(run_data)
 
     # --- Print Results Table ---
     print("\n\n--- BENCHMARK RESULTS (in seconds, CPU/parsing time only) ---")
-    
+
     # Header
     header = f"| {'Test Run':<20} |"
     for limit in limits:
@@ -168,13 +186,17 @@ async def main():
     # Average rows
     avg_quads_row = f"| {'Average - Quads':<20} |"
     for limit in limits:
-        avg_time = statistics.mean([run_results[i]["quads"][limit] for i in range(runs)])
+        avg_time = statistics.mean(
+            [run_results[i]["quads"][limit] for i in range(runs)]
+        )
         avg_quads_row += f" {avg_time:<10.3f} |"
     print(avg_quads_row)
 
     avg_stores_row = f"| {'Average - Stores':<20} |"
     for limit in limits:
-        avg_time = statistics.mean([run_results[i]["stores"][limit] for i in range(runs)])
+        avg_time = statistics.mean(
+            [run_results[i]["stores"][limit] for i in range(runs)]
+        )
         avg_stores_row += f" {avg_time:<10.3f} |"
     print(avg_stores_row)
 

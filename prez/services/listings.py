@@ -6,22 +6,38 @@ import logging
 
 from fastapi.responses import PlainTextResponse
 from oxrdflib._converter import to_ox
-from pyoxigraph import RdfFormat, Store as OxiStore, Quad as OxiQuad, NamedNode as OxiNamedNode, \
-    BlankNode as OxiBlankNode, Literal as OxiLiteral, DefaultGraph as OxiDefaultGraph
+from pyoxigraph import (
+    RdfFormat,
+    Store as OxiStore,
+    Quad as OxiQuad,
+    NamedNode as OxiNamedNode,
+    BlankNode as OxiBlankNode,
+    Literal as OxiLiteral,
+    DefaultGraph as OxiDefaultGraph,
+)
 from rdf2geojson import convert
-from rdflib import Literal, DCTERMS, XSD, Namespace, URIRef
+from rdflib import Literal, Namespace
 from rdflib.namespace import GEO, RDF, PROF
 from sparql_grammar_pydantic import (
     IRI,
     TriplesSameSubject,
-    TriplesSameSubjectPath,
     Var,
+    SelectClause,
+    WhereClause,
+    GroupGraphPattern,
+    GroupGraphPatternSub,
+    TriplesBlock,
+    TriplesSameSubjectPath,
+    SolutionModifier,
+    SubSelect,
+    LimitOffsetClauses,
+    LimitClause,
+    OffsetClause,
 )
 
-from prez.cache import profiles_graph_cache, prefix_graph
+from prez.cache import prefix_graph
 from prez.config import settings
 from prez.enums import NonAnnotatedRDFMediaType, AnnotatedRDFMediaType
-from prez.exceptions.model_exceptions import PrefixNotBoundException
 from prez.reference_data.prez_ns import ALTREXT, OGCFEAT, PREZ
 from prez.renderers.renderer import (
     return_annotated_rdf_for_oxigraph,
@@ -35,12 +51,11 @@ from prez.renderers.renderer import (
 )
 from prez.repositories import Repo
 from prez.services.connegp_service import OXIGRAPH_SERIALIZER_TYPES_MAP
-from prez.services.curie_functions import get_curie_id_for_uri, get_uri_for_curie_id
+from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.generate_queryables import generate_queryables_json
 from prez.services.link_generation import add_prez_links_for_oxigraph
 from prez.services.query_generation.count import CountQuery
 from prez.services.query_generation.facet import FacetQuery
-from prez.services.query_generation.shacl import NodeShape
 from prez.services.query_generation.umbrella import (
     PrezQueryConstructor,
     merge_listing_query_grammar_inputs,
@@ -49,6 +64,18 @@ from prez.services.query_generation.umbrella import (
 log = logging.getLogger(__name__)
 
 DWC = Namespace("http://rs.tdwg.org/dwc/terms/")
+
+
+async def extract_queryables_rdf(system_repo: Repo):
+    """
+    Extract queryables RDF from the system store using a DESCRIBE query.
+    Returns an Oxigraph store containing all queryables and their property shapes.
+    """
+    describe_query = "DESCRIBE ?queryable WHERE { ?queryable a <http://www.opengis.net/doc/IS/cql2/1.0/Queryable> }"
+    queryables_store, _ = await system_repo.send_queries(
+        [describe_query], [], return_oxigraph_store=True
+    )
+    return queryables_store
 
 
 async def listing_profiles(
@@ -187,41 +214,124 @@ async def listing_function(
     ):
         return PlainTextResponse(queries[0], media_type="application/sparql-query")
 
-    # add a count query if it's an annotated mediatype or counted search
-    if (
-            ("anot+" in pmts.selected["mediatype"] and not search_query) or
-            (pmts.selected["mediatype"] == "application/geo+json") or
-            (search_query and settings.search_uses_listing_count_limit)
-    ):
-        subselect = copy.deepcopy(main_query.inner_select)
-        count_query = CountQuery(original_subselect=subselect).to_string()
-        queries.append(count_query)
+    # add faceting query if requested
     facet_profile_uri = None
     if query_params.facet_profile:
-        facet_profile_uri, facets_query = await _create_facets_query(
+        # Check if main query has a subselect, if not, create one with the `?focus_node a ?type` triple
+        # This will allow the count query below to reuse the subselect preventing an error.
+        if not hasattr(main_query, "inner_select") or main_query.inner_select is None:
+            # Create the ?focus_node a ?type triple
+            basic_triple = TriplesSameSubjectPath.from_spo(
+                subject=Var(value="focus_node"),
+                predicate=IRI(value="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+                object=Var(value="type"),
+            )
+
+            # Create a new subselect with this triple
+            basic_subselect = SubSelect(
+                select_clause=SelectClause(
+                    variables_or_all=[Var(value="focus_node")],
+                    distinct=True,
+                ),
+                where_clause=WhereClause(
+                    group_graph_pattern=GroupGraphPattern(
+                        content=GroupGraphPatternSub(
+                            triples_block=TriplesBlock.from_tssp_list([basic_triple])
+                        )
+                    )
+                ),
+                solution_modifier=SolutionModifier(
+                    limit_offset=LimitOffsetClauses(
+                        limit_clause=LimitClause(limit=settings.listing_count_limit),
+                        offset_clause=OffsetClause(offset=0),
+                    )
+                ),
+            )
+
+            # Add the subselect to the main query's where clause
+            from sparql_grammar_pydantic import (
+                GraphPatternNotTriples,
+                GroupOrUnionGraphPattern,
+            )
+
+            subselect_gpnt = GraphPatternNotTriples(
+                content=GroupOrUnionGraphPattern(
+                    group_graph_patterns=[GroupGraphPattern(content=basic_subselect)]
+                )
+            )
+
+            # Insert the subselect at the beginning of the where clause
+            if hasattr(
+                main_query.where_clause.group_graph_pattern.content,
+                "graph_patterns_or_triples_blocks",
+            ):
+                main_query.where_clause.group_graph_pattern.content.graph_patterns_or_triples_blocks.insert(
+                    0, subselect_gpnt
+                )
+
+        facet_profile_uri, facets_query = await FacetQuery.create_facets_query(
             main_query, query_params
         )
         if facets_query:
             queries.append(facets_query.to_string())
 
+    # add a count query if it's an annotated mediatype or counted search
+    if (
+        ("anot+" in pmts.selected["mediatype"] and not search_query)
+        or (pmts.selected["mediatype"] == "application/geo+json")
+        or (search_query and settings.search_uses_listing_count_limit)
+    ):
+        subselect = copy.deepcopy(main_query.inner_select)
+        count_query = CountQuery(original_subselect=subselect).to_string()
+        queries.append(count_query)
+
     item_store: OxiStore
-    item_store, _ = await query_repo.send_queries(queries, [], return_oxigraph_store=True)
+    item_store, _ = await query_repo.send_queries(
+        queries, [], return_oxigraph_store=True
+    )
     default = OxiDefaultGraph()
     if facet_profile_uri:
-        item_store.add(OxiQuad(OxiBlankNode(), OxiNamedNode(PREZ.facetProfile), OxiNamedNode(facet_profile_uri), default))
+        item_store.add(
+            OxiQuad(
+                OxiBlankNode(),
+                OxiNamedNode(PREZ.facetProfile),
+                OxiNamedNode(facet_profile_uri),
+                default,
+            )
+        )
     if "anot+" in pmts.selected["mediatype"]:
-        item_store.add(OxiQuad(OxiBlankNode(), OxiNamedNode(PREZ.currentProfile), OxiNamedNode(pmts.selected["profile"]), default))
+        item_store.add(
+            OxiQuad(
+                OxiBlankNode(),
+                OxiNamedNode(PREZ.currentProfile),
+                OxiNamedNode(pmts.selected["profile"]),
+                default,
+            )
+        )
         await add_prez_links_for_oxigraph(item_store, query_repo, endpoint_structure)
 
     # count search results - hard to do in SPARQL as the SELECT part of the query is NOT aggregated
     if search_query and not settings.search_uses_listing_count_limit:
-        count = len(list(item_store.quads_for_pattern(None, OxiNamedNode(RDF.type), OxiNamedNode(PREZ.SearchResult), None)))
+        count = len(
+            list(
+                item_store.quads_for_pattern(
+                    None, OxiNamedNode(RDF.type), OxiNamedNode(PREZ.SearchResult), None
+                )
+            )
+        )
         if count == search_query.limit:
             count_literal = f">{(count - 1) * query_params.page}"
         else:
             # last page, this is the actual count = (complete pages) * limit + count
             count_literal = f"{(query_params.limit * (query_params.page - 1)) + count}"
-        item_store.add(OxiQuad(OxiNamedNode(PREZ.SearchResult), OxiNamedNode(PREZ["count"]), OxiLiteral(count_literal), default))
+        item_store.add(
+            OxiQuad(
+                OxiNamedNode(PREZ.SearchResult),
+                OxiNamedNode(PREZ["count"]),
+                OxiLiteral(count_literal),
+                default,
+            )
+        )
     return await return_from_graph(
         item_store,
         pmts.selected["mediatype"],
@@ -233,62 +343,6 @@ async def listing_function(
         query_params,
         url,
     )
-
-
-async def _create_facets_query(main_query, query_params):
-    profile_uri = await get_facet_profile_uri_from_qsa(query_params.facet_profile)
-    if not profile_uri:
-        return None, None
-    else:
-        facet_nodeshape = NodeShape(
-            uri=profile_uri,
-            graph=profiles_graph_cache,
-            kind="profile",
-            focus_node=Var(value="focus_node"),
-        )
-        facet_property_shape = facet_nodeshape.propertyShapes[0]
-        subselect_for_faceting = copy.deepcopy(main_query.inner_select)
-        facets_query = FacetQuery(
-            original_subselect=subselect_for_faceting,
-            property_shape=facet_property_shape,
-        )
-        return profile_uri, facets_query
-
-
-async def get_facet_profile_uri_from_qsa(facet_profile_qsa):
-    requested_facet_profile = facet_profile_qsa
-    profile_uri = next(  # check if QSA is identifier
-        profiles_graph_cache.subjects(
-            predicate=DCTERMS.identifier, object=Literal(requested_facet_profile)
-        ),
-        None,
-    ) or next(
-        profiles_graph_cache.subjects(
-            predicate=DCTERMS.identifier,
-            object=Literal(requested_facet_profile, datatype=XSD.token),
-        ),
-        None,
-    )
-    if not profile_uri:  # check if QSA is uri
-        try:
-            uri_ref = URIRef(requested_facet_profile)
-            # Check if this URI exists as a subject in any triple
-            if (uri_ref, None, None) in profiles_graph_cache:
-                profile_uri = uri_ref
-        except ValueError:
-            pass
-
-    if not profile_uri:  # check if QSA is curie
-        try:
-            requested_facet_profile_uri = await get_uri_for_curie_id(
-                requested_facet_profile
-            )
-            if requested_facet_profile_uri:
-                if (requested_facet_profile_uri, None, None) in profiles_graph_cache:
-                    profile_uri = requested_facet_profile_uri
-        except PrefixNotBoundException:
-            pass
-    return profile_uri
 
 
 async def ogc_features_listing_function(
@@ -389,10 +443,14 @@ async def ogc_features_listing_function(
     count: int
 
     item_store: OxiStore
-    main_query_task = asyncio.ensure_future(data_repo.send_queries(queries, [], return_oxigraph_store=True))
+    main_query_task = asyncio.ensure_future(
+        data_repo.send_queries(queries, [], return_oxigraph_store=True)
+    )
     if count_query:
         # send this in parallel to the main query
-        count_query_task = asyncio.ensure_future(data_repo.send_queries([count_query], [], return_oxigraph_store=True))
+        count_query_task = asyncio.ensure_future(
+            data_repo.send_queries([count_query], [], return_oxigraph_store=True)
+        )
     else:
         count_query_task = None
     await asyncio.sleep(0)  # Yield control to allow the parallel tasks to start
@@ -422,7 +480,49 @@ async def ogc_features_listing_function(
         annotations_store = await return_annotated_rdf_for_oxigraph(
             item_store, data_repo, system_repo
         )
-    item_graph = item_store # treat the Oxigraph Store as a graph
+    item_graph = item_store  # treat the Oxigraph Store as a graph
+
+    # Handle queryables RDF responses
+    if endpoint_uri_type[0] in [
+        OGCFEAT["queryables-local"],
+        OGCFEAT["queryables-global"],
+    ] and (
+        selected_mediatype in NonAnnotatedRDFMediaType
+        or selected_mediatype in AnnotatedRDFMediaType
+    ):
+        # Extract queryables RDF from the system store using DESCRIBE query
+        queryables_store = await extract_queryables_rdf(system_repo)
+
+        # Handle annotated vs non-annotated RDF
+        if selected_mediatype in AnnotatedRDFMediaType:
+            serialization_format = selected_mediatype.replace("anot+", "")
+            # Get specific annotations for the queryables data (not the entire annotations store)
+            specific_annotations_store = await return_annotated_rdf_for_oxigraph(
+                queryables_store, data_repo, system_repo
+            )
+            queryables_store.bulk_extend(specific_annotations_store)
+        else:
+            serialization_format = selected_mediatype
+
+        # Get the Oxigraph serializer format
+        serializer_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(
+            serialization_format, RdfFormat.N_TRIPLES
+        )
+
+        # Get prefixes for serialization
+        oxigraph_prefixes = {
+            p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()
+        }
+
+        content = io.BytesIO()
+        queryables_store.dump(
+            content,
+            serializer_format,
+            from_graph=OxiDefaultGraph(),
+            prefixes=oxigraph_prefixes,
+        )
+        content.seek(0)
+        return content, link_headers
 
     if selected_mediatype == "application/json":
         if endpoint_uri_type[0] in [
@@ -443,7 +543,11 @@ async def ogc_features_listing_function(
         else:
             collections = create_collections_json(
                 item_graph,
-                annotations_store if annotations_store is not None else annotations_graph,
+                (
+                    annotations_store
+                    if annotations_store is not None
+                    else annotations_graph
+                ),
                 url,
                 selected_mediatype,
                 query_params,
@@ -485,11 +589,20 @@ async def ogc_features_listing_function(
         content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
     elif selected_mediatype in NonAnnotatedRDFMediaType:
         item_store: OxiStore = item_graph
-        serializer_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(str(selected_mediatype), RdfFormat.N_TRIPLES)
-        oxigraph_prefixes = {p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()}
+        serializer_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(
+            str(selected_mediatype), RdfFormat.N_TRIPLES
+        )
+        oxigraph_prefixes = {
+            p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()
+        }
         content = io.BytesIO()
         # TODO, what happens if the store has content in a named graph? This can only dump the default graph.
-        item_store.dump(content, serializer_format, from_graph=OxiDefaultGraph(), prefixes=oxigraph_prefixes)
+        item_store.dump(
+            content,
+            serializer_format,
+            from_graph=OxiDefaultGraph(),
+            prefixes=oxigraph_prefixes,
+        )
         content.seek(0)  # Reset the stream position to the beginning
 
     elif selected_mediatype in AnnotatedRDFMediaType:
@@ -502,11 +615,16 @@ async def ogc_features_listing_function(
             # Add the annotations to the store
             for s, p, o in annotations_graph.triples((None, None, None)):
                 item_store.add(OxiQuad(to_ox(s), to_ox(p), to_ox(o), default))
-        serializer_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(str(non_anot_mt), RdfFormat.N_TRIPLES)
-        oxigraph_prefixes = {p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()}
+        serializer_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(
+            str(non_anot_mt), RdfFormat.N_TRIPLES
+        )
+        oxigraph_prefixes = {
+            p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()
+        }
         content = io.BytesIO()
         # TODO, what happens if the store has content in a named graph? This can only dump the default graph.
-        item_store.dump(content, serializer_format, from_graph=default, prefixes=oxigraph_prefixes)
+        item_store.dump(
+            content, serializer_format, from_graph=default, prefixes=oxigraph_prefixes
+        )
         content.seek(0)  # Reset the stream position to the beginning
-        content = io.BytesIO(item_graph.serialize(format=non_anot_mt, encoding="utf-8"))
     return content, link_headers

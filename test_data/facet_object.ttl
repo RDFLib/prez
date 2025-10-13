@@ -1,0 +1,22 @@
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix ex: <http://example.org/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:Site1 a dcat:Catalog ;
+    rdfs:label "Site 1 Orange" ;
+    ex:hasReport ex:ChildReport1 , ex:ChildReport2 , ex:ChildReport3 ;
+    ex:hasWellLog ex:WellLog1 , ex:WellLog2 ;
+    ex:hasGeomchemistryReport ex:GeoChemReport1 , ex:GeoChemReport2 , ex:GeoChemReport3 , ex:GeoChemReport4 ;
+    .
+
+ex:ChildReport1 a ex:Report .
+ex:ChildReport2 a ex:Report .
+ex:ChildReport3 a ex:Report .
+
+ex:WellLog1 a ex:WellLog .
+ex:WellLog2 a ex:WellLog .
+
+ex:GeoChemReport1 a ex:GeoChemReport .
+ex:GeoChemReport2 a ex:GeoChemReport .
+ex:GeoChemReport3 a ex:GeoChemReport .
+ex:GeoChemReport4 a ex:GeoChemReport .

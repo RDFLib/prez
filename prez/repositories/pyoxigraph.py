@@ -1,7 +1,9 @@
 import logging
+from threading import Lock
 from typing import Any
-from io import BytesIO
+
 import pyoxigraph
+from fastapi.concurrency import run_in_threadpool
 from pyoxigraph import (
     RdfFormat,
     Store,
@@ -10,8 +12,6 @@ from pyoxigraph import (
     QueryBoolean,
     Quad,
 )
-from fastapi.concurrency import run_in_threadpool
-from threading import Lock
 from rdflib import Graph, Namespace, URIRef
 
 from prez.exceptions.model_exceptions import InvalidSPARQLQueryException
@@ -58,7 +58,9 @@ class PyoxigraphRepo(Repo):
             # Into an oxigraph store
             default = pyoxigraph.DefaultGraph()
             # If the target is a Store, we can directly load the triples into it.
-            into_.bulk_extend(Quad(t.subject, t.predicate, t.object, default) for t in results)
+            into_.bulk_extend(
+                Quad(t.subject, t.predicate, t.object, default) for t in results
+            )
             return into_
         ntriples_bytes = results.serialize(None, format=RdfFormat.N_TRIPLES)
         if ntriples_bytes is None:
@@ -156,7 +158,10 @@ class PyoxigraphRepo(Repo):
             if graph_lock is not None and do_delete_lock:
                 # The Lock might still be acquired by a different thread, but doesn't matter,
                 # we can still delete the lock reference from the dict.
-                if id(into_graph) in self.into_store_write_locks and graph_lock is self.into_store_write_locks[id(into_graph)]:
+                if (
+                    id(into_graph) in self.into_store_write_locks
+                    and graph_lock is self.into_store_write_locks[id(into_graph)]
+                ):
                     del self.into_store_write_locks[id(into_graph)]
 
     async def rdf_query_to_oxigraph_store(
@@ -179,7 +184,10 @@ class PyoxigraphRepo(Repo):
             if store_lock is not None and do_delete_lock:
                 # The Lock might still be acquired by a different thread, but doesn't matter,
                 # we can still delete the lock reference from the dict.
-                if id(into_store) in self.into_store_write_locks and store_lock is self.into_store_write_locks[id(into_store)]:
+                if (
+                    id(into_store) in self.into_store_write_locks
+                    and store_lock is self.into_store_write_locks[id(into_store)]
+                ):
                     del self.into_store_write_locks[id(into_store)]
 
     async def tabular_query_to_table(

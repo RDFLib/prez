@@ -1,4 +1,3 @@
-from io import BytesIO
 import logging
 from typing import Any
 from urllib.parse import quote_plus
@@ -31,14 +30,27 @@ class RemoteSparqlRepo(Repo):
         Args: query: str: A SPARQL query to be sent asynchronously.
         Returns: httpx.Response: A httpx.Response object
         """
+        data = {"query": query}
+        if settings.sparql_timeout_param_name:
+            data[settings.sparql_timeout_param_name] = str(settings.sparql_timeout)
+
         query_rq = self.async_client.build_request(
             "POST",
             url=settings.sparql_endpoint,
             headers={"Accept": mediatype},
-            data={"query": query},
+            data=data,
         )
-        response = await self.async_client.send(query_rq, stream=True)
-        return response
+        try:
+            response = await self.async_client.send(query_rq, stream=True)
+            return response
+        except httpx.TimeoutException as e:
+            timeout_msg = (
+                f"SPARQL query timed out after {settings.sparql_timeout} seconds"
+            )
+            if settings.sparql_timeout_param_name:
+                timeout_msg += f" (sent '{settings.sparql_timeout_param_name}={settings.sparql_timeout}' to remote endpoint)"
+            log.error(timeout_msg)
+            raise httpx.TimeoutException(timeout_msg) from e
 
     async def rdf_query_to_rdflib_graph(
         self, query: str, into_graph: Graph | None = None
@@ -78,7 +90,9 @@ class RemoteSparqlRepo(Repo):
         else:
             s = Store()
         content_bytes = await response.aread()
-        oxigraph_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(response_format, RdfFormat.N_TRIPLES)
+        oxigraph_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(
+            response_format, RdfFormat.N_TRIPLES
+        )
         s.bulk_load(content_bytes, oxigraph_format)
         return s
 
@@ -108,11 +122,19 @@ class RemoteSparqlRepo(Repo):
         if method == "GET":
             query_escaped = quote_plus(query)
             url = f"{settings.sparql_endpoint}?query={query_escaped}"
+            if settings.sparql_timeout_param_name:
+                url += (
+                    f"&{settings.sparql_timeout_param_name}={settings.sparql_timeout}"
+                )
             request = httpx.Request(method, url, headers=headers)
         else:
             url = settings.sparql_endpoint
             # Prepare form data
             form_data = f"query={quote_plus(query)}"
+            if settings.sparql_timeout_param_name:
+                form_data += (
+                    f"&{settings.sparql_timeout_param_name}={settings.sparql_timeout}"
+                )
 
             # Set correct headers for form data
             headers["content-type"] = "application/x-www-form-urlencoded"
@@ -138,4 +160,3 @@ class RemoteSparqlRepo(Repo):
             ) from e
 
         return response
-

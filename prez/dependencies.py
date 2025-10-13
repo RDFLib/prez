@@ -5,7 +5,7 @@ from pathlib import Path
 import httpx
 from fastapi import Depends, HTTPException, Request
 from pyoxigraph import Store, RdfFormat, DefaultGraph as OxiDefaultGraph
-from rdflib import DCTERMS, RDF, SKOS, Dataset, Literal, URIRef, Graph
+from rdflib import DCTERMS, RDF, SKOS, Literal, URIRef, Graph
 from sparql_grammar_pydantic import IRI, Var
 
 from prez.cache import (
@@ -111,7 +111,10 @@ async def get_data_repo(
         return data_repo
     except (AttributeError, LookupError):
         pass
-    if settings.sparql_repo_type == "pyoxigraph_memory" or settings.sparql_repo_type == "pyoxigraph_persistent":
+    if (
+        settings.sparql_repo_type == "pyoxigraph_memory"
+        or settings.sparql_repo_type == "pyoxigraph_persistent"
+    ):
         return PyoxigraphRepo(pyoxi_data_store)
     elif settings.sparql_repo_type == "oxrdflib":
         return OxrdflibRepo(oxrdflib_store)
@@ -146,7 +149,9 @@ async def load_local_data_to_oxigraph(store: Store):
     Loads all the data from the local data directory into the local SPARQL endpoint
     """
     default = OxiDefaultGraph()
-    for file in (Path(__file__).parent.parent / settings.pyoxigraph_data_dir).glob("**/*.ttl"):
+    for file in (Path(__file__).parent.parent / settings.pyoxigraph_data_dir).glob(
+        "**/*.ttl"
+    ):
         try:
             store.bulk_load(None, RdfFormat.TURTLE, path=str(file), to_graph=default)
         except Exception as e:
@@ -212,7 +217,7 @@ async def cql_post_parser_dependency(
         body = await request.json()
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON format.")
-    
+
     try:
         cql_parser = CQLParser(cql_json=body, queryable_props=queryable_props)
         cql_parser.parse()
@@ -231,7 +236,9 @@ async def cql_get_parser_dependency(
         try:
             crs = query_params.filter_crs
             query = json.loads(query_params._filter)
-            cql_parser = CQLParser(cql_json=query, crs=crs, queryable_props=queryable_props)
+            cql_parser = CQLParser(
+                cql_json=query, crs=crs, queryable_props=queryable_props
+            )
             try:
                 cql_parser.parse()
             except Exception as e:
@@ -263,14 +270,36 @@ async def generate_search_query(
     endpoint_uri_type: tuple[URIRef, URIRef] = Depends(get_endpoint_uri_type),
 ):
     term = request.query_params.get("q")
+
+    # Check for filtering/faceting parameters that allow empty search terms
+    def has_filtering_params():
+        params = request.query_params
+        # Check for faceting
+        if params.get("facet_profile"):
+            return True
+        # Check for CQL filter
+        if params.get("filter"):
+            return True
+        # Check for spatial filtering
+        if params.get("bbox"):
+            return True
+        # Check for temporal filtering
+        if params.get("datetime"):
+            return True
+        return False
+
     # Check if the search term 'q' is provided
     if not term:
-        # If 'q' is missing or empty, only raise error if it's the search endpoint
+        # If 'q' is missing or empty, check if we're on the search endpoint
         if endpoint_uri_type[0] == EP["extended-ogc-records/search"]:
-            raise HTTPException(
-                status_code=400,
-                detail="Search query parameter 'q' must be provided.",
-            )
+            # Allow empty search term if filtering/faceting parameters are present
+            if has_filtering_params():
+                return None  # generate query without FTS component
+            else:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Search query parameter 'q' must be provided, or use filtering parameters (facet_profile, filter, bbox, datetime).",
+                )
         else:
             # For other endpoints, 'q' is optional, return None if not provided
             return None

@@ -26,9 +26,13 @@ from prez.exceptions.model_exceptions import (
     NoEndpointNodeshapeException,
     NoProfilesException,
     PrefixNotBoundException,
-    URINotFoundException
+    URINotFoundException,
 )
-from prez.models.ogc_features import OGCFeaturesLandingPage, generate_landing_page_links
+from prez.models.ogc_features import (
+    FunctionsResponse,
+    OGCFeaturesLandingPage,
+    generate_landing_page_links,
+)
 from prez.models.query_params import ListingQueryParams
 from prez.reference_data.prez_ns import OGCFEAT
 from prez.renderers.renderer import generate_link_headers
@@ -44,10 +48,11 @@ from prez.services.exception_catchers import (
     catch_no_endpoint_nodeshape_exception,
     catch_no_profiles_exception,
     catch_prefix_not_found_exception,
-    catch_uri_not_found_exception, catch_missing_filter_query_param,
+    catch_uri_not_found_exception,
 )
 from prez.services.listings import ogc_features_listing_function
 from prez.services.objects import ogc_features_object_function
+from prez.services.ogc_functions_data import get_ogc_functions_response
 from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.shacl import NodeShape
 
@@ -107,6 +112,21 @@ async def ogc_features_api(
         content=lp.model_dump(),
         headers={"Content-Type": "application/json"} | link_headers,
     )
+
+
+@features_subapi.api_route(
+    "/functions",
+    summary="OGC Features Functions",
+    methods=ALLOWED_METHODS,
+    response_model=FunctionsResponse,
+)
+async def get_functions() -> FunctionsResponse:
+    """
+    Get the list of functions supported by this server.
+
+    Implements OGC API - Features - Part 3: Filtering - Functions requirement.
+    """
+    return get_ogc_functions_response()
 
 
 ########################################################################################################################

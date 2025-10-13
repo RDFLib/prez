@@ -69,17 +69,17 @@ class ConceptHierarchyQuery(ConstructQuery):
     """
 
     def __init__(
-            self,
-            parent_uri: IRI,
-            parent_child_predicates: tuple[IRI, IRI],
-            limit: int = 10,
-            offset: int = 0,
-            has_children_var: Var = Var(
-                value="hasChildren"
-            ),  # whether the focus nodes have children
-            label_predicate: IRI = IRI(value=SKOS.prefLabel),
-            child_grandchild_predicates: Optional[tuple[IRI, IRI]] = None,
-            label_var=Var(value="label"),
+        self,
+        parent_uri: IRI,
+        parent_child_predicates: tuple[IRI, IRI],
+        limit: int = 10,
+        offset: int = 0,
+        has_children_var: Var = Var(
+            value="hasChildren"
+        ),  # whether the focus nodes have children
+        label_predicate: IRI = IRI(value=SKOS.prefLabel),
+        child_grandchild_predicates: Optional[tuple[IRI, IRI]] = None,
+        label_var=Var(value="label"),
     ):
         if not child_grandchild_predicates:
             child_grandchild_predicates = parent_child_predicates
@@ -219,9 +219,7 @@ class ConceptHierarchyQuery(ConstructQuery):
         tb2 = TriplesBlock.from_tssp_list(
             [
                 TriplesSameSubjectPath.from_spo(
-                    Var(value="focus_node"),
-                    label_predicate,
-                    label_var
+                    Var(value="focus_node"), label_predicate, label_var
                 )
             ]
         )
@@ -241,7 +239,9 @@ class ConceptHierarchyQuery(ConstructQuery):
         )
 
         inner_sm = SolutionModifier(
-            order_by=OrderClause(conditions=[OrderCondition(constraint_or_var=label_var)]),
+            order_by=OrderClause(
+                conditions=[OrderCondition(constraint_or_var=label_var)]
+            ),
             limit_offset=LimitOffsetClauses(
                 limit_clause=LimitClause(limit=limit),
                 offset_clause=OffsetClause(offset=offset),

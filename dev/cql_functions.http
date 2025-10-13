@@ -1,0 +1,130 @@
+### FOIObservationFilterDirect
+GET {{baseUrl}}/cql
+    ?filter={
+      "op": "FOIObservationFilterDirect",
+      "args": ["http://www.w3.org/ns/sosa/usedProcedure", "http://example.org/field-name-procedure", "http://www.w3.org/ns/sosa/hasSimpleResult", "rabbit"]
+    }
+Accept: application/sparql-query
+
+### FOIObservationFilterSequence
+GET {{baseUrl}}/cql
+    ?filter={
+      "op": "FOIObservationFilterSequence",
+      "args": ["http://www.w3.org/ns/sosa/usedProcedure", "http://example.org/field-name-procedure", "http://www.w3.org/ns/sosa/hasResult", "http://www.w3.org/1999/02/22-rdf-syntax-ns#value", "rabbit"]
+    }
+Accept: application/sparql-query
+
+### hasObservation single values
+GET {{baseUrl}}/cql
+    ?filter={
+      "op": "hasObservation",
+      "args": [
+        ["https://example.org/vocab/prop1"],
+        ["val1"]
+      ]
+    }
+Accept: application/sparql-query
+
+### hasObservation multiple values
+GET {{baseUrl}}/cql
+    ?filter={
+      "op": "hasObservation",
+      "args": [
+        ["https://example.org/vocab/prop1", "https://example.org/vocab/prop2"],
+        ["val1", "val2"]
+      ]
+    }
+Accept: application/sparql-query
+
+### hasAttribute single values
+GET {{baseUrl}}/cql
+    ?filter={
+      "op": "hasAttribute",
+      "args": [
+        ["https://example.org/vocab/prop1"],
+        ["val1"]
+      ]
+    }
+Accept: application/sparql-query
+
+### hasAttribute multiple values
+GET {{baseUrl}}/cql
+    ?filter={
+      "op": "hasAttribute",
+      "args": [
+        ["https://example.org/vocab/prop1", "https://example.org/vocab/prop2"],
+        ["val1", "val2"]
+      ]
+    }
+Accept: application/sparql-query
+
+### hasAdditional single values
+GET {{baseUrl}}/cql
+    ?filter={
+      "op": "hasAdditional",
+      "args": [
+        ["https://example.org/vocab/prop1"],
+        ["val1"]
+      ]
+    }
+Accept: application/sparql-query
+
+### hasAdditional multiple values
+GET {{baseUrl}}/cql
+    ?filter={
+      "op": "hasAdditional",
+      "args": [
+        ["https://example.org/vocab/prop1", "https://example.org/vocab/prop2"],
+        ["val1", "val2"]
+      ]
+    }
+Accept: application/sparql-query
+
+### add datetime query param
+### hasAdditional multiple values
+GET {{baseUrl}}/cql
+    ?filter={
+      "op": "hasAdditional",
+      "args": [
+        ["https://example.org/vocab/prop1", "https://example.org/vocab/prop2"],
+        ["val1", "val2"]
+      ]
+    }
+    &datetime=2021-01-01T00:00:00Z/2021-01-02T00:00:00Z
+Accept: application/sparql-query
+
+### check or logic variable separation
+### hasAdditional multiple values
+GET {{baseUrl}}/cql
+    ?filter={
+        "op": "or",
+        "args": [
+            {
+                "op": "hasAdditional",
+                "args": [
+                    [
+                        "https://example.org/vocab/prop1",
+                        "https://example.org/vocab/prop2"
+                    ],
+                    [
+                        "val1",
+                        "val2"
+                    ]
+                ]
+            },
+            {
+                "op": "hasAttribute",
+                "args": [
+                    [
+                        "https://example.org/vocab/prop3",
+                        "https://example.org/vocab/prop4"
+                    ],
+                    [
+                        "val3",
+                        "val4"
+                    ]
+                ]
+            }
+        ]
+    }
+Accept: application/sparql-query

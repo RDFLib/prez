@@ -129,7 +129,7 @@ UNION
 ?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://linked.data.gov.au/def/borehole/Bore> .
 }"""
     ]
-    
+
     # Extract original patterns from within FILTER EXISTS wrapper
     original_patterns = _extract_patterns_from_filter_exists(parser.inner_select_gpntotb_list)
     assert len(original_patterns) == len(expected_inner_select_gpntotb_list_str)
@@ -200,10 +200,10 @@ def test_cql_nested_and_operator():
 ?focus_node <http://purl.org/dc/terms/subject> <http://example.org/subjects#Geology> .
 ?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/vocab#Report> ."""
     ]
-    
+
     # Extract original patterns from within FILTER EXISTS wrapper
     original_patterns = _extract_patterns_from_filter_exists(parser.inner_select_gpntotb_list)
-    
+
     # With focus_node optimization, AND operations now generate individual TriplesBlocks
     # Combine them into a single string to match the test expectation
     if len(original_patterns) > 1 and all(hasattr(p, 'to_string') for p in original_patterns):
@@ -212,7 +212,7 @@ def test_cql_nested_and_operator():
         combined_pattern = "\n".join(sorted(pattern_strings))  # Sort for consistent ordering
     else:
         combined_pattern = original_patterns[0].to_string() if original_patterns else ""
-    
+
     expected_combined = expected_inner_select_gpntotb_list_str[0]
     assert combined_pattern.replace(" ", "").replace("\n", "") == expected_combined.replace(" ", "").replace("\n", "")
 
@@ -261,26 +261,26 @@ def _get_all_tssp_from_triples_block(triples_block):
 
 def _extract_patterns_from_filter_exists(inner_select_gpntotb_list):
     """Helper to extract patterns from CQL query structure.
-    
+
     With the new optimization, patterns may be:
     1. Direct patterns (like GroupOrUnionGraphPattern for OR operations)
     2. Wrapped in FILTER EXISTS (for complex AND operations)
     3. Mix of both (focus_node triples + FILTER EXISTS)
-    
+
     Returns the list of patterns that represent the core CQL logic.
     """
     if not inner_select_gpntotb_list:
         return []
-    
+
     if len(inner_select_gpntotb_list) == 1:
         pattern = inner_select_gpntotb_list[0]
-        
+
         # Check if it's a FILTER EXISTS wrapper
-        if (hasattr(pattern, 'content') and 
+        if (hasattr(pattern, 'content') and
             hasattr(pattern.content, 'constraint') and
             hasattr(pattern.content.constraint, 'content') and
             hasattr(pattern.content.constraint.content, 'other_expressions')):
-            
+
             # Navigate through the FILTER EXISTS structure:
             # GraphPatternNotTriples -> Filter -> Constraint -> BuiltInCall -> ExistsFunc -> GroupGraphPattern -> GroupGraphPatternSub
             try:
@@ -294,7 +294,7 @@ def _extract_patterns_from_filter_exists(inner_select_gpntotb_list):
         else:
             # Direct pattern (e.g., GroupOrUnionGraphPattern)
             return [pattern]
-    
+
     # Multiple patterns - return as-is (this represents focus_node triples + FILTER EXISTS)
     return inner_select_gpntotb_list
 
@@ -326,7 +326,7 @@ UNION
 }
 }""",
     ]
-    
+
     # Extract original patterns from within FILTER EXISTS wrapper
     original_patterns = _extract_patterns_from_filter_exists(parser.inner_select_gpntotb_list)
     assert len(original_patterns) == len(expected_inner_select_gpntotb_list_str)
@@ -363,7 +363,7 @@ UNION
 
 }"""
     ]
-    
+
     # Extract original patterns from within FILTER EXISTS wrapper
     original_patterns = _extract_patterns_from_filter_exists(parser.inner_select_gpntotb_list)
     assert len(original_patterns) == len(expected_inner_select_gpntotb_list_str)
@@ -392,7 +392,7 @@ def test_cql_and_of_and_AB_C():
 ?focus_node <http://example.org/propB> <http://example.org/valB> .
 ?focus_node <http://example.org/propA> <http://example.org/valA> ."""
     ]
-    
+
     # Extract original patterns from within FILTER EXISTS wrapper
     original_patterns = _extract_patterns_from_filter_exists(parser.inner_select_gpntotb_list)
     assert len(original_patterns) == len(expected_inner_select_gpntotb_list_str)
@@ -480,7 +480,7 @@ UNION
 }
 }""",
     ]
-    
+
     # Extract original patterns from within FILTER EXISTS wrapper
     original_patterns = _extract_patterns_from_filter_exists(parser.inner_select_gpntotb_list)
     assert len(original_patterns) == len(expected_inner_select_gpntotb_list_str)
@@ -525,7 +525,7 @@ UNION
 }
 """
     ]
-    
+
     # Extract original patterns from within FILTER EXISTS wrapper
     original_patterns = _extract_patterns_from_filter_exists(parser.inner_select_gpntotb_list)
     assert len(original_patterns) == len(expected_inner_select_gpntotb_list_str)
@@ -539,8 +539,9 @@ def test_focus_node_in_subquery():
     Tests that ?focus_node is always included in the inner select variables,
     even for a simple query.
     """
-    from prez.services.query_generation.cql import CQLParser
     from sparql_grammar_pydantic import Var
+
+    from prez.services.query_generation.cql import CQLParser
 
     cql_json_data = {
         "op": "=",
@@ -554,6 +555,25 @@ def test_focus_node_in_subquery():
     parser.parse()
 
     assert Var(value="focus_node") in parser.inner_select_vars
+
+
+def test_cql_boolean_equals_filter():
+    """Ensure boolean literals in CQL become boolean literals in the SPARQL FILTER."""
+    from prez.services.query_generation.cql import CQLParser
+
+    cql_json_data = {
+        "op": "=",
+        "args": [
+            {"property": "http://example.org/flag"},
+            True,
+        ],
+    }
+
+    parser = CQLParser(cql_json=cql_json_data)
+    parser.parse()
+
+    query_str = parser.query_str
+    assert "FILTER (?var_1 = true)" in query_str
 
 
 def test_cql_not_equal_operator_with_literal():
@@ -1100,3 +1120,85 @@ def test_cql_mixed_operators_with_multiple_nots():
     assert "suspended" in query_str  # Property name will be in the URI
     assert '"guest"' in query_str
     assert "temporary" in query_str  # Property name will be in the URI
+
+
+@pytest.mark.parametrize(
+    "filter_value,expected_class,expected_datatype",
+    [
+        ["term", "RDFLiteral", None],
+        ["multi term phrase", "RDFLiteral", None],
+        ['"quotedTermNoDatatype"', "RDFLiteral", None],
+        ['"quoted phrase no datatype"', "RDFLiteral", None],
+        [
+            '"quotedTermWithDatatype"^^<http://my/datatype>',
+            "RDFLiteral",
+            "http://my/datatype",
+        ],
+        [
+            "unquotedTermWithDatatype^^<http://my/datatype>",
+            "RDFLiteral",
+            "http://my/datatype",
+        ],
+        [
+            "'singleQuotedTermWithDatatype'^^<http://my/datatype>",
+            "RDFLiteral",
+            "http://my/datatype",
+        ],
+        ['"some-identifier"^^<invalid uri>', "RDFLiteral", None],
+        ['"some-identifier"^^<https://valid/uri>', "RDFLiteral", "https://valid/uri"],
+        ['"some-identifier"^<https://valid/uri>', "RDFLiteral", None],
+        [
+            '"idEntifIER_with lots!of$craz3y charac^#@ters"^^<https://valid/uri>',
+            "RDFLiteral",
+            "https://valid/uri",
+        ],
+        [1, "NumericLiteral", None],
+        [9999999999999999999999999999999999, "NumericLiteral", None],
+        [True, "BooleanLiteral", None],
+        [False, "BooleanLiteral", None],
+        ["False", "RDFLiteral", None],
+        [
+            '"normal_value"^^<http://example.org/type> ) { SELECT * {?s ?p ?o} } FILTER(',
+            "RDFLiteral",
+            None,
+        ],
+        [
+            '"normal_value""^^<http://example.org/type> ) { SELECT * {?s ?p ?o} } FILTER(',
+            "RDFLiteral",
+            None,
+        ],
+    ],
+)
+def test_cql_typed_literal(
+    filter_value: str, expected_class: str, expected_datatype: str | None
+):
+    from sparql_grammar_pydantic import (  # noqa
+        IRI,
+        BooleanLiteral,
+        NumericLiteral,
+        RDFLiteral,
+    )
+
+    from prez.services.query_generation.cql import CQLParser
+
+    expected_class = eval(expected_class)
+    parser = CQLParser()
+    test_element = {
+        "op": "=",
+        "args": [{"property": "http://example.org/prop"}, filter_value],
+    }
+    ggps_iterator = parser.parse_logical_operators(test_element)
+    ggps = next(ggps_iterator)
+    parsed_term = (
+        ggps.graph_patterns_or_triples_blocks[1]
+        .content.constraint.content.expression.conditional_or_expression.conditional_and_expressions[
+            0
+        ]
+        .value_logicals[0]
+        .relational_expression.right.additive_expression.base_expression.base_expression.primary_expression.content
+    )
+    assert isinstance(parsed_term, expected_class)
+    if expected_class == RDFLiteral:
+        if expected_datatype is not None:
+            expected_datatype = IRI(value=expected_datatype)
+        assert parsed_term.datatype == expected_datatype
