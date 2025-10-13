@@ -1,0 +1,84 @@
+@prefix altr-ext: <http://www.w3.org/ns/dx/connegp/altr-ext#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.org/> .
+@prefix prez: <https://prez.dev/> .
+@prefix prof: <http://www.w3.org/ns/dx/prof/> .
+@prefix profile: <https://prez.dev/profile/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sdo: <https://schema.org/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix shext: <http://example.com/shacl-extension#> .
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+
+profile:pivotPath a prof:Profile ;
+  sh:constrainsClass dcat:Catalog ;
+  sh:property [
+    shext:pivotShape [
+          sh:path prov:qualifiedAssociation ;
+          shext:pivotKey prov:hadRole ;
+          shext:pivotValue prov:agent
+      ] ;
+    ] ;
+.
+
+profile:pivotInversePath a prof:Profile ;
+  sh:constrainsClass dcat:Resource ;
+  sh:property [
+      shext:pivotShape [
+        sh:path [ sh:inversePath sosa:hasFeatureOfInterest ] ;
+        shext:pivotKey sosa:observedProperty ;
+        shext:pivotValue sosa:hasSimpleResult ;
+      ]
+  ] ;
+.
+
+profile:pivotSequencePath a prof:Profile ;
+  sh:constrainsClass dcat:Resource ;
+  sh:property [
+      shext:pivotShape [
+        sh:path ( [ sh:inversePath sosa:hasFeatureOfInterest ] sosa:hasResult [ sh:inversePath sosa:hasFeatureOfInterest ] ) ;
+        shext:pivotKey sosa:observedProperty ;
+        shext:pivotValue sosa:hasSimpleResult ;
+      ]
+  ] ;
+.
+
+profile:pivotMixed a prof:Profile ;
+  sh:constrainsClass dcat:Catalog ;
+  sh:property [
+    sh:class dcat:Resource ;
+    sh:path dct:hasPart
+  ],
+  [
+    shext:pivotShape [
+        sh:path prov:qualifiedAssociation ;
+        shext:pivotKey prov:hadRole ;
+        shext:pivotValue prov:agent
+    ] ;
+  ] ;
+.
+
+profile:pivotAlternativePath a prof:Profile ;
+  sh:constrainsClass dcat:Catalog ;
+  sh:property [
+    shext:pivotShape [
+      sh:path [ sh:alternativePath ( sdo:spatial dct:spatial ) ] ;
+      shext:pivotKey sdo:additionalType ;
+      shext:pivotValue rdfs:comment ;
+    ]
+  ] ;
+.
+
+profile:pivotOneOrMorePath a prof:Profile ;
+  sh:constrainsClass dcat:Catalog ;
+  sh:property [
+    shext:pivotShape [
+      sh:path ( [ sh:oneOrMorePath dct:hasPart ] ex:preda ) ;
+      shext:pivotKey ex:predb ;
+      shext:pivotValue ex:predc ;
+    ] ;
+  ] ;
+.

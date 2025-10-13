@@ -272,18 +272,10 @@ class PropertyShape(Shape):
         if filter_shape_uri:
             filter_shape_tssp_list = self._parse_filter_shape(filter_shape_uri)
 
-        pivot_shape_uri = next(self.graph.objects(self.uri, SHEXT.pivotShape), None)
-        if pivot_shape_uri:
-            pivot_path = next(self.graph.objects(pivot_shape_uri, SH.path), None)
-            # order matters here. key then value. reflected in _generate_sparql_for_paths
-            for pred in [SHEXT.pivotKey, SHEXT.pivotValue]:
-                pred_path = next(self.graph.objects(pivot_shape_uri, pred), None)
-                combined_path = Collection(self.graph, BNode(), [pivot_path, pred_path])
-                self._add_path_to_shape(
-                    combined_path.uri,
-                    shape_level_alias=shape_level_path_alias,
-                    filter_shape_tssp_list=filter_shape_tssp_list,
-                )
+        self._add_pivot_paths(
+            shape_level_path_alias=shape_level_path_alias,
+            filter_shape_tssp_list=filter_shape_tssp_list,
+        )
 
         pps = list(self.graph.objects(self.uri, SH.path))
         for pp in pps:
@@ -296,6 +288,53 @@ class PropertyShape(Shape):
         self.and_property_paths = sorted(
             self.and_property_paths, key=lambda x: len(x), reverse=True
         )
+
+    def _add_pivot_paths(
+        self,
+        shape_level_path_alias: URIRef,
+        filter_shape_tssp_list: list[TriplesSameSubjectPath],
+    ):
+        """Handle processing of pivot paths as defined by the shext:pivotShape SHACL Extension.
+
+        handles profile property shapes of the form:
+
+          sh:property [
+            shext:pivotShape [
+              sh:path ... ;
+              shext:pivotKey <...> ;
+              shext:pivotValue <...> ;
+            ]
+          ]
+
+        Injects the sh:path as context for the shext:pivotKey and shext:pivotValue and then calls
+        _add_path_to_shape on the modified paths.
+        """
+        pivot_shape_uri = next(self.graph.objects(self.uri, SHEXT.pivotShape), None)
+        if pivot_shape_uri:
+            pivot_path = next(self.graph.objects(pivot_shape_uri, SH.path), None)
+            pivot_path_is_sequence = (pivot_path, RDF.first, None) in self.graph
+            # IMPORTANT
+            # the order here matters. It must be pivotkey then pivotvalue.
+            # This is expected in the _generate_sparql_for_paths' handling for
+            # pivot profile paths.
+            for pred in [SHEXT.pivotKey, SHEXT.pivotValue]:
+                pred_path = next(self.graph.objects(pivot_shape_uri, pred), None)
+                # pivot key/value must be a direct property not a sequence path
+                assert (pred_path, RDF.first, None) not in self.graph
+                if pivot_path_is_sequence:
+                    combined_path = Collection(self.graph, pivot_path, [pred_path])
+                else:
+                    combined_path = Collection(
+                        self.graph, BNode(), [pivot_path, pred_path]
+                    )
+                self._add_path_to_shape(
+                    combined_path.uri,
+                    shape_level_alias=shape_level_path_alias,
+                    filter_shape_tssp_list=filter_shape_tssp_list,
+                )
+                if pivot_path_is_sequence:
+                    del combined_path[combined_path.index(pred_path)]
+        return
 
     def _create_facet_binds(
         self, property_path: PropertyPath, value_var: Union[Var, IRI]
@@ -344,12 +383,10 @@ class PropertyShape(Shape):
 
         return binds
 
-    def _parse_property_path(
-        self, pp: Node, uri: Optional[URIRef] = None
-    ) -> PropertyPath:
+    def _parse_property_path(self, pp: Node) -> PropertyPath:
         """Recursively parses a SHACL path node (URIRef or BNode) into a PropertyPath object."""
         if isinstance(pp, URIRef):
-            return Path(value=pp, uri=uri)
+            return Path(value=pp)
         elif isinstance(pp, BNode):
             # Check for sequence first (RDF list structure)
             if self.graph.value(pp, RDF.first):
@@ -366,7 +403,7 @@ class PropertyShape(Shape):
                         raise ValueError(
                             f"Malformed RDF list structure: missing rdf:rest from {pp}"
                         )
-                return SequencePath(value=path_elements, uri=uri)
+                return SequencePath(value=path_elements)
 
             # If not a sequence, check for other SHACL path constructs
             pred_objects = list(self.graph.predicate_objects(subject=pp))
@@ -471,7 +508,6 @@ class PropertyShape(Shape):
         self,
         pp: Node,
         union: bool = False,
-        uri: Optional[URIRef] = None,
         shape_level_alias: Optional[URIRef] = None,
         filter_shape_tssp_list: Optional[List[TriplesSameSubjectPath]] = None,
     ):
@@ -499,7 +535,7 @@ class PropertyShape(Shape):
                 path_to_parse = nested_path_node
 
         try:
-            path_object = self._parse_property_path(path_to_parse, uri)
+            path_object = self._parse_property_path(path_to_parse)
             if path_object is not None:
                 if path_alias_value:
                     path_object.path_alias = path_alias_value
@@ -688,6 +724,9 @@ class PropertyShape(Shape):
         processed_paths_data = []
         pp_i = start_pp_i
 
+        # Establish variables required for handling pivot profiles, other
+        # pivot profile specific handling is done in the loop for SequencePaths
+        # as pivot paths are necessarily, always SequencePaths.
         pivot_profile = (
             next(self.graph.objects(self.uri, SHEXT.pivotShape), None) is not None
         )
@@ -885,17 +924,24 @@ class PropertyShape(Shape):
                         # (path_nodes[0] is path_node_1, path_nodes[1] is path_node_2, etc.)
                         segment_object_node = path_nodes[j]
 
-                        # pivot profile special handling
+                        # Pivot paths special handling
+                        # If we are in a pivot profile then the property_paths will be
+                        # [pivotkey_path, pivotvalue_path] - in that order.
+                        # thus we know we will process the pivotkey_path first
                         last_segment = (j + 1) == len(property_path.value)
                         if pivot_profile:
                             if last_segment and not pivot_key_var:
+                                # If we are at the end of the pivotkeypath, save the variable for the pivot key
+                                # and the pivot node. the pivot node is always one up from the last_segment.
                                 pivot_node_var = segment_subject_node
                                 pivot_key_var = segment_object_node
                             elif not last_segment and pivot_key_var:
-                                # only add the last segment segment for the pivot_value_path
+                                # If we are processing the pivotValue path only add the last segment
+                                # all other segments will be as per the pivotKey path
                                 continue
                             elif last_segment and pivot_key_var:
-                                # adjust the subject node to be the same as for the pivot_key_path
+                                # adjust the subject node to be the pivot node as saved earlier and esatblish the
+                                # single construct triple required for the pivot profile.
                                 segment_subject_node = pivot_node_var
                                 pivot_value_var = segment_object_node
                                 pivot_triple = (
@@ -1000,7 +1046,7 @@ class PropertyShape(Shape):
                                             value=alt_path_item.value.value
                                         )  # Use base predicate for construct
 
-                                    if construct_pred_iri:
+                                    if construct_pred_iri and not pivot_profile:
                                         self.tss_list.append(
                                             TriplesSameSubject.from_spo(
                                                 construct_subj,
