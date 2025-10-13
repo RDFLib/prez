@@ -131,7 +131,9 @@ UNION
     ]
 
     # Extract original patterns from within FILTER EXISTS wrapper
-    original_patterns = _extract_patterns_from_filter_exists(parser.inner_select_gpntotb_list)
+    original_patterns = _extract_patterns_from_filter_exists(
+        parser.inner_select_gpntotb_list
+    )
     assert len(original_patterns) == len(expected_inner_select_gpntotb_list_str)
     assert original_patterns[0].to_string().replace(" ", "").replace(
         "\n", ""
@@ -202,19 +204,27 @@ def test_cql_nested_and_operator():
     ]
 
     # Extract original patterns from within FILTER EXISTS wrapper
-    original_patterns = _extract_patterns_from_filter_exists(parser.inner_select_gpntotb_list)
+    original_patterns = _extract_patterns_from_filter_exists(
+        parser.inner_select_gpntotb_list
+    )
 
     # With focus_node optimization, AND operations now generate individual TriplesBlocks
     # Combine them into a single string to match the test expectation
-    if len(original_patterns) > 1 and all(hasattr(p, 'to_string') for p in original_patterns):
+    if len(original_patterns) > 1 and all(
+        hasattr(p, "to_string") for p in original_patterns
+    ):
         # Remove duplicates by converting to set of strings, then back to list
         pattern_strings = list(set(p.to_string().strip() for p in original_patterns))
-        combined_pattern = "\n".join(sorted(pattern_strings))  # Sort for consistent ordering
+        combined_pattern = "\n".join(
+            sorted(pattern_strings)
+        )  # Sort for consistent ordering
     else:
         combined_pattern = original_patterns[0].to_string() if original_patterns else ""
 
     expected_combined = expected_inner_select_gpntotb_list_str[0]
-    assert combined_pattern.replace(" ", "").replace("\n", "") == expected_combined.replace(" ", "").replace("\n", "")
+    assert combined_pattern.replace(" ", "").replace(
+        "\n", ""
+    ) == expected_combined.replace(" ", "").replace("\n", "")
 
 
 # --- Tests for nested AND/OR operators ---
@@ -276,10 +286,12 @@ def _extract_patterns_from_filter_exists(inner_select_gpntotb_list):
         pattern = inner_select_gpntotb_list[0]
 
         # Check if it's a FILTER EXISTS wrapper
-        if (hasattr(pattern, 'content') and
-            hasattr(pattern.content, 'constraint') and
-            hasattr(pattern.content.constraint, 'content') and
-            hasattr(pattern.content.constraint.content, 'other_expressions')):
+        if (
+            hasattr(pattern, "content")
+            and hasattr(pattern.content, "constraint")
+            and hasattr(pattern.content.constraint, "content")
+            and hasattr(pattern.content.constraint.content, "other_expressions")
+        ):
 
             # Navigate through the FILTER EXISTS structure:
             # GraphPatternNotTriples -> Filter -> Constraint -> BuiltInCall -> ExistsFunc -> GroupGraphPattern -> GroupGraphPatternSub
@@ -328,7 +340,9 @@ UNION
     ]
 
     # Extract original patterns from within FILTER EXISTS wrapper
-    original_patterns = _extract_patterns_from_filter_exists(parser.inner_select_gpntotb_list)
+    original_patterns = _extract_patterns_from_filter_exists(
+        parser.inner_select_gpntotb_list
+    )
     assert len(original_patterns) == len(expected_inner_select_gpntotb_list_str)
     assert original_patterns[0].to_string().replace(" ", "").replace(
         "\n", ""
@@ -365,7 +379,9 @@ UNION
     ]
 
     # Extract original patterns from within FILTER EXISTS wrapper
-    original_patterns = _extract_patterns_from_filter_exists(parser.inner_select_gpntotb_list)
+    original_patterns = _extract_patterns_from_filter_exists(
+        parser.inner_select_gpntotb_list
+    )
     assert len(original_patterns) == len(expected_inner_select_gpntotb_list_str)
     assert original_patterns[0].to_string().replace(" ", "").replace(
         "\n", ""
@@ -394,7 +410,9 @@ def test_cql_and_of_and_AB_C():
     ]
 
     # Extract original patterns from within FILTER EXISTS wrapper
-    original_patterns = _extract_patterns_from_filter_exists(parser.inner_select_gpntotb_list)
+    original_patterns = _extract_patterns_from_filter_exists(
+        parser.inner_select_gpntotb_list
+    )
     assert len(original_patterns) == len(expected_inner_select_gpntotb_list_str)
     assert original_patterns[0].to_string().replace(" ", "").replace(
         "\n", ""
@@ -482,7 +500,9 @@ UNION
     ]
 
     # Extract original patterns from within FILTER EXISTS wrapper
-    original_patterns = _extract_patterns_from_filter_exists(parser.inner_select_gpntotb_list)
+    original_patterns = _extract_patterns_from_filter_exists(
+        parser.inner_select_gpntotb_list
+    )
     assert len(original_patterns) == len(expected_inner_select_gpntotb_list_str)
     assert original_patterns[0].to_string().replace(" ", "").replace(
         "\n", ""
@@ -527,7 +547,9 @@ UNION
     ]
 
     # Extract original patterns from within FILTER EXISTS wrapper
-    original_patterns = _extract_patterns_from_filter_exists(parser.inner_select_gpntotb_list)
+    original_patterns = _extract_patterns_from_filter_exists(
+        parser.inner_select_gpntotb_list
+    )
     assert len(original_patterns) == len(expected_inner_select_gpntotb_list_str)
     assert original_patterns[0].to_string().replace(" ", "").replace(
         "\n", ""
@@ -787,7 +809,7 @@ def test_cql_not_operator_with_complex_expression():
                                     "true",
                                 ],
                             },
-                        ]
+                        ],
                     }
                 ],
             },
@@ -836,7 +858,9 @@ def test_cql_double_negation():
     query_str = parser.query_str
     # Should have nested FILTER NOT EXISTS statements
     not_exists_count = query_str.count("FILTER NOT EXISTS")
-    assert not_exists_count == 2, f"Expected 2 FILTER NOT EXISTS, got {not_exists_count}"
+    assert (
+        not_exists_count == 2
+    ), f"Expected 2 FILTER NOT EXISTS, got {not_exists_count}"
     assert '"active"' in query_str
 
 
@@ -883,7 +907,9 @@ def test_cql_or_with_not_branches():
     # Should have UNION with FILTER NOT EXISTS in each branch
     assert "UNION" in query_str
     not_exists_count = query_str.count("FILTER NOT EXISTS")
-    assert not_exists_count == 2, f"Expected 2 FILTER NOT EXISTS, got {not_exists_count}"
+    assert (
+        not_exists_count == 2
+    ), f"Expected 2 FILTER NOT EXISTS, got {not_exists_count}"
     assert '"inactive"' in query_str
     assert '"true"' in query_str
 
@@ -933,7 +959,9 @@ def test_cql_complex_nested_not_and_or():
                                             {
                                                 "op": "=",
                                                 "args": [
-                                                    {"property": "http://example.org/verified"},
+                                                    {
+                                                        "property": "http://example.org/verified"
+                                                    },
                                                     "true",
                                                 ],
                                             },
@@ -954,7 +982,9 @@ def test_cql_complex_nested_not_and_or():
     query_str = parser.query_str
     # Should have nested structure with multiple FILTER NOT EXISTS
     not_exists_count = query_str.count("FILTER NOT EXISTS")
-    assert not_exists_count == 2, f"Expected 2 FILTER NOT EXISTS, got {not_exists_count}"
+    assert (
+        not_exists_count == 2
+    ), f"Expected 2 FILTER NOT EXISTS, got {not_exists_count}"
     assert "UNION" in query_str  # From OR inside first NOT
     assert '"alice"' in query_str
     assert '"banned"' in query_str
@@ -1004,7 +1034,9 @@ def test_cql_not_of_and_with_not():
     query_str = parser.query_str
     # Should have nested FILTER NOT EXISTS structures
     not_exists_count = query_str.count("FILTER NOT EXISTS")
-    assert not_exists_count == 2, f"Expected 2 FILTER NOT EXISTS, got {not_exists_count}"
+    assert (
+        not_exists_count == 2
+    ), f"Expected 2 FILTER NOT EXISTS, got {not_exists_count}"
     assert '"premium"' in query_str
     assert '"true"' in query_str
 
@@ -1044,7 +1076,9 @@ def test_cql_triple_negation():
     query_str = parser.query_str
     # Should have three nested FILTER NOT EXISTS statements
     not_exists_count = query_str.count("FILTER NOT EXISTS")
-    assert not_exists_count == 3, f"Expected 3 FILTER NOT EXISTS, got {not_exists_count}"
+    assert (
+        not_exists_count == 3
+    ), f"Expected 3 FILTER NOT EXISTS, got {not_exists_count}"
     assert '"enabled"' in query_str
 
 
@@ -1115,7 +1149,9 @@ def test_cql_mixed_operators_with_multiple_nots():
     # Should have UNION with different NOT structures in each branch
     assert "UNION" in query_str
     not_exists_count = query_str.count("FILTER NOT EXISTS")
-    assert not_exists_count == 2, f"Expected 2 FILTER NOT EXISTS, got {not_exists_count}"
+    assert (
+        not_exists_count == 2
+    ), f"Expected 2 FILTER NOT EXISTS, got {not_exists_count}"
     assert '"user"' in query_str
     assert "suspended" in query_str  # Property name will be in the URI
     assert '"guest"' in query_str

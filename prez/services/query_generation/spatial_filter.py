@@ -389,7 +389,7 @@ def generate_bbox_filter(
                 ),
                 TriplesSameSubjectPath.from_spo(
                     geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var
-                )
+                ),
             ]
         )
 
@@ -400,7 +400,9 @@ def generate_bbox_filter(
                 triples=TriplesSameSubjectPath.from_spo(
                     geom_bn_var,
                     IRI(value=GEO.sfIntersects),
-                    RDFLiteral(value=processed_wkt, datatype=IRI(value=str(GEO.wktLiteral))),
+                    RDFLiteral(
+                        value=processed_wkt, datatype=IRI(value=str(GEO.wktLiteral))
+                    ),
                 )
             )
         )
@@ -418,7 +420,9 @@ def generate_bbox_filter(
             target_system=target_system,
         )
         if not spatial_filter_gpnts:
-            raise ValueError("generate_spatial_filter_clause returned no patterns for GeoSPARQL bbox.")
+            raise ValueError(
+                "generate_spatial_filter_clause returned no patterns for GeoSPARQL bbox."
+            )
 
         for gpnt in spatial_filter_gpnts:
             ggps.add_pattern(gpnt)
@@ -426,11 +430,7 @@ def generate_bbox_filter(
         # do not use a FILTER EXISTS, assume the triplestore query optimiser will execute performantly
         final_gpnt = GraphPatternNotTriples(
             content=GroupOrUnionGraphPattern(
-                group_graph_patterns=[
-                    GroupGraphPattern(
-                        content=ggps
-                    )
-                ]
+                group_graph_patterns=[GroupGraphPattern(content=ggps)]
             )
         )
 

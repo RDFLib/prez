@@ -54,7 +54,8 @@ from sparql_grammar_pydantic import (
     TriplesSameSubjectPath,
     UnaryExpression,
     ValueLogical,
-    Var, NotExistsFunc,
+    Var,
+    NotExistsFunc,
     Var,
     VarOrTerm,
     VerbPath,
@@ -568,9 +569,7 @@ def _create_filter_in(variable: Var, values: list) -> GraphPatternNotTriples:
     right_primary_expressions = []
     for value in values:
         rdf_term = convert_value_to_rdf_term(value)
-        right_primary_expressions.append(
-            PrimaryExpression(content=rdf_term)
-        )
+        right_primary_expressions.append(PrimaryExpression(content=rdf_term))
 
     in_expr = Expression.create_in_expression(
         left_primary_expression=PrimaryExpression(content=variable),
@@ -580,8 +579,6 @@ def _create_filter_in(variable: Var, values: list) -> GraphPatternNotTriples:
 
     return GraphPatternNotTriples(
         content=Filter(
-            constraint=Constraint(
-                content=BrackettedExpression(expression=in_expr)
-            )
+            constraint=Constraint(content=BrackettedExpression(expression=in_expr))
         )
     )

@@ -316,7 +316,7 @@ def merge_listing_query_grammar_inputs(
         triple = (
             Var(value="focus_node"),
             IRI(value="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
-            Var(value="prof_1_node_1")
+            Var(value="prof_1_node_1"),
         )
         tss = TriplesSameSubject.from_spo(*triple)
         tssp = TriplesSameSubjectPath.from_spo(*triple)

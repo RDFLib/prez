@@ -22,7 +22,8 @@ from sparql_grammar_pydantic import (
     TriplesBlock,
     TriplesSameSubjectPath,
     Var,
-    WhereClause, IRIOrFunction,
+    WhereClause,
+    IRIOrFunction,
 )
 
 from prez.cache import prez_system_graph
@@ -46,7 +47,8 @@ from prez.services.query_generation.grammar_helpers import (
     create_temporal_or_gpnt,
     create_filter_bool_gpnt,
     create_temporal_and_gpnt,
-    create_filter_not_exists, _create_filter_in,
+    create_filter_not_exists,
+    _create_filter_in,
 )
 from prez.services.query_generation.shacl import PropertyShape
 from prez.services.query_generation.spatial_filter import (
@@ -109,9 +111,7 @@ class CQLParser:
         # Get patterns from parsing with focus_node optimization applied at each level
         parsed_ggps = next(self.parse_logical_operators(root))
 
-        where = WhereClause(
-            group_graph_pattern=GroupGraphPattern(content=parsed_ggps)
-        )
+        where = WhereClause(group_graph_pattern=GroupGraphPattern(content=parsed_ggps))
 
         if self.tss_list:
             construct_triples = ConstructTriples.from_tss_list(self.tss_list)
@@ -274,7 +274,9 @@ class CQLParser:
 
             # Re-parse to collect TSSP patterns properly
             temp_ggps = next(self.parse_logical_operators(nested_arg), None)
-            combined_nested_patterns = self.combine_all_patterns(temp_ggps if temp_ggps else GroupGraphPatternSub())
+            combined_nested_patterns = self.combine_all_patterns(
+                temp_ggps if temp_ggps else GroupGraphPatternSub()
+            )
 
             # Restore original TSSP list
             self.tssp_list = temp_tssp_list
@@ -306,7 +308,9 @@ class CQLParser:
             )
             self._add_tssp_to_ggps(ggps, tssp)
 
-    def _add_tssp_to_ggps(self, ggps: GroupGraphPatternSub, tssp: TriplesSameSubjectPath) -> None:
+    def _add_tssp_to_ggps(
+        self, ggps: GroupGraphPatternSub, tssp: TriplesSameSubjectPath
+    ) -> None:
         """Add a TSSP as a TriplesBlock to the GGPS."""
         new_tb_for_this_tssp = TriplesBlock(triples=tssp)
 

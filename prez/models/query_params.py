@@ -41,7 +41,7 @@ def reformat_bbox(
         if len(coords) not in [4, 6]:
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid bbox format: Expected 4 or 6 coordinates, got {len(coords)}"
+                detail=f"Invalid bbox format: Expected 4 or 6 coordinates, got {len(coords)}",
             )
 
         return coords
@@ -50,7 +50,7 @@ def reformat_bbox(
         raise HTTPException(
             status_code=400,
             detail=f"Invalid bbox format: Unable to parse coordinates as numbers. Expected format: 'minx,miny,maxx,maxy'"
-                   f", received '{bbox[0]}'"
+            f", received '{bbox[0]}'",
         )
 
 
@@ -195,7 +195,7 @@ class ListingQueryParams:
         self.profile = profile
         self.page = page
         self.limit = limit
-        self.offset = offset if not hasattr(offset, 'default') else offset.default
+        self.offset = offset if not hasattr(offset, "default") else offset.default
         self.facet_profile = facet_profile
         self.bbox = bbox
         self.filter_lang = filter_lang
@@ -206,30 +206,36 @@ class ListingQueryParams:
         self._filter = _filter
         self.mediatype = mediatype
         self.subscription_key = subscription_key
-        self.startindex = startindex if not hasattr(startindex, 'default') else startindex.default
+        self.startindex = (
+            startindex if not hasattr(startindex, "default") else startindex.default
+        )
         self.validate_pagination_params()
         self.validate_filter()
 
     def validate_pagination_params(self):
         """Validate mutually exclusive pagination parameters."""
         from fastapi import HTTPException
-        
+
         # Debug print to see what values we have
-        print(f"DEBUG - page: {self.page}, offset: {self.offset}, startindex: {self.startindex}")
-        
+        print(
+            f"DEBUG - page: {self.page}, offset: {self.offset}, startindex: {self.startindex}"
+        )
+
         pagination_params = [
             (self.page != 1, "page"),  # page=1 is default, so only conflict if changed
             (self.offset is not None, "offset"),
-            (self.startindex is not None, "startindex")
+            (self.startindex is not None, "startindex"),
         ]
-        
-        provided_params = [(provided, name) for provided, name in pagination_params if provided]
-        
+
+        provided_params = [
+            (provided, name) for provided, name in pagination_params if provided
+        ]
+
         if len(provided_params) > 1:
             param_names = [name for _, name in provided_params]
             raise HTTPException(
-                status_code=400, 
-                detail=f"Mutually exclusive pagination parameters provided: {', '.join(param_names)}. Use only one of: page, offset, or startindex."
+                status_code=400,
+                detail=f"Mutually exclusive pagination parameters provided: {', '.join(param_names)}. Use only one of: page, offset, or startindex.",
             )
 
     def validate_filter(self):
