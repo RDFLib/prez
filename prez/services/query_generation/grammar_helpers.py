@@ -54,6 +54,7 @@ from sparql_grammar_pydantic import (
     Var,
     VarOrTerm,
     VerbPath,
+    ExistsFunc,
 )
 
 logger = logging.getLogger(__name__)
@@ -504,5 +505,30 @@ def create_union_gpnt_from_tssps(
                 )
                 for tssp in tssps
             ]
+        )
+    )
+
+
+def create_filter_exists(patterns: GroupGraphPatternSub) -> GraphPatternNotTriples:
+    """Create a FILTER EXISTS wrapper around a group of patterns.
+
+    This wraps the given patterns in FILTER EXISTS { ... } which improves
+    query performance.
+
+    Args:
+        patterns: The GroupGraphPatternSub containing all patterns to wrap
+
+    Returns:
+        GraphPatternNotTriples containing the FILTER EXISTS
+    """
+    return GraphPatternNotTriples(
+        content=Filter(
+            constraint=Constraint(
+                content=BuiltInCall(
+                    other_expressions=ExistsFunc(
+                        group_graph_pattern=GroupGraphPattern(content=patterns)
+                    )
+                )
+            )
         )
     )

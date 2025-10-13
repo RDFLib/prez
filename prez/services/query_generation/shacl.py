@@ -95,6 +95,8 @@ class NodeShape(Shape):
     tss_list: Optional[List[TriplesSameSubject]] = []
     tssp_list: Optional[List[TriplesSameSubjectPath]] = []
     gpnt_list: Optional[List[GraphPatternNotTriples]] = []
+    tssp_exists_list: Optional[List[TriplesSameSubjectPath]] = []
+    gpnt_exists_list: Optional[List[GraphPatternNotTriples]] = []
     rule_triples: Optional[TriplesSameSubjectPath] = []
     path_nodes: Optional[Dict[str, Var | IRI]] = {}
     classes_at_len: Optional[Dict[str, List[URIRef]]] = {}
@@ -146,21 +148,23 @@ class NodeShape(Shape):
             if self.targetClasses == [RDFS.Resource]:
                 pass
             else:
-                self.add_triple_to_tss_and_tssp(
-                    (
+                self.tssp_exists_list.append(
+                    TriplesSameSubjectPath.from_spo(
                         self.focus_node,
                         IRI(value=RDF.type),
                         IRI(value=self.targetClasses[0]),
                     )
                 )
         elif len(self.targetClasses) > 1:
-            self.add_triple_to_tss_and_tssp(
-                (self.focus_node, IRI(value=RDF.type), Var(value="focus_classes"))
+            self.tssp_exists_list.append(
+                TriplesSameSubjectPath.from_spo(
+                    self.focus_node, IRI(value=RDF.type), Var(value="focus_classes")
+                )
             )
             dbvs = [
                 DataBlockValue(value=IRI(value=klass)) for klass in self.targetClasses
             ]
-            self.gpnt_list.append(
+            self.gpnt_exists_list.append(
                 GraphPatternNotTriples(
                     content=InlineData(
                         data_block=DataBlock(
@@ -197,6 +201,8 @@ class NodeShape(Shape):
             self.tssp_list.extend(shape.tssp_list)
             self.tss_list.extend(shape.tss_list)
             self.gpnt_list.extend(shape.gpnt_list)
+            self.tssp_exists_list.extend(shape.tssp_exists_list)
+            self.gpnt_exists_list.extend(shape.gpnt_exists_list)
             self.path_nodes = self.path_nodes | shape.path_nodes
             self.classes_at_len = self.classes_at_len | shape.classes_at_len
         # deduplicate
@@ -218,6 +224,8 @@ class PropertyShape(Shape):
     tss_list: Optional[List[TriplesSameSubject]] = []
     tssp_list: Optional[List[TriplesSameSubjectPath]] = []
     gpnt_list: Optional[List[GraphPatternNotTriples]] = []  # Initialize as list
+    tssp_exists_list: Optional[List[TriplesSameSubjectPath]] = []
+    gpnt_exists_list: Optional[List[GraphPatternNotTriples]] = []
     path_nodes: Optional[Dict[str, Var | IRI]] = {}
     classes_at_len: Optional[Dict[str, List[URIRef]]] = {}
     _select_vars: Optional[List[Var]] = None
@@ -534,16 +542,16 @@ class PropertyShape(Shape):
 
             if self.or_klasses:
                 if len(self.or_klasses) == 1:
-                    self.add_triple_to_tss_and_tssp(
-                        (
+                    self.tssp_exists_list.append(
+                        TriplesSameSubjectPath.from_spo(
                             path_node_term,
                             IRI(value=RDF.type),
                             IRI(value=self.or_klasses[0]),
                         )
                     )
                 else:
-                    self.add_triple_to_tss_and_tssp(
-                        (
+                    self.tssp_exists_list.append(
+                        TriplesSameSubjectPath.from_spo(
                             path_node_term,
                             IRI(value=RDF.type),
                             Var(value=f"{path_or_prop}_node_classes_{len_pp}"),
@@ -553,7 +561,7 @@ class PropertyShape(Shape):
                         DataBlockValue(value=IRI(value=klass))
                         for klass in self.or_klasses
                     ]
-                    self.gpnt_list.append(
+                    self.gpnt_exists_list.append(
                         GraphPatternNotTriples(
                             content=InlineData(
                                 data_block=DataBlock(
@@ -576,6 +584,7 @@ class PropertyShape(Shape):
             )
             for item in and_paths_data:
                 self.tssp_list.extend(item["tssp_list"])
+                self.tssp_exists_list.extend(item["tssp_exists_list"])
 
         # Process UNION paths
         if self.union_property_paths:
@@ -719,6 +728,7 @@ class PropertyShape(Shape):
                 )
 
             current_tssp = []
+            current_tssp_exists = []
             current_facet_binds = []
             if obj_node:  # Only create binds if we have a valid object node
                 current_facet_binds = self._create_facet_binds(property_path, obj_node)
@@ -757,9 +767,9 @@ class PropertyShape(Shape):
                         IRI(value=RDF.type),
                         IRI(value=property_path.sh_class),
                     )
-                    # Add to WHERE and CONSTRUCT clauses
                     current_tssp.append(TriplesSameSubjectPath.from_spo(*type_triple))
-                    self.tss_list.append(TriplesSameSubject.from_spo(*type_triple))
+                    if not use_alias:
+                        self.tss_list.append(TriplesSameSubject.from_spo(*type_triple))
 
             elif isinstance(property_path, BNodeDepth):
                 # BNodeDepth doesn't directly generate triples here, just sets the depth
@@ -1021,10 +1031,6 @@ class PropertyShape(Shape):
                         current_tssp.append(
                             TriplesSameSubjectPath.from_spo(*type_triple_for_seq_class)
                         )
-                        if not use_alias:  # Add to CONSTRUCT if not aliased
-                            self.tss_list.append(
-                                TriplesSameSubject.from_spo(*type_triple_for_seq_class)
-                            )
                 # End of SequencePath specific logic
 
             # --- Alias Handling and pp_i Increment ---
@@ -1081,6 +1087,7 @@ class PropertyShape(Shape):
             processed_paths_data.append(
                 {
                     "tssp_list": current_tssp,
+                    "tssp_exists_list": current_tssp_exists,
                     "facet_binds": current_facet_binds,
                     "path_alias_or_path": path_alias_or_path_value,
                 }
