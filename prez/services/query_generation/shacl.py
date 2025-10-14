@@ -274,7 +274,6 @@ class PropertyShape(Shape):
 
         self._add_pivot_paths(
             shape_level_path_alias=shape_level_path_alias,
-            filter_shape_tssp_list=filter_shape_tssp_list,
         )
 
         pps = list(self.graph.objects(self.uri, SH.path))
@@ -292,7 +291,6 @@ class PropertyShape(Shape):
     def _add_pivot_paths(
         self,
         shape_level_path_alias: URIRef,
-        filter_shape_tssp_list: list[TriplesSameSubjectPath],
     ):
         """Handle processing of pivot paths as defined by the shext:pivotShape SHACL Extension.
 
@@ -330,7 +328,6 @@ class PropertyShape(Shape):
                 self._add_path_to_shape(
                     combined_path.uri,
                     shape_level_alias=shape_level_path_alias,
-                    filter_shape_tssp_list=filter_shape_tssp_list,
                 )
                 if pivot_path_is_sequence:
                     del combined_path[combined_path.index(pred_path)]
