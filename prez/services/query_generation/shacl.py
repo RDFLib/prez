@@ -212,7 +212,7 @@ class NodeShape(Shape):
 class PropertyShape(Shape):
     uri: URIRef | BNode  # URI of the shape
     graph: Graph
-    kind: TypingLiteral["endpoint", "profile", "fts"]
+    kind: TypingLiteral["endpoint", "profile", "fts", "cql"]
     focus_node: Union[IRI, Var]
     # inputs
     shape_number: int = 0
@@ -517,8 +517,8 @@ class PropertyShape(Shape):
 
     def to_grammar(self):
         # label nodes in the inner select and profile part of the query differently for clarity.
-        if self.kind == "endpoint":
-            path_or_prop = "path"
+        if self.kind == "endpoint" or self.kind == "cql":
+            path_or_prop = "path"  # this is for the short form property path format <a>/<b>/^<c> etc.
         elif (self.kind == "profile") or (self.kind == "fts"):
             path_or_prop = f"prof_{self.shape_number + 1}"
 
@@ -530,7 +530,7 @@ class PropertyShape(Shape):
                 self.path_nodes[path_node_str] = Var(value=path_node_str)
 
         self.tssp_list = []
-        if path_or_prop == "path":
+        if self.kind == "endpoint":
             len_pp = max([len(i) for i in self.and_property_paths])
             # sh:class applies to the end of sequence paths
             if f"{path_or_prop}_node_{len_pp}" in self.path_nodes:
@@ -837,7 +837,7 @@ class PropertyShape(Shape):
             elif isinstance(property_path, SequencePath):
                 seq_path_len = len(property_path.value)
 
-                if self.kind == "endpoint":
+                if self.kind in ["endpoint", "cql"]:
                     # For endpoints, the entire sequence is treated as one complex path.
                     # We collect all PropertyPath objects that make up the sequence.
                     sequence_elements_for_endpoint: list[PropertyPath] = []

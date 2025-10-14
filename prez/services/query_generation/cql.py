@@ -627,7 +627,7 @@ class CQLParser:
         ps = PropertyShape(
             uri=URIRef(queryable_uri),
             graph=queryable_shape,
-            kind="endpoint",  # could be renamed - originally only endpoint nodeshapes filtered the nodes to be selected
+            kind="cql",
             focus_node=Var(value="focus_node"),
             var_counter_offset=self.var_counter,  # Pass current var_counter to ensure unique variables
         )
