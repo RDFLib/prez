@@ -58,7 +58,7 @@ from sparql_grammar_pydantic import (
     Var,
     VarOrTerm,
     VerbPath,
-    ExistsFunc,
+    ExistsFunc, IRIOrFunction,
 )
 
 logger = logging.getLogger(__name__)
@@ -563,13 +563,17 @@ def create_filter_not_exists(patterns: GroupGraphPatternSub) -> GraphPatternNotT
     )
 
 
-def _create_filter_in(variable: Var, values: list) -> GraphPatternNotTriples:
+def _create_filter_in(variable: Var, values: list[str]) -> GraphPatternNotTriples:
     """Create a FILTER(?var IN (<val1>, "val2", ...)) constraint."""
     # Convert values to appropriate RDF terms and wrap in PrimaryExpression
     right_primary_expressions = []
     for value in values:
         rdf_term = convert_value_to_rdf_term(value)
-        right_primary_expressions.append(PrimaryExpression(content=rdf_term))
+        if isinstance(rdf_term, (IRI)):
+            content=IRIOrFunction(iri=rdf_term)
+        else:
+            content=rdf_term
+        right_primary_expressions.append(PrimaryExpression(content=content))
 
     in_expr = Expression.create_in_expression(
         left_primary_expression=PrimaryExpression(content=variable),
