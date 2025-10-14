@@ -224,7 +224,6 @@ class PropertyShape(Shape):
     bnode_depth: Optional[int] = None
     union_tssps_binds: Optional[List[Dict[str, Any]]] = []  # New attribute
     all_predicate_values_counter: int = 0
-    _pkids: dict() = {}
 
     @property
     def minCount(self):
