@@ -212,7 +212,7 @@ class NodeShape(Shape):
 class PropertyShape(Shape):
     uri: URIRef | BNode  # URI of the shape
     graph: Graph
-    kind: TypingLiteral["endpoint", "profile", "fts"]
+    kind: TypingLiteral["endpoint", "profile", "fts", "cql"]
     focus_node: Union[IRI, Var]
     # inputs
     shape_number: int = 0
@@ -233,6 +233,7 @@ class PropertyShape(Shape):
     bnode_depth: Optional[int] = None
     union_tssps_binds: Optional[List[Dict[str, Any]]] = []  # New attribute
     all_predicate_values_counter: int = 0
+    cql_filter_var: Optional[Var] = None  # Variable to use for CQL FILTER IN clauses
 
     @property
     def minCount(self):
@@ -517,12 +518,15 @@ class PropertyShape(Shape):
 
     def to_grammar(self):
         # label nodes in the inner select and profile part of the query differently for clarity.
-        if self.kind == "endpoint":
-            path_or_prop = "path"
+        if self.kind == "endpoint" or self.kind == "cql":
+            path_or_prop = "path"  # this is for the short form property path format <a>/<b>/^<c> etc.
         elif (self.kind == "profile") or (self.kind == "fts"):
             path_or_prop = f"prof_{self.shape_number + 1}"
 
         # set up the path nodes - either from supplied values or set as variables
+        # Note: For endpoint kind, NodeShape may pre-populate self.path_nodes with specific IRIs.
+        # For CQL kind, self.path_nodes is empty (PropertyShape created directly, not from NodeShape).
+        # Pre-population uses base naming (no offset) since endpoint always has var_counter_offset=0.
         total_individual_nodes = sum([len(i) for i in self.and_property_paths])
         for i in range(total_individual_nodes):
             path_node_str = f"{path_or_prop}_node_{i + 1}"
@@ -530,7 +534,7 @@ class PropertyShape(Shape):
                 self.path_nodes[path_node_str] = Var(value=path_node_str)
 
         self.tssp_list = []
-        if path_or_prop == "path":
+        if self.kind == "endpoint":
             len_pp = max([len(i) for i in self.and_property_paths])
             # sh:class applies to the end of sequence paths
             if f"{path_or_prop}_node_{len_pp}" in self.path_nodes:
@@ -680,6 +684,15 @@ class PropertyShape(Shape):
         """Processes property paths, generating TSSP lists and facet binds."""
         processed_paths_data = []
         pp_i = start_pp_i
+
+        # For CQL kind, create a shared filter variable for all paths
+        # This allows a single FILTER(?cql_filter_N IN (...)) clause
+        if self.kind == "cql":
+            cql_filter_var = Var(value=f"cql_filter_{self.var_counter_offset + 1}")
+            self.cql_filter_var = cql_filter_var
+        else:
+            cql_filter_var = None
+
         for property_path in property_paths:
             # Determine if we should use the path alias for CONSTRUCT triples
             use_alias = (
@@ -689,7 +702,10 @@ class PropertyShape(Shape):
             )
 
             # Always create path_node_1 as it's needed everywhere
-            if self.kind == "fts":
+            if self.kind == "cql":
+                # For CQL, all paths (including union paths) share the same filter variable
+                path_node_1 = cql_filter_var
+            elif self.kind == "fts":
                 if isinstance(property_path, SequencePath):
                     # For FTS sequence paths, intermediate nodes are numbered, final node is fts_search_node
                     path_node_1 = Var(value=f"fts_search_node_{pp_i + 1}")
@@ -699,10 +715,13 @@ class PropertyShape(Shape):
                 f"{path_or_prop}_node_{pp_i + 1 + self.var_counter_offset}"
                 in self.path_nodes
             ):
+                # Check if NodeShape pre-populated this path node (endpoint kind only)
+                # Lookup includes var_counter_offset, which is 0 for endpoint, non-zero for CQL
                 path_node_1 = self.path_nodes[
                     f"{path_or_prop}_node_{pp_i + 1 + self.var_counter_offset}"
                 ]
             else:
+                # Create new variable with offset to ensure uniqueness across multiple PropertyShapes
                 path_node_1 = Var(
                     value=f"{path_or_prop}_node_{pp_i + 1 + self.var_counter_offset}"
                 )
@@ -715,7 +734,13 @@ class PropertyShape(Shape):
             if isinstance(property_path, SequencePath):
                 seq_path_len = len(property_path.value)
                 for i in range(1, seq_path_len):
-                    if self.kind == "fts":
+                    if self.kind == "cql":
+                        # For CQL, only the final node matters (used in abbreviated path syntax)
+                        # Only populate the final node with the shared filter var
+                        if i == seq_path_len - 1:
+                            path_nodes[i] = cql_filter_var
+                        # Intermediate nodes are not used in CQL abbreviated syntax (property paths), don't populate
+                    elif self.kind == "fts":
                         # For FTS sequence paths: intermediate nodes are numbered, final node is fts_search_node
                         if i == seq_path_len - 1:  # Last node in sequence
                             path_nodes[i] = Var(value="fts_search_node")
@@ -837,7 +862,7 @@ class PropertyShape(Shape):
             elif isinstance(property_path, SequencePath):
                 seq_path_len = len(property_path.value)
 
-                if self.kind == "endpoint":
+                if self.kind in ["endpoint", "cql"]:
                     # For endpoints, the entire sequence is treated as one complex path.
                     # We collect all PropertyPath objects that make up the sequence.
                     sequence_elements_for_endpoint: list[PropertyPath] = []
