@@ -37,6 +37,7 @@ from prez.services.query_generation.datetime_filter import generate_datetime_fil
 from prez.services.query_generation.search_default import SearchQueryRegex
 from prez.services.query_generation.search_fuseki_fts import SearchQueryFusekiFTS
 from prez.services.query_generation.shacl import NodeShape
+from prez.services.query_generation.grammar_helpers import create_filter_exists
 
 
 class PrezQueryConstructor(ConstructQuery):
@@ -291,6 +292,29 @@ def merge_listing_query_grammar_inputs(
         ]:
             kwargs["inner_select_tssp_list"].extend(endpoint_nodeshape.tssp_list)
             kwargs["inner_select_gpnt"].extend(endpoint_nodeshape.gpnt_list)
+
+            # Handle exists lists by wrapping them in FILTER EXISTS
+            if (
+                endpoint_nodeshape.tssp_exists_list
+                or endpoint_nodeshape.gpnt_exists_list
+            ):
+                exists_gpotb = []
+
+                # Add TriplesBlock from tssp_exists_list if present
+                if endpoint_nodeshape.tssp_exists_list:
+                    exists_gpotb.append(
+                        TriplesBlock.from_tssp_list(endpoint_nodeshape.tssp_exists_list)
+                    )
+
+                # Add gpnt_exists_list items if present
+                if endpoint_nodeshape.gpnt_exists_list:
+                    exists_gpotb.extend(endpoint_nodeshape.gpnt_exists_list)
+
+                # Wrap in FILTER EXISTS and add to inner_select_gpnt
+                exists_gpnt = create_filter_exists(
+                    GroupGraphPatternSub(graph_patterns_or_triples_blocks=exists_gpotb)
+                )
+                kwargs["inner_select_gpnt"].append(exists_gpnt)
 
     if bbox:
         gpnt_list, tssp_list = generate_bbox_filter(bbox, filter_crs)

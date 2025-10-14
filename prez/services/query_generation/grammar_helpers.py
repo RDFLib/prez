@@ -54,11 +54,11 @@ from sparql_grammar_pydantic import (
     TriplesSameSubjectPath,
     UnaryExpression,
     ValueLogical,
-    Var,
     NotExistsFunc,
     Var,
     VarOrTerm,
     VerbPath,
+    ExistsFunc,
 )
 
 logger = logging.getLogger(__name__)
