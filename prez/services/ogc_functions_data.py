@@ -11,7 +11,6 @@ from prez.models.ogc_features import (
     FunctionArgumentType,
     FunctionsResponse,
 )
-from rdflib import URIRef
 
 from prez.services.query_generation.cql_functions import REGISTERED_CQL_FUNCTIONS
 
@@ -134,6 +133,23 @@ def get_ogc_functions_response() -> FunctionsResponse:
                     title="Attribute Values",
                     description="Array of any of schema:value, rdf:value, or schema:value/rdf:value values "
                     "(passed as CQL arrayLiteral)",
+                    type=[FunctionArgumentType.ARRAY],
+                ),
+            ],
+            "returns": [FunctionArgumentType.BOOLEAN],
+        },
+        "qualifiedAttribution": {
+            "description": "Filter focus nodes by PROV qualified attribution patterns, matching features that have "
+            "specific agents with particular roles in their qualified attribution.",
+            "arguments": [
+                FunctionArgument(
+                    title="Role IRIs",
+                    description="Array of role IRIs for prov:hadRole (passed as CQL arrayLiteral)",
+                    type=[FunctionArgumentType.ARRAY],
+                ),
+                FunctionArgument(
+                    title="Agent IRIs",
+                    description="Array of agent IRIs for prov:agent (passed as CQL arrayLiteral)",
                     type=[FunctionArgumentType.ARRAY],
                 ),
             ],

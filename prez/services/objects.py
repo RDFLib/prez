@@ -7,10 +7,6 @@ import urllib.parse
 from urllib.parse import urlencode
 
 from fastapi.responses import PlainTextResponse, RedirectResponse
-from rdf2geojson import convert
-from rdflib import RDF, URIRef, BNode
-from rdflib.namespace import GEO
-from sparql_grammar_pydantic import IRI, TriplesSameSubject, TriplesSameSubjectPath, Var
 from pyoxigraph import (
     RdfFormat,
     Store as OxiStore,
@@ -19,9 +15,13 @@ from pyoxigraph import (
     Quad as OxiQuad,
     DefaultGraph as OxiDefaultGraph,
 )
-from oxrdflib._converter import to_ox
-from prez.config import settings
+from rdf2geojson import convert
+from rdflib import RDF, URIRef
+from rdflib.namespace import GEO
+from sparql_grammar_pydantic import IRI, TriplesSameSubject, TriplesSameSubjectPath, Var
+
 from prez.cache import prefix_graph
+from prez.config import settings
 from prez.enums import NonAnnotatedRDFMediaType, AnnotatedRDFMediaType
 from prez.exceptions.model_exceptions import URINotFoundException
 from prez.models.ogc_features import Collection, Link, Links
@@ -33,14 +33,13 @@ from prez.renderers.renderer import (
     get_brisbane_timestamp,
 )
 from prez.renderers.renderer import (
-    return_annotated_rdf,
     return_annotated_rdf_for_oxigraph,
     return_from_graph,
 )
 from prez.repositories.base import Repo
 from prez.services.connegp_service import OXIGRAPH_SERIALIZER_TYPES_MAP, RDF_MEDIATYPES
 from prez.services.curie_functions import get_curie_id_for_uri
-from prez.services.link_generation import add_prez_links, add_prez_links_for_oxigraph
+from prez.services.link_generation import add_prez_links_for_oxigraph
 from prez.services.listings import listing_function
 from prez.services.query_generation.facet import FacetQuery
 from prez.services.query_generation.umbrella import PrezQueryConstructor

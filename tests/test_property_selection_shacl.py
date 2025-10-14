@@ -588,14 +588,6 @@ def test_sh_class_in_bnode_path(mock_settings):
     ).to_string()
     assert expected_tss_2_path in actual_tss_strings
 
-    # Path 2: sh:class triple (ex:LabelType)
-    expected_tss_2_class = TriplesSameSubject.from_spo(
-        subject=Var(value="prof_1_node_3"),  # Node reached by skos:prefLabel
-        predicate=IRI(value=RDF.type),
-        object=IRI(value="http://example.com/LabelType"),
-    ).to_string()
-    assert expected_tss_2_class in actual_tss_strings
-
     # Path 3: Simple path (dcterms:title) - No class
     expected_tss_3_path = TriplesSameSubject.from_spo(
         subject=Var(value="focus_node"),

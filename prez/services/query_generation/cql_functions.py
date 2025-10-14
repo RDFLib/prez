@@ -8,7 +8,7 @@ from sparql_grammar_pydantic import (
     GraphTerm,
 )
 from rdflib import Namespace
-from rdflib.namespace import SOSA, RDF, SDO
+from rdflib.namespace import SOSA, RDF, SDO, PROV
 
 TERN = Namespace("https://w3id.org/tern/ontologies/tern/")
 
@@ -26,6 +26,7 @@ REGISTERED_CQL_FUNCTIONS = [
     "hasObservation",
     "hasAttribute",
     "hasAdditional",
+    "qualifiedAttribution",
 ]
 
 
@@ -229,3 +230,48 @@ def handle_custom_functions(
         ggps.add_pattern(union_gpnt)
         ggps.add_pattern(arg_1_values_gpnt)
         ggps.add_pattern(arg_2_values_gpnt)
+    elif operator in ["qualifiedAttribution"]:
+        """
+        allows filtering on the prov qualified pattern where a known agent has a particular role
+        {
+            ?focus prov:qualifiedAttribution ?qa_1 .
+            ?qa_1 prov:hadRole $arg1 .
+            ?qa_1 prov:agent $arg2 .
+            VALUES $arg1 { <https://example.org/vocab/role/contributor> }
+            VALUES $arg2 { <https://example.org/vocab/org/org2> }
+        }
+        """
+        qa_bn_var = Var(value=f"qa_bn_var{suffix}")
+        role_var = Var(value=f"role_var{suffix}")
+        agent_var = Var(value=f"agent_var{suffix}")
+
+        focus_to_qa_tssp = TriplesSameSubjectPath.from_spo(
+            subject=focus_node_vot.varorterm,
+            predicate=IRI(value=str(PROV.qualifiedAttribution)),
+            object=qa_bn_var,
+        )
+        qa_to_role_tssp = TriplesSameSubjectPath.from_spo(
+            subject=qa_bn_var,
+            predicate=IRI(value=str(PROV.hadRole)),
+            object=role_var,
+        )
+        qa_to_agent_tssp = TriplesSameSubjectPath.from_spo(
+            subject=qa_bn_var,
+            predicate=IRI(value=str(PROV.agent)),
+            object=agent_var,
+        )
+
+        role_values_gpnt = create_values_constraint(
+            role_var, args[0]
+        )  # args[0] is array for roles
+        agent_values_gpnt = create_values_constraint(
+            agent_var, args[1]
+        )  # args[1] is array for agents
+
+        ggps.add_pattern(
+            TriplesBlock.from_tssp_list(
+                [qa_to_agent_tssp, qa_to_role_tssp, focus_to_qa_tssp]
+            )
+        )
+        ggps.add_pattern(role_values_gpnt)
+        ggps.add_pattern(agent_values_gpnt)

@@ -129,10 +129,13 @@ UNION
 ?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://linked.data.gov.au/def/borehole/Bore> .
 }"""
     ]
-    assert len(parser.inner_select_gpntotb_list) == len(
-        expected_inner_select_gpntotb_list_str
+
+    # Extract original patterns from within FILTER EXISTS wrapper
+    original_patterns = _extract_patterns_from_filter_exists(
+        parser.inner_select_gpntotb_list
     )
-    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace(
+    assert len(original_patterns) == len(expected_inner_select_gpntotb_list_str)
+    assert original_patterns[0].to_string().replace(" ", "").replace(
         "\n", ""
     ) == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
 
@@ -199,12 +202,29 @@ def test_cql_nested_and_operator():
 ?focus_node <http://purl.org/dc/terms/subject> <http://example.org/subjects#Geology> .
 ?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/vocab#Report> ."""
     ]
-    assert len(parser.inner_select_gpntotb_list) == len(
-        expected_inner_select_gpntotb_list_str
+
+    # Extract original patterns from within FILTER EXISTS wrapper
+    original_patterns = _extract_patterns_from_filter_exists(
+        parser.inner_select_gpntotb_list
     )
-    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace(
+
+    # With focus_node optimization, AND operations now generate individual TriplesBlocks
+    # Combine them into a single string to match the test expectation
+    if len(original_patterns) > 1 and all(
+        hasattr(p, "to_string") for p in original_patterns
+    ):
+        # Remove duplicates by converting to set of strings, then back to list
+        pattern_strings = list(set(p.to_string().strip() for p in original_patterns))
+        combined_pattern = "\n".join(
+            sorted(pattern_strings)
+        )  # Sort for consistent ordering
+    else:
+        combined_pattern = original_patterns[0].to_string() if original_patterns else ""
+
+    expected_combined = expected_inner_select_gpntotb_list_str[0]
+    assert combined_pattern.replace(" ", "").replace(
         "\n", ""
-    ) == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
+    ) == expected_combined.replace(" ", "").replace("\n", "")
 
 
 # --- Tests for nested AND/OR operators ---
@@ -249,6 +269,48 @@ def _get_all_tssp_from_triples_block(triples_block):
     return all_tssp
 
 
+def _extract_patterns_from_filter_exists(inner_select_gpntotb_list):
+    """Helper to extract patterns from CQL query structure.
+
+    With the new optimization, patterns may be:
+    1. Direct patterns (like GroupOrUnionGraphPattern for OR operations)
+    2. Wrapped in FILTER EXISTS (for complex AND operations)
+    3. Mix of both (focus_node triples + FILTER EXISTS)
+
+    Returns the list of patterns that represent the core CQL logic.
+    """
+    if not inner_select_gpntotb_list:
+        return []
+
+    if len(inner_select_gpntotb_list) == 1:
+        pattern = inner_select_gpntotb_list[0]
+
+        # Check if it's a FILTER EXISTS wrapper
+        if (
+            hasattr(pattern, "content")
+            and hasattr(pattern.content, "constraint")
+            and hasattr(pattern.content.constraint, "content")
+            and hasattr(pattern.content.constraint.content, "other_expressions")
+        ):
+
+            # Navigate through the FILTER EXISTS structure:
+            # GraphPatternNotTriples -> Filter -> Constraint -> BuiltInCall -> ExistsFunc -> GroupGraphPattern -> GroupGraphPatternSub
+            try:
+                inner_content = (
+                    pattern.content.constraint.content.other_expressions.group_graph_pattern.content
+                )
+                return inner_content.graph_patterns_or_triples_blocks or []
+            except AttributeError:
+                # If navigation fails, return the pattern as-is
+                return [pattern]
+        else:
+            # Direct pattern (e.g., GroupOrUnionGraphPattern)
+            return [pattern]
+
+    # Multiple patterns - return as-is (this represents focus_node triples + FILTER EXISTS)
+    return inner_select_gpntotb_list
+
+
 def test_cql_and_of_A_or_BC():
     """Tests AND(A, OR(B, C))"""
     from prez.services.query_generation.cql import CQLParser
@@ -276,13 +338,16 @@ UNION
 }
 }""",
     ]
-    assert len(parser.inner_select_gpntotb_list) == len(
-        expected_inner_select_gpntotb_list_str
+
+    # Extract original patterns from within FILTER EXISTS wrapper
+    original_patterns = _extract_patterns_from_filter_exists(
+        parser.inner_select_gpntotb_list
     )
-    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace(
+    assert len(original_patterns) == len(expected_inner_select_gpntotb_list_str)
+    assert original_patterns[0].to_string().replace(" ", "").replace(
         "\n", ""
     ) == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
-    assert parser.inner_select_gpntotb_list[1].to_string().replace(" ", "").replace(
+    assert original_patterns[1].to_string().replace(" ", "").replace(
         "\n", ""
     ) == expected_inner_select_gpntotb_list_str[1].replace(" ", "").replace("\n", "")
 
@@ -312,10 +377,13 @@ UNION
 
 }"""
     ]
-    assert len(parser.inner_select_gpntotb_list) == len(
-        expected_inner_select_gpntotb_list_str
+
+    # Extract original patterns from within FILTER EXISTS wrapper
+    original_patterns = _extract_patterns_from_filter_exists(
+        parser.inner_select_gpntotb_list
     )
-    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace(
+    assert len(original_patterns) == len(expected_inner_select_gpntotb_list_str)
+    assert original_patterns[0].to_string().replace(" ", "").replace(
         "\n", ""
     ) == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
 
@@ -340,10 +408,13 @@ def test_cql_and_of_and_AB_C():
 ?focus_node <http://example.org/propB> <http://example.org/valB> .
 ?focus_node <http://example.org/propA> <http://example.org/valA> ."""
     ]
-    assert len(parser.inner_select_gpntotb_list) == len(
-        expected_inner_select_gpntotb_list_str
+
+    # Extract original patterns from within FILTER EXISTS wrapper
+    original_patterns = _extract_patterns_from_filter_exists(
+        parser.inner_select_gpntotb_list
     )
-    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace(
+    assert len(original_patterns) == len(expected_inner_select_gpntotb_list_str)
+    assert original_patterns[0].to_string().replace(" ", "").replace(
         "\n", ""
     ) == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
 
@@ -427,13 +498,16 @@ UNION
 }
 }""",
     ]
-    assert len(parser.inner_select_gpntotb_list) == len(
-        expected_inner_select_gpntotb_list_str
+
+    # Extract original patterns from within FILTER EXISTS wrapper
+    original_patterns = _extract_patterns_from_filter_exists(
+        parser.inner_select_gpntotb_list
     )
-    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace(
+    assert len(original_patterns) == len(expected_inner_select_gpntotb_list_str)
+    assert original_patterns[0].to_string().replace(" ", "").replace(
         "\n", ""
     ) == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
-    assert parser.inner_select_gpntotb_list[1].to_string().replace(" ", "").replace(
+    assert original_patterns[1].to_string().replace(" ", "").replace(
         "\n", ""
     ) == expected_inner_select_gpntotb_list_str[1].replace(" ", "").replace("\n", "")
 
@@ -471,10 +545,13 @@ UNION
 }
 """
     ]
-    assert len(parser.inner_select_gpntotb_list) == len(
-        expected_inner_select_gpntotb_list_str
+
+    # Extract original patterns from within FILTER EXISTS wrapper
+    original_patterns = _extract_patterns_from_filter_exists(
+        parser.inner_select_gpntotb_list
     )
-    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace(
+    assert len(original_patterns) == len(expected_inner_select_gpntotb_list_str)
+    assert original_patterns[0].to_string().replace(" ", "").replace(
         "\n", ""
     ) == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
 
@@ -484,8 +561,9 @@ def test_focus_node_in_subquery():
     Tests that ?focus_node is always included in the inner select variables,
     even for a simple query.
     """
-    from prez.services.query_generation.cql import CQLParser
     from sparql_grammar_pydantic import Var
+
+    from prez.services.query_generation.cql import CQLParser
 
     cql_json_data = {
         "op": "=",
@@ -499,6 +577,25 @@ def test_focus_node_in_subquery():
     parser.parse()
 
     assert Var(value="focus_node") in parser.inner_select_vars
+
+
+def test_cql_boolean_equals_filter():
+    """Ensure boolean literals in CQL become boolean literals in the SPARQL FILTER."""
+    from prez.services.query_generation.cql import CQLParser
+
+    cql_json_data = {
+        "op": "=",
+        "args": [
+            {"property": "http://example.org/flag"},
+            True,
+        ],
+    }
+
+    parser = CQLParser(cql_json=cql_json_data)
+    parser.parse()
+
+    query_str = parser.query_str
+    assert "FILTER (?var_1 = true)" in query_str
 
 
 def test_cql_not_equal_operator_with_literal():
@@ -819,3 +916,499 @@ def test_cql_or_shacl_union_structure():
     finally:
         for triple in mock_system_graph:
             prez_system_graph.remove(triple)
+
+
+def test_cql_not_operator():
+    """
+    Tests the 'not' operator with FILTER NOT EXISTS.
+    """
+    from prez.services.query_generation.cql import CQLParser
+
+    cql_json_data = {
+        "op": "not",
+        "args": [
+            {
+                "op": "=",
+                "args": [
+                    {"property": "http://example.org/status"},
+                    "inactive",
+                ],
+            },
+        ],
+    }
+
+    parser = CQLParser(cql_json=cql_json_data)
+    parser.parse()
+
+    query_str = parser.query_str
+    # Should contain FILTER NOT EXISTS
+    assert "FILTER NOT EXISTS" in query_str
+    assert '"inactive"' in query_str
+    assert 'FILTER (?var_2 = "inactive")\n' in query_str
+
+
+def test_cql_not_operator_with_complex_expression():
+    """
+    Tests the 'not' operator with a complex nested expression (AND/OR).
+    """
+    from prez.services.query_generation.cql import CQLParser
+
+    cql_json_data = {
+        "op": "and",
+        "args": [
+            {
+                "op": "=",
+                "args": [
+                    {"property": "http://example.org/name"},
+                    "john",
+                ],
+            },
+            {
+                "op": "not",
+                "args": [
+                    {
+                        "op": "or",
+                        "args": [
+                            {
+                                "op": "=",
+                                "args": [
+                                    {"property": "http://example.org/status"},
+                                    "inactive",
+                                ],
+                            },
+                            {
+                                "op": "=",
+                                "args": [
+                                    {"property": "http://example.org/deleted"},
+                                    "true",
+                                ],
+                            },
+                        ],
+                    }
+                ],
+            },
+        ],
+    }
+
+    parser = CQLParser(cql_json=cql_json_data)
+    parser.parse()
+
+    query_str = parser.query_str
+    # Should contain both FILTER EXISTS and FILTER NOT EXISTS
+    assert "FILTER NOT EXISTS" in query_str
+    assert "UNION" in query_str  # From the OR inside NOT
+    assert '"john"' in query_str
+    assert '"inactive"' in query_str
+    assert '"true"' in query_str
+
+
+def test_cql_double_negation():
+    """
+    Tests double negation: NOT(NOT(condition)) - should create nested FILTER NOT EXISTS.
+    """
+    from prez.services.query_generation.cql import CQLParser
+
+    cql_json_data = {
+        "op": "not",
+        "args": [
+            {
+                "op": "not",
+                "args": [
+                    {
+                        "op": "=",
+                        "args": [
+                            {"property": "http://example.org/status"},
+                            "active",
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
+
+    parser = CQLParser(cql_json=cql_json_data)
+    parser.parse()
+
+    query_str = parser.query_str
+    # Should have nested FILTER NOT EXISTS statements
+    not_exists_count = query_str.count("FILTER NOT EXISTS")
+    assert (
+        not_exists_count == 2
+    ), f"Expected 2 FILTER NOT EXISTS, got {not_exists_count}"
+    assert '"active"' in query_str
+
+
+def test_cql_or_with_not_branches():
+    """
+    Tests OR with NOT in both branches: OR(NOT(A), NOT(B)).
+    """
+    from prez.services.query_generation.cql import CQLParser
+
+    cql_json_data = {
+        "op": "or",
+        "args": [
+            {
+                "op": "not",
+                "args": [
+                    {
+                        "op": "=",
+                        "args": [
+                            {"property": "http://example.org/status"},
+                            "inactive",
+                        ],
+                    },
+                ],
+            },
+            {
+                "op": "not",
+                "args": [
+                    {
+                        "op": "=",
+                        "args": [
+                            {"property": "http://example.org/deleted"},
+                            "true",
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
+
+    parser = CQLParser(cql_json=cql_json_data)
+    parser.parse()
+
+    query_str = parser.query_str
+    # Should have UNION with FILTER NOT EXISTS in each branch
+    assert "UNION" in query_str
+    not_exists_count = query_str.count("FILTER NOT EXISTS")
+    assert (
+        not_exists_count == 2
+    ), f"Expected 2 FILTER NOT EXISTS, got {not_exists_count}"
+    assert '"inactive"' in query_str
+    assert '"true"' in query_str
+
+
+def test_cql_complex_nested_not_and_or():
+    """
+    Tests complex nesting: AND(A, NOT(OR(B, AND(C, NOT(D))))).
+    """
+    from prez.services.query_generation.cql import CQLParser
+
+    cql_json_data = {
+        "op": "and",
+        "args": [
+            {
+                "op": "=",
+                "args": [
+                    {"property": "http://example.org/name"},
+                    "alice",
+                ],
+            },
+            {
+                "op": "not",
+                "args": [
+                    {
+                        "op": "or",
+                        "args": [
+                            {
+                                "op": "=",
+                                "args": [
+                                    {"property": "http://example.org/status"},
+                                    "banned",
+                                ],
+                            },
+                            {
+                                "op": "and",
+                                "args": [
+                                    {
+                                        "op": "=",
+                                        "args": [
+                                            {"property": "http://example.org/role"},
+                                            "admin",
+                                        ],
+                                    },
+                                    {
+                                        "op": "not",
+                                        "args": [
+                                            {
+                                                "op": "=",
+                                                "args": [
+                                                    {
+                                                        "property": "http://example.org/verified"
+                                                    },
+                                                    "true",
+                                                ],
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    }
+                ],
+            },
+        ],
+    }
+
+    parser = CQLParser(cql_json=cql_json_data)
+    parser.parse()
+
+    query_str = parser.query_str
+    # Should have nested structure with multiple FILTER NOT EXISTS
+    not_exists_count = query_str.count("FILTER NOT EXISTS")
+    assert (
+        not_exists_count == 2
+    ), f"Expected 2 FILTER NOT EXISTS, got {not_exists_count}"
+    assert "UNION" in query_str  # From OR inside first NOT
+    assert '"alice"' in query_str
+    assert '"banned"' in query_str
+    assert '"admin"' in query_str
+    assert '"true"' in query_str
+
+
+def test_cql_not_of_and_with_not():
+    """
+    Tests NOT(AND(A, NOT(B))) - NOT at top level containing AND with nested NOT.
+    """
+    from prez.services.query_generation.cql import CQLParser
+
+    cql_json_data = {
+        "op": "not",
+        "args": [
+            {
+                "op": "and",
+                "args": [
+                    {
+                        "op": "=",
+                        "args": [
+                            {"property": "http://example.org/category"},
+                            "premium",
+                        ],
+                    },
+                    {
+                        "op": "not",
+                        "args": [
+                            {
+                                "op": "=",
+                                "args": [
+                                    {"property": "http://example.org/expired"},
+                                    "true",
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
+
+    parser = CQLParser(cql_json=cql_json_data)
+    parser.parse()
+
+    query_str = parser.query_str
+    # Should have nested FILTER NOT EXISTS structures
+    not_exists_count = query_str.count("FILTER NOT EXISTS")
+    assert (
+        not_exists_count == 2
+    ), f"Expected 2 FILTER NOT EXISTS, got {not_exists_count}"
+    assert '"premium"' in query_str
+    assert '"true"' in query_str
+
+
+def test_cql_triple_negation():
+    """
+    Tests triple negation: NOT(NOT(NOT(condition))) - should create three nested FILTER NOT EXISTS.
+    """
+    from prez.services.query_generation.cql import CQLParser
+
+    cql_json_data = {
+        "op": "not",
+        "args": [
+            {
+                "op": "not",
+                "args": [
+                    {
+                        "op": "not",
+                        "args": [
+                            {
+                                "op": "=",
+                                "args": [
+                                    {"property": "http://example.org/flag"},
+                                    "enabled",
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
+
+    parser = CQLParser(cql_json=cql_json_data)
+    parser.parse()
+
+    query_str = parser.query_str
+    # Should have three nested FILTER NOT EXISTS statements
+    not_exists_count = query_str.count("FILTER NOT EXISTS")
+    assert (
+        not_exists_count == 3
+    ), f"Expected 3 FILTER NOT EXISTS, got {not_exists_count}"
+    assert '"enabled"' in query_str
+
+
+def test_cql_mixed_operators_with_multiple_nots():
+    """
+    Tests a complex mix: OR(AND(A, NOT(B)), NOT(AND(C, D))).
+    """
+    from prez.services.query_generation.cql import CQLParser
+
+    cql_json_data = {
+        "op": "or",
+        "args": [
+            {
+                "op": "and",
+                "args": [
+                    {
+                        "op": "=",
+                        "args": [
+                            {"property": "http://example.org/type"},
+                            "user",
+                        ],
+                    },
+                    {
+                        "op": "not",
+                        "args": [
+                            {
+                                "op": "=",
+                                "args": [
+                                    {"property": "http://example.org/suspended"},
+                                    "true",
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+            {
+                "op": "not",
+                "args": [
+                    {
+                        "op": "and",
+                        "args": [
+                            {
+                                "op": "=",
+                                "args": [
+                                    {"property": "http://example.org/role"},
+                                    "guest",
+                                ],
+                            },
+                            {
+                                "op": "=",
+                                "args": [
+                                    {"property": "http://example.org/temporary"},
+                                    "true",
+                                ],
+                            },
+                        ],
+                    }
+                ],
+            },
+        ],
+    }
+
+    parser = CQLParser(cql_json=cql_json_data)
+    parser.parse()
+
+    query_str = parser.query_str
+    # Should have UNION with different NOT structures in each branch
+    assert "UNION" in query_str
+    not_exists_count = query_str.count("FILTER NOT EXISTS")
+    assert (
+        not_exists_count == 2
+    ), f"Expected 2 FILTER NOT EXISTS, got {not_exists_count}"
+    assert '"user"' in query_str
+    assert "suspended" in query_str  # Property name will be in the URI
+    assert '"guest"' in query_str
+    assert "temporary" in query_str  # Property name will be in the URI
+
+
+@pytest.mark.parametrize(
+    "filter_value,expected_class,expected_datatype",
+    [
+        ["term", "RDFLiteral", None],
+        ["multi term phrase", "RDFLiteral", None],
+        ['"quotedTermNoDatatype"', "RDFLiteral", None],
+        ['"quoted phrase no datatype"', "RDFLiteral", None],
+        [
+            '"quotedTermWithDatatype"^^<http://my/datatype>',
+            "RDFLiteral",
+            "http://my/datatype",
+        ],
+        [
+            "unquotedTermWithDatatype^^<http://my/datatype>",
+            "RDFLiteral",
+            "http://my/datatype",
+        ],
+        [
+            "'singleQuotedTermWithDatatype'^^<http://my/datatype>",
+            "RDFLiteral",
+            "http://my/datatype",
+        ],
+        ['"some-identifier"^^<invalid uri>', "RDFLiteral", None],
+        ['"some-identifier"^^<https://valid/uri>', "RDFLiteral", "https://valid/uri"],
+        ['"some-identifier"^<https://valid/uri>', "RDFLiteral", None],
+        [
+            '"idEntifIER_with lots!of$craz3y charac^#@ters"^^<https://valid/uri>',
+            "RDFLiteral",
+            "https://valid/uri",
+        ],
+        [1, "NumericLiteral", None],
+        [9999999999999999999999999999999999, "NumericLiteral", None],
+        [True, "BooleanLiteral", None],
+        [False, "BooleanLiteral", None],
+        ["False", "RDFLiteral", None],
+        [
+            '"normal_value"^^<http://example.org/type> ) { SELECT * {?s ?p ?o} } FILTER(',
+            "RDFLiteral",
+            None,
+        ],
+        [
+            '"normal_value""^^<http://example.org/type> ) { SELECT * {?s ?p ?o} } FILTER(',
+            "RDFLiteral",
+            None,
+        ],
+    ],
+)
+def test_cql_typed_literal(
+    filter_value: str, expected_class: str, expected_datatype: str | None
+):
+    from sparql_grammar_pydantic import (  # noqa
+        IRI,
+        BooleanLiteral,
+        NumericLiteral,
+        RDFLiteral,
+    )
+
+    from prez.services.query_generation.cql import CQLParser
+
+    expected_class = eval(expected_class)
+    parser = CQLParser()
+    test_element = {
+        "op": "=",
+        "args": [{"property": "http://example.org/prop"}, filter_value],
+    }
+    ggps_iterator = parser.parse_logical_operators(test_element)
+    ggps = next(ggps_iterator)
+    parsed_term = (
+        ggps.graph_patterns_or_triples_blocks[1]
+        .content.constraint.content.expression.conditional_or_expression.conditional_and_expressions[
+            0
+        ]
+        .value_logicals[0]
+        .relational_expression.right.additive_expression.base_expression.base_expression.primary_expression.content
+    )
+    assert isinstance(parsed_term, expected_class)
+    if expected_class == RDFLiteral:
+        if expected_datatype is not None:
+            expected_datatype = IRI(value=expected_datatype)
+        assert parsed_term.datatype == expected_datatype

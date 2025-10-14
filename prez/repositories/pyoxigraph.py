@@ -1,7 +1,9 @@
 import logging
+from threading import Lock
 from typing import Any
-from io import BytesIO
+
 import pyoxigraph
+from fastapi.concurrency import run_in_threadpool
 from pyoxigraph import (
     RdfFormat,
     Store,
@@ -10,8 +12,6 @@ from pyoxigraph import (
     QueryBoolean,
     Quad,
 )
-from fastapi.concurrency import run_in_threadpool
-from threading import Lock
 from rdflib import Graph, Namespace, URIRef
 
 from prez.exceptions.model_exceptions import InvalidSPARQLQueryException

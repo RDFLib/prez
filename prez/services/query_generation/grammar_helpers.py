@@ -7,29 +7,36 @@ grammar construction patterns. The intention is to move these to the
 sparql-grammar-pydantic library itself.
 """
 
+import logging
+import re
+
 from rdflib import URIRef
 from sparql_grammar_pydantic import (
+    IRI,
     AdditiveExpression,
     BooleanLiteral,
     BrackettedExpression,
+    BuiltInCall,
     ConditionalAndExpression,
     ConditionalOrExpression,
     Constraint,
     DataBlock,
     DataBlockValue,
+    ExistsFunc,
+    Expression,
     Filter,
+    GraphNodePath,
+    GraphPatternNotTriples,
+    GroupGraphPattern,
+    GroupGraphPatternSub,
+    GroupGraphPattern,
+    GroupGraphPatternSub,
+    GroupOrUnionGraphPattern,
     InlineData,
     InlineDataOneVar,
     MultiplicativeExpression,
     NumericExpression,
     NumericLiteral,
-    RegexExpression,
-    RelationalExpression,
-    UnaryExpression,
-    ValueLogical,
-    BuiltInCall,
-    Expression,
-    GraphNodePath,
     ObjectListPath,
     ObjectPath,
     PathAlternative,
@@ -39,29 +46,56 @@ from sparql_grammar_pydantic import (
     PathSequence,
     PrimaryExpression,
     PropertyListPathNotEmpty,
-    SG_Path,
-    VerbPath,
-    IRI,
-    GraphPatternNotTriples,
-    GroupGraphPattern,
-    GroupGraphPatternSub,
-    GroupOrUnionGraphPattern,
     RDFLiteral,
+    RegexExpression,
+    RelationalExpression,
+    SG_Path,
     TriplesBlock,
     TriplesSameSubjectPath,
+    UnaryExpression,
+    ValueLogical,
+    NotExistsFunc,
     Var,
     VarOrTerm,
+    VerbPath,
+    ExistsFunc,
 )
 
+logger = logging.getLogger(__name__)
 
-def convert_value_to_rdf_term(val) -> IRI | NumericLiteral | RDFLiteral:
+
+def convert_value_to_rdf_term(
+    val,
+) -> IRI | NumericLiteral | RDFLiteral | BooleanLiteral:
     """Convert a Python value to the appropriate RDF term."""
-    if isinstance(val, str) and val.startswith("http"):
-        return IRI(value=val)
-    elif isinstance(val, (int, float)):
+    # handle booleans
+    if isinstance(val, bool):
+        return BooleanLiteral(value=val)
+
+    # handle numbers
+    if isinstance(val, (int, float)):
         return NumericLiteral(value=val)
-    else:
-        return RDFLiteral(value=val)
+
+    # sanitize leading and trailing quotes
+    val = val.strip("'\"")
+    # escape double quotes to prevent sparql injection
+    val = val.replace('"', r"\"")
+
+    # check if it is a datatyped literal
+    datatype_pattern = r"(.*)\^\^<(\S+)>$"
+    capture_groups = re.findall(datatype_pattern, val)
+    if capture_groups and len(capture_groups) == 1:
+        value_str, datatype_str = capture_groups[0]
+        value_str = value_str.strip("'\"")
+        datatype_iri = IRI(value=datatype_str)
+        return RDFLiteral(value=value_str, datatype=datatype_iri)
+
+    # check if it is a uri
+    elif val.startswith("http"):
+        return IRI(value=val)
+
+    # just return a literal if nothing else matched
+    return RDFLiteral(value=val)
 
 
 def create_regex_filter(variable: Var, pattern: str) -> GraphPatternNotTriples:
@@ -95,7 +129,9 @@ def create_regex_filter(variable: Var, pattern: str) -> GraphPatternNotTriples:
 
 
 def create_relational_filter(
-    left_var: Var, operator: str, right_value: IRI | NumericLiteral | RDFLiteral
+    left_var: Var,
+    operator: str,
+    right_value: IRI | NumericLiteral | RDFLiteral | BooleanLiteral,
 ) -> GraphPatternNotTriples:
     """Create a SPARQL FILTER with relational comparison.
 
@@ -473,5 +509,76 @@ def create_union_gpnt_from_tssps(
                 )
                 for tssp in tssps
             ]
+        )
+    )
+
+
+def create_filter_exists(patterns: GroupGraphPatternSub) -> GraphPatternNotTriples:
+    """Create a FILTER EXISTS wrapper around a group of patterns.
+
+    This wraps the given patterns in FILTER EXISTS { ... } which improves
+    query performance.
+
+    Args:
+        patterns: The GroupGraphPatternSub containing all patterns to wrap
+
+    Returns:
+        GraphPatternNotTriples containing the FILTER EXISTS
+    """
+    return GraphPatternNotTriples(
+        content=Filter(
+            constraint=Constraint(
+                content=BuiltInCall(
+                    other_expressions=ExistsFunc(
+                        group_graph_pattern=GroupGraphPattern(content=patterns)
+                    )
+                )
+            )
+        )
+    )
+
+
+def create_filter_not_exists(patterns: GroupGraphPatternSub) -> GraphPatternNotTriples:
+    """Create a FILTER NOT EXISTS wrapper around a group of patterns.
+
+    This wraps the given patterns in FILTER NOT EXISTS { ... } which improves
+    query performance.
+
+    Args:
+        patterns: The GroupGraphPatternSub containing all patterns to wrap
+
+    Returns:
+        GraphPatternNotTriples containing the FILTER NOT EXISTS
+    """
+    return GraphPatternNotTriples(
+        content=Filter(
+            constraint=Constraint(
+                content=BuiltInCall(
+                    other_expressions=NotExistsFunc(
+                        group_graph_pattern=GroupGraphPattern(content=patterns)
+                    )
+                )
+            )
+        )
+    )
+
+
+def _create_filter_in(variable: Var, values: list) -> GraphPatternNotTriples:
+    """Create a FILTER(?var IN (<val1>, "val2", ...)) constraint."""
+    # Convert values to appropriate RDF terms and wrap in PrimaryExpression
+    right_primary_expressions = []
+    for value in values:
+        rdf_term = convert_value_to_rdf_term(value)
+        right_primary_expressions.append(PrimaryExpression(content=rdf_term))
+
+    in_expr = Expression.create_in_expression(
+        left_primary_expression=PrimaryExpression(content=variable),
+        operator="IN",
+        right_primary_expressions=right_primary_expressions,
+    )
+
+    return GraphPatternNotTriples(
+        content=Filter(
+            constraint=Constraint(content=BrackettedExpression(expression=in_expr))
         )
     )

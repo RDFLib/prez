@@ -11,7 +11,6 @@ from sparql_grammar_pydantic import (
     GraphPatternNotTriples,
     GroupGraphPattern,
     GroupOrUnionGraphPattern,
-    IRIOrFunction,
     RDFLiteral,
     SolutionModifier,
     TriplesSameSubject,
@@ -23,6 +22,8 @@ from sparql_grammar_pydantic import (
     TriplesBlock,
     TriplesSameSubjectPath,
     Var,
+    WhereClause,
+    IRIOrFunction,
 )
 
 from prez.cache import prez_system_graph
@@ -46,6 +47,8 @@ from prez.services.query_generation.grammar_helpers import (
     create_temporal_or_gpnt,
     create_filter_bool_gpnt,
     create_temporal_and_gpnt,
+    create_filter_not_exists,
+    _create_filter_in,
 )
 from prez.services.query_generation.shacl import PropertyShape
 from prez.services.query_generation.spatial_filter import (
@@ -99,16 +102,17 @@ class CQLParser:
         self.query_str: str | None = None
         self.tss_list: list[TriplesSameSubject] = []
         self.tssp_list: list[TriplesSameSubjectPath] = []
+        self.focus_node_tssp_list: list[TriplesSameSubjectPath] = []
         self.crs: str | None = crs
         self.queryable_props: dict[str, str] | None = queryable_props
 
     def parse(self):
         root = self.cql_json
-        where = WhereClause(
-            group_graph_pattern=GroupGraphPattern(
-                content=next(self.parse_logical_operators(root))
-            )
-        )
+        # Get patterns from parsing with focus_node optimization applied at each level
+        parsed_ggps = next(self.parse_logical_operators(root))
+
+        where = WhereClause(group_graph_pattern=GroupGraphPattern(content=parsed_ggps))
+
         if self.tss_list:
             construct_triples = ConstructTriples.from_tss_list(self.tss_list)
         else:
@@ -121,6 +125,8 @@ class CQLParser:
             solution_modifier=solution_modifier,
         )
         self.query_str = self.query_object.to_string()
+
+        # Set inner_select_gpntotb_list for backwards compatibility
         gpotb = self.query_object.where_clause.group_graph_pattern.content
         if gpotb.graph_patterns_or_triples_blocks:
             self.inner_select_gpntotb_list = gpotb.graph_patterns_or_triples_blocks
@@ -137,6 +143,8 @@ class CQLParser:
             yield from self._handle_and_operator(args, ggps, existing_ggps)
         elif operator == "or":
             yield from self._handle_or_operator(args, ggps, existing_ggps)
+        elif operator == "not":
+            yield from self._handle_not_operator(args, ggps, existing_ggps)
 
         # ... other operators like "<", "=", ">", "like", spatial, "in", temporal ...
         elif operator in ["<", "=", ">", "<=", ">=", "<>"]:
@@ -177,11 +185,9 @@ class CQLParser:
         ggps: GroupGraphPatternSub,
         existing_ggps: GroupGraphPatternSub | None,
     ) -> Generator[GroupGraphPatternSub, None, None]:
-        """Handle AND logical operator."""
         for arg in args:
-            # Process each argument and update the same ggps without yielding
-            list(self.parse_logical_operators(arg, ggps))
-        # If a new ggps was created (not passed from outside), yield it
+            next(self.parse_logical_operators(arg, ggps), None)
+
         if existing_ggps is None:
             yield ggps
 
@@ -246,6 +252,42 @@ class CQLParser:
         ):  # If this OR was top-level for this call and created its own ggps
             yield ggps
 
+    def _handle_not_operator(
+        self,
+        args: list[dict],
+        ggps: GroupGraphPatternSub,
+        existing_ggps: GroupGraphPatternSub | None,
+    ) -> Generator[GroupGraphPatternSub, None, None]:
+        """Handle NOT logical operator using FILTER NOT EXISTS."""
+        if len(args) != 1:
+            raise ValueError("NOT operator requires exactly one argument")
+
+        # Parse the nested argument to get its patterns
+        nested_arg = args[0]
+        nested_ggps = next(self.parse_logical_operators(nested_arg), None)
+
+        if nested_ggps is not None:
+            # Combine the nested patterns with any collected TSSP patterns
+            # Create a temporary parser state to collect patterns from the nested expression
+            temp_tssp_list = self.tssp_list.copy()
+            self.tssp_list = []  # Clear for nested parsing
+
+            # Re-parse to collect TSSP patterns properly
+            temp_ggps = next(self.parse_logical_operators(nested_arg), None)
+            combined_nested_patterns = self.combine_all_patterns(
+                temp_ggps if temp_ggps else GroupGraphPatternSub()
+            )
+
+            # Restore original TSSP list
+            self.tssp_list = temp_tssp_list
+
+            # Create FILTER NOT EXISTS wrapper
+            filter_not_exists_gpnt = create_filter_not_exists(combined_nested_patterns)
+            ggps.add_pattern(filter_not_exists_gpnt)
+
+        if existing_ggps is None:
+            yield ggps
+
     def _add_triple(
         self,
         ggps: GroupGraphPatternSub,
@@ -264,33 +306,35 @@ class CQLParser:
             tssp = TriplesSameSubjectPath.from_spo(
                 subject=subject, predicate=predicate, object=obj
             )
-            # Note: tssp goes to ggps.graph_patterns_or_triples_blocks, NOT self.tssp_list
+            self._add_tssp_to_ggps(ggps, tssp)
 
-            new_tb_for_this_tssp = TriplesBlock(triples=tssp)
+    def _add_tssp_to_ggps(
+        self, ggps: GroupGraphPatternSub, tssp: TriplesSameSubjectPath
+    ) -> None:
+        """Add a TSSP as a TriplesBlock to the GGPS."""
+        new_tb_for_this_tssp = TriplesBlock(triples=tssp)
 
-            if not ggps.graph_patterns_or_triples_blocks:
-                ggps.graph_patterns_or_triples_blocks = [new_tb_for_this_tssp]
+        if not ggps.graph_patterns_or_triples_blocks:
+            ggps.graph_patterns_or_triples_blocks = [new_tb_for_this_tssp]
+        else:
+            # Find if there's already a TriplesBlock to nest under the new one
+            existing_tb = None
+            existing_tb_index = None
+
+            for i, gpnt_or_tb in enumerate(ggps.graph_patterns_or_triples_blocks):
+                if isinstance(gpnt_or_tb, TriplesBlock):
+                    existing_tb = gpnt_or_tb
+                    existing_tb_index = i
+                    break
+
+            if existing_tb:
+                # Create new TriplesBlock with current tssp and nest the existing one
+                nested_tb = TriplesBlock(triples=tssp, triples_block=existing_tb)
+                # Replace the existing TriplesBlock with the new nested one
+                ggps.graph_patterns_or_triples_blocks[existing_tb_index] = nested_tb
             else:
-                # Find if there's already a TriplesBlock to nest under the new one
-                existing_tb = None
-                existing_tb_index = None
-
-                for i, gpnt_or_tb in enumerate(ggps.graph_patterns_or_triples_blocks):
-                    if isinstance(gpnt_or_tb, TriplesBlock):
-                        existing_tb = gpnt_or_tb
-                        existing_tb_index = i
-                        break
-
-                if existing_tb:
-                    # Create new TriplesBlock with current tssp and nest the existing one
-                    nested_tb = TriplesBlock(triples=tssp, triples_block=existing_tb)
-                    # Replace the existing TriplesBlock with the new nested one
-                    ggps.graph_patterns_or_triples_blocks[existing_tb_index] = nested_tb
-                else:
-                    # No existing TriplesBlock, just append the new one
-                    ggps.graph_patterns_or_triples_blocks.append(new_tb_for_this_tssp)
-
-            # All patterns are channeled into the graph_patterns_or_triples_blocks list.
+                # No existing TriplesBlock, just append the new one
+                ggps.graph_patterns_or_triples_blocks.append(new_tb_for_this_tssp)
 
     def _handle_comparison(
         self,
@@ -420,10 +464,12 @@ class CQLParser:
     def _handle_in(
         self, args: list[dict | list], existing_ggps: GroupGraphPatternSub | None = None
     ) -> None:
+        """Handle CQL 'in' operator using FILTER with IN for semantic consistency."""
         ggps, obj = self._add_tss_tssp(args, existing_ggps)
-
-        values_constraint = create_values_constraint(obj, args[1])
-        ggps.add_pattern(values_constraint)
+        # Create FILTER with IN. This enables term comparison semantics available in FILTER. The previous implementation
+        # using VALUES clauses was thought to be more performant but could cause issues with date, number comparisons
+        filter_in_gpnt = _create_filter_in(obj, args[1])
+        ggps.add_pattern(filter_in_gpnt)
 
     def _handle_shacl_defined_prop(self, prop: str, ggps: GroupGraphPatternSub) -> Var:
         property_shape, obj_var = self.queryable_id_to_tssp(self.queryable_props[prop])
@@ -593,3 +639,30 @@ class CQLParser:
             .graph_node_path.varorterm_or_triplesnodepath.varorterm
         )
         return ps, obj_var_name
+
+    def combine_all_patterns(self, ggps: GroupGraphPatternSub) -> GroupGraphPatternSub:
+        """Combine all collected patterns (TSS, TSSP, GPNT) into a single GroupGraphPatternSub.
+
+        This method takes the patterns from self.tss_list, self.tssp_list,
+        and any additional patterns in the provided ggps, and combines them all
+        into a single unified GroupGraphPatternSub for FILTER EXISTS wrapping.
+
+        Args:
+            ggps: The GroupGraphPatternSub from parse_logical_operators containing GPNT patterns
+
+        Returns:
+            A single GroupGraphPatternSub containing all combined patterns
+        """
+        combined_ggps = GroupGraphPatternSub()
+
+        # Add TSSP patterns from SHACL queryables as TripleBlocks
+        if self.tssp_list:
+            tb = TriplesBlock.from_tssp_list(self.tssp_list)
+            combined_ggps.add_pattern(tb)
+
+        # Add all patterns from the main parsing result
+        if ggps.graph_patterns_or_triples_blocks:
+            for pattern in ggps.graph_patterns_or_triples_blocks:
+                combined_ggps.add_pattern(pattern)
+
+        return combined_ggps
