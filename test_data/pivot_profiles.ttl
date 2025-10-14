@@ -1,17 +1,19 @@
-@prefix altr-ext: <http://www.w3.org/ns/dx/connegp/altr-ext#> .
 @prefix dct: <http://purl.org/dc/terms/> .
 @prefix ex: <https://example.org/> .
-@prefix prez: <https://prez.dev/> .
-@prefix prof: <http://www.w3.org/ns/dx/prof/> .
 @prefix profile: <https://prez.dev/profile/> .
 @prefix prov: <http://www.w3.org/ns/prov#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
 @prefix sdo: <https://schema.org/> .
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+@prefix altr-ext: <http://www.w3.org/ns/dx/connegp/altr-ext#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix prez: <https://prez.dev/> .
+@prefix prof: <http://www.w3.org/ns/dx/prof/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix shext: <http://example.com/shacl-extension#> .
-@prefix sosa: <http://www.w3.org/ns/sosa/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix dcat: <http://www.w3.org/ns/dcat#> .
 
 profile:pivotPath a prof:Profile ;
   sh:constrainsClass dcat:Catalog ;
@@ -81,4 +83,68 @@ profile:pivotOneOrMorePath a prof:Profile ;
       shext:pivotValue ex:predc ;
     ] ;
   ] ;
+.
+
+prez:UnionPivot a
+        prof:Profile,
+        sh:NodeShape,
+        prez:ObjectProfile,
+        prez:ListingProfile ;
+    dcterms:description "Support for nesting pivot shapes under union" ;
+    dcterms:identifier "union-pivot"^^xsd:token ;
+    dcterms:title "Union Pivot" ;
+    altr-ext:constrainsClass
+        sosa:Sample , prez:CQLFilterResult ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
+    altr-ext:hasResourceFormat
+        "application/anot+ld+json",
+        "application/ld+json",
+        "application/n-triples",
+        "application/rdf+xml",
+        "text/anot+turtle",
+        "text/turtle" ;
+    sh:property
+        [
+            sh:path
+                [
+                    sh:union
+                        (
+                            rdf:type
+                            sdo:identifier
+                            shext:pivotShape [
+                                                 sh:path [ sh:inversePath sosa:hasFeatureOfInterest ] ;
+                                                 shext:pivotKey sosa:observedProperty ;
+                                                 shext:pivotValue sdo:value ;
+                                             ]
+                        )
+                ]
+        ] ;
+.
+
+
+prez:SequencePivotValue a
+        prof:Profile,
+        sh:NodeShape,
+        prez:ObjectProfile,
+        prez:ListingProfile ;
+    dcterms:description "Support for sequence paths in pivot keys/values" ;
+    dcterms:identifier "sequence paths"^^xsd:token ;
+    dcterms:title "Support for sequence paths in pivot keys/values" ;
+    altr-ext:constrainsClass
+        sosa:Sample , prez:CQLFilterResult ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
+    altr-ext:hasResourceFormat
+        "application/anot+ld+json",
+        "application/ld+json",
+        "application/n-triples",
+        "application/rdf+xml",
+        "text/anot+turtle",
+        "text/turtle" ;
+    sh:property[
+                            shext:pivotShape [
+                                                 sh:path [ sh:inversePath sosa:hasFeatureOfInterest ] ;
+                                                 shext:pivotKey sosa:observedProperty ;
+                                                 shext:pivotValue ( sosa:hasResult sdo:value );
+                                             ]
+               ]
 .
