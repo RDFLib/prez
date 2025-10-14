@@ -58,7 +58,8 @@ from sparql_grammar_pydantic import (
     Var,
     VarOrTerm,
     VerbPath,
-    ExistsFunc, IRIOrFunction,
+    ExistsFunc,
+    IRIOrFunction,
 )
 
 logger = logging.getLogger(__name__)
@@ -570,9 +571,9 @@ def _create_filter_in(variable: Var, values: list[str]) -> GraphPatternNotTriple
     for value in values:
         rdf_term = convert_value_to_rdf_term(value)
         if isinstance(rdf_term, (IRI)):
-            content=IRIOrFunction(iri=rdf_term)
+            content = IRIOrFunction(iri=rdf_term)
         else:
-            content=rdf_term
+            content = rdf_term
         right_primary_expressions.append(PrimaryExpression(content=content))
 
     in_expr = Expression.create_in_expression(

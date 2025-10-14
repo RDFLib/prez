@@ -907,9 +907,7 @@ def test_cql_or_shacl_union_structure():
         union_str = (
             union_gpnt.to_string().replace(" ", "").replace("\n", "").replace("\t", "")
         )
-        expected_union = (
-            "{?focus_node<http://example.org/pathProp1>?path_node_1.FILTER(?path_node_1IN(<http://example.org/valueA>))}UNION{?focus_node<http://example.org/pathProp2>?path_node_2.FILTER(?path_node_2IN(<http://example.org/valueB>))}"
-        )
+        expected_union = "{?focus_node<http://example.org/pathProp1>?path_node_1.FILTER(?path_node_1IN(<http://example.org/valueA>))}UNION{?focus_node<http://example.org/pathProp2>?path_node_2.FILTER(?path_node_2IN(<http://example.org/valueB>))}"
         assert union_str == expected_union
     finally:
         for triple in mock_system_graph:
