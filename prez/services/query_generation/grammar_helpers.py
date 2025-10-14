@@ -22,10 +22,13 @@ from sparql_grammar_pydantic import (
     Constraint,
     DataBlock,
     DataBlockValue,
+    ExistsFunc,
     Expression,
     Filter,
     GraphNodePath,
     GraphPatternNotTriples,
+    GroupGraphPattern,
+    GroupGraphPatternSub,
     GroupGraphPattern,
     GroupGraphPatternSub,
     GroupOrUnionGraphPattern,
@@ -51,6 +54,8 @@ from sparql_grammar_pydantic import (
     TriplesSameSubjectPath,
     UnaryExpression,
     ValueLogical,
+    Var,
+    NotExistsFunc,
     Var,
     VarOrTerm,
     VerbPath,
@@ -504,5 +509,76 @@ def create_union_gpnt_from_tssps(
                 )
                 for tssp in tssps
             ]
+        )
+    )
+
+
+def create_filter_exists(patterns: GroupGraphPatternSub) -> GraphPatternNotTriples:
+    """Create a FILTER EXISTS wrapper around a group of patterns.
+
+    This wraps the given patterns in FILTER EXISTS { ... } which improves
+    query performance.
+
+    Args:
+        patterns: The GroupGraphPatternSub containing all patterns to wrap
+
+    Returns:
+        GraphPatternNotTriples containing the FILTER EXISTS
+    """
+    return GraphPatternNotTriples(
+        content=Filter(
+            constraint=Constraint(
+                content=BuiltInCall(
+                    other_expressions=ExistsFunc(
+                        group_graph_pattern=GroupGraphPattern(content=patterns)
+                    )
+                )
+            )
+        )
+    )
+
+
+def create_filter_not_exists(patterns: GroupGraphPatternSub) -> GraphPatternNotTriples:
+    """Create a FILTER NOT EXISTS wrapper around a group of patterns.
+
+    This wraps the given patterns in FILTER NOT EXISTS { ... } which improves
+    query performance.
+
+    Args:
+        patterns: The GroupGraphPatternSub containing all patterns to wrap
+
+    Returns:
+        GraphPatternNotTriples containing the FILTER NOT EXISTS
+    """
+    return GraphPatternNotTriples(
+        content=Filter(
+            constraint=Constraint(
+                content=BuiltInCall(
+                    other_expressions=NotExistsFunc(
+                        group_graph_pattern=GroupGraphPattern(content=patterns)
+                    )
+                )
+            )
+        )
+    )
+
+
+def _create_filter_in(variable: Var, values: list) -> GraphPatternNotTriples:
+    """Create a FILTER(?var IN (<val1>, "val2", ...)) constraint."""
+    # Convert values to appropriate RDF terms and wrap in PrimaryExpression
+    right_primary_expressions = []
+    for value in values:
+        rdf_term = convert_value_to_rdf_term(value)
+        right_primary_expressions.append(PrimaryExpression(content=rdf_term))
+
+    in_expr = Expression.create_in_expression(
+        left_primary_expression=PrimaryExpression(content=variable),
+        operator="IN",
+        right_primary_expressions=right_primary_expressions,
+    )
+
+    return GraphPatternNotTriples(
+        content=Filter(
+            constraint=Constraint(content=BrackettedExpression(expression=in_expr))
         )
     )
