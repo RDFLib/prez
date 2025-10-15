@@ -84,7 +84,7 @@ def test_issue_418(monkeypatch):
     path_vars = {
         var.value
         for var in parser.inner_select_vars
-        if var.value.startswith("path_node_")
+        if var.value.startswith("cql_filter")
     }
     assert len(path_vars) >= 1, "At least one path variable should be present"
 

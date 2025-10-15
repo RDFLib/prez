@@ -828,7 +828,7 @@ def test_cql_or_operator_variable_separation(monkeypatch):
     path_vars = {
         var.value
         for var in parser.inner_select_vars
-        if var.value.startswith("path_node_")
+        if var.value.startswith("cql_filter")
     }
     assert len(path_vars) == 3, "Each branch should expose a unique path variable"
 
@@ -907,7 +907,7 @@ def test_cql_or_shacl_union_structure():
         union_str = (
             union_gpnt.to_string().replace(" ", "").replace("\n", "").replace("\t", "")
         )
-        expected_union = "{?focus_node<http://example.org/pathProp1>?path_node_1.FILTER(?path_node_1IN(<http://example.org/valueA>))}UNION{?focus_node<http://example.org/pathProp2>?path_node_2.FILTER(?path_node_2IN(<http://example.org/valueB>))}"
+        expected_union = "{?focus_node<http://example.org/pathProp1>?cql_filter_1.FILTER(?cql_filter_1IN(<http://example.org/valueA>))}UNION{?focus_node<http://example.org/pathProp2>?cql_filter_2.FILTER(?cql_filter_2IN(<http://example.org/valueB>))}"
         assert union_str == expected_union
     finally:
         for triple in mock_system_graph:

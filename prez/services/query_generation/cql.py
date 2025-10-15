@@ -472,17 +472,21 @@ class CQLParser:
         ggps.add_pattern(filter_in_gpnt)
 
     def _handle_shacl_defined_prop(self, prop: str, ggps: GroupGraphPatternSub) -> Var:
-        property_shape, obj_var = self.queryable_id_to_tssp(self.queryable_props[prop])
+        property_shape = self.queryable_id_to_tssp(self.queryable_props[prop])
 
         if property_shape.tss_list:
             self.tss_list.extend(property_shape.tss_list)
 
         self._append_property_shape_patterns(ggps, property_shape)
 
-        self.inner_select_vars.append(obj_var)
+        # For CQL, always use cql_filter_var which provides a consistent interface
+        # for both simple paths and union paths (enables FILTER(?cql_filter_N IN (...)))
+        filter_var = property_shape.cql_filter_var
+
+        self.inner_select_vars.append(filter_var)
         # Increment after processing so next SHACL queryable gets a unique counter
         self.var_counter += 1
-        return obj_var
+        return filter_var
 
     def _append_property_shape_patterns(
         self, ggps: GroupGraphPatternSub, property_shape: PropertyShape
@@ -622,7 +626,7 @@ class CQLParser:
     def queryable_id_to_tssp(
         self,
         queryable_uri: str,
-    ) -> tuple[PropertyShape, Var]:
+    ) -> PropertyShape:
         queryable_shape = prez_system_graph.cbd(URIRef(queryable_uri))
         ps = PropertyShape(
             uri=URIRef(queryable_uri),
@@ -631,14 +635,7 @@ class CQLParser:
             focus_node=Var(value="focus_node"),
             var_counter_offset=self.var_counter,  # Pass current var_counter to ensure unique variables
         )
-        obj_var_name = (
-            ps.tssp_list[0]
-            .content[1]
-            .first_pair[1]
-            .object_paths[0]
-            .graph_node_path.varorterm_or_triplesnodepath.varorterm
-        )
-        return ps, obj_var_name
+        return ps
 
     def combine_all_patterns(self, ggps: GroupGraphPatternSub) -> GroupGraphPatternSub:
         """Combine all collected patterns (TSS, TSSP, GPNT) into a single GroupGraphPatternSub.

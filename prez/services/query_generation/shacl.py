@@ -233,6 +233,7 @@ class PropertyShape(Shape):
     bnode_depth: Optional[int] = None
     union_tssps_binds: Optional[List[Dict[str, Any]]] = []  # New attribute
     all_predicate_values_counter: int = 0
+    cql_filter_var: Optional[Var] = None  # Variable to use for CQL FILTER IN clauses
 
     @property
     def minCount(self):
@@ -680,6 +681,15 @@ class PropertyShape(Shape):
         """Processes property paths, generating TSSP lists and facet binds."""
         processed_paths_data = []
         pp_i = start_pp_i
+
+        # For CQL kind, create a shared filter variable for all paths
+        # This allows a single FILTER(?cql_filter_N IN (...)) clause
+        if self.kind == "cql":
+            cql_filter_var = Var(value=f"cql_filter_{self.var_counter_offset + 1}")
+            self.cql_filter_var = cql_filter_var
+        else:
+            cql_filter_var = None
+
         for property_path in property_paths:
             # Determine if we should use the path alias for CONSTRUCT triples
             use_alias = (
@@ -689,7 +699,10 @@ class PropertyShape(Shape):
             )
 
             # Always create path_node_1 as it's needed everywhere
-            if self.kind == "fts":
+            if self.kind == "cql":
+                # For CQL, all paths (including union paths) share the same filter variable
+                path_node_1 = cql_filter_var
+            elif self.kind == "fts":
                 if isinstance(property_path, SequencePath):
                     # For FTS sequence paths, intermediate nodes are numbered, final node is fts_search_node
                     path_node_1 = Var(value=f"fts_search_node_{pp_i + 1}")
@@ -715,7 +728,13 @@ class PropertyShape(Shape):
             if isinstance(property_path, SequencePath):
                 seq_path_len = len(property_path.value)
                 for i in range(1, seq_path_len):
-                    if self.kind == "fts":
+                    if self.kind == "cql":
+                        # For CQL, only the final node matters (used in abbreviated path syntax)
+                        # Only populate the final node with the shared filter var
+                        if i == seq_path_len - 1:
+                            path_nodes[i] = cql_filter_var
+                        # Intermediate nodes are not used in CQL abbreviated syntax (property paths), don't populate
+                    elif self.kind == "fts":
                         # For FTS sequence paths: intermediate nodes are numbered, final node is fts_search_node
                         if i == seq_path_len - 1:  # Last node in sequence
                             path_nodes[i] = Var(value="fts_search_node")
