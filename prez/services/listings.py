@@ -631,7 +631,7 @@ async def ogc_features_listing_function(
                 namespace_manager=prefix_graph.namespace_manager,
             )
         else:
-            # Dummmy empty FeatureCollection for adding metadata
+            # Dummy empty FeatureCollection for adding metadata
             geojson = {"type": "FeatureCollection", "features": []}
         is_first_page = subselect_kwargs["offset"] == 0
         per_page = subselect_kwargs["limit"]
