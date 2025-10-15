@@ -11,6 +11,7 @@ DateTimeOrUnbounded = Union[datetime, str, None]
 # Get the root logger, this is only for debugging
 logger = logging.getLogger()
 
+
 def reformat_bbox(
     bbox: List[str] = Query(
         default=[],  # Australia
