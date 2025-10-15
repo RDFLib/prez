@@ -768,6 +768,7 @@ async def check_unknown_params(request: Request):
         "subscription-key",
         "startindex",
         "f",
+        "resultType"
     }
     unknown_params = set(request.query_params.keys()) - known_params
     if unknown_params:
