@@ -13,6 +13,7 @@ import re
 from rdflib import URIRef
 from sparql_grammar_pydantic import (
     IRI,
+    IRIOrFunction,
     AdditiveExpression,
     BooleanLiteral,
     BrackettedExpression,
@@ -143,7 +144,6 @@ def create_relational_filter(
     Returns:
         GraphPatternNotTriples containing the FILTER
     """
-    from sparql_grammar_pydantic import IRIOrFunction
 
     object_pe = PrimaryExpression(content=left_var)
 
@@ -569,6 +569,8 @@ def _create_filter_in(variable: Var, values: list) -> GraphPatternNotTriples:
     right_primary_expressions = []
     for value in values:
         rdf_term = convert_value_to_rdf_term(value)
+        if isinstance(rdf_term, IRI):
+            rdf_term = IRIOrFunction(iri=rdf_term)
         right_primary_expressions.append(PrimaryExpression(content=rdf_term))
 
     in_expr = Expression.create_in_expression(
