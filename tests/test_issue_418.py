@@ -81,12 +81,8 @@ def test_issue_418(monkeypatch):
     print(f"Generated SPARQL query:\n{query_str}")
 
     # Ensure path variables are present
-    path_vars = {
-        var.value
-        for var in parser.inner_select_vars
-        if var.value.startswith("cql_filter")
-    }
-    assert len(path_vars) >= 1, "At least one path variable should be present"
+    assert "?cql_filter_1" in query_str
+    assert "?cql_filter_2" in query_str
 
     # Ensure both identifier URIs are present in the query
     assert "https://id.biodiversity.org.au/name/apni/223339" in query_str

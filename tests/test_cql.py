@@ -825,12 +825,9 @@ def test_cql_or_operator_variable_separation(monkeypatch):
     print(f"Generated SPARQL query:\n{query_str}")
 
     # Ensure each OR branch introduced a distinct path variable
-    path_vars = {
-        var.value
-        for var in parser.inner_select_vars
-        if var.value.startswith("cql_filter")
-    }
-    assert len(path_vars) == 3, "Each branch should expose a unique path variable"
+    assert "?cql_filter_1" in query_str
+    assert "?cql_filter_2" in query_str
+    assert "?cql_filter_3" in query_str
 
     # Ensure both type URIs are present
     assert "https://linked.data.gov.au/def/bore/Bore" in query_str

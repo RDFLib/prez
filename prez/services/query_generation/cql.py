@@ -482,8 +482,6 @@ class CQLParser:
         # For CQL, always use cql_filter_var which provides a consistent interface
         # for both simple paths and union paths (enables FILTER(?cql_filter_N IN (...)))
         filter_var = property_shape.cql_filter_var
-
-        self.inner_select_vars.append(filter_var)
         # Increment after processing so next SHACL queryable gets a unique counter
         self.var_counter += 1
         return filter_var

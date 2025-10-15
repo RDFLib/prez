@@ -524,6 +524,9 @@ class PropertyShape(Shape):
             path_or_prop = f"prof_{self.shape_number + 1}"
 
         # set up the path nodes - either from supplied values or set as variables
+        # Note: For endpoint kind, NodeShape may pre-populate self.path_nodes with specific IRIs.
+        # For CQL kind, self.path_nodes is empty (PropertyShape created directly, not from NodeShape).
+        # Pre-population uses base naming (no offset) since endpoint always has var_counter_offset=0.
         total_individual_nodes = sum([len(i) for i in self.and_property_paths])
         for i in range(total_individual_nodes):
             path_node_str = f"{path_or_prop}_node_{i + 1}"
@@ -712,10 +715,13 @@ class PropertyShape(Shape):
                 f"{path_or_prop}_node_{pp_i + 1 + self.var_counter_offset}"
                 in self.path_nodes
             ):
+                # Check if NodeShape pre-populated this path node (endpoint kind only)
+                # Lookup includes var_counter_offset, which is 0 for endpoint, non-zero for CQL
                 path_node_1 = self.path_nodes[
                     f"{path_or_prop}_node_{pp_i + 1 + self.var_counter_offset}"
                 ]
             else:
+                # Create new variable with offset to ensure uniqueness across multiple PropertyShapes
                 path_node_1 = Var(
                     value=f"{path_or_prop}_node_{pp_i + 1 + self.var_counter_offset}"
                 )
