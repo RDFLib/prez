@@ -692,7 +692,7 @@ class PropertyShape(Shape):
             self.gpnt_list.append(gpnt)
 
     def _generate_path_nodes_for_path(
-        self, property_path: PropertyPath, path_or_prop: str, pp_i
+            self, property_path: PropertyPath, path_or_prop: str, pp_i
     ):
         # For CQL kind, create a shared filter variable for all paths
         # This allows a single FILTER(?cql_filter_N IN (...)) clause
