@@ -918,84 +918,82 @@ class PropertyShape(Shape):
                             current_tssp.append(tssp_mod_segment)
                             # `triple` remains None, so no simple triple added to CONSTRUCT unless aliased.
 
-                        elif isinstance(path_segment, AlternativePath):
-                            inner_path_type = "alternative"
-                            # For profile/fts, AlternativePath within a sequence needs to generate a UNION block.
+                    elif isinstance(path_segment, AlternativePath):
+                        inner_path_type = "alternative"
+                        # For profile/fts, AlternativePath within a sequence needs to generate a UNION block.
 
-                            group_graph_patterns_for_union = []
-                            for alt_path_item in path_segment.value:
-                                # Each alt_path_item is a PropertyPath (e.g., Path, InversePath)
-                                # We need to generate a simple TSSP for it.
-                                tssp_for_alt = _tssp_for_path_segment(
-                                    segment_subject_node,
+                        group_graph_patterns_for_union = []
+                        for alt_path_item in path_segment.value:
+                            # Each alt_path_item is a PropertyPath (e.g., Path, InversePath)
+                            # We need to generate a simple TSSP for it.
+                            tssp_for_alt = _tssp_for_path_segment(
+                                segment_subject_node,
+                                alt_path_item,
+                                segment_object_node,
+                            )
+                            group_graph_patterns_for_union.append(
+                                GroupGraphPattern(
+                                    content=GroupGraphPatternSub(
+                                        triples_block=TriplesBlock.from_tssp_list(
+                                            [tssp_for_alt]
+                                        )
+                                    )
+                                )
+                            )
+                            # For CONSTRUCT, add individual triples for each alternative if not aliased
+                            if not use_alias:
+                                # Need to get the correct predicate for the CONSTRUCT
+                                construct_pred_iri = None
+                                construct_subj = segment_subject_node
+                                construct_obj = segment_object_node
+                                if isinstance(alt_path_item, Path):
+                                    construct_pred_iri = IRI(value=alt_path_item.value)
+                                elif isinstance(
+                                    alt_path_item, InversePath
+                                ) and isinstance(alt_path_item.value, Path):
+                                    construct_pred_iri = IRI(
+                                        value=alt_path_item.value.value
+                                    )
+                                    construct_subj, construct_obj = (
+                                        construct_obj,
+                                        construct_subj,
+                                    )  # Swap for inverse
+                                elif isinstance(
                                     alt_path_item,
-                                    segment_object_node,
-                                )
-                                group_graph_patterns_for_union.append(
-                                    GroupGraphPattern(
-                                        content=GroupGraphPatternSub(
-                                            triples_block=TriplesBlock.from_tssp_list(
-                                                [tssp_for_alt]
-                                            )
-                                        )
-                                    )
-                                )
-                                # For CONSTRUCT, add individual triples for each alternative if not aliased
-                                if not use_alias:
-                                    # Need to get the correct predicate for the CONSTRUCT
-                                    construct_pred_iri = None
-                                    construct_subj = segment_subject_node
-                                    construct_obj = segment_object_node
-                                    if isinstance(alt_path_item, Path):
-                                        construct_pred_iri = IRI(
-                                            value=alt_path_item.value
-                                        )
-                                    elif isinstance(
-                                        alt_path_item, InversePath
-                                    ) and isinstance(alt_path_item.value, Path):
-                                        construct_pred_iri = IRI(
-                                            value=alt_path_item.value.value
-                                        )
-                                        construct_subj, construct_obj = (
-                                            construct_obj,
+                                    (ZeroOrMorePath, OneOrMorePath, ZeroOrOnePath),
+                                ) and isinstance(alt_path_item.value, Path):
+                                    construct_pred_iri = IRI(
+                                        value=alt_path_item.value.value
+                                    )  # Use base predicate for construct
+                                if construct_pred_iri and add_to_tss_list:
+                                    self.tss_list.append(
+                                        TriplesSameSubject.from_spo(
                                             construct_subj,
-                                        )  # Swap for inverse
-                                    elif isinstance(
-                                        alt_path_item,
-                                        (ZeroOrMorePath, OneOrMorePath, ZeroOrOnePath),
-                                    ) and isinstance(alt_path_item.value, Path):
-                                        construct_pred_iri = IRI(
-                                            value=alt_path_item.value.value
-                                        )  # Use base predicate for construct
-                                    if construct_pred_iri and add_to_tss_list:
-                                        self.tss_list.append(
-                                            TriplesSameSubject.from_spo(
-                                                construct_subj,
-                                                construct_pred_iri,
-                                                construct_obj,
+                                            construct_pred_iri,
+                                            construct_obj,
+                                        )
+                                    )
+
+                        if group_graph_patterns_for_union:
+                            union_gpnt = GraphPatternNotTriples(
+                                content=GroupOrUnionGraphPattern(
+                                    group_graph_patterns=[
+                                        GroupGraphPattern(
+                                            content=GroupGraphPatternSub(
+                                                graph_patterns_or_triples_blocks=[
+                                                    GraphPatternNotTriples(
+                                                        content=GroupOrUnionGraphPattern(
+                                                            group_graph_patterns=group_graph_patterns_for_union
+                                                        )
+                                                    )
+                                                ]
                                             )
                                         )
-
-                            if group_graph_patterns_for_union:
-                                union_gpnt = GraphPatternNotTriples(
-                                    content=GroupOrUnionGraphPattern(
-                                        group_graph_patterns=[
-                                            GroupGraphPattern(
-                                                content=GroupGraphPatternSub(
-                                                    graph_patterns_or_triples_blocks=[
-                                                        GraphPatternNotTriples(
-                                                            content=GroupOrUnionGraphPattern(
-                                                                group_graph_patterns=group_graph_patterns_for_union
-                                                            )
-                                                        )
-                                                    ]
-                                                )
-                                            )
-                                        ]
-                                    )
+                                    ]
                                 )
-                                self.gpnt_list.append(union_gpnt)
-                                # `triple` remains None, as it's handled by the union_gp and tss_list additions.
+                            )
+                            self.gpnt_list.append(union_gpnt)
+                        # `triple` remains None, as it's handled by the union_gp and tss_list additions.
 
                     # Process the generated simple triple (if any) for this segment (profile/fts)
                     # This block is for simple Path, InversePath, and ZeroOrOneMorePath that result in a 'triple'
@@ -1004,9 +1002,7 @@ class PropertyShape(Shape):
                         if j == seq_path_len - 1 and self.kind == "fts":
                             # Use the actual final segment object node variable name for FTS
                             final_fts_var = segment_object_node
-                            if (
-                                inner_path_type != "inverse"
-                            ):  # s P o -> s P fts_node
+                            if inner_path_type != "inverse":  # s P o -> s P fts_node
                                 where_triple = triple[:2] + (final_fts_var,)
                             else:  # o P s -> fts_node P s (subject of inverse is fts_node)
                                 where_triple = (final_fts_var,) + triple[1:]
