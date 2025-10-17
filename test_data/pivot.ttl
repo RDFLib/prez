@@ -7,6 +7,7 @@
 @prefix sdo: <https://schema.org/> .
 @prefix sosa: <http://www.w3.org/ns/sosa/> .
 @prefix ssn: <http://www.w3.org/ns/ssn/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 ex:catalog a dcat:Catalog ;
   dct:title "Drillhole Catalog" ;
@@ -48,6 +49,7 @@ ex:sampling a sosa:Sampling ;
 
 ex:sample1 a sosa:Sample ;
   sosa:hasFeatureOfInterest ex:drillhole ;
+  sdo:identifier "abc123"^^xsd:token ;
   rdfs:label "dh1-s1" ;
 .
 
@@ -61,6 +63,12 @@ ex:observation1-1 a sosa:Observation ;
   sosa:hasFeatureOfInterest ex:sample1 ;
   sosa:observedProperty ex:color ;
   sosa:hasSimpleResult "brown" ;
+  sosa:hasResult ex:result1-1-1 ;
+.
+
+ex:result1-1-1 a sosa:Result ;
+  rdfs:label "dh1-s1-o1-r1" ;
+  sdo:value "brown" ;
 .
 
 ex:observation1-2 a sosa:Observation ;
@@ -68,6 +76,12 @@ ex:observation1-2 a sosa:Observation ;
   sosa:hasFeatureOfInterest ex:sample1 ;
   sosa:observedProperty ex:earthworms ;
   sosa:hasSimpleResult false ;
+  sosa:hasResult ex:result1-2-1 ;
+.
+
+ex:result1-2-1 a sosa:Result ;
+  rdfs:label "dh1-s1-o2-r1" ;
+  sdo:value false ;
 .
 
 ex:observation1-3 a sosa:Observation ;

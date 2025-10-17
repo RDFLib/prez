@@ -16,135 +16,92 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 profile:pivotPath a prof:Profile ;
-  sh:constrainsClass dcat:Catalog ;
   sh:property [
-    shext:pivotShape [
-          sh:path prov:qualifiedAssociation ;
-          shext:pivotKey prov:hadRole ;
-          shext:pivotValue prov:agent
+    sh:path [
+      shext:pivotPath [
+        sh:path prov:qualifiedAssociation ;
+        shext:pivotKey prov:hadRole ;
+        shext:pivotValue prov:agent
       ] ;
     ] ;
+  ] ;
 .
 
 profile:pivotInversePath a prof:Profile ;
-  sh:constrainsClass dcat:Resource ;
   sh:property [
-      shext:pivotShape [
+    sh:path [
+      shext:pivotPath [
         sh:path [ sh:inversePath sosa:hasFeatureOfInterest ] ;
         shext:pivotKey sosa:observedProperty ;
         shext:pivotValue sosa:hasSimpleResult ;
       ]
+    ] ;
   ] ;
 .
 
 profile:pivotSequencePath a prof:Profile ;
-  sh:constrainsClass dcat:Resource ;
   sh:property [
-      shext:pivotShape [
+    sh:path [
+      shext:pivotPath [
         sh:path ( [ sh:inversePath sosa:hasFeatureOfInterest ] sosa:hasResult [ sh:inversePath sosa:hasFeatureOfInterest ] ) ;
         shext:pivotKey sosa:observedProperty ;
         shext:pivotValue sosa:hasSimpleResult ;
       ]
-  ] ;
-.
-
-profile:pivotMixed a prof:Profile ;
-  sh:constrainsClass dcat:Catalog ;
-  sh:property [
-    sh:class dcat:Resource ;
-    sh:path dct:hasPart
-  ],
-  [
-    shext:pivotShape [
-        sh:path prov:qualifiedAssociation ;
-        shext:pivotKey prov:hadRole ;
-        shext:pivotValue prov:agent
     ] ;
   ] ;
 .
 
 profile:pivotAlternativePath a prof:Profile ;
-  sh:constrainsClass dcat:Catalog ;
   sh:property [
-    shext:pivotShape [
-      sh:path [ sh:alternativePath ( sdo:spatial dct:spatial ) ] ;
-      shext:pivotKey sdo:additionalType ;
-      shext:pivotValue rdfs:comment ;
-    ]
-  ] ;
-.
-
-profile:pivotOneOrMorePath a prof:Profile ;
-  sh:constrainsClass dcat:Catalog ;
-  sh:property [
-    shext:pivotShape [
-      sh:path ( [ sh:oneOrMorePath dct:hasPart ] ex:preda ) ;
-      shext:pivotKey ex:predb ;
-      shext:pivotValue ex:predc ;
+    sh:path [
+      shext:pivotPath [
+        sh:path [ sh:alternativePath ( sdo:spatial dct:spatial ) ] ;
+        shext:pivotKey sdo:additionalType ;
+        shext:pivotValue rdfs:comment ;
+      ]
     ] ;
   ] ;
 .
 
-prez:UnionPivot a
-        prof:Profile,
-        sh:NodeShape,
-        prez:ObjectProfile,
-        prez:ListingProfile ;
-    dcterms:description "Support for nesting pivot shapes under union" ;
-    dcterms:identifier "union-pivot"^^xsd:token ;
-    dcterms:title "Union Pivot" ;
-    altr-ext:constrainsClass
-        sosa:Sample , prez:CQLFilterResult ;
-    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
-    altr-ext:hasResourceFormat
-        "application/anot+ld+json",
-        "application/ld+json",
-        "application/n-triples",
-        "application/rdf+xml",
-        "text/anot+turtle",
-        "text/turtle" ;
-    sh:property
-        [
-            sh:path
-                [
-                    sh:union
-                        (
-                            rdf:type
-                            sdo:identifier
-                            shext:pivotShape [
-                                                 sh:path [ sh:inversePath sosa:hasFeatureOfInterest ] ;
-                                                 shext:pivotKey sosa:observedProperty ;
-                                                 shext:pivotValue sdo:value ;
-                                             ]
-                        )
-                ]
-        ] ;
+profile:pivotOneOrMorePath a prof:Profile ;
+  sh:property [
+    sh:path [
+      shext:pivotPath [
+        sh:path ( [ sh:oneOrMorePath dct:hasPart ] ex:preda ) ;
+        shext:pivotKey ex:predb ;
+        shext:pivotValue ex:predc ;
+      ] ;
+    ] ;
+  ] ;
+.
+
+profile:pivotUnion a prof:Profile ;
+  sh:property [
+    sh:path [
+      sh:union
+      (
+        rdf:type
+        sdo:identifier
+        [ shext:pivotPath [
+          sh:path [ sh:inversePath sosa:hasFeatureOfInterest ] ;
+          shext:pivotKey sosa:observedProperty ;
+          shext:pivotValue sosa:hasSimpleResult ;
+          ]
+        ]
+      )
+    ] ;
+  ] ;
 .
 
 
-prez:SequencePivotValue a
-        prof:Profile,
-        sh:NodeShape,
-        prez:ObjectProfile,
-        prez:ListingProfile ;
-    dcterms:description "Support for sequence paths in pivot keys/values" ;
-    dcterms:identifier "sequence paths"^^xsd:token ;
-    dcterms:title "Support for sequence paths in pivot keys/values" ;
-    altr-ext:constrainsClass
-        sosa:Sample , prez:CQLFilterResult ;
-    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
-    altr-ext:hasResourceFormat
-        "application/anot+ld+json",
-        "application/ld+json",
-        "application/n-triples",
-        "application/rdf+xml",
-        "text/anot+turtle",
-        "text/turtle" ;
-    sh:property[
-                            shext:pivotShape [
-                                                 sh:path [ sh:inversePath sosa:hasFeatureOfInterest ] ;
-                                                 shext:pivotKey sosa:observedProperty ;
-                                                 shext:pivotValue ( sosa:hasResult sdo:value );
-                                             ]
-               ]
+profile:pivotValueSequence a prof:Profile ;
+  sh:property [
+    sh:path [
+      shext:pivotPath [
+        sh:path [ sh:inversePath sosa:hasFeatureOfInterest ] ;
+        shext:pivotKey sosa:observedProperty ;
+        shext:pivotValue ( sosa:hasResult sdo:value );
+      ] ;
+    ] ;
+  ] ;
 .

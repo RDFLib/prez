@@ -5,9 +5,8 @@ Tests to ensure that the pivot shacl extension works as expected
 
 from pathlib import Path
 
-import pytest
 from rdflib import Graph, Literal, Namespace
-from rdflib.namespace import SDO
+from rdflib.namespace import RDF, SDO, SOSA, XSD
 from sparql_grammar_pydantic import Var
 
 from prez.services.query_generation.shacl import NodeShape
@@ -25,20 +24,6 @@ PROF = Namespace("https://prez.dev/profile/")
 EX = Namespace("https://example.org/")
 
 
-def assert_tss_list_looks_ok(nodeshape: NodeShape):
-    # assert tss_list looks like
-    #     ?focus_node ?pred ?obj
-    # (i.e. all variables, no IRIs)
-    assert len(nodeshape.tss_list) == 1
-    var1 = nodeshape.tss_list[0].content[0].varorterm
-    assert isinstance(var1, Var)
-    verb, objectlist = nodeshape.tss_list[0].content[1].verb_objectlist[0]
-    var2 = verb.varoriri.varoriri
-    var3 = objectlist.list_object[0].graphnode.varorterm_or_triplesnode.varorterm
-    assert isinstance(var2, Var)
-    assert isinstance(var3, Var)
-
-
 def test_pivot_path():
     """test processing of a simple path"""
     nodeshape = NodeShape(
@@ -47,7 +32,6 @@ def test_pivot_path():
         kind="profile",
         focus_node=Var(value="focus_node"),
     )
-    assert_tss_list_looks_ok(nodeshape)
     query = PrezQueryConstructor(
         construct_tss_list=nodeshape.tss_list,
         profile_triples=nodeshape.tssp_list,
@@ -70,7 +54,6 @@ def test_pivot_inverse_path():
         kind="profile",
         focus_node=Var(value="focus_node"),
     )
-    assert_tss_list_looks_ok(nodeshape)
     query = PrezQueryConstructor(
         construct_tss_list=nodeshape.tss_list,
         profile_triples=nodeshape.tssp_list,
@@ -92,7 +75,6 @@ def test_pivot_sequence_path():
         kind="profile",
         focus_node=Var(value="focus_node"),
     )
-    assert_tss_list_looks_ok(nodeshape)
     query = PrezQueryConstructor(
         construct_tss_list=nodeshape.tss_list,
         profile_triples=nodeshape.tssp_list,
@@ -106,26 +88,6 @@ def test_pivot_sequence_path():
     assert all([triple in results.graph for triple in expected_triples])
 
 
-@pytest.mark.xfail(reason="unsupported")
-def test_pivot_mixed():
-    nodeshape = NodeShape(
-        uri=PROF.pivotMixed,
-        graph=profiles_graph,
-        kind="profile",
-        focus_node=Var(value="focus_node"),
-    )
-    # tss_list should have 2 entries
-    assert_tss_list_looks_ok(nodeshape)
-    query = PrezQueryConstructor(
-        construct_tss_list=nodeshape.tss_list,
-        profile_triples=nodeshape.tssp_list,
-        profile_gpnt=nodeshape.gpnt_list,
-    )
-    results = data_graph.query(query.to_string())
-    expected_triples = []
-    assert all([triple in results.graph for triple in expected_triples])
-
-
 def test_pivot_alternative_path():
     nodeshape = NodeShape(
         uri=PROF.pivotAlternativePath,
@@ -133,7 +95,6 @@ def test_pivot_alternative_path():
         kind="profile",
         focus_node=Var(value="focus_node"),
     )
-    assert_tss_list_looks_ok(nodeshape)
     query = PrezQueryConstructor(
         construct_tss_list=nodeshape.tss_list,
         profile_triples=nodeshape.tssp_list,
@@ -154,7 +115,6 @@ def test_pivot_oneormore_path():
         kind="profile",
         focus_node=Var(value="focus_node"),
     )
-    assert_tss_list_looks_ok(nodeshape)
     query = PrezQueryConstructor(
         construct_tss_list=nodeshape.tss_list,
         profile_triples=nodeshape.tssp_list,
@@ -165,5 +125,47 @@ def test_pivot_oneormore_path():
         (EX.otherCatalog, EX.key1, Literal("value1")),
         (EX.otherCatalog, EX.key2, Literal("value2")),
         (EX.subResource1, EX.key2, Literal("value2")),
+    ]
+    assert all([triple in results.graph for triple in expected_triples])
+
+
+def test_pivot_union():
+    nodeshape = NodeShape(
+        uri=PROF.pivotUnion,
+        graph=profiles_graph,
+        kind="profile",
+        focus_node=Var(value="focus_node"),
+    )
+    query = PrezQueryConstructor(
+        construct_tss_list=nodeshape.tss_list,
+        profile_triples=nodeshape.tssp_list,
+        profile_gpnt=nodeshape.gpnt_list,
+    )
+    results = data_graph.query(query.to_string())
+    expected_triples = [
+        (EX.sample1, RDF.type, SOSA.Sample),
+        (EX.sample1, SDO.identifier, Literal("abc123", datatype=XSD.token)),
+        (EX.sample2, RDF.type, SOSA.Sample),
+        (EX.sample2, EX.color, Literal("red")),
+    ]
+    assert all([triple in results.graph for triple in expected_triples])
+
+
+def test_pivot_value_sequence():
+    nodeshape = NodeShape(
+        uri=PROF.pivotValueSequence,
+        graph=profiles_graph,
+        kind="profile",
+        focus_node=Var(value="focus_node"),
+    )
+    query = PrezQueryConstructor(
+        construct_tss_list=nodeshape.tss_list,
+        profile_triples=nodeshape.tssp_list,
+        profile_gpnt=nodeshape.gpnt_list,
+    )
+    results = data_graph.query(query.to_string())
+    expected_triples = [
+        (EX.sample1, EX.color, Literal("brown")),
+        (EX.sample1, EX.earthworms, Literal(False)),
     ]
     assert all([triple in results.graph for triple in expected_triples])
