@@ -71,12 +71,14 @@ profile:pivot-assoc a prof:Profile, prez:ListingProfile ;
       "text/anot+turtle" ,
       "text/turtle" ;
   sh:property [
-    shext:pivotShape [
+    sh:path [
+      shext:pivotPath [
           sh:path prov:qualifiedAssociation ;
           shext:pivotKey prov:hadRole ;
           shext:pivotValue prov:agent
       ] ;
     ] ;
+  ] ;
 .
 ```
 
@@ -86,24 +88,38 @@ The profile **MUST**
 
 - conform to all other Profile requirements,
 - be a `prez:ListingProfile`,
-- contain a `sh:property` with a nested `shext:pivotShape`,
-- not contain any other `sh:property` statements.
+- contain a `sh:property` with a `sh:path` that points to the `shext:pivotPath`
 
-The `shext:pivotShape` **MUST**
+The `shext:pivotPath` **MUST**
 
-- contain a `sh:path`, `shext:pivotKey`, and `shext:pivotValue`,
+- contain a `sh:path`, `shext:pivotKey`, and `shext:pivotValue`, where
 
-  where
-  - the `sh:path` gives the path to the nested nodes on which there are values you want to
-    pivot.
+  - the `sh:path` gives the path to the nested nodes on which there are values you want to pivot.
+  - the `shext:pivotKey` is a path to the column headers
+  - and the `shext:pivotValue` is the path to the cell values.
 
-  - the `shext:pivotKey` is the IRI for a predicate that exists on the nested node. The
-    values of which will become the column headers as per the example above.
+The `shext:pivotPath` **MAY**
 
-  - and the `shext:pivotValue` is the IRI of a predicate on the nested node that you want to
-    become the cell values.
+  - be under a `sh:union` clause like
 
----
+  ```turtle
+  sh:property [
+    sh:path [
+      sh:union (
+        rdf:type
+        [ shext:pivotPath [
+            sh:path (ex:path ex:to ex:node ) ;
+            sh:piovotKey ex:key ;
+            sh:pivotValue ex:value ;
+          ]
+        ]
+      )
+    ]
+  ]
+  ```
+
+You can think of using `shext:pivotPath` in the same way as other shacl pathing
+operators like `sh:inversPath`
 
 With the above pivot profile Prez will produce queries like the following
 
@@ -136,29 +152,4 @@ i.e.
 
 ```
 /catalogs?_profile=pivot-assoc
-```
-
-## Usage Notes
-
-Pivot profiles are not supported for use with other property shapes in the same profile.
-
-for example, the following kind of profile is not supported and may cause Prez to fail in
-unexpected ways.
-
-
-```turtle
-profile:pivot-assoc a prof:Profile, prez:ListingProfile ;
-  ...
-  sh:property [
-      sh:class dcat:Resource ;
-      sh:path dcterms:hasPart
-    ],
-    [
-      shext:pivotShape [
-            sh:path prov:qualifiedAssociation ;
-            shext:pivotKey prov:hadRole ;
-            shext:pivotValue prov:agent
-        ] ;
-    ] ;
-.
 ```
