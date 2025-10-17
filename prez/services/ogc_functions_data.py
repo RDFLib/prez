@@ -138,6 +138,23 @@ def get_ogc_functions_response() -> FunctionsResponse:
             ],
             "returns": [FunctionArgumentType.BOOLEAN],
         },
+        "qualifiedAttribution": {
+            "description": "Filter focus nodes by PROV qualified attribution patterns, matching features that have "
+            "specific agents with particular roles in their qualified attribution.",
+            "arguments": [
+                FunctionArgument(
+                    title="Role IRIs",
+                    description="Array of role IRIs for prov:hadRole (passed as CQL arrayLiteral)",
+                    type=[FunctionArgumentType.ARRAY],
+                ),
+                FunctionArgument(
+                    title="Agent IRIs",
+                    description="Array of agent IRIs for prov:agent (passed as CQL arrayLiteral)",
+                    type=[FunctionArgumentType.ARRAY],
+                ),
+            ],
+            "returns": [FunctionArgumentType.BOOLEAN],
+        },
     }
 
     # Create Function objects for each registered CQL function
