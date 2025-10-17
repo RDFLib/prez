@@ -47,8 +47,7 @@ from prez.services.query_generation.grammar_helpers import (
     create_temporal_or_gpnt,
     create_filter_bool_gpnt,
     create_temporal_and_gpnt,
-    create_filter_not_exists,
-    _create_filter_in,
+    create_filter_not_exists
 )
 from prez.services.query_generation.shacl import PropertyShape
 from prez.services.query_generation.spatial_filter import (
@@ -150,7 +149,11 @@ class CQLParser:
         elif operator in ["<", "=", ">", "<=", ">=", "<>"]:
             if operator == "<>":
                 operator = "!="  # CQL -> SPARQL equivalent
-            self._handle_comparison(operator, args, ggps)
+            if operator == "=":
+                # Special handling for equals to always use VALUES
+                self._handle_equals(args, ggps)
+            else:
+                self._handle_comparison(operator, args, ggps)
             if existing_ggps is None:
                 yield ggps
         elif operator == "like":
@@ -336,6 +339,18 @@ class CQLParser:
                 # No existing TriplesBlock, just append the new one
                 ggps.graph_patterns_or_triples_blocks.append(new_tb_for_this_tssp)
 
+    def _handle_equals(
+            self,
+            args: list[dict],
+            existing_ggps: GroupGraphPatternSub | None = None,
+    ):
+        # always use VALUES statement.
+        #TODO review scenarios where FILTER IN has different semantics and may be more appropriate e.g. dates, boolean
+
+        ggps, obj = self._add_tss_tssp(args, existing_ggps)
+        values_gpnt = create_values_constraint(variable=obj, values=[args[1]])
+        ggps.add_pattern(values_gpnt)
+
     def _handle_comparison(
         self,
         operator: str,
@@ -366,14 +381,14 @@ class CQLParser:
         existing_ggps: GroupGraphPatternSub | None,
         obj: Var | IRI | RDFLiteral | None = None,
     ) -> tuple[GroupGraphPatternSub, Var | IRI | RDFLiteral]:
-        self.var_counter += 1
         ggps = existing_ggps if existing_ggps is not None else GroupGraphPatternSub()
         prop = args[0].get("property")
         if self.queryable_props and prop in self.queryable_props:
-            shacl_defined_obj = self._handle_shacl_defined_prop(prop)
+            shacl_defined_obj = self._handle_shacl_defined_prop(prop, ggps)
             if not obj:
                 obj = shacl_defined_obj
         else:
+            self.var_counter += 1
             subject = Var(value="focus_node")
             predicate = IRI(value=prop)
             var_obj = Var(value=f"var_{self.var_counter}")
@@ -466,16 +481,39 @@ class CQLParser:
     ) -> None:
         """Handle CQL 'in' operator using FILTER with IN for semantic consistency."""
         ggps, obj = self._add_tss_tssp(args, existing_ggps)
-        # Create FILTER with IN. This enables term comparison semantics available in FILTER. The previous implementation
-        # using VALUES clauses was thought to be more performant but could cause issues with date, number comparisons
-        filter_in_gpnt = _create_filter_in(obj, args[1])
-        ggps.add_pattern(filter_in_gpnt)
+        # Create with VALUES clause. This is more efficient and clearer than FILTER IN for large lists.
+        #TODO review scenarios where FILTER IN has different semantics and may be more appropriate e.g. dates, boolean
+        values_clause_gpnt = create_values_constraint(obj, args[1])
+        ggps.add_pattern(values_clause_gpnt)
 
-    def _handle_shacl_defined_prop(self, prop):
-        tssp_list, obj_var = self.queryable_id_to_tssp(self.queryable_props[prop])
-        self.tssp_list.extend(tssp_list)
-        self.inner_select_vars.append(obj_var)
-        return obj_var
+    def _handle_shacl_defined_prop(self, prop: str, ggps: GroupGraphPatternSub) -> Var:
+        property_shape = self.queryable_id_to_tssp(self.queryable_props[prop])
+
+        if property_shape.tss_list:
+            self.tss_list.extend(property_shape.tss_list)
+
+        self._append_property_shape_patterns(ggps, property_shape)
+
+        # For CQL, always use cql_filter_var which provides a consistent interface
+        # for both simple paths and union paths (enables FILTER(?cql_filter_N IN (...)))
+        filter_var = property_shape.cql_filter_var
+        # Increment after processing so next SHACL queryable gets a unique counter
+        self.var_counter += 1
+        return filter_var
+
+    def _append_property_shape_patterns(
+        self, ggps: GroupGraphPatternSub, property_shape: PropertyShape
+    ) -> None:
+        tssp_list = property_shape.tssp_list or []
+        if tssp_list:
+            triples_block = TriplesBlock.from_tssp_list(tssp_list)
+            if ggps.graph_patterns_or_triples_blocks:
+                ggps.graph_patterns_or_triples_blocks.append(triples_block)
+            else:
+                ggps.graph_patterns_or_triples_blocks = [triples_block]
+
+        for gpnt in property_shape.gpnt_list or []:
+            ggps.add_pattern(gpnt)
 
     def _handle_temporal(
         self,
@@ -512,7 +550,7 @@ class CQLParser:
             prop = arg.get("property")
             if prop:
                 if self.queryable_props and prop in self.queryable_props:
-                    obj = self._handle_shacl_defined_prop(prop)
+                    obj = self._handle_shacl_defined_prop(prop, ggps)
                     operands[f"t{i}_{label}"] = obj
                 else:
                     self._triple_for_time_prop(ggps, i, label, prop, operands)
@@ -601,22 +639,16 @@ class CQLParser:
     def queryable_id_to_tssp(
         self,
         queryable_uri: str,
-    ) -> tuple[list[TriplesSameSubjectPath], Var]:
+    ) -> PropertyShape:
         queryable_shape = prez_system_graph.cbd(URIRef(queryable_uri))
         ps = PropertyShape(
             uri=URIRef(queryable_uri),
             graph=queryable_shape,
-            kind="endpoint",  # could be renamed - originally only endpoint nodeshapes filtered the nodes to be selected
+            kind="cql",
             focus_node=Var(value="focus_node"),
+            var_counter_offset=self.var_counter,  # Pass current var_counter to ensure unique variables
         )
-        obj_var_name = (
-            ps.tssp_list[0]
-            .content[1]
-            .first_pair[1]
-            .object_paths[0]
-            .graph_node_path.varorterm_or_triplesnodepath.varorterm
-        )
-        return ps.tssp_list, obj_var_name
+        return ps
 
     def combine_all_patterns(self, ggps: GroupGraphPatternSub) -> GroupGraphPatternSub:
         """Combine all collected patterns (TSS, TSSP, GPNT) into a single GroupGraphPatternSub.
