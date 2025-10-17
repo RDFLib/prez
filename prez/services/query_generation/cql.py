@@ -47,8 +47,7 @@ from prez.services.query_generation.grammar_helpers import (
     create_temporal_or_gpnt,
     create_filter_bool_gpnt,
     create_temporal_and_gpnt,
-    create_filter_not_exists,
-    _create_filter_in,
+    create_filter_not_exists
 )
 from prez.services.query_generation.shacl import PropertyShape
 from prez.services.query_generation.spatial_filter import (
@@ -150,7 +149,11 @@ class CQLParser:
         elif operator in ["<", "=", ">", "<=", ">=", "<>"]:
             if operator == "<>":
                 operator = "!="  # CQL -> SPARQL equivalent
-            self._handle_comparison(operator, args, ggps)
+            if operator == "=":
+                # Special handling for equals to always use VALUES
+                self._handle_equals(args, ggps)
+            else:
+                self._handle_comparison(operator, args, ggps)
             if existing_ggps is None:
                 yield ggps
         elif operator == "like":
@@ -336,6 +339,18 @@ class CQLParser:
                 # No existing TriplesBlock, just append the new one
                 ggps.graph_patterns_or_triples_blocks.append(new_tb_for_this_tssp)
 
+    def _handle_equals(
+            self,
+            args: list[dict],
+            existing_ggps: GroupGraphPatternSub | None = None,
+    ):
+        # always use VALUES statement.
+        #TODO review scenarios where FILTER IN has different semantics and may be more appropriate e.g. dates, boolean
+
+        ggps, obj = self._add_tss_tssp(args, existing_ggps)
+        values_gpnt = create_values_constraint(variable=obj, values=[args[1]])
+        ggps.add_pattern(values_gpnt)
+
     def _handle_comparison(
         self,
         operator: str,
@@ -466,10 +481,10 @@ class CQLParser:
     ) -> None:
         """Handle CQL 'in' operator using FILTER with IN for semantic consistency."""
         ggps, obj = self._add_tss_tssp(args, existing_ggps)
-        # Create FILTER with IN. This enables term comparison semantics available in FILTER. The previous implementation
-        # using VALUES clauses was thought to be more performant but could cause issues with date, number comparisons
-        filter_in_gpnt = _create_filter_in(obj, args[1])
-        ggps.add_pattern(filter_in_gpnt)
+        # Create with VALUES clause. This is more efficient and clearer than FILTER IN for large lists.
+        #TODO review scenarios where FILTER IN has different semantics and may be more appropriate e.g. dates, boolean
+        values_clause_gpnt = create_values_constraint(obj, args[1])
+        ggps.add_pattern(values_clause_gpnt)
 
     def _handle_shacl_defined_prop(self, prop: str, ggps: GroupGraphPatternSub) -> Var:
         property_shape = self.queryable_id_to_tssp(self.queryable_props[prop])

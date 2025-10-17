@@ -66,7 +66,7 @@ logger = logging.getLogger(__name__)
 
 
 def convert_value_to_rdf_term(
-    val,
+    val: str
 ) -> IRI | NumericLiteral | RDFLiteral | BooleanLiteral:
     """Convert a Python value to the appropriate RDF term."""
     # handle booleans
@@ -173,14 +173,14 @@ def create_values_constraint(variable: Var, values: list) -> GraphPatternNotTrip
         GraphPatternNotTriples containing the VALUES constraint
     """
     # Convert values to appropriate RDF terms
-    rdf_values = []
-    for value in values:
-        if isinstance(value, str) and value.startswith("http"):
-            rdf_values.append(IRI(value=URIRef(value)))
-        elif isinstance(value, (int, float)):
-            rdf_values.append(NumericLiteral(value=value))
-        else:
-            rdf_values.append(RDFLiteral(value=str(value)))
+    rdf_values = [convert_value_to_rdf_term(value) for value in values]
+    # for value in values:
+    #     if isinstance(value, str) and value.startswith("http"):
+    #         rdf_values.append(IRI(value=URIRef(value)))
+    #     elif isinstance(value, (int, float)):
+    #         rdf_values.append(NumericLiteral(value=value))
+    #     else:
+    #         rdf_values.append(RDFLiteral(value=str(value)))
 
     iri_db_vals = [DataBlockValue(value=p) for p in rdf_values]
     ildov = InlineDataOneVar(variable=variable, datablockvalues=iri_db_vals)
