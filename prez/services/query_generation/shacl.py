@@ -750,7 +750,7 @@ class PropertyShape(Shape):
         obj_node = (
             None
             if isinstance(property_path, BNodeDepth)
-            else path_nodes[len(path_nodes.keys()) - 1]
+            else path_nodes[max(path_nodes.keys())]
         )
         subj_node = self.focus_node if subj_var is None else subj_var
 
