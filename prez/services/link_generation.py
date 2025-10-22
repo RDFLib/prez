@@ -26,6 +26,7 @@ from sparql_grammar_pydantic import (
     SubSelect,
     TriplesBlock,
     WhereClause,
+    VarOrTerm,
 )
 
 from prez.cache import endpoints_graph_cache, links_ids_graph_cache
@@ -348,22 +349,14 @@ async def add_links_to_graph_and_cache(
             )
         )
     if members_link:
-        # TODO need to confirm the link value doesn't match the existing link value, as multiple endpoints can deliver
-        # the same class/have different links for the same URI
-        existing_members_link = list(
-            links_ids_graph_cache.quads_for_pattern(
-                uri_node, OxiNamedNode(PREZ["members"]), None, uri_node
+        quads.append(
+            OxiQuad(
+                uri_node,
+                OxiNamedNode(PREZ["members"]),
+                OxiLiteral(members_link),
+                uri_node,
             )
         )
-        if not existing_members_link:
-            quads.append(
-                OxiQuad(
-                    uri_node,
-                    OxiNamedNode(PREZ["members"]),
-                    OxiLiteral(members_link),
-                    uri_node,
-                )
-            )
     links_ids_graph_cache.bulk_extend(quads)
     if isinstance(graph, OxiStore):
         store: OxiStore = graph
@@ -471,6 +464,24 @@ async def get_link_components_many(
                 )
             )
         )
+        # get the type triples that are NOT for the focus node (focus node is known iri(s), ergo do not need to constrain/further check type etc.)
+        type_triples_not_for_focus_node = [
+            tssp
+            for tssp in ns.tssp_exists_list
+            if tssp.content[0] != VarOrTerm(varorterm=Var(value="_link_focus_node"))
+        ]
+        if type_triples_not_for_focus_node:
+            triples_block_ttnffn = TriplesBlock.from_tssp_list(
+                type_triples_not_for_focus_node
+            )
+            ttnffn_list = [triples_block_ttnffn]
+        else:
+            ttnffn_list = []
+        gpnt_exists_not_for_focus_node = [
+            gpnt
+            for gpnt in ns.gpnt_exists_list
+            if gpnt.content.data_block.block.variable != Var(value="focus_classes")
+        ]
         subselect_string = SubSelect(
             select_clause=SelectClause(
                 variables_or_all=[link_focus_var] + list(ns.path_nodes.values())
@@ -482,7 +493,9 @@ async def get_link_components_many(
                             ns.tssp_list[::-1]
                         ),  # reversed for performance
                         graph_patterns_or_triples_blocks=ns.gpnt_list
-                        + [_link_focus_gpnt],
+                        + [_link_focus_gpnt]
+                        + ttnffn_list
+                        + gpnt_exists_not_for_focus_node,
                     )
                 )
             ),
