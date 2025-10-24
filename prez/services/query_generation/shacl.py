@@ -512,7 +512,7 @@ class PropertyShape(Shape):
                 if final_filter_shape_tssp_list:
                     path_object.filter_shape_tssp_list = final_filter_shape_tssp_list
                 if isinstance(path_object, PivotPath):
-                    union = False
+                    union = True
                 self._add_path(path_object, union)
         except ValueError as e:
             log.warning(
@@ -1143,15 +1143,14 @@ class PropertyShape(Shape):
 
             if isinstance(property_path, PivotPath):
                 node_path, key_path, value_path = property_path.value
-                paths_data, pp_i, pivot_obj_node = self._generate_sparql_for_path(
+                node_data, pp_i, pivot_obj_node = self._generate_sparql_for_path(
                     property_path=node_path,
                     path_or_prop=path_or_prop,
                     pp_i=pp_i,
                     use_alias=use_alias,
                     add_to_tss_list=False,
                 )
-                processed_paths_data.append(paths_data)
-                paths_data, pp_i, pivot_key_node = self._generate_sparql_for_path(
+                key_data, pp_i, pivot_key_node = self._generate_sparql_for_path(
                     property_path=key_path,
                     path_or_prop=path_or_prop,
                     pp_i=pp_i,
@@ -1159,8 +1158,7 @@ class PropertyShape(Shape):
                     subj_var=pivot_obj_node,
                     add_to_tss_list=False,
                 )
-                processed_paths_data.append(paths_data)
-                paths_data, pp_i, pivot_value_node = self._generate_sparql_for_path(
+                value_data, pp_i, pivot_value_node = self._generate_sparql_for_path(
                     property_path=value_path,
                     path_or_prop=path_or_prop,
                     pp_i=pp_i,
@@ -1168,7 +1166,34 @@ class PropertyShape(Shape):
                     subj_var=pivot_obj_node,
                     add_to_tss_list=False,
                 )
-                processed_paths_data.append(paths_data)
+                combined_tssp = (
+                    node_data["tssp_list"]
+                    + key_data["tssp_list"]
+                    + value_data["tssp_list"]
+                )
+                combined_tssp_exists = (
+                    node_data["tssp_exists_list"]
+                    + key_data["tssp_exists_list"]
+                    + value_data["tssp_exists_list"]
+                )
+                combined_facet_binds = (
+                    node_data["facet_binds"]
+                    + key_data["facet_binds"]
+                    + value_data["facet_binds"]
+                )
+                combined_alias = (
+                    node_data["path_alias_or_path"]
+                    or key_data["path_alias_or_path"]
+                    or value_data["path_alias_or_path"]
+                )
+                processed_paths_data.append(
+                    {
+                        "tssp_list": combined_tssp,
+                        "tssp_exists_list": combined_tssp_exists,
+                        "facet_binds": combined_facet_binds,
+                        "path_alias_or_path": combined_alias,
+                    }
+                )
                 pivot_triple = (self.focus_node, pivot_key_node, pivot_value_node)
                 self.tss_list.append(TriplesSameSubject.from_spo(*pivot_triple))
             else:
