@@ -105,3 +105,27 @@ profile:pivotValueSequence a prof:Profile ;
     ] ;
   ] ;
 .
+
+
+profile:pivotTwoPivots a prof:Profile ;
+  sh:property [
+    sh:path [
+      sh:union (
+        [
+          shext:pivotPath [
+            sh:path prov:qualifiedAssociation ;
+            shext:pivotKey prov:hadRole ;
+            shext:pivotValue prov:agent
+          ]
+        ]
+        [
+          shext:pivotPath [
+            sh:path [ sh:inversePath sosa:hasFeatureOfInterest ] ;
+            shext:pivotKey sosa:observedProperty ;
+            shext:pivotValue sosa:hasSimpleResult ;
+          ]
+        ]
+      )
+    ] ;
+  ] ;
+.

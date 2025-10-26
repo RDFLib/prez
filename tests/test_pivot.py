@@ -169,3 +169,24 @@ def test_pivot_value_sequence():
         (EX.sample1, EX.earthworms, Literal(False)),
     ]
     assert all([triple in results.graph for triple in expected_triples])
+
+def test_pivot_two_pivots():
+    nodeshape = NodeShape(
+        uri=PROF.pivotTwoPivots,
+        graph=profiles_graph,
+        kind="profile",
+        focus_node=Var(value="focus_node"),
+    )
+    query = PrezQueryConstructor(
+        construct_tss_list=nodeshape.tss_list,
+        profile_triples=nodeshape.tssp_list,
+        profile_gpnt=nodeshape.gpnt_list,
+    )
+    results = data_graph.query(query.to_string())
+    expected_triples = [
+        (EX.catalog, EX.role1, Literal("agent 1")),
+        (EX.catalog, EX.role2, Literal("agent 2")),
+        (EX.sample1, EX.color, Literal("brown")),
+        (EX.sample1, EX.earthworms, Literal(False)),
+    ]
+    assert all([triple in results.graph for triple in expected_triples])
