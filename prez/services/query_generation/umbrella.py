@@ -336,11 +336,12 @@ def merge_listing_query_grammar_inputs(
 
     # include at least one triple in the subselect, for the focus node class, which will match the class selection
     # always included in profiles.
+    # kwargs["inner_select_gpnt"] could be present but have a FILTER EXISTS only, producing no bindings, so it is not checked here.
     if not kwargs["inner_select_tssp_list"]:
         triple = (
             Var(value="focus_node"),
             IRI(value="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
-            Var(value="prof_1_node_1"),
+            Var(value="default_class_var"),
         )
         tss = TriplesSameSubject.from_spo(*triple)
         tssp = TriplesSameSubjectPath.from_spo(*triple)

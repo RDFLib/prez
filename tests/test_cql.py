@@ -744,6 +744,173 @@ def test_cql_operator_conversion():
             raise  # Some other NotImplementedError
 
 
+def test_cql_or_operator_variable_separation(monkeypatch):
+    """
+    Tests that OR operations generate separate variables with proper counter separation.
+    When using OR with the same property in multiple branches, each branch should get
+    unique variable names to avoid conflicts in the generated CQL.
+    This specifically tests the SHACL queryable case where the bug occurs.
+    """
+    from prez.services.query_generation.cql import CQLParser
+    from rdflib import Graph
+
+    # Mock the queryable properties to simulate SHACL queryable
+    mock_queryable_props = {"type": "https://prez/queryables/RDFType"}
+
+    # Mock the system graph with SHACL shape
+    mock_system_graph = Graph()
+    mock_system_graph.parse(
+        data="""
+        @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+        @prefix cql: <http://www.opengis.net/doc/IS/cql2/1.0/> .
+        @prefix dcterms: <http://purl.org/dc/terms/> .
+        @prefix sh: <http://www.w3.org/ns/shacl#> .
+        @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+        @prefix prezqueryables: <https://prez/queryables/> .
+        @prefix bore: <https://linked.data.gov.au/def/bore/> .
+
+        prezqueryables:RDFType a cql:Queryable ;
+            a sh:PropertyShape ;
+            dcterms:identifier "type" ;
+            sh:datatype xsd:string ;
+            sh:description "Filter by RDF type" ;
+            sh:name "RDF Type" ;
+            sh:path rdf:type ;
+            sh:in (
+                bore:Bore
+                bore:Drillhole
+            ) .
+    """,
+        format="turtle",
+    )
+
+    # Add the mock data to the actual system graph
+    from prez.cache import prez_system_graph
+
+    prez_system_graph += mock_system_graph
+
+    cql_json_data = {
+        "op": "or",
+        "args": [
+            {
+                "op": "=",
+                "args": [
+                    {"property": "type"},
+                    "https://linked.data.gov.au/def/bore/Bore",
+                ],
+            },
+            {
+                "op": "=",
+                "args": [
+                    {"property": "type"},
+                    "https://linked.data.gov.au/def/bore/Drillhole",
+                ],
+            },
+            {
+                "op": "=",
+                "args": [
+                    {"property": "type"},
+                    "https://linked.data.gov.au/def/bore/test",
+                ],
+            },
+        ],
+    }
+
+    # Create parser with mock queryable properties
+    parser = CQLParser(cql_json=cql_json_data, queryable_props=mock_queryable_props)
+    parser.parse()
+
+    # Get the generated SPARQL query
+    query_str = parser.query_str
+    print(f"Generated SPARQL query:\n{query_str}")
+
+    # Ensure each OR branch introduced a distinct path variable
+    assert "?cql_filter_1" in query_str
+    assert "?cql_filter_2" in query_str
+    assert "?cql_filter_3" in query_str
+
+    # Ensure both type URIs are present
+    assert "https://linked.data.gov.au/def/bore/Bore" in query_str
+    assert "https://linked.data.gov.au/def/bore/Drillhole" in query_str
+
+    # Verify UNION structure is present
+    assert "UNION" in query_str
+
+
+def test_cql_or_shacl_union_structure():
+    """Ensure SHACL-backed properties place triples inside their UNION branches."""
+    from prez.services.query_generation.cql import CQLParser
+    from rdflib import Graph
+
+    mock_queryable_props = {
+        "prop_a": "https://prez/queryables/PropA",
+        "prop_b": "https://prez/queryables/PropB",
+    }
+
+    mock_system_graph = Graph()
+    mock_system_graph.parse(
+        data="""
+        @prefix ex: <http://example.org/> .
+        @prefix cql: <http://www.opengis.net/doc/IS/cql2/1.0/> .
+        @prefix dcterms: <http://purl.org/dc/terms/> .
+        @prefix sh: <http://www.w3.org/ns/shacl#> .
+        @prefix prezqueryables: <https://prez/queryables/> .
+
+        prezqueryables:PropA a cql:Queryable, sh:PropertyShape ;
+            dcterms:identifier "prop_a" ;
+            sh:path ex:pathProp1 .
+
+        prezqueryables:PropB a cql:Queryable, sh:PropertyShape ;
+            dcterms:identifier "prop_b" ;
+            sh:path ex:pathProp2 .
+        """,
+        format="turtle",
+    )
+
+    from prez.cache import prez_system_graph
+
+    for triple in mock_system_graph:
+        prez_system_graph.add(triple)
+
+    try:
+        cql_json_data = {
+            "op": "or",
+            "args": [
+                {
+                    "op": "in",
+                    "args": [
+                        {"property": "prop_a"},
+                        ["http://example.org/valueA"],
+                    ],
+                },
+                {
+                    "op": "in",
+                    "args": [
+                        {"property": "prop_b"},
+                        ["http://example.org/valueB"],
+                    ],
+                },
+            ],
+        }
+
+        parser = CQLParser(cql_json=cql_json_data, queryable_props=mock_queryable_props)
+        parser.parse()
+
+        # The triples must live inside the UNION branches rather than the global list
+        assert not parser.tssp_list
+        assert len(parser.inner_select_gpntotb_list) == 1
+
+        union_gpnt = parser.inner_select_gpntotb_list[0]
+        union_str = (
+            union_gpnt.to_string().replace(" ", "").replace("\n", "").replace("\t", "")
+        )
+        expected_union = "{?focus_node<http://example.org/pathProp1>?cql_filter_1.FILTER(?cql_filter_1IN(<http://example.org/valueA>))}UNION{?focus_node<http://example.org/pathProp2>?cql_filter_2.FILTER(?cql_filter_2IN(<http://example.org/valueB>))}"
+        assert union_str == expected_union
+    finally:
+        for triple in mock_system_graph:
+            prez_system_graph.remove(triple)
+
+
 def test_cql_not_operator():
     """
     Tests the 'not' operator with FILTER NOT EXISTS.
