@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional, Union
 
 import httpx
 from fastapi import FastAPI
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.openapi.utils import get_openapi
 from rdflib import Graph
 from starlette.applications import Starlette
@@ -254,6 +255,8 @@ def assemble_app(
         _app=app,
     )
 
+    if not _settings.gzip_min_size == -1:
+        app.add_middleware(GZipMiddleware, minimum_size=_settings.gzip_min_size)
     app.middleware("http")(add_cors_headers)
 
     app.add_middleware(
