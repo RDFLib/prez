@@ -74,7 +74,7 @@ async def return_from_graph(
     url: str = None,
 ):
     profile_headers["Content-Disposition"] = "inline"
-
+    return_geojson = str(mediatype) == "application/geo+json"
     is_oxigraph = isinstance(graph, OxiStore)
 
     if str(mediatype) in RDF_MEDIATYPES:
@@ -97,12 +97,23 @@ async def return_from_graph(
         else:
             return await return_rdf(graph, mediatype, profile_headers)
 
-    elif str(mediatype) == "application/geo+json":
+    elif return_geojson:
+        if query_params is not None:
+            is_first_page = (
+                query_params.page == 1
+                and (query_params.offset is None or query_params.offset == 0)
+                and (query_params.startindex is None or query_params.startindex == 0)
+            )
+            per_page = query_params.limit
+        else:
+            is_first_page = False
+            per_page = 10
         if "human" in profile.lower():
             kind = "human"
+            # TODO - Decide, perhaps we do need to get annotations
+            # for machine kind too? Consult rdf2geojson converter.
             if is_oxigraph:
                 store: OxiStore = graph
-                # This still returns an RDFlib graph of anotations, even when the store is an Oxigraph Store.
                 annotations_store: OxiStore = await return_annotated_rdf_for_oxigraph(
                     store, repo, system_repo
                 )
@@ -112,6 +123,7 @@ async def return_from_graph(
                 graph.__iadd__(annotations_graph)
         else:
             kind = "machine"
+
         collection_label = None
         count = None  # for an object; no count query.
         str_count = None
@@ -141,7 +153,6 @@ async def return_from_graph(
                 kind=kind,
                 namespace_manager=prefix_graph.namespace_manager,
             )
-
             for q in store.quads_for_pattern(
                 None, OxiNamedNode(PREZ["count"]), None, OxiDefaultGraph()
             ):
@@ -168,7 +179,13 @@ async def return_from_graph(
         if str_count is not None:
             count = get_geojson_int_count(str_count)
         headers, geojson = await generate_geojson_extras(
-            count, geojson, query_params, "application/geo+json", url
+            count,
+            geojson,
+            query_params,
+            "application/geo+json",
+            url,
+            is_first_page,
+            per_page,
         )
         content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
         return StreamingResponse(content=content, media_type=mediatype)
@@ -178,7 +195,6 @@ async def return_from_graph(
             non_anot_mediatype = mediatype.replace("anot+", "")
             if is_oxigraph:
                 store: OxiStore = graph
-                # This still returns an RDFlib graph of anotations, even when the store is an Oxigraph Store.
                 annotations_store: OxiStore = await return_annotated_rdf_for_oxigraph(
                     store, repo, system_repo
                 )
@@ -299,25 +315,42 @@ async def return_annotated_rdf_for_oxigraph(
 
 
 async def generate_geojson_extras(
-    count, geojson, query_params, selected_mediatype, url
+    count: int | None,
+    geojson: dict,
+    query_params,
+    selected_mediatype,
+    url,
+    is_first_page: bool = False,
+    per_page: int = 10,
 ):
     all_links = create_self_alt_links(selected_mediatype, url, query_params, count)
     all_links_dict = Links(links=all_links).model_dump(exclude_none=True)
     link_headers = generate_link_headers(all_links)
     geojson["links"] = all_links_dict["links"]
     geojson["timeStamp"] = get_brisbane_timestamp()
-    if count:  # listing
+    if count is not None:  # listing
+        # Could be zero features, but still not None
         geojson["numberMatched"] = count
-        if geojson.get("features"):
-            geojson["numberReturned"] = len(geojson["features"])
-        else:
-            geojson["numberReturned"] = 0
+    # If there is a known list of features,
+    # return that count as "numberReturned"
+    if (_features := geojson.get("features")) is not None:
+        number_features = len(_features)
+        geojson["numberReturned"] = number_features
+
+    else:
+        number_features = 0
+
+    geojson["numberReturned"] = number_features
+    # if this is the first page, and there are less features than the per_page limit,
+    # then we know the numberMatched exactly.
+    if count is None and is_first_page and number_features < per_page:
+        geojson["numberMatched"] = number_features
     return link_headers, geojson
 
 
 def create_collections_json(
-    item_graph: Graph | OxiStore,
-    annotations_graph: Graph | OxiStore,
+    item_graph: Graph | OxiStore | None,
+    annotations_graph: Graph | OxiStore | None,
     url,
     selected_mediatype,
     query_params,
@@ -325,7 +358,10 @@ def create_collections_json(
 ):
     collections_list = []
     collection_properties_map: dict[URIRef, tuple] = {}
-    if isinstance(item_graph, OxiStore):
+    if item_graph is None:
+        # will return empty collections
+        pass
+    elif isinstance(item_graph, OxiStore):
         item_store: OxiStore = item_graph
         for q in item_store.quads_for_pattern(
             None, OxiNamedNode(RDF.type), OxiNamedNode(GEO.FeatureCollection), None
@@ -388,7 +424,12 @@ def create_collections_json(
             collection_properties_map[s] = (curie_id, json_extent)
 
     for s, (curie_id, json_extent) in collection_properties_map.items():
-        if isinstance(annotations_graph, OxiStore):
+        collection_description: str | None = None
+        collection_title: str | None = None
+        if annotations_graph is None:
+            collection_description = None
+            collection_title = None
+        elif isinstance(annotations_graph, OxiStore):
             for q in annotations_graph.quads_for_pattern(
                 to_ox(s), OxiNamedNode(PREZ.description), None, None
             ):
@@ -404,11 +445,17 @@ def create_collections_json(
             else:
                 collection_title = None
         else:
-            collection_description = annotations_graph.value(
+            collection_description_lit = annotations_graph.value(
                 subject=s, predicate=PREZ.description, default=None
             )
-            collection_title = annotations_graph.value(
+            collection_description = (
+                str(collection_description_lit) if collection_description_lit else None
+            )
+            collection_title_lit = annotations_graph.value(
                 subject=s, predicate=PREZ.label, default=None
+            )
+            collection_title = (
+                str(collection_title_lit) if collection_title_lit else None
             )
 
         collections_list.append(
