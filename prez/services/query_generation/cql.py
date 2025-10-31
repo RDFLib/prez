@@ -27,7 +27,7 @@ from sparql_grammar_pydantic import (
 )
 
 from prez.cache import prez_system_graph
-from prez.config import settings
+from prez.config import settings, get_reference_data_dir
 from prez.models.query_params import parse_datetime
 from prez.reference_data.cql.geo_function_mapping import (
     cql_sparql_spatial_mapping,
@@ -78,8 +78,8 @@ SUPPORTED_CQL_TIME_OPERATORS = {
 
 UNBOUNDED = "unbounded"
 
-relations_path = Path(__file__).parent.parent.parent / (
-    "reference_data/cql/bounded_temporal_interval_relation_matrix.json"
+relations_path = (
+    get_reference_data_dir() / "cql/bounded_temporal_interval_relation_matrix.json"
 )
 relations = json.loads(relations_path.read_text())
 

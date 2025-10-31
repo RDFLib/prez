@@ -1,0 +1,13 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix prof: <http://www.w3.org/ns/dx/prof/> .
+@prefix prez: <https://prez.dev/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://prez.dev/profile/facet-by-type>
+    a prof:Profile , prez:ListingProfile ;
+    dcterms:identifier "facet-type"^^xsd:token ;
+    dcterms:title "Facet things by type" ;
+    dcterms:description "Allows faceting by rdf:type" ;
+    sh:property [ sh:path [ sh:union ( rdf:type ) ] ] .

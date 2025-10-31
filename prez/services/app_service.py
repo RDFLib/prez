@@ -11,7 +11,7 @@ from prez.cache import (
     prefix_graph,
     prez_system_graph,
 )
-from prez.config import settings
+from prez.config import settings, get_reference_data_dir
 from prez.reference_data.prez_ns import ONT, PREZ
 from prez.repositories import Repo
 from prez.services.curie_functions import get_curie_id_for_uri
@@ -102,21 +102,39 @@ async def retrieve_remote_template_queries(repo: Repo):
         log.info("No remote template queries found")
 
 
-async def retrieve_remote_jena_fts_shapes(repo: Repo):
+async def retrieve_jena_fts_shapes(repo: Repo):
+    """
+    Loads Jena FTS shape definitions from both remote repo and local files.
+    """
+    # Load remote shapes
     query = "DESCRIBE ?fts_shape WHERE {?fts_shape a <https://prez.dev/ont/JenaFTSPropertyShape>}"
-    g, _ = await repo.send_queries([query], [])
-    if len(g) > 0:
-        prez_system_graph.__iadd__(g)
-        n_shapes = len(list(g.subjects(RDF.type, ONT.JenaFTSPropertyShape)))
-        names_list = list(g.objects(subject=None, predicate=SH.name))
+    remote_g, _ = await repo.send_queries([query], [])
+    if len(remote_g) > 0:
+        prez_system_graph.__iadd__(remote_g)
+        n_shapes = len(list(remote_g.subjects(RDF.type, ONT.JenaFTSPropertyShape)))
+        names_list = list(remote_g.objects(subject=None, predicate=SH.name))
         while len(names_list) < n_shapes:
             names_list.append("(no label)")
         names = ", ".join(names_list)
-        log.info(
-            f"Found and added {n_shapes} Jena FTS shapes from remote repo: {names}"
-        )
+        log.info(f"Found and added {n_shapes} remote Jena FTS shapes: {names}")
     else:
         log.info("No remote Jena FTS shapes found")
+
+    # Load local shapes
+    jena_fts_shapes_dir = get_reference_data_dir() / "jena_fts_shapes"
+    local_g = Graph()
+    for f in jena_fts_shapes_dir.glob("*.ttl"):
+        local_g.parse(f, format="turtle")
+    if len(local_g) > 0:
+        prez_system_graph.__iadd__(local_g)
+        n_shapes = len(list(local_g.subjects(RDF.type, ONT.JenaFTSPropertyShape)))
+        names_list = list(local_g.objects(subject=None, predicate=SH.name))
+        while len(names_list) < n_shapes:
+            names_list.append("(no label)")
+        names = ", ".join(names_list)
+        log.info(f"Found and added {n_shapes} local Jena FTS shapes: {names}")
+    else:
+        log.info("No local Jena FTS shapes found")
 
 
 async def add_remote_prefixes(repo: Repo):
@@ -135,7 +153,7 @@ async def add_local_prefixes(repo):
     """
     Adds prefixes to the prefix graph
     """
-    for f in (Path(__file__).parent.parent / "reference_data/prefixes").glob("*.ttl"):
+    for f in (get_reference_data_dir() / "prefixes").glob("*.ttl"):
         g = Graph().parse(f, format="turtle")
         local_i = await _add_prefixes_from_graph(g)
         log.info(f"{local_i + 1:,} prefixes bound from file {f.name}")
@@ -188,7 +206,7 @@ async def _add_prefixes_from_graph(g):
 
 
 async def create_endpoints_graph(app_state):
-    endpoints_root = Path(__file__).parent.parent / "reference_data/endpoints"
+    endpoints_root = get_reference_data_dir() / "endpoints"
     # Custom data endpoints
     if app_state.settings.custom_endpoints:
         # first try remote, if endpoints are found, use these
@@ -288,10 +306,11 @@ async def retrieve_local_queryable_definitions(app_state, system_store):
     """
     Loads local queryable definitions from files into the system store.
     """
-    queryables_dir = Path(__file__).parent.parent / "reference_data/queryables"
+    queryables_dir = get_reference_data_dir() / "queryables"
     g = Graph()
-    for f in queryables_dir.glob("*.ttl"):
-        g.parse(f, format="turtle")
+    files = list(queryables_dir.glob("*.ttl")) + list(queryables_dir.glob("*.rdf"))
+    for f in files:
+        g.parse(f)
     if len(g) > 0:
         prez_system_graph.__iadd__(g)
         queryable_bytes = g.serialize(format="nt", encoding="utf-8")

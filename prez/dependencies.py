@@ -19,7 +19,7 @@ from prez.cache import (
     system_store,
     persistent_store,
 )
-from prez.config import settings
+from prez.config import settings, get_reference_data_dir
 from prez.enums import (
     GeoJSONMediaType,
     JSONMediaType,
@@ -177,13 +177,14 @@ async def load_annotations_data_to_oxigraph(store: Store):
     Loads all the data from the local data directory into the local SPARQL endpoint
     """
     default = OxiDefaultGraph()
-    for file in (Path(__file__).parent / "reference_data/annotations").glob("*.nt"):
+    annotations_dir = get_reference_data_dir() / "annotations"
+    for file in annotations_dir.glob("*.nt"):
         store.bulk_load(None, RdfFormat.N_TRIPLES, path=str(file), to_graph=default)
-    for file in (Path(__file__).parent / "reference_data/annotations").glob("*.ttl"):
+    for file in annotations_dir.glob("*.ttl"):
         store.bulk_load(None, RdfFormat.TURTLE, path=str(file), to_graph=default)
-    for file in (Path(__file__).parent / "reference_data/annotations").glob("*.nq"):
+    for file in annotations_dir.glob("*.nq"):
         store.bulk_load(None, RdfFormat.N_QUADS, path=str(file))
-    for file in (Path(__file__).parent / "reference_data/annotations").glob("*.trig"):
+    for file in annotations_dir.glob("*.trig"):
         store.bulk_load(None, RdfFormat.TRIG, path=str(file))
 
 
