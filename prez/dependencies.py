@@ -265,6 +265,11 @@ async def get_jena_fts_shacl_predicates(system_repo: Repo) -> Graph:
     return await system_repo.rdf_query_to_rdflib_graph(query)
 
 
+class DummySearchMarker:
+    """Marker to indicate that dummy search results should be injected."""
+    pass
+
+
 async def generate_search_query(
     request: Request,
     system_repo: Repo = Depends(get_system_repo),
@@ -295,7 +300,8 @@ async def generate_search_query(
         if endpoint_uri_type[0] == EP["extended-ogc-records/search"]:
             # Allow empty search term if filtering/faceting parameters are present
             if has_filtering_params():
-                return None  # generate query without FTS component
+                # Return marker to indicate dummy search results needed
+                return DummySearchMarker()
             else:
                 raise HTTPException(
                     status_code=400,

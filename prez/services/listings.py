@@ -1,5 +1,6 @@
 import asyncio
 import copy
+import hashlib
 import io
 import json
 import logging
@@ -17,7 +18,7 @@ from pyoxigraph import (
 )
 from rdf2geojson import convert
 from rdflib import Literal, Namespace
-from rdflib.namespace import GEO, RDF, PROF
+from rdflib.namespace import GEO, RDF, PROF, RDFS
 from sparql_grammar_pydantic import (
     IRI,
     TriplesSameSubject,
@@ -37,6 +38,7 @@ from sparql_grammar_pydantic import (
 
 from prez.cache import prefix_graph
 from prez.config import settings
+from prez.dependencies import DummySearchMarker
 from prez.enums import NonAnnotatedRDFMediaType, AnnotatedRDFMediaType
 from prez.reference_data.prez_ns import ALTREXT, OGCFEAT, PREZ
 from prez.renderers.renderer import (
@@ -310,8 +312,70 @@ async def listing_function(
         )
         await add_prez_links_for_oxigraph(item_store, query_repo, endpoint_structure)
 
+        # Inject dummy search results for non-text search requests
+        if isinstance(search_query, DummySearchMarker):
+            # Extract all focus nodes from the result store
+            focus_node_quads = list(
+                item_store.quads_for_pattern(
+                    None, OxiNamedNode(PREZ["type"]), OxiNamedNode(PREZ.FocusNode), None
+                )
+            )
+
+            # Create a dummy search result for each focus node
+            for focus_node_quad in focus_node_quads:
+                # focus_node_quad.subject is already an OxiNamedNode
+                focus_node = focus_node_quad.subject
+                focus_node_uri = focus_node.value  # Get the URI string without angle brackets
+
+                # Create a unique hash ID for this dummy search result
+                hash_input = f"{focus_node_uri}:dummy"
+                hash_digest = hashlib.sha256(hash_input.encode()).hexdigest()
+                dummy_search_result_uri = f"urn:hash:{hash_digest}"
+
+                # Add dummy search result quads
+                item_store.add(
+                    OxiQuad(
+                        OxiNamedNode(dummy_search_result_uri),
+                        OxiNamedNode(RDF.type),
+                        OxiNamedNode(PREZ.SearchResult),
+                        default,
+                    )
+                )
+                item_store.add(
+                    OxiQuad(
+                        OxiNamedNode(dummy_search_result_uri),
+                        OxiNamedNode(PREZ.searchResultURI),
+                        focus_node,  # Use the OxiNamedNode directly
+                        default,
+                    )
+                )
+                item_store.add(
+                    OxiQuad(
+                        OxiNamedNode(dummy_search_result_uri),
+                        OxiNamedNode(PREZ.searchResultMatch),
+                        OxiLiteral(""),
+                        default,
+                    )
+                )
+                item_store.add(
+                    OxiQuad(
+                        OxiNamedNode(dummy_search_result_uri),
+                        OxiNamedNode(PREZ.searchResultPredicate),
+                        OxiNamedNode(RDFS.label),
+                        default,
+                    )
+                )
+                item_store.add(
+                    OxiQuad(
+                        OxiNamedNode(dummy_search_result_uri),
+                        OxiNamedNode(PREZ.searchResultWeight),
+                        OxiLiteral("0"),
+                        default,
+                    )
+                )
+
     # count search results - hard to do in SPARQL as the SELECT part of the query is NOT aggregated
-    if search_query and not settings.search_uses_listing_count_limit:
+    if search_query and not isinstance(search_query, DummySearchMarker) and not settings.search_uses_listing_count_limit:
         count = len(
             list(
                 item_store.quads_for_pattern(
@@ -329,6 +393,23 @@ async def listing_function(
                 OxiNamedNode(PREZ.SearchResult),
                 OxiNamedNode(PREZ["count"]),
                 OxiLiteral(count_literal),
+                default,
+            )
+        )
+    elif isinstance(search_query, DummySearchMarker):
+        # For dummy search results, count them and add the count
+        count = len(
+            list(
+                item_store.quads_for_pattern(
+                    None, OxiNamedNode(RDF.type), OxiNamedNode(PREZ.SearchResult), None
+                )
+            )
+        )
+        item_store.add(
+            OxiQuad(
+                OxiNamedNode(PREZ.SearchResult),
+                OxiNamedNode(PREZ["count"]),
+                OxiLiteral(str(count)),
                 default,
             )
         )

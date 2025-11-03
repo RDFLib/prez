@@ -29,6 +29,7 @@ from sparql_grammar_pydantic import (
     PrimaryExpression,
 )
 
+from prez.dependencies import DummySearchMarker
 from prez.models.query_params import ListingQueryParams
 from prez.services.query_generation.spatial_filter import generate_bbox_filter
 from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQuery
@@ -215,7 +216,7 @@ class PrezQueryConstructor(ConstructQuery):
 def merge_listing_query_grammar_inputs(
     cql_parser: Optional[CQLParser] = None,
     endpoint_nodeshape: Optional[NodeShape] = None,
-    search_query: Optional[SearchQueryRegex | SearchQueryFusekiFTS] = None,
+    search_query: Optional[SearchQueryRegex | SearchQueryFusekiFTS | DummySearchMarker] = None,
     concept_hierarchy_query: Optional[ConceptHierarchyQuery] = None,
     query_params: Optional[ListingQueryParams] = None,
 ) -> dict:
@@ -268,7 +269,9 @@ def merge_listing_query_grammar_inputs(
         kwargs["inner_select_gpnt"] = [concept_hierarchy_query.inner_select_gpnt]
 
     # TODO can remove limit/offset/order by from search query - apply from QSA or defaults.
-    if search_query:
+    if search_query and hasattr(search_query, 'tss_list'):
+        # Only process real search queries (SearchQueryRegex or SearchQueryFusekiFTS)
+        # Skip DummySearchMarker which doesn't have these attributes
         kwargs["construct_tss_list"].extend(search_query.tss_list)
         kwargs["inner_select_vars"].extend(search_query.inner_select_vars)
         kwargs["limit"] = search_query.limit
