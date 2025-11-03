@@ -47,7 +47,7 @@ from prez.services.query_generation.grammar_helpers import (
     create_temporal_or_gpnt,
     create_filter_bool_gpnt,
     create_temporal_and_gpnt,
-    create_filter_not_exists
+    create_filter_not_exists,
 )
 from prez.services.query_generation.shacl import PropertyShape
 from prez.services.query_generation.spatial_filter import (
@@ -340,12 +340,12 @@ class CQLParser:
                 ggps.graph_patterns_or_triples_blocks.append(new_tb_for_this_tssp)
 
     def _handle_equals(
-            self,
-            args: list[dict],
-            existing_ggps: GroupGraphPatternSub | None = None,
+        self,
+        args: list[dict],
+        existing_ggps: GroupGraphPatternSub | None = None,
     ):
         # always use VALUES statement.
-        #TODO review scenarios where FILTER IN has different semantics and may be more appropriate e.g. dates, boolean
+        # TODO review scenarios where FILTER IN has different semantics and may be more appropriate e.g. dates, boolean
 
         ggps, obj = self._add_tss_tssp(args, existing_ggps)
         values_gpnt = create_values_constraint(variable=obj, values=[args[1]])
@@ -482,7 +482,7 @@ class CQLParser:
         """Handle CQL 'in' operator using FILTER with IN for semantic consistency."""
         ggps, obj = self._add_tss_tssp(args, existing_ggps)
         # Create with VALUES clause. This is more efficient and clearer than FILTER IN for large lists.
-        #TODO review scenarios where FILTER IN has different semantics and may be more appropriate e.g. dates, boolean
+        # TODO review scenarios where FILTER IN has different semantics and may be more appropriate e.g. dates, boolean
         values_clause_gpnt = create_values_constraint(obj, args[1])
         ggps.add_pattern(values_clause_gpnt)
 

@@ -66,7 +66,7 @@ logger = logging.getLogger(__name__)
 
 
 def convert_value_to_rdf_term(
-    val: str
+    val: str,
 ) -> IRI | NumericLiteral | RDFLiteral | BooleanLiteral:
     """Convert a Python value to the appropriate RDF term."""
     # handle booleans
