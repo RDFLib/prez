@@ -267,20 +267,37 @@ async def listing_function(
             main_query, query_params
         )
 
-    if not hits_response:
-        queries.append(main_query.to_string())
+    # Determine whether to run main query and count query based on LISTING_COUNT_ON_DEMAND setting
+    if settings.listing_count_on_demand:
+        # On-demand mode: similar to OGC features logic
+        # - If hits_response, skip main query and only do count
+        # - If not hits_response, do main query but skip count (unless GeoJSON)
+        if not hits_response:
+            queries.append(main_query.to_string())
+    else:
+        # Original behavior: always add main query unless it's a hits request
+        if not hits_response:
+            queries.append(main_query.to_string())
+
     if facets_query:
         queries.append(facets_query.to_string())
     count_query: str | None = None
-    # add a count query if it's an annotated mediatype or counted search
+    # add a count query if it's an annotated mediatype or counted search OR if it's a hits request
     if (
         ("anot+" in pmts.selected["mediatype"] and not search_query)
         or (return_geojson and "human" in profile_nodeshape.uri.lower())
         or (search_query and settings.search_uses_listing_count_limit)
+        or hits_response  # Always include count for hits requests (even non-annotated mediatypes)
     ):
-        # When returning GeoJSON, only include
-        # the numberMatched count if it's a hits request
-        include_count_query: bool = (not return_geojson) or hits_response
+        # When LISTING_COUNT_ON_DEMAND is enabled, apply conditional logic similar to OGC features
+        if settings.listing_count_on_demand:
+            # Only include count query when:
+            # - It's a GeoJSON response AND it's a hits request, OR
+            # - It's NOT a GeoJSON response and it's a hits request
+            include_count_query: bool = hits_response
+        else:
+            # Original behavior: when returning GeoJSON, only include the count if it's a hits request
+            include_count_query: bool = (not return_geojson) or hits_response
         if include_count_query:
             subselect = copy.deepcopy(main_query.inner_select)
             count_query = CountQuery(original_subselect=subselect).to_string()
