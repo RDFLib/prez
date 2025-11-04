@@ -43,6 +43,7 @@ from sparql_grammar_pydantic import (
 
 from prez.services.query_generation.classes import ClassesSelectQuery
 from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQuery
+from prez.services.query_generation.grammar_helpers import create_regex_filter
 from prez.services.query_generation.prefixes import PrefixQuery
 from prez.services.query_generation.search_default import SearchQueryRegex
 from prez.services.query_generation.umbrella import PrezQueryConstructor
@@ -366,3 +367,11 @@ def test_umbrella_cql_query():
     query = PrezQueryConstructor(**kwargs)
     query_string = query.to_string()
     assert "SELECT DISTINCT ?focus_node" in query_string
+
+
+def test_create_regex_filter():
+    variable = Var(value="variable")
+    pattern = "test_pattern"
+    regex_filter = create_regex_filter(variable, pattern)
+    query_string = regex_filter.to_string()
+    assert query_string == '\nFILTER REGEX(STR(?variable), "test_pattern")'

@@ -101,11 +101,9 @@ def convert_value_to_rdf_term(
 
 def create_regex_filter(variable: Var, pattern: str) -> GraphPatternNotTriples:
     """Create a SPARQL FILTER with REGEX for pattern matching.
-
     Args:
         variable: The variable to test against
         pattern: The regex pattern to match
-
     Returns:
         GraphPatternNotTriples containing the FILTER with REGEX
     """
@@ -115,7 +113,18 @@ def create_regex_filter(variable: Var, pattern: str) -> GraphPatternNotTriples:
                 content=BuiltInCall(
                     other_expressions=RegexExpression(
                         text_expression=Expression.from_primary_expression(
-                            primary_expression=PrimaryExpression(content=variable)
+                            PrimaryExpression(
+                                content=BuiltInCall(
+                                    function_name="STR",
+                                    arguments=[
+                                        Expression.from_primary_expression(
+                                            primary_expression=PrimaryExpression(
+                                                content=variable
+                                            )
+                                        )
+                                    ],
+                                )
+                            )
                         ),
                         pattern_expression=Expression.from_primary_expression(
                             primary_expression=PrimaryExpression(
