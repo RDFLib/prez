@@ -1,8 +1,10 @@
 import json
+import re
 from pathlib import Path
 from urllib.parse import quote_plus
 
 import pytest
+from sparql_grammar_pydantic import Var, TriplesSameSubjectPath, IRI, TriplesBlock
 
 cql_filenames = [
     "example01.json",
@@ -27,16 +29,9 @@ cql_filenames = [
     "example39.json",
 ]
 
-# @pytest.mark.parametrize(
-#     "cql_json_filename",
-#     cql_filenames
-# )
-# def test_simple_post(client, cql_json_filename):
-#     cql_json_path = Path(__file__).parent.parent / f"test_data/cql/input/{cql_json_filename}"
-#     cql_json = json.loads(cql_json_path.read_text())
-#     headers = {"content-type": "application/json"}
-#     response = client.post("/cql", json=cql_json, headers=headers)
-#     assert response.status_code == 200
+
+def strip_ws(s: str) -> str:
+    return re.sub(r"\s+", "", s)
 
 
 @pytest.mark.parametrize("cql_json_filename", cql_filenames)
@@ -49,13 +44,6 @@ def test_simple_get(client, cql_json_filename):
     response = client.get(f"/cql?filter={query_string}")
     assert response.status_code == 200
 
-
-# def test_intersects_post(client):
-#     cql_json_path = Path(__file__).parent.parent / f"test_data/cql/input/geo_intersects.json"
-#     cql_json = json.loads(cql_json_path.read_text())
-#     headers = {"content-type": "application/json"}
-#     response = client.post("/cql", json=cql_json, headers=headers)
-#     assert response.status_code == 200
 
 cql_geo_filenames = [
     "geo_contains",
@@ -113,31 +101,26 @@ def test_cql_or_operator_fix():
     }
 
     parser = CQLParser(cql_json=cql_json_data)
-    try:
-        parser.parse()
-    except Exception as e:
-        print(e)
-    where_content = parser.query_object.where_clause.group_graph_pattern.content
+    parser.parse()
 
-    expected_inner_select_gpntotb_list_str = [
+    assert strip_ws(parser.query_str) == strip_ws(
+        """CONSTRUCT {
+            ?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?var_2 .
+            ?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?var_1
+        }
+        WHERE {
+            {
+                ?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?var_1 .
+                VALUES ?var_1{ <http://www.w3.org/ns/sosa/Sample>  }
+            }
+            UNION
+            {
+                ?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?var_2 .
+                VALUES ?var_2{ <https://linked.data.gov.au/def/borehole/Bore>  }
+            }
+        }
         """
-{
-?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/sosa/Sample> .
-}
-UNION
-{
-?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://linked.data.gov.au/def/borehole/Bore> .
-}"""
-    ]
-
-    # Extract original patterns from within FILTER EXISTS wrapper
-    original_patterns = _extract_patterns_from_filter_exists(
-        parser.inner_select_gpntotb_list
     )
-    assert len(original_patterns) == len(expected_inner_select_gpntotb_list_str)
-    assert original_patterns[0].to_string().replace(" ", "").replace(
-        "\n", ""
-    ) == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
 
 
 def test_cql_nested_and_operator():
@@ -196,35 +179,25 @@ def test_cql_nested_and_operator():
     parser = CQLParser(cql_json=cql_json_data)
     parser.parse()
 
-    expected_inner_select_gpntotb_list_str = [
-        """?focus_node <http://purl.org/dc/terms/creator> <http://example.org/organizations#GeologicalSurvey> .
-?focus_node <http://purl.org/dc/terms/format> <http://example.org/formats#PDF> .
-?focus_node <http://purl.org/dc/terms/subject> <http://example.org/subjects#Geology> .
-?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/vocab#Report> ."""
-    ]
-
-    # Extract original patterns from within FILTER EXISTS wrapper
-    original_patterns = _extract_patterns_from_filter_exists(
-        parser.inner_select_gpntotb_list
+    assert strip_ws(parser.query_str) == strip_ws(
+        """CONSTRUCT {
+            ?focus_node <http://purl.org/dc/terms/creator> ?var_4 .
+            ?focus_node <http://purl.org/dc/terms/format> ?var_3 .
+            ?focus_node <http://purl.org/dc/terms/subject> ?var_2 .
+            ?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?var_1
+        }
+        WHERE {
+            ?focus_node <http://purl.org/dc/terms/creator> ?var_4 .
+            ?focus_node <http://purl.org/dc/terms/format> ?var_3 .
+            ?focus_node <http://purl.org/dc/terms/subject> ?var_2 .
+            ?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?var_1 .
+            VALUES ?var_1{ <http://example.org/vocab#Report>  }
+            VALUES ?var_2{ <http://example.org/subjects#Geology>  }
+            VALUES ?var_3{ <http://example.org/formats#PDF>  }
+            VALUES ?var_4{ <http://example.org/organizations#GeologicalSurvey>  }
+        }
+        """
     )
-
-    # With focus_node optimization, AND operations now generate individual TriplesBlocks
-    # Combine them into a single string to match the test expectation
-    if len(original_patterns) > 1 and all(
-        hasattr(p, "to_string") for p in original_patterns
-    ):
-        # Remove duplicates by converting to set of strings, then back to list
-        pattern_strings = list(set(p.to_string().strip() for p in original_patterns))
-        combined_pattern = "\n".join(
-            sorted(pattern_strings)
-        )  # Sort for consistent ordering
-    else:
-        combined_pattern = original_patterns[0].to_string() if original_patterns else ""
-
-    expected_combined = expected_inner_select_gpntotb_list_str[0]
-    assert combined_pattern.replace(" ", "").replace(
-        "\n", ""
-    ) == expected_combined.replace(" ", "").replace("\n", "")
 
 
 # --- Tests for nested AND/OR operators ---
@@ -269,48 +242,6 @@ def _get_all_tssp_from_triples_block(triples_block):
     return all_tssp
 
 
-def _extract_patterns_from_filter_exists(inner_select_gpntotb_list):
-    """Helper to extract patterns from CQL query structure.
-
-    With the new optimization, patterns may be:
-    1. Direct patterns (like GroupOrUnionGraphPattern for OR operations)
-    2. Wrapped in FILTER EXISTS (for complex AND operations)
-    3. Mix of both (focus_node triples + FILTER EXISTS)
-
-    Returns the list of patterns that represent the core CQL logic.
-    """
-    if not inner_select_gpntotb_list:
-        return []
-
-    if len(inner_select_gpntotb_list) == 1:
-        pattern = inner_select_gpntotb_list[0]
-
-        # Check if it's a FILTER EXISTS wrapper
-        if (
-            hasattr(pattern, "content")
-            and hasattr(pattern.content, "constraint")
-            and hasattr(pattern.content.constraint, "content")
-            and hasattr(pattern.content.constraint.content, "other_expressions")
-        ):
-
-            # Navigate through the FILTER EXISTS structure:
-            # GraphPatternNotTriples -> Filter -> Constraint -> BuiltInCall -> ExistsFunc -> GroupGraphPattern -> GroupGraphPatternSub
-            try:
-                inner_content = (
-                    pattern.content.constraint.content.other_expressions.group_graph_pattern.content
-                )
-                return inner_content.graph_patterns_or_triples_blocks or []
-            except AttributeError:
-                # If navigation fails, return the pattern as-is
-                return [pattern]
-        else:
-            # Direct pattern (e.g., GroupOrUnionGraphPattern)
-            return [pattern]
-
-    # Multiple patterns - return as-is (this represents focus_node triples + FILTER EXISTS)
-    return inner_select_gpntotb_list
-
-
 def test_cql_and_of_A_or_BC():
     """Tests AND(A, OR(B, C))"""
     from prez.services.query_generation.cql import CQLParser
@@ -322,34 +253,27 @@ def test_cql_and_of_A_or_BC():
     cql_json_data = {"op": "and", "args": [cql_A, {"op": "or", "args": [cql_B, cql_C]}]}
     parser = CQLParser(cql_json=cql_json_data)
     parser.parse()
-
-    where_content = parser.query_object.where_clause.group_graph_pattern.content
-
-    expected_inner_select_gpntotb_list_str = [
-        """?focus_node <http://example.org/propA> <http://example.org/valA> .""",
-        """
-{
-{
-?focus_node <http://example.org/propB> <http://example.org/valB> .
-}
-UNION
-{
-?focus_node <http://example.org/propC> <http://example.org/valC> .
-}
-}""",
-    ]
-
-    # Extract original patterns from within FILTER EXISTS wrapper
-    original_patterns = _extract_patterns_from_filter_exists(
-        parser.inner_select_gpntotb_list
+    print(parser.query_str)
+    assert strip_ws(parser.query_str) == strip_ws(
+        """CONSTRUCT {\n  ?focus_node <http://example.org/propC> ?var_3 .
+                ?focus_node <http://example.org/propB> ?var_2 .
+                ?focus_node <http://example.org/propA> ?var_1\n}
+            WHERE {  
+                ?focus_node <http://example.org/propA> ?var_1 .
+                VALUES ?var_1{ <http://example.org/valA>  }
+                {
+                    {
+                      ?focus_node <http://example.org/propB> ?var_2 .
+                        VALUES ?var_2{ <http://example.org/valB>  }
+                    }
+                    UNION
+                    {
+                      ?focus_node <http://example.org/propC> ?var_3 .
+                            VALUES ?var_3{ <http://example.org/valC>  }
+                    }
+              }
+          }"""
     )
-    assert len(original_patterns) == len(expected_inner_select_gpntotb_list_str)
-    assert original_patterns[0].to_string().replace(" ", "").replace(
-        "\n", ""
-    ) == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
-    assert original_patterns[1].to_string().replace(" ", "").replace(
-        "\n", ""
-    ) == expected_inner_select_gpntotb_list_str[1].replace(" ", "").replace("\n", "")
 
 
 def test_cql_or_of_A_and_BC():
@@ -364,28 +288,32 @@ def test_cql_or_of_A_and_BC():
     parser = CQLParser(cql_json=cql_json_data)
     parser.parse()
 
-    expected_inner_select_gpntotb_list_str = [
-        """
+    assert strip_ws(parser.query_str) == strip_ws(
+        """CONSTRUCT {
+?focus_node <http://example.org/propC> ?var_3 .
+?focus_node <http://example.org/propB> ?var_2 .
+?focus_node <http://example.org/propA> ?var_1
+}
+WHERE {
+
 
 {
-?focus_node <http://example.org/propA> <http://example.org/valA> .
+?focus_node <http://example.org/propA> ?var_1 .
+
+	VALUES ?var_1{ <http://example.org/valA>  }
 }
 UNION
 {
-?focus_node <http://example.org/propC> <http://example.org/valC> .
-?focus_node <http://example.org/propB> <http://example.org/valB> .
+?focus_node <http://example.org/propC> ?var_3 .
+?focus_node <http://example.org/propB> ?var_2 .
 
-}"""
-    ]
+	VALUES ?var_2{ <http://example.org/valB>  }
 
-    # Extract original patterns from within FILTER EXISTS wrapper
-    original_patterns = _extract_patterns_from_filter_exists(
-        parser.inner_select_gpntotb_list
+	VALUES ?var_3{ <http://example.org/valC>  }
+}
+}
+"""
     )
-    assert len(original_patterns) == len(expected_inner_select_gpntotb_list_str)
-    assert original_patterns[0].to_string().replace(" ", "").replace(
-        "\n", ""
-    ) == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
 
 
 def test_cql_and_of_and_AB_C():
@@ -403,20 +331,25 @@ def test_cql_and_of_and_AB_C():
     parser = CQLParser(cql_json=cql_json_data)
     parser.parse()
 
-    expected_inner_select_gpntotb_list_str = [
-        """?focus_node <http://example.org/propC> <http://example.org/valC> .
-?focus_node <http://example.org/propB> <http://example.org/valB> .
-?focus_node <http://example.org/propA> <http://example.org/valA> ."""
-    ]
+    assert strip_ws(parser.query_str) == strip_ws(
+        """CONSTRUCT {
+?focus_node <http://example.org/propC> ?var_3 .
+?focus_node <http://example.org/propB> ?var_2 .
+?focus_node <http://example.org/propA> ?var_1
+}
+WHERE {
+?focus_node <http://example.org/propC> ?var_3 .
+?focus_node <http://example.org/propB> ?var_2 .
+?focus_node <http://example.org/propA> ?var_1 .
 
-    # Extract original patterns from within FILTER EXISTS wrapper
-    original_patterns = _extract_patterns_from_filter_exists(
-        parser.inner_select_gpntotb_list
+	VALUES ?var_1{ <http://example.org/valA>  }
+
+	VALUES ?var_2{ <http://example.org/valB>  }
+
+	VALUES ?var_3{ <http://example.org/valC>  }
+}
+"""
     )
-    assert len(original_patterns) == len(expected_inner_select_gpntotb_list_str)
-    assert original_patterns[0].to_string().replace(" ", "").replace(
-        "\n", ""
-    ) == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
 
 
 def test_cql_or_of_or_AB_C():
@@ -431,29 +364,39 @@ def test_cql_or_of_or_AB_C():
     parser = CQLParser(cql_json=cql_json_data)
     parser.parse()
 
-    expected_inner_select_gpntotb_list_str = [
-        """
+    assert strip_ws(parser.query_str) == strip_ws(
+        """CONSTRUCT {
+?focus_node <http://example.org/propC> ?var_3 .
+?focus_node <http://example.org/propB> ?var_2 .
+?focus_node <http://example.org/propA> ?var_1
+}
+WHERE {
+
+
 {
+
+
 {
-?focus_node <http://example.org/propA> <http://example.org/valA> .
+?focus_node <http://example.org/propA> ?var_1 .
+
+	VALUES ?var_1{ <http://example.org/valA>  }
 }
 UNION
 {
-?focus_node <http://example.org/propB> <http://example.org/valB> .
+?focus_node <http://example.org/propB> ?var_2 .
+
+	VALUES ?var_2{ <http://example.org/valB>  }
 }
 }
 UNION
 {
-?focus_node <http://example.org/propC> <http://example.org/valC> .
+?focus_node <http://example.org/propC> ?var_3 .
+
+	VALUES ?var_3{ <http://example.org/valC>  }
+}
 }
 """
-    ]
-    assert len(parser.inner_select_gpntotb_list) == len(
-        expected_inner_select_gpntotb_list_str
     )
-    assert parser.inner_select_gpntotb_list[0].to_string().replace(" ", "").replace(
-        "\n", ""
-    ) == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
 
 
 def test_cql_and_of_or_AB_or_CD():
@@ -474,42 +417,51 @@ def test_cql_and_of_or_AB_or_CD():
     }
     parser = CQLParser(cql_json=cql_json_data)
     parser.parse()
-    where_content = parser.query_object.where_clause.group_graph_pattern.content
 
-    expected_inner_select_gpntotb_list_str = [
-        """
+    assert strip_ws(parser.query_str) == strip_ws(
+        """CONSTRUCT {
+?focus_node <http://example.org/propD> ?var_4 .
+?focus_node <http://example.org/propC> ?var_3 .
+?focus_node <http://example.org/propB> ?var_2 .
+?focus_node <http://example.org/propA> ?var_1
+}
+WHERE {
+
+
 {
+
+
 {
-?focus_node <http://example.org/propA> <http://example.org/valA> .
+?focus_node <http://example.org/propA> ?var_1 .
+
+	VALUES ?var_1{ <http://example.org/valA>  }
 }
 UNION
 {
-?focus_node <http://example.org/propB> <http://example.org/valB> .
+?focus_node <http://example.org/propB> ?var_2 .
+
+	VALUES ?var_2{ <http://example.org/valB>  }
 }
-}""",
-        """
+}
+
 {
+
+
 {
-?focus_node <http://example.org/propC> <http://example.org/valC> .
+?focus_node <http://example.org/propC> ?var_3 .
+
+	VALUES ?var_3{ <http://example.org/valC>  }
 }
 UNION
 {
-?focus_node <http://example.org/propD> <http://example.org/valD> .
-}
-}""",
-    ]
+?focus_node <http://example.org/propD> ?var_4 .
 
-    # Extract original patterns from within FILTER EXISTS wrapper
-    original_patterns = _extract_patterns_from_filter_exists(
-        parser.inner_select_gpntotb_list
+	VALUES ?var_4{ <http://example.org/valD>  }
+}
+}
+}
+"""
     )
-    assert len(original_patterns) == len(expected_inner_select_gpntotb_list_str)
-    assert original_patterns[0].to_string().replace(" ", "").replace(
-        "\n", ""
-    ) == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
-    assert original_patterns[1].to_string().replace(" ", "").replace(
-        "\n", ""
-    ) == expected_inner_select_gpntotb_list_str[1].replace(" ", "").replace("\n", "")
 
 
 def test_cql_or_of_and_AB_and_CD():
@@ -530,30 +482,37 @@ def test_cql_or_of_and_AB_and_CD():
     }
     parser = CQLParser(cql_json=cql_json_data)
     parser.parse()
-    where_content = parser.query_object.where_clause.group_graph_pattern.content
 
-    expected_inner_select_gpntotb_list_str = [
-        """
+    assert strip_ws(parser.query_str) == strip_ws(
+        """CONSTRUCT {
+?focus_node <http://example.org/propD> ?var_4 .
+?focus_node <http://example.org/propC> ?var_3 .
+?focus_node <http://example.org/propB> ?var_2 .
+?focus_node <http://example.org/propA> ?var_1
+}
+WHERE {
+
+
 {
-?focus_node <http://example.org/propB> <http://example.org/valB> .
-?focus_node <http://example.org/propA> <http://example.org/valA> .
+?focus_node <http://example.org/propB> ?var_2 .
+?focus_node <http://example.org/propA> ?var_1 .
+
+	VALUES ?var_1{ <http://example.org/valA>  }
+
+	VALUES ?var_2{ <http://example.org/valB>  }
 }
 UNION
 {
-?focus_node <http://example.org/propD> <http://example.org/valD> .
-?focus_node <http://example.org/propC> <http://example.org/valC> .
+?focus_node <http://example.org/propD> ?var_4 .
+?focus_node <http://example.org/propC> ?var_3 .
+
+	VALUES ?var_3{ <http://example.org/valC>  }
+
+	VALUES ?var_4{ <http://example.org/valD>  }
+}
 }
 """
-    ]
-
-    # Extract original patterns from within FILTER EXISTS wrapper
-    original_patterns = _extract_patterns_from_filter_exists(
-        parser.inner_select_gpntotb_list
     )
-    assert len(original_patterns) == len(expected_inner_select_gpntotb_list_str)
-    assert original_patterns[0].to_string().replace(" ", "").replace(
-        "\n", ""
-    ) == expected_inner_select_gpntotb_list_str[0].replace(" ", "").replace("\n", "")
 
 
 def test_focus_node_in_subquery():
@@ -594,8 +553,16 @@ def test_cql_boolean_equals_filter():
     parser = CQLParser(cql_json=cql_json_data)
     parser.parse()
 
-    query_str = parser.query_str
-    assert "FILTER (?var_1 = true)" in query_str
+    assert strip_ws(parser.query_str) == strip_ws(
+        """CONSTRUCT {
+            ?focus_node <http://example.org/flag> ?var_1
+        }
+        WHERE {
+            ?focus_node <http://example.org/flag> ?var_1 .
+            VALUES ?var_1{ true  }
+        }
+        """
+    )
 
 
 def test_cql_not_equal_operator_with_literal():
@@ -616,12 +583,16 @@ def test_cql_not_equal_operator_with_literal():
     parser = CQLParser(cql_json=cql_json_data)
     parser.parse()
 
-    # The query should contain a FILTER with != operator
-    query_str = parser.query_str
-    assert "FILTER" in query_str
-    assert "!=" in query_str
-    assert '"active"' in query_str
-    assert "?var_1" in query_str  # Should use variable for the property value
+    assert strip_ws(parser.query_str) == strip_ws(
+        """CONSTRUCT {
+            ?focus_node <http://example.org/vocab#status> ?var_1
+        }
+        WHERE {
+            ?focus_node <http://example.org/vocab#status> ?var_1 .
+            FILTER (?var_1 != "active")
+        }
+        """
+    )
 
 
 def test_cql_not_equal_operator_with_uri():
@@ -642,11 +613,16 @@ def test_cql_not_equal_operator_with_uri():
     parser = CQLParser(cql_json=cql_json_data)
     parser.parse()
 
-    # Should use FILTER even for URI values when using <> operator
-    query_str = parser.query_str
-    assert "FILTER" in query_str
-    assert "!=" in query_str
-    assert "http://example.org/vocab#ExcludedType" in query_str
+    assert strip_ws(parser.query_str) == strip_ws(
+        """CONSTRUCT {
+            ?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?var_1
+        }
+        WHERE {
+            ?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?var_1 .
+            FILTER (?var_1 != <http://example.org/vocab#ExcludedType>)
+        }
+        """
+    )
 
 
 def test_cql_not_equal_operator_with_shacl_queryable():
@@ -706,15 +682,19 @@ def test_cql_not_equal_operator_in_complex_query():
     parser = CQLParser(cql_json=cql_json_data)
     parser.parse()
 
-    query_str = parser.query_str
-    # Should contain both a triple pattern and a FILTER
-    assert (
-        "?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/vocab#Document>"
-        in query_str
+    assert strip_ws(parser.query_str) == strip_ws(
+        """CONSTRUCT {
+?focus_node <http://example.org/vocab#status> ?var_2 .
+?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?var_1
+}
+WHERE {
+?focus_node <http://example.org/vocab#status> ?var_2 .
+?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?var_1 .
+	VALUES ?var_1{ <http://example.org/vocab#Document>  }
+FILTER (?var_2 != "archived")
+}
+"""
     )
-    assert "FILTER" in query_str
-    assert "!=" in query_str
-    assert '"archived"' in query_str
 
 
 def test_cql_operator_conversion():
@@ -744,6 +724,192 @@ def test_cql_operator_conversion():
             raise  # Some other NotImplementedError
 
 
+def test_cql_or_operator_variable_separation(monkeypatch):
+    """
+    Tests that OR operations generate separate variables with proper counter separation.
+    When using OR with the same property in multiple branches, each branch should get
+    unique variable names to avoid conflicts in the generated CQL.
+    This specifically tests the SHACL queryable case where the bug occurs.
+    """
+    from prez.services.query_generation.cql import CQLParser
+    from rdflib import Graph
+
+    # Mock the queryable properties to simulate SHACL queryable
+    mock_queryable_props = {"type": "https://prez/queryables/RDFType"}
+
+    # Mock the system graph with SHACL shape
+    mock_system_graph = Graph()
+    mock_system_graph.parse(
+        data="""
+        @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+        @prefix cql: <http://www.opengis.net/doc/IS/cql2/1.0/> .
+        @prefix dcterms: <http://purl.org/dc/terms/> .
+        @prefix sh: <http://www.w3.org/ns/shacl#> .
+        @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+        @prefix prezqueryables: <https://prez/queryables/> .
+        @prefix bore: <https://linked.data.gov.au/def/bore/> .
+
+        prezqueryables:RDFType a cql:Queryable ;
+            a sh:PropertyShape ;
+            dcterms:identifier "type" ;
+            sh:datatype xsd:string ;
+            sh:description "Filter by RDF type" ;
+            sh:name "RDF Type" ;
+            sh:path rdf:type ;
+            sh:in (
+                bore:Bore
+                bore:Drillhole
+            ) .
+    """,
+        format="turtle",
+    )
+
+    # Add the mock data to the actual system graph
+    from prez.cache import prez_system_graph
+
+    prez_system_graph += mock_system_graph
+
+    cql_json_data = {
+        "op": "or",
+        "args": [
+            {
+                "op": "=",
+                "args": [
+                    {"property": "type"},
+                    "https://linked.data.gov.au/def/bore/Bore",
+                ],
+            },
+            {
+                "op": "=",
+                "args": [
+                    {"property": "type"},
+                    "https://linked.data.gov.au/def/bore/Drillhole",
+                ],
+            },
+            {
+                "op": "=",
+                "args": [
+                    {"property": "type"},
+                    "https://linked.data.gov.au/def/bore/test",
+                ],
+            },
+        ],
+    }
+
+    # Create parser with mock queryable properties
+    parser = CQLParser(cql_json=cql_json_data, queryable_props=mock_queryable_props)
+    parser.parse()
+
+    assert strip_ws(parser.query_str) == strip_ws(
+        """CONSTRUCT {
+?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?cql_filter_3 .
+?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?cql_filter_2 .
+?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?cql_filter_1
+}
+WHERE {
+
+
+{
+?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?cql_filter_1 .
+	VALUES ?cql_filter_1{ <https://linked.data.gov.au/def/bore/Bore>  }
+}
+UNION
+{
+?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?cql_filter_2 .
+	VALUES ?cql_filter_2{ <https://linked.data.gov.au/def/bore/Drillhole>  }
+}
+UNION
+{
+?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?cql_filter_3 .
+	VALUES ?cql_filter_3{ <https://linked.data.gov.au/def/bore/test>  }
+}
+}
+"""
+    )
+
+
+def test_cql_or_shacl_union_structure():
+    """Ensure SHACL-backed properties place triples inside their UNION branches."""
+    from prez.services.query_generation.cql import CQLParser
+    from rdflib import Graph
+
+    mock_queryable_props = {
+        "prop_a": "https://prez/queryables/PropA",
+        "prop_b": "https://prez/queryables/PropB",
+    }
+
+    mock_system_graph = Graph()
+    mock_system_graph.parse(
+        data="""
+        @prefix ex: <http://example.org/> .
+        @prefix cql: <http://www.opengis.net/doc/IS/cql2/1.0/> .
+        @prefix dcterms: <http://purl.org/dc/terms/> .
+        @prefix sh: <http://www.w3.org/ns/shacl#> .
+        @prefix prezqueryables: <https://prez/queryables/> .
+
+        prezqueryables:PropA a cql:Queryable, sh:PropertyShape ;
+            dcterms:identifier "prop_a" ;
+            sh:path ex:pathProp1 .
+
+        prezqueryables:PropB a cql:Queryable, sh:PropertyShape ;
+            dcterms:identifier "prop_b" ;
+            sh:path ex:pathProp2 .
+        """,
+        format="turtle",
+    )
+
+    from prez.cache import prez_system_graph
+
+    for triple in mock_system_graph:
+        prez_system_graph.add(triple)
+
+    try:
+        cql_json_data = {
+            "op": "or",
+            "args": [
+                {
+                    "op": "in",
+                    "args": [
+                        {"property": "prop_a"},
+                        ["http://example.org/valueA"],
+                    ],
+                },
+                {
+                    "op": "in",
+                    "args": [
+                        {"property": "prop_b"},
+                        ["http://example.org/valueB"],
+                    ],
+                },
+            ],
+        }
+
+        parser = CQLParser(cql_json=cql_json_data, queryable_props=mock_queryable_props)
+        parser.parse()
+
+        assert strip_ws(parser.query_str) == strip_ws(
+            """CONSTRUCT {
+?focus_node <http://example.org/pathProp2> ?cql_filter_2 .
+?focus_node <http://example.org/pathProp1> ?cql_filter_1
+}
+WHERE {
+{
+?focus_node <http://example.org/pathProp1> ?cql_filter_1 .
+	VALUES ?cql_filter_1{ <http://example.org/valueA>  }
+}
+UNION
+{
+?focus_node <http://example.org/pathProp2> ?cql_filter_2 .
+	VALUES ?cql_filter_2{ <http://example.org/valueB>  }
+}
+}
+"""
+        )
+    finally:
+        for triple in mock_system_graph:
+            prez_system_graph.remove(triple)
+
+
 def test_cql_not_operator():
     """
     Tests the 'not' operator with FILTER NOT EXISTS.
@@ -766,11 +932,21 @@ def test_cql_not_operator():
     parser = CQLParser(cql_json=cql_json_data)
     parser.parse()
 
-    query_str = parser.query_str
-    # Should contain FILTER NOT EXISTS
-    assert "FILTER NOT EXISTS" in query_str
-    assert '"inactive"' in query_str
-    assert 'FILTER (?var_2 = "inactive")\n' in query_str
+    assert strip_ws(parser.query_str) == strip_ws(
+        """CONSTRUCT {
+?focus_node <http://example.org/status> ?var_2 .
+?focus_node <http://example.org/status> ?var_1
+}
+WHERE {
+
+FILTER NOT EXISTS{
+?focus_node <http://example.org/status> ?var_2 .
+
+	VALUES ?var_2{ "inactive"  }
+}
+}
+"""
+    )
 
 
 def test_cql_not_operator_with_complex_expression():
@@ -819,13 +995,31 @@ def test_cql_not_operator_with_complex_expression():
     parser = CQLParser(cql_json=cql_json_data)
     parser.parse()
 
-    query_str = parser.query_str
-    # Should contain both FILTER EXISTS and FILTER NOT EXISTS
-    assert "FILTER NOT EXISTS" in query_str
-    assert "UNION" in query_str  # From the OR inside NOT
-    assert '"john"' in query_str
-    assert '"inactive"' in query_str
-    assert '"true"' in query_str
+    assert strip_ws(parser.query_str) == strip_ws(
+        """CONSTRUCT {
+            ?focus_node <http://example.org/deleted> ?var_5 .
+            ?focus_node <http://example.org/status> ?var_4 .
+            ?focus_node <http://example.org/deleted> ?var_3 .
+            ?focus_node <http://example.org/status> ?var_2 .
+            ?focus_node <http://example.org/name> ?var_1
+        }
+        WHERE {
+            ?focus_node <http://example.org/name> ?var_1 .
+            VALUES ?var_1{ "john"  }
+            FILTER NOT EXISTS{
+                {
+                    ?focus_node <http://example.org/status> ?var_4 .
+                    VALUES ?var_4{ "inactive"  }
+                }
+                UNION
+                {
+                    ?focus_node <http://example.org/deleted> ?var_5 .
+                    VALUES ?var_5{ "true"  }
+                }
+            }
+        }
+        """
+    )
 
 
 def test_cql_double_negation():
@@ -855,13 +1049,23 @@ def test_cql_double_negation():
     parser = CQLParser(cql_json=cql_json_data)
     parser.parse()
 
-    query_str = parser.query_str
-    # Should have nested FILTER NOT EXISTS statements
-    not_exists_count = query_str.count("FILTER NOT EXISTS")
-    assert (
-        not_exists_count == 2
-    ), f"Expected 2 FILTER NOT EXISTS, got {not_exists_count}"
-    assert '"active"' in query_str
+    assert strip_ws(parser.query_str) == strip_ws(
+        """CONSTRUCT {
+            ?focus_node <http://example.org/status> ?var_4 .
+            ?focus_node <http://example.org/status> ?var_3 .
+            ?focus_node <http://example.org/status> ?var_2 .
+            ?focus_node <http://example.org/status> ?var_1
+        }
+        WHERE {
+            FILTER NOT EXISTS{
+                FILTER NOT EXISTS{
+                    ?focus_node <http://example.org/status> ?var_4 .
+                    VALUES ?var_4{ "active"  }
+                }
+            }
+        }
+        """
+    )
 
 
 def test_cql_or_with_not_branches():
@@ -903,15 +1107,30 @@ def test_cql_or_with_not_branches():
     parser = CQLParser(cql_json=cql_json_data)
     parser.parse()
 
-    query_str = parser.query_str
-    # Should have UNION with FILTER NOT EXISTS in each branch
-    assert "UNION" in query_str
-    not_exists_count = query_str.count("FILTER NOT EXISTS")
-    assert (
-        not_exists_count == 2
-    ), f"Expected 2 FILTER NOT EXISTS, got {not_exists_count}"
-    assert '"inactive"' in query_str
-    assert '"true"' in query_str
+    assert strip_ws(parser.query_str) == strip_ws(
+        """CONSTRUCT {
+            ?focus_node <http://example.org/deleted> ?var_4 .
+            ?focus_node <http://example.org/deleted> ?var_3 .
+            ?focus_node <http://example.org/status> ?var_2 .
+            ?focus_node <http://example.org/status> ?var_1
+        }
+        WHERE {
+            {
+                FILTER NOT EXISTS{
+                    ?focus_node <http://example.org/status> ?var_2 .
+                    VALUES ?var_2{ "inactive"  }
+                }
+            }
+            UNION
+            {
+                FILTER NOT EXISTS{
+                    ?focus_node <http://example.org/deleted> ?var_4 .
+                    VALUES ?var_4{ "true"  }
+                }
+            }
+        }
+        """
+    )
 
 
 def test_cql_complex_nested_not_and_or():
@@ -979,17 +1198,39 @@ def test_cql_complex_nested_not_and_or():
     parser = CQLParser(cql_json=cql_json_data)
     parser.parse()
 
-    query_str = parser.query_str
-    # Should have nested structure with multiple FILTER NOT EXISTS
-    not_exists_count = query_str.count("FILTER NOT EXISTS")
-    assert (
-        not_exists_count == 2
-    ), f"Expected 2 FILTER NOT EXISTS, got {not_exists_count}"
-    assert "UNION" in query_str  # From OR inside first NOT
-    assert '"alice"' in query_str
-    assert '"banned"' in query_str
-    assert '"admin"' in query_str
-    assert '"true"' in query_str
+    assert strip_ws(parser.query_str) == strip_ws(
+        """CONSTRUCT {
+            ?focus_node <http://example.org/verified> ?var_9 .
+            ?focus_node <http://example.org/verified> ?var_8 .
+            ?focus_node <http://example.org/role> ?var_7 .
+            ?focus_node <http://example.org/status> ?var_6 .
+            ?focus_node <http://example.org/verified> ?var_5 .
+            ?focus_node <http://example.org/verified> ?var_4 .
+            ?focus_node <http://example.org/role> ?var_3 .
+            ?focus_node <http://example.org/status> ?var_2 .
+            ?focus_node <http://example.org/name> ?var_1
+        }
+        WHERE {
+            ?focus_node <http://example.org/name> ?var_1 .
+            VALUES ?var_1{ "alice"  }
+            FILTER NOT EXISTS{
+                {
+                    ?focus_node <http://example.org/status> ?var_6 .
+                    VALUES ?var_6{ "banned"  }
+                }
+                UNION
+                {
+                    ?focus_node <http://example.org/role> ?var_7 .
+                    VALUES ?var_7{ "admin"  }
+                    FILTER NOT EXISTS{
+                        ?focus_node <http://example.org/verified> ?var_9 .
+                        VALUES ?var_9{ "true"  }
+                    }
+                }
+            }
+        }
+        """
+    )
 
 
 def test_cql_not_of_and_with_not():
@@ -1031,14 +1272,27 @@ def test_cql_not_of_and_with_not():
     parser = CQLParser(cql_json=cql_json_data)
     parser.parse()
 
-    query_str = parser.query_str
-    # Should have nested FILTER NOT EXISTS structures
-    not_exists_count = query_str.count("FILTER NOT EXISTS")
-    assert (
-        not_exists_count == 2
-    ), f"Expected 2 FILTER NOT EXISTS, got {not_exists_count}"
-    assert '"premium"' in query_str
-    assert '"true"' in query_str
+    assert strip_ws(parser.query_str) == strip_ws(
+        """CONSTRUCT {
+            ?focus_node <http://example.org/expired> ?var_6 .
+            ?focus_node <http://example.org/expired> ?var_5 .
+            ?focus_node <http://example.org/category> ?var_4 .
+            ?focus_node <http://example.org/expired> ?var_3 .
+            ?focus_node <http://example.org/expired> ?var_2 .
+            ?focus_node <http://example.org/category> ?var_1
+        }
+        WHERE {
+            FILTER NOT EXISTS{
+                ?focus_node <http://example.org/category> ?var_4 .
+                VALUES ?var_4{ "premium"  }
+                FILTER NOT EXISTS{
+                    ?focus_node <http://example.org/expired> ?var_6 .
+                    VALUES ?var_6{ "true"  }
+                }
+            }
+        }
+        """
+    )
 
 
 def test_cql_triple_negation():
@@ -1073,13 +1327,29 @@ def test_cql_triple_negation():
     parser = CQLParser(cql_json=cql_json_data)
     parser.parse()
 
-    query_str = parser.query_str
-    # Should have three nested FILTER NOT EXISTS statements
-    not_exists_count = query_str.count("FILTER NOT EXISTS")
-    assert (
-        not_exists_count == 3
-    ), f"Expected 3 FILTER NOT EXISTS, got {not_exists_count}"
-    assert '"enabled"' in query_str
+    assert strip_ws(parser.query_str) == strip_ws(
+        """CONSTRUCT {
+            ?focus_node <http://example.org/flag> ?var_8 .
+            ?focus_node <http://example.org/flag> ?var_7 .
+            ?focus_node <http://example.org/flag> ?var_6 .
+            ?focus_node <http://example.org/flag> ?var_5 .
+            ?focus_node <http://example.org/flag> ?var_4 .
+            ?focus_node <http://example.org/flag> ?var_3 .
+            ?focus_node <http://example.org/flag> ?var_2 .
+            ?focus_node <http://example.org/flag> ?var_1
+        }
+        WHERE {
+            FILTER NOT EXISTS{
+                FILTER NOT EXISTS{
+                    FILTER NOT EXISTS{
+                        ?focus_node <http://example.org/flag> ?var_8 .
+                        VALUES ?var_8{ "enabled"  }
+                    }
+                }
+            }
+        }
+        """
+    )
 
 
 def test_cql_mixed_operators_with_multiple_nots():
@@ -1144,6 +1414,7 @@ def test_cql_mixed_operators_with_multiple_nots():
 
     parser = CQLParser(cql_json=cql_json_data)
     parser.parse()
+    print(parser.query_str)
 
     query_str = parser.query_str
     # Should have UNION with different NOT structures in each branch
@@ -1208,12 +1479,12 @@ def test_cql_mixed_operators_with_multiple_nots():
 def test_cql_typed_literal(
     filter_value: str, expected_class: str, expected_datatype: str | None
 ):
-    from sparql_grammar_pydantic import (  # noqa
+    from sparql_grammar_pydantic import (
         IRI,
         BooleanLiteral,
         NumericLiteral,
         RDFLiteral,
-    )
+    )  # noqa
 
     from prez.services.query_generation.cql import CQLParser
 
@@ -1227,11 +1498,8 @@ def test_cql_typed_literal(
     ggps = next(ggps_iterator)
     parsed_term = (
         ggps.graph_patterns_or_triples_blocks[1]
-        .content.constraint.content.expression.conditional_or_expression.conditional_and_expressions[
-            0
-        ]
-        .value_logicals[0]
-        .relational_expression.right.additive_expression.base_expression.base_expression.primary_expression.content
+        .content.data_block.block.datablockvalues[0]
+        .value
     )
     assert isinstance(parsed_term, expected_class)
     if expected_class == RDFLiteral:

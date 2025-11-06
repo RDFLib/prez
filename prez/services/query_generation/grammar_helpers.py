@@ -59,13 +59,14 @@ from sparql_grammar_pydantic import (
     VarOrTerm,
     VerbPath,
     ExistsFunc,
+    IRIOrFunction,
 )
 
 logger = logging.getLogger(__name__)
 
 
 def convert_value_to_rdf_term(
-    val,
+    val: str,
 ) -> IRI | NumericLiteral | RDFLiteral | BooleanLiteral:
     """Convert a Python value to the appropriate RDF term."""
     # handle booleans
@@ -181,14 +182,14 @@ def create_values_constraint(variable: Var, values: list) -> GraphPatternNotTrip
         GraphPatternNotTriples containing the VALUES constraint
     """
     # Convert values to appropriate RDF terms
-    rdf_values = []
-    for value in values:
-        if isinstance(value, str) and value.startswith("http"):
-            rdf_values.append(IRI(value=URIRef(value)))
-        elif isinstance(value, (int, float)):
-            rdf_values.append(NumericLiteral(value=value))
-        else:
-            rdf_values.append(RDFLiteral(value=str(value)))
+    rdf_values = [convert_value_to_rdf_term(value) for value in values]
+    # for value in values:
+    #     if isinstance(value, str) and value.startswith("http"):
+    #         rdf_values.append(IRI(value=URIRef(value)))
+    #     elif isinstance(value, (int, float)):
+    #         rdf_values.append(NumericLiteral(value=value))
+    #     else:
+    #         rdf_values.append(RDFLiteral(value=str(value)))
 
     iri_db_vals = [DataBlockValue(value=p) for p in rdf_values]
     ildov = InlineDataOneVar(variable=variable, datablockvalues=iri_db_vals)
@@ -572,13 +573,17 @@ def create_filter_not_exists(patterns: GroupGraphPatternSub) -> GraphPatternNotT
     )
 
 
-def _create_filter_in(variable: Var, values: list) -> GraphPatternNotTriples:
+def _create_filter_in(variable: Var, values: list[str]) -> GraphPatternNotTriples:
     """Create a FILTER(?var IN (<val1>, "val2", ...)) constraint."""
     # Convert values to appropriate RDF terms and wrap in PrimaryExpression
     right_primary_expressions = []
     for value in values:
         rdf_term = convert_value_to_rdf_term(value)
-        right_primary_expressions.append(PrimaryExpression(content=rdf_term))
+        if isinstance(rdf_term, (IRI)):
+            content = IRIOrFunction(iri=rdf_term)
+        else:
+            content = rdf_term
+        right_primary_expressions.append(PrimaryExpression(content=content))
 
     in_expr = Expression.create_in_expression(
         left_primary_expression=PrimaryExpression(content=variable),
