@@ -128,7 +128,10 @@ class SearchQueryFusekiFTS(ConstructQuery):
                 "At least one of `non_shacl_predicates` and `shacl_tssp_preds` must be given"
             )
         limit += 1  # increase the limit by one, so we know if there are further pages of results.
-        term = term.replace('"', '\\"')
+        # clients submitting lucene FTS queries must escape the following characters if they do not want them to have
+        # the lucene special meaning: + - && || ! ( ) { } [ ] ^ " ~ * ? : \ /
+        term = term.replace("\\", "\\\\")  # escape for SPARQL anything that has been Lucene escaped already
+        term = term.replace('"', '\\"')  # escape quotes for SPARQL
 
         sr_uri: Var = Var(value="focus_node")
         weight: Var = Var(value="weight")
