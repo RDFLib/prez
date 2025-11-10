@@ -1,12 +1,15 @@
 import json
 from datetime import datetime
 from typing import List, Optional, Tuple, Union
-
+import logging
 from fastapi import Depends, HTTPException, Query
 
 from prez.enums import FilterLangEnum, OrderByDirectionEnum
 
 DateTimeOrUnbounded = Union[datetime, str, None]
+
+# Get the root logger, this is only for debugging
+logger = logging.getLogger()
 
 
 def reformat_bbox(
@@ -190,6 +193,11 @@ class ListingQueryParams:
             default=None,
             description="Optional: Pagination offset",
         ),
+        result_type: Optional[str] = Query(
+            default="results",
+            description="Optional: OGC Results Type - 'results' or 'hits'",
+            alias="resultType",
+        ),
     ):
         self.q = q
         self.profile = profile
@@ -209,15 +217,15 @@ class ListingQueryParams:
         self.startindex = (
             startindex if not hasattr(startindex, "default") else startindex.default
         )
+        self.result_type = result_type
         self.validate_pagination_params()
         self.validate_filter()
 
     def validate_pagination_params(self):
         """Validate mutually exclusive pagination parameters."""
-        from fastapi import HTTPException
 
         # Debug print to see what values we have
-        print(
+        logger.debug(
             f"DEBUG - page: {self.page}, offset: {self.offset}, startindex: {self.startindex}"
         )
 
