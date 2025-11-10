@@ -1,4 +1,33 @@
 import pytest
+from fastapi.testclient import TestClient
+from starlette.routing import Mount
+
+
+@pytest.fixture(scope="function")
+def fresh_client(test_repo):
+    """
+    Function-scoped client that creates a fresh app instance.
+    
+    This is needed for tests that run after test_issue_236 which pollutes
+    global caches with custom endpoints.
+    """
+    from prez.app import assemble_app
+    from prez.dependencies import get_data_repo
+    
+    def override_get_repo():
+        return test_repo
+    
+    app = assemble_app()
+    app.dependency_overrides[get_data_repo] = override_get_repo
+    
+    for route in app.routes:
+        if isinstance(route, Mount):
+            route.app.dependency_overrides[get_data_repo] = override_get_repo
+    
+    with TestClient(app) as c:
+        yield c
+    
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture
@@ -183,18 +212,20 @@ def test_bbox_graphdb_200_4326_crs(client):
         settings.spatial_query_format = original_format
 
 
-def test_ogc_features_listing_annotated(client):
+def test_ogc_features_listing_annotated(fresh_client):
     # General regression test that would have caught the bug fixed in #413
-    r = client.get(
+    # Uses fresh_client to avoid cache pollution from test_issue_236
+    r = fresh_client.get(
         "/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/collections?_profile=mem&_mediatype=text/anot%2Bturtle"
     )
     assert r.status_code == 200
     assert len(r.content) > 0
 
 
-def test_ogc_features_object_annotated(client):
+def test_ogc_features_object_annotated(fresh_client):
     # General regression test
-    r = client.get(
+    # Uses fresh_client to avoid cache pollution from test_issue_236
+    r = fresh_client.get(
         "/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/collections/ex:FeatureCollection?_mediatype=text/anot%2Bturtle&_profile=ogcfeat-minimal"
     )
     assert r.status_code == 200
