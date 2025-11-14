@@ -5,6 +5,8 @@ from rdf2geojson.contrib.geomet.util import flatten_multi_dim
 from rdf2geojson.contrib.geomet.wkt import dumps
 from rdflib.namespace import GEO
 from sparql_grammar_pydantic import (
+    CollectionPath,
+    TriplesNodePath,
     IRI,
     ArgList,
     Constraint,
@@ -43,7 +45,7 @@ from sparql_grammar_pydantic import (
     GroupOrUnionGraphPattern,
     ObjectListPath,
     ObjectPath,
-    GraphNodePath,
+    GraphNodePath, Bind, IRIOrFunction,
 )
 
 from prez.config import settings
@@ -76,7 +78,7 @@ def _verb_path_for_iri(iri: str) -> VerbPath:
 
 
 def _object_list_for_iri_or_var_or_lit(
-    iri_or_var_or_lit: IRI | Var | RDFLiteral,
+        iri_or_var_or_lit: IRI | Var | RDFLiteral,
 ) -> ObjectList:
     if isinstance(iri_or_var_or_lit, (IRI, RDFLiteral)):
         vot = VarOrTerm(varorterm=GraphTerm(content=iri_or_var_or_lit))
@@ -150,12 +152,12 @@ def format_coordinates_as_wkt(bbox_values):
 
 
 def generate_spatial_filter_clause(
-    wkt_value: str,  # The plain WKT string, e.g. "POLYGON((...))"
-    subject_var: Var,  # The SPARQL variable for the subject, e.g. Var(value="focus_node")
-    geom_bnode_var: Var,
-    geom_wkt_lit_var: Var,
-    cql_operator: str,
-    target_system: str,
+        wkt_value: str,  # The plain WKT string, e.g. "POLYGON((...))"
+        subject_var: Var,  # The SPARQL variable for the subject, e.g. Var(value="focus_node")
+        geom_bnode_var: Var,
+        geom_wkt_lit_var: Var,
+        cql_operator: str,
+        target_system: str,
 ) -> List[GraphPatternNotTriples]:
     """
     Generates SPARQL spatial filter clauses (FILTER or SERVICE block).
@@ -166,6 +168,101 @@ def generate_spatial_filter_clause(
             raise NotImplementedError(
                 f"CQL operator {cql_operator} not supported for GeoSPARQL"
             )
+
+        # fuseki temp additions:
+        # BIND(geof:envelope(wkt_value ...
+        # feature spatial:intersectBoxGeom(?ch)
+        envelope_var = Var(value="envelope")
+        bind_gpnt = GraphPatternNotTriples(
+            content=Bind(
+                expression=Expression.from_primary_expression(
+                    PrimaryExpression(
+                        content=IRIOrFunction(
+                            iri=IRI(
+                                value="http://www.opengis.net/def/function/geosparql/envelope"
+                            ),
+                            arg_list=ArgList(
+                                expressions=[
+                                    Expression.from_primary_expression(
+                                        PrimaryExpression(
+                                            content=RDFLiteral(
+                                                value=wkt_value,  # Use wkt_value directly
+                                                datatype=IRI(value=str(GEO.wktLiteral)),
+                                            )
+                                        )
+                                    )
+                                ]
+                            )
+                        )
+                    )
+                ),
+                var=envelope_var
+            )
+        )
+
+        # spatial filter triple
+        spatial_intersects_box_geom = TriplesSameSubjectPath(
+                content=(
+                    VarOrTerm(varorterm=Var(value="focus_node")),
+                    PropertyListPathNotEmpty(
+                        first_pair=(
+                            VerbPath(
+                                path=SG_Path(
+                                    path_alternative=PathAlternative(
+                                        sequence_paths=[
+                                            PathSequence(
+                                                list_path_elt_or_inverse=[
+                                                    PathEltOrInverse(
+                                                        path_elt=PathElt(
+                                                            path_primary=PathPrimary(
+                                                                value=IRI(
+                                                                    value="http://jena.apache.org/spatial#intersectBoxGeom")
+                                                            )
+                                                        )
+                                                    )
+                                                ]
+                                            )
+                                        ]
+                                    )
+                                )
+                            ),
+                            ObjectListPath(
+                                object_paths=[
+                                    ObjectPath(
+                                        graph_node_path=GraphNodePath(
+                                            varorterm_or_triplesnodepath=TriplesNodePath(
+                                                coll_path_or_bnpl_path=CollectionPath(
+                                                    graphnodepath_list=[
+                                                        GraphNodePath(
+                                                            varorterm_or_triplesnodepath=VarOrTerm(
+                                                                varorterm=envelope_var
+                                                            )
+                                                        )
+                                                    ]
+                                                )
+                                            )
+                                        )
+                                    )
+                                ]
+                            ),
+                        )
+                    )
+                )
+            )
+        spatial_intersects_tb = TriplesBlock.from_tssp_list([spatial_intersects_box_geom])
+
+        subject = Var(value="focus_node")
+        geom_bn_var = Var(
+            value="geom_bnode"
+        )  # Make var names unique if used alongside others
+        geom_lit_var = Var(value="geom_var")
+        geo_has_geom_as_wkt_1 = TriplesSameSubjectPath.from_spo(
+                    subject, IRI(value=GEO.hasGeometry), geom_bn_var
+                )
+        geo_has_geom_as_wkt_2 = TriplesSameSubjectPath.from_spo(
+                    geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var
+                )
+        geo_as_wkt_tb = TriplesBlock.from_tssp_list([geo_has_geom_as_wkt_2, geo_has_geom_as_wkt_1])
 
         filter_gpnt = GraphPatternNotTriples(
             content=Filter(
@@ -193,7 +290,7 @@ def generate_spatial_filter_clause(
                 )
             )
         )
-        return [filter_gpnt]
+        return [filter_gpnt, geo_as_wkt_tb, spatial_intersects_tb, bind_gpnt]
 
     elif target_system == "qlever":
         if cql_operator not in cql_qlever_spatial_mapping:
@@ -348,7 +445,7 @@ def generate_spatial_filter_clause(
 
 
 def generate_bbox_filter(
-    bbox: List[float], filter_crs: str
+        bbox: List[float], filter_crs: str
 ) -> (List[GraphPatternNotTriples], List[TriplesSameSubjectPath]):
     """
     Generates spatial filter for a bounding box query parameter, wrapped in a FILTER EXISTS statement.
@@ -381,7 +478,7 @@ def generate_bbox_filter(
     final_gpnt = None
 
     # Add geometry triples
-    if target_system in ["geosparql", "graphdb"]:
+    if target_system in ["graphdb"]:
         bgp_list.extend(
             [
                 TriplesSameSubjectPath.from_spo(
@@ -425,7 +522,7 @@ def generate_bbox_filter(
             )
 
         for gpnt in spatial_filter_gpnts:
-            ggps.add_pattern(gpnt)
+            ggps.add_pattern(gpnt, prepend=True)
 
         # do not use a FILTER EXISTS, assume the triplestore query optimiser will execute performantly
         final_gpnt = GraphPatternNotTriples(

@@ -430,12 +430,12 @@ class CQLParser:
             geom_bn_var = Var(value="geom_bnode")
             geom_lit_var = Var(value="geom_var")
 
-            self._add_triple(
-                ggps, subject, IRI(value=GEO.hasGeometry), geom_bn_var, "tss_and_tssp"
-            )
-            self._add_triple(
-                ggps, geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var, "tss_and_tssp"
-            )
+            # self._add_triple(
+            #     ggps, subject, IRI(value=GEO.hasGeometry), geom_bn_var, "tss_and_tssp"
+            # )
+            # self._add_triple(
+            #     ggps, geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var, "tss_and_tssp"
+            # )
 
             target_system = settings.spatial_query_format
             if target_system not in ["geosparql", "qlever", "graphdb"]:
@@ -474,7 +474,7 @@ class CQLParser:
                     target_system=target_system,
                 )
                 for gpnt_item in filter_gpnt_list:
-                    ggps.add_pattern(gpnt_item)
+                    ggps.add_pattern(gpnt_item, prepend=True)
 
     def _handle_in(
         self, args: list[dict | list], existing_ggps: GroupGraphPatternSub | None = None
