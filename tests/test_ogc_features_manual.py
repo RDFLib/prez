@@ -7,26 +7,26 @@ from starlette.routing import Mount
 def fresh_client(test_repo):
     """
     Function-scoped client that creates a fresh app instance.
-    
+
     This is needed for tests that run after test_issue_236 which pollutes
     global caches with custom endpoints.
     """
     from prez.app import assemble_app
     from prez.dependencies import get_data_repo
-    
+
     def override_get_repo():
         return test_repo
-    
+
     app = assemble_app()
     app.dependency_overrides[get_data_repo] = override_get_repo
-    
+
     for route in app.routes:
         if isinstance(route, Mount):
             route.app.dependency_overrides[get_data_repo] = override_get_repo
-    
+
     with TestClient(app) as c:
         yield c
-    
+
     app.dependency_overrides.clear()
 
 
