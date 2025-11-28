@@ -1,0 +1,60 @@
+services:
+  apache:
+    image: httpd:2.4-alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./apache.conf:/usr/local/apache2/conf/httpd.conf:ro
+    networks:
+      - prez-proxy-test
+    depends_on:
+      - prez
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  prez:
+    image: "ghcr.io/rdflib/prez:latest"
+    environment:
+      SPARQL_REPO_TYPE: 'pyoxigraph_memory'
+      PREZ_DATA_DIR: '/data'
+      ROOT_PATH: '/api/prez'
+      LOG_LEVEL: 'INFO'
+    volumes:
+      - ../../../../test_data:/data
+    networks:
+      - prez-proxy-test
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://127.0.0.1:8000/api/prez/catalogs\")'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  test:
+    image: curlimages/curl:latest
+    depends_on:
+      apache:
+        condition: service_healthy
+      prez:
+        condition: service_healthy
+    networks:
+      - prez-proxy-test
+    command: >
+      sh -c '
+        echo "=== Testing Apache + Prez Proxy Setup ===" &&
+        echo "" &&
+        echo "Testing /api/prez/catalogs through Apache..." &&
+        curl -s http://apache/api/prez/catalogs | head -20 &&
+        echo "" &&
+        echo "=== Test complete ===" &&
+        echo "" &&
+        echo "Prez via Apache: http://localhost/api/prez/catalogs" &&
+        echo "Prez Swagger UI: http://localhost/api/prez/docs"
+      '
+
+networks:
+  prez-proxy-test:
+    driver: bridge
