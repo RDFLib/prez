@@ -47,7 +47,8 @@ from prez.services.query_generation.grammar_helpers import (
     create_temporal_or_gpnt,
     create_filter_bool_gpnt,
     create_temporal_and_gpnt,
-    create_filter_not_exists
+    create_filter_not_exists,
+    create_filter_in
 )
 from prez.services.query_generation.shacl import PropertyShape
 from prez.services.query_generation.spatial_filter import (
@@ -344,12 +345,53 @@ class CQLParser:
             args: list[dict],
             existing_ggps: GroupGraphPatternSub | None = None,
     ):
-        # always use VALUES statement.
-        #TODO review scenarios where FILTER IN has different semantics and may be more appropriate e.g. dates, boolean
+        """Handle CQL equals operator using FILTER or VALUES based on sh:in heuristic.
+
+        Heuristic:
+        - SHACL queryable WITH sh:in → FILTER IN (SPARQL engine optimization)
+        - SHACL queryable WITHOUT sh:in → VALUES (better for open-ended values)
+        - Direct predicate with IRI value → Direct triple pattern (existing behavior)
+        - Direct predicate with boolean value → FILTER (type coercion semantics)
+        - Direct predicate (non-queryable) → VALUES (default behavior)
+        """
+        prop = args[0].get("property")
+        value = convert_value_to_rdf_term(args[1])
+
+        # Special case: non-queryable with IRI value - use direct triple pattern
+        if isinstance(value, IRI) and not (self.queryable_props and prop in self.queryable_props):
+            ggps, obj = self._add_tss_tssp(args, existing_ggps, value)
+            return
 
         ggps, obj = self._add_tss_tssp(args, existing_ggps)
-        values_gpnt = create_values_constraint(variable=obj, values=[args[1]])
-        ggps.add_pattern(values_gpnt)
+
+        # Determine whether to use FILTER or VALUES
+        use_filter_in = False  # Use FILTER IN for sh:in queryables
+        use_filter_equals = False  # Use FILTER = for booleans
+
+        # Check for boolean values on non-queryables - use FILTER for proper type coercion
+        from sparql_grammar_pydantic import BooleanLiteral
+        if isinstance(value, BooleanLiteral) and not (self.queryable_props and prop in self.queryable_props):
+            use_filter_equals = True
+        elif self.queryable_props and prop in self.queryable_props:
+            # This is a SHACL queryable - check for sh:in
+            property_shape = self.queryable_id_to_tssp(self.queryable_props[prop])
+            if property_shape.has_sh_in:
+                use_filter_in = True
+
+        # Generate appropriate constraint
+        if use_filter_in:
+            # For sh:in queryables, use FILTER IN
+            filter_gpnt = create_filter_in(variable=obj, values=args[1])
+            ggps.add_pattern(filter_gpnt)
+        elif use_filter_equals:
+            # For booleans, use FILTER =
+            from prez.services.query_generation.grammar_helpers import create_relational_filter
+            filter_gpnt = create_relational_filter(obj, "=", value)
+            ggps.add_pattern(filter_gpnt)
+        else:
+            # Default: use VALUES
+            values_gpnt = create_values_constraint(variable=obj, values=[args[1]])
+            ggps.add_pattern(values_gpnt)
 
     def _handle_comparison(
         self,
@@ -479,12 +521,31 @@ class CQLParser:
     def _handle_in(
         self, args: list[dict | list], existing_ggps: GroupGraphPatternSub | None = None
     ) -> None:
-        """Handle CQL 'in' operator using FILTER with IN for semantic consistency."""
+        """Handle CQL IN operator using FILTER or VALUES based on sh:in heuristic.
+
+        Heuristic:
+        - SHACL queryable WITH sh:in → FILTER IN (SPARQL engine optimization)
+        - SHACL queryable WITHOUT sh:in → VALUES (better for open-ended values)
+        - Direct predicate (non-queryable) → VALUES (default behavior)
+        """
         ggps, obj = self._add_tss_tssp(args, existing_ggps)
-        # Create with VALUES clause. This is more efficient and clearer than FILTER IN for large lists.
-        #TODO review scenarios where FILTER IN has different semantics and may be more appropriate e.g. dates, boolean
-        values_clause_gpnt = create_values_constraint(obj, args[1])
-        ggps.add_pattern(values_clause_gpnt)
+        prop = args[0].get("property")
+
+        # Determine whether to use FILTER or VALUES
+        use_filter = False
+        if self.queryable_props and prop in self.queryable_props:
+            # This is a SHACL queryable - check for sh:in
+            property_shape = self.queryable_id_to_tssp(self.queryable_props[prop])
+            if property_shape.has_sh_in:
+                use_filter = True
+
+        # Generate appropriate constraint
+        if use_filter:
+            filter_gpnt = create_filter_in(variable=obj, values=args[1])
+            ggps.add_pattern(filter_gpnt)
+        else:
+            values_clause_gpnt = create_values_constraint(obj, args[1])
+            ggps.add_pattern(values_clause_gpnt)
 
     def _handle_shacl_defined_prop(self, prop: str, ggps: GroupGraphPatternSub) -> Var:
         property_shape = self.queryable_id_to_tssp(self.queryable_props[prop])

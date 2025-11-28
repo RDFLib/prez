@@ -247,6 +247,23 @@ class PropertyShape(Shape):
         if maxc is not None:
             return int(maxc)
 
+    @property
+    def has_sh_in(self) -> bool:
+        """Check if this PropertyShape has an sh:in constraint.
+
+        Returns:
+            bool: True if sh:in predicate exists on this shape, False otherwise.
+        """
+        try:
+            sh_in_value = next(self.graph.objects(self.uri, SH["in"]), None)
+            return sh_in_value is not None
+        except Exception as e:
+            log.warning(
+                f"Error checking for sh:in on {self.uri}: {e}. "
+                "Defaulting to has_sh_in=False"
+            )
+            return False
+
     def from_graph(self):
         # Context Guard: Check if this PropertyShape is inside a sh:filterShape.
         # This checks for both direct and nested sh:property within the filter.

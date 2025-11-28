@@ -570,8 +570,20 @@ def create_filter_not_exists(patterns: GroupGraphPatternSub) -> GraphPatternNotT
     )
 
 
-def _create_filter_in(variable: Var, values: list[str]) -> GraphPatternNotTriples:
-    """Create a FILTER(?var IN (<val1>, "val2", ...)) constraint."""
+def create_filter_in(variable: Var, values: list[str] | str) -> GraphPatternNotTriples:
+    """Create a FILTER(?var IN (...)) constraint.
+
+    Args:
+        variable: The SPARQL variable to filter
+        values: Single value or list of values to match against
+
+    Returns:
+        GraphPatternNotTriples containing the FILTER IN constraint
+    """
+    # Normalize to list
+    if not isinstance(values, list):
+        values = [values]
+
     # Convert values to appropriate RDF terms and wrap in PrimaryExpression
     right_primary_expressions = []
     for value in values:

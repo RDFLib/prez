@@ -904,7 +904,8 @@ def test_cql_or_shacl_union_structure():
         union_str = (
             union_gpnt.to_string().replace(" ", "").replace("\n", "").replace("\t", "")
         )
-        expected_union = "{?focus_node<http://example.org/pathProp1>?cql_filter_1.FILTER(?cql_filter_1IN(<http://example.org/valueA>))}UNION{?focus_node<http://example.org/pathProp2>?cql_filter_2.FILTER(?cql_filter_2IN(<http://example.org/valueB>))}"
+        # After sh:in heuristic: queryables WITHOUT sh:in use VALUES, not FILTER IN
+        expected_union = "{?focus_node<http://example.org/pathProp1>?cql_filter_1.VALUES?cql_filter_1{<http://example.org/valueA>}}UNION{?focus_node<http://example.org/pathProp2>?cql_filter_2.VALUES?cql_filter_2{<http://example.org/valueB>}}"
         assert union_str == expected_union
     finally:
         for triple in mock_system_graph:
@@ -937,7 +938,8 @@ def test_cql_not_operator():
     # Should contain FILTER NOT EXISTS
     assert "FILTER NOT EXISTS" in query_str
     assert '"inactive"' in query_str
-    assert 'FILTER (?var_2 = "inactive")\n' in query_str
+    # After sh:in heuristic: non-queryables with string literals use VALUES
+    assert 'VALUES ?var_2{ "inactive"' in query_str
 
 
 def test_cql_not_operator_with_complex_expression():
@@ -1392,14 +1394,27 @@ def test_cql_typed_literal(
     }
     ggps_iterator = parser.parse_logical_operators(test_element)
     ggps = next(ggps_iterator)
-    parsed_term = (
-        ggps.graph_patterns_or_triples_blocks[1]
-        .content.constraint.content.expression.conditional_or_expression.conditional_and_expressions[
-            0
-        ]
-        .value_logicals[0]
-        .relational_expression.right.additive_expression.base_expression.base_expression.primary_expression.content
-    )
+
+    # After sh:in heuristic: booleans use FILTER, others use VALUES
+    gpnt = ggps.graph_patterns_or_triples_blocks[1]
+
+    # Check if this is a FILTER (for booleans) or VALUES (for other literals)
+    if hasattr(gpnt, 'content') and hasattr(gpnt.content, 'constraint'):
+        # FILTER path (booleans)
+        parsed_term = (
+            gpnt.content.constraint.content.expression.conditional_or_expression.conditional_and_expressions[
+                0
+            ]
+            .value_logicals[0]
+            .relational_expression.right.additive_expression.base_expression.base_expression.primary_expression.content
+        )
+    else:
+        # VALUES path (other literals)
+        from sparql_grammar_pydantic import InlineData
+        assert isinstance(gpnt.content, InlineData)
+        # Extract the value from VALUES clause
+        parsed_term = gpnt.content.data_block.block.datablockvalues[0].value
+
     assert isinstance(parsed_term, expected_class)
     if expected_class == RDFLiteral:
         if expected_datatype is not None:
