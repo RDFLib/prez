@@ -42,6 +42,7 @@ class RemoteSparqlRepo(Repo):
         )
         try:
             response = await self.async_client.send(query_rq, stream=True)
+            response.raise_for_status()
             return response
         except httpx.TimeoutException as e:
             timeout_msg = (
@@ -51,6 +52,10 @@ class RemoteSparqlRepo(Repo):
                 timeout_msg += f" (sent '{settings.sparql_timeout_param_name}={settings.sparql_timeout}' to remote endpoint)"
             log.error(timeout_msg)
             raise httpx.TimeoutException(timeout_msg) from e
+        except httpx.HTTPStatusError as e:
+            # Read the response body for error details
+            await e.response.aread()
+            raise
 
     async def rdf_query_to_rdflib_graph(
         self, query: str, into_graph: Graph | None = None

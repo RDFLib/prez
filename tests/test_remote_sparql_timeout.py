@@ -26,6 +26,7 @@ class TestRemoteSparqlTimeout:
         """Test that timeout parameter is added to form data when configured."""
         # Setup
         mock_response = Mock(spec=httpx.Response)
+        mock_response.raise_for_status = Mock()  # Mock raise_for_status method
         mock_async_client.build_request.return_value = Mock()
         mock_async_client.send.return_value = mock_response
 
@@ -51,6 +52,7 @@ class TestRemoteSparqlTimeout:
         """Test that no timeout parameter is added when not configured."""
         # Setup
         mock_response = Mock(spec=httpx.Response)
+        mock_response.raise_for_status = Mock()  # Mock raise_for_status method
         mock_async_client.build_request.return_value = Mock()
         mock_async_client.send.return_value = mock_response
 
@@ -119,6 +121,7 @@ class TestRemoteSparqlTimeout:
     async def test_different_timeout_param_names(self, remote_repo, mock_async_client):
         """Test various timeout parameter names work correctly."""
         mock_response = Mock(spec=httpx.Response)
+        mock_response.raise_for_status = Mock()  # Mock raise_for_status method
         mock_async_client.build_request.return_value = Mock()
         mock_async_client.send.return_value = mock_response
 
