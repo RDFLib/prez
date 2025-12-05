@@ -46,7 +46,7 @@ class TestSparqlErrorPassthrough:
             raise httpx.HTTPStatusError(
                 "Client error '400 Bad Request' for url",
                 request=Mock(),
-                response=mock_response
+                response=mock_response,
             )
 
         mock_response.raise_for_status = raise_status_error
@@ -79,7 +79,7 @@ class TestSparqlErrorPassthrough:
             raise httpx.HTTPStatusError(
                 "Server error '500 Internal Server Error' for url",
                 request=Mock(),
-                response=mock_response
+                response=mock_response,
             )
 
         mock_response.raise_for_status = raise_status_error
@@ -108,7 +108,7 @@ class TestSparqlErrorPassthrough:
         exc = httpx.HTTPStatusError(
             "Client error '400 Bad Request' for url",
             request=Mock(),
-            response=mock_response
+            response=mock_response,
         )
 
         # Call the exception handler
@@ -120,6 +120,7 @@ class TestSparqlErrorPassthrough:
 
         # Parse response body
         import json
+
         body = json.loads(response.body)
         assert body["error"] == "SPARQL_ENDPOINT_ERROR"
         assert "Malformed SPARQL query" in body["detail"]
@@ -136,7 +137,7 @@ class TestSparqlErrorPassthrough:
         exc = httpx.HTTPStatusError(
             "Server error '500 Internal Server Error' for url",
             request=Mock(),
-            response=mock_response
+            response=mock_response,
         )
 
         response = await catch_httpx_error(mock_request, exc)
@@ -144,6 +145,7 @@ class TestSparqlErrorPassthrough:
         assert response.status_code == 500
 
         import json
+
         body = json.loads(response.body)
         assert body["error"] == "SPARQL_ENDPOINT_ERROR"
         assert "Database connection failed" in body["detail"]
@@ -160,6 +162,7 @@ class TestSparqlErrorPassthrough:
         assert response.status_code == 504
 
         import json
+
         body = json.loads(response.body)
         assert body["error"] == "SPARQL_TIMEOUT_ERROR"
         assert "timed out" in body["detail"]
@@ -176,12 +179,15 @@ class TestSparqlErrorPassthrough:
         assert response.status_code == 503
 
         import json
+
         body = json.loads(response.body)
         assert body["error"] == "SPARQL_CONNECTION_ERROR"
         assert "Connection refused" in body["detail"]
 
     @pytest.mark.asyncio
-    async def test_send_query_success_does_not_raise(self, remote_repo, mock_async_client):
+    async def test_send_query_success_does_not_raise(
+        self, remote_repo, mock_async_client
+    ):
         """Test that successful queries don't raise exceptions."""
         # Setup successful mock response
         mock_response = Mock(spec=httpx.Response)

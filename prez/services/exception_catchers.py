@@ -113,7 +113,9 @@ async def catch_httpx_error(request: Request, exc: httpx.HTTPError):
         status_code = exc.response.status_code
         try:
             # Try to get the response text if available
-            error_detail = exc.response.text if hasattr(exc.response, 'text') else str(exc)
+            error_detail = (
+                exc.response.text if hasattr(exc.response, "text") else str(exc)
+            )
         except Exception:
             error_detail = str(exc)
 
