@@ -1,0 +1,5 @@
+PREFIX vann: <http://purl.org/vocab/vann/>
+
+[ vann:preferredNamespacePrefix "cats" ;
+ vann:preferredNamespaceUri "http://example.org/cats/"
+] .
