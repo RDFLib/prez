@@ -1,0 +1,75 @@
+services:
+  traefik:
+    image: traefik:v3.6
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--log.level=INFO"
+      - "--accesslog=true"
+      - "--ping=true"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - prez-proxy-test
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  prez:
+    image: "ghcr.io/rdflib/prez:4.23.3"
+    environment:
+      SPARQL_REPO_TYPE: 'pyoxigraph_memory'
+      PYOXIGRAPH_DATA_DIR: '/data'
+      ROOT_PATH: '/api/prez'
+      LOG_LEVEL: 'INFO'
+    volumes:
+      - ../../test_data:/data
+    networks:
+      - prez-proxy-test
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prez.rule=PathPrefix(`/api/prez`)"
+      - "traefik.http.routers.prez.entrypoints=web"
+      - "traefik.http.services.prez.loadbalancer.server.port=8000"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://127.0.0.1:8000/api/prez/catalogs\")'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  test:
+    image: curlimages/curl:latest
+    depends_on:
+      traefik:
+        condition: service_healthy
+      prez:
+        condition: service_healthy
+    networks:
+      - prez-proxy-test
+    command: >
+      sh -c '
+        echo "=== Testing Traefik + Prez Proxy Setup ===" &&
+        echo "" &&
+        echo "Waiting for Traefik to configure routes..." &&
+        sleep 3 &&
+        echo "Testing /api/prez/catalogs through Traefik..." &&
+        curl -s http://traefik/api/prez/catalogs | head -20 &&
+        echo "" &&
+        echo "=== Test complete ===" &&
+        echo "" &&
+        echo "Traefik Dashboard: http://localhost:8080/dashboard/" &&
+        echo "Prez via Traefik: http://localhost/api/prez/catalogs" &&
+        echo "Prez Swagger UI: http://localhost/api/prez/docs"
+      '
+
+networks:
+  prez-proxy-test:
+    driver: bridge
