@@ -19,10 +19,11 @@ services:
     image: "ghcr.io/rdflib/prez:4.23.3"
     environment:
       SPARQL_REPO_TYPE: 'pyoxigraph_memory'
+      PYOXIGRAPH_DATA_DIR: '/data'
       ROOT_PATH: '/api/prez'
       LOG_LEVEL: 'INFO'
     volumes:
-      - ../../../../test_data:/data
+      - ../../test_data:/data
     networks:
       - prez-proxy-test
     healthcheck:
