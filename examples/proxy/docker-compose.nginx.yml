@@ -16,7 +16,7 @@ services:
       retries: 5
 
   prez:
-    image: "ghcr.io/rdflib/prez:latest"
+    image: "ghcr.io/rdflib/prez:4.23.3"
     environment:
       SPARQL_REPO_TYPE: 'pyoxigraph_memory'
       ROOT_PATH: '/api/prez'
