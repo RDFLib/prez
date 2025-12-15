@@ -111,7 +111,8 @@ class Settings(BaseSettings):
     use_path_aliases: bool = False
     spatial_query_format: Literal["geosparql", "qlever", "graphdb"] = "geosparql"
     search_uses_listing_count_limit: bool = False
-    profile_constraint_max_distance: int = 1
+    # If True, allow a single rdfs:subClassOf hop when selecting profiles. If False, exact class only.
+    profile_constraint_allow_subclass: bool = False
 
     @field_validator("prez_version")
     @classmethod
@@ -156,15 +157,6 @@ class Settings(BaseSettings):
             raise ValueError(
                 "Could not parse predicates. predicates must be valid URIs no prefixes allowed "
                 f"original message: {e}"
-            )
-        return v
-
-    @field_validator("profile_constraint_max_distance")
-    @classmethod
-    def validate_constraint_distance(cls, v):
-        if v < -1:
-            raise ValueError(
-                "profile_constraint_max_distance must be >= -1 (use -1 for unlimited)"
             )
         return v
 

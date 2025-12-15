@@ -5,11 +5,26 @@ These tests verify that profiles can match resources whose class is a subclass
 of the constrained class, with configurable distance limits.
 """
 import os
+from pathlib import Path
+
 import pytest
+from pyoxigraph import RdfFormat
 from rdflib import URIRef
 
 from prez.repositories import PyoxigraphRepo
 from prez.services.connegp_service import NegotiatedPMTs
+
+
+@pytest.fixture()
+def subclass_profiles_loaded(client_no_override):
+    """
+    Ensure subclass test profiles are present in the system store for these tests.
+    Uses fixture scope instead of globals to keep data loading explicit.
+    """
+    system_store = client_no_override.app.state._state.get("pyoxi_system_store")
+    data_path = Path(__file__).parent.parent / "test_data" / "profile_subclass_test.ttl"
+    system_store.load(data_path.read_bytes(), RdfFormat.TURTLE)
+    yield
 
 
 @pytest.mark.parametrize(
@@ -43,7 +58,8 @@ async def test_profile_subclass_matching(
     expected_profile_title,
     description,
     client_no_override,
-    monkeypatch
+    monkeypatch,
+    subclass_profiles_loaded,
 ):
     """
     Test profile matching with different constraint distance configurations.
@@ -54,8 +70,9 @@ async def test_profile_subclass_matching(
     3. Configuration via environment variable works correctly
     4. distance=0 reverts to exact-match-only behavior
     """
-    # Set the configuration via environment variable
-    monkeypatch.setenv("PROFILE_CONSTRAINT_MAX_DISTANCE", str(distance_config))
+    # Map legacy distance config to new boolean: 0 disables subclass, anything else enables single-hop
+    allow_subclass = distance_config != 0
+    monkeypatch.setenv("PROFILE_CONSTRAINT_ALLOW_SUBCLASS", "true" if allow_subclass else "false")
 
     # Reload settings to pick up new environment variable
     from prez import config
@@ -63,8 +80,8 @@ async def test_profile_subclass_matching(
     config.settings = config.Settings()
 
     # Verify config was set correctly
-    assert config.settings.profile_constraint_max_distance == distance_config, \
-        f"Config not set correctly: expected {distance_config}, got {config.settings.profile_constraint_max_distance}"
+    assert config.settings.profile_constraint_allow_subclass == allow_subclass, \
+        f"Config not set correctly: expected allow_subclass={allow_subclass}, got {config.settings.profile_constraint_allow_subclass}"
 
     # Get system store and repo
     system_store = client_no_override.app.state._state.get("pyoxi_system_store")
@@ -93,7 +110,7 @@ async def test_profile_subclass_matching(
 
 
 @pytest.mark.asyncio
-async def test_exact_match_priority_over_superclass(client_no_override, monkeypatch):
+async def test_exact_match_priority_over_superclass(client_no_override, monkeypatch, subclass_profiles_loaded):
     """
     Test that exact match (constraint_distance=0) always beats superclass match (constraint_distance=1).
 
@@ -104,7 +121,7 @@ async def test_exact_match_priority_over_superclass(client_no_override, monkeypa
 
     The exact match should always win regardless of other factors.
     """
-    monkeypatch.setenv("PROFILE_CONSTRAINT_MAX_DISTANCE", "2")
+    monkeypatch.setenv("PROFILE_CONSTRAINT_ALLOW_SUBCLASS", "true")
     from prez import config
     config.settings = config.Settings()
 
@@ -127,14 +144,14 @@ async def test_exact_match_priority_over_superclass(client_no_override, monkeypa
 
 
 @pytest.mark.asyncio
-async def test_superclass_match_when_no_exact_match(client_no_override, monkeypatch):
+async def test_superclass_match_when_no_exact_match(client_no_override, monkeypatch, subclass_profiles_loaded):
     """
     Test that superclass profile matches when no exact match exists.
 
     Mammal resource has no MammalProfile, so should match:
     - AnimalProfile (1-hop parent, distance=1) ✓ WINNER
     """
-    monkeypatch.setenv("PROFILE_CONSTRAINT_MAX_DISTANCE", "1")
+    monkeypatch.setenv("PROFILE_CONSTRAINT_ALLOW_SUBCLASS", "true")
     from prez import config
     config.settings = config.Settings()
 
@@ -157,7 +174,7 @@ async def test_superclass_match_when_no_exact_match(client_no_override, monkeypa
 
 
 @pytest.mark.asyncio
-async def test_distance_zero_exact_match_only(client_no_override, monkeypatch):
+async def test_distance_zero_exact_match_only(client_no_override, monkeypatch, subclass_profiles_loaded):
     """
     Test that distance=0 enforces exact-match-only behavior (original behavior).
 
@@ -166,11 +183,11 @@ async def test_distance_zero_exact_match_only(client_no_override, monkeypatch):
     - Cat matches CatProfile ✓
     - Mammal matches nothing (no MammalProfile exists) ✓
     """
-    monkeypatch.setenv("PROFILE_CONSTRAINT_MAX_DISTANCE", "0")
+    monkeypatch.setenv("PROFILE_CONSTRAINT_ALLOW_SUBCLASS", "false")
     from prez import config
     config.settings = config.Settings()
 
-    assert config.settings.profile_constraint_max_distance == 0
+    assert config.settings.profile_constraint_allow_subclass is False
 
     system_store = client_no_override.app.state._state.get("pyoxi_system_store")
     system_repo = PyoxigraphRepo(system_store)
@@ -206,29 +223,23 @@ async def test_distance_zero_exact_match_only(client_no_override, monkeypatch):
 @pytest.mark.asyncio
 async def test_config_validation_rejects_invalid_values(monkeypatch):
     """
-    Test that the configuration validator rejects invalid distance values.
-
-    Values < -1 should be rejected with a ValueError.
+    Test that the configuration parses boolean values for subclass allowance.
     """
     from prez.config import Settings
 
-    # Test that -2 is rejected
-    with pytest.raises(ValueError, match="must be >= -1"):
-        Settings(profile_constraint_max_distance=-2)
+    # Direct instantiation
+    Settings(profile_constraint_allow_subclass=True)
+    Settings(profile_constraint_allow_subclass=False)
 
-    # Test that -3 is rejected
-    with pytest.raises(ValueError, match="must be >= -1"):
-        Settings(profile_constraint_max_distance=-100)
-
-    # Test that valid values are accepted
-    Settings(profile_constraint_max_distance=-1)  # Should not raise
-    Settings(profile_constraint_max_distance=0)   # Should not raise
-    Settings(profile_constraint_max_distance=1)   # Should not raise
-    Settings(profile_constraint_max_distance=10)  # Should not raise
+    # From environment strings
+    monkeypatch.setenv("PROFILE_CONSTRAINT_ALLOW_SUBCLASS", "true")
+    assert Settings().profile_constraint_allow_subclass is True
+    monkeypatch.setenv("PROFILE_CONSTRAINT_ALLOW_SUBCLASS", "false")
+    assert Settings().profile_constraint_allow_subclass is False
 
 
 @pytest.mark.asyncio
-async def test_unlimited_distance_transitive_closure(client_no_override, monkeypatch):
+async def test_unlimited_distance_transitive_closure(client_no_override, monkeypatch, subclass_profiles_loaded):
     """
     Test that distance=-1 uses transitive closure for unlimited ancestor matching.
 
@@ -239,11 +250,11 @@ async def test_unlimited_distance_transitive_closure(client_no_override, monkeyp
 
     All should work with unlimited transitive matching.
     """
-    monkeypatch.setenv("PROFILE_CONSTRAINT_MAX_DISTANCE", "-1")
+    monkeypatch.setenv("PROFILE_CONSTRAINT_ALLOW_SUBCLASS", "true")
     from prez import config
     config.settings = config.Settings()
 
-    assert config.settings.profile_constraint_max_distance == -1
+    assert config.settings.profile_constraint_allow_subclass is True
 
     system_store = client_no_override.app.state._state.get("pyoxi_system_store")
     system_repo = PyoxigraphRepo(system_store)
@@ -270,7 +281,7 @@ async def test_unlimited_distance_transitive_closure(client_no_override, monkeyp
 
 
 @pytest.mark.asyncio
-async def test_backwards_compatibility(client_no_override):
+async def test_backwards_compatibility(client_no_override, subclass_profiles_loaded):
     """
     Test that existing profiles still work with the new feature (default distance=1).
 
@@ -280,8 +291,8 @@ async def test_backwards_compatibility(client_no_override):
     # Use default config (distance=1)
     from prez import config
     # Reset to default
-    if os.environ.get("PROFILE_CONSTRAINT_MAX_DISTANCE"):
-        del os.environ["PROFILE_CONSTRAINT_MAX_DISTANCE"]
+    if os.environ.get("PROFILE_CONSTRAINT_ALLOW_SUBCLASS"):
+        del os.environ["PROFILE_CONSTRAINT_ALLOW_SUBCLASS"]
     config.settings = config.Settings()
 
     system_store = client_no_override.app.state._state.get("pyoxi_system_store")

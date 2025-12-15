@@ -319,48 +319,44 @@ class NegotiatedPMTs(BaseModel):
 
     def _generate_constraint_matching_pattern(self) -> str:
         """
-        Generates SPARQL pattern for constraint class matching based on config.
-        Returns the complete pattern string to replace the constraint matching line.
+        Generates SPARQL pattern and constraint distance calculation based on config.
+        Returns the pattern string to embed in the main SELECT.
         """
         from prez.config import settings
 
-        max_distance = settings.profile_constraint_max_distance
+        allow_subclass = getattr(settings, "profile_constraint_allow_subclass", True)
+        # Constrain to exact (0) or single-hop (1) behaviour for now to keep
+        # ranking deterministic without handling deeper inheritance chains.
+        effective_max = 0 if not allow_subclass else 1
 
-        if max_distance == 0:
-            # Exact match only - just return the constraint line
-            # BIND will be added separately after the full pattern
-            return "?profile altr-ext:constrainsClass ?class ;"
+        base_pattern = """?profile altr-ext:constrainsClass ?matchClass ;
+                       altr-ext:hasResourceFormat ?format ;
+                       dcterms:title ?title ."""
 
-        elif max_distance == 1:
-            # Single hop - optimized UNION (default)
-            return """{
-                BIND(?class as ?matchClass)
-                BIND(0 as ?constraint_distance)
-              } UNION {
-                ?class rdfs:subClassOf ?matchClass .
-                BIND(1 as ?constraint_distance)
-              }
-              ?profile altr-ext:constrainsClass ?matchClass ;"""
+        if effective_max == 0:
+            # Only accept exact match
+            return (
+                base_pattern
+                + """
+              BIND(IF(?class = ?matchClass, 0, 999) AS ?constraint_distance)
+              FILTER(?constraint_distance = 0)"""
+            )
 
-        elif max_distance > 1:
-            # Multi-hop - generate N UNION branches
-            unions = []
-            # Exact match (distance 0)
-            unions.append("{{\n                BIND(?class as ?matchClass)\n                BIND(0 as ?constraint_distance)\n              }}")
-            # N hops
-            for i in range(1, max_distance + 1):
-                unions.append(
-                    f"{{\n                ?class rdfs:subClassOf{{{i}}} ?matchClass .\n"
-                    f"                BIND({i} as ?constraint_distance)\n              }}"
-                )
-            return f"""{' UNION '.join(unions)}
-              ?profile altr-ext:constrainsClass ?matchClass ;"""
+        # For distance >=1, compute distance only for 0 or 1 hops.
+        expr = "IF(?class = ?matchClass, 0,\n" \
+               "    IF(EXISTS { ?class rdfs:subClassOf ?matchClass }, 1,\n" \
+               "       999))"
 
-        else:  # max_distance == -1 (unlimited)
-            # Transitive closure with binary distance
-            return """?class rdfs:subClassOf* ?matchClass .
-              BIND(IF(?class = ?matchClass, 0, 1) as ?constraint_distance)
-              ?profile altr-ext:constrainsClass ?matchClass ;"""
+        distance_filter = (
+            f"FILTER(?constraint_distance <= {effective_max})"
+        )
+
+        return (
+            base_pattern
+            + f"""
+              BIND({expr} AS ?constraint_distance)
+              {distance_filter}"""
+        )
 
     def _compose_select_query(self) -> str:
         from prez.config import settings
@@ -375,9 +371,6 @@ class NegotiatedPMTs(BaseModel):
         else:
             requested_profile = None
 
-        # Determine if we need a separate BIND for distance=0
-        add_distance_bind = settings.profile_constraint_max_distance == 0
-
         query = dedent(
             f"""
             PREFIX altr-ext: <http://www.w3.org/ns/dx/connegp/altr-ext#>
@@ -391,20 +384,16 @@ class NegotiatedPMTs(BaseModel):
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             PREFIX sh: <http://www.w3.org/ns/shacl#>
 
-            SELECT ?profile ?title ?class (count(?mid) as ?distance) ?constraint_distance ?req_profile ?def_profile ?format ?req_format ?def_format ?alt_prof
+            SELECT ?profile ?title ?class ?constraint_distance ?req_profile ?def_profile ?format ?req_format ?def_format ?alt_prof
 
             WHERE {{
               VALUES ?class {{{" ".join('<' + str(klass) + '>' for klass in self.classes)}}}
-              ?class rdfs:subClassOf* ?mid .
-              ?mid rdfs:subClassOf* ?base_class .
+              ?class rdfs:subClassOf* ?base_class .
               VALUES ?base_class {{ {" ".join(klass.n3() for klass in query_klasses)}
                prof:Profile prez:SPARQLQuery
               prez:SearchResult prez:CQLFilterResult prez:Object rdfs:Resource }}
               {self._generate_constraint_matching_pattern()}
-                       altr-ext:hasResourceFormat ?format ;
-                       dcterms:title ?title .
               {f'?profile a {profile_class.n3()} .'}
-              {"BIND(0 as ?constraint_distance)" if add_distance_bind else ""}
               {f'BIND(?profile={requested_profile.n3()} as ?req_profile)' if requested_profile else 'BIND(false as ?req_profile)'}
               BIND(EXISTS {{ ?shape sh:targetClass ?class ;
                                    altr-ext:hasDefaultProfile ?profile }} AS ?def_profile)
@@ -413,7 +402,7 @@ class NegotiatedPMTs(BaseModel):
               BIND(?profile=<http://www.w3.org/ns/dx/connegp/altr-ext#alt-profile> AS ?alt_prof)
             }}
             GROUP BY ?class ?profile ?constraint_distance ?req_profile ?def_profile ?format ?req_format ?def_format ?title ?alt_prof
-            ORDER BY DESC(?req_profile) ASC(?alt_prof) ASC(?constraint_distance) DESC(?distance) DESC(?def_profile) DESC(?req_format) DESC(?def_format)
+            ORDER BY DESC(?req_profile) ASC(?constraint_distance) DESC(?def_profile) DESC(?req_format) DESC(?def_format) ASC(?alt_prof)
             """
         )
         return query
@@ -451,7 +440,6 @@ class NegotiatedPMTs(BaseModel):
                     item["profile"]["value"],
                     item["title"]["value"],
                     item["class"]["value"],
-                    item["distance"]["value"],
                     item["constraint_distance"]["value"],
                     item["def_profile"]["value"],
                     item["req_profile"]["value"],
@@ -468,7 +456,6 @@ class NegotiatedPMTs(BaseModel):
                 "Profile",
                 "Title",
                 "Class",
-                "Distance",
                 "Constraint Distance",
                 "Default Profile",
                 "Requested Profile",
@@ -479,6 +466,6 @@ class NegotiatedPMTs(BaseModel):
             ]
 
             # Render as a table
-            log.debug(tabulate(table_data, headers=headers, tablefmt="grid"))
+            print(tabulate(table_data, headers=headers, tablefmt="grid"))
 
         return response
