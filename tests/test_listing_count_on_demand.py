@@ -143,7 +143,7 @@ class TestListingCountOnDemandEnabled:
         with patch.object(settings, "listing_count_on_demand", True):
             # Request GeoJSON listing without hits
             r = client.get(
-                "/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/collections/ex:FeatureCollection/items?_mediatype=application/geo%2Bjson&_profile=ogcfeat-human"
+                "/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/collections/ex:FeatureCollection/items?_mediatype=application/geo%2Bjson&_profile=ogcfeat-human&limit=1"
             )
             assert r.status_code == 200
 
@@ -152,6 +152,7 @@ class TestListingCountOnDemandEnabled:
             # Should have numberReturned (count of items in this response)
             assert "numberReturned" in geojson
             assert geojson["numberReturned"] >= 0
+            assert "numberMatched" not in geojson
 
             # Should NOT have numberMatched (total count)
             # Note: numberMatched might be inferred if it's the first page and
