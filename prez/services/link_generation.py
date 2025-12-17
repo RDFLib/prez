@@ -245,46 +245,27 @@ async def _link_generation_many(
             ]
             # run queries for available nodeshapes to get link components
             for ns in available_nodeshapes:
-                if int(ns.hierarchy_level) > 1:
-                    results = await get_link_components_many(ns, uri_nodes, repo)
-                    for result in results:
-                        # if the list at tuple[1] > 0 then there's some result and a link should be generated.
-                        # NB for top level links, there will be a result (the graph pattern matched) BUT the result will not form
-                        # part of the link. e.g. ?path_node_1 will have result(s) but is not part of the link.
-                        solution: dict
-                        for solution in result[1]:
-                            uri = URIRef(
-                                solution.pop("_link_focus_node")["value"]
-                            )  # remove the link's focus node variable
-                            # create link strings
-                            (curie_for_uri, members_link, object_link, identifiers) = (
-                                await create_link_strings(
-                                    ns.hierarchy_level,
-                                    solution,
-                                    uri,
-                                    endpoint_structure,
-                                )
-                            )
-                            uri_node = OxiNamedNode(uri)
-                            # add links and identifiers to graph and cache
-                            await add_links_to_graph_and_cache(
-                                curie_for_uri,
-                                graph,
-                                members_link,
-                                object_link,
-                                uri_node,
-                                identifiers,
-                            )
-                else:
-                    for uri_node in uri_nodes:
-                        curie_for_uri, members_link, object_link, identifiers = (
+                results = await get_link_components_many(ns, uri_nodes, repo)
+                for result in results:
+                    # if the list at tuple[1] > 0 then there's some result and a link should be generated.
+                    # NB for top level links, there will be a result (the graph pattern matched) BUT the result will not form
+                    # part of the link. e.g. ?path_node_1 will have result(s) but is not part of the link.
+                    solution: dict
+                    for solution in result[1]:
+                        uri = URIRef(
+                            solution.pop("_link_focus_node")["value"]
+                        )  # remove the link's focus node variable
+                        # create link strings
+                        (curie_for_uri, members_link, object_link, identifiers) = (
                             await create_link_strings(
                                 ns.hierarchy_level,
-                                {},
-                                URIRef(uri_node.value),
+                                solution,
+                                uri,
                                 endpoint_structure,
                             )
                         )
+                        uri_node = OxiNamedNode(uri)
+                        # add links and identifiers to graph and cache
                         await add_links_to_graph_and_cache(
                             curie_for_uri,
                             graph,
