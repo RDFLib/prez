@@ -2,7 +2,7 @@ import logging
 import sys
 
 from rdflib import Namespace
-from rdflib.namespace import RDF, RDFS
+from rdflib.namespace import RDF, RDFS, XSD
 from sparql_grammar_pydantic import (
     IRI,
     AdditiveExpression,
@@ -247,6 +247,16 @@ class SearchQueryFusekiFTS(ConstructQuery):
                                                                         varorterm=GraphTerm(
                                                                             content=RDFLiteral(
                                                                                 value=term
+                                                                            )
+                                                                        )
+                                                                    )
+                                                                ),
+                                                                GraphNodePath(
+                                                                    varorterm_or_triplesnodepath=VarOrTerm(
+                                                                        varorterm=GraphTerm(
+                                                                            content=RDFLiteral(
+                                                                                value=str(limit + offset),
+                                                                                datatype=IRI(value=XSD.integer)
                                                                             )
                                                                         )
                                                                     )
