@@ -2,7 +2,7 @@ import logging
 import sys
 
 from rdflib import Namespace
-from rdflib.namespace import RDF, RDFS
+from rdflib.namespace import RDF, RDFS, XSD
 from sparql_grammar_pydantic import (
     IRI,
     AdditiveExpression,
@@ -92,7 +92,7 @@ class SearchQueryFusekiFTS(ConstructQuery):
             SELECT ?focus_node ?pred ?match ?weight (URI(CONCAT("urn:hash:", SHA256(CONCAT(STR(?focus_node), STR(?pred), STR(?match), STR(?weight))))) AS ?hashID)
             WHERE {
                 {
-                    (?focus_node ?weight ?match ?g ?pred) <http://jena.apache.org/text#query> ( <searchProp1> <searchProp2> "search+term")
+                    (?focus_node ?weight ?match ?g ?pred) <http://jena.apache.org/text#query> ( <searchProp1> <searchProp2> "search+term" <limit>)
                 }
                 UNION
                 {
@@ -130,7 +130,9 @@ class SearchQueryFusekiFTS(ConstructQuery):
         limit += 1  # increase the limit by one, so we know if there are further pages of results.
         # clients submitting lucene FTS queries must escape the following characters if they do not want them to have
         # the lucene special meaning: + - && || ! ( ) { } [ ] ^ " ~ * ? : \ /
-        term = term.replace("\\", "\\\\")  # escape for SPARQL anything that has been Lucene escaped already
+        term = term.replace(
+            "\\", "\\\\"
+        )  # escape for SPARQL anything that has been Lucene escaped already
         term = term.replace('"', '\\"')  # escape quotes for SPARQL
 
         sr_uri: Var = Var(value="focus_node")
@@ -250,7 +252,22 @@ class SearchQueryFusekiFTS(ConstructQuery):
                                                                             )
                                                                         )
                                                                     )
-                                                                )
+                                                                ),
+                                                                GraphNodePath(
+                                                                    varorterm_or_triplesnodepath=VarOrTerm(
+                                                                        varorterm=GraphTerm(
+                                                                            content=RDFLiteral(
+                                                                                value=str(
+                                                                                    limit
+                                                                                    + offset
+                                                                                ),
+                                                                                datatype=IRI(
+                                                                                    value=XSD.integer
+                                                                                ),
+                                                                            )
+                                                                        )
+                                                                    )
+                                                                ),
                                                             ]
                                                         )
                                                     )
@@ -426,6 +443,40 @@ class SearchQueryFusekiFTS(ConstructQuery):
             where_clause=where_clause,
             solution_modifier=SolutionModifier(),
         )
+
+    def update_fts_limit_arg(self, new_limit: int):
+        """Update the limit argument for the inner text:query function.
+        This modifies the relevant TriplesBlock inside the query's WHERE clause.
+        """
+
+        gnp = GraphNodePath(
+            varorterm_or_triplesnodepath=VarOrTerm(
+                varorterm=GraphTerm(
+                    content=RDFLiteral(
+                        value=str(new_limit),
+                        datatype=IRI(value=XSD.integer),
+                    )
+                )
+            )
+        )
+        try:
+            self.where_clause.group_graph_pattern.content.where_clause.group_graph_pattern.content.graph_patterns_or_triples_blocks[
+                0
+            ].content.group_graph_patterns[
+                0
+            ].content.graph_patterns_or_triples_blocks[
+                0
+            ].triples.content[
+                1
+            ].plpne.first_pair[
+                1
+            ].object_paths[
+                0
+            ].graph_node_path.varorterm_or_triplesnodepath.coll_path_or_bnpl_path.graphnodepath_list[
+                2
+            ] = gnp
+        except Exception as e:
+            pass
 
     @property
     def order_by_val(self):

@@ -7,49 +7,49 @@ import logging
 
 from fastapi.responses import PlainTextResponse
 from oxrdflib._converter import to_ox
+from pyoxigraph import BlankNode as OxiBlankNode
+from pyoxigraph import DefaultGraph as OxiDefaultGraph
+from pyoxigraph import Literal as OxiLiteral
+from pyoxigraph import NamedNode as OxiNamedNode
+from pyoxigraph import Quad as OxiQuad
 from pyoxigraph import (
     RdfFormat,
-    Store as OxiStore,
-    Quad as OxiQuad,
-    NamedNode as OxiNamedNode,
-    BlankNode as OxiBlankNode,
-    Literal as OxiLiteral,
-    DefaultGraph as OxiDefaultGraph,
 )
+from pyoxigraph import Store as OxiStore
 from rdf2geojson import convert
 from rdflib import Literal, Namespace
-from rdflib.namespace import GEO, RDF, PROF, RDFS
+from rdflib.namespace import GEO, PROF, RDF, RDFS
 from sparql_grammar_pydantic import (
     IRI,
-    TriplesSameSubject,
-    Var,
-    SelectClause,
-    WhereClause,
     GroupGraphPattern,
     GroupGraphPatternSub,
-    TriplesBlock,
-    TriplesSameSubjectPath,
+    LimitClause,
+    LimitOffsetClauses,
+    OffsetClause,
+    SelectClause,
     SolutionModifier,
     SubSelect,
-    LimitOffsetClauses,
-    LimitClause,
-    OffsetClause,
+    TriplesBlock,
+    TriplesSameSubject,
+    TriplesSameSubjectPath,
+    Var,
+    WhereClause,
 )
 
 from prez.cache import prefix_graph
 from prez.config import settings
 from prez.dependencies import DummySearchMarker
-from prez.enums import NonAnnotatedRDFMediaType, AnnotatedRDFMediaType
+from prez.enums import AnnotatedRDFMediaType, NonAnnotatedRDFMediaType
 from prez.reference_data.prez_ns import ALTREXT, OGCFEAT, PREZ
 from prez.renderers.renderer import (
+    create_collections_json,
+    generate_geojson_extras,
+    generate_link_headers,
+    generate_queryables_from_shacl_definition,
+    get_geojson_int_count,
+    handle_alt_profile,
     return_annotated_rdf_for_oxigraph,
     return_from_graph,
-    generate_geojson_extras,
-    handle_alt_profile,
-    generate_queryables_from_shacl_definition,
-    create_collections_json,
-    generate_link_headers,
-    get_geojson_int_count,
 )
 from prez.repositories import Repo
 from prez.services.connegp_service import OXIGRAPH_SERIALIZER_TYPES_MAP
@@ -58,12 +58,14 @@ from prez.services.generate_queryables import generate_queryables_json
 from prez.services.link_generation import add_prez_links_for_oxigraph
 from prez.services.query_generation.count import CountQuery
 from prez.services.query_generation.facet import FacetQuery
+from prez.services.query_generation.search_fuseki_fts import SearchQueryFusekiFTS
 from prez.services.query_generation.umbrella import (
     PrezQueryConstructor,
     merge_listing_query_grammar_inputs,
 )
 
 log = logging.getLogger(__name__)
+
 
 DWC = Namespace("http://rs.tdwg.org/dwc/terms/")
 
@@ -283,7 +285,68 @@ async def listing_function(
         or (pmts.selected["mediatype"] == "application/geo+json")
         or (search_query and settings.search_uses_listing_count_limit)
     ):
-        subselect = copy.deepcopy(main_query.inner_select)
+        # If its a FTS query, adjust the limit in the text:query to match
+        # the limit of the outer select, which will be the listing count limit
+        # setting or greater based on the limit + offset specified in the query.
+        #
+        # I'm sure this is not an ideal why to do this, but I don't know
+        # how else. Essentially This just reconstructs the SearchQuery in the same
+        # way as it is done at the start of this function.
+        if search_query and isinstance(search_query, SearchQueryFusekiFTS):
+            current_offset = (
+                main_query.inner_select.solution_modifier.limit_offset.offset_clause.offset
+            )
+            current_limit = (
+                main_query.inner_select.solution_modifier.limit_offset.limit_clause.limit
+            )
+            if (current_offset + current_limit) > settings.listing_count_limit:
+                limit = current_offset + current_limit
+            else:
+                limit = settings.listing_count_limit
+            limit_plus_one = limit + 1
+            search_query_copy: SearchQueryFusekiFTS = copy.deepcopy(search_query)
+            search_query_copy.update_fts_limit_arg(new_limit=limit_plus_one)
+            subselect_kwargs = merge_listing_query_grammar_inputs(
+                cql_parser=cql_parser,
+                endpoint_nodeshape=endpoint_nodeshape,
+                search_query=search_query_copy,
+                concept_hierarchy_query=concept_hierarchy_query,
+                query_params=query_params,
+            )
+            if (
+                pmts.selected["mediatype"] == "application/geo+json"
+            ):  # Ensure the focus nodes have a geometry in the SPARQL
+                # subselect. If they are missing, the subsequent GeoJSON conversion will drop any Features without geometries.
+                _add_geom_triple_pattern_match(
+                    subselect_kwargs["inner_select_tssp_list"]
+                )
+
+            # merge subselect and profile triples same subject (for construct triples)
+            construct_tss_list = []
+            subselect_tss_list = subselect_kwargs.pop("construct_tss_list")
+            if subselect_tss_list:
+                construct_tss_list.extend(subselect_tss_list)
+            if profile_nodeshape.tss_list:
+                construct_tss_list.extend(profile_nodeshape.tss_list)
+
+            # add focus node declaration if it's an annotated mediatype
+            if "anot+" in pmts.selected["mediatype"]:
+                construct_tss_list.append(
+                    TriplesSameSubject.from_spo(
+                        subject=profile_nodeshape.focus_node,
+                        predicate=IRI(value="https://prez.dev/type"),
+                        object=IRI(value="https://prez.dev/FocusNode"),
+                    )
+                )
+            main_query_copy = PrezQueryConstructor(
+                construct_tss_list=construct_tss_list,
+                profile_triples=profile_nodeshape.tssp_list,
+                profile_gpnt=profile_nodeshape.gpnt_list,
+                **subselect_kwargs,
+            )
+            subselect = main_query_copy.inner_select
+        else:
+            subselect = copy.deepcopy(main_query.inner_select)
         count_query = CountQuery(original_subselect=subselect).to_string()
         queries.append(count_query)
 
@@ -325,7 +388,9 @@ async def listing_function(
             for focus_node_quad in focus_node_quads:
                 # focus_node_quad.subject is already an OxiNamedNode
                 focus_node = focus_node_quad.subject
-                focus_node_uri = focus_node.value  # Get the URI string without angle brackets
+                focus_node_uri = (
+                    focus_node.value
+                )  # Get the URI string without angle brackets
 
                 # Create a unique hash ID for this dummy search result
                 hash_input = f"{focus_node_uri}:dummy"
@@ -375,7 +440,11 @@ async def listing_function(
                 )
 
     # count search results - hard to do in SPARQL as the SELECT part of the query is NOT aggregated
-    if search_query and not isinstance(search_query, DummySearchMarker) and not settings.search_uses_listing_count_limit:
+    if (
+        search_query
+        and not isinstance(search_query, DummySearchMarker)
+        and not settings.search_uses_listing_count_limit
+    ):
         count = len(
             list(
                 item_store.quads_for_pattern(
