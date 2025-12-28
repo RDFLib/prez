@@ -1375,6 +1375,21 @@ def _build_path_elt_or_inverse(path_item: PropertyPath) -> PathEltOrInverse:
                 path_alternative=PathAlternative(sequence_paths=alt_sg_path_sequences)
             )
         )
+    elif isinstance(path_item, SequencePath):
+        # Build a PathSequence that preserves the ordered elements of the sequence
+        sequence_list = [
+            _build_path_elt_or_inverse(sequence_element)
+            for sequence_element in path_item.value
+        ]
+        core_path_primary = PathPrimary(
+            value=SG_Path(
+                path_alternative=PathAlternative(
+                    sequence_paths=[
+                        PathSequence(list_path_elt_or_inverse=sequence_list)
+                    ]
+                )
+            )
+        )
     elif isinstance(
         path_item, (InversePath, ZeroOrMorePath, OneOrMorePath, ZeroOrOnePath)
     ):
