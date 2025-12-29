@@ -7,49 +7,49 @@ import logging
 
 from fastapi.responses import PlainTextResponse
 from oxrdflib._converter import to_ox
+from pyoxigraph import BlankNode as OxiBlankNode
+from pyoxigraph import DefaultGraph as OxiDefaultGraph
+from pyoxigraph import Literal as OxiLiteral
+from pyoxigraph import NamedNode as OxiNamedNode
+from pyoxigraph import Quad as OxiQuad
 from pyoxigraph import (
     RdfFormat,
-    Store as OxiStore,
-    Quad as OxiQuad,
-    NamedNode as OxiNamedNode,
-    BlankNode as OxiBlankNode,
-    Literal as OxiLiteral,
-    DefaultGraph as OxiDefaultGraph,
 )
+from pyoxigraph import Store as OxiStore
 from rdf2geojson import convert
 from rdflib import Literal, Namespace
-from rdflib.namespace import GEO, RDF, PROF, RDFS
+from rdflib.namespace import GEO, PROF, RDF, RDFS
 from sparql_grammar_pydantic import (
     IRI,
-    TriplesSameSubject,
-    Var,
-    SelectClause,
-    WhereClause,
     GroupGraphPattern,
     GroupGraphPatternSub,
-    TriplesBlock,
-    TriplesSameSubjectPath,
+    LimitClause,
+    LimitOffsetClauses,
+    OffsetClause,
+    SelectClause,
     SolutionModifier,
     SubSelect,
-    LimitOffsetClauses,
-    LimitClause,
-    OffsetClause,
+    TriplesBlock,
+    TriplesSameSubject,
+    TriplesSameSubjectPath,
+    Var,
+    WhereClause,
 )
 
 from prez.cache import prefix_graph
 from prez.config import settings
 from prez.dependencies import DummySearchMarker
-from prez.enums import NonAnnotatedRDFMediaType, AnnotatedRDFMediaType
+from prez.enums import AnnotatedRDFMediaType, NonAnnotatedRDFMediaType
 from prez.reference_data.prez_ns import ALTREXT, OGCFEAT, PREZ
 from prez.renderers.renderer import (
+    create_collections_json,
+    generate_geojson_extras,
+    generate_link_headers,
+    generate_queryables_from_shacl_definition,
+    get_geojson_int_count,
+    handle_alt_profile,
     return_annotated_rdf_for_oxigraph,
     return_from_graph,
-    generate_geojson_extras,
-    handle_alt_profile,
-    generate_queryables_from_shacl_definition,
-    create_collections_json,
-    generate_link_headers,
-    get_geojson_int_count,
 )
 from prez.repositories import Repo
 from prez.services.connegp_service import OXIGRAPH_SERIALIZER_TYPES_MAP
@@ -325,7 +325,9 @@ async def listing_function(
             for focus_node_quad in focus_node_quads:
                 # focus_node_quad.subject is already an OxiNamedNode
                 focus_node = focus_node_quad.subject
-                focus_node_uri = focus_node.value  # Get the URI string without angle brackets
+                focus_node_uri = (
+                    focus_node.value
+                )  # Get the URI string without angle brackets
 
                 # Create a unique hash ID for this dummy search result
                 hash_input = f"{focus_node_uri}:dummy"
@@ -375,7 +377,11 @@ async def listing_function(
                 )
 
     # count search results - hard to do in SPARQL as the SELECT part of the query is NOT aggregated
-    if search_query and not isinstance(search_query, DummySearchMarker) and not settings.search_uses_listing_count_limit:
+    if (
+        search_query
+        and not isinstance(search_query, DummySearchMarker)
+        and not settings.search_uses_listing_count_limit
+    ):
         count = len(
             list(
                 item_store.quads_for_pattern(

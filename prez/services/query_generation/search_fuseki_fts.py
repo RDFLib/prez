@@ -130,7 +130,9 @@ class SearchQueryFusekiFTS(ConstructQuery):
         limit += 1  # increase the limit by one, so we know if there are further pages of results.
         # clients submitting lucene FTS queries must escape the following characters if they do not want them to have
         # the lucene special meaning: + - && || ! ( ) { } [ ] ^ " ~ * ? : \ /
-        term = term.replace("\\", "\\\\")  # escape for SPARQL anything that has been Lucene escaped already
+        term = term.replace(
+            "\\", "\\\\"
+        )  # escape for SPARQL anything that has been Lucene escaped already
         term = term.replace('"', '\\"')  # escape quotes for SPARQL
 
         sr_uri: Var = Var(value="focus_node")
@@ -255,12 +257,17 @@ class SearchQueryFusekiFTS(ConstructQuery):
                                                                     varorterm_or_triplesnodepath=VarOrTerm(
                                                                         varorterm=GraphTerm(
                                                                             content=RDFLiteral(
-                                                                                value=str(limit + offset),
-                                                                                datatype=IRI(value=XSD.integer)
+                                                                                value=str(
+                                                                                    limit
+                                                                                    + offset
+                                                                                ),
+                                                                                datatype=IRI(
+                                                                                    value=XSD.integer
+                                                                                ),
                                                                             )
                                                                         )
                                                                     )
-                                                                )
+                                                                ),
                                                             ]
                                                         )
                                                     )
