@@ -58,12 +58,14 @@ from prez.services.generate_queryables import generate_queryables_json
 from prez.services.link_generation import add_prez_links_for_oxigraph
 from prez.services.query_generation.count import CountQuery
 from prez.services.query_generation.facet import FacetQuery
+from prez.services.query_generation.search_fuseki_fts import SearchQueryFusekiFTS
 from prez.services.query_generation.umbrella import (
     PrezQueryConstructor,
     merge_listing_query_grammar_inputs,
 )
 
 log = logging.getLogger(__name__)
+
 
 DWC = Namespace("http://rs.tdwg.org/dwc/terms/")
 
@@ -283,7 +285,51 @@ async def listing_function(
         or (pmts.selected["mediatype"] == "application/geo+json")
         or (search_query and settings.search_uses_listing_count_limit)
     ):
-        subselect = copy.deepcopy(main_query.inner_select)
+        # Remove FTS limit from text:query property function for FTS queries
+        if search_query and isinstance(search_query, SearchQueryFusekiFTS):
+            search_query_copy = copy.deepcopy(search_query)
+            search_query_copy.remove_fts_limit_arg()
+            subselect_kwargs = merge_listing_query_grammar_inputs(
+                cql_parser=cql_parser,
+                endpoint_nodeshape=endpoint_nodeshape,
+                search_query=search_query_copy,
+                concept_hierarchy_query=concept_hierarchy_query,
+                query_params=query_params,
+            )
+            if (
+                pmts.selected["mediatype"] == "application/geo+json"
+            ):  # Ensure the focus nodes have a geometry in the SPARQL
+                # subselect. If they are missing, the subsequent GeoJSON conversion will drop any Features without geometries.
+                _add_geom_triple_pattern_match(
+                    subselect_kwargs["inner_select_tssp_list"]
+                )
+
+            # merge subselect and profile triples same subject (for construct triples)
+            construct_tss_list = []
+            subselect_tss_list = subselect_kwargs.pop("construct_tss_list")
+            if subselect_tss_list:
+                construct_tss_list.extend(subselect_tss_list)
+            if profile_nodeshape.tss_list:
+                construct_tss_list.extend(profile_nodeshape.tss_list)
+
+            # add focus node declaration if it's an annotated mediatype
+            if "anot+" in pmts.selected["mediatype"]:
+                construct_tss_list.append(
+                    TriplesSameSubject.from_spo(
+                        subject=profile_nodeshape.focus_node,
+                        predicate=IRI(value="https://prez.dev/type"),
+                        object=IRI(value="https://prez.dev/FocusNode"),
+                    )
+                )
+            main_query_copy = PrezQueryConstructor(
+                construct_tss_list=construct_tss_list,
+                profile_triples=profile_nodeshape.tssp_list,
+                profile_gpnt=profile_nodeshape.gpnt_list,
+                **subselect_kwargs,
+            )
+            subselect = main_query_copy.inner_select
+        else:
+            subselect = copy.deepcopy(main_query.inner_select)
         count_query = CountQuery(original_subselect=subselect).to_string()
         queries.append(count_query)
 

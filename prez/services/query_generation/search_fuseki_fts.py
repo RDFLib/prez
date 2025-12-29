@@ -444,6 +444,43 @@ class SearchQueryFusekiFTS(ConstructQuery):
             solution_modifier=SolutionModifier(),
         )
 
+    def remove_fts_limit_arg(self):
+        """Remove the limit argument from the inner text:query function.
+        This modifies the relevant TriplesBlock inside the query's WHERE clause.
+        """
+
+        def _remove_limit_arg_from_block(tb):
+            try:
+                del (
+                    tb.content[1]
+                    .plpne.first_pair[1]
+                    .object_paths[0]
+                    .graph_node_path.varorterm_or_triplesnodepath.coll_path_or_bnpl_path.graphnodepath_list[
+                        2
+                    ]
+                )
+            except Exception:
+                pass
+
+        group_graph_pattern = self.where_clause.group_graph_pattern
+        inner_select = getattr(group_graph_pattern.content, "where_clause", None)
+        if inner_select:
+            subs = (
+                inner_select.group_graph_pattern.content.graph_patterns_or_triples_blocks
+            )
+            for gpnt in subs:
+                if hasattr(gpnt, "triples") and hasattr(gpnt.triples, "content"):
+                    _remove_limit_arg_from_block(gpnt.triples)
+                elif hasattr(gpnt, "content"):
+                    for subgp in getattr(gpnt.content, "group_graph_patterns", []):
+                        for sub in getattr(
+                            subgp.content, "graph_patterns_or_triples_blocks", []
+                        ):
+                            if hasattr(sub, "triples") and hasattr(
+                                sub.triples, "content"
+                            ):
+                                _remove_limit_arg_from_block(sub.triples)
+
     @property
     def order_by_val(self):
         return Var(value="weight")
