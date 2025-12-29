@@ -287,8 +287,19 @@ async def listing_function(
     ):
         # Remove FTS limit from text:query property function for FTS queries
         if search_query and isinstance(search_query, SearchQueryFusekiFTS):
-            search_query_copy = copy.deepcopy(search_query)
-            search_query_copy.remove_fts_limit_arg()
+            current_offset = (
+                main_query.inner_select.solution_modifier.limit_offset.offset_clause.offset
+            )
+            current_limit = (
+                main_query.inner_select.solution_modifier.limit_offset.limit_clause.limit
+            )
+            if (current_offset + current_limit) > settings.listing_count_limit:
+                limit = current_offset + current_limit
+            else:
+                limit = settings.listing_count_limit
+            limit_plus_one = limit + 1
+            search_query_copy: SearchQueryFusekiFTS = copy.deepcopy(search_query)
+            search_query_copy.update_fts_limit_arg(new_limit=limit_plus_one)
             subselect_kwargs = merge_listing_query_grammar_inputs(
                 cql_parser=cql_parser,
                 endpoint_nodeshape=endpoint_nodeshape,
