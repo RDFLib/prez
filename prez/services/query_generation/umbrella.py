@@ -337,7 +337,11 @@ def merge_listing_query_grammar_inputs(
     # include at least one triple in the subselect, for the focus node class, which will match the class selection
     # always included in profiles.
     # kwargs["inner_select_gpnt"] could be present but have a FILTER EXISTS only, producing no bindings, so it is not checked here.
-    if not kwargs["inner_select_tssp_list"]:
+    #
+    # The concept hierarchy query provides its own focus-node binding patterns and must not be forced to also match
+    # `?focus_node a ?default_class_var` (see #453).
+    # This guards against ?focus_node from being unbounded for concept hierarchy queries.
+    if not kwargs["inner_select_tssp_list"] and not concept_hierarchy_query:
         triple = (
             Var(value="focus_node"),
             IRI(value="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
