@@ -375,3 +375,71 @@ def test_create_regex_filter():
     regex_filter = create_regex_filter(variable, pattern)
     query_string = regex_filter.to_string()
     assert query_string == '\nFILTER REGEX(STR(?variable), "test_pattern")'
+
+
+def test_default_class_var_included_when_inner_select_tssp_list_empty():
+    """
+    Tests that when inner_select_tssp_list is empty (and no concept_hierarchy_query),
+    the default ?focus_node a ?default_class_var triple is added to the inner select.
+    """
+    from prez.services.query_generation.umbrella import (
+        merge_listing_query_grammar_inputs,
+    )
+    from prez.models.query_params import ListingQueryParams
+
+    qp = ListingQueryParams(
+        limit=10, page=1, offset=0, _filter=None, bbox=[], datetime=None, order_by=None
+    )
+    kwargs = merge_listing_query_grammar_inputs(query_params=qp)
+    query = PrezQueryConstructor(**kwargs)
+    query_string = query.to_string()
+    assert (
+        "?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?default_class_var"
+        in query_string
+    )
+
+
+def test_default_class_var_excluded_for_concept_hierarchy_query():
+    """
+    Tests that when a concept_hierarchy_query is provided, the default
+    ?focus_node a ?default_class_var triple is NOT added to the inner select.
+    This prevents unbounded variables causing the database to load unnecessary data.
+    See https://github.com/RDFLib/prez/issues/453
+    """
+    from prez.services.query_generation.umbrella import (
+        merge_listing_query_grammar_inputs,
+    )
+    from prez.models.query_params import ListingQueryParams
+
+    parent_uri = IRI(value="https://example.org/concept-scheme")
+    parent_child_predicates = (
+        IRI(value=SKOS.hasTopConcept),
+        IRI(value=SKOS.topConceptOf),
+    )
+    child_grandchild_predicates = (IRI(value=SKOS.narrower), IRI(value=SKOS.broader))
+
+    concept_hierarchy_query = ConceptHierarchyQuery(
+        parent_uri=parent_uri,
+        parent_child_predicates=parent_child_predicates,
+        child_grandchild_predicates=child_grandchild_predicates,
+    )
+
+    qp = ListingQueryParams(
+        limit=20,
+        page=1,
+        offset=0,
+        _filter=None,
+        bbox=[],
+        datetime=None,
+        order_by=None,
+        order_by_direction=None,
+    )
+    kwargs = merge_listing_query_grammar_inputs(
+        concept_hierarchy_query=concept_hierarchy_query, query_params=qp
+    )
+    query = PrezQueryConstructor(**kwargs)
+    query_string = query.to_string()
+    assert (
+        "?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?default_class_var"
+        not in query_string
+    )
