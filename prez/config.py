@@ -113,6 +113,9 @@ class Settings(BaseSettings):
     search_uses_listing_count_limit: bool = False
     # If True, allow a single rdfs:subClassOf hop when selecting profiles. If False, exact class only.
     profile_constraint_allow_subclass: bool = False
+    # Optional inner limit for Fuseki FTS text:query. When None, no limit is added to the text:query.
+    # When set to an integer, adds that value as a limit argument to the FTS query.
+    fts_limit: Optional[int] = None
 
     @field_validator("prez_version")
     @classmethod

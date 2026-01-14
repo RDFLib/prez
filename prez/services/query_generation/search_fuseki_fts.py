@@ -2,7 +2,7 @@ import logging
 import sys
 
 from rdflib import Namespace
-from rdflib.namespace import RDF, RDFS, XSD
+from rdflib.namespace import RDF, RDFS
 from sparql_grammar_pydantic import (
     IRI,
     AdditiveExpression,
@@ -27,6 +27,7 @@ from sparql_grammar_pydantic import (
     LimitOffsetClauses,
     MultiplicativeExpression,
     NumericExpression,
+    NumericLiteral,
     ObjectListPath,
     ObjectPath,
     OffsetClause,
@@ -122,6 +123,7 @@ class SearchQueryFusekiFTS(ConstructQuery):
             list[tuple[list[TriplesSameSubjectPath], list[str]]] | None
         ) = None,
         tss_list: list[TriplesSameSubjectPath] | None = None,
+        fts_limit: int | None = None,
     ):
         if not any([bool(non_shacl_predicates), bool(shacl_tssp_preds)]):
             raise ValueError(
@@ -169,6 +171,32 @@ class SearchQueryFusekiFTS(ConstructQuery):
         def _generate_fts_triples_block(
             preds: list[str], sr_uri: Var = sr_uri
         ) -> TriplesBlock:
+            # Build base graphnodepath_list with predicates and search term
+            base_list = [
+                GraphNodePath(
+                    varorterm_or_triplesnodepath=VarOrTerm(
+                        varorterm=GraphTerm(content=IRI(value=predicate))
+                    )
+                )
+                for predicate in preds
+            ] + [
+                GraphNodePath(
+                    varorterm_or_triplesnodepath=VarOrTerm(
+                        varorterm=GraphTerm(content=RDFLiteral(value=term))
+                    )
+                )
+            ]
+
+            # Conditionally add FTS limit if configured
+            if fts_limit is not None:
+                base_list.append(
+                    GraphNodePath(
+                        varorterm_or_triplesnodepath=VarOrTerm(
+                            varorterm=GraphTerm(content=NumericLiteral(value=fts_limit))
+                        )
+                    )
+                )
+
             return TriplesBlock(
                 triples=TriplesSameSubjectPath(
                     content=(
@@ -231,44 +259,7 @@ class SearchQueryFusekiFTS(ConstructQuery):
                                                 graph_node_path=GraphNodePath(
                                                     varorterm_or_triplesnodepath=TriplesNodePath(
                                                         coll_path_or_bnpl_path=CollectionPath(
-                                                            graphnodepath_list=[
-                                                                GraphNodePath(
-                                                                    varorterm_or_triplesnodepath=VarOrTerm(
-                                                                        varorterm=GraphTerm(
-                                                                            content=IRI(
-                                                                                value=predicate
-                                                                            )
-                                                                        )
-                                                                    )
-                                                                )
-                                                                for predicate in preds
-                                                            ]
-                                                            + [
-                                                                GraphNodePath(
-                                                                    varorterm_or_triplesnodepath=VarOrTerm(
-                                                                        varorterm=GraphTerm(
-                                                                            content=RDFLiteral(
-                                                                                value=term
-                                                                            )
-                                                                        )
-                                                                    )
-                                                                ),
-                                                                GraphNodePath(
-                                                                    varorterm_or_triplesnodepath=VarOrTerm(
-                                                                        varorterm=GraphTerm(
-                                                                            content=RDFLiteral(
-                                                                                value=str(
-                                                                                    limit
-                                                                                    + offset
-                                                                                ),
-                                                                                datatype=IRI(
-                                                                                    value=XSD.integer
-                                                                                ),
-                                                                            )
-                                                                        )
-                                                                    )
-                                                                ),
-                                                            ]
+                                                            graphnodepath_list=base_list
                                                         )
                                                     )
                                                 )
@@ -443,40 +434,6 @@ class SearchQueryFusekiFTS(ConstructQuery):
             where_clause=where_clause,
             solution_modifier=SolutionModifier(),
         )
-
-    def update_fts_limit_arg(self, new_limit: int):
-        """Update the limit argument for the inner text:query function.
-        This modifies the relevant TriplesBlock inside the query's WHERE clause.
-        """
-
-        gnp = GraphNodePath(
-            varorterm_or_triplesnodepath=VarOrTerm(
-                varorterm=GraphTerm(
-                    content=RDFLiteral(
-                        value=str(new_limit),
-                        datatype=IRI(value=XSD.integer),
-                    )
-                )
-            )
-        )
-        try:
-            self.where_clause.group_graph_pattern.content.where_clause.group_graph_pattern.content.graph_patterns_or_triples_blocks[
-                0
-            ].content.group_graph_patterns[
-                0
-            ].content.graph_patterns_or_triples_blocks[
-                0
-            ].triples.content[
-                1
-            ].plpne.first_pair[
-                1
-            ].object_paths[
-                0
-            ].graph_node_path.varorterm_or_triplesnodepath.coll_path_or_bnpl_path.graphnodepath_list[
-                2
-            ] = gnp
-        except Exception as e:
-            pass
 
     @property
     def order_by_val(self):
