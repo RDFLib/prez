@@ -27,6 +27,7 @@ from sparql_grammar_pydantic import (
     LimitOffsetClauses,
     MultiplicativeExpression,
     NumericExpression,
+    NumericLiteral,
     ObjectListPath,
     ObjectPath,
     OffsetClause,
@@ -92,7 +93,7 @@ class SearchQueryFusekiFTS(ConstructQuery):
             SELECT ?focus_node ?pred ?match ?weight (URI(CONCAT("urn:hash:", SHA256(CONCAT(STR(?focus_node), STR(?pred), STR(?match), STR(?weight))))) AS ?hashID)
             WHERE {
                 {
-                    (?focus_node ?weight ?match ?g ?pred) <http://jena.apache.org/text#query> ( <searchProp1> <searchProp2> "search+term")
+                    (?focus_node ?weight ?match ?g ?pred) <http://jena.apache.org/text#query> ( <searchProp1> <searchProp2> "search+term" <limit>)
                 }
                 UNION
                 {
@@ -122,6 +123,7 @@ class SearchQueryFusekiFTS(ConstructQuery):
             list[tuple[list[TriplesSameSubjectPath], list[str]]] | None
         ) = None,
         tss_list: list[TriplesSameSubjectPath] | None = None,
+        fts_limit: int | None = None,
     ):
         if not any([bool(non_shacl_predicates), bool(shacl_tssp_preds)]):
             raise ValueError(
@@ -130,7 +132,9 @@ class SearchQueryFusekiFTS(ConstructQuery):
         limit += 1  # increase the limit by one, so we know if there are further pages of results.
         # clients submitting lucene FTS queries must escape the following characters if they do not want them to have
         # the lucene special meaning: + - && || ! ( ) { } [ ] ^ " ~ * ? : \ /
-        term = term.replace("\\", "\\\\")  # escape for SPARQL anything that has been Lucene escaped already
+        term = term.replace(
+            "\\", "\\\\"
+        )  # escape for SPARQL anything that has been Lucene escaped already
         term = term.replace('"', '\\"')  # escape quotes for SPARQL
 
         sr_uri: Var = Var(value="focus_node")
@@ -167,6 +171,32 @@ class SearchQueryFusekiFTS(ConstructQuery):
         def _generate_fts_triples_block(
             preds: list[str], sr_uri: Var = sr_uri
         ) -> TriplesBlock:
+            # Build base graphnodepath_list with predicates and search term
+            base_list = [
+                GraphNodePath(
+                    varorterm_or_triplesnodepath=VarOrTerm(
+                        varorterm=GraphTerm(content=IRI(value=predicate))
+                    )
+                )
+                for predicate in preds
+            ] + [
+                GraphNodePath(
+                    varorterm_or_triplesnodepath=VarOrTerm(
+                        varorterm=GraphTerm(content=RDFLiteral(value=term))
+                    )
+                )
+            ]
+
+            # Conditionally add FTS limit if configured
+            if fts_limit is not None:
+                base_list.append(
+                    GraphNodePath(
+                        varorterm_or_triplesnodepath=VarOrTerm(
+                            varorterm=GraphTerm(content=NumericLiteral(value=fts_limit + offset))
+                        )
+                    )
+                )
+
             return TriplesBlock(
                 triples=TriplesSameSubjectPath(
                     content=(
@@ -229,29 +259,7 @@ class SearchQueryFusekiFTS(ConstructQuery):
                                                 graph_node_path=GraphNodePath(
                                                     varorterm_or_triplesnodepath=TriplesNodePath(
                                                         coll_path_or_bnpl_path=CollectionPath(
-                                                            graphnodepath_list=[
-                                                                GraphNodePath(
-                                                                    varorterm_or_triplesnodepath=VarOrTerm(
-                                                                        varorterm=GraphTerm(
-                                                                            content=IRI(
-                                                                                value=predicate
-                                                                            )
-                                                                        )
-                                                                    )
-                                                                )
-                                                                for predicate in preds
-                                                            ]
-                                                            + [
-                                                                GraphNodePath(
-                                                                    varorterm_or_triplesnodepath=VarOrTerm(
-                                                                        varorterm=GraphTerm(
-                                                                            content=RDFLiteral(
-                                                                                value=term
-                                                                            )
-                                                                        )
-                                                                    )
-                                                                )
-                                                            ]
+                                                            graphnodepath_list=base_list
                                                         )
                                                     )
                                                 )

@@ -371,6 +371,7 @@ async def generate_search_query(
                 tss_list=tss_list,
                 limit=limit,
                 offset=offset,
+                fts_limit=settings.fts_limit,
             )
         else:
             raise NotImplementedError(
