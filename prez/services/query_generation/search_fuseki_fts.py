@@ -192,7 +192,7 @@ class SearchQueryFusekiFTS(ConstructQuery):
                 base_list.append(
                     GraphNodePath(
                         varorterm_or_triplesnodepath=VarOrTerm(
-                            varorterm=GraphTerm(content=NumericLiteral(value=fts_limit))
+                            varorterm=GraphTerm(content=NumericLiteral(value=fts_limit + offset))
                         )
                     )
                 )

@@ -152,7 +152,7 @@ def test_fts_limit_none():
 
 
 def test_fts_limit_set():
-    """Test that when fts_limit is set to an integer, it's added to the text:query"""
+    """Test that when fts_limit is set (offset=0), it's added to the text:query."""
     query_obj = SearchQueryFusekiFTS(
         term="test",
         limit=10,
@@ -162,21 +162,39 @@ def test_fts_limit_set():
     )
     query_string = query_obj.to_string()
 
-    # The query should contain the search term AND the fts_limit value
     assert '<http://www.w3.org/2000/01/rdf-schema#label>' in query_string
     assert '<http://www.w3.org/2000/01/rdf-schema#comment>' in query_string
     assert '"test"' in query_string
-    assert '50' in query_string  # The fts_limit value should appear as a numeric literal
 
-    # Verify it's not accidentally using limit + offset
-    assert 'LIMIT 11' in query_string  # The outer LIMIT should be 11 (10 + 1)
-    # The FTS limit should be 50, not 10 or 11
-    # Check that the text:query contains 50
+    # Outer LIMIT should be 11 (10 + 1)
+    assert 'LIMIT 11' in query_string
+
+    # FTS numeric limit should be exactly 50 when offset=0
     assert '"test"50' in query_string or '"test" 50' in query_string.replace('\n', ' ')
 
 
+def test_fts_limit_adds_offset_non_shacl():
+    """Test the FTS numeric limit uses fts_limit + offset (non-SHACL predicates case)."""
+    query_obj = SearchQueryFusekiFTS(
+        term="test",
+        limit=10,
+        offset=7,
+        non_shacl_predicates=[RDFS.label],
+        fts_limit=50,
+    )
+    query_string = query_obj.to_string()
+
+    assert 'OFFSET 7' in query_string
+    assert 'LIMIT 11' in query_string
+
+    # FTS numeric limit should be 50 + 7
+    assert '57' in query_string
+    assert '50' not in query_string
+    assert '"test"57' in query_string or '"test" 57' in query_string.replace('\n', ' ')
+
+
 def test_fts_limit_with_shacl():
-    """Test that fts_limit works correctly with SHACL predicates too"""
+    """Test that FTS numeric limit is fts_limit + offset when offset is provided (SHACL path case)."""
     tssp_list = [
         TriplesSameSubjectPath.from_spo(
             Var(value="focus_node"),
@@ -199,15 +217,14 @@ def test_fts_limit_with_shacl():
     )
     query_string = query_obj.to_string()
 
-    # Should have the fts_limit value
-    assert '100' in query_string
-    assert '"test"' in query_string
+    # Outer pagination
+    assert 'LIMIT 11' in query_string
+    assert 'OFFSET 5' in query_string
 
-    # Should NOT have limit + offset (which would be 15)
-    # Note: the outer limit will be 11 (10+1), offset will be 5
-    # But the FTS limit should be exactly 100
-    assert 'LIMIT 11' in query_string  # outer limit
-    assert 'OFFSET 5' in query_string  # outer offset
+    # FTS numeric limit should be fts_limit + offset (100 + 5)
+    assert '105' in query_string
+    assert '100' not in query_string
+    assert '"test"105' in query_string or '"test" 105' in query_string.replace('\n', ' ')
 
 
 def test_fts_limit_default_none():
