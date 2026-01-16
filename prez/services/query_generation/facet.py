@@ -253,11 +253,12 @@ class FacetQuery(ConstructQuery):
         if not profile_uri:
             return None, None
         else:
+            focus_node = IRI(value=focus_node_uri) if focus_node_uri else Var(value="focus_node")
             facet_nodeshape = NodeShape(
                 uri=profile_uri,
                 graph=profiles_graph_cache,
                 kind="profile",
-                focus_node=Var(value="focus_node"),
+                focus_node=focus_node,
             )
             facet_property_shape = facet_nodeshape.propertyShapes[0]
 
