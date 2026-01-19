@@ -152,6 +152,9 @@ async def _link_generation(
                     # NB for top level links, there will be a result (the graph pattern matched) BUT the result will not form
                     # part of the link. e.g. ?path_node_1 will have result(s) but is not part of the link.
                     for solution in result[1]:
+                        # skip solutions with bnodes - can't generate valid links
+                        if any(v.get("type") == "bnode" for v in solution.values()):
+                            continue
                         # create link strings
                         (curie_for_uri, members_link, object_link, identifiers) = (
                             await create_link_strings(
@@ -255,6 +258,9 @@ async def _link_generation_many(
                             uri = URIRef(
                                 solution.pop("_link_focus_node")["value"]
                             )  # remove the link's focus node variable
+                            # skip solutions with bnodes - can't generate valid links
+                            if any(v.get("type") == "bnode" for v in solution.values()):
+                                continue
                             # create link strings
                             (curie_for_uri, members_link, object_link, identifiers) = (
                                 await create_link_strings(
@@ -384,6 +390,7 @@ async def create_link_strings(
     identifiers = {
         URIRef(v["value"]): get_curie_id_for_uri(v["value"])
         for k, v in solution.items()
+        if v.get("type") == "uri"
     } | {uri: curie_for_uri}
     components = list(endpoint_structure[: int(hierarchy_level)])
     variables = reversed(
@@ -392,7 +399,7 @@ async def create_link_strings(
     item_link_template = Template(
         "".join([f"/{comp}/${pattern}" for comp, pattern in zip(components, variables)])
     )
-    sol_values = {k: identifiers[URIRef(v["value"])] for k, v in solution.items()}
+    sol_values = {k: identifiers[URIRef(v["value"])] for k, v in solution.items() if v.get("type") == "uri"}
     object_link = item_link_template.substitute(
         sol_values | {"focus_node": curie_for_uri}
     )
