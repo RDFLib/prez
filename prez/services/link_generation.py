@@ -154,13 +154,16 @@ async def _link_generation(
                     for solution in result[1]:
                         # skip solutions with bnodes - can't generate valid links
                         if any(v.get("type") == "bnode" for v in solution.values()):
+                            log.debug(f"Skipping link generation for {uri} - solution contains bnode: {solution}")
                             continue
                         # create link strings
-                        (curie_for_uri, members_link, object_link, identifiers) = (
-                            await create_link_strings(
-                                ns.hierarchy_level, solution, uri, endpoint_structure
-                            )
+                        result_tuple = await create_link_strings(
+                            ns.hierarchy_level, solution, uri, endpoint_structure
                         )
+                        if result_tuple is None:
+                            log.debug(f"Skipping link generation for {uri} - missing required path nodes in solution: {solution}")
+                            continue
+                        (curie_for_uri, members_link, object_link, identifiers) = result_tuple
                         # add links and identifiers to graph and cache
                         await add_links_to_graph_and_cache(
                             curie_for_uri,
@@ -260,16 +263,19 @@ async def _link_generation_many(
                             )  # remove the link's focus node variable
                             # skip solutions with bnodes - can't generate valid links
                             if any(v.get("type") == "bnode" for v in solution.values()):
+                                log.debug(f"Skipping link generation for {uri} - solution contains bnode: {solution}")
                                 continue
                             # create link strings
-                            (curie_for_uri, members_link, object_link, identifiers) = (
-                                await create_link_strings(
-                                    ns.hierarchy_level,
-                                    solution,
-                                    uri,
-                                    endpoint_structure,
-                                )
+                            result_tuple = await create_link_strings(
+                                ns.hierarchy_level,
+                                solution,
+                                uri,
+                                endpoint_structure,
                             )
+                            if result_tuple is None:
+                                log.debug(f"Skipping link generation for {uri} - missing required path nodes in solution: {solution}")
+                                continue
+                            (curie_for_uri, members_link, object_link, identifiers) = result_tuple
                             uri_node = OxiNamedNode(uri)
                             # add links and identifiers to graph and cache
                             await add_links_to_graph_and_cache(
@@ -385,6 +391,7 @@ async def create_link_strings(
 ):
     """
     Creates link strings based on the hierarchy level and solution provided.
+    Returns None if required path nodes are missing (e.g. bnodes in solution).
     """
     curie_for_uri = get_curie_id_for_uri(uri)
     identifiers = {
@@ -393,13 +400,15 @@ async def create_link_strings(
         if v.get("type") == "uri"
     } | {uri: curie_for_uri}
     components = list(endpoint_structure[: int(hierarchy_level)])
-    variables = reversed(
-        ["focus_node"] + [f"path_node_{i}" for i in range(1, len(components))]
-    )
+    required_path_nodes = [f"path_node_{i}" for i in range(1, len(components))]
+    variables = list(reversed(["focus_node"] + required_path_nodes))
     item_link_template = Template(
         "".join([f"/{comp}/${pattern}" for comp, pattern in zip(components, variables)])
     )
     sol_values = {k: identifiers[URIRef(v["value"])] for k, v in solution.items() if v.get("type") == "uri"}
+    # Check all required path nodes are present
+    if not all(pn in sol_values for pn in required_path_nodes):
+        return None
     object_link = item_link_template.substitute(
         sol_values | {"focus_node": curie_for_uri}
     )
