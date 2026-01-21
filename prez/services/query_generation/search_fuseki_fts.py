@@ -31,6 +31,7 @@ from sparql_grammar_pydantic import (
     ObjectListPath,
     ObjectPath,
     OffsetClause,
+    OptionalGraphPattern,
     OrderClause,
     OrderCondition,
     PathAlternative,
@@ -327,12 +328,84 @@ class SearchQueryFusekiFTS(ConstructQuery):
                 path_preds_tb = _generate_fts_triples_block(
                     preds, Var(value="fts_search_node")
                 )
-                path_preds_tb.triples_block = TriplesBlock.from_tssp_list(tssp_list)
+                # Wrap the SHACL path triples in OPTIONAL and add FILTER(BOUND && !isBLANK)
+                # for better Fuseki compatibility with unbound variables
+                optional_content = GroupGraphPatternSub(
+                    graph_patterns_or_triples_blocks=[
+                        TriplesBlock.from_tssp_list(tssp_list),
+                    ]
+                )
+                optional_gpnt = GraphPatternNotTriples(
+                    content=OptionalGraphPattern(
+                        group_graph_pattern=GroupGraphPattern(content=optional_content)
+                    )
+                )
+                # Create FILTER(BOUND(?focus_node) && !isBLANK(?focus_node))
+                bound_and_not_blank_filter = Filter(
+                    constraint=Constraint(
+                        content=BrackettedExpression(
+                            expression=Expression(
+                                conditional_or_expression=ConditionalOrExpression(
+                                    conditional_and_expressions=[
+                                        ConditionalAndExpression(
+                                            value_logicals=[
+                                                # BOUND(?focus_node)
+                                                ValueLogical(
+                                                    relational_expression=RelationalExpression(
+                                                        left=NumericExpression(
+                                                            additive_expression=AdditiveExpression(
+                                                                base_expression=MultiplicativeExpression(
+                                                                    base_expression=UnaryExpression(
+                                                                        primary_expression=PrimaryExpression(
+                                                                            content=BuiltInCall(
+                                                                                function_name="BOUND",
+                                                                                arguments=[
+                                                                                    sr_uri
+                                                                                ],
+                                                                            )
+                                                                        ),
+                                                                    )
+                                                                )
+                                                            )
+                                                        )
+                                                    )
+                                                ),
+                                                # !isBLANK(?focus_node)
+                                                ValueLogical(
+                                                    relational_expression=RelationalExpression(
+                                                        left=NumericExpression(
+                                                            additive_expression=AdditiveExpression(
+                                                                base_expression=MultiplicativeExpression(
+                                                                    base_expression=UnaryExpression(
+                                                                        operator="!",
+                                                                        primary_expression=PrimaryExpression(
+                                                                            content=BuiltInCall(
+                                                                                function_name="isBLANK",
+                                                                                arguments=[
+                                                                                    sr_uri
+                                                                                ],
+                                                                            )
+                                                                        ),
+                                                                    )
+                                                                )
+                                                            )
+                                                        )
+                                                    )
+                                                ),
+                                            ]
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    )
+                )
                 path_preds_ggp = GroupGraphPattern(
                     content=GroupGraphPatternSub(
                         graph_patterns_or_triples_blocks=[
                             path_preds_tb,
-                            GraphPatternNotTriples(content=bnode_filter),
+                            optional_gpnt,
+                            GraphPatternNotTriples(content=bound_and_not_blank_filter),
                         ]
                     )
                 )
