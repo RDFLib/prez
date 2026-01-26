@@ -635,7 +635,9 @@ class PropertyShape(Shape):
                 # This prevents adding {} for paths like bNodeDepth that don't generate direct triples here
                 if item["tssp_list"]:
                     ggps_content = GroupGraphPatternSub(
-                        triples_block=TriplesBlock.from_tssp_list(item["tssp_list"]),
+                        triples_block=TriplesBlock.from_tssp_list(
+                            self._tssp_list_for_triples_block(item["tssp_list"])
+                        ),
                         # TODO: Incorporate facet binds if needed
                     )
                     ggp_list.append(GroupGraphPattern(content=ggps_content))
@@ -673,7 +675,7 @@ class PropertyShape(Shape):
                         group_graph_pattern=GroupGraphPattern(
                             content=GroupGraphPatternSub(
                                 triples_block=TriplesBlock.from_tssp_list(
-                                    self.tssp_list
+                                    self._tssp_list_for_triples_block(self.tssp_list)
                                 )
                             )
                         )
@@ -750,6 +752,13 @@ class PropertyShape(Shape):
                     else:
                         path_nodes[i] = Var(value=node_key)
         return path_nodes
+
+    def _tssp_list_for_triples_block(
+        self, tssp_list: List[TriplesSameSubjectPath]
+    ) -> List[TriplesSameSubjectPath]:
+        if self.kind == "profile":
+            return list(reversed(tssp_list))
+        return tssp_list
 
     def _generate_sparql_for_path(
         self,
@@ -976,7 +985,9 @@ class PropertyShape(Shape):
                                 GroupGraphPattern(
                                     content=GroupGraphPatternSub(
                                         triples_block=TriplesBlock.from_tssp_list(
-                                            [tssp_for_alt]
+                                            self._tssp_list_for_triples_block(
+                                                [tssp_for_alt]
+                                            )
                                         )
                                     )
                                 )

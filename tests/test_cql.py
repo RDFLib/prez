@@ -598,6 +598,46 @@ def test_cql_boolean_equals_filter():
     assert "FILTER (?var_1 = true)" in query_str
 
 
+def test_cql_equals_non_queryable_uses_filter_in():
+    """Non-queryables should use FILTER IN for literal equality."""
+    from prez.services.query_generation.cql import CQLParser
+
+    cql_json_data = {
+        "op": "=",
+        "args": [
+            {"property": "http://example.org/status"},
+            "active",
+        ],
+    }
+
+    parser = CQLParser(cql_json=cql_json_data)
+    parser.parse()
+
+    normalized = "".join(parser.query_str.split())
+    assert 'FILTER(?var_1IN("active"))' in normalized
+    assert "VALUES?var_1" not in normalized
+
+
+def test_cql_in_non_queryable_uses_filter_in():
+    """Non-queryables should use FILTER IN for IN operations."""
+    from prez.services.query_generation.cql import CQLParser
+
+    cql_json_data = {
+        "op": "in",
+        "args": [
+            {"property": "http://example.org/status"},
+            ["active", "pending"],
+        ],
+    }
+
+    parser = CQLParser(cql_json=cql_json_data)
+    parser.parse()
+
+    normalized = "".join(parser.query_str.split())
+    assert 'FILTER(?var_1IN("active","pending"))' in normalized
+    assert "VALUES?var_1" not in normalized
+
+
 def test_cql_not_equal_operator_with_literal():
     """
     Tests the '<>' operator (not equal) with a literal string value.
@@ -904,8 +944,8 @@ def test_cql_or_shacl_union_structure():
         union_str = (
             union_gpnt.to_string().replace(" ", "").replace("\n", "").replace("\t", "")
         )
-        # After sh:in heuristic: queryables WITHOUT sh:in use VALUES, not FILTER IN
-        expected_union = "{?focus_node<http://example.org/pathProp1>?cql_filter_1.VALUES?cql_filter_1{<http://example.org/valueA>}}UNION{?focus_node<http://example.org/pathProp2>?cql_filter_2.VALUES?cql_filter_2{<http://example.org/valueB>}}"
+        # After sh:in heuristic: queryables WITHOUT sh:in use VALUES prepended
+        expected_union = "{VALUES?cql_filter_1{<http://example.org/valueA>}?focus_node<http://example.org/pathProp1>?cql_filter_1.}UNION{VALUES?cql_filter_2{<http://example.org/valueB>}?focus_node<http://example.org/pathProp2>?cql_filter_2.}"
         assert union_str == expected_union
     finally:
         for triple in mock_system_graph:
@@ -939,7 +979,7 @@ def test_cql_not_operator():
     assert "FILTER NOT EXISTS" in query_str
     assert '"inactive"' in query_str
     # After sh:in heuristic: non-queryables with string literals use VALUES
-    assert 'VALUES ?var_2{ "inactive"' in query_str
+    assert 'FILTER (?var_2 IN ("inactive"))' in query_str
 
 
 def test_cql_not_operator_with_complex_expression():
@@ -1401,13 +1441,18 @@ def test_cql_typed_literal(
     # Check if this is a FILTER (for booleans) or VALUES (for other literals)
     if hasattr(gpnt, 'content') and hasattr(gpnt.content, 'constraint'):
         # FILTER path (booleans)
-        parsed_term = (
-            gpnt.content.constraint.content.expression.conditional_or_expression.conditional_and_expressions[
+        try:
+            parsed_term = (
+                gpnt.content.constraint.content.expression.conditional_or_expression.conditional_and_expressions[
+                    0
+                ]
+                .value_logicals[0]
+                .relational_expression.right.expressions[0].conditional_or_expression.conditional_and_expressions[0].value_logicals[0].relational_expression.left.additive_expression.base_expression.base_expression.primary_expression.content
+            )
+        except AttributeError:
+            parsed_term = gpnt.content.constraint.content.expression.conditional_or_expression.conditional_and_expressions[
                 0
-            ]
-            .value_logicals[0]
-            .relational_expression.right.additive_expression.base_expression.base_expression.primary_expression.content
-        )
+            ].value_logicals[0].relational_expression.right.additive_expression.base_expression.base_expression.primary_expression.content
     else:
         # VALUES path (other literals)
         from sparql_grammar_pydantic import InlineData

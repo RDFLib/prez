@@ -493,8 +493,8 @@ def test_union_nested_bnode():
 
     # Pattern 3: ( prov:qualifiedDerivation prov:hadRole )
     expected_pattern_3 = """{
-?prof_1_node_3 <http://www.w3.org/ns/prov#hadRole> ?prof_1_node_4 .
 ?focus_node <http://www.w3.org/ns/prov#qualifiedDerivation> ?prof_1_node_3 .
+?prof_1_node_3 <http://www.w3.org/ns/prov#hadRole> ?prof_1_node_4 .
 }"""
     assert (
         union_pattern.group_graph_patterns[2].to_string().strip()
@@ -606,14 +606,14 @@ def test_sh_class_in_bnode_path(mock_settings):
 
     expected_sparql = """
     {
-    ?prof_1_node_2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/DerivationRole> .
-    ?prof_1_node_1 <http://www.w3.org/ns/prov#hadRole> ?prof_1_node_2 .
     ?focus_node <http://www.w3.org/ns/prov#qualifiedDerivation> ?prof_1_node_1 .
+    ?prof_1_node_1 <http://www.w3.org/ns/prov#hadRole> ?prof_1_node_2 .
+    ?prof_1_node_2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/DerivationRole> .
     }
     UNION
     {
-    ?prof_1_node_3 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/LabelType> .
     ?focus_node <http://www.w3.org/2004/02/skos/core#prefLabel> ?prof_1_node_3 .
+    ?prof_1_node_3 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/LabelType> .
     }
     UNION
     {

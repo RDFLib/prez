@@ -345,53 +345,47 @@ class CQLParser:
             args: list[dict],
             existing_ggps: GroupGraphPatternSub | None = None,
     ):
-        """Handle CQL equals operator using FILTER or VALUES based on sh:in heuristic.
+        """Handle CQL equals operator using FILTER or VALUES based on queryable type.
 
         Heuristic:
-        - SHACL queryable WITH sh:in → FILTER IN (SPARQL engine optimization)
-        - SHACL queryable WITHOUT sh:in → VALUES (better for open-ended values)
-        - Direct predicate with IRI value → Direct triple pattern (existing behavior)
-        - Direct predicate with boolean value → FILTER (type coercion semantics)
-        - Direct predicate (non-queryable) → VALUES (default behavior)
+        - SHACL queryable WITH sh:in → FILTER IN (categorical filtering)
+        - SHACL queryable WITHOUT sh:in → VALUES prepended (specific identifier lookup)
+        - Direct predicate with IRI value → Direct triple pattern
+        - Direct predicate with boolean value → FILTER = (type coercion)
+        - Direct predicate (non-queryable) → FILTER IN (focus_node often already bound)
         """
         prop = args[0].get("property")
         value = convert_value_to_rdf_term(args[1])
+        is_queryable = self.queryable_props and prop in self.queryable_props
 
         # Special case: non-queryable with IRI value - use direct triple pattern
-        if isinstance(value, IRI) and not (self.queryable_props and prop in self.queryable_props):
+        if isinstance(value, IRI) and not is_queryable:
             ggps, obj = self._add_tss_tssp(args, existing_ggps, value)
             return
 
         ggps, obj = self._add_tss_tssp(args, existing_ggps)
 
-        # Determine whether to use FILTER or VALUES
-        use_filter_in = False  # Use FILTER IN for sh:in queryables
-        use_filter_equals = False  # Use FILTER = for booleans
-
         # Check for boolean values on non-queryables - use FILTER for proper type coercion
         from sparql_grammar_pydantic import BooleanLiteral
-        if isinstance(value, BooleanLiteral) and not (self.queryable_props and prop in self.queryable_props):
-            use_filter_equals = True
-        elif self.queryable_props and prop in self.queryable_props:
-            # This is a SHACL queryable - check for sh:in
-            property_shape = self.queryable_id_to_tssp(self.queryable_props[prop])
-            if property_shape.has_sh_in:
-                use_filter_in = True
-
-        # Generate appropriate constraint
-        if use_filter_in:
-            # For sh:in queryables, use FILTER IN
-            filter_gpnt = create_filter_in(variable=obj, values=args[1])
-            ggps.add_pattern(filter_gpnt)
-        elif use_filter_equals:
-            # For booleans, use FILTER =
+        if isinstance(value, BooleanLiteral) and not is_queryable:
             from prez.services.query_generation.grammar_helpers import create_relational_filter
             filter_gpnt = create_relational_filter(obj, "=", value)
             ggps.add_pattern(filter_gpnt)
+        elif is_queryable:
+            # This is a SHACL queryable - check for sh:in
+            property_shape = self.queryable_id_to_tssp(self.queryable_props[prop])
+            if property_shape.has_sh_in:
+                # sh:in queryable: categorical filtering with FILTER IN
+                filter_gpnt = create_filter_in(variable=obj, values=args[1])
+                ggps.add_pattern(filter_gpnt)
+            else:
+                # No sh:in: specific identifier lookup, VALUES as starting point
+                values_gpnt = create_values_constraint(variable=obj, values=[args[1]])
+                ggps.add_pattern(values_gpnt, prepend=True)
         else:
-            # Default: use VALUES
-            values_gpnt = create_values_constraint(variable=obj, values=[args[1]])
-            ggps.add_pattern(values_gpnt)
+            # Non-queryable: use FILTER IN (focus_node often already bound)
+            filter_gpnt = create_filter_in(variable=obj, values=[args[1]])
+            ggps.add_pattern(filter_gpnt)
 
     def _handle_comparison(
         self,
@@ -521,31 +515,32 @@ class CQLParser:
     def _handle_in(
         self, args: list[dict | list], existing_ggps: GroupGraphPatternSub | None = None
     ) -> None:
-        """Handle CQL IN operator using FILTER or VALUES based on sh:in heuristic.
+        """Handle CQL IN operator using FILTER or VALUES based on queryable type.
 
         Heuristic:
-        - SHACL queryable WITH sh:in → FILTER IN (SPARQL engine optimization)
-        - SHACL queryable WITHOUT sh:in → VALUES (better for open-ended values)
-        - Direct predicate (non-queryable) → VALUES (default behavior)
+        - SHACL queryable WITH sh:in → FILTER IN (categorical filtering)
+        - SHACL queryable WITHOUT sh:in → VALUES prepended (specific identifier lookup)
+        - Direct predicate (non-queryable) → FILTER IN (focus_node often already bound)
         """
         ggps, obj = self._add_tss_tssp(args, existing_ggps)
         prop = args[0].get("property")
+        is_queryable = self.queryable_props and prop in self.queryable_props
 
-        # Determine whether to use FILTER or VALUES
-        use_filter = False
-        if self.queryable_props and prop in self.queryable_props:
+        if is_queryable:
             # This is a SHACL queryable - check for sh:in
             property_shape = self.queryable_id_to_tssp(self.queryable_props[prop])
             if property_shape.has_sh_in:
-                use_filter = True
-
-        # Generate appropriate constraint
-        if use_filter:
+                # sh:in queryable: categorical filtering with FILTER IN
+                filter_gpnt = create_filter_in(variable=obj, values=args[1])
+                ggps.add_pattern(filter_gpnt)
+            else:
+                # No sh:in: specific identifier lookup, VALUES as starting point
+                values_clause_gpnt = create_values_constraint(obj, args[1])
+                ggps.add_pattern(values_clause_gpnt, prepend=True)
+        else:
+            # Non-queryable: use FILTER IN (focus_node often already bound)
             filter_gpnt = create_filter_in(variable=obj, values=args[1])
             ggps.add_pattern(filter_gpnt)
-        else:
-            values_clause_gpnt = create_values_constraint(obj, args[1])
-            ggps.add_pattern(values_clause_gpnt)
 
     def _handle_shacl_defined_prop(self, prop: str, ggps: GroupGraphPatternSub) -> Var:
         property_shape = self.queryable_id_to_tssp(self.queryable_props[prop])

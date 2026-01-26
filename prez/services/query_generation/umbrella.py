@@ -85,7 +85,8 @@ class PrezQueryConstructor(ConstructQuery):
         # select is appended to this list as a GraphPatternNotTriples
         gpotb = []
         if profile_triples:
-            gpotb.append(TriplesBlock.from_tssp_list(profile_triples))
+            # Reverse to preserve focus-first ordering after TriplesBlock nesting.
+            gpotb.append(TriplesBlock.from_tssp_list(profile_triples[::-1]))
         if profile_gpnt:
             gpotb.extend(profile_gpnt)
 

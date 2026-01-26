@@ -147,12 +147,13 @@ class FacetQuery(ConstructQuery):
         if len(property_shape.union_tssps_binds) > 1:
             for utb in property_shape.union_tssps_binds:
                 # generate a GGP.
+                tssp_list = utb.get("tssp_list")
+                if property_shape.kind == "profile":
+                    tssp_list = list(reversed(tssp_list))
                 union_ggps.append(
                     GroupGraphPattern(
                         content=GroupGraphPatternSub(
-                            triples_block=TriplesBlock.from_tssp_list(
-                                utb.get("tssp_list")
-                            ),
+                            triples_block=TriplesBlock.from_tssp_list(tssp_list),
                             graph_patterns_or_triples_blocks=utb.get("facet_binds"),
                         )
                     )
@@ -168,7 +169,10 @@ class FacetQuery(ConstructQuery):
 
         else:  # faceting on a single property
             utb = property_shape.union_tssps_binds[0]
-            inner_gpnts_or_tb.append(TriplesBlock.from_tssp_list(utb.get("tssp_list")))
+            tssp_list = utb.get("tssp_list")
+            if property_shape.kind == "profile":
+                tssp_list = list(reversed(tssp_list))
+            inner_gpnts_or_tb.append(TriplesBlock.from_tssp_list(tssp_list))
             inner_gpnts_or_tb.extend(utb.get("facet_binds"))
 
         # --- Outer WHERE Clause ---

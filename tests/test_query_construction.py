@@ -369,6 +369,33 @@ def test_umbrella_cql_query():
     assert "SELECT DISTINCT ?focus_node" in query_string
 
 
+def test_profile_triples_preserve_focus_first_order():
+    """Profile triples should keep focus_node first after TriplesBlock nesting."""
+    from sparql_grammar_pydantic import IRI, TriplesSameSubjectPath, Var
+
+    from prez.services.query_generation.umbrella import PrezQueryConstructor
+
+    profile_triples = [
+        TriplesSameSubjectPath.from_spo(
+            subject=Var(value="focus_node"),
+            predicate=IRI(value="http://example.org/p1"),
+            object=Var(value="node1"),
+        ),
+        TriplesSameSubjectPath.from_spo(
+            subject=Var(value="node1"),
+            predicate=IRI(value="http://example.org/p2"),
+            object=Var(value="node2"),
+        ),
+    ]
+    query = PrezQueryConstructor(profile_triples=profile_triples)
+    normalized = "".join(query.to_string().split())
+    first = "?focus_node<http://example.org/p1>?node1."
+    second = "?node1<http://example.org/p2>?node2."
+    assert normalized.find(first) != -1
+    assert normalized.find(second) != -1
+    assert normalized.find(first) < normalized.find(second)
+
+
 def test_create_regex_filter():
     variable = Var(value="variable")
     pattern = "test_pattern"
