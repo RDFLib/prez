@@ -82,6 +82,120 @@ async def extract_queryables_rdf(system_repo: Repo):
     return queryables_store
 
 
+async def handle_queryables_rdf_response(
+    endpoint_uri: str,
+    collection_uri: str | None,
+    selected_mediatype: str,
+    data_repo: Repo,
+    system_repo: Repo,
+    accept_encoding: str | None = None,
+) -> tuple[io.BytesIO, dict | None] | None:
+    """
+    Handle queryables RDF responses with caching.
+
+    Returns (content, headers) if this is a queryables RDF request.
+    Returns None if this is not a queryables RDF request (caller should continue normal flow).
+
+    If the client supports gzip (via Accept-Encoding header), returns pre-gzipped cached bytes.
+    Otherwise, falls back to non-cached serialization for compatibility.
+    """
+    import gzip
+    import time
+
+    # Only handle RDF mediatypes for queryables
+    if not (
+        selected_mediatype in NonAnnotatedRDFMediaType
+        or selected_mediatype in AnnotatedRDFMediaType
+    ):
+        return None
+
+    # Check if client supports gzip
+    supports_gzip = accept_encoding and "gzip" in accept_encoding.lower()
+
+    if supports_gzip:
+        # Check cache for gzipped content
+        t0 = time.perf_counter()
+        queryables_cache = caches.get("queryables")
+        cache_key = f"{endpoint_uri}:{collection_uri}:{selected_mediatype}"
+        cached_content = await queryables_cache.get(cache_key)
+        t1 = time.perf_counter()
+        log.info(f"TIMING: Cache lookup took {(t1-t0)*1000:.1f}ms")
+
+        if cached_content is not None:
+            log.info(
+                f"TIMING: Cache HIT for {cache_key}, returning {len(cached_content)} gzipped bytes"
+            )
+            return io.BytesIO(cached_content), {"Content-Encoding": "gzip"}
+    else:
+        log.info("Client does not support gzip, skipping cache")
+
+    # Cache miss - do the expensive work
+    log.info(f"TIMING: Cache MISS - doing expensive queryables serialization")
+
+    # Extract queryables RDF from the system store
+    t0 = time.perf_counter()
+    queryables_store = await extract_queryables_rdf(system_repo)
+    t1 = time.perf_counter()
+    log.info(f"TIMING: extract_queryables_rdf took {(t1-t0)*1000:.1f}ms")
+
+    # Handle annotated vs non-annotated RDF
+    if selected_mediatype in AnnotatedRDFMediaType:
+        serialization_format = selected_mediatype.replace("anot+", "")
+        t2 = time.perf_counter()
+        specific_annotations_store = await return_annotated_rdf_for_oxigraph(
+            queryables_store, data_repo, system_repo
+        )
+        queryables_store.bulk_extend(specific_annotations_store)
+        t3 = time.perf_counter()
+        log.info(f"TIMING: annotations for queryables took {(t3-t2)*1000:.1f}ms")
+    else:
+        serialization_format = selected_mediatype
+
+    # Get the Oxigraph serializer format
+    serializer_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(
+        serialization_format, RdfFormat.N_TRIPLES
+    )
+
+    # Get prefixes for serialization
+    oxigraph_prefixes = {
+        p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()
+    }
+
+    t4 = time.perf_counter()
+    content = io.BytesIO()
+    queryables_store.dump(
+        content,
+        serializer_format,
+        from_graph=OxiDefaultGraph(),
+        prefixes=oxigraph_prefixes,
+    )
+    content.seek(0)
+    t5 = time.perf_counter()
+    log.info(f"TIMING: queryables serialization took {(t5-t4)*1000:.1f}ms")
+
+    # If client supports gzip, compress, cache, and return gzipped
+    if supports_gzip:
+        t6 = time.perf_counter()
+        raw_bytes = content.getvalue()
+        gzipped_bytes = gzip.compress(raw_bytes)
+        t7 = time.perf_counter()
+        log.info(
+            f"TIMING: gzip compression took {(t7-t6)*1000:.1f}ms "
+            f"({len(raw_bytes)} -> {len(gzipped_bytes)} bytes, "
+            f"{len(gzipped_bytes)/len(raw_bytes)*100:.1f}%)"
+        )
+
+        # Cache the gzipped bytes
+        queryables_cache = caches.get("queryables")
+        cache_key = f"{endpoint_uri}:{collection_uri}:{selected_mediatype}"
+        await queryables_cache.set(cache_key, gzipped_bytes)
+
+        return io.BytesIO(gzipped_bytes), {"Content-Encoding": "gzip"}
+    else:
+        # Return raw content without caching for non-gzip clients
+        return content, None
+
+
 async def listing_profiles(
     data_repo,
     system_repo,
@@ -439,6 +553,7 @@ async def ogc_features_listing_function(
     cql_parser,
     query_params,
     path_params,
+    accept_encoding: str | None = None,
 ):
     count_query = None
     count = 0
@@ -461,6 +576,18 @@ async def ogc_features_listing_function(
         OGCFEAT["queryables-local"],
         OGCFEAT["queryables-global"],
     ]:
+        # Handle queryables RDF responses with caching (returns early if cached or RDF mediatype)
+        queryables_result = await handle_queryables_rdf_response(
+            endpoint_uri=endpoint_uri_type[0],
+            collection_uri=collection_uri,
+            selected_mediatype=selected_mediatype,
+            data_repo=data_repo,
+            system_repo=system_repo,
+            accept_encoding=accept_encoding,
+        )
+        if queryables_result is not None:
+            return queryables_result
+
         queryables = await generate_queryables_from_shacl_definition(
             url, endpoint_uri_type[0], system_repo
         )
@@ -564,63 +691,6 @@ async def ogc_features_listing_function(
             item_store, data_repo, system_repo
         )
     item_graph = item_store  # treat the Oxigraph Store as a graph
-
-    # Handle queryables RDF responses
-    if endpoint_uri_type[0] in [
-        OGCFEAT["queryables-local"],
-        OGCFEAT["queryables-global"],
-    ] and (
-        selected_mediatype in NonAnnotatedRDFMediaType
-        or selected_mediatype in AnnotatedRDFMediaType
-    ):
-        # Check cache first - queryables serialization is expensive
-        queryables_cache = caches.get("queryables")
-        cache_key = f"{endpoint_uri_type[0]}:{collection_uri}:{selected_mediatype}"
-        cached_content = await queryables_cache.get(cache_key)
-        if cached_content is not None:
-            log.debug(f"Queryables cache hit for {cache_key}")
-            return io.BytesIO(cached_content), link_headers
-
-        # Cache miss - do the expensive work
-        log.debug(f"Queryables cache miss for {cache_key}")
-
-        # Extract queryables RDF from the system store using DESCRIBE query
-        queryables_store = await extract_queryables_rdf(system_repo)
-
-        # Handle annotated vs non-annotated RDF
-        if selected_mediatype in AnnotatedRDFMediaType:
-            serialization_format = selected_mediatype.replace("anot+", "")
-            # Get specific annotations for the queryables data (not the entire annotations store)
-            specific_annotations_store = await return_annotated_rdf_for_oxigraph(
-                queryables_store, data_repo, system_repo
-            )
-            queryables_store.bulk_extend(specific_annotations_store)
-        else:
-            serialization_format = selected_mediatype
-
-        # Get the Oxigraph serializer format
-        serializer_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(
-            serialization_format, RdfFormat.N_TRIPLES
-        )
-
-        # Get prefixes for serialization
-        oxigraph_prefixes = {
-            p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()
-        }
-
-        content = io.BytesIO()
-        queryables_store.dump(
-            content,
-            serializer_format,
-            from_graph=OxiDefaultGraph(),
-            prefixes=oxigraph_prefixes,
-        )
-        content.seek(0)
-
-        # Cache the serialized bytes
-        await queryables_cache.set(cache_key, content.getvalue())
-
-        return content, link_headers
 
     if selected_mediatype == "application/json":
         if endpoint_uri_type[0] in [

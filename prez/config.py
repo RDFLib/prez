@@ -111,6 +111,8 @@ class Settings(BaseSettings):
     use_path_aliases: bool = False
     spatial_query_format: Literal["geosparql", "qlever", "graphdb"] = "geosparql"
     search_uses_listing_count_limit: bool = False
+    # Minimum response size in bytes for gzip compression. Set to -1 to disable compression.
+    gzip_min_size: int = 1000
     # If True, allow a single rdfs:subClassOf hop when selecting profiles. If False, exact class only.
     profile_constraint_allow_subclass: bool = False
     # Optional inner limit for Fuseki FTS text:query. When None, no limit is added to the text:query.

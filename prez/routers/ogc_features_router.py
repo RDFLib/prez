@@ -1,6 +1,9 @@
+import logging
 from typing import List, Optional
 
 from fastapi import Depends, FastAPI
+
+log = logging.getLogger(__name__)
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from starlette import status
@@ -73,6 +76,14 @@ features_subapi = FastAPI(
     },
 )
 features_subapi.include_router(conformance_router)
+
+
+@features_subapi.middleware("http")
+async def add_timing(request: Request, call_next):
+    import time
+    request.state.start_time = time.perf_counter()
+    response = await call_next(request)
+    return response
 
 
 @features_subapi.exception_handler(RequestValidationError)
@@ -160,6 +171,7 @@ async def get_functions() -> FunctionsResponse:
     openapi_extra=ogc_features_openapi_extras.get("feature-collection"),
 )
 async def listings_with_feature_collection(
+    request: Request,
     validate_unknown_params: bool = Depends(check_unknown_params),
     endpoint_uri_type: str = Depends(get_endpoint_uri_type),
     endpoint_nodeshape: NodeShape = Depends(get_endpoint_nodeshapes),
@@ -172,7 +184,13 @@ async def listings_with_feature_collection(
     data_repo: Repo = Depends(get_data_repo),
     system_repo: Repo = Depends(get_system_repo),
 ):
+    import time
+    deps_done = time.perf_counter()
+    start_time = request.state.start_time if hasattr(request.state, 'start_time') else deps_done
+    log.info(f"TIMING: Dependencies resolved in {(deps_done - start_time)*1000:.1f}ms")
+
     try:
+        func_start = time.perf_counter()
         content, headers = await ogc_features_listing_function(
             endpoint_uri_type,
             endpoint_nodeshape,
@@ -184,7 +202,10 @@ async def listings_with_feature_collection(
             cql_parser,
             query_params,
             path_params,
+            accept_encoding=request.headers.get("Accept-Encoding"),
         )
+        func_end = time.perf_counter()
+        log.info(f"TIMING: ogc_features_listing_function took {(func_end - func_start)*1000:.1f}ms")
     except Exception as e:
         raise e
     return StreamingResponse(content=content, media_type=mediatype, headers=headers)
