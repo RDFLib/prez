@@ -44,5 +44,9 @@ caches.set_config(
             "cache": "aiocache.SimpleMemoryCache",
             "serializer": {"class": "aiocache.serializers.PickleSerializer"},
         },
+        "queryables": {
+            "cache": "aiocache.SimpleMemoryCache",
+            "serializer": {"class": "aiocache.serializers.NullSerializer"},
+        },
     }
 )

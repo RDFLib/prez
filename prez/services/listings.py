@@ -36,6 +36,8 @@ from sparql_grammar_pydantic import (
     OffsetClause,
 )
 
+from aiocache import caches
+
 from prez.cache import prefix_graph
 from prez.config import settings
 from prez.dependencies import DummySearchMarker
@@ -571,6 +573,17 @@ async def ogc_features_listing_function(
         selected_mediatype in NonAnnotatedRDFMediaType
         or selected_mediatype in AnnotatedRDFMediaType
     ):
+        # Check cache first - queryables serialization is expensive
+        queryables_cache = caches.get("queryables")
+        cache_key = f"{endpoint_uri_type[0]}:{collection_uri}:{selected_mediatype}"
+        cached_content = await queryables_cache.get(cache_key)
+        if cached_content is not None:
+            log.debug(f"Queryables cache hit for {cache_key}")
+            return io.BytesIO(cached_content), link_headers
+
+        # Cache miss - do the expensive work
+        log.debug(f"Queryables cache miss for {cache_key}")
+
         # Extract queryables RDF from the system store using DESCRIBE query
         queryables_store = await extract_queryables_rdf(system_repo)
 
@@ -603,6 +616,10 @@ async def ogc_features_listing_function(
             prefixes=oxigraph_prefixes,
         )
         content.seek(0)
+
+        # Cache the serialized bytes
+        await queryables_cache.set(cache_key, content.getvalue())
+
         return content, link_headers
 
     if selected_mediatype == "application/json":

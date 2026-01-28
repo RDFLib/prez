@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from typing import FrozenSet, List, Set, Tuple
 
@@ -131,6 +130,9 @@ async def process_uncached_terms(
     main repository to get the results for the uncached terms. The results are then added to the graph and also
     cached for future use.
 
+    Optimization: Query local repos (system, annotations) first. Only query data_repo (potentially remote)
+    if there are still terms without annotations.
+
     Args:
         terms (list): A list of terms that are not cached.
         data_repo (Repo): An instance of the Repo class.
@@ -139,48 +141,57 @@ async def process_uncached_terms(
     Returns:
         None
     """
-    annotations_repo = await get_annotations_repo()
+    # Initialize subjects_map with each term having an empty set to start with
+    subjects_map = {term: set() for term in terms}
+    all_results = Graph()
+    remaining_terms = set(terms)
+
+    # Query system_repo first (always local/fast)
     annotations_query = AnnotationsConstructQuery(
         terms=[IRI(value=term) for term in terms]
     ).to_string()
-    data_repo_query_task = asyncio.ensure_future(
-        data_repo.send_queries(
-            rdf_queries=[annotations_query],
-            tabular_queries=[],
-            return_oxigraph_store=False,
-        )
+    system_repo_results = await system_repo.send_queries(
+        rdf_queries=[annotations_query],
+        tabular_queries=[],
+        return_oxigraph_store=False,
     )
-    annotation_repo_query_task = asyncio.ensure_future(
-        annotations_repo.send_queries(
-            rdf_queries=[annotations_query],
-            tabular_queries=[],
-            return_oxigraph_store=False,
-        )
-    )
-
-    system_repo_query_task = asyncio.ensure_future(
-        system_repo.send_queries(
-            rdf_queries=[annotations_query],
-            tabular_queries=[],
-            return_oxigraph_store=False,
-        )
-    )
-    await asyncio.sleep(0)  # Yield control to allow the parallel tasks to kick-start
-    all_results = Graph()
-    # Wait the local ones first, annotation repo and system repo queries
-    system_repo_results = await system_repo_query_task
-    all_results += system_repo_results[0]
-    annotation_repo_results = await annotation_repo_query_task
-    all_results += annotation_repo_results[0]
-    # now wait for the data repo (might be remote)
-    data_repo_results = await data_repo_query_task
-    all_results += data_repo_results[0]
-
-    # Initialize subjects_map with each term having an empty set to start with
-    subjects_map = {term: set() for term in terms}
-
-    for s, p, o in all_results:
+    system_graph = system_repo_results[0]
+    all_results += system_graph
+    for s, p, o in system_graph:
         subjects_map[s].add((p, o))
+        remaining_terms.discard(s)
+
+    # Query annotations_repo next (also local) if terms still need annotations
+    if remaining_terms:
+        annotations_repo = await get_annotations_repo()
+        remaining_query = AnnotationsConstructQuery(
+            terms=[IRI(value=term) for term in remaining_terms]
+        ).to_string()
+        annotation_repo_results = await annotations_repo.send_queries(
+            rdf_queries=[remaining_query],
+            tabular_queries=[],
+            return_oxigraph_store=False,
+        )
+        annotations_graph = annotation_repo_results[0]
+        all_results += annotations_graph
+        for s, p, o in annotations_graph:
+            subjects_map[s].add((p, o))
+            remaining_terms.discard(s)
+
+    # Only query data_repo (potentially remote) if terms still need annotations
+    if remaining_terms:
+        remaining_query = AnnotationsConstructQuery(
+            terms=[IRI(value=term) for term in remaining_terms]
+        ).to_string()
+        data_repo_results = await data_repo.send_queries(
+            rdf_queries=[remaining_query],
+            tabular_queries=[],
+            return_oxigraph_store=False,
+        )
+        data_graph = data_repo_results[0]
+        all_results += data_graph
+        for s, p, o in data_graph:
+            subjects_map[s].add((p, o))
 
     # Prepare subjects_list, only converting to frozenset where there are actual results
     subjects_list = [
@@ -204,75 +215,82 @@ async def process_uncached_terms_for_oxigraph(
 ):
     """
     This function processes the terms that are not cached. It sends queries to the annotations repository and the
-    main repository to get the results for the uncached terms. The results are then added to the graph and also
+    main repository to get the results for the uncached terms. The results are then added to the store and also
     cached for future use.
 
+    Optimization: Query local repos (system, annotations) first. Only query data_repo (potentially remote)
+    if there are still terms without annotations.
+
     Args:
-        terms (list): A list of terms that are not cached.
+        terms (list): A list of OxiNamedNode terms that are not cached.
         data_repo (Repo): An instance of the Repo class.
-        annotations_g (Graph): A graph to which the results are added.
+        system_repo (Repo): An instance of the Repo class with the Prez system graph.
+        annotations_store (OxiStore): An oxigraph store to which the results are added.
 
     Returns:
         None
     """
-    annotations_repo = await get_annotations_repo()
-    annotations_query = AnnotationsConstructQuery(
-        terms=[IRI(value=term.value) for term in terms]
-    ).to_string()
-    data_repo_query_task = asyncio.ensure_future(
-        data_repo.send_queries(
-            rdf_queries=[annotations_query],
-            tabular_queries=[],
-            return_oxigraph_store=True,
-        )
-    )
-    annotation_repo_query_task = asyncio.ensure_future(
-        annotations_repo.send_queries(
-            rdf_queries=[annotations_query],
-            tabular_queries=[],
-            return_oxigraph_store=True,
-        )
-    )
-
-    system_repo_query_task = asyncio.ensure_future(
-        system_repo.send_queries(
-            rdf_queries=[annotations_query],
-            tabular_queries=[],
-            return_oxigraph_store=True,
-        )
-    )
-    await asyncio.sleep(0)  # Yield control to allow the parallel tasks to kick-start
-
     # Initialize subjects_map with each term having an empty set to start with
     uriref_subjects_map: dict[URIRef, set] = {
         URIRef(term.value): set() for term in terms
     }
+    remaining_terms = set(terms)
 
-    # Wait the local ones first, annotation repo and system repo queries
-    system_repo_results = await system_repo_query_task
+    # Query system_repo first (always local/fast)
+    annotations_query = AnnotationsConstructQuery(
+        terms=[IRI(value=term.value) for term in terms]
+    ).to_string()
+    system_repo_results = await system_repo.send_queries(
+        rdf_queries=[annotations_query],
+        tabular_queries=[],
+        return_oxigraph_store=True,
+    )
     system_repo_result_store: OxiStore = system_repo_results[0]
     for quad in system_repo_result_store.quads_for_pattern(None, None, None, None):
         uriref_subjects_map[URIRef(quad[0].value)].add(
             (from_ox(quad[1]), from_ox(quad[2]))
         )
         annotations_store.add(quad)
+        # Remove from remaining using the original OxiNamedNode
+        remaining_terms.discard(quad[0])
 
-    annotation_repo_results = await annotation_repo_query_task
-    annotation_repo_result_store: OxiStore = annotation_repo_results[0]
-    for quad in annotation_repo_result_store.quads_for_pattern(None, None, None, None):
-        uriref_subjects_map[URIRef(quad[0].value)].add(
-            (from_ox(quad[1]), from_ox(quad[2]))
+    # Query annotations_repo next (also local) if terms still need annotations
+    if remaining_terms:
+        annotations_repo = await get_annotations_repo()
+        remaining_query = AnnotationsConstructQuery(
+            terms=[IRI(value=term.value) for term in remaining_terms]
+        ).to_string()
+        annotation_repo_results = await annotations_repo.send_queries(
+            rdf_queries=[remaining_query],
+            tabular_queries=[],
+            return_oxigraph_store=True,
         )
-        annotations_store.add(quad)
+        annotation_repo_result_store: OxiStore = annotation_repo_results[0]
+        for quad in annotation_repo_result_store.quads_for_pattern(
+            None, None, None, None
+        ):
+            uriref_subjects_map[URIRef(quad[0].value)].add(
+                (from_ox(quad[1]), from_ox(quad[2]))
+            )
+            annotations_store.add(quad)
+            remaining_terms.discard(quad[0])
 
-    # now wait for the data repo (might be remote)
-    data_repo_results = await data_repo_query_task
-    data_repo_result_store: OxiStore = data_repo_results[0]
-    for quad in data_repo_result_store.quads_for_pattern(None, None, None, None):
-        uriref_subjects_map[URIRef(quad[0].value)].add(
-            (from_ox(quad[1]), from_ox(quad[2]))
+    # Only query data_repo (potentially remote) if terms still need annotations
+    if remaining_terms:
+        remaining_query = AnnotationsConstructQuery(
+            terms=[IRI(value=term.value) for term in remaining_terms]
+        ).to_string()
+        data_repo_results = await data_repo.send_queries(
+            rdf_queries=[remaining_query],
+            tabular_queries=[],
+            return_oxigraph_store=True,
         )
-        annotations_store.add(quad)
+        data_repo_result_store: OxiStore = data_repo_results[0]
+        for quad in data_repo_result_store.quads_for_pattern(None, None, None, None):
+            uriref_subjects_map[URIRef(quad[0].value)].add(
+                (from_ox(quad[1]), from_ox(quad[2]))
+            )
+            annotations_store.add(quad)
 
     # Prepare subjects_list, only converting to frozenset where there are actual results
     subjects_list = [
