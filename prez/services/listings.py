@@ -70,6 +70,36 @@ log = logging.getLogger(__name__)
 DWC = Namespace("http://rs.tdwg.org/dwc/terms/")
 
 
+async def warm_queryables_cache(data_repo: Repo, system_repo: Repo) -> None:
+    """
+    Pre-warm the queryables cache at startup for performance.
+    Generates and caches gzipped queryables for common RDF mediatypes.
+    """
+    import time
+
+    mediatypes_to_warm = [
+        "text/anot+turtle",  # Most common annotated format
+        "text/turtle",       # Most common non-annotated format
+    ]
+
+    for mediatype in mediatypes_to_warm:
+        log.info(f"Warming queryables cache for {mediatype}...")
+        t0 = time.perf_counter()
+        try:
+            await handle_queryables_rdf_response(
+                endpoint_uri=str(OGCFEAT["queryables-global"]),
+                collection_uri=None,
+                selected_mediatype=mediatype,
+                data_repo=data_repo,
+                system_repo=system_repo,
+                accept_encoding="gzip",  # Pre-compress for cache
+            )
+            t1 = time.perf_counter()
+            log.info(f"Warmed queryables cache for {mediatype} in {(t1-t0)*1000:.1f}ms")
+        except Exception as e:
+            log.warning(f"Failed to warm queryables cache for {mediatype}: {e}")
+
+
 async def extract_queryables_rdf(system_repo: Repo):
     """
     Extract queryables RDF from the system store using a DESCRIBE query.
