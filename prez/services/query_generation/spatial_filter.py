@@ -7,6 +7,7 @@ from rdflib.namespace import GEO
 from sparql_grammar_pydantic import (
     IRI,
     ArgList,
+    Bind,
     Constraint,
     Expression,
     Filter,
@@ -47,8 +48,9 @@ from sparql_grammar_pydantic import (
 )
 
 from prez.config import settings
-from prez.reference_data.cql.geo_function_mapping import (  # Updated import
+from prez.reference_data.cql.geo_function_mapping import (
     cql_sparql_spatial_mapping,
+    cql_graphdb_spatial_properties,
     cql_qlever_spatial_mapping,
     QLSS,
 )
@@ -162,38 +164,54 @@ def generate_spatial_filter_clause(
     Returns a list of GraphPatternNotTriples.
     """
     if target_system == "geosparql":
-        if cql_operator not in cql_sparql_spatial_mapping:
+        if cql_operator not in cql_graphdb_spatial_properties:
             raise NotImplementedError(
                 f"CQL operator {cql_operator} not supported for GeoSPARQL"
             )
 
-        filter_gpnt = GraphPatternNotTriples(
-            content=Filter(
-                constraint=Constraint(
-                    content=FunctionCall(
-                        iri=IRI(value=cql_sparql_spatial_mapping[cql_operator]),
-                        arg_list=ArgList(
-                            expressions=[
-                                Expression.from_primary_expression(
-                                    primary_expression=PrimaryExpression(
-                                        content=geom_wkt_lit_var
-                                    )
-                                ),
-                                Expression.from_primary_expression(
-                                    primary_expression=PrimaryExpression(
-                                        content=RDFLiteral(
-                                            value=wkt_value,
-                                            datatype=IRI(value=str(GEO.wktLiteral)),
-                                        )
-                                    )
-                                ),
-                            ]
-                        ),
+        # Get the geo: predicate (e.g., geo:sfIntersects) from the mapping
+        spatial_predicate = cql_graphdb_spatial_properties[cql_operator]
+
+        # Create variable for the bound WKT input
+        spatial_wkt_input_var = Var(value="spatial_wkt_input")
+
+        # Create BIND clause: BIND("WKT"^^geo:wktLiteral AS ?spatial_wkt_input)
+        bind_gpnt = GraphPatternNotTriples(
+            content=Bind(
+                expression=Expression.from_primary_expression(
+                    primary_expression=PrimaryExpression(
+                        content=RDFLiteral(
+                            value=wkt_value,
+                            datatype=IRI(value=str(GEO.wktLiteral)),
+                        )
                     )
-                )
+                ),
+                var=spatial_wkt_input_var,
             )
         )
-        return [filter_gpnt]
+
+        # Create triple: ?spatial_wkt_input geo:sfIntersects ?geom_wkt_lit_var
+        spatial_triple_gpnt = GraphPatternNotTriples(
+            content=GroupOrUnionGraphPattern(
+                group_graph_patterns=[
+                    GroupGraphPattern(
+                        content=GroupGraphPatternSub(
+                            graph_patterns_or_triples_blocks=[
+                                TriplesBlock(
+                                    triples=TriplesSameSubjectPath.from_spo(
+                                        spatial_wkt_input_var,
+                                        IRI(value=str(spatial_predicate)),
+                                        geom_wkt_lit_var,
+                                    )
+                                )
+                            ]
+                        )
+                    )
+                ]
+            )
+        )
+
+        return [bind_gpnt, spatial_triple_gpnt]
 
     elif target_system == "qlever":
         if cql_operator not in cql_qlever_spatial_mapping:

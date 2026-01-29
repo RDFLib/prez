@@ -8,6 +8,7 @@ from sparql_grammar_pydantic import (
     AdditiveExpression,
     BrackettedExpression,
     BuiltInCall,
+    Bind,
     CollectionPath,
     ConditionalAndExpression,
     ConditionalOrExpression,
@@ -31,7 +32,6 @@ from sparql_grammar_pydantic import (
     ObjectListPath,
     ObjectPath,
     OffsetClause,
-    OptionalGraphPattern,
     OrderClause,
     OrderCondition,
     PathAlternative,
@@ -274,142 +274,120 @@ class SearchQueryFusekiFTS(ConstructQuery):
                 )
             )
 
-        ggp_list = []
-        bnode_filter = Filter(
-            constraint=Constraint(
-                content=BrackettedExpression(
-                    expression=Expression(
-                        conditional_or_expression=ConditionalOrExpression(
-                            conditional_and_expressions=[
-                                ConditionalAndExpression(
-                                    value_logicals=[
-                                        ValueLogical(
-                                            relational_expression=RelationalExpression(
-                                                left=NumericExpression(
-                                                    additive_expression=AdditiveExpression(
-                                                        base_expression=MultiplicativeExpression(
-                                                            base_expression=UnaryExpression(
-                                                                operator="!",
-                                                                primary_expression=PrimaryExpression(
-                                                                    content=BuiltInCall(
-                                                                        function_name="isBLANK",
-                                                                        arguments=[
-                                                                            sr_uri
-                                                                        ],
-                                                                    )
-                                                                ),
+        def _not_blank_filter(var: Var) -> Filter:
+            return Filter(
+                constraint=Constraint(
+                    content=BrackettedExpression(
+                        expression=Expression(
+                            conditional_or_expression=ConditionalOrExpression(
+                                conditional_and_expressions=[
+                                    ConditionalAndExpression(
+                                        value_logicals=[
+                                            ValueLogical(
+                                                relational_expression=RelationalExpression(
+                                                    left=NumericExpression(
+                                                        additive_expression=AdditiveExpression(
+                                                            base_expression=MultiplicativeExpression(
+                                                                base_expression=UnaryExpression(
+                                                                    operator="!",
+                                                                    primary_expression=PrimaryExpression(
+                                                                        content=BuiltInCall(
+                                                                            function_name="isBLANK",
+                                                                            arguments=[
+                                                                                var
+                                                                            ],
+                                                                        )
+                                                                    ),
+                                                                )
                                                             )
                                                         )
                                                     )
                                                 )
                                             )
-                                        )
-                                    ]
-                                )
-                            ]
-                        )
-                    )
-                )
-            )
-        )
-        if non_shacl_predicates:
-            direct_preds_tb = _generate_fts_triples_block(non_shacl_predicates)
-            direct_preds_ggp = GroupGraphPattern(
-                content=GroupGraphPatternSub(
-                    graph_patterns_or_triples_blocks=[
-                        direct_preds_tb,
-                        GraphPatternNotTriples(content=bnode_filter),
-                    ]
-                )
-            )
-            ggp_list.append(direct_preds_ggp)
-        if shacl_tssp_preds:
-            for tssp_list, preds in shacl_tssp_preds:
-                path_preds_tb = _generate_fts_triples_block(
-                    preds, Var(value="fts_search_node")
-                )
-                # Wrap the SHACL path triples in OPTIONAL and add FILTER(BOUND && !isBLANK)
-                # for better Fuseki compatibility with unbound variables
-                optional_content = GroupGraphPatternSub(
-                    graph_patterns_or_triples_blocks=[
-                        TriplesBlock.from_tssp_list(tssp_list),
-                    ]
-                )
-                optional_gpnt = GraphPatternNotTriples(
-                    content=OptionalGraphPattern(
-                        group_graph_pattern=GroupGraphPattern(content=optional_content)
-                    )
-                )
-                # Create FILTER(BOUND(?focus_node) && !isBLANK(?focus_node))
-                bound_and_not_blank_filter = Filter(
-                    constraint=Constraint(
-                        content=BrackettedExpression(
-                            expression=Expression(
-                                conditional_or_expression=ConditionalOrExpression(
-                                    conditional_and_expressions=[
-                                        ConditionalAndExpression(
-                                            value_logicals=[
-                                                # BOUND(?focus_node)
-                                                ValueLogical(
-                                                    relational_expression=RelationalExpression(
-                                                        left=NumericExpression(
-                                                            additive_expression=AdditiveExpression(
-                                                                base_expression=MultiplicativeExpression(
-                                                                    base_expression=UnaryExpression(
-                                                                        primary_expression=PrimaryExpression(
-                                                                            content=BuiltInCall(
-                                                                                function_name="BOUND",
-                                                                                arguments=[
-                                                                                    sr_uri
-                                                                                ],
-                                                                            )
-                                                                        ),
-                                                                    )
-                                                                )
-                                                            )
-                                                        )
-                                                    )
-                                                ),
-                                                # !isBLANK(?focus_node)
-                                                ValueLogical(
-                                                    relational_expression=RelationalExpression(
-                                                        left=NumericExpression(
-                                                            additive_expression=AdditiveExpression(
-                                                                base_expression=MultiplicativeExpression(
-                                                                    base_expression=UnaryExpression(
-                                                                        operator="!",
-                                                                        primary_expression=PrimaryExpression(
-                                                                            content=BuiltInCall(
-                                                                                function_name="isBLANK",
-                                                                                arguments=[
-                                                                                    sr_uri
-                                                                                ],
-                                                                            )
-                                                                        ),
-                                                                    )
-                                                                )
-                                                            )
-                                                        )
-                                                    )
-                                                ),
-                                            ]
-                                        )
-                                    ]
-                                )
+                                        ]
+                                    )
+                                ]
                             )
                         )
                     )
                 )
-                path_preds_ggp = GroupGraphPattern(
+            )
+
+        fts_search_node = Var(value="fts_search_node")
+
+        def _dedupe_preserve_order(values: list[str]) -> list[str]:
+            seen = set()
+            out = []
+            for v in values:
+                if v in seen:
+                    continue
+                seen.add(v)
+                out.append(v)
+            return out
+
+        all_preds = []
+        if non_shacl_predicates:
+            all_preds.extend([str(p) for p in non_shacl_predicates])
+        if shacl_tssp_preds:
+            for _, preds in shacl_tssp_preds:
+                all_preds.extend([str(p) for p in preds])
+
+        text_query_tb = _generate_fts_triples_block(
+            _dedupe_preserve_order(all_preds), fts_search_node
+        )
+
+        ggp_list = []
+        if non_shacl_predicates:
+            direct_pred_values = _dedupe_preserve_order(
+                [str(p) for p in non_shacl_predicates]
+            )
+            for pred_iri in direct_pred_values:
+                match_tssp = TriplesSameSubjectPath.from_spo(
+                    subject=sr_uri,
+                    predicate=IRI(value=pred_iri),
+                    object=match,
+                )
+                bind_focus_gpnt = GraphPatternNotTriples(
+                    content=Bind(
+                        expression=Expression.from_primary_expression(
+                            PrimaryExpression(content=fts_search_node)
+                        ),
+                        var=sr_uri,
+                    )
+                )
+                direct_preds_ggp = GroupGraphPattern(
                     content=GroupGraphPatternSub(
                         graph_patterns_or_triples_blocks=[
-                            path_preds_tb,
-                            optional_gpnt,
-                            GraphPatternNotTriples(content=bound_and_not_blank_filter),
+                            bind_focus_gpnt,
+                            TriplesBlock.from_tssp_list([match_tssp]),
+                            GraphPatternNotTriples(content=_not_blank_filter(sr_uri)),
                         ]
                     )
                 )
-                ggp_list.append(path_preds_ggp)
+                ggp_list.append(direct_preds_ggp)
+        if shacl_tssp_preds:
+            for tssp_list, preds in shacl_tssp_preds:
+                pred_values = _dedupe_preserve_order([str(p) for p in preds])
+                if not pred_values:
+                    continue
+                for pred_iri in pred_values:
+                    match_tssp = TriplesSameSubjectPath.from_spo(
+                        subject=fts_search_node,
+                        predicate=IRI(value=pred_iri),
+                        object=match,
+                    )
+                    branch_tssp_list = [*tssp_list, match_tssp]
+                    path_preds_ggp = GroupGraphPattern(
+                        content=GroupGraphPatternSub(
+                            graph_patterns_or_triples_blocks=[
+                                TriplesBlock.from_tssp_list(branch_tssp_list),
+                                GraphPatternNotTriples(
+                                    content=_not_blank_filter(sr_uri)
+                                ),
+                            ]
+                        )
+                    )
+                    ggp_list.append(path_preds_ggp)
 
         gpnt = GraphPatternNotTriples(
             content=GroupOrUnionGraphPattern(group_graph_patterns=ggp_list)
@@ -482,7 +460,10 @@ class SearchQueryFusekiFTS(ConstructQuery):
                     where_clause=WhereClause(
                         group_graph_pattern=GroupGraphPattern(
                             content=GroupGraphPatternSub(
-                                graph_patterns_or_triples_blocks=[gpnt]
+                                graph_patterns_or_triples_blocks=[
+                                    text_query_tb,
+                                    gpnt,
+                                ]
                             )
                         )
                     ),
