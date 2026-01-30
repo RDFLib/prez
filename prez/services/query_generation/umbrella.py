@@ -41,6 +41,25 @@ from prez.services.query_generation.shacl import NodeShape
 from prez.services.query_generation.grammar_helpers import create_filter_exists
 
 
+def _dedupe_inner_select_vars(
+    inner_select_vars: list[Union[Var, Tuple[Expression, Var]]],
+) -> list[Union[Var, Tuple[Expression, Var]]]:
+    """De-duplicate SELECT projection vars by name while preserving order."""
+
+    seen: set[str] = set()
+    out: list[Union[Var, Tuple[Expression, Var]]] = []
+
+    for item in inner_select_vars:
+        var = item[1] if isinstance(item, tuple) else item
+        key = getattr(var, "value", str(var))
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(item)
+
+    return out
+
+
 class PrezQueryConstructor(ConstructQuery):
     """
     Creates a CONSTRUCT query to describe a listing of objects or an individual object.
@@ -341,6 +360,8 @@ def merge_listing_query_grammar_inputs(
     # include at least one triple in the subselect, for the focus node class, which will match the class selection
     # always included in profiles.
     # kwargs["inner_select_gpnt"] could be present but have a FILTER EXISTS only, producing no bindings, so it is not checked here.
+    kwargs["inner_select_vars"] = _dedupe_inner_select_vars(kwargs["inner_select_vars"])
+
     if not (kwargs["inner_select_tssp_list"]) and not (kwargs["inner_select_gpnt"]):
         triple = (
             Var(value="focus_node"),

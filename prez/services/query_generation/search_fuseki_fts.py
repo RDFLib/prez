@@ -338,33 +338,23 @@ class SearchQueryFusekiFTS(ConstructQuery):
 
         ggp_list = []
         if non_shacl_predicates:
-            direct_pred_values = _dedupe_preserve_order(
-                [str(p) for p in non_shacl_predicates]
+            bind_focus_gpnt = GraphPatternNotTriples(
+                content=Bind(
+                    expression=Expression.from_primary_expression(
+                        PrimaryExpression(content=fts_search_node)
+                    ),
+                    var=sr_uri,
+                )
             )
-            for pred_iri in direct_pred_values:
-                match_tssp = TriplesSameSubjectPath.from_spo(
-                    subject=sr_uri,
-                    predicate=IRI(value=pred_iri),
-                    object=match,
+            direct_preds_ggp = GroupGraphPattern(
+                content=GroupGraphPatternSub(
+                    graph_patterns_or_triples_blocks=[
+                        bind_focus_gpnt,
+                        GraphPatternNotTriples(content=_not_blank_filter(sr_uri)),
+                    ]
                 )
-                bind_focus_gpnt = GraphPatternNotTriples(
-                    content=Bind(
-                        expression=Expression.from_primary_expression(
-                            PrimaryExpression(content=fts_search_node)
-                        ),
-                        var=sr_uri,
-                    )
-                )
-                direct_preds_ggp = GroupGraphPattern(
-                    content=GroupGraphPatternSub(
-                        graph_patterns_or_triples_blocks=[
-                            bind_focus_gpnt,
-                            TriplesBlock.from_tssp_list([match_tssp]),
-                            GraphPatternNotTriples(content=_not_blank_filter(sr_uri)),
-                        ]
-                    )
-                )
-                ggp_list.append(direct_preds_ggp)
+            )
+            ggp_list.append(direct_preds_ggp)
         if shacl_tssp_preds:
             for tssp_list, preds in shacl_tssp_preds:
                 pred_values = _dedupe_preserve_order([str(p) for p in preds])
@@ -527,6 +517,7 @@ class SearchQueryFusekiFTS(ConstructQuery):
         return GraphPatternNotTriples(
             content=GroupOrUnionGraphPattern(group_graph_patterns=[inner_ggp])
         )
+
 
 
 if __name__ == "__main__":

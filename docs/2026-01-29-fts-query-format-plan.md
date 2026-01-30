@@ -85,6 +85,24 @@ Notes:
 - **Duplicate predicates**: Use a set for `text:query` but still reference the predicate in each branch?
 - **Weight/limit placement**: If weights or limits are appended after the literal in current queries, keep the same ordering when consolidating.
 - **Branch duplication**: The provided sample shows a duplicate UNION branch; confirm whether duplicates should be removed or preserved.
+- **Property group IRIs (Fuseki config)**: Non‑SHACL predicates may be *property group* IRIs (e.g., `http://example.org/allprops`) that expand to multiple predicates in the Fuseki text index. These are not resolvable in Prez, so we cannot emit `?fts_search_node <group> ?match` safely.
+
+## Clarification: Property Group IRIs
+
+Fuseki text indices can define *property groups* where an IRI represents a collection of indexed predicates. When a non‑SHACL predicate equals a property group IRI, Prez cannot expand it into real predicates and therefore cannot emit a predicate‑specific triple.
+
+### Proposed handling
+
+- **Non‑SHACL predicates (possibly property groups)**:  
+  Use a branch that **only** binds `?focus_node` to `?fts_search_node` and applies `FILTER(!isBLANK(?focus_node))`.  
+  This avoids false negatives when the IRI is a property group, at the cost of less constraint in that branch.
+
+- **SHACL predicates**:  
+  Continue to emit predicate‑specific match triples so the branch is restricted to the shape’s `ont:searchPredicate`.
+
+### Recommendation for precision
+
+If users want predicate‑specific matching for a single property, advise creating a SHACL FTS shape with a single `ont:searchPredicate`. This provides a concrete predicate IRI for the match triple without relying on property groups.
 
 ## Suggested Tests
 
