@@ -47,6 +47,10 @@ Notes:
 4. **Add predicate-specific match triple** in each UNION branch:
    - `?fts_search_node <shape_predicate> ?match`
    - Ensures that the branch only matches results indexed by that predicate.
+5. **Support SHACL-AF union containers** for FTS shapes:
+   - Allow a standalone node expression (identified by `dcterms:identifier`) with `sh:union ( ... )`
+   - Each union member is a path expression (blank node with `sh:path`) and may include `ont:searchPredicate`
+   - Translate each member into a separate UNION branch, same as if the member were a normal FTS property shape.
 
 ## Implementation Plan
 
@@ -86,6 +90,54 @@ Notes:
 - **Weight/limit placement**: If weights or limits are appended after the literal in current queries, keep the same ordering when consolidating.
 - **Branch duplication**: The provided sample shows a duplicate UNION branch; confirm whether duplicates should be removed or preserved.
 - **Property group IRIs (Fuseki config)**: Non‑SHACL predicates may be *property group* IRIs (e.g., `http://example.org/allprops`) that expand to multiple predicates in the Fuseki text index. These are not resolvable in Prez, so we cannot emit `?fts_search_node <group> ?match` safely.
+- **SHACL-AF union containers**: Decide how to surface these in config/docs and whether to require an explicit class (e.g., `ont:JenaFTSUnionShape`) or simply any node with `sh:union` and `dcterms:identifier`.
+
+## Plan: FTS Union Containers (sh:union)
+
+### Goal
+
+Allow a **single `predicates=` value** to represent a union of multiple FTS property shapes by using `sh:union` on a standalone node expression. This becomes a declarative container for UNION branches.
+
+### Expected Turtle Pattern (example)
+
+```turtle
+ex:interesting_objects
+    dcterms:identifier "interesting_objects" ;
+    sh:union (
+        [ sh:path ex:firstName ; ont:searchPredicate rdfs:label ]
+        [ sh:path ex:givenName ; ont:searchPredicate rdfs:label ]
+        [ sh:path ex:title ; ont:searchPredicate dcterms:title ]
+    ) .
+```
+
+### Implementation Steps
+
+1. **Parse union container nodes**
+   - In `get_jena_fts_shacl_predicates` / FTS shape parsing, detect nodes with `sh:union`.
+   - Require `dcterms:identifier` so they can be referenced via `predicates=`.
+
+2. **Expand union members into FTS shapes**
+   - For each member node expression in the `sh:union` list:
+     - Expect `sh:path` (path expression).
+     - Read `ont:searchPredicate` (if missing, decide on fallback or skip).
+   - Convert each member into a `PropertyShape` equivalent (reuse existing `PropertyShape` parsing if possible).
+
+3. **Integrate with query generation**
+   - Treat union members as if they were listed separately in `predicates=`.
+   - Each member creates its own UNION branch with predicate‑specific match triple.
+
+4. **Validation and errors**
+   - If a union member lacks `sh:path` or `ont:searchPredicate`, return a clear config error.
+   - If a union container is referenced in `predicates=` but has no resolvable members, ignore or error consistently.
+
+5. **Tests**
+   - One union container with two members (different paths, different predicates).
+   - Union container mixed with normal FTS property shapes and non‑SHACL predicates.
+   - Invalid union member (missing `sh:path`) → expected error.
+
+### Documentation Updates
+
+- Add a section to `docs/fuseki_fts_functionality.md` describing `sh:union` containers and how to use them.
 
 ## Clarification: Property Group IRIs
 
