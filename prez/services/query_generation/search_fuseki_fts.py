@@ -16,6 +16,7 @@ from sparql_grammar_pydantic import (
     ConstructTemplate,
     ConstructTriples,
     Expression,
+    Bind,
     Filter,
     GraphNodePath,
     GraphPatternNotTriples,
@@ -449,14 +450,48 @@ class SearchQueryFusekiFTS(ConstructQuery):
                     if not pred_values:
                         continue
                     branch_tssp_list = list(reversed(tssp_list))
-                    if not branch_tssp_list:
-                        continue
                     branch_patterns = []
                     branch_patterns.append(
                         GraphPatternNotTriples(
                             content=_bound_filter(fts_search_node)
                         )
                     )
+                    if not branch_tssp_list:
+                        if focus_node_classes:
+                            branch_patterns.append(
+                                TriplesBlock.from_tssp_list(
+                                    [
+                                        TriplesSameSubjectPath.from_spo(
+                                            fts_search_node,
+                                            IRI(value=RDF.type),
+                                            IRI(value=klass),
+                                        )
+                                        for klass in focus_node_classes
+                                    ]
+                                )
+                            )
+                        branch_patterns.append(
+                            GraphPatternNotTriples(
+                                content=Bind(
+                                    expression=Expression.from_primary_expression(
+                                        PrimaryExpression(content=fts_search_node)
+                                    ),
+                                    var=sr_uri,
+                                )
+                            )
+                        )
+                        path_preds_ggp = GroupGraphPattern(
+                            content=GroupGraphPatternSub(
+                                graph_patterns_or_triples_blocks=[
+                                    *branch_patterns,
+                                    GraphPatternNotTriples(
+                                        content=_not_blank_filter(sr_uri)
+                                    ),
+                                ]
+                            )
+                        )
+                        shacl_branch_ggps.append(path_preds_ggp)
+                        continue
                     seen_bound_vars = {fts_search_node.value}
                     for tssp in branch_tssp_list:
                         branch_patterns.append(
