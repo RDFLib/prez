@@ -234,6 +234,7 @@ class PropertyShape(Shape):
     union_tssps_binds: Optional[List[Dict[str, Any]]] = []  # New attribute
     all_predicate_values_counter: int = 0
     cql_filter_var: Optional[Var] = None  # Variable to use for CQL FILTER IN clauses
+    focus_node_classes: Optional[List[URIRef]] = []
 
     @property
     def minCount(self):
@@ -667,6 +668,15 @@ class PropertyShape(Shape):
                     )
                 )
             )
+
+        if self.kind == "fts" and self.or_klasses:
+            if len(self.or_klasses) == 1:
+                self.focus_node_classes = list(self.or_klasses)
+            else:
+                log.warning(
+                    "FTS property shape sh:class with multiple values (sh:or) "
+                    f"is not yet supported: {self.or_klasses}"
+                )
 
         if self.minCount == 0:
             self.gpnt_list.append(

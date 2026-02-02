@@ -82,15 +82,17 @@ def test_bnode_filter():
         limit=10,
         offset=0,
         non_shacl_predicates=[RDFS.label, RDFS.comment],
-        shacl_tssp_preds=[(tssp_list, [RDFS.label])],
+        shacl_tssp_preds=[(tssp_list, [RDFS.label], None)],
     )
     query_string = query_obj.to_string()
-    # For non-shacl predicates, just the bnode filter
+    # Non-shacl predicates use direct focus_node + isIRI filter
+    assert "FILTER (isIRI(?focus_node))" in query_string
+    # SHACL paths still filter out blank focus nodes
     assert "FILTER (! isBLANK(?focus_node))" in query_string
 
 
-def test_shacl_path_optional_and_bound_filter():
-    """Test that SHACL path triples are wrapped in OPTIONAL with FILTER(BOUND && !isBLANK)."""
+def test_shacl_path_filter():
+    """Test that SHACL path triples include a !isBLANK focus node filter."""
     tssp_list = [
         TriplesSameSubjectPath.from_spo(
             Var(value="fts_search_node_3"),
@@ -117,22 +119,48 @@ def test_shacl_path_optional_and_bound_filter():
         term="MN02",
         limit=10,
         offset=0,
-        shacl_tssp_preds=[(tssp_list, [RDFS.label])],
+        shacl_tssp_preds=[(tssp_list, [RDFS.label], None)],
         fts_limit=500,
     )
     query_string = query_obj.to_string()
 
-    # Verify OPTIONAL is present (SHACL path triples should be in OPTIONAL block)
-    assert "OPTIONAL {" in query_string
-
-    # Verify the combined FILTER with BOUND and !isBLANK
-    assert "FILTER (BOUND(?focus_node) && ! isBLANK(?focus_node))" in query_string
+    # Verify the filter is present
+    assert "FILTER (! isBLANK(?focus_node))" in query_string
 
     # Verify the triple patterns are present
     assert "https://linked.data.gov.au/dataset/gswa/hasAgeName" in query_string
     assert "https://schema.org/maxValue" in query_string
     assert "http://www.w3.org/ns/sosa/hasResult" in query_string
     assert "http://www.w3.org/ns/sosa/hasFeatureOfInterest" in query_string
+
+
+def test_fts_property_shape_class_constraint():
+    file = Path(__file__).parent.parent / "test_data" / "fts_property_shapes.ttl"
+    ps_g = Graph().parse(file)
+    ps = PropertyShape(
+        uri=URIRef("http://example.com/FTSClassShape"),
+        graph=ps_g,
+        kind="fts",
+        focus_node=Var(value="focus_node"),
+        shape_number=102,
+    )
+    query_obj = SearchQueryFusekiFTS(
+        term="test",
+        limit=10,
+        offset=0,
+        shacl_tssp_preds=[
+            (
+                ps.tssp_list,
+                [URIRef("http://example.com/labelProp")],
+                [URIRef("http://example.com/ResultClass")],
+            )
+        ],
+    )
+    query_string = query_obj.to_string()
+    assert (
+        "?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/ResultClass>"
+        in query_string
+    )
 
 
 def test_oomp():
@@ -157,12 +185,11 @@ def test_oomp():
         term="test",
         limit=10,
         offset=0,
-        shacl_tssp_preds=[(tssp_list, [RDF.value])],
+        shacl_tssp_preds=[(tssp_list, [RDF.value], None)],
     )
     query_string = query_obj.to_string()
-    # SHACL paths use OPTIONAL + FILTER(BOUND && !isBLANK)
-    assert "OPTIONAL {" in query_string
-    assert "FILTER (BOUND(?focus_node) && ! isBLANK(?focus_node))" in query_string
+    # SHACL paths use !isBLANK filter
+    assert "FILTER (! isBLANK(?focus_node))" in query_string
 
 
 @patch("prez.dependencies.settings")
@@ -261,7 +288,7 @@ def test_fts_limit_with_shacl():
         term="test",
         limit=10,
         offset=5,
-        shacl_tssp_preds=[(tssp_list, [RDFS.label])],
+        shacl_tssp_preds=[(tssp_list, [RDFS.label], None)],
         fts_limit=100,
     )
     query_string = query_obj.to_string()

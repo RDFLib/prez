@@ -358,7 +358,7 @@ async def generate_search_query(
                         focus_node=Var(value="focus_node"),
                         shape_number=i,
                     )
-                    tssp_lists.append((ps.tssp_list, search_preds))
+                    tssp_lists.append((ps.tssp_list, search_preds, ps.focus_node_classes))
                     tss_list.extend(ps.tss_list)
                     i += 1
                 else:

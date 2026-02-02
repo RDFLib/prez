@@ -8,16 +8,26 @@ from sparql_grammar_pydantic import (
     IRI,
     ArgList,
     Bind,
+    BrackettedExpression,
     Constraint,
     Expression,
     Filter,
+    BuiltInCall,
     FunctionCall,
     GraphPatternNotTriples,
+    AdditiveExpression,
+    ConditionalAndExpression,
+    ConditionalOrExpression,
+    MultiplicativeExpression,
+    NumericExpression,
     PrimaryExpression,
     RDFLiteral,
+    RelationalExpression,
     TriplesSameSubjectPath,
+    UnaryExpression,
     Var,
     TriplesBlock,
+    ValueLogical,
     DataBlock,
     DataBlockValue,
     InlineData,
@@ -88,6 +98,43 @@ def _object_list_for_iri_or_var_or_lit(
         raise ValueError("Unsupported type for _object_list_for_iri_or_var_or_lit")
     return ObjectList(
         list_object=[Object(graphnode=GraphNode(varorterm_or_triplesnode=vot))]
+    )
+
+
+def _bound_filter(var: Var) -> Filter:
+    return Filter(
+        constraint=Constraint(
+            content=BrackettedExpression(
+                expression=Expression(
+                    conditional_or_expression=ConditionalOrExpression(
+                        conditional_and_expressions=[
+                            ConditionalAndExpression(
+                                value_logicals=[
+                                    ValueLogical(
+                                        relational_expression=RelationalExpression(
+                                            left=NumericExpression(
+                                                additive_expression=AdditiveExpression(
+                                                    base_expression=MultiplicativeExpression(
+                                                        base_expression=UnaryExpression(
+                                                            primary_expression=PrimaryExpression(
+                                                                content=BuiltInCall(
+                                                                    function_name="BOUND",
+                                                                    arguments=[var],
+                                                                )
+                                                            ),
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                ]
+                            )
+                        ]
+                    )
+                )
+            )
+        )
     )
 
 
@@ -427,18 +474,21 @@ def generate_bbox_filter(
 
     elif target_system in ["geosparql", "qlever"]:
         # Add geometry triple patterns first (inside the block)
-        # Order: focus_node first, then geom_bnode (reversed for TriplesBlock nesting)
-        geometry_triples = TriplesBlock.from_tssp_list(
-            [
-                TriplesSameSubjectPath.from_spo(
-                    geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var
-                ),
-                TriplesSameSubjectPath.from_spo(
+        ggps.add_pattern(
+            TriplesBlock(
+                triples=TriplesSameSubjectPath.from_spo(
                     subject, IRI(value=GEO.hasGeometry), geom_bn_var
-                ),
-            ]
+                )
+            )
         )
-        ggps.add_pattern(geometry_triples)
+        ggps.add_pattern(GraphPatternNotTriples(content=_bound_filter(geom_bn_var)))
+        ggps.add_pattern(
+            TriplesBlock(
+                triples=TriplesSameSubjectPath.from_spo(
+                    geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var
+                )
+            )
+        )
 
         # Add spatial filter patterns after geometry triples
         spatial_filter_gpnts = generate_spatial_filter_clause(
