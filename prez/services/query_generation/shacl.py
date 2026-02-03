@@ -490,6 +490,7 @@ class PropertyShape(Shape):
                 )
         return patterns
 
+
     def _add_path_to_shape(
         self,
         pp: Node,
@@ -1636,6 +1637,54 @@ def _tssp_for_sequence(focus_node, sequence_elements: list[PropertyPath], obj):
             ),
         )
     )
+
+
+class FTSUnionContainer(BaseModel):
+    class Config:
+        arbitrary_types_allowed = True
+
+    uri: URIRef | BNode
+    graph: Graph
+    focus_node: Union[Var, IRI]
+    shape_number: int = 0
+    tssp_list_with_preds: List[
+        Tuple[List[TriplesSameSubjectPath], List[Node], List[URIRef]]
+    ] = []
+    tss_list: List[TriplesSameSubject] = []
+    next_shape_number: int = 0
+
+    def __init__(self, **data: Any):
+        super().__init__(**data)
+        self._parse_union()
+
+    def _parse_union(self):
+        union_node = next(self.graph.objects(self.uri, SH.union), None)
+        if union_node is None:
+            raise ValueError(f"FTS union container has no sh:union list: {self.uri}")
+        members = list(Collection(self.graph, union_node))
+        current = self.shape_number
+        for member in members:
+            member_graph = self.graph.cbd(member)
+            search_preds = list(
+                member_graph.objects(subject=None, predicate=ONT.searchPredicate)
+            )
+            if not search_preds:
+                raise ValueError(
+                    f"FTS union member missing ont:searchPredicate: {member}"
+                )
+            ps = PropertyShape(
+                uri=member,
+                graph=member_graph,
+                kind="fts",
+                focus_node=self.focus_node,
+                shape_number=current,
+            )
+            self.tssp_list_with_preds.append(
+                (ps.tssp_list, search_preds, ps.focus_node_classes)
+            )
+            self.tss_list.extend(ps.tss_list)
+            current += 1
+        self.next_shape_number = current
 
 
 class PropertyPath(BaseModel):

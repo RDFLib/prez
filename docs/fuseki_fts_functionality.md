@@ -62,7 +62,7 @@ Define a **union container** that lists member FTS property shapes. Each member 
 ex:InterestingObjects
     a ont:JenaFTSUnionShape ;
     dcterms:identifier "interesting_objects" ;
-    ont:union (
+    sh:union (
         ex:NameSearch
         ex:TitleSearch
         ex:IdentifierSearch

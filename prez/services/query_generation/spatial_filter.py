@@ -138,6 +138,53 @@ def _bound_filter(var: Var) -> Filter:
     )
 
 
+def _not_blanknode_like_literal_filter(var: Var) -> Filter:
+    str_expr = Expression.from_primary_expression(
+        PrimaryExpression(content=BuiltInCall(function_name="STR", arguments=[var]))
+    )
+    underscore_expr = Expression.from_primary_expression(
+        PrimaryExpression(content=RDFLiteral(value="_"))
+    )
+    return Filter(
+        constraint=Constraint(
+            content=BrackettedExpression(
+                expression=Expression(
+                    conditional_or_expression=ConditionalOrExpression(
+                        conditional_and_expressions=[
+                            ConditionalAndExpression(
+                                value_logicals=[
+                                    ValueLogical(
+                                        relational_expression=RelationalExpression(
+                                            left=NumericExpression(
+                                                additive_expression=AdditiveExpression(
+                                                    base_expression=MultiplicativeExpression(
+                                                        base_expression=UnaryExpression(
+                                                            operator="!",
+                                                            primary_expression=PrimaryExpression(
+                                                                content=BuiltInCall(
+                                                                    function_name="STRSTARTS",
+                                                                    arguments=[
+                                                                        str_expr,
+                                                                        underscore_expr,
+                                                                    ],
+                                                                )
+                                                            ),
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                ]
+                            )
+                        ]
+                    )
+                )
+            )
+        )
+    )
+
+
 def count_decimal_places(num):
     return abs(Decimal(str(num)).as_tuple().exponent)
 
@@ -222,6 +269,11 @@ def generate_spatial_filter_clause(
         # Create variable for the bound WKT input
         spatial_wkt_input_var = Var(value="spatial_wkt_input")
 
+        # Create FILTER to skip literals that look like blank nodes (e.g., "_:b1")
+        non_blanknode_filter_gpnt = GraphPatternNotTriples(
+            content=_not_blanknode_like_literal_filter(geom_wkt_lit_var)
+        )
+
         # Create BIND clause: BIND("WKT"^^geo:wktLiteral AS ?spatial_wkt_input)
         bind_gpnt = GraphPatternNotTriples(
             content=Bind(
@@ -258,7 +310,7 @@ def generate_spatial_filter_clause(
             )
         )
 
-        return [bind_gpnt, spatial_triple_gpnt]
+        return [non_blanknode_filter_gpnt, bind_gpnt, spatial_triple_gpnt]
 
     elif target_system == "qlever":
         if cql_operator not in cql_qlever_spatial_mapping:
@@ -376,7 +428,12 @@ def generate_spatial_filter_clause(
                                                     object=geom_wkt_lit_var,
                                                 ),
                                             ]
-                                        )
+                                        ),
+                                        GraphPatternNotTriples(
+                                            content=_not_blanknode_like_literal_filter(
+                                                geom_wkt_lit_var
+                                            )
+                                        ),
                                     ]
                                 )
                             )

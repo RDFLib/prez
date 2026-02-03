@@ -4,7 +4,7 @@
 
 ## Background
 
-Current FTS node shape query generation emits multiple UNION branches, each with its own `text:query` clause and an OPTIONAL path from `?fts_search_node` to `?focus_node`, guarded by `BOUND()`/`!isBLANK()` checks. The desired update consolidates predicates into a single `text:query` list, simplifies UNION branches, and adds a predicate-specific match triple to restrict branch evaluation to the relevant shape.
+Current FTS node shape query generation emits multiple UNION branches, each with its own `text:query` clause and an OPTIONAL path from `?fts_search_node` to `?focus_node`, guarded by `BOUND()`/`!isBLANK()` checks. The desired update consolidates predicates into a single `text:query` list and simplifies UNION branches to direct path triples with a not‑blank filter on `?focus_node`.
 
 ## Target Query Shape (Sketch)
 
@@ -20,23 +20,20 @@ Current FTS node shape query generation emits multiple UNION branches, each with
 
 {
   ?focus_node <pathA> ?fts_search_node .
-  ?fts_search_node <predA> ?match .
 }
 UNION
 {
   ?fts_search_node <pathB> ?focus_node .
-  ?fts_search_node <predB> ?match .
 }
 UNION
 {
   ?focus_node <pathC> ?fts_search_node .
-  ?fts_search_node <predC> ?match .
 }
 ```
 
 Notes:
 - The `text:query` list includes *all* predicates from relevant `ont:searchPredicate` values.
-- Each UNION branch adds `?fts_search_node <shape_pred> ?match` to bind matches to that shape’s predicate.
+- UNION branches are the path patterns only (plus not‑blank checks).
 - Optional/BIND/FILTER checks are removed; branch patterns are direct triples.
 
 ## Requirements Summary
@@ -44,10 +41,7 @@ Notes:
 1. **Collect all FTS predicates** from the active FTS node shapes via `ont:searchPredicate`.
 2. **Emit a single `text:query` clause** containing all collected predicates and the search string.
 3. **Simplify branch patterns** to plain triple patterns (no OPTIONAL + BOUND + isBLANK).
-4. **Add predicate-specific match triple** in each UNION branch:
-   - `?fts_search_node <shape_predicate> ?match`
-   - Ensures that the branch only matches results indexed by that predicate.
-5. **Support SHACL-AF union containers** for FTS shapes:
+4. **Support SHACL-AF union containers** for FTS shapes:
    - Allow a standalone node expression (identified by `dcterms:identifier`) with `sh:union ( ... )`
    - Each union member is a path expression (blank node with `sh:path`) and may include `ont:searchPredicate`
    - Translate each member into a separate UNION branch, same as if the member were a normal FTS property shape.
@@ -69,19 +63,17 @@ Notes:
 4. **Rewrite UNION branches**
    - For each FTS node shape:
      - Replace OPTIONAL path + `BOUND`/`isBLANK` filter with direct triple patterns.
-     - Add the extra predicate-specific match triple:
-       `?fts_search_node <shape_predicate> ?match`.
+     - Apply `FILTER(!isBLANK(?focus_node))` as needed.
    - Ensure branch-specific path direction is preserved (some shapes go from `?focus_node` to `?fts_search_node`, others the reverse).
 
 5. **Validate generated query structure**
    - Add or update unit tests / snapshot tests to cover:
      - Multiple FTS node shapes with different `ont:searchPredicate` values.
      - Mixed path directions to `?focus_node`.
-     - Duplicate predicates across shapes (dedupe in `text:query`, but still emit per-branch match triple).
+     - Duplicate predicates across shapes (dedupe in `text:query`).
 
 6. **Review execution semantics**
-   - Confirm that `?match` remains bound via `text:query` and is compatible with the added match triple.
-   - Ensure the additional match triple does not unintentionally exclude valid results (verify with a representative dataset).
+   - Confirm that `?match` remains bound via `text:query` and is available for CONSTRUCT output.
 
 ## Open Questions / Decisions
 
@@ -89,7 +81,7 @@ Notes:
 - **Duplicate predicates**: Use a set for `text:query` but still reference the predicate in each branch?
 - **Weight/limit placement**: If weights or limits are appended after the literal in current queries, keep the same ordering when consolidating.
 - **Branch duplication**: The provided sample shows a duplicate UNION branch; confirm whether duplicates should be removed or preserved.
-- **Property group IRIs (Fuseki config)**: Non‑SHACL predicates may be *property group* IRIs (e.g., `http://example.org/allprops`) that expand to multiple predicates in the Fuseki text index. These are not resolvable in Prez, so we cannot emit `?fts_search_node <group> ?match` safely.
+- **Property group IRIs (Fuseki config)**: Non‑SHACL predicates may be *property group* IRIs (e.g., `http://example.org/allprops`) that expand to multiple predicates in the Fuseki text index. These are not resolvable in Prez, so we cannot emit predicate‑specific match triples safely.
 - **SHACL-AF union containers**: Decide how to surface these in config/docs and whether to require an explicit class (e.g., `ont:JenaFTSUnionShape`) or simply any node with `sh:union` and `dcterms:identifier`.
 
 ## Plan: FTS Union Containers (sh:union)
@@ -124,7 +116,7 @@ ex:interesting_objects
 
 3. **Integrate with query generation**
    - Treat union members as if they were listed separately in `predicates=`.
-   - Each member creates its own UNION branch with predicate‑specific match triple.
+   - Each member creates its own UNION branch (path triples only).
 
 4. **Validation and errors**
    - If a union member lacks `sh:path` or `ont:searchPredicate`, return a clear config error.
@@ -150,11 +142,11 @@ Fuseki text indices can define *property groups* where an IRI represents a colle
   This avoids false negatives when the IRI is a property group, at the cost of less constraint in that branch.
 
 - **SHACL predicates**:  
-  Continue to emit predicate‑specific match triples so the branch is restricted to the shape’s `ont:searchPredicate`.
+  Continue to emit only the path triples in each branch.
 
 ### Recommendation for precision
 
-If users want predicate‑specific matching for a single property, advise creating a SHACL FTS shape with a single `ont:searchPredicate`. This provides a concrete predicate IRI for the match triple without relying on property groups.
+If users want predicate‑specific matching for a single property, advise creating a SHACL FTS shape with a single `ont:searchPredicate`. This provides a concrete predicate IRI for targeted configuration.
 
 ## Suggested Tests
 

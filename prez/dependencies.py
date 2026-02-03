@@ -5,7 +5,7 @@ from pathlib import Path
 import httpx
 from fastapi import Depends, HTTPException, Request
 from pyoxigraph import Store, RdfFormat, DefaultGraph as OxiDefaultGraph
-from rdflib import DCTERMS, RDF, SKOS, Literal, URIRef, Graph
+from rdflib import DCTERMS, RDF, SH, SKOS, Literal, URIRef, Graph
 from sparql_grammar_pydantic import IRI, Var
 
 from prez.cache import (
@@ -43,7 +43,7 @@ from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQue
 from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.search_default import SearchQueryRegex
 from prez.services.query_generation.search_fuseki_fts import SearchQueryFusekiFTS
-from prez.services.query_generation.shacl import NodeShape, PropertyShape
+from prez.services.query_generation.shacl import FTSUnionContainer, NodeShape, PropertyShape
 
 logger = logging.getLogger(__name__)
 
@@ -261,7 +261,18 @@ async def cql_get_parser_dependency(
 
 
 async def get_jena_fts_shacl_predicates(system_repo: Repo) -> Graph:
-    query = "DESCRIBE ?fts_shape WHERE {?fts_shape a <https://prez.dev/ont/JenaFTSPropertyShape>}"
+    query = """
+    DESCRIBE ?fts_shape
+    WHERE {
+        { ?fts_shape a <https://prez.dev/ont/JenaFTSPropertyShape> }
+        UNION
+        {
+            ?fts_shape a <https://prez.dev/ont/JenaFTSUnionShape> .
+            ?fts_shape <http://www.w3.org/ns/shacl#union> ?u .
+            ?fts_shape <http://purl.org/dc/terms/identifier> ?id .
+        }
+    }
+    """
     return await system_repo.rdf_query_to_rdflib_graph(query)
 
 
@@ -328,6 +339,8 @@ async def generate_search_query(
         elif settings.search_method == SearchMethod.FTS_FUSEKI:
             predicates = predicates if predicates else settings.search_predicates
             shacl_shapes = await get_jena_fts_shacl_predicates(system_repo)
+            def _has_triple(graph: Graph, s, p, o) -> bool:
+                return any(graph.triples((s, p, o)))
             shacl_shape_ids = list(
                 [
                     str(x)
@@ -345,22 +358,41 @@ async def generate_search_query(
                     shacl_shape_uri = shacl_shapes.value(
                         subject=None, predicate=DCTERMS.identifier, object=Literal(pred)
                     )
-                    shacl_shape_g = shacl_shapes.cbd(shacl_shape_uri)
-                    search_preds = list(
-                        shacl_shape_g.objects(
-                            subject=None, predicate=ONT.searchPredicate
+                    if (
+                        shacl_shape_uri
+                        and _has_triple(
+                            shacl_shapes, shacl_shape_uri, RDF.type, ONT.JenaFTSUnionShape
                         )
-                    )
-                    ps = PropertyShape(
-                        uri=shacl_shape_uri,
-                        graph=shacl_shape_g,
-                        kind="fts",
-                        focus_node=Var(value="focus_node"),
-                        shape_number=i,
-                    )
-                    tssp_lists.append((ps.tssp_list, search_preds, ps.focus_node_classes))
-                    tss_list.extend(ps.tss_list)
-                    i += 1
+                        and _has_triple(shacl_shapes, shacl_shape_uri, SH.union, None)
+                    ):
+                        union_container = FTSUnionContainer(
+                            uri=shacl_shape_uri,
+                            graph=shacl_shapes,
+                            focus_node=Var(value="focus_node"),
+                            shape_number=i,
+                        )
+                        tssp_lists.extend(union_container.tssp_list_with_preds)
+                        tss_list.extend(union_container.tss_list)
+                        i = union_container.next_shape_number
+                    else:
+                        shacl_shape_g = shacl_shapes.cbd(shacl_shape_uri)
+                        search_preds = list(
+                            shacl_shape_g.objects(
+                                subject=None, predicate=ONT.searchPredicate
+                            )
+                        )
+                        ps = PropertyShape(
+                            uri=shacl_shape_uri,
+                            graph=shacl_shape_g,
+                            kind="fts",
+                            focus_node=Var(value="focus_node"),
+                            shape_number=i,
+                        )
+                        tssp_lists.append(
+                            (ps.tssp_list, search_preds, ps.focus_node_classes)
+                        )
+                        tss_list.extend(ps.tss_list)
+                        i += 1
                 else:
                     non_shacl_predicates.append(pred)
 

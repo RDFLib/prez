@@ -106,17 +106,43 @@ async def retrieve_jena_fts_shapes(repo: Repo):
     """
     Loads Jena FTS shape definitions from both remote repo and local files.
     """
+    def _log_fts_shapes(graph: Graph, shape_type: URIRef, label: str):
+        shape_nodes = list(graph.subjects(RDF.type, shape_type))
+        n_shapes = len(shape_nodes)
+        if n_shapes > 0:
+            names_list = []
+            for node in shape_nodes:
+                name = next(graph.objects(node, SH.name), None)
+                if name is None:
+                    name = next(graph.objects(node, DCTERMS.identifier), None)
+                names_list.append(str(name) if name is not None else "(no label)")
+            names = ", ".join(names_list)
+            log.info(f"Found and added {n_shapes} {label}: {names}")
+        else:
+            log.info(f"No {label} found")
+
     # Load remote shapes
-    query = "DESCRIBE ?fts_shape WHERE {?fts_shape a <https://prez.dev/ont/JenaFTSPropertyShape>}"
+    query = """
+        DESCRIBE ?fts_shape
+        WHERE {
+            { ?fts_shape a <https://prez.dev/ont/JenaFTSPropertyShape> }
+            UNION
+            { ?fts_shape a <https://prez.dev/ont/JenaFTSUnionShape> }
+        }
+    """
     remote_g, _ = await repo.send_queries([query], [])
     if len(remote_g) > 0:
         prez_system_graph.__iadd__(remote_g)
-        n_shapes = len(list(remote_g.subjects(RDF.type, ONT.JenaFTSPropertyShape)))
-        names_list = list(remote_g.objects(subject=None, predicate=SH.name))
-        while len(names_list) < n_shapes:
-            names_list.append("(no label)")
-        names = ", ".join(names_list)
-        log.info(f"Found and added {n_shapes} remote Jena FTS shapes: {names}")
+        _log_fts_shapes(
+            remote_g,
+            ONT.JenaFTSPropertyShape,
+            "remote Jena FTS shapes",
+        )
+        _log_fts_shapes(
+            remote_g,
+            ONT.JenaFTSUnionShape,
+            "remote Jena FTS union shapes",
+        )
     else:
         log.info("No remote Jena FTS shapes found")
 
@@ -127,12 +153,16 @@ async def retrieve_jena_fts_shapes(repo: Repo):
         local_g.parse(f, format="turtle")
     if len(local_g) > 0:
         prez_system_graph.__iadd__(local_g)
-        n_shapes = len(list(local_g.subjects(RDF.type, ONT.JenaFTSPropertyShape)))
-        names_list = list(local_g.objects(subject=None, predicate=SH.name))
-        while len(names_list) < n_shapes:
-            names_list.append("(no label)")
-        names = ", ".join(names_list)
-        log.info(f"Found and added {n_shapes} local Jena FTS shapes: {names}")
+        _log_fts_shapes(
+            local_g,
+            ONT.JenaFTSPropertyShape,
+            "local Jena FTS shapes",
+        )
+        _log_fts_shapes(
+            local_g,
+            ONT.JenaFTSUnionShape,
+            "local Jena FTS union shapes",
+        )
     else:
         log.info("No local Jena FTS shapes found")
 
