@@ -53,7 +53,7 @@ from prez.services.query_generation.grammar_helpers import (
 from prez.services.query_generation.shacl import PropertyShape
 from prez.services.query_generation.spatial_filter import (
     generate_spatial_filter_clause,
-    get_wkt_from_coords,
+    get_wkt_from_coords, _bound_filter,
 )
 
 CQL = Namespace("http://www.opengis.net/doc/IS/cql2/1.0/")
@@ -466,11 +466,12 @@ class CQLParser:
             geom_bn_var = Var(value="geom_bnode")
             geom_lit_var = Var(value="geom_var")
 
+            # Keep TSS for construct, but control WHERE order explicitly.
             self._add_triple(
-                ggps, subject, IRI(value=GEO.hasGeometry), geom_bn_var, "tss_and_tssp"
+                ggps, subject, IRI(value=GEO.hasGeometry), geom_bn_var, "tss"
             )
             self._add_triple(
-                ggps, geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var, "tss_and_tssp"
+                ggps, geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var, "tss"
             )
 
             target_system = settings.spatial_query_format
@@ -501,6 +502,22 @@ class CQLParser:
                     ggps, subject, predicate_iri, object_wkt_literal, to="tssp"
                 )
             else:
+                # Ensure the spatial triples and filters are in a predictable order.
+                ggps.add_pattern(
+                    TriplesBlock(
+                        triples=TriplesSameSubjectPath.from_spo(
+                            subject, IRI(value=GEO.hasGeometry), geom_bn_var
+                        )
+                    )
+                )
+                ggps.add_pattern(GraphPatternNotTriples(content=_bound_filter(geom_bn_var)))
+                ggps.add_pattern(
+                    TriplesBlock(
+                        triples=TriplesSameSubjectPath.from_spo(
+                            geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var
+                        )
+                    )
+                )
                 filter_gpnt_list = generate_spatial_filter_clause(
                     wkt_value=processed_wkt,
                     subject_var=subject,
@@ -510,7 +527,7 @@ class CQLParser:
                     target_system=target_system,
                 )
                 for gpnt_item in filter_gpnt_list:
-                    ggps.add_pattern(gpnt_item, prepend=True)
+                    ggps.add_pattern(gpnt_item)
 
     def _handle_in(
         self, args: list[dict | list], existing_ggps: GroupGraphPatternSub | None = None
