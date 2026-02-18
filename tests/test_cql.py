@@ -27,16 +27,14 @@ cql_filenames = [
     "example39.json",
 ]
 
-# @pytest.mark.parametrize(
-#     "cql_json_filename",
-#     cql_filenames
-# )
-# def test_simple_post(client, cql_json_filename):
-#     cql_json_path = Path(__file__).parent.parent / f"test_data/cql/input/{cql_json_filename}"
-#     cql_json = json.loads(cql_json_path.read_text())
-#     headers = {"content-type": "application/json"}
-#     response = client.post("/cql", json=cql_json, headers=headers)
-#     assert response.status_code == 200
+@pytest.mark.parametrize("cql_json_filename", cql_filenames)
+def test_simple_post(client, cql_json_filename):
+    cql_json_path = Path(__file__).parent.parent / f"test_data/cql/input/{cql_json_filename}"
+    cql_json = json.loads(cql_json_path.read_text())
+    headers = {"content-type": "application/json"}
+    # New wrapped format: filter expression is under the "filter" key
+    response = client.post("/cql", json={"filter": cql_json}, headers=headers)
+    assert response.status_code == 200
 
 
 @pytest.mark.parametrize("cql_json_filename", cql_filenames)
@@ -50,12 +48,13 @@ def test_simple_get(client, cql_json_filename):
     assert response.status_code == 200
 
 
-# def test_intersects_post(client):
-#     cql_json_path = Path(__file__).parent.parent / f"test_data/cql/input/geo_intersects.json"
-#     cql_json = json.loads(cql_json_path.read_text())
-#     headers = {"content-type": "application/json"}
-#     response = client.post("/cql", json=cql_json, headers=headers)
-#     assert response.status_code == 200
+def test_intersects_post(client):
+    cql_json_path = Path(__file__).parent.parent / f"docs/examples/cql/geo_intersects.json"
+    cql_json = json.loads(cql_json_path.read_text())
+    headers = {"content-type": "application/json"}
+    # New wrapped format: filter expression is under the "filter" key
+    response = client.post("/cql", json={"filter": cql_json}, headers=headers)
+    assert response.status_code == 200
 
 cql_geo_filenames = [
     "geo_contains",

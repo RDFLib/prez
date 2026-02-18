@@ -1,8 +1,9 @@
 import json
 from datetime import datetime
-from typing import List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from fastapi import Depends, HTTPException, Query
+from pydantic import BaseModel
 
 from prez.enums import FilterLangEnum, OrderByDirectionEnum
 
@@ -246,6 +247,49 @@ class ListingQueryParams:
                 raise HTTPException(
                     status_code=400, detail="Filter criteria must be valid JSON."
                 )
+
+
+class ListingPostBody(BaseModel):
+    """
+    Pydantic model for POST body on listing endpoints.
+    Field names match the GET query parameter names.
+    Used for OpenAPI schema generation only — actual parsing is done by
+    listing_post_params_dependency which constructs a ListingQueryParams.
+    """
+
+    _mediatype: Optional[str] = "text/turtle"
+    _profile: Optional[str] = None
+    page: Optional[int] = 1
+    limit: Optional[int] = 10
+    facet_profile: Optional[str] = None
+    datetime: Optional[str] = None
+    bbox: Optional[List[float]] = None
+    filter_lang: Optional[str] = "cql2-json"
+    filter_crs: Optional[str] = "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+    q: Optional[str] = None
+    filter: Optional[Dict[str, Any]] = None
+    order_by: Optional[str] = None
+    order_by_direction: Optional[str] = None
+    subscription_key: Optional[str] = None
+    startindex: Optional[int] = None
+    offset: Optional[int] = None
+
+    class Config:
+        populate_by_name = True
+
+
+class ObjectPostBody(BaseModel):
+    """Pydantic model for POST body on the /object endpoint."""
+
+    iri: Optional[str] = None
+    uri: Optional[str] = None
+    _mediatype: Optional[str] = "text/anot+turtle"
+    _profile: Optional[str] = None
+    facet_profile: Optional[str] = None
+    subscription_key: Optional[str] = None
+
+    class Config:
+        populate_by_name = True
 
 
 class ObjectQueryParams:

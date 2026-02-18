@@ -34,7 +34,17 @@ ogce:search
     ont:relevantShapes ex:Search ;
 .
 
+ogce:search-post
+    a ont:ListingEndpoint ;
+    ont:relevantShapes ex:Search ;
+.
+
 ogce:top-concepts
+    a ont:ListingEndpoint ;
+    ont:relevantShapes ex:TopConcepts ;
+.
+
+ogce:top-concepts-post
     a ont:ListingEndpoint ;
     ont:relevantShapes ex:TopConcepts ;
 .
@@ -43,3 +53,18 @@ ogce:narrowers
     a ont:ListingEndpoint ;
     ont:relevantShapes ex:Narrowers ;
 .
+
+ogce:narrowers-post
+    a ont:ListingEndpoint ;
+    ont:relevantShapes ex:Narrowers ;
+.
+
+sys:profile-listing-post
+    a ont:ListingEndpoint , ont:SystemEndpoint ;
+    ont:relevantShapes ex:Profiles ;
+    .
+
+sys:object-post
+    a ont:ObjectEndpoint , ont:SystemEndpoint ;
+    ont:relevantShapes ex:Profiles ;
+    .

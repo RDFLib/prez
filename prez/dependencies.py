@@ -33,7 +33,7 @@ from prez.exceptions.model_exceptions import (
     URINotFoundException,
     MissingFilterQueryError,
 )
-from prez.models.query_params import ListingQueryParams
+from prez.models.query_params import ListingQueryParams, ObjectQueryParams, parse_datetime
 from prez.reference_data.prez_ns import ALTREXT, EP, OGCE, OGCFEAT, ONT
 from prez.repositories import OxrdflibRepo, PyoxigraphRepo, RemoteSparqlRepo, Repo
 from prez.services.classes import get_classes_single
@@ -214,13 +214,43 @@ async def cql_post_parser_dependency(
     request: Request,
     queryable_props: list = Depends(get_queryable_props),
 ) -> CQLParser:
+    """
+    CQL parser for POST /cql.
+
+    BREAKING CHANGE: The body must now be a JSON object with a ``filter`` key
+    containing the CQL2-JSON expression.  The previous format (raw CQL expression
+    as the entire body) is no longer supported.
+
+    Example body::
+
+        {"filter": {"op": "s_intersects", "args": [...]}, "limit": 10}
+    """
+    content_type = request.headers.get("content-type", "")
+    if "application/json" not in content_type:
+        raise HTTPException(
+            status_code=415,
+            detail="Content-Type must be application/json",
+        )
     try:
         body = await request.json()
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON format.")
 
+    if not isinstance(body, dict):
+        raise HTTPException(
+            status_code=400,
+            detail="Request body must be a JSON object with a 'filter' key.",
+        )
+
+    cql_json = body.get("filter")
+    if cql_json is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Request body must contain a 'filter' key with the CQL2-JSON expression.",
+        )
+
     try:
-        cql_parser = CQLParser(cql_json=body, queryable_props=queryable_props)
+        cql_parser = CQLParser(cql_json=cql_json, queryable_props=queryable_props)
         cql_parser.parse()
         return cql_parser
     except Exception as e:
@@ -258,6 +288,459 @@ async def cql_get_parser_dependency(
             "filter query parameter with a valid CQL JSON expression must be provided when "
             "using the /cql endpoint."
         )
+
+
+async def get_unprefixed_url_path(
+    request: Request,
+) -> str:
+    root_path = request.scope.get("app_root_path", request.scope.get("root_path", ""))
+    return request.url.path[len(root_path):]
+
+
+########################################################################################################################
+# POST support: shared body-parsing helper
+########################################################################################################################
+
+
+def _validate_post_content_type(request: Request) -> None:
+    content_type = request.headers.get("content-type", "")
+    if "application/json" not in content_type:
+        raise HTTPException(
+            status_code=415,
+            detail="Content-Type must be application/json",
+        )
+
+
+async def _parse_post_body(request: Request) -> dict:
+    """Parse and validate the JSON body of a POST request, returning a dict."""
+    _validate_post_content_type(request)
+    try:
+        body = await request.json()
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON body.")
+    if body is None:
+        body = {}
+    if not isinstance(body, dict):
+        raise HTTPException(
+            status_code=400,
+            detail="Request body must be a JSON object.",
+        )
+    return body
+
+
+########################################################################################################################
+# POST support: listing endpoints
+########################################################################################################################
+
+
+async def listing_post_params_dependency(request: Request) -> ListingQueryParams:
+    """
+    Parse a JSON POST body and return a ``ListingQueryParams`` equivalent.
+
+    The body fields mirror the GET query parameter names::
+
+        {
+            "_mediatype": "text/turtle",
+            "_profile": "https://example.org/profile",
+            "page": 1,
+            "limit": 10,
+            "q": "search term",
+            "filter": { ... CQL2-JSON ... },
+            "filter-lang": "cql2-json",
+            "filter_crs": "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+            "bbox": [153.0, -28.0, 154.0, -27.0],
+            "datetime": "2020-01-01T00:00:00Z/2021-01-01T00:00:00Z",
+            "order_by": "label",
+            "order_by_direction": "ASC"
+        }
+    """
+    body = await _parse_post_body(request)
+
+    # bbox
+    bbox_raw = body.get("bbox")
+    if bbox_raw is not None:
+        if not isinstance(bbox_raw, list):
+            raise HTTPException(status_code=400, detail="bbox must be an array of coordinates.")
+        try:
+            coords = [float(v) for v in bbox_raw]
+        except (TypeError, ValueError):
+            raise HTTPException(
+                status_code=400,
+                detail="bbox coordinates must be numbers.",
+            )
+        if len(coords) not in (4, 6):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid bbox: expected 4 or 6 coordinates, got {len(coords)}.",
+            )
+        bbox = coords
+    else:
+        bbox = None
+
+    # datetime
+    datetime_raw = body.get("datetime")
+    if datetime_raw:
+        try:
+            dt = parse_datetime(str(datetime_raw))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=f"Invalid datetime: {exc}")
+    else:
+        dt = None
+
+    # filter (dict → JSON string to reuse existing validation)
+    filter_raw = body.get("filter")
+    if filter_raw is not None:
+        if isinstance(filter_raw, dict):
+            filter_str = json.dumps(filter_raw)
+        else:
+            filter_str = str(filter_raw)
+    else:
+        filter_str = None
+
+    # Pagination
+    page = body.get("page", 1)
+    limit = body.get("limit", 10)
+    offset = body.get("offset")
+    startindex = body.get("startindex")
+
+    # Build params object without going through FastAPI's Query injection
+    params = ListingQueryParams.__new__(ListingQueryParams)
+    params.mediatype = body.get("_mediatype", "text/turtle")
+    params.profile = body.get("_profile")
+    params.page = page
+    params.limit = limit
+    params.offset = offset
+    params.startindex = startindex
+    params.facet_profile = body.get("facet_profile")
+    params.bbox = bbox
+    params.filter_lang = body.get("filter-lang", "cql2-json")
+    params.filter_crs = body.get(
+        "filter_crs", "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+    )
+    params.datetime = dt
+    params.order_by = body.get("order_by")
+    params.order_by_direction = body.get("order_by_direction")
+    params._filter = filter_str
+    params.q = body.get("q")
+    params.subscription_key = body.get("subscription-key")
+
+    params.validate_pagination_params()
+    params.validate_filter()
+    return params
+
+
+async def get_negotiated_pmts_listing_post(
+    request: Request,
+    query_params: ListingQueryParams = Depends(listing_post_params_dependency),
+    repo: Repo = Depends(get_data_repo),
+    system_repo: Repo = Depends(get_system_repo),
+    endpoint_uri_type: tuple = Depends(get_endpoint_uri_type),
+    url_path: str = Depends(get_unprefixed_url_path),
+) -> "NegotiatedPMTs":
+    """POST variant of get_negotiated_pmts for listing endpoints."""
+    from sparql_grammar_pydantic import Var
+    from prez.services.connegp_service import NegotiatedPMTs
+
+    # For listing endpoints, focus node is always a variable (not a specific IRI)
+    focus_node = Var(value="focus_node")
+    endpoint_ns = await get_endpoint_nodeshapes(
+        request=request,
+        repo=repo,
+        system_repo=system_repo,
+        endpoint_uri_type=endpoint_uri_type,
+        focus_node=focus_node,
+        url_path=url_path,
+    )
+    klasses = endpoint_ns.targetClasses
+    params_dict = {
+        "_profile": query_params.profile or "",
+        "_mediatype": query_params.mediatype or "",
+    }
+    pmts = NegotiatedPMTs(
+        headers=request.headers,
+        params=params_dict,
+        classes=klasses,
+        listing=True,
+        system_repo=system_repo,
+        current_path=url_path,
+    )
+    await pmts.setup()
+    return pmts
+
+
+async def get_endpoint_structure_listing_post(
+    pmts: "NegotiatedPMTs" = Depends(get_negotiated_pmts_listing_post),
+    endpoint_uri_type: tuple = Depends(get_endpoint_uri_type),
+) -> tuple:
+    from prez.reference_data.prez_ns import ALTREXT
+    endpoint_uri = endpoint_uri_type[0]
+    if (endpoint_uri in settings.system_endpoints) or (
+        pmts.selected.get("profile") == ALTREXT["alt-profile"]
+    ):
+        return ("profiles",)
+    return settings.endpoint_structure
+
+
+async def get_profile_nodeshape_listing_post(
+    pmts: "NegotiatedPMTs" = Depends(get_negotiated_pmts_listing_post),
+) -> "NodeShape":
+    from sparql_grammar_pydantic import Var
+    from prez.cache import profiles_graph_cache
+    from prez.services.query_generation.shacl import NodeShape
+
+    profile = pmts.selected.get("profile")
+    focus_node = Var(value="focus_node")  # always Var for listing
+    return NodeShape(
+        uri=profile,
+        graph=profiles_graph_cache,
+        kind="profile",
+        focus_node=focus_node,
+    )
+
+
+async def cql_post_listing_parser_dependency(
+    query_params: ListingQueryParams = Depends(listing_post_params_dependency),
+    queryable_props: list = Depends(get_queryable_props),
+    endpoint_uri_type: tuple = Depends(get_endpoint_uri_type),
+) -> "CQLParser | None":
+    """CQL parser for listing POST endpoints (filter is optional)."""
+    if query_params._filter:
+        try:
+            crs = query_params.filter_crs
+            cql_json = json.loads(query_params._filter)
+            cql_parser = CQLParser(
+                cql_json=cql_json, crs=crs, queryable_props=queryable_props
+            )
+            cql_parser.parse()
+            return cql_parser
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=400, detail="Invalid JSON in 'filter' field.")
+        except Exception:
+            raise HTTPException(
+                status_code=400, detail="Invalid CQL format: parsing failed."
+            )
+    return None
+
+
+async def generate_search_query_post(
+    request: Request,
+    query_params: ListingQueryParams = Depends(listing_post_params_dependency),
+    system_repo: Repo = Depends(get_system_repo),
+    endpoint_uri_type: tuple = Depends(get_endpoint_uri_type),
+):
+    """POST variant of generate_search_query — reads params from POST body."""
+    term = query_params.q
+
+    def has_filtering_params() -> bool:
+        if query_params.facet_profile:
+            return True
+        if query_params._filter:
+            return True
+        if query_params.bbox:
+            return True
+        if query_params.datetime:
+            return True
+        return False
+
+    _search_ep_uris = {EP["extended-ogc-records/search"], EP["extended-ogc-records/search-post"]}
+    if not term:
+        if endpoint_uri_type[0] in _search_ep_uris:
+            if has_filtering_params():
+                return DummySearchMarker()
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Search query parameter 'q' must be provided in the request body, "
+                    "or use filtering parameters (facet_profile, filter, bbox, datetime)."
+                ),
+            )
+        return None
+
+    predicates = []  # POST body does not expose 'predicates' in initial implementation
+    page = query_params.page or 1
+    limit = query_params.limit if query_params.limit else settings.search_count_limit
+    offset = limit * (page - 1)
+
+    if settings.search_method == SearchMethod.DEFAULT:
+        return SearchQueryRegex(
+            term=term,
+            predicates=predicates,
+            limit=limit,
+            offset=offset,
+        )
+    elif settings.search_method == SearchMethod.FTS_FUSEKI:
+        predicates = predicates if predicates else settings.search_predicates
+        shacl_shapes = await get_jena_fts_shacl_predicates(system_repo)
+
+        def _has_triple(graph, s, p, o) -> bool:
+            return any(graph.triples((s, p, o)))
+
+        shacl_shape_ids = [
+            str(x)
+            for x in shacl_shapes.objects(subject=None, predicate=DCTERMS.identifier)
+        ]
+        tssp_lists = []
+        tss_list = []
+        non_shacl_predicates = []
+        i = 100
+        for pred in predicates:
+            if str(pred) in shacl_shape_ids:
+                shacl_shape_uri = shacl_shapes.value(
+                    subject=None,
+                    predicate=DCTERMS.identifier,
+                    object=Literal(pred),
+                )
+                if shacl_shape_uri and _has_triple(
+                    shacl_shapes, shacl_shape_uri, RDF.type, ONT.JenaFTSUnionShape
+                ) and _has_triple(shacl_shapes, shacl_shape_uri, SH.union, None):
+                    union_container = FTSUnionContainer(
+                        uri=shacl_shape_uri,
+                        graph=shacl_shapes,
+                        focus_node=Var(value="focus_node"),
+                        shape_number=i,
+                    )
+                    tssp_lists.extend(union_container.tssp_list_with_preds)
+                    tss_list.extend(union_container.tss_list)
+                    i = union_container.next_shape_number
+                else:
+                    shacl_shape_g = shacl_shapes.cbd(shacl_shape_uri)
+                    search_preds = list(
+                        shacl_shape_g.objects(subject=None, predicate=ONT.searchPredicate)
+                    )
+                    ps = PropertyShape(
+                        uri=shacl_shape_uri,
+                        graph=shacl_shape_g,
+                        kind="fts",
+                        focus_node=Var(value="focus_node"),
+                        shape_number=i,
+                    )
+                    tssp_lists.append((ps.tssp_list, search_preds, ps.focus_node_classes))
+                    tss_list.extend(ps.tss_list)
+                    i += 1
+            else:
+                non_shacl_predicates.append(pred)
+
+        return SearchQueryFusekiFTS(
+            term=term,
+            non_shacl_predicates=non_shacl_predicates,
+            shacl_tssp_preds=tssp_lists,
+            tss_list=tss_list,
+            limit=limit,
+            offset=offset,
+            fts_limit=settings.fts_limit,
+        )
+    raise NotImplementedError(f"Search method {settings.search_method} not implemented")
+
+
+########################################################################################################################
+# POST support: /object endpoint
+########################################################################################################################
+
+
+async def object_post_params_dependency(request: Request) -> dict:
+    """Parse the JSON body for POST /object, returning the raw body dict."""
+    return await _parse_post_body(request)
+
+
+async def get_focus_node_post_object(
+    body: dict = Depends(object_post_params_dependency),
+) -> "IRI":
+    from sparql_grammar_pydantic import IRI as SPARQLIRI
+    iri = body.get("iri") or body.get("uri")
+    if not iri:
+        raise HTTPException(
+            status_code=400,
+            detail="Request body must contain 'iri' or 'uri'.",
+        )
+    return SPARQLIRI(value=iri)
+
+
+async def get_endpoint_nodeshapes_post_object(
+    focus_node=Depends(get_focus_node_post_object),
+) -> "NodeShape":
+    from prez.cache import endpoints_graph_cache
+    from prez.services.query_generation.shacl import NodeShape
+    return NodeShape(
+        uri=URIRef("http://example.org/ns#Object"),
+        graph=endpoints_graph_cache,
+        kind="endpoint",
+        focus_node=focus_node,
+    )
+
+
+async def get_negotiated_pmts_post_object(
+    request: Request,
+    body: dict = Depends(object_post_params_dependency),
+    focus_node=Depends(get_focus_node_post_object),
+    repo: Repo = Depends(get_data_repo),
+    system_repo: Repo = Depends(get_system_repo),
+    url_path: str = Depends(get_unprefixed_url_path),
+) -> "NegotiatedPMTs":
+    from prez.services.classes import get_classes_single
+    from prez.services.connegp_service import NegotiatedPMTs
+
+    klasses_fs = await get_classes_single(URIRef(focus_node.value), repo)
+    klasses = list(klasses_fs)
+    params_dict = {
+        "_profile": body.get("_profile", ""),
+        "_mediatype": body.get("_mediatype", "text/anot+turtle"),
+    }
+    pmts = NegotiatedPMTs(
+        headers=request.headers,
+        params=params_dict,
+        classes=klasses,
+        listing=False,
+        system_repo=system_repo,
+        current_path=url_path,
+    )
+    await pmts.setup()
+    return pmts
+
+
+async def get_endpoint_structure_post_object(
+    pmts: "NegotiatedPMTs" = Depends(get_negotiated_pmts_post_object),
+    endpoint_uri_type: tuple = Depends(get_endpoint_uri_type),
+) -> tuple:
+    from prez.reference_data.prez_ns import ALTREXT
+    endpoint_uri = endpoint_uri_type[0]
+    if (endpoint_uri in settings.system_endpoints) or (
+        pmts.selected.get("profile") == ALTREXT["alt-profile"]
+    ):
+        return ("profiles",)
+    return settings.endpoint_structure
+
+
+async def get_profile_nodeshape_post_object(
+    pmts: "NegotiatedPMTs" = Depends(get_negotiated_pmts_post_object),
+    focus_node=Depends(get_focus_node_post_object),
+) -> "NodeShape":
+    from prez.reference_data.prez_ns import ALTREXT
+    from prez.cache import profiles_graph_cache
+    from prez.services.query_generation.shacl import NodeShape
+    from sparql_grammar_pydantic import Var
+
+    profile = pmts.selected.get("profile")
+    if profile == ALTREXT["alt-profile"]:
+        fn = Var(value="focus_node")
+    else:
+        fn = focus_node
+    return NodeShape(
+        uri=profile,
+        graph=profiles_graph_cache,
+        kind="profile",
+        focus_node=fn,
+    )
+
+
+async def get_object_query_params_post(
+    body: dict = Depends(object_post_params_dependency),
+) -> ObjectQueryParams:
+    params = ObjectQueryParams.__new__(ObjectQueryParams)
+    params.mediatype = body.get("_mediatype", "text/anot+turtle")
+    params.profile = body.get("_profile")
+    params.facet_profile = body.get("facet_profile")
+    params.subscription_key = body.get("subscription-key")
+    return params
 
 
 async def get_jena_fts_shacl_predicates(system_repo: Repo) -> Graph:
@@ -438,13 +921,6 @@ async def generate_concept_hierarchy_query(
         parent_child_predicates=parent_child_predicates,
         child_grandchild_predicates=child_grandchild_predicates,
     )
-
-
-async def get_unprefixed_url_path(
-    request: Request,
-) -> str:
-    root_path = request.scope.get("app_root_path", request.scope.get("root_path", ""))
-    return request.url.path[len(root_path) :]
 
 
 async def get_focus_node(
