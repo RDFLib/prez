@@ -502,22 +502,20 @@ class CQLParser:
                     ggps, subject, predicate_iri, object_wkt_literal, to="tssp"
                 )
             else:
-                # Ensure the spatial triples and filters are in a predictable order.
-                ggps.add_pattern(
+                # Build spatial patterns first so they can be inserted before other CQL filters.
+                spatial_prefix = [
                     TriplesBlock(
                         triples=TriplesSameSubjectPath.from_spo(
                             subject, IRI(value=GEO.hasGeometry), geom_bn_var
                         )
-                    )
-                )
-                ggps.add_pattern(GraphPatternNotTriples(content=_bound_filter(geom_bn_var)))
-                ggps.add_pattern(
+                    ),
+                    GraphPatternNotTriples(content=_bound_filter(geom_bn_var)),
                     TriplesBlock(
                         triples=TriplesSameSubjectPath.from_spo(
                             geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var
                         )
-                    )
-                )
+                    ),
+                ]
                 filter_gpnt_list = generate_spatial_filter_clause(
                     wkt_value=processed_wkt,
                     subject_var=subject,
@@ -526,8 +524,13 @@ class CQLParser:
                     cql_operator=operator,
                     target_system=target_system,
                 )
-                for gpnt_item in filter_gpnt_list:
-                    ggps.add_pattern(gpnt_item)
+                spatial_prefix.extend(filter_gpnt_list)
+                if ggps.graph_patterns_or_triples_blocks is None:
+                    ggps.graph_patterns_or_triples_blocks = spatial_prefix
+                else:
+                    ggps.graph_patterns_or_triples_blocks = (
+                        spatial_prefix + ggps.graph_patterns_or_triples_blocks
+                    )
 
     def _handle_in(
         self, args: list[dict | list], existing_ggps: GroupGraphPatternSub | None = None
