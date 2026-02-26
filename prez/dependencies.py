@@ -422,6 +422,7 @@ async def listing_post_params_dependency(request: Request) -> ListingQueryParams
     params.order_by_direction = body.get("order_by_direction")
     params._filter = filter_str
     params.q = body.get("q")
+    params.predicates = body.get("predicates", [])
     params.subscription_key = body.get("subscription-key")
 
     params.validate_pagination_params()
@@ -556,7 +557,7 @@ async def generate_search_query_post(
             )
         return None
 
-    predicates = []  # POST body does not expose 'predicates' in initial implementation
+    predicates = query_params.predicates if hasattr(query_params, 'predicates') else []
     page = query_params.page or 1
     limit = query_params.limit if query_params.limit else settings.search_count_limit
     offset = limit * (page - 1)

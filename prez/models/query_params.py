@@ -267,6 +267,7 @@ class ListingPostBody(BaseModel):
     filter_lang: Optional[str] = "cql2-json"
     filter_crs: Optional[str] = "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
     q: Optional[str] = None
+    predicates: Optional[List[str]] = None
     filter: Optional[Dict[str, Any]] = None
     order_by: Optional[str] = None
     order_by_direction: Optional[str] = None
