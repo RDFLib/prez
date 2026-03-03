@@ -405,7 +405,7 @@ async def listing_post_params_dependency(request: Request) -> ListingQueryParams
 
     # Build params object without going through FastAPI's Query injection
     params = ListingQueryParams.__new__(ListingQueryParams)
-    params.mediatype = body.get("_mediatype", "text/turtle")
+    params.mediatype = body.get("_mediatype")
     params.profile = body.get("_profile")
     params.page = page
     params.limit = limit
@@ -684,7 +684,7 @@ async def get_negotiated_pmts_post_object(
     klasses = list(klasses_fs)
     params_dict = {
         "_profile": body.get("_profile", ""),
-        "_mediatype": body.get("_mediatype", "text/anot+turtle"),
+        "_mediatype": body.get("_mediatype", ""),
     }
     pmts = NegotiatedPMTs(
         headers=request.headers,
@@ -737,7 +737,7 @@ async def get_object_query_params_post(
     body: dict = Depends(object_post_params_dependency),
 ) -> ObjectQueryParams:
     params = ObjectQueryParams.__new__(ObjectQueryParams)
-    params.mediatype = body.get("_mediatype", "text/anot+turtle")
+    params.mediatype = body.get("_mediatype")
     params.profile = body.get("_profile")
     params.facet_profile = body.get("facet_profile")
     params.subscription_key = body.get("subscription-key")
