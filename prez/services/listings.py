@@ -60,6 +60,7 @@ from prez.services.generate_queryables import generate_queryables_json
 from prez.services.link_generation import add_prez_links_for_oxigraph
 from prez.services.query_generation.count import CountQuery
 from prez.services.query_generation.facet import FacetQuery
+from prez.services.query_generation.search_jena_lucene import SearchQueryJenaLucene
 from prez.services.query_generation.umbrella import (
     PrezQueryConstructor,
     merge_listing_query_grammar_inputs,
@@ -68,6 +69,12 @@ from prez.services.query_generation.umbrella import (
 log = logging.getLogger(__name__)
 
 DWC = Namespace("http://rs.tdwg.org/dwc/terms/")
+
+
+def _normalize_listing_query_string(query: str, search_query) -> str:
+    if isinstance(search_query, SearchQueryJenaLucene):
+        return search_query.normalize_query_string(query)
+    return query
 
 
 async def warm_queryables_cache(data_repo: Repo, system_repo: Repo) -> None:
@@ -306,6 +313,7 @@ async def listing_function(
     query_params,
     original_endpoint_type,
     url,
+    extra_rdf_queries: list[str] | None = None,
 ):
     if (
         pmts.selected["profile"] == ALTREXT["alt-profile"]
@@ -354,13 +362,22 @@ async def listing_function(
         profile_gpnt=profile_nodeshape.gpnt_list,
         **subselect_kwargs,
     )
-    queries.append(main_query.to_string())
+    main_query_str = _normalize_listing_query_string(main_query.to_string(), search_query)
+    queries.append(main_query_str)
+    if extra_rdf_queries:
+        queries.extend(query for query in extra_rdf_queries if query)
 
     if (
         pmts.requested_mediatypes is not None
         and pmts.requested_mediatypes[0][0] == "application/sparql-query"
     ):
-        return PlainTextResponse(queries[0], media_type="application/sparql-query")
+        formatted_queries = "\n\n".join(
+            f"# Query {index}\n{query}" for index, query in enumerate(queries, start=1)
+        )
+        return PlainTextResponse(
+            formatted_queries,
+            media_type="application/sparql-query",
+        )
 
     # add faceting query if requested
     facet_profile_uri = None
@@ -427,10 +444,17 @@ async def listing_function(
     if (
         ("anot+" in pmts.selected["mediatype"] and not search_query)
         or (pmts.selected["mediatype"] == "application/geo+json")
-        or (search_query and settings.search_uses_listing_count_limit)
+        or (
+            search_query
+            and not isinstance(search_query, SearchQueryJenaLucene)
+            and settings.search_uses_listing_count_limit
+        )
     ):
         subselect = copy.deepcopy(main_query.inner_select)
-        count_query = CountQuery(original_subselect=subselect).to_string()
+        count_query = _normalize_listing_query_string(
+            CountQuery(original_subselect=subselect).to_string(),
+            search_query,
+        )
         queries.append(count_query)
 
     item_store: OxiStore
@@ -521,7 +545,11 @@ async def listing_function(
                 )
 
     # count search results - hard to do in SPARQL as the SELECT part of the query is NOT aggregated
-    if search_query and not isinstance(search_query, DummySearchMarker) and not settings.search_uses_listing_count_limit:
+    if (
+        search_query
+        and not isinstance(search_query, (DummySearchMarker, SearchQueryJenaLucene))
+        and not settings.search_uses_listing_count_limit
+    ):
         count = len(
             list(
                 item_store.quads_for_pattern(

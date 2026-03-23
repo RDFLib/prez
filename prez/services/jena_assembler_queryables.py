@@ -26,6 +26,15 @@ FIELD_TYPE_TO_DATATYPE = {
     IDX.DoubleField: XSD.double,
 }
 
+FIELD_TYPE_TO_LABEL = {
+    IDX.KeywordField: "keyword",
+    IDX.TextField: "text",
+    IDX.IntField: "int",
+    IDX.LongField: "long",
+    IDX.DoubleField: "double",
+    IDX.LatLonField: "latlon",
+}
+
 UNSUPPORTED_FIELD_TYPES = {IDX.LatLonField}
 
 
@@ -158,9 +167,15 @@ def _transform_field(
         )
     )
     output_graph.add((field_uri, SH.datatype, datatype))
-
-    if _literal_truthy(assembler_graph.value(field_node, IDX.facetable)):
-        output_graph.add((field_uri, ONT.facetable, Literal(True)))
+    output_graph.add(
+        (field_uri, ONT.luceneFieldType, Literal(FIELD_TYPE_TO_LABEL[field_type]))
+    )
+    output_graph.add((field_uri, ONT.stored, Literal(_field_bool(assembler_graph, field_node, IDX.stored, True))))
+    output_graph.add((field_uri, ONT.indexed, Literal(_field_bool(assembler_graph, field_node, IDX.indexed, True))))
+    output_graph.add((field_uri, ONT.facetable, Literal(_field_bool(assembler_graph, field_node, IDX.facetable, False))))
+    output_graph.add((field_uri, ONT.sortable, Literal(_field_bool(assembler_graph, field_node, IDX.sortable, False))))
+    output_graph.add((field_uri, ONT.multiValued, Literal(_field_bool(assembler_graph, field_node, IDX.multiValued, False))))
+    output_graph.add((field_uri, ONT.defaultSearch, Literal(_field_bool(assembler_graph, field_node, IDX.defaultSearch, False))))
     return field_uri
 
 
@@ -179,3 +194,15 @@ def _literal_truthy(value) -> bool:
             return python_value
         return str(python_value).lower() in {"true", "1"}
     return str(value).lower() in {"true", "1"}
+
+
+def _field_bool(
+    assembler_graph: Graph,
+    field_node: URIRef | BNode,
+    predicate: URIRef,
+    default: bool,
+) -> bool:
+    value = assembler_graph.value(field_node, predicate)
+    if value is None:
+        return default
+    return _literal_truthy(value)

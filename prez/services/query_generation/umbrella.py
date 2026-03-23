@@ -37,6 +37,7 @@ from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.datetime_filter import generate_datetime_filter
 from prez.services.query_generation.search_default import SearchQueryRegex
 from prez.services.query_generation.search_fuseki_fts import SearchQueryFusekiFTS
+from prez.services.query_generation.search_jena_lucene import SearchQueryJenaLucene
 from prez.services.query_generation.shacl import NodeShape
 from prez.services.query_generation.grammar_helpers import create_filter_exists
 
@@ -236,7 +237,9 @@ class PrezQueryConstructor(ConstructQuery):
 def merge_listing_query_grammar_inputs(
     cql_parser: Optional[CQLParser] = None,
     endpoint_nodeshape: Optional[NodeShape] = None,
-    search_query: Optional[SearchQueryRegex | SearchQueryFusekiFTS | DummySearchMarker] = None,
+    search_query: Optional[
+        SearchQueryRegex | SearchQueryFusekiFTS | SearchQueryJenaLucene | DummySearchMarker
+    ] = None,
     concept_hierarchy_query: Optional[ConceptHierarchyQuery] = None,
     query_params: Optional[ListingQueryParams] = None,
 ) -> dict:

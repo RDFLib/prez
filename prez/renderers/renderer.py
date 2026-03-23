@@ -540,7 +540,13 @@ async def generate_queryables_from_shacl_definition(
     	cql:description ?description ;
     	cql:datatype ?type ;
     	cql:enum ?enums ;
-        prez:facetable ?facetable .
+        prez:facetable ?facetable ;
+        prez:sortable ?sortable ;
+        prez:defaultSearch ?defaultSearch ;
+        prez:multiValued ?multiValued ;
+        prez:stored ?stored ;
+        prez:indexed ?indexed ;
+        prez:luceneFieldType ?luceneFieldType .
     }
     WHERE {?queryable a cql:Queryable ;
         dcterms:identifier ?id ;
@@ -549,6 +555,12 @@ async def generate_queryables_from_shacl_definition(
         sh:datatype ?type .
         OPTIONAL { ?queryable sh:in/rdf:rest*/rdf:first ?enums }
         OPTIONAL { ?queryable prez:facetable ?facetable }
+        OPTIONAL { ?queryable prez:sortable ?sortable }
+        OPTIONAL { ?queryable prez:defaultSearch ?defaultSearch }
+        OPTIONAL { ?queryable prez:multiValued ?multiValued }
+        OPTIONAL { ?queryable prez:stored ?stored }
+        OPTIONAL { ?queryable prez:indexed ?indexed }
+        OPTIONAL { ?queryable prez:luceneFieldType ?luceneFieldType }
     }
     """
     g, _ = await system_repo.send_queries([query], [])
@@ -580,6 +592,24 @@ async def generate_queryables_from_shacl_definition(
         facetable = item.get("https://prez.dev/ont/facetable")
         if facetable and facetable[0].get("@value") in [True, "true", "True", 1, "1"]:
             queryable_props[id_value]["x-prez-facetable"] = True
+        sortable = item.get("https://prez.dev/ont/sortable")
+        if sortable and sortable[0].get("@value") in [True, "true", "True", 1, "1", False, "false", "False", 0, "0"]:
+            queryable_props[id_value]["x-prez-sortable"] = sortable[0]["@value"] in [True, "true", "True", 1, "1"]
+        default_search = item.get("https://prez.dev/ont/defaultSearch")
+        if default_search and default_search[0].get("@value") in [True, "true", "True", 1, "1", False, "false", "False", 0, "0"]:
+            queryable_props[id_value]["x-prez-default-search"] = default_search[0]["@value"] in [True, "true", "True", 1, "1"]
+        multi_valued = item.get("https://prez.dev/ont/multiValued")
+        if multi_valued and multi_valued[0].get("@value") in [True, "true", "True", 1, "1", False, "false", "False", 0, "0"]:
+            queryable_props[id_value]["x-prez-multi-valued"] = multi_valued[0]["@value"] in [True, "true", "True", 1, "1"]
+        stored = item.get("https://prez.dev/ont/stored")
+        if stored and stored[0].get("@value") in [True, "true", "True", 1, "1", False, "false", "False", 0, "0"]:
+            queryable_props[id_value]["x-prez-stored"] = stored[0]["@value"] in [True, "true", "True", 1, "1"]
+        indexed = item.get("https://prez.dev/ont/indexed")
+        if indexed and indexed[0].get("@value") in [True, "true", "True", 1, "1", False, "false", "False", 0, "0"]:
+            queryable_props[id_value]["x-prez-indexed"] = indexed[0]["@value"] in [True, "true", "True", 1, "1"]
+        lucene_field_type = item.get("https://prez.dev/ont/luceneFieldType")
+        if lucene_field_type:
+            queryable_props[id_value]["x-prez-lucene-field-type"] = lucene_field_type[0]["@value"]
     if endpoint_uri == OGCFEAT["queryables-global"]:
         title = "Global Queryables"
         description = (

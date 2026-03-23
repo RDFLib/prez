@@ -4,17 +4,20 @@
 
 ## Summary
 
-Prez now has a feature-flagged Lucene-backed `/cql` implementation that is separate from the existing CQL listing pipeline.
+Prez now has a feature-flagged Lucene-backed `/cql` implementation.
 
 When the feature flag is disabled, `/cql` keeps its existing behavior.
 
 When the feature flag is enabled, `/cql`:
 
-- accepts raw Lucene-backed `q`, `filter`, and `facets` inputs
+- accepts Lucene-backed `q`, `filter`, and `facets` inputs
 - validates that CQL `property` values are IRIs
-- executes raw SPARQL with `luc:query` and optional `luc:facet`
-- always returns `application/sparql-results+json`
-- ignores Prez content negotiation and profile negotiation for this endpoint
+- uses Jena Lucene `luc:query` inside the normal Prez listing/query/render pipeline
+- maps Lucene `totalHits` to `prez:count`
+- maps Lucene facet results into Prez facet RDF when `facets` is requested
+- keeps Prez content negotiation and profile negotiation
+- keeps annotation enrichment and Prez link generation
+- keeps existing `facet_profile` support when Lucene `facets` is not used
 
 The same feature also extends OGC Features `/queryables` so that Lucene-capable synthetic queryables loaded into the system store can be exposed to clients.
 
@@ -36,7 +39,7 @@ Validation rules:
 
 This implementation is intended for a remote Fuseki-compatible SPARQL endpoint. Local `pyoxigraph` stores do not support `luc:query`.
 
-`lucene_index_name` defaults to `default` and is emitted as the leading Lucene property-function argument in both `luc:query` and `luc:facet`.
+`lucene_index_name` defaults to `default` and is emitted as the leading Lucene property-function argument in `luc:query` and `luc:facet`.
 
 ## Request Contract
 
@@ -46,7 +49,8 @@ Accepted parameters:
 
 - `q`: optional string, defaults to `*`
 - `filter`: optional JSON string, must parse to an object
-- `facets`: optional repeated query params only
+- `facets`: optional repeated query params of Lucene field IRIs
+- `facet_profile`: optional existing Prez facet profile IRI
 - `limit`: optional positive integer, defaults to `lucene_default_limit`
 - `offset`: optional non-negative integer, defaults to `0`
 
@@ -84,16 +88,20 @@ Validation rules:
 - `filter` must be a JSON object when present
 - every `filter.args[].property` must be an absolute IRI
 - GET `facets` must be repeated query params
-- POST `facets` must be an array of strings
-- requested facet IRIs must be present in the facetable synthetic queryables set
-- invalid facet IRIs return `400`
+- POST `facets` must be an array of IRI strings
+- requested facet IRIs must be valid facetable Lucene queryables
+- `facets` and `facet_profile` cannot be used together
 - invalid `limit` or `offset` return `400`
 
-The endpoint always returns:
+The endpoint now behaves like the legacy Prez `/cql` route:
 
-```http
-Content-Type: application/sparql-results+json
-```
+- mediatype negotiation is honored
+- profile negotiation is honored
+- `application/sparql-query` can be requested to inspect the generated queries
+- normal Prez renderers are used for non-SPARQL-query responses
+- Lucene hit score is exposed via `prez:searchResultWeight`
+- Lucene total hits is exposed via `prez:count`
+- Lucene facet rows are exposed via `prez:facetName`, `prez:facetValue`, and `prez:facetCount`
 
 ## Queryables Behavior
 
@@ -147,13 +155,39 @@ Example:
     prez:facetable true .
 ```
 
-When `prez:facetable true` is present, `/queryables` JSON exposes:
+When synthetic Lucene queryables are present, `/queryables` JSON can expose Lucene-specific vendor extensions such as:
 
 ```json
 {
-  "x-prez-facetable": true
+  "x-prez-facetable": true,
+  "x-prez-sortable": true,
+  "x-prez-default-search": false,
+  "x-prez-multi-valued": true,
+  "x-prez-stored": true,
+  "x-prez-indexed": true,
+  "x-prez-lucene-field-type": "keyword"
 }
 ```
+
+The currently supported Lucene queryables extensions are:
+
+- `x-prez-facetable`
+- `x-prez-sortable`
+- `x-prez-default-search`
+- `x-prez-multi-valued`
+- `x-prez-stored`
+- `x-prez-indexed`
+- `x-prez-lucene-field-type`
+
+`x-prez-lucene-field-type` is the frontend-facing signal for how the field is indexed:
+
+- `text`
+- `keyword`
+- `int`
+- `long`
+- `double`
+
+`LatLonField` is still skipped by the current queryables transform, so it is not exposed through these JSON extensions yet.
 
 For v1, global and local queryables return the same loaded dataset-derived set.
 
@@ -204,48 +238,54 @@ and not a separate domain predicate IRI that Prez would remap later. The current
 
 ## Representative SPARQL Shape
 
-This is the readable query shape generated for the POST example above:
+This is the readable main query shape generated inside the Prez listing pipeline for the POST example above:
 
 ```sparql
 PREFIX luc: <urn:jena:lucene:index#>
-SELECT ?focus_node ?score ?literal ?graph ?property ?facet_field ?facet_value ?facet_count
+CONSTRUCT {
+  ?hashID <https://prez.dev/searchResultURI> ?focus_node .
+  ?hashID <https://prez.dev/searchResultPredicate> ?pred .
+  ?hashID <https://prez.dev/searchResultMatch> ?match .
+  ?hashID <https://prez.dev/searchResultWeight> ?weight .
+  ?hashID a <https://prez.dev/SearchResult> .
+  <https://prez.dev/SearchResult> <https://prez.dev/count> ?totalHits .
+}
 WHERE {
-{
-  (?focus_node ?score ?literal ?graph ?property) luc:query (
-    'default'
-    'ore'
-    '{"op":"=","args":[{"property":"file:///fuseki/config.ttl#field-commodity"},"gold"]}'
-    5
-  ) .
+  {
+    SELECT DISTINCT ?focus_node ?pred ?match ?weight ?totalHits
+      (URI(CONCAT('urn:hash:', SHA256(CONCAT(STR(?focus_node), STR(?pred), STR(?match), STR(?weight))))) AS ?hashID)
+    WHERE {
+      {
+        (?focus_node ?weight ?match ?totalHits ?g ?pred) luc:query (
+          'default'
+          'ore'
+          '{"op":"=","args":[{"property":"file:///fuseki/config.ttl#field-commodity"},"gold"]}'
+          16
+        ) .
+        FILTER (isIRI(?focus_node))
+      }
+    }
+    ORDER BY DESC(?weight)
+    LIMIT 6
+    OFFSET 10
+  }
 }
-UNION
-{
-  (?facet_field ?facet_value ?facet_count) luc:facet (
-    'default'
-    'ore'
-    '["file:///fuseki/config.ttl#field-commodity","file:///fuseki/config.ttl#field-state"]'
-    '{"op":"=","args":[{"property":"file:///fuseki/config.ttl#field-commodity"},"gold"]}'
-    5
-  ) .
-}
-}
-LIMIT 5
-OFFSET 10
 ```
 
 Notes:
 
 - omitted `q` becomes `*`
 - omitted `filter` means no Lucene filter argument is passed
-- omitted `facets` means no `luc:facet` branch is generated
-- `LIMIT` and `OFFSET` are standard SPARQL pagination
+- Lucene's internal limit is expanded to `offset + limit + 1` so Prez paging still works through the normal listing pipeline
+- the outer listing query still uses normal Prez `LIMIT` and `OFFSET`
+- when `facets` is requested, Prez generates a second Lucene `CONSTRUCT` query that maps `luc:facet` rows into `prez:facetName`, `prez:facetValue`, and `prez:facetCount`
+- `application/sparql-query` returns all generated queries joined with comment headers such as `# Query 1` and `# Query 2`
 
 ## Non-Goals
 
 This feature does not:
 
 - modify `/search`
-- integrate the Lucene `/cql` route into the legacy listing/rendering pipeline
 - compute enum values or available facet values offline
 - add a new discovery endpoint
 - add special runtime reload behavior for transformed queryables
