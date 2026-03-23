@@ -254,6 +254,36 @@ def test_lucene_cql_get_accepts_repeated_facets():
     assert _escaped_sparql_json_string(facets) in fake_repo.queries[-1]["query"]
 
 
+def test_lucene_cql_get_accepts_q_filter_facets_limit_and_offset():
+    client, fake_repo = _build_lucene_test_client()
+    filter_json = {"op": "=", "args": [{"property": "http://example.com/p"}, "x"]}
+    facets = [
+        "file:///fuseki/config.ttl#field-commodity",
+        "file:///fuseki/config.ttl#field-state",
+    ]
+    try:
+        response = client.get(
+            "/cql",
+            params=[
+                ("q", "ore"),
+                ("filter", json.dumps(filter_json)),
+                ("facets", facets[0]),
+                ("facets", facets[1]),
+                ("limit", "5"),
+                ("offset", "10"),
+            ],
+        )
+    finally:
+        client.close()
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/sparql-results+json")
+    assert 'luc:query ( "default" "ore" "{\\"op\\":\\"=\\",\\"args\\":[{\\"property\\":\\"http://example.com/p\\"},\\"x\\"]}" 5 )' in fake_repo.queries[-1]["query"]
+    assert 'luc:facet ( "default" "ore" "[\\"file:///fuseki/config.ttl#field-commodity\\",\\"file:///fuseki/config.ttl#field-state\\"]" "{\\"op\\":\\"=\\",\\"args\\":[{\\"property\\":\\"http://example.com/p\\"},\\"x\\"]}" 5 )' in fake_repo.queries[-1]["query"]
+    assert "LIMIT 5" in fake_repo.queries[-1]["query"]
+    assert "OFFSET 10" in fake_repo.queries[-1]["query"]
+
+
 def test_lucene_cql_get_rejects_invalid_facet():
     client, _ = _build_lucene_test_client()
     try:

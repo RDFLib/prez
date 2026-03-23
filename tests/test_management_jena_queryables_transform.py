@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 import pytest
 from rdflib import DCTERMS, RDF, SH, XSD, Graph, Literal, URIRef
 
+from prez.cache import system_store
 from prez.config import Settings
 from prez.reference_data.prez_ns import ONT
 from prez.routers.management import router as management_router
@@ -156,6 +157,158 @@ def test_transform_jena_assembler_to_queryables_requires_matching_dataset_name()
         )
 
 
+def test_transform_jena_assembler_to_queryables_requires_text_index():
+    assembler_ttl = """
+    @prefix : <http://example.com/assembler#> .
+    @prefix fuseki: <http://jena.apache.org/fuseki#> .
+    @prefix text: <http://jena.apache.org/text#> .
+
+    :service a fuseki:Service ;
+        fuseki:name "mining" ;
+        fuseki:dataset :textDataset .
+
+    :textDataset a text:TextDataset .
+    """
+
+    with pytest.raises(JenaAssemblerTransformError, match="missing text:index"):
+        transform_jena_assembler_to_queryables(_graph_from_turtle(assembler_ttl), "mining")
+
+
+def test_transform_jena_assembler_to_queryables_requires_text_shapes():
+    assembler_ttl = """
+    @prefix : <http://example.com/assembler#> .
+    @prefix fuseki: <http://jena.apache.org/fuseki#> .
+    @prefix text: <http://jena.apache.org/text#> .
+
+    :service a fuseki:Service ;
+        fuseki:name "mining" ;
+        fuseki:dataset :textDataset .
+
+    :textDataset a text:TextDataset ;
+        text:index :index .
+
+    :index a text:TextIndexShacl .
+    """
+
+    with pytest.raises(JenaAssemblerTransformError, match="missing text:shapes"):
+        transform_jena_assembler_to_queryables(_graph_from_turtle(assembler_ttl), "mining")
+
+
+def test_transform_jena_assembler_to_queryables_rejects_empty_shapes_list():
+    assembler_ttl = """
+    @prefix : <http://example.com/assembler#> .
+    @prefix fuseki: <http://jena.apache.org/fuseki#> .
+    @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+    @prefix text: <http://jena.apache.org/text#> .
+
+    :service a fuseki:Service ;
+        fuseki:name "mining" ;
+        fuseki:dataset :textDataset .
+
+    :textDataset a text:TextDataset ;
+        text:index :index .
+
+    :index a text:TextIndexShacl ;
+        text:shapes rdf:nil .
+    """
+
+    with pytest.raises(JenaAssemblerTransformError, match="empty text:shapes list"):
+        transform_jena_assembler_to_queryables(_graph_from_turtle(assembler_ttl), "mining")
+
+
+def test_transform_jena_assembler_to_queryables_requires_field_name():
+    assembler_ttl = """
+    @prefix : <http://example.com/assembler#> .
+    @prefix ex: <http://example.com/> .
+    @prefix fuseki: <http://jena.apache.org/fuseki#> .
+    @prefix sh: <http://www.w3.org/ns/shacl#> .
+    @prefix text: <http://jena.apache.org/text#> .
+
+    :service a fuseki:Service ;
+        fuseki:name "mining" ;
+        fuseki:dataset :textDataset .
+
+    :textDataset a text:TextDataset ;
+        text:index :index .
+
+    :index a text:TextIndexShacl ;
+        text:shapes ( :Shape ) .
+
+    :Shape sh:property [
+        sh:path ex:commodity
+    ] .
+    """
+
+    with pytest.raises(JenaAssemblerTransformError, match="idx:fieldName"):
+        transform_jena_assembler_to_queryables(_graph_from_turtle(assembler_ttl), "mining")
+
+
+def test_transform_jena_assembler_to_queryables_requires_field_path():
+    assembler_ttl = """
+    @prefix : <http://example.com/assembler#> .
+    @prefix fuseki: <http://jena.apache.org/fuseki#> .
+    @prefix idx: <urn:jena:lucene:index#> .
+    @prefix sh: <http://www.w3.org/ns/shacl#> .
+    @prefix text: <http://jena.apache.org/text#> .
+
+    :service a fuseki:Service ;
+        fuseki:name "mining" ;
+        fuseki:dataset :textDataset .
+
+    :textDataset a text:TextDataset ;
+        text:index :index .
+
+    :index a text:TextIndexShacl ;
+        text:shapes ( :Shape ) .
+
+    :Shape sh:property [
+        idx:fieldName "commodity"
+    ] .
+    """
+
+    with pytest.raises(JenaAssemblerTransformError, match="sh:path"):
+        transform_jena_assembler_to_queryables(_graph_from_turtle(assembler_ttl), "mining")
+
+
+def test_transform_jena_assembler_to_queryables_deduplicates_duplicate_field_iris():
+    assembler_ttl = """
+    @prefix : <http://example.com/assembler#> .
+    @prefix ex: <http://example.com/> .
+    @prefix field: <urn:test:field#> .
+    @prefix fuseki: <http://jena.apache.org/fuseki#> .
+    @prefix idx: <urn:jena:lucene:index#> .
+    @prefix sh: <http://www.w3.org/ns/shacl#> .
+    @prefix text: <http://jena.apache.org/text#> .
+
+    :service a fuseki:Service ;
+        fuseki:name "mining" ;
+        fuseki:dataset :textDataset .
+
+    :textDataset a text:TextDataset ;
+        text:index :index .
+
+    :index a text:TextIndexShacl ;
+        text:shapes ( :ShapeA :ShapeB ) .
+
+    field:commodity
+        idx:fieldName "commodity" ;
+        idx:fieldType idx:KeywordField ;
+        sh:path ex:commodity .
+
+    :ShapeA sh:property field:commodity .
+    :ShapeB sh:property field:commodity .
+    """
+
+    output_graph = transform_jena_assembler_to_queryables(
+        _graph_from_turtle(assembler_ttl),
+        "mining",
+    )
+    queryable_type = URIRef("http://www.opengis.net/doc/IS/cql2/1.0/Queryable")
+    queryables = list(output_graph.subjects(RDF.type, queryable_type))
+
+    assert queryables == [URIRef("urn:test:field#commodity")]
+
+
 def test_management_endpoint_returns_generated_turtle():
     app = _build_management_app(Settings(jena_fuseki_dataset_name="mining"))
     with TestClient(app) as client:
@@ -173,6 +326,25 @@ def test_management_endpoint_returns_generated_turtle():
         DCTERMS.identifier,
         Literal("urn:test:field#commodity"),
     ) in graph
+
+
+def test_management_endpoint_is_pure_and_does_not_mutate_system_store():
+    app = _build_management_app(Settings(jena_fuseki_dataset_name="mining"))
+    before_quads = list(system_store.quads_for_pattern(None, None, None, None))
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/jena-assembler-to-queryables",
+            content=DIRECT_ASSEMBLER_TTL,
+            headers={"content-type": "text/turtle"},
+        )
+
+    after_quads = list(system_store.quads_for_pattern(None, None, None, None))
+    queryable_uri = "urn:test:field#commodity"
+
+    assert response.status_code == 200
+    assert len(after_quads) == len(before_quads)
+    assert queryable_uri not in {str(quad[0]) for quad in after_quads}
 
 
 def test_management_endpoint_rejects_invalid_turtle():
