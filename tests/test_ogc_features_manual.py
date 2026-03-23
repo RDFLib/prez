@@ -11,13 +11,17 @@ def mock_queryables():
         @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
         @prefix cql: <http://www.opengis.net/doc/IS/cql2/1.0/> .
         @prefix dcterms: <http://purl.org/dc/terms/> .
+        @prefix prez: <https://prez.dev/ont/> .
         @prefix sh: <http://www.w3.org/ns/shacl#> .
+        @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
         <https://prez/queryables/TestRDFType> a cql:Queryable, sh:PropertyShape ;
-            dcterms:identifier "test-type" ;
+            dcterms:identifier "file:///fuseki/config.ttl#field-commodity" ;
             sh:description "Filter by RDF type (test data)" ;
             sh:name "Test RDF Type" ;
-            sh:path rdf:type .
+            sh:datatype xsd:string ;
+            sh:path rdf:type ;
+            prez:facetable true .
     """
 
     # Add the mock queryables to the system store
@@ -35,6 +39,28 @@ def test_ogc_features_queryables(client):
         "/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/queryables"
     )
     assert r.status_code == 200
+
+
+def test_ogc_features_queryables_json_facetable(client, mock_queryables):
+    r = client.get("/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/queryables")
+    assert r.status_code == 200
+    body = r.json()
+    assert (
+        body["properties"]["file:///fuseki/config.ttl#field-commodity"][
+            "x-prez-facetable"
+        ]
+        is True
+    )
+
+
+def test_ogc_features_queryables_global_and_local_match(client, mock_queryables):
+    global_r = client.get("/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/queryables")
+    local_r = client.get(
+        "/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/collections/ex:FeatureCollection/queryables"
+    )
+    assert global_r.status_code == 200
+    assert local_r.status_code == 200
+    assert global_r.json()["properties"] == local_r.json()["properties"]
 
 
 def test_ogc_features_queryables_turtle(client, mock_queryables):

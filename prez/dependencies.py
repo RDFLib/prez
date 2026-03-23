@@ -1,9 +1,11 @@
 import json
 import logging
 from pathlib import Path
+from urllib.parse import urlparse
 
 import httpx
 from fastapi import Depends, HTTPException, Request
+from pydantic import BaseModel
 from pyoxigraph import Store, RdfFormat, DefaultGraph as OxiDefaultGraph
 from rdflib import DCTERMS, RDF, SH, SKOS, Literal, URIRef, Graph
 from sparql_grammar_pydantic import IRI, Var
@@ -19,7 +21,7 @@ from prez.cache import (
     system_store,
     persistent_store,
 )
-from prez.config import settings, get_reference_data_dir
+from prez.config import Settings, settings, get_reference_data_dir
 from prez.enums import (
     GeoJSONMediaType,
     JSONMediaType,
@@ -142,6 +144,10 @@ async def get_annotations_repo():
     A pyoxigraph Store with labels, descriptions etc. from Context Ontologies
     """
     return PyoxigraphRepo(annotations_store)
+
+
+def get_runtime_settings(request: Request) -> Settings:
+    return getattr(request.app.state, "settings", settings)
 
 
 async def load_local_data_to_oxigraph(store: Store):
@@ -326,6 +332,198 @@ async def _parse_post_body(request: Request) -> dict:
             detail="Request body must be a JSON object.",
         )
     return body
+
+
+class LuceneCQLRequest(BaseModel):
+    q: str | None = None
+    filter_json: dict | None = None
+    facets: list[str] | None = None
+    limit: int
+    offset: int = 0
+
+
+def _is_absolute_iri(value: str) -> bool:
+    parsed = urlparse(value)
+    return bool(parsed.scheme and (parsed.netloc or parsed.path))
+
+
+def _collect_non_iri_cql_properties(node, invalid_properties: list[str]) -> None:
+    if isinstance(node, dict):
+        property_value = node.get("property")
+        if property_value is not None:
+            if not isinstance(property_value, str) or not _is_absolute_iri(property_value):
+                invalid_properties.append(str(property_value))
+        for value in node.values():
+            _collect_non_iri_cql_properties(value, invalid_properties)
+    elif isinstance(node, list):
+        for item in node:
+            _collect_non_iri_cql_properties(item, invalid_properties)
+
+
+def _validate_lucene_cql_filter(filter_json: dict | None) -> None:
+    if filter_json is None:
+        return
+    invalid_properties: list[str] = []
+    _collect_non_iri_cql_properties(filter_json, invalid_properties)
+    if invalid_properties:
+        invalid_values = ", ".join(dict.fromkeys(invalid_properties))
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "CQL property values must be IRIs when the Lucene-backed /cql "
+                f"feature is enabled. Invalid values: {invalid_values}"
+            ),
+        )
+
+
+def _parse_positive_int(value, param_name: str, default_value: int) -> int:
+    if value is None:
+        return default_value
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        raise HTTPException(
+            status_code=400,
+            detail=f"{param_name} must be a positive integer.",
+        )
+    if parsed <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail=f"{param_name} must be a positive integer.",
+        )
+    return parsed
+
+
+def _parse_non_negative_int(value, param_name: str, default_value: int) -> int:
+    if value is None:
+        return default_value
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        raise HTTPException(
+            status_code=400,
+            detail=f"{param_name} must be a non-negative integer.",
+        )
+    if parsed < 0:
+        raise HTTPException(
+            status_code=400,
+            detail=f"{param_name} must be a non-negative integer.",
+        )
+    return parsed
+
+
+async def get_lucene_facetable_queryable_identifiers(
+    system_repo: Repo = Depends(get_system_repo),
+) -> set[str]:
+    query = """
+    PREFIX cql: <http://www.opengis.net/doc/IS/cql2/1.0/>
+    PREFIX dcterms: <http://purl.org/dc/terms/>
+    PREFIX prez: <https://prez.dev/ont/>
+    SELECT ?identifier
+    WHERE {
+        ?queryable a cql:Queryable ;
+            dcterms:identifier ?identifier ;
+            prez:facetable true .
+        FILTER(isLiteral(?identifier))
+    }
+    """
+    _, results = await system_repo.send_queries([], [(None, query)])
+    if not results:
+        return set()
+    return {row["identifier"]["value"] for row in results[0][1]}
+
+
+def _validate_lucene_facets(
+    facets: list[str] | None,
+    supported_facets: set[str],
+) -> list[str] | None:
+    if not facets:
+        return None
+    unsupported = [facet for facet in dict.fromkeys(facets) if facet not in supported_facets]
+    if unsupported:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported facet IRIs: {', '.join(unsupported)}",
+        )
+    return facets
+
+
+async def lucene_cql_get_request_dependency(
+    request: Request,
+    runtime_settings: Settings = Depends(get_runtime_settings),
+    supported_facets: set[str] = Depends(get_lucene_facetable_queryable_identifiers),
+) -> LuceneCQLRequest:
+    q = request.query_params.get("q")
+    filter_raw = request.query_params.get("filter")
+    filter_json = None
+    if filter_raw is not None:
+        try:
+            filter_json = json.loads(filter_raw)
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=400, detail="Invalid GET filter JSON.")
+        if not isinstance(filter_json, dict):
+            raise HTTPException(
+                status_code=400,
+                detail="GET filter must be a JSON object.",
+            )
+    _validate_lucene_cql_filter(filter_json)
+
+    facets = request.query_params.getlist("facets") or None
+    facets = _validate_lucene_facets(facets, supported_facets)
+
+    return LuceneCQLRequest(
+        q=q,
+        filter_json=filter_json,
+        facets=facets,
+        limit=_parse_positive_int(
+            request.query_params.get("limit"),
+            "limit",
+            runtime_settings.lucene_default_limit,
+        ),
+        offset=_parse_non_negative_int(
+            request.query_params.get("offset"),
+            "offset",
+            0,
+        ),
+    )
+
+
+async def lucene_cql_post_request_dependency(
+    request: Request,
+    runtime_settings: Settings = Depends(get_runtime_settings),
+    supported_facets: set[str] = Depends(get_lucene_facetable_queryable_identifiers),
+) -> LuceneCQLRequest:
+    body = await _parse_post_body(request)
+
+    q = body.get("q")
+    if q is not None and not isinstance(q, str):
+        raise HTTPException(status_code=400, detail="POST q must be a string.")
+
+    filter_json = body.get("filter")
+    if filter_json is not None and not isinstance(filter_json, dict):
+        raise HTTPException(status_code=400, detail="POST filter must be a JSON object.")
+    _validate_lucene_cql_filter(filter_json)
+
+    facets = body.get("facets")
+    if facets is not None:
+        if not isinstance(facets, list) or not all(isinstance(facet, str) for facet in facets):
+            raise HTTPException(
+                status_code=400,
+                detail="POST facets must be an array of IRI strings.",
+            )
+        facets = _validate_lucene_facets(facets, supported_facets)
+
+    return LuceneCQLRequest(
+        q=q,
+        filter_json=filter_json,
+        facets=facets,
+        limit=_parse_positive_int(
+            body.get("limit"),
+            "limit",
+            runtime_settings.lucene_default_limit,
+        ),
+        offset=_parse_non_negative_int(body.get("offset"), "offset", 0),
+    )
 
 
 ########################################################################################################################

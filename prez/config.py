@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union, Literal
 
 import toml
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings
 from rdflib import DCTERMS, RDFS, SDO, URIRef, RDF, SOSA
 from rdflib.namespace import SKOS
@@ -118,6 +118,9 @@ class Settings(BaseSettings):
     # Optional inner limit for Fuseki FTS text:query. When None, no limit is added to the text:query.
     # When set to an integer, adds that value as a limit argument to the FTS query.
     fts_limit: Optional[int] = None
+    enable_cql_jena_lucene_json: bool = False
+    lucene_default_limit: int = 10000
+    jena_fuseki_dataset_name: Optional[str] = None
 
     @field_validator("prez_version")
     @classmethod
@@ -164,6 +167,26 @@ class Settings(BaseSettings):
                 f"original message: {e}"
             )
         return v
+
+    @field_validator("lucene_default_limit")
+    @classmethod
+    def validate_lucene_default_limit(cls, v):
+        if v <= 0:
+            raise ValueError("lucene_default_limit must be a positive integer")
+        return v
+
+    @model_validator(mode="after")
+    def validate_lucene_settings(self):
+        if self.enable_cql_jena_lucene_json:
+            if not self.jena_fuseki_dataset_name:
+                raise ValueError(
+                    "jena_fuseki_dataset_name must be set when enable_cql_jena_lucene_json is true"
+                )
+            if self.sparql_repo_type != SparqlRepoType.remote:
+                raise ValueError(
+                    "enable_cql_jena_lucene_json requires sparql_repo_type=remote"
+                )
+        return self
 
 
 settings = Settings()

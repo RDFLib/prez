@@ -38,6 +38,8 @@ from prez.exceptions.model_exceptions import (
 from prez.middleware import create_validate_header_middleware
 from prez.repositories import OxrdflibRepo, PyoxigraphRepo, RemoteSparqlRepo
 from prez.routers.base_router import router as base_prez_router
+from prez.routers.cql_lucene_router import router as cql_lucene_router
+from prez.routers.cql_router import router as cql_router
 from prez.routers.custom_endpoints import create_dynamic_router
 from prez.routers.identifier import router as identifier_router
 from prez.routers.management import config_router
@@ -249,6 +251,10 @@ def assemble_app(
             features_subapi,
         )
     app.include_router(base_prez_router)
+    if _settings.enable_cql_jena_lucene_json:
+        app.include_router(cql_lucene_router)
+    else:
+        app.include_router(cql_router)
     app.include_router(identifier_router)
     app.openapi = partial(
         prez_open_api_metadata,

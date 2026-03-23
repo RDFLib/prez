@@ -227,6 +227,7 @@ class QueryableProperty(BaseModel):
     items: Optional[Union[List[str], List[int]]] = Field(
         None, description="Items for array properties"
     )
+    x_prez_facetable: Optional[bool] = Field(None, alias="x-prez-facetable")
 
 
 class SpatialQueryableProperty(QueryableProperty):

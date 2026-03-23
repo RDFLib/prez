@@ -531,6 +531,7 @@ async def generate_queryables_from_shacl_definition(
     query = """
     PREFIX cql: <http://www.opengis.net/doc/IS/cql2/1.0/>
     PREFIX dcterms: <http://purl.org/dc/terms/>
+    PREFIX prez: <https://prez.dev/ont/>
     PREFIX sh: <http://www.w3.org/ns/shacl#>
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     CONSTRUCT {
@@ -538,7 +539,8 @@ async def generate_queryables_from_shacl_definition(
     	cql:name ?title ;
     	cql:description ?description ;
     	cql:datatype ?type ;
-    	cql:enum ?enums .
+    	cql:enum ?enums ;
+        prez:facetable ?facetable .
     }
     WHERE {?queryable a cql:Queryable ;
         dcterms:identifier ?id ;
@@ -546,6 +548,7 @@ async def generate_queryables_from_shacl_definition(
         sh:description ?description ;
         sh:datatype ?type .
         OPTIONAL { ?queryable sh:in/rdf:rest*/rdf:first ?enums }
+        OPTIONAL { ?queryable prez:facetable ?facetable }
     }
     """
     g, _ = await system_repo.send_queries([query], [])
@@ -574,6 +577,9 @@ async def generate_queryables_from_shacl_definition(
         )  # enums are optional.
         if enum:
             queryable_props[id_value]["enum"] = [enum_item["@id"] for enum_item in enum]
+        facetable = item.get("https://prez.dev/ont/facetable")
+        if facetable and facetable[0].get("@value") in [True, "true", "True", 1, "1"]:
+            queryable_props[id_value]["x-prez-facetable"] = True
     if endpoint_uri == OGCFEAT["queryables-global"]:
         title = "Global Queryables"
         description = (
