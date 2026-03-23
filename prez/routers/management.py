@@ -2,10 +2,10 @@ import io
 import json
 import logging
 import pickle
-from typing import Optional
+from typing import Annotated, Optional
 
 from aiocache import caches
-from fastapi import APIRouter, Body, Depends, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, Header, HTTPException, Query
 from pydantic import ValidationError
 from rdflib import VANN, BNode, Graph, Literal, URIRef
 from rdflib.collection import Collection
@@ -14,14 +14,19 @@ from starlette.responses import PlainTextResponse, Response, StreamingResponse
 
 from prez.cache import endpoints_graph_cache, prefix_graph
 from prez.config import settings
-from prez.dependencies import get_system_repo
+from prez.dependencies import get_runtime_settings, get_system_repo
 from prez.enums import JSONMediaType, NonAnnotatedRDFMediaType
 from prez.models.endpoint_config import RootModel, configure_endpoings_example
+from prez.config import Settings
 from prez.reference_data.prez_ns import PREZ
 from prez.renderers.renderer import return_from_graph, return_rdf
 from prez.repositories import Repo
 from prez.services.connegp_service import RDF_MEDIATYPES, NegotiatedPMTs
 from prez.services.generate_endpoint_rdf import create_endpoint_rdf
+from prez.services.jena_assembler_queryables import (
+    JenaAssemblerTransformError,
+    transform_jena_assembler_to_queryables,
+)
 
 router = APIRouter(tags=["Management"])
 config_router = APIRouter(tags=["Configuration"])
@@ -105,6 +110,50 @@ async def return_tbox_cache(request: Request):
 @router.get("/health")
 async def health_check():
     return {"status": "ok"}
+
+
+async def get_turtle_request_body(
+    request: Request,
+    content_type: Annotated[Optional[str], Header()] = None,
+) -> str:
+    if content_type is None or "text/turtle" not in content_type:
+        raise HTTPException(
+            status_code=415,
+            detail="Content-Type must be text/turtle.",
+        )
+    return (await request.body()).decode("utf-8")
+
+
+@router.post(
+    "/jena-assembler-to-queryables",
+    summary="Convert Jena assembler Turtle into synthetic queryables Turtle",
+)
+async def jena_assembler_to_queryables(
+    assembler_turtle: Annotated[str, Depends(get_turtle_request_body)],
+    runtime_settings: Annotated[Settings, Depends(get_runtime_settings)],
+):
+    if not runtime_settings.jena_fuseki_dataset_name:
+        raise HTTPException(
+            status_code=400,
+            detail="jena_fuseki_dataset_name must be set to use this transform endpoint.",
+        )
+
+    assembler_graph = Graph()
+    try:
+        assembler_graph.parse(data=assembler_turtle, format="turtle")
+        queryables_graph = transform_jena_assembler_to_queryables(
+            assembler_graph,
+            runtime_settings.jena_fuseki_dataset_name,
+        )
+    except JenaAssemblerTransformError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Invalid Turtle body: {exc}")
+
+    return Response(
+        content=queryables_graph.serialize(format="turtle"),
+        media_type="text/turtle",
+    )
 
 
 async def return_annotation_predicates():
