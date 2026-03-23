@@ -120,6 +120,7 @@ class Settings(BaseSettings):
     fts_limit: Optional[int] = None
     enable_cql_jena_lucene_json: bool = False
     lucene_default_limit: int = 10000
+    lucene_index_name: str = "default"
     jena_fuseki_dataset_name: Optional[str] = None
 
     @field_validator("prez_version")
@@ -173,6 +174,13 @@ class Settings(BaseSettings):
     def validate_lucene_default_limit(cls, v):
         if v <= 0:
             raise ValueError("lucene_default_limit must be a positive integer")
+        return v
+
+    @field_validator("lucene_index_name")
+    @classmethod
+    def validate_lucene_index_name(cls, v):
+        if not v.strip():
+            raise ValueError("lucene_index_name must be a non-empty string")
         return v
 
     @model_validator(mode="after")

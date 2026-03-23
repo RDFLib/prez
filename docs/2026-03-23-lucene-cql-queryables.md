@@ -24,15 +24,19 @@ The feature is controlled by the following settings:
 
 - `enable_cql_jena_lucene_json`
 - `lucene_default_limit`
+- `lucene_index_name`
 - `jena_fuseki_dataset_name`
 
 Validation rules:
 
 - `lucene_default_limit` must be a positive integer
+- `lucene_index_name` must be a non-empty string
 - when `enable_cql_jena_lucene_json=true`, `jena_fuseki_dataset_name` must be set
 - when `enable_cql_jena_lucene_json=true`, `sparql_repo_type` must be `remote`
 
 This implementation is intended for a remote Fuseki-compatible SPARQL endpoint. Local `pyoxigraph` stores do not support `luc:query`.
+
+`lucene_index_name` defaults to `default` and is emitted as the leading Lucene property-function argument in both `luc:query` and `luc:facet`.
 
 ## Request Contract
 
@@ -93,12 +97,32 @@ Content-Type: application/sparql-results+json
 
 ## Queryables Behavior
 
-The existing OGC Features endpoints are reused:
+The existing OGC Features endpoints are reused inside the mounted OGC Features API:
 
 - `/queryables`
 - `/collections/{collectionId}/queryables`
 
+In this Prez app, OGC Features is mounted under:
+
+```text
+/catalogs/{catalogId}/collections/{recordsCollectionId}/features
+```
+
+So the effective deployed queryables URLs are shaped like:
+
+```text
+/catalogs/{catalogId}/collections/{recordsCollectionId}/features/queryables
+/catalogs/{catalogId}/collections/{recordsCollectionId}/features/collections/{collectionId}/queryables
+```
+
 For this feature, Prez expects synthetic `cql:Queryable` resources to be loaded into the system store during normal startup loading. Prez does not parse the Fuseki assembler dynamically at request time.
+
+Local queryables files are loaded from:
+
+- `prez/reference_data/queryables/`
+- or `$PREZ_REFERENCE_DATA_DIR/queryables/` when `PREZ_REFERENCE_DATA_DIR` is set
+
+Prez loads `*.ttl` and `*.rdf` files from that directory at startup.
 
 Each synthetic queryable should use the Lucene field IRI as both:
 
@@ -133,6 +157,31 @@ When `prez:facetable true` is present, `/queryables` JSON exposes:
 
 For v1, global and local queryables return the same loaded dataset-derived set.
 
+## Jena Assembler Transform Endpoint
+
+Prez also exposes a management convenience endpoint for generating synthetic queryables from a Jena assembler:
+
+```text
+POST /jena-assembler-to-queryables
+Content-Type: text/turtle
+```
+
+Behavior:
+
+- accepts a Jena assembler in Turtle
+- uses the configured `jena_fuseki_dataset_name` to select the `fuseki:Service`
+- transforms the Lucene `text:shapes` field definitions into synthetic `cql:Queryable` RDF
+- returns generated Turtle
+- does not write files
+- does not load the generated queryables into the running instance
+
+This endpoint is a pure transform. To make Prez use the generated queryables, save the returned Turtle into:
+
+- `prez/reference_data/queryables/`
+- or `$PREZ_REFERENCE_DATA_DIR/queryables/`
+
+and then restart Prez.
+
 ## Property IRIs in Filters
 
 For the Lucene-backed `/cql` feature, the `property` value in the CQL filter should be the same synthetic field IRI exposed via `/queryables`.
@@ -163,6 +212,7 @@ SELECT ?focus_node ?score ?literal ?graph ?property ?facet_field ?facet_value ?f
 WHERE {
 {
   (?focus_node ?score ?literal ?graph ?property) luc:query (
+    'default'
     'ore'
     '{"op":"=","args":[{"property":"file:///fuseki/config.ttl#field-commodity"},"gold"]}'
     5
@@ -171,9 +221,11 @@ WHERE {
 UNION
 {
   (?facet_field ?facet_value ?facet_count) luc:facet (
+    'default'
     'ore'
     '["file:///fuseki/config.ttl#field-commodity","file:///fuseki/config.ttl#field-state"]'
     '{"op":"=","args":[{"property":"file:///fuseki/config.ttl#field-commodity"},"gold"]}'
+    5
   ) .
 }
 }

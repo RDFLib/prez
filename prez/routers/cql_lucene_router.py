@@ -10,9 +10,11 @@ from starlette.responses import StreamingResponse
 from prez.dependencies import (
     LuceneCQLRequest,
     get_data_repo,
+    get_runtime_settings,
     lucene_cql_get_request_dependency,
     lucene_cql_post_request_dependency,
 )
+from prez.config import Settings
 from prez.repositories import Repo
 from prez.reference_data.prez_ns import OGCE
 from prez.routers.api_extras_examples import responses
@@ -25,8 +27,13 @@ router = APIRouter(tags=["ogcprez"])
 SPARQL_RESULTS_JSON = "application/sparql-results+json"
 
 
-async def _execute_lucene_cql_query(repo: Repo, request_params: LuceneCQLRequest):
+async def _execute_lucene_cql_query(
+    repo: Repo,
+    request_params: LuceneCQLRequest,
+    runtime_settings: Settings,
+):
     query = generate_cql_lucene_json_sparql(
+        lucene_index_name=runtime_settings.lucene_index_name,
         q=request_params.q,
         filter_json=request_params.filter_json,
         facets=request_params.facets,
@@ -79,8 +86,9 @@ async def _execute_lucene_cql_query(repo: Repo, request_params: LuceneCQLRequest
 async def lucene_cql_get(
     request_params: LuceneCQLRequest = Depends(lucene_cql_get_request_dependency),
     data_repo: Repo = Depends(get_data_repo),
+    runtime_settings: Settings = Depends(get_runtime_settings),
 ):
-    return await _execute_lucene_cql_query(data_repo, request_params)
+    return await _execute_lucene_cql_query(data_repo, request_params, runtime_settings)
 
 
 @router.post(
@@ -113,5 +121,6 @@ async def lucene_cql_get(
 async def lucene_cql_post(
     request_params: LuceneCQLRequest = Depends(lucene_cql_post_request_dependency),
     data_repo: Repo = Depends(get_data_repo),
+    runtime_settings: Settings = Depends(get_runtime_settings),
 ):
-    return await _execute_lucene_cql_query(data_repo, request_params)
+    return await _execute_lucene_cql_query(data_repo, request_params, runtime_settings)

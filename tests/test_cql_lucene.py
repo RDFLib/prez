@@ -46,6 +46,7 @@ def _build_lucene_test_client():
         enable_cql_jena_lucene_json=True,
         jena_fuseki_dataset_name="dataset",
         lucene_default_limit=77,
+        lucene_index_name="default",
         sparql_repo_type="remote",
         sparql_endpoint="http://example.com/dataset/sparql",
     )
@@ -117,6 +118,11 @@ def test_lucene_default_limit_must_be_positive():
         Settings(lucene_default_limit=0)
 
 
+def test_lucene_index_name_must_be_non_empty():
+    with pytest.raises(ValueError, match="lucene_index_name"):
+        Settings(lucene_index_name="  ")
+
+
 def test_cql_router_registration_defaults_to_legacy_router():
     app = assemble_app(local_settings=Settings())
     cql_routes = _cql_route_modules(app)
@@ -140,13 +146,14 @@ def test_cql_router_registration_switches_to_lucene_router():
 
 def test_generate_cql_lucene_json_sparql_defaults_q_to_wildcard():
     query = generate_cql_lucene_json_sparql(
+        lucene_index_name="default",
         q=None,
         filter_json=None,
         facets=None,
         limit=100,
         offset=5,
     )
-    assert 'luc:query ( "*" 100 )' in query
+    assert 'luc:query ( "default" "*" 100 )' in query
     assert "LIMIT 100" in query
     assert "OFFSET 5" in query
 
@@ -154,6 +161,7 @@ def test_generate_cql_lucene_json_sparql_defaults_q_to_wildcard():
 def test_generate_cql_lucene_json_sparql_omits_lucene_facet_when_not_requested():
     filter_json = {"op": "=", "args": [{"property": "http://example.com/p"}, "x"]}
     query = generate_cql_lucene_json_sparql(
+        lucene_index_name="default",
         q="ore",
         filter_json=filter_json,
         facets=None,
@@ -170,6 +178,7 @@ def test_generate_cql_lucene_json_sparql_includes_facets_as_json_array():
         "file:///fuseki/config.ttl#field-state",
     ]
     query = generate_cql_lucene_json_sparql(
+        lucene_index_name="default",
         q="ore",
         filter_json=None,
         facets=facets,
@@ -178,6 +187,20 @@ def test_generate_cql_lucene_json_sparql_includes_facets_as_json_array():
     )
     assert "luc:facet" in query
     assert _escaped_sparql_json_string(facets) in query
+    assert 'luc:facet ( "default" "ore"' in query
+
+
+def test_generate_cql_lucene_json_sparql_uses_configured_index_name():
+    query = generate_cql_lucene_json_sparql(
+        lucene_index_name="custom-index",
+        q="ore",
+        filter_json=None,
+        facets=["file:///fuseki/config.ttl#field-commodity"],
+        limit=10,
+        offset=0,
+    )
+    assert 'luc:query ( "custom-index" "ore" 10 )' in query
+    assert 'luc:facet ( "custom-index" "ore"' in query
 
 
 def test_lucene_cql_get_defaults_q_and_returns_sparql_results_json():
@@ -193,7 +216,7 @@ def test_lucene_cql_get_defaults_q_and_returns_sparql_results_json():
     assert fake_repo.queries[-1]["raw_headers"] == [
         (b"accept", b"application/sparql-results+json")
     ]
-    assert 'luc:query ( "*" 77 )' in fake_repo.queries[-1]["query"]
+    assert 'luc:query ( "default" "*" 77 )' in fake_repo.queries[-1]["query"]
 
 
 def test_lucene_cql_get_accepts_filter_only():
@@ -284,10 +307,34 @@ def test_lucene_cql_post_accepts_q_filter_facets_limit_and_offset():
 
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("application/sparql-results+json")
-    assert 'luc:query ( "ore" "{\\"op\\":\\"=\\",\\"args\\":[{\\"property\\":\\"http://example.com/p\\"},\\"x\\"]}" 5 )' in fake_repo.queries[-1]["query"]
-    assert 'luc:facet ( "ore" "[\\"file:///fuseki/config.ttl#field-commodity\\"]" "{\\"op\\":\\"=\\",\\"args\\":[{\\"property\\":\\"http://example.com/p\\"},\\"x\\"]}" )' in fake_repo.queries[-1]["query"]
+    assert 'luc:query ( "default" "ore" "{\\"op\\":\\"=\\",\\"args\\":[{\\"property\\":\\"http://example.com/p\\"},\\"x\\"]}" 5 )' in fake_repo.queries[-1]["query"]
+    assert 'luc:facet ( "default" "ore" "[\\"file:///fuseki/config.ttl#field-commodity\\"]" "{\\"op\\":\\"=\\",\\"args\\":[{\\"property\\":\\"http://example.com/p\\"},\\"x\\"]}" 5 )' in fake_repo.queries[-1]["query"]
     assert "LIMIT 5" in fake_repo.queries[-1]["query"]
     assert "OFFSET 10" in fake_repo.queries[-1]["query"]
+
+
+def test_lucene_cql_route_uses_configured_index_name():
+    app = FastAPI()
+    app.state.settings = Settings(
+        enable_cql_jena_lucene_json=True,
+        jena_fuseki_dataset_name="dataset",
+        lucene_default_limit=77,
+        lucene_index_name="custom-index",
+        sparql_repo_type="remote",
+        sparql_endpoint="http://example.com/dataset/sparql",
+    )
+    app.include_router(cql_lucene_router)
+
+    system_store = Store()
+    fake_repo = FakeLuceneRepo()
+    app.dependency_overrides[get_data_repo] = lambda: fake_repo
+    app.dependency_overrides[get_system_repo] = lambda: PyoxigraphRepo(system_store)
+
+    with TestClient(app) as client:
+        response = client.get("/cql")
+
+    assert response.status_code == 200
+    assert 'luc:query ( "custom-index" "*" 77 )' in fake_repo.queries[-1]["query"]
 
 
 def test_lucene_cql_post_rejects_non_object_filter():

@@ -13,6 +13,7 @@ def _compact_json(value: dict | list[str]) -> str:
 
 
 def generate_cql_lucene_json_sparql(
+    lucene_index_name: str,
     q: str | None,
     filter_json: dict | None,
     facets: list[str] | None,
@@ -21,7 +22,10 @@ def generate_cql_lucene_json_sparql(
 ) -> str:
     query_string = q if q is not None else "*"
 
-    lucene_query_args = [_sparql_string_literal(query_string)]
+    lucene_query_args = [
+        _sparql_string_literal(lucene_index_name),
+        _sparql_string_literal(query_string),
+    ]
     if filter_json is not None:
         lucene_query_args.append(_sparql_string_literal(_compact_json(filter_json)))
     lucene_query_args.append(str(limit))
@@ -44,11 +48,13 @@ def generate_cql_lucene_json_sparql(
 
     if facets:
         lucene_facet_args = [
+            _sparql_string_literal(lucene_index_name),
             _sparql_string_literal(query_string),
             _sparql_string_literal(_compact_json(facets)),
         ]
         if filter_json is not None:
             lucene_facet_args.append(_sparql_string_literal(_compact_json(filter_json)))
+        lucene_facet_args.append(str(limit))
         lucene_facet_args_string = " ".join(lucene_facet_args)
         facet_branch = (
             "{\n"
