@@ -5,7 +5,6 @@ from urllib.parse import urlparse
 
 import httpx
 from fastapi import Depends, HTTPException, Request
-from pydantic import BaseModel
 from pyoxigraph import Store, RdfFormat, DefaultGraph as OxiDefaultGraph
 from rdflib import DCTERMS, RDF, SH, SKOS, Literal, URIRef, Graph
 from sparql_grammar_pydantic import IRI, Var
@@ -45,6 +44,10 @@ from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQue
 from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.search_default import SearchQueryRegex
 from prez.services.query_generation.search_fuseki_fts import SearchQueryFusekiFTS
+from prez.services.query_generation.search_jena_lucene import (
+    LuceneFacetQuery,
+    SearchQueryJenaLucene,
+)
 from prez.services.query_generation.shacl import FTSUnionContainer, NodeShape, PropertyShape
 
 logger = logging.getLogger(__name__)
@@ -334,14 +337,6 @@ async def _parse_post_body(request: Request) -> dict:
     return body
 
 
-class LuceneCQLRequest(BaseModel):
-    q: str | None = None
-    filter_json: dict | None = None
-    facets: list[str] | None = None
-    limit: int
-    offset: int = 0
-
-
 def _is_absolute_iri(value: str) -> bool:
     parsed = urlparse(value)
     return bool(parsed.scheme and (parsed.netloc or parsed.path))
@@ -376,70 +371,32 @@ def _validate_lucene_cql_filter(filter_json: dict | None) -> None:
         )
 
 
-def _parse_positive_int(value, param_name: str, default_value: int) -> int:
-    if value is None:
-        return default_value
-    try:
-        parsed = int(value)
-    except (TypeError, ValueError):
-        raise HTTPException(
-            status_code=400,
-            detail=f"{param_name} must be a positive integer.",
-        )
-    if parsed <= 0:
-        raise HTTPException(
-            status_code=400,
-            detail=f"{param_name} must be a positive integer.",
-        )
-    return parsed
-
-
-def _parse_non_negative_int(value, param_name: str, default_value: int) -> int:
-    if value is None:
-        return default_value
-    try:
-        parsed = int(value)
-    except (TypeError, ValueError):
-        raise HTTPException(
-            status_code=400,
-            detail=f"{param_name} must be a non-negative integer.",
-        )
-    if parsed < 0:
-        raise HTTPException(
-            status_code=400,
-            detail=f"{param_name} must be a non-negative integer.",
-        )
-    return parsed
-
-
-async def get_lucene_facetable_queryable_identifiers(
-    system_repo: Repo = Depends(get_system_repo),
-) -> set[str]:
-    query = """
-    PREFIX cql: <http://www.opengis.net/doc/IS/cql2/1.0/>
-    PREFIX dcterms: <http://purl.org/dc/terms/>
-    PREFIX prez: <https://prez.dev/ont/>
-    SELECT ?identifier
-    WHERE {
-        ?queryable a cql:Queryable ;
-            dcterms:identifier ?identifier ;
-            prez:facetable true .
-        FILTER(isLiteral(?identifier))
-    }
+async def _get_facetable_lucene_queryables(system_repo: Repo) -> set[str]:
+    query = f"""
+    CONSTRUCT {{
+        ?queryable <{ONT.facetable}> ?facetable .
+    }}
+    WHERE {{
+        ?queryable a <http://www.opengis.net/doc/IS/cql2/1.0/Queryable> ;
+            <{ONT.facetable}> ?facetable .
+    }}
     """
-    _, results = await system_repo.send_queries([], [(None, query)])
-    if not results:
-        return set()
-    return {row["identifier"]["value"] for row in results[0][1]}
+    graph = await system_repo.rdf_query_to_rdflib_graph(query)
+    supported: set[str] = set()
+    for subject, _, facetable in graph.triples((None, URIRef(str(ONT.facetable)), None)):
+        if str(facetable).lower() in {"true", "1"}:
+            supported.add(str(subject))
+    return supported
 
 
-def _validate_lucene_facets(
+async def _validate_lucene_requested_facets(
     facets: list[str] | None,
-    supported_facets: set[str],
+    system_repo: Repo,
 ) -> list[str] | None:
     if not facets:
         return None
-    unsupported = [facet for facet in dict.fromkeys(facets) if facet not in supported_facets]
+    supported = await _get_facetable_lucene_queryables(system_repo)
+    unsupported = [facet for facet in facets if facet not in supported]
     if unsupported:
         raise HTTPException(
             status_code=400,
@@ -448,81 +405,138 @@ def _validate_lucene_facets(
     return facets
 
 
-async def lucene_cql_get_request_dependency(
+async def lucene_cql_get_facets_dependency(
     request: Request,
-    runtime_settings: Settings = Depends(get_runtime_settings),
-    supported_facets: set[str] = Depends(get_lucene_facetable_queryable_identifiers),
-) -> LuceneCQLRequest:
-    q = request.query_params.get("q")
-    filter_raw = request.query_params.get("filter")
-    filter_json = None
-    if filter_raw is not None:
-        try:
-            filter_json = json.loads(filter_raw)
-        except json.JSONDecodeError:
-            raise HTTPException(status_code=400, detail="Invalid GET filter JSON.")
-        if not isinstance(filter_json, dict):
-            raise HTTPException(
-                status_code=400,
-                detail="GET filter must be a JSON object.",
-            )
-    _validate_lucene_cql_filter(filter_json)
-
+    query_params: ListingQueryParams = Depends(),
+    system_repo: Repo = Depends(get_system_repo),
+) -> list[str] | None:
     facets = request.query_params.getlist("facets") or None
-    facets = _validate_lucene_facets(facets, supported_facets)
+    if facets and query_params.facet_profile:
+        raise HTTPException(
+            status_code=400,
+            detail="Lucene-backed /cql cannot accept both 'facets' and 'facet_profile'.",
+        )
+    return await _validate_lucene_requested_facets(facets, system_repo)
 
-    return LuceneCQLRequest(
-        q=q,
+
+async def lucene_cql_post_facets_dependency(
+    request: Request,
+    system_repo: Repo = Depends(get_system_repo),
+) -> list[str] | None:
+    body = await _parse_post_body(request)
+    facets = body.get("facets")
+    if facets is None:
+        return None
+    if body.get("facet_profile"):
+        raise HTTPException(
+            status_code=400,
+            detail="Lucene-backed /cql cannot accept both 'facets' and 'facet_profile'.",
+        )
+    if not isinstance(facets, list) or any(not isinstance(facet, str) for facet in facets):
+        raise HTTPException(
+            status_code=400,
+            detail="POST facets must be an array of IRI strings.",
+        )
+    return await _validate_lucene_requested_facets(facets, system_repo)
+
+
+def _parse_lucene_filter_json(
+    filter_value,
+    source: str,
+) -> dict | None:
+    if filter_value is None:
+        return None
+    if isinstance(filter_value, str):
+        try:
+            filter_json = json.loads(filter_value)
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=400, detail=f"Invalid {source} filter JSON.")
+    else:
+        filter_json = filter_value
+    if not isinstance(filter_json, dict):
+        raise HTTPException(
+            status_code=400,
+            detail=f"{source} filter must be a JSON object.",
+        )
+    _validate_lucene_cql_filter(filter_json)
+    return filter_json
+
+
+def _apply_lucene_default_limit(
+    query_params: ListingQueryParams,
+    runtime_settings: Settings,
+    limit_supplied: bool,
+) -> None:
+    if not limit_supplied:
+        query_params.limit = runtime_settings.lucene_default_limit
+
+
+def _calculate_listing_offset(query_params: ListingQueryParams) -> int:
+    if query_params.offset is not None:
+        return int(query_params.offset)
+    if query_params.startindex is not None:
+        return int(query_params.startindex)
+    return int(query_params.limit) * (int(query_params.page) - 1)
+
+
+async def lucene_cql_get_parser_dependency(
+    request: Request,
+    query_params: ListingQueryParams = Depends(),
+    runtime_settings: Settings = Depends(get_runtime_settings),
+    facets: list[str] | None = Depends(lucene_cql_get_facets_dependency),
+) -> CQLParser | None:
+    _apply_lucene_default_limit(
+        query_params,
+        runtime_settings,
+        limit_supplied=request.query_params.get("limit") is not None,
+    )
+    _ = facets
+    _parse_lucene_filter_json(query_params._filter, "GET")
+    return None
+
+
+async def generate_lucene_cql_search_query(
+    request: Request,
+    query_params: ListingQueryParams = Depends(),
+    runtime_settings: Settings = Depends(get_runtime_settings),
+    facets: list[str] | None = Depends(lucene_cql_get_facets_dependency),
+):
+    _apply_lucene_default_limit(
+        query_params,
+        runtime_settings,
+        limit_supplied=request.query_params.get("limit") is not None,
+    )
+    _ = facets
+    filter_json = _parse_lucene_filter_json(query_params._filter, "GET")
+    return SearchQueryJenaLucene(
+        term=query_params.q,
         filter_json=filter_json,
-        facets=facets,
-        limit=_parse_positive_int(
-            request.query_params.get("limit"),
-            "limit",
-            runtime_settings.lucene_default_limit,
-        ),
-        offset=_parse_non_negative_int(
-            request.query_params.get("offset"),
-            "offset",
-            0,
-        ),
+        limit=int(query_params.limit),
+        offset=_calculate_listing_offset(query_params),
+        lucene_index_name=runtime_settings.lucene_index_name,
     )
 
 
-async def lucene_cql_post_request_dependency(
+async def generate_lucene_cql_facets_query(
     request: Request,
+    query_params: ListingQueryParams = Depends(),
     runtime_settings: Settings = Depends(get_runtime_settings),
-    supported_facets: set[str] = Depends(get_lucene_facetable_queryable_identifiers),
-) -> LuceneCQLRequest:
-    body = await _parse_post_body(request)
-
-    q = body.get("q")
-    if q is not None and not isinstance(q, str):
-        raise HTTPException(status_code=400, detail="POST q must be a string.")
-
-    filter_json = body.get("filter")
-    if filter_json is not None and not isinstance(filter_json, dict):
-        raise HTTPException(status_code=400, detail="POST filter must be a JSON object.")
-    _validate_lucene_cql_filter(filter_json)
-
-    facets = body.get("facets")
-    if facets is not None:
-        if not isinstance(facets, list) or not all(isinstance(facet, str) for facet in facets):
-            raise HTTPException(
-                status_code=400,
-                detail="POST facets must be an array of IRI strings.",
-            )
-        facets = _validate_lucene_facets(facets, supported_facets)
-
-    return LuceneCQLRequest(
-        q=q,
-        filter_json=filter_json,
+    facets: list[str] | None = Depends(lucene_cql_get_facets_dependency),
+):
+    _apply_lucene_default_limit(
+        query_params,
+        runtime_settings,
+        limit_supplied=request.query_params.get("limit") is not None,
+    )
+    if not facets:
+        return None
+    filter_json = _parse_lucene_filter_json(query_params._filter, "GET")
+    return LuceneFacetQuery(
+        term=query_params.q,
         facets=facets,
-        limit=_parse_positive_int(
-            body.get("limit"),
-            "limit",
-            runtime_settings.lucene_default_limit,
-        ),
-        offset=_parse_non_negative_int(body.get("offset"), "offset", 0),
+        filter_json=filter_json,
+        limit=int(query_params.limit),
+        lucene_index_name=runtime_settings.lucene_index_name,
     )
 
 
@@ -588,10 +602,10 @@ async def listing_post_params_dependency(request: Request) -> ListingQueryParams
     # filter (dict → JSON string to reuse existing validation)
     filter_raw = body.get("filter")
     if filter_raw is not None:
-        if isinstance(filter_raw, dict):
-            filter_str = json.dumps(filter_raw)
+        if isinstance(filter_raw, str):
+            filter_str = filter_raw
         else:
-            filter_str = str(filter_raw)
+            filter_str = json.dumps(filter_raw)
     else:
         filter_str = None
 
@@ -626,6 +640,78 @@ async def listing_post_params_dependency(request: Request) -> ListingQueryParams
     params.validate_pagination_params()
     params.validate_filter()
     return params
+
+
+async def lucene_cql_post_parser_dependency(
+    request: Request,
+    query_params: ListingQueryParams = Depends(listing_post_params_dependency),
+    runtime_settings: Settings = Depends(get_runtime_settings),
+    facets: list[str] | None = Depends(lucene_cql_post_facets_dependency),
+) -> CQLParser | None:
+    body = await _parse_post_body(request)
+    if body.get("q") is not None and not isinstance(body.get("q"), str):
+        raise HTTPException(status_code=400, detail="POST q must be a string.")
+    _apply_lucene_default_limit(
+        query_params,
+        runtime_settings,
+        limit_supplied="limit" in body,
+    )
+    _ = facets
+    _parse_lucene_filter_json(body.get("filter"), "POST")
+    return None
+
+
+async def generate_lucene_cql_search_query_post(
+    request: Request,
+    query_params: ListingQueryParams = Depends(listing_post_params_dependency),
+    runtime_settings: Settings = Depends(get_runtime_settings),
+    facets: list[str] | None = Depends(lucene_cql_post_facets_dependency),
+):
+    body = await _parse_post_body(request)
+    q = body.get("q")
+    if q is not None and not isinstance(q, str):
+        raise HTTPException(status_code=400, detail="POST q must be a string.")
+    _apply_lucene_default_limit(
+        query_params,
+        runtime_settings,
+        limit_supplied="limit" in body,
+    )
+    _ = facets
+    filter_json = _parse_lucene_filter_json(body.get("filter"), "POST")
+    return SearchQueryJenaLucene(
+        term=q,
+        filter_json=filter_json,
+        limit=int(query_params.limit),
+        offset=_calculate_listing_offset(query_params),
+        lucene_index_name=runtime_settings.lucene_index_name,
+    )
+
+
+async def generate_lucene_cql_facets_query_post(
+    request: Request,
+    query_params: ListingQueryParams = Depends(listing_post_params_dependency),
+    runtime_settings: Settings = Depends(get_runtime_settings),
+    facets: list[str] | None = Depends(lucene_cql_post_facets_dependency),
+):
+    body = await _parse_post_body(request)
+    q = body.get("q")
+    if q is not None and not isinstance(q, str):
+        raise HTTPException(status_code=400, detail="POST q must be a string.")
+    _apply_lucene_default_limit(
+        query_params,
+        runtime_settings,
+        limit_supplied="limit" in body,
+    )
+    if not facets:
+        return None
+    filter_json = _parse_lucene_filter_json(body.get("filter"), "POST")
+    return LuceneFacetQuery(
+        term=q,
+        facets=facets,
+        filter_json=filter_json,
+        limit=int(query_params.limit),
+        lucene_index_name=runtime_settings.lucene_index_name,
+    )
 
 
 async def get_negotiated_pmts_listing_post(

@@ -40,12 +40,26 @@ field:commodity
     idx:fieldName "commodity" ;
     idx:fieldType idx:KeywordField ;
     idx:facetable true ;
+    idx:sortable true ;
+    idx:multiValued true ;
     sh:path ex:commodity .
 
 field:year
     idx:fieldName "year" ;
     idx:fieldType idx:IntField ;
+    idx:indexed false ;
     sh:path ex:year .
+
+field:rating
+    idx:fieldName "rating" ;
+    idx:fieldType idx:DoubleField ;
+    idx:stored false ;
+    sh:path ex:rating .
+
+field:updatedAt
+    idx:fieldName "updatedAt" ;
+    idx:fieldType idx:LongField ;
+    sh:path ex:updatedAt .
 
 field:location
     idx:fieldName "location" ;
@@ -55,8 +69,11 @@ field:location
 :MiningReportShape
     sh:property field:commodity ;
     sh:property field:year ;
+    sh:property field:rating ;
+    sh:property field:updatedAt ;
     sh:property [
         idx:fieldName "title" ;
+        idx:defaultSearch true ;
         sh:path rdfs:label
     ] ;
     sh:property field:location .
@@ -119,6 +136,8 @@ def test_transform_jena_assembler_to_queryables_generates_expected_fields():
 
     commodity = URIRef("urn:test:field#commodity")
     year = URIRef("urn:test:field#year")
+    rating = URIRef("urn:test:field#rating")
+    updated_at = URIRef("urn:test:field#updatedAt")
     title = URIRef("urn:jena:lucene:field#title")
     location = URIRef("urn:test:field#location")
     queryable_type = URIRef("http://www.opengis.net/doc/IS/cql2/1.0/Queryable")
@@ -128,13 +147,32 @@ def test_transform_jena_assembler_to_queryables_generates_expected_fields():
     assert (commodity, SH.name, Literal("commodity")) in output_graph
     assert (commodity, SH.datatype, XSD.string) in output_graph
     assert (commodity, ONT.facetable, Literal(True)) in output_graph
+    assert (commodity, ONT.sortable, Literal(True)) in output_graph
+    assert (commodity, ONT.multiValued, Literal(True)) in output_graph
+    assert (commodity, ONT.stored, Literal(True)) in output_graph
+    assert (commodity, ONT.indexed, Literal(True)) in output_graph
+    assert (commodity, ONT.defaultSearch, Literal(False)) in output_graph
+    assert (commodity, ONT.luceneFieldType, Literal("keyword")) in output_graph
 
     assert (year, RDF.type, queryable_type) in output_graph
     assert (year, SH.datatype, XSD.integer) in output_graph
+    assert (year, ONT.indexed, Literal(False)) in output_graph
+    assert (year, ONT.luceneFieldType, Literal("int")) in output_graph
+
+    assert (rating, RDF.type, queryable_type) in output_graph
+    assert (rating, SH.datatype, XSD.double) in output_graph
+    assert (rating, ONT.stored, Literal(False)) in output_graph
+    assert (rating, ONT.luceneFieldType, Literal("double")) in output_graph
+
+    assert (updated_at, RDF.type, queryable_type) in output_graph
+    assert (updated_at, SH.datatype, XSD.long) in output_graph
+    assert (updated_at, ONT.luceneFieldType, Literal("long")) in output_graph
 
     assert (title, RDF.type, queryable_type) in output_graph
     assert (title, DCTERMS.identifier, Literal(str(title))) in output_graph
     assert (title, SH.datatype, XSD.string) in output_graph
+    assert (title, ONT.defaultSearch, Literal(True)) in output_graph
+    assert (title, ONT.luceneFieldType, Literal("text")) in output_graph
 
     assert (location, RDF.type, queryable_type) not in output_graph
 

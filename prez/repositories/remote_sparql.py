@@ -52,6 +52,18 @@ class RemoteSparqlRepo(Repo):
             log.error(timeout_msg)
             raise httpx.TimeoutException(timeout_msg) from e
 
+    async def _raise_for_status_with_body(self, response: httpx.Response) -> None:
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            content_bytes = await response.aread()
+            body_text = content_bytes.decode("utf-8", errors="replace")
+            raise httpx.HTTPStatusError(
+                f"HTTP Error {response.status_code}: {body_text}",
+                request=response.request,
+                response=response,
+            ) from e
+
     async def rdf_query_to_rdflib_graph(
         self, query: str, into_graph: Graph | None = None
     ) -> Graph:
@@ -61,6 +73,7 @@ class RemoteSparqlRepo(Repo):
         Returns: rdflib.Graph: An RDFLib Graph object
         """
         response: httpx.Response = await self._send_query(query)
+        await self._raise_for_status_with_body(response)
         response_format = response.headers.get("content-type", "application/n-triples")
         response_format = response_format.split(";")[
             0
@@ -81,6 +94,7 @@ class RemoteSparqlRepo(Repo):
         Returns: pyoxigraph.Store: An pyoxigraph Store object
         """
         response: httpx.Response = await self._send_query(query)
+        await self._raise_for_status_with_body(response)
         response_format = response.headers.get("content-type", "application/n-triples")
         response_format = response_format.split(";")[
             0

@@ -21,7 +21,13 @@ def mock_queryables():
             sh:name "Test RDF Type" ;
             sh:datatype xsd:string ;
             sh:path rdf:type ;
-            prez:facetable true .
+            prez:facetable true ;
+            prez:sortable true ;
+            prez:defaultSearch false ;
+            prez:multiValued true ;
+            prez:stored true ;
+            prez:indexed true ;
+            prez:luceneFieldType "keyword" .
     """
 
     # Add the mock queryables to the system store
@@ -50,6 +56,42 @@ def test_ogc_features_queryables_json_facetable(client, mock_queryables):
             "x-prez-facetable"
         ]
         is True
+    )
+    assert (
+        body["properties"]["file:///fuseki/config.ttl#field-commodity"][
+            "x-prez-sortable"
+        ]
+        is True
+    )
+    assert (
+        body["properties"]["file:///fuseki/config.ttl#field-commodity"][
+            "x-prez-default-search"
+        ]
+        is False
+    )
+    assert (
+        body["properties"]["file:///fuseki/config.ttl#field-commodity"][
+            "x-prez-multi-valued"
+        ]
+        is True
+    )
+    assert (
+        body["properties"]["file:///fuseki/config.ttl#field-commodity"][
+            "x-prez-stored"
+        ]
+        is True
+    )
+    assert (
+        body["properties"]["file:///fuseki/config.ttl#field-commodity"][
+            "x-prez-indexed"
+        ]
+        is True
+    )
+    assert (
+        body["properties"]["file:///fuseki/config.ttl#field-commodity"][
+            "x-prez-lucene-field-type"
+        ]
+        == "keyword"
     )
 
 
