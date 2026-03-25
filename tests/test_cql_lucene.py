@@ -7,8 +7,8 @@ import pytest
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 from pyoxigraph import Store, DefaultGraph, NamedNode, Literal, Quad
-from rdflib import Graph, RDF, Literal as RDFLiteral, URIRef
-from sparql_grammar_pydantic import Var
+from rdflib import Graph, RDF, Literal as RDFlibLiteral, URIRef
+from sparql_grammar_pydantic import IRI, TriplesSameSubject, Var
 
 from prez.app import assemble_app
 from prez.config import Settings, settings as global_settings
@@ -32,10 +32,11 @@ from prez.services.query_generation.search_jena_lucene import LuceneFacetQuery, 
 
 
 class FakeLuceneListingRepo(Repo):
-    def __init__(self):
+    def __init__(self, profile_query_matchers: list[tuple[str, Quad]] | None = None):
         self.rdf_queries: list[list[str]] = []
         self.tabular_queries: list[list] = []
         self.return_oxigraph_store_flags: list[bool] = []
+        self.profile_query_matchers = profile_query_matchers or []
 
     def _build_result_store(self) -> Store:
         store = Store()
@@ -78,20 +79,26 @@ class FakeLuceneListingRepo(Repo):
         if return_oxigraph_store:
             store = self._build_result_store()
             default = DefaultGraph()
+            main_query = rdf_queries[0] if rdf_queries else ""
+            for query_fragment, quad in self.profile_query_matchers:
+                if query_fragment in main_query:
+                    store.add(quad)
             if any("urn:jena:lucene:index#facet" in query for query in rdf_queries):
                 facet_node = NamedNode("urn:facet:1")
                 store.add(Quad(facet_node, NamedNode(str(PREZ.facetName)), NamedNode("urn:jena:lucene:field#commodity"), default))
                 store.add(Quad(facet_node, NamedNode(str(PREZ.facetValue)), Literal("Gold"), default))
                 store.add(Quad(facet_node, NamedNode(str(PREZ.facetCount)), Literal("2"), default))
             return store, []
+        if tabular_queries:
+            return Graph(), [(None, []) for _ in tabular_queries]
         return Graph(), []
 
     async def rdf_query_to_rdflib_graph(self, query: str, into_graph: Graph | None = None):
         graph = into_graph if into_graph is not None else Graph()
         commodity = URIRef("urn:jena:lucene:field#commodity")
         state = URIRef("urn:jena:lucene:field#state")
-        graph.add((commodity, URIRef(str(ONT.facetable)), RDFLiteral(True)))
-        graph.add((state, URIRef(str(ONT.facetable)), RDFLiteral(True)))
+        graph.add((commodity, URIRef(str(ONT.facetable)), RDFlibLiteral(True)))
+        graph.add((state, URIRef(str(ONT.facetable)), RDFlibLiteral(True)))
         return graph
 
     async def rdf_query_to_oxigraph_store(self, query: str, into_store=None):
@@ -109,6 +116,8 @@ def _build_lucene_test_client(
     test_repo: Repo | None,
     *,
     lucene_index_name: str = "default",
+    default_profile_uri: str = "http://example.org/profile",
+    profile_tss_list: list[TriplesSameSubject] | None = None,
 ) -> TestClient:
     local_settings = Settings(
         enable_cql_jena_lucene_json=True,
@@ -143,19 +152,20 @@ def _build_lucene_test_client(
         tssp_exists_list=[],
         gpnt_exists_list=[],
     )
-    fake_profile_nodeshape = SimpleNamespace(
-        uri="http://example.org/profile",
-        focus_node=Var(value="focus_node"),
-        tss_list=[],
-        tssp_list=[],
-        gpnt_list=[],
-    )
+    def _build_fake_profile_nodeshape(profile_uri: str):
+        return SimpleNamespace(
+            uri=profile_uri,
+            focus_node=Var(value="focus_node"),
+            tss_list=list(profile_tss_list or []),
+            tssp_list=[],
+            gpnt_list=[],
+        )
 
     class FakePMTs:
-        def __init__(self, mediatype: str):
+        def __init__(self, mediatype: str, profile_uri: str):
             self.selected = {
                 "mediatype": mediatype,
-                "profile": "http://example.org/profile",
+                "profile": profile_uri,
                 "class": URIRef("http://example.com/Class"),
             }
             self.requested_mediatypes = (
@@ -167,19 +177,39 @@ def _build_lucene_test_client(
 
     async def _get_fake_pmts(request: Request):
         mediatype = request.query_params.get("_mediatype", "text/turtle")
-        return FakePMTs(mediatype)
+        profile_uri = request.query_params.get("_profile", default_profile_uri)
+        return FakePMTs(mediatype, profile_uri)
 
     async def _get_fake_pmts_post(request: Request):
         body = await request.json()
         mediatype = body.get("_mediatype", "text/turtle") if isinstance(body, dict) else "text/turtle"
-        return FakePMTs(mediatype)
+        profile_uri = (
+            body.get("_profile", default_profile_uri)
+            if isinstance(body, dict)
+            else default_profile_uri
+        )
+        return FakePMTs(mediatype, profile_uri)
+
+    async def _get_fake_profile_nodeshape(request: Request):
+        return _build_fake_profile_nodeshape(
+            request.query_params.get("_profile", default_profile_uri)
+        )
+
+    async def _get_fake_profile_nodeshape_post(request: Request):
+        body = await request.json()
+        profile_uri = (
+            body.get("_profile", default_profile_uri)
+            if isinstance(body, dict)
+            else default_profile_uri
+        )
+        return _build_fake_profile_nodeshape(profile_uri)
 
     app.dependency_overrides[get_data_repo] = lambda: test_repo
     app.dependency_overrides[get_system_repo] = lambda: test_repo
     app.dependency_overrides[get_endpoint_nodeshapes] = lambda: fake_endpoint_nodeshape
-    app.dependency_overrides[get_profile_nodeshape] = lambda: fake_profile_nodeshape
+    app.dependency_overrides[get_profile_nodeshape] = _get_fake_profile_nodeshape
     app.dependency_overrides[get_profile_nodeshape_listing_post] = (
-        lambda: fake_profile_nodeshape
+        _get_fake_profile_nodeshape_post
     )
     app.dependency_overrides[get_negotiated_pmts] = _get_fake_pmts
     app.dependency_overrides[get_negotiated_pmts_listing_post] = _get_fake_pmts_post
@@ -219,6 +249,11 @@ def test_lucene_feature_flag_requires_remote_repo():
             sparql_repo_type="pyoxigraph_memory",
             jena_fuseki_dataset_name="dataset",
         )
+
+
+def test_jena_assembler_path_requires_dataset_name():
+    with pytest.raises(ValueError, match="jena_fuseki_dataset_name"):
+        Settings(jena_assembler_path="/tmp/config.ttl")
 
 
 def test_lucene_default_limit_must_be_positive():
@@ -698,3 +733,136 @@ def test_lucene_cql_get_rejects_non_iri_property_before_repo_execution():
 
     assert response.status_code == 400
     assert fake_repo.rdf_queries == []
+
+
+def test_lucene_cql_get_annotated_response_includes_requested_profile_expansion_and_annotations():
+    profile_predicate = URIRef("http://example.com/profilePredicate")
+    annotation_predicate = URIRef("http://example.com/annotationPredicate")
+    requested_profile = "http://example.com/profile/custom"
+    profile_object = URIRef("http://example.com/profile-expanded-object")
+    annotation_value = "annotation value"
+    profile_quad = Quad(
+        NamedNode("http://example.com/resource/1"),
+        NamedNode(str(profile_predicate)),
+        NamedNode(str(profile_object)),
+        DefaultGraph(),
+    )
+    fake_repo = FakeLuceneListingRepo(
+        profile_query_matchers=[(str(profile_predicate), profile_quad)]
+    )
+    profile_tss_list = [
+        TriplesSameSubject.from_spo(
+            subject=Var(value="focus_node"),
+            predicate=IRI(value=str(profile_predicate)),
+            object=IRI(value=str(profile_object)),
+        )
+    ]
+
+    async def _fake_annotations(store, repo, system_repo):
+        annotations = Store()
+        annotations.add(
+            Quad(
+                NamedNode("http://example.com/resource/1"),
+                NamedNode(str(annotation_predicate)),
+                Literal(annotation_value),
+                DefaultGraph(),
+            )
+        )
+        return annotations
+
+    with patch(
+        "prez.renderers.renderer.return_annotated_rdf_for_oxigraph",
+        side_effect=_fake_annotations,
+    ):
+        with _build_lucene_test_client(
+            fake_repo,
+            default_profile_uri="http://example.com/profile/default",
+            profile_tss_list=profile_tss_list,
+        ) as client:
+            response = client.get(
+                "/cql",
+                params={
+                    "_mediatype": "text/anot+turtle",
+                    "_profile": requested_profile,
+                },
+            )
+
+    assert response.status_code == 200
+    rendered_graph = Graph().parse(data=response.text, format="turtle")
+    assert (
+        None,
+        PREZ.currentProfile,
+        URIRef(requested_profile),
+    ) in rendered_graph
+    assert (
+        URIRef("http://example.com/resource/1"),
+        profile_predicate,
+        profile_object,
+    ) in rendered_graph
+    assert (
+        URIRef("http://example.com/resource/1"),
+        annotation_predicate,
+        RDFlibLiteral(annotation_value),
+    ) in rendered_graph
+
+
+def test_lucene_cql_post_annotated_response_includes_requested_profile():
+    requested_profile = "http://example.com/profile/post-custom"
+    fake_repo = FakeLuceneListingRepo()
+
+    with _build_lucene_test_client(fake_repo) as client:
+        response = client.post(
+            "/cql",
+            json={
+                "_mediatype": "text/anot+turtle",
+                "_profile": requested_profile,
+                "q": "deep",
+            },
+        )
+
+    assert response.status_code == 200
+    rendered_graph = Graph().parse(data=response.text, format="turtle")
+    assert (
+        None,
+        PREZ.currentProfile,
+        URIRef(requested_profile),
+    ) in rendered_graph
+
+
+def test_lucene_cql_get_annotated_response_includes_generated_links():
+    generated_link = "/catalogs/demo/resource/1"
+    fake_repo = FakeLuceneListingRepo()
+
+    async def _fake_add_links(store, repo, endpoint_structure, uris=None):
+        store.add(
+            Quad(
+                NamedNode("http://example.com/resource/1"),
+                NamedNode(str(PREZ.link)),
+                Literal(generated_link),
+                DefaultGraph(),
+            )
+        )
+
+    async def _empty_annotations(store, repo, system_repo):
+        return Store()
+
+    with patch(
+        "prez.services.listings.add_prez_links_for_oxigraph",
+        side_effect=_fake_add_links,
+    ), patch(
+        "prez.renderers.renderer.return_annotated_rdf_for_oxigraph",
+        side_effect=_empty_annotations,
+    ):
+        with _build_lucene_test_client(fake_repo) as client:
+            response = client.get(
+                "/cql",
+                params={"_mediatype": "text/anot+turtle"},
+            )
+
+    assert response.status_code == 200
+    rendered_graph = Graph().parse(data=response.text, format="turtle")
+    assert (
+        URIRef("http://example.com/resource/1"),
+        PREZ.link,
+        RDFlibLiteral(generated_link),
+    ) in rendered_graph

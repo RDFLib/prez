@@ -157,6 +157,7 @@ def _transform_field(
         return field_uri
 
     output_graph.add((field_uri, RDF.type, CQL.Queryable))
+    output_graph.add((field_uri, RDF.type, SH.PropertyShape))
     output_graph.add((field_uri, DCTERMS.identifier, Literal(str(field_uri))))
     output_graph.add((field_uri, SH.name, Literal(str(field_name))))
     output_graph.add(
@@ -167,6 +168,7 @@ def _transform_field(
         )
     )
     output_graph.add((field_uri, SH.datatype, datatype))
+    output_graph.add((field_uri, SH.path, assembler_graph.value(field_node, SH.path)))
     output_graph.add(
         (field_uri, ONT.luceneFieldType, Literal(FIELD_TYPE_TO_LABEL[field_type]))
     )
