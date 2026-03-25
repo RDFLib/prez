@@ -29,6 +29,7 @@ The feature is controlled by the following settings:
 - `lucene_default_limit`
 - `lucene_index_name`
 - `jena_fuseki_dataset_name`
+- `jena_assembler_path`
 
 Validation rules:
 
@@ -36,10 +37,15 @@ Validation rules:
 - `lucene_index_name` must be a non-empty string
 - when `enable_cql_jena_lucene_json=true`, `jena_fuseki_dataset_name` must be set
 - when `enable_cql_jena_lucene_json=true`, `sparql_repo_type` must be `remote`
+- when `jena_assembler_path` is set, `jena_fuseki_dataset_name` must be set
 
 This implementation is intended for a remote Fuseki-compatible SPARQL endpoint. Local `pyoxigraph` stores do not support `luc:query`.
 
 `lucene_index_name` defaults to `default` and is emitted as the leading Lucene property-function argument in `luc:query` and `luc:facet`.
+
+`jena_assembler_path` is optional and points at a Turtle Jena assembler file that Prez will parse during startup to generate Lucene queryables.
+
+Startup queryables generation via `jena_assembler_path` is independent from the Lucene `/cql` feature flag. You can generate and expose `/queryables` from the assembler without enabling the Lucene-backed `/cql` router.
 
 ## Request Contract
 
@@ -57,7 +63,7 @@ Accepted parameters:
 Example:
 
 ```http
-GET /cql?q=ore&limit=5&offset=10&facets=file:///fuseki/config.ttl#field-commodity&facets=file:///fuseki/config.ttl#field-state&filter={"op":"=","args":[{"property":"file:///fuseki/config.ttl#field-commodity"},"gold"]}
+GET /cql?q=ore&limit=5&offset=10&facets=urn:jena:lucene:field#commodity&facets=urn:jena:lucene:field#state&filter={"op":"=","args":[{"property":"urn:jena:lucene:field#commodity"},"gold"]}
 ```
 
 ### POST `/cql`
@@ -70,13 +76,13 @@ Accepted JSON body:
   "filter": {
     "op": "=",
     "args": [
-      { "property": "file:///fuseki/config.ttl#field-commodity" },
+      { "property": "urn:jena:lucene:field#commodity" },
       "gold"
     ]
   },
   "facets": [
-    "file:///fuseki/config.ttl#field-commodity",
-    "file:///fuseki/config.ttl#field-state"
+    "urn:jena:lucene:field#commodity",
+    "urn:jena:lucene:field#state"
   ],
   "limit": 5,
   "offset": 10
@@ -123,7 +129,13 @@ So the effective deployed queryables URLs are shaped like:
 /catalogs/{catalogId}/collections/{recordsCollectionId}/features/collections/{collectionId}/queryables
 ```
 
-For this feature, Prez expects synthetic `cql:Queryable` resources to be loaded into the system store during normal startup loading. Prez does not parse the Fuseki assembler dynamically at request time.
+For this feature, Prez loads `cql:Queryable` resources into the system store during normal startup loading. Prez does not parse the Fuseki assembler dynamically at request time.
+
+Queryables can come from three startup sources:
+
+- generated from `jena_assembler_path`
+- remote explicit queryables from the configured SPARQL endpoint
+- local explicit queryables from reference data files
 
 Local queryables files are loaded from:
 
@@ -132,10 +144,32 @@ Local queryables files are loaded from:
 
 Prez loads `*.ttl` and `*.rdf` files from that directory at startup.
 
-Each synthetic queryable should use the Lucene field IRI as both:
+When `jena_assembler_path` is configured, Prez:
+
+- parses the assembler file at startup
+- uses `jena_fuseki_dataset_name` to select the `fuseki:Service`
+- transforms Lucene `text:shapes` field definitions into synthetic queryables
+- merges those generated queryables with any remote/local explicit queryables
+- fails startup if the configured assembler path is missing, not a file, or invalid Turtle
+
+Merge precedence is:
+
+- local explicit queryables
+- remote explicit queryables
+- generated assembler queryables
+
+Merge identity is based on `dcterms:identifier`, not RDF subject identity. That means an explicit local or remote queryable can override a generated one by reusing the same `dcterms:identifier` even if it uses a different RDF subject.
+
+Generated assembler queryables use the Lucene field IRI as both:
 
 - the RDF subject
 - the `dcterms:identifier` string literal value
+
+Generated assembler queryables also include:
+
+- `a cql:Queryable`
+- `a sh:PropertyShape`
+- `sh:path`
 
 Example:
 
@@ -146,12 +180,13 @@ Example:
 @prefix prez: <https://prez.dev/ont/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<file:///fuseki/config.ttl#field-commodity>
-    a cql:Queryable ;
-    dcterms:identifier "file:///fuseki/config.ttl#field-commodity" ;
+<urn:jena:lucene:field#commodity>
+    a cql:Queryable, sh:PropertyShape ;
+    dcterms:identifier "urn:jena:lucene:field#commodity" ;
     sh:name "commodity" ;
     sh:description "Lucene indexed field commodity" ;
     sh:datatype xsd:string ;
+    sh:path <http://example.org/mining/commodity> ;
     prez:facetable true .
 ```
 
@@ -209,12 +244,16 @@ Behavior:
 - does not write files
 - does not load the generated queryables into the running instance
 
-This endpoint is a pure transform. To make Prez use the generated queryables, save the returned Turtle into:
+This endpoint is a pure transform and remains useful for inspection/debugging.
+
+The normal runtime path is now startup generation via `jena_assembler_path`, not saving the transform output into `reference_data/queryables`.
+
+Saving the returned Turtle into:
 
 - `prez/reference_data/queryables/`
 - or `$PREZ_REFERENCE_DATA_DIR/queryables/`
 
-and then restart Prez.
+is still valid if you want explicit file-based queryables, and those explicit queryables will override generated ones when they share the same `dcterms:identifier`.
 
 ## Property IRIs in Filters
 
@@ -227,7 +266,7 @@ That means this is the intended form:
   "filter": {
     "op": "=",
     "args": [
-      { "property": "file:///fuseki/config.ttl#field-commodity" },
+      { "property": "urn:jena:lucene:field#commodity" },
       "gold"
     ]
   }
@@ -259,7 +298,7 @@ WHERE {
         (?focus_node ?weight ?match ?totalHits ?g ?pred) luc:query (
           'default'
           'ore'
-          '{"op":"=","args":[{"property":"file:///fuseki/config.ttl#field-commodity"},"gold"]}'
+          '{"op":"=","args":[{"property":"urn:jena:lucene:field#commodity"},"gold"]}'
           16
         ) .
         FILTER (isIRI(?focus_node))
