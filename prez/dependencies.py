@@ -44,10 +44,7 @@ from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQue
 from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.search_default import SearchQueryRegex
 from prez.services.query_generation.search_fuseki_fts import SearchQueryFusekiFTS
-from prez.services.query_generation.search_jena_lucene import (
-    LuceneFacetQuery,
-    SearchQueryJenaLucene,
-)
+from prez.services.query_generation.search_jena_lucene import SearchQueryJenaLucene
 from prez.services.query_generation.shacl import FTSUnionContainer, NodeShape, PropertyShape
 
 logger = logging.getLogger(__name__)
@@ -510,32 +507,10 @@ async def generate_lucene_cql_search_query(
     filter_json = _parse_lucene_filter_json(query_params._filter, "GET")
     return SearchQueryJenaLucene(
         term=query_params.q,
-        filter_json=filter_json,
-        limit=int(query_params.limit),
-        offset=_calculate_listing_offset(query_params),
-        lucene_index_name=runtime_settings.lucene_index_name,
-    )
-
-
-async def generate_lucene_cql_facets_query(
-    request: Request,
-    query_params: ListingQueryParams = Depends(),
-    runtime_settings: Settings = Depends(get_runtime_settings),
-    facets: list[str] | None = Depends(lucene_cql_get_facets_dependency),
-):
-    _apply_lucene_default_limit(
-        query_params,
-        runtime_settings,
-        limit_supplied=request.query_params.get("limit") is not None,
-    )
-    if not facets:
-        return None
-    filter_json = _parse_lucene_filter_json(query_params._filter, "GET")
-    return LuceneFacetQuery(
-        term=query_params.q,
         facets=facets,
         filter_json=filter_json,
         limit=int(query_params.limit),
+        offset=_calculate_listing_offset(query_params),
         lucene_index_name=runtime_settings.lucene_index_name,
     )
 
@@ -680,36 +655,10 @@ async def generate_lucene_cql_search_query_post(
     filter_json = _parse_lucene_filter_json(body.get("filter"), "POST")
     return SearchQueryJenaLucene(
         term=q,
-        filter_json=filter_json,
-        limit=int(query_params.limit),
-        offset=_calculate_listing_offset(query_params),
-        lucene_index_name=runtime_settings.lucene_index_name,
-    )
-
-
-async def generate_lucene_cql_facets_query_post(
-    request: Request,
-    query_params: ListingQueryParams = Depends(listing_post_params_dependency),
-    runtime_settings: Settings = Depends(get_runtime_settings),
-    facets: list[str] | None = Depends(lucene_cql_post_facets_dependency),
-):
-    body = await _parse_post_body(request)
-    q = body.get("q")
-    if q is not None and not isinstance(q, str):
-        raise HTTPException(status_code=400, detail="POST q must be a string.")
-    _apply_lucene_default_limit(
-        query_params,
-        runtime_settings,
-        limit_supplied="limit" in body,
-    )
-    if not facets:
-        return None
-    filter_json = _parse_lucene_filter_json(body.get("filter"), "POST")
-    return LuceneFacetQuery(
-        term=q,
         facets=facets,
         filter_json=filter_json,
         limit=int(query_params.limit),
+        offset=_calculate_listing_offset(query_params),
         lucene_index_name=runtime_settings.lucene_index_name,
     )
 

@@ -8,7 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 from pyoxigraph import Store, DefaultGraph, NamedNode, Literal, Quad
 from rdflib import Graph, RDF, Literal as RDFlibLiteral, URIRef
-from sparql_grammar_pydantic import IRI, TriplesSameSubject, Var
+from sparql_grammar_pydantic import ConstructQuery, IRI, TriplesSameSubject, Var
 
 from prez.app import assemble_app
 from prez.config import Settings, settings as global_settings
@@ -28,7 +28,7 @@ from prez.dependencies import (
 from prez.repositories import Repo
 from prez.reference_data.prez_ns import ONT, PREZ
 from prez.routers.cql_lucene_router import router as cql_lucene_router
-from prez.services.query_generation.search_jena_lucene import LuceneFacetQuery, SearchQueryJenaLucene
+from prez.services.query_generation.search_jena_lucene import SearchQueryJenaLucene
 
 
 class FakeLuceneListingRepo(Repo):
@@ -327,9 +327,11 @@ def test_search_query_jena_lucene_includes_compact_filter_json():
     assert query_fragment.endswith("16) .")
 
 
-def test_lucene_facet_query_serializes_requested_facets():
-    facet_query = LuceneFacetQuery(
+def test_search_query_jena_lucene_builds_combined_construct_query_for_facets():
+    search_query = SearchQueryJenaLucene(
         term="deep",
+        limit=10,
+        offset=0,
         facets=[
             "urn:jena:lucene:field#commodity",
             "urn:jena:lucene:field#state",
@@ -338,12 +340,19 @@ def test_lucene_facet_query_serializes_requested_facets():
             "op": "=",
             "args": [{"property": "urn:jena:lucene:field#commodity"}, "Gold"],
         },
-        limit=10,
         lucene_index_name="default",
     )
 
-    query_string = facet_query.to_string()
+    combined_query = search_query.build_combined_query(
+        construct_tss_list=search_query.tss_list + search_query.facet_tss_list,
+        profile_triples=[],
+        profile_gpnt=[],
+    )
+    query_string = search_query.normalize_query_string(combined_query.to_string())
 
+    assert isinstance(combined_query, ConstructQuery)
+    assert "UNION" in query_string
+    assert "urn:jena:lucene:index#query" in query_string
     assert "urn:jena:lucene:index#facet" in query_string
     assert "<https://prez.dev/facetName> ?facetName" in query_string
     assert (
@@ -596,12 +605,13 @@ def test_lucene_cql_sparql_query_response_includes_all_generated_queries():
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("application/sparql-query")
     assert "# Query 1" in response.text
-    assert "# Query 2" in response.text
+    assert "# Query 2" not in response.text
+    assert "UNION" in response.text
     assert "urn:jena:lucene:index#query" in response.text
     assert "urn:jena:lucene:index#facet" in response.text
 
 
-def test_lucene_cql_get_accepts_facets_and_appends_lucene_facet_query():
+def test_lucene_cql_get_accepts_facets_in_one_lucene_query():
     fake_repo = FakeLuceneListingRepo()
     with _build_lucene_test_client(fake_repo) as client:
         response = client.get(
@@ -616,8 +626,10 @@ def test_lucene_cql_get_accepts_facets_and_appends_lucene_facet_query():
         )
 
     assert response.status_code == 200
-    assert len(fake_repo.rdf_queries[0]) == 2
-    assert "urn:jena:lucene:index#facet" in fake_repo.rdf_queries[0][1]
+    assert len(fake_repo.rdf_queries[0]) == 1
+    assert "urn:jena:lucene:index#query" in fake_repo.rdf_queries[0][0]
+    assert "urn:jena:lucene:index#facet" in fake_repo.rdf_queries[0][0]
+    assert "UNION" in fake_repo.rdf_queries[0][0]
     rendered_graph = Graph().parse(data=response.text, format="turtle")
     assert (
         None,
@@ -626,7 +638,7 @@ def test_lucene_cql_get_accepts_facets_and_appends_lucene_facet_query():
     ) in rendered_graph
 
 
-def test_lucene_cql_post_accepts_facets_and_appends_lucene_facet_query():
+def test_lucene_cql_post_accepts_facets_in_one_lucene_query():
     fake_repo = FakeLuceneListingRepo()
     with _build_lucene_test_client(fake_repo) as client:
         response = client.post(
@@ -641,8 +653,10 @@ def test_lucene_cql_post_accepts_facets_and_appends_lucene_facet_query():
         )
 
     assert response.status_code == 200
-    assert len(fake_repo.rdf_queries[0]) == 2
-    assert "urn:jena:lucene:index#facet" in fake_repo.rdf_queries[0][1]
+    assert len(fake_repo.rdf_queries[0]) == 1
+    assert "urn:jena:lucene:index#query" in fake_repo.rdf_queries[0][0]
+    assert "urn:jena:lucene:index#facet" in fake_repo.rdf_queries[0][0]
+    assert "UNION" in fake_repo.rdf_queries[0][0]
 
 
 def test_lucene_cql_get_rejects_non_object_filter(test_repo: Repo):

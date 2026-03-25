@@ -3,8 +3,6 @@ from sparql_grammar_pydantic import ConstructQuery
 
 from prez.dependencies import (
     generate_concept_hierarchy_query,
-    generate_lucene_cql_facets_query,
-    generate_lucene_cql_facets_query_post,
     generate_lucene_cql_search_query,
     generate_lucene_cql_search_query_post,
     get_data_repo,
@@ -47,7 +45,6 @@ async def lucene_cql_get(
     profile_nodeshape: NodeShape = Depends(get_profile_nodeshape),
     cql_parser: CQLParser | None = Depends(lucene_cql_get_parser_dependency),
     search_query: ConstructQuery = Depends(generate_lucene_cql_search_query),
-    lucene_facets_query = Depends(generate_lucene_cql_facets_query),
     concept_hierarchy_query: ConceptHierarchyQuery = Depends(
         generate_concept_hierarchy_query
     ),
@@ -68,7 +65,6 @@ async def lucene_cql_get(
         query_params=query_params,
         original_endpoint_type=ONT["ListingEndpoint"],
         url=url,
-        extra_rdf_queries=[lucene_facets_query.to_string()] if lucene_facets_query else None,
     )
 
 
@@ -112,7 +108,6 @@ async def lucene_cql_post(
     profile_nodeshape: NodeShape = Depends(get_profile_nodeshape_listing_post),
     cql_parser: CQLParser | None = Depends(lucene_cql_post_parser_dependency),
     search_query: ConstructQuery = Depends(generate_lucene_cql_search_query_post),
-    lucene_facets_query = Depends(generate_lucene_cql_facets_query_post),
     concept_hierarchy_query: ConceptHierarchyQuery = Depends(
         generate_concept_hierarchy_query
     ),
@@ -133,5 +128,4 @@ async def lucene_cql_post(
         query_params=query_params,
         original_endpoint_type=ONT["ListingEndpoint"],
         url=url,
-        extra_rdf_queries=[lucene_facets_query.to_string()] if lucene_facets_query else None,
     )

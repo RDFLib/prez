@@ -356,13 +356,22 @@ async def listing_function(
         )
 
     queries = []
-    main_query = PrezQueryConstructor(
-        construct_tss_list=construct_tss_list,
-        profile_triples=profile_nodeshape.tssp_list,
-        profile_gpnt=profile_nodeshape.gpnt_list,
-        **subselect_kwargs,
-    )
-    main_query_str = _normalize_listing_query_string(main_query.to_string(), search_query)
+    main_query = None
+    if isinstance(search_query, SearchQueryJenaLucene) and search_query.has_facets:
+        main_query = search_query.build_combined_query(
+            construct_tss_list=construct_tss_list + search_query.facet_tss_list,
+            profile_triples=profile_nodeshape.tssp_list,
+            profile_gpnt=profile_nodeshape.gpnt_list,
+        )
+        main_query_str = search_query.normalize_query_string(main_query.to_string())
+    else:
+        main_query = PrezQueryConstructor(
+            construct_tss_list=construct_tss_list,
+            profile_triples=profile_nodeshape.tssp_list,
+            profile_gpnt=profile_nodeshape.gpnt_list,
+            **subselect_kwargs,
+        )
+        main_query_str = _normalize_listing_query_string(main_query.to_string(), search_query)
     queries.append(main_query_str)
     if extra_rdf_queries:
         queries.extend(query for query in extra_rdf_queries if query)
