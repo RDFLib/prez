@@ -126,7 +126,12 @@ async def get_turtle_request_body(
 
 @router.post(
     "/jena-assembler-to-queryables",
-    summary="Convert Jena assembler Turtle into synthetic queryables Turtle",
+    summary="Debug: transform Jena assembler Turtle into queryables Turtle",
+    description=(
+        "Pure transform endpoint for inspection/debugging. "
+        "Does not load queryables into the running instance. "
+        "Use jena_assembler_path for normal startup loading."
+    ),
 )
 async def jena_assembler_to_queryables(
     assembler_turtle: Annotated[str, Depends(get_turtle_request_body)],
