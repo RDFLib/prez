@@ -17,6 +17,7 @@ from fastapi.testclient import TestClient
 from pyoxigraph.pyoxigraph import Store, RdfFormat
 
 from prez.app import assemble_app
+from prez.config import Settings
 from prez.dependencies import get_data_repo
 from prez.repositories import PyoxigraphRepo, Repo
 
@@ -44,7 +45,13 @@ def client(test_repo: Repo) -> TestClient:
     def override_get_repo():
         return test_repo
 
-    app = assemble_app()
+    app = assemble_app(
+        local_settings=Settings(
+            _env_file=None,
+            sparql_repo_type="pyoxigraph_memory",
+            enable_sparql_endpoint=True,
+        )
+    )
 
     app.dependency_overrides[get_data_repo] = override_get_repo
 
@@ -61,8 +68,13 @@ def client(test_repo: Repo) -> TestClient:
 
 @pytest.fixture(scope="session")
 def client_no_override() -> TestClient:
-
-    app = assemble_app()
+    app = assemble_app(
+        local_settings=Settings(
+            _env_file=None,
+            sparql_repo_type="pyoxigraph_memory",
+            enable_sparql_endpoint=True,
+        )
+    )
 
     with TestClient(app) as c:
         yield c

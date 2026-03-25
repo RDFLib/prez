@@ -99,6 +99,8 @@ async def test_retrieve_queryable_definitions_merges_sources_with_precedence(
     remote_store.load(REMOTE_QUERYABLES_TTL.encode("utf-8"), RdfFormat.TURTLE)
     app_state = SimpleNamespace(
         settings=Settings(
+            _env_file=None,
+            enable_cql_jena_lucene_json=False,
             jena_fuseki_dataset_name="mining",
             jena_assembler_path=str(assembler_path),
         ),
@@ -141,6 +143,8 @@ async def test_retrieve_queryable_definitions_uses_generated_queryables_when_uns
 
     app_state = SimpleNamespace(
         settings=Settings(
+            _env_file=None,
+            enable_cql_jena_lucene_json=False,
             jena_fuseki_dataset_name="mining",
             jena_assembler_path=str(assembler_path),
         ),
