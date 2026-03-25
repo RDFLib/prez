@@ -122,6 +122,7 @@ class Settings(BaseSettings):
     lucene_default_limit: int = 10000
     lucene_index_name: str = "default"
     jena_fuseki_dataset_name: Optional[str] = None
+    jena_assembler_path: Optional[str] = None
 
     @field_validator("prez_version")
     @classmethod
@@ -183,6 +184,15 @@ class Settings(BaseSettings):
             raise ValueError("lucene_index_name must be a non-empty string")
         return v
 
+    @field_validator("jena_assembler_path")
+    @classmethod
+    def validate_jena_assembler_path(cls, v):
+        if v is None:
+            return v
+        if not v.strip():
+            raise ValueError("jena_assembler_path must be a non-empty string")
+        return v
+
     @model_validator(mode="after")
     def validate_lucene_settings(self):
         if self.enable_cql_jena_lucene_json:
@@ -194,6 +204,10 @@ class Settings(BaseSettings):
                 raise ValueError(
                     "enable_cql_jena_lucene_json requires sparql_repo_type=remote"
                 )
+        if self.jena_assembler_path and not self.jena_fuseki_dataset_name:
+            raise ValueError(
+                "jena_fuseki_dataset_name must be set when jena_assembler_path is configured"
+            )
         return self
 
 

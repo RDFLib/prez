@@ -251,6 +251,11 @@ def test_lucene_feature_flag_requires_remote_repo():
         )
 
 
+def test_jena_assembler_path_requires_dataset_name():
+    with pytest.raises(ValueError, match="jena_fuseki_dataset_name"):
+        Settings(jena_assembler_path="/tmp/config.ttl")
+
+
 def test_lucene_default_limit_must_be_positive():
     with pytest.raises(ValueError, match="lucene_default_limit"):
         Settings(lucene_default_limit=0)

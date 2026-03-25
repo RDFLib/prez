@@ -143,9 +143,11 @@ def test_transform_jena_assembler_to_queryables_generates_expected_fields():
     queryable_type = URIRef("http://www.opengis.net/doc/IS/cql2/1.0/Queryable")
 
     assert (commodity, RDF.type, queryable_type) in output_graph
+    assert (commodity, RDF.type, SH.PropertyShape) in output_graph
     assert (commodity, DCTERMS.identifier, Literal(str(commodity))) in output_graph
     assert (commodity, SH.name, Literal("commodity")) in output_graph
     assert (commodity, SH.datatype, XSD.string) in output_graph
+    assert (commodity, SH.path, URIRef("http://example.com/commodity")) in output_graph
     assert (commodity, ONT.facetable, Literal(True)) in output_graph
     assert (commodity, ONT.sortable, Literal(True)) in output_graph
     assert (commodity, ONT.multiValued, Literal(True)) in output_graph
@@ -169,8 +171,10 @@ def test_transform_jena_assembler_to_queryables_generates_expected_fields():
     assert (updated_at, ONT.luceneFieldType, Literal("long")) in output_graph
 
     assert (title, RDF.type, queryable_type) in output_graph
+    assert (title, RDF.type, SH.PropertyShape) in output_graph
     assert (title, DCTERMS.identifier, Literal(str(title))) in output_graph
     assert (title, SH.datatype, XSD.string) in output_graph
+    assert (title, SH.path, URIRef("http://www.w3.org/2000/01/rdf-schema#label")) in output_graph
     assert (title, ONT.defaultSearch, Literal(True)) in output_graph
     assert (title, ONT.luceneFieldType, Literal("text")) in output_graph
 
