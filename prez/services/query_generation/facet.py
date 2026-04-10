@@ -1,6 +1,9 @@
 import copy
+import json
+import logging
 
-from rdflib import URIRef, Literal, DCTERMS, XSD
+from rdflib import RDF, URIRef, Literal, DCTERMS, XSD, Graph
+from rdflib.collection import Collection
 from sparql_grammar_pydantic import (
     Aggregate,
     ConstructQuery,
@@ -41,8 +44,10 @@ from sparql_grammar_pydantic.grammar import (
 
 from prez.cache import profiles_graph_cache
 from prez.exceptions.model_exceptions import PrefixNotBoundException
-from prez.reference_data.prez_ns import PREZ
+from prez.reference_data.prez_ns import LUC, PREZ
 from prez.services.curie_functions import get_uri_for_curie_id
+
+log = logging.getLogger(__name__)
 
 
 class FacetQuery(ConstructQuery):
@@ -317,3 +322,44 @@ async def get_facet_profile_uri_from_qsa(facet_profile_qsa):
         except PrefixNotBoundException:
             pass
     return profile_uri
+
+
+def extract_lucene_facets_from_profile(
+    profile_uri: URIRef, graph: Graph | None = None
+) -> list | None:
+    """Extract Lucene facet specs from a profile's luc:flatFacets / luc:rangeFacets.
+
+    Returns a list suitable for SearchQueryJenaLucene._facets:
+      - flat facets → field IRI strings
+      - range facets → {"field": "<iri>", "ranges": [null, 20, 30, null]}
+
+    Returns None if the profile has no Lucene facet predicates.
+    """
+    g = graph if graph is not None else profiles_graph_cache
+    facets: list = []
+
+    # luc:flatFacets — each object is a field IRI
+    for field_iri in g.objects(profile_uri, LUC.flatFacets):
+        if isinstance(field_iri, URIRef):
+            facets.append(str(field_iri))
+
+    # luc:rangeFacets — blank nodes with luc:field + luc:bucketBoundaries
+    for range_node in g.objects(profile_uri, LUC.rangeFacets):
+        field_iri = g.value(range_node, LUC.field)
+        boundaries_literal = g.value(range_node, LUC.bucketBoundaries)
+        if field_iri is None:
+            log.warning("luc:rangeFacets node %s is missing luc:field, skipping", range_node)
+            continue
+        range_spec: dict = {"field": str(field_iri)}
+        if boundaries_literal is not None:
+            try:
+                range_spec["ranges"] = json.loads(str(boundaries_literal))
+            except (json.JSONDecodeError, TypeError):
+                log.warning(
+                    "Could not parse luc:bucketBoundaries %r on %s, skipping ranges",
+                    str(boundaries_literal),
+                    range_node,
+                )
+        facets.append(range_spec)
+
+    return facets if facets else None

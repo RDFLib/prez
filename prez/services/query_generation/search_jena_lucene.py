@@ -734,6 +734,10 @@ class SearchQueryJenaLucene:
     def has_facets(self) -> bool:
         return len(self._facets) > 0
 
+    def set_facets(self, facets: list) -> None:
+        """Set facets after construction (e.g. resolved from a facet profile)."""
+        self._facets = facets
+
     @property
     def facet_tss_list(self):
         return self._facet_tss_list

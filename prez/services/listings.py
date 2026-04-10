@@ -59,7 +59,11 @@ from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.generate_queryables import generate_queryables_json
 from prez.services.link_generation import add_prez_links_for_oxigraph
 from prez.services.query_generation.count import CountQuery
-from prez.services.query_generation.facet import FacetQuery
+from prez.services.query_generation.facet import (
+    FacetQuery,
+    extract_lucene_facets_from_profile,
+    get_facet_profile_uri_from_qsa,
+)
 from prez.services.query_generation.search_jena_lucene import SearchQueryJenaLucene
 from prez.services.query_generation.umbrella import (
     PrezQueryConstructor,
@@ -355,6 +359,21 @@ async def listing_function(
             )
         )
 
+    # Resolve Lucene facets from facet_profile before building the main query,
+    # so that SearchQueryJenaLucene.has_facets is true when we construct the combined query.
+    lucene_facet_profile_uri = None
+    if (
+        query_params.facet_profile
+        and isinstance(search_query, SearchQueryJenaLucene)
+        and not search_query.has_facets
+    ):
+        profile_uri = await get_facet_profile_uri_from_qsa(query_params.facet_profile)
+        if profile_uri:
+            lucene_facets = extract_lucene_facets_from_profile(profile_uri)
+            if lucene_facets is not None:
+                search_query.set_facets(lucene_facets)
+                lucene_facet_profile_uri = profile_uri
+
     queries = []
     main_query = None
     if isinstance(search_query, SearchQueryJenaLucene) and search_query.has_facets:
@@ -389,8 +408,9 @@ async def listing_function(
         )
 
     # add faceting query if requested
-    facet_profile_uri = None
-    if query_params.facet_profile:
+    facet_profile_uri = lucene_facet_profile_uri
+    if query_params.facet_profile and not lucene_facet_profile_uri:
+        # Non-Lucene path: build a SPARQL-based facet query from the profile's sh:property paths
         # Check if main query has a subselect, if not, create one with the `?focus_node a ?type` triple
         # This will allow the count query below to reuse the subselect preventing an error.
         if not hasattr(main_query, "inner_select") or main_query.inner_select is None:

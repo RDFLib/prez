@@ -1222,3 +1222,148 @@ def test_lucene_cql_get_annotated_response_includes_generated_links():
         PREZ.link,
         RDFlibLiteral(generated_link),
     ) in rendered_graph
+
+
+# ── Lucene facet profile tests ──────────────────────────────────────────
+
+
+def test_extract_lucene_facets_from_profile_flat_facets():
+    """Test extracting flat (category) facets from a profile graph."""
+    from rdflib import Graph as RDFlibGraph, URIRef, Namespace
+    from prez.services.query_generation.facet import extract_lucene_facets_from_profile
+
+    LUC = Namespace("https://prez.dev/jena-lucene/")
+    profile = URIRef("http://example.com/profile/test-facets")
+    g = RDFlibGraph()
+    g.add((profile, LUC.flatFacets, URIRef("urn:field:commodity")))
+    g.add((profile, LUC.flatFacets, URIRef("urn:field:state")))
+
+    result = extract_lucene_facets_from_profile(profile, graph=g)
+    assert result is not None
+    assert set(result) == {"urn:field:commodity", "urn:field:state"}
+
+
+def test_extract_lucene_facets_from_profile_range_facets():
+    """Test extracting range facets with bucket boundaries."""
+    from rdflib import BNode, Graph as RDFlibGraph, Literal as RDFlibLit, Namespace, URIRef
+
+    from prez.services.query_generation.facet import extract_lucene_facets_from_profile
+
+    LUC = Namespace("https://prez.dev/jena-lucene/")
+    RDF_JSON = URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON")
+    profile = URIRef("http://example.com/profile/range-facets")
+    g = RDFlibGraph()
+    range_node = BNode()
+    g.add((profile, LUC.rangeFacets, range_node))
+    g.add((range_node, LUC.field, URIRef("urn:field:year")))
+    g.add((range_node, LUC.bucketBoundaries, RDFlibLit("[null, 2020, 2022, 2024, null]", datatype=RDF_JSON)))
+
+    result = extract_lucene_facets_from_profile(profile, graph=g)
+    assert result is not None
+    assert len(result) == 1
+    assert result[0]["field"] == "urn:field:year"
+    assert result[0]["ranges"] == [None, 2020, 2022, 2024, None]
+
+
+def test_extract_lucene_facets_from_profile_mixed():
+    """Test extracting both flat and range facets."""
+    from rdflib import BNode, Graph as RDFlibGraph, Literal as RDFlibLit, Namespace, URIRef
+
+    from prez.services.query_generation.facet import extract_lucene_facets_from_profile
+
+    LUC = Namespace("https://prez.dev/jena-lucene/")
+    RDF_JSON = URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON")
+    profile = URIRef("http://example.com/profile/mixed")
+    g = RDFlibGraph()
+    g.add((profile, LUC.flatFacets, URIRef("urn:field:commodity")))
+    range_node = BNode()
+    g.add((profile, LUC.rangeFacets, range_node))
+    g.add((range_node, LUC.field, URIRef("urn:field:year")))
+    g.add((range_node, LUC.bucketBoundaries, RDFlibLit("[null, 10, 20, null]", datatype=RDF_JSON)))
+
+    result = extract_lucene_facets_from_profile(profile, graph=g)
+    assert result is not None
+    flat = [f for f in result if isinstance(f, str)]
+    ranges = [f for f in result if isinstance(f, dict)]
+    assert flat == ["urn:field:commodity"]
+    assert len(ranges) == 1
+    assert ranges[0]["field"] == "urn:field:year"
+
+
+def test_extract_lucene_facets_returns_none_for_non_lucene_profile():
+    """Test that a profile with only sh:property (no lucene predicates) returns None."""
+    from rdflib import Graph as RDFlibGraph, URIRef
+    from prez.services.query_generation.facet import extract_lucene_facets_from_profile
+
+    profile = URIRef("http://example.com/profile/sparql-only")
+    g = RDFlibGraph()
+    g.parse(
+        data="""
+        @prefix sh: <http://www.w3.org/ns/shacl#> .
+        @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+        <http://example.com/profile/sparql-only> sh:property [ sh:path rdf:type ] .
+        """,
+        format="turtle",
+    )
+
+    result = extract_lucene_facets_from_profile(profile, graph=g)
+    assert result is None
+
+
+def test_set_facets_on_search_query_jena_lucene():
+    """Test that set_facets updates the query's facets after construction."""
+    sq = SearchQueryJenaLucene(
+        term="test",
+        limit=10,
+        offset=0,
+        lucene_index_name="default",
+        facets=None,
+    )
+    assert not sq.has_facets
+
+    sq.set_facets(["urn:field:commodity", "urn:field:state"])
+    assert sq.has_facets
+
+    combined = sq.build_combined_query(
+        construct_tss_list=sq.tss_list + sq.facet_tss_list,
+        profile_triples=[],
+        profile_gpnt=[],
+    )
+    query_string = sq.normalize_query_string(combined.to_string())
+    assert "urn:jena:lucene:index#facet" in query_string
+    assert "urn:field:commodity" in query_string
+    assert "urn:field:state" in query_string
+
+
+def test_lucene_cql_facet_profile_resolves_lucene_facets():
+    """When facet_profile points to a profile with luc:flatFacets,
+    the combined query should include luc:facet with those field IRIs."""
+    from prez.reference_data.prez_ns import LUC
+
+    fake_repo = FakeLuceneListingRepo()
+    profile_uri = URIRef("http://example.com/profile/lucene-facets")
+    profile_graph = Graph()
+    profile_graph.add((profile_uri, LUC.flatFacets, URIRef("urn:field:commodity")))
+    profile_graph.add((profile_uri, LUC.flatFacets, URIRef("urn:field:state")))
+
+    with patch(
+        "prez.services.listings.get_facet_profile_uri_from_qsa",
+        return_value=profile_uri,
+    ), patch(
+        "prez.services.listings.extract_lucene_facets_from_profile",
+        return_value=["urn:field:commodity", "urn:field:state"],
+    ):
+        with _build_lucene_test_client(fake_repo) as client:
+            response = client.post(
+                "/cql",
+                json={
+                    "_mediatype": "application/sparql-query",
+                    "facet_profile": "http://example.com/profile/lucene-facets",
+                },
+            )
+
+    assert response.status_code == 200
+    sparql = response.text
+    assert "urn:jena:lucene:index#facet" in sparql
+    assert "urn:field:commodity" in sparql
+    assert "urn:field:state" in sparql
