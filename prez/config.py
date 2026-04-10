@@ -196,18 +196,10 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def validate_lucene_settings(self):
         if self.enable_cql_jena_lucene_json:
-            if not self.jena_fuseki_dataset_name:
-                raise ValueError(
-                    "jena_fuseki_dataset_name must be set when enable_cql_jena_lucene_json is true"
-                )
             if self.sparql_repo_type != SparqlRepoType.remote:
                 raise ValueError(
                     "enable_cql_jena_lucene_json requires sparql_repo_type=remote"
                 )
-        if self.jena_assembler_path and not self.jena_fuseki_dataset_name:
-            raise ValueError(
-                "jena_fuseki_dataset_name must be set when jena_assembler_path is configured"
-            )
         return self
 
 

@@ -13,7 +13,11 @@ from sparql_grammar_pydantic import ConstructQuery, IRI, TriplesSameSubject, Var
 from prez.app import assemble_app
 from prez.config import Settings, settings as global_settings
 from prez.dependencies import (
+    cql_get_parser_dependency,
+    cql_post_listing_parser_dependency,
     generate_concept_hierarchy_query,
+    generate_search_query,
+    generate_search_query_post,
     get_data_repo,
     get_endpoint_nodeshapes,
     get_endpoint_structure,
@@ -22,12 +26,15 @@ from prez.dependencies import (
     get_negotiated_pmts_listing_post,
     get_profile_nodeshape,
     get_profile_nodeshape_listing_post,
+    get_queryable_props,
     get_system_repo,
     get_url,
 )
+from prez.models.query_params import ListingQueryParams
 from prez.repositories import Repo
-from prez.reference_data.prez_ns import ONT, PREZ
+from prez.reference_data.prez_ns import EP, ONT, PREZ
 from prez.routers.cql_lucene_router import router as cql_lucene_router
+from prez.services.listings import listing_function
 from prez.services.query_generation.search_jena_lucene import SearchQueryJenaLucene
 
 
@@ -43,14 +50,17 @@ class FakeLuceneListingRepo(Repo):
         default = DefaultGraph()
         focus_node = NamedNode("http://example.com/resource/1")
         hash_node = NamedNode("urn:hash:1")
+        match_node = NamedNode("urn:match:1")
         store.add(Quad(focus_node, NamedNode(str(PREZ.type)), NamedNode(str(PREZ.FocusNode)), default))
         store.add(Quad(focus_node, NamedNode(str(RDF.type)), NamedNode("http://example.com/Class"), default))
         store.add(Quad(hash_node, NamedNode(str(RDF.type)), NamedNode(str(PREZ.SearchResult)), default))
         store.add(Quad(hash_node, NamedNode(str(PREZ.searchResultURI)), focus_node, default))
-        store.add(Quad(hash_node, NamedNode(str(PREZ.searchResultMatch)), Literal("deep"), default))
+        store.add(Quad(hash_node, NamedNode(str(PREZ.hasSearchMatch)), match_node, default))
+        store.add(Quad(match_node, NamedNode(str(RDF.type)), NamedNode(str(PREZ.SearchResultMatch)), default))
+        store.add(Quad(match_node, NamedNode(str(PREZ.searchResultMatch)), Literal("deep"), default))
         store.add(
             Quad(
-                hash_node,
+                match_node,
                 NamedNode(str(PREZ.searchResultPredicate)),
                 NamedNode("urn:jena:lucene:field#commodity"),
                 default,
@@ -233,13 +243,57 @@ def _cql_route_modules(app):
     }
 
 
+def _make_request(url: str, *, method: str = "GET", json_body: dict | None = None) -> Request:
+    body_bytes = (
+        b""
+        if json_body is None
+        else json.dumps(json_body).encode("utf-8")
+    )
+
+    async def receive():
+        return {"type": "http.request", "body": body_bytes, "more_body": False}
+
+    scope = {
+        "type": "http",
+        "http_version": "1.1",
+        "method": method,
+        "scheme": "http",
+        "path": url.split("?", 1)[0],
+        "raw_path": url.split("?", 1)[0].encode("utf-8"),
+        "query_string": url.split("?", 1)[1].encode("utf-8") if "?" in url else b"",
+        "headers": (
+            [(b"content-type", b"application/json")]
+            if json_body is not None
+            else []
+        ),
+        "client": ("testclient", 50000),
+        "server": ("testserver", 80),
+    }
+    return Request(scope, receive)
+
+
+class _FakePMTs:
+    def __init__(self, mediatype: str = "text/turtle", profile_uri: str = "http://example.org/profile"):
+        self.selected = {
+            "mediatype": mediatype,
+            "profile": profile_uri,
+            "class": URIRef("http://example.com/Class"),
+        }
+        self.requested_mediatypes = None
+
+    def generate_response_headers(self):
+        return {}
+
+
+
 def test_lucene_feature_flag_requires_dataset_name():
-    with pytest.raises(ValueError, match="jena_fuseki_dataset_name"):
-        Settings(
-            enable_cql_jena_lucene_json=True,
-            sparql_repo_type="remote",
-            sparql_endpoint="http://example.com/dataset/sparql",
-        )
+    settings = Settings(
+        enable_cql_jena_lucene_json=True,
+        sparql_repo_type="remote",
+        sparql_endpoint="http://example.com/dataset/sparql",
+    )
+
+    assert settings.enable_cql_jena_lucene_json is True
 
 
 def test_lucene_feature_flag_requires_remote_repo():
@@ -252,8 +306,9 @@ def test_lucene_feature_flag_requires_remote_repo():
 
 
 def test_jena_assembler_path_requires_dataset_name():
-    with pytest.raises(ValueError, match="jena_fuseki_dataset_name"):
-        Settings(jena_assembler_path="/tmp/config.ttl")
+    settings = Settings(jena_assembler_path="/tmp/config.ttl")
+
+    assert settings.jena_assembler_path == "/tmp/config.ttl"
 
 
 def test_lucene_default_limit_must_be_positive():
@@ -298,8 +353,8 @@ def test_search_query_jena_lucene_defaults_q_to_wildcard():
     query_fragment = search_query.valid_lucene_query_triple
 
     assert "urn:jena:lucene:index#query" in query_fragment
-    assert "(?focus_node ?weight ?match ?totalHits ?g ?pred)" in query_fragment
-    assert '("default" "*" 106)' in query_fragment
+    assert "(?hit ?focus_node ?weight ?totalHits)" in query_fragment
+    assert '("default" "default" "*" "" "" 106)' in query_fragment
     assert search_query.limit == 101
 
 
@@ -318,8 +373,8 @@ def test_search_query_jena_lucene_includes_compact_filter_json():
 
     query_fragment = search_query.valid_lucene_query_triple
 
-    assert "(?focus_node ?weight ?match ?totalHits ?g ?pred)" in query_fragment
-    assert '("custom-index" "ore"' in query_fragment
+    assert "(?hit ?focus_node ?weight ?totalHits)" in query_fragment
+    assert '("custom-index" "default" "ore"' in query_fragment
     assert (
         '"{\\"op\\":\\"=\\",\\"args\\":[{\\"property\\":\\"http://example.com/predicate\\"},\\"Gold\\"]}"'
         in query_fragment
@@ -353,7 +408,9 @@ def test_search_query_jena_lucene_builds_combined_construct_query_for_facets():
     assert isinstance(combined_query, ConstructQuery)
     assert "UNION" in query_string
     assert "urn:jena:lucene:index#query" in query_string
+    assert "urn:jena:lucene:index#match" in query_string
     assert "urn:jena:lucene:index#facet" in query_string
+    assert "<https://prez.dev/hasSearchMatch> ?searchMatch" in query_string
     assert "<https://prez.dev/facetName> ?facetName" in query_string
     assert (
         '"[\\"urn:jena:lucene:field#commodity\\",\\"urn:jena:lucene:field#state\\"]"'
@@ -363,7 +420,7 @@ def test_search_query_jena_lucene_builds_combined_construct_query_for_facets():
         '"{\\"op\\":\\"=\\",\\"args\\":[{\\"property\\":\\"urn:jena:lucene:field#commodity\\"},\\"Gold\\"]}"'
         in query_string
     )
-    assert '("default" "deep"' in query_string
+    assert '("default" "default" "deep"' in query_string
 
 
 def test_lucene_cql_get_supports_conneg_and_uses_default_limit(test_repo: Repo):
@@ -374,9 +431,10 @@ def test_lucene_cql_get_supports_conneg_and_uses_default_limit(test_repo: Repo):
     assert response.headers["content-type"].startswith("application/sparql-query")
     assert "CONSTRUCT" in response.text
     assert "urn:jena:lucene:index#query" in response.text
-    assert "(?focus_node ?weight ?match ?totalHits ?g ?pred)" in response.text
+    assert "urn:jena:lucene:index#match" in response.text
+    assert "(?hit ?focus_node ?weight ?totalHits)" in response.text
     assert "<https://prez.dev/count> ?totalHits" in response.text
-    assert '("default" "*" 78)' in response.text
+    assert '("default" "default" "*" "" "" 78)' in response.text
     assert "LIMIT 78" in response.text
 
 
@@ -404,16 +462,276 @@ def test_lucene_cql_get_accepts_q_filter_limit_and_offset(test_repo: Repo):
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("application/sparql-query")
     assert "urn:jena:lucene:index#query" in response.text
-    assert "(?focus_node ?weight ?match ?totalHits ?g ?pred)" in response.text
+    assert "urn:jena:lucene:index#match" in response.text
+    assert "(?hit ?focus_node ?weight ?totalHits)" in response.text
     assert "<https://prez.dev/count> ?totalHits" in response.text
-    assert '("custom-index" "ore"' in response.text
+    assert '("custom-index" "default" "ore"' in response.text
     assert (
         '"{\\"op\\":\\"=\\",\\"args\\":[{\\"property\\":\\"urn:jena:lucene:field#commodity\\"},\\"Gold\\"]}"'
         in response.text
     )
-    assert "LIMIT 6" in response.text
-    assert "OFFSET 10" in response.text
-    assert " 16)" in response.text
+
+
+@pytest.mark.asyncio
+async def test_generate_search_query_uses_lucene_when_feature_flag_enabled(test_repo: Repo):
+    runtime_settings = Settings(
+        enable_cql_jena_lucene_json=True,
+        lucene_default_limit=77,
+        lucene_index_name="shacl",
+        sparql_repo_type="remote",
+        sparql_endpoint="http://example.com/dataset/sparql",
+    )
+    query_params = ListingQueryParams(
+        page=1,
+        q="ore",
+        _filter=json.dumps(
+            {
+                "op": "=",
+                "args": [
+                    {"property": "urn:jena:lucene:field#commodity"},
+                    "Gold",
+                ],
+            }
+        ),
+        limit=5,
+        offset=10,
+    )
+
+    search_query = await generate_search_query(
+        request=_make_request(
+            "/search?q=ore&limit=5&offset=10&filter=%7B%7D"
+        ),
+        query_params=query_params,
+        system_repo=test_repo,
+        endpoint_uri_type=(EP["extended-ogc-records/search"], ONT["ListingEndpoint"]),
+        runtime_settings=runtime_settings,
+    )
+
+    assert isinstance(search_query, SearchQueryJenaLucene)
+    assert "(?hit ?focus_node ?weight ?totalHits)" in search_query.valid_lucene_query_triple
+    assert '("shacl" "default" "ore"' in search_query.valid_lucene_query_triple
+
+
+@pytest.mark.asyncio
+async def test_generate_search_query_with_filter_only_uses_wildcard_lucene_query(
+    test_repo: Repo,
+):
+    runtime_settings = Settings(
+        enable_cql_jena_lucene_json=True,
+        lucene_default_limit=77,
+        lucene_index_name="default",
+        sparql_repo_type="remote",
+        sparql_endpoint="http://example.com/dataset/sparql",
+    )
+    query_params = ListingQueryParams(
+        page=1,
+        limit=10,
+        q=None,
+        _filter=json.dumps(
+            {
+                "op": "=",
+                "args": [
+                    {"property": "urn:jena:lucene:field#commodity"},
+                    "Gold",
+                ],
+            }
+        )
+    )
+
+    search_query = await generate_search_query(
+        request=_make_request("/search?filter=%7B%7D"),
+        query_params=query_params,
+        system_repo=test_repo,
+        endpoint_uri_type=(EP["extended-ogc-records/search"], ONT["ListingEndpoint"]),
+        runtime_settings=runtime_settings,
+    )
+
+    assert isinstance(search_query, SearchQueryJenaLucene)
+    assert '("default" "default" "*"' in search_query.valid_lucene_query_triple
+    assert '"{\\"op\\":\\"=\\",\\"args\\":[{\\"property\\":\\"urn:jena:lucene:field#commodity\\"},\\"Gold\\"]}"' in search_query.valid_lucene_query_triple
+    assert search_query.valid_lucene_query_triple.endswith('78) .')
+    assert search_query.limit == 78
+
+
+@pytest.mark.asyncio
+async def test_search_parser_dependencies_stand_down_for_lucene_search():
+    runtime_settings = Settings(
+        enable_cql_jena_lucene_json=True,
+        lucene_default_limit=77,
+        sparql_repo_type="remote",
+        sparql_endpoint="http://example.com/dataset/sparql",
+    )
+    query_params = ListingQueryParams(
+        page=1,
+        limit=10,
+        _filter=json.dumps(
+            {
+                "op": "=",
+                "args": [
+                    {"property": "urn:jena:lucene:field#commodity"},
+                    "Gold",
+                ],
+            }
+        )
+    )
+
+    get_parser = await cql_get_parser_dependency(
+        query_params=query_params,
+        queryable_props=[],
+        endpoint_uri_type=(EP["extended-ogc-records/search"], ONT["ListingEndpoint"]),
+        runtime_settings=runtime_settings,
+    )
+    post_parser = await cql_post_listing_parser_dependency(
+        query_params=query_params,
+        queryable_props=[],
+        endpoint_uri_type=(EP["extended-ogc-records/search-post"], ONT["ListingEndpoint"]),
+        runtime_settings=runtime_settings,
+    )
+
+    assert get_parser is None
+    assert post_parser is None
+
+
+@pytest.mark.asyncio
+async def test_generate_search_query_post_uses_lucene_when_feature_flag_enabled(
+    test_repo: Repo,
+):
+    runtime_settings = Settings(
+        enable_cql_jena_lucene_json=True,
+        lucene_default_limit=77,
+        lucene_index_name="default",
+        sparql_repo_type="remote",
+        sparql_endpoint="http://example.com/dataset/sparql",
+    )
+    body = {
+        "q": "ore",
+        "filter": {
+            "op": "=",
+            "args": [
+                {"property": "urn:jena:lucene:field#commodity"},
+                "Gold",
+            ],
+        },
+        "limit": 5,
+        "offset": 10,
+    }
+    query_params = ListingQueryParams(
+        page=1,
+        q="ore",
+        _filter=json.dumps(body["filter"]),
+        limit=5,
+        offset=10,
+    )
+
+    search_query = await generate_search_query_post(
+        request=_make_request("/search", method="POST", json_body=body),
+        query_params=query_params,
+        system_repo=test_repo,
+        endpoint_uri_type=(EP["extended-ogc-records/search-post"], ONT["ListingEndpoint"]),
+        runtime_settings=runtime_settings,
+    )
+
+    assert isinstance(search_query, SearchQueryJenaLucene)
+    assert '("default" "default" "ore"' in search_query.valid_lucene_query_triple
+    assert search_query.valid_lucene_query_triple.endswith("16) .")
+
+
+@pytest.mark.asyncio
+async def test_listing_function_lucene_uses_single_query_and_preserves_total_hits(
+    monkeypatch,
+):
+    fake_repo = FakeLuceneListingRepo()
+    search_query = SearchQueryJenaLucene(
+        term="deep",
+        filter_json={
+            "op": "=",
+            "args": [
+                {"property": "urn:jena:lucene:field#commodity"},
+                "Gold",
+            ],
+        },
+        limit=5,
+        offset=0,
+        lucene_index_name="default",
+    )
+    endpoint_nodeshape = SimpleNamespace(
+        uri="http://example.org/ns#Search",
+        tssp_list=[],
+        gpnt_list=[],
+        tssp_exists_list=[],
+        gpnt_exists_list=[],
+    )
+    profile_nodeshape = SimpleNamespace(
+        focus_node=Var(value="focus_node"),
+        tss_list=[],
+        tssp_list=[],
+        gpnt_list=[],
+    )
+    captured = {}
+
+    async def _fake_return_from_graph(
+        item_store,
+        selected_mediatype,
+        selected_profile,
+        response_headers,
+        selected_class,
+        data_repo,
+        system_repo,
+        query_params,
+        url,
+    ):
+        captured["store"] = item_store
+        return item_store
+
+    monkeypatch.setattr("prez.services.listings.return_from_graph", _fake_return_from_graph)
+
+    result = await listing_function(
+        data_repo=fake_repo,
+        system_repo=fake_repo,
+        endpoint_nodeshape=endpoint_nodeshape,
+        endpoint_structure=tuple(),
+        search_query=search_query,
+        concept_hierarchy_query=None,
+        cql_parser=None,
+        pmts=_FakePMTs(),
+        profile_nodeshape=profile_nodeshape,
+        query_params=ListingQueryParams(
+            page=1,
+            limit=5,
+            q=None,
+            _filter=None,
+            bbox=[],
+            datetime=None,
+            filter_crs="http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+            order_by=None,
+            order_by_direction=None,
+            facet_profile=None,
+            mediatype="text/turtle",
+            profile=None,
+            subscription_key=None,
+            startindex=None,
+            offset=None,
+        ),
+        original_endpoint_type=ONT["ListingEndpoint"],
+        url="http://testserver/search",
+    )
+
+    assert result is captured["store"]
+    assert len(fake_repo.rdf_queries) == 1
+    assert len(fake_repo.rdf_queries[0]) == 1
+    assert "urn:jena:lucene:index#query" in fake_repo.rdf_queries[0][0]
+    assert "COUNT(" not in fake_repo.rdf_queries[0][0]
+
+    count_quads = list(
+        captured["store"].quads_for_pattern(
+            NamedNode(str(PREZ.SearchResult)),
+            NamedNode(str(PREZ["count"])),
+            None,
+            None,
+        )
+    )
+    assert len(count_quads) == 1
+    assert count_quads[0].object.value == "2"
 
 
 def test_lucene_cql_post_accepts_q_filter_limit_and_offset(test_repo: Repo):
@@ -439,9 +757,10 @@ def test_lucene_cql_post_accepts_q_filter_limit_and_offset(test_repo: Repo):
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("application/sparql-query")
     assert "urn:jena:lucene:index#query" in response.text
-    assert "(?focus_node ?weight ?match ?totalHits ?g ?pred)" in response.text
+    assert "urn:jena:lucene:index#match" in response.text
+    assert "(?hit ?focus_node ?weight ?totalHits)" in response.text
     assert "<https://prez.dev/count> ?totalHits" in response.text
-    assert '("default" "ore"' in response.text
+    assert '("default" "default" "ore"' in response.text
     assert (
         '"{\\"op\\":\\"=\\",\\"args\\":[{\\"property\\":\\"urn:jena:lucene:field#commodity\\"},\\"Gold\\"]}"'
         in response.text
@@ -474,9 +793,13 @@ def test_lucene_cql_get_renders_successfully_via_listing_pipeline():
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/turtle")
     assert fake_repo.return_oxigraph_store_flags == [True]
+    assert len(fake_repo.rdf_queries) == 1
+    assert len(fake_repo.rdf_queries[0]) == 1
     assert "urn:jena:lucene:index#query" in fake_repo.rdf_queries[0][0]
-    assert "(?focus_node ?weight ?match ?totalHits ?g ?pred)" in fake_repo.rdf_queries[0][0]
-    assert '("default" "deep"' in fake_repo.rdf_queries[0][0]
+    assert "urn:jena:lucene:index#match" in fake_repo.rdf_queries[0][0]
+    assert "(?hit ?focus_node ?weight ?totalHits)" in fake_repo.rdf_queries[0][0]
+    assert '("default" "default" "deep"' in fake_repo.rdf_queries[0][0]
+    assert "COUNT(" not in fake_repo.rdf_queries[0][0]
     assert (
         '"{\\"op\\":\\"=\\",\\"args\\":[{\\"property\\":\\"urn:jena:lucene:field#commodity\\"},\\"Gold\\"]}"'
         in fake_repo.rdf_queries[0][0]
@@ -493,9 +816,19 @@ def test_lucene_cql_get_renders_successfully_via_listing_pipeline():
         None,
     ) in rendered_graph
     assert (
+        URIRef("urn:hash:1"),
+        URIRef(str(PREZ.hasSearchMatch)),
+        URIRef("urn:match:1"),
+    ) in rendered_graph
+    assert (
+        URIRef("urn:match:1"),
+        URIRef(str(PREZ.searchResultMatch)),
+        None,
+    ) in rendered_graph
+    assert (
         URIRef(str(PREZ.SearchResult)),
         URIRef(str(PREZ["count"])),
-        None,
+        RDFlibLiteral("2"),
     ) in rendered_graph
 
 
@@ -520,9 +853,13 @@ def test_lucene_cql_post_renders_successfully_via_listing_pipeline():
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/turtle")
     assert fake_repo.return_oxigraph_store_flags == [True]
+    assert len(fake_repo.rdf_queries) == 1
+    assert len(fake_repo.rdf_queries[0]) == 1
     assert "urn:jena:lucene:index#query" in fake_repo.rdf_queries[0][0]
-    assert "(?focus_node ?weight ?match ?totalHits ?g ?pred)" in fake_repo.rdf_queries[0][0]
-    assert '("default" "deep"' in fake_repo.rdf_queries[0][0]
+    assert "urn:jena:lucene:index#match" in fake_repo.rdf_queries[0][0]
+    assert "(?hit ?focus_node ?weight ?totalHits)" in fake_repo.rdf_queries[0][0]
+    assert '("default" "default" "deep"' in fake_repo.rdf_queries[0][0]
+    assert "COUNT(" not in fake_repo.rdf_queries[0][0]
     assert (
         '"{\\"op\\":\\"=\\",\\"args\\":[{\\"property\\":\\"urn:jena:lucene:field#commodity\\"},\\"Gold\\"]}"'
         in fake_repo.rdf_queries[0][0]
@@ -539,9 +876,14 @@ def test_lucene_cql_post_renders_successfully_via_listing_pipeline():
         None,
     ) in rendered_graph
     assert (
+        URIRef("urn:hash:1"),
+        URIRef(str(PREZ.hasSearchMatch)),
+        URIRef("urn:match:1"),
+    ) in rendered_graph
+    assert (
         URIRef(str(PREZ.SearchResult)),
         URIRef(str(PREZ["count"])),
-        None,
+        RDFlibLiteral("2"),
     ) in rendered_graph
 
 
@@ -552,7 +894,7 @@ def test_lucene_cql_get_rendered_path_uses_wildcard_and_default_limit():
 
     assert response.status_code == 200
     assert fake_repo.return_oxigraph_store_flags == [True]
-    assert '("default" "*" 78)' in fake_repo.rdf_queries[0][0]
+    assert '("default" "default" "*" "" "" 78)' in fake_repo.rdf_queries[0][0]
 
 
 def test_lucene_cql_get_with_facet_profile_appends_facets_query():

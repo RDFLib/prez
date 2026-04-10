@@ -137,19 +137,10 @@ async def jena_assembler_to_queryables(
     assembler_turtle: Annotated[str, Depends(get_turtle_request_body)],
     runtime_settings: Annotated[Settings, Depends(get_runtime_settings)],
 ):
-    if not runtime_settings.jena_fuseki_dataset_name:
-        raise HTTPException(
-            status_code=400,
-            detail="jena_fuseki_dataset_name must be set to use this transform endpoint.",
-        )
-
     assembler_graph = Graph()
     try:
         assembler_graph.parse(data=assembler_turtle, format="turtle")
-        queryables_graph = transform_jena_assembler_to_queryables(
-            assembler_graph,
-            runtime_settings.jena_fuseki_dataset_name,
-        )
+        queryables_graph = transform_jena_assembler_to_queryables(assembler_graph)
     except JenaAssemblerTransformError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     except Exception as exc:

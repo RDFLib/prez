@@ -12,6 +12,7 @@ from sparql_grammar_pydantic import (
     Constraint,
     ConstructQuery,
     ConstructTemplate,
+    ConstructTriples,
     Expression,
     Filter,
     GraphNodePath,
@@ -20,7 +21,6 @@ from sparql_grammar_pydantic import (
     GroupGraphPattern,
     GroupGraphPatternSub,
     GroupOrUnionGraphPattern,
-    ConstructTriples,
     LimitClause,
     LimitOffsetClauses,
     MultiplicativeExpression,
@@ -61,6 +61,8 @@ from prez.reference_data.prez_ns import PREZ
 
 
 LUCENE = Namespace("urn:jena:lucene:index#")
+DEFAULT_FIELD_SPEC = "default"
+EMPTY_STRING_SENTINEL = ""
 
 
 def _sparql_string_literal(value: str) -> str:
@@ -90,7 +92,6 @@ class LuceneCombinedConstructQuery(ConstructQuery):
             )
         ]
         if profile_triples:
-            # Reverse to preserve focus-first ordering after TriplesBlock nesting.
             search_branch_parts.append(
                 TriplesBlock.from_tssp_list(profile_triples[::-1])
             )
@@ -136,6 +137,8 @@ class SearchQueryJenaLucene:
         lucene_index_name: str,
         filter_json: dict | None = None,
         facets: list[str] | None = None,
+        order_by: str | None = None,
+        order_by_direction: str | None = None,
     ):
         self._limit = limit + 1
         self._lucene_limit = self._limit + offset
@@ -144,25 +147,59 @@ class SearchQueryJenaLucene:
         self._term = "*" if term is None else term
         self._filter_json = filter_json
         self._facets = facets or []
+        self._sort_json = (
+            _compact_json({"field": order_by, "order": (order_by_direction or "ASC").lower()})
+            if isinstance(order_by, str) and order_by
+            else None
+        )
         self._facet_limit = limit
+        self._lucene_facet_tb = None
+        self._lucene_match_tb = None
 
         sr_uri = Var(value="focus_node")
         weight = Var(value="weight")
-        match = Var(value="match")
         total_hits = Var(value="totalHits")
         pred = Var(value="pred")
-        hashid = Var(value="hashID")
+        match = Var(value="match")
+        search_result = Var(value="searchResult")
+        search_match = Var(value="searchMatch")
 
-        ct_map = {
-            IRI(value=PREZ.searchResultWeight): weight,
-            IRI(value=PREZ.searchResultPredicate): pred,
-            IRI(value=PREZ.searchResultMatch): match,
-            IRI(value=PREZ.searchResultURI): sr_uri,
-            IRI(value=RDF.type): IRI(value=PREZ.SearchResult),
-        }
         self._tss_list = [
-            TriplesSameSubject.from_spo(subject=hashid, predicate=p, object=v)
-            for p, v in ct_map.items()
+            TriplesSameSubject.from_spo(
+                subject=search_result,
+                predicate=IRI(value=RDF.type),
+                object=IRI(value=PREZ.SearchResult),
+            ),
+            TriplesSameSubject.from_spo(
+                subject=search_result,
+                predicate=IRI(value=PREZ.searchResultURI),
+                object=sr_uri,
+            ),
+            TriplesSameSubject.from_spo(
+                subject=search_result,
+                predicate=IRI(value=PREZ.searchResultWeight),
+                object=weight,
+            ),
+            TriplesSameSubject.from_spo(
+                subject=search_result,
+                predicate=IRI(value=PREZ.hasSearchMatch),
+                object=search_match,
+            ),
+            TriplesSameSubject.from_spo(
+                subject=search_match,
+                predicate=IRI(value=RDF.type),
+                object=IRI(value=PREZ.SearchResultMatch),
+            ),
+            TriplesSameSubject.from_spo(
+                subject=search_match,
+                predicate=IRI(value=PREZ.searchResultPredicate),
+                object=pred,
+            ),
+            TriplesSameSubject.from_spo(
+                subject=search_match,
+                predicate=IRI(value=PREZ.searchResultMatch),
+                object=match,
+            ),
         ]
         self._tss_list.append(
             TriplesSameSubject.from_spo(
@@ -191,46 +228,52 @@ class SearchQueryJenaLucene:
         ]
         self._inner_select_vars = [
             sr_uri,
-            pred,
-            match,
             weight,
             total_hits,
-            (self._create_hashid_expression(sr_uri, pred, match, weight), hashid),
+            pred,
+            match,
+            (self._create_hitid_expression(sr_uri, weight), search_result),
+            (
+                self._create_matchid_expression(sr_uri, pred, match, weight),
+                search_match,
+            ),
         ]
         self._inner_select_gpnt = self._build_inner_select_gpnt(
             sr_uri=sr_uri,
             weight=weight,
-            match=match,
             total_hits=total_hits,
             pred=pred,
-            lucene_index_name=lucene_index_name,
+            match=match,
         )
-        self._lucene_facet_tb = None
 
     def _compact_filter_json(self) -> str | None:
         return _compact_json(self._filter_json)
 
+    def _query_filter_arg(self) -> str:
+        return self._compact_filter_json() or EMPTY_STRING_SENTINEL
+
+    def _sort_json_arg(self) -> str:
+        return self._sort_json or EMPTY_STRING_SENTINEL
+
     def _lucene_args_strings(self) -> list[str]:
-        lucene_args = [
+        return [
             _sparql_string_literal(self._lucene_index_name),
+            _sparql_string_literal(DEFAULT_FIELD_SPEC),
             _sparql_string_literal(self._term),
+            _sparql_string_literal(self._query_filter_arg()),
+            _sparql_string_literal(self._sort_json_arg()),
         ]
-        compact_filter_json = self._compact_filter_json()
-        if compact_filter_json is not None:
-            lucene_args.append(_sparql_string_literal(compact_filter_json))
-        return lucene_args
 
     def _facet_args_strings(self) -> list[str]:
-        lucene_args = [
+        return [
             _sparql_string_literal(self._lucene_index_name),
+            _sparql_string_literal(DEFAULT_FIELD_SPEC),
             _sparql_string_literal(self._term),
             _sparql_string_literal(_compact_json(self._facets)),
+            _sparql_string_literal(self._query_filter_arg()),
+            str(self._facet_limit),
+            "0",
         ]
-        compact_filter_json = self._compact_filter_json()
-        if compact_filter_json is not None:
-            lucene_args.append(_sparql_string_literal(compact_filter_json))
-        lucene_args.append(str(self._facet_limit))
-        return lucene_args
 
     def _create_uri_hash_expression(
         self,
@@ -272,7 +315,18 @@ class SearchQueryJenaLucene:
             )
         )
 
-    def _create_hashid_expression(
+    def _create_hitid_expression(
+        self,
+        sr_uri: Var,
+        weight: Var,
+    ) -> Expression:
+        return self._create_uri_hash_expression(
+            "urn:hash:",
+            sr_uri,
+            weight,
+        )
+
+    def _create_matchid_expression(
         self,
         sr_uri: Var,
         pred: Var,
@@ -280,7 +334,7 @@ class SearchQueryJenaLucene:
         weight: Var,
     ) -> Expression:
         return self._create_uri_hash_expression(
-            "urn:hash:",
+            "urn:match:",
             sr_uri,
             pred,
             match,
@@ -336,126 +390,127 @@ class SearchQueryJenaLucene:
             )
         )
 
+    @staticmethod
+    def _create_predicate_path(predicate: IRI) -> SG_Path:
+        return SG_Path(
+            path_alternative=PathAlternative(
+                sequence_paths=[
+                    PathSequence(
+                        list_path_elt_or_inverse=[
+                            PathEltOrInverse(
+                                path_elt=PathElt(
+                                    path_primary=PathPrimary(value=predicate)
+                                )
+                            )
+                        ]
+                    )
+                ]
+            )
+        )
+
+    @staticmethod
+    def _create_collection_path(*nodes: GraphNodePath) -> TriplesNodePath:
+        return TriplesNodePath(
+            coll_path_or_bnpl_path=CollectionPath(graphnodepath_list=list(nodes))
+        )
+
+    @staticmethod
+    def _create_rdf_literal_node(value: str) -> GraphNodePath:
+        return GraphNodePath(
+            varorterm_or_triplesnodepath=VarOrTerm(
+                varorterm=GraphTerm(content=RDFLiteral(value=value))
+            )
+        )
+
+    @staticmethod
+    def _create_numeric_node(value: int) -> GraphNodePath:
+        return GraphNodePath(
+            varorterm_or_triplesnodepath=VarOrTerm(
+                varorterm=GraphTerm(content=NumericLiteral(value=value))
+            )
+        )
+
     def _build_inner_select_gpnt(
         self,
         sr_uri: Var,
         weight: Var,
-        match: Var,
         total_hits: Var,
         pred: Var,
-        lucene_index_name: str,
+        match: Var,
     ) -> GraphPatternNotTriples:
-        query_var = Var(value="g")
-        lucene_args = [
-            GraphNodePath(
-                varorterm_or_triplesnodepath=VarOrTerm(
-                    varorterm=GraphTerm(content=RDFLiteral(value=lucene_index_name))
-                )
-            ),
-            GraphNodePath(
-                varorterm_or_triplesnodepath=VarOrTerm(
-                    varorterm=GraphTerm(content=RDFLiteral(value=self._term))
-                )
-            ),
-        ]
-        if self._filter_json is not None:
-            lucene_args.append(
-                GraphNodePath(
-                    varorterm_or_triplesnodepath=VarOrTerm(
-                        varorterm=GraphTerm(
-                            content=RDFLiteral(
-                                value=json.dumps(
-                                    self._filter_json,
-                                    separators=(",", ":"),
-                                    ensure_ascii=False,
-                                )
-                            )
-                        )
-                    )
-                )
-            )
-        lucene_args.append(
-            GraphNodePath(
-                varorterm_or_triplesnodepath=VarOrTerm(
-                    varorterm=GraphTerm(
-                        content=NumericLiteral(value=self._lucene_limit)
-                    )
-                )
-            )
+        hit = Var(value="hit")
+        snippet = Var(value="snippet")
+        lucene_query_args = self._create_collection_path(
+            self._create_rdf_literal_node(self._lucene_index_name),
+            self._create_rdf_literal_node(DEFAULT_FIELD_SPEC),
+            self._create_rdf_literal_node(self._term),
+            self._create_rdf_literal_node(self._query_filter_arg()),
+            self._create_rdf_literal_node(self._sort_json_arg()),
+            self._create_numeric_node(self._lucene_limit),
         )
-
         lucene_query_tb = TriplesBlock(
             triples=TriplesSameSubjectPath(
                 content=(
-                    TriplesNodePath(
-                        coll_path_or_bnpl_path=CollectionPath(
-                            graphnodepath_list=[
-                                GraphNodePath(
-                                    varorterm_or_triplesnodepath=VarOrTerm(
-                                        varorterm=sr_uri
-                                    )
-                                ),
-                                GraphNodePath(
-                                    varorterm_or_triplesnodepath=VarOrTerm(
-                                        varorterm=weight
-                                    )
-                                ),
-                                GraphNodePath(
-                                    varorterm_or_triplesnodepath=VarOrTerm(
-                                        varorterm=match
-                                    )
-                                ),
-                                GraphNodePath(
-                                    varorterm_or_triplesnodepath=VarOrTerm(
-                                        varorterm=total_hits
-                                    )
-                                ),
-                                GraphNodePath(
-                                    varorterm_or_triplesnodepath=VarOrTerm(
-                                        varorterm=query_var
-                                    )
-                                ),
-                                GraphNodePath(
-                                    varorterm_or_triplesnodepath=VarOrTerm(
-                                        varorterm=pred
-                                    )
-                                ),
-                            ]
-                        )
+                    self._create_collection_path(
+                        GraphNodePath(
+                            varorterm_or_triplesnodepath=VarOrTerm(varorterm=hit)
+                        ),
+                        GraphNodePath(
+                            varorterm_or_triplesnodepath=VarOrTerm(varorterm=sr_uri)
+                        ),
+                        GraphNodePath(
+                            varorterm_or_triplesnodepath=VarOrTerm(varorterm=weight)
+                        ),
+                        GraphNodePath(
+                            varorterm_or_triplesnodepath=VarOrTerm(varorterm=total_hits)
+                        ),
                     ),
                     PropertyListPath(
                         plpne=PropertyListPathNotEmpty(
                             first_pair=(
-                                VerbPath(
-                                    path=SG_Path(
-                                        path_alternative=PathAlternative(
-                                            sequence_paths=[
-                                                PathSequence(
-                                                    list_path_elt_or_inverse=[
-                                                        PathEltOrInverse(
-                                                            path_elt=PathElt(
-                                                                path_primary=PathPrimary(
-                                                                    value=IRI(
-                                                                        value=LUCENE.query
-                                                                    )
-                                                                )
-                                                            )
-                                                        )
-                                                    ]
-                                                )
-                                            ]
-                                        )
-                                    )
-                                ),
+                                VerbPath(path=self._create_predicate_path(IRI(value=LUCENE.query))),
                                 ObjectListPath(
                                     object_paths=[
                                         ObjectPath(
                                             graph_node_path=GraphNodePath(
-                                                varorterm_or_triplesnodepath=TriplesNodePath(
-                                                    coll_path_or_bnpl_path=CollectionPath(
-                                                        graphnodepath_list=lucene_args
-                                                    )
-                                                )
+                                                varorterm_or_triplesnodepath=lucene_query_args
+                                            )
+                                        )
+                                    ]
+                                ),
+                            )
+                        )
+                    ),
+                )
+            )
+        )
+
+        lucene_match_tb = TriplesBlock(
+            triples=TriplesSameSubjectPath(
+                content=(
+                    self._create_collection_path(
+                        GraphNodePath(
+                            varorterm_or_triplesnodepath=VarOrTerm(varorterm=hit)
+                        ),
+                        GraphNodePath(
+                            varorterm_or_triplesnodepath=VarOrTerm(varorterm=pred)
+                        ),
+                        GraphNodePath(
+                            varorterm_or_triplesnodepath=VarOrTerm(varorterm=match)
+                        ),
+                        GraphNodePath(
+                            varorterm_or_triplesnodepath=VarOrTerm(varorterm=snippet)
+                        ),
+                    ),
+                    PropertyListPath(
+                        plpne=PropertyListPathNotEmpty(
+                            first_pair=(
+                                VerbPath(path=self._create_predicate_path(IRI(value=LUCENE.match))),
+                                ObjectListPath(
+                                    object_paths=[
+                                        ObjectPath(
+                                            graph_node_path=GraphNodePath(
+                                                varorterm_or_triplesnodepath=self._create_collection_path()
                                             )
                                         )
                                     ]
@@ -471,11 +526,13 @@ class SearchQueryJenaLucene:
             content=GroupGraphPatternSub(
                 graph_patterns_or_triples_blocks=[
                     lucene_query_tb,
+                    lucene_match_tb,
                     GraphPatternNotTriples(content=self._build_is_iri_filter(sr_uri)),
                 ]
             )
         )
         self._lucene_query_tb = lucene_query_tb
+        self._lucene_match_tb = lucene_match_tb
         return GraphPatternNotTriples(
             content=GroupOrUnionGraphPattern(group_graph_patterns=[inner_ggp])
         )
@@ -486,104 +543,46 @@ class SearchQueryJenaLucene:
         facet_value: Var,
         facet_count: Var,
     ) -> TriplesBlock:
-        lucene_args = [
-            GraphNodePath(
-                varorterm_or_triplesnodepath=VarOrTerm(
-                    varorterm=GraphTerm(
-                        content=RDFLiteral(value=self._lucene_index_name)
-                    )
-                )
-            ),
-            GraphNodePath(
-                varorterm_or_triplesnodepath=VarOrTerm(
-                    varorterm=GraphTerm(content=RDFLiteral(value=self._term))
-                )
-            ),
-            GraphNodePath(
-                varorterm_or_triplesnodepath=VarOrTerm(
-                    varorterm=GraphTerm(
-                        content=RDFLiteral(value=_compact_json(self._facets))
-                    )
-                )
-            ),
-        ]
-        if self._filter_json is not None:
-            lucene_args.append(
-                GraphNodePath(
-                    varorterm_or_triplesnodepath=VarOrTerm(
-                        varorterm=GraphTerm(
-                            content=RDFLiteral(value=self._compact_filter_json())
-                        )
-                    )
-                )
-            )
-        lucene_args.append(
-            GraphNodePath(
-                varorterm_or_triplesnodepath=VarOrTerm(
-                    varorterm=GraphTerm(
-                        content=NumericLiteral(value=self._facet_limit)
-                    )
-                )
-            )
+        facet_low = Var(value="facetLow")
+        facet_high = Var(value="facetHigh")
+        facet_args = self._create_collection_path(
+            self._create_rdf_literal_node(self._lucene_index_name),
+            self._create_rdf_literal_node(DEFAULT_FIELD_SPEC),
+            self._create_rdf_literal_node(self._term),
+            self._create_rdf_literal_node(_compact_json(self._facets)),
+            self._create_rdf_literal_node(self._query_filter_arg()),
+            self._create_numeric_node(self._facet_limit),
+            self._create_numeric_node(0),
         )
-
         return TriplesBlock(
             triples=TriplesSameSubjectPath(
                 content=(
-                    TriplesNodePath(
-                        coll_path_or_bnpl_path=CollectionPath(
-                            graphnodepath_list=[
-                                GraphNodePath(
-                                    varorterm_or_triplesnodepath=VarOrTerm(
-                                        varorterm=facet_name
-                                    )
-                                ),
-                                GraphNodePath(
-                                    varorterm_or_triplesnodepath=VarOrTerm(
-                                        varorterm=facet_value
-                                    )
-                                ),
-                                GraphNodePath(
-                                    varorterm_or_triplesnodepath=VarOrTerm(
-                                        varorterm=facet_count
-                                    )
-                                ),
-                            ]
-                        )
+                    self._create_collection_path(
+                        GraphNodePath(
+                            varorterm_or_triplesnodepath=VarOrTerm(varorterm=facet_name)
+                        ),
+                        GraphNodePath(
+                            varorterm_or_triplesnodepath=VarOrTerm(varorterm=facet_value)
+                        ),
+                        GraphNodePath(
+                            varorterm_or_triplesnodepath=VarOrTerm(varorterm=facet_low)
+                        ),
+                        GraphNodePath(
+                            varorterm_or_triplesnodepath=VarOrTerm(varorterm=facet_high)
+                        ),
+                        GraphNodePath(
+                            varorterm_or_triplesnodepath=VarOrTerm(varorterm=facet_count)
+                        ),
                     ),
                     PropertyListPath(
                         plpne=PropertyListPathNotEmpty(
                             first_pair=(
-                                VerbPath(
-                                    path=SG_Path(
-                                        path_alternative=PathAlternative(
-                                            sequence_paths=[
-                                                PathSequence(
-                                                    list_path_elt_or_inverse=[
-                                                        PathEltOrInverse(
-                                                            path_elt=PathElt(
-                                                                path_primary=PathPrimary(
-                                                                    value=IRI(
-                                                                        value=LUCENE.facet
-                                                                    )
-                                                                )
-                                                            )
-                                                        )
-                                                    ]
-                                                )
-                                            ]
-                                        )
-                                    )
-                                ),
+                                VerbPath(path=self._create_predicate_path(IRI(value=LUCENE.facet))),
                                 ObjectListPath(
                                     object_paths=[
                                         ObjectPath(
                                             graph_node_path=GraphNodePath(
-                                                varorterm_or_triplesnodepath=TriplesNodePath(
-                                                    coll_path_or_bnpl_path=CollectionPath(
-                                                        graphnodepath_list=lucene_args
-                                                    )
-                                                )
+                                                varorterm_or_triplesnodepath=facet_args
                                             )
                                         )
                                     ]
@@ -607,6 +606,7 @@ class SearchQueryJenaLucene:
                     content=GroupGraphPatternSub(
                         graph_patterns_or_triples_blocks=[
                             self._lucene_query_tb,
+                            self._lucene_match_tb,
                             GraphPatternNotTriples(
                                 content=self._build_is_iri_filter(Var(value="focus_node"))
                             ),
@@ -671,14 +671,18 @@ class SearchQueryJenaLucene:
         lucene_args = self._lucene_args_strings()
         lucene_args.append(str(self._lucene_limit))
         return (
-            f"(?focus_node ?weight ?match ?totalHits ?g ?pred) <{LUCENE.query}> "
+            f"(?hit ?focus_node ?weight ?totalHits) <{LUCENE.query}> "
             f"({' '.join(lucene_args)}) ."
         )
 
     @property
+    def valid_lucene_match_triple(self) -> str:
+        return f"(?hit ?pred ?match ?snippet) <{LUCENE.match}> () ."
+
+    @property
     def valid_lucene_facet_triple(self) -> str:
         return (
-            f"(?facetName ?facetValue ?facetCount) <{LUCENE.facet}> "
+            f"(?facetName ?facetValue ?facetLow ?facetHigh ?facetCount) <{LUCENE.facet}> "
             f"({' '.join(self._facet_args_strings())}) ."
         )
 
@@ -686,6 +690,10 @@ class SearchQueryJenaLucene:
         normalized_query = query.replace(
             self._lucene_query_tb.to_string(),
             self.valid_lucene_query_triple,
+        )
+        normalized_query = normalized_query.replace(
+            self._lucene_match_tb.to_string(),
+            self.valid_lucene_match_triple,
         )
         if self._lucene_facet_tb is not None:
             normalized_query = normalized_query.replace(

@@ -268,7 +268,13 @@ async def cql_get_parser_dependency(
     query_params: ListingQueryParams = Depends(),
     queryable_props: list = Depends(get_queryable_props),
     endpoint_uri_type: str = Depends(get_endpoint_uri_type),
+    runtime_settings: Settings = Depends(get_runtime_settings),
 ) -> CQLParser:
+    if _search_uses_jena_lucene(endpoint_uri_type[0], runtime_settings):
+        if query_params._filter:
+            _parse_lucene_filter_json(query_params._filter, "GET")
+        return None
+
     if query_params._filter:
         try:
             crs = query_params.filter_crs
@@ -476,6 +482,13 @@ def _calculate_listing_offset(query_params: ListingQueryParams) -> int:
     return int(query_params.limit) * (int(query_params.page) - 1)
 
 
+def _search_uses_jena_lucene(endpoint_uri: URIRef, runtime_settings: Settings) -> bool:
+    return runtime_settings.enable_cql_jena_lucene_json and endpoint_uri in {
+        EP["extended-ogc-records/search"],
+        EP["extended-ogc-records/search-post"],
+    }
+
+
 async def lucene_cql_get_parser_dependency(
     request: Request,
     query_params: ListingQueryParams = Depends(),
@@ -512,6 +525,8 @@ async def generate_lucene_cql_search_query(
         limit=int(query_params.limit),
         offset=_calculate_listing_offset(query_params),
         lucene_index_name=runtime_settings.lucene_index_name,
+        order_by=query_params.order_by,
+        order_by_direction=query_params.order_by_direction,
     )
 
 
@@ -660,6 +675,8 @@ async def generate_lucene_cql_search_query_post(
         limit=int(query_params.limit),
         offset=_calculate_listing_offset(query_params),
         lucene_index_name=runtime_settings.lucene_index_name,
+        order_by=query_params.order_by,
+        order_by_direction=query_params.order_by_direction,
     )
 
 
@@ -736,8 +753,14 @@ async def cql_post_listing_parser_dependency(
     query_params: ListingQueryParams = Depends(listing_post_params_dependency),
     queryable_props: list = Depends(get_queryable_props),
     endpoint_uri_type: tuple = Depends(get_endpoint_uri_type),
+    runtime_settings: Settings = Depends(get_runtime_settings),
 ) -> "CQLParser | None":
     """CQL parser for listing POST endpoints (filter is optional)."""
+    if _search_uses_jena_lucene(endpoint_uri_type[0], runtime_settings):
+        if query_params._filter:
+            _parse_lucene_filter_json(query_params._filter, "POST")
+        return None
+
     if query_params._filter:
         try:
             crs = query_params.filter_crs
@@ -761,6 +784,7 @@ async def generate_search_query_post(
     query_params: ListingQueryParams = Depends(listing_post_params_dependency),
     system_repo: Repo = Depends(get_system_repo),
     endpoint_uri_type: tuple = Depends(get_endpoint_uri_type),
+    runtime_settings: Settings = Depends(get_runtime_settings),
 ):
     """POST variant of generate_search_query — reads params from POST body."""
     term = query_params.q
@@ -780,6 +804,24 @@ async def generate_search_query_post(
     if not term:
         if endpoint_uri_type[0] in _search_ep_uris:
             if has_filtering_params():
+                if _search_uses_jena_lucene(endpoint_uri_type[0], runtime_settings):
+                    body = await _parse_post_body(request)
+                    _apply_lucene_default_limit(
+                        query_params,
+                        runtime_settings,
+                        limit_supplied="limit" in body,
+                    )
+                    filter_json = _parse_lucene_filter_json(query_params._filter, "POST")
+                    return SearchQueryJenaLucene(
+                        term=query_params.q,
+                        facets=None,
+                        filter_json=filter_json,
+                        limit=int(query_params.limit),
+                        offset=_calculate_listing_offset(query_params),
+                        lucene_index_name=runtime_settings.lucene_index_name,
+                        order_by=query_params.order_by,
+                        order_by_direction=query_params.order_by_direction,
+                    )
                 return DummySearchMarker()
             raise HTTPException(
                 status_code=400,
@@ -789,6 +831,25 @@ async def generate_search_query_post(
                 ),
             )
         return None
+
+    if _search_uses_jena_lucene(endpoint_uri_type[0], runtime_settings):
+        body = await _parse_post_body(request)
+        _apply_lucene_default_limit(
+            query_params,
+            runtime_settings,
+            limit_supplied="limit" in body,
+        )
+        filter_json = _parse_lucene_filter_json(query_params._filter, "POST")
+        return SearchQueryJenaLucene(
+            term=term,
+            facets=None,
+            filter_json=filter_json,
+            limit=int(query_params.limit),
+            offset=_calculate_listing_offset(query_params),
+            lucene_index_name=runtime_settings.lucene_index_name,
+            order_by=query_params.order_by,
+            order_by_direction=query_params.order_by_direction,
+        )
 
     predicates = query_params.predicates if hasattr(query_params, 'predicates') else []
     page = query_params.page or 1
@@ -1000,8 +1061,10 @@ class DummySearchMarker:
 
 async def generate_search_query(
     request: Request,
+    query_params: ListingQueryParams = Depends(),
     system_repo: Repo = Depends(get_system_repo),
     endpoint_uri_type: tuple[URIRef, URIRef] = Depends(get_endpoint_uri_type),
+    runtime_settings: Settings = Depends(get_runtime_settings),
 ):
     term = request.query_params.get("q")
 
@@ -1028,6 +1091,23 @@ async def generate_search_query(
         if endpoint_uri_type[0] == EP["extended-ogc-records/search"]:
             # Allow empty search term if filtering/faceting parameters are present
             if has_filtering_params():
+                if _search_uses_jena_lucene(endpoint_uri_type[0], runtime_settings):
+                    _apply_lucene_default_limit(
+                        query_params,
+                        runtime_settings,
+                        limit_supplied=request.query_params.get("limit") is not None,
+                    )
+                    filter_json = _parse_lucene_filter_json(query_params._filter, "GET")
+                    return SearchQueryJenaLucene(
+                        term=query_params.q,
+                        facets=None,
+                        filter_json=filter_json,
+                        limit=int(query_params.limit),
+                        offset=_calculate_listing_offset(query_params),
+                        lucene_index_name=runtime_settings.lucene_index_name,
+                        order_by=query_params.order_by,
+                        order_by_direction=query_params.order_by_direction,
+                    )
                 # Return marker to indicate dummy search results needed
                 return DummySearchMarker()
             else:
@@ -1039,6 +1119,26 @@ async def generate_search_query(
             # For other endpoints, 'q' is optional, return None if not provided
             return None
     else:
+        if _search_uses_jena_lucene(endpoint_uri_type[0], runtime_settings):
+            _apply_lucene_default_limit(
+                query_params,
+                runtime_settings,
+                limit_supplied=request.query_params.get("limit") is not None,
+            )
+            filter_json = _parse_lucene_filter_json(query_params._filter, "GET")
+            search_query = SearchQueryJenaLucene(
+                term=query_params.q,
+                facets=None,
+                filter_json=filter_json,
+                limit=int(query_params.limit),
+                offset=_calculate_listing_offset(query_params),
+                lucene_index_name=runtime_settings.lucene_index_name,
+                order_by=query_params.order_by,
+                order_by_direction=query_params.order_by_direction,
+            )
+            logger.debug(f"Generated search query: {search_query}")
+            return search_query
+
         # escaped_term = escape_for_lucene_and_sparql(term)
         predicates = request.query_params.getlist("predicates")
         page = request.query_params.get("page", 1)

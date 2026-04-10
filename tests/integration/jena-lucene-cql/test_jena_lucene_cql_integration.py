@@ -40,15 +40,21 @@ ex1:bh-bod-001 a ex1:Borehole .
 prez:SearchResult prez:count 2 .
 <urn:hash:046be7b484e960f3c47939b8aa3959a11bb0b88329e76758b51b9fc293a1fcee> prez:searchResultWeight "2.7743397"^^xsd:float ;
     prez:searchResultURI ex1:bh-bod-001 ;
+    prez:hasSearchMatch <urn:match:046be7b484e960f3c47939b8aa3959a11bb0b88329e76758b51b9fc293a1fcee> ;
+    a prez:SearchResult .
+<urn:match:046be7b484e960f3c47939b8aa3959a11bb0b88329e76758b51b9fc293a1fcee>
     prez:searchResultPredicate <urn:jena:lucene:field#title> ;
     prez:searchResultMatch "BOD-DDH-001 Boddington Deep Diamond Hole" ;
-    a prez:SearchResult .
+    a prez:SearchResultMatch .
 ex1:bh-cad-001 a ex1:Borehole .
 <urn:hash:9425a9e2e5c80570d7b3642bed78f5c48c244e4c63e417abf9a8811a9ba90381> prez:searchResultWeight "2.7743397"^^xsd:float ;
     prez:searchResultURI ex1:bh-cad-001 ;
+    prez:hasSearchMatch <urn:match:9425a9e2e5c80570d7b3642bed78f5c48c244e4c63e417abf9a8811a9ba90381> ;
+    a prez:SearchResult .
+<urn:match:9425a9e2e5c80570d7b3642bed78f5c48c244e4c63e417abf9a8811a9ba90381>
     prez:searchResultPredicate <urn:jena:lucene:field#title> ;
     prez:searchResultMatch "CAD-DDH-001 Cadia Deep Exploration Hole" ;
-    a prez:SearchResult .
+    a prez:SearchResultMatch .
 <urn:facet:e8e6e61a91e60a42f594395130eaee4cb5ca9e67fff6e08594fe5aa34a881685> prez:facetValue <http://example.org/mining/commodity/Gold> ;
     prez:facetName <urn:jena:lucene:field#commodity> ;
     prez:facetCount 2 .
@@ -80,9 +86,12 @@ ex1:bh-cad-001 a ex1:Borehole .
 prez:SearchResult prez:count 1 .
 <urn:hash:320eea1fc6c09ca1264e45d769e97d5c5dbeaafbb66a58f7ce0e0d5b89d7ca00> prez:searchResultWeight "3.175807"^^xsd:float ;
     prez:searchResultURI ex1:bh-cad-001 ;
+    prez:hasSearchMatch <urn:match:320eea1fc6c09ca1264e45d769e97d5c5dbeaafbb66a58f7ce0e0d5b89d7ca00> ;
+    a prez:SearchResult .
+<urn:match:320eea1fc6c09ca1264e45d769e97d5c5dbeaafbb66a58f7ce0e0d5b89d7ca00>
     prez:searchResultPredicate <urn:jena:lucene:field#title> ;
     prez:searchResultMatch "CAD-DDH-001 Cadia Deep Exploration Hole" ;
-    a prez:SearchResult .
+    a prez:SearchResultMatch .
 <urn:facet:9f9f76c45f67d42926169c094038f4eb0df4fd202abac4a4cee29b8be0d2812e> prez:facetValue <http://example.org/mining/commodity/Copper> ;
     prez:facetName <urn:jena:lucene:field#commodity> ;
     prez:facetCount 1 .
@@ -129,7 +138,9 @@ def _normalize_dynamic_nodes(graph: Graph) -> Graph:
 
     def _map_node(node):
         if isinstance(node, URIRef) and (
-            str(node).startswith("urn:hash:") or str(node).startswith("urn:facet:")
+            str(node).startswith("urn:hash:")
+            or str(node).startswith("urn:match:")
+            or str(node).startswith("urn:facet:")
         ):
             if node not in node_map:
                 node_map[node] = BNode()
@@ -244,6 +255,7 @@ def lucene_client(fuseki_container: DockerContainer) -> TestClient:
             yield client
 
 
+@pytest.mark.skip(reason="requires Docker / testcontainers — run manually")
 @pytest.mark.parametrize(
     ("commodity_iri", "expected_turtle"),
     [

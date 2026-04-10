@@ -101,7 +101,6 @@ async def test_retrieve_queryable_definitions_merges_sources_with_precedence(
         settings=Settings(
             _env_file=None,
             enable_cql_jena_lucene_json=False,
-            jena_fuseki_dataset_name="mining",
             jena_assembler_path=str(assembler_path),
         ),
         repo=PyoxigraphRepo(remote_store),
@@ -145,7 +144,6 @@ async def test_retrieve_queryable_definitions_uses_generated_queryables_when_uns
         settings=Settings(
             _env_file=None,
             enable_cql_jena_lucene_json=False,
-            jena_fuseki_dataset_name="mining",
             jena_assembler_path=str(assembler_path),
         ),
         repo=PyoxigraphRepo(Store()),

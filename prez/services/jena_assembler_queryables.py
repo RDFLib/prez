@@ -38,33 +38,32 @@ FIELD_TYPE_TO_LABEL = {
 UNSUPPORTED_FIELD_TYPES = {IDX.LatLonField}
 
 
-def transform_jena_assembler_to_queryables(
-    assembler_graph: Graph, dataset_name: str
-) -> Graph:
-    service_node = _find_fuseki_service(assembler_graph, dataset_name)
+def transform_jena_assembler_to_queryables(assembler_graph: Graph) -> Graph:
+    service_node = _find_single_fuseki_service(assembler_graph)
     dataset_node = assembler_graph.value(service_node, FUSEKI.dataset)
     if dataset_node is None:
         raise JenaAssemblerTransformError(
-            f"Fuseki service '{dataset_name}' is missing fuseki:dataset."
+            "The assembler's fuseki:Service is missing fuseki:dataset."
         )
 
     text_dataset = _resolve_text_dataset(assembler_graph, dataset_node, seen=set())
-    index_node = assembler_graph.value(text_dataset, TEXT["index"])
-    if index_node is None:
+    index_nodes = _resolve_text_indexes(assembler_graph, text_dataset)
+    if not index_nodes:
         raise JenaAssemblerTransformError(
-            f"Dataset '{dataset_name}' is missing text:index."
+            "The assembler's text dataset is missing required text:indexes."
         )
 
-    shapes_list_node = assembler_graph.value(index_node, TEXT.shapes)
-    if shapes_list_node is None:
-        raise JenaAssemblerTransformError(
-            f"Dataset '{dataset_name}' is missing text:shapes."
-        )
-
-    shape_nodes = list(Collection(assembler_graph, shapes_list_node))
+    shape_nodes: list[URIRef | BNode] = []
+    for index_node in index_nodes:
+        shapes_list_node = assembler_graph.value(index_node, TEXT.shapes)
+        if shapes_list_node is None:
+            raise JenaAssemblerTransformError(
+                f"Index {index_node} is missing text:shapes."
+            )
+        shape_nodes.extend(list(Collection(assembler_graph, shapes_list_node)))
     if not shape_nodes:
         raise JenaAssemblerTransformError(
-            f"Dataset '{dataset_name}' has an empty text:shapes list."
+            "The assembler's configured indexes have no shapes in text:shapes."
         )
 
     output_graph = Graph()
@@ -87,22 +86,23 @@ def transform_jena_assembler_to_queryables(
 
     if not transformed_fields:
         raise JenaAssemblerTransformError(
-            f"Dataset '{dataset_name}' did not produce any supported queryable fields."
+            "The assembler did not produce any supported queryable fields."
         )
     return output_graph
 
 
-def _find_fuseki_service(graph: Graph, dataset_name: str) -> URIRef | BNode:
-    matching_services = list(graph.subjects(FUSEKI.name, Literal(dataset_name)))
-    if not matching_services:
+def _find_single_fuseki_service(graph: Graph) -> URIRef | BNode:
+    services = list(graph.subjects(RDF.type, FUSEKI.Service))
+    if not services:
         raise JenaAssemblerTransformError(
-            f"No fuseki:Service with fuseki:name '{dataset_name}' was found."
+            "No fuseki:Service was found in the assembler."
         )
-    if len(matching_services) > 1:
+    if len(services) > 1:
         raise JenaAssemblerTransformError(
-            f"Multiple fuseki:Service resources with fuseki:name '{dataset_name}' were found."
+            "Multiple fuseki:Service resources were found in the assembler. "
+            "Prez now assumes exactly one service per assembler file."
         )
-    return matching_services[0]
+    return services[0]
 
 
 def _resolve_text_dataset(
@@ -127,6 +127,29 @@ def _resolve_text_dataset(
     raise JenaAssemblerTransformError(
         f"Could not resolve a text:TextDataset from dataset node {dataset_node}."
     )
+
+
+def _resolve_text_indexes(
+    graph: Graph, text_dataset: URIRef | BNode
+) -> list[URIRef | BNode]:
+    direct_index = graph.value(text_dataset, TEXT["index"])
+    indexes_list = graph.value(text_dataset, TEXT.indexes)
+    if direct_index is not None and indexes_list is not None:
+        raise JenaAssemblerTransformError(
+            "Assembler text dataset must not define both text:index and text:indexes."
+        )
+
+    if indexes_list is not None:
+        if (indexes_list, RDF.first, None) in graph:
+            return list(Collection(graph, indexes_list))
+        return [indexes_list]
+
+    if direct_index is not None:
+        return [direct_index]
+
+    if indexes_list is None:
+        return []
+    return []
 
 
 def _transform_field(

@@ -349,12 +349,8 @@ def _retrieve_generated_queryable_definitions(app_state) -> Graph:
             f"Configured jena_assembler_path is not a file: {assembler_file}"
         )
 
-    dataset_name = app_state.settings.jena_fuseki_dataset_name
     assembler_graph = Graph().parse(assembler_file, format="turtle")
-    generated_graph = transform_jena_assembler_to_queryables(
-        assembler_graph,
-        dataset_name,
-    )
+    generated_graph = transform_jena_assembler_to_queryables(assembler_graph)
     _log_queryable_graph(generated_graph, "generated")
     return generated_graph
 
