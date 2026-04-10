@@ -155,17 +155,27 @@ def _resolve_text_indexes(
 def _transform_field(
     assembler_graph: Graph, field_node: URIRef | BNode, output_graph: Graph
 ) -> URIRef | None:
-    field_name = assembler_graph.value(field_node, IDX.fieldName)
+    # Support new occurrence model: blank node with idx:field -> canonical field resource.
+    # sh:path lives on the occurrence; all other metadata lives on the canonical resource.
+    canonical_ref = assembler_graph.value(field_node, IDX.field)
+    if canonical_ref is not None:
+        meta_node = canonical_ref
+        path_node = assembler_graph.value(field_node, SH.path)
+    else:
+        meta_node = field_node
+        path_node = assembler_graph.value(field_node, SH.path)
+
+    field_name = assembler_graph.value(meta_node, IDX.fieldName)
     if field_name is None:
         raise JenaAssemblerTransformError(
             f"Field {field_node} is missing required idx:fieldName."
         )
-    if assembler_graph.value(field_node, SH.path) is None:
+    if path_node is None:
         raise JenaAssemblerTransformError(
             f"Field {field_node} is missing required sh:path."
         )
 
-    field_type = assembler_graph.value(field_node, IDX.fieldType) or IDX.TextField
+    field_type = assembler_graph.value(meta_node, IDX.fieldType) or IDX.TextField
     if field_type in UNSUPPORTED_FIELD_TYPES:
         log.warning("Skipping unsupported Lucene field type %s for %s", field_type, field_node)
         return None
@@ -175,7 +185,7 @@ def _transform_field(
         log.warning("Skipping unmapped Lucene field type %s for %s", field_type, field_node)
         return None
 
-    field_uri = _field_identity(field_node, str(field_name))
+    field_uri = _field_identity(meta_node, str(field_name))
     if (field_uri, RDF.type, CQL.Queryable) in output_graph:
         return field_uri
 
@@ -191,16 +201,16 @@ def _transform_field(
         )
     )
     output_graph.add((field_uri, SH.datatype, datatype))
-    output_graph.add((field_uri, SH.path, assembler_graph.value(field_node, SH.path)))
+    output_graph.add((field_uri, SH.path, path_node))
     output_graph.add(
         (field_uri, ONT.luceneFieldType, Literal(FIELD_TYPE_TO_LABEL[field_type]))
     )
-    output_graph.add((field_uri, ONT.stored, Literal(_field_bool(assembler_graph, field_node, IDX.stored, True))))
-    output_graph.add((field_uri, ONT.indexed, Literal(_field_bool(assembler_graph, field_node, IDX.indexed, True))))
-    output_graph.add((field_uri, ONT.facetable, Literal(_field_bool(assembler_graph, field_node, IDX.facetable, False))))
-    output_graph.add((field_uri, ONT.sortable, Literal(_field_bool(assembler_graph, field_node, IDX.sortable, False))))
-    output_graph.add((field_uri, ONT.multiValued, Literal(_field_bool(assembler_graph, field_node, IDX.multiValued, False))))
-    output_graph.add((field_uri, ONT.defaultSearch, Literal(_field_bool(assembler_graph, field_node, IDX.defaultSearch, False))))
+    output_graph.add((field_uri, ONT.stored, Literal(_field_bool(assembler_graph, meta_node, IDX.stored, True))))
+    output_graph.add((field_uri, ONT.indexed, Literal(_field_bool(assembler_graph, meta_node, IDX.indexed, True))))
+    output_graph.add((field_uri, ONT.facetable, Literal(_field_bool(assembler_graph, meta_node, IDX.facetable, False))))
+    output_graph.add((field_uri, ONT.sortable, Literal(_field_bool(assembler_graph, meta_node, IDX.sortable, False))))
+    output_graph.add((field_uri, ONT.multiValued, Literal(_field_bool(assembler_graph, meta_node, IDX.multiValued, False))))
+    output_graph.add((field_uri, ONT.defaultSearch, Literal(_field_bool(assembler_graph, meta_node, IDX.defaultSearch, False))))
     return field_uri
 
 

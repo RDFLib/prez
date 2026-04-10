@@ -40,108 +40,96 @@ PREFIX ex:      <http://example.org/mining/>
     text:maxFacetHits 50000 ;
     idx:fusekiBase "http://localhost:3030" .
 
-## --- Field definitions (named resources — IRIs used in SPARQL bindings) ---
+## --- Field definitions (canonical, path-free) ---
 
 field:entityType
     idx:fieldName "entityType" ;
     idx:fieldType idx:KeywordField ;
-    idx:facetable true ;
-    sh:path rdf:type .
+    idx:facetable true .
 
 field:title
     idx:fieldName "title" ;
     idx:fieldType idx:TextField ;
-    idx:defaultSearch true ;
-    sh:path rdfs:label .
+    idx:defaultSearch true .
 
 field:description
     idx:fieldName "description" ;
-    idx:fieldType idx:TextField ;
-    sh:path <http://purl.org/dc/terms/description> .
+    idx:fieldType idx:TextField .
 
 field:commodity
     idx:fieldName "commodity" ;
     idx:fieldType idx:KeywordField ;
     idx:facetable true ;
-    idx:multiValued true ;
-    sh:path ex:commodity .
+    idx:multiValued true .
 
 field:state
     idx:fieldName "state" ;
     idx:fieldType idx:KeywordField ;
-    idx:facetable true ;
-    sh:path ex:state .
+    idx:facetable true .
 
 field:operator
     idx:fieldName "operator" ;
     idx:fieldType idx:KeywordField ;
-    idx:facetable true ;
-    sh:path ex:operator .
+    idx:facetable true .
 
 field:status
     idx:fieldName "status" ;
     idx:fieldType idx:KeywordField ;
-    idx:facetable true ;
-    sh:path ex:status .
+    idx:facetable true .
 
 field:year
     idx:fieldName "year" ;
     idx:fieldType idx:IntField ;
-    idx:sortable true ;
-    sh:path ex:year .
+    idx:sortable true .
 
 field:authorName
     idx:fieldName "authorName" ;
     idx:fieldType idx:KeywordField ;
-    idx:facetable true ;
-    sh:path ( ex:authoredBy ex:name ) .
+    idx:facetable true .
 
 field:authoredByUri
     idx:fieldName "authoredByUri" ;
     idx:fieldType idx:KeywordField ;
-    idx:multiValued true ;
-    sh:path [ sh:inversePath ex:authored ] .
+    idx:multiValued true .
 
 field:depth
     idx:fieldName "depth" ;
     idx:fieldType idx:IntField ;
-    idx:sortable true ;
-    sh:path ex:depth .
+    idx:sortable true .
 
 field:location
     idx:fieldName "location" ;
-    idx:fieldType idx:LatLonField ;
-    sh:path <http://www.opengis.net/ont/geosparql#asWKT> .
+    idx:fieldType idx:LatLonField .
 
 ## --- Shapes ---
 
 :MiningReportShape
     sh:targetClass ex:MiningReport ;
-    sh:property field:entityType ;
-    sh:property field:title ;
-    sh:property field:description ;
-    sh:property field:commodity ;
-    sh:property field:state ;
-    sh:property field:operator ;
-    sh:property field:status ;
-    sh:property field:year ;
-    sh:property field:authorName ;
-    sh:property field:authoredByUri .
+    sh:property [ idx:field field:entityType ; sh:path rdf:type ] ;
+    sh:property [ idx:field field:title ; sh:path rdfs:label ] ;
+    sh:property [ idx:field field:description ; sh:path <http://purl.org/dc/terms/description> ] ;
+    sh:property [ idx:field field:commodity ; sh:path ex:commodity ] ;
+    sh:property [ idx:field field:state ; sh:path ex:state ] ;
+    sh:property [ idx:field field:operator ; sh:path ex:operator ] ;
+    sh:property [ idx:field field:status ; sh:path ex:status ] ;
+    sh:property [ idx:field field:year ; sh:path ex:year ] ;
+    sh:property [ idx:field field:authorName ; sh:path ( ex:authoredBy ex:name ) ] ;
+    sh:property [ idx:field field:authoredByUri ; sh:path [ sh:inversePath ex:authored ] ] .
 
 :BoreholeShape
     sh:targetClass ex:Borehole ;
-    sh:property field:entityType ;
-    sh:property field:title ;
-    sh:property field:commodity ;
-    sh:property field:state ;
-    sh:property field:depth ;
-    sh:property field:location .
+    sh:property [ idx:field field:entityType ; sh:path rdf:type ] ;
+    sh:property [ idx:field field:title ; sh:path rdfs:label ] ;
+    sh:property [ idx:field field:commodity ; sh:path ex:commodity ] ;
+    sh:property [ idx:field field:state ; sh:path ex:state ] ;
+    sh:property [ idx:field field:depth ; sh:path ex:depth ] ;
+    sh:property [ idx:field field:location ; sh:path <http://www.opengis.net/ont/geosparql#asWKT> ] .
 
 :SiteShape
     sh:targetClass ex:Site ;
-    sh:property field:entityType ;
-    sh:property field:title ;
-    sh:property field:commodity ;
-    sh:property field:state ;
-    sh:property field:status ;
-    sh:property field:location .
+    sh:property [ idx:field field:entityType ; sh:path rdf:type ] ;
+    sh:property [ idx:field field:title ; sh:path rdfs:label ] ;
+    sh:property [ idx:field field:commodity ; sh:path ex:commodity ] ;
+    sh:property [ idx:field field:state ; sh:path ex:state ] ;
+    sh:property [ idx:field field:status ; sh:path ex:status ] ;
+    sh:property [ idx:field field:location ; sh:path <http://www.opengis.net/ont/geosparql#asWKT> ] .
