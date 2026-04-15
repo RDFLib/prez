@@ -473,14 +473,17 @@ def _calculate_listing_offset(query_params: ListingQueryParams) -> int:
     return int(query_params.limit) * (int(query_params.page) - 1)
 
 
-def _resolve_lucene_inner_limit(
+def _resolve_lucene_hit_limit(
     query_params: ListingQueryParams,
     runtime_settings: Settings,
 ) -> int:
-    setting_value = runtime_settings.lucene_inner_limit
-    if setting_value == "page_size":
-        return int(query_params.limit)
-    return int(setting_value)
+    if runtime_settings.fts_limit is not None:
+        return int(runtime_settings.fts_limit)
+    return int(query_params.limit)
+
+
+def _lucene_uses_limit_offset_pushdown(runtime_settings: Settings) -> bool:
+    return bool(runtime_settings.lucene_limit_offset_pushdown)
 
 
 def _normalize_lucene_search_fields(
@@ -575,9 +578,11 @@ async def generate_lucene_cql_search_query(
         offset=_calculate_listing_offset(query_params),
         lucene_index_name=runtime_settings.lucene_index_name,
         search_fields=search_fields,
-        lucene_inner_limit=_resolve_lucene_inner_limit(query_params, runtime_settings),
+        lucene_hit_limit=_resolve_lucene_hit_limit(query_params, runtime_settings),
         order_by=query_params.order_by,
         order_by_direction=query_params.order_by_direction,
+        include_matches=bool(query_params.q),
+        pagination_pushed_down=_lucene_uses_limit_offset_pushdown(runtime_settings),
     )
 
 
@@ -724,9 +729,11 @@ async def generate_lucene_cql_search_query_post(
         offset=_calculate_listing_offset(query_params),
         lucene_index_name=runtime_settings.lucene_index_name,
         search_fields=search_fields,
-        lucene_inner_limit=_resolve_lucene_inner_limit(query_params, runtime_settings),
+        lucene_hit_limit=_resolve_lucene_hit_limit(query_params, runtime_settings),
         order_by=query_params.order_by,
         order_by_direction=query_params.order_by_direction,
+        include_matches=bool(q),
+        pagination_pushed_down=_lucene_uses_limit_offset_pushdown(runtime_settings),
     )
 
 
@@ -870,9 +877,11 @@ async def generate_search_query_post(
                         offset=_calculate_listing_offset(query_params),
                         lucene_index_name=runtime_settings.lucene_index_name,
                         search_fields=search_fields,
-                        lucene_inner_limit=_resolve_lucene_inner_limit(query_params, runtime_settings),
+                        lucene_hit_limit=_resolve_lucene_hit_limit(query_params, runtime_settings),
                         order_by=query_params.order_by,
                         order_by_direction=query_params.order_by_direction,
+                        include_matches=bool(query_params.q),
+                        pagination_pushed_down=_lucene_uses_limit_offset_pushdown(runtime_settings),
                     )
                 return DummySearchMarker()
             raise HTTPException(
@@ -900,9 +909,11 @@ async def generate_search_query_post(
             offset=_calculate_listing_offset(query_params),
             lucene_index_name=runtime_settings.lucene_index_name,
             search_fields=search_fields,
-            lucene_inner_limit=_resolve_lucene_inner_limit(query_params, runtime_settings),
+            lucene_hit_limit=_resolve_lucene_hit_limit(query_params, runtime_settings),
             order_by=query_params.order_by,
             order_by_direction=query_params.order_by_direction,
+            include_matches=bool(term),
+            pagination_pushed_down=_lucene_uses_limit_offset_pushdown(runtime_settings),
         )
 
     predicates = query_params.predicates if hasattr(query_params, 'predicates') else []
@@ -1160,9 +1171,11 @@ async def generate_search_query(
                         offset=_calculate_listing_offset(query_params),
                         lucene_index_name=runtime_settings.lucene_index_name,
                         search_fields=search_fields,
-                        lucene_inner_limit=_resolve_lucene_inner_limit(query_params, runtime_settings),
+                        lucene_hit_limit=_resolve_lucene_hit_limit(query_params, runtime_settings),
                         order_by=query_params.order_by,
                         order_by_direction=query_params.order_by_direction,
+                        include_matches=bool(query_params.q),
+                        pagination_pushed_down=_lucene_uses_limit_offset_pushdown(runtime_settings),
                     )
                 # Return marker to indicate dummy search results needed
                 return DummySearchMarker()
@@ -1190,9 +1203,11 @@ async def generate_search_query(
                 offset=_calculate_listing_offset(query_params),
                 lucene_index_name=runtime_settings.lucene_index_name,
                 search_fields=search_fields,
-                lucene_inner_limit=_resolve_lucene_inner_limit(query_params, runtime_settings),
+                lucene_hit_limit=_resolve_lucene_hit_limit(query_params, runtime_settings),
                 order_by=query_params.order_by,
                 order_by_direction=query_params.order_by_direction,
+                include_matches=bool(query_params.q),
+                pagination_pushed_down=_lucene_uses_limit_offset_pushdown(runtime_settings),
             )
             logger.debug(f"Generated search query: {search_query}")
             return search_query

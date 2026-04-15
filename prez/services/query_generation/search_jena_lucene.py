@@ -142,18 +142,25 @@ class SearchQueryJenaLucene:
         offset: int,
         lucene_index_name: str,
         search_fields: str | list[str] = DEFAULT_FIELD_SPEC,
-        lucene_inner_limit: int | None = None,
+        lucene_hit_limit: int | None = None,
         filter_json: dict | None = None,
         facets: list[str] | None = None,
         order_by: str | None = None,
         order_by_direction: str | None = None,
+        include_matches: bool = True,
+        pagination_pushed_down: bool = False,
     ):
         self._limit = limit
-        self._lucene_limit = (lucene_inner_limit if lucene_inner_limit is not None else limit) + offset
+        lucene_base_limit = lucene_hit_limit if lucene_hit_limit is not None else limit
+        self._pagination_pushed_down = pagination_pushed_down
+        self._lucene_limit = (
+            lucene_base_limit if pagination_pushed_down else lucene_base_limit + offset
+        )
         self._offset = offset
         self._lucene_index_name = lucene_index_name
         self._search_fields = search_fields
         self._term = "*" if term is None else term
+        self._include_matches = include_matches
         self._filter_json = filter_json
         self._facets = facets or []
         self._sort_json = (
@@ -189,27 +196,32 @@ class SearchQueryJenaLucene:
                 predicate=IRI(value=PREZ.searchResultWeight),
                 object=weight,
             ),
-            TriplesSameSubject.from_spo(
-                subject=search_result,
-                predicate=IRI(value=PREZ.hasSearchMatch),
-                object=search_match,
-            ),
-            TriplesSameSubject.from_spo(
-                subject=search_match,
-                predicate=IRI(value=RDF.type),
-                object=IRI(value=PREZ.SearchResultMatch),
-            ),
-            TriplesSameSubject.from_spo(
-                subject=search_match,
-                predicate=IRI(value=PREZ.searchResultPredicate),
-                object=pred,
-            ),
-            TriplesSameSubject.from_spo(
-                subject=search_match,
-                predicate=IRI(value=PREZ.searchResultMatch),
-                object=match,
-            ),
         ]
+        if self._include_matches:
+            self._tss_list.extend(
+                [
+                    TriplesSameSubject.from_spo(
+                        subject=search_result,
+                        predicate=IRI(value=PREZ.hasSearchMatch),
+                        object=search_match,
+                    ),
+                    TriplesSameSubject.from_spo(
+                        subject=search_match,
+                        predicate=IRI(value=RDF.type),
+                        object=IRI(value=PREZ.SearchResultMatch),
+                    ),
+                    TriplesSameSubject.from_spo(
+                        subject=search_match,
+                        predicate=IRI(value=PREZ.searchResultPredicate),
+                        object=pred,
+                    ),
+                    TriplesSameSubject.from_spo(
+                        subject=search_match,
+                        predicate=IRI(value=PREZ.searchResultMatch),
+                        object=match,
+                    ),
+                ]
+            )
         self._tss_list.append(
             TriplesSameSubject.from_spo(
                 subject=IRI(value=PREZ.SearchResult),
@@ -239,14 +251,19 @@ class SearchQueryJenaLucene:
             sr_uri,
             weight,
             total_hits,
-            pred,
-            match,
             (self._create_hitid_expression(sr_uri, weight), search_result),
-            (
-                self._create_matchid_expression(sr_uri, pred, match, weight),
-                search_match,
-            ),
         ]
+        if self._include_matches:
+            self._inner_select_vars.extend(
+                [
+                    pred,
+                    match,
+                    (
+                        self._create_matchid_expression(sr_uri, pred, match, weight),
+                        search_match,
+                    ),
+                ]
+            )
         self._inner_select_gpnt = self._build_inner_select_gpnt(
             sr_uri=sr_uri,
             weight=weight,
@@ -494,50 +511,55 @@ class SearchQueryJenaLucene:
             )
         )
 
-        lucene_match_tb = TriplesBlock(
-            triples=TriplesSameSubjectPath(
-                content=(
-                    self._create_collection_path(
-                        GraphNodePath(
-                            varorterm_or_triplesnodepath=VarOrTerm(varorterm=hit)
+        lucene_match_tb = None
+        if self._include_matches:
+            lucene_match_tb = TriplesBlock(
+                triples=TriplesSameSubjectPath(
+                    content=(
+                        self._create_collection_path(
+                            GraphNodePath(
+                                varorterm_or_triplesnodepath=VarOrTerm(varorterm=hit)
+                            ),
+                            GraphNodePath(
+                                varorterm_or_triplesnodepath=VarOrTerm(varorterm=pred)
+                            ),
+                            GraphNodePath(
+                                varorterm_or_triplesnodepath=VarOrTerm(varorterm=match)
+                            ),
+                            GraphNodePath(
+                                varorterm_or_triplesnodepath=VarOrTerm(varorterm=snippet)
+                            ),
                         ),
-                        GraphNodePath(
-                            varorterm_or_triplesnodepath=VarOrTerm(varorterm=pred)
-                        ),
-                        GraphNodePath(
-                            varorterm_or_triplesnodepath=VarOrTerm(varorterm=match)
-                        ),
-                        GraphNodePath(
-                            varorterm_or_triplesnodepath=VarOrTerm(varorterm=snippet)
-                        ),
-                    ),
-                    PropertyListPath(
-                        plpne=PropertyListPathNotEmpty(
-                            first_pair=(
-                                VerbPath(path=self._create_predicate_path(IRI(value=LUCENE.match))),
-                                ObjectListPath(
-                                    object_paths=[
-                                        ObjectPath(
-                                            graph_node_path=GraphNodePath(
-                                                varorterm_or_triplesnodepath=self._create_collection_path()
+                        PropertyListPath(
+                            plpne=PropertyListPathNotEmpty(
+                                first_pair=(
+                                    VerbPath(path=self._create_predicate_path(IRI(value=LUCENE.match))),
+                                    ObjectListPath(
+                                        object_paths=[
+                                            ObjectPath(
+                                                graph_node_path=GraphNodePath(
+                                                    varorterm_or_triplesnodepath=self._create_collection_path()
+                                                )
                                             )
-                                        )
-                                    ]
-                                ),
+                                        ]
+                                    ),
+                                )
                             )
-                        )
-                    ),
+                        ),
+                    )
                 )
             )
+
+        graph_patterns_or_triples_blocks = [lucene_query_tb]
+        if lucene_match_tb is not None:
+            graph_patterns_or_triples_blocks.append(lucene_match_tb)
+        graph_patterns_or_triples_blocks.append(
+            GraphPatternNotTriples(content=self._build_is_iri_filter(sr_uri))
         )
 
         inner_ggp = GroupGraphPattern(
             content=GroupGraphPatternSub(
-                graph_patterns_or_triples_blocks=[
-                    lucene_query_tb,
-                    lucene_match_tb,
-                    GraphPatternNotTriples(content=self._build_is_iri_filter(sr_uri)),
-                ]
+                graph_patterns_or_triples_blocks=graph_patterns_or_triples_blocks
             )
         )
         self._lucene_query_tb = lucene_query_tb
@@ -605,6 +627,20 @@ class SearchQueryJenaLucene:
 
     def _build_search_subselect(self) -> SubSelect:
         weight = Var(value="weight")
+        graph_patterns_or_triples_blocks = [self._lucene_query_tb]
+        if self._lucene_match_tb is not None:
+            graph_patterns_or_triples_blocks.append(self._lucene_match_tb)
+        graph_patterns_or_triples_blocks.append(
+            GraphPatternNotTriples(
+                content=self._build_is_iri_filter(Var(value="focus_node"))
+            )
+        )
+        limit_offset = None
+        if not self._pagination_pushed_down:
+            limit_offset = LimitOffsetClauses(
+                limit_clause=LimitClause(limit=self._limit),
+                offset_clause=OffsetClause(offset=self._offset),
+            )
         return SubSelect(
             select_clause=SelectClause(
                 distinct=True,
@@ -613,13 +649,7 @@ class SearchQueryJenaLucene:
             where_clause=WhereClause(
                 group_graph_pattern=GroupGraphPattern(
                     content=GroupGraphPatternSub(
-                        graph_patterns_or_triples_blocks=[
-                            self._lucene_query_tb,
-                            self._lucene_match_tb,
-                            GraphPatternNotTriples(
-                                content=self._build_is_iri_filter(Var(value="focus_node"))
-                            ),
-                        ]
+                        graph_patterns_or_triples_blocks=graph_patterns_or_triples_blocks
                     )
                 )
             ),
@@ -632,10 +662,7 @@ class SearchQueryJenaLucene:
                         )
                     ]
                 ),
-                limit_offset=LimitOffsetClauses(
-                    limit_clause=LimitClause(limit=self._limit),
-                    offset_clause=OffsetClause(offset=self._offset),
-                ),
+                limit_offset=limit_offset,
             ),
         )
 
@@ -700,10 +727,11 @@ class SearchQueryJenaLucene:
             self._lucene_query_tb.to_string(),
             self.valid_lucene_query_triple,
         )
-        normalized_query = normalized_query.replace(
-            self._lucene_match_tb.to_string(),
-            self.valid_lucene_match_triple,
-        )
+        if self._lucene_match_tb is not None:
+            normalized_query = normalized_query.replace(
+                self._lucene_match_tb.to_string(),
+                self.valid_lucene_match_triple,
+            )
         if self._lucene_facet_tb is not None:
             normalized_query = normalized_query.replace(
                 self._lucene_facet_tb.to_string(),
@@ -742,6 +770,10 @@ class SearchQueryJenaLucene:
     @property
     def has_facets(self) -> bool:
         return len(self._facets) > 0
+
+    @property
+    def pagination_pushed_down(self) -> bool:
+        return self._pagination_pushed_down
 
     def set_facets(self, facets: list) -> None:
         """Set facets after construction (e.g. resolved from a facet profile)."""

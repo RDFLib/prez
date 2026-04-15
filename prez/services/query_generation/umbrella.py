@@ -171,6 +171,12 @@ class PrezQueryConstructor(ConstructQuery):
             ss_gpotb.extend(inner_select_gpnt)
 
         if inner_select_tssp_list or inner_select_gpnt:
+            limit_offset = None
+            if limit is not None or offset is not None:
+                limit_offset = LimitOffsetClauses(
+                    limit_clause=LimitClause(limit=limit) if limit is not None else None,
+                    offset_clause=OffsetClause(offset=offset) if offset is not None else None,
+                )
             gpnt_inner_subselect = GraphPatternNotTriples(
                 content=GroupOrUnionGraphPattern(
                     group_graph_patterns=[
@@ -187,14 +193,7 @@ class PrezQueryConstructor(ConstructQuery):
                                     )
                                 ),
                                 solution_modifier=SolutionModifier(
-                                    limit_offset=LimitOffsetClauses(
-                                        limit_clause=LimitClause(
-                                            limit=limit
-                                        ),  # LIMIT m
-                                        offset_clause=OffsetClause(
-                                            offset=offset
-                                        ),  # OFFSET n
-                                    ),
+                                    limit_offset=limit_offset,
                                     order_by=oc,
                                 ),
                             )
@@ -297,7 +296,11 @@ def merge_listing_query_grammar_inputs(
         # Skip DummySearchMarker which doesn't have these attributes
         kwargs["construct_tss_list"].extend(search_query.tss_list)
         kwargs["inner_select_vars"].extend(search_query.inner_select_vars)
-        kwargs["limit"] = search_query.limit
+        if getattr(search_query, "pagination_pushed_down", False):
+            kwargs["limit"] = None
+            kwargs["offset"] = None
+        else:
+            kwargs["limit"] = search_query.limit
         kwargs["order_by_value"] = search_query.order_by_val
         kwargs["order_by_direction"] = search_query.order_by_direction
         kwargs["inner_select_gpnt"].extend([search_query.inner_select_gpnt])

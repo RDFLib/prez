@@ -115,14 +115,13 @@ class Settings(BaseSettings):
     gzip_min_size: int = 1000
     # If True, allow a single rdfs:subClassOf hop when selecting profiles. If False, exact class only.
     profile_constraint_allow_subclass: bool = False
-    # Optional inner limit for Fuseki FTS text:query. When None, no limit is added to the text:query.
-    # When set to an integer, adds that value as a limit argument to the FTS query.
+    # Shared Lucene/FTS hit limit. For Fuseki FTS this is appended to text:query.
+    # For Jena Lucene JSON this caps the Lucene hit window. When unset, the request `limit` is used.
     fts_limit: Optional[int] = None
     enable_cql_jena_lucene_json: bool = False
-    # Controls how many Lucene hits Prez asks for before SPARQL applies LIMIT/OFFSET.
-    # Use "page_size" when filters are expected to be pushed down into Lucene/CQL.
-    # Use a larger integer only when later SPARQL stages may discard some Lucene hits.
-    lucene_inner_limit: int | Literal["page_size"] = "page_size"
+    # If True, Jena Lucene listing queries omit the outer SPARQL LIMIT/OFFSET and rely on Lucene pagination pushdown.
+    # This should remain enabled when filters/sorting are fully handled in Lucene/CQL.
+    lucene_limit_offset_pushdown: bool = True
     lucene_index_name: str = "default"
     lucene_search_fields: str | list[str] = "default"
     jena_fuseki_dataset_name: Optional[str] = None
@@ -174,13 +173,13 @@ class Settings(BaseSettings):
             )
         return v
 
-    @field_validator("lucene_inner_limit")
+    @field_validator("fts_limit")
     @classmethod
-    def validate_lucene_inner_limit(cls, v):
-        if v == "page_size":
+    def validate_fts_limit(cls, v):
+        if v is None:
             return v
         if v <= 0:
-            raise ValueError("lucene_inner_limit must be a positive integer or 'page_size'")
+            raise ValueError("fts_limit must be a positive integer")
         return v
 
     @field_validator("lucene_index_name")

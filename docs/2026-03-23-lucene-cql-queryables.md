@@ -26,14 +26,15 @@ The same feature also extends OGC Features `/queryables` so that Lucene-capable 
 The feature is controlled by the following settings:
 
 - `enable_cql_jena_lucene_json`
-- `lucene_inner_limit`
+- `fts_limit`
+- `lucene_limit_offset_pushdown`
 - `lucene_index_name`
 - `jena_fuseki_dataset_name`
 - `jena_assembler_path`
 
 Validation rules:
 
-- `lucene_inner_limit` must be a positive integer or `page_size`
+- `fts_limit` must be positive when set
 - `lucene_index_name` must be a non-empty string
 - when `enable_cql_jena_lucene_json=true`, `jena_fuseki_dataset_name` must be set
 - when `enable_cql_jena_lucene_json=true`, `sparql_repo_type` must be `remote`
@@ -43,7 +44,9 @@ This implementation is intended for a remote Fuseki-compatible SPARQL endpoint. 
 
 `lucene_index_name` defaults to `default` and is emitted as the leading Lucene property-function argument in `luc:query` and `luc:facet`.
 
-`lucene_inner_limit` controls how many Lucene hits Prez requests before SPARQL applies the visible `LIMIT/OFFSET`. Set it to `page_size` when all effective filtering is expected to be pushed down into Lucene/CQL. Use a larger integer only if later SPARQL stages may discard some Lucene hits.
+`fts_limit` is the primary Lucene hit cap. When set, Prez uses it for both Fuseki FTS and Jena Lucene JSON searches.
+
+`lucene_limit_offset_pushdown` controls whether Jena Lucene listing queries omit the outer SPARQL `LIMIT/OFFSET` and rely on Lucene-side pagination semantics instead. It defaults to `true`.
 
 `jena_assembler_path` is optional and points at a Turtle Jena assembler file that Prez will parse during startup to generate Lucene queryables.
 
