@@ -26,14 +26,14 @@ The same feature also extends OGC Features `/queryables` so that Lucene-capable 
 The feature is controlled by the following settings:
 
 - `enable_cql_jena_lucene_json`
-- `lucene_default_limit`
+- `lucene_inner_limit`
 - `lucene_index_name`
 - `jena_fuseki_dataset_name`
 - `jena_assembler_path`
 
 Validation rules:
 
-- `lucene_default_limit` must be a positive integer
+- `lucene_inner_limit` must be a positive integer or `page_size`
 - `lucene_index_name` must be a non-empty string
 - when `enable_cql_jena_lucene_json=true`, `jena_fuseki_dataset_name` must be set
 - when `enable_cql_jena_lucene_json=true`, `sparql_repo_type` must be `remote`
@@ -42,6 +42,8 @@ Validation rules:
 This implementation is intended for a remote Fuseki-compatible SPARQL endpoint. Local `pyoxigraph` stores do not support `luc:query`.
 
 `lucene_index_name` defaults to `default` and is emitted as the leading Lucene property-function argument in `luc:query` and `luc:facet`.
+
+`lucene_inner_limit` controls how many Lucene hits Prez requests before SPARQL applies the visible `LIMIT/OFFSET`. Set it to `page_size` when all effective filtering is expected to be pushed down into Lucene/CQL. Use a larger integer only if later SPARQL stages may discard some Lucene hits.
 
 `jena_assembler_path` is optional and points at a Turtle Jena assembler file that Prez will parse during startup to generate Lucene queryables.
 
@@ -57,7 +59,7 @@ Accepted parameters:
 - `filter`: optional JSON string, must parse to an object
 - `facets`: optional repeated query params of Lucene field IRIs
 - `facet_profile`: optional existing Prez facet profile IRI
-- `limit`: optional positive integer, defaults to `lucene_default_limit`
+- `limit`: optional positive integer, defaults to the normal Prez listing limit
 - `offset`: optional non-negative integer, defaults to `0`
 
 Example:
