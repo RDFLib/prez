@@ -169,6 +169,11 @@ class ListingQueryParams:
             description="CRS used for the filter expression",
         ),
         q: Optional[str] = Query(None, description="Search query", example="building"),
+        fields: Optional[List[str]] = Query(
+            default=None,
+            description="Optional Lucene search fields override. Repeat to target specific indexed fields.",
+            alias="fields",
+        ),
         _filter: Optional[str] = Query(
             default=None, description="CQL JSON expression.", alias="filter"
         ),
@@ -193,6 +198,7 @@ class ListingQueryParams:
         ),
     ):
         self.q = q
+        self.fields = fields
         self.profile = profile
         self.page = page
         self.limit = limit
@@ -267,6 +273,7 @@ class ListingPostBody(BaseModel):
     filter_lang: Optional[str] = "cql2-json"
     filter_crs: Optional[str] = "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
     q: Optional[str] = None
+    fields: Optional[List[str] | str] = None
     predicates: Optional[List[str]] = None
     filter: Optional[Dict[str, Any]] = None
     order_by: Optional[str] = None

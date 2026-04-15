@@ -465,21 +465,75 @@ def _parse_lucene_filter_json(
     return filter_json
 
 
-def _apply_lucene_default_limit(
-    query_params: ListingQueryParams,
-    runtime_settings: Settings,
-    limit_supplied: bool,
-) -> None:
-    if not limit_supplied:
-        query_params.limit = runtime_settings.lucene_default_limit
-
-
 def _calculate_listing_offset(query_params: ListingQueryParams) -> int:
     if query_params.offset is not None:
         return int(query_params.offset)
     if query_params.startindex is not None:
         return int(query_params.startindex)
     return int(query_params.limit) * (int(query_params.page) - 1)
+
+
+def _resolve_lucene_inner_limit(
+    query_params: ListingQueryParams,
+    runtime_settings: Settings,
+) -> int:
+    setting_value = runtime_settings.lucene_inner_limit
+    if setting_value == "page_size":
+        return int(query_params.limit)
+    return int(setting_value)
+
+
+def _normalize_lucene_search_fields(
+    fields,
+    source: str,
+) -> str | list[str] | None:
+    if fields is None:
+        return None
+    if isinstance(fields, str):
+        normalized = fields.strip()
+        if not normalized:
+            raise HTTPException(
+                status_code=400,
+                detail=f"{source} fields must be 'default' or a non-empty string/list.",
+            )
+        return normalized if normalized == "default" else [normalized]
+    if isinstance(fields, list):
+        normalized = []
+        for field in fields:
+            if not isinstance(field, str) or not field.strip():
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"{source} fields must be 'default' or a non-empty string/list.",
+                )
+            normalized.append(field.strip())
+        if not normalized:
+            raise HTTPException(
+                status_code=400,
+                detail=f"{source} fields must be 'default' or a non-empty string/list.",
+            )
+        if "default" in normalized:
+            if len(normalized) > 1:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"{source} fields cannot mix 'default' with explicit field names.",
+                )
+            return "default"
+        return normalized
+    raise HTTPException(
+        status_code=400,
+        detail=f"{source} fields must be 'default' or a non-empty string/list.",
+    )
+
+
+def _resolve_lucene_search_fields(
+    override_fields,
+    runtime_settings: Settings,
+    source: str,
+) -> str | list[str]:
+    normalized_override = _normalize_lucene_search_fields(override_fields, source)
+    if normalized_override is not None:
+        return normalized_override
+    return runtime_settings.lucene_search_fields
 
 
 def _search_uses_jena_lucene(endpoint_uri: URIRef, runtime_settings: Settings) -> bool:
@@ -495,11 +549,6 @@ async def lucene_cql_get_parser_dependency(
     runtime_settings: Settings = Depends(get_runtime_settings),
     facets: list[str] | None = Depends(lucene_cql_get_facets_dependency),
 ) -> CQLParser | None:
-    _apply_lucene_default_limit(
-        query_params,
-        runtime_settings,
-        limit_supplied=request.query_params.get("limit") is not None,
-    )
     _ = facets
     _parse_lucene_filter_json(query_params._filter, "GET")
     return None
@@ -511,13 +560,13 @@ async def generate_lucene_cql_search_query(
     runtime_settings: Settings = Depends(get_runtime_settings),
     facets: list[str] | None = Depends(lucene_cql_get_facets_dependency),
 ):
-    _apply_lucene_default_limit(
-        query_params,
-        runtime_settings,
-        limit_supplied=request.query_params.get("limit") is not None,
-    )
     _ = facets
     filter_json = _parse_lucene_filter_json(query_params._filter, "GET")
+    search_fields = _resolve_lucene_search_fields(
+        request.query_params.getlist("fields") or None,
+        runtime_settings,
+        "GET",
+    )
     return SearchQueryJenaLucene(
         term=query_params.q,
         facets=facets,
@@ -525,6 +574,8 @@ async def generate_lucene_cql_search_query(
         limit=int(query_params.limit),
         offset=_calculate_listing_offset(query_params),
         lucene_index_name=runtime_settings.lucene_index_name,
+        search_fields=search_fields,
+        lucene_inner_limit=_resolve_lucene_inner_limit(query_params, runtime_settings),
         order_by=query_params.order_by,
         order_by_direction=query_params.order_by_direction,
     )
@@ -547,6 +598,7 @@ async def listing_post_params_dependency(request: Request) -> ListingQueryParams
             "page": 1,
             "limit": 10,
             "q": "search term",
+            "fields": ["urn:jena:lucene:field#id"],
             "filter": { ... CQL2-JSON ... },
             "filter-lang": "cql2-json",
             "filter_crs": "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
@@ -624,6 +676,7 @@ async def listing_post_params_dependency(request: Request) -> ListingQueryParams
     params.order_by_direction = body.get("order_by_direction")
     params._filter = filter_str
     params.q = body.get("q")
+    params.fields = body.get("fields")
     params.predicates = body.get("predicates", [])
     params.subscription_key = body.get("subscription-key")
 
@@ -641,11 +694,6 @@ async def lucene_cql_post_parser_dependency(
     body = await _parse_post_body(request)
     if body.get("q") is not None and not isinstance(body.get("q"), str):
         raise HTTPException(status_code=400, detail="POST q must be a string.")
-    _apply_lucene_default_limit(
-        query_params,
-        runtime_settings,
-        limit_supplied="limit" in body,
-    )
     _ = facets
     _parse_lucene_filter_json(body.get("filter"), "POST")
     return None
@@ -661,13 +709,13 @@ async def generate_lucene_cql_search_query_post(
     q = body.get("q")
     if q is not None and not isinstance(q, str):
         raise HTTPException(status_code=400, detail="POST q must be a string.")
-    _apply_lucene_default_limit(
-        query_params,
-        runtime_settings,
-        limit_supplied="limit" in body,
-    )
     _ = facets
     filter_json = _parse_lucene_filter_json(body.get("filter"), "POST")
+    search_fields = _resolve_lucene_search_fields(
+        body.get("fields"),
+        runtime_settings,
+        "POST",
+    )
     return SearchQueryJenaLucene(
         term=q,
         facets=facets,
@@ -675,6 +723,8 @@ async def generate_lucene_cql_search_query_post(
         limit=int(query_params.limit),
         offset=_calculate_listing_offset(query_params),
         lucene_index_name=runtime_settings.lucene_index_name,
+        search_fields=search_fields,
+        lucene_inner_limit=_resolve_lucene_inner_limit(query_params, runtime_settings),
         order_by=query_params.order_by,
         order_by_direction=query_params.order_by_direction,
     )
@@ -806,12 +856,12 @@ async def generate_search_query_post(
             if has_filtering_params():
                 if _search_uses_jena_lucene(endpoint_uri_type[0], runtime_settings):
                     body = await _parse_post_body(request)
-                    _apply_lucene_default_limit(
-                        query_params,
-                        runtime_settings,
-                        limit_supplied="limit" in body,
-                    )
                     filter_json = _parse_lucene_filter_json(query_params._filter, "POST")
+                    search_fields = _resolve_lucene_search_fields(
+                        body.get("fields"),
+                        runtime_settings,
+                        "POST",
+                    )
                     return SearchQueryJenaLucene(
                         term=query_params.q,
                         facets=None,
@@ -819,6 +869,8 @@ async def generate_search_query_post(
                         limit=int(query_params.limit),
                         offset=_calculate_listing_offset(query_params),
                         lucene_index_name=runtime_settings.lucene_index_name,
+                        search_fields=search_fields,
+                        lucene_inner_limit=_resolve_lucene_inner_limit(query_params, runtime_settings),
                         order_by=query_params.order_by,
                         order_by_direction=query_params.order_by_direction,
                     )
@@ -834,12 +886,12 @@ async def generate_search_query_post(
 
     if _search_uses_jena_lucene(endpoint_uri_type[0], runtime_settings):
         body = await _parse_post_body(request)
-        _apply_lucene_default_limit(
-            query_params,
-            runtime_settings,
-            limit_supplied="limit" in body,
-        )
         filter_json = _parse_lucene_filter_json(query_params._filter, "POST")
+        search_fields = _resolve_lucene_search_fields(
+            body.get("fields"),
+            runtime_settings,
+            "POST",
+        )
         return SearchQueryJenaLucene(
             term=term,
             facets=None,
@@ -847,6 +899,8 @@ async def generate_search_query_post(
             limit=int(query_params.limit),
             offset=_calculate_listing_offset(query_params),
             lucene_index_name=runtime_settings.lucene_index_name,
+            search_fields=search_fields,
+            lucene_inner_limit=_resolve_lucene_inner_limit(query_params, runtime_settings),
             order_by=query_params.order_by,
             order_by_direction=query_params.order_by_direction,
         )
@@ -1092,12 +1146,12 @@ async def generate_search_query(
             # Allow empty search term if filtering/faceting parameters are present
             if has_filtering_params():
                 if _search_uses_jena_lucene(endpoint_uri_type[0], runtime_settings):
-                    _apply_lucene_default_limit(
-                        query_params,
-                        runtime_settings,
-                        limit_supplied=request.query_params.get("limit") is not None,
-                    )
                     filter_json = _parse_lucene_filter_json(query_params._filter, "GET")
+                    search_fields = _resolve_lucene_search_fields(
+                        request.query_params.getlist("fields") or None,
+                        runtime_settings,
+                        "GET",
+                    )
                     return SearchQueryJenaLucene(
                         term=query_params.q,
                         facets=None,
@@ -1105,6 +1159,8 @@ async def generate_search_query(
                         limit=int(query_params.limit),
                         offset=_calculate_listing_offset(query_params),
                         lucene_index_name=runtime_settings.lucene_index_name,
+                        search_fields=search_fields,
+                        lucene_inner_limit=_resolve_lucene_inner_limit(query_params, runtime_settings),
                         order_by=query_params.order_by,
                         order_by_direction=query_params.order_by_direction,
                     )
@@ -1120,12 +1176,12 @@ async def generate_search_query(
             return None
     else:
         if _search_uses_jena_lucene(endpoint_uri_type[0], runtime_settings):
-            _apply_lucene_default_limit(
-                query_params,
-                runtime_settings,
-                limit_supplied=request.query_params.get("limit") is not None,
-            )
             filter_json = _parse_lucene_filter_json(query_params._filter, "GET")
+            search_fields = _resolve_lucene_search_fields(
+                request.query_params.getlist("fields") or None,
+                runtime_settings,
+                "GET",
+            )
             search_query = SearchQueryJenaLucene(
                 term=query_params.q,
                 facets=None,
@@ -1133,6 +1189,8 @@ async def generate_search_query(
                 limit=int(query_params.limit),
                 offset=_calculate_listing_offset(query_params),
                 lucene_index_name=runtime_settings.lucene_index_name,
+                search_fields=search_fields,
+                lucene_inner_limit=_resolve_lucene_inner_limit(query_params, runtime_settings),
                 order_by=query_params.order_by,
                 order_by_direction=query_params.order_by_direction,
             )

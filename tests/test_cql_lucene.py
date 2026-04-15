@@ -126,14 +126,15 @@ def _build_lucene_test_client(
     test_repo: Repo | None,
     *,
     lucene_index_name: str = "default",
+    lucene_search_fields: str | list[str] = "default",
     default_profile_uri: str = "http://example.org/profile",
     profile_tss_list: list[TriplesSameSubject] | None = None,
 ) -> TestClient:
     local_settings = Settings(
         enable_cql_jena_lucene_json=True,
         jena_fuseki_dataset_name="dataset",
-        lucene_default_limit=77,
         lucene_index_name=lucene_index_name,
+        lucene_search_fields=lucene_search_fields,
         sparql_repo_type="remote",
         sparql_endpoint="http://example.com/dataset/sparql",
     )
@@ -142,8 +143,8 @@ def _build_lucene_test_client(
         for key in (
             "enable_cql_jena_lucene_json",
             "jena_fuseki_dataset_name",
-            "lucene_default_limit",
             "lucene_index_name",
+            "lucene_search_fields",
             "sparql_repo_type",
             "sparql_endpoint",
         )
@@ -311,14 +312,30 @@ def test_jena_assembler_path_requires_dataset_name():
     assert settings.jena_assembler_path == "/tmp/config.ttl"
 
 
-def test_lucene_default_limit_must_be_positive():
-    with pytest.raises(ValueError, match="lucene_default_limit"):
-        Settings(lucene_default_limit=0)
-
-
 def test_lucene_index_name_must_be_non_empty():
     with pytest.raises(ValueError, match="lucene_index_name"):
         Settings(lucene_index_name="  ")
+
+
+def test_lucene_inner_limit_must_be_positive_or_page_size():
+    with pytest.raises(ValueError, match="lucene_inner_limit"):
+        Settings(lucene_inner_limit=0)
+
+    settings = Settings(lucene_inner_limit="page_size")
+    assert settings.lucene_inner_limit == "page_size"
+
+
+def test_lucene_search_fields_accepts_default_or_list():
+    assert Settings(lucene_search_fields="default").lucene_search_fields == "default"
+    assert Settings(
+        lucene_search_fields=["urn:jena:lucene:field#id", "urn:jena:lucene:field#label"]
+    ).lucene_search_fields == [
+        "urn:jena:lucene:field#id",
+        "urn:jena:lucene:field#label",
+    ]
+
+    with pytest.raises(ValueError, match="lucene_search_fields"):
+        Settings(lucene_search_fields=[])
 
 
 def test_cql_router_registration_defaults_to_legacy_router():
@@ -354,8 +371,25 @@ def test_search_query_jena_lucene_defaults_q_to_wildcard():
 
     assert "urn:jena:lucene:index#query" in query_fragment
     assert "(?hit ?focus_node ?weight ?totalHits)" in query_fragment
-    assert '("default" "default" "*" "" "" 106)' in query_fragment
-    assert search_query.limit == 101
+    assert '("default" "default" "*" "" "" 105)' in query_fragment
+    assert search_query.limit == 100
+
+
+def test_search_query_jena_lucene_supports_explicit_search_fields():
+    search_query = SearchQueryJenaLucene(
+        term="ore",
+        limit=5,
+        offset=0,
+        lucene_index_name="default",
+        search_fields=["urn:jena:lucene:field#id", "urn:jena:lucene:field#label"],
+    )
+
+    query_fragment = search_query.valid_lucene_query_triple
+
+    assert (
+        '"[\\"urn:jena:lucene:field#id\\",\\"urn:jena:lucene:field#label\\"]"'
+        in query_fragment
+    )
 
 
 def test_search_query_jena_lucene_includes_compact_filter_json():
@@ -379,7 +413,20 @@ def test_search_query_jena_lucene_includes_compact_filter_json():
         '"{\\"op\\":\\"=\\",\\"args\\":[{\\"property\\":\\"http://example.com/predicate\\"},\\"Gold\\"]}"'
         in query_fragment
     )
-    assert query_fragment.endswith("16) .")
+    assert query_fragment.endswith("15) .")
+
+
+def test_search_query_jena_lucene_supports_explicit_inner_limit_override():
+    search_query = SearchQueryJenaLucene(
+        term="ore",
+        limit=5,
+        offset=10,
+        lucene_index_name="default",
+        lucene_inner_limit=25,
+    )
+
+    assert search_query.valid_lucene_query_triple.endswith("35) .")
+    assert search_query.limit == 5
 
 
 def test_search_query_jena_lucene_builds_combined_construct_query_for_facets():
@@ -423,7 +470,7 @@ def test_search_query_jena_lucene_builds_combined_construct_query_for_facets():
     assert '("default" "default" "deep"' in query_string
 
 
-def test_lucene_cql_get_supports_conneg_and_uses_default_limit(test_repo: Repo):
+def test_lucene_cql_get_supports_conneg_and_uses_listing_default_limit(test_repo: Repo):
     with _build_lucene_test_client(test_repo) as client:
         response = client.get("/cql", params={"_mediatype": "application/sparql-query"})
 
@@ -434,8 +481,8 @@ def test_lucene_cql_get_supports_conneg_and_uses_default_limit(test_repo: Repo):
     assert "urn:jena:lucene:index#match" in response.text
     assert "(?hit ?focus_node ?weight ?totalHits)" in response.text
     assert "<https://prez.dev/count> ?totalHits" in response.text
-    assert '("default" "default" "*" "" "" 78)' in response.text
-    assert "LIMIT 78" in response.text
+    assert '("default" "default" "*" "" "" 10)' in response.text
+    assert "LIMIT 10" in response.text
 
 
 def test_lucene_cql_get_accepts_q_filter_limit_and_offset(test_repo: Repo):
@@ -472,12 +519,47 @@ def test_lucene_cql_get_accepts_q_filter_limit_and_offset(test_repo: Repo):
     )
 
 
+def test_lucene_cql_get_uses_configured_search_fields(test_repo: Repo):
+    with _build_lucene_test_client(
+        test_repo,
+        lucene_search_fields=["urn:jena:lucene:field#id"],
+    ) as client:
+        response = client.get("/cql", params={"_mediatype": "application/sparql-query"})
+
+    assert response.status_code == 200
+    assert '"[\\"urn:jena:lucene:field#id\\"]"' in response.text
+
+
+def test_lucene_cql_get_fields_param_overrides_configured_search_fields(test_repo: Repo):
+    with _build_lucene_test_client(
+        test_repo,
+        lucene_search_fields=["urn:jena:lucene:field#label"],
+    ) as client:
+        response = client.get(
+            "/cql",
+            params={
+                "_mediatype": "application/sparql-query",
+                "fields": [
+                    "urn:jena:lucene:field#id",
+                    "urn:jena:lucene:field#altLabel",
+                ],
+            },
+        )
+
+    assert response.status_code == 200
+    assert (
+        '"[\\"urn:jena:lucene:field#id\\",\\"urn:jena:lucene:field#altLabel\\"]"'
+        in response.text
+    )
+    assert '"[\\"urn:jena:lucene:field#label\\"]"' not in response.text
+
+
 @pytest.mark.asyncio
 async def test_generate_search_query_uses_lucene_when_feature_flag_enabled(test_repo: Repo):
     runtime_settings = Settings(
         enable_cql_jena_lucene_json=True,
-        lucene_default_limit=77,
         lucene_index_name="shacl",
+        lucene_search_fields=["urn:jena:lucene:field#id"],
         sparql_repo_type="remote",
         sparql_endpoint="http://example.com/dataset/sparql",
     )
@@ -509,7 +591,10 @@ async def test_generate_search_query_uses_lucene_when_feature_flag_enabled(test_
 
     assert isinstance(search_query, SearchQueryJenaLucene)
     assert "(?hit ?focus_node ?weight ?totalHits)" in search_query.valid_lucene_query_triple
-    assert '("shacl" "default" "ore"' in search_query.valid_lucene_query_triple
+    assert (
+        '("shacl" "[\\"urn:jena:lucene:field#id\\"]" "ore"'
+        in search_query.valid_lucene_query_triple
+    )
 
 
 @pytest.mark.asyncio
@@ -518,7 +603,6 @@ async def test_generate_search_query_with_filter_only_uses_wildcard_lucene_query
 ):
     runtime_settings = Settings(
         enable_cql_jena_lucene_json=True,
-        lucene_default_limit=77,
         lucene_index_name="default",
         sparql_repo_type="remote",
         sparql_endpoint="http://example.com/dataset/sparql",
@@ -549,15 +633,85 @@ async def test_generate_search_query_with_filter_only_uses_wildcard_lucene_query
     assert isinstance(search_query, SearchQueryJenaLucene)
     assert '("default" "default" "*"' in search_query.valid_lucene_query_triple
     assert '"{\\"op\\":\\"=\\",\\"args\\":[{\\"property\\":\\"urn:jena:lucene:field#commodity\\"},\\"Gold\\"]}"' in search_query.valid_lucene_query_triple
-    assert search_query.valid_lucene_query_triple.endswith('78) .')
-    assert search_query.limit == 78
+    assert search_query.valid_lucene_query_triple.endswith('10) .')
+    assert search_query.limit == 10
+
+
+@pytest.mark.asyncio
+async def test_generate_search_query_get_fields_override_takes_precedence(
+    test_repo: Repo,
+):
+    runtime_settings = Settings(
+        enable_cql_jena_lucene_json=True,
+        lucene_index_name="default",
+        lucene_search_fields=["urn:jena:lucene:field#label"],
+        sparql_repo_type="remote",
+        sparql_endpoint="http://example.com/dataset/sparql",
+    )
+    query_params = ListingQueryParams(
+        page=1,
+        limit=5,
+        q="ore",
+        fields=["urn:jena:lucene:field#id"],
+    )
+
+    search_query = await generate_search_query(
+        request=_make_request("/search?q=ore&limit=5&fields=urn:jena:lucene:field%23id"),
+        query_params=query_params,
+        system_repo=test_repo,
+        endpoint_uri_type=(EP["extended-ogc-records/search"], ONT["ListingEndpoint"]),
+        runtime_settings=runtime_settings,
+    )
+
+    assert isinstance(search_query, SearchQueryJenaLucene)
+    assert '"[\\"urn:jena:lucene:field#id\\"]"' in search_query.valid_lucene_query_triple
+    assert '"[\\"urn:jena:lucene:field#label\\"]"' not in search_query.valid_lucene_query_triple
+
+
+@pytest.mark.asyncio
+async def test_generate_search_query_uses_configured_lucene_inner_limit(
+    test_repo: Repo,
+):
+    runtime_settings = Settings(
+        enable_cql_jena_lucene_json=True,
+        lucene_inner_limit=25,
+        lucene_index_name="default",
+        sparql_repo_type="remote",
+        sparql_endpoint="http://example.com/dataset/sparql",
+    )
+    query_params = ListingQueryParams(
+        page=1,
+        limit=5,
+        q="ore",
+        _filter=json.dumps(
+            {
+                "op": "=",
+                "args": [
+                    {"property": "urn:jena:lucene:field#commodity"},
+                    "Gold",
+                ],
+            }
+        ),
+        offset=10,
+    )
+
+    search_query = await generate_search_query(
+        request=_make_request("/search?q=ore&limit=5&offset=10&filter=%7B%7D"),
+        query_params=query_params,
+        system_repo=test_repo,
+        endpoint_uri_type=(EP["extended-ogc-records/search"], ONT["ListingEndpoint"]),
+        runtime_settings=runtime_settings,
+    )
+
+    assert isinstance(search_query, SearchQueryJenaLucene)
+    assert search_query.valid_lucene_query_triple.endswith("35) .")
+    assert search_query.limit == 5
 
 
 @pytest.mark.asyncio
 async def test_search_parser_dependencies_stand_down_for_lucene_search():
     runtime_settings = Settings(
         enable_cql_jena_lucene_json=True,
-        lucene_default_limit=77,
         sparql_repo_type="remote",
         sparql_endpoint="http://example.com/dataset/sparql",
     )
@@ -598,8 +752,8 @@ async def test_generate_search_query_post_uses_lucene_when_feature_flag_enabled(
 ):
     runtime_settings = Settings(
         enable_cql_jena_lucene_json=True,
-        lucene_default_limit=77,
         lucene_index_name="default",
+        lucene_search_fields=["urn:jena:lucene:field#label"],
         sparql_repo_type="remote",
         sparql_endpoint="http://example.com/dataset/sparql",
     )
@@ -614,10 +768,12 @@ async def test_generate_search_query_post_uses_lucene_when_feature_flag_enabled(
         },
         "limit": 5,
         "offset": 10,
+        "fields": ["urn:jena:lucene:field#id"],
     }
     query_params = ListingQueryParams(
         page=1,
         q="ore",
+        fields=["urn:jena:lucene:field#id"],
         _filter=json.dumps(body["filter"]),
         limit=5,
         offset=10,
@@ -632,8 +788,11 @@ async def test_generate_search_query_post_uses_lucene_when_feature_flag_enabled(
     )
 
     assert isinstance(search_query, SearchQueryJenaLucene)
-    assert '("default" "default" "ore"' in search_query.valid_lucene_query_triple
-    assert search_query.valid_lucene_query_triple.endswith("16) .")
+    assert (
+        '("default" "[\\"urn:jena:lucene:field#id\\"]" "ore"'
+        in search_query.valid_lucene_query_triple
+    )
+    assert search_query.valid_lucene_query_triple.endswith("15) .")
 
 
 @pytest.mark.asyncio
@@ -765,9 +924,9 @@ def test_lucene_cql_post_accepts_q_filter_limit_and_offset(test_repo: Repo):
         '"{\\"op\\":\\"=\\",\\"args\\":[{\\"property\\":\\"urn:jena:lucene:field#commodity\\"},\\"Gold\\"]}"'
         in response.text
     )
-    assert "LIMIT 6" in response.text
+    assert "LIMIT 5" in response.text
     assert "OFFSET 10" in response.text
-    assert " 16)" in response.text
+    assert " 15)" in response.text
 
 
 def test_lucene_cql_get_renders_successfully_via_listing_pipeline():
@@ -887,14 +1046,14 @@ def test_lucene_cql_post_renders_successfully_via_listing_pipeline():
     ) in rendered_graph
 
 
-def test_lucene_cql_get_rendered_path_uses_wildcard_and_default_limit():
+def test_lucene_cql_get_rendered_path_uses_wildcard_and_listing_default_limit():
     fake_repo = FakeLuceneListingRepo()
     with _build_lucene_test_client(fake_repo) as client:
         response = client.get("/cql", params={"_mediatype": "text/turtle"})
 
     assert response.status_code == 200
     assert fake_repo.return_oxigraph_store_flags == [True]
-    assert '("default" "default" "*" "" "" 78)' in fake_repo.rdf_queries[0][0]
+    assert '("default" "default" "*" "" "" 10)' in fake_repo.rdf_queries[0][0]
 
 
 def test_lucene_cql_get_with_facet_profile_appends_facets_query():
@@ -999,6 +1158,25 @@ def test_lucene_cql_post_accepts_facets_in_one_lucene_query():
     assert "urn:jena:lucene:index#query" in fake_repo.rdf_queries[0][0]
     assert "urn:jena:lucene:index#facet" in fake_repo.rdf_queries[0][0]
     assert "UNION" in fake_repo.rdf_queries[0][0]
+
+
+def test_lucene_cql_post_fields_override_configured_search_fields(test_repo: Repo):
+    with _build_lucene_test_client(
+        test_repo,
+        lucene_search_fields=["urn:jena:lucene:field#label"],
+    ) as client:
+        response = client.post(
+            "/cql",
+            json={
+                "_mediatype": "application/sparql-query",
+                "q": "ore",
+                "fields": ["urn:jena:lucene:field#id"],
+            },
+        )
+
+    assert response.status_code == 200
+    assert '"[\\"urn:jena:lucene:field#id\\"]"' in response.text
+    assert '"[\\"urn:jena:lucene:field#label\\"]"' not in response.text
 
 
 def test_lucene_cql_get_rejects_non_object_filter(test_repo: Repo):

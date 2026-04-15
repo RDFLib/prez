@@ -119,8 +119,12 @@ class Settings(BaseSettings):
     # When set to an integer, adds that value as a limit argument to the FTS query.
     fts_limit: Optional[int] = None
     enable_cql_jena_lucene_json: bool = False
-    lucene_default_limit: int = 10000
+    # Controls how many Lucene hits Prez asks for before SPARQL applies LIMIT/OFFSET.
+    # Use "page_size" when filters are expected to be pushed down into Lucene/CQL.
+    # Use a larger integer only when later SPARQL stages may discard some Lucene hits.
+    lucene_inner_limit: int | Literal["page_size"] = "page_size"
     lucene_index_name: str = "default"
+    lucene_search_fields: str | list[str] = "default"
     jena_fuseki_dataset_name: Optional[str] = None
     jena_assembler_path: Optional[str] = None
 
@@ -170,11 +174,13 @@ class Settings(BaseSettings):
             )
         return v
 
-    @field_validator("lucene_default_limit")
+    @field_validator("lucene_inner_limit")
     @classmethod
-    def validate_lucene_default_limit(cls, v):
+    def validate_lucene_inner_limit(cls, v):
+        if v == "page_size":
+            return v
         if v <= 0:
-            raise ValueError("lucene_default_limit must be a positive integer")
+            raise ValueError("lucene_inner_limit must be a positive integer or 'page_size'")
         return v
 
     @field_validator("lucene_index_name")
@@ -183,6 +189,33 @@ class Settings(BaseSettings):
         if not v.strip():
             raise ValueError("lucene_index_name must be a non-empty string")
         return v
+
+    @field_validator("lucene_search_fields")
+    @classmethod
+    def validate_lucene_search_fields(cls, v):
+        if isinstance(v, str):
+            normalized = v.strip()
+            if not normalized:
+                raise ValueError(
+                    "lucene_search_fields must be 'default' or a non-empty list of strings"
+                )
+            return normalized
+        if isinstance(v, list):
+            normalized = []
+            for field in v:
+                if not isinstance(field, str) or not field.strip():
+                    raise ValueError(
+                        "lucene_search_fields must be 'default' or a non-empty list of strings"
+                    )
+                normalized.append(field.strip())
+            if not normalized:
+                raise ValueError(
+                    "lucene_search_fields must be 'default' or a non-empty list of strings"
+                )
+            return normalized
+        raise ValueError(
+            "lucene_search_fields must be 'default' or a non-empty list of strings"
+        )
 
     @field_validator("jena_assembler_path")
     @classmethod

@@ -75,6 +75,12 @@ def _compact_json(value: dict | list | None) -> str | None:
     return json.dumps(value, separators=(",", ":"), ensure_ascii=False)
 
 
+def _compact_field_spec(value: str | list[str]) -> str:
+    if isinstance(value, str):
+        return value
+    return _compact_json(value)
+
+
 class LuceneCombinedConstructQuery(ConstructQuery):
     def __init__(
         self,
@@ -135,15 +141,18 @@ class SearchQueryJenaLucene:
         limit: int,
         offset: int,
         lucene_index_name: str,
+        search_fields: str | list[str] = DEFAULT_FIELD_SPEC,
+        lucene_inner_limit: int | None = None,
         filter_json: dict | None = None,
         facets: list[str] | None = None,
         order_by: str | None = None,
         order_by_direction: str | None = None,
     ):
-        self._limit = limit + 1
-        self._lucene_limit = self._limit + offset
+        self._limit = limit
+        self._lucene_limit = (lucene_inner_limit if lucene_inner_limit is not None else limit) + offset
         self._offset = offset
         self._lucene_index_name = lucene_index_name
+        self._search_fields = search_fields
         self._term = "*" if term is None else term
         self._filter_json = filter_json
         self._facets = facets or []
@@ -258,7 +267,7 @@ class SearchQueryJenaLucene:
     def _lucene_args_strings(self) -> list[str]:
         return [
             _sparql_string_literal(self._lucene_index_name),
-            _sparql_string_literal(DEFAULT_FIELD_SPEC),
+            _sparql_string_literal(_compact_field_spec(self._search_fields)),
             _sparql_string_literal(self._term),
             _sparql_string_literal(self._query_filter_arg()),
             _sparql_string_literal(self._sort_json_arg()),
@@ -442,7 +451,7 @@ class SearchQueryJenaLucene:
         snippet = Var(value="snippet")
         lucene_query_args = self._create_collection_path(
             self._create_rdf_literal_node(self._lucene_index_name),
-            self._create_rdf_literal_node(DEFAULT_FIELD_SPEC),
+            self._create_rdf_literal_node(_compact_field_spec(self._search_fields)),
             self._create_rdf_literal_node(self._term),
             self._create_rdf_literal_node(self._query_filter_arg()),
             self._create_rdf_literal_node(self._sort_json_arg()),
