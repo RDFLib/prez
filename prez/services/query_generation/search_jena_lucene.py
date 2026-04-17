@@ -5,6 +5,7 @@ from sparql_grammar_pydantic import (
     IRI,
     AdditiveExpression,
     BrackettedExpression,
+    BlankNodePropertyList,
     BuiltInCall,
     CollectionPath,
     ConditionalAndExpression,
@@ -15,6 +16,7 @@ from sparql_grammar_pydantic import (
     ConstructTriples,
     Expression,
     Filter,
+    GraphNode,
     GraphNodePath,
     GraphPatternNotTriples,
     GraphTerm,
@@ -26,6 +28,8 @@ from sparql_grammar_pydantic import (
     MultiplicativeExpression,
     NumericExpression,
     NumericLiteral,
+    Object,
+    ObjectList,
     ObjectListPath,
     ObjectPath,
     OffsetClause,
@@ -39,6 +43,7 @@ from sparql_grammar_pydantic import (
     PrimaryExpression,
     PropertyListPath,
     PropertyListPathNotEmpty,
+    PropertyListNotEmpty,
     RDFLiteral,
     RelationalExpression,
     SG_Path,
@@ -46,16 +51,20 @@ from sparql_grammar_pydantic import (
     SolutionModifier,
     SubSelect,
     TriplesBlock,
+    TriplesNode,
     TriplesNodePath,
     TriplesSameSubject,
     TriplesSameSubjectPath,
     UnaryExpression,
     ValueLogical,
     Var,
+    VarOrIri,
     VarOrTerm,
+    Verb,
     VerbPath,
     WhereClause,
 )
+from sparql_grammar_pydantic.grammar import PropertyList
 
 from prez.reference_data.prez_ns import PREZ
 
@@ -229,23 +238,41 @@ class SearchQueryJenaLucene:
                 object=total_hits,
             )
         )
-        facet_node = Var(value="facetNode")
+        facet_props_vals = [
+            (IRI(value=PREZ.facetName), Var(value="facetName")),
+            (IRI(value=PREZ.facetValue), Var(value="facetValue")),
+            (IRI(value=PREZ.facetCount), Var(value="facetCount")),
+        ]
+        facet_vol_list = []
+        for prop, value in facet_props_vals:
+            facet_vol_list.append(
+                (
+                    Verb(varoriri=VarOrIri(varoriri=prop)),
+                    ObjectList(
+                        list_object=[
+                            Object(
+                                graphnode=GraphNode(
+                                    varorterm_or_triplesnode=VarOrTerm(varorterm=value)
+                                )
+                            )
+                        ]
+                    ),
+                )
+            )
+
         self._facet_tss_list = [
-            TriplesSameSubject.from_spo(
-                subject=facet_node,
-                predicate=IRI(value=PREZ.facetName),
-                object=Var(value="facetName"),
-            ),
-            TriplesSameSubject.from_spo(
-                subject=facet_node,
-                predicate=IRI(value=PREZ.facetValue),
-                object=Var(value="facetValue"),
-            ),
-            TriplesSameSubject.from_spo(
-                subject=facet_node,
-                predicate=IRI(value=PREZ.facetCount),
-                object=Var(value="facetCount"),
-            ),
+            TriplesSameSubject(
+                content=(
+                    TriplesNode(
+                        coll_or_bnpl=BlankNodePropertyList(
+                            plne=PropertyListNotEmpty(
+                                verb_objectlist=facet_vol_list
+                            )
+                        )
+                    ),
+                    PropertyList(),
+                )
+            )
         ]
         self._inner_select_vars = [
             sr_uri,
@@ -365,19 +392,6 @@ class SearchQueryJenaLucene:
             pred,
             match,
             weight,
-        )
-
-    def _create_facet_node_expression(
-        self,
-        facet_name: Var,
-        facet_value: Var,
-        facet_count: Var,
-    ) -> Expression:
-        return self._create_uri_hash_expression(
-            "urn:facet:",
-            facet_name,
-            facet_value,
-            facet_count,
         )
 
     def _build_is_iri_filter(self, var: Var) -> Filter:
@@ -667,7 +681,6 @@ class SearchQueryJenaLucene:
         )
 
     def _build_facet_subselect(self) -> SubSelect:
-        facet_node = Var(value="facetNode")
         facet_name = Var(value="facetName")
         facet_value = Var(value="facetValue")
         facet_count = Var(value="facetCount")
@@ -683,14 +696,6 @@ class SearchQueryJenaLucene:
                     facet_name,
                     facet_value,
                     facet_count,
-                    (
-                        self._create_facet_node_expression(
-                            facet_name=facet_name,
-                            facet_value=facet_value,
-                            facet_count=facet_count,
-                        ),
-                        facet_node,
-                    ),
                 ],
             ),
             where_clause=WhereClause(

@@ -55,16 +55,16 @@ ex1:bh-cad-001 a ex1:Borehole .
     prez:searchResultPredicate <urn:jena:lucene:field#title> ;
     prez:searchResultMatch "CAD-DDH-001 Cadia Deep Exploration Hole" ;
     a prez:SearchResultMatch .
-<urn:facet:e8e6e61a91e60a42f594395130eaee4cb5ca9e67fff6e08594fe5aa34a881685> prez:facetValue <http://example.org/mining/commodity/Gold> ;
+[] prez:facetValue <http://example.org/mining/commodity/Gold> ;
     prez:facetName <urn:jena:lucene:field#commodity> ;
     prez:facetCount 2 .
-<urn:facet:9f9f76c45f67d42926169c094038f4eb0df4fd202abac4a4cee29b8be0d2812e> prez:facetValue <http://example.org/mining/commodity/Copper> ;
+[] prez:facetValue <http://example.org/mining/commodity/Copper> ;
     prez:facetName <urn:jena:lucene:field#commodity> ;
     prez:facetCount 1 .
-<urn:facet:dae674b26007084e26ca0b99f2d009ee605511185a3909b7baaa946883a55bdb> prez:facetValue <http://example.org/mining/state/NSW> ;
+[] prez:facetValue <http://example.org/mining/state/NSW> ;
     prez:facetName <urn:jena:lucene:field#state> ;
     prez:facetCount 1 .
-<urn:facet:9b6ef4971a241d02389b4882a8140bc1a324c75855d8b2a8d4cf0373d6a157d5> prez:facetValue <http://example.org/mining/state/WA> ;
+[] prez:facetValue <http://example.org/mining/state/WA> ;
     prez:facetName <urn:jena:lucene:field#state> ;
     prez:facetCount 1 .
 """
@@ -92,13 +92,13 @@ prez:SearchResult prez:count 1 .
     prez:searchResultPredicate <urn:jena:lucene:field#title> ;
     prez:searchResultMatch "CAD-DDH-001 Cadia Deep Exploration Hole" ;
     a prez:SearchResultMatch .
-<urn:facet:9f9f76c45f67d42926169c094038f4eb0df4fd202abac4a4cee29b8be0d2812e> prez:facetValue <http://example.org/mining/commodity/Copper> ;
+[] prez:facetValue <http://example.org/mining/commodity/Copper> ;
     prez:facetName <urn:jena:lucene:field#commodity> ;
     prez:facetCount 1 .
-<urn:facet:23e7ef3733003036814ee05a41611e03e34c131393bd5430c7d4ad7a66df4abf> prez:facetValue <http://example.org/mining/commodity/Gold> ;
+[] prez:facetValue <http://example.org/mining/commodity/Gold> ;
     prez:facetName <urn:jena:lucene:field#commodity> ;
     prez:facetCount 1 .
-<urn:facet:dae674b26007084e26ca0b99f2d009ee605511185a3909b7baaa946883a55bdb> prez:facetValue <http://example.org/mining/state/NSW> ;
+[] prez:facetValue <http://example.org/mining/state/NSW> ;
     prez:facetName <urn:jena:lucene:field#state> ;
     prez:facetCount 1 .
 """

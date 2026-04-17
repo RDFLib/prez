@@ -6,7 +6,7 @@ from unittest.mock import patch
 import pytest
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
-from pyoxigraph import Store, DefaultGraph, NamedNode, Literal, Quad
+from pyoxigraph import Store, BlankNode, DefaultGraph, NamedNode, Literal, Quad
 from rdflib import Graph, RDF, Literal as RDFlibLiteral, URIRef
 from sparql_grammar_pydantic import ConstructQuery, IRI, TriplesSameSubject, Var
 
@@ -94,7 +94,7 @@ class FakeLuceneListingRepo(Repo):
                 if query_fragment in main_query:
                     store.add(quad)
             if any("urn:jena:lucene:index#facet" in query for query in rdf_queries):
-                facet_node = NamedNode("urn:facet:1")
+                facet_node = BlankNode("facet1")
                 store.add(Quad(facet_node, NamedNode(str(PREZ.facetName)), NamedNode("urn:jena:lucene:field#commodity"), default))
                 store.add(Quad(facet_node, NamedNode(str(PREZ.facetValue)), Literal("Gold"), default))
                 store.add(Quad(facet_node, NamedNode(str(PREZ.facetCount)), Literal("2"), default))
@@ -498,6 +498,12 @@ def test_search_query_jena_lucene_builds_combined_construct_query_for_facets():
     assert "urn:jena:lucene:index#facet" in query_string
     assert "<https://prez.dev/hasSearchMatch> ?searchMatch" in query_string
     assert "<https://prez.dev/facetName> ?facetName" in query_string
+    assert (
+        "[<https://prez.dev/facetName> ?facetName;<https://prez.dev/facetValue> ?facetValue;<https://prez.dev/facetCount> ?facetCount]"
+        in query_string
+    )
+    assert "?facetNode" not in query_string
+    assert "urn:facet:" not in query_string
     assert (
         '"[\\"urn:jena:lucene:field#commodity\\",\\"urn:jena:lucene:field#state\\"]"'
         in query_string
@@ -1583,6 +1589,8 @@ def test_set_facets_on_search_query_jena_lucene():
     assert "urn:jena:lucene:index#facet" in query_string
     assert "urn:field:commodity" in query_string
     assert "urn:field:state" in query_string
+    assert "?facetNode" not in query_string
+    assert "urn:facet:" not in query_string
 
 
 def test_lucene_cql_facet_profile_resolves_lucene_facets():
