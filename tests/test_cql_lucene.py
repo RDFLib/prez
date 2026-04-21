@@ -377,7 +377,7 @@ def test_search_query_jena_lucene_defaults_q_to_wildcard():
 
     assert "urn:jena:lucene:index#query" in query_fragment
     assert "(?hit ?focus_node ?weight ?totalHits)" in query_fragment
-    assert '("default" "default" "*" "" "" 105)' in query_fragment
+    assert '("default" "default" "*" "" "" 100 0)' in query_fragment
     assert "urn:jena:lucene:index#match" not in normalized_inner
     assert "<https://prez.dev/hasSearchMatch>" not in "".join(
         tss.to_string() for tss in search_query.tss_list
@@ -394,7 +394,7 @@ def test_search_query_jena_lucene_pushes_down_paging_when_enabled():
         pagination_pushed_down=True,
     )
 
-    assert search_query.valid_lucene_query_triple.endswith('5) .')
+    assert search_query.valid_lucene_query_triple.endswith('5 10) .')
     normalized_inner = search_query.normalize_query_string(
         search_query._build_search_subselect().to_string()
     )
@@ -440,7 +440,7 @@ def test_search_query_jena_lucene_includes_compact_filter_json():
         '"{\\"op\\":\\"=\\",\\"args\\":[{\\"property\\":\\"http://example.com/predicate\\"},\\"Gold\\"]}"'
         in query_fragment
     )
-    assert query_fragment.endswith("15) .")
+    assert query_fragment.endswith("5 0) .")
 
 
 def test_search_query_jena_lucene_supports_explicit_inner_limit_override():
@@ -452,7 +452,7 @@ def test_search_query_jena_lucene_supports_explicit_inner_limit_override():
         lucene_hit_limit=25,
     )
 
-    assert search_query.valid_lucene_query_triple.endswith("35) .")
+    assert search_query.valid_lucene_query_triple.endswith("25 0) .")
     assert search_query.limit == 5
 
 
@@ -465,7 +465,7 @@ def test_search_query_jena_lucene_uses_request_limit_when_fts_limit_unset():
         pagination_pushed_down=True,
     )
 
-    assert search_query.valid_lucene_query_triple.endswith("5) .")
+    assert search_query.valid_lucene_query_triple.endswith("5 10) .")
 
 
 def test_search_query_jena_lucene_builds_combined_construct_query_for_facets():
@@ -526,7 +526,7 @@ def test_lucene_cql_get_supports_conneg_and_uses_listing_default_limit(test_repo
     assert "urn:jena:lucene:index#match" not in response.text
     assert "(?hit ?focus_node ?weight ?totalHits)" in response.text
     assert "<https://prez.dev/count> ?totalHits" in response.text
-    assert '("default" "default" "*" "" "" 10)' in response.text
+    assert '("default" "default" "*" "" "" 10 0)' in response.text
     assert "LIMIT 10" not in response.text
     assert "OFFSET 0" not in response.text
 
@@ -565,7 +565,7 @@ def test_lucene_cql_get_accepts_q_filter_limit_and_offset(test_repo: Repo):
     )
     assert "LIMIT 5" not in response.text
     assert "OFFSET 10" not in response.text
-    assert " 5)" in response.text
+    assert " 5 10)" in response.text
 
 
 def test_lucene_cql_get_can_disable_limit_offset_pushdown(test_repo: Repo):
@@ -586,7 +586,7 @@ def test_lucene_cql_get_can_disable_limit_offset_pushdown(test_repo: Repo):
     assert response.status_code == 200
     assert "LIMIT 5" in response.text
     assert "OFFSET 10" in response.text
-    assert " 15)" in response.text
+    assert " 5 0)" in response.text
 
 
 def test_lucene_cql_get_uses_configured_search_fields(test_repo: Repo):
@@ -703,7 +703,7 @@ async def test_generate_search_query_with_filter_only_uses_wildcard_lucene_query
     assert isinstance(search_query, SearchQueryJenaLucene)
     assert '("default" "default" "*"' in search_query.valid_lucene_query_triple
     assert '"{\\"op\\":\\"=\\",\\"args\\":[{\\"property\\":\\"urn:jena:lucene:field#commodity\\"},\\"Gold\\"]}"' in search_query.valid_lucene_query_triple
-    assert search_query.valid_lucene_query_triple.endswith('10) .')
+    assert search_query.valid_lucene_query_triple.endswith('10 0) .')
     assert "urn:jena:lucene:index#match" not in search_query.normalize_query_string(
         search_query.inner_select_gpnt.to_string()
     )
@@ -743,7 +743,7 @@ async def test_generate_search_query_get_fields_override_takes_precedence(
 
 
 @pytest.mark.asyncio
-async def test_generate_search_query_uses_configured_fts_limit(
+async def test_generate_search_query_ignores_configured_fts_limit_when_pushdown_enabled(
     test_repo: Repo,
 ):
     runtime_settings = Settings(
@@ -778,8 +778,50 @@ async def test_generate_search_query_uses_configured_fts_limit(
     )
 
     assert isinstance(search_query, SearchQueryJenaLucene)
-    assert search_query.valid_lucene_query_triple.endswith("25) .")
+    assert search_query.valid_lucene_query_triple.endswith("5 10) .")
     assert search_query.pagination_pushed_down is True
+    assert search_query.limit == 5
+
+
+@pytest.mark.asyncio
+async def test_generate_search_query_uses_configured_fts_limit_when_pushdown_disabled(
+    test_repo: Repo,
+):
+    runtime_settings = Settings(
+        enable_cql_jena_lucene_json=True,
+        fts_limit=25,
+        lucene_index_name="default",
+        lucene_limit_offset_pushdown=False,
+        sparql_repo_type="remote",
+        sparql_endpoint="http://example.com/dataset/sparql",
+    )
+    query_params = ListingQueryParams(
+        page=1,
+        limit=5,
+        q="ore",
+        _filter=json.dumps(
+            {
+                "op": "=",
+                "args": [
+                    {"property": "urn:jena:lucene:field#commodity"},
+                    "Gold",
+                ],
+            }
+        ),
+        offset=10,
+    )
+
+    search_query = await generate_search_query(
+        request=_make_request("/search?q=ore&limit=5&offset=10&filter=%7B%7D"),
+        query_params=query_params,
+        system_repo=test_repo,
+        endpoint_uri_type=(EP["extended-ogc-records/search"], ONT["ListingEndpoint"]),
+        runtime_settings=runtime_settings,
+    )
+
+    assert isinstance(search_query, SearchQueryJenaLucene)
+    assert search_query.valid_lucene_query_triple.endswith("25 0) .")
+    assert search_query.pagination_pushed_down is False
     assert search_query.limit == 5
 
 
@@ -869,7 +911,7 @@ async def test_generate_search_query_post_uses_lucene_when_feature_flag_enabled(
         '("default" "[\\"urn:jena:lucene:field#id\\"]" "ore"'
         in search_query.valid_lucene_query_triple
     )
-    assert search_query.valid_lucene_query_triple.endswith("15) .")
+    assert search_query.valid_lucene_query_triple.endswith("5 10) .")
 
 
 @pytest.mark.asyncio

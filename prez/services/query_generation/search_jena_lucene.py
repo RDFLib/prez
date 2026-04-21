@@ -162,10 +162,9 @@ class SearchQueryJenaLucene:
         self._limit = limit
         lucene_base_limit = lucene_hit_limit if lucene_hit_limit is not None else limit
         self._pagination_pushed_down = pagination_pushed_down
-        self._lucene_limit = (
-            lucene_base_limit if pagination_pushed_down else lucene_base_limit + offset
-        )
         self._offset = offset
+        self._lucene_limit = limit if pagination_pushed_down else lucene_base_limit
+        self._lucene_offset = offset if pagination_pushed_down else 0
         self._lucene_index_name = lucene_index_name
         self._search_fields = search_fields
         self._term = "*" if term is None else term
@@ -315,6 +314,8 @@ class SearchQueryJenaLucene:
             _sparql_string_literal(self._term),
             _sparql_string_literal(self._query_filter_arg()),
             _sparql_string_literal(self._sort_json_arg()),
+            str(self._lucene_limit),
+            str(self._lucene_offset),
         ]
 
     def _facet_args_strings(self) -> list[str]:
@@ -487,6 +488,7 @@ class SearchQueryJenaLucene:
             self._create_rdf_literal_node(self._query_filter_arg()),
             self._create_rdf_literal_node(self._sort_json_arg()),
             self._create_numeric_node(self._lucene_limit),
+            self._create_numeric_node(self._lucene_offset),
         )
         lucene_query_tb = TriplesBlock(
             triples=TriplesSameSubjectPath(
@@ -709,11 +711,9 @@ class SearchQueryJenaLucene:
 
     @property
     def valid_lucene_query_triple(self) -> str:
-        lucene_args = self._lucene_args_strings()
-        lucene_args.append(str(self._lucene_limit))
         return (
             f"(?hit ?focus_node ?weight ?totalHits) <{LUCENE.query}> "
-            f"({' '.join(lucene_args)}) ."
+            f"({' '.join(self._lucene_args_strings())}) ."
         )
 
     @property
