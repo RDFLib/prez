@@ -4,6 +4,7 @@ import hashlib
 import io
 import json
 import logging
+import time
 
 from fastapi.responses import PlainTextResponse
 from oxrdflib._converter import to_ox
@@ -69,6 +70,7 @@ from prez.services.query_generation.umbrella import (
     PrezQueryConstructor,
     merge_listing_query_grammar_inputs,
 )
+from prez.services.timing_csv import log_timing_csv
 
 log = logging.getLogger(__name__)
 
@@ -319,6 +321,7 @@ async def listing_function(
     url,
     extra_rdf_queries: list[str] | None = None,
 ):
+    total_start = time.perf_counter()
     if (
         pmts.selected["profile"] == ALTREXT["alt-profile"]
     ):  # recalculate the endpoint node shape
@@ -486,9 +489,22 @@ async def listing_function(
         )
         queries.append(count_query)
 
+    query_start_time = time.perf_counter()
     item_store: OxiStore
     item_store, _ = await query_repo.send_queries(
         queries, [], return_oxigraph_store=True
+    )
+    log.debug(
+        f"Listing query time: {time.perf_counter() - query_start_time} "
+        f"(queries={len(queries)}, mediatype={pmts.selected['mediatype']}, store_quads={len(item_store)})"
+    )
+    log_timing_csv(
+        "listing_query",
+        mediatype=pmts.selected["mediatype"],
+        profile=str(pmts.selected["profile"]),
+        queries=len(queries),
+        store_quads=len(item_store),
+        elapsed_ms=f"{(time.perf_counter() - query_start_time) * 1000:.1f}",
     )
     default = OxiDefaultGraph()
     if facet_profile_uri:
@@ -509,7 +525,22 @@ async def listing_function(
                 default,
             )
         )
+        link_generation_start = time.perf_counter()
+        log.debug(
+            f"Starting Prez link generation for listing response "
+            f"(store_quads={len(item_store)}, mediatype={pmts.selected['mediatype']})"
+        )
         await add_prez_links_for_oxigraph(item_store, query_repo, endpoint_structure)
+        log.debug(
+            f"Listing Prez link generation time: {time.perf_counter() - link_generation_start}"
+        )
+        log_timing_csv(
+            "listing_link_generation",
+            mediatype=pmts.selected["mediatype"],
+            profile=str(pmts.selected["profile"]),
+            store_quads=len(item_store),
+            elapsed_ms=f"{(time.perf_counter() - link_generation_start) * 1000:.1f}",
+        )
 
         # Inject dummy search results for non-text search requests
         if isinstance(search_query, DummySearchMarker):
@@ -616,7 +647,8 @@ async def listing_function(
                 default,
             )
         )
-    return await return_from_graph(
+    render_start = time.perf_counter()
+    response = await return_from_graph(
         item_store,
         pmts.selected["mediatype"],
         pmts.selected["profile"],
@@ -627,6 +659,27 @@ async def listing_function(
         query_params,
         url,
     )
+    render_ms = (time.perf_counter() - render_start) * 1000
+    total_ms = (time.perf_counter() - total_start) * 1000
+    log.debug(
+        "listing_function complete mediatype=%s profile=%s queries=%s store_quads=%s render_ms=%.1f total_ms=%.1f",
+        pmts.selected["mediatype"],
+        pmts.selected["profile"],
+        len(queries),
+        len(item_store),
+        render_ms,
+        total_ms,
+    )
+    log_timing_csv(
+        "listing_function_complete",
+        mediatype=pmts.selected["mediatype"],
+        profile=str(pmts.selected["profile"]),
+        queries=len(queries),
+        store_quads=len(item_store),
+        render_ms=f"{render_ms:.1f}",
+        total_ms=f"{total_ms:.1f}",
+    )
+    return response
 
 
 async def ogc_features_listing_function(
@@ -642,6 +695,7 @@ async def ogc_features_listing_function(
     path_params,
     accept_encoding: str | None = None,
 ):
+    total_start = time.perf_counter()
     count_query = None
     count = 0
     collection_uri = path_params.get("collection_uri")
@@ -659,6 +713,7 @@ async def ogc_features_listing_function(
         construct_tss_list.extend(profile_nodeshape.tss_list)
 
     queries = []
+    build_start = time.perf_counter()
     if endpoint_uri_type[0] in [
         OGCFEAT["queryables-local"],
         OGCFEAT["queryables-global"],
@@ -733,6 +788,16 @@ async def ogc_features_listing_function(
         subselect = copy.deepcopy(feature_list_query.inner_select)
         count_query = CountQuery(original_subselect=subselect).to_string()
     link_headers = None
+    build_ms = (time.perf_counter() - build_start) * 1000
+    log.debug(
+        "ogc_features_listing built mediatype=%s profile=%s collection_uri=%s queries=%s has_count_query=%s build_ms=%.1f",
+        selected_mediatype,
+        getattr(profile_nodeshape, "uri", None),
+        collection_uri,
+        len(queries),
+        bool(count_query),
+        build_ms,
+    )
     if selected_mediatype == "application/sparql-query":
         # just do the first query for now:
         content = io.BytesIO(queries[0].encode("utf-8"))
@@ -740,6 +805,7 @@ async def ogc_features_listing_function(
     count: int
 
     item_store: OxiStore
+    main_query_start = time.perf_counter()
     main_query_task = asyncio.ensure_future(
         data_repo.send_queries(queries, [], return_oxigraph_store=True)
     )
@@ -752,9 +818,18 @@ async def ogc_features_listing_function(
         count_query_task = None
     await asyncio.sleep(0)  # Yield control to allow the parallel tasks to start
     item_store, _ = await main_query_task
+    main_query_ms = (time.perf_counter() - main_query_start) * 1000
+    log.debug(
+        "ogc_features_listing main_query mediatype=%s store_quads=%s elapsed_ms=%.1f",
+        selected_mediatype,
+        len(item_store),
+        main_query_ms,
+    )
     if count_query_task is not None:
         count_store: OxiStore
+        count_await_start = time.perf_counter()
         count_store, _ = await count_query_task
+        count_await_ms = (time.perf_counter() - count_await_start) * 1000
         if count_store is not None:
             for q in count_store.quads_for_pattern(None, None, None, None):
                 count_str = str(q[2].value)
@@ -762,6 +837,13 @@ async def ogc_features_listing_function(
                 break
             else:
                 count = 0
+        log.debug(
+            "ogc_features_listing count_query mediatype=%s count=%s count_quads=%s await_ms=%.1f",
+            selected_mediatype,
+            count,
+            len(count_store) if count_store is not None else 0,
+            count_await_ms,
+        )
     # only need the annotations for mediatypes of application/json or annotated mediatypes
     annotations_store = None
     annotations_graph = None
@@ -774,8 +856,16 @@ async def ogc_features_listing_function(
         )
     ):
         # This still returns an RDFlib graph of anotations, even when the store is an Oxigraph Store.
+        annotations_start = time.perf_counter()
         annotations_store = await return_annotated_rdf_for_oxigraph(
             item_store, data_repo, system_repo
+        )
+        annotations_ms = (time.perf_counter() - annotations_start) * 1000
+        log.debug(
+            "ogc_features_listing annotations mediatype=%s annotation_quads=%s elapsed_ms=%.1f",
+            selected_mediatype,
+            len(annotations_store) if annotations_store is not None else 0,
+            annotations_ms,
         )
     item_graph = item_store  # treat the Oxigraph Store as a graph
 
@@ -817,6 +907,12 @@ async def ogc_features_listing_function(
             content = io.BytesIO(
                 collections.model_dump_json(exclude_none=True).encode("utf-8")
             )
+        total_ms = (time.perf_counter() - total_start) * 1000
+        log.debug(
+            "ogc_features_listing response mediatype=%s branch=json total_ms=%.1f",
+            selected_mediatype,
+            total_ms,
+        )
 
     elif selected_mediatype == "application/geo+json":
         if "human" in profile_nodeshape.uri.lower():  # human readable profile
@@ -842,8 +938,15 @@ async def ogc_features_listing_function(
             count, geojson, query_params, selected_mediatype, url
         )
         content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
+        total_ms = (time.perf_counter() - total_start) * 1000
+        log.debug(
+            "ogc_features_listing response mediatype=%s branch=geojson total_ms=%.1f",
+            selected_mediatype,
+            total_ms,
+        )
     elif selected_mediatype in NonAnnotatedRDFMediaType:
         item_store: OxiStore = item_graph
+        dump_start = time.perf_counter()
         serializer_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(
             str(selected_mediatype), RdfFormat.N_TRIPLES
         )
@@ -859,17 +962,31 @@ async def ogc_features_listing_function(
             prefixes=oxigraph_prefixes,
         )
         content.seek(0)  # Reset the stream position to the beginning
+        dump_ms = (time.perf_counter() - dump_start) * 1000
+        total_ms = (time.perf_counter() - total_start) * 1000
+        log.debug(
+            "ogc_features_listing response mediatype=%s branch=non_annotated dump_ms=%.1f total_ms=%.1f",
+            selected_mediatype,
+            dump_ms,
+            total_ms,
+        )
 
     elif selected_mediatype in AnnotatedRDFMediaType:
         non_anot_mt = selected_mediatype.replace("anot+", "")
         item_store: OxiStore = item_graph
         default = OxiDefaultGraph()
         if annotations_store is not None:
+            merge_start = time.perf_counter()
             item_store.bulk_extend(annotations_store)
+            merge_ms = (time.perf_counter() - merge_start) * 1000
         elif annotations_graph is not None:
             # Add the annotations to the store
+            merge_start = time.perf_counter()
             for s, p, o in annotations_graph.triples((None, None, None)):
                 item_store.add(OxiQuad(to_ox(s), to_ox(p), to_ox(o), default))
+            merge_ms = (time.perf_counter() - merge_start) * 1000
+        else:
+            merge_ms = 0.0
         serializer_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(
             str(non_anot_mt), RdfFormat.N_TRIPLES
         )
@@ -878,8 +995,18 @@ async def ogc_features_listing_function(
         }
         content = io.BytesIO()
         # TODO, what happens if the store has content in a named graph? This can only dump the default graph.
+        dump_start = time.perf_counter()
         item_store.dump(
             content, serializer_format, from_graph=default, prefixes=oxigraph_prefixes
         )
         content.seek(0)  # Reset the stream position to the beginning
+        dump_ms = (time.perf_counter() - dump_start) * 1000
+        total_ms = (time.perf_counter() - total_start) * 1000
+        log.debug(
+            "ogc_features_listing response mediatype=%s branch=annotated merge_ms=%.1f dump_ms=%.1f total_ms=%.1f",
+            selected_mediatype,
+            merge_ms,
+            dump_ms,
+            total_ms,
+        )
     return content, link_headers

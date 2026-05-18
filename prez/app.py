@@ -35,7 +35,11 @@ from prez.exceptions.model_exceptions import (
     URINotFoundException,
     MissingFilterQueryError,
 )
-from prez.middleware import create_validate_header_middleware
+from prez.middleware import (
+    RequestTimingMiddleware,
+    create_response_header_budget_middleware,
+    create_validate_header_middleware,
+)
 from prez.repositories import OxrdflibRepo, PyoxigraphRepo, RemoteSparqlRepo
 from prez.routers.base_router import router as base_prez_router
 from prez.routers.cql_lucene_router import router as cql_lucene_router
@@ -231,6 +235,7 @@ def assemble_app(
     )
 
     app.state.settings = _settings
+    app.add_middleware(RequestTimingMiddleware)
 
     app.include_router(management_router)
     if _settings.enable_sparql_endpoint:
@@ -264,6 +269,10 @@ def assemble_app(
     )
 
     app.middleware("http")(add_cors_headers)
+    response_header_budget_middleware = create_response_header_budget_middleware(
+        _settings.response_headers_max_bytes
+    )
+    app.middleware("http")(response_header_budget_middleware)
 
     app.add_middleware(
         CORSMiddleware,
@@ -274,7 +283,7 @@ def assemble_app(
         expose_headers=["*"],
     )
     validate_header_middleware = create_validate_header_middleware(
-        settings.required_header
+        _settings.required_header
     )
     app.middleware("http")(validate_header_middleware)
 

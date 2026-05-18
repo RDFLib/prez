@@ -1,4 +1,6 @@
+import hashlib
 import logging
+import time
 from typing import Any
 from urllib.parse import quote_plus
 
@@ -9,10 +11,15 @@ from rdflib import Graph, Namespace, URIRef
 from prez.config import settings
 from prez.repositories.base import Repo
 from prez.services.connegp_service import OXIGRAPH_SERIALIZER_TYPES_MAP
+from prez.services.timing_csv import log_timing_csv
 
 PREZ = Namespace("https://prez.dev/")
 
 log = logging.getLogger(__name__)
+
+
+def _query_fingerprint(query: str) -> str:
+    return hashlib.sha256(query.encode("utf-8")).hexdigest()[:12]
 
 
 class RemoteSparqlRepo(Repo):
@@ -40,8 +47,19 @@ class RemoteSparqlRepo(Repo):
             headers={"Accept": mediatype},
             data=data,
         )
+        query_id = _query_fingerprint(query)
+        t0 = time.perf_counter()
         try:
             response = await self.async_client.send(query_rq, stream=True)
+            elapsed_ms = (time.perf_counter() - t0) * 1000
+            log.debug(
+                "remote_sparql send_complete query_id=%s accept=%s status=%s elapsed_ms=%.1f endpoint=%s",
+                query_id,
+                mediatype,
+                response.status_code,
+                elapsed_ms,
+                settings.sparql_endpoint,
+            )
             return response
         except httpx.TimeoutException as e:
             timeout_msg = (
@@ -72,6 +90,8 @@ class RemoteSparqlRepo(Repo):
         Args: query: str: A SPARQL query to be sent asynchronously.
         Returns: rdflib.Graph: An RDFLib Graph object
         """
+        query_id = _query_fingerprint(query)
+        total_start = time.perf_counter()
         response: httpx.Response = await self._send_query(query)
         await self._raise_for_status_with_body(response)
         response_format = response.headers.get("content-type", "application/n-triples")
@@ -82,8 +102,23 @@ class RemoteSparqlRepo(Repo):
             g = into_graph
         else:
             g = Graph()
+        read_start = time.perf_counter()
         content_bytes = await response.aread()
-        return g.parse(data=content_bytes, format=response_format)
+        read_ms = (time.perf_counter() - read_start) * 1000
+        parse_start = time.perf_counter()
+        parsed = g.parse(data=content_bytes, format=response_format)
+        parse_ms = (time.perf_counter() - parse_start) * 1000
+        total_ms = (time.perf_counter() - total_start) * 1000
+        log.debug(
+            "remote_sparql rdflib_graph query_id=%s format=%s bytes=%s read_ms=%.1f parse_ms=%.1f total_ms=%.1f",
+            query_id,
+            response_format,
+            len(content_bytes),
+            read_ms,
+            parse_ms,
+            total_ms,
+        )
+        return parsed
 
     async def rdf_query_to_oxigraph_store(
         self, query: str, into_store: Store | None = None
@@ -93,6 +128,8 @@ class RemoteSparqlRepo(Repo):
         Args: query: str: A SPARQL query to be sent asynchronously.
         Returns: pyoxigraph.Store: An pyoxigraph Store object
         """
+        query_id = _query_fingerprint(query)
+        total_start = time.perf_counter()
         response: httpx.Response = await self._send_query(query)
         await self._raise_for_status_with_body(response)
         response_format = response.headers.get("content-type", "application/n-triples")
@@ -103,11 +140,36 @@ class RemoteSparqlRepo(Repo):
             s = into_store
         else:
             s = Store()
+        read_start = time.perf_counter()
         content_bytes = await response.aread()
+        read_ms = (time.perf_counter() - read_start) * 1000
         oxigraph_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(
             response_format, RdfFormat.N_TRIPLES
         )
+        bulk_load_start = time.perf_counter()
         s.bulk_load(content_bytes, oxigraph_format)
+        bulk_load_ms = (time.perf_counter() - bulk_load_start) * 1000
+        total_ms = (time.perf_counter() - total_start) * 1000
+        log.debug(
+            "remote_sparql oxigraph_store query_id=%s format=%s oxigraph_format=%s bytes=%s read_ms=%.1f bulk_load_ms=%.1f total_ms=%.1f",
+            query_id,
+            response_format,
+            oxigraph_format,
+            len(content_bytes),
+            read_ms,
+            bulk_load_ms,
+            total_ms,
+        )
+        log_timing_csv(
+            "remote_sparql_oxigraph_store",
+            query_id=query_id,
+            format=response_format,
+            oxigraph_format=str(oxigraph_format),
+            bytes=len(content_bytes),
+            read_ms=f"{read_ms:.1f}",
+            bulk_load_ms=f"{bulk_load_ms:.1f}",
+            total_ms=f"{total_ms:.1f}",
+        )
         return s
 
     async def tabular_query_to_table(
@@ -119,13 +181,30 @@ class RemoteSparqlRepo(Repo):
         distinguished from each other.
         """
         response = await self._send_query(query, "application/sparql-results+json")
+        query_id = _query_fingerprint(query)
+        read_start = time.perf_counter()
         await response.aread()
+        read_ms = (time.perf_counter() - read_start) * 1000
+        log.debug(
+            "remote_sparql tabular_query query_id=%s status=%s read_ms=%.1f",
+            query_id,
+            response.status_code,
+            read_ms,
+        )
+        log_timing_csv(
+            "remote_sparql_tabular_query",
+            query_id=query_id,
+            status=response.status_code,
+            read_ms=f"{read_ms:.1f}",
+        )
         return context, response.json()["results"]["bindings"]
 
     async def sparql(
         self, query: str, raw_headers: list[tuple[bytes, bytes]], method: str = "GET"
     ):
         """Sends a request (containing a SPARQL query in the URL parameters) to a proxied SPARQL endpoint."""
+        query_id = _query_fingerprint(query)
+        total_start = time.perf_counter()
         # Convert raw_headers to a dict, excluding the 'host' header
         headers = {
             k.decode("utf-8"): v.decode("utf-8")
@@ -161,7 +240,9 @@ class RemoteSparqlRepo(Repo):
         # Add the correct 'host' header
         request.headers["host"] = httpx.URL(url).host
 
+        send_start = time.perf_counter()
         response = await self.async_client.send(request, stream=True)
+        send_ms = (time.perf_counter() - send_start) * 1000
         try:
             response.raise_for_status()
         except httpx.HTTPStatusError as e:
@@ -172,5 +253,24 @@ class RemoteSparqlRepo(Repo):
                 request=request,
                 response=response,
             ) from e
+        total_ms = (time.perf_counter() - total_start) * 1000
+        log.debug(
+            "remote_sparql proxy query_id=%s method=%s status=%s send_ms=%.1f total_ms=%.1f endpoint=%s",
+            query_id,
+            method,
+            response.status_code,
+            send_ms,
+            total_ms,
+            settings.sparql_endpoint,
+        )
+        log_timing_csv(
+            "remote_sparql_proxy",
+            query_id=query_id,
+            method=method,
+            status=response.status_code,
+            endpoint=settings.sparql_endpoint,
+            elapsed_ms=f"{send_ms:.1f}",
+            total_ms=f"{total_ms:.1f}",
+        )
 
         return response

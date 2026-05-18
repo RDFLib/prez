@@ -80,6 +80,8 @@ class Settings(BaseSettings):
     pyoxigraph_data_dir: str = "pyoxigraph_data_dir"
     log_level: str = "INFO"
     log_output: str = "stdout"
+    timing_csv_enabled: bool = False
+    timing_csv_path: str = "logs/prez-timing.csv"
     prez_title: Optional[str] = "Prez"
     prez_desc: Optional[str] = (
         "A web framework API for delivering Linked Data. It provides read-only access to "
@@ -109,6 +111,9 @@ class Settings(BaseSettings):
     forwarded_allow_ips: str = "127.0.0.1"
     root_path: str = ""
     use_path_aliases: bool = False
+    minimal_link_headers: bool = False
+    # Upper bound for total response header bytes. Set to 0 to disable trimming.
+    response_headers_max_bytes: int = 60000
     spatial_query_format: Literal["geosparql", "qlever", "graphdb"] = "geosparql"
     search_uses_listing_count_limit: bool = False
     # Minimum response size in bytes for gzip compression. Set to -1 to disable compression.
@@ -180,6 +185,13 @@ class Settings(BaseSettings):
             return v
         if v <= 0:
             raise ValueError("fts_limit must be a positive integer")
+        return v
+
+    @field_validator("response_headers_max_bytes")
+    @classmethod
+    def validate_response_headers_max_bytes(cls, v):
+        if v < 0:
+            raise ValueError("response_headers_max_bytes must be greater than or equal to 0")
         return v
 
     @field_validator("lucene_index_name")

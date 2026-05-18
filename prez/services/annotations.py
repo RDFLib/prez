@@ -1,4 +1,5 @@
 import logging
+import time
 from typing import FrozenSet, List, Set, Tuple
 
 from aiocache import caches
@@ -16,6 +17,7 @@ from sparql_grammar_pydantic import IRI
 from prez.dependencies import get_annotations_repo
 from prez.repositories import Repo
 from prez.services.query_generation.annotations import AnnotationsConstructQuery
+from prez.services.timing_csv import log_timing_csv
 
 log = logging.getLogger(__name__)
 
@@ -67,11 +69,14 @@ async def get_annotations_for_oxigraph(
     Returns:
         annotations_store (OxiStore): A oxigraph store containing the processed terms and their data types.
     """
+    total_start = time.perf_counter()
     annotations_store = OxiStore()
     oxi_default_graph = OxiDefaultGraph()
     cache = caches.get("default")  # This always returns the SAME instance
     # Cache always uses URIRefs, so we convert OxiNamedNode to URIRef
+    cache_start = time.perf_counter()
     results = await cache.multi_get(list(URIRef(t.value) for t in terms_and_dtypes))
+    cache_ms = (time.perf_counter() - cache_start) * 1000
     zipped = list(zip(terms_and_dtypes, results))
 
     cached = [z for z in zipped if z[1] is not None]
@@ -92,6 +97,16 @@ async def get_annotations_for_oxigraph(
         await process_uncached_terms_for_oxigraph(
             uncached, repo, system_repo, annotations_store
         )
+
+    total_ms = (time.perf_counter() - total_start) * 1000
+    log_timing_csv(
+        "annotations_cache_lookup",
+        count=len(terms_and_dtypes),
+        store_quads=len(annotations_store),
+        elapsed_ms=f"{cache_ms:.1f}",
+        total_ms=f"{total_ms:.1f}",
+        details=f"cached={len(cached)} uncached={len(uncached)}",
+    )
 
     return annotations_store
 
@@ -230,6 +245,7 @@ async def process_uncached_terms_for_oxigraph(
     Returns:
         None
     """
+    total_start = time.perf_counter()
     # Initialize subjects_map with each term having an empty set to start with
     uriref_subjects_map: dict[URIRef, set] = {
         URIRef(term.value): set() for term in terms
@@ -240,11 +256,13 @@ async def process_uncached_terms_for_oxigraph(
     annotations_query = AnnotationsConstructQuery(
         terms=[IRI(value=term.value) for term in terms]
     ).to_string()
+    system_start = time.perf_counter()
     system_repo_results = await system_repo.send_queries(
         rdf_queries=[annotations_query],
         tabular_queries=[],
         return_oxigraph_store=True,
     )
+    system_ms = (time.perf_counter() - system_start) * 1000
     system_repo_result_store: OxiStore = system_repo_results[0]
     for quad in system_repo_result_store.quads_for_pattern(None, None, None, None):
         uriref_subjects_map[URIRef(quad[0].value)].add(
@@ -255,16 +273,19 @@ async def process_uncached_terms_for_oxigraph(
         remaining_terms.discard(quad[0])
 
     # Query annotations_repo next (also local) if terms still need annotations
+    annotations_repo_ms = 0.0
     if remaining_terms:
         annotations_repo = await get_annotations_repo()
         remaining_query = AnnotationsConstructQuery(
             terms=[IRI(value=term.value) for term in remaining_terms]
         ).to_string()
+        annotations_repo_start = time.perf_counter()
         annotation_repo_results = await annotations_repo.send_queries(
             rdf_queries=[remaining_query],
             tabular_queries=[],
             return_oxigraph_store=True,
         )
+        annotations_repo_ms = (time.perf_counter() - annotations_repo_start) * 1000
         annotation_repo_result_store: OxiStore = annotation_repo_results[0]
         for quad in annotation_repo_result_store.quads_for_pattern(
             None, None, None, None
@@ -276,15 +297,18 @@ async def process_uncached_terms_for_oxigraph(
             remaining_terms.discard(quad[0])
 
     # Only query data_repo (potentially remote) if terms still need annotations
+    data_repo_ms = 0.0
     if remaining_terms:
         remaining_query = AnnotationsConstructQuery(
             terms=[IRI(value=term.value) for term in remaining_terms]
         ).to_string()
+        data_repo_start = time.perf_counter()
         data_repo_results = await data_repo.send_queries(
             rdf_queries=[remaining_query],
             tabular_queries=[],
             return_oxigraph_store=True,
         )
+        data_repo_ms = (time.perf_counter() - data_repo_start) * 1000
         data_repo_result_store: OxiStore = data_repo_results[0]
         for quad in data_repo_result_store.quads_for_pattern(None, None, None, None):
             uriref_subjects_map[URIRef(quad[0].value)].add(
@@ -300,7 +324,22 @@ async def process_uncached_terms_for_oxigraph(
 
     # Cache the results
     cache = caches.get("default")
+    cache_set_start = time.perf_counter()
     await cache.multi_set(subjects_list)
+    cache_set_ms = (time.perf_counter() - cache_set_start) * 1000
+
+    total_ms = (time.perf_counter() - total_start) * 1000
+    log_timing_csv(
+        "annotations_uncached_terms",
+        count=len(terms),
+        store_quads=len(annotations_store),
+        elapsed_ms=f"{system_ms:.1f}",
+        annotations_ms=f"{annotations_repo_ms:.1f}",
+        bulk_load_ms=f"{data_repo_ms:.1f}",
+        merge_ms=f"{cache_set_ms:.1f}",
+        total_ms=f"{total_ms:.1f}",
+        details=f"remaining_after_all={len(remaining_terms)}",
+    )
 
 
 async def get_annotation_properties(
@@ -352,6 +391,7 @@ async def get_annotation_properties_for_oxigraph(
     But the response is still an rdflib Graph, so it can be used in the same way as the rdflib version.
     This is because the annotations cache and all annotations logic are still based on URIRefs and rdflib Graphs.
     """
+    collect_start = time.perf_counter()
     # get all terms and datatypes for which we want to retrieve annotations
     all_uris: set[OxiNamedNode] = set()
     all_dtypes: set[OxiNamedNode] = set()
@@ -374,6 +414,7 @@ async def get_annotation_properties_for_oxigraph(
     if len(all_uris) == 0 and len(all_dtypes) == 0:
         return OxiStore()
     terms_and_types: set[OxiNamedNode] = all_uris.union(all_dtypes)
+    collect_ms = (time.perf_counter() - collect_start) * 1000
     annotations_store = await get_annotations_for_oxigraph(
         terms_and_types, repo, system_repo
     )

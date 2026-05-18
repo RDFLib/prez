@@ -35,7 +35,6 @@ from prez.repositories import Repo
 from prez.services.classes import get_classes
 from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.query_generation.shacl import NodeShape
-
 log = logging.getLogger(__name__)
 
 
@@ -48,16 +47,28 @@ async def add_prez_links(
     t_start = time.time()
     # get all URIRefs - if Prez can find a class and endpoint for them, an internal link will be generated.
     if uris is None:
+        uri_collection_start = time.time()
         uris = [uri for uri in graph.all_nodes() if isinstance(uri, URIRef)]
+        log.debug(
+            f"Time taken to collect link candidate URIs from graph: {time.time() - uri_collection_start} "
+            f"(unique_uris={len(uris)})"
+        )
+    else:
+        log.debug(f"Using provided URIs for link generation: {len(uris)}")
     t = time.time()
     uriref_to_klasses = await get_classes(uris, repo)
-    log.debug(f"Time taken to get classes: {time.time() - t}")
+    log.debug(f"Time taken to get classes for {len(uris)} URIs: {time.time() - t}")
     # Convert the URIRefs to OxiNamedNode because the link cache uses Oxigraph nodes as keys
     urinode_to_klasses = {
         OxiNamedNode(uri): klasses for uri, klasses in uriref_to_klasses.items()
     }
+    link_generation_start = time.time()
     await _link_generation_many(urinode_to_klasses, repo, graph, endpoint_structure)
-    log.debug(f"Time taken to add links: {time.time() - t_start}")
+    log.debug(
+        f"Time taken to generate and add links for {len(urinode_to_klasses)} URIs: "
+        f"{time.time() - link_generation_start}"
+    )
+    log.debug(f"Total time taken to add links: {time.time() - t_start}")
 
 
 async def add_prez_links_for_oxigraph(
@@ -70,9 +81,14 @@ async def add_prez_links_for_oxigraph(
     Adds internal links to the given store for all URIRefs that have a class and endpoint associated with them.
     """
     t_start = time.time()
+    log.debug(
+        "Starting Prez link generation for Oxigraph store "
+        f"(provided_uris={len(uris) if uris is not None else 'auto'}, store_quads={len(store)})"
+    )
     # get all URIRefs - if Prez can find a class and endpoint for them, an internal link will be generated.
     if uris is None:
         # TODO: Is there a faster way to get all unique subjects and objects in Oxigraph?
+        uri_collection_start = time.time()
         unique_subjects: set[OxiNamedNode] = set()
         unique_objects: set[OxiNamedNode] = set()
         for s, p, o, c in store:
@@ -81,17 +97,30 @@ async def add_prez_links_for_oxigraph(
             if isinstance(o, OxiNamedNode):
                 unique_objects.add(o)
         uris = list(unique_subjects.union(unique_objects))
+        log.debug(
+            f"Time taken to collect link candidate URIs from store: {time.time() - uri_collection_start} "
+            f"(subjects={len(unique_subjects)}, objects={len(unique_objects)}, unique_uris={len(uris)})"
+        )
+    else:
+        log.debug(f"Using provided URIs for link generation: {len(uris)}")
     t = time.time()
     # get_classes always takes URIRefs because the aiocahce pickes URIRefs
     uriref_keys = [URIRef(uri.value) for uri in uris]
     uriref_to_klasses = await get_classes(uriref_keys, repo)
-    log.debug(f"Time taken to get classes: {time.time() - t}")
+    log.debug(
+        f"Time taken to get classes for {len(uriref_keys)} URIs: {time.time() - t}"
+    )
     # Convert the URIRefs to OxiNamedNode because the link cache uses Oxigraph nodes as keys
     urinode_to_klasses = {
         OxiNamedNode(uri): klasses for uri, klasses in uriref_to_klasses.items()
     }
+    link_generation_start = time.time()
     await _link_generation_many(urinode_to_klasses, repo, store, endpoint_structure)
-    log.debug(f"Time taken to add links: {time.time() - t_start}")
+    log.debug(
+        f"Time taken to generate and add links for {len(urinode_to_klasses)} URIs: "
+        f"{time.time() - link_generation_start}"
+    )
+    log.debug(f"Total time taken to add links: {time.time() - t_start}")
 
 
 async def _link_generation(
@@ -200,6 +229,8 @@ async def _link_generation_many(
     """
     is_oxigraph = isinstance(graph, OxiStore)
     klasses_to_get_for_uris = dict()
+    cache_hits = 0
+    cache_misses = 0
     for uri_node, klasses in uris_klasses.items():
         # check the cache
         quads = list(
@@ -207,6 +238,7 @@ async def _link_generation_many(
         )  # context required as not all triples that relate to links or identifiers for a particular object have that
         # object's URI as the subject
         if quads:
+            cache_hits += 1
             if is_oxigraph:
                 store: OxiStore = graph
                 default = OxiDefaultGraph()
@@ -215,6 +247,7 @@ async def _link_generation_many(
                 for q in quads:
                     graph.add((from_ox(q[0]), from_ox(q[1]), from_ox(q[2])))
         else:
+            cache_misses += 1
             # if no links in cache, record klass and uri to generate link components
             for klass in klasses:
                 if klass not in klasses_to_get_for_uris:
@@ -225,6 +258,7 @@ async def _link_generation_many(
     # many node shapes to one endpoint; multiple node shapes can point to the endpoint
     if klasses_to_get_for_uris:  # generate links
         for klass, uri_nodes in klasses_to_get_for_uris.items():
+            nodeshape_start = time.time()
             available_nodeshapes = await get_nodeshapes_constraining_class(
                 [klass], Var(value="_link_focus_node")
             )
