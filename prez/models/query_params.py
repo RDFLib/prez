@@ -246,6 +246,8 @@ class ListingQueryParams:
             )
 
     def validate_filter(self):
+        if hasattr(self._filter, "default"):
+            self._filter = self._filter.default
         if self._filter:
             try:
                 json.loads(self._filter)

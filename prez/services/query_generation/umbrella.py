@@ -301,8 +301,15 @@ def merge_listing_query_grammar_inputs(
             kwargs["offset"] = None
         else:
             kwargs["limit"] = search_query.limit
-        kwargs["order_by_value"] = search_query.order_by_val
-        kwargs["order_by_direction"] = search_query.order_by_direction
+        if isinstance(search_query, SearchQueryJenaLucene):
+            # Jena Lucene applies ordering inside luc:query via its sort JSON argument.
+            # Do not layer generic SPARQL ordering or an RDF predicate path on top.
+            kwargs["order_by_predicate"] = None
+            kwargs["order_by_value"] = None
+            kwargs["order_by_direction"] = None
+        else:
+            kwargs["order_by_value"] = search_query.order_by_val
+            kwargs["order_by_direction"] = search_query.order_by_direction
         kwargs["inner_select_gpnt"].extend([search_query.inner_select_gpnt])
 
     if cql_parser:
@@ -356,9 +363,9 @@ def merge_listing_query_grammar_inputs(
         kwargs["inner_select_tssp_list"].extend(tssp_list)
 
     if (
-        order_by
+        order_by and not isinstance(search_query, SearchQueryJenaLucene)
     ):  # order by comes from query param - this will override the default order by in search and concept
-        # hierarchy queries
+        # hierarchy queries, except for Jena Lucene which handles sorting internally
         kwargs["order_by_predicate"] = IRI(value=order_by)
         kwargs["order_by_value"] = Var(value="order_by_val")
         kwargs["order_by_direction"] = order_by_direction or "ASC"

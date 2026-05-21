@@ -19,7 +19,7 @@ from pyoxigraph import (
 )
 from rdf2geojson import convert
 from rdflib import Literal, Namespace
-from rdflib.namespace import GEO, RDF, PROF, RDFS
+from rdflib.namespace import GEO, RDF, PROF, RDFS, XSD
 from sparql_grammar_pydantic import (
     IRI,
     TriplesSameSubject,
@@ -81,6 +81,23 @@ def _normalize_listing_query_string(query: str, search_query) -> str:
     if isinstance(search_query, SearchQueryJenaLucene):
         return search_query.normalize_query_string(query)
     return query
+
+
+def _suppress_nan_lucene_weights(item_store: OxiStore) -> None:
+    weight_pred = OxiNamedNode(PREZ.searchResultWeight)
+    nan_datatypes = {str(XSD.float), str(XSD.double)}
+    to_remove = []
+    for quad in item_store.quads_for_pattern(None, weight_pred, None, None):
+        obj = quad.object
+        if (
+            isinstance(obj, OxiLiteral)
+            and obj.value == "NaN"
+            and obj.datatype is not None
+            and obj.datatype.value in nan_datatypes
+        ):
+            to_remove.append(quad)
+    for quad in to_remove:
+        item_store.remove(quad)
 
 
 async def warm_queryables_cache(data_repo: Repo, system_repo: Repo) -> None:
@@ -506,6 +523,8 @@ async def listing_function(
         store_quads=len(item_store),
         elapsed_ms=f"{(time.perf_counter() - query_start_time) * 1000:.1f}",
     )
+    if isinstance(search_query, SearchQueryJenaLucene):
+        _suppress_nan_lucene_weights(item_store)
     default = OxiDefaultGraph()
     if facet_profile_uri:
         item_store.add(

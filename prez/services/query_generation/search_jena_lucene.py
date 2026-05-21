@@ -90,6 +90,15 @@ def _compact_field_spec(value: str | list[str]) -> str:
     return _compact_json(value)
 
 
+def _normalize_sort_direction(value: str | object | None) -> str:
+    if value is None:
+        return "asc"
+    normalized = getattr(value, "value", value)
+    if not isinstance(normalized, str):
+        raise TypeError("Lucene sort direction must be a string or enum with a string value")
+    return normalized.lower()
+
+
 class LuceneCombinedConstructQuery(ConstructQuery):
     def __init__(
         self,
@@ -172,7 +181,9 @@ class SearchQueryJenaLucene:
         self._filter_json = filter_json
         self._facets = facets or []
         self._sort_json = (
-            _compact_json({"field": order_by, "order": (order_by_direction or "ASC").lower()})
+            _compact_json(
+                {"field": order_by, "order": _normalize_sort_direction(order_by_direction)}
+            )
             if isinstance(order_by, str) and order_by
             else None
         )

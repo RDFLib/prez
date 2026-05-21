@@ -30,6 +30,7 @@ from prez.dependencies import (
     get_system_repo,
     get_url,
 )
+from prez.enums import OrderByDirectionEnum
 from prez.models.query_params import ListingQueryParams
 from prez.repositories import Repo
 from prez.reference_data.prez_ns import EP, ONT, PREZ
@@ -39,11 +40,17 @@ from prez.services.query_generation.search_jena_lucene import SearchQueryJenaLuc
 
 
 class FakeLuceneListingRepo(Repo):
-    def __init__(self, profile_query_matchers: list[tuple[str, Quad]] | None = None):
+    def __init__(
+        self,
+        profile_query_matchers: list[tuple[str, Quad]] | None = None,
+        *,
+        weight_literal: Literal | None = None,
+    ):
         self.rdf_queries: list[list[str]] = []
         self.tabular_queries: list[list] = []
         self.return_oxigraph_store_flags: list[bool] = []
         self.profile_query_matchers = profile_query_matchers or []
+        self.weight_literal = weight_literal or Literal("1")
 
     def _build_result_store(self) -> Store:
         store = Store()
@@ -66,7 +73,14 @@ class FakeLuceneListingRepo(Repo):
                 default,
             )
         )
-        store.add(Quad(hash_node, NamedNode(str(PREZ.searchResultWeight)), Literal("1"), default))
+        store.add(
+            Quad(
+                hash_node,
+                NamedNode(str(PREZ.searchResultWeight)),
+                self.weight_literal,
+                default,
+            )
+        )
         store.add(
             Quad(
                 NamedNode(str(PREZ.SearchResult)),
@@ -419,6 +433,24 @@ def test_search_query_jena_lucene_supports_explicit_search_fields():
     )
 
 
+def test_search_query_jena_lucene_accepts_enum_order_direction():
+    search_query = SearchQueryJenaLucene(
+        term="ore",
+        limit=5,
+        offset=0,
+        lucene_index_name="default",
+        order_by="urn:jena:lucene:field#dateCreated",
+        order_by_direction=OrderByDirectionEnum.DESC,
+    )
+
+    query_fragment = search_query.valid_lucene_query_triple
+
+    assert (
+        '"{\\"field\\":\\"urn:jena:lucene:field#dateCreated\\",\\"order\\":\\"desc\\"}"'
+        in query_fragment
+    )
+
+
 def test_search_query_jena_lucene_includes_compact_filter_json():
     filter_json = {
         "op": "=",
@@ -622,6 +654,30 @@ def test_lucene_cql_get_fields_param_overrides_configured_search_fields(test_rep
         in response.text
     )
     assert '"[\\"urn:jena:lucene:field#label\\"]"' not in response.text
+
+
+def test_lucene_cql_get_order_by_uses_lucene_sort_without_outer_sparql_ordering(
+    test_repo: Repo,
+):
+    with _build_lucene_test_client(test_repo) as client:
+        response = client.get(
+            "/cql",
+            params={
+                "_mediatype": "application/sparql-query",
+                "q": "ore",
+                "order_by": "urn:jena:lucene:field#dateCreated",
+                "order_by_direction": "DESC",
+                "limit": "5",
+            },
+        )
+
+    assert response.status_code == 200
+    assert (
+        '"{\\"field\\":\\"urn:jena:lucene:field#dateCreated\\",\\"order\\":\\"desc\\"}"'
+        in response.text
+    )
+    assert "?focus_node <urn:jena:lucene:field#dateCreated> ?order_by_val" not in response.text
+    assert "ORDER BY DESC( ?weight )" not in response.text
 
 
 @pytest.mark.asyncio
@@ -1045,7 +1101,7 @@ def test_lucene_cql_post_accepts_q_filter_limit_and_offset(test_repo: Repo):
     )
     assert "LIMIT 5" not in response.text
     assert "OFFSET 10" not in response.text
-    assert " 5)" in response.text
+    assert " 5 10)" in response.text
 
 
 def test_lucene_cql_get_renders_successfully_via_listing_pipeline():
@@ -1165,6 +1221,31 @@ def test_lucene_cql_post_renders_successfully_via_listing_pipeline():
     ) in rendered_graph
 
 
+def test_lucene_cql_rendered_path_suppresses_nan_weight_literals():
+    fake_repo = FakeLuceneListingRepo(
+        weight_literal=Literal(
+            "NaN",
+            datatype=NamedNode("http://www.w3.org/2001/XMLSchema#float"),
+        )
+    )
+    with _build_lucene_test_client(fake_repo) as client:
+        response = client.get(
+            "/cql",
+            params={
+                "q": "deep",
+                "_mediatype": "text/turtle",
+            },
+        )
+
+    assert response.status_code == 200
+    rendered_graph = Graph().parse(data=response.text, format="turtle")
+    assert (
+        URIRef("urn:hash:1"),
+        URIRef(str(PREZ.searchResultWeight)),
+        None,
+    ) not in rendered_graph
+
+
 def test_lucene_cql_get_rendered_path_uses_wildcard_and_listing_default_limit():
     fake_repo = FakeLuceneListingRepo()
     with _build_lucene_test_client(fake_repo) as client:
@@ -1172,7 +1253,7 @@ def test_lucene_cql_get_rendered_path_uses_wildcard_and_listing_default_limit():
 
     assert response.status_code == 200
     assert fake_repo.return_oxigraph_store_flags == [True]
-    assert '("default" "default" "*" "" "" 10)' in fake_repo.rdf_queries[0][0]
+    assert '("default" "default" "*" "" "" 10 0)' in fake_repo.rdf_queries[0][0]
     assert "urn:jena:lucene:index#match" not in fake_repo.rdf_queries[0][0]
 
 
