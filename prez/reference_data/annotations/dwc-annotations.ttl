@@ -3,6 +3,15 @@ PREFIX schema: <https://schema.org/>
 
 <http://rs.tdwg.org/dwc/terms/>
     rdfs:label "Core terms defined by Darwin Core"@en ;
-    schema:description "This term list includes all currently valid terms that have been defined in the core Darwin Core namespace dwc:.  To comment on this schema, please create a new issue in https://github.com/tdwg/dwc/issues"@en ;
+    schema:description "This term list includes all currently valid terms that have been defined in the core Darwin Core namespace dwc:.  To comment on this schema, please create a new issue in https://github.com/tdwg/dwc/issues"
 .
 
+<http://rs.tdwg.org/dwc/terms/Occurrence>
+    rdfs:label "Occurrence"@en ;
+    schema:description "An existence of a dwc:Organism at a particular place at a particular time."@en
+.
+
+<http://rs.tdwg.org/dwc/terms/Identification>
+    rdfs:label "Identification"@en ;
+    schema:description "A taxonomic determination (e.g., the assignment to a dwc:Taxon)."@en
+.
