@@ -1,0 +1,52 @@
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+PREFIX idn-policy: <https://data.idnau.org/pid/policy/>
+PREFIX idn-resource: <https://data.idnau.org/pid/resource/>
+PREFIX odrl: <http://www.w3.org/ns/odrl/2/>
+PREFIX schema: <https://schema.org/>
+
+idn-policy:telstra-ngaanyatjarra-ilua {
+    idn-policy:telstra-ngaanyatjarra-ilua
+        a odrl:Agreement ;
+        schema:name "Telstra Ngaanyatjarra ILUA — demonstration ODRL Agreement"@en ;
+        odrl:permission
+            idn-policy:telstra-ngaanyatjarra-ilua-permission-access ,
+            idn-policy:telstra-ngaanyatjarra-ilua-permission-read-summary ;
+    .
+
+    idn-policy:telstra-ngaanyatjarra-ilua-permission-access
+        a odrl:Permission ;
+        schema:name "Use of the Telstra Ngaanyatjarra ILUA agreement area"@en ;
+        odrl:action odrl:use ;
+        odrl:assigner idn-policy:telstra-ngaanyatjarra-ilua-party-ngaanyatjarra-signatories ;
+        odrl:assignee idn-resource:telstra ;
+        odrl:target <https://data.idnau.org/pid/nntt/WI2004-006> ;
+    .
+
+    idn-policy:telstra-ngaanyatjarra-ilua-permission-read-summary
+        a odrl:Permission ;
+        schema:name "Read the public agreement summary"@en ;
+        odrl:action odrl:read ;
+        odrl:assigner idn-policy:telstra-ngaanyatjarra-ilua-party-ngaanyatjarra-signatories ;
+        odrl:assignee odrl:All ;
+        odrl:target idn-resource:dd9b004b-1c22-5b53-8381-bd93760ee922 ;
+    .
+
+    idn-policy:telstra-ngaanyatjarra-ilua-party-ngaanyatjarra-signatories
+        schema:name "Ngaanyatjarra signatory parties"@en ;
+    .
+
+    idn-resource:telstra schema:name "Telstra Corporation Limited"@en .
+    idn-resource:dd9b004b-1c22-5b53-8381-bd93760ee922
+        schema:name "Telstra Ngaanyatjarra Indigenous Land Use Agreement"@en ;
+    .
+}
+
+<https://data.idnau.org/pid/nntt/WI2004-006> {
+    <https://data.idnau.org/pid/nntt/WI2004-006>
+        a geo:Feature ;
+        dcterms:identifier "WI2004-006" ;
+        schema:name "Telstra Ngaanyatjarra ILUA registered area"@en ;
+        geo:hasGeometry [ geo:asWKT "POLYGON ((122 -27, 123 -27, 123 -26, 122 -26, 122 -27))"^^geo:wktLiteral ] ;
+    .
+}

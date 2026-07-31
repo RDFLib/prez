@@ -1,0 +1,40 @@
+PREFIX altr-ext: <http://www.w3.org/ns/dx/connegp/altr-ext#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX odrl: <http://www.w3.org/ns/odrl/2/>
+PREFIX prez: <https://prez.dev/>
+PREFIX prof: <http://www.w3.org/ns/dx/prof/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX schema: <https://schema.org/>
+PREFIX sh: <http://www.w3.org/ns/shacl#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+<https://prez.dev/profile/odrl-agreement>
+    a prof:Profile , prez:ObjectProfile ;
+    dcterms:identifier "odrl-agreement"^^xsd:token ;
+    dcterms:title "ODRL Agreement presentation profile"@en ;
+    dcterms:description "Presents an ODRL Agreement with its named Permission rules and their actions, parties and targets."@en ;
+    altr-ext:constrainsClass odrl:Agreement ;
+    altr-ext:hasDefaultResourceFormat "text/anot+turtle" ;
+    altr-ext:hasResourceFormat
+        "application/anot+ld+json" ,
+        "application/ld+json" ,
+        "text/anot+turtle" ,
+        "text/turtle" ;
+    sh:property [
+        sh:path [
+            sh:union (
+                rdf:type
+                dcterms:title
+                schema:name
+                odrl:permission
+                ( odrl:permission rdf:type )
+                ( odrl:permission dcterms:title )
+                ( odrl:permission schema:name )
+                ( odrl:permission odrl:action )
+                ( odrl:permission odrl:assigner )
+                ( odrl:permission odrl:assignee )
+                ( odrl:permission odrl:target )
+            )
+        ]
+    ] ;
+.
