@@ -21,10 +21,7 @@ TARGET = URIRef("https://data.idnau.org/pid/nntt/WI2004-006")
 
 
 def _profile_shape() -> NodeShape:
-    profile_path = (
-        Path(__file__).parents[1]
-        / "examples/profiles/odrl_agreement.ttl"
-    )
+    profile_path = Path(__file__).parents[1] / "examples/profiles/odrl_agreement.ttl"
     profile_graph = Graph().parse(profile_path)
     return NodeShape(
         uri=PROFILE,
@@ -85,7 +82,9 @@ def test_two_permissions_remain_grouped_in_the_api_rdf():
     assert (
         PERMISSION_READ,
         ODRL.target,
-        URIRef("https://data.idnau.org/pid/resource/dd9b004b-1c22-5b53-8381-bd93760ee922"),
+        URIRef(
+            "https://data.idnau.org/pid/resource/dd9b004b-1c22-5b53-8381-bd93760ee922"
+        ),
     ) in result
     assert (PERMISSION_ACCESS, RDF.type, ODRL.Permission) in result
     assert (TARGET, SCHEMA.name, None) not in result
@@ -96,9 +95,7 @@ def test_target_in_a_separate_named_graph_requires_graph_aware_lookup():
     store = Store()
     store.load(fixture.read_bytes(), RdfFormat.TRIG)
     default_graph_labels = list(
-        store.query(
-            f"SELECT ?label WHERE {{ <{TARGET}> <{SCHEMA.name}> ?label }}"
-        )
+        store.query(f"SELECT ?label WHERE {{ <{TARGET}> <{SCHEMA.name}> ?label }}")
     )
     named_graph_labels = list(
         store.query(
@@ -108,6 +105,5 @@ def test_target_in_a_separate_named_graph_requires_graph_aware_lookup():
 
     assert default_graph_labels == []
     assert (
-        named_graph_labels[0][0].value
-        == "Telstra Ngaanyatjarra ILUA registered area"
+        named_graph_labels[0][0].value == "Telstra Ngaanyatjarra ILUA registered area"
     )
