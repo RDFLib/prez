@@ -1,0 +1,625 @@
+# ODRL annotations for Prez.
+# Source: https://github.com/w3c/poe/blob/gh-pages/vocab/ODRL22.ttl
+# Retrieved: 2026-09-03
+# Source content: https://www.w3.org/copyright/software-license-2023/
+#
+
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+odrl:Action rdfs:label "Action"@en ;
+    skos:definition "An operation on an Asset."@en .
+
+odrl:Agreement rdfs:label "Agreement"@en ;
+    skos:definition "A Policy that grants the assignee a Rule over an Asset from an assigner."@en .
+
+odrl:All rdfs:label "All"@en ;
+    skos:definition "Specifies that the scope of the relationship is all of the collective individuals within a context."@en .
+
+odrl:All2ndConnections rdfs:label "All Second-level Connections"@en ;
+    skos:definition "Specifies that the scope of the relationship is all of the second-level connections to the Party."@en .
+
+odrl:AllConnections rdfs:label "All First-Level Connections"@en ;
+    skos:definition "Specifies that the scope of the relationship is all of the first-level connections of the Party."@en .
+
+odrl:AllGroups rdfs:label "All Group Connections"@en ;
+    skos:definition "Specifies that the scope of the relationship is all of the group connections of the Party."@en .
+
+odrl:Assertion rdfs:label "Assertion"@en ;
+    skos:definition "A Policy that asserts a Rule over an Asset from parties."@en .
+
+odrl:Asset rdfs:label "Asset"@en ;
+    skos:definition "A resource or a collection of resources that are the subject of a Rule."@en .
+
+odrl:AssetCollection rdfs:label "Asset Collection"@en ;
+    skos:definition "An Asset that is collection of individual resources"@en .
+
+odrl:AssetScope rdfs:label "Asset Scope"@en ;
+    skos:definition "Scopes for Asset Scope expressions."@en .
+
+odrl:ConflictTerm rdfs:label "Conflict Strategy Preference"@en ;
+    skos:definition "Used to establish strategies to resolve conflicts that arise from the merging of Policies or conflicts between Permissions and Prohibitions in the same Policy."@en .
+
+odrl:Constraint rdfs:label "Constraint"@en ;
+    skos:definition "A boolean expression that refines the semantics of an Action and Party/Asset Collection or declare the conditions applicable to a Rule."@en .
+
+odrl:Duty rdfs:label "Duty"@en ;
+    skos:definition "The obligation to perform an Action"@en .
+
+odrl:Group rdfs:label "Group"@en ;
+    skos:definition "Specifies that the scope of the relationship is the defined group with multiple individual members."@en .
+
+odrl:Individual rdfs:label "Individual"@en ;
+    skos:definition "Specifies that the scope of the relationship is the single Party individual."@en .
+
+odrl:LeftOperand rdfs:label "Left Operand"@en ;
+    skos:definition "Left operand for a constraint expression."@en .
+
+odrl:LogicalConstraint rdfs:label "Logical Constraint"@en ;
+    skos:definition "A logical expression that refines the semantics of an Action and Party/Asset Collection or declare the conditions applicable to a Rule."@en .
+
+odrl:Offer rdfs:label "Offer"@en ;
+    skos:definition "A Policy that proposes a Rule over an Asset from an assigner."@en .
+
+odrl:Operator rdfs:label "Operator"@en ;
+    skos:definition "Operator for constraint expression."@en .
+
+odrl:Party rdfs:label "Party"@en ;
+    skos:definition "An entity or a collection of entities that undertake Roles in a Rule."@en .
+
+odrl:PartyCollection rdfs:label "Party Collection"@en ;
+    skos:definition "A Party that is a group of individual entities"@en .
+
+odrl:PartyScope rdfs:label "Party Scope"@en ;
+    skos:definition "Scopes for Party Scope expressions."@en .
+
+odrl:Permission rdfs:label "Permission"@en ;
+    skos:definition "The ability to perform an Action over an Asset."@en .
+
+odrl:Policy rdfs:label "Policy"@en ;
+    skos:definition "A non-empty group of Permissions and/or Prohibitions."@en .
+
+odrl:Privacy rdfs:label "Privacy Policy"@en ;
+    skos:definition "A Policy that expresses a Rule over an Asset containing personal information."@en .
+
+odrl:Prohibition rdfs:label "Prohibition"@en ;
+    skos:definition "The inability to perform an Action over an Asset."@en .
+
+odrl:Request rdfs:label "Request"@en ;
+    skos:definition "A Policy that proposes a Rule over an Asset from an assignee."@en .
+
+odrl:RightOperand rdfs:label "Right Operand"@en ;
+    skos:definition "Right operand for constraint expression."@en .
+
+odrl:Rule rdfs:label "Rule"@en ;
+    skos:definition "An abstract concept that represents the common characteristics of Permissions, Prohibitions, and Duties."@en .
+
+odrl:Set rdfs:label "Set"@en ;
+    skos:definition "A Policy that expresses a Rule over an Asset."@en .
+
+odrl:Ticket rdfs:label "Ticket"@en ;
+    skos:definition "A Policy that grants the holder a Rule over an Asset from an assigner."@en .
+
+odrl:UndefinedTerm rdfs:label "Undefined Term"@en ;
+    skos:definition "Is used to indicate how to support Actions that are not part of any vocabulary or profile in the policy expression system."@en .
+
+odrl:absolutePosition rdfs:label "Absolute Asset Position"@en ;
+    skos:definition "A point in space or time defined with absolute coordinates for the positioning of the target Asset."@en .
+
+odrl:absoluteSize rdfs:label "Absolute Asset Size"@en ;
+    skos:definition "Measure(s) of one or two axes for 2D-objects or measure(s) of one to tree axes for 3D-objects of the target Asset."@en .
+
+odrl:absoluteSpatialPosition rdfs:label "Absolute Spatial Asset Position"@en ;
+    skos:definition "The absolute spatial positions of four corners of a rectangle on a 2D-canvas or the eight corners of a cuboid in a 3D-space for the target Asset to fit."@en .
+
+odrl:absoluteTemporalPosition rdfs:label "Absolute Temporal Asset Position"@en ;
+    skos:definition "The absolute temporal positions in a media stream the target Asset has to fit."@en .
+
+odrl:acceptTracking rdfs:label "Accept Tracking"@en ;
+    skos:definition "To accept that the use of the Asset may be tracked."@en .
+
+odrl:action rdfs:label "Has Action"@en ;
+    skos:definition "The operation relating to the Asset for which the Rule is being subjected."@en .
+
+odrl:adHocShare rdfs:label "Ad-hoc sharing"@en ;
+    skos:definition "The act of sharing the asset to parties in close proximity to the owner."@en .
+
+odrl:aggregate rdfs:label "Aggregate"@en ;
+    skos:definition "To use the Asset or parts of it as part of a composite collection."@en .
+
+odrl:and rdfs:label "And"@en ;
+    skos:definition "The relation is satisfied when all of the Constraints are satisfied."@en .
+
+odrl:andSequence rdfs:label "And Sequence"@en ;
+    skos:definition "The relation is satisfied when each of the Constraints are satisfied in the order specified."@en .
+
+odrl:annotate rdfs:label "Annotate"@en ;
+    skos:definition "To add explanatory notations/commentaries to the Asset without modifying the Asset in any other way."@en .
+
+odrl:anonymize rdfs:label "Anonymize"@en ;
+    skos:definition "To anonymize all or parts of the Asset."@en .
+
+odrl:append rdfs:label "Append"@en ;
+    skos:definition "The act of adding to the end of an asset."@en .
+
+odrl:appendTo rdfs:label "Append To"@en ;
+    skos:definition "The act of appending data to the Asset without modifying the Asset in any other way."@en .
+
+odrl:archive rdfs:label "Archive"@en ;
+    skos:definition "To store the Asset (in a non-transient form)."@en .
+
+odrl:assignee rdfs:label "Assignee"@en ;
+    skos:definition "The Party is the recipient of the Rule."@en .
+
+odrl:assigneeOf rdfs:label "Assignee Of"@en ;
+    skos:definition "Identifies an ODRL Policy for which the identified Party undertakes the assignee functional role."@en .
+
+odrl:assigner rdfs:label "Assigner"@en ;
+    skos:definition "The Party is the issuer of the Rule."@en .
+
+odrl:assignerOf rdfs:label "Assigner Of"@en ;
+    skos:definition "Identifies an ODRL Policy for which the identified Party undertakes the assigner functional role."@en .
+
+odrl:attachPolicy rdfs:label "Attach policy"@en ;
+    skos:definition "The act of keeping the policy notice with the asset."@en .
+
+odrl:attachSource rdfs:label "Attach source"@en ;
+    skos:definition "The act of attaching the source of the asset and its derivatives."@en .
+
+odrl:attribute rdfs:label "Attribute"@en ;
+    skos:definition "To attribute the use of the Asset."@en .
+
+odrl:attributedParty rdfs:label "Attributed Party"@en ;
+    skos:definition "The Party to be attributed."@en .
+
+odrl:attributingParty rdfs:label "Attributing Party"@en ;
+    skos:definition "The Party who undertakes the attribution."@en .
+
+odrl:commercialize rdfs:label "Commercialize"@en ;
+    skos:definition "The act of using the asset in a business environment."@en .
+
+odrl:compensate rdfs:label "Compensate"@en ;
+    skos:definition "To compensate by transfer of some amount of value, if defined, for using or selling the Asset."@en .
+
+odrl:compensatedParty rdfs:label "Compensated Party"@en ;
+    skos:definition "The Party is the recipient of the compensation."@en .
+
+odrl:compensatingParty rdfs:label "Compensating Party"@en ;
+    skos:definition "The Party that is the provider of the compensation."@en .
+
+odrl:concurrentUse rdfs:label "Concurrent Use"@en ;
+    skos:definition "To create multiple copies of the Asset that are being concurrently used."@en .
+
+odrl:conflict rdfs:label "Handle Policy Conflicts"@en ;
+    skos:definition "The conflict-resolution strategy for a Policy."@en .
+
+odrl:consentedParty rdfs:label "Consented Party"@en ;
+    skos:definition "The Party who obtains the consent."@en .
+
+odrl:consentingParty rdfs:label "Consenting Party"@en ;
+    skos:definition "The Party to obtain consent from."@en .
+
+odrl:consequence rdfs:label "Consequence"@en ;
+    skos:definition "Relates a Duty to another Duty, the latter being a consequence of not fulfilling the former."@en .
+
+odrl:constraint rdfs:label "Has Constraint"@en ;
+    skos:definition "Constraint applied to a Rule"@en .
+
+odrl:contractedParty rdfs:label "Contracted Party"@en ;
+    skos:definition "The Party who is being contracted."@en .
+
+odrl:contractingParty rdfs:label "Contracting Party"@en ;
+    skos:definition "The Party who is offering the contract."@en .
+
+odrl:copy rdfs:label "Copy"@en ;
+    skos:definition "The act of making an exact reproduction of the asset."@en .
+
+odrl:core rdfs:label "ODRL Core Profile"@en ;
+    skos:definition "Identifier for the ODRL Core Profile"@en .
+
+odrl:count rdfs:label "Count"@en ;
+    skos:definition "Numeric count of executions of the action of the Rule."@en .
+
+odrl:dataType rdfs:label "Datatype"@en ;
+    skos:definition "The datatype of the value of the rightOperand or rightOperandReference of a Constraint."@en .
+
+odrl:dateTime rdfs:label "Datetime"@en ;
+    skos:definition "The date (and optional time and timezone) of exercising the action of the Rule. Right operand value MUST be an xsd:date or xsd:dateTime as defined by [[xmlschema11-2]]."@en .
+
+odrl:delayPeriod rdfs:label "Delay Period"@en ;
+    skos:definition "A time delay period prior to exercising the action of the Rule. The point in time triggering this period MAY be defined by another temporal Constraint combined by a Logical Constraint (utilising the odrl:andSequence operand). Right operand value MUST be an xsd:duration as defined by [[xmlschema11-2]]."@en .
+
+odrl:delete rdfs:label "Delete"@en ;
+    skos:definition "To permanently remove all copies of the Asset after it has been used."@en .
+
+odrl:deliveryChannel rdfs:label "Delivery Channel"@en ;
+    skos:definition "The delivery channel used for exercising the action of the Rule."@en .
+
+odrl:derive rdfs:label "Derive"@en ;
+    skos:definition "To create a new derivative Asset from this Asset and to edit or modify the derivative."@en .
+
+odrl:device rdfs:label "Device"@en ;
+    skos:definition "An identified device used for exercising the action of the Rule."@en .
+
+odrl:digitize rdfs:label "Digitize"@en ;
+    skos:definition "To produce a digital copy of (or otherwise digitize) the Asset from its analogue form."@en .
+
+odrl:display rdfs:label "Display"@en ;
+    skos:definition "To create a static and transient rendition of an Asset."@en .
+
+odrl:distribute rdfs:label "Distribute"@en ;
+    skos:definition "To supply the Asset to third-parties."@en .
+
+odrl:duty rdfs:label "Has Duty"@en ;
+    skos:definition "Relates an individual Duty to a Permission."@en .
+
+odrl:elapsedTime rdfs:label "Elapsed Time"@en ;
+    skos:definition "A continuous elapsed time period which may be used for exercising of the action of the Rule. Right operand value MUST be an xsd:duration as defined by [[xmlschema11-2]]."@en .
+
+odrl:ensureExclusivity rdfs:label "Ensure Exclusivity"@en ;
+    skos:definition "To ensure that the Rule on the Asset is exclusive."@en .
+
+odrl:eq rdfs:label "Equal to"@en ;
+    skos:definition "Indicating that a given value equals the right operand of the Constraint."@en .
+
+odrl:event rdfs:label "Event"@en ;
+    skos:definition "An identified event setting a context for exercising the action of the Rule."@en .
+
+odrl:execute rdfs:label "Execute"@en ;
+    skos:definition "To run the computer program Asset."@en .
+
+odrl:export rdfs:label "Export"@en ;
+    skos:definition "The act of transforming the asset into a new form."@en .
+
+odrl:extract rdfs:label "Extract"@en ;
+    skos:definition "To extract parts of the Asset and to use it as a new Asset."@en .
+
+odrl:extractChar rdfs:label "Extract character"@en ;
+    skos:definition "The act of extracting (replicating) unchanged characters from the asset."@en .
+
+odrl:extractPage rdfs:label "Extract page"@en ;
+    skos:definition "The act of extracting (replicating) unchanged pages from the asset."@en .
+
+odrl:extractWord rdfs:label "Extract word"@en ;
+    skos:definition "The act of extracting (replicating) unchanged words from the asset."@en .
+
+odrl:failure rdfs:label "Failure"@en ;
+    skos:definition "Failure is an abstract property that defines the violation (or unmet) relationship between Rules."@en .
+
+odrl:fileFormat rdfs:label "File Format"@en ;
+    skos:definition "A transformed file format of the target Asset."@en .
+
+odrl:function rdfs:label "Function"@en ;
+    skos:definition "Function is an abstract property whose sub-properties define the functional roles which may be fulfilled by a party in relation to a Rule."@en .
+
+odrl:give rdfs:label "Give"@en ;
+    skos:definition "To transfer the ownership of the Asset to a third party without compensation and while deleting the original asset."@en .
+
+odrl:grantUse rdfs:label "Grant Use"@en ;
+    skos:definition "To grant the use of the Asset to third parties."@en .
+
+odrl:gt rdfs:label "Greater than"@en ;
+    skos:definition "Indicating that a given value is greater than the right operand of the Constraint."@en .
+
+odrl:gteq rdfs:label "Greater than or equal to"@en ;
+    skos:definition "Indicating that a given value is greater than or equal to the right operand of the Constraint."@en .
+
+odrl:hasPart rdfs:label "Has part"@en ;
+    skos:definition "A set-based operator indicating that a given value contains the right operand of the Constraint."@en .
+
+odrl:hasPolicy rdfs:label "Target Policy"@en ;
+    skos:definition "Identifies an ODRL Policy for which the identified Asset is the target Asset to all the Rules."@en .
+
+odrl:ignore rdfs:label "Ignore Undefined Actions"@en ;
+    skos:definition "The Action is to be ignored and is not part of the policy – and the policy remains valid."@en .
+
+odrl:implies rdfs:label "Implies"@en ;
+    skos:definition "An Action asserts that another Action is not prohibited to enable its operational semantics."@en .
+
+odrl:include rdfs:label "Include"@en ;
+    skos:definition "To include other related assets in the Asset."@en .
+
+odrl:includedIn rdfs:label "Included In"@en ;
+    skos:definition "An Action transitively asserts that another Action that encompasses its operational semantics."@en .
+
+odrl:index rdfs:label "Index"@en ;
+    skos:definition "To record the Asset in an index."@en .
+
+odrl:industry rdfs:label "Industry Context"@en ;
+    skos:definition "A defined industry sector setting a context for exercising the action of the Rule."@en .
+
+odrl:inform rdfs:label "Inform"@en ;
+    skos:definition "To inform that an action has been performed on or in relation to the Asset."@en .
+
+odrl:informedParty rdfs:label "Informed Party"@en ;
+    skos:definition "The Party to be informed of all uses."@en .
+
+odrl:informingParty rdfs:label "Informing Party"@en ;
+    skos:definition "The Party who provides the inform use data."@en .
+
+odrl:inheritAllowed rdfs:label "Inheritance Allowed"@en ;
+    skos:definition "Indicates if the Policy entity can be inherited."@en .
+
+odrl:inheritFrom rdfs:label "Inherits From"@en ;
+    skos:definition "Relates a (child) policy to another (parent) policy from which terms are inherited."@en .
+
+odrl:inheritRelation rdfs:label "Inherit Relation"@en ;
+    skos:definition "Indentifies the type of inheritance."@en .
+
+odrl:install rdfs:label "Install"@en ;
+    skos:definition "To load the computer program Asset onto a storage device which allows operating or running the Asset."@en .
+
+odrl:invalid rdfs:label "Void Policy"@en ;
+    skos:definition "The policy is void."@en .
+
+odrl:isA rdfs:label "Is a"@en ;
+    skos:definition "A set-based operator indicating that a given value is an instance of the right operand of the Constraint."@en .
+
+odrl:isAllOf rdfs:label "Is all of"@en ;
+    skos:definition "A set-based operator indicating that a given value is all of the right operand of the Constraint."@en .
+
+odrl:isAnyOf rdfs:label "Is any of"@en ;
+    skos:definition "A set-based operator indicating that a given value is any of the right operand of the Constraint."@en .
+
+odrl:isNoneOf rdfs:label "Is none of"@en ;
+    skos:definition "A set-based operator indicating that a given value is none of the right operand of the Constraint."@en .
+
+odrl:isPartOf rdfs:label "Is part of"@en ;
+    skos:definition "A set-based operator indicating that a given value is contained by the right operand of the Constraint."@en .
+
+odrl:language rdfs:label "Language"@en ;
+    skos:definition "A natural language used by the target Asset."@en .
+
+odrl:lease rdfs:label "Lease"@en ;
+    skos:definition "The act of making available the asset to a third-party for a fixed period of time with exchange of value."@en .
+
+odrl:leftOperand rdfs:label "Has Left Operand"@en ;
+    skos:definition "The left operand in a constraint expression."@en .
+
+odrl:lend rdfs:label "Lend"@en ;
+    skos:definition "The act of making available the asset to a third-party for a fixed period of time without exchange of value."@en .
+
+odrl:license rdfs:label "License"@en ;
+    skos:definition "The act of granting the right to use the asset to a third-party."@en .
+
+odrl:lt rdfs:label "Less than"@en ;
+    skos:definition "Indicating that a given value is less than the right operand of the Constraint."@en .
+
+odrl:lteq rdfs:label "Less than or equal to"@en ;
+    skos:definition "Indicating that a given value is less than or equal to the right operand of the Constraint."@en .
+
+odrl:media rdfs:label "Media Context"@en ;
+    skos:definition "Category of a media asset setting a context for exercising the action of the Rule."@en .
+
+odrl:meteredTime rdfs:label "Metered Time"@en ;
+    skos:definition "An accumulated amount of one to many metered time periods which were used for exercising the action of the Rule. Right operand value MUST be an xsd:duration as defined by [[xmlschema11-2]]."@en .
+
+odrl:modify rdfs:label "Modify"@en ;
+    skos:definition "To change existing content of the Asset. A new asset is not created by this action."@en .
+
+odrl:move rdfs:label "Move"@en ;
+    skos:definition "To move the Asset from one digital location to another including deleting the original copy."@en .
+
+odrl:neq rdfs:label "Not equal to"@en ;
+    skos:definition "Indicating that a given value is not equal to the right operand of the Constraint."@en .
+
+odrl:nextPolicy rdfs:label "Next Policy"@en ;
+    skos:definition "To grant the specified Policy to a third party for their use of the Asset."@en .
+
+odrl:obligation rdfs:label "Obligation"@en ;
+    skos:definition "Relates an individual Duty to a Policy."@en .
+
+odrl:obtainConsent rdfs:label "Obtain Consent"@en ;
+    skos:definition "To obtain verifiable consent to perform the requested action in relation to the Asset."@en .
+
+odrl:operand rdfs:label "Operand"@en ;
+    skos:definition "Operand is an abstract property for a logical relationship."@en .
+
+odrl:operator rdfs:label "Has Operator"@en ;
+    skos:definition "The operator function applied to operands of a Constraint"@en .
+
+odrl:or rdfs:label "Or"@en ;
+    skos:definition "The relation is satisfied when at least one of the Constraints is satisfied."@en .
+
+odrl:output rdfs:label "Output"@en ;
+    skos:definition "The output property specifies the Asset which is created from the output of the Action."@en .
+
+odrl:partOf rdfs:label "Part Of"@en ;
+    skos:definition "Identifies an Asset/PartyCollection that the Asset/Party is a member of."@en .
+
+odrl:pay rdfs:label "Pay"@en ;
+    skos:definition "The act of paying a financial amount to a party for use of the asset."@en .
+
+odrl:payAmount rdfs:label "Payment Amount"@en ;
+    skos:definition "The amount of a financial payment. Right operand value MUST be an xsd:decimal. "@en .
+
+odrl:payeeParty rdfs:label "Payee Party"@en ;
+    skos:definition "The Party is the recipient of the payment."@en .
+
+odrl:percentage rdfs:label "Asset Percentage"@en ;
+    skos:definition "A percentage amount of the target Asset relevant for exercising the action of the Rule. Right operand value MUST be an xsd:decimal from 0 to 100."@en .
+
+odrl:perm rdfs:label "Prefer Permissions"@en ;
+    skos:definition "Permissions take preference over prohibitions."@en .
+
+odrl:permission rdfs:label "Has Permission"@en ;
+    skos:definition "Relates an individual Permission to a Policy."@en .
+
+odrl:play rdfs:label "Play"@en ;
+    skos:definition "To create a sequential and transient rendition of an Asset."@en .
+
+odrl:policyUsage rdfs:label "Policy Rule Usage"@en ;
+    skos:definition "Indicates the actual datetime the action of the Rule was exercised."@en .
+
+odrl:present rdfs:label "Present"@en ;
+    skos:definition "To publicly perform the Asset."@en .
+
+odrl:preview rdfs:label "Preview"@en ;
+    skos:definition "The act of providing a short preview of the asset."@en .
+
+odrl:print rdfs:label "Print"@en ;
+    skos:definition "To create a tangible and permanent rendition of an Asset."@en .
+
+odrl:product rdfs:label "Product Context"@en ;
+    skos:definition "Category of product or service setting a context for exercising the action of the Rule."@en .
+
+odrl:profile rdfs:label "Profile"@en ;
+    skos:definition "The identifier(s) of an ODRL Profile that the Policy conforms to."@en .
+
+odrl:prohibit rdfs:label "Prefer Prohibitions"@en ;
+    skos:definition "Prohibitions take preference over permissions."@en .
+
+odrl:prohibition rdfs:label "Has Prohibition"@en ;
+    skos:definition "Relates an individual Prohibition to a Policy."@en .
+
+odrl:proximity rdfs:label "proximity"@en ;
+    skos:definition "An value indicating the closeness or nearness."@en .
+
+odrl:purpose rdfs:label "Purpose"@en ;
+    skos:definition "A defined purpose for exercising the action of the Rule."@en .
+
+odrl:read rdfs:label "Read"@en ;
+    skos:definition "To obtain data from the Asset."@en .
+
+odrl:recipient rdfs:label "Recipient"@en ;
+    skos:definition "The party receiving the result/outcome of exercising the action of the Rule."@en .
+
+odrl:refinement rdfs:label "Refinement"@en ;
+    skos:definition "Constraint used to refine the semantics of an Action, or Party/Asset Collection"@en .
+
+odrl:relation rdfs:label "Relation"@en ;
+    skos:definition "Relation is an abstract property which creates an explicit link between an Action and an Asset."@en .
+
+odrl:relativePosition rdfs:label "Relative Asset Position"@en ;
+    skos:definition "A point in space or time defined with coordinates relative to full measures the positioning of the target Asset."@en .
+
+odrl:relativeSize rdfs:label "Relative Asset Size"@en ;
+    skos:definition "Measure(s) of one or two axes for 2D-objects or measure(s) of one to tree axes for 3D-objects - expressed as percentages of full values - of the target Asset."@en .
+
+odrl:relativeSpatialPosition rdfs:label "Relative Spatial Asset Position"@en ;
+    skos:definition "The relative spatial positions - expressed as percentages of full values - of four corners of a rectangle on a 2D-canvas or the eight corners of a cuboid in a 3D-space of the target Asset."@en .
+
+odrl:relativeTemporalPosition rdfs:label "Relative Temporal Asset Position"@en ;
+    skos:definition "A point in space or time defined with coordinates relative to full measures the positioning of the target Asset."@en .
+
+odrl:remedy rdfs:label "Remedy"@en ;
+    skos:definition "Relates an individual remedy Duty to a Prohibition."@en .
+
+odrl:reproduce rdfs:label "Reproduce"@en ;
+    skos:definition "To make duplicate copies the Asset in any material form."@en .
+
+odrl:resolution rdfs:label "Rendition Resolution"@en ;
+    skos:definition "Resolution of the rendition of the target Asset."@en .
+
+odrl:reviewPolicy rdfs:label "Review Policy"@en ;
+    skos:definition "To review the Policy applicable to the Asset."@en .
+
+odrl:rightOperand rdfs:label "Has Right Operand"@en ;
+    skos:definition "The value of the right operand in a constraint expression."@en .
+
+odrl:rightOperandReference rdfs:label "Has Right Operand Reference"@en ;
+    skos:definition "A reference to a web resource providing the value for the right operand of a Constraint."@en .
+
+odrl:scope rdfs:label "Scope"@en ;
+    skos:definition "The identifier of a scope that provides context to the extent of the entity."@en .
+
+odrl:secondaryUse rdfs:label "Secondary Use"@en ;
+    skos:definition "The act of using the asset for a purpose other than the purpose it was intended for."@en .
+
+odrl:sell rdfs:label "Sell"@en ;
+    skos:definition "To transfer the ownership of the Asset to a third party with compensation and while deleting the original asset."@en .
+
+odrl:share rdfs:label "Share"@en ;
+    skos:definition "The act of the non-commercial reproduction and distribution of the asset to third-parties."@en .
+
+odrl:shareAlike rdfs:label "Share-alike"@en ;
+    skos:definition "The act of distributing any derivative asset under the same terms as the original asset."@en .
+
+odrl:source rdfs:label "Source"@en ;
+    skos:definition "Reference to a Asset/PartyCollection"@en .
+
+odrl:spatial rdfs:label "Geospatial Named Area"@en ;
+    skos:definition "A named and identified geospatial area with defined borders which is used for exercising the action of the Rule. An IRI MUST be used to represent this value."@en .
+
+odrl:spatialCoordinates rdfs:label "Geospatial Coordinates"@en ;
+    skos:definition "A set of coordinates setting the borders of a geospatial area used for exercising the action of the Rule. The coordinates MUST include longitude and latitude, they MAY include altitude and the geodetic datum."@en .
+
+odrl:status rdfs:label "Status"@en ;
+    skos:definition "the value generated from the leftOperand action or a value related to the leftOperand set as the reference for the comparison."@en .
+
+odrl:stream rdfs:label "Stream"@en ;
+    skos:definition "To deliver the Asset in real-time."@en .
+
+odrl:support rdfs:label "Support Undefined Actions"@en ;
+    skos:definition "The Action is to be supported as part of the policy – and the policy remains valid."@en .
+
+odrl:synchronize rdfs:label "Synchronize"@en ;
+    skos:definition "To use the Asset in timed relations with media (audio/visual) elements of another Asset."@en .
+
+odrl:system rdfs:label "System"@en ;
+    skos:definition "An identified computing system used for exercising the action of the Rule."@en .
+
+odrl:systemDevice rdfs:label "System Device"@en ;
+    skos:definition "An identified computing system or computing device used for exercising the action of the Rule."@en .
+
+odrl:target rdfs:label "Target"@en ;
+    skos:definition "The target property indicates the Asset that is the primary subject to which the Rule action directly applies."@en .
+
+odrl:textToSpeech rdfs:label "Text-to-speech"@en ;
+    skos:definition "To have a text Asset read out loud."@en .
+
+odrl:timeInterval rdfs:label "Recurring Time Interval"@en ;
+    skos:definition "A recurring period of time before the next execution of the action of the Rule. Right operand value MUST be an xsd:duration as defined by [[xmlschema11-2]]."@en .
+
+odrl:timedCount rdfs:label "Timed Count"@en ;
+    skos:definition "The number of seconds after which timed metering use of the asset begins."@en .
+
+odrl:trackedParty rdfs:label "Tracked Party"@en ;
+    skos:definition "The Party whose usage is being tracked."@en .
+
+odrl:trackingParty rdfs:label "Tracking Party"@en ;
+    skos:definition "The Party who is tracking usage."@en .
+
+odrl:transfer rdfs:label "Transfer Ownership"@en ;
+    skos:definition "To transfer the ownership of the Asset in perpetuity."@en .
+
+odrl:transform rdfs:label "Transform"@en ;
+    skos:definition "To convert the Asset into a different format."@en .
+
+odrl:translate rdfs:label "Translate"@en ;
+    skos:definition "To translate the original natural language of an Asset into another natural language."@en .
+
+odrl:uid rdfs:label "Unique Identifier"@en ;
+    skos:definition "An unambiguous identifier"@en .
+
+odrl:undefined rdfs:label "Handle Undefined Term"@en ;
+    skos:definition "Relates the strategy used for handling undefined actions to a Policy."@en .
+
+odrl:uninstall rdfs:label "Uninstall"@en ;
+    skos:definition "To unload and delete the computer program Asset from a storage device and disable its readiness for operation."@en .
+
+odrl:unitOfCount rdfs:label "Unit Of Count"@en ;
+    skos:definition "The unit of measure used for counting the executions of the action of the Rule."@en .
+
+odrl:use rdfs:label "Use"@en ;
+    skos:definition "To use the Asset"@en .
+
+odrl:version rdfs:label "Version"@en ;
+    skos:definition "The version of the target Asset."@en .
+
+odrl:virtualLocation rdfs:label "Virtual IT Communication Location"@en ;
+    skos:definition "An identified location of the IT communication space which is relevant for exercising the action of the Rule."@en .
+
+odrl:watermark rdfs:label "Watermark"@en ;
+    skos:definition "To apply a watermark to the Asset."@en .
+
+odrl:write rdfs:label "Write"@en ;
+    skos:definition "The act of writing to the Asset."@en .
+
+odrl:writeTo rdfs:label "Write to"@en ;
+    skos:definition "The act of adding data to the Asset."@en .
+
+odrl:xone rdfs:label "Only One"@en ;
+    skos:definition "The relation is satisfied when only one, and not more, of the Constaints is satisfied"@en .
+
