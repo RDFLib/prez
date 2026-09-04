@@ -1,0 +1,2144 @@
+# RIC-O annotations for Prez.
+# Source: https://github.com/ICA-EGAD/RiC-O/tree/master/ontology/current-version/modularized-version/RiC-O_1-1_core.rdf
+# Retrieved: 2026-09-04
+#
+
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <http://schema.org/>
+
+<https://www.ica.org/standards/RiC/ontology#Activity> rdfs:label "Activity"@en ;
+    schema:description "The doing of something for some human purpose."@en .
+
+<https://www.ica.org/standards/RiC/ontology#ActivityType> rdfs:label "Activity Type"@en ;
+    schema:description "Categorization of an Activity."@en .
+
+<https://www.ica.org/standards/RiC/ontology#Agent> rdfs:label "Agent"@en ;
+    schema:description """A Person, or Group, or an entity created by a Person or Group
+         (Mechanism), or a Position, that acts in the world."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#AgentName> rdfs:label "Agent Name"@en ;
+    schema:description """A label, title or term designating an Agent in order to make it
+         distinguishable from other similar entities."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#Appellation> rdfs:label "Appellation"@en ;
+    schema:description """A concept of any kind that is used for designating an Entity and
+         referring to it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#CarrierExtent> rdfs:label "Carrier Extent"@en ;
+    schema:description """Number of physical units and/or physical dimensions of the carrier
+         of an Instantiation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#CarrierType> rdfs:label "Carrier Type"@en ;
+    schema:description """Categorization of physical material on which information is
+         represented."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#Concept> rdfs:label "Concept"@en ;
+    schema:description """An idea, unit of thought, abstract cultural object or
+         category"""@en .
+
+<https://www.ica.org/standards/RiC/ontology#ContentType> rdfs:label "Content Type"@en ;
+    schema:description """The fundamental form of communication in which a Record or Record
+         Part is expressed."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#Coordinates> rdfs:label "Coordinates"@en ;
+    schema:description """Longitudinal and latitudinal information about a
+         Place."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#CorporateBody> rdfs:label "Corporate Body"@en ;
+    schema:description """An organized group of persons that act together as an Agent, and
+         that has a recognized legal or social status."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#CorporateBodyType> rdfs:label "Corporate Body Type"@en ;
+    schema:description "Categorization of a Corporate Body."@en .
+
+<https://www.ica.org/standards/RiC/ontology#Date> rdfs:label "Date"@en ;
+    schema:description """Chronological information associated with an entity that
+         contributes to its identification and contextualization."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#DateType> rdfs:label "Date Type"@en ;
+    schema:description "Categorization of a Date."@en .
+
+<https://www.ica.org/standards/RiC/ontology#DemographicGroup> rdfs:label "Demographic Group"@en ;
+    schema:description """Categorization of a Person or Group based on shared
+         characteristics."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#DocumentaryFormType> rdfs:label "Documentary Form Type"@en ;
+    schema:description """Categorization of a Record or Record Part with respect to its
+         extrinsic and intrinsic elements that together communicate its content, administrative and
+         documentary context, and authority."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#Event> rdfs:label "Event"@en ;
+    schema:description "Something that happens or occurs in time and space."@en .
+
+<https://www.ica.org/standards/RiC/ontology#EventType> rdfs:label "Event Type"@en ;
+    schema:description "Categorization of an Event."@en .
+
+<https://www.ica.org/standards/RiC/ontology#Extent> rdfs:label "Extent"@en ;
+    schema:description """Countable characteristics of the content of an entity expressed as
+         a quantity."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#ExtentType> rdfs:label "Extent Type"@en ;
+    schema:description """Categorization of the extent that is being
+         measured."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#Family> rdfs:label "Family"@en ;
+    schema:description """Two or more persons related by birth, or through marriage,
+         adoption, civil union, or other social conventions that bind them together as a socially
+         recognized familial group."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#FamilyType> rdfs:label "Family Type"@en ;
+    schema:description "Categorization of a Family."@en .
+
+<https://www.ica.org/standards/RiC/ontology#Group> rdfs:label "Group"@en ;
+    schema:description "Two or more Agents that act together as an Agent."@en .
+
+<https://www.ica.org/standards/RiC/ontology#Identifier> rdfs:label "Identifier"@en ;
+    schema:description """A word, number, letter, symbol, or any combination of these used
+         to uniquely identify or reference an individual instance of an entity within a specific
+         information domain."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#IdentifierType> rdfs:label "Identifier Type"@en ;
+    schema:description "Categorization of an Identifier."@en .
+
+<https://www.ica.org/standards/RiC/ontology#Instantiation> rdfs:label "Instantiation"@en ;
+    schema:description """The inscription of information made by an Agent on a physical
+         carrier in any persistent, recoverable form as a means of communicating information through
+         time and space."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#InstantiationExtent> rdfs:label "Instantiation Extent"@en ;
+    schema:description """Countable characteristics of an Instantiation expressed as a
+         quantity."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#Language> rdfs:label "Language"@en ;
+    schema:description """A spoken or written human language represented in a Record
+         Resource or used by an Agent."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#LegalStatus> rdfs:label "Legal Status"@en ;
+    schema:description "A status defined by law."@en .
+
+<https://www.ica.org/standards/RiC/ontology#Mandate> rdfs:label "Mandate"@en ;
+    schema:description """Delegation of responsibility or authority by an Agent to another
+         Agent to perform an Activity."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#MandateType> rdfs:label "Mandate Type"@en ;
+    schema:description "Categorization of a Mandate."@en .
+
+<https://www.ica.org/standards/RiC/ontology#Mechanism> rdfs:label "Mechanism"@en ;
+    schema:description """A process or system created by a Person or Group that performs an
+         Activity."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#Name> rdfs:label "Name"@en ;
+    schema:description """A label, title or term designating an entity in order to make it
+         distinguishable from other similar entities."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#OccupationType> rdfs:label "Occupation Type"@en ;
+    schema:description """Categorization of a profession, trade, or craft pursued by a
+         Person in fulfilment of an Activity."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#Person> rdfs:label "Person"@en ;
+    schema:description "An individual human being."@en .
+
+<https://www.ica.org/standards/RiC/ontology#PhysicalLocation> rdfs:label "Physical Location"@en ;
+    schema:description """A delimitation of the physical territory of a
+         Place."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#Place> rdfs:label "Place"@en ;
+    schema:description "Bounded, named geographic area or region."@en .
+
+<https://www.ica.org/standards/RiC/ontology#PlaceName> rdfs:label "Place Name"@en ;
+    schema:description """A label, title or term designating a Place in order to make it
+         distinguishable from other similar entities."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#PlaceType> rdfs:label "Place Type"@en ;
+    schema:description "Categorization of a Place."@en .
+
+<https://www.ica.org/standards/RiC/ontology#Position> rdfs:label "Position"@en ;
+    schema:description "The functional role of a Person within a Group."@en .
+
+<https://www.ica.org/standards/RiC/ontology#ProductionTechniqueType> rdfs:label "Production Technique Type"@en ;
+    schema:description """The method used in the representation of information on an
+         instantiation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#Proxy> rdfs:label "Proxy"@en ;
+    schema:description """A Proxy represents (stands for) a Record Resource as it exists in
+         a specific other Record Resource."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#Record> rdfs:label "Record"@en ;
+    schema:description """Discrete information content formed and inscribed, at least once,
+         by any method on any carrier in any persistent, recoverable form by an Agent in the course
+         of life or work activity."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#RecordPart> rdfs:label "Record Part"@en ;
+    schema:description """Component of a Record with independent information content that
+         contributes to the intellectual completeness of the Record."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#RecordResource> rdfs:label "Record Resource"@en ;
+    schema:description """Information produced or acquired and retained by an Agent in the
+         course of life or work activity."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#RecordResourceExtent> rdfs:label "Record Resource Extent"@en ;
+    schema:description """The quantity of information content, as human experienced,
+         contained in a Record Resource."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#RecordSet> rdfs:label "Record Set"@en ;
+    schema:description """One or more records that are grouped together by an Agent based on
+         the records sharing one or more attributes or relations."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#RecordSetType> rdfs:label "Record Set Type"@en ;
+    schema:description "A broad categorization of the type of Record Set."@en .
+
+<https://www.ica.org/standards/RiC/ontology#RecordState> rdfs:label "Record State"@en ;
+    schema:description """Description of the production or reproduction status of a Record
+         or Record Part."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#RepresentationType> rdfs:label "Representation Type"@en ;
+    schema:description """Method of recording the content type of an
+         Instantiation"""@en .
+
+<https://www.ica.org/standards/RiC/ontology#RoleType> rdfs:label "Role Type"@en ;
+    schema:description """The role an Agent plays in some context (usually in some creation
+         relation). Not to be confused with a Position (position of an agent in some group). For
+         example, a Person who is the head of some Corporate Body may play the role of annotator (of
+         a record) in a creation relation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#Rule> rdfs:label "Rule"@en ;
+    schema:description """Conditions that govern the existence, responsibility, or authority
+         of an Agent; or the performance of an Activity by an Agent; or that contribute to the
+         distinct characteristics of things created or managed by an Agent."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#RuleType> rdfs:label "Rule Type"@en ;
+    schema:description "Categorization of a Rule."@en .
+
+<https://www.ica.org/standards/RiC/ontology#Thing> rdfs:label "Thing"@en ;
+    schema:description """Any idea, material thing, or event within the realm of human
+         experience."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#Title> rdfs:label "Title"@en ;
+    schema:description "A name that is used for a Record Resource or a Rule"@en .
+
+<https://www.ica.org/standards/RiC/ontology#TitleType> rdfs:label "Title Type"@en ;
+    schema:description "Categorization of a Title."@en .
+
+<https://www.ica.org/standards/RiC/ontology#Type> rdfs:label "Type"@en ;
+    schema:description """A superclass for any type of some thing. A type characterizes an
+         entity."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#UnitOfMeasurement> rdfs:label "Unit Of Measurement"@en ;
+    schema:description """A definite magnitude of a quantity, defined and adopted by
+         convention or by law, that is used as a standard for measurement of the same kind of
+         quantity. Can be spacial units (cm, m), weight (g, kg), time (s, h), storage (MB, TB) or
+         more informal units used in the archival context like number of boxes, pages or
+         words."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#accruals> rdfs:label "accruals"@en ;
+    schema:description """Information on the anticipated accession(s) to the Record
+         Set."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#accrualsStatus> rdfs:label "accruals status"@en ;
+    schema:description "Information on the status of possible accruals"@en .
+
+<https://www.ica.org/standards/RiC/ontology#accumulationDate> rdfs:label "accumulation date"@en ;
+    schema:description """A date at which a Record Resource or Instantiation was or will be
+         accumulated."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#affectsOrAffected> rdfs:label "affects or affected"@en ;
+    schema:description """Connects an Event to a Thing on which the Event has or had some
+         significant impact."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#agentHasOrHadLocation> rdfs:label "agent has or had location"@en ;
+    schema:description """Inverse of 'is or was location of agent' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#allMembersWithAccumulationDate> rdfs:label "all members with accumulation date"@en ;
+    schema:description """Date at which all of the present or past members of a Record Set
+         were or will be accumulated."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#allMembersWithCreationDate> rdfs:label "all members with creation date"@en ;
+    schema:description """Date at which all of the present or past members of a Record Set
+         were or will be created."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#altimetricSystem> rdfs:label "altimetric system"@en ;
+    schema:description "Reference system used for altitude"@en .
+
+<https://www.ica.org/standards/RiC/ontology#altitude> rdfs:label "altitude"@en ;
+    schema:description """The height of a Place above a reference level, especially above
+         sea level."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#authenticityNote> rdfs:label "authenticity note"@en ;
+    schema:description """Information on the evidence that a Record Resource or
+         Instantiation is what it purports to be, was created or sent by the said Agent at the said
+         time, and has not been tampered with, corrupted, or forged. """@en .
+
+<https://www.ica.org/standards/RiC/ontology#authorizedBy> rdfs:label "authorized by"@en ;
+    schema:description "Inverse of 'authorizes' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#authorizes> rdfs:label "authorizes"@en ;
+    schema:description """Connects a Mandate to the Agent that the Mandate gives the
+         authority or competencies to act."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#authorizingMandate> rdfs:label "authorizing mandate"@en ;
+    schema:description """Information on a Mandate that authorizes an Agent to perform an
+         Activity."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#beginningDate> rdfs:label "beginning date"@en ;
+    schema:description "Date at which something began."@en .
+
+<https://www.ica.org/standards/RiC/ontology#birthDate> rdfs:label "birth date"@en ;
+    schema:description "Date at which a Person was born."@en .
+
+<https://www.ica.org/standards/RiC/ontology#carrierExtent> rdfs:label "carrier extent"@en ;
+    schema:description """Number of physical units and/or physical dimensions of the carrier
+         of an Instantiation. In order to manage an Instantiation of a record resource it is
+         necessary to note the extent of the carrier as well as that of the Instantiation itself.
+         Whether it is necessary to note dimensions, the number of relevant units, or both, depends
+         on the nature of the carrier and particular business needs."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#classification> rdfs:label "classification"@en ;
+    schema:description """A term, number or alphanumeric string that is usually taken from
+         an external classification vocabulary or scheme that qualifies a Record
+         Resource."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#conditionsOfAccess> rdfs:label "conditions of access"@en ;
+    schema:description """Terms and circumstances affecting the availability of a Record
+         Resource or an Instantiation for consultation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#conditionsOfUse> rdfs:label "conditions of use"@en ;
+    schema:description """Terms and circumstances affecting the use of a Record Resource or
+         an Instantiation after access has been provided. Includes conditions governing reproduction
+         of the Record Resource under applicable copyright (intellectual property) and/or property
+         legislation or due to conservation status."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#contained> rdfs:label "contained"@en ;
+    schema:description """Connects a Place to a Place that it contained in the
+         past."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#containsOrContained> rdfs:label "contains or contained"@en ;
+    schema:description """Connects a Place to a region that is or was within
+         it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#containsTransitive> rdfs:label "contains transitive"@en ;
+    schema:description """Connects a Place to a Place that it contains, directly or
+         indirectly. This is a transitive relation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#creationDate> rdfs:label "creation date"@en ;
+    schema:description """Date at which a Record Resource or Instantiation was or will be
+         created."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#date> rdfs:label "date"@en ;
+    schema:description """Chronological information associated with an entity that
+         contributes to its identification and contextualization."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#dateQualifier> rdfs:label "date qualifier"@en ;
+    schema:description """A human readable qualification of a Date to indicate the level of
+         precision or certainty."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#deathDate> rdfs:label "death date"@en ;
+    schema:description "Date at which a Person died."@en .
+
+<https://www.ica.org/standards/RiC/ontology#derivationDate> rdfs:label "derivation date"@en ;
+    schema:description """Date at which an Instantiation was or will be derived from another
+         Instantiation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#describesOrDescribed> rdfs:label "describes or described"@en ;
+    schema:description """Connects a Record Resource to a Thing that it describes or
+         described."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#destructionDate> rdfs:label "destruction date"@en ;
+    schema:description """Date at which a Record Resource or Instantiation was or will be
+         destructed."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#directlyContains> rdfs:label "contains directly"@en ;
+    schema:description """Connects a Place to another Place that it directly
+         contains."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#directlyFollowsInSequence> rdfs:label "directly follows in sequence"@en ;
+    schema:description """Inverse of 'directly precedes in sequence' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#directlyFollowsProxyInSequence> rdfs:label "directly follows proxy in sequence"@en ;
+    schema:description "Inverse of 'proxy directly precedes in sequence' object property. "@en .
+
+<https://www.ica.org/standards/RiC/ontology#directlyIncludes> rdfs:label "directly includes"@en ;
+    schema:description """Connects a Record Set to a Record or Record Set which it includes
+         directly."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#directlyIncludesProxy> rdfs:label "directly includes proxy"@en ;
+    schema:description """Inverse of 'proxy is directly included in' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#directlyPrecedesInSequence> rdfs:label "directly precedes in sequence"@en ;
+    schema:description """Connects a Thing to a Thing that it precedes directly in some
+         sequence (not necessarily defined or characterised chronologically)."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#directlyPrecedesProxyInSequence> rdfs:label "directly precedes proxy in sequence"@en ;
+    schema:description """Connects a Record Resource to a Proxy of a Record Resource that it
+         precedes directly in some sequence (not necessarily defined or characterised
+         chronologically)."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#documentedBy> rdfs:label "documented by"@en ;
+    schema:description "Inverse of 'documents' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#documents> rdfs:label "documents"@en ;
+    schema:description """Connects a Record Resource or an Instantiation to the Activity
+         that generates the Record Resource or Instantiation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#endDate> rdfs:label "end date"@en ;
+    schema:description "Date at which something ended."@en .
+
+<https://www.ica.org/standards/RiC/ontology#existsOrExistedIn> rdfs:label "exists or existed in"@en ;
+    schema:description """Connects a Position to a Group in which that Position exists or
+         existed, or that is defined by that Group's organizational structure."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#expressedDate> rdfs:label "expressed date"@en ;
+    schema:description """Natural language expression of a date. This property is a
+         specialization of the name property. In order that the precise meaning of the date can be
+         understood, information such as the calendar used or other specific context should be
+         included."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#expressesOrExpressed> rdfs:label "expresses or expressed"@en ;
+    schema:description """Inverse of 'is or was expressed by' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#followedInSequence> rdfs:label "followed in sequence"@en ;
+    schema:description """Connects a Thing to a Thing that it followed in some sequence (not
+         necessarily defined or characterised chronologically) in the past."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#followsInSequenceTransitive> rdfs:label "follows in sequence transitive"@en ;
+    schema:description """Inverse of 'precedes in sequence transitive' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#followsInTime> rdfs:label "follows in time"@en ;
+    schema:description """Inverse of 'precedes in time' object property. This is a
+         transitive relation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#followsOrFollowed> rdfs:label "follows or followed"@en ;
+    schema:description "Inverse of 'precedes or preceded' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#followsProxyInSequence> rdfs:label "follows proxy in sequence"@en ;
+    schema:description """Inverse of 'proxy precedes in sequence' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#generalDescription> rdfs:label "general description"@en ;
+    schema:description """General information about an entity. General description may be
+         used to describe any entity. There are different appropriate uses for general description.
+         First, while it is recommended that more specific properties be used in describing an
+         entity, it may be desirable, for economic or other reasons, to describe two or more
+         specific properties together. Second, general description may be used to describe one or
+         more characteristics that are not otherwise accommodated in RiC-O. Third, it may be used to
+         provide a succinct summary or abstract description in addition to more detailed specific
+         description."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#geodesicSystem> rdfs:label "geodesic system"@en ;
+    schema:description "Reference system used for geographical coordinates."@en .
+
+<https://www.ica.org/standards/RiC/ontology#geographicalCoordinates> rdfs:label "geographical coordinates"@en ;
+    schema:description "Longitudinal and latitudinal information about a Place. "@en .
+
+<https://www.ica.org/standards/RiC/ontology#hadComponent> rdfs:label "had component"@en ;
+    schema:description """Connects an Instantiation to another Instantiation that was its
+         component in the past."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hadConstituent> rdfs:label "had constituent"@en ;
+    schema:description """Connects a Record or Record Part to another Record or Record Part
+         that was its constituent in the past."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hadPart> rdfs:label "had part"@en ;
+    schema:description """Connects a Thing to a Thing that was a constitutive or component
+         part of that Thing in the past."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hadSubdivision> rdfs:label "had subdivision"@en ;
+    schema:description "Connects a Group to one of its past subdivisions."@en .
+
+<https://www.ica.org/standards/RiC/ontology#hadSubevent> rdfs:label "had subevent"@en ;
+    schema:description """Connects a past Event to one of a series of past Events that
+         constituted that original, broader, past Event."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hadSubordinate> rdfs:label "had subordinate"@en ;
+    schema:description """Connects an Agent to an Agent that was hierarchically inferior in
+         the past."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasAccumulationDate> rdfs:label "has accumulation date"@en ;
+    schema:description """Inverse of 'is accumulation date of' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasAccumulator> rdfs:label "has accumulator"@en ;
+    schema:description """Connects a Record Resource or an Instantiation to the Agent that
+         accumulates it, be it intentionally (collecting) or not (receiving in the course of its
+         activities)."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasActivityType> rdfs:label "has activity type"@en ;
+    schema:description """Connects an Activity to an Activity Type that categorizes
+         it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasAddressee> rdfs:label "has addressee"@en ;
+    schema:description """Connects a Record Resource or an Instantiation to the Agent that
+         it is addressed to."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasAncestor> rdfs:label "has ancestor"@en ;
+    schema:description """Inverse of 'has descendant' object property. This is a transitive
+         relation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasAuthor> rdfs:label "has author"@en ;
+    schema:description """Connects a Record to the Group, Person or Position that is
+         responsible for conceiving and formulating the information contained in the
+         Record."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasBeginningDate> rdfs:label "has beginning date"@en ;
+    schema:description "Inverse of 'is beginning date of' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasBirthDate> rdfs:label "has birth date"@en ;
+    schema:description "Inverse of 'is birth date of' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasBirthPlace> rdfs:label "has birth place"@en ;
+    schema:description "Inverse of 'is birth place of' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasCarrierType> rdfs:label "has carrier type"@en ;
+    schema:description """Connects an Instantiation to a Carrier Type which categorizes its
+         carrier."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasChild> rdfs:label "has child"@en ;
+    schema:description "Connects a Person to one of their children."@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasCollector> rdfs:label "has collector"@en ;
+    schema:description """Connects a Record Resource or an Instantiation to the Agent that
+         collects it intentionally, i.e., the Agent is a collector."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasComponentTransitive> rdfs:label "has component transitive"@en ;
+    schema:description """Connects an Instantiation to another Instantiation that is,
+         directly or indirectly, a component of that Instantiation. This is a transitive
+         relation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasConstituentProxy> rdfs:label "has constituent proxy"@en ;
+    schema:description """Inverse of 'proxy is constituent of' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasConstituentTransitive> rdfs:label "has constituent transitive"@en ;
+    schema:description """Connects a Record or Record Part to another Record or Record Part
+         that is its constituent, directly or indirectly. This is a transitive
+         relation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasContentOfType> rdfs:label "has content of type"@en ;
+    schema:description """Connects a Record or a Record Part to a Content Type which
+         categorizes its content."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasContentWhichMainlyRepresents> rdfs:label "has content which mainly represents"@en ;
+    schema:description """Connects a Record or a Record Part to a Thing that its content
+         mainly represents."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasContentWhichRepresents> rdfs:label "has content which represents"@en ;
+    schema:description """Connects a Record or a Record Part to a Thing that its content
+         represents."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasCopy> rdfs:label "has copy"@en ;
+    schema:description """Connects a Record Resource to a copy of that Record
+         Resource."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasCreationDate> rdfs:label "has creation date"@en ;
+    schema:description "Inverse of 'is creation date of' object property"@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasCreator> rdfs:label "has creator"@en ;
+    schema:description """Connects a Record Resource or an Instantiation to an Agent that is
+         either responsible for all or some of the content of the Record Resource or is a
+         contributor to the genesis or production of an Instantiation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasDateType> rdfs:label "has date type"@en ;
+    schema:description "Connects a Date to its Date Type."@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasDeathDate> rdfs:label "has death date"@en ;
+    schema:description "Inverse of 'is death date of' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasDeathPlace> rdfs:label "has death place"@en ;
+    schema:description "Inverse of 'is death place of' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasDerivationDate> rdfs:label "has derivation date"@en ;
+    schema:description "Inverse of 'is derivation date of' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasDescendant> rdfs:label "has descendant"@en ;
+    schema:description """Connects a Person to one of their descendants. This is a
+         transitive relation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasDestructionDate> rdfs:label "has destruction date"@en ;
+    schema:description """Inverse of 'is destruction date of' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasDirectComponent> rdfs:label "has direct component"@en ;
+    schema:description """Connects an Instantiation to another Instantiation that is its
+         direct component."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasDirectConstituent> rdfs:label "has direct constituent"@en ;
+    schema:description """Connects a Record or Record Part to another Record or Record Part
+         that is its direct constituent."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasDirectConstituentProxy> rdfs:label "has direct constituent proxy"@en ;
+    schema:description """Inverse of 'proxy is direct constituent of' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasDirectPart> rdfs:label "has direct part"@en ;
+    schema:description """Connects a Thing to a Thing that is a direct constitutive or
+         component part of that Thing."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasDirectSubdivision> rdfs:label "has direct subdivision"@en ;
+    schema:description "Connects a Group to one of its direct subdivisions."@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasDirectSubevent> rdfs:label "has direct subevent"@en ;
+    schema:description """Connects an ongoing Event to one of a series of Events that
+         directly constitute that broader, ongoing Event."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasDirectSubordinate> rdfs:label "has direct subordinate"@en ;
+    schema:description """Connects an Agent to an Agent that is its direct
+         subordinate."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasDocumentaryFormType> rdfs:label "has documentary form type"@en ;
+    schema:description """Connects a Record or Record Part to its Documentary Form
+         Type."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasDraft> rdfs:label "has draft"@en ;
+    schema:description "Inverse of 'is draft of' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasEndDate> rdfs:label "has end date"@en ;
+    schema:description "Inverse of 'is end date of' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasEventType> rdfs:label "has event type"@en ;
+    schema:description """Connects an Event to an Event Type which categorizes
+         it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasExtent> rdfs:label "has extent"@en ;
+    schema:description """Connects a Record Resource or Instantiation to an
+         Extent"""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasExtentType> rdfs:label "has extent type"@en ;
+    schema:description """Connects an Extent to an Extent Type that categorizes what is
+         being measured."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasFamilyAssociationWith> rdfs:label "has family association with"@en ;
+    schema:description """Connects two Persons that have some type of family link, i.e.
+         belong to the same family. This relation is symmetric."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasFamilyType> rdfs:label "has family type"@en ;
+    schema:description """Connects a Family to a Family Type that categorizes
+         it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasGeneticLinkToRecordResource> rdfs:label "has genetic link to record resource"@en ;
+    schema:description """Connects two Record Resources when there is a genetic link between
+         them. Genetic in this sense is as defined by diplomatics, i.e. the process by which a
+         Record Resource is developed. This relation is symmetric."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasIdentifierType> rdfs:label "has identifier type"@en ;
+    schema:description """Connects an Identifier and an Identifier Type that categorizes
+         it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasMigrationDate> rdfs:label "has migration date"@en ;
+    schema:description "Inverse of 'is migration date of' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasModificationDate> rdfs:label "has modification date"@en ;
+    schema:description """Inverse of 'is modification date of' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadAgentName> rdfs:label "has or had agent name"@en ;
+    schema:description """Connects an Agent and (one of) its present or past Agent
+         Name."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadAllMembersWithAccumulationDate> rdfs:label "has or had all members with accumulation date"@en ;
+    schema:description """Inverse of 'is or was accumulation date of all members of' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadAllMembersWithContentType> rdfs:label "has or had all members with content type"@en ;
+    schema:description """Connects a Record Set and a Content Type that categorizes all the
+         Records or Record Parts that are or were included in the Record Set."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadAllMembersWithCreationDate> rdfs:label "has or had all members with creation date"@en ;
+    schema:description """Inverse of 'is or was creation date of all members of' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadAllMembersWithDocumentaryFormType> rdfs:label "has or had all members with documentary form type"@en ;
+    schema:description """Connects a Record Set and a Documentary Form Type that categorizes
+         all the Records or Record Parts that are or were included in the Record Set."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadAllMembersWithLanguage> rdfs:label "has or had all members with language"@en ;
+    schema:description """Connects a Record Set and a Language used by all the Records or
+         Record Parts that are or were included in the Record Set."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadAllMembersWithLegalStatus> rdfs:label "has or had all members with legal status"@en ;
+    schema:description """Connects a Record Set and a Legal Status that categorizes all the
+         Records or Record Parts that are or were included in the Record Set."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadAllMembersWithMainSubject> rdfs:label "has or had all members with main subject"@en ;
+    schema:description """Connects a Record Set and a Thing that is the main subject of all
+         the Records or Record Parts that are or were included in the Record Set."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadAllMembersWithRecordState> rdfs:label "has or had all members with record state"@en ;
+    schema:description """Connects a Record Set and a Record State that categorizes all the
+         Records or Record Parts that are or were included in the Record Set."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadAllMembersWithSubject> rdfs:label "has or had all members with subject"@en ;
+    schema:description """Connects a Record Set and a Thing that is the subject of all the
+         Records or Record Parts that are or were included in the Record Set."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadAllMembersWithType> rdfs:label "has or had all members with type"@en ;
+    schema:description """Connects a Record Set and a Type to which all the Records or
+         Record Parts that are or were included in the Record Set belong."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadAnalogueInstantiation> rdfs:label "has or had analogue instantiation"@en ;
+    schema:description """Connects a record resource to one of its analogue instantiations,
+         whether it exists or has been lost or destroyed."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadAppellation> rdfs:label "has or had appellation"@en ;
+    schema:description """Connects a Thing to an Appellation that is or was used for
+         designating it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadAuthorityOver> rdfs:label "has or had authority over"@en ;
+    schema:description """Connects an Agent to a Thing over which the Agent has or had some
+         kind of authority."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadComponent> rdfs:label "has or had component"@en ;
+    schema:description """Connects an Instantiation to one of its present or past component
+         instantiations."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadConstituent> rdfs:label "has or had constituent"@en ;
+    schema:description """Connects a Record or Record Part to a Record or Record part that
+         is or was a constituent of that Record or Record Part."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadController> rdfs:label "has or had controller"@en ;
+    schema:description """Inverse of 'is or was controller of' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadCoordinates> rdfs:label "has or had coordinates"@en ;
+    schema:description """Connects a Physical Location to its past or present coordinates in
+         a reference system."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadCorporateBodyType> rdfs:label "has or had corporate body type"@en ;
+    schema:description """Connects a Corporate Body to a Corporate Body Type which
+         categorizes or categorized it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadCorrespondent> rdfs:label "has or had correspondent"@en ;
+    schema:description """Connects two Persons that correspond or have corresponded with
+         each other. This relation is symmetric."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadDemographicGroup> rdfs:label "has or had demographic group"@en ;
+    schema:description """Connects a Person or a Group to a Demographic Group to which it
+         belongs or belonged."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadDerivedInstantiation> rdfs:label "has or had derived instantiation"@en ;
+    schema:description """Connects an instantiation to an instantiation that is derived from
+         it, whether it exists or has been lost or destroyed."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadDigitalInstantiation> rdfs:label "has or had digital instantiation"@en ;
+    schema:description """Connects a record resource to one of its digital instantiations,
+         whether it exists or has been lost or destroyed."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadEmployer> rdfs:label "has or had employer"@en ;
+    schema:description "Inverse of 'is or was employer of' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadHolder> rdfs:label "has or had holder"@en ;
+    schema:description "Inverse of 'is or was holder of' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadIdentifier> rdfs:label "has or had identifier"@en ;
+    schema:description """Connects a Thing to one of its past or present
+         Identifiers."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadInstantiation> rdfs:label "has or had instantiation"@en ;
+    schema:description """Connects a Record Resource to an Instantiation, which either may
+         exist or may have been lost or destroyed."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadIntellectualPropertyRightsHolder> rdfs:label "has or had intellectual property rights holder"@en ;
+    schema:description """Inverse of 'is or was holder of intellectual property rights of'
+         object property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadJurisdiction> rdfs:label "has or had jurisdiction"@en ;
+    schema:description """Inverse of 'is or was jurisdiction of' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadLanguage> rdfs:label "has or had language"@en ;
+    schema:description """Connects an Agent, Record or Record Part to a Language that uses
+         or used it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadLeader> rdfs:label "has or had leader"@en ;
+    schema:description "Inverse of 'is or was leader of' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadLegalStatus> rdfs:label "has or had legal status"@en ;
+    schema:description """Connects an Agent or Record Resource to a Legal Status which
+         categorized or categorizes it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadLocation> rdfs:label "has or had location"@en ;
+    schema:description "Inverse of 'is or was location of' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadMainSubject> rdfs:label "has or had main subject"@en ;
+    schema:description """Connects a Record Resource to a Thing that is or was its main
+         subject."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadManager> rdfs:label "has or had manager"@en ;
+    schema:description "Inverse of 'is or was manager of' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadMandateType> rdfs:label "has or had mandate type"@en ;
+    schema:description """Connects a Mandate to a Mandate Type that categorized or
+         categorizes it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadMember> rdfs:label "has or had member"@en ;
+    schema:description """Connects a Group to a Person that is or was a member of that
+         Group."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadMostMembersWithAccumulationDate> rdfs:label "has or had most members with accumulation date"@en ;
+    schema:description """Inverse of 'is or was accumulation date of most members of' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadMostMembersWithCreationDate> rdfs:label "has or had most members with creation date"@en ;
+    schema:description """Inverse of 'is or was creation date of most members of' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadName> rdfs:label "has or had name"@en ;
+    schema:description """Connects a Thing to one of its past or present
+         Names."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadOccupationOfType> rdfs:label "has or had occupation of type"@en ;
+    schema:description """Connects a Person to an Occupation Type that categorized or
+         categorizes his/her occupation (profession, trade or craft)."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadOwner> rdfs:label "has or had owner"@en ;
+    schema:description "Inverse of 'is or was owner of' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadPart> rdfs:label "has or had part"@en ;
+    schema:description """Connects a Thing to a constitutive or component part of that
+         Thing."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadParticipant> rdfs:label "has or had participant"@en ;
+    schema:description """Connects an Event to a Thing that is or was actively or passively
+         involved in it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadPhysicalLocation> rdfs:label "has or had physical location"@en ;
+    schema:description """Connects a Place to one of its past or present Physical
+         Location."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadPlaceName> rdfs:label "has or had place name"@en ;
+    schema:description """Connects a Place to one of its past or present
+         names."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadPlaceType> rdfs:label "has or had place type"@en ;
+    schema:description """Connects a Place to a Place Type that categorized or categorizes
+         it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadPosition> rdfs:label "has or had position"@en ;
+    schema:description "Inverse of 'exists or existed in' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadRuleType> rdfs:label "has or had rule type"@en ;
+    schema:description """Connects a Rule to a Rule Type that categorized or categorizes
+         it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadSomeMembersWhoseContentMainlyRepresents> rdfs:label "has or had some members whose content mainly represents"@en ;
+    schema:description """Connects a Record Set and a Thing that is the main element
+         represented by the content of some of the members of the Records or Record Parts that are
+         or were included in the Record Set."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadSomeMembersWhoseContentRepresents> rdfs:label "has or had some members whose content represents"@en ;
+    schema:description """Connects a Record Set and a Thing that is represented by the
+         content of some of the Records or Record Parts that are or were included in the Record
+         Set."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadSomeMembersWithAccumulationDate> rdfs:label "has or had some members with accumulation date"@en ;
+    schema:description """Inverse of 'is or was accumulation date of some members of' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadSomeMembersWithContentType> rdfs:label "has or had some members with content type"@en ;
+    schema:description """Connects a Record Set and a Content Type that categorizes some of
+         the Records or Record Parts that are or were included in the Record Set."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadSomeMembersWithCreationDate> rdfs:label "has or had some members with creation date"@en ;
+    schema:description """Inverse of 'is or was creation date of some members of' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadSomeMembersWithDocumentaryFormType> rdfs:label "has or had some members with documentary form type"@en ;
+    schema:description """Connects a Record Set and a Documentary Form Type that categorizes
+         some of the Records or Record Parts that are or were included in the Record
+         Set."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadSomeMembersWithLanguage> rdfs:label "has or had some members with language"@en ;
+    schema:description """Connects a Record Set and a Language used by some of the Records
+         or Record Parts that are or were included in the Record Set."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadSomeMembersWithLegalStatus> rdfs:label "has or had some members with legal status"@en ;
+    schema:description """Connects a Record Set and a Legal Status that categorizes some of
+         the Records or Record Parts that are or were included in the Record Set."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadSomeMembersWithMainSubject> rdfs:label "has or had some members with main subject"@en ;
+    schema:description """Connects a Record Set and a Thing that is the main subject of some
+         of the Records or Record Parts that are or were included in the Record Set."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadSomeMembersWithRecordState> rdfs:label "has or had some members with record state"@en ;
+    schema:description """Connects a Record Set and a Record State that categorizes some of
+         the Records or Record Parts that are or were included in the Record Set."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadSomeMembersWithSubject> rdfs:label "has or had some members with subject"@en ;
+    schema:description """Connects a Record Set and a Thing that is the subject of some of
+         the Records or Record Parts that are or were included in the Record Set."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadSomeMembersWithType> rdfs:label "has or had some members with type"@en ;
+    schema:description """Connects a Record Set and a Type to which some of the Records or
+         Record Parts that are or were included in the Record Set belong."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadSpouse> rdfs:label "has or had spouse"@en ;
+    schema:description """Connects two Persons who are or were married. This relation is
+         symmetric."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadStudent> rdfs:label "has or had student"@en ;
+    schema:description "Inverse of 'has or had teacher' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadSubdivision> rdfs:label "has or had subdivision"@en ;
+    schema:description """Connects a Group to one of its present or past
+         subdivisions."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadSubevent> rdfs:label "has or had subevent"@en ;
+    schema:description """Connects an Event to one of a series of Events that constitute the
+         original, broader, past or ongoing Event."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadSubject> rdfs:label "has or had subject"@en ;
+    schema:description """Connects a Record Resource to a Thing that is or was its
+         subject."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadSubordinate> rdfs:label "has or had subordinate"@en ;
+    schema:description """Connects an Agent to an Agent that is hierarchically
+         inferior."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadTeacher> rdfs:label "has or had teacher"@en ;
+    schema:description """Connects a Person to another Person who is or was their
+         teacher."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadTitle> rdfs:label "has or had title"@en ;
+    schema:description """Connects a Record Resource, Instantiation or Rule to a title that
+         is or was used for designating it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadType> rdfs:label "has or had type"@en ;
+    schema:description """Connects a Thing to a Type that categorizes or categorized
+         it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrHadWorkRelationWith> rdfs:label "has or had work relation with"@en ;
+    schema:description """Connects two Agents that have or had some type of work relation in
+         the course of their activities. This relation is symmetric."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrganicOrFunctionalProvenance> rdfs:label "has organic or functional provenance"@en ;
+    schema:description """Connects a Record Resource or an Instantiation to an Agent that
+         creates or accumulates it, receives it, or sends it, or to an Activity that generates
+         it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrganicProvenance> rdfs:label "has organic provenance"@en ;
+    schema:description """Connects a Record Resource or an Instantiation to an Agent that
+         creates or accumulates the Record Resource, receives it, or sends it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOrganicProvenanceDate> rdfs:label "has organic provenance date"@en ;
+    schema:description """Inverse of 'is date associated with organic provenance of' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasOriginal> rdfs:label "has original"@en ;
+    schema:description "Inverse of 'is original of' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasPartTransitive> rdfs:label "has part transitive"@en ;
+    schema:description """Connects a Thing to a Thing that is, directly or indirectly, a
+         constitutive or component part of that Thing. This is a transitive relation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasProductionTechniqueType> rdfs:label "has production technique type"@en ;
+    schema:description """Connects an Instantiation to a Production Technique Type that
+         categorizes its production technique."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasProxy> rdfs:label "has proxy"@en ;
+    schema:description "Inverse of 'proxy for' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasPublicationDate> rdfs:label "has publication date"@en ;
+    schema:description """Inverse of 'is publication date of' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasPublisher> rdfs:label "has publisher"@en ;
+    schema:description """Connects a Record resource to an Agent who published
+         it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasReceiver> rdfs:label "has receiver"@en ;
+    schema:description """Connects a Record Resource or an Instantiation to the Agent that
+         receives it in the course of the Agent's activities."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasRecordSetType> rdfs:label "has record set type"@en ;
+    schema:description """Connects a Record Set to a Record Set Type that categorizes
+         it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasRecordState> rdfs:label "has record state"@en ;
+    schema:description """Connects a Record or Record Part to a Record State that
+         categorizes its state."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasReply> rdfs:label "has reply"@en ;
+    schema:description """Connects a Record Resource to a reply, usually in the form of
+         correspondence."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasRepresentationType> rdfs:label "has representation type"@en ;
+    schema:description """Connects an Instantiation to a Representation Type that
+         categorizes its representation type."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasSender> rdfs:label "has sender"@en ;
+    schema:description """Connects a Record Resource or an Instantiation to the Agent that
+         sends it"""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasSibling> rdfs:label "has sibling"@en ;
+    schema:description """Connects two Persons who are siblings. This relation is
+         symmetric."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasSubdivisionTransitive> rdfs:label "has subdivision transitive"@en ;
+    schema:description """Connects a Group to another Group that is one of its direct or
+         indirect subdivisions. This is a transitive relation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasSubeventTransitive> rdfs:label "has subevent transitive"@en ;
+    schema:description """Connects an ongoing Event to one of a series of Events that
+         directly or indirectly constitute that broader, ongoing Event. This is a transitive
+         relation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasSubordinateTransitive> rdfs:label "has subordinate transitive"@en ;
+    schema:description """Connects an Agent to an Agent that is directly or indirectly
+         hierarchically inferior. This is a transitive relation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasSuccessor> rdfs:label "has successor"@en ;
+    schema:description """Connects an Agent to another Agent that succeeds it
+         chronologically."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasTitleType> rdfs:label "has title type"@en ;
+    schema:description """Connects a Title and a Title Type that categorizes
+         it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasUnitOfMeasurement> rdfs:label "has unit of measurement"@en ;
+    schema:description "Connects an Extent to a Unit Of Measurement"@en .
+
+<https://www.ica.org/standards/RiC/ontology#hasWithin> rdfs:label "has within"@en ;
+    schema:description "Inverse of 'is within' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#height> rdfs:label "height"@en ;
+    schema:description "Vertical dimension of an entity."@en .
+
+<https://www.ica.org/standards/RiC/ontology#history> rdfs:label "history"@en ;
+    schema:description """Summary of the development of an entity throughout its
+         existence."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#identifier> rdfs:label "identifier"@en ;
+    schema:description """A word, number, letter, symbol, or any combination of these used
+         to uniquely identify or reference an individual instance of an entity within a specific
+         information domain. Can include Global Persistent Identifiers (globally unique and
+         persistently resolvable identifier for the entity) and/or Local Identifiers. Both the
+         domain within which the identifier is unique, and the rules used in forming the identifier
+         value should be provided with the identifier value."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#included> rdfs:label "included"@en ;
+    schema:description """Connects a Record Set to a Record or Record Set which it included
+         in the past."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#includesOrIncluded> rdfs:label "includes or included"@en ;
+    schema:description """Connects a Record Set to a Record or Record Set it aggregates, or
+         aggregated in the past."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#includesProxy> rdfs:label "includes proxy"@en ;
+    schema:description "Inverse of 'proxy is included in' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#includesTransitive> rdfs:label "includes transitive"@en ;
+    schema:description """Connects a Record Set to a Record or Record Set which it includes
+         directly or indirectly. This is a transitive relation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#instantiationExtent> rdfs:label "Instantiation extent"@en ;
+    schema:description """Countable characteristics of an Instantiation expressed as a
+         quantity."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#instantiationStructure> rdfs:label "Instantiation structure"@en ;
+    schema:description """Information about the physical arrangement and composition of an
+         Instantiation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#integrityNote> rdfs:label "integrity note"@en ;
+    schema:description """Information about the known intellectual completeness of a Record
+         Resource."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#intersects> rdfs:label "intersects"@en ;
+    schema:description """Connects two Dates that overlap. This relation is
+         symmetric."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isAccumulationDateOf> rdfs:label "is accumulation date of"@en ;
+    schema:description """Connects a Date to a Record Resource or Instantiation that was or
+         will be accumulated at this Date."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isAccumulatorOf> rdfs:label "is accumulator of"@en ;
+    schema:description "Inverse of 'has accumulator' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#isActivityTypeOf> rdfs:label "is activity type of"@en ;
+    schema:description """Connects an Activity Type to an Activity that it
+         categorizes."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isAddresseeOf> rdfs:label "is addressee of"@en ;
+    schema:description "Inverse of 'has addressee' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#isAgentAssociatedWithAgent> rdfs:label "is agent associated with agent"@en ;
+    schema:description """Connects two Agents. This object property is
+         symmetric."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isAgentAssociatedWithPlace> rdfs:label "is agent associated with place"@en ;
+    schema:description """Inverse of 'is place associated with agent' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isAssociatedWithDate> rdfs:label "is associated with date"@en ;
+    schema:description """Inverse of 'is date associated with' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isAssociatedWithEvent> rdfs:label "is associated with event"@en ;
+    schema:description """Inverse of 'is event associated with' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isAssociatedWithPlace> rdfs:label "is associated with place"@en ;
+    schema:description """Inverse of 'is place associated with' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isAssociatedWithRule> rdfs:label "is associated with rule"@en ;
+    schema:description """Inverse of 'is rule associated with' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isAuthorOf> rdfs:label "is author of"@en ;
+    schema:description "Inverse of 'has author' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#isBeginningDateOf> rdfs:label "is beginning date of"@en ;
+    schema:description """Connects a Date to a Thing that came into existence on that
+         Date."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isBirthDateOf> rdfs:label "is birth date of"@en ;
+    schema:description """Connects a Date to a Person that was born on that
+         Date."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isBirthPlaceOf> rdfs:label "is birth place of"@en ;
+    schema:description """Connects a Place to a Person who was born in that
+         Place."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isCarrierTypeOf> rdfs:label "is carrier type of"@en ;
+    schema:description """Connects a Carrier Type to an Instantiation whose carrier it
+         categorizes."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isChildOf> rdfs:label "is child of"@en ;
+    schema:description "Inverse of 'has child' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#isCollectorOf> rdfs:label "is collector of"@en ;
+    schema:description "Inverse of 'has collector' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#isComponentOfTransitive> rdfs:label "is component of transitive"@en ;
+    schema:description """Connects an Instantiation to another Instantiation of which it is,
+         directly or indirectly, a component. This is a transitive relation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isConstituentOfProxy> rdfs:label "is constituent of proxy"@en ;
+    schema:description """Connects a Record or Record Part to a Proxy of a Record or Record
+         Part of which it is a constituent, directly or indirectly."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isConstituentOfTransitive> rdfs:label "is constituent of transitive"@en ;
+    schema:description """Connects a Record or Record Part to another Record or Record Part
+         of which it is a constituent, directly or indirectly. This is a transitive
+         relation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isContainedByTransitive> rdfs:label "is contained by transitive"@en ;
+    schema:description """Connects a Place to a Place that is, directly or indirectly,
+         contained by it. This is a transitive relation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isContentTypeOf> rdfs:label "is content type of"@en ;
+    schema:description """Connects a Content Type to a Record or Record Part whose content
+         it categorizes."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isCopyOf> rdfs:label "is copy of"@en ;
+    schema:description "Inverse of 'has copy' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#isCreationDateOf> rdfs:label "is creation date of"@en ;
+    schema:description """Connects a Date to a Record Resource or Instantiation that was or
+         will be created at this Date."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isCreatorOf> rdfs:label "is creator of"@en ;
+    schema:description "Inverse of 'has creator' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#isDateAssociatedWith> rdfs:label "is date associated with"@en ;
+    schema:description """Connects a Date to a Thing with whose existence and lifecycle the
+         Date is associated."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isDateOfOccurrenceOf> rdfs:label "is date of occurrence of"@en ;
+    schema:description """Connects a Date to an Event that occurred at this Date. An event
+         or activity can be recurrent, which implies that one single event can be related to several
+         dates."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isDateTypeOf> rdfs:label "is date type of"@en ;
+    schema:description "Connects a Date Type to a Date that it categorizes."@en .
+
+<https://www.ica.org/standards/RiC/ontology#isDeathDateOf> rdfs:label "is death date of"@en ;
+    schema:description "Connects a Date to a Person who died on that Date."@en .
+
+<https://www.ica.org/standards/RiC/ontology#isDeathPlaceOf> rdfs:label "is death place of"@en ;
+    schema:description """Connects a Place to a Person who died in that
+         Place."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isDerivationDateOf> rdfs:label "is derivation date of"@en ;
+    schema:description """Connects a Date to an Instantiation from which a new Instantiation
+         was or will be derived at that Date."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isDestructionDateOf> rdfs:label "is destruction date of"@en ;
+    schema:description """Connects a Date to a Record Resource or Instantiation that was or
+         will be destructed at that Date."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isDirectComponentOf> rdfs:label "is direct component of"@en ;
+    schema:description """Connects an Instantiation to another Instantiation of which it is
+         a direct component."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isDirectConstituentOf> rdfs:label "is direct constituent of"@en ;
+    schema:description """Connects a Record or Record Part to another Record or Record Part
+         of which it is a direct constituent."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isDirectConstituentOfProxy> rdfs:label "is direct constituent of proxy"@en ;
+    schema:description """Connects a Record or Record Part to a Proxy of a Record or Record
+         Part which it is a direct constituent of."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isDirectPartOf> rdfs:label "is direct part of"@en ;
+    schema:description """Connects a Thing to a Thing of which it is direct constitutive or
+         component part."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isDirectSubdivisionOf> rdfs:label "is direct subdivision of"@en ;
+    schema:description """Connects a Group to the Group it is a direct subdivision
+         of."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isDirectSubeventOf> rdfs:label "is direct subevent of"@en ;
+    schema:description """Connects an ongoing Event to the Event it is a direct part
+         of."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isDirectSubordinateTo> rdfs:label "is direct subordinate to"@en ;
+    schema:description """Connects an Agent to an Agent that is directly hierarchically
+         superior."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isDirectlyContainedBy> rdfs:label "is directly contained by"@en ;
+    schema:description """Connects a Place to a Place that directly contains
+         it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isDirectlyIncludedIn> rdfs:label "is directly included in"@en ;
+    schema:description """Connects a Record to a Record or Record Set in which it is
+         directly included."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isDirectlyIncludedInProxy> rdfs:label "is directly included in proxy"@en ;
+    schema:description """Connects a Record or Record Set to a Proxy of a Record Set which
+         it is directly included in."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isDocumentaryFormTypeOf> rdfs:label "is documentary form type of"@en ;
+    schema:description """Connects a Documentary Form Type to a Record or Record Part that
+         it categorizes."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isDraftOf> rdfs:label "is draft of"@en ;
+    schema:description "Connects a draft to the final version of a Record."@en .
+
+<https://www.ica.org/standards/RiC/ontology#isEndDateOf> rdfs:label "is end date of"@en ;
+    schema:description """Connects a Date to a Thing whose existence ended on that
+         Date."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isEquivalentTo> rdfs:label "is equivalent to"@en ;
+    schema:description "Connects two Things that are considered equivalent."@en .
+
+<https://www.ica.org/standards/RiC/ontology#isEventAssociatedWith> rdfs:label "is event associated with"@en ;
+    schema:description """Connects an Event to a Thing that is associated with the existence
+         and lifecycle of the Event."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isEventTypeOf> rdfs:label "is event type of"@en ;
+    schema:description """Connects an Event Type to an Event that it
+         categorizes."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isExtentOf> rdfs:label "is extent of"@en ;
+    schema:description "Connects an Extent to a Thing"@en .
+
+<https://www.ica.org/standards/RiC/ontology#isExtentTypeOf> rdfs:label "is extent type of"@en ;
+    schema:description """Connects an Extent Type to an Extent that it
+         categorizes."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isFamilyTypeOf> rdfs:label "is family type of"@en ;
+    schema:description """Connects a Family Type to a Family that it
+         categorizes."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isFromUseDateOf> rdfs:label "is from use date of"@en ;
+    schema:description """Connects a Date to an Appellation, when it is the date at which
+         the Appellation was first used."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isFunctionallyEquivalentTo> rdfs:label "is functionally equivalent to"@en ;
+    schema:description """Connects two Instantiations which may be considered as equivalent.
+         This relation is symmetric."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isIdentifierTypeOf> rdfs:label "is identifier type of"@en ;
+    schema:description """Connects an Identifier Type and an Identifier that it
+         categorizes."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isIncludedInProxy> rdfs:label "is included in proxy"@en ;
+    schema:description """Connects a Record or Record Set to a Proxy of a Record Set which
+         it is included in, directly or indirectly."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isIncludedInTransitive> rdfs:label "is included in transitive"@en ;
+    schema:description """Connects a Record to a Record or Record Set in which it is
+         directly or indirectly included. This is a transitive relation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isInstantiationAssociatedWithInstantiation> rdfs:label "is instantiation associated with instantiation"@en ;
+    schema:description """Connects two Instantiations. This relation is
+         symmetric."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isLastUpdateDateOf> rdfs:label "is last update date of"@en ;
+    schema:description """Connects a Date and a Thing that was last modified at this
+         Date."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isMainThingRepresentedByContentOf> rdfs:label "is main thing represented by content of"@en ;
+    schema:description """Inverse of 'has content which mainly represents' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isMigrationDateOf> rdfs:label "is migration date of"@en ;
+    schema:description """Connects a Date to an Instantiation that was or will be migrated
+         at that Date."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isModificationDateOf> rdfs:label "is modification date of"@en ;
+    schema:description """Connects a Date to a Thing that was modified on that
+         Date."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasAccumulationDateOfAllMembersOf> rdfs:label "is or was accumulation date of all members of"@en ;
+    schema:description """Connects a Date to a Record Set all of whose present or past
+         members were or will be accumulated at this Date."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasAccumulationDateOfMostMembersOf> rdfs:label "is or was accumulation date of most members of"@en ;
+    schema:description """Connects a Date to a Record Set most of whose present or past
+         members were or will be accumulated at this Date."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasAccumulationDateOfSomeMembersOf> rdfs:label "is or was accumulation date of some members of"@en ;
+    schema:description """Connects a Date to a Record Set some of whose present or past
+         members were or will be accumulated at this Date."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasActiveAtDate> rdfs:label "is or was active at date"@en ;
+    schema:description """Inverse of 'is or was activity date of' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasActivityDateOf> rdfs:label "is or was date of activity of"@en ;
+    schema:description """Connects a Date to an Agent that is or was active at that
+         Date."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasAdjacentTo> rdfs:label "is or was adjacent to"@en ;
+    schema:description """Connects two Places that are or were geographically adjacent. This
+         relation is symmetric."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasAffectedBy> rdfs:label "is or was affected by"@en ;
+    schema:description "Inverse of 'affects or affected' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasAgentNameOf> rdfs:label "is or was agent name of"@en ;
+    schema:description """Connects an Agent Name to an Agent it designates or
+         designated."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasAnalogueInstantiationOf> rdfs:label "is or was analogue instantiation of"@en ;
+    schema:description """Inverse of 'has or had analogue instantiation' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasAppellationOf> rdfs:label "is or was appellation of"@en ;
+    schema:description """Connects an Appellation to a Thing that it designates or
+         designated."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasAttendedByStudent> rdfs:label "is or was attended by student"@en ;
+    schema:description "Inverse of 'studies or studied at' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasComponentOf> rdfs:label "is or was component of"@en ;
+    schema:description "Inverse of 'has or had component' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasConstituentOf> rdfs:label "is or was constituent of"@en ;
+    schema:description """Inverse of 'has or had constituent' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasContainedBy> rdfs:label "is or was contained by"@en ;
+    schema:description "Inverse of 'contains or contained' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasContentTypeOfAllMembersOf> rdfs:label "is or was content type of all members of"@en ;
+    schema:description """Connects a Content Type and a Record Set whose all past or present
+         Record or Record Part members have that Content Type."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasContentTypeOfSomeMembersOf> rdfs:label "is or was content type of some members of"@en ;
+    schema:description """Connects a Content Type and a Record Set whose some past or
+         present Record or Record Part members have that Content Type."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasControllerOf> rdfs:label "is or was controller of"@en ;
+    schema:description """Connects an Agent to another Agent it controls or
+         controlled."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasCoordinatesOf> rdfs:label "is or was coordinates of"@en ;
+    schema:description """Connects an instance of Coordinates to a Physical Location it
+         locates or located on earth, according to some reference system."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasCorporateBodyTypeOf> rdfs:label "is or was corporate body type of"@en ;
+    schema:description """Connects a Corporate Body Type to a Corporate Body that it
+         categorizes or categorized."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasCreationDateOfAllMembersOf> rdfs:label "is or was creation date of all members of"@en ;
+    schema:description """Connects a Date to a Record Set all of whose present or past
+         members were or will be created at this Date."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasCreationDateOfMostMembersOf> rdfs:label "is or was creation date of most members of"@en ;
+    schema:description """Connects a Date to a Record Set most of whose present or past
+         members were or will be created at this Date."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasCreationDateOfSomeMembersOf> rdfs:label "is or was creation date of some members of"@en ;
+    schema:description """Connects a Date to a Record Set some of whose present or past
+         members were or will be created at this Date."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasDemographicGroupOf> rdfs:label "is or was demographic group of"@en ;
+    schema:description """Connects a Demographic Group to a Person or Group which belongs or
+         belonged to it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasDerivedFromInstantiation> rdfs:label "is or was derived from instantiation"@en ;
+    schema:description """Inverse of 'has or had derived instantiation' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasDescribedBy> rdfs:label "is or was described by"@en ;
+    schema:description """Inverse of 'describes or described' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasDigitalInstantiationOf> rdfs:label "is or was digital instantiation of"@en ;
+    schema:description """Inverse of 'has or had digital instantiation' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasDocumentaryFormTypeOfAllMembersOf> rdfs:label "is or was documentary form type of all members of"@en ;
+    schema:description """Connects a Documentary Form Type and a Record Set whose all past
+         or present Record or Record Part members have that Documentary Form Type."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasDocumentaryFormTypeOfSomeMembersOf> rdfs:label "is or was documentary form type of some members of"@en ;
+    schema:description """Connects a Documentary Form Type and a Record Set whose some past
+         or present Record or Record Part members have that Documentary Form Type."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasEmployerOf> rdfs:label "is or was employer of"@en ;
+    schema:description """Connects a Corporate Body or a Person to a Person who is or was
+         their employee."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasEnforcedBy> rdfs:label "is or was enforced by"@en ;
+    schema:description """Connects a Rule to an Agent that enforces or enforced the
+         Rule."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasExpressedBy> rdfs:label "is or was expressed by"@en ;
+    schema:description """Connects a Rule to a Record Resource that expresses or expressed
+         the Rule."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasHolderOf> rdfs:label "is or was holder of"@en ;
+    schema:description """Connects an Agent to a Record Resource or Instantiation that the
+         Agent holds or held."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasHolderOfIntellectualPropertyRightsOf> rdfs:label "is or was holder of intellectual property rights of"@en ;
+    schema:description """Connects an Agent to a Record Resource or Instantiation on which
+         the Agent has or had some intellectual property rights."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasIdentifierOf> rdfs:label "is or was identifier of"@en ;
+    schema:description """Connects an Identifier to a Thing that it identified or
+         identifies."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasIncludedIn> rdfs:label "is or was included in"@en ;
+    schema:description "Inverse of 'includes or included' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasInstantiationOf> rdfs:label "is or was instantiation of"@en ;
+    schema:description """Inverse of 'has or had instantiation' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasJurisdictionOf> rdfs:label "is or was jurisdiction of"@en ;
+    schema:description """Connects a Place to an Agent that has or had jurisdiction over the
+         Place."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasLanguageOf> rdfs:label "is or was language of"@en ;
+    schema:description """Connects a Language to an Agent, Record or Record Part that uses
+         or used it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasLanguageOfAllMembersOf> rdfs:label "is or was language of all members of"@en ;
+    schema:description """Connects a Language and a Record Set whose all present or past
+         Record or Record Part members use that Language."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasLanguageOfSomeMembersOf> rdfs:label "is or was language of some members of"@en ;
+    schema:description """Connects a Language and a Record Set whose some present or past
+         Record or Record Part members use that Language."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasLeaderOf> rdfs:label "is or was leader of"@en ;
+    schema:description """Connects a Person to the Group that Person leads or led in the
+         past."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasLegalStatusOf> rdfs:label "is or was legal status of"@en ;
+    schema:description """Connects a Legal Status to an Agent or Record Resource that it
+         categorizes."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasLegalStatusOfAllMembersOf> rdfs:label "is or was legal status of all members of"@en ;
+    schema:description """Connects a Legal Status and a Record Set whose all past or present
+         Record or Record Part members have that Legal Status."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasLegalStatusOfSomeMembersOf> rdfs:label "is or was legal status of some members of"@en ;
+    schema:description """Connects a Legal Status and a Record Set whose some past or
+         present Record or Record Part members have that Legal Status."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasLocationOf> rdfs:label "is or was location of"@en ;
+    schema:description """Connects a Place to a Thing that is or was located in the
+         Place."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasLocationOfAgent> rdfs:label "is or was location of agent"@en ;
+    schema:description """Connects a Place to an Agent that is or was located in this
+         Place."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasMainSubjectOf> rdfs:label "is or was main subject of"@en ;
+    schema:description """Inverse of 'has or had main subject' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasMainSubjectOfAllMembersOf> rdfs:label "is or was main subject of all members of"@en ;
+    schema:description """Inverse of 'has or had all members with main subject' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasMainSubjectOfSomeMembersOf> rdfs:label "is or was main subject of some members of"@en ;
+    schema:description """Inverse of 'has or had some members with main subject' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasMainThingRepresentedByContentOfSomeMembersOf> rdfs:label """is or was main thing represented by content of some members
+         of"""@en ;
+    schema:description """Inverse of 'has or had some members whose content mainly
+         represents' object property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasManagerOf> rdfs:label "is or was manager of"@en ;
+    schema:description """Connects an Agent to a Record Resource or Instantiation that the
+         Agent managed or manages."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasMandateTypeOf> rdfs:label "is or was mandate type of"@en ;
+    schema:description """Connects a Mandate Type to a Mandate that it categorized or
+         categorizes."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasMemberOf> rdfs:label "is or was member of"@en ;
+    schema:description "Inverse of 'has or had member' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasNameOf> rdfs:label "is or was name of"@en ;
+    schema:description """Connects a Name to a Thing that it designated or
+         designates."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasOccupationTypeOf> rdfs:label "is or was occupation type of"@en ;
+    schema:description """Connects an Occupation Type to a Person whose occupation is or was
+         categorized by it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasOccupiedBy> rdfs:label "is or was occupied by"@en ;
+    schema:description "Inverse of 'occupies or occupied' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasOwnerOf> rdfs:label "is or was owner of"@en ;
+    schema:description """Connects a Group, Person or Position to a Thing that this Agent
+         owns or owned."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasPartOf> rdfs:label "is or was part of"@en ;
+    schema:description "Inverse of 'has or had part' relation."@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasParticipantIn> rdfs:label "is or was participant in"@en ;
+    schema:description """Inverse of 'has or had participant' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasPerformedBy> rdfs:label "is or was performed by"@en ;
+    schema:description """Connects an Activity to an Agent that performed or performs the
+         Activity."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasPhysicalLocationOf> rdfs:label "is or was physical location of"@en ;
+    schema:description """Connects a Physical Location to a Place, when it is or was its
+         location."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasPlaceNameOf> rdfs:label "is or was place name of"@en ;
+    schema:description """Connects a Place Name to a Place that was or is designated by
+         it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasPlaceTypeOf> rdfs:label "is or was place type of"@en ;
+    schema:description """Connects a Place Type to a Place that is or was categorized by
+         it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasRecordStateOfAllMembersOf> rdfs:label "is or was record state of all members of"@en ;
+    schema:description """Connects a Record State and a Record Set whose all past or present
+         Record or Record Part members have that Record State."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasRecordStateOfSomeMembersOf> rdfs:label "is or was record state of some members of"@en ;
+    schema:description """Connects a Record State and a Record Set whose some past or
+         present Record or Record Part members have that Record State."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasRegulatedBy> rdfs:label "is or was regulated by"@en ;
+    schema:description """Inverse of 'regulates or regulated' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasRepresentedByContentOfSomeMembersOf> rdfs:label "is or was represented by content of some members of"@en ;
+    schema:description """Inverse of 'has or had some members whose content represents'
+         object property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasResponsibleForEnforcing> rdfs:label "is or was responsible for enforcing"@en ;
+    schema:description "Inverse of 'is or was enforced by' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasRuleTypeOf> rdfs:label "is or was rule type of"@en ;
+    schema:description """Connects a Rule Type to a Rule that it categorized or
+         categorizes."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasSubdivisionOf> rdfs:label "is or was subdivision of"@en ;
+    schema:description """Inverse of 'has or had subdivision' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasSubeventOf> rdfs:label "is or was subevent of"@en ;
+    schema:description "Inverse of 'has or had subevent' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasSubjectOf> rdfs:label "is or was subject of"@en ;
+    schema:description "Inverse of 'has or had subject' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasSubjectOfAllMembersOf> rdfs:label "is or was subject of all members of"@en ;
+    schema:description """Inverse of 'has or had all members with subject' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasSubjectOfSomeMembersOf> rdfs:label "is or was subject of some members of"@en ;
+    schema:description """Inverse of 'has or had some members with subject' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasSubordinateTo> rdfs:label "is or was subordinate to"@en ;
+    schema:description """Inverse of 'has or had subordinate' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasTitleOf> rdfs:label "is or was title of"@en ;
+    schema:description """Connects a Title to a Record Resource, Instantiation or Rule that
+         it designated or designates."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasTypeOf> rdfs:label "is or was type of"@en ;
+    schema:description """Connects a Type to a Thing that it categorizes or
+         categorized."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasTypeOfAllMembersOf> rdfs:label "is or was type of all members of"@en ;
+    schema:description """Connects a Type and a Record Set whose all present or past Record
+         or Record Part members belong to that Type."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasTypeOfSomeMembersOf> rdfs:label "is or was type of some members of"@en ;
+    schema:description """Connects a Type and a Record Set whose some present or past Record
+         or Record Part members belong to that Type."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrWasUnderAuthorityOf> rdfs:label "is or was under authority of"@en ;
+    schema:description """Inverse of 'has or had authority over' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrganicOrFunctionalProvenanceOf> rdfs:label "is organic or functional provenance of"@en ;
+    schema:description """Inverse of 'has organic or functional provenance' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrganicProvenanceDateOf> rdfs:label "is organic provenance date of"@en ;
+    schema:description """Connects a Date associated with the organic provenance of a Record
+         Resource or Instantiation to that Record Resource or Instantiation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOrganicProvenanceOf> rdfs:label "is organic provenance of"@en ;
+    schema:description """Inverse of 'has organic provenance' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isOriginalOf> rdfs:label "is original of"@en ;
+    schema:description """Connects the original version of a Record to a copy or a later
+         version."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isPartOfTransitive> rdfs:label "is part of transitive"@en ;
+    schema:description """Connects a Thing to a Thing of which it is a a constitutive or
+         component part, directly or indirectly. This is a transitive relation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isPlaceAssociatedWith> rdfs:label "is place associated with"@en ;
+    schema:description """Connects a Place to a Thing with whose existence and lifecycle the
+         Place is associated."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isPlaceAssociatedWithAgent> rdfs:label "is place associated with agent"@en ;
+    schema:description """Connects a Place to an Agent which is related to that
+         Place."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isProductionTechniqueTypeOf> rdfs:label "is production technique type of"@en ;
+    schema:description """Connects a Production Technique Type to an Instantiation whose
+         production technique is categorized by it."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isPublicationDateOf> rdfs:label "is publication date of"@en ;
+    schema:description """Connects a Date to a Record Resource that was or will be made
+         public at this Date."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isPublisherOf> rdfs:label "is publisher of"@en ;
+    schema:description """Connects an Agent to a Record Resource that it
+         published."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isReceiverOf> rdfs:label "is receiver of"@en ;
+    schema:description "Inverse of 'received by' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#isRecordResourceAssociatedWithRecordResource> rdfs:label "is record resource associated with record resource"@en ;
+    schema:description """Connects two Record Resources. This relation is
+         symmetric."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isRecordSetTypeOf> rdfs:label "is record set type of"@en ;
+    schema:description """Connects a Record Set Type to a Record Set that it
+         categorizes."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isRecordStateOf> rdfs:label "is record state of"@en ;
+    schema:description """Connects a Record State to a Record or Record Part whose state it
+         categorizes."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isRelatedTo> rdfs:label "is related to"@en ;
+    schema:description """The most generic relation, is related to, connects any Thing to
+         any other Thing. This relation is symmetric."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isReplyTo> rdfs:label "is reply to"@en ;
+    schema:description "Inverse of 'has reply' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#isRepresentationTypeOf> rdfs:label "is representation type of"@en ;
+    schema:description """Connects a Representation Type to an Instantiation that it
+         categorizes."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isRepresentedByContentOf> rdfs:label "is represented by content of"@en ;
+    schema:description """Inverse of 'has content which represents' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isResponsibleForIssuing> rdfs:label "is responsible for issuing"@en ;
+    schema:description "Inverse of 'issued by' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#isRuleAssociatedWith> rdfs:label "is rule associated with"@en ;
+    schema:description """Connects a Rule to a Thing that is associated with the
+         Rule."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isSenderOf> rdfs:label "is sender of"@en ;
+    schema:description "Inverse of 'has sender' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#isSourceOfInformationOfRecordResource> rdfs:label "is source of information of Record Resource"@en ;
+    schema:description """Connects a Record Resource to a Record Resource, when the first is
+         used as a source of information for producing the content of the second one."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isSubdivisionOfTransitive> rdfs:label "is subdivision of transitive"@en ;
+    schema:description """Connects a Group to the Group it is a direct or indirect
+         subdivision of. This is a transitive relation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isSubeventOfTransitive> rdfs:label "is subevent of transitive"@en ;
+    schema:description """Connects an ongoing Event to an Event of which it is a direct or
+         indirect part. This is a transitive relation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isSubordinateToTransitive> rdfs:label "is subordinate to transitive"@en ;
+    schema:description """Connects an Agent to an Agent that is directly or indirectly
+         hierarchically superior. This is a transitive relation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isSuccessorOf> rdfs:label "is successor of"@en ;
+    schema:description "Inverse of 'has successor' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#isTitleTypeOf> rdfs:label "is title type of"@en ;
+    schema:description """Connects a Title Type and a Title that it
+         categorizes."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isToUseDateOf> rdfs:label "is to use date of"@en ;
+    schema:description """Connects a Date to an Appellation, when it is the date till which
+         the Appellation was used."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isUnitOfMeasurementOf> rdfs:label "is unit of measurement of"@en ;
+    schema:description """Inverse of 'has unit of measurement' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#isWithin> rdfs:label "is within"@en ;
+    schema:description "Connects a Date to a Date in which it is contained."@en .
+
+<https://www.ica.org/standards/RiC/ontology#issuedBy> rdfs:label "issued by"@en ;
+    schema:description """Connects a Rule to the Agent that issued or published the
+         Rule."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#knownBy> rdfs:label "known by"@en ;
+    schema:description "Inverse of 'knows of' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#knows> rdfs:label "knows"@en ;
+    schema:description """Connects two Persons that directly know each other during their
+         existence. This relation is symmetric."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#knowsOf> rdfs:label "knows of"@en ;
+    schema:description """Connects a Person to another Person they have some knowledge of
+         through time or space."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#lastModificationDate> rdfs:label "last modification date"@en ;
+    schema:description "Date at which an entity was last updated."@en .
+
+<https://www.ica.org/standards/RiC/ontology#latitude> rdfs:label "latitude"@en ;
+    schema:description "Distance in degrees north or south of the equator."@en .
+
+<https://www.ica.org/standards/RiC/ontology#length> rdfs:label "length"@en ;
+    schema:description "Length of an entity."@en .
+
+<https://www.ica.org/standards/RiC/ontology#location> rdfs:label "location"@en ;
+    schema:description """A delimitation of the physical territory of a Place. Used to
+         describe basic human-readable text such as an address, a cadastral reference, or less
+         precise information found in a Record."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#longitude> rdfs:label "longitude"@en ;
+    schema:description """Distance in degrees east or west of a prime
+         meridian."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#measure> rdfs:label "measure"@en ;
+    schema:description """The extent, quantity, amount, or degree of an entity, as
+         determined by measurement or calculation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#migratedFrom> rdfs:label "migrated from"@en ;
+    schema:description "Inverse of 'migrated into' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#migratedInto> rdfs:label "migrated into"@en ;
+    schema:description """Connects an Instantiation to a version it has been migrated
+         into."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#migrationDate> rdfs:label "migration date"@en ;
+    schema:description """Date at which an Instantiation was or will be
+         migrated."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#modificationDate> rdfs:label "modification date"@en ;
+    schema:description "Date of the modification of an entity."@en .
+
+<https://www.ica.org/standards/RiC/ontology#mostMembersWithAccumulationDate> rdfs:label "most members with accumulation date"@en ;
+    schema:description """Date at which most of the present or past members of a Record Set
+         were or will be accumulated."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#mostMembersWithCreationDate> rdfs:label "most members with creation date"@en ;
+    schema:description """Date at which most of the present or past members of a Record Set
+         were or will be created."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#name> rdfs:label "name"@en ;
+    schema:description """A label, title or term designating an entity in order to make it
+         distinguishable from other similar entities."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#normalizedDateValue> rdfs:label "normalized date value"@en ;
+    schema:description """Machine readable representation of the date based on a public
+         technical standard."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#normalizedValue> rdfs:label "normalized value"@en ;
+    schema:description """Value representation based on a standard, preferably
+         machine-readable."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#note> rdfs:label "note"@en ;
+    schema:description """A short textual statement, that gives a little information on a
+         specific feature of a Thing."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#occupiesOrOccupied> rdfs:label "occupies or occupied"@en ;
+    schema:description """Connects a Person to a Position they occupy or
+         occupied."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#occurredAtDate> rdfs:label "occurred at date"@en ;
+    schema:description """Inverse of 'is date of occurrence of' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#overlapsOrOverlapped> rdfs:label "overlaps or overlapped"@en ;
+    schema:description """Connects two Places that geographically overlap or overlapped.
+         This relation is symmetric."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#performsOrPerformed> rdfs:label "performs or performed"@en ;
+    schema:description """Inverse of 'is or was performed by' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#physicalCharacteristicsNote> rdfs:label "physical characteristics note"@en ;
+    schema:description """Information about the physical features, completeness, or
+         conservation status of an Instantiation. Includes information about the physical nature and
+         condition such as conservation status or the deterioration of an Instantiation (for example
+         its carrier) affecting the ability to recover information. """@en .
+
+<https://www.ica.org/standards/RiC/ontology#physicalOrLogicalExtent> rdfs:label "physical or logical extent"@en ;
+    schema:description """Countable characteristics of the content of an entity expressed as
+         a quantity."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#precededInSequence> rdfs:label "preceded in sequence"@en ;
+    schema:description """Connects a Thing to a Thing that followed it in some sequence (not
+         necessarily defined or characterised chronologically) in the past."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#precedesInSequenceTransitive> rdfs:label "precedes in sequence transitive"@en ;
+    schema:description """Connects a Thing to a Thing that follows it directly or indirectly
+         in some sequence (not necessarily defined or characterised chronologically). This is a
+         transitive relation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#precedesInTime> rdfs:label "precedes in time"@en ;
+    schema:description """Connects a Thing to a Thing that follows it in chronological
+         order. This is a transitive relation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#precedesOrPreceded> rdfs:label "precedes or preceded"@en ;
+    schema:description """Connects a Thing to a Thing that follows or followed it in some
+         sequence."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#precedesProxyInSequence> rdfs:label "precedes proxy in sequence"@en ;
+    schema:description """Connects a Record Resource to a Proxy of a Record Resource that it
+         precedes directly or indirectly in some sequence (not necessarily defined or characterised
+         chronologically)."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#productionTechnique> rdfs:label "production technique"@en ;
+    schema:description """The method used in the representation of information on an
+         Instantiation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyDirectlyFollowsInSequence> rdfs:label "proxy directly follows in sequence"@en ;
+    schema:description """Inverse of 'directly precedes proxy in sequence' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyDirectlyFollowsProxyInSequence> rdfs:label "proxy directly follows proxy in sequence"@en ;
+    schema:description """Inverse of 'proxy directly precedes proxy in sequence' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyDirectlyIncludes> rdfs:label "proxy directly includes"@en ;
+    schema:description """Inverse of 'is directly included in proxy' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyDirectlyIncludesProxy> rdfs:label "proxy directly includes proxy"@en ;
+    schema:description """Inverse of 'proxy is directly included in' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyDirectlyPrecedesInSequence> rdfs:label "proxy directly precedes in sequence"@en ;
+    schema:description """Connects a Proxy of a Record Resource to a Record Resource which
+         it precedes directly in some sequence (not necessarily defined or characterised
+         chronologically)."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyDirectlyPrecedesProxyInSequence> rdfs:label "proxy directly precedes proxy in sequence"@en ;
+    schema:description """Connects a Proxy of a Record Resource to a Proxy of another Record
+         Resource that it precedes directly in some sequence (not necessarily defined or
+         characterised chronologically)."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyFollowsInSequence> rdfs:label "proxy follows in sequence"@en ;
+    schema:description """Inverse of 'precedes proxy in sequence' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyFollowsProxyInSequenceTransitive> rdfs:label "proxy follows proxy in sequence transitive"@en ;
+    schema:description """Inverse of 'proxy recedes proxy in sequence transitive' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyFor> rdfs:label "proxy for"@en ;
+    schema:description """Connects a Proxy to the Record Resource it stands for in the
+         context of a specific Record Resource."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyHasConstituent> rdfs:label "proxy has constituent"@en ;
+    schema:description """Inverse of 'is constituent of proxy' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyHasConstituentProxyTransitive> rdfs:label "proxy has constituent proxy transitive"@en ;
+    schema:description """Inverse of 'proxy is constituent of proxy transitive' object
+         property. This is a transitive relation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyHasDirectConstituent> rdfs:label "proxy has direct constituent"@en ;
+    schema:description """Inverse of 'is direct constituent of proxy' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyHasDirectConstituentProxy> rdfs:label "proxy has direct constituent proxy"@en ;
+    schema:description """Inverse of 'proxy is direct constituent of' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyIn> rdfs:label "proxy in"@en ;
+    schema:description """Connects a Proxy to the Record Resource in which it stands for
+         (represents) another Record Resource."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyInRecord> rdfs:label "proxy in record"@en ;
+    schema:description """Connects a Proxy to a Record in which it stands for (represents) a
+         Record Part or another Record."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyInRecordSet> rdfs:label "proxy in record set"@en ;
+    schema:description """Connects a Proxy to a Record Set in which it stands for
+         (represents) a Record or another Record Set."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyIncludes> rdfs:label "proxy includes"@en ;
+    schema:description "Inverse of 'is included in proxy' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyIncludesProxyTransitive> rdfs:label "proxy includes proxy transitive"@en ;
+    schema:description """Inverse of 'proxy is included in proxy transitive' object
+         property. This is a transitive relation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyIsConstituentOf> rdfs:label "proxy is constituent of"@en ;
+    schema:description """Connects a Proxy of a Record or Record Part to a Record or Record
+         Part which it is a constituent of, directly or indirectly."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyIsConstituentOfProxyTransitive> rdfs:label "proxy is constituent of proxy transitive"@en ;
+    schema:description """Connects a Proxy of a Record or Record Part to a Proxy of another
+         Record or Record Part which it is a constituent of, directly or indirectly. This is a
+         transitive relation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyIsDirectConstituentOf> rdfs:label "proxy is direct constituent of"@en ;
+    schema:description """Connects a Proxy of a Record or Record Part to another Record or
+         Record Part which the first is a direct constituent of."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyIsDirectConstituentOfProxy> rdfs:label "proxy is direct constituent of proxy"@en ;
+    schema:description """Connects a Proxy of a Record or Record Part to a Proxy of another
+         Record or Record Part of which the first is a direct constituent."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyIsDirectlyIncludedIn> rdfs:label "proxy is directly included in"@en ;
+    schema:description """Connects a Proxy of a Record or Record Set to another Record Set
+         which the first is directly included in."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyIsDirectlyIncludedInProxy> rdfs:label "proxy is directly included in proxy"@en ;
+    schema:description """Connects a Proxy of a Record or Record Set to a Proxy of a Record
+         Set which it is directly included in."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyIsIncludedIn> rdfs:label "proxy is included in"@en ;
+    schema:description """Connects a Proxy of a Record or Record Set to a Record Set which
+         it is included in, directly or indirectly."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyIsIncludedInProxyTransitive> rdfs:label "proxy is included in proxy transitive"@en ;
+    schema:description """Connects a Proxy of a Record or Record Set to a Proxy of a Record
+         Set which it is included in, directly or indirectly. This is a transitive
+         relation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyPrecedesInSequence> rdfs:label "proxy precedes in sequence"@en ;
+    schema:description """Connects a Proxy of a Record Resource to a Record Resource which
+         the first precedes directly or indirectly in some sequence (not necessarily defined or
+         characterised chronologically)."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#proxyPrecedesProxyInSequenceTransitive> rdfs:label "proxy precedes proxy in sequence transitive"@en ;
+    schema:description """Connects a Proxy of a Record Resource to a Proxy of another Record
+         Resource which directly or indirectly follows the first in some sequence (not necessarily
+         defined or characterised chronologically). This is a transitive relation."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#publicationDate> rdfs:label "publication date"@en ;
+    schema:description """Date of the publication, in the past or in the future, of a Record
+         Resource."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#qualityOfRepresentationNote> rdfs:label "quality of representation note"@en ;
+    schema:description """Characteristics of an Instantiation that affect the ability to
+         recover the intellectual content. Such characteristics may be related to the methods used
+         in creating the Instantiation or introduced subsequent to the creation through
+         accident."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#quantity> rdfs:label "quantity"@en ;
+    schema:description "Machine-readable quantity."@en .
+
+<https://www.ica.org/standards/RiC/ontology#rankInHierarchy> rdfs:label "rank in hierarchy"@en ;
+    schema:description """The rank of a Record Resource, or of a Proxy that stands for it,
+         in a hierarchy."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#rankInSequence> rdfs:label "rank in sequence"@en ;
+    schema:description """The rank of a Record Resource, or of a Proxy that stands for it,
+         in a sequence."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#recordResourceExtent> rdfs:label "Record Resource Extent"@en ;
+    schema:description """The quantity of information content, as human experienced,
+         contained in a Record Resource. The method and precision of expressing the quantity of
+         information represented in a Record Resource will vary according to the kind of Record
+         Resource being described, processing economy constraints, etc. For record sets, quantity
+         may be expressed as number of records, or, for analogue records in particular, by the
+         physical storage dimensions of the members of the Record Set. For individual records or
+         record parts, quantity may be expressed in more precise terms. """@en .
+
+<https://www.ica.org/standards/RiC/ontology#recordResourceHasSourceOfInformation> rdfs:label "Record Resource has source of information"@en ;
+    schema:description """Connects a Record Resource to a Record Resource, when the second
+         one is used as a source of information for producing the content of the first
+         one."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#recordResourceSourceOfInformation> rdfs:label "Record Resource source of information"@en ;
+    schema:description """Information about some source on which the content of a Record
+         Resource is based."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#recordResourceStructure> rdfs:label "Record Resource structure"@en ;
+    schema:description """Information about the intellectual arrangement and composition of
+         a Record Resource. For Record and Record Part, it encompasses information about the
+         intellectual composition of the record, the presence of record parts and their functions.
+         For Record Set, it encompasses information about the methodology or criteria used for
+         arranging the Record Set members or Record members within the containing Record
+         Set"""@en .
+
+<https://www.ica.org/standards/RiC/ontology#referenceSystem> rdfs:label "reference system"@en ;
+    schema:description """Framework or standard used to represent an
+         information."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#regulatesOrRegulated> rdfs:label "regulates or regulated"@en ;
+    schema:description """Connects a Rule to a Thing that it regulates or
+         regulated."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#resultedFromTheMergerOf> rdfs:label "resulted from the merger of"@en ;
+    schema:description "Inverse of 'was merged into' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#resultedFromTheSplitOf> rdfs:label "resulted from the split of"@en ;
+    schema:description "Inverse of 'was split into' object property."@en .
+
+<https://www.ica.org/standards/RiC/ontology#resultsOrResultedFrom> rdfs:label "results or resulted from"@en ;
+    schema:description """Inverse of 'results or resulted in' object
+         property."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#resultsOrResultedIn> rdfs:label "results or resulted in"@en ;
+    schema:description """Connects an Event to a Thing that results or resulted from the
+         Event."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#ruleFollowed> rdfs:label "rule followed"@en ;
+    schema:description """The rule or conditions that govern the existence or lifecycle of a
+         Thing."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#scopeAndContent> rdfs:label "scope and content"@en ;
+    schema:description """Summary of the scope (such as time periods, geography) and content
+         (such as subject matter, administrative processes) of a Record Resource. Provides a more
+         complete summary of the informational content of the Record Resource highlighting the
+         information conveyed in the Record Resource, why it was created, received, and/or
+         maintained, and the agents connected to it. It may include description of relations with
+         agents, activities, dates and places, or with other record resources."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#sentimentOrEmotionExpressed> rdfs:label "sentiment or emotion expressed"@en ;
+    schema:description """Specification of, or information about, the sentiment(s) or
+         emotion(s) expressed by the content of a Record or a Record Part."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#someMembersWithAccumulationDate> rdfs:label "some members with accumulation date"@en ;
+    schema:description """Date at which some of the present or past members of a Record Set
+         were or will be accumulated."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#someMembersWithCreationDate> rdfs:label "some members with creation date"@en ;
+    schema:description """Date at which some of the present or past members of a Record Set
+         were or will be created."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#structure> rdfs:label "structure"@en ;
+    schema:description """Information about the intellectual arrangement and composition of
+         a Record Resource or the physical arrangement and composition of an Instantiation. For
+         Record and Record Part, it encompasses information about the intellectual composition of
+         the record, the presence of record parts and their functions. For Record Set, it
+         encompasses information about the methodology or criteria used for arranging the Record Set
+         members or Record members within the containing Record Set. For Instantiation, it may
+         comprise information about the composition of the physical elements of the
+         instantiation"""@en .
+
+<https://www.ica.org/standards/RiC/ontology#studiesOrStudiedAt> rdfs:label "studies or studied at"@en ;
+    schema:description """Connects a Person to an educational institution at which they
+         studied or study. Both 'institution' and 'at' can be interpreted broadly."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#technicalCharacteristics> rdfs:label "technical characteristics"@en ;
+    schema:description """Describes any relevant physical or software feature of any device
+         involved in the creation or management of a Record Resource."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#textualValue> rdfs:label "textual value"@en ;
+    schema:description "A textual expression of an Appellation or Date."@en .
+
+<https://www.ica.org/standards/RiC/ontology#title> rdfs:label "title"@en ;
+    schema:description """An identifying name of a Record Resource, Instantiation or
+         Rule."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#type> rdfs:label "type"@en ;
+    schema:description "A term used to characterize an entity."@en .
+
+<https://www.ica.org/standards/RiC/ontology#unitOfMeasurement> rdfs:label "unit of measurement"@en ;
+    schema:description """A definite magnitude of a quantity, defined and adopted by
+         convention or by law, that is used as a standard for measurement of the same kind of
+         quantity. Can be spacial units (cm, m), weight (g, kg), time (s, h), storage (MB, TB) or
+         more informal units used in the archival context like number of boxes, pages or
+         words."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#usedFromDate> rdfs:label "used from date"@en ;
+    schema:description "Date at which an Appellation was first used."@en .
+
+<https://www.ica.org/standards/RiC/ontology#usedToDate> rdfs:label "used to date"@en ;
+    schema:description "Date until an Appellation was used."@en .
+
+<https://www.ica.org/standards/RiC/ontology#wasComponentOf> rdfs:label "was component of"@en ;
+    schema:description """Connects an Instantiation to another Instantiation of which it was
+         a component in the past."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#wasConstituentOf> rdfs:label "was constituent of"@en ;
+    schema:description """Connects a Record or Record Part to another Record or Record Part
+         of which it was a constituent in the past."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#wasContainedBy> rdfs:label "was contained by"@en ;
+    schema:description """Connects a Place to a Place within which it was
+         contained."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#wasIncludedIn> rdfs:label "was included in"@en ;
+    schema:description """Connects a Record to a Record or Record Set in which it was
+         included in the past."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#wasLastUpdatedAtDate> rdfs:label "was last updated at date"@en ;
+    schema:description """Connects a Thing to the Date when it was last
+         modified."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#wasMergedInto> rdfs:label "was merged into"@en ;
+    schema:description """Connects a Corporate Body to another Corporate Body that is the
+         result of a merger of the previous one with one to many other corporate
+         bodies."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#wasPartOf> rdfs:label "was part of"@en ;
+    schema:description """Connects a Thing to a Thing of which it was a constitutive or
+         component part in the past."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#wasSplitInto> rdfs:label "was split into"@en ;
+    schema:description """Connects a Corporate Body to one of the Corporate Bodies that
+         results from the split of the previous one into two to many corporate
+         bodies."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#wasSubdivisionOf> rdfs:label "was subdivision of"@en ;
+    schema:description """Connects a subdivision to the Group it was a part of in the
+         past."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#wasSubeventOf> rdfs:label "was subevent of"@en ;
+    schema:description """Connects a past Event to the broader Event of which it was a
+         part."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#wasSubordinateTo> rdfs:label "was subordinate to"@en ;
+    schema:description """Connects an Agent to an Agent that was hierarchically superior in
+         the past."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#wasUsedFromDate> rdfs:label "was used from date"@en ;
+    schema:description """Connects an Appellation to the Date from which it was
+         used."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#wasUsedToDate> rdfs:label "was used to date"@en ;
+    schema:description """Connects an Appellation to the Date till when it was
+         used."""@en .
+
+<https://www.ica.org/standards/RiC/ontology#width> rdfs:label "width"@en ;
+    schema:description "Horizontal dimension of an entity."@en .
+
