@@ -4,7 +4,7 @@
 #
 
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX schema: <http://schema.org/>
+PREFIX schema: <https://schema.org/>
 
 <https://www.ica.org/standards/RiC/ontology#Activity> rdfs:label "Activity"@en ;
     schema:description "The doing of something for some human purpose."@en .
