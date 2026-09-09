@@ -196,7 +196,7 @@ class FacetQuery(ConstructQuery):
     @staticmethod
     async def create_facets_query(main_query, query_params, focus_node_uri=None):
         """Create a facets query for either listing or object endpoints."""
-        from prez.services.query_generation.shacl import NodeShape
+        from prez.services.query_generation.shacl import get_nodeshape
 
         profile_uri = await get_facet_profile_uri_from_qsa(query_params.facet_profile)
         if not profile_uri:
@@ -205,7 +205,7 @@ class FacetQuery(ConstructQuery):
             focus_node = (
                 IRI(value=focus_node_uri) if focus_node_uri else Var(value="focus_node")
             )
-            facet_nodeshape = NodeShape(
+            facet_nodeshape = get_nodeshape(
                 uri=profile_uri,
                 graph=profiles_graph_cache,
                 kind="profile",

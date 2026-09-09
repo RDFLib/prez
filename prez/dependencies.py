@@ -53,6 +53,7 @@ from prez.services.query_generation.shacl import (
     FTSUnionContainer,
     NodeShape,
     PropertyShape,
+    get_nodeshape,
 )
 
 logger = logging.getLogger(__name__)
@@ -813,11 +814,11 @@ async def get_profile_nodeshape_listing_post(
 ) -> "NodeShape":
     from sparql_grammar import Var
     from prez.cache import profiles_graph_cache
-    from prez.services.query_generation.shacl import NodeShape
+    from prez.services.query_generation.shacl import get_nodeshape
 
     profile = pmts.selected.get("profile")
     focus_node = Var(value="focus_node")  # always Var for listing
-    return NodeShape(
+    return get_nodeshape(
         uri=profile,
         graph=profiles_graph_cache,
         kind="profile",
@@ -1058,9 +1059,9 @@ async def get_endpoint_nodeshapes_post_object(
     focus_node=Depends(get_focus_node_post_object),
 ) -> "NodeShape":
     from prez.cache import endpoints_graph_cache
-    from prez.services.query_generation.shacl import NodeShape
+    from prez.services.query_generation.shacl import get_nodeshape
 
-    return NodeShape(
+    return get_nodeshape(
         uri=URIRef("http://example.org/ns#Object"),
         graph=endpoints_graph_cache,
         kind="endpoint",
@@ -1117,7 +1118,7 @@ async def get_profile_nodeshape_post_object(
 ) -> "NodeShape":
     from prez.reference_data.prez_ns import ALTREXT
     from prez.cache import profiles_graph_cache
-    from prez.services.query_generation.shacl import NodeShape
+    from prez.services.query_generation.shacl import get_nodeshape
     from sparql_grammar import Var
 
     profile = pmts.selected.get("profile")
@@ -1125,7 +1126,7 @@ async def get_profile_nodeshape_post_object(
         fn = Var(value="focus_node")
     else:
         fn = focus_node
-    return NodeShape(
+    return get_nodeshape(
         uri=profile,
         graph=profiles_graph_cache,
         kind="profile",
@@ -1411,45 +1412,32 @@ async def get_focus_node(
         return Var(value="focus_node")
 
 
+#: endpoint -> the node shape that selects focus nodes for it. These endpoints each
+#: have exactly one shape, named in prez/reference_data/endpoints/endpoint_nodeshapes.ttl.
+SPECIAL_CASE_NODESHAPES = {
+    EP["system/object"]: URIRef("http://example.org/ns#Object"),
+    EP["extended-ogc-records/top-concepts"]: URIRef(
+        "http://example.org/ns#TopConcepts"
+    ),
+    EP["extended-ogc-records/narrowers"]: URIRef("http://example.org/ns#Narrowers"),
+    EP["extended-ogc-records/cql-get"]: URIRef("http://example.org/ns#CQL"),
+    EP["extended-ogc-records/search"]: URIRef("http://example.org/ns#Search"),
+}
+
+
 def handle_special_cases(ep_uri, focus_node):
     """
     uris provided to the nodeshapes are those in prez/reference_data/endpoints/endpoint_nodeshapes.ttl
     """
-    if ep_uri == EP["system/object"]:
-        return NodeShape(
-            uri=URIRef("http://example.org/ns#Object"),
-            graph=endpoints_graph_cache,
-            kind="endpoint",
-            focus_node=focus_node,
-        )
-    elif ep_uri == EP["extended-ogc-records/top-concepts"]:
-        return NodeShape(
-            uri=URIRef("http://example.org/ns#TopConcepts"),
-            graph=endpoints_graph_cache,
-            kind="endpoint",
-            focus_node=focus_node,
-        )
-    elif ep_uri == EP["extended-ogc-records/narrowers"]:
-        return NodeShape(
-            uri=URIRef("http://example.org/ns#Narrowers"),
-            graph=endpoints_graph_cache,
-            kind="endpoint",
-            focus_node=focus_node,
-        )
-    elif ep_uri == EP["extended-ogc-records/cql-get"]:
-        return NodeShape(
-            uri=URIRef("http://example.org/ns#CQL"),
-            graph=endpoints_graph_cache,
-            kind="endpoint",
-            focus_node=focus_node,
-        )
-    elif ep_uri == EP["extended-ogc-records/search"]:
-        return NodeShape(
-            uri=URIRef("http://example.org/ns#Search"),
-            graph=endpoints_graph_cache,
-            kind="endpoint",
-            focus_node=focus_node,
-        )
+    shape_uri = SPECIAL_CASE_NODESHAPES.get(ep_uri)
+    if shape_uri is None:
+        return None
+    return get_nodeshape(
+        uri=shape_uri,
+        graph=endpoints_graph_cache,
+        kind="endpoint",
+        focus_node=focus_node,
+    )
 
 
 async def get_endpoint_nodeshapes(
@@ -1507,7 +1495,7 @@ async def get_endpoint_nodeshapes(
         for pn, uri in path_nodes.items():
             path_node_classes[pn] = await get_classes_single(URIRef(uri.value), repo)
         nodeshapes = [
-            NodeShape(
+            get_nodeshape(
                 uri=URIRef(ns),
                 graph=endpoints_graph_cache,
                 kind="endpoint",
@@ -1537,14 +1525,13 @@ async def get_endpoint_nodeshapes(
     if not path_nodes:
         path_nodes = {}
     if node_selection_shape_uri:
-        ns = NodeShape(
+        return get_nodeshape(
             uri=node_selection_shape_uri,
             graph=endpoints_graph_cache,
             kind="endpoint",
             path_nodes=path_nodes,
             focus_node=focus_node,
         )
-        return ns
     else:
         raise NoEndpointNodeshapeException(ep_uri, hierarchy_level)
 
@@ -1619,7 +1606,7 @@ async def get_profile_nodeshape(
         focus_node = IRI(value=focus_node_uri)
     else:  # listing
         focus_node = Var(value="focus_node")
-    return NodeShape(
+    return get_nodeshape(
         uri=profile,
         graph=profiles_graph_cache,
         kind="profile",

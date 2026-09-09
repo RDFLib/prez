@@ -408,6 +408,57 @@ async def _clear_class_cache():
     await caches.get("classes").clear()
 
 
+def bench_link_generation_end_to_end(rec: Recorder) -> None:
+    """Generate links for a store of objects, the way a response does.
+
+    Covers everything issue #474 names: the class lookup, the node shapes, the
+    components query per class, and the link and identifier strings per solution.
+    Run cold (nothing cached) and warm (every link already in the cache), because a
+    deployment serving a listing repeatedly is in the warm case.
+    """
+    from pyoxigraph import NamedNode, Quad, RdfFormat, Store
+
+    from prez.cache import links_ids_graph_cache, store as data_store
+    from prez.repositories import PyoxigraphRepo
+    from prez.services.link_generation import add_prez_links_for_oxigraph
+
+    for file in (REPO_ROOT / "test_data").glob("**/*.ttl"):
+        data_store.load(file.read_bytes(), RdfFormat.TURTLE)
+    repo = PyoxigraphRepo(data_store)
+    concept = NamedNode("http://www.w3.org/2004/02/skos/core#Concept")
+    rdf_type = NamedNode("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
+    uris = sorted(
+        {q.subject.value for q in data_store.quads_for_pattern(None, rdf_type, concept)}
+    )
+    if not uris:
+        print("link_generation_e2e: no concepts in test_data, skipped", flush=True)
+        return
+    nodes = [NamedNode(u) for u in uris]
+    structure = ("catalogs", "collections", "items")
+
+    def run():
+        target = Store()
+        target.bulk_extend(
+            Quad(n, rdf_type, concept, n) for n in nodes  # something to attach links to
+        )
+        asyncio.run(add_prez_links_for_oxigraph(target, repo, structure, uris=nodes))
+        return target
+
+    def cold():
+        links_ids_graph_cache.clear()
+        asyncio.run(_clear_class_cache())
+        return run()
+
+    rec.scenario("link_generation_e2e_cold", cold, n=len(nodes))
+    rec.scenario("link_generation_e2e_warm", run, n=len(nodes))
+
+
+async def _clear_class_cache():
+    from aiocache import caches
+
+    await caches.get("classes").clear()
+
+
 def bench_listing(rec: Recorder, endpoints_graph: Graph, profiles_graph: Graph) -> None:
     from prez.models.query_params import ListingQueryParams
     from prez.services.query_generation.count import CountQuery

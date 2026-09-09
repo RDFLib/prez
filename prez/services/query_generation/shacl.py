@@ -72,6 +72,66 @@ class Shape(BaseModel):
         raise NotImplementedError("Subclasses must implement this method.")
 
 
+#: (shape uri, graph, kind, focus node, path nodes) -> the parsed shape.
+#:
+#: Parsing a shape walks a SHACL graph and builds the grammar for its property
+#: paths, and a request asks for the same profile or endpoint shape as the request
+#: before it. The shapes here are shared, so **callers must treat a shape as
+#: read-only**: build new lists from ``tss_list``, ``tssp_list`` and ``gpnt_list``
+#: rather than appending to them. Cleared by :func:`clear_nodeshape_cache` when the
+#: endpoint or profile graphs are (re)loaded.
+_nodeshape_cache: dict[tuple, "NodeShape"] = {}
+
+#: How many shapes to hold. Object endpoints key on the object's IRI, so the number
+#: of distinct keys grows with traffic; past this the cache starts over rather than
+#: growing without bound.
+_NODESHAPE_CACHE_MAX = 1024
+
+
+def clear_nodeshape_cache() -> None:
+    """Forget the parsed node shapes."""
+    _nodeshape_cache.clear()
+
+
+def get_nodeshape(
+    uri: URIRef,
+    graph: Graph,
+    kind: str,
+    focus_node: Union["Var", "IRI"],
+    path_nodes: Optional[Dict[str, Union["Var", "IRI"]]] = None,
+) -> "NodeShape":
+    """A parsed :class:`NodeShape`, from the cache when it has been parsed before.
+
+    The result is shared between callers and must not be mutated; see
+    :data:`_nodeshape_cache`.
+    """
+    # len(graph) is in the key so that a shape parsed from an earlier state of the
+    # graph is not reused after it changes: prez loads its endpoints and profiles at
+    # startup, but tests (and any future reload) add to those graphs afterwards, and
+    # a stale shape is a wrong query rather than a slow one.
+    key = (
+        uri,
+        id(graph),
+        len(graph),
+        kind,
+        focus_node,
+        tuple(sorted(path_nodes.items())) if path_nodes else (),
+    )
+    shape = _nodeshape_cache.get(key)
+    if shape is None:
+        shape = NodeShape(
+            uri=uri,
+            graph=graph,
+            kind=kind,
+            focus_node=focus_node,
+            path_nodes=dict(path_nodes) if path_nodes else {},
+        )
+        if len(_nodeshape_cache) >= _NODESHAPE_CACHE_MAX:
+            _nodeshape_cache.clear()
+        _nodeshape_cache[key] = shape
+    return shape
+
+
 class NodeShape(Shape):
     uri: URIRef
     graph: Graph

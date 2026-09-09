@@ -57,7 +57,7 @@ from prez.services.connegp_service import (
 )
 from prez.services.connegp_service import RDF_SERIALIZER_TYPES_MAP
 from prez.services.curie_functions import get_curie_id_for_uri
-from prez.services.query_generation.shacl import NodeShape
+from prez.services.query_generation.shacl import NodeShape, get_nodeshape
 from prez.services.timing_csv import log_timing_csv
 
 log = logging.getLogger(__name__)
@@ -591,7 +591,7 @@ async def handle_alt_profile(original_endpoint_type, pmts):
         ONT["ListingEndpoint"]: URIRef("http://example.org/ns#AltProfilesForListing"),
     }
     endpoint_uri = endpoint_nodeshape_map[original_endpoint_type]
-    endpoint_nodeshape = NodeShape(
+    endpoint_nodeshape = get_nodeshape(
         uri=endpoint_uri,
         graph=endpoints_graph_cache,
         kind="endpoint",

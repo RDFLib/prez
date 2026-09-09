@@ -29,25 +29,26 @@ class PyoxigraphRepo(Repo):
 
     @staticmethod
     def _handle_query_solution_results(results: QuerySolutions) -> dict[str, Any]:
-        """Organise the query results into format serializable by FastAPIs JSONResponse."""
-        variables = results.variables
-        results_dict: dict[str, Any] = {
-            "head": {"vars": [v.value for v in results.variables]}
-        }
+        """Organise the query results into format serializable by FastAPIs JSONResponse.
+
+        A solution iterates its bindings in the order of ``results.variables``, and an
+        unbound variable yields None, so the names are paired with the values by
+        position rather than looked up per row. Link generation and class lookups run
+        this over every result of every request, so the per-binding work is kept to
+        the dict literal and one type test.
+        """
+        names = [v.value for v in results.variables]
         results_list: list[dict] = []
         for result in results:
             result_dict = {}
-            for var in variables:
-                binding = result[var]
-                if binding:
-                    binding_type = _pyoxi_result_type(binding)
-                    result_dict[str(var)[1:]] = {
-                        "type": binding_type,
+            for name, binding in zip(names, result):
+                if binding is not None:
+                    result_dict[name] = {
+                        "type": _pyoxi_result_type(binding),
                         "value": binding.value,
                     }
             results_list.append(result_dict)
-        results_dict["results"] = {"bindings": results_list}
-        return results_dict
+        return {"head": {"vars": names}, "results": {"bindings": results_list}}
 
     @staticmethod
     def _handle_query_triples_results(
@@ -203,12 +204,17 @@ class PyoxigraphRepo(Repo):
         return self._sparql(query)
 
 
+#: pyoxigraph term class -> its name in the SPARQL results JSON format. A dict lookup
+#: on the exact class, since these are final types with no subclasses.
+_RESULT_TYPES = {
+    pyoxigraph.Literal: "literal",
+    pyoxigraph.NamedNode: "uri",
+    pyoxigraph.BlankNode: "bnode",
+}
+
+
 def _pyoxi_result_type(term) -> str:
-    if isinstance(term, pyoxigraph.Literal):
-        return "literal"
-    elif isinstance(term, pyoxigraph.NamedNode):
-        return "uri"
-    elif isinstance(term, pyoxigraph.BlankNode):
-        return "bnode"
-    else:
-        raise ValueError(f"Unknown type: {type(term)}")
+    try:
+        return _RESULT_TYPES[type(term)]
+    except KeyError:
+        raise ValueError(f"Unknown type: {type(term)}") from None
