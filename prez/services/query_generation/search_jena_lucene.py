@@ -46,10 +46,6 @@ DEFAULT_FIELD_SPEC = "default"
 EMPTY_STRING_SENTINEL = ""
 
 
-def _sparql_string_literal(value: str) -> str:
-    return json.dumps(value, ensure_ascii=False)
-
-
 def _compact_json(value: dict | list | None) -> str | None:
     if value is None:
         return None
@@ -266,28 +262,6 @@ class SearchQueryJenaLucene:
     def _sort_json_arg(self) -> str:
         return self._sort_json or EMPTY_STRING_SENTINEL
 
-    def _lucene_args_strings(self) -> list[str]:
-        return [
-            _sparql_string_literal(self._lucene_index_name),
-            _sparql_string_literal(_compact_field_spec(self._search_fields)),
-            _sparql_string_literal(self._term),
-            _sparql_string_literal(self._query_filter_arg()),
-            _sparql_string_literal(self._sort_json_arg()),
-            str(self._lucene_limit),
-            str(self._lucene_offset),
-        ]
-
-    def _facet_args_strings(self) -> list[str]:
-        return [
-            _sparql_string_literal(self._lucene_index_name),
-            _sparql_string_literal(DEFAULT_FIELD_SPEC),
-            _sparql_string_literal(self._term),
-            _sparql_string_literal(_compact_json(self._facets)),
-            _sparql_string_literal(self._query_filter_arg()),
-            str(self._facet_limit),
-            "0",
-        ]
-
     def _create_hitid_expression(
         self,
         sr_uri: Var,
@@ -437,41 +411,6 @@ class SearchQueryJenaLucene:
                 GroupGraphPattern(GroupGraphPatternSub([self._lucene_facet_tb]))
             ),
         )
-
-    @property
-    def valid_lucene_query_triple(self) -> str:
-        return (
-            f"(?hit ?focus_node ?weight ?totalHits) <{LUCENE.query}> "
-            f"({' '.join(self._lucene_args_strings())}) ."
-        )
-
-    @property
-    def valid_lucene_match_triple(self) -> str:
-        return f"(?hit ?pred ?match ?snippet) <{LUCENE.match}> () ."
-
-    @property
-    def valid_lucene_facet_triple(self) -> str:
-        return (
-            f"(?facetName ?facetValue ?facetLow ?facetHigh ?facetCount) <{LUCENE.facet}> "
-            f"({' '.join(self._facet_args_strings())}) ."
-        )
-
-    def normalize_query_string(self, query: str) -> str:
-        normalized_query = query.replace(
-            self._lucene_query_tb.to_string(),
-            self.valid_lucene_query_triple,
-        )
-        if self._lucene_match_tb is not None:
-            normalized_query = normalized_query.replace(
-                self._lucene_match_tb.to_string(),
-                self.valid_lucene_match_triple,
-            )
-        if self._lucene_facet_tb is not None:
-            normalized_query = normalized_query.replace(
-                self._lucene_facet_tb.to_string(),
-                self.valid_lucene_facet_triple,
-            )
-        return normalized_query
 
     @property
     def tss_list(self):

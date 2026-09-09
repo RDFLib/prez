@@ -76,12 +76,6 @@ log = logging.getLogger(__name__)
 DWC = Namespace("http://rs.tdwg.org/dwc/terms/")
 
 
-def _normalize_listing_query_string(query: str, search_query) -> str:
-    if isinstance(search_query, SearchQueryJenaLucene):
-        return search_query.normalize_query_string(query)
-    return query
-
-
 def _suppress_nan_lucene_weights(item_store: OxiStore) -> None:
     weight_pred = OxiNamedNode(PREZ.searchResultWeight)
     nan_datatypes = {str(XSD.float), str(XSD.double)}
@@ -401,7 +395,7 @@ async def listing_function(
             profile_triples=profile_nodeshape.tssp_list,
             profile_gpnt=profile_nodeshape.gpnt_list,
         )
-        main_query_str = search_query.normalize_query_string(main_query.to_string())
+        main_query_str = main_query.to_string()
     else:
         main_query = PrezQueryConstructor(
             construct_tss_list=construct_tss_list,
@@ -409,9 +403,7 @@ async def listing_function(
             profile_gpnt=profile_nodeshape.gpnt_list,
             **subselect_kwargs,
         )
-        main_query_str = _normalize_listing_query_string(
-            main_query.to_string(), search_query
-        )
+        main_query_str = main_query.to_string()
     queries.append(main_query_str)
     if extra_rdf_queries:
         queries.extend(query for query in extra_rdf_queries if query)
@@ -491,10 +483,7 @@ async def listing_function(
         )
     ):
         subselect = copy.deepcopy(main_query.inner_select)
-        count_query = _normalize_listing_query_string(
-            CountQuery(original_subselect=subselect).to_string(),
-            search_query,
-        )
+        count_query = CountQuery(original_subselect=subselect).to_string()
         queries.append(count_query)
 
     query_start_time = time.perf_counter()
