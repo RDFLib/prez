@@ -12,19 +12,16 @@ from pyoxigraph import (
 )
 from rdflib import Graph, URIRef
 from rdflib.namespace import RDF, SH
-from sparql_grammar_pydantic import (
+from sparql_grammar import (
     IRI,
-    DataBlock,
-    DataBlockValue,
-    GraphPatternNotTriples,
-    InlineData,
-    InlineDataOneVar,
-    Var,
     GroupGraphPattern,
     GroupGraphPatternSub,
+    InlineData,
+    InlineDataOneVar,
     SelectClause,
     SubSelect,
     TriplesBlock,
+    Var,
     WhereClause,
 )
 
@@ -35,6 +32,7 @@ from prez.repositories import Repo
 from prez.services.classes import get_classes
 from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.query_generation.shacl import NodeShape
+
 log = logging.getLogger(__name__)
 
 
@@ -183,16 +181,22 @@ async def _link_generation(
                     for solution in result[1]:
                         # skip solutions with bnodes - can't generate valid links
                         if any(v.get("type") == "bnode" for v in solution.values()):
-                            log.debug(f"Skipping link generation for {uri} - solution contains bnode: {solution}")
+                            log.debug(
+                                f"Skipping link generation for {uri} - solution contains bnode: {solution}"
+                            )
                             continue
                         # create link strings
                         result_tuple = await create_link_strings(
                             ns.hierarchy_level, solution, uri, endpoint_structure
                         )
                         if result_tuple is None:
-                            log.debug(f"Skipping link generation for {uri} - missing required path nodes in solution: {solution}")
+                            log.debug(
+                                f"Skipping link generation for {uri} - missing required path nodes in solution: {solution}"
+                            )
                             continue
-                        (curie_for_uri, members_link, object_link, identifiers) = result_tuple
+                        (curie_for_uri, members_link, object_link, identifiers) = (
+                            result_tuple
+                        )
                         # add links and identifiers to graph and cache
                         await add_links_to_graph_and_cache(
                             curie_for_uri,
@@ -297,7 +301,9 @@ async def _link_generation_many(
                             )  # remove the link's focus node variable
                             # skip solutions with bnodes - can't generate valid links
                             if any(v.get("type") == "bnode" for v in solution.values()):
-                                log.debug(f"Skipping link generation for {uri} - solution contains bnode: {solution}")
+                                log.debug(
+                                    f"Skipping link generation for {uri} - solution contains bnode: {solution}"
+                                )
                                 continue
                             # create link strings
                             result_tuple = await create_link_strings(
@@ -307,9 +313,13 @@ async def _link_generation_many(
                                 endpoint_structure,
                             )
                             if result_tuple is None:
-                                log.debug(f"Skipping link generation for {uri} - missing required path nodes in solution: {solution}")
+                                log.debug(
+                                    f"Skipping link generation for {uri} - missing required path nodes in solution: {solution}"
+                                )
                                 continue
-                            (curie_for_uri, members_link, object_link, identifiers) = result_tuple
+                            (curie_for_uri, members_link, object_link, identifiers) = (
+                                result_tuple
+                            )
                             uri_node = OxiNamedNode(uri)
                             # add links and identifiers to graph and cache
                             await add_links_to_graph_and_cache(
@@ -439,7 +449,11 @@ async def create_link_strings(
     item_link_template = Template(
         "".join([f"/{comp}/${pattern}" for comp, pattern in zip(components, variables)])
     )
-    sol_values = {k: identifiers[URIRef(v["value"])] for k, v in solution.items() if v.get("type") == "uri"}
+    sol_values = {
+        k: identifiers[URIRef(v["value"])]
+        for k, v in solution.items()
+        if v.get("type") == "uri"
+    }
     # Check all required path nodes are present
     if not all(pn in sol_values for pn in required_path_nodes):
         return None
@@ -471,14 +485,12 @@ async def get_link_components(ns: NodeShape, repo: Repo):
             (
                 ns.uri,
                 SubSelect(
-                    select_clause=SelectClause(variables_or_all=ns.path_nodes.values()),
+                    select_clause=SelectClause(list(ns.path_nodes.values())),
                     where_clause=WhereClause(
-                        group_graph_pattern=GroupGraphPattern(
-                            content=GroupGraphPatternSub(
-                                triples_block=TriplesBlock.from_tssp_list(
-                                    ns.tssp_list[::-1]
-                                ),  # reversed for performance
-                                graph_patterns_or_triples_blocks=ns.gpnt_list,
+                        GroupGraphPattern(
+                            GroupGraphPatternSub(
+                                # already in emission order, chosen for performance
+                                [TriplesBlock(list(ns.tssp_list)), *ns.gpnt_list]
                             )
                         )
                     ),
@@ -508,31 +520,23 @@ async def get_link_components_many(
     link_queries = []
     if ns.path_nodes:
         link_focus_var = Var(value="_link_focus_node")
-        _link_focus_gpnt = GraphPatternNotTriples(
-            content=InlineData(
-                data_block=DataBlock(
-                    block=InlineDataOneVar(
-                        variable=link_focus_var,
-                        datablockvalues=[
-                            DataBlockValue(value=IRI(value=n.value))
-                            for n in for_focus_nodes
-                        ],
-                    )
-                )
+        # VALUES ?_link_focus_node { <uri1> <uri2> ... }
+        _link_focus_gpnt = InlineData(
+            InlineDataOneVar(
+                link_focus_var, [IRI(value=n.value) for n in for_focus_nodes]
             )
         )
         subselect_string = SubSelect(
-            select_clause=SelectClause(
-                variables_or_all=[link_focus_var] + list(ns.path_nodes.values())
-            ),
+            select_clause=SelectClause([link_focus_var] + list(ns.path_nodes.values())),
             where_clause=WhereClause(
-                group_graph_pattern=GroupGraphPattern(
-                    content=GroupGraphPatternSub(
-                        triples_block=TriplesBlock.from_tssp_list(
-                            ns.tssp_list[::-1]
-                        ),  # reversed for performance
-                        graph_patterns_or_triples_blocks=ns.gpnt_list
-                        + [_link_focus_gpnt],
+                GroupGraphPattern(
+                    GroupGraphPatternSub(
+                        # already in emission order, chosen for performance
+                        [
+                            TriplesBlock(list(ns.tssp_list)),
+                            *ns.gpnt_list,
+                            _link_focus_gpnt,
+                        ]
                     )
                 )
             ),

@@ -162,5 +162,13 @@ async def test_retrieve_queryable_definitions_uses_generated_queryables_when_uns
         "urn:test:field#commodity": "urn:test:field#commodity"
     }
     assert (generated_queryable, RDF.type, QUERYABLE_TYPE) in system_graph
-    assert (generated_queryable, DCTERMS.identifier, Literal("urn:test:field#commodity")) in system_graph
-    assert (generated_queryable, SH.path, URIRef("http://example.com/commodity")) in system_graph
+    assert (
+        generated_queryable,
+        DCTERMS.identifier,
+        Literal("urn:test:field#commodity"),
+    ) in system_graph
+    assert (
+        generated_queryable,
+        SH.path,
+        URIRef("http://example.com/commodity"),
+    ) in system_graph

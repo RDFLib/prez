@@ -27,9 +27,12 @@ cql_filenames = [
     "example39.json",
 ]
 
+
 @pytest.mark.parametrize("cql_json_filename", cql_filenames)
 def test_simple_post(client, cql_json_filename):
-    cql_json_path = Path(__file__).parent.parent / f"test_data/cql/input/{cql_json_filename}"
+    cql_json_path = (
+        Path(__file__).parent.parent / f"test_data/cql/input/{cql_json_filename}"
+    )
     cql_json = json.loads(cql_json_path.read_text())
     headers = {"content-type": "application/json"}
     # New wrapped format: filter expression is under the "filter" key
@@ -49,12 +52,15 @@ def test_simple_get(client, cql_json_filename):
 
 
 def test_intersects_post(client):
-    cql_json_path = Path(__file__).parent.parent / f"docs/examples/cql/geo_intersects.json"
+    cql_json_path = (
+        Path(__file__).parent.parent / f"docs/examples/cql/geo_intersects.json"
+    )
     cql_json = json.loads(cql_json_path.read_text())
     headers = {"content-type": "application/json"}
     # New wrapped format: filter expression is under the "filter" key
     response = client.post("/cql", json={"filter": cql_json}, headers=headers)
     assert response.status_code == 200
+
 
 cql_geo_filenames = [
     "geo_contains",
@@ -121,11 +127,11 @@ def test_cql_or_operator_fix():
     expected_inner_select_gpntotb_list_str = [
         """
 {
-?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/sosa/Sample> .
+?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/sosa/Sample>
 }
 UNION
 {
-?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://linked.data.gov.au/def/borehole/Bore> .
+?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://linked.data.gov.au/def/borehole/Bore>
 }"""
     ]
 
@@ -199,7 +205,7 @@ def test_cql_nested_and_operator():
         """?focus_node <http://purl.org/dc/terms/creator> <http://example.org/organizations#GeologicalSurvey> .
 ?focus_node <http://purl.org/dc/terms/format> <http://example.org/formats#PDF> .
 ?focus_node <http://purl.org/dc/terms/subject> <http://example.org/subjects#Geology> .
-?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/vocab#Report> ."""
+?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/vocab#Report>"""
     ]
 
     # Extract original patterns from within FILTER EXISTS wrapper
@@ -244,7 +250,7 @@ def _create_eq_cql(prop, val_str):
 
 
 def _create_tssp(prop_uri, val_uri):
-    from sparql_grammar_pydantic import IRI, TriplesSameSubjectPath, Var
+    from sparql_grammar import IRI, TriplesSameSubjectPath, Var
 
     return TriplesSameSubjectPath.from_spo(
         Var(value="focus_node"), IRI(value=prop_uri), IRI(value=val_uri)
@@ -252,20 +258,14 @@ def _create_tssp(prop_uri, val_uri):
 
 
 def _get_all_tssp_from_triples_block(triples_block):
-    """Helper to extract all TriplesSameSubjectPath from a linked list of TriplesBlock."""
-    from sparql_grammar_pydantic import TriplesBlock, TriplesSameSubjectPath
+    """Helper to extract all TriplesSameSubjectPath from a TriplesBlock."""
+    from sparql_grammar import TriplesBlock, TriplesSameSubjectPath
 
-    all_tssp = []
-    current_block = triples_block
-    while current_block:
-        if isinstance(current_block, TriplesBlock) and isinstance(
-            current_block.triples, TriplesSameSubjectPath
-        ):
-            all_tssp.append(current_block.triples)
-        elif isinstance(current_block, TriplesSameSubjectPath):
-            all_tssp.append(current_block)
-        current_block = getattr(current_block, "triples_block", None)
-    return all_tssp
+    if isinstance(triples_block, TriplesBlock):
+        return list(triples_block.triples)
+    if isinstance(triples_block, TriplesSameSubjectPath):
+        return [triples_block]
+    return []
 
 
 def _extract_patterns_from_filter_exists(inner_select_gpntotb_list):
@@ -285,20 +285,12 @@ def _extract_patterns_from_filter_exists(inner_select_gpntotb_list):
         pattern = inner_select_gpntotb_list[0]
 
         # Check if it's a FILTER EXISTS wrapper
-        if (
-            hasattr(pattern, "content")
-            and hasattr(pattern.content, "constraint")
-            and hasattr(pattern.content.constraint, "content")
-            and hasattr(pattern.content.constraint.content, "other_expressions")
+        # Filter -> ExistsFunc -> GroupGraphPattern -> GroupGraphPatternSub
+        if hasattr(pattern, "constraint") and hasattr(
+            pattern.constraint, "group_graph_pattern"
         ):
-
-            # Navigate through the FILTER EXISTS structure:
-            # GraphPatternNotTriples -> Filter -> Constraint -> BuiltInCall -> ExistsFunc -> GroupGraphPattern -> GroupGraphPatternSub
             try:
-                inner_content = (
-                    pattern.content.constraint.content.other_expressions.group_graph_pattern.content
-                )
-                return inner_content.graph_patterns_or_triples_blocks or []
+                return pattern.constraint.group_graph_pattern.content.patterns or []
             except AttributeError:
                 # If navigation fails, return the pattern as-is
                 return [pattern]
@@ -325,15 +317,15 @@ def test_cql_and_of_A_or_BC():
     where_content = parser.query_object.where_clause.group_graph_pattern.content
 
     expected_inner_select_gpntotb_list_str = [
-        """?focus_node <http://example.org/propA> <http://example.org/valA> .""",
+        """?focus_node <http://example.org/propA> <http://example.org/valA>""",
         """
 {
 {
-?focus_node <http://example.org/propB> <http://example.org/valB> .
+?focus_node <http://example.org/propB> <http://example.org/valB>
 }
 UNION
 {
-?focus_node <http://example.org/propC> <http://example.org/valC> .
+?focus_node <http://example.org/propC> <http://example.org/valC>
 }
 }""",
     ]
@@ -367,12 +359,12 @@ def test_cql_or_of_A_and_BC():
         """
 
 {
-?focus_node <http://example.org/propA> <http://example.org/valA> .
+?focus_node <http://example.org/propA> <http://example.org/valA>
 }
 UNION
 {
 ?focus_node <http://example.org/propC> <http://example.org/valC> .
-?focus_node <http://example.org/propB> <http://example.org/valB> .
+?focus_node <http://example.org/propB> <http://example.org/valB>
 
 }"""
     ]
@@ -405,7 +397,7 @@ def test_cql_and_of_and_AB_C():
     expected_inner_select_gpntotb_list_str = [
         """?focus_node <http://example.org/propC> <http://example.org/valC> .
 ?focus_node <http://example.org/propB> <http://example.org/valB> .
-?focus_node <http://example.org/propA> <http://example.org/valA> ."""
+?focus_node <http://example.org/propA> <http://example.org/valA>"""
     ]
 
     # Extract original patterns from within FILTER EXISTS wrapper
@@ -434,16 +426,16 @@ def test_cql_or_of_or_AB_C():
         """
 {
 {
-?focus_node <http://example.org/propA> <http://example.org/valA> .
+?focus_node <http://example.org/propA> <http://example.org/valA>
 }
 UNION
 {
-?focus_node <http://example.org/propB> <http://example.org/valB> .
+?focus_node <http://example.org/propB> <http://example.org/valB>
 }
 }
 UNION
 {
-?focus_node <http://example.org/propC> <http://example.org/valC> .
+?focus_node <http://example.org/propC> <http://example.org/valC>
 }
 """
     ]
@@ -479,21 +471,21 @@ def test_cql_and_of_or_AB_or_CD():
         """
 {
 {
-?focus_node <http://example.org/propA> <http://example.org/valA> .
+?focus_node <http://example.org/propA> <http://example.org/valA>
 }
 UNION
 {
-?focus_node <http://example.org/propB> <http://example.org/valB> .
+?focus_node <http://example.org/propB> <http://example.org/valB>
 }
 }""",
         """
 {
 {
-?focus_node <http://example.org/propC> <http://example.org/valC> .
+?focus_node <http://example.org/propC> <http://example.org/valC>
 }
 UNION
 {
-?focus_node <http://example.org/propD> <http://example.org/valD> .
+?focus_node <http://example.org/propD> <http://example.org/valD>
 }
 }""",
     ]
@@ -535,12 +527,12 @@ def test_cql_or_of_and_AB_and_CD():
         """
 {
 ?focus_node <http://example.org/propB> <http://example.org/valB> .
-?focus_node <http://example.org/propA> <http://example.org/valA> .
+?focus_node <http://example.org/propA> <http://example.org/valA>
 }
 UNION
 {
 ?focus_node <http://example.org/propD> <http://example.org/valD> .
-?focus_node <http://example.org/propC> <http://example.org/valC> .
+?focus_node <http://example.org/propC> <http://example.org/valC>
 }
 """
     ]
@@ -560,7 +552,7 @@ def test_focus_node_in_subquery():
     Tests that ?focus_node is always included in the inner select variables,
     even for a simple query.
     """
-    from sparql_grammar_pydantic import Var
+    from sparql_grammar import Var
 
     from prez.services.query_generation.cql import CQLParser
 
@@ -944,7 +936,7 @@ def test_cql_or_shacl_union_structure():
             union_gpnt.to_string().replace(" ", "").replace("\n", "").replace("\t", "")
         )
         # After sh:in heuristic: queryables WITHOUT sh:in use VALUES prepended
-        expected_union = "{VALUES?cql_filter_1{<http://example.org/valueA>}?focus_node<http://example.org/pathProp1>?cql_filter_1.}UNION{VALUES?cql_filter_2{<http://example.org/valueB>}?focus_node<http://example.org/pathProp2>?cql_filter_2.}"
+        expected_union = "{VALUES?cql_filter_1{<http://example.org/valueA>}?focus_node<http://example.org/pathProp1>?cql_filter_1}UNION{VALUES?cql_filter_2{<http://example.org/valueB>}?focus_node<http://example.org/pathProp2>?cql_filter_2}"
         assert union_str == expected_union
     finally:
         for triple in mock_system_graph:
@@ -1416,7 +1408,7 @@ def test_cql_mixed_operators_with_multiple_nots():
 def test_cql_typed_literal(
     filter_value: str, expected_class: str, expected_datatype: str | None
 ):
-    from sparql_grammar_pydantic import (  # noqa
+    from sparql_grammar import (  # noqa
         IRI,
         BooleanLiteral,
         NumericLiteral,
@@ -1435,29 +1427,27 @@ def test_cql_typed_literal(
     ggps = next(ggps_iterator)
 
     # After sh:in heuristic: booleans use FILTER, others use VALUES
-    gpnt = ggps.graph_patterns_or_triples_blocks[1]
+    gpnt = ggps.patterns[1]
 
     # Check if this is a FILTER (for booleans) or VALUES (for other literals)
-    if hasattr(gpnt, 'content') and hasattr(gpnt.content, 'constraint'):
-        # FILTER path (booleans)
-        try:
-            parsed_term = (
-                gpnt.content.constraint.content.expression.conditional_or_expression.conditional_and_expressions[
-                    0
-                ]
-                .value_logicals[0]
-                .relational_expression.right.expressions[0].conditional_or_expression.conditional_and_expressions[0].value_logicals[0].relational_expression.left.additive_expression.base_expression.base_expression.primary_expression.content
-            )
-        except AttributeError:
-            parsed_term = gpnt.content.constraint.content.expression.conditional_or_expression.conditional_and_expressions[
-                0
-            ].value_logicals[0].relational_expression.right.additive_expression.base_expression.base_expression.primary_expression.content
+    from sparql_grammar import Filter, InlineData
+
+    if isinstance(gpnt, Filter):
+        # FILTER path (booleans and FILTER IN): the compared value is the first
+        # term in the expression tree that is not the variable
+        terms = [
+            node
+            for node in gpnt.walk()
+            if isinstance(node, (RDFLiteral, BooleanLiteral, IRI))
+            or type(node).__name__ in ("INTEGER", "DECIMAL", "DOUBLE")
+        ]
+        assert terms, f"no term found in {gpnt.to_string()}"
+        parsed_term = terms[0]
     else:
         # VALUES path (other literals)
-        from sparql_grammar_pydantic import InlineData
-        assert isinstance(gpnt.content, InlineData)
+        assert isinstance(gpnt, InlineData)
         # Extract the value from VALUES clause
-        parsed_term = gpnt.content.data_block.block.datablockvalues[0].value
+        parsed_term = gpnt.data_block.values[0]
 
     assert isinstance(parsed_term, expected_class)
     if expected_class == RDFLiteral:

@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 from rdflib import DCTERMS, PROV, RDF, SH, Graph, URIRef, SKOS
-from sparql_grammar_pydantic import (
+from sparql_grammar import (
     IRI,
     Filter,
     GroupOrUnionGraphPattern,
@@ -31,9 +31,9 @@ def test_simple_path():
     )
     assert (
         TriplesSameSubjectPath.from_spo(
-            subject=Var(value="focus_node"),
-            predicate=IRI(value=RDF.type),
-            object=Var(value="prof_1_node_1"),
+            Var(value="focus_node"),
+            IRI(value=RDF.type),
+            Var(value="prof_1_node_1"),
         )
         in ps.tssp_list
     )
@@ -54,17 +54,17 @@ def test_sequence_path():
     )
     assert (
         TriplesSameSubjectPath.from_spo(
-            subject=Var(value="focus_node"),
-            predicate=IRI(value=PROV.qualifiedDerivation),
-            object=Var(value="prof_1_node_1"),
+            Var(value="focus_node"),
+            IRI(value=PROV.qualifiedDerivation),
+            Var(value="prof_1_node_1"),
         )
         in ps.tssp_list
     )
     assert (
         TriplesSameSubjectPath.from_spo(
-            subject=Var(value="prof_1_node_1"),
-            predicate=IRI(value=PROV.hadRole),
-            object=Var(value="prof_1_node_2"),
+            Var(value="prof_1_node_1"),
+            IRI(value=PROV.hadRole),
+            Var(value="prof_1_node_2"),
         )
         in ps.tssp_list
     )
@@ -98,49 +98,49 @@ def test_union():
     )
     assert (
         TriplesSameSubject.from_spo(
-            subject=Var(value="focus_node"),
-            predicate=IRI(value=PROV.qualifiedDerivation),
-            object=Var(value="prof_1_node_3"),
+            Var(value="focus_node"),
+            IRI(value=PROV.qualifiedDerivation),
+            Var(value="prof_1_node_3"),
         )
         in ps.tss_list
     )
     assert (
         TriplesSameSubject.from_spo(
-            subject=Var(value="prof_1_node_3"),
-            predicate=IRI(value=PROV.hadRole),
-            object=Var(value="prof_1_node_4"),
+            Var(value="prof_1_node_3"),
+            IRI(value=PROV.hadRole),
+            Var(value="prof_1_node_4"),
         )
         in ps.tss_list
     )
     assert (
         TriplesSameSubject.from_spo(
-            subject=Var(value="focus_node"),
-            predicate=IRI(value=PROV.qualifiedDerivation),
-            object=Var(value="prof_1_node_5"),
+            Var(value="focus_node"),
+            IRI(value=PROV.qualifiedDerivation),
+            Var(value="prof_1_node_5"),
         )
         in ps.tss_list
     )
     assert (
         TriplesSameSubject.from_spo(
-            subject=Var(value="prof_1_node_5"),
-            predicate=IRI(value=PROV.entity),
-            object=Var(value="prof_1_node_6"),
+            Var(value="prof_1_node_5"),
+            IRI(value=PROV.entity),
+            Var(value="prof_1_node_6"),
         )
         in ps.tss_list
     )
     assert (
         TriplesSameSubject.from_spo(
-            subject=Var(value="focus_node"),
-            predicate=IRI(value=DCTERMS.publisher),
-            object=Var(value="prof_1_node_1"),
+            Var(value="focus_node"),
+            IRI(value=DCTERMS.publisher),
+            Var(value="prof_1_node_1"),
         )
         in ps.tss_list
     )
     assert (
         TriplesSameSubject.from_spo(
-            subject=Var(value="focus_node"),
-            predicate=IRI(value=REG.status),
-            object=Var(value="prof_1_node_2"),
+            Var(value="focus_node"),
+            IRI(value=REG.status),
+            Var(value="prof_1_node_2"),
         )
         in ps.tss_list
     )
@@ -167,7 +167,7 @@ def test_optional_props():
         uri=path_bn, graph=g, kind="profile", focus_node=Var(value="focus_node")
     )
     assert ps.tssp_list == []
-    assert isinstance(ps.gpnt_list[0].content, OptionalGraphPattern)
+    assert isinstance(ps.gpnt_list[0], OptionalGraphPattern)
 
 
 def test_complex_optional_props():
@@ -190,7 +190,7 @@ def test_complex_optional_props():
         uri=path_bn, graph=g, kind="profile", focus_node=Var(value="focus_node")
     )
     assert ps.tssp_list == []
-    assert isinstance(ps.gpnt_list[0].content, OptionalGraphPattern)
+    assert isinstance(ps.gpnt_list[0], OptionalGraphPattern)
 
 
 def test_excluded_props():
@@ -215,13 +215,13 @@ def test_excluded_props():
     )
     assert (
         TriplesSameSubjectPath.from_spo(
-            subject=Var(value="focus_node"),
-            predicate=Var(value="preds"),
-            object=Var(value="excluded_pred_vals"),
+            Var(value="focus_node"),
+            Var(value="preds"),
+            Var(value="excluded_pred_vals"),
         )
         in ps.tssp_list
     )
-    assert isinstance(ps.gpnt_list[0].content, Filter)
+    assert isinstance(ps.gpnt_list[0], Filter)
 
 
 @pytest.mark.parametrize(
@@ -288,14 +288,14 @@ def test_bnode_depth_union():
         """
     {
         ?focus_node ?bn_p_1 ?bn_o_1 .
-        ?bn_o_1 ?bn_p_2 ?bn_o_2 .
+        ?bn_o_1 ?bn_p_2 ?bn_o_2
         FILTER isBLANK(?bn_o_1)
     }
     UNION
     {
         ?focus_node ?bn_p_1 ?bn_o_1 .
         ?bn_o_1 ?bn_p_2 ?bn_o_2 .
-        ?bn_o_2 ?bn_p_3 ?bn_o_3 .
+        ?bn_o_2 ?bn_p_3 ?bn_o_3
         FILTER isBLANK(?bn_o_1)
         FILTER isBLANK(?bn_o_2)
     }""".split()
@@ -327,14 +327,14 @@ def test_bnode_depth_direct():
         """
     {
         ?focus_node ?bn_p_1 ?bn_o_1 .
-        ?bn_o_1 ?bn_p_2 ?bn_o_2 .
+        ?bn_o_1 ?bn_p_2 ?bn_o_2
         FILTER isBLANK(?bn_o_1)
     }
     UNION
     {
         ?focus_node ?bn_p_1 ?bn_o_1 .
         ?bn_o_1 ?bn_p_2 ?bn_o_2 .
-        ?bn_o_2 ?bn_p_3 ?bn_o_3 .
+        ?bn_o_2 ?bn_p_3 ?bn_o_3
         FILTER isBLANK(?bn_o_1)
         FILTER isBLANK(?bn_o_2)
     }""".split()
@@ -414,9 +414,9 @@ def test_union_nested_bnode():
     # 1. dcterms:publisher (direct)
     assert (
         TriplesSameSubject.from_spo(
-            subject=Var(value="focus_node"),
-            predicate=IRI(value=DCTERMS.publisher),
-            object=Var(value="prof_1_node_1"),
+            Var(value="focus_node"),
+            IRI(value=DCTERMS.publisher),
+            Var(value="prof_1_node_1"),
         )
         in ps.tss_list
     )
@@ -424,9 +424,9 @@ def test_union_nested_bnode():
     # 2. reg:status (from nested BNode)
     assert (
         TriplesSameSubject.from_spo(
-            subject=Var(value="focus_node"),
-            predicate=IRI(value=REG.status),
-            object=Var(value="prof_1_node_2"),
+            Var(value="focus_node"),
+            IRI(value=REG.status),
+            Var(value="prof_1_node_2"),
         )
         in ps.tss_list
     )
@@ -434,17 +434,17 @@ def test_union_nested_bnode():
     # 3. ( prov:qualifiedDerivation prov:hadRole ) (from nested BNode)
     assert (
         TriplesSameSubject.from_spo(
-            subject=Var(value="focus_node"),
-            predicate=IRI(value=PROV.qualifiedDerivation),
-            object=Var(value="prof_1_node_3"),
+            Var(value="focus_node"),
+            IRI(value=PROV.qualifiedDerivation),
+            Var(value="prof_1_node_3"),
         )
         in ps.tss_list
     )
     assert (
         TriplesSameSubject.from_spo(
-            subject=Var(value="prof_1_node_3"),
-            predicate=IRI(value=PROV.hadRole),
-            object=Var(value="prof_1_node_4"),
+            Var(value="prof_1_node_3"),
+            IRI(value=PROV.hadRole),
+            Var(value="prof_1_node_4"),
         )
         in ps.tss_list
     )
@@ -452,9 +452,9 @@ def test_union_nested_bnode():
     # 4. [ sh:inversePath dcterms:creator ] (direct inverse)
     assert (
         TriplesSameSubject.from_spo(
-            subject=Var(value="prof_1_node_5"),
-            predicate=IRI(value=DCTERMS.creator),
-            object=Var(value="focus_node"),
+            Var(value="prof_1_node_5"),
+            IRI(value=DCTERMS.creator),
+            Var(value="focus_node"),
         )
         in ps.tss_list
     )
@@ -462,7 +462,7 @@ def test_union_nested_bnode():
     # Also check the WHERE clause paths (tssp_list) are generated correctly within the UNION structure
     # The gpnt_list should contain one GroupOrUnionGraphPattern
     assert len(ps.gpnt_list) == 1
-    union_pattern = ps.gpnt_list[0].content
+    union_pattern = ps.gpnt_list[0]
     assert isinstance(union_pattern, GroupOrUnionGraphPattern)
     assert (
         len(union_pattern.group_graph_patterns) == 5
@@ -475,7 +475,7 @@ def test_union_nested_bnode():
 
     # Pattern 1: dcterms:publisher
     expected_pattern_1 = """{
-?focus_node <http://purl.org/dc/terms/publisher> ?prof_1_node_1 .
+?focus_node <http://purl.org/dc/terms/publisher> ?prof_1_node_1
 }"""
     assert (
         union_pattern.group_graph_patterns[0].to_string().strip()
@@ -484,7 +484,7 @@ def test_union_nested_bnode():
 
     # Pattern 2: reg:status
     expected_pattern_2 = """{
-?focus_node <http://purl.org/linked-data/registry#status> ?prof_1_node_2 .
+?focus_node <http://purl.org/linked-data/registry#status> ?prof_1_node_2
 }"""
     assert (
         union_pattern.group_graph_patterns[1].to_string().strip()
@@ -494,7 +494,7 @@ def test_union_nested_bnode():
     # Pattern 3: ( prov:qualifiedDerivation prov:hadRole )
     expected_pattern_3 = """{
 ?focus_node <http://www.w3.org/ns/prov#qualifiedDerivation> ?prof_1_node_3 .
-?prof_1_node_3 <http://www.w3.org/ns/prov#hadRole> ?prof_1_node_4 .
+?prof_1_node_3 <http://www.w3.org/ns/prov#hadRole> ?prof_1_node_4
 }"""
     assert (
         union_pattern.group_graph_patterns[2].to_string().strip()
@@ -503,7 +503,7 @@ def test_union_nested_bnode():
 
     # Pattern 4: inverse(dcterms:creator)
     expected_pattern_4 = """{
-?prof_1_node_5 <http://purl.org/dc/terms/creator> ?focus_node .
+?prof_1_node_5 <http://purl.org/dc/terms/creator> ?focus_node
 }"""
     assert (
         union_pattern.group_graph_patterns[3].to_string().strip()
@@ -563,9 +563,9 @@ def test_sh_class_in_bnode_path(mock_settings):
     # Path 1: Sequence path (prov:qualifiedDerivation prov:hadRole)
     # Alias is present, so only the alias triple should be in tss_list for the main path
     expected_tss_1_alias = TriplesSameSubject.from_spo(
-        subject=Var(value="focus_node"),
-        predicate=IRI(value="http://alias.com/role"),
-        object=Var(value="prof_1_node_2"),  # Object is the *end* node of the sequence
+        Var(value="focus_node"),
+        IRI(value="http://alias.com/role"),
+        Var(value="prof_1_node_2"),  # Object is the *end* node of the sequence
     ).to_string()
     assert expected_tss_1_alias in actual_tss_strings
 
@@ -582,23 +582,23 @@ def test_sh_class_in_bnode_path(mock_settings):
 
     # Path 2: Simple path (skos:prefLabel)
     expected_tss_2_path = TriplesSameSubject.from_spo(
-        subject=Var(value="focus_node"),
-        predicate=IRI(value=SKOS.prefLabel),
-        object=Var(value="prof_1_node_3"),
+        Var(value="focus_node"),
+        IRI(value=SKOS.prefLabel),
+        Var(value="prof_1_node_3"),
     ).to_string()
     assert expected_tss_2_path in actual_tss_strings
 
     # Path 3: Simple path (dcterms:title) - No class
     expected_tss_3_path = TriplesSameSubject.from_spo(
-        subject=Var(value="focus_node"),
-        predicate=IRI(value=DCTERMS.title),
-        object=Var(value="prof_1_node_4"),
+        Var(value="focus_node"),
+        IRI(value=DCTERMS.title),
+        Var(value="prof_1_node_4"),
     ).to_string()
     assert expected_tss_3_path in actual_tss_strings
 
     # --- Check WHERE Clause Triples (via gpnt_list containing the UNION) ---
     assert len(ps.gpnt_list) == 1
-    assert isinstance(ps.gpnt_list[0].content, GroupOrUnionGraphPattern)
+    assert isinstance(ps.gpnt_list[0], GroupOrUnionGraphPattern)
 
     # Helper function to normalize SPARQL strings for comparison
     def normalize_sparql(sparql_string):
@@ -608,16 +608,16 @@ def test_sh_class_in_bnode_path(mock_settings):
     {
     ?focus_node <http://www.w3.org/ns/prov#qualifiedDerivation> ?prof_1_node_1 .
     ?prof_1_node_1 <http://www.w3.org/ns/prov#hadRole> ?prof_1_node_2 .
-    ?prof_1_node_2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/DerivationRole> .
+    ?prof_1_node_2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/DerivationRole>
     }
     UNION
     {
     ?focus_node <http://www.w3.org/2004/02/skos/core#prefLabel> ?prof_1_node_3 .
-    ?prof_1_node_3 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/LabelType> .
+    ?prof_1_node_3 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/LabelType>
     }
     UNION
     {
-    ?focus_node <http://purl.org/dc/terms/title> ?prof_1_node_4 .
+    ?focus_node <http://purl.org/dc/terms/title> ?prof_1_node_4
     }
     """
 

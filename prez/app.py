@@ -176,6 +176,7 @@ async def lifespan(app: FastAPI):
 
     # Warm queryables cache to avoid thundering herd on first request
     from prez.services.listings import warm_queryables_cache
+
     system_repo = PyoxigraphRepo(system_store)
     await warm_queryables_cache(data_repo=repo, system_repo=system_repo)
 

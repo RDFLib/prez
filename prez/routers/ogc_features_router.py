@@ -81,6 +81,7 @@ features_subapi.include_router(conformance_router)
 @features_subapi.middleware("http")
 async def add_timing(request: Request, call_next):
     import time
+
     request.state.start_time = time.perf_counter()
     response = await call_next(request)
     return response
@@ -185,8 +186,11 @@ async def listings_with_feature_collection(
     system_repo: Repo = Depends(get_system_repo),
 ):
     import time
+
     deps_done = time.perf_counter()
-    start_time = request.state.start_time if hasattr(request.state, 'start_time') else deps_done
+    start_time = (
+        request.state.start_time if hasattr(request.state, "start_time") else deps_done
+    )
     log.info(f"TIMING: Dependencies resolved in {(deps_done - start_time)*1000:.1f}ms")
 
     try:
@@ -205,7 +209,9 @@ async def listings_with_feature_collection(
             accept_encoding=request.headers.get("Accept-Encoding"),
         )
         func_end = time.perf_counter()
-        log.info(f"TIMING: ogc_features_listing_function took {(func_end - func_start)*1000:.1f}ms")
+        log.info(
+            f"TIMING: ogc_features_listing_function took {(func_end - func_start)*1000:.1f}ms"
+        )
     except Exception as e:
         raise e
     return StreamingResponse(content=content, media_type=mediatype, headers=headers)

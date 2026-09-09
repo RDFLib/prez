@@ -4,47 +4,34 @@ import logging
 
 from rdflib import RDF, URIRef, Literal, DCTERMS, XSD, Graph
 from rdflib.collection import Collection
-from sparql_grammar_pydantic import (
+from sparql_grammar import (
+    IRI,
     Aggregate,
+    BlankNodePropertyList,
     ConstructQuery,
     ConstructTemplate,
     ConstructTriples,
     Expression,
+    GroupClause,
     GroupGraphPattern,
-    PrimaryExpression,
+    GroupGraphPatternSub,
+    GroupOrUnionGraphPattern,
+    IRIOrFunction,
+    ObjectList,
+    PropertyListNotEmpty,
     SelectClause,
     SolutionModifier,
     SubSelect,
-    WhereClause,
-    GroupClause,
-    GroupCondition,
-    BuiltInCall,
-    GroupGraphPatternSub,
-    GraphPatternNotTriples,
-    GroupOrUnionGraphPattern,
     TriplesBlock,
     TriplesSameSubject,
-    BlankNodePropertyList,
-    PropertyListNotEmpty,
-    Verb,
-    ObjectList,
-    VarOrTerm,
-    IRI,
-    Object,
-    VarOrIri,
-    GraphNode,
     Var,
-    TriplesNode,
-)
-from sparql_grammar_pydantic.grammar import (
-    PropertyList,
-    IRIOrFunction,
-    TriplesSameSubjectPath,
+    WhereClause,
 )
 
 from prez.cache import profiles_graph_cache
 from prez.exceptions.model_exceptions import PrefixNotBoundException
 from prez.reference_data.prez_ns import LUC, PREZ
+from prez.services.query_generation.grammar_helpers import triples_block
 from prez.services.curie_functions import get_uri_for_curie_id
 
 log = logging.getLogger(__name__)
@@ -102,12 +89,10 @@ class FacetQuery(ConstructQuery):
         # Define variables used
         if focus_node_uri:
             focus_node_var_or_iri = IRI(value=focus_node_uri)
-            focus_node_pe = PrimaryExpression(
-                content=IRIOrFunction(iri=focus_node_var_or_iri)
-            )
+            focus_node_pe = IRIOrFunction(iri=focus_node_var_or_iri)
         else:
             focus_node_var_or_iri = Var(value="focus_node")
-            focus_node_pe = PrimaryExpression(content=focus_node_var_or_iri)
+            focus_node_pe = focus_node_var_or_iri
         facet_name_var = Var(value="facetName")
         facet_name_iri = IRI(value=PREZ.facetName)
         facet_value_var = Var(value="facetValue")
@@ -116,14 +101,7 @@ class FacetQuery(ConstructQuery):
         facet_count_iri = IRI(value=PREZ.facetCount)
 
         count_expression = Expression.from_primary_expression(
-            PrimaryExpression(
-                content=BuiltInCall(
-                    other_expressions=Aggregate(
-                        function_name="COUNT",
-                        expression=Expression.from_primary_expression(focus_node_pe),
-                    )
-                )
-            )
+            Aggregate.count(focus_node_pe)
         )
 
         # inner subselect or direct patterns
@@ -132,19 +110,12 @@ class FacetQuery(ConstructQuery):
         if original_subselect is not None:
             # For listing queries with original subselect
             inner_ss = SubSelect(
-                select_clause=SelectClause(
-                    variables_or_all=[focus_node_var_or_iri],
-                    distinct=True,
-                ),
+                select_clause=SelectClause.create(focus_node_var_or_iri, distinct=True),
                 where_clause=original_subselect.where_clause,
                 solution_modifier=SolutionModifier(),
             )
             inner_gpnts_or_tb.append(
-                GraphPatternNotTriples(
-                    content=GroupOrUnionGraphPattern(
-                        group_graph_patterns=[GroupGraphPattern(content=inner_ss)]
-                    )
-                )
+                GroupOrUnionGraphPattern([GroupGraphPattern(inner_ss)])
             )
 
         # union facet selection
@@ -152,59 +123,46 @@ class FacetQuery(ConstructQuery):
         if len(property_shape.union_tssps_binds) > 1:
             for utb in property_shape.union_tssps_binds:
                 # generate a GGP.
-                tssp_list = utb.get("tssp_list")
-                if property_shape.kind == "profile":
-                    tssp_list = list(reversed(tssp_list))
+                tssp_list = utb.get("tssp_list") or []
+                block = (
+                    TriplesBlock(list(tssp_list))
+                    if property_shape.kind == "profile"
+                    else triples_block(tssp_list)
+                )
                 union_ggps.append(
                     GroupGraphPattern(
-                        content=GroupGraphPatternSub(
-                            triples_block=TriplesBlock.from_tssp_list(tssp_list),
-                            graph_patterns_or_triples_blocks=utb.get("facet_binds"),
-                        )
+                        GroupGraphPatternSub([block, *(utb.get("facet_binds") or [])])
                     )
                 )
             if union_ggps:
-                inner_gpnts_or_tb.append(
-                    GraphPatternNotTriples(
-                        content=GroupOrUnionGraphPattern(
-                            group_graph_patterns=union_ggps
-                        )
-                    )
-                )
+                inner_gpnts_or_tb.append(GroupOrUnionGraphPattern(union_ggps))
 
         else:  # faceting on a single property
             utb = property_shape.union_tssps_binds[0]
-            tssp_list = utb.get("tssp_list")
-            if property_shape.kind == "profile":
-                tssp_list = list(reversed(tssp_list))
-            inner_gpnts_or_tb.append(TriplesBlock.from_tssp_list(tssp_list))
-            inner_gpnts_or_tb.extend(utb.get("facet_binds"))
+            tssp_list = utb.get("tssp_list") or []
+            inner_gpnts_or_tb.append(
+                TriplesBlock(list(tssp_list))
+                if property_shape.kind == "profile"
+                else triples_block(tssp_list)
+            )
+            inner_gpnts_or_tb.extend(utb.get("facet_binds") or [])
 
         # --- Outer WHERE Clause ---
         outer_where_clause = WhereClause(
-            group_graph_pattern=GroupGraphPattern(
-                content=SubSelect(
+            GroupGraphPattern(
+                SubSelect(
                     select_clause=SelectClause(
-                        variables_or_all=[
+                        [
                             facet_name_var,
                             facet_value_var,
                             (count_expression, facet_count_var),
-                        ],
+                        ]
                     ),
                     where_clause=WhereClause(
-                        group_graph_pattern=GroupGraphPattern(
-                            content=GroupGraphPatternSub(
-                                graph_patterns_or_triples_blocks=inner_gpnts_or_tb
-                            )
-                        )
+                        GroupGraphPattern(GroupGraphPatternSub(inner_gpnts_or_tb))
                     ),
                     solution_modifier=SolutionModifier(
-                        group_by=GroupClause(
-                            group_conditions=[
-                                GroupCondition(condition=facet_name_var),
-                                GroupCondition(condition=facet_value_var),
-                            ]
-                        )
+                        group_by=GroupClause.create(facet_name_var, facet_value_var)
                     ),
                 )
             )
@@ -217,34 +175,16 @@ class FacetQuery(ConstructQuery):
             (facet_value_iri, facet_value_var),
             (facet_count_iri, facet_count_var),
         ]
-        vol_list = []
-        for prop, val in props_vals:
-            verb_inner = Verb(varoriri=VarOrIri(varoriri=prop))
-            object_list1_inner = ObjectList(
-                list_object=[
-                    Object(
-                        graphnode=GraphNode(
-                            varorterm_or_triplesnode=VarOrTerm(varorterm=val)
-                        )
-                    )
-                ]
-            )
-            vol_list.append((verb_inner, object_list1_inner))
-
+        # [ prez:facetName ?facetName ; prez:facetValue ?facetValue ; prez:facetCount ?facetCount ]
         tss = TriplesSameSubject(
-            content=(
-                TriplesNode(
-                    coll_or_bnpl=BlankNodePropertyList(
-                        plne=PropertyListNotEmpty(verb_objectlist=vol_list)
-                    )
-                ),
-                PropertyList(),
+            BlankNodePropertyList(
+                PropertyListNotEmpty(
+                    [(prop, ObjectList.create(val)) for prop, val in props_vals]
+                )
             )
         )
 
-        construct_template = ConstructTemplate(
-            construct_triples=ConstructTriples(triples=tss)
-        )
+        construct_template = ConstructTemplate(ConstructTriples([tss]))
 
         # Initialize the base ConstructQuery
         super().__init__(
@@ -262,7 +202,9 @@ class FacetQuery(ConstructQuery):
         if not profile_uri:
             return None, None
         else:
-            focus_node = IRI(value=focus_node_uri) if focus_node_uri else Var(value="focus_node")
+            focus_node = (
+                IRI(value=focus_node_uri) if focus_node_uri else Var(value="focus_node")
+            )
             facet_nodeshape = NodeShape(
                 uri=profile_uri,
                 graph=profiles_graph_cache,
@@ -348,7 +290,9 @@ def extract_lucene_facets_from_profile(
         field_iri = g.value(range_node, LUC.field)
         boundaries_literal = g.value(range_node, LUC.bucketBoundaries)
         if field_iri is None:
-            log.warning("luc:rangeFacets node %s is missing luc:field, skipping", range_node)
+            log.warning(
+                "luc:rangeFacets node %s is missing luc:field, skipping", range_node
+            )
             continue
         range_spec: dict = {"field": str(field_iri)}
         if boundaries_literal is not None:

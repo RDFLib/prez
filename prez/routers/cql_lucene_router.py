@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from sparql_grammar_pydantic import ConstructQuery
+from sparql_grammar import ConstructQuery
 
 from prez.dependencies import (
     generate_concept_hierarchy_query,
@@ -30,6 +30,7 @@ from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.shacl import NodeShape
 
 router = APIRouter(tags=["ogcprez"])
+
 
 @router.get(
     "/cql",

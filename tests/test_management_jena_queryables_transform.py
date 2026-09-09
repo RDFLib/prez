@@ -236,7 +236,11 @@ def test_transform_jena_assembler_to_queryables_generates_expected_fields():
     assert (title, RDF.type, SH.PropertyShape) in output_graph
     assert (title, DCTERMS.identifier, Literal(str(title))) in output_graph
     assert (title, SH.datatype, XSD.string) in output_graph
-    assert (title, SH.path, URIRef("http://www.w3.org/2000/01/rdf-schema#label")) in output_graph
+    assert (
+        title,
+        SH.path,
+        URIRef("http://www.w3.org/2000/01/rdf-schema#label"),
+    ) in output_graph
     assert (title, ONT.defaultSearch, Literal(True)) in output_graph
     assert (title, ONT.luceneFieldType, Literal("text")) in output_graph
 
@@ -257,7 +261,11 @@ def test_transform_jena_assembler_to_queryables_supports_text_indexes_list():
         _graph_from_turtle(INDEXES_ASSEMBLER_TTL)
     )
     queryable_type = URIRef("http://www.opengis.net/doc/IS/cql2/1.0/Queryable")
-    assert (URIRef("urn:test:field#commodity"), RDF.type, queryable_type) in output_graph
+    assert (
+        URIRef("urn:test:field#commodity"),
+        RDF.type,
+        queryable_type,
+    ) in output_graph
     assert (URIRef("urn:test:field#year"), RDF.type, queryable_type) in output_graph
 
 
@@ -266,7 +274,11 @@ def test_transform_jena_assembler_to_queryables_supports_text_indexes_single_nod
         _graph_from_turtle(DIRECT_INDEXES_NODE_ASSEMBLER_TTL)
     )
     queryable_type = URIRef("http://www.opengis.net/doc/IS/cql2/1.0/Queryable")
-    assert (URIRef("urn:test:field#commodity"), RDF.type, queryable_type) in output_graph
+    assert (
+        URIRef("urn:test:field#commodity"),
+        RDF.type,
+        queryable_type,
+    ) in output_graph
 
 
 def test_transform_jena_assembler_to_queryables_requires_a_service():
@@ -341,7 +353,9 @@ def test_transform_jena_assembler_to_queryables_supports_legacy_text_index():
     :Shape sh:property :field .
     """
 
-    output_graph = transform_jena_assembler_to_queryables(_graph_from_turtle(assembler_ttl))
+    output_graph = transform_jena_assembler_to_queryables(
+        _graph_from_turtle(assembler_ttl)
+    )
     queryable_type = URIRef("http://www.opengis.net/doc/IS/cql2/1.0/Queryable")
     assert (
         URIRef("http://example.com/assembler#field"),

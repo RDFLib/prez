@@ -177,12 +177,16 @@ def _transform_field(
 
     field_type = assembler_graph.value(meta_node, IDX.fieldType) or IDX.TextField
     if field_type in UNSUPPORTED_FIELD_TYPES:
-        log.warning("Skipping unsupported Lucene field type %s for %s", field_type, field_node)
+        log.warning(
+            "Skipping unsupported Lucene field type %s for %s", field_type, field_node
+        )
         return None
 
     datatype = FIELD_TYPE_TO_DATATYPE.get(field_type)
     if datatype is None:
-        log.warning("Skipping unmapped Lucene field type %s for %s", field_type, field_node)
+        log.warning(
+            "Skipping unmapped Lucene field type %s for %s", field_type, field_node
+        )
         return None
 
     field_uri = _field_identity(meta_node, str(field_name))
@@ -205,12 +209,48 @@ def _transform_field(
     output_graph.add(
         (field_uri, ONT.luceneFieldType, Literal(FIELD_TYPE_TO_LABEL[field_type]))
     )
-    output_graph.add((field_uri, ONT.stored, Literal(_field_bool(assembler_graph, meta_node, IDX.stored, True))))
-    output_graph.add((field_uri, ONT.indexed, Literal(_field_bool(assembler_graph, meta_node, IDX.indexed, True))))
-    output_graph.add((field_uri, ONT.facetable, Literal(_field_bool(assembler_graph, meta_node, IDX.facetable, False))))
-    output_graph.add((field_uri, ONT.sortable, Literal(_field_bool(assembler_graph, meta_node, IDX.sortable, False))))
-    output_graph.add((field_uri, ONT.multiValued, Literal(_field_bool(assembler_graph, meta_node, IDX.multiValued, False))))
-    output_graph.add((field_uri, ONT.defaultSearch, Literal(_field_bool(assembler_graph, meta_node, IDX.defaultSearch, False))))
+    output_graph.add(
+        (
+            field_uri,
+            ONT.stored,
+            Literal(_field_bool(assembler_graph, meta_node, IDX.stored, True)),
+        )
+    )
+    output_graph.add(
+        (
+            field_uri,
+            ONT.indexed,
+            Literal(_field_bool(assembler_graph, meta_node, IDX.indexed, True)),
+        )
+    )
+    output_graph.add(
+        (
+            field_uri,
+            ONT.facetable,
+            Literal(_field_bool(assembler_graph, meta_node, IDX.facetable, False)),
+        )
+    )
+    output_graph.add(
+        (
+            field_uri,
+            ONT.sortable,
+            Literal(_field_bool(assembler_graph, meta_node, IDX.sortable, False)),
+        )
+    )
+    output_graph.add(
+        (
+            field_uri,
+            ONT.multiValued,
+            Literal(_field_bool(assembler_graph, meta_node, IDX.multiValued, False)),
+        )
+    )
+    output_graph.add(
+        (
+            field_uri,
+            ONT.defaultSearch,
+            Literal(_field_bool(assembler_graph, meta_node, IDX.defaultSearch, False)),
+        )
+    )
     return field_uri
 
 

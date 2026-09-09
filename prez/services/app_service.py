@@ -112,6 +112,7 @@ async def retrieve_jena_fts_shapes(repo: Repo):
     """
     Loads Jena FTS shape definitions from both remote repo and local files.
     """
+
     def _log_fts_shapes(graph: Graph, shape_type: URIRef, label: str):
         shape_nodes = list(graph.subjects(RDF.type, shape_type))
         n_shapes = len(shape_nodes)

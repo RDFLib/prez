@@ -4,182 +4,53 @@ from typing import List
 from rdf2geojson.contrib.geomet.util import flatten_multi_dim
 from rdf2geojson.contrib.geomet.wkt import dumps
 from rdflib.namespace import GEO
-from sparql_grammar_pydantic import (
+from sparql_grammar import (
+    BLANK_NODE_LABEL,
     IRI,
     ArgList,
     Bind,
-    BrackettedExpression,
-    Constraint,
+    BuiltInCall,
     Expression,
     Filter,
-    BuiltInCall,
     FunctionCall,
     GraphPatternNotTriples,
-    AdditiveExpression,
-    ConditionalAndExpression,
-    ConditionalOrExpression,
-    MultiplicativeExpression,
-    NumericExpression,
-    PrimaryExpression,
-    RDFLiteral,
-    RelationalExpression,
-    TriplesSameSubjectPath,
-    UnaryExpression,
-    Var,
-    TriplesBlock,
-    ValueLogical,
-    DataBlock,
-    DataBlockValue,
-    InlineData,
-    InlineDataOneVar,
     GroupGraphPattern,
     GroupGraphPatternSub,
-    ServiceGraphPattern,
-    VarOrIri,
-    VarOrTerm,
-    PropertyListPathNotEmpty,
-    GraphTerm,
-    BlankNode,
-    BlankNodeLabel,
-    VerbPath,
-    SG_Path,
-    PathAlternative,
-    PathSequence,
-    PathEltOrInverse,
-    PathElt,
-    PathPrimary,
-    ObjectList,
-    Object,
-    GraphNode,
     GroupOrUnionGraphPattern,
+    InlineData,
+    InlineDataOneVar,
     ObjectListPath,
-    ObjectPath,
-    GraphNodePath,
+    PathAlternative,
+    PropertyListPathNotEmpty,
+    RDFLiteral,
+    ServiceGraphPattern,
+    TriplesBlock,
+    TriplesSameSubjectPath,
+    Var,
 )
 
 from prez.config import settings
 from prez.reference_data.cql.geo_function_mapping import (
-    cql_sparql_spatial_mapping,
+    QLSS,
     cql_graphdb_spatial_properties,
     cql_qlever_spatial_mapping,
-    QLSS,
 )
 from prez.services.query_generation.grammar_helpers import create_filter_exists
 
 
-def _verb_path_for_iri(iri: str) -> VerbPath:
-    return VerbPath(
-        path=SG_Path(
-            path_alternative=PathAlternative(
-                sequence_paths=[
-                    PathSequence(
-                        list_path_elt_or_inverse=[
-                            PathEltOrInverse(
-                                path_elt=PathElt(
-                                    path_primary=PathPrimary(value=IRI(value=iri))
-                                )
-                            )
-                        ]
-                    )
-                ]
-            )
-        )
-    )
-
-
-def _object_list_for_iri_or_var_or_lit(
-        iri_or_var_or_lit: IRI | Var | RDFLiteral,
-) -> ObjectList:
-    if isinstance(iri_or_var_or_lit, (IRI, RDFLiteral)):
-        vot = VarOrTerm(varorterm=GraphTerm(content=iri_or_var_or_lit))
-    elif isinstance(iri_or_var_or_lit, Var):
-        vot = VarOrTerm(varorterm=iri_or_var_or_lit)
-    else:
-        raise ValueError("Unsupported type for _object_list_for_iri_or_var_or_lit")
-    return ObjectList(
-        list_object=[Object(graphnode=GraphNode(varorterm_or_triplesnode=vot))]
-    )
-
-
 def _bound_filter(var: Var) -> Filter:
-    return Filter(
-        constraint=Constraint(
-            content=BrackettedExpression(
-                expression=Expression(
-                    conditional_or_expression=ConditionalOrExpression(
-                        conditional_and_expressions=[
-                            ConditionalAndExpression(
-                                value_logicals=[
-                                    ValueLogical(
-                                        relational_expression=RelationalExpression(
-                                            left=NumericExpression(
-                                                additive_expression=AdditiveExpression(
-                                                    base_expression=MultiplicativeExpression(
-                                                        base_expression=UnaryExpression(
-                                                            primary_expression=PrimaryExpression(
-                                                                content=BuiltInCall(
-                                                                    function_name="BOUND",
-                                                                    arguments=[var],
-                                                                )
-                                                            ),
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                        )
-                                    )
-                                ]
-                            )
-                        ]
-                    )
-                )
-            )
-        )
-    )
+    """FILTER(BOUND(?var))"""
+    return Filter(Expression.from_primary_expression(BuiltInCall.create("BOUND", var)))
 
 
 def _not_blanknode_like_literal_filter(var: Var) -> Filter:
-    str_expr = Expression.from_primary_expression(
-        PrimaryExpression(content=BuiltInCall(function_name="STR", arguments=[var]))
-    )
-    underscore_expr = Expression.from_primary_expression(
-        PrimaryExpression(content=RDFLiteral(value="_"))
-    )
+    """FILTER(!STRSTARTS(STR(?var), "_")) - skips literals that look like blank nodes."""
     return Filter(
-        constraint=Constraint(
-            content=BrackettedExpression(
-                expression=Expression(
-                    conditional_or_expression=ConditionalOrExpression(
-                        conditional_and_expressions=[
-                            ConditionalAndExpression(
-                                value_logicals=[
-                                    ValueLogical(
-                                        relational_expression=RelationalExpression(
-                                            left=NumericExpression(
-                                                additive_expression=AdditiveExpression(
-                                                    base_expression=MultiplicativeExpression(
-                                                        base_expression=UnaryExpression(
-                                                            operator="!",
-                                                            primary_expression=PrimaryExpression(
-                                                                content=BuiltInCall(
-                                                                    function_name="STRSTARTS",
-                                                                    arguments=[
-                                                                        str_expr,
-                                                                        underscore_expr,
-                                                                    ],
-                                                                )
-                                                            ),
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                        )
-                                    )
-                                ]
-                            )
-                        ]
-                    )
-                )
+        Expression.negate(
+            BuiltInCall.create(
+                "STRSTARTS",
+                BuiltInCall.create("STR", var),
+                RDFLiteral(value="_"),
             )
         )
     )
@@ -245,17 +116,21 @@ def format_coordinates_as_wkt(bbox_values):
     return coordinates
 
 
+def _wkt_literal(wkt_value: str) -> RDFLiteral:
+    return RDFLiteral(value=wkt_value, datatype=IRI(value=str(GEO.wktLiteral)))
+
+
 def generate_spatial_filter_clause(
-        wkt_value: str,  # The plain WKT string, e.g. "POLYGON((...))"
-        subject_var: Var,  # The SPARQL variable for the subject, e.g. Var(value="focus_node")
-        geom_bnode_var: Var,
-        geom_wkt_lit_var: Var,
-        cql_operator: str,
-        target_system: str,
+    wkt_value: str,  # The plain WKT string, e.g. "POLYGON((...))"
+    subject_var: Var,  # The SPARQL variable for the subject, e.g. Var(value="focus_node")
+    geom_bnode_var: Var,
+    geom_wkt_lit_var: Var,
+    cql_operator: str,
+    target_system: str,
 ) -> List[GraphPatternNotTriples]:
     """
     Generates SPARQL spatial filter clauses (FILTER or SERVICE block).
-    Returns a list of GraphPatternNotTriples.
+    Returns a list of graph patterns.
     """
     if target_system == "geosparql":
         if cql_operator not in cql_graphdb_spatial_properties:
@@ -270,44 +145,33 @@ def generate_spatial_filter_clause(
         spatial_wkt_input_var = Var(value="spatial_wkt_input")
 
         # Create FILTER to skip literals that look like blank nodes (e.g., "_:b1")
-        non_blanknode_filter_gpnt = GraphPatternNotTriples(
-            content=_not_blanknode_like_literal_filter(geom_wkt_lit_var)
-        )
+        non_blanknode_filter_gpnt = _not_blanknode_like_literal_filter(geom_wkt_lit_var)
 
         # Create BIND clause: BIND("WKT"^^geo:wktLiteral AS ?spatial_wkt_input)
-        bind_gpnt = GraphPatternNotTriples(
-            content=Bind(
-                expression=Expression.from_primary_expression(
-                    primary_expression=PrimaryExpression(
-                        content=RDFLiteral(
-                            value=wkt_value,
-                            datatype=IRI(value=str(GEO.wktLiteral)),
-                        )
-                    )
-                ),
-                var=spatial_wkt_input_var,
-            )
+        bind_gpnt = Bind(
+            Expression.from_primary_expression(_wkt_literal(wkt_value)),
+            spatial_wkt_input_var,
         )
 
         # Create triple: ?spatial_wkt_input geo:sfIntersects ?geom_wkt_lit_var
-        spatial_triple_gpnt = GraphPatternNotTriples(
-            content=GroupOrUnionGraphPattern(
-                group_graph_patterns=[
-                    GroupGraphPattern(
-                        content=GroupGraphPatternSub(
-                            graph_patterns_or_triples_blocks=[
-                                TriplesBlock(
-                                    triples=TriplesSameSubjectPath.from_spo(
+        spatial_triple_gpnt = GroupOrUnionGraphPattern(
+            [
+                GroupGraphPattern(
+                    GroupGraphPatternSub(
+                        [
+                            TriplesBlock(
+                                [
+                                    TriplesSameSubjectPath.from_spo(
                                         spatial_wkt_input_var,
                                         IRI(value=str(spatial_predicate)),
                                         geom_wkt_lit_var,
                                     )
-                                )
-                            ]
-                        )
+                                ]
+                            )
+                        ]
                     )
-                ]
-            )
+                )
+            ]
         )
 
         return [non_blanknode_filter_gpnt, bind_gpnt, spatial_triple_gpnt]
@@ -320,148 +184,83 @@ def generate_spatial_filter_clause(
 
         qlever_function_iri = IRI(value=cql_qlever_spatial_mapping[cql_operator])
 
-        values_clause_for_input_wkt = GraphPatternNotTriples(
-            content=InlineData(
-                data_block=DataBlock(
-                    block=InlineDataOneVar(
-                        variable=Var(
-                            value="wkt_input_for_qlever"
-                        ),  # Dedicated var for QLever input WKT
-                        datablockvalues=[
-                            DataBlockValue(
-                                value=RDFLiteral(
-                                    value=wkt_value,
-                                    datatype=IRI(
-                                        value=str(
-                                            GEO.wktLiteral
-                                        )  # Qlever ignores the datatype at present.
-                                    ),
-                                )
-                            )
-                        ],
-                    )
-                )
-            )
+        # Dedicated var for QLever input WKT. Qlever ignores the datatype at present.
+        wkt_input_var = Var(value="wkt_input_for_qlever")
+        values_clause_for_input_wkt = InlineData(
+            InlineDataOneVar(wkt_input_var, [_wkt_literal(wkt_value)])
         )
+
+        def pair(predicate, obj):
+            return (
+                PathAlternative.iri(IRI(value=str(predicate))),
+                ObjectListPath.create(obj),
+            )
 
         # Internal graph pattern for QLever SERVICE call
         qlever_internal_ggps = GroupGraphPatternSub(
-            graph_patterns_or_triples_blocks=[
+            [
                 TriplesBlock(
-                    triples=TriplesSameSubjectPath(
-                        content=(
-                            VarOrTerm(
-                                varorterm=GraphTerm(
-                                    content=BlankNode(
-                                        value=BlankNodeLabel(part_1="config")
-                                    )
-                                )
-                            ),
+                    [
+                        # _:config qlss:algorithm qlss:libspatialjoin ; qlss:left ... ; ...
+                        TriplesSameSubjectPath(
+                            BLANK_NODE_LABEL("config"),
                             PropertyListPathNotEmpty(
-                                first_pair=(
-                                    _verb_path_for_iri(str(QLSS.algorithm)),
-                                    ObjectListPath(
-                                        object_paths=[
-                                            ObjectPath(
-                                                graph_node_path=GraphNodePath(
-                                                    varorterm_or_triplesnodepath=VarOrTerm(
-                                                        varorterm=GraphTerm(
-                                                            content=IRI(
-                                                                value=str(
-                                                                    QLSS.libspatialjoin
-                                                                )
-                                                            )
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                        ]
+                                [
+                                    pair(
+                                        QLSS.algorithm,
+                                        IRI(value=str(QLSS.libspatialjoin)),
                                     ),
-                                ),
-                                other_pairs=[
-                                    (
-                                        _verb_path_for_iri(str(QLSS.left)),
-                                        _object_list_for_iri_or_var_or_lit(
-                                            Var(value="wkt_input_for_qlever")
-                                        ),
-                                    ),
-                                    (
-                                        _verb_path_for_iri(str(QLSS.right)),
-                                        _object_list_for_iri_or_var_or_lit(
-                                            geom_wkt_lit_var
-                                        ),
-                                    ),
-                                    (
-                                        _verb_path_for_iri(str(QLSS.payload)),
-                                        _object_list_for_iri_or_var_or_lit(subject_var),
-                                    ),
-                                    (
-                                        _verb_path_for_iri(str(QLSS.joinType)),
-                                        _object_list_for_iri_or_var_or_lit(
-                                            qlever_function_iri
-                                        ),
-                                    ),
-                                ],
+                                    pair(QLSS.left, wkt_input_var),
+                                    pair(QLSS.right, geom_wkt_lit_var),
+                                    pair(QLSS.payload, subject_var),
+                                    pair(QLSS.joinType, qlever_function_iri),
+                                ]
                             ),
                         )
-                    )
+                    ]
                 ),
                 # Re-declare necessary triples inside QLever's scope
-                GraphPatternNotTriples(
-                    content=GroupOrUnionGraphPattern(
-                        group_graph_patterns=[
-                            GroupGraphPattern(
-                                content=GroupGraphPatternSub(
-                                    graph_patterns_or_triples_blocks=[
-                                        TriplesBlock.from_tssp_list(
-                                            [
-                                                TriplesSameSubjectPath.from_spo(
-                                                    subject=subject_var,
-                                                    predicate=IRI(
-                                                        value=str(GEO.hasGeometry)
-                                                    ),
-                                                    object=geom_bnode_var,
-                                                ),
-                                                TriplesSameSubjectPath.from_spo(
-                                                    subject=geom_bnode_var,
-                                                    predicate=IRI(value=str(GEO.asWKT)),
-                                                    object=geom_wkt_lit_var,
-                                                ),
-                                            ]
-                                        ),
-                                        GraphPatternNotTriples(
-                                            content=_not_blanknode_like_literal_filter(
-                                                geom_wkt_lit_var
-                                            )
-                                        ),
-                                    ]
-                                )
+                GroupOrUnionGraphPattern(
+                    [
+                        GroupGraphPattern(
+                            GroupGraphPatternSub(
+                                [
+                                    TriplesBlock(
+                                        [
+                                            TriplesSameSubjectPath.from_spo(
+                                                subject_var,
+                                                IRI(value=str(GEO.hasGeometry)),
+                                                geom_bnode_var,
+                                            ),
+                                            TriplesSameSubjectPath.from_spo(
+                                                geom_bnode_var,
+                                                IRI(value=str(GEO.asWKT)),
+                                                geom_wkt_lit_var,
+                                            ),
+                                        ]
+                                    ),
+                                    _not_blanknode_like_literal_filter(
+                                        geom_wkt_lit_var
+                                    ),
+                                ]
                             )
-                        ]
-                    )
+                        )
+                    ]
                 ),
             ]
         )
 
-        qlever_service_gpnt = GraphPatternNotTriples(
-            content=ServiceGraphPattern(
-                var_or_iri=VarOrIri(varoriri=IRI(value=str(QLSS))),
-                group_graph_pattern=GroupGraphPattern(content=qlever_internal_ggps),
-            )
+        qlever_service_gpnt = ServiceGraphPattern(
+            IRI(value=str(QLSS)), GroupGraphPattern(qlever_internal_ggps)
         )
-        combined_gpnt = GraphPatternNotTriples(
-            content=GroupOrUnionGraphPattern(
-                group_graph_patterns=[
-                    GroupGraphPattern(
-                        content=GroupGraphPatternSub(
-                            graph_patterns_or_triples_blocks=[
-                                values_clause_for_input_wkt,
-                                qlever_service_gpnt,
-                            ]
-                        )
+        combined_gpnt = GroupOrUnionGraphPattern(
+            [
+                GroupGraphPattern(
+                    GroupGraphPatternSub(
+                        [values_clause_for_input_wkt, qlever_service_gpnt]
                     )
-                ]
-            )
+                )
+            ]
         )
         return [combined_gpnt]
 
@@ -470,7 +269,7 @@ def generate_spatial_filter_clause(
 
 
 def generate_bbox_filter(
-        bbox: List[float], filter_crs: str
+    bbox: List[float], filter_crs: str
 ) -> (List[GraphPatternNotTriples], List[TriplesSameSubjectPath]):
     """
     Generates spatial filter for a bounding box query parameter, wrapped in a FILTER EXISTS statement.
@@ -517,13 +316,13 @@ def generate_bbox_filter(
         # Add the filter predicate triple for GraphDB
         ggps.add_pattern(
             TriplesBlock(
-                triples=TriplesSameSubjectPath.from_spo(
-                    geom_bn_var,
-                    IRI(value=GEO.sfIntersects),
-                    RDFLiteral(
-                        value=processed_wkt, datatype=IRI(value=str(GEO.wktLiteral))
-                    ),
-                )
+                [
+                    TriplesSameSubjectPath.from_spo(
+                        geom_bn_var,
+                        IRI(value=GEO.sfIntersects),
+                        _wkt_literal(processed_wkt),
+                    )
+                ]
             )
         )
         # use a FILTER EXISTS, in most but not all cases this is more performant with the GraphDB special predicates
@@ -533,17 +332,21 @@ def generate_bbox_filter(
         # Add geometry triple patterns first (inside the block)
         ggps.add_pattern(
             TriplesBlock(
-                triples=TriplesSameSubjectPath.from_spo(
-                    subject, IRI(value=GEO.hasGeometry), geom_bn_var
-                )
+                [
+                    TriplesSameSubjectPath.from_spo(
+                        subject, IRI(value=GEO.hasGeometry), geom_bn_var
+                    )
+                ]
             )
         )
-        ggps.add_pattern(GraphPatternNotTriples(content=_bound_filter(geom_bn_var)))
+        ggps.add_pattern(_bound_filter(geom_bn_var))
         ggps.add_pattern(
             TriplesBlock(
-                triples=TriplesSameSubjectPath.from_spo(
-                    geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var
-                )
+                [
+                    TriplesSameSubjectPath.from_spo(
+                        geom_bn_var, IRI(value=GEO.asWKT), geom_lit_var
+                    )
+                ]
             )
         )
 
@@ -565,10 +368,6 @@ def generate_bbox_filter(
             ggps.add_pattern(gpnt)
 
         # do not use a FILTER EXISTS, assume the triplestore query optimiser will execute performantly
-        final_gpnt = GraphPatternNotTriples(
-            content=GroupOrUnionGraphPattern(
-                group_graph_patterns=[GroupGraphPattern(content=ggps)]
-            )
-        )
+        final_gpnt = GroupOrUnionGraphPattern([GroupGraphPattern(ggps)])
 
     return [final_gpnt], bgp_list

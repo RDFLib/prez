@@ -1,34 +1,25 @@
 from typing import List, Optional
 
 from rdflib import RDF
-from sparql_grammar_pydantic import (
+from sparql_grammar import (
     IRI,
     Aggregate,
     Bind,
     BuiltInCall,
-    Constraint,
     ConstructQuery,
     ConstructTemplate,
     ConstructTriples,
-    DataBlock,
-    DataBlockValue,
     Expression,
     Filter,
-    GraphPatternNotTriples,
     GroupClause,
-    GroupCondition,
     GroupGraphPattern,
     GroupGraphPatternSub,
     GroupOrUnionGraphPattern,
     InlineData,
     InlineDataOneVar,
-    LimitClause,
     LimitOffsetClauses,
-    NumericLiteral,
-    OffsetClause,
     OrderClause,
     OrderCondition,
-    PrimaryExpression,
     RDFLiteral,
     RegexExpression,
     SelectClause,
@@ -39,10 +30,34 @@ from sparql_grammar_pydantic import (
     TriplesSameSubjectPath,
     Var,
     WhereClause,
+    numeric_literal,
 )
 
 from prez.config import settings
+from prez.services.query_generation.grammar_helpers import construct_triples
 from prez.reference_data.prez_ns import PREZ
+
+
+def hash_id_expression(*terms: Var, prefix: str = "urn:hash:") -> Expression:
+    """URI(CONCAT("<prefix>", SHA256(CONCAT(STR(?a), STR(?b), ...))))
+
+    A stable IRI for a row of results, from the values that identify it.
+    """
+    return Expression.from_primary_expression(
+        BuiltInCall.create(
+            "URI",
+            BuiltInCall.create(
+                "CONCAT",
+                RDFLiteral(value=prefix),
+                BuiltInCall.create(
+                    "SHA256",
+                    BuiltInCall.create(
+                        "CONCAT", *[BuiltInCall.create("STR", term) for term in terms]
+                    ),
+                ),
+            ),
+        )
+    )
 
 
 class SearchQueryRegex(ConstructQuery):
@@ -55,6 +70,8 @@ class SearchQueryRegex(ConstructQuery):
     ):
 
         limit += 1  # increase the limit by one so we know if there are further pages of results.
+        self._limit = limit
+        self._offset = offset
 
         if not predicates:
             predicates = settings.search_predicates
@@ -75,171 +92,78 @@ class SearchQueryRegex(ConstructQuery):
 
         # set construct triples
         construct_tss_list = [
-            TriplesSameSubject.from_spo(subject=hashid, predicate=p, object=v)
-            for p, v in ct_map.items()
+            TriplesSameSubject.from_spo(hashid, p, v) for p, v in ct_map.items()
         ]
 
         # construct template
-        ct = ConstructTemplate(
-            construct_triples=ConstructTriples.from_tss_list(construct_tss_list)
+        ct = ConstructTemplate(construct_triples(construct_tss_list))
+
+        # SELECT ?focus_node ?predicate ?match (SUM(?w) AS ?weight)
+        # WHERE { VALUES ?pred { ... } { ... } UNION { ... } UNION { ... } }
+        # GROUP BY ?focus_node ?pred ?match
+        weighted_matches = SubSelect(
+            select_clause=SelectClause(
+                [
+                    sr_uri,
+                    pred,
+                    match,
+                    (
+                        Expression.from_primary_expression(
+                            Aggregate.create("SUM", Var(value="w"))
+                        ),
+                        weight,
+                    ),
+                ]
+            ),
+            where_clause=WhereClause(
+                GroupGraphPattern(
+                    GroupGraphPatternSub(
+                        [
+                            InlineData(
+                                InlineDataOneVar(
+                                    pred, [IRI(value=p) for p in predicates]
+                                )
+                            ),
+                            GroupOrUnionGraphPattern(
+                                [
+                                    self.create_inner_ggp(
+                                        **var_dict,
+                                        sr_uri=sr_uri,
+                                        pred=pred,
+                                        match=match,
+                                        term=term,
+                                    )
+                                    for var_dict in self.inner_select_args.values()
+                                ]
+                            ),
+                        ]
+                    )
+                )
+            ),
+            solution_modifier=SolutionModifier(
+                group_by=GroupClause.create(sr_uri, pred, match)
+            ),
         )
+
+        # SELECT ?focus_node ?predicate ?match ?weight (URI(CONCAT("urn:hash:",
+        #   SHA256(CONCAT(STR(?focus_node), STR(?predicate), STR(?match), STR(?weight))))) AS ?hashID)
         wc = WhereClause(
-            group_graph_pattern=GroupGraphPattern(
-                content=SubSelect(
-                    # SELECT ?focus_node ?predicate ?match ?weight (URI(CONCAT("urn:hash:",
-                    #   SHA256(CONCAT(STR(?focus_node), STR(?predicate), STR(?match), STR(?weight))))) AS ?hashID)
+            GroupGraphPattern(
+                SubSelect(
                     select_clause=SelectClause(
-                        variables_or_all=[
+                        [
                             sr_uri,
                             pred,
                             match,
                             weight,
-                            (
-                                Expression.from_primary_expression(
-                                    PrimaryExpression(
-                                        content=BuiltInCall.create_with_one_expr(
-                                            "URI",
-                                            PrimaryExpression(
-                                                content=BuiltInCall.create_with_n_expr(
-                                                    "CONCAT",
-                                                    [
-                                                        PrimaryExpression(
-                                                            content=RDFLiteral(
-                                                                value="urn:hash:"
-                                                            )
-                                                        ),
-                                                        PrimaryExpression(
-                                                            content=BuiltInCall.create_with_one_expr(
-                                                                "SHA256",
-                                                                PrimaryExpression(
-                                                                    content=BuiltInCall.create_with_n_expr(
-                                                                        "CONCAT",
-                                                                        [
-                                                                            PrimaryExpression(
-                                                                                content=b
-                                                                            )
-                                                                            for b in [
-                                                                                BuiltInCall.create_with_one_expr(
-                                                                                    "STR",
-                                                                                    PrimaryExpression(
-                                                                                        content=e
-                                                                                    ),
-                                                                                )
-                                                                                for e in [
-                                                                                    sr_uri,
-                                                                                    pred,
-                                                                                    match,
-                                                                                    weight,
-                                                                                ]
-                                                                            ]
-                                                                        ],
-                                                                    )
-                                                                ),
-                                                            )
-                                                        ),
-                                                    ],
-                                                )
-                                            ),
-                                        )
-                                    )
-                                ),
-                                hashid,
-                            ),
+                            (hash_id_expression(sr_uri, pred, match, weight), hashid),
                         ]
                     ),
-                    where_clause=WhereClause(
-                        group_graph_pattern=GroupGraphPattern(
-                            content=SubSelect(
-                                # SELECT ?focus_node ?predicate ?match (SUM(?w) AS ?weight)
-                                select_clause=SelectClause(
-                                    variables_or_all=[
-                                        sr_uri,
-                                        pred,
-                                        match,
-                                        (
-                                            Expression.from_primary_expression(
-                                                PrimaryExpression(
-                                                    content=BuiltInCall(
-                                                        other_expressions=Aggregate(
-                                                            function_name="SUM",
-                                                            expression=Expression.from_primary_expression(
-                                                                PrimaryExpression(
-                                                                    content=Var(
-                                                                        value="w"
-                                                                    )
-                                                                )
-                                                            ),
-                                                        )
-                                                    )
-                                                )
-                                            ),
-                                            weight,
-                                        ),
-                                    ]
-                                ),
-                                where_clause=WhereClause(
-                                    group_graph_pattern=GroupGraphPattern(
-                                        content=GroupGraphPatternSub(
-                                            graph_patterns_or_triples_blocks=[
-                                                GraphPatternNotTriples(
-                                                    content=InlineData(
-                                                        data_block=DataBlock(
-                                                            block=InlineDataOneVar(
-                                                                variable=pred,
-                                                                datablockvalues=[
-                                                                    DataBlockValue(
-                                                                        value=p
-                                                                    )
-                                                                    for p in [
-                                                                        IRI(value=p)
-                                                                        for p in predicates
-                                                                    ]
-                                                                ],
-                                                            )
-                                                        )
-                                                    )
-                                                ),
-                                                GraphPatternNotTriples(
-                                                    content=GroupOrUnionGraphPattern(
-                                                        group_graph_patterns=[
-                                                            self.create_inner_ggp(
-                                                                **var_dict,
-                                                                sr_uri=sr_uri,
-                                                                pred=pred,
-                                                                match=match,
-                                                                term=term,
-                                                            )
-                                                            for var_dict in self.inner_select_args.values()
-                                                        ]
-                                                    )
-                                                ),
-                                            ]
-                                        )
-                                    )
-                                ),
-                                solution_modifier=SolutionModifier(
-                                    group_by=GroupClause(
-                                        group_conditions=[
-                                            GroupCondition(condition=sr_uri),
-                                            GroupCondition(condition=pred),
-                                            GroupCondition(condition=match),
-                                        ]
-                                    )
-                                ),
-                            )
-                        )
-                    ),
+                    where_clause=WhereClause(GroupGraphPattern(weighted_matches)),
                     solution_modifier=SolutionModifier(
-                        order_by=OrderClause(
-                            conditions=[
-                                OrderCondition(
-                                    constraint_or_var=weight, direction="DESC"
-                                )
-                            ]
-                        ),
-                        limit_offset=LimitOffsetClauses(
-                            limit_clause=LimitClause(limit=limit),
-                            offset_clause=OffsetClause(offset=offset),
+                        order_by=OrderClause([OrderCondition.desc(weight)]),
+                        limit_offset=LimitOffsetClauses.create(
+                            limit=limit, offset=offset
                         ),
                     ),
                 )
@@ -286,72 +210,45 @@ class SearchQueryRegex(ConstructQuery):
         term: str,
     ) -> GroupGraphPattern:
         ggp = GroupGraphPattern(
-            content=GroupGraphPatternSub(
-                triples_block=TriplesBlock.from_tssp_list(
-                    [
-                        TriplesSameSubjectPath.from_spo(
-                            subject=sr_uri,
-                            predicate=pred,
-                            object=match,
-                        )
-                    ]
-                ),
-                graph_patterns_or_triples_blocks=[
-                    GraphPatternNotTriples(
-                        content=Bind(
-                            expression=Expression.from_primary_expression(
-                                PrimaryExpression(
-                                    content=NumericLiteral(value=weight_val)
-                                )
-                            ),
-                            var=Var(value="w"),
-                        )
-                    )
-                ],
+            GroupGraphPatternSub(
+                [
+                    TriplesBlock(
+                        [TriplesSameSubjectPath.from_spo(sr_uri, pred, match)]
+                    ),
+                    Bind(
+                        Expression.from_primary_expression(numeric_literal(weight_val)),
+                        Var(value="w"),
+                    ),
+                ]
             )
         )
-        # FILTER (REGEX(?match, "^$term", "i"))
-        pe_st = PrimaryExpression(content=RDFLiteral(value=(prefix + term)))
+        search_term = RDFLiteral(value=prefix + term)
 
         filter_expr = None
         if function == "REGEX":
+            # FILTER REGEX(?match, "^term", "i")
             filter_expr = Filter(
-                constraint=Constraint(
-                    content=BuiltInCall(
-                        other_expressions=RegexExpression(
-                            text_expression=Expression.from_primary_expression(
-                                PrimaryExpression(content=match)
-                            ),  # Expression for the text
-                            pattern_expression=Expression.from_primary_expression(
-                                pe_st
-                            ),
-                            flags_expression=(
-                                Expression.from_primary_expression(
-                                    PrimaryExpression(content=RDFLiteral(value="i"))
-                                )
-                                if case_insensitive
-                                else None
-                            ),
-                        )
-                    )
+                RegexExpression(
+                    Expression.from_primary_expression(match),
+                    Expression.from_primary_expression(search_term),
+                    (
+                        Expression.from_primary_expression(RDFLiteral(value="i"))
+                        if case_insensitive
+                        else None
+                    ),
                 )
             )
-
-        # filter e.g. FILTER(LCASE(?match) = "search term")
         elif function == "LCASE":
-            filter_expr = Filter.filter_relational(
-                focus=PrimaryExpression(
-                    content=BuiltInCall(function_name=function, arguments=[match])
-                ),
-                comparators=pe_st,
-                operator="=",
+            # FILTER(LCASE(?match) = "search term")
+            filter_expr = Filter(
+                Expression.compare(BuiltInCall.create("LCASE", match), "=", search_term)
             )
-        ggp.content.add_pattern(GraphPatternNotTriples(content=filter_expr))
+        ggp.content.add_pattern(filter_expr)
         return ggp
 
     @property
     def tss_list(self):
-        return self.construct_template.construct_triples.to_tss_list()
+        return list(self.construct_template.construct_triples.triples)
 
     # convenience properties for the construct query
     @property
@@ -359,18 +256,17 @@ class SearchQueryRegex(ConstructQuery):
         return self.construct_template.construct_triples
 
     @property
+    def _outer_subselect(self) -> SubSelect:
+        return self.where_clause.group_graph_pattern.content
+
+    @property
     def inner_select_vars(self):
-        return (
-            self.where_clause.group_graph_pattern.content.select_clause.variables_or_all
-        )
+        return self._outer_subselect.select_clause.variables
 
     @property
     def inner_select_gpnt(self):
-        inner_ggp = (
-            self.where_clause.group_graph_pattern.content.where_clause.group_graph_pattern
-        )
-        return GraphPatternNotTriples(
-            content=GroupOrUnionGraphPattern(group_graph_patterns=[inner_ggp])
+        return GroupOrUnionGraphPattern(
+            [self._outer_subselect.where_clause.group_graph_pattern]
         )
 
     @property
@@ -383,12 +279,8 @@ class SearchQueryRegex(ConstructQuery):
 
     @property
     def limit(self):
-        return (
-            self.where_clause.group_graph_pattern.content.solution_modifier.limit_offset.limit_clause.limit
-        )
+        return self._limit
 
     @property
     def offset(self):
-        return (
-            self.where_clause.group_graph_pattern.content.solution_modifier.limit_offset.offset_clause.offset
-        )
+        return self._offset

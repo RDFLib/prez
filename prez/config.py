@@ -191,7 +191,9 @@ class Settings(BaseSettings):
     @classmethod
     def validate_response_headers_max_bytes(cls, v):
         if v < 0:
-            raise ValueError("response_headers_max_bytes must be greater than or equal to 0")
+            raise ValueError(
+                "response_headers_max_bytes must be greater than or equal to 0"
+            )
         return v
 
     @field_validator("lucene_index_name")

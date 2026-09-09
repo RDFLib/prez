@@ -25,7 +25,7 @@ from rdf2geojson.contrib.geomet import wkt
 from rdflib import Graph
 from rdflib import URIRef
 from rdflib.namespace import GEO, RDF
-from sparql_grammar_pydantic import (
+from sparql_grammar import (
     IRI,
     Var,
 )
@@ -364,7 +364,9 @@ async def return_annotated_rdf_for_oxigraph(
     system_repo: Repo,
 ) -> OxiStore:
     t_start = time.time()
-    log.debug(f"Starting annotation lookup for Oxigraph store (store_quads={len(store)})")
+    log.debug(
+        f"Starting annotation lookup for Oxigraph store (store_quads={len(store)})"
+    )
     first_pass_start = time.time()
     annotations_store = await get_annotation_properties_for_oxigraph(
         store, repo, system_repo
@@ -684,23 +686,102 @@ async def generate_queryables_from_shacl_definition(
         if facetable and facetable[0].get("@value") in [True, "true", "True", 1, "1"]:
             queryable_props[id_value]["x-prez-facetable"] = True
         sortable = item.get("https://prez.dev/ont/sortable")
-        if sortable and sortable[0].get("@value") in [True, "true", "True", 1, "1", False, "false", "False", 0, "0"]:
-            queryable_props[id_value]["x-prez-sortable"] = sortable[0]["@value"] in [True, "true", "True", 1, "1"]
+        if sortable and sortable[0].get("@value") in [
+            True,
+            "true",
+            "True",
+            1,
+            "1",
+            False,
+            "false",
+            "False",
+            0,
+            "0",
+        ]:
+            queryable_props[id_value]["x-prez-sortable"] = sortable[0]["@value"] in [
+                True,
+                "true",
+                "True",
+                1,
+                "1",
+            ]
         default_search = item.get("https://prez.dev/ont/defaultSearch")
-        if default_search and default_search[0].get("@value") in [True, "true", "True", 1, "1", False, "false", "False", 0, "0"]:
-            queryable_props[id_value]["x-prez-default-search"] = default_search[0]["@value"] in [True, "true", "True", 1, "1"]
+        if default_search and default_search[0].get("@value") in [
+            True,
+            "true",
+            "True",
+            1,
+            "1",
+            False,
+            "false",
+            "False",
+            0,
+            "0",
+        ]:
+            queryable_props[id_value]["x-prez-default-search"] = default_search[0][
+                "@value"
+            ] in [True, "true", "True", 1, "1"]
         multi_valued = item.get("https://prez.dev/ont/multiValued")
-        if multi_valued and multi_valued[0].get("@value") in [True, "true", "True", 1, "1", False, "false", "False", 0, "0"]:
-            queryable_props[id_value]["x-prez-multi-valued"] = multi_valued[0]["@value"] in [True, "true", "True", 1, "1"]
+        if multi_valued and multi_valued[0].get("@value") in [
+            True,
+            "true",
+            "True",
+            1,
+            "1",
+            False,
+            "false",
+            "False",
+            0,
+            "0",
+        ]:
+            queryable_props[id_value]["x-prez-multi-valued"] = multi_valued[0][
+                "@value"
+            ] in [True, "true", "True", 1, "1"]
         stored = item.get("https://prez.dev/ont/stored")
-        if stored and stored[0].get("@value") in [True, "true", "True", 1, "1", False, "false", "False", 0, "0"]:
-            queryable_props[id_value]["x-prez-stored"] = stored[0]["@value"] in [True, "true", "True", 1, "1"]
+        if stored and stored[0].get("@value") in [
+            True,
+            "true",
+            "True",
+            1,
+            "1",
+            False,
+            "false",
+            "False",
+            0,
+            "0",
+        ]:
+            queryable_props[id_value]["x-prez-stored"] = stored[0]["@value"] in [
+                True,
+                "true",
+                "True",
+                1,
+                "1",
+            ]
         indexed = item.get("https://prez.dev/ont/indexed")
-        if indexed and indexed[0].get("@value") in [True, "true", "True", 1, "1", False, "false", "False", 0, "0"]:
-            queryable_props[id_value]["x-prez-indexed"] = indexed[0]["@value"] in [True, "true", "True", 1, "1"]
+        if indexed and indexed[0].get("@value") in [
+            True,
+            "true",
+            "True",
+            1,
+            "1",
+            False,
+            "false",
+            "False",
+            0,
+            "0",
+        ]:
+            queryable_props[id_value]["x-prez-indexed"] = indexed[0]["@value"] in [
+                True,
+                "true",
+                "True",
+                1,
+                "1",
+            ]
         lucene_field_type = item.get("https://prez.dev/ont/luceneFieldType")
         if lucene_field_type:
-            queryable_props[id_value]["x-prez-lucene-field-type"] = lucene_field_type[0]["@value"]
+            queryable_props[id_value]["x-prez-lucene-field-type"] = lucene_field_type[
+                0
+            ]["@value"]
     if endpoint_uri == OGCFEAT["queryables-global"]:
         title = "Global Queryables"
         description = (

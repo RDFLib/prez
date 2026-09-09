@@ -191,7 +191,9 @@ class RequestTimingMiddleware:
                 status_code = message["status"]
                 response_started_ms = (time.perf_counter() - start) * 1000
                 headers = message.get("headers", [])
-                header_bytes = sum(len(name) + len(value) + 4 for name, value in headers)
+                header_bytes = sum(
+                    len(name) + len(value) + 4 for name, value in headers
+                )
                 send_start = time.perf_counter()
                 await send(message)
                 response_start_send_ms = (time.perf_counter() - send_start) * 1000

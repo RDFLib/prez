@@ -7,7 +7,7 @@ from pathlib import Path
 
 from rdflib import Graph, Literal, Namespace
 from rdflib.namespace import RDF, SDO, SOSA, XSD
-from sparql_grammar_pydantic import Var
+from sparql_grammar import Var
 
 from prez.services.query_generation.shacl import NodeShape
 from prez.services.query_generation.umbrella import PrezQueryConstructor
@@ -169,6 +169,7 @@ def test_pivot_value_sequence():
         (EX.sample1, EX.earthworms, Literal(False)),
     ]
     assert all([triple in results.graph for triple in expected_triples])
+
 
 def test_pivot_two_pivots():
     nodeshape = NodeShape(

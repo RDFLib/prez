@@ -12,7 +12,7 @@ from pyoxigraph import (
     DefaultGraph as OxiDefaultGraph,
 )
 from rdflib import Graph, Literal, URIRef
-from sparql_grammar_pydantic import IRI
+from sparql_grammar import IRI
 
 from prez.dependencies import get_annotations_repo
 from prez.repositories import Repo

@@ -203,7 +203,9 @@ class TestRemoteSparqlTimeout:
         mock_async_client.send.return_value = response
 
         with pytest.raises(httpx.HTTPStatusError) as exc_info:
-            await remote_repo.rdf_query_to_oxigraph_store("CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }")
+            await remote_repo.rdf_query_to_oxigraph_store(
+                "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }"
+            )
 
         assert "Fuseki parse error" in str(exc_info.value)
         response.aread.assert_awaited_once()
