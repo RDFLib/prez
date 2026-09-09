@@ -195,6 +195,7 @@ async def _link_generation_many(
     # many node shapes to one endpoint; multiple node shapes can point to the endpoint
     if klasses_to_get_for_uris:  # generate links
         generated_quads = []
+        members_seen: set = set()
         for klass, uri_nodes in klasses_to_get_for_uris.items():
             available_nodeshapes = await get_nodeshapes_for_class(klass)
             # run queries for available nodeshapes to get link components
@@ -237,6 +238,7 @@ async def _link_generation_many(
                                     object_link,
                                     OxiNamedNode(uri),
                                     identifiers,
+                                    members_seen,
                                 )
                             )
                 else:
@@ -255,6 +257,7 @@ async def _link_generation_many(
                                 object_link,
                                 uri_node,
                                 identifiers,
+                                members_seen,
                             )
                         )
         # one write to the cache and one to the response, rather than two per link
@@ -326,8 +329,15 @@ def link_quads(
     object_link: str,
     uri_node: OxiNamedNode,
     identifiers: dict,
+    members_seen: set | None = None,
 ) -> list[OxiQuad]:
-    """The link and identifier quads for one object, in the object's own context."""
+    """The link and identifier quads for one object, in the object's own context.
+
+    ``members_seen`` collects the objects that already have a members link in this
+    batch. Several node shapes can deliver the same class, and only the first
+    members link for an object is kept; the run of links is written to the cache
+    once at the end, so a set is what can see the earlier link, not the cache.
+    """
     quads: list[OxiQuad] = []
     quads.append(
         OxiQuad(uri_node, OxiNamedNode(PREZ["link"]), OxiLiteral(object_link), uri_node)
@@ -344,11 +354,17 @@ def link_quads(
     if members_link:
         # TODO need to confirm the link value doesn't match the existing link value, as multiple endpoints can deliver
         # the same class/have different links for the same URI
-        existing_members_link = list(
-            links_ids_graph_cache.quads_for_pattern(
-                uri_node, OxiNamedNode(PREZ["members"]), None, uri_node
+        if members_seen is None or uri_node not in members_seen:
+            quads.append(
+                OxiQuad(
+                    uri_node,
+                    OxiNamedNode(PREZ["members"]),
+                    OxiLiteral(members_link),
+                    uri_node,
+                )
             )
-        )
+            if members_seen is not None:
+                members_seen.add(uri_node)
     return quads
 
 
