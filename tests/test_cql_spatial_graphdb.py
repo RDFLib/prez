@@ -3,7 +3,7 @@ from prez.services.query_generation.cql import CQLParser
 from prez.config import settings
 from rdflib import Namespace, URIRef
 from rdflib.namespace import GEO
-from sparql_grammar_pydantic import IRI, Var, RDFLiteral, TriplesSameSubjectPath
+from sparql_grammar import IRI, Var, RDFLiteral, TriplesSameSubjectPath
 
 
 # Temporarily set spatial_query_format to "graphdb" for testing
@@ -29,19 +29,19 @@ def test_cql_spatial_graphdb_intersects():
     parser.parse()
 
     expected_tssp1 = TriplesSameSubjectPath.from_spo(
-        subject=Var(value="focus_node"),
-        predicate=IRI(value=str(GEO.hasGeometry)),
-        object=Var(value="geom_bnode"),
+        Var(value="focus_node"),
+        IRI(value=str(GEO.hasGeometry)),
+        Var(value="geom_bnode"),
     )
     expected_tssp2 = TriplesSameSubjectPath.from_spo(
-        subject=Var(value="geom_bnode"),
-        predicate=IRI(value=str(GEO.asWKT)),
-        object=Var(value="geom_var"),
+        Var(value="geom_bnode"),
+        IRI(value=str(GEO.asWKT)),
+        Var(value="geom_var"),
     )
     expected_tssp3 = TriplesSameSubjectPath.from_spo(
-        subject=Var(value="focus_node"),
-        predicate=IRI(value=str(GEO.sfIntersects)),
-        object=RDFLiteral(
+        Var(value="focus_node"),
+        IRI(value=str(GEO.sfIntersects)),
+        RDFLiteral(
             value="<http://www.opengis.net/def/crs/OGC/1.3/CRS84> POINT (150.0 -30.0)",
             datatype=IRI(value=str(GEO.wktLiteral)),
         ),
@@ -83,19 +83,19 @@ def test_cql_spatial_graphdb_within_with_crs():
     expected_wkt = "<http://www.opengis.net/def/crs/OGC/1.3/CRS84> POLYGON ((100.0 0.0, 101.0 0.0, 101.0 1.0, 100.0 1.0, 100.0 0.0"
 
     expected_tssp1 = TriplesSameSubjectPath.from_spo(
-        subject=Var(value="focus_node"),
-        predicate=IRI(value=str(GEO.hasGeometry)),
-        object=Var(value="geom_bnode"),
+        Var(value="focus_node"),
+        IRI(value=str(GEO.hasGeometry)),
+        Var(value="geom_bnode"),
     )
     expected_tssp2 = TriplesSameSubjectPath.from_spo(
-        subject=Var(value="geom_bnode"),
-        predicate=IRI(value=str(GEO.asWKT)),
-        object=Var(value="geom_var"),
+        Var(value="geom_bnode"),
+        IRI(value=str(GEO.asWKT)),
+        Var(value="geom_var"),
     )
     expected_tssp3 = TriplesSameSubjectPath.from_spo(
-        subject=Var(value="focus_node"),
-        predicate=IRI(value=str(GEO.sfWithin)),
-        object=RDFLiteral(value=expected_wkt, datatype=IRI(value=str(GEO.wktLiteral))),
+        Var(value="focus_node"),
+        IRI(value=str(GEO.sfWithin)),
+        RDFLiteral(value=expected_wkt, datatype=IRI(value=str(GEO.wktLiteral))),
     )
     expected_tssp_list = [expected_tssp1, expected_tssp2, expected_tssp3]
     for tssp in parser.tssp_list:

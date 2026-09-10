@@ -1,4 +1,5 @@
 import json
+import re
 from contextlib import contextmanager
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -8,7 +9,7 @@ from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 from pyoxigraph import Store, BlankNode, DefaultGraph, NamedNode, Literal, Quad
 from rdflib import Graph, RDF, Literal as RDFlibLiteral, URIRef
-from sparql_grammar_pydantic import ConstructQuery, IRI, TriplesSameSubject, Var
+from sparql_grammar import ConstructQuery, IRI, TriplesSameSubject, Var
 
 from prez.app import assemble_app
 from prez.config import Settings, settings as global_settings
@@ -39,6 +40,22 @@ from prez.services.listings import listing_function
 from prez.services.query_generation.search_jena_lucene import SearchQueryJenaLucene
 
 
+def lucene_call(search_query) -> str:
+    """The Lucene query call as it is rendered into the query that gets sent.
+
+    Read from the built grammar rather than from a hand-written string, so an
+    assertion here is an assertion about what Fuseki receives. The renderer puts
+    a space inside a collection's brackets; ``compact`` takes it back out so the
+    expected text reads the way the call is written.
+    """
+    return compact(search_query._lucene_query_tb.to_string())
+
+
+def compact(text: str) -> str:
+    """Collapse whitespace, and the space the renderer puts inside brackets."""
+    return re.sub(r"\(\s+", "(", re.sub(r"\s+\)", ")", re.sub(r"\s+", " ", text)))
+
+
 class FakeLuceneListingRepo(Repo):
     def __init__(
         self,
@@ -58,13 +75,52 @@ class FakeLuceneListingRepo(Repo):
         focus_node = NamedNode("http://example.com/resource/1")
         hash_node = NamedNode("urn:hash:1")
         match_node = NamedNode("urn:match:1")
-        store.add(Quad(focus_node, NamedNode(str(PREZ.type)), NamedNode(str(PREZ.FocusNode)), default))
-        store.add(Quad(focus_node, NamedNode(str(RDF.type)), NamedNode("http://example.com/Class"), default))
-        store.add(Quad(hash_node, NamedNode(str(RDF.type)), NamedNode(str(PREZ.SearchResult)), default))
-        store.add(Quad(hash_node, NamedNode(str(PREZ.searchResultURI)), focus_node, default))
-        store.add(Quad(hash_node, NamedNode(str(PREZ.hasSearchMatch)), match_node, default))
-        store.add(Quad(match_node, NamedNode(str(RDF.type)), NamedNode(str(PREZ.SearchResultMatch)), default))
-        store.add(Quad(match_node, NamedNode(str(PREZ.searchResultMatch)), Literal("deep"), default))
+        store.add(
+            Quad(
+                focus_node,
+                NamedNode(str(PREZ.type)),
+                NamedNode(str(PREZ.FocusNode)),
+                default,
+            )
+        )
+        store.add(
+            Quad(
+                focus_node,
+                NamedNode(str(RDF.type)),
+                NamedNode("http://example.com/Class"),
+                default,
+            )
+        )
+        store.add(
+            Quad(
+                hash_node,
+                NamedNode(str(RDF.type)),
+                NamedNode(str(PREZ.SearchResult)),
+                default,
+            )
+        )
+        store.add(
+            Quad(hash_node, NamedNode(str(PREZ.searchResultURI)), focus_node, default)
+        )
+        store.add(
+            Quad(hash_node, NamedNode(str(PREZ.hasSearchMatch)), match_node, default)
+        )
+        store.add(
+            Quad(
+                match_node,
+                NamedNode(str(RDF.type)),
+                NamedNode(str(PREZ.SearchResultMatch)),
+                default,
+            )
+        )
+        store.add(
+            Quad(
+                match_node,
+                NamedNode(str(PREZ.searchResultMatch)),
+                Literal("deep"),
+                default,
+            )
+        )
         store.add(
             Quad(
                 match_node,
@@ -109,15 +165,38 @@ class FakeLuceneListingRepo(Repo):
                     store.add(quad)
             if any("urn:jena:lucene:index#facet" in query for query in rdf_queries):
                 facet_node = BlankNode("facet1")
-                store.add(Quad(facet_node, NamedNode(str(PREZ.facetName)), NamedNode("urn:jena:lucene:field#commodity"), default))
-                store.add(Quad(facet_node, NamedNode(str(PREZ.facetValue)), Literal("Gold"), default))
-                store.add(Quad(facet_node, NamedNode(str(PREZ.facetCount)), Literal("2"), default))
+                store.add(
+                    Quad(
+                        facet_node,
+                        NamedNode(str(PREZ.facetName)),
+                        NamedNode("urn:jena:lucene:field#commodity"),
+                        default,
+                    )
+                )
+                store.add(
+                    Quad(
+                        facet_node,
+                        NamedNode(str(PREZ.facetValue)),
+                        Literal("Gold"),
+                        default,
+                    )
+                )
+                store.add(
+                    Quad(
+                        facet_node,
+                        NamedNode(str(PREZ.facetCount)),
+                        Literal("2"),
+                        default,
+                    )
+                )
             return store, []
         if tabular_queries:
             return Graph(), [(None, []) for _ in tabular_queries]
         return Graph(), []
 
-    async def rdf_query_to_rdflib_graph(self, query: str, into_graph: Graph | None = None):
+    async def rdf_query_to_rdflib_graph(
+        self, query: str, into_graph: Graph | None = None
+    ):
         graph = into_graph if into_graph is not None else Graph()
         commodity = URIRef("urn:jena:lucene:field#commodity")
         state = URIRef("urn:jena:lucene:field#state")
@@ -131,7 +210,9 @@ class FakeLuceneListingRepo(Repo):
     async def tabular_query_to_table(self, query: str, context=None):
         raise NotImplementedError
 
-    async def sparql(self, query: str, raw_headers: list[tuple[bytes, bytes]], method: str = "GET"):
+    async def sparql(
+        self, query: str, raw_headers: list[tuple[bytes, bytes]], method: str = "GET"
+    ):
         raise NotImplementedError
 
 
@@ -180,6 +261,7 @@ def _build_lucene_test_client(
         tssp_exists_list=[],
         gpnt_exists_list=[],
     )
+
     def _build_fake_profile_nodeshape(profile_uri: str):
         return SimpleNamespace(
             uri=profile_uri,
@@ -210,7 +292,11 @@ def _build_lucene_test_client(
 
     async def _get_fake_pmts_post(request: Request):
         body = await request.json()
-        mediatype = body.get("_mediatype", "text/turtle") if isinstance(body, dict) else "text/turtle"
+        mediatype = (
+            body.get("_mediatype", "text/turtle")
+            if isinstance(body, dict)
+            else "text/turtle"
+        )
         profile_uri = (
             body.get("_profile", default_profile_uri)
             if isinstance(body, dict)
@@ -261,12 +347,10 @@ def _cql_route_modules(app):
     }
 
 
-def _make_request(url: str, *, method: str = "GET", json_body: dict | None = None) -> Request:
-    body_bytes = (
-        b""
-        if json_body is None
-        else json.dumps(json_body).encode("utf-8")
-    )
+def _make_request(
+    url: str, *, method: str = "GET", json_body: dict | None = None
+) -> Request:
+    body_bytes = b"" if json_body is None else json.dumps(json_body).encode("utf-8")
 
     async def receive():
         return {"type": "http.request", "body": body_bytes, "more_body": False}
@@ -280,9 +364,7 @@ def _make_request(url: str, *, method: str = "GET", json_body: dict | None = Non
         "raw_path": url.split("?", 1)[0].encode("utf-8"),
         "query_string": url.split("?", 1)[1].encode("utf-8") if "?" in url else b"",
         "headers": (
-            [(b"content-type", b"application/json")]
-            if json_body is not None
-            else []
+            [(b"content-type", b"application/json")] if json_body is not None else []
         ),
         "client": ("testclient", 50000),
         "server": ("testserver", 80),
@@ -291,7 +373,11 @@ def _make_request(url: str, *, method: str = "GET", json_body: dict | None = Non
 
 
 class _FakePMTs:
-    def __init__(self, mediatype: str = "text/turtle", profile_uri: str = "http://example.org/profile"):
+    def __init__(
+        self,
+        mediatype: str = "text/turtle",
+        profile_uri: str = "http://example.org/profile",
+    ):
         self.selected = {
             "mediatype": mediatype,
             "profile": profile_uri,
@@ -301,7 +387,6 @@ class _FakePMTs:
 
     def generate_response_headers(self):
         return {}
-
 
 
 def test_lucene_feature_flag_requires_dataset_name():
@@ -384,10 +469,8 @@ def test_search_query_jena_lucene_defaults_q_to_wildcard():
         include_matches=False,
     )
 
-    query_fragment = search_query.valid_lucene_query_triple
-    normalized_inner = search_query.normalize_query_string(
-        search_query.inner_select_gpnt.to_string()
-    )
+    query_fragment = lucene_call(search_query)
+    normalized_inner = search_query.inner_select_gpnt.to_string()
 
     assert "urn:jena:lucene:index#query" in query_fragment
     assert "(?hit ?focus_node ?weight ?totalHits)" in query_fragment
@@ -408,10 +491,8 @@ def test_search_query_jena_lucene_pushes_down_paging_when_enabled():
         pagination_pushed_down=True,
     )
 
-    assert search_query.valid_lucene_query_triple.endswith('5 10) .')
-    normalized_inner = search_query.normalize_query_string(
-        search_query._build_search_subselect().to_string()
-    )
+    assert lucene_call(search_query).endswith("5 10)")
+    normalized_inner = search_query._build_search_subselect().to_string()
     assert "LIMIT 5" not in normalized_inner
     assert "OFFSET 10" not in normalized_inner
 
@@ -425,7 +506,7 @@ def test_search_query_jena_lucene_supports_explicit_search_fields():
         search_fields=["urn:jena:lucene:field#id", "urn:jena:lucene:field#label"],
     )
 
-    query_fragment = search_query.valid_lucene_query_triple
+    query_fragment = lucene_call(search_query)
 
     assert (
         '"[\\"urn:jena:lucene:field#id\\",\\"urn:jena:lucene:field#label\\"]"'
@@ -443,7 +524,7 @@ def test_search_query_jena_lucene_accepts_enum_order_direction():
         order_by_direction=OrderByDirectionEnum.DESC,
     )
 
-    query_fragment = search_query.valid_lucene_query_triple
+    query_fragment = lucene_call(search_query)
 
     assert (
         '"{\\"field\\":\\"urn:jena:lucene:field#dateCreated\\",\\"order\\":\\"desc\\"}"'
@@ -464,7 +545,7 @@ def test_search_query_jena_lucene_includes_compact_filter_json():
         lucene_index_name="custom-index",
     )
 
-    query_fragment = search_query.valid_lucene_query_triple
+    query_fragment = lucene_call(search_query)
 
     assert "(?hit ?focus_node ?weight ?totalHits)" in query_fragment
     assert '("custom-index" "default" "ore"' in query_fragment
@@ -472,7 +553,7 @@ def test_search_query_jena_lucene_includes_compact_filter_json():
         '"{\\"op\\":\\"=\\",\\"args\\":[{\\"property\\":\\"http://example.com/predicate\\"},\\"Gold\\"]}"'
         in query_fragment
     )
-    assert query_fragment.endswith("5 0) .")
+    assert query_fragment.endswith("5 0)")
 
 
 def test_search_query_jena_lucene_supports_explicit_inner_limit_override():
@@ -484,7 +565,7 @@ def test_search_query_jena_lucene_supports_explicit_inner_limit_override():
         lucene_hit_limit=25,
     )
 
-    assert search_query.valid_lucene_query_triple.endswith("25 0) .")
+    assert lucene_call(search_query).endswith("25 0)")
     assert search_query.limit == 5
 
 
@@ -497,7 +578,7 @@ def test_search_query_jena_lucene_uses_request_limit_when_fts_limit_unset():
         pagination_pushed_down=True,
     )
 
-    assert search_query.valid_lucene_query_triple.endswith("5 10) .")
+    assert lucene_call(search_query).endswith("5 10)")
 
 
 def test_search_query_jena_lucene_builds_combined_construct_query_for_facets():
@@ -521,7 +602,7 @@ def test_search_query_jena_lucene_builds_combined_construct_query_for_facets():
         profile_triples=[],
         profile_gpnt=[],
     )
-    query_string = search_query.normalize_query_string(combined_query.to_string())
+    query_string = compact(combined_query.to_string())
 
     assert isinstance(combined_query, ConstructQuery)
     assert "UNION" in query_string
@@ -530,10 +611,12 @@ def test_search_query_jena_lucene_builds_combined_construct_query_for_facets():
     assert "urn:jena:lucene:index#facet" in query_string
     assert "<https://prez.dev/hasSearchMatch> ?searchMatch" in query_string
     assert "<https://prez.dev/facetName> ?facetName" in query_string
+    # the property list of the facet blank node, whitespace aside
     assert (
-        "[<https://prez.dev/facetName> ?facetName;<https://prez.dev/facetValue> ?facetValue;<https://prez.dev/facetCount> ?facetCount]"
-        in query_string
-    )
+        "[ <https://prez.dev/facetName> ?facetName ; "
+        "<https://prez.dev/facetValue> ?facetValue ; "
+        "<https://prez.dev/facetCount> ?facetCount ]"
+    ) in query_string
     assert "?facetNode" not in query_string
     assert "urn:facet:" not in query_string
     assert (
@@ -553,18 +636,20 @@ def test_lucene_cql_get_supports_conneg_and_uses_listing_default_limit(test_repo
 
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("application/sparql-query")
-    assert "CONSTRUCT" in response.text
-    assert "urn:jena:lucene:index#query" in response.text
-    assert "urn:jena:lucene:index#match" not in response.text
-    assert "(?hit ?focus_node ?weight ?totalHits)" in response.text
-    assert "<https://prez.dev/count> ?totalHits" in response.text
-    assert '("default" "default" "*" "" "" 10 0)' in response.text
-    assert "LIMIT 10" not in response.text
-    assert "OFFSET 0" not in response.text
+    assert "CONSTRUCT" in compact(response.text)
+    assert "urn:jena:lucene:index#query" in compact(response.text)
+    assert "urn:jena:lucene:index#match" not in compact(response.text)
+    assert "(?hit ?focus_node ?weight ?totalHits)" in compact(response.text)
+    assert "<https://prez.dev/count> ?totalHits" in compact(response.text)
+    assert '("default" "default" "*" "" "" 10 0)' in compact(response.text)
+    assert "LIMIT 10" not in compact(response.text)
+    assert "OFFSET 0" not in compact(response.text)
 
 
 def test_lucene_cql_get_accepts_q_filter_limit_and_offset(test_repo: Repo):
-    with _build_lucene_test_client(test_repo, lucene_index_name="custom-index") as client:
+    with _build_lucene_test_client(
+        test_repo, lucene_index_name="custom-index"
+    ) as client:
         response = client.get(
             "/cql",
             params={
@@ -586,18 +671,18 @@ def test_lucene_cql_get_accepts_q_filter_limit_and_offset(test_repo: Repo):
 
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("application/sparql-query")
-    assert "urn:jena:lucene:index#query" in response.text
-    assert "urn:jena:lucene:index#match" in response.text
-    assert "(?hit ?focus_node ?weight ?totalHits)" in response.text
-    assert "<https://prez.dev/count> ?totalHits" in response.text
-    assert '("custom-index" "default" "ore"' in response.text
+    assert "urn:jena:lucene:index#query" in compact(response.text)
+    assert "urn:jena:lucene:index#match" in compact(response.text)
+    assert "(?hit ?focus_node ?weight ?totalHits)" in compact(response.text)
+    assert "<https://prez.dev/count> ?totalHits" in compact(response.text)
+    assert '("custom-index" "default" "ore"' in compact(response.text)
     assert (
         '"{\\"op\\":\\"=\\",\\"args\\":[{\\"property\\":\\"urn:jena:lucene:field#commodity\\"},\\"Gold\\"]}"'
-        in response.text
+        in compact(response.text)
     )
-    assert "LIMIT 5" not in response.text
-    assert "OFFSET 10" not in response.text
-    assert " 5 10)" in response.text
+    assert "LIMIT 5" not in compact(response.text)
+    assert "OFFSET 10" not in compact(response.text)
+    assert " 5 10)" in compact(response.text)
 
 
 def test_lucene_cql_get_can_disable_limit_offset_pushdown(test_repo: Repo):
@@ -616,9 +701,9 @@ def test_lucene_cql_get_can_disable_limit_offset_pushdown(test_repo: Repo):
         )
 
     assert response.status_code == 200
-    assert "LIMIT 5" in response.text
-    assert "OFFSET 10" in response.text
-    assert " 5 0)" in response.text
+    assert "LIMIT 5" in compact(response.text)
+    assert "OFFSET 10" in compact(response.text)
+    assert " 5 0)" in compact(response.text)
 
 
 def test_lucene_cql_get_uses_configured_search_fields(test_repo: Repo):
@@ -629,10 +714,12 @@ def test_lucene_cql_get_uses_configured_search_fields(test_repo: Repo):
         response = client.get("/cql", params={"_mediatype": "application/sparql-query"})
 
     assert response.status_code == 200
-    assert '"[\\"urn:jena:lucene:field#id\\"]"' in response.text
+    assert '"[\\"urn:jena:lucene:field#id\\"]"' in compact(response.text)
 
 
-def test_lucene_cql_get_fields_param_overrides_configured_search_fields(test_repo: Repo):
+def test_lucene_cql_get_fields_param_overrides_configured_search_fields(
+    test_repo: Repo,
+):
     with _build_lucene_test_client(
         test_repo,
         lucene_search_fields=["urn:jena:lucene:field#label"],
@@ -651,9 +738,9 @@ def test_lucene_cql_get_fields_param_overrides_configured_search_fields(test_rep
     assert response.status_code == 200
     assert (
         '"[\\"urn:jena:lucene:field#id\\",\\"urn:jena:lucene:field#altLabel\\"]"'
-        in response.text
+        in compact(response.text)
     )
-    assert '"[\\"urn:jena:lucene:field#label\\"]"' not in response.text
+    assert '"[\\"urn:jena:lucene:field#label\\"]"' not in compact(response.text)
 
 
 def test_lucene_cql_get_order_by_uses_lucene_sort_without_outer_sparql_ordering(
@@ -674,14 +761,19 @@ def test_lucene_cql_get_order_by_uses_lucene_sort_without_outer_sparql_ordering(
     assert response.status_code == 200
     assert (
         '"{\\"field\\":\\"urn:jena:lucene:field#dateCreated\\",\\"order\\":\\"desc\\"}"'
-        in response.text
+        in compact(response.text)
     )
-    assert "?focus_node <urn:jena:lucene:field#dateCreated> ?order_by_val" not in response.text
-    assert "ORDER BY DESC( ?weight )" not in response.text
+    assert (
+        "?focus_node <urn:jena:lucene:field#dateCreated> ?order_by_val"
+        not in compact(response.text)
+    )
+    assert "ORDER BY" not in compact(response.text)
 
 
 @pytest.mark.asyncio
-async def test_generate_search_query_uses_lucene_when_feature_flag_enabled(test_repo: Repo):
+async def test_generate_search_query_uses_lucene_when_feature_flag_enabled(
+    test_repo: Repo,
+):
     runtime_settings = Settings(
         enable_cql_jena_lucene_json=True,
         lucene_index_name="shacl",
@@ -706,9 +798,7 @@ async def test_generate_search_query_uses_lucene_when_feature_flag_enabled(test_
     )
 
     search_query = await generate_search_query(
-        request=_make_request(
-            "/search?q=ore&limit=5&offset=10&filter=%7B%7D"
-        ),
+        request=_make_request("/search?q=ore&limit=5&offset=10&filter=%7B%7D"),
         query_params=query_params,
         system_repo=test_repo,
         endpoint_uri_type=(EP["extended-ogc-records/search"], ONT["ListingEndpoint"]),
@@ -716,10 +806,9 @@ async def test_generate_search_query_uses_lucene_when_feature_flag_enabled(test_
     )
 
     assert isinstance(search_query, SearchQueryJenaLucene)
-    assert "(?hit ?focus_node ?weight ?totalHits)" in search_query.valid_lucene_query_triple
-    assert (
-        '("shacl" "[\\"urn:jena:lucene:field#id\\"]" "ore"'
-        in search_query.valid_lucene_query_triple
+    assert "(?hit ?focus_node ?weight ?totalHits)" in lucene_call(search_query)
+    assert '("shacl" "[\\"urn:jena:lucene:field#id\\"]" "ore"' in lucene_call(
+        search_query
     )
 
 
@@ -745,7 +834,7 @@ async def test_generate_search_query_with_filter_only_uses_wildcard_lucene_query
                     "Gold",
                 ],
             }
-        )
+        ),
     )
 
     search_query = await generate_search_query(
@@ -757,11 +846,14 @@ async def test_generate_search_query_with_filter_only_uses_wildcard_lucene_query
     )
 
     assert isinstance(search_query, SearchQueryJenaLucene)
-    assert '("default" "default" "*"' in search_query.valid_lucene_query_triple
-    assert '"{\\"op\\":\\"=\\",\\"args\\":[{\\"property\\":\\"urn:jena:lucene:field#commodity\\"},\\"Gold\\"]}"' in search_query.valid_lucene_query_triple
-    assert search_query.valid_lucene_query_triple.endswith('10 0) .')
-    assert "urn:jena:lucene:index#match" not in search_query.normalize_query_string(
-        search_query.inner_select_gpnt.to_string()
+    assert '("default" "default" "*"' in lucene_call(search_query)
+    assert (
+        '"{\\"op\\":\\"=\\",\\"args\\":[{\\"property\\":\\"urn:jena:lucene:field#commodity\\"},\\"Gold\\"]}"'
+        in lucene_call(search_query)
+    )
+    assert lucene_call(search_query).endswith("10 0)")
+    assert (
+        "urn:jena:lucene:index#match" not in search_query.inner_select_gpnt.to_string()
     )
     assert search_query.pagination_pushed_down is True
     assert search_query.limit == 10
@@ -786,7 +878,9 @@ async def test_generate_search_query_get_fields_override_takes_precedence(
     )
 
     search_query = await generate_search_query(
-        request=_make_request("/search?q=ore&limit=5&fields=urn:jena:lucene:field%23id"),
+        request=_make_request(
+            "/search?q=ore&limit=5&fields=urn:jena:lucene:field%23id"
+        ),
         query_params=query_params,
         system_repo=test_repo,
         endpoint_uri_type=(EP["extended-ogc-records/search"], ONT["ListingEndpoint"]),
@@ -794,8 +888,8 @@ async def test_generate_search_query_get_fields_override_takes_precedence(
     )
 
     assert isinstance(search_query, SearchQueryJenaLucene)
-    assert '"[\\"urn:jena:lucene:field#id\\"]"' in search_query.valid_lucene_query_triple
-    assert '"[\\"urn:jena:lucene:field#label\\"]"' not in search_query.valid_lucene_query_triple
+    assert '"[\\"urn:jena:lucene:field#id\\"]"' in lucene_call(search_query)
+    assert '"[\\"urn:jena:lucene:field#label\\"]"' not in lucene_call(search_query)
 
 
 @pytest.mark.asyncio
@@ -834,7 +928,7 @@ async def test_generate_search_query_ignores_configured_fts_limit_when_pushdown_
     )
 
     assert isinstance(search_query, SearchQueryJenaLucene)
-    assert search_query.valid_lucene_query_triple.endswith("5 10) .")
+    assert lucene_call(search_query).endswith("5 10)")
     assert search_query.pagination_pushed_down is True
     assert search_query.limit == 5
 
@@ -876,11 +970,9 @@ async def test_generate_search_query_uses_configured_fts_limit_when_pushdown_dis
     )
 
     assert isinstance(search_query, SearchQueryJenaLucene)
-    assert search_query.valid_lucene_query_triple.endswith("25 0) .")
+    assert lucene_call(search_query).endswith("25 0)")
     assert search_query.pagination_pushed_down is False
     assert search_query.limit == 5
-
-
 
 
 @pytest.mark.asyncio
@@ -901,7 +993,7 @@ async def test_search_parser_dependencies_stand_down_for_lucene_search():
                     "Gold",
                 ],
             }
-        )
+        ),
     )
 
     get_parser = await cql_get_parser_dependency(
@@ -913,7 +1005,10 @@ async def test_search_parser_dependencies_stand_down_for_lucene_search():
     post_parser = await cql_post_listing_parser_dependency(
         query_params=query_params,
         queryable_props=[],
-        endpoint_uri_type=(EP["extended-ogc-records/search-post"], ONT["ListingEndpoint"]),
+        endpoint_uri_type=(
+            EP["extended-ogc-records/search-post"],
+            ONT["ListingEndpoint"],
+        ),
         runtime_settings=runtime_settings,
     )
 
@@ -958,16 +1053,18 @@ async def test_generate_search_query_post_uses_lucene_when_feature_flag_enabled(
         request=_make_request("/search", method="POST", json_body=body),
         query_params=query_params,
         system_repo=test_repo,
-        endpoint_uri_type=(EP["extended-ogc-records/search-post"], ONT["ListingEndpoint"]),
+        endpoint_uri_type=(
+            EP["extended-ogc-records/search-post"],
+            ONT["ListingEndpoint"],
+        ),
         runtime_settings=runtime_settings,
     )
 
     assert isinstance(search_query, SearchQueryJenaLucene)
-    assert (
-        '("default" "[\\"urn:jena:lucene:field#id\\"]" "ore"'
-        in search_query.valid_lucene_query_triple
+    assert '("default" "[\\"urn:jena:lucene:field#id\\"]" "ore"' in lucene_call(
+        search_query
     )
-    assert search_query.valid_lucene_query_triple.endswith("5 10) .")
+    assert lucene_call(search_query).endswith("5 10)")
 
 
 @pytest.mark.asyncio
@@ -1017,7 +1114,9 @@ async def test_listing_function_lucene_uses_single_query_and_preserves_total_hit
         captured["store"] = item_store
         return item_store
 
-    monkeypatch.setattr("prez.services.listings.return_from_graph", _fake_return_from_graph)
+    monkeypatch.setattr(
+        "prez.services.listings.return_from_graph", _fake_return_from_graph
+    )
 
     result = await listing_function(
         data_repo=fake_repo,
@@ -1053,8 +1152,8 @@ async def test_listing_function_lucene_uses_single_query_and_preserves_total_hit
     assert result is captured["store"]
     assert len(fake_repo.rdf_queries) == 1
     assert len(fake_repo.rdf_queries[0]) == 1
-    assert "urn:jena:lucene:index#query" in fake_repo.rdf_queries[0][0]
-    assert "COUNT(" not in fake_repo.rdf_queries[0][0]
+    assert "urn:jena:lucene:index#query" in compact(fake_repo.rdf_queries[0][0])
+    assert "COUNT(" not in compact(fake_repo.rdf_queries[0][0])
 
     count_quads = list(
         captured["store"].quads_for_pattern(
@@ -1090,18 +1189,18 @@ def test_lucene_cql_post_accepts_q_filter_limit_and_offset(test_repo: Repo):
 
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("application/sparql-query")
-    assert "urn:jena:lucene:index#query" in response.text
-    assert "urn:jena:lucene:index#match" in response.text
-    assert "(?hit ?focus_node ?weight ?totalHits)" in response.text
-    assert "<https://prez.dev/count> ?totalHits" in response.text
-    assert '("default" "default" "ore"' in response.text
+    assert "urn:jena:lucene:index#query" in compact(response.text)
+    assert "urn:jena:lucene:index#match" in compact(response.text)
+    assert "(?hit ?focus_node ?weight ?totalHits)" in compact(response.text)
+    assert "<https://prez.dev/count> ?totalHits" in compact(response.text)
+    assert '("default" "default" "ore"' in compact(response.text)
     assert (
         '"{\\"op\\":\\"=\\",\\"args\\":[{\\"property\\":\\"urn:jena:lucene:field#commodity\\"},\\"Gold\\"]}"'
-        in response.text
+        in compact(response.text)
     )
-    assert "LIMIT 5" not in response.text
-    assert "OFFSET 10" not in response.text
-    assert " 5 10)" in response.text
+    assert "LIMIT 5" not in compact(response.text)
+    assert "OFFSET 10" not in compact(response.text)
+    assert " 5 10)" in compact(response.text)
 
 
 def test_lucene_cql_get_renders_successfully_via_listing_pipeline():
@@ -1129,14 +1228,16 @@ def test_lucene_cql_get_renders_successfully_via_listing_pipeline():
     assert fake_repo.return_oxigraph_store_flags == [True]
     assert len(fake_repo.rdf_queries) == 1
     assert len(fake_repo.rdf_queries[0]) == 1
-    assert "urn:jena:lucene:index#query" in fake_repo.rdf_queries[0][0]
-    assert "urn:jena:lucene:index#match" in fake_repo.rdf_queries[0][0]
-    assert "(?hit ?focus_node ?weight ?totalHits)" in fake_repo.rdf_queries[0][0]
-    assert '("default" "default" "deep"' in fake_repo.rdf_queries[0][0]
-    assert "COUNT(" not in fake_repo.rdf_queries[0][0]
+    assert "urn:jena:lucene:index#query" in compact(fake_repo.rdf_queries[0][0])
+    assert "urn:jena:lucene:index#match" in compact(fake_repo.rdf_queries[0][0])
+    assert "(?hit ?focus_node ?weight ?totalHits)" in compact(
+        fake_repo.rdf_queries[0][0]
+    )
+    assert '("default" "default" "deep"' in compact(fake_repo.rdf_queries[0][0])
+    assert "COUNT(" not in compact(fake_repo.rdf_queries[0][0])
     assert (
         '"{\\"op\\":\\"=\\",\\"args\\":[{\\"property\\":\\"urn:jena:lucene:field#commodity\\"},\\"Gold\\"]}"'
-        in fake_repo.rdf_queries[0][0]
+        in compact(fake_repo.rdf_queries[0][0])
     )
     rendered_graph = Graph().parse(data=response.text, format="turtle")
     assert (
@@ -1189,14 +1290,16 @@ def test_lucene_cql_post_renders_successfully_via_listing_pipeline():
     assert fake_repo.return_oxigraph_store_flags == [True]
     assert len(fake_repo.rdf_queries) == 1
     assert len(fake_repo.rdf_queries[0]) == 1
-    assert "urn:jena:lucene:index#query" in fake_repo.rdf_queries[0][0]
-    assert "urn:jena:lucene:index#match" in fake_repo.rdf_queries[0][0]
-    assert "(?hit ?focus_node ?weight ?totalHits)" in fake_repo.rdf_queries[0][0]
-    assert '("default" "default" "deep"' in fake_repo.rdf_queries[0][0]
-    assert "COUNT(" not in fake_repo.rdf_queries[0][0]
+    assert "urn:jena:lucene:index#query" in compact(fake_repo.rdf_queries[0][0])
+    assert "urn:jena:lucene:index#match" in compact(fake_repo.rdf_queries[0][0])
+    assert "(?hit ?focus_node ?weight ?totalHits)" in compact(
+        fake_repo.rdf_queries[0][0]
+    )
+    assert '("default" "default" "deep"' in compact(fake_repo.rdf_queries[0][0])
+    assert "COUNT(" not in compact(fake_repo.rdf_queries[0][0])
     assert (
         '"{\\"op\\":\\"=\\",\\"args\\":[{\\"property\\":\\"urn:jena:lucene:field#commodity\\"},\\"Gold\\"]}"'
-        in fake_repo.rdf_queries[0][0]
+        in compact(fake_repo.rdf_queries[0][0])
     )
     rendered_graph = Graph().parse(data=response.text, format="turtle")
     assert (
@@ -1253,13 +1356,17 @@ def test_lucene_cql_get_rendered_path_uses_wildcard_and_listing_default_limit():
 
     assert response.status_code == 200
     assert fake_repo.return_oxigraph_store_flags == [True]
-    assert '("default" "default" "*" "" "" 10 0)' in fake_repo.rdf_queries[0][0]
-    assert "urn:jena:lucene:index#match" not in fake_repo.rdf_queries[0][0]
+    assert '("default" "default" "*" "" "" 10 0)' in compact(
+        fake_repo.rdf_queries[0][0]
+    )
+    assert "urn:jena:lucene:index#match" not in compact(fake_repo.rdf_queries[0][0])
 
 
 def test_lucene_cql_get_with_facet_profile_appends_facets_query():
     fake_repo = FakeLuceneListingRepo()
-    fake_facets_query = SimpleNamespace(to_string=lambda: "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }")
+    fake_facets_query = SimpleNamespace(
+        to_string=lambda: "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }"
+    )
 
     with patch(
         "prez.services.listings.FacetQuery.create_facets_query",
@@ -1279,7 +1386,9 @@ def test_lucene_cql_get_with_facet_profile_appends_facets_query():
     rendered_graph = Graph().parse(data=response.text, format="turtle")
     assert any(
         obj == URIRef("http://example.com/facet-profile")
-        for _, _, obj in rendered_graph.triples((None, URIRef(str(PREZ.facetProfile)), None))
+        for _, _, obj in rendered_graph.triples(
+            (None, URIRef(str(PREZ.facetProfile)), None)
+        )
     )
 
 
@@ -1306,11 +1415,11 @@ def test_lucene_cql_sparql_query_response_includes_all_generated_queries():
 
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("application/sparql-query")
-    assert "# Query 1" in response.text
-    assert "# Query 2" not in response.text
-    assert "UNION" in response.text
-    assert "urn:jena:lucene:index#query" in response.text
-    assert "urn:jena:lucene:index#facet" in response.text
+    assert "# Query 1" in compact(response.text)
+    assert "# Query 2" not in compact(response.text)
+    assert "UNION" in compact(response.text)
+    assert "urn:jena:lucene:index#query" in compact(response.text)
+    assert "urn:jena:lucene:index#facet" in compact(response.text)
 
 
 def test_lucene_cql_get_accepts_facets_in_one_lucene_query():
@@ -1329,9 +1438,9 @@ def test_lucene_cql_get_accepts_facets_in_one_lucene_query():
 
     assert response.status_code == 200
     assert len(fake_repo.rdf_queries[0]) == 1
-    assert "urn:jena:lucene:index#query" in fake_repo.rdf_queries[0][0]
-    assert "urn:jena:lucene:index#facet" in fake_repo.rdf_queries[0][0]
-    assert "UNION" in fake_repo.rdf_queries[0][0]
+    assert "urn:jena:lucene:index#query" in compact(fake_repo.rdf_queries[0][0])
+    assert "urn:jena:lucene:index#facet" in compact(fake_repo.rdf_queries[0][0])
+    assert "UNION" in compact(fake_repo.rdf_queries[0][0])
     rendered_graph = Graph().parse(data=response.text, format="turtle")
     assert (
         None,
@@ -1356,9 +1465,9 @@ def test_lucene_cql_post_accepts_facets_in_one_lucene_query():
 
     assert response.status_code == 200
     assert len(fake_repo.rdf_queries[0]) == 1
-    assert "urn:jena:lucene:index#query" in fake_repo.rdf_queries[0][0]
-    assert "urn:jena:lucene:index#facet" in fake_repo.rdf_queries[0][0]
-    assert "UNION" in fake_repo.rdf_queries[0][0]
+    assert "urn:jena:lucene:index#query" in compact(fake_repo.rdf_queries[0][0])
+    assert "urn:jena:lucene:index#facet" in compact(fake_repo.rdf_queries[0][0])
+    assert "UNION" in compact(fake_repo.rdf_queries[0][0])
 
 
 def test_lucene_cql_post_fields_override_configured_search_fields(test_repo: Repo):
@@ -1376,8 +1485,8 @@ def test_lucene_cql_post_fields_override_configured_search_fields(test_repo: Rep
         )
 
     assert response.status_code == 200
-    assert '"[\\"urn:jena:lucene:field#id\\"]"' in response.text
-    assert '"[\\"urn:jena:lucene:field#label\\"]"' not in response.text
+    assert '"[\\"urn:jena:lucene:field#id\\"]"' in compact(response.text)
+    assert '"[\\"urn:jena:lucene:field#label\\"]"' not in compact(response.text)
 
 
 def test_lucene_cql_get_rejects_non_object_filter(test_repo: Repo):
@@ -1422,7 +1531,9 @@ def test_lucene_cql_post_rejects_non_string_q(test_repo: Repo):
 def test_lucene_cql_get_rejects_unsupported_facet_before_repo_execution():
     fake_repo = FakeLuceneListingRepo()
     with _build_lucene_test_client(fake_repo) as client:
-        response = client.get("/cql", params={"facets": "urn:jena:lucene:field#authorName"})
+        response = client.get(
+            "/cql", params={"facets": "urn:jena:lucene:field#authorName"}
+        )
 
     assert response.status_code == 400
     assert "Unsupported facet IRIs" in response.json()["detail"]
@@ -1451,7 +1562,9 @@ def test_lucene_cql_get_rejects_facets_with_facet_profile():
         )
 
     assert response.status_code == 400
-    assert "cannot accept both 'facets' and 'facet_profile'" in response.json()["detail"]
+    assert (
+        "cannot accept both 'facets' and 'facet_profile'" in response.json()["detail"]
+    )
 
 
 def test_lucene_cql_get_rejects_non_iri_property_before_repo_execution():
@@ -1487,9 +1600,9 @@ def test_lucene_cql_get_annotated_response_includes_requested_profile_expansion_
     )
     profile_tss_list = [
         TriplesSameSubject.from_spo(
-            subject=Var(value="focus_node"),
-            predicate=IRI(value=str(profile_predicate)),
-            object=IRI(value=str(profile_object)),
+            Var(value="focus_node"),
+            IRI(value=str(profile_predicate)),
+            IRI(value=str(profile_object)),
         )
     ]
 
@@ -1624,7 +1737,13 @@ def test_extract_lucene_facets_from_profile_flat_facets():
 
 def test_extract_lucene_facets_from_profile_range_facets():
     """Test extracting range facets with bucket boundaries."""
-    from rdflib import BNode, Graph as RDFlibGraph, Literal as RDFlibLit, Namespace, URIRef
+    from rdflib import (
+        BNode,
+        Graph as RDFlibGraph,
+        Literal as RDFlibLit,
+        Namespace,
+        URIRef,
+    )
 
     from prez.services.query_generation.facet import extract_lucene_facets_from_profile
 
@@ -1635,7 +1754,13 @@ def test_extract_lucene_facets_from_profile_range_facets():
     range_node = BNode()
     g.add((profile, LUC.rangeFacets, range_node))
     g.add((range_node, LUC.field, URIRef("urn:field:year")))
-    g.add((range_node, LUC.bucketBoundaries, RDFlibLit("[null, 2020, 2022, 2024, null]", datatype=RDF_JSON)))
+    g.add(
+        (
+            range_node,
+            LUC.bucketBoundaries,
+            RDFlibLit("[null, 2020, 2022, 2024, null]", datatype=RDF_JSON),
+        )
+    )
 
     result = extract_lucene_facets_from_profile(profile, graph=g)
     assert result is not None
@@ -1646,7 +1771,13 @@ def test_extract_lucene_facets_from_profile_range_facets():
 
 def test_extract_lucene_facets_from_profile_mixed():
     """Test extracting both flat and range facets."""
-    from rdflib import BNode, Graph as RDFlibGraph, Literal as RDFlibLit, Namespace, URIRef
+    from rdflib import (
+        BNode,
+        Graph as RDFlibGraph,
+        Literal as RDFlibLit,
+        Namespace,
+        URIRef,
+    )
 
     from prez.services.query_generation.facet import extract_lucene_facets_from_profile
 
@@ -1658,7 +1789,13 @@ def test_extract_lucene_facets_from_profile_mixed():
     range_node = BNode()
     g.add((profile, LUC.rangeFacets, range_node))
     g.add((range_node, LUC.field, URIRef("urn:field:year")))
-    g.add((range_node, LUC.bucketBoundaries, RDFlibLit("[null, 10, 20, null]", datatype=RDF_JSON)))
+    g.add(
+        (
+            range_node,
+            LUC.bucketBoundaries,
+            RDFlibLit("[null, 10, 20, null]", datatype=RDF_JSON),
+        )
+    )
 
     result = extract_lucene_facets_from_profile(profile, graph=g)
     assert result is not None
@@ -1708,7 +1845,7 @@ def test_set_facets_on_search_query_jena_lucene():
         profile_triples=[],
         profile_gpnt=[],
     )
-    query_string = sq.normalize_query_string(combined.to_string())
+    query_string = compact(combined.to_string())
     assert "urn:jena:lucene:index#facet" in query_string
     assert "urn:field:commodity" in query_string
     assert "urn:field:state" in query_string
@@ -1744,7 +1881,7 @@ def test_lucene_cql_facet_profile_resolves_lucene_facets():
             )
 
     assert response.status_code == 200
-    sparql = response.text
+    sparql = compact(response.text)
     assert "urn:jena:lucene:index#facet" in sparql
     assert "urn:field:commodity" in sparql
     assert "urn:field:state" in sparql

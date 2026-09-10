@@ -48,7 +48,9 @@ def test_ogc_features_queryables(client):
 
 
 def test_ogc_features_queryables_json_facetable(client, mock_queryables):
-    r = client.get("/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/queryables")
+    r = client.get(
+        "/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/queryables"
+    )
     assert r.status_code == 200
     body = r.json()
     assert (
@@ -76,9 +78,7 @@ def test_ogc_features_queryables_json_facetable(client, mock_queryables):
         is True
     )
     assert (
-        body["properties"]["file:///fuseki/config.ttl#field-commodity"][
-            "x-prez-stored"
-        ]
+        body["properties"]["file:///fuseki/config.ttl#field-commodity"]["x-prez-stored"]
         is True
     )
     assert (
@@ -96,7 +96,9 @@ def test_ogc_features_queryables_json_facetable(client, mock_queryables):
 
 
 def test_ogc_features_queryables_global_and_local_match(client, mock_queryables):
-    global_r = client.get("/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/queryables")
+    global_r = client.get(
+        "/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/queryables"
+    )
     local_r = client.get(
         "/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/collections/ex:FeatureCollection/queryables"
     )

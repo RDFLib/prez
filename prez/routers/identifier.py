@@ -19,9 +19,7 @@ router = APIRouter(tags=["Identifier Resolution"])
         status.HTTP_404_NOT_FOUND: {"content": {"application/json": {}}},
     },
 )
-async def get_identifier_redirect_route(
-    iri: str, repo=Depends(get_data_repo)
-):
+async def get_identifier_redirect_route(iri: str, repo=Depends(get_data_repo)):
     """
     The `iri` query parameter is used to return a redirect response with the value from the `foaf:homepage` lookup.
     If no value is found, a 404 HTTP response is returned.

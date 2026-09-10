@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from sparql_grammar_pydantic import ConstructQuery
+from sparql_grammar import ConstructQuery
 
 from prez.dependencies import (
     cql_get_parser_dependency,

@@ -318,12 +318,14 @@ class NegotiatedPMTs(BaseModel):
                         continue
                     seen_mediatypes.add(mediatype)
                     links.append(
-                        f'<{settings.system_uri}{self.current_path}?_profile={selected_profile_token}&_mediatype={mediatype}>; '
+                        f"<{settings.system_uri}{self.current_path}?_profile={selected_profile_token}&_mediatype={mediatype}>; "
                         f'rel="{"self" if pmt == self.selected else "alternate"}"; type="{mediatype}"'
                     )
         else:
             profile_uri = "<http://www.w3.org/ns/dx/prof/Profile>"
-            distinct_profiles = {(pmt["profile"], pmt["title"]) for pmt in self.available}
+            distinct_profiles = {
+                (pmt["profile"], pmt["title"]) for pmt in self.available
+            }
             profile_header_links = [f'<{self.selected["profile"]}>; rel="profile"']
             profile_header_links.extend(
                 [
@@ -373,13 +375,13 @@ class NegotiatedPMTs(BaseModel):
             )
 
         # For distance >=1, compute distance only for 0 or 1 hops.
-        expr = "IF(?class = ?matchClass, 0,\n" \
-               "    IF(EXISTS { ?class rdfs:subClassOf ?matchClass }, 1,\n" \
-               "       999))"
-
-        distance_filter = (
-            f"FILTER(?constraint_distance <= {effective_max})"
+        expr = (
+            "IF(?class = ?matchClass, 0,\n"
+            "    IF(EXISTS { ?class rdfs:subClassOf ?matchClass }, 1,\n"
+            "       999))"
         )
+
+        distance_filter = f"FILTER(?constraint_distance <= {effective_max})"
 
         return (
             base_pattern

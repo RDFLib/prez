@@ -229,12 +229,8 @@ class QueryableProperty(BaseModel):
     )
     x_prez_facetable: Optional[bool] = Field(None, alias="x-prez-facetable")
     x_prez_sortable: Optional[bool] = Field(None, alias="x-prez-sortable")
-    x_prez_default_search: Optional[bool] = Field(
-        None, alias="x-prez-default-search"
-    )
-    x_prez_multi_valued: Optional[bool] = Field(
-        None, alias="x-prez-multi-valued"
-    )
+    x_prez_default_search: Optional[bool] = Field(None, alias="x-prez-default-search")
+    x_prez_multi_valued: Optional[bool] = Field(None, alias="x-prez-multi-valued")
     x_prez_stored: Optional[bool] = Field(None, alias="x-prez-stored")
     x_prez_indexed: Optional[bool] = Field(None, alias="x-prez-indexed")
     x_prez_lucene_field_type: Optional[str] = Field(

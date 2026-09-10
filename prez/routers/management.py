@@ -1,7 +1,6 @@
 import io
 import json
 import logging
-import pickle
 from typing import Annotated, Optional
 
 from aiocache import caches
@@ -94,16 +93,11 @@ async def return_tbox_cache(request: Request):
         mediatype = "text/turtle"
     cache = caches.get("default")
     cache_g = Graph()
-    cache_dict = cache._cache
-    for subject, pred_obj_bytes in cache_dict.items():
-        # use pickle to deserialize the pred_obj_bytes
-        pred_obj = pickle.loads(pred_obj_bytes)
+    # the cache holds the predicate-object pairs themselves, keyed by subject; an
+    # entry can be empty, meaning no annotations were found for that URI
+    for subject, pred_obj in cache._cache.items():
         for pred, obj in pred_obj:
-            if (
-                pred_obj
-            ):  # cache entry for a URI can be empty - i.e. no annotations found for URI
-                # Add the expanded triple (subject, predicate, object) to 'annotations_g'
-                cache_g.add((subject, pred, obj))
+            cache_g.add((subject, pred, obj))
     return await return_rdf(cache_g, mediatype, profile_headers={})
 
 

@@ -30,23 +30,20 @@ queryable_props = {}
 
 oxrdflib_store = Graph(store="Oxigraph")
 
+# These caches live in this process, so a serializer only buys a copy of the value on
+# every read and write - pickling and unpickling a set of URIs for every term of every
+# response. What they hold is immutable (frozensets of annotations and classes, and
+# URIRefs), so the value itself can be handed out.
+_IN_MEMORY_CACHE = {
+    "cache": "aiocache.SimpleMemoryCache",
+    "serializer": {"class": "aiocache.serializers.NullSerializer"},
+}
+
 caches.set_config(
     {
-        "default": {
-            "cache": "aiocache.SimpleMemoryCache",
-            "serializer": {"class": "aiocache.serializers.PickleSerializer"},
-        },
-        "curies": {
-            "cache": "aiocache.SimpleMemoryCache",
-            "serializer": {"class": "aiocache.serializers.PickleSerializer"},
-        },
-        "classes": {
-            "cache": "aiocache.SimpleMemoryCache",
-            "serializer": {"class": "aiocache.serializers.PickleSerializer"},
-        },
-        "queryables": {
-            "cache": "aiocache.SimpleMemoryCache",
-            "serializer": {"class": "aiocache.serializers.NullSerializer"},
-        },
+        "default": dict(_IN_MEMORY_CACHE),
+        "curies": dict(_IN_MEMORY_CACHE),
+        "classes": dict(_IN_MEMORY_CACHE),
+        "queryables": dict(_IN_MEMORY_CACHE),
     }
 )

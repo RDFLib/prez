@@ -29,44 +29,52 @@ class PyoxigraphRepo(Repo):
 
     @staticmethod
     def _handle_query_solution_results(results: QuerySolutions) -> dict[str, Any]:
-        """Organise the query results into format serializable by FastAPIs JSONResponse."""
-        variables = results.variables
-        results_dict: dict[str, Any] = {
-            "head": {"vars": [v.value for v in results.variables]}
-        }
+        """Organise the query results into format serializable by FastAPIs JSONResponse.
+
+        A solution iterates its bindings in the order of ``results.variables``, and an
+        unbound variable yields None, so the names are paired with the values by
+        position rather than looked up per row. Link generation and class lookups run
+        this over every result of every request, so the per-binding work is kept to
+        the dict literal and one type test.
+        """
+        names = [v.value for v in results.variables]
         results_list: list[dict] = []
         for result in results:
             result_dict = {}
-            for var in variables:
-                binding = result[var]
-                if binding:
-                    binding_type = _pyoxi_result_type(binding)
-                    result_dict[str(var)[1:]] = {
-                        "type": binding_type,
+            for name, binding in zip(names, result):
+                if binding is not None:
+                    result_dict[name] = {
+                        "type": _pyoxi_result_type(binding),
                         "value": binding.value,
                     }
             results_list.append(result_dict)
-        results_dict["results"] = {"bindings": results_list}
-        return results_dict
+        return {"head": {"vars": names}, "results": {"bindings": results_list}}
 
     @staticmethod
     def _handle_query_triples_results(
         results: QueryTriples, into_: Graph | Store
     ) -> Graph | Store:
-        """Parse the query results into a rdflib.Graph or pyoxigraph.Store."""
-        if isinstance(into_, Store):
-            # Into an oxigraph store
-            default = pyoxigraph.DefaultGraph()
-            # If the target is a Store, we can directly load the triples into it.
-            into_.bulk_extend(
-                Quad(t.subject, t.predicate, t.object, default) for t in results
-            )
-            return into_
+        """Parse the query results into a rdflib.Graph or pyoxigraph.Store.
+
+        Both directions go through N-Triples, which keeps the loop in Rust: building
+        a ``Quad`` per triple in Python was the largest single cost in a request,
+        about 16 ms of the 29 ms it took to move 5,600 triples.
+
+        The cost of that is blank node labels: a load names blank nodes afresh, so a
+        blank node returned by two separate queries arrives as two nodes rather than
+        one. That is what a blank node label means - it is scoped to the document it
+        arrives in - and it is what prez already does everywhere else: the rdflib
+        path below has always parsed N-Triples, and ``RemoteSparqlRepo`` bulk-loads
+        the endpoint's N-Triples response, so a deployment against Fuseki has never
+        joined blank nodes across queries. The embedded store was the one path that
+        did, and now the repository types agree.
+        """
         ntriples_bytes = results.serialize(None, format=RdfFormat.N_TRIPLES)
-        if ntriples_bytes is None:
-            # If the results are empty, return the empty store or graph.
+        # an empty result serializes to nothing at all
+        if not ntriples_bytes or len(ntriples_bytes) < 3:
             return into_
-        if len(ntriples_bytes) < 3:
+        if isinstance(into_, Store):
+            into_.bulk_load(ntriples_bytes, RdfFormat.N_TRIPLES)
             return into_
         return into_.parse(data=ntriples_bytes, format="ntriples")
 
@@ -203,12 +211,17 @@ class PyoxigraphRepo(Repo):
         return self._sparql(query)
 
 
+#: pyoxigraph term class -> its name in the SPARQL results JSON format. A dict lookup
+#: on the exact class, since these are final types with no subclasses.
+_RESULT_TYPES = {
+    pyoxigraph.Literal: "literal",
+    pyoxigraph.NamedNode: "uri",
+    pyoxigraph.BlankNode: "bnode",
+}
+
+
 def _pyoxi_result_type(term) -> str:
-    if isinstance(term, pyoxigraph.Literal):
-        return "literal"
-    elif isinstance(term, pyoxigraph.NamedNode):
-        return "uri"
-    elif isinstance(term, pyoxigraph.BlankNode):
-        return "bnode"
-    else:
-        raise ValueError(f"Unknown type: {type(term)}")
+    try:
+        return _RESULT_TYPES[type(term)]
+    except KeyError:
+        raise ValueError(f"Unknown type: {type(term)}") from None

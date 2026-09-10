@@ -1,7 +1,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
-from sparql_grammar_pydantic import ConstructQuery
+from sparql_grammar import ConstructQuery
 
 from prez.dependencies import (
     cql_get_parser_dependency,
@@ -26,7 +26,12 @@ from prez.dependencies import (
     listing_post_params_dependency,
     get_object_query_params_post,
 )
-from prez.models.query_params import ListingQueryParams, ListingPostBody, ObjectPostBody, ObjectQueryParams
+from prez.models.query_params import (
+    ListingQueryParams,
+    ListingPostBody,
+    ObjectPostBody,
+    ObjectQueryParams,
+)
 from prez.reference_data.prez_ns import EP, OGCE, ONT
 from prez.repositories import Repo
 from prez.routers.api_extras_examples import (

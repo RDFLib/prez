@@ -45,7 +45,9 @@ def test_redirect_endpoint(
         assert data.get("detail") == f"No homepage found for IRI {iri}."
 
 
-def test_redirect_endpoint_does_not_reflect_arbitrary_request_headers(client: TestClient):
+def test_redirect_endpoint_does_not_reflect_arbitrary_request_headers(
+    client: TestClient,
+):
     response = client.get(
         "/identifier/redirect",
         params={"iri": "http://data.bgs.ac.uk/id/dataHolding/13603129"},

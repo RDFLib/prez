@@ -20,7 +20,7 @@ from pyoxigraph import (
 from rdf2geojson import convert
 from rdflib import Literal, Namespace
 from rdflib.namespace import GEO, RDF, PROF, RDFS, XSD
-from sparql_grammar_pydantic import (
+from sparql_grammar import (
     IRI,
     TriplesSameSubject,
     Var,
@@ -33,8 +33,7 @@ from sparql_grammar_pydantic import (
     SolutionModifier,
     SubSelect,
     LimitOffsetClauses,
-    LimitClause,
-    OffsetClause,
+    GroupOrUnionGraphPattern,
 )
 
 from aiocache import caches
@@ -77,12 +76,6 @@ log = logging.getLogger(__name__)
 DWC = Namespace("http://rs.tdwg.org/dwc/terms/")
 
 
-def _normalize_listing_query_string(query: str, search_query) -> str:
-    if isinstance(search_query, SearchQueryJenaLucene):
-        return search_query.normalize_query_string(query)
-    return query
-
-
 def _suppress_nan_lucene_weights(item_store: OxiStore) -> None:
     weight_pred = OxiNamedNode(PREZ.searchResultWeight)
     nan_datatypes = {str(XSD.float), str(XSD.double)}
@@ -109,7 +102,7 @@ async def warm_queryables_cache(data_repo: Repo, system_repo: Repo) -> None:
 
     mediatypes_to_warm = [
         "text/anot+turtle",  # Most common annotated format
-        "text/turtle",       # Most common non-annotated format
+        "text/turtle",  # Most common non-annotated format
     ]
 
     for mediatype in mediatypes_to_warm:
@@ -373,9 +366,9 @@ async def listing_function(
     if "anot+" in pmts.selected["mediatype"]:
         construct_tss_list.append(
             TriplesSameSubject.from_spo(
-                subject=profile_nodeshape.focus_node,
-                predicate=IRI(value="https://prez.dev/type"),
-                object=IRI(value="https://prez.dev/FocusNode"),
+                profile_nodeshape.focus_node,
+                IRI(value="https://prez.dev/type"),
+                IRI(value="https://prez.dev/FocusNode"),
             )
         )
 
@@ -402,7 +395,7 @@ async def listing_function(
             profile_triples=profile_nodeshape.tssp_list,
             profile_gpnt=profile_nodeshape.gpnt_list,
         )
-        main_query_str = search_query.normalize_query_string(main_query.to_string())
+        main_query_str = main_query.to_string()
     else:
         main_query = PrezQueryConstructor(
             construct_tss_list=construct_tss_list,
@@ -410,7 +403,7 @@ async def listing_function(
             profile_gpnt=profile_nodeshape.gpnt_list,
             **subselect_kwargs,
         )
-        main_query_str = _normalize_listing_query_string(main_query.to_string(), search_query)
+        main_query_str = main_query.to_string()
     queries.append(main_query_str)
     if extra_rdf_queries:
         queries.extend(query for query in extra_rdf_queries if query)
@@ -436,52 +429,42 @@ async def listing_function(
         if not hasattr(main_query, "inner_select") or main_query.inner_select is None:
             # Create the ?focus_node a ?type triple
             basic_triple = TriplesSameSubjectPath.from_spo(
-                subject=Var(value="focus_node"),
-                predicate=IRI(value="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
-                object=Var(value="type"),
+                Var(value="focus_node"),
+                IRI(value="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+                Var(value="type"),
             )
 
             # Create a new subselect with this triple
             basic_subselect = SubSelect(
-                select_clause=SelectClause(
-                    variables_or_all=[Var(value="focus_node")],
-                    distinct=True,
+                select_clause=SelectClause.create(
+                    Var(value="focus_node"), distinct=True
                 ),
                 where_clause=WhereClause(
-                    group_graph_pattern=GroupGraphPattern(
-                        content=GroupGraphPatternSub(
-                            triples_block=TriplesBlock.from_tssp_list([basic_triple])
-                        )
+                    GroupGraphPattern(
+                        GroupGraphPatternSub([TriplesBlock([basic_triple])])
                     )
                 ),
                 solution_modifier=SolutionModifier(
-                    limit_offset=LimitOffsetClauses(
-                        limit_clause=LimitClause(limit=settings.listing_count_limit),
-                        offset_clause=OffsetClause(offset=0),
+                    limit_offset=LimitOffsetClauses.create(
+                        limit=settings.listing_count_limit, offset=0
                     )
                 ),
             )
 
             # Add the subselect to the main query's where clause
-            from sparql_grammar_pydantic import (
+            from sparql_grammar import (
                 GraphPatternNotTriples,
                 GroupOrUnionGraphPattern,
             )
 
-            subselect_gpnt = GraphPatternNotTriples(
-                content=GroupOrUnionGraphPattern(
-                    group_graph_patterns=[GroupGraphPattern(content=basic_subselect)]
-                )
+            subselect_gpnt = GroupOrUnionGraphPattern(
+                [GroupGraphPattern(basic_subselect)]
             )
 
             # Insert the subselect at the beginning of the where clause
-            if hasattr(
-                main_query.where_clause.group_graph_pattern.content,
-                "graph_patterns_or_triples_blocks",
-            ):
-                main_query.where_clause.group_graph_pattern.content.graph_patterns_or_triples_blocks.insert(
-                    0, subselect_gpnt
-                )
+            main_query.where_clause.group_graph_pattern.content.add_pattern(
+                subselect_gpnt, prepend=True
+            )
 
         facet_profile_uri, facets_query = await FacetQuery.create_facets_query(
             main_query, query_params
@@ -500,10 +483,7 @@ async def listing_function(
         )
     ):
         subselect = copy.deepcopy(main_query.inner_select)
-        count_query = _normalize_listing_query_string(
-            CountQuery(original_subselect=subselect).to_string(),
-            search_query,
-        )
+        count_query = CountQuery(original_subselect=subselect).to_string()
         queries.append(count_query)
 
     query_start_time = time.perf_counter()
@@ -574,7 +554,9 @@ async def listing_function(
             for focus_node_quad in focus_node_quads:
                 # focus_node_quad.subject is already an OxiNamedNode
                 focus_node = focus_node_quad.subject
-                focus_node_uri = focus_node.value  # Get the URI string without angle brackets
+                focus_node_uri = (
+                    focus_node.value
+                )  # Get the URI string without angle brackets
 
                 # Create a unique hash ID for this dummy search result
                 hash_input = f"{focus_node_uri}:dummy"

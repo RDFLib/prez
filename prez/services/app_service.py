@@ -15,10 +15,11 @@ from prez.cache import (
 from prez.config import settings, get_reference_data_dir
 from prez.reference_data.prez_ns import ONT, PREZ
 from prez.repositories import Repo
-from prez.services.curie_functions import get_curie_id_for_uri
+from prez.services.curie_functions import clear_curie_cache, get_curie_id_for_uri
 from prez.services.jena_assembler_queryables import (
     transform_jena_assembler_to_queryables,
 )
+from prez.services.link_generation import clear_link_generation_caches
 from prez.services.query_generation.count import startup_count_objects
 from prez.services.query_generation.prefixes import PrefixQuery
 
@@ -112,6 +113,7 @@ async def retrieve_jena_fts_shapes(repo: Repo):
     """
     Loads Jena FTS shape definitions from both remote repo and local files.
     """
+
     def _log_fts_shapes(graph: Graph, shape_type: URIRef, label: str):
         shape_nodes = list(graph.subjects(RDF.type, shape_type))
         n_shapes = len(shape_nodes)
@@ -182,6 +184,7 @@ async def add_remote_prefixes(repo: Repo):
         namespace = result["namespace"]["value"]
         prefix = result["prefix"]["value"]
         prefix_graph.bind(prefix, namespace)
+    clear_curie_cache()  # a new binding can change the curie for a URI
     log.info(f"{i + 1:,} prefixes bound from data repo")
 
 
@@ -238,10 +241,14 @@ async def _add_prefixes_from_graph(g):
             s, URIRef("http://purl.org/vocab/vann/preferredNamespaceUri")
         )
         prefix_graph.bind(str(prefix), namespace)
+    clear_curie_cache()  # a new binding can change the curie for a URI
     return i
 
 
 async def create_endpoints_graph(app_state):
+    # the node shapes parsed from this graph are cached, so anything already parsed
+    # from a previous load has to go
+    clear_link_generation_caches()
     endpoints_root = get_reference_data_dir() / "endpoints"
     # Custom data endpoints
     if app_state.settings.custom_endpoints:

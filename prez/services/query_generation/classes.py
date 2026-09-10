@@ -1,22 +1,19 @@
 import logging
 
 from rdflib.namespace import RDF
-from sparql_grammar_pydantic import (
+from sparql_grammar import (
     IRI,
-    DataBlock,
-    DataBlockValue,
     GroupGraphPattern,
     GroupGraphPatternSub,
+    InlineData,
     InlineDataOneVar,
     SelectClause,
+    SolutionModifier,
     SubSelect,
     TriplesBlock,
     TriplesSameSubjectPath,
     Var,
     WhereClause,
-    GraphPatternNotTriples,
-    InlineData,
-    SolutionModifier,
 )
 
 log = logging.getLogger(__name__)
@@ -37,36 +34,23 @@ class ClassesSelectQuery(SubSelect):
     ):
         class_var = Var(value="class")
         uris_var = Var(value="uri")
-        select_clause = SelectClause(variables_or_all=[class_var, uris_var])
-        where_clause = WhereClause(
-            group_graph_pattern=GroupGraphPattern(
-                content=GroupGraphPatternSub(
-                    triples_block=TriplesBlock(
-                        triples=TriplesSameSubjectPath.from_spo(
-                            subject=uris_var,
-                            predicate=IRI(value=RDF.type),
-                            object=class_var,
-                        )
-                    ),
-                    graph_patterns_or_triples_blocks=[
-                        GraphPatternNotTriples(
-                            content=InlineData(
-                                data_block=DataBlock(
-                                    block=InlineDataOneVar(
-                                        variable=uris_var,
-                                        datablockvalues=[
-                                            DataBlockValue(value=uri) for uri in iris
-                                        ],
-                                    )
-                                )
-                            )
-                        )
-                    ],
-                )
-            )
-        )
         super().__init__(
-            select_clause=select_clause,
-            where_clause=where_clause,
+            select_clause=SelectClause([class_var, uris_var]),
+            where_clause=WhereClause(
+                GroupGraphPattern(
+                    GroupGraphPatternSub(
+                        [
+                            TriplesBlock(
+                                [
+                                    TriplesSameSubjectPath.from_spo(
+                                        uris_var, IRI(value=RDF.type), class_var
+                                    )
+                                ]
+                            ),
+                            InlineData(InlineDataOneVar(uris_var, list(iris))),
+                        ]
+                    )
+                )
+            ),
             solution_modifier=SolutionModifier(),
         )

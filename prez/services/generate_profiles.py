@@ -5,6 +5,7 @@ from rdflib import Graph
 
 from prez.cache import profiles_graph_cache
 from prez.config import get_reference_data_dir
+from prez.services.query_generation.shacl import clear_nodeshape_cache
 
 log = logging.getLogger(__name__)
 
@@ -38,3 +39,5 @@ async def create_profiles_graph(repo) -> Graph:
         log.info("Remote profile(s) found and added")
     else:
         log.info("No remote profiles found")
+    # the node shapes parsed from these profiles are cached
+    clear_nodeshape_cache()

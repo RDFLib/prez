@@ -1,81 +1,49 @@
 import json
 
 from rdflib import RDF, Namespace
-from sparql_grammar_pydantic import (
+from sparql_grammar import (
     IRI,
-    AdditiveExpression,
-    BrackettedExpression,
+    Bind,
     BlankNodePropertyList,
     BuiltInCall,
     CollectionPath,
-    ConditionalAndExpression,
-    ConditionalOrExpression,
-    Constraint,
     ConstructQuery,
     ConstructTemplate,
-    ConstructTriples,
     Expression,
     Filter,
-    GraphNode,
-    GraphNodePath,
     GraphPatternNotTriples,
-    GraphTerm,
     GroupGraphPattern,
     GroupGraphPatternSub,
     GroupOrUnionGraphPattern,
-    LimitClause,
     LimitOffsetClauses,
-    MultiplicativeExpression,
-    NumericExpression,
-    NumericLiteral,
-    Object,
     ObjectList,
     ObjectListPath,
-    ObjectPath,
-    OffsetClause,
     OrderClause,
     OrderCondition,
+    OrderDirection,
     PathAlternative,
-    PathElt,
-    PathEltOrInverse,
-    PathPrimary,
-    PathSequence,
-    PrimaryExpression,
-    PropertyListPath,
-    PropertyListPathNotEmpty,
     PropertyListNotEmpty,
+    PropertyListPathNotEmpty,
     RDFLiteral,
-    RelationalExpression,
-    SG_Path,
     SelectClause,
     SolutionModifier,
     SubSelect,
     TriplesBlock,
-    TriplesNode,
-    TriplesNodePath,
     TriplesSameSubject,
     TriplesSameSubjectPath,
-    UnaryExpression,
-    ValueLogical,
     Var,
-    VarOrIri,
-    VarOrTerm,
-    Verb,
-    VerbPath,
     WhereClause,
+    numeric_literal,
 )
-from sparql_grammar_pydantic.grammar import PropertyList
 
+from prez.services.query_generation.grammar_helpers import construct_triples
+from prez.services.query_generation.search_default import hash_id_expression
 from prez.reference_data.prez_ns import PREZ
 
 
 LUCENE = Namespace("urn:jena:lucene:index#")
 DEFAULT_FIELD_SPEC = "default"
 EMPTY_STRING_SENTINEL = ""
-
-
-def _sparql_string_literal(value: str) -> str:
-    return json.dumps(value, ensure_ascii=False)
 
 
 def _compact_json(value: dict | list | None) -> str | None:
@@ -95,7 +63,9 @@ def _normalize_sort_direction(value: str | object | None) -> str:
         return "asc"
     normalized = getattr(value, "value", value)
     if not isinstance(normalized, str):
-        raise TypeError("Lucene sort direction must be a string or enum with a string value")
+        raise TypeError(
+            "Lucene sort direction must be a string or enum with a string value"
+        )
     return normalized.lower()
 
 
@@ -109,34 +79,25 @@ class LuceneCombinedConstructQuery(ConstructQuery):
         profile_gpnt: list[GraphPatternNotTriples] | None = None,
     ):
         search_branch_parts = [
-            GraphPatternNotTriples(
-                content=GroupOrUnionGraphPattern(
-                    group_graph_patterns=[GroupGraphPattern(content=search_subselect)]
-                )
-            )
+            GroupOrUnionGraphPattern([GroupGraphPattern(search_subselect)])
         ]
         if profile_triples:
-            search_branch_parts.append(
-                TriplesBlock.from_tssp_list(profile_triples[::-1])
-            )
+            # focus-node first: this list is already in emission order
+            search_branch_parts.append(TriplesBlock(list(profile_triples)))
         if profile_gpnt:
             search_branch_parts.extend(profile_gpnt)
 
         where_clause = WhereClause(
-            group_graph_pattern=GroupGraphPattern(
-                content=GroupGraphPatternSub(
-                    graph_patterns_or_triples_blocks=[
-                        GraphPatternNotTriples(
-                            content=GroupOrUnionGraphPattern(
-                                group_graph_patterns=[
-                                    GroupGraphPattern(
-                                        content=GroupGraphPatternSub(
-                                            graph_patterns_or_triples_blocks=search_branch_parts
-                                        )
-                                    ),
-                                    GroupGraphPattern(content=facet_subselect),
-                                ]
-                            )
+            GroupGraphPattern(
+                GroupGraphPatternSub(
+                    [
+                        GroupOrUnionGraphPattern(
+                            [
+                                GroupGraphPattern(
+                                    GroupGraphPatternSub(search_branch_parts)
+                                ),
+                                GroupGraphPattern(facet_subselect),
+                            ]
                         )
                     ]
                 )
@@ -144,9 +105,7 @@ class LuceneCombinedConstructQuery(ConstructQuery):
         )
 
         super().__init__(
-            construct_template=ConstructTemplate(
-                construct_triples=ConstructTriples.from_tss_list(construct_tss_list)
-            ),
+            construct_template=ConstructTemplate(construct_triples(construct_tss_list)),
             where_clause=where_clause,
             solution_modifier=SolutionModifier(),
         )
@@ -182,7 +141,10 @@ class SearchQueryJenaLucene:
         self._facets = facets or []
         self._sort_json = (
             _compact_json(
-                {"field": order_by, "order": _normalize_sort_direction(order_by_direction)}
+                {
+                    "field": order_by,
+                    "order": _normalize_sort_direction(order_by_direction),
+                }
             )
             if isinstance(order_by, str) and order_by
             else None
@@ -201,51 +163,51 @@ class SearchQueryJenaLucene:
 
         self._tss_list = [
             TriplesSameSubject.from_spo(
-                subject=search_result,
-                predicate=IRI(value=RDF.type),
-                object=IRI(value=PREZ.SearchResult),
+                search_result,
+                IRI(value=RDF.type),
+                IRI(value=PREZ.SearchResult),
             ),
             TriplesSameSubject.from_spo(
-                subject=search_result,
-                predicate=IRI(value=PREZ.searchResultURI),
-                object=sr_uri,
+                search_result,
+                IRI(value=PREZ.searchResultURI),
+                sr_uri,
             ),
             TriplesSameSubject.from_spo(
-                subject=search_result,
-                predicate=IRI(value=PREZ.searchResultWeight),
-                object=weight,
+                search_result,
+                IRI(value=PREZ.searchResultWeight),
+                weight,
             ),
         ]
         if self._include_matches:
             self._tss_list.extend(
                 [
                     TriplesSameSubject.from_spo(
-                        subject=search_result,
-                        predicate=IRI(value=PREZ.hasSearchMatch),
-                        object=search_match,
+                        search_result,
+                        IRI(value=PREZ.hasSearchMatch),
+                        search_match,
                     ),
                     TriplesSameSubject.from_spo(
-                        subject=search_match,
-                        predicate=IRI(value=RDF.type),
-                        object=IRI(value=PREZ.SearchResultMatch),
+                        search_match,
+                        IRI(value=RDF.type),
+                        IRI(value=PREZ.SearchResultMatch),
                     ),
                     TriplesSameSubject.from_spo(
-                        subject=search_match,
-                        predicate=IRI(value=PREZ.searchResultPredicate),
-                        object=pred,
+                        search_match,
+                        IRI(value=PREZ.searchResultPredicate),
+                        pred,
                     ),
                     TriplesSameSubject.from_spo(
-                        subject=search_match,
-                        predicate=IRI(value=PREZ.searchResultMatch),
-                        object=match,
+                        search_match,
+                        IRI(value=PREZ.searchResultMatch),
+                        match,
                     ),
                 ]
             )
         self._tss_list.append(
             TriplesSameSubject.from_spo(
-                subject=IRI(value=PREZ.SearchResult),
-                predicate=IRI(value=PREZ["count"]),
-                object=total_hits,
+                IRI(value=PREZ.SearchResult),
+                IRI(value=PREZ["count"]),
+                total_hits,
             )
         )
         facet_props_vals = [
@@ -253,34 +215,16 @@ class SearchQueryJenaLucene:
             (IRI(value=PREZ.facetValue), Var(value="facetValue")),
             (IRI(value=PREZ.facetCount), Var(value="facetCount")),
         ]
-        facet_vol_list = []
-        for prop, value in facet_props_vals:
-            facet_vol_list.append(
-                (
-                    Verb(varoriri=VarOrIri(varoriri=prop)),
-                    ObjectList(
-                        list_object=[
-                            Object(
-                                graphnode=GraphNode(
-                                    varorterm_or_triplesnode=VarOrTerm(varorterm=value)
-                                )
-                            )
-                        ]
-                    ),
-                )
-            )
-
+        # [ prez:facetName ?facetName ; prez:facetValue ?facetValue ; ... ]
         self._facet_tss_list = [
             TriplesSameSubject(
-                content=(
-                    TriplesNode(
-                        coll_or_bnpl=BlankNodePropertyList(
-                            plne=PropertyListNotEmpty(
-                                verb_objectlist=facet_vol_list
-                            )
-                        )
-                    ),
-                    PropertyList(),
+                BlankNodePropertyList(
+                    PropertyListNotEmpty(
+                        [
+                            (prop, ObjectList.create(value))
+                            for prop, value in facet_props_vals
+                        ]
+                    )
                 )
             )
         ]
@@ -318,78 +262,12 @@ class SearchQueryJenaLucene:
     def _sort_json_arg(self) -> str:
         return self._sort_json or EMPTY_STRING_SENTINEL
 
-    def _lucene_args_strings(self) -> list[str]:
-        return [
-            _sparql_string_literal(self._lucene_index_name),
-            _sparql_string_literal(_compact_field_spec(self._search_fields)),
-            _sparql_string_literal(self._term),
-            _sparql_string_literal(self._query_filter_arg()),
-            _sparql_string_literal(self._sort_json_arg()),
-            str(self._lucene_limit),
-            str(self._lucene_offset),
-        ]
-
-    def _facet_args_strings(self) -> list[str]:
-        return [
-            _sparql_string_literal(self._lucene_index_name),
-            _sparql_string_literal(DEFAULT_FIELD_SPEC),
-            _sparql_string_literal(self._term),
-            _sparql_string_literal(_compact_json(self._facets)),
-            _sparql_string_literal(self._query_filter_arg()),
-            str(self._facet_limit),
-            "0",
-        ]
-
-    def _create_uri_hash_expression(
-        self,
-        prefix: str,
-        *values: Var,
-    ) -> Expression:
-        return Expression.from_primary_expression(
-            PrimaryExpression(
-                content=BuiltInCall.create_with_one_expr(
-                    "URI",
-                    PrimaryExpression(
-                        content=BuiltInCall.create_with_n_expr(
-                            "CONCAT",
-                            [
-                                PrimaryExpression(content=RDFLiteral(value=prefix)),
-                                PrimaryExpression(
-                                    content=BuiltInCall.create_with_one_expr(
-                                        "SHA256",
-                                        PrimaryExpression(
-                                            content=BuiltInCall.create_with_n_expr(
-                                                "CONCAT",
-                                                [
-                                                    PrimaryExpression(
-                                                        content=BuiltInCall.create_with_one_expr(
-                                                            "STR",
-                                                            PrimaryExpression(content=value),
-                                                        )
-                                                    )
-                                                    for value in values
-                                                ],
-                                            )
-                                        ),
-                                    )
-                                ),
-                            ],
-                        )
-                    ),
-                )
-            )
-        )
-
     def _create_hitid_expression(
         self,
         sr_uri: Var,
         weight: Var,
     ) -> Expression:
-        return self._create_uri_hash_expression(
-            "urn:hash:",
-            sr_uri,
-            weight,
-        )
+        return hash_id_expression(sr_uri, weight)
 
     def _create_matchid_expression(
         self,
@@ -398,88 +276,35 @@ class SearchQueryJenaLucene:
         match: Var,
         weight: Var,
     ) -> Expression:
-        return self._create_uri_hash_expression(
-            "urn:match:",
-            sr_uri,
-            pred,
-            match,
-            weight,
-        )
+        return hash_id_expression(sr_uri, pred, match, weight, prefix="urn:match:")
 
     def _build_is_iri_filter(self, var: Var) -> Filter:
+        """FILTER(isIRI(?var))"""
         return Filter(
-            constraint=Constraint(
-                content=BrackettedExpression(
-                    expression=Expression(
-                        conditional_or_expression=ConditionalOrExpression(
-                            conditional_and_expressions=[
-                                ConditionalAndExpression(
-                                    value_logicals=[
-                                        ValueLogical(
-                                            relational_expression=RelationalExpression(
-                                                left=NumericExpression(
-                                                    additive_expression=AdditiveExpression(
-                                                        base_expression=MultiplicativeExpression(
-                                                            base_expression=UnaryExpression(
-                                                                primary_expression=PrimaryExpression(
-                                                                    content=BuiltInCall(
-                                                                        function_name="isIRI",
-                                                                        arguments=[var],
-                                                                    )
-                                                                )
-                                                            )
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                        )
-                                    ]
-                                )
-                            ]
-                        )
-                    )
-                )
-            )
+            Expression.from_primary_expression(BuiltInCall.create("isIRI", var))
         )
 
     @staticmethod
-    def _create_predicate_path(predicate: IRI) -> SG_Path:
-        return SG_Path(
-            path_alternative=PathAlternative(
-                sequence_paths=[
-                    PathSequence(
-                        list_path_elt_or_inverse=[
-                            PathEltOrInverse(
-                                path_elt=PathElt(
-                                    path_primary=PathPrimary(value=predicate)
-                                )
+    def _lucene_triple(subjects: list, predicate, arguments: list) -> TriplesBlock:
+        """``( ?a ?b ... ) <predicate> ( "arg" ... )`` - how Jena's Lucene index is called.
+
+        Both sides are collection paths: the variables the index binds on the left,
+        the index arguments on the right.
+        """
+        return TriplesBlock(
+            [
+                TriplesSameSubjectPath(
+                    CollectionPath(subjects),
+                    PropertyListPathNotEmpty(
+                        [
+                            (
+                                PathAlternative.iri(predicate),
+                                ObjectListPath.create(CollectionPath(arguments)),
                             )
                         ]
-                    )
-                ]
-            )
-        )
-
-    @staticmethod
-    def _create_collection_path(*nodes: GraphNodePath) -> TriplesNodePath:
-        return TriplesNodePath(
-            coll_path_or_bnpl_path=CollectionPath(graphnodepath_list=list(nodes))
-        )
-
-    @staticmethod
-    def _create_rdf_literal_node(value: str) -> GraphNodePath:
-        return GraphNodePath(
-            varorterm_or_triplesnodepath=VarOrTerm(
-                varorterm=GraphTerm(content=RDFLiteral(value=value))
-            )
-        )
-
-    @staticmethod
-    def _create_numeric_node(value: int) -> GraphNodePath:
-        return GraphNodePath(
-            varorterm_or_triplesnodepath=VarOrTerm(
-                varorterm=GraphTerm(content=NumericLiteral(value=value))
-            )
+                    ),
+                )
+            ]
         )
 
     def _build_inner_select_gpnt(
@@ -492,108 +317,37 @@ class SearchQueryJenaLucene:
     ) -> GraphPatternNotTriples:
         hit = Var(value="hit")
         snippet = Var(value="snippet")
-        lucene_query_args = self._create_collection_path(
-            self._create_rdf_literal_node(self._lucene_index_name),
-            self._create_rdf_literal_node(_compact_field_spec(self._search_fields)),
-            self._create_rdf_literal_node(self._term),
-            self._create_rdf_literal_node(self._query_filter_arg()),
-            self._create_rdf_literal_node(self._sort_json_arg()),
-            self._create_numeric_node(self._lucene_limit),
-            self._create_numeric_node(self._lucene_offset),
-        )
-        lucene_query_tb = TriplesBlock(
-            triples=TriplesSameSubjectPath(
-                content=(
-                    self._create_collection_path(
-                        GraphNodePath(
-                            varorterm_or_triplesnodepath=VarOrTerm(varorterm=hit)
-                        ),
-                        GraphNodePath(
-                            varorterm_or_triplesnodepath=VarOrTerm(varorterm=sr_uri)
-                        ),
-                        GraphNodePath(
-                            varorterm_or_triplesnodepath=VarOrTerm(varorterm=weight)
-                        ),
-                        GraphNodePath(
-                            varorterm_or_triplesnodepath=VarOrTerm(varorterm=total_hits)
-                        ),
-                    ),
-                    PropertyListPath(
-                        plpne=PropertyListPathNotEmpty(
-                            first_pair=(
-                                VerbPath(path=self._create_predicate_path(IRI(value=LUCENE.query))),
-                                ObjectListPath(
-                                    object_paths=[
-                                        ObjectPath(
-                                            graph_node_path=GraphNodePath(
-                                                varorterm_or_triplesnodepath=lucene_query_args
-                                            )
-                                        )
-                                    ]
-                                ),
-                            )
-                        )
-                    ),
-                )
-            )
+        # ( ?hit ?focus_node ?weight ?totalHits ) lucene:query ( "index" "fields" ... )
+        lucene_query_tb = self._lucene_triple(
+            [hit, sr_uri, weight, total_hits],
+            IRI(value=LUCENE.query),
+            [
+                RDFLiteral(value=self._lucene_index_name),
+                RDFLiteral(value=_compact_field_spec(self._search_fields)),
+                RDFLiteral(value=self._term),
+                RDFLiteral(value=self._query_filter_arg()),
+                RDFLiteral(value=self._sort_json_arg()),
+                numeric_literal(self._lucene_limit),
+                numeric_literal(self._lucene_offset),
+            ],
         )
 
         lucene_match_tb = None
         if self._include_matches:
-            lucene_match_tb = TriplesBlock(
-                triples=TriplesSameSubjectPath(
-                    content=(
-                        self._create_collection_path(
-                            GraphNodePath(
-                                varorterm_or_triplesnodepath=VarOrTerm(varorterm=hit)
-                            ),
-                            GraphNodePath(
-                                varorterm_or_triplesnodepath=VarOrTerm(varorterm=pred)
-                            ),
-                            GraphNodePath(
-                                varorterm_or_triplesnodepath=VarOrTerm(varorterm=match)
-                            ),
-                            GraphNodePath(
-                                varorterm_or_triplesnodepath=VarOrTerm(varorterm=snippet)
-                            ),
-                        ),
-                        PropertyListPath(
-                            plpne=PropertyListPathNotEmpty(
-                                first_pair=(
-                                    VerbPath(path=self._create_predicate_path(IRI(value=LUCENE.match))),
-                                    ObjectListPath(
-                                        object_paths=[
-                                            ObjectPath(
-                                                graph_node_path=GraphNodePath(
-                                                    varorterm_or_triplesnodepath=self._create_collection_path()
-                                                )
-                                            )
-                                        ]
-                                    ),
-                                )
-                            )
-                        ),
-                    )
-                )
+            # ( ?hit ?pred ?match ?snippet ) lucene:match ( )
+            lucene_match_tb = self._lucene_triple(
+                [hit, pred, match, snippet], IRI(value=LUCENE.match), []
             )
 
-        graph_patterns_or_triples_blocks = [lucene_query_tb]
+        patterns = [lucene_query_tb]
         if lucene_match_tb is not None:
-            graph_patterns_or_triples_blocks.append(lucene_match_tb)
-        graph_patterns_or_triples_blocks.append(
-            GraphPatternNotTriples(content=self._build_is_iri_filter(sr_uri))
-        )
+            patterns.append(lucene_match_tb)
+        patterns.append(self._build_is_iri_filter(sr_uri))
 
-        inner_ggp = GroupGraphPattern(
-            content=GroupGraphPatternSub(
-                graph_patterns_or_triples_blocks=graph_patterns_or_triples_blocks
-            )
-        )
+        inner_ggp = GroupGraphPattern(GroupGraphPatternSub(patterns))
         self._lucene_query_tb = lucene_query_tb
         self._lucene_match_tb = lucene_match_tb
-        return GraphPatternNotTriples(
-            content=GroupOrUnionGraphPattern(group_graph_patterns=[inner_ggp])
-        )
+        return GroupOrUnionGraphPattern([inner_ggp])
 
     def _build_lucene_facet_tb(
         self,
@@ -603,91 +357,38 @@ class SearchQueryJenaLucene:
     ) -> TriplesBlock:
         facet_low = Var(value="facetLow")
         facet_high = Var(value="facetHigh")
-        facet_args = self._create_collection_path(
-            self._create_rdf_literal_node(self._lucene_index_name),
-            self._create_rdf_literal_node(DEFAULT_FIELD_SPEC),
-            self._create_rdf_literal_node(self._term),
-            self._create_rdf_literal_node(_compact_json(self._facets)),
-            self._create_rdf_literal_node(self._query_filter_arg()),
-            self._create_numeric_node(self._facet_limit),
-            self._create_numeric_node(0),
-        )
-        return TriplesBlock(
-            triples=TriplesSameSubjectPath(
-                content=(
-                    self._create_collection_path(
-                        GraphNodePath(
-                            varorterm_or_triplesnodepath=VarOrTerm(varorterm=facet_name)
-                        ),
-                        GraphNodePath(
-                            varorterm_or_triplesnodepath=VarOrTerm(varorterm=facet_value)
-                        ),
-                        GraphNodePath(
-                            varorterm_or_triplesnodepath=VarOrTerm(varorterm=facet_low)
-                        ),
-                        GraphNodePath(
-                            varorterm_or_triplesnodepath=VarOrTerm(varorterm=facet_high)
-                        ),
-                        GraphNodePath(
-                            varorterm_or_triplesnodepath=VarOrTerm(varorterm=facet_count)
-                        ),
-                    ),
-                    PropertyListPath(
-                        plpne=PropertyListPathNotEmpty(
-                            first_pair=(
-                                VerbPath(path=self._create_predicate_path(IRI(value=LUCENE.facet))),
-                                ObjectListPath(
-                                    object_paths=[
-                                        ObjectPath(
-                                            graph_node_path=GraphNodePath(
-                                                varorterm_or_triplesnodepath=facet_args
-                                            )
-                                        )
-                                    ]
-                                ),
-                            )
-                        )
-                    ),
-                )
-            )
+        # ( ?facetName ?facetValue ?facetLow ?facetHigh ?facetCount ) lucene:facet ( ... )
+        return self._lucene_triple(
+            [facet_name, facet_value, facet_low, facet_high, facet_count],
+            IRI(value=LUCENE.facet),
+            [
+                RDFLiteral(value=self._lucene_index_name),
+                RDFLiteral(value=DEFAULT_FIELD_SPEC),
+                RDFLiteral(value=self._term),
+                RDFLiteral(value=_compact_json(self._facets)),
+                RDFLiteral(value=self._query_filter_arg()),
+                numeric_literal(self._facet_limit),
+                numeric_literal(0),
+            ],
         )
 
     def _build_search_subselect(self) -> SubSelect:
         weight = Var(value="weight")
-        graph_patterns_or_triples_blocks = [self._lucene_query_tb]
+        patterns = [self._lucene_query_tb]
         if self._lucene_match_tb is not None:
-            graph_patterns_or_triples_blocks.append(self._lucene_match_tb)
-        graph_patterns_or_triples_blocks.append(
-            GraphPatternNotTriples(
-                content=self._build_is_iri_filter(Var(value="focus_node"))
-            )
-        )
+            patterns.append(self._lucene_match_tb)
+        patterns.append(self._build_is_iri_filter(Var(value="focus_node")))
         limit_offset = None
         if not self._pagination_pushed_down:
-            limit_offset = LimitOffsetClauses(
-                limit_clause=LimitClause(limit=self._limit),
-                offset_clause=OffsetClause(offset=self._offset),
+            limit_offset = LimitOffsetClauses.create(
+                limit=self._limit, offset=self._offset
             )
         return SubSelect(
-            select_clause=SelectClause(
-                distinct=True,
-                variables_or_all=self._inner_select_vars,
-            ),
-            where_clause=WhereClause(
-                group_graph_pattern=GroupGraphPattern(
-                    content=GroupGraphPatternSub(
-                        graph_patterns_or_triples_blocks=graph_patterns_or_triples_blocks
-                    )
-                )
-            ),
+            select_clause=SelectClause.create(*self._inner_select_vars, distinct=True),
+            where_clause=WhereClause(GroupGraphPattern(GroupGraphPatternSub(patterns))),
             solution_modifier=SolutionModifier(
                 order_by=OrderClause(
-                    conditions=[
-                        OrderCondition(
-                            constraint_or_var=weight,
-                            direction=self.order_by_direction,
-                        )
-                    ]
+                    [OrderCondition(weight, OrderDirection(self.order_by_direction))]
                 ),
                 limit_offset=limit_offset,
             ),
@@ -703,57 +404,13 @@ class SearchQueryJenaLucene:
             facet_count=facet_count,
         )
         return SubSelect(
-            select_clause=SelectClause(
-                distinct=True,
-                variables_or_all=[
-                    facet_name,
-                    facet_value,
-                    facet_count,
-                ],
+            select_clause=SelectClause.create(
+                facet_name, facet_value, facet_count, distinct=True
             ),
             where_clause=WhereClause(
-                group_graph_pattern=GroupGraphPattern(
-                    content=GroupGraphPatternSub(
-                        graph_patterns_or_triples_blocks=[self._lucene_facet_tb]
-                    )
-                )
+                GroupGraphPattern(GroupGraphPatternSub([self._lucene_facet_tb]))
             ),
         )
-
-    @property
-    def valid_lucene_query_triple(self) -> str:
-        return (
-            f"(?hit ?focus_node ?weight ?totalHits) <{LUCENE.query}> "
-            f"({' '.join(self._lucene_args_strings())}) ."
-        )
-
-    @property
-    def valid_lucene_match_triple(self) -> str:
-        return f"(?hit ?pred ?match ?snippet) <{LUCENE.match}> () ."
-
-    @property
-    def valid_lucene_facet_triple(self) -> str:
-        return (
-            f"(?facetName ?facetValue ?facetLow ?facetHigh ?facetCount) <{LUCENE.facet}> "
-            f"({' '.join(self._facet_args_strings())}) ."
-        )
-
-    def normalize_query_string(self, query: str) -> str:
-        normalized_query = query.replace(
-            self._lucene_query_tb.to_string(),
-            self.valid_lucene_query_triple,
-        )
-        if self._lucene_match_tb is not None:
-            normalized_query = normalized_query.replace(
-                self._lucene_match_tb.to_string(),
-                self.valid_lucene_match_triple,
-            )
-        if self._lucene_facet_tb is not None:
-            normalized_query = normalized_query.replace(
-                self._lucene_facet_tb.to_string(),
-                self.valid_lucene_facet_triple,
-            )
-        return normalized_query
 
     @property
     def tss_list(self):
