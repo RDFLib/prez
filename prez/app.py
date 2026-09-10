@@ -126,6 +126,10 @@ async def lifespan(app: FastAPI):
                 and mount_app not in mounted_apps
             ):
                 mounted_apps.append(mount_app)
+    # Announced once here rather than from get_pyoxi_store, which is a per-request
+    # dependency of get_data_repo and was logging on every request, including for
+    # repository types that never touch a pyoxigraph store.
+    log.info(f"Using {app.state.settings.sparql_repo_type} data repository")
     if app.state.settings.sparql_repo_type == "pyoxigraph_memory":
         app.state.pyoxi_store = pyoxi_store = get_pyoxi_store()
         for mounted_app in mounted_apps:
@@ -199,7 +203,7 @@ def assemble_app(
     description: Optional[str] = None,
     version: Optional[str] = None,
     local_settings: Optional[Settings] = None,
-    **kwargs
+    **kwargs,
 ):
     _settings = local_settings if local_settings is not None else settings
     actual_root_path = root_path or _settings.root_path or ""
@@ -232,7 +236,7 @@ def assemble_app(
             MissingFilterQueryError: catch_missing_filter_query_param,
             httpx.HTTPError: catch_httpx_error,
         },
-        **kwargs
+        **kwargs,
     )
 
     app.state.settings = _settings

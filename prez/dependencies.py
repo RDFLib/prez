@@ -71,7 +71,6 @@ async def get_async_http_client():
 
 
 def get_pyoxi_memory_store():
-    logger.info("Using in-memory pyoxigraph data store")
     return store
 
 
@@ -89,6 +88,13 @@ def get_pyoxi_persistent_store():
 
 
 def get_pyoxi_store():
+    """The pyoxigraph store for the configured repository type.
+
+    Resolved as a dependency of :func:`get_data_repo` on every request, so it does
+    not log: which store is in use is announced once at startup instead. It is also
+    reached when the repository is remote or oxrdflib, because ``get_data_repo``
+    declares it either way and only reads it when nothing is on ``app.state``.
+    """
     if settings.sparql_repo_type == "pyoxigraph_persistent":
         return get_pyoxi_persistent_store()
     return get_pyoxi_memory_store()
