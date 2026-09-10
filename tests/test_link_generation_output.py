@@ -55,20 +55,24 @@ def test_link_quads_emits_the_members_link():
     assert members[0].object.value == "/catalogs/exm:cat/collections"
 
 
-def test_link_quads_keeps_only_the_first_members_link_per_object():
-    """Several node shapes can deliver one class; the first members link wins.
+def test_link_quads_emits_a_members_link_per_node_shape():
+    """One object can carry several members links, one per node shape reaching it.
 
-    The run of links reaches the cache in one write at the end, so the set is
-    what sees the earlier link - the cache cannot.
+    A catalogue reached at hierarchy level 1 and again as a collection under
+    another catalogue has a members link for each. The restriction to a single
+    members link per object was removed in #442, and the link generation tests
+    for issue #236 depend on both being present.
     """
     uri_node = OxiNamedNode("https://example.com/cat")
-    seen: set = set()
-    first = link_quads("/first", "/catalogs/exm:cat", uri_node, {}, seen)
-    second = link_quads("/second", "/catalogs/exm:cat", uri_node, {}, seen)
-    assert [
-        q.object.value for q in first if q.predicate.value == str(PREZ.members)
-    ] == ["/first"]
-    assert [q for q in second if q.predicate.value == str(PREZ.members)] == []
+    first = link_quads("/first", "/catalogs/exm:cat", uri_node, {})
+    second = link_quads("/second", "/catalogs/exm:cat", uri_node, {})
+    members = [
+        q.object.value
+        for quads in (first, second)
+        for q in quads
+        if q.predicate.value == str(PREZ.members)
+    ]
+    assert members == ["/first", "/second"]
 
 
 def test_link_quads_without_a_members_link_emits_none():

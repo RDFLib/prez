@@ -703,6 +703,7 @@ async def listing_post_params_dependency(request: Request) -> ListingQueryParams
     params.fields = body.get("fields")
     params.predicates = body.get("predicates", [])
     params.subscription_key = body.get("subscription-key")
+    params.result_type = body.get("result_type")
 
     params.validate_pagination_params()
     params.validate_filter()
@@ -1733,6 +1734,7 @@ async def check_unknown_params(request: Request):
         "subscription-key",
         "startindex",
         "f",
+        "resultType",
     }
     unknown_params = set(request.query_params.keys()) - known_params
     if unknown_params:

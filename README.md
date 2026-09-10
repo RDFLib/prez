@@ -276,7 +276,7 @@ All the profiles listed above provide validators that can be used with RDF data 
 
 The profiles' validators are all available from the profiles themselves (navigate to the listings of other profile resources via the specification links above) and they are also loaded into the _KurrawongAI SHACL Validator_ online tool which you can use without downloading or installing anything:
 
-- <https://tools.dev.kurrawong.ai/validate>
+- <https://tools.kurrawong.ai/validate>
 
 Look for the _VocPrez Compounded_ and similar validators. The 'compounded' bit means that validator will validate data against all VocPrez and inherited requirements.
 

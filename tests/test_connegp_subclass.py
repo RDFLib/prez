@@ -138,7 +138,7 @@ async def test_profile_subclass_matching(
     from prez import config
 
     # Force pydantic to reload from env vars
-    config.settings = config.Settings()
+    monkeypatch.setattr(config, "settings", config.Settings())
 
     # Verify config was set correctly
     assert (
@@ -190,7 +190,7 @@ async def test_exact_match_priority_over_superclass(
     monkeypatch.setenv("PROFILE_CONSTRAINT_ALLOW_SUBCLASS", "true")
     from prez import config
 
-    config.settings = config.Settings()
+    monkeypatch.setattr(config, "settings", config.Settings())
 
     system_store = client_no_override.app.state._state.get("pyoxi_system_store")
     system_repo = PyoxigraphRepo(system_store)
@@ -224,7 +224,7 @@ async def test_superclass_match_when_no_exact_match(
     monkeypatch.setenv("PROFILE_CONSTRAINT_ALLOW_SUBCLASS", "true")
     from prez import config
 
-    config.settings = config.Settings()
+    monkeypatch.setattr(config, "settings", config.Settings())
 
     system_store = client_no_override.app.state._state.get("pyoxi_system_store")
     system_repo = PyoxigraphRepo(system_store)
@@ -260,7 +260,7 @@ async def test_distance_zero_exact_match_only(
     monkeypatch.setenv("PROFILE_CONSTRAINT_ALLOW_SUBCLASS", "false")
     from prez import config
 
-    config.settings = config.Settings()
+    monkeypatch.setattr(config, "settings", config.Settings())
 
     assert config.settings.profile_constraint_allow_subclass is False
 
@@ -332,7 +332,7 @@ async def test_unlimited_distance_transitive_closure(
     monkeypatch.setenv("PROFILE_CONSTRAINT_ALLOW_SUBCLASS", "true")
     from prez import config
 
-    config.settings = config.Settings()
+    monkeypatch.setattr(config, "settings", config.Settings())
 
     assert config.settings.profile_constraint_allow_subclass is True
 
@@ -362,7 +362,9 @@ async def test_unlimited_distance_transitive_closure(
 
 
 @pytest.mark.asyncio
-async def test_backwards_compatibility(client_no_override, subclass_profiles_loaded):
+async def test_backwards_compatibility(
+    client_no_override, monkeypatch, subclass_profiles_loaded
+):
     """
     Test that existing profiles still work with the new feature (default distance=1).
 
@@ -375,7 +377,7 @@ async def test_backwards_compatibility(client_no_override, subclass_profiles_loa
     # Reset to default
     if os.environ.get("PROFILE_CONSTRAINT_ALLOW_SUBCLASS"):
         del os.environ["PROFILE_CONSTRAINT_ALLOW_SUBCLASS"]
-    config.settings = config.Settings()
+    monkeypatch.setattr(config, "settings", config.Settings())
 
     system_store = client_no_override.app.state._state.get("pyoxi_system_store")
     system_repo = PyoxigraphRepo(system_store)

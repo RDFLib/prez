@@ -352,12 +352,20 @@ def merge_listing_query_grammar_inputs(
         kwargs["order_by_value"] = Var(value="order_by_val")
         kwargs["order_by_direction"] = order_by_direction or "ASC"
 
-    # include at least one triple in the subselect, for the focus node class, which will match the class selection
-    # always included in profiles.
-    # kwargs["inner_select_gpnt"] could be present but have a FILTER EXISTS only, producing no bindings, so it is not checked here.
+    # Include at least one triple in the subselect, for the focus node class, which
+    # will match the class selection always included in profiles.
+    #
+    # Skipped when something else already binds the focus node: a pattern list, a
+    # GPNT (a FILTER EXISTS there is expected to sit alongside a TSSP outside it), or
+    # a concept hierarchy query, which brings its own binding patterns and must not
+    # also be made to match `?focus_node a ?default_class_var` (see #453).
     kwargs["inner_select_vars"] = _dedupe_inner_select_vars(kwargs["inner_select_vars"])
 
-    if not (kwargs["inner_select_tssp_list"]) and not (kwargs["inner_select_gpnt"]):
+    if (
+        not kwargs["inner_select_tssp_list"]
+        and not kwargs["inner_select_gpnt"]
+        and not concept_hierarchy_query
+    ):
         triple = (
             Var(value="focus_node"),
             IRI(value="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),

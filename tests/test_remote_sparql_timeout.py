@@ -27,6 +27,7 @@ class TestRemoteSparqlTimeout:
         # Setup
         mock_response = Mock(spec=httpx.Response)
         mock_response.status_code = 200
+        mock_response.raise_for_status = Mock()
         mock_async_client.build_request.return_value = Mock()
         mock_async_client.send.return_value = mock_response
 
@@ -53,6 +54,7 @@ class TestRemoteSparqlTimeout:
         # Setup
         mock_response = Mock(spec=httpx.Response)
         mock_response.status_code = 200
+        mock_response.raise_for_status = Mock()
         mock_async_client.build_request.return_value = Mock()
         mock_async_client.send.return_value = mock_response
 
@@ -124,6 +126,7 @@ class TestRemoteSparqlTimeout:
         """Test various timeout parameter names work correctly."""
         mock_response = Mock(spec=httpx.Response)
         mock_response.status_code = 200
+        mock_response.raise_for_status = Mock()
         mock_async_client.build_request.return_value = Mock()
         mock_async_client.send.return_value = mock_response
 

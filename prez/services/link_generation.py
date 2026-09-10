@@ -31,6 +31,7 @@ from prez.reference_data.prez_ns import PREZ
 from prez.repositories import Repo
 from prez.services.classes import get_classes
 from prez.services.curie_functions import get_curie_id_for_uri
+from prez.services.query_generation.grammar_helpers import triples_block
 from prez.services.query_generation.shacl import (
     NodeShape,
     clear_nodeshape_cache,
@@ -195,69 +196,51 @@ async def _link_generation_many(
     # many node shapes to one endpoint; multiple node shapes can point to the endpoint
     if klasses_to_get_for_uris:  # generate links
         generated_quads = []
-        members_seen: set = set()
         for klass, uri_nodes in klasses_to_get_for_uris.items():
             available_nodeshapes = await get_nodeshapes_for_class(klass)
             # run queries for available nodeshapes to get link components
             for ns in available_nodeshapes:
-                if int(ns.hierarchy_level) > 1:
-                    results = await get_link_components_many(ns, uri_nodes, repo)
-                    for result in results:
-                        # if the list at tuple[1] > 0 then there's some result and a link should be generated.
-                        # NB for top level links, there will be a result (the graph pattern matched) BUT the result will not form
-                        # part of the link. e.g. ?path_node_1 will have result(s) but is not part of the link.
-                        solution: dict
-                        for solution in result[1]:
-                            uri = URIRef(
-                                solution.pop("_link_focus_node")["value"]
-                            )  # remove the link's focus node variable
-                            # skip solutions with bnodes - can't generate valid links
-                            if any(v.get("type") == "bnode" for v in solution.values()):
-                                log.debug(
-                                    f"Skipping link generation for {uri} - solution contains bnode: {solution}"
-                                )
-                                continue
-                            # create link strings
-                            result_tuple = await create_link_strings(
-                                ns.hierarchy_level,
-                                solution,
-                                uri,
-                                endpoint_structure,
+                # Every hierarchy level runs the components query. Level 1 used to
+                # skip it, on the reasoning that there are no path nodes to resolve
+                # curies for, but the query is also what checks that the child nodes
+                # exist, so skipping it generated links for empty collections (#450).
+                results = await get_link_components_many(ns, uri_nodes, repo)
+                for result in results:
+                    # if the list at tuple[1] > 0 then there's some result and a link should be generated.
+                    # NB for top level links, there will be a result (the graph pattern matched) BUT the result will not form
+                    # part of the link. e.g. ?path_node_1 will have result(s) but is not part of the link.
+                    solution: dict
+                    for solution in result[1]:
+                        uri = URIRef(
+                            solution.pop("_link_focus_node")["value"]
+                        )  # remove the link's focus node variable
+                        # skip solutions with bnodes - can't generate valid links
+                        if any(v.get("type") == "bnode" for v in solution.values()):
+                            log.debug(
+                                f"Skipping link generation for {uri} - solution contains bnode: {solution}"
                             )
-                            if result_tuple is None:
-                                log.debug(
-                                    f"Skipping link generation for {uri} - missing required path nodes in solution: {solution}"
-                                )
-                                continue
-                            curie_for_uri, members_link, object_link, identifiers = (
-                                result_tuple
+                            continue
+                        # create link strings
+                        result_tuple = await create_link_strings(
+                            ns.hierarchy_level,
+                            solution,
+                            uri,
+                            endpoint_structure,
+                        )
+                        if result_tuple is None:
+                            log.debug(
+                                f"Skipping link generation for {uri} - missing required path nodes in solution: {solution}"
                             )
-                            generated_quads.extend(
-                                link_quads(
-                                    members_link,
-                                    object_link,
-                                    OxiNamedNode(uri),
-                                    identifiers,
-                                    members_seen,
-                                )
-                            )
-                else:
-                    for uri_node in uri_nodes:
+                            continue
                         curie_for_uri, members_link, object_link, identifiers = (
-                            await create_link_strings(
-                                ns.hierarchy_level,
-                                {},
-                                URIRef(uri_node.value),
-                                endpoint_structure,
-                            )
+                            result_tuple
                         )
                         generated_quads.extend(
                             link_quads(
                                 members_link,
                                 object_link,
-                                uri_node,
+                                OxiNamedNode(uri),
                                 identifiers,
-                                members_seen,
                             )
                         )
         # one write to the cache and one to the response, rather than two per link
@@ -329,14 +312,12 @@ def link_quads(
     object_link: str,
     uri_node: OxiNamedNode,
     identifiers: dict,
-    members_seen: set | None = None,
 ) -> list[OxiQuad]:
     """The link and identifier quads for one object, in the object's own context.
 
-    ``members_seen`` collects the objects that already have a members link in this
-    batch. Several node shapes can deliver the same class, and only the first
-    members link for an object is kept; the run of links is written to the cache
-    once at the end, so a set is what can see the earlier link, not the cache.
+    An object gets a members link for every node shape that reaches it, so one
+    object can carry several: a catalogue reached at hierarchy level 1 and again
+    as a collection under another catalogue has a members link for each (#442).
     """
     quads: list[OxiQuad] = []
     quads.append(
@@ -352,19 +333,14 @@ def link_quads(
             )
         )
     if members_link:
-        # TODO need to confirm the link value doesn't match the existing link value, as multiple endpoints can deliver
-        # the same class/have different links for the same URI
-        if members_seen is None or uri_node not in members_seen:
-            quads.append(
-                OxiQuad(
-                    uri_node,
-                    OxiNamedNode(PREZ["members"]),
-                    OxiLiteral(members_link),
-                    uri_node,
-                )
+        quads.append(
+            OxiQuad(
+                uri_node,
+                OxiNamedNode(PREZ["members"]),
+                OxiLiteral(members_link),
+                uri_node,
             )
-            if members_seen is not None:
-                members_seen.add(uri_node)
+        )
     return quads
 
 
@@ -450,6 +426,24 @@ async def get_link_components_many(
                 link_focus_var, [IRI(value=n.value) for n in for_focus_nodes]
             )
         )
+        # The type constraints for the focus node itself are not needed: the focus
+        # nodes arrive as known IRIs. Those for the other nodes of the path are, so
+        # they come across from the exists lists rather than being dropped with them.
+        type_triples_not_for_focus_node = [
+            tssp for tssp in ns.tssp_exists_list if tssp.subject != link_focus_var
+        ]
+        ttnffn_list = (
+            [triples_block(type_triples_not_for_focus_node)]
+            if type_triples_not_for_focus_node
+            else []
+        )
+        focus_classes = Var(value="focus_classes")
+        gpnt_exists_not_for_focus_node = [
+            gpnt
+            for gpnt in ns.gpnt_exists_list
+            if getattr(getattr(gpnt, "data_block", None), "variable", None)
+            != focus_classes
+        ]
         subselect_string = SubSelect(
             select_clause=SelectClause([link_focus_var] + list(ns.path_nodes.values())),
             where_clause=WhereClause(
@@ -460,6 +454,8 @@ async def get_link_components_many(
                             TriplesBlock(list(ns.tssp_list)),
                             *ns.gpnt_list,
                             _link_focus_gpnt,
+                            *ttnffn_list,
+                            *gpnt_exists_not_for_focus_node,
                         ]
                     )
                 )

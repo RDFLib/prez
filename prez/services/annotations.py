@@ -173,7 +173,7 @@ async def process_uncached_terms(
     system_graph = system_repo_results[0]
     all_results += system_graph
     for s, p, o in system_graph:
-        subjects_map[s].add((p, o))
+        subjects_map.setdefault(s, set()).add((p, o))
         remaining_terms.discard(s)
 
     # Query annotations_repo next (also local) if terms still need annotations
@@ -190,7 +190,7 @@ async def process_uncached_terms(
         annotations_graph = annotation_repo_results[0]
         all_results += annotations_graph
         for s, p, o in annotations_graph:
-            subjects_map[s].add((p, o))
+            subjects_map.setdefault(s, set()).add((p, o))
             remaining_terms.discard(s)
 
     # Only query data_repo (potentially remote) if terms still need annotations
@@ -206,7 +206,7 @@ async def process_uncached_terms(
         data_graph = data_repo_results[0]
         all_results += data_graph
         for s, p, o in data_graph:
-            subjects_map[s].add((p, o))
+            subjects_map.setdefault(s, set()).add((p, o))
 
     # Prepare subjects_list, only converting to frozenset where there are actual results
     subjects_list = [
@@ -265,7 +265,7 @@ async def process_uncached_terms_for_oxigraph(
     system_ms = (time.perf_counter() - system_start) * 1000
     system_repo_result_store: OxiStore = system_repo_results[0]
     for quad in system_repo_result_store.quads_for_pattern(None, None, None, None):
-        uriref_subjects_map[URIRef(quad[0].value)].add(
+        uriref_subjects_map.setdefault(URIRef(quad[0].value), set()).add(
             (from_ox(quad[1]), from_ox(quad[2]))
         )
         annotations_store.add(quad)
@@ -290,7 +290,7 @@ async def process_uncached_terms_for_oxigraph(
         for quad in annotation_repo_result_store.quads_for_pattern(
             None, None, None, None
         ):
-            uriref_subjects_map[URIRef(quad[0].value)].add(
+            uriref_subjects_map.setdefault(URIRef(quad[0].value), set()).add(
                 (from_ox(quad[1]), from_ox(quad[2]))
             )
             annotations_store.add(quad)
@@ -311,7 +311,7 @@ async def process_uncached_terms_for_oxigraph(
         data_repo_ms = (time.perf_counter() - data_repo_start) * 1000
         data_repo_result_store: OxiStore = data_repo_results[0]
         for quad in data_repo_result_store.quads_for_pattern(None, None, None, None):
-            uriref_subjects_map[URIRef(quad[0].value)].add(
+            uriref_subjects_map.setdefault(URIRef(quad[0].value), set()).add(
                 (from_ox(quad[1]), from_ox(quad[2]))
             )
             annotations_store.add(quad)

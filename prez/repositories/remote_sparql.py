@@ -60,6 +60,9 @@ class RemoteSparqlRepo(Repo):
                 elapsed_ms,
                 settings.sparql_endpoint,
             )
+            # A failing status is raised here, with the endpoint's own error text read
+            # into the message rather than a bare "Bad Request" (#447).
+            await self._raise_for_status_with_body(response)
             return response
         except httpx.TimeoutException as e:
             timeout_msg = (
@@ -93,7 +96,6 @@ class RemoteSparqlRepo(Repo):
         query_id = _query_fingerprint(query)
         total_start = time.perf_counter()
         response: httpx.Response = await self._send_query(query)
-        await self._raise_for_status_with_body(response)
         response_format = response.headers.get("content-type", "application/n-triples")
         response_format = response_format.split(";")[
             0
@@ -131,7 +133,6 @@ class RemoteSparqlRepo(Repo):
         query_id = _query_fingerprint(query)
         total_start = time.perf_counter()
         response: httpx.Response = await self._send_query(query)
-        await self._raise_for_status_with_body(response)
         response_format = response.headers.get("content-type", "application/n-triples")
         response_format = response_format.split(";")[
             0

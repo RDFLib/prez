@@ -131,6 +131,7 @@ class Settings(BaseSettings):
     lucene_search_fields: str | list[str] = "default"
     jena_fuseki_dataset_name: Optional[str] = None
     jena_assembler_path: Optional[str] = None
+    listing_count_on_demand: bool = False
 
     @field_validator("prez_version")
     @classmethod

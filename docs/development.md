@@ -289,6 +289,15 @@ This forms the inner select part of the SPARQL query. The inputs are one or more
 
 #### 1. Endpoint Nodeshapes:
 
+Design:
+
+Whilst the property shapes used with endpoint nodeshapes use generic SHACL mechanisms to check the classes of related nodes reached by specified predicates, the following specific design is used with the default endpoints and is generally recommended as the way to design endpoint nodeshapes for hierarchical data in Prez. Using other designs is possible, but may lead to unexpected results. The SHACL parsing in Prez is limited to "just enough" to support the relevant features.
+
+- Top level endpoint definitions should include a property shape declaring their relation to their immediate children using `sh:path` (if there is a second level endpoint), and the classes of these children using `sh:or` with multiple `sh:class` statements, or just a single `sh:class` statement if there is only one class of child.
+- Second level endpoint definitions should include a property shape declaring their relation to their immediate parent using `sh:path` and the class of this parent using `sh:class`.
+(This should prevent the appearance of top level catalogs at the second level and vice versa.)
+- Third level and further endpoint definitions should include property shapes declaring their relation to all parents in the URL path using `sh:path`. That is, there should be a property shape for each "parent" relation, e.g. one for the direct parent, another with a sequence path of length two for the "grandparent", etc., each with a `sh:class` statement specifying the class of the relevant parent
+
 Considerations:
 
 1. Class of objects to list (e.g. for /catalogs, list all items of class dcat:Catalog)
@@ -304,8 +313,12 @@ ogce:item-object
 .
 ```
 
-To determine which NodeShape (under `ont:relevantShapes`) should be used to render resources, the class of parents in the URL path is first determined. The logic for this is: 1. Get the classes of all parents in the URL path. Prez caches this class information. 2. Match these to `sh:class` statements on the PropertyShapes for the NodeShape. _`sh:class` is used on nested PropertyShapes to specify a constraint on the class of related nodes, that is, nodes related via the property shape. (e.g. "the class of the first parent is `dcat:Resource`, the class of the second parent is `dcat:Catalog`, therefore the applicable NodeShape for the listing is the `ex:Resource` NodeShape.)_
-The NodeShape information, once determined, is used for: 1. Query generation - which class of nodes to list (e.g. `rdf:Resource` below) 2. Link generation - to determine which endpoints can render a resource of a given class, and, how to find the parents of a given object in order to generate a link (e.g. the parents are all related via `dcterms:hasPart` in the example below.)
+To determine which NodeShape (under `ont:relevantShapes`) should be used to render resources, the class of parents in the URL path is first determined. The logic for this is: 
+1. Get the classes of all parents in the URL path. Prez caches this class information. 
+2. Match these to `sh:class` statements on the PropertyShapes for the NodeShape. _`sh:class` is used on nested PropertyShapes to specify a constraint on the class of related nodes, that is, nodes related via the property shape. (e.g. "the class of the first parent is `dcat:Resource`, the class of the second parent is `dcat:Catalog`, therefore the applicable NodeShape for the listing is the `ex:Resource` NodeShape.)_
+The NodeShape information, once determined, is used for: 
+1. Query generation - which class of nodes to list (e.g. `rdf:Resource` below) 
+2. Link generation - to determine which endpoints can render a resource of a given class, and, how to find the parents of a given object in order to generate a link (e.g. the parents are all related via `dcterms:hasPart` in the example below.)
 An example NodeShapes for describing an endpoint is:
 
 ```turtle
