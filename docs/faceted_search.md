@@ -98,3 +98,61 @@ For larger datasets, it is recommended to:
 - Add additional filters or search terms to reduce the scope (using parameters: filter, bbox, datetime, q)
 - Use a separate full text search/faceting implementation designed for large-scale operations such as open search or lucene
 ```
+
+## Lucene-native faceting
+
+Where the data is served through a Jena Fuseki Lucene index, a facet profile can
+name the index's own fields instead of describing SHACL property paths. Lucene
+then counts the facets itself, which is faster and avoids restating in SHACL what
+the index configuration already knows.
+
+The predicates live in the `https://prez.dev/jena-lucene/` namespace:
+
+```turtle
+@prefix luc:   <https://prez.dev/jena-lucene/> .
+@prefix field: <urn:jena:lucene:field#> .
+```
+
+`luc:flatFacets` takes one or more field IRIs, for categorical facets:
+
+```turtle
+<https://prez.dev/profile/facet-by-commodity>
+    a prof:Profile , prez:ListingProfile , prez:ObjectProfile ;
+    dcterms:identifier "facet-commodity"^^xsd:token ;
+    dcterms:title "Facet on commodity" ;
+    dcterms:description "Counts results by the indexed commodity field" ;
+    luc:flatFacets field:targetCommodity , field:sourceSystem .
+```
+
+`luc:rangeFacets` takes a node carrying `luc:field` and, optionally,
+`luc:bucketBoundaries`, for numeric and date facets. The boundaries are a JSON
+array, where `null` at either end means unbounded:
+
+```turtle
+<https://prez.dev/profile/facet-by-date>
+    a prof:Profile , prez:ListingProfile , prez:ObjectProfile ;
+    dcterms:identifier "facet-date"^^xsd:token ;
+    dcterms:title "Facet on year created" ;
+    dcterms:description "Counts results into year ranges" ;
+    luc:rangeFacets [
+        luc:field field:dateCreated ;
+        luc:bucketBoundaries "[null, 2020, 2022, 2024, null]"
+    ] .
+```
+
+Both predicates can appear on the same profile.
+
+Two things to know about how this behaves:
+
+- **The field must be facetable in the index.** A field IRI only works if its
+  entry in the Fuseki assembler configuration carries `idx:facetable true`.
+  Naming a field that is not facetable yields no counts for it.
+- **Prez chooses the mechanism from the profile.** A profile carrying
+  `luc:flatFacets` or `luc:rangeFacets` uses Lucene-native faceting; any other
+  profile falls back to the `sh:property` union path described above. So the
+  SHACL form keeps working for non-Lucene deployments, and a profile is migrated
+  by replacing its `sh:property` block with the field IRIs, dropping the
+  `shext:pathAlias` triples with it.
+
+A `luc:rangeFacets` node with no `luc:field` is skipped with a warning, as is a
+`luc:bucketBoundaries` value that is not parseable JSON.
