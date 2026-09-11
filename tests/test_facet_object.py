@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 from rdflib import Graph, URIRef, Namespace
-from sparql_grammar_pydantic import (
+from sparql_grammar import (
     IRI,
     Var,
 )
@@ -54,7 +54,9 @@ def test_site_object_property_shape(mock_settings):
     # Before the fix: always used Var("focus_node")
     # After the fix: uses IRI(focus_node_uri) when focus_node_uri is provided
     # So to test the fix, we need to test with the NEW behavior:
-    focus_node = IRI(value=focus_node_uri) if focus_node_uri else Var(value="focus_node")
+    focus_node = (
+        IRI(value=focus_node_uri) if focus_node_uri else Var(value="focus_node")
+    )
     ns = NodeShape(
         uri=URIRef("https://prez.dev/profile/site-object-facet"),
         graph=g,
@@ -72,7 +74,10 @@ def test_site_object_property_shape(mock_settings):
     # With the change, the focus node IRI should be used in WHERE patterns
     assert "<http://example.org/Site1> <http://example.org/hasReport>" in query_str
     assert "<http://example.org/Site1> <http://example.org/hasWellLog>" in query_str
-    assert "<http://example.org/Site1> <http://example.org/hasGeomchemistryReport>" in query_str
+    assert (
+        "<http://example.org/Site1> <http://example.org/hasGeomchemistryReport>"
+        in query_str
+    )
 
     # The focus node IRI should be in the COUNT expression
     assert "COUNT(<http://example.org/Site1>)" in query_str
@@ -128,7 +133,9 @@ def test_focus_node_var_vs_iri_comparison(mock_settings):
         uri=URIRef("https://prez.dev/profile/site-object-facet"),
         graph=g,
         kind="profile",
-        focus_node=Var(value="focus_node"),  # This is what line 261 currently does (WRONG)
+        focus_node=Var(
+            value="focus_node"
+        ),  # This is what line 261 currently does (WRONG)
     )
     fq_broken = FacetQuery(
         original_subselect=None,
@@ -142,7 +149,9 @@ def test_focus_node_var_vs_iri_comparison(mock_settings):
         uri=URIRef("https://prez.dev/profile/site-object-facet"),
         graph=g,
         kind="profile",
-        focus_node=IRI(value=focus_node_uri),  # This is what line 261 SHOULD do (CORRECT)
+        focus_node=IRI(
+            value=focus_node_uri
+        ),  # This is what line 261 SHOULD do (CORRECT)
     )
     fq_fixed = FacetQuery(
         original_subselect=None,
@@ -152,14 +161,17 @@ def test_focus_node_var_vs_iri_comparison(mock_settings):
     fixed_query = str(fq_fixed)
 
     # Demonstrate the bug: broken version uses ?focus_node
-    assert "?focus_node <http://example.org/hasReport>" in broken_query, \
-        "Broken code uses ?focus_node variable (this demonstrates the bug)"
+    assert (
+        "?focus_node <http://example.org/hasReport>" in broken_query
+    ), "Broken code uses ?focus_node variable (this demonstrates the bug)"
 
     # Validate the fix: fixed version uses the actual IRI
-    assert f"<{focus_node_uri}> <http://example.org/hasReport>" in fixed_query, \
-        "Fixed code uses the actual IRI in WHERE patterns"
-    assert "?focus_node <http://example.org/hasReport>" not in fixed_query, \
-        "Fixed code should not use ?focus_node variable"
+    assert (
+        f"<{focus_node_uri}> <http://example.org/hasReport>" in fixed_query
+    ), "Fixed code uses the actual IRI in WHERE patterns"
+    assert (
+        "?focus_node <http://example.org/hasReport>" not in fixed_query
+    ), "Fixed code should not use ?focus_node variable"
 
     # Both should have the IRI in the COUNT (this always worked)
     assert f"COUNT(<{focus_node_uri}>)" in broken_query

@@ -1,8 +1,2192 @@
+# Darwin Core annotations for Prez.
+# Source: https://github.com/tdwg/rs.tdwg.org/tree/master/terms and /iri
+# Retrieved: 2026-07-20
+# Source content: CC BY 4.0, https://creativecommons.org/licenses/by/4.0/
+#
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX schema: <https://schema.org/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+<http://rs.tdwg.org/dwc/iri/>
+    rdfs:label "Darwin Core IRI-value Term Analogs"@en ;
+    skos:definition "The terms on this list are intended to be used with IRI values"@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/assayType>
+    rdfs:label "Assay Type (IRI)"@en ;
+    skos:definition "A type of method used in a study to detect taxon/taxa of interest in a dwc:MaterialEntity."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/assertionBy>
+    rdfs:label "Assertion By (IRI)"@en ;
+    skos:definition "An IRI identifying a dcterms:Agent responsible for making a dwc:Assertion."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/assertionType>
+    rdfs:label "Assertion Type (IRI)"@en ;
+    skos:definition "A category that best matches the nature of a dwc:Assertion."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/assertionUnit>
+    rdfs:label "Assertion Unit (IRI)"@en ;
+    skos:definition "A unit associated with the value in dwc:assertionValue."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/assertionValue>
+    rdfs:label "Assertion Value (IRI)"@en ;
+    skos:definition "An asserted value."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/behavior>
+    rdfs:label "Behavior (IRI)"@en ;
+    skos:definition "A behavior shown by a dwc:Organism."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/caste>
+    rdfs:label "Caste (IRI)"@en ;
+    skos:definition "A social caste of a dwc:Organism."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/dataGeneralizations>
+    rdfs:label "Data Generalizations (IRI)"@en ;
+    skos:definition "Actions taken to make the shared data less specific or complete than in its original form. Suggests that alternative data of higher quality may be available on request."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/degreeOfEstablishment>
+    rdfs:label "Degree of Establishment (IRI)"@en ;
+    skos:definition "The degree to which a dwc:Organism survives, reproduces, and expands its range at the given place and time."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/discipline>
+    rdfs:label "Discipline (IRI)"@en ;
+    skos:definition "The primary branch or branches of knowledge represented by the record."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/disposition>
+    rdfs:label "Disposition (IRI)"@en ;
+    skos:definition "A current state of a dwc:MaterialEntity with respect to where it can be found."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/earliestGeochronologicalEra>
+    rdfs:label "Earliest Geochronological Era"@en ;
+    skos:definition "Use to link a dwc:GeologicalContext instance to chronostratigraphic time periods at the lowest possible level in a standardized hierarchy. Use this property to point to the earliest possible geological time period from which the dwc:MaterialEntity was collected."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/establishmentMeans>
+    rdfs:label "Establishment Means (IRI)"@en ;
+    skos:definition "Statement about whether a dwc:Organism has been introduced to a given place and time through the direct or indirect activity of modern humans."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/eventCategory>
+    rdfs:label "Event Category (IRI)"@en ;
+    skos:definition "A broad category that best matches the nature of a dwc:Event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/eventType>
+    rdfs:label "Event Type (IRI)"@en ;
+    skos:definition "A narrow category that best matches the nature of a dwc:Event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/fieldNotes>
+    rdfs:label "Field Notes (IRI)"@en ;
+    skos:definition "One of a) an indicator of the existence of, b) a reference to (publication, URI), or c) the text of notes taken in the field about the dwc:Event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/fieldNumber>
+    rdfs:label "Field Number (IRI)"@en ;
+    skos:definition "An identifier given to a dwc:Event in the field."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/footprintSRS>
+    rdfs:label "Footprint SRS (IRI)"@en ;
+    skos:definition "The ellipsoid, geodetic datum, or spatial reference system (SRS) upon which the geometry given in dwc:footprintWKT is based."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/footprintWKT>
+    rdfs:label "Footprint WKT (IRI)"@en ;
+    skos:definition "A Well-Known Text (WKT) representation of the shape (footprint, geometry) that defines the dcterms:Location. A dcterms:Location may have both a point-radius representation (see dwc:decimalLatitude) and a footprint representation, and they may differ from each other."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/fromLithostratigraphicUnit>
+    rdfs:label "From Lithostratigraphic Unit"@en ;
+    skos:definition "Use to link a dwc:GeologicalContext instance to an IRI-identified lithostratigraphic unit at the lowest possible level in a hierarchy."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/fundingAttribution>
+    rdfs:label "Funding Attribution (IRI)"@en ;
+    skos:definition "An organization or agency that provided funding for a project."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/geodeticDatum>
+    rdfs:label "Geodetic Datum (IRI)"@en ;
+    skos:definition "The ellipsoid, geodetic datum, or spatial reference system (SRS) upon which the geographic coordinates given in dwc:decimalLatitude and dwc:decimalLongitude are based."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/georeferenceProtocol>
+    rdfs:label "Georeference Protocol (IRI)"@en ;
+    skos:definition "A description or reference to a dwc:Protocol used to determine a spatial footprint, coordinates, and uncertainties."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/georeferenceSources>
+    rdfs:label "Georeference Sources (IRI)"@en ;
+    skos:definition "An IRI for a map, gazetteer, or other resource used to georeference a dcterms:Location."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/georeferenceVerificationStatus>
+    rdfs:label "Georeference Verification Status (IRI)"@en ;
+    skos:definition "A categorical description of the extent to which the georeference has been verified to represent the best possible spatial description for the dcterms:Location of the dwc:Occurrence."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/georeferencedBy>
+    rdfs:label "Georeferenced By (IRI)"@en ;
+    skos:definition "An IRI identifying a dcterms:Agent responsible for providing a georeference."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/habitat>
+    rdfs:label "Habitat (IRI)"@en ;
+    skos:definition "A category or description of the habitat in which the dwc:Event occurred."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/identificationQualifier>
+    rdfs:label "Identification Qualifier (IRI)"@en ;
+    skos:definition "A controlled value to express the determiner's doubts about the dwc:Identification."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/identificationType>
+    rdfs:label "Identification Type (IRI)"@en ;
+    skos:definition "A category that best matches the nature of a dwc:Identification."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/identificationVerificationStatus>
+    rdfs:label "Identification Verification Status (IRI)"@en ;
+    skos:definition "A categorical indicator of the extent to which a taxonomic determination has been verified to be correct."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/identifiedBy>
+    rdfs:label "Identified By (IRI)"@en ;
+    skos:definition "An IRI identifying a dcterms:Agent responsible for making a dwc:Identification."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/inCollection>
+    rdfs:label "In Collection"@en ;
+    skos:definition "Use to link any subject resource that is part of a collection to the collection containing the resource."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/inDataset>
+    rdfs:label "In Dataset"@en ;
+    skos:definition "Use to link a subject dataset record to the dataset which contains it."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/inDescribedPlace>
+    rdfs:label "In Described Place"@en ;
+    skos:definition "Use to link a dcterms:Location instance subject to the lowest level standardized hierarchically-described resource."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/informationWithheld>
+    rdfs:label "Information Withheld (IRI)"@en ;
+    skos:definition "Additional information that exists about a resource, but that is not shared publicly. Suggests that alternative data of higher quality may be available on request."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/latestGeochronologicalEra>
+    rdfs:label "Latest Geochronological Era"@en ;
+    skos:definition "Use to link a dwc:GeologicalContext instance to chronostratigraphic time periods at the lowest possible level in a standardized hierarchy. Use this property to point to the latest possible geological time period from which the dwc:MaterialEntity was collected."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/lifeStage>
+    rdfs:label "Life Stage (IRI)"@en ;
+    skos:definition "An age class or life stage of a dwc:Organism."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/locationAccordingTo>
+    rdfs:label "Location According To (IRI)"@en ;
+    skos:definition "Information about the source of this dcterms:Location information. Could be a publication (gazetteer), institution, or team of individuals."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/materialEntityCategory>
+    rdfs:label "Material Entity Category (IRI)"@en ;
+    skos:definition "A high-level, mutually exclusive classification describing the fundamental substance and origin of a dwc:MaterialEntity."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/materialEntityType>
+    rdfs:label "Material Entity Type (IRI)"@en ;
+    skos:definition "A more generic classification of a dwc:MaterialEntity than dwc:preparations but less broad than dwc:materialCategory."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/measurementDeterminedBy>
+    rdfs:label "Measurement Determined By (IRI)"@en ;
+    skos:definition "A person, group, or organization who determined the value of the dwc:MeasurementOrFact."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/measurementMethod>
+    rdfs:label "Measurement Method (IRI)"@en ;
+    skos:definition "The method or protocol used to determine the measurement, fact, characteristic, or assertion."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/measurementType>
+    rdfs:label "Measurement Type (IRI)"@en ;
+    skos:definition "The nature of the measurement, fact, characteristic, or assertion."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/measurementUnit>
+    rdfs:label "Measurement Unit (IRI)"@en ;
+    skos:definition "The units associated with the dwc:measurementValue."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/measurementValue>
+    rdfs:label "Measurement Value (IRI)"@en ;
+    skos:definition "The value of the measurement, fact, characteristic, or assertion."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/objectQuantityType>
+    rdfs:label "Object Quantity Type (IRI)"@en ;
+    skos:definition "The type of quantification system used for the quantity of dwc:MaterialEntities."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/occurrenceStatus>
+    rdfs:label "Occurrence Status (IRI)"@en ;
+    skos:definition "A statement about the detection or non-detection of a dwc:Organism during a dwc:Event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/organismInteractionType>
+    rdfs:label "Organism Interaction Type (IRI)"@en ;
+    skos:definition "A category that best matches the nature of a dwc:OrganismInteraction."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/organismQuantityType>
+    rdfs:label "Organism Quantity Type (IRI)"@en ;
+    skos:definition "The type of quantification system used for the quantity of organisms."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/organismScope>
+    rdfs:label "Organism Scope (IRI)"@en ;
+    skos:definition "A description of the kind of dwc:Organism instance. Can be used to indicate whether the dwc:Organism instance represents a discrete organism or if it represents a particular type of aggregation."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/pathway>
+    rdfs:label "Pathway (IRI)"@en ;
+    skos:definition "The process by which a dwc:Organism came to be in a given place at a given time."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/preferredSpatialRepresentation>
+    rdfs:label "Preferred Spatial Representation (IRI)"@en ;
+    skos:definition "An indication of which spatial representation best represents the dcterms:Location."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/preparations>
+    rdfs:label "Preparations (IRI)"@en ;
+    skos:definition "A preparation or preservation method for a specimen."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/protocolType>
+    rdfs:label "Protocol Type (IRI)"@en ;
+    skos:definition "A category that best matches the nature of a dwc:Protocol."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/recordNumber>
+    rdfs:label "Record Number (IRI)"@en ;
+    skos:definition "An identifier given to the dwc:Occurrence at the time it was recorded. Often serves as a link between field notes and a dwc:Occurrence record, such as a specimen collector's number."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/recordedBy>
+    rdfs:label "Recorded By (IRI)"@en ;
+    skos:definition "An IRI identifying a dcterms:Agent responsible for recording a dwc:Occurrence."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/reproductiveCondition>
+    rdfs:label "Reproductive Condition (IRI)"@en ;
+    skos:definition "A reproductive condition of a dwc:Organism."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/sampleSizeUnit>
+    rdfs:label "Sampling Size Unit (IRI)"@en ;
+    skos:definition "The unit of measurement of the size (time duration, length, area, or volume) of a sample in a sampling dwc:Event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/sampledSubstrateCategory>
+    rdfs:label "Sampled Substrate Category (IRI)"@en ;
+    skos:definition "A category or type of substrate sampled during a dwc:Event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/sampledSubstrateLayer>
+    rdfs:label "Sampled Substrate Layer (IRI)"@en ;
+    skos:definition "An IRI identifying a substrate layer sampled during a dwc:Event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/samplingProtocol>
+    rdfs:label "Sampling Protocol (IRI)"@en ;
+    skos:definition "The methods or protocols used during a dwc:Event, denoted by an IRI."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/sex>
+    rdfs:label "Sex (IRI)"@en ;
+    skos:definition "A sex of a dwc:Organism."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/siteNumber>
+    rdfs:label "Site Number (IRI)"@en ;
+    skos:definition "An identifier for a named site."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/taxonFormula>
+    rdfs:label "Taxon Formula (IRI)"@en ;
+    skos:definition "A pattern to use to construct a dwc:Identification from dwc:Taxon names and identification qualifiers."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/toDigitalSpecimen>
+    rdfs:label "To Digital Specimen"@en ;
+    skos:definition "Use to link a dwc:Identification instance subject to a taxonomic entity such as a taxon, taxon concept, or taxon name use."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/toTaxon>
+    rdfs:label "To Taxon"@en ;
+    skos:definition "Use to link a dwc:Identification instance subject to a taxonomic entity such as a taxon, taxon concept, or taxon name use."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/typeStatus>
+    rdfs:label "Type Status (IRI)"@en ;
+    skos:definition "A nomenclatural type (type status, typified scientific name, publication) applied to the subject."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/verbatimCoordinateSystem>
+    rdfs:label "Verbatim Coordinate System (IRI)"@en ;
+    skos:definition "A coordinate format for dwc:verbatimLatitude and dwc:verbatimLongitude or dwc:verbatimCoordinates."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/verbatimSRS>
+    rdfs:label "Verbatim SRS (IRI)"@en ;
+    skos:definition "The ellipsoid, geodetic datum, or spatial reference system (SRS) upon which coordinates given in dwc:verbatimLatitude and dwc:verbatimLongitude, or dwc:verbatimCoordinates are based."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/verticalDatum>
+    rdfs:label "Vertical Datum (IRI)"@en ;
+    skos:definition "The vertical datum used as the reference upon which the values in the elevation terms are based."@en ;
+.
+
+<http://rs.tdwg.org/dwc/iri/vitality>
+    rdfs:label "Vitality (IRI)"@en ;
+    skos:definition "An indication of whether a dwc:Organism was alive or dead at the time of collection or observation."@en ;
+.
 
 <http://rs.tdwg.org/dwc/terms/>
     rdfs:label "Core terms defined by Darwin Core"@en ;
-    schema:description "This term list includes all currently valid terms that have been defined in the core Darwin Core namespace dwc:.  To comment on this schema, please create a new issue in https://github.com/tdwg/dwc/issues"@en ;
+    skos:definition "This term list includes all currently valid terms that have been defined in the core Darwin Core namespace dwc:.  To comment on this schema, please create a new issue in https://github.com/tdwg/dwc/issues"@en ;
 .
 
+<http://rs.tdwg.org/dwc/terms/AcceptedTaxon>
+    rdfs:label "Accepted Taxon"@en ;
+    skos:definition "The currently valid (zoological) or accepted (botanical) name for the ScientificName."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/AcceptedTaxonID>
+    rdfs:label "Accepted Taxon ID"@en ;
+    skos:definition "A global unique identifier for the parent to the AcceptedTaxon."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/AccessConstraints>
+    rdfs:label "Access Constraints"@en ;
+    skos:definition "A description of constraints on the use of the data as shared or access to further data that is not shared."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/Assertion>
+    rdfs:label "Assertion"@en ;
+    skos:definition "A statement about an rdfs:Resource (http://www.w3.org/2000/01/rdf-schema#Resource)."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/CatalogNumberNumeric>
+    rdfs:label "Catalog Number Numeric"@en ;
+    skos:definition "The numeric value of the catalogNumber, used to facilitate numerical sorting and searching by ranges."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/Dataset>
+    rdfs:label "Dataset"@en ;
+    skos:definition "The category of information pertaining to a logical set of records."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/DwCType>
+    rdfs:label "Darwin Core Type"@en ;
+    skos:definition "The set of classes specified by the Darwin Core Type Vocabulary, used to categorize the nature or genre of the resource."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/EarliestDateCollected>
+    rdfs:label "Earliest Date Collected"@en ;
+    skos:definition "The earliest date-time in a period during which a event occurred. If the event is recorded as occurring at a single date-time, populate both EarliestDateCollected and LatestDateCollected with the same value. Recommended best practice is to use an encoding scheme, such as ISO 8601:2004(E)."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/EndTimeOfDay>
+    rdfs:label "End Time of Day"@en ;
+    skos:definition "The time of day when the event ended, expressed as decimal hours from midnight, local time."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/Event>
+    rdfs:label "Event"@en ;
+    skos:definition "An action, process, or set of circumstances occurring at a dcterms:Location during a period of time."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/EventAttribute>
+    rdfs:label "Event Attribute"@en ;
+    skos:definition "Container class for information about attributes related to a given sampling event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/EventAttributeAccuracy>
+    rdfs:label "Event Attribute Accuracy"@en ;
+    skos:definition "The description of the error associated with the EventAttributeValue."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/EventAttributeDeterminedBy>
+    rdfs:label "Event Attribute Determined By"@en ;
+    skos:definition "The agent responsible for having determined the value of the measurement or characteristic of the sampling event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/EventAttributeDeterminedDate>
+    rdfs:label "Event Attribute Determined Date"@en ;
+    skos:definition "The date on which the the measurement or characteristic of the sampling event was made."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/EventAttributeID>
+    rdfs:label "Event Attribute ID"@en ;
+    skos:definition "An identifier for the event attribute. May be a global unique identifier or an identifier specific to the data set."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/EventAttributeRemarks>
+    rdfs:label "Event Attribute Remarks"@en ;
+    skos:definition "Comments or notes accompanying the measurement or characteristic of the sampling event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/EventAttributeType>
+    rdfs:label "Event Attribute Type"@en ;
+    skos:definition "The nature of the measurement or characteristic of the sampling event. Recommended best practice is to use a controlled vocabulary."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/EventAttributeUnit>
+    rdfs:label "Event Attribute Unit"@en ;
+    skos:definition "The units for the value of the measurement or characteristic of the sampling event. Recommended best practice is to use International System of Units (SI) units."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/EventAttributeValue>
+    rdfs:label "Event Attribute"@en ;
+    skos:definition "The value of the measurement or characteristic of the sampling event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/EventMeasurement>
+    rdfs:label "Event Measurement"@en ;
+    skos:definition "The category of information pertaining to measurements associated with an event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/FossilSpecimen>
+    rdfs:label "Fossil Specimen"@en ;
+    skos:definition "A preserved specimen that is a fossil."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/Generalizations>
+    rdfs:label "Generalizations"@en ;
+    skos:definition "Actions taken to make the data as shared less specific or complete than in its original form. Suggests that alternative data of highly quality may be available on request."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/GeologicalContext>
+    rdfs:label "Geological Context"@en ;
+    skos:definition "A set of geological designations, such as stratigraphy, that qualifies a dcterms:Location or source of a dwc:MaterialEntity."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/HigherTaxon>
+    rdfs:label "Higher Taxon"@en ;
+    skos:definition "A list (concatenated and separated) of the names for the taxonomic ranks less specific than the ScientificName."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/HigherTaxonID>
+    rdfs:label "Higher Taxon ID"@en ;
+    skos:definition "A global unique identifier for the parent to the taxon."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/HumanObservation>
+    rdfs:label "Human Observation"@en ;
+    skos:definition "An output of a human observation process."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/Identification>
+    rdfs:label "Identification"@en ;
+    skos:definition "A classification of a resource according to a classification scheme."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/LatestDateCollected>
+    rdfs:label "Latest Date Collected"@en ;
+    skos:definition "The latest date-time in a period during which a event occurred. If the event is recorded as occurring at a single date-time, populate both EarliestDateCollected and LatestDateCollected with the same value. Recommended best practice is to use an encoding scheme, such as ISO 8601:2004(E)."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/LivingSpecimen>
+    rdfs:label "Living Specimen"@en ;
+    skos:definition "A specimen that is alive."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/MachineObservation>
+    rdfs:label "Machine Observation"@en ;
+    skos:definition "An output of a machine observation process."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/MaterialCitation>
+    rdfs:label "Material Citation"@en ;
+    skos:definition "A reference to or citation of one, a part of, or multiple specimens in scholarly publications."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/MaterialEntity>
+    rdfs:label "Material Entity"@en ;
+    skos:definition "An entity that can be identified, exists for some period of time, and consists in whole or in part of physical matter while it exists."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/MaterialSample>
+    rdfs:label "Material Sample"@en ;
+    skos:definition "A material entity that represents an entity of interest in whole or in part."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/MeasurementOrFact>
+    rdfs:label "Measurement Or Fact"@en ;
+    skos:definition "A measurement of or fact about an rdfs:Resource (http://www.w3.org/2000/01/rdf-schema#Resource)."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/MolecularProtocol>
+    rdfs:label "Molecular Protocol"@en ;
+    skos:definition "A protocol used to perform a dwc:NucleotideAnalysis and potentially derive a dwc:NucleotideSequence from a dwc:MaterialEntity."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/NucleotideAnalysis>
+    rdfs:label "Nucleotide Analysis"@en ;
+    skos:definition "A link between a dwc:NucleotideSequence or a dwc:Identification and a dwc:Event and a dwc:MaterialEntity from which it was derived, using a specified dwc:Protocol."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/NucleotideSequence>
+    rdfs:label "Nucleotide Sequence"@en ;
+    skos:definition "A digital representation of a nucleotide sequence."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/Occurrence>
+    rdfs:label "Occurrence"@en ;
+    skos:definition "A dwc:Event that establishes the state of a dwc:Organism at a particular place and time."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/OccurrenceMeasurement>
+    rdfs:label "Occurrence Measurement"@en ;
+    skos:definition "The category of information pertaining to measurements accociated with an occurrence."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/Organism>
+    rdfs:label "Organism"@en ;
+    skos:definition "A particular organism or defined group of organisms considered to be taxonomically homogeneous."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/OrganismInteraction>
+    rdfs:label "Organism Interaction"@en ;
+    skos:definition "An interaction between two dwc:Organisms during a dwc:Event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/PreservedSpecimen>
+    rdfs:label "Preserved Specimen"@en ;
+    skos:definition "A specimen that has been preserved."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/PreviousIdentifications>
+    rdfs:label "Previous Identifications"@en ;
+    skos:definition "A list (concatenated and separated) of previous ScientificNames to which the sample was identified."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/Protocol>
+    rdfs:label "Protocol"@en ;
+    skos:definition "A method used during an action."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/Provenance>
+    rdfs:label "Provenance"@en ;
+    skos:definition "Information about an entity’s origins."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/RelatedBasisOfRecord>
+    rdfs:label "Related Basis of Record"@en ;
+    skos:definition "The nature of the related resource. Recommended best practice is to use the same controlled vocabulary as for basisOfRecord."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/ResourceRelationship>
+    rdfs:label "Resource Relationship"@en ;
+    skos:definition "A relationship of one rdfs:Resource (http://www.w3.org/2000/01/rdf-schema#Resource) to another."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/Sample>
+    rdfs:label "Sample"@en ;
+    skos:definition "Container class for information about the results of a sampling event (specimen, observation, etc.)"@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/SampleAttribute>
+    rdfs:label "Sample Attribute"@en ;
+    skos:definition "Container class for information about attributes related to a given sample."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/SampleAttributeAccuracy>
+    rdfs:label "Sample Attribute Accuracy"@en ;
+    skos:definition "The description of the error associated with the SampleAttributeValue."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/SampleAttributeDeterminedBy>
+    rdfs:label "Sample Attribute Determined By"@en ;
+    skos:definition "The agent responsible for having determined the value of the measurement or characteristic of the sample."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/SampleAttributeDeterminedDate>
+    rdfs:label "Sample Attribute Determined Date"@en ;
+    skos:definition "The date on which the the measurement or characteristic of the sample was made."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/SampleAttributeRemarks>
+    rdfs:label "Sample Attribute Remarks"@en ;
+    skos:definition "Comments or notes accompanying the measurement or characteristic of the sample."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/SampleAttributeUnit>
+    rdfs:label "Sample Attribute Unit"@en ;
+    skos:definition "The units for the value of the measurement or characteristic of the sample. Recommended best practice is to use International System of Units (SI) units."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/SampleAttributeValue>
+    rdfs:label "Sample Attribute Value"@en ;
+    skos:definition "The value of the measurement or characteristic of the sample."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/SampleRemarks>
+    rdfs:label "Sample Remarks"@en ;
+    skos:definition "Comments or notes about the sample or record."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/SamplingAttributeID>
+    rdfs:label "Sample Attribute ID"@en ;
+    skos:definition "An identifier for the sampling attribute. May be a global unique identifier or an identifier specific to the data set."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/SamplingAttributeType>
+    rdfs:label "Sample Attribute Type"@en ;
+    skos:definition "The nature of the measurement or characteristic of the sample. Recommended best practice is to use a controlled vocabulary."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/SamplingEvent>
+    rdfs:label "Sampling Event"@en ;
+    skos:definition "Container class for information about the conditions and methods of acquisition of samples."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/SamplingEventAttributes>
+    rdfs:label "Sampling Event Attributes"@en ;
+    skos:definition "A list (concatenated and separated) of additional measurements or characteristics of the sampling event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/SamplingEventID>
+    rdfs:label "Sampling Event ID"@en ;
+    skos:definition "An identifier for the sampling event. May be a global unique identifier or an identifier specific to the data set."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/SamplingEventRemarks>
+    rdfs:label "Sampling Event Remarks"@en ;
+    skos:definition "Comments or notes about the sampling event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/SamplingLocation>
+    rdfs:label "Sampling Location"@en ;
+    skos:definition "Container class for information about the location where a sampling event occurred."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/SamplingLocationID>
+    rdfs:label "Sampling Location ID"@en ;
+    skos:definition "An identifier for the sampling location. May be a global unique identifier or an identifier specific to the data set."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/SamplingLocationRemarks>
+    rdfs:label "Sampling Location Remarks"@en ;
+    skos:definition "Comments or notes about the sampling location."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/StartTimeOfDay>
+    rdfs:label "Start Time of Day"@en ;
+    skos:definition "The time of day when the event began, expressed as decimal hours from midnight, local time."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/Taxon>
+    rdfs:label "Taxon"@en ;
+    skos:definition "A group of organisms (sensu http://purl.obolibrary.org/obo/OBI_0100026) considered by taxonomists to form a homogeneous unit."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/TaxonID>
+    rdfs:label "Taxon ID"@en ;
+    skos:definition "A global unique identifier for the taxon (name in a classification)."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/UsagePolicy>
+    rdfs:label "Usage Policy"@en ;
+    skos:definition "Information about rights, usage, and attribution statements applicable to an entity."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/acceptedNameUsage>
+    rdfs:label "Accepted Name Usage"@en ;
+    skos:definition "The full name, with authorship and date information if known, of the currently valid (zoological) or accepted (botanical) dwc:Taxon."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/acceptedNameUsageID>
+    rdfs:label "Accepted Name Usage ID"@en ;
+    skos:definition "An identifier for the name usage (documented meaning of the name according to a source) of the currently valid (zoological) or accepted (botanical) taxon."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/acceptedScientificName>
+    rdfs:label "Accepted Scientific Name"@en ;
+    skos:definition "The currently valid (zoological) or accepted (botanical) name for the scientificName."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/acceptedScientificNameID>
+    rdfs:label "Accepted Scientific Name ID"@en ;
+    skos:definition "A unique identifier for the acceptedScientificName."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/acceptedTaxonID>
+    rdfs:label "Accepted Taxon ID"@en ;
+    skos:definition "An identifier for the name of the currently valid (zoological) or accepted (botanical) taxon. See acceptedTaxon."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/acceptedTaxonName>
+    rdfs:label "Accepted Taxon Name"@en ;
+    skos:definition "The currently valid (zoological) or accepted (botanical) name for the scientificName."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/acceptedTaxonNameID>
+    rdfs:label "Accepted Taxon Name ID"@en ;
+    skos:definition "A unique identifier for the acceptedTaxonName."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/accordingTo>
+    rdfs:label "According To"@en ;
+    skos:definition "Abstract term to attribute information to a source."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/accuracy>
+    rdfs:label "Accuracy"@en ;
+    skos:definition "Abstract term to capture error information about a measurement or fact."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/agentID>
+    rdfs:label "Agent ID"@en ;
+    skos:definition "An identifier for a dcterms:Agent."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/agentRemarks>
+    rdfs:label "Agent Remarks"@en ;
+    skos:definition "Comments or notes about a dcterms:Agent."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/agentRoleOrder>
+    rdfs:label "Agent Role Order"@en ;
+    skos:definition "A numerical position of an AgentRole in a set of AgentRoles."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/agentType>
+    rdfs:label "Agent Type"@en ;
+    skos:definition "A category that best matches the nature of a dcterms:Agent."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/assayType>
+    rdfs:label "Assay Type"@en ;
+    skos:definition "A type of method used in a study to detect taxon/taxa of interest in a dwc:MaterialEntity."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/assertionBy>
+    rdfs:label "Assertion By"@en ;
+    skos:definition "A name for a dcterms:Agent responsible for making a dwc:Assertion."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/assertionEffectiveDate>
+    rdfs:label "Assertion Effective Date"@en ;
+    skos:definition "A date on which a state or measurement of a dwc:Assertion was deemed to first be in effect."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/assertionError>
+    rdfs:label "Assertion Error"@en ;
+    skos:definition "A description of the potential error associated with a dwc:assertionValue."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/assertionID>
+    rdfs:label "Assertion ID"@en ;
+    skos:definition "An identifier for a dwc:Assertion."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/assertionMadeDate>
+    rdfs:label "Assertion Made Date"@en ;
+    skos:definition "A date on which a dwc:Assertion was created."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/assertionProtocols>
+    rdfs:label "Assertion Protocols"@en ;
+    skos:definition "Names of, references to, or descriptions of dwc:Protocols used in making a dwc:Assertion."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/assertionReferences>
+    rdfs:label "Assertion References"@en ;
+    skos:definition "A list (concatenated and separated) of dcterms:BibliographicResources associated with a dwc:Assertion."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/assertionRemarks>
+    rdfs:label "Assertion Remarks"@en ;
+    skos:definition "Comments or notes about a dwc:Assertion."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/assertionType>
+    rdfs:label "Assertion Type"@en ;
+    skos:definition "A category that best matches the nature of a dwc:Assertion."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/assertionUnit>
+    rdfs:label "Assertion Unit"@en ;
+    skos:definition "A unit associated with the value in dwc:assertionValue."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/assertionValue>
+    rdfs:label "Assertion Value"@en ;
+    skos:definition "An asserted value."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/associatedMedia>
+    rdfs:label "Associated Media"@en ;
+    skos:definition "A list (concatenated and separated) of identifiers (publication, global unique identifier, URI) of media associated with the dwc:Occurrence."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/associatedOccurrences>
+    rdfs:label "Associated Occurrences"@en ;
+    skos:definition "A list (concatenated and separated) of identifiers of other dwc:Occurrence records and their associations to this dwc:Occurrence."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/associatedOrganisms>
+    rdfs:label "Associated Organisms"@en ;
+    skos:definition "A list (concatenated and separated) of identifiers of other dwc:Organisms and the associations of this dwc:Organism to each of them."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/associatedReferences>
+    rdfs:label "Associated References"@en ;
+    skos:definition "A list (concatenated and separated) of identifiers (publication, bibliographic reference, global unique identifier, URI) of literature associated with the dwc:Occurrence."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/associatedSequences>
+    rdfs:label "Associated Sequences"@en ;
+    skos:definition "A list (concatenated and separated) of dcterms:BibliographicResources for dwc:NucleotideSequences associated with a dwc:MaterialEntity."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/associatedTaxa>
+    rdfs:label "Associated Taxa"@en ;
+    skos:definition "A list (concatenated and separated) of identifiers or names of dwc:Taxon records and the associations of this dwc:Occurrence to each of them."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/basionym>
+    rdfs:label "Basionym"@en ;
+    skos:definition "The basionym (botany) or basonym (bacteriology) of the scientificName."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/basionymID>
+    rdfs:label "Basionym ID"@en ;
+    skos:definition "A unique identifier for the basionym (botany) or basonym (bacteriology) of the scientificName."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/basisOfRecord>
+    rdfs:label "Basis Of Record"@en ;
+    skos:definition "The specific nature of the data record."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/bed>
+    rdfs:label "Bed"@en ;
+    skos:definition "The full name of the lithostratigraphic bed from which the dwc:MaterialEntity was collected."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/behavior>
+    rdfs:label "Behavior"@en ;
+    skos:definition "A behavior shown by a dwc:Organism."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/binomial>
+    rdfs:label "Binomial"@en ;
+    skos:definition "The combination of genus and first (species) epithet of the scientificName."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/caste>
+    rdfs:label "Caste"@en ;
+    skos:definition "A social caste of a dwc:Organism."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/catalogNumber>
+    rdfs:label "Catalog Number"@en ;
+    skos:definition "An identifier (preferably unique) for a resource within a collection."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/causeOfDeath>
+    rdfs:label "Cause Of Death"@en ;
+    skos:definition "An indication of the known or suspected cause of death of a dwc:Organism."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/class>
+    rdfs:label "Class"@en ;
+    skos:definition "The full scientific name of the class in which the dwc:Taxon is classified."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/collectionCode>
+    rdfs:label "Collection Code"@en ;
+    skos:definition "A name, acronym, coden, or initialism identifying a collection."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/collectionID>
+    rdfs:label "Collection ID"@en ;
+    skos:definition "An identifier for a collection."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/continent>
+    rdfs:label "Continent"@en ;
+    skos:definition "The name of the continent in which the dcterms:Location occurs."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/coordinatePrecision>
+    rdfs:label "Coordinate Precision"@en ;
+    skos:definition "A decimal representation of the precision of the coordinates given in the dwc:decimalLatitude and dwc:decimalLongitude."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/coordinateUncertaintyInMeters>
+    rdfs:label "Coordinate Uncertainty In Meters"@en ;
+    skos:definition "A horizontal distance (in meters) from a given dwc:decimalLatitude and dwc:decimalLongitude describing the smallest circle containing the whole of the dcterms:Location. Zero is not a valid value for this term."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/country>
+    rdfs:label "Country"@en ;
+    skos:definition "The name of the country or major administrative unit in which the dcterms:Location occurs."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/countryCode>
+    rdfs:label "Country Code"@en ;
+    skos:definition "The standard code for the country in which the dcterms:Location occurs."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/county>
+    rdfs:label "Second Order Division"@en ;
+    skos:definition "The full, unabbreviated name of the next smaller administrative region than stateProvince (county, shire, department, etc.) in which the dcterms:Location occurs."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/cultivarEpithet>
+    rdfs:label "Cultivar Epithet"@en ;
+    skos:definition "Part of the name of a cultivar, cultivar group or grex that follows the dwc:scientificName."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/dataGeneralizations>
+    rdfs:label "Data Generalizations"@en ;
+    skos:definition "Actions taken to make the shared data less specific or complete than in its original form. Suggests that alternative data of higher quality may be available on request."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/datasetID>
+    rdfs:label "Dataset ID"@en ;
+    skos:definition "An identifier for the set of data. May be a global unique identifier or an identifier specific to a collection or institution."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/datasetName>
+    rdfs:label "Dataset Name"@en ;
+    skos:definition "A name of a source dataset."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/dateIdentified>
+    rdfs:label "Date Identified"@en ;
+    skos:definition "The date on which the subject was determined as representing the dwc:Taxon."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/day>
+    rdfs:label "Day"@en ;
+    skos:definition "The integer day of the month on which the dwc:Event occurred."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/decimalLatitude>
+    rdfs:label "Decimal Latitude"@en ;
+    skos:definition "A geographic latitude (in decimal degrees, using the spatial reference system given in dwc:geodeticDatum) of a dcterms:Location."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/decimalLongitude>
+    rdfs:label "Decimal Longitude"@en ;
+    skos:definition "A geographic longitude (in decimal degrees, using the spatial reference system given in dwc:geodeticDatum) of a dcterms:Location."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/degreeOfEstablishment>
+    rdfs:label "Degree of Establishment"@en ;
+    skos:definition "The degree to which a dwc:Organism survives, reproduces, and expands its range at the given place and time."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/digitalSpecimenID>
+    rdfs:label "Digital Specimen ID"@en ;
+    skos:definition "An identifier for a Digital Specimen resource."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/discipline>
+    rdfs:label "Discipline"@en ;
+    skos:definition "The primary branch or branches of knowledge represented by a dwc:MaterialEntity."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/disposition>
+    rdfs:label "Disposition"@en ;
+    skos:definition "A current state of a dwc:MaterialEntity with respect to where it can be found."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/dynamicProperties>
+    rdfs:label "Dynamic Properties"@en ;
+    skos:definition "A list of additional measurements, facts, characteristics, or assertions about the record. Meant to provide a mechanism for structured content."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/earliestAgeOrLowestStage>
+    rdfs:label "Earliest Age Or Lowest Stage"@en ;
+    skos:definition "The full name of the earliest possible geochronologic age or lowest chronostratigraphic stage attributable to the stratigraphic horizon from which the dwc:MaterialEntity was collected."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/earliestEonOrLowestEonothem>
+    rdfs:label "Earliest Eon Or Lowest Eonothem"@en ;
+    skos:definition "The full name of the earliest possible geochronologic eon or lowest chronostratigraphic eonothem or the informal name attributable to the stratigraphic horizon from which the dwc:MaterialEntity was collected."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/earliestEpochOrLowestSeries>
+    rdfs:label "Earliest Epoch Or Lowest Series"@en ;
+    skos:definition "The full name of the earliest possible geochronologic epoch or lowest chronostratigraphic series attributable to the stratigraphic horizon from which the dwc:MaterialEntity was collected."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/earliestEraOrLowestErathem>
+    rdfs:label "Earliest Era Or Lowest Erathem"@en ;
+    skos:definition "The full name of the earliest possible geochronologic era or lowest chronostratigraphic erathem attributable to the stratigraphic horizon from which the dwc:MaterialEntity was collected."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/earliestPeriodOrLowestSystem>
+    rdfs:label "Earliest Period Or Lowest System"@en ;
+    skos:definition "The full name of the earliest possible geochronologic period or lowest chronostratigraphic system attributable to the stratigraphic horizon from which the dwc:MaterialEntity was collected."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/endDayOfYear>
+    rdfs:label "End Day Of Year"@en ;
+    skos:definition "The latest integer day of the year on which a dwc:Event occurred."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/establishmentMeans>
+    rdfs:label "Establishment Means"@en ;
+    skos:definition "Statement about whether a dwc:Organism has been introduced to a given place and time through the direct or indirect activity of modern humans."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/eventAttributes>
+    rdfs:label "Event Attributes"@en ;
+    skos:definition "A list (concatenated and separated) of additional measurements or characteristics of the Event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/eventCategory>
+    rdfs:label "Event Category"@en ;
+    skos:definition "A broad category that best matches the nature of a dwc:Event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/eventDate>
+    rdfs:label "Event Date"@en ;
+    skos:definition "A date-time or time interval during which a dwc:Event occurred."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/eventID>
+    rdfs:label "Event ID"@en ;
+    skos:definition "An identifier for the set of information associated with a dwc:Event (something that occurs at a place and time). May be a global unique identifier or an identifier specific to the data set."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/eventMeasurementAccuracy>
+    rdfs:label "Event Measurement Accuracy"@en ;
+    skos:definition "The description of the error associated with the EventAttributeValue."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/eventMeasurementDeterminedBy>
+    rdfs:label "Event Measurement Determined By"@en ;
+    skos:definition "The agent responsible for having determined the value of the measurement or characteristic of the event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/eventMeasurementDeterminedDate>
+    rdfs:label "Event Measurement Determined Date"@en ;
+    skos:definition "The date on which the the measurement or characteristic of the event was made. Recommended best practice is to use an encoding scheme, such as ISO 8601:2004(E)."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/eventMeasurementID>
+    rdfs:label "Event Measurement ID"@en ;
+    skos:definition "An identifier for the event attribute. May be a global unique identifier or an identifier specific to the data set."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/eventMeasurementRemarks>
+    rdfs:label "Event Measurement Remarks"@en ;
+    skos:definition "Comments or notes accompanying the measurement or characteristic of the event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/eventMeasurementType>
+    rdfs:label "Event Measurement Type"@en ;
+    skos:definition "The nature of the measurement or characteristic of the event. Recommended best practice is to use a controlled vocabulary."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/eventMeasurementUnit>
+    rdfs:label "Event Measurement Unit"@en ;
+    skos:definition "The units for the value of the measurement or characteristic of the event. Recommended best practice is to use International System of Units (SI) units."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/eventMeasurementValue>
+    rdfs:label "Event Measurement Value"@en ;
+    skos:definition "The value of the measurement or characteristic of the event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/eventRemarks>
+    rdfs:label "Event Remarks"@en ;
+    skos:definition "Comments or notes about the dwc:Event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/eventTime>
+    rdfs:label "Event Time"@en ;
+    skos:definition "The time or interval during which a dwc:Event occurred."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/eventType>
+    rdfs:label "Event Type"@en ;
+    skos:definition "A narrow category that best matches the nature of a dwc:Event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/family>
+    rdfs:label "Family"@en ;
+    skos:definition "The full scientific name of the family in which the dwc:Taxon is classified."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/feedbackURL>
+    rdfs:label "Feedback URL"@en ;
+    skos:definition "A uniform resource locator (URL) that points to a webpage on which a form may be submitted to gather feedback about the record."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/fieldNotes>
+    rdfs:label "Field Notes"@en ;
+    skos:definition "One of a) an indicator of the existence of, b) a reference to (publication, URI), or c) the text of notes taken in the field about the dwc:Event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/fieldNumber>
+    rdfs:label "Field Number"@en ;
+    skos:definition "An identifier given to a dwc:Event in the field."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/footprintSRS>
+    rdfs:label "Footprint SRS"@en ;
+    skos:definition "The ellipsoid, geodetic datum, or spatial reference system (SRS) upon which the geometry given in dwc:footprintWKT is based."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/footprintSpatialFit>
+    rdfs:label "Footprint Spatial Fit"@en ;
+    skos:definition "A ratio of the area of a footprint (dwc:footprintWKT) to the area of a true (original, or most specific) spatial representation of a dcterms:Location."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/footprintWKT>
+    rdfs:label "Footprint WKT"@en ;
+    skos:definition "A Well-Known Text (WKT) representation of the shape (footprint, geometry) that defines a dcterms:Location."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/formation>
+    rdfs:label "Formation"@en ;
+    skos:definition "The full name of the lithostratigraphic formation from which the dwc:MaterialEntity was collected."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/fundingAttributionID>
+    rdfs:label "Funding Attribution ID"@en ;
+    skos:definition "An identifier for a dcterms:Agent that financially supported a project."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/genericName>
+    rdfs:label "Generic Name"@en ;
+    skos:definition "The genus part of the dwc:scientificName without authorship."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/genus>
+    rdfs:label "Genus"@en ;
+    skos:definition "The full scientific name of the genus in which the dwc:Taxon is classified."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/geodeticDatum>
+    rdfs:label "Geodetic Datum"@en ;
+    skos:definition "The ellipsoid, geodetic datum, or spatial reference system (SRS) upon which the geographic coordinates given in dwc:decimalLatitude and dwc:decimalLongitude are based."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/geologicalContextID>
+    rdfs:label "Geological Context ID"@en ;
+    skos:definition "An identifier for the set of information associated with a dwc:GeologicalContext (the location within a geological context, such as stratigraphy). May be a global unique identifier or an identifier specific to the data set."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/georeferenceProtocol>
+    rdfs:label "Georeference Protocol"@en ;
+    skos:definition "A description or reference to a dwc:Protocol used to determine a spatial footprint, coordinates, and uncertainties."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/georeferenceRemarks>
+    rdfs:label "Georeference Remarks"@en ;
+    skos:definition "Comments or notes about the spatial description determination, explaining assumptions made in addition or opposition to the those formalized in the method referred to in dwc:georeferenceProtocol."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/georeferenceSources>
+    rdfs:label "Georeference Sources"@en ;
+    skos:definition "A list (concatenated and separated) of maps, gazetteers, or other resources used to georeference a dcterms:Location, described specifically enough to allow anyone in the future to use the same resources."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/georeferenceVerificationStatus>
+    rdfs:label "Georeference Verification Status"@en ;
+    skos:definition "A categorical description of the extent to which the georeference has been verified to represent the best possible spatial description for the dcterms:Location of the dwc:Occurrence."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/georeferencedBy>
+    rdfs:label "Georeferenced By"@en ;
+    skos:definition "A name for a dcterms:Agent responsible for providing a georeference."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/georeferencedDate>
+    rdfs:label "Georeferenced Date"@en ;
+    skos:definition "The date on which the dcterms:Location was georeferenced."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/group>
+    rdfs:label "Group"@en ;
+    skos:definition "The full name of the lithostratigraphic group from which the dwc:MaterialEntity was collected."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/habitat>
+    rdfs:label "Habitat"@en ;
+    skos:definition "A category or description of the habitat in which the dwc:Event occurred."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/higherClassification>
+    rdfs:label "Higher Classification"@en ;
+    skos:definition "A list (concatenated and separated) of taxa names terminating at the rank immediately superior to the referenced dwc:Taxon."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/higherGeography>
+    rdfs:label "Higher Geography"@en ;
+    skos:definition "A list (concatenated and separated) of geographic names less specific than the information captured in the dwc:locality term."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/higherGeographyID>
+    rdfs:label "Higher Geography ID"@en ;
+    skos:definition "An identifier for the geographic region within which the dcterms:Location occurred."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/higherTaxonName>
+    rdfs:label "Higher Taxon Name"@en ;
+    skos:definition "A list (concatenated and separated) of the names for the taxonomic ranks less specific than that given in the scientificName."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/higherTaxonNameID>
+    rdfs:label "Higher Taxon Name ID"@en ;
+    skos:definition "A unique identifier for the name of the next higher rank than the scientificName in a taxonomic classification. See higherTaxonName."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/higherTaxonconceptID>
+    rdfs:label "Higher Taxon Concept ID"@en ;
+    skos:definition "A unique identifier for the taxon concept less specific than that given in the taxonConceptID."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/highestBiostratigraphicZone>
+    rdfs:label "Highest Biostratigraphic Zone"@en ;
+    skos:definition "The full name of the highest possible geological biostratigraphic zone of the stratigraphic horizon from which the dwc:MaterialEntity was collected."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/identificationAttributes>
+    rdfs:label "Identification Attributes"@en ;
+    skos:definition "A list (concatenated and separated) of additional measurements, facts, characteristics, or assertions about the Identification."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/identificationID>
+    rdfs:label "Identification ID"@en ;
+    skos:definition "An identifier for a dwc:Identification."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/identificationQualifier>
+    rdfs:label "Identification Qualifier"@en ;
+    skos:definition "A brief phrase or a standard term (\"cf.\", \"aff.\") to express the determiner's doubts about the dwc:Identification."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/identificationReferences>
+    rdfs:label "Identification References"@en ;
+    skos:definition "A list (concatenated and separated) of dcterms:BibliographicResources used in a dwc:Identification."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/identificationRemarks>
+    rdfs:label "Identification Remarks"@en ;
+    skos:definition "Comments or notes about the dwc:Identification."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/identificationType>
+    rdfs:label "Identification Type"@en ;
+    skos:definition "A category that best matches the nature of a dwc:Identification."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/identificationVerificationStatus>
+    rdfs:label "Identification Verification Status"@en ;
+    skos:definition "A categorical indicator of the extent to which a taxonomic determination has been verified to be correct."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/identifiedBy>
+    rdfs:label "Identified By"@en ;
+    skos:definition "A name for a dcterms:Agent responsible for making a dwc:Identification."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/identifiedByID>
+    rdfs:label "Identified By ID"@en ;
+    skos:definition "An identifier for a dcterms:Agent responsible for making a dwc:Identification."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/individualCount>
+    rdfs:label "Individual Count"@en ;
+    skos:definition "The number of individuals present at the time of the dwc:Occurrence."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/individualID>
+    rdfs:label "Individual ID"@en ;
+    skos:definition "An identifier for an individual or named group of individual organisms represented in the Occurrence. Meant to accommodate resampling of the same individual or group for monitoring purposes. May be a global unique identifier or an identifier specific to a data set."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/informationWithheld>
+    rdfs:label "Information Withheld"@en ;
+    skos:definition "Additional information that exists about a resource, but that is not shared publicly. Suggests that alternative data of higher quality may be available on request."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/infragenericEpithet>
+    rdfs:label "Infrageneric Epithet"@en ;
+    skos:definition "The infrageneric part of a binomial name at ranks above species but below genus."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/infraspecificEpithet>
+    rdfs:label "Infraspecific Epithet"@en ;
+    skos:definition "The name of the lowest or terminal infraspecific of the dwc:scientificName."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/institutionCode>
+    rdfs:label "Institution Code"@en ;
+    skos:definition "A name (or acronym) in use by an institution having custody of a resource."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/institutionID>
+    rdfs:label "Institution ID"@en ;
+    skos:definition "An identifier for an organization."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/isAcceptedIdentification>
+    rdfs:label "Is Accepted Identification"@en ;
+    skos:definition "An indicator that a dwc:Identification of a dwc:Organism is a currently an accepted or preferred one."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/island>
+    rdfs:label "Island"@en ;
+    skos:definition "The name of the island on or near which the dcterms:Location occurs."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/islandGroup>
+    rdfs:label "Island Group"@en ;
+    skos:definition "The name of the island group in which the dcterms:Location occurs."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/kingdom>
+    rdfs:label "Kingdom"@en ;
+    skos:definition "The full scientific name of the kingdom in which the dwc:Taxon is classified."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/latestAgeOrHighestStage>
+    rdfs:label "Latest Age Or Highest Stage"@en ;
+    skos:definition "The full name of the latest possible geochronologic age or highest chronostratigraphic stage attributable to the stratigraphic horizon from which the dwc:MaterialEntity was collected."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/latestEonOrHighestEonothem>
+    rdfs:label "Latest Eon Or Highest Eonothem"@en ;
+    skos:definition "The full name of the latest possible geochronologic eon or highest chronostratigraphic eonothem or the informal name attributable to the stratigraphic horizon from which the dwc:MaterialEntity was collected."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/latestEpochOrHighestSeries>
+    rdfs:label "Latest Epoch Or Highest Series"@en ;
+    skos:definition "The full name of the latest possible geochronologic epoch or highest chronostratigraphic series attributable to the stratigraphic horizon from which the dwc:MaterialEntity was collected."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/latestEraOrHighestErathem>
+    rdfs:label "Latest Era Or Highest Erathem"@en ;
+    skos:definition "The full name of the latest possible geochronologic era or highest chronostratigraphic erathem attributable to the stratigraphic horizon from which the dwc:MaterialEntity was collected."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/latestPeriodOrHighestSystem>
+    rdfs:label "Latest Period Or Highest System"@en ;
+    skos:definition "The full name of the latest possible geochronologic period or highest chronostratigraphic system attributable to the stratigraphic horizon from which the dwc:MaterialEntity was collected."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/lifeStage>
+    rdfs:label "Life Stage"@en ;
+    skos:definition "An age class or life stage of a dwc:Organism."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/lithostratigraphicTerms>
+    rdfs:label "Lithostratigraphic Terms"@en ;
+    skos:definition "The combination of all lithostratigraphic names for the rock from which the dwc:MaterialEntity was collected."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/locality>
+    rdfs:label "Locality"@en ;
+    skos:definition "The specific description of the place."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/locationAccordingTo>
+    rdfs:label "Location According To"@en ;
+    skos:definition "Information about the source of this dcterms:Location information. Could be a publication (gazetteer), institution, or team of individuals."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/locationAttributes>
+    rdfs:label "Location Attributes"@en ;
+    skos:definition "A list (concatenated and separated) of additional measurements, facts, characteristics, or assertions about the location."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/locationID>
+    rdfs:label "Location ID"@en ;
+    skos:definition "An identifier for a dcterms:Location."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/locationRemarks>
+    rdfs:label "Location Remarks"@en ;
+    skos:definition "Comments or notes about the dcterms:Location."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/lowestBiostratigraphicZone>
+    rdfs:label "Lowest Biostratigraphic Zone"@en ;
+    skos:definition "The full name of the lowest possible geological biostratigraphic zone of the stratigraphic horizon from which the dwc:MaterialEntity was collected."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/materialEntityCategory>
+    rdfs:label "Material Entity Category"@en ;
+    skos:definition "A high-level, mutually exclusive classification describing the fundamental substance and origin of a dwc:MaterialEntity."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/materialEntityID>
+    rdfs:label "Material Entity ID"@en ;
+    skos:definition "An identifier for a particular instance of a dwc:MaterialEntity."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/materialEntityRemarks>
+    rdfs:label "Material Entity Remarks"@en ;
+    skos:definition "Comments or notes about a dwc:MaterialEntity."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/materialEntityType>
+    rdfs:label "Material Entity Type"@en ;
+    skos:definition "A more generic classification of a dwc:MaterialEntity than dwc:preparations but less broad than dwc:materialCategory."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/materialSampleID>
+    rdfs:label "Material Sample ID"@en ;
+    skos:definition "An identifier for the dwc:MaterialSample (as opposed to a particular digital record of the dwc:MaterialSample). In the absence of a persistent global unique identifier, construct one from a combination of identifiers in the record that will most closely make the dwc:materialSampleID globally unique."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/maximumDepthInMeters>
+    rdfs:label "Maximum Depth In Meters"@en ;
+    skos:definition "The greatest depth within a range of depths, measured relative to the vertical reference surface indicated by the value of dwc:verticalDatum."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/maximumDistanceAboveSurfaceInMeters>
+    rdfs:label "Maximum Distance Above Surface In Meters"@en ;
+    skos:definition "The greater distance in a range of distance from a reference surface in the vertical direction, in meters. Use positive values for locations above the surface, negative values for locations below. If depth measures are given, the reference surface is the location given by the depth, otherwise the reference surface is the location given by the elevation."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/maximumElevationInMeters>
+    rdfs:label "Maximum Elevation In Meters"@en ;
+    skos:definition "The greatest elevation within a range of elevations, measured relative to the vertical reference surface indicated by the value of dwc:verticalDatum."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/measurementAccuracy>
+    rdfs:label "Measurement Accuracy"@en ;
+    skos:definition "The description of the potential error associated with the dwc:measurementValue."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/measurementDeterminedBy>
+    rdfs:label "Measurement Determined By"@en ;
+    skos:definition "A list (concatenated and separated) of names of people, groups, or organizations who determined the value of the dwc:MeasurementOrFact."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/measurementDeterminedDate>
+    rdfs:label "Measurement Determined Date"@en ;
+    skos:definition "The date on which the dwc:MeasurementOrFact was made."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/measurementID>
+    rdfs:label "Measurement ID"@en ;
+    skos:definition "An identifier for the dwc:MeasurementOrFact (information pertaining to measurements, facts, characteristics, or assertions). May be a global unique identifier or an identifier specific to the data set."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/measurementMethod>
+    rdfs:label "Measurement Method"@en ;
+    skos:definition "A description of or reference to (publication, URI) the method or protocol used to determine the measurement, fact, characteristic, or assertion."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/measurementRemarks>
+    rdfs:label "Measurement Remarks"@en ;
+    skos:definition "Comments or notes accompanying the dwc:MeasurementOrFact."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/measurementType>
+    rdfs:label "Measurement Type"@en ;
+    skos:definition "The nature of the measurement, fact, characteristic, or assertion."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/measurementUnit>
+    rdfs:label "Measurement Unit"@en ;
+    skos:definition "The units associated with the dwc:measurementValue."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/measurementValue>
+    rdfs:label "Measurement Value"@en ;
+    skos:definition "The value of the measurement, fact, characteristic, or assertion."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/member>
+    rdfs:label "Member"@en ;
+    skos:definition "The full name of the lithostratigraphic member from which the dwc:MaterialEntity was collected."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/minimumDepthInMeters>
+    rdfs:label "Minimum Depth In Meters"@en ;
+    skos:definition "The least depth within a range of depths, measured relative to the vertical reference surface indicated by the value of dwc:verticalDatum."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/minimumDistanceAboveSurfaceInMeters>
+    rdfs:label "Minimum Distance Above Surface In Meters"@en ;
+    skos:definition "The lesser distance in a range of distance from a reference surface in the vertical direction, in meters. Use positive values for locations above the surface, negative values for locations below. If depth measures are given, the reference surface is the location given by the depth, otherwise the reference surface is the location given by the elevation."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/minimumElevationInMeters>
+    rdfs:label "Minimum Elevation In Meters"@en ;
+    skos:definition "The least elevation within a range of elevations, measured relative to the vertical reference surface indicated by the value of dwc:verticalDatum."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/molecularProtocolID>
+    rdfs:label "Molecular Protocol ID"@en ;
+    skos:definition "An identifier for a dwc:MolecularProtocol."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/month>
+    rdfs:label "Month"@en ;
+    skos:definition "The integer month in which the dwc:Event occurred."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/municipality>
+    rdfs:label "Third Order Division"@en ;
+    skos:definition "The full, unabbreviated name of the next smaller administrative region than county (city, municipality, etc.) in which the dcterms:Location occurs. Do not use this term for a nearby named place that does not contain the actual dcterms:Location."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/nameAccordingTo>
+    rdfs:label "Name According To"@en ;
+    skos:definition "The reference to the source in which the specific taxon concept circumscription is defined or implied - traditionally signified by the Latin \"sensu\" or \"sec.\" (from secundum, meaning \"according to\"). For taxa that result from identifications, a reference to the keys, monographs, experts and other sources should be given."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/nameAccordingToID>
+    rdfs:label "Name According To ID"@en ;
+    skos:definition "An identifier for the source in which the specific taxon concept circumscription is defined or implied. See dwc:nameAccordingTo."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/namePublicationID>
+    rdfs:label "Name Publication ID"@en ;
+    skos:definition "A resolvable globally unique identifier for the original publication of the scientificName."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/namePublishedIn>
+    rdfs:label "Name Published In"@en ;
+    skos:definition "A reference for the publication in which the dwc:scientificName was originally established under the rules of the associated dwc:nomenclaturalCode."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/namePublishedInID>
+    rdfs:label "Name Published In ID"@en ;
+    skos:definition "An identifier for the publication in which the dwc:scientificName was originally established under the rules of the associated dwc:nomenclaturalCode."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/namePublishedInYear>
+    rdfs:label "Name Published In Year"@en ;
+    skos:definition "The four-digit year in which the dwc:scientificName was published."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/nomenclaturalCode>
+    rdfs:label "Nomenclatural Code"@en ;
+    skos:definition "The nomenclatural code (or codes in the case of an ambiregnal name) under which the dwc:scientificName is constructed."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/nomenclaturalStatus>
+    rdfs:label "Nomenclatural Status"@en ;
+    skos:definition "The status related to the original publication of the name and its conformance to the relevant rules of nomenclature. It is based essentially on an algorithm according to the business rules of the code. It requires no taxonomic opinion."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/nucleotideSequenceRemarks>
+    rdfs:label "Nucleotide Sequence Remarks"@en ;
+    skos:definition "Comments or notes about a dwc:NucleotideSequence."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/objectQuantity>
+    rdfs:label "Object Quantity"@en ;
+    skos:definition "A number or enumeration value for the quantity of differentiable dwc:MaterialEntities comprising this dwc:MaterialEntity."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/objectQuantityType>
+    rdfs:label "Object Quantity Type"@en ;
+    skos:definition "The type of quantification system used for the quantity of dwc:MaterialEntities."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/occurrenceAttributes>
+    rdfs:label "Occurrence Attributes"@en ;
+    skos:definition "A list (concatenated and separated) of additional measurements, facts, characteristics, or assertions about the Occurrence."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/occurrenceDetails>
+    rdfs:label "Occurrence Details"@en ;
+    skos:definition "A reference (publication, URI) to the most detailed information available about the Occurrence."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/occurrenceID>
+    rdfs:label "Occurrence ID"@en ;
+    skos:definition "An identifier for a dwc:Occurrence (as opposed to a particular digital record of a dwc:Occurrence)."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/occurrenceMeasurementAccuracy>
+    rdfs:label "Occurrence Measurement Accuracy"@en ;
+    skos:definition "The description of the error associated with the occurrenceAttributeValue."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/occurrenceMeasurementDeterminedBy>
+    rdfs:label "Occurrence Measurement Determined By"@en ;
+    skos:definition "The agent responsible for having determined the value of the measurement or characteristic of the occurrence."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/occurrenceMeasurementDeterminedDate>
+    rdfs:label "Occurrence Measurement Determined Date"@en ;
+    skos:definition "The date on which the the measurement or characteristic of the occurrence was made. Recommended best practice is to use an encoding scheme, such as ISO 8601:2004(E)."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/occurrenceMeasurementID>
+    rdfs:label "Occurrence Measurement ID"@en ;
+    skos:definition "An identifier for the occurrence attribute. May be a global unique identifier or an identifier specific to the data set."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/occurrenceMeasurementRemarks>
+    rdfs:label "Occurrence Measurement Remarks"@en ;
+    skos:definition "Comments or notes accompanying the measurement or characteristic of the occurrence."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/occurrenceMeasurementType>
+    rdfs:label "Occurrence Measurement Type"@en ;
+    skos:definition "The nature of the measurement or characteristic of the occurrence. Recommended best practice is to use a controlled vocabulary."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/occurrenceMeasurementUnit>
+    rdfs:label "Occurrence Measurement Unit"@en ;
+    skos:definition "The units for the value of the measurement or characteristic of the occurrence. Recommended best practice is to use International System of Units (SI) units."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/occurrenceMeasurementValue>
+    rdfs:label "Occurrence Measurement Value"@en ;
+    skos:definition "The value of the measurement or characteristic of the occurrence."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/occurrenceRemarks>
+    rdfs:label "Occurrence Remarks"@en ;
+    skos:definition "Comments or notes about the dwc:Occurrence."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/occurrenceStatus>
+    rdfs:label "Occurrence Status"@en ;
+    skos:definition "A statement about the detection or non-detection of a dwc:Organism during a dwc:Event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/order>
+    rdfs:label "Order"@en ;
+    skos:definition "The full scientific name of the order in which the dwc:Taxon is classified."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/organismID>
+    rdfs:label "Organism ID"@en ;
+    skos:definition "An identifier for the dwc:Organism instance (as opposed to a particular digital record of the dwc:Organism). May be a globally unique identifier or an identifier specific to the data set."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/organismInteractionDescription>
+    rdfs:label "Organism Interaction Description"@en ;
+    skos:definition "A verbatim description of a dwc:OrganismInteraction."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/organismInteractionID>
+    rdfs:label "Organism Interaction ID"@en ;
+    skos:definition "An identifier for a dwc:OrganismInteraction."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/organismInteractionType>
+    rdfs:label "Organism Interaction Type"@en ;
+    skos:definition "A category that best matches the nature of a dwc:OrganismInteraction."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/organismName>
+    rdfs:label "Organism Name"@en ;
+    skos:definition "A textual name or label assigned to a dwc:Organism instance."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/organismQuantity>
+    rdfs:label "Organism Quantity"@en ;
+    skos:definition "A number or enumeration value for the quantity of dwc:Organisms."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/organismQuantityType>
+    rdfs:label "Organism Quantity Type"@en ;
+    skos:definition "The type of quantification system used for the quantity of dwc:Organisms."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/organismRemarks>
+    rdfs:label "Organism Remarks"@en ;
+    skos:definition "Comments or notes about the dwc:Organism instance."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/organismScope>
+    rdfs:label "Organism Scope"@en ;
+    skos:definition "A description of the kind of dwc:Organism instance. Can be used to indicate whether the dwc:Organism instance represents a discrete organism or if it represents a particular type of aggregation."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/originalNameUsage>
+    rdfs:label "Original Name Usage"@en ;
+    skos:definition "The taxon name, with authorship and date information if known, as it originally appeared when first established under the rules of the associated dwc:nomenclaturalCode. The basionym (botany) or basonym (bacteriology) of the dwc:scientificName or the senior/earlier homonym for replaced names."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/originalNameUsageID>
+    rdfs:label "Original Name Usage ID"@en ;
+    skos:definition "An identifier for the name usage (documented meaning of the name according to a source) in which the terminal element of the dwc:scientificName was originally established under the rules of the associated dwc:nomenclaturalCode."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/otherCatalogNumbers>
+    rdfs:label "Other Catalog Numbers"@en ;
+    skos:definition "A list (concatenated and separated) of previous or alternate fully qualified catalog numbers or other human-used identifiers for the same dwc:MaterialEntity, whether in the current or any other data set or collection."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/ownerInstitutionCode>
+    rdfs:label "Owner Institution Code"@en ;
+    skos:definition "A name (or acronym) in use by an institution having ownership of a resource."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/parentEventID>
+    rdfs:label "Parent Event ID"@en ;
+    skos:definition "An identifier for a broader dwc:Event that contains this and potentially other dwc:Events."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/parentMeasurementID>
+    rdfs:label "Parent Measurement ID"@en ;
+    skos:definition "An identifier for a broader dwc:MeasurementOrFact that groups this and potentially other dwc:MeasurementOrFacts."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/parentNameUsage>
+    rdfs:label "Parent Name Usage"@en ;
+    skos:definition "The full name, with authorship and date information if known, of the direct, most proximate higher-rank parent dwc:Taxon (in a classification) of the most specific element of the dwc:scientificName."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/parentNameUsageID>
+    rdfs:label "Parent Name Usage ID"@en ;
+    skos:definition "An identifier for the name usage (documented meaning of the name according to a source) of the direct, most proximate higher-rank parent taxon (in a classification) of the most specific element of the dwc:scientificName."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/pathway>
+    rdfs:label "Pathway"@en ;
+    skos:definition "The process by which a dwc:Organism came to be in a given place at a given time."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/phylum>
+    rdfs:label "Phylum"@en ;
+    skos:definition "The full scientific name of the phylum or division in which the dwc:Taxon is classified."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/pointRadiusSpatialFit>
+    rdfs:label "Point Radius Spatial Fit"@en ;
+    skos:definition "A ratio of the area of a point-radius (dwc:decimalLatitude, dwc:decimalLongitude, dwc:coordinateUncertaintyInMeters) to the area of a true (original, or most specific) spatial representation of a dcterms:Location."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/preferredSpatialRepresentation>
+    rdfs:label "Preferred Spatial Representation"@en ;
+    skos:definition "An indication of which spatial representation best represents the dcterms:Location."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/preparations>
+    rdfs:label "Preparations"@en ;
+    skos:definition "A list (concatenated and separated) of preparations and preservation methods for a dwc:MaterialEntity."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/previousIdentifications>
+    rdfs:label "Previous Identifications"@en ;
+    skos:definition "A list (concatenated and separated) of previous assignments of names to the dwc:Organism."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/processedTotalReadCount>
+    rdfs:label "Processed Total Read Count"@en ;
+    skos:definition "The total number of reads obtained for a processed dwc:NucleotideSequence during a dwc:NucleotideAnalysis."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/projectID>
+    rdfs:label "Project ID"@en ;
+    skos:definition "A list (concatenated and separated) of identifiers for projects that contributed to a dwc:Event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/projectTitle>
+    rdfs:label "Project Title"@en ;
+    skos:definition "A list (concatenated and separated) of titles or names for projects that contributed to a dwc:Event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/protocolDescription>
+    rdfs:label "Protocol Description"@en ;
+    skos:definition "A detailed description of a dwc:Protocol."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/protocolID>
+    rdfs:label "Protocol ID"@en ;
+    skos:definition "An identifier for a dwc:Protocol."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/protocolReferences>
+    rdfs:label "Protocol References"@en ;
+    skos:definition "A list (concatenated and separated) of dcterms:BibliographicResources used in a dwc:Protocol."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/protocolRemarks>
+    rdfs:label "Protocol Remarks"@en ;
+    skos:definition "Comments or notes about a dwc:Protocol."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/protocolType>
+    rdfs:label "Protocol Type"@en ;
+    skos:definition "A category that best matches the nature of a dwc:Protocol."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/readCount>
+    rdfs:label "Read Count"@en ;
+    skos:definition "The number of reads obtained for a processed dwc:NucleotideSequence during a dwc:NucleotideAnalysis."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/recordNumber>
+    rdfs:label "Record Number"@en ;
+    skos:definition "An identifier given to the dwc:Occurrence at the time it was recorded. Often serves as a link between field notes and a dwc:Occurrence record, such as a specimen collector's number."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/recordedBy>
+    rdfs:label "Recorded By"@en ;
+    skos:definition "A name for a dcterms:Agent responsible for recording a dwc:Occurrence."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/recordedByID>
+    rdfs:label "Recorded By ID"@en ;
+    skos:definition "An identifier for a dcterms:Agent responsible for recording a dwc:Occurrence."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/referenceID>
+    rdfs:label "Reference ID"@en ;
+    skos:definition "An identifier for a dcterms:BibliographicResource."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/referenceRemarks>
+    rdfs:label "Reference Remarks"@en ;
+    skos:definition "Comments or notes about a dcterms:BibliographicResource."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/referenceType>
+    rdfs:label "Reference Type"@en ;
+    skos:definition "A category that best matches the nature of a dcterms:BibliographicResource."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/relatedResourceID>
+    rdfs:label "Related Resource ID"@en ;
+    skos:definition "An identifier for the related resource (the object) of a dwc:ResourceRelationship."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/relatedResourceType>
+    rdfs:label "Related Resource Type"@en ;
+    skos:definition "The type of the related resource. Recommended best practice is to use a controlled vocabulary."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/relationshipAccordingTo>
+    rdfs:label "Relationship According To"@en ;
+    skos:definition "The source (person, organization, publication, reference) establishing the relationship between the two resources."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/relationshipEstablishedDate>
+    rdfs:label "Relationship Established Date"@en ;
+    skos:definition "The date-time on which the relationship between the two resources was established."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/relationshipOfResource>
+    rdfs:label "Relationship Of Resource"@en ;
+    skos:definition "The relationship of the subject (identified by dwc:resourceID) to the object (identified by dwc:relatedResourceID)."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/relationshipOfResourceID>
+    rdfs:label "Relationship Of Resource ID"@en ;
+    skos:definition "An identifier for the relationship type (predicate) that connects the subject identified by dwc:resourceID to its object identified by dwc:relatedResourceID."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/relationshipRemarks>
+    rdfs:label "Relationship Remarks"@en ;
+    skos:definition "Comments or notes about the relationship between the two resources."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/reproductiveCondition>
+    rdfs:label "Reproductive Condition"@en ;
+    skos:definition "A reproductive condition of a dwc:Organism."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/resourceID>
+    rdfs:label "Resource ID"@en ;
+    skos:definition "An identifier for the resource that is the subject of the relationship."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/resourceRelationshipID>
+    rdfs:label "Resource Relationship ID"@en ;
+    skos:definition "An identifier for a dwc:ResourceRelationship."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/sampleSizeUnit>
+    rdfs:label "Sample Size Unit"@en ;
+    skos:definition "The unit of measurement of the size (time duration, length, area, or volume) of a sample in a sampling dwc:Event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/sampleSizeValue>
+    rdfs:label "Sample Size Value"@en ;
+    skos:definition "A numeric value for a measurement of the size (time duration, length, area, or volume) of a sample in a sampling dwc:Event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/sampledSubstrateCategory>
+    rdfs:label "Sampled Substrate Category"@en ;
+    skos:definition "A category or type of substrate sampled during a dwc:Event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/sampledSubstrateLayer>
+    rdfs:label "Sampled Substrate Layer"@en ;
+    skos:definition "A list (concatenated and separated) of substrate layers sampled during a dwc:Event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/samplingEffort>
+    rdfs:label "Sampling Effort"@en ;
+    skos:definition "The amount of effort expended during a dwc:Event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/samplingProtocol>
+    rdfs:label "Sampling Protocol"@en ;
+    skos:definition "The names of, references to, or descriptions of the methods or protocols used during a dwc:Event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/scientificName>
+    rdfs:label "Scientific Name"@en ;
+    skos:definition "The full scientific name, with authorship and date information if known. When forming part of a dwc:Identification, this should be the name in lowest level taxonomic rank that can be determined."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/scientificNameAuthorship>
+    rdfs:label "Scientific Name Authorship"@en ;
+    skos:definition "The authorship information for the dwc:scientificName formatted according to the conventions of the applicable dwc:nomenclaturalCode."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/scientificNameID>
+    rdfs:label "Scientific Name ID"@en ;
+    skos:definition "An identifier for the nomenclatural (not taxonomic) details of a scientific name."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/scientificNameRank>
+    rdfs:label "Scientific Name Rank"@en ;
+    skos:definition "The taxonomic rank of the most specific name in the scientificName. Recommended best practice is to use a controlled vocabulary."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/sequence>
+    rdfs:label "Sequence"@en ;
+    skos:definition "A string representing nucleotide base pairs."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/sex>
+    rdfs:label "Sex"@en ;
+    skos:definition "A sex of a dwc:Organism."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/siteNumber>
+    rdfs:label "Site Number"@en ;
+    skos:definition "An identifier for a named site."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/specificEpithet>
+    rdfs:label "Specific Epithet"@en ;
+    skos:definition "The name of the first or species epithet of the dwc:scientificName."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/startDayOfYear>
+    rdfs:label "Start Day Of Year"@en ;
+    skos:definition "The earliest integer day of the year on which a dwc:Event occurred."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/stateProvince>
+    rdfs:label "First Order Division"@en ;
+    skos:definition "The name of the next smaller administrative region than country (state, province, canton, department, region, etc.) in which the dcterms:Location occurs."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/subfamily>
+    rdfs:label "Subfamily"@en ;
+    skos:definition "The full scientific name of the subfamily in which the dwc:Taxon is classified."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/subgenus>
+    rdfs:label "Subgenus"@en ;
+    skos:definition "The full scientific name of the subgenus in which the dwc:Taxon is classified."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/subtribe>
+    rdfs:label "Subtribe"@en ;
+    skos:definition "The full scientific name of the subtribe in which the dwc:Taxon is classified."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/superfamily>
+    rdfs:label "Superfamily"@en ;
+    skos:definition "The full scientific name of the superfamily in which the dwc:Taxon is classified."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/taxonAccordingTo>
+    rdfs:label "Taxon According To"@en ;
+    skos:definition "Information about the authorship of this taxon concept which uses the scientificName in their sense (secundum, sensu). Could be a publication (identification key), institution or team of individuals."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/taxonAttributes>
+    rdfs:label "Taxon Attributes"@en ;
+    skos:definition "A list (concatenated and separated) of additional measurements, facts, characteristics, or assertions about the taxon."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/taxonConceptID>
+    rdfs:label "Taxon Concept ID"@en ;
+    skos:definition "An identifier for the taxonomic concept to which the record refers - not for the nomenclatural details of a dwc:Taxon."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/taxonFormula>
+    rdfs:label "Taxon Formula"@en ;
+    skos:definition "A string representing the pattern to use to construct a dwc:Identification from dwc:Taxon names and identification qualifiers."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/taxonID>
+    rdfs:label "Taxon ID"@en ;
+    skos:definition "An identifier for a dwc:Taxon."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/taxonNameID>
+    rdfs:label "Taxon Name ID"@en ;
+    skos:definition "A unique identifier for the scientificName."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/taxonRank>
+    rdfs:label "Taxon Rank"@en ;
+    skos:definition "The taxonomic rank of the most specific name in the dwc:scientificName."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/taxonRemarks>
+    rdfs:label "Taxon Remarks"@en ;
+    skos:definition "Comments or notes about the taxon or name."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/taxonomicStatus>
+    rdfs:label "Taxonomic Status"@en ;
+    skos:definition "The status of the use of the dwc:scientificName as a label for a taxon. Requires taxonomic opinion to define the scope of a dwc:Taxon. Rules of priority then are used to define the taxonomic status of the nomenclature contained in that scope, combined with the experts opinion. It must be linked to a specific taxonomic reference that defines the concept."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/tribe>
+    rdfs:label "Tribe"@en ;
+    skos:definition "The full scientific name of the tribe in which the dwc:Taxon is classified."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/typeOfType>
+    rdfs:label "Type Of Type"@en ;
+    skos:definition "A category of nomenclatural type of a dwc:MaterialEntity."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/typeStatus>
+    rdfs:label "Type Status"@en ;
+    skos:definition "A list (concatenated and separated) of nomenclatural types (type status, typified scientific name, publication) applied to the subject."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/typifiedName>
+    rdfs:label "Typified Name"@en ;
+    skos:definition "A scientific name for which a specimen or other name is the type."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/verbatimAssertionType>
+    rdfs:label "Verbatim Assertion Type"@en ;
+    skos:definition "A string representing the type of dwc:Assertion as it appeared in an original record."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/verbatimCoordinateSystem>
+    rdfs:label "Verbatim Coordinate System"@en ;
+    skos:definition "A coordinate format for dwc:verbatimLatitude and dwc:verbatimLongitude or dwc:verbatimCoordinates."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/verbatimCoordinates>
+    rdfs:label "Verbatim Coordinates"@en ;
+    skos:definition "Verbatim original spatial coordinates of a dcterms:Location."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/verbatimDepth>
+    rdfs:label "Verbatim Depth"@en ;
+    skos:definition "The original description of the depth below the local surface."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/verbatimElevation>
+    rdfs:label "Verbatim Elevation"@en ;
+    skos:definition "An original description of the elevation of a dcterms:Location."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/verbatimEventDate>
+    rdfs:label "Verbatim EventDate"@en ;
+    skos:definition "The verbatim original representation of the date and time information for a dwc:Event."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/verbatimIdentification>
+    rdfs:label "Verbatim Identification"@en ;
+    skos:definition "A string representing the taxonomic identification as it appeared in the original record."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/verbatimLabel>
+    rdfs:label "Verbatim Label"@en ;
+    skos:definition "A verbatim original representation of the written information affixed or related to a dwc:MaterialEntity."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/verbatimLatitude>
+    rdfs:label "Verbatim Latitude"@en ;
+    skos:definition "A verbatim original latitude of a dcterms:Location."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/verbatimLocality>
+    rdfs:label "Verbatim Locality"@en ;
+    skos:definition "An original textual description of a dcterms:Location."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/verbatimLongitude>
+    rdfs:label "Verbatim Longitude"@en ;
+    skos:definition "A verbatim original longitude of a dcterms:Location."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/verbatimMeasurementType>
+    rdfs:label "Verbatim Measurement Type"@en ;
+    skos:definition "A string representing the type of measurement or fact as it appeared in the original record."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/verbatimSRS>
+    rdfs:label "Verbatim SRS"@en ;
+    skos:definition "The ellipsoid, geodetic datum, or spatial reference system (SRS) upon which coordinates given in dwc:verbatimLatitude and dwc:verbatimLongitude, or dwc:verbatimCoordinates are based."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/verbatimScientificNameRank>
+    rdfs:label "Verbatim Scientific Name Rank"@en ;
+    skos:definition "The taxonomic rank of the most specific name in the scientificName as it appears in the original record."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/verbatimTaxonRank>
+    rdfs:label "Verbatim Taxon Rank"@en ;
+    skos:definition "The taxonomic rank of the most specific name in the dwc:scientificName as it appears in the original record."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/vernacularName>
+    rdfs:label "Vernacular Name"@en ;
+    skos:definition "A common or vernacular name."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/verticalDatum>
+    rdfs:label "Vertical Datum"@en ;
+    skos:definition "The vertical datum used as the reference upon which the values in the elevation terms are based."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/vitality>
+    rdfs:label "Vitality"@en ;
+    skos:definition "An indication of whether a dwc:Organism was alive or dead at the time of collection or observation."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/waterBody>
+    rdfs:label "Water Body"@en ;
+    skos:definition "The name of the water body in which the dcterms:Location occurs."@en ;
+.
+
+<http://rs.tdwg.org/dwc/terms/year>
+    rdfs:label "Year"@en ;
+    skos:definition "The four-digit year in which the dwc:Event occurred, according to the Common Era Calendar."@en ;
+.

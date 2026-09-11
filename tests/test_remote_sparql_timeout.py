@@ -26,6 +26,8 @@ class TestRemoteSparqlTimeout:
         """Test that timeout parameter is added to form data when configured."""
         # Setup
         mock_response = Mock(spec=httpx.Response)
+        mock_response.status_code = 200
+        mock_response.raise_for_status = Mock()
         mock_async_client.build_request.return_value = Mock()
         mock_async_client.send.return_value = mock_response
 
@@ -51,6 +53,8 @@ class TestRemoteSparqlTimeout:
         """Test that no timeout parameter is added when not configured."""
         # Setup
         mock_response = Mock(spec=httpx.Response)
+        mock_response.status_code = 200
+        mock_response.raise_for_status = Mock()
         mock_async_client.build_request.return_value = Mock()
         mock_async_client.send.return_value = mock_response
 
@@ -70,6 +74,7 @@ class TestRemoteSparqlTimeout:
         """Test that timeout parameter is added to GET query string."""
         # Setup
         mock_response = Mock(spec=httpx.Response)
+        mock_response.status_code = 200
         mock_response.raise_for_status.return_value = None
         mock_async_client.send.return_value = mock_response
 
@@ -95,6 +100,7 @@ class TestRemoteSparqlTimeout:
         """Test that timeout parameter is added to POST form data."""
         # Setup
         mock_response = Mock(spec=httpx.Response)
+        mock_response.status_code = 200
         mock_response.raise_for_status.return_value = None
         mock_async_client.send.return_value = mock_response
 
@@ -119,6 +125,8 @@ class TestRemoteSparqlTimeout:
     async def test_different_timeout_param_names(self, remote_repo, mock_async_client):
         """Test various timeout parameter names work correctly."""
         mock_response = Mock(spec=httpx.Response)
+        mock_response.status_code = 200
+        mock_response.raise_for_status = Mock()
         mock_async_client.build_request.return_value = Mock()
         mock_async_client.send.return_value = mock_response
 
@@ -178,3 +186,55 @@ class TestRemoteSparqlTimeout:
             assert "45 seconds" in error_message
             # Should NOT mention remote endpoint since no param is configured
             assert "remote endpoint" not in error_message
+
+    @pytest.mark.asyncio
+    async def test_rdf_query_to_oxigraph_store_raises_http_error_before_parsing(
+        self, remote_repo, mock_async_client
+    ):
+        request = httpx.Request("POST", "http://test-endpoint.com")
+        response = Mock(spec=httpx.Response)
+        response.status_code = 400
+        response.request = request
+        response.headers = {"content-type": "text/plain"}
+        response.aread = AsyncMock(return_value=b"Fuseki parse error")
+        response.raise_for_status.side_effect = httpx.HTTPStatusError(
+            "Bad Request",
+            request=request,
+            response=response,
+        )
+        mock_async_client.build_request.return_value = Mock()
+        mock_async_client.send.return_value = response
+
+        with pytest.raises(httpx.HTTPStatusError) as exc_info:
+            await remote_repo.rdf_query_to_oxigraph_store(
+                "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }"
+            )
+
+        assert "Fuseki parse error" in str(exc_info.value)
+        response.aread.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_rdf_query_to_rdflib_graph_raises_http_error_before_parsing(
+        self, remote_repo, mock_async_client
+    ):
+        request = httpx.Request("POST", "http://test-endpoint.com")
+        response = Mock(spec=httpx.Response)
+        response.status_code = 500
+        response.request = request
+        response.headers = {"content-type": "text/plain"}
+        response.aread = AsyncMock(return_value=b"Fuseki execution error")
+        response.raise_for_status.side_effect = httpx.HTTPStatusError(
+            "Internal Server Error",
+            request=request,
+            response=response,
+        )
+        mock_async_client.build_request.return_value = Mock()
+        mock_async_client.send.return_value = response
+
+        with pytest.raises(httpx.HTTPStatusError) as exc_info:
+            await remote_repo.rdf_query_to_rdflib_graph(
+                "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }"
+            )
+
+        assert "Fuseki execution error" in str(exc_info.value)
+        response.aread.assert_awaited_once()

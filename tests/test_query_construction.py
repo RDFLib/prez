@@ -3,40 +3,27 @@ from itertools import product
 import pytest
 from rdflib import RDF, RDFS, SKOS
 from rdflib.namespace import GEO
-from sparql_grammar_pydantic import (
+from sparql_grammar import (
+    ANON,
     IRI,
-    AdditiveExpression,
     Aggregate,
-    Anon,
     Bind,
-    BlankNode,
     BuiltInCall,
-    ConditionalAndExpression,
-    ConditionalOrExpression,
     ConstructQuery,
     ConstructTemplate,
     ConstructTriples,
     Expression,
-    GraphPatternNotTriples,
     GroupGraphPattern,
     GroupGraphPatternSub,
     GroupOrUnionGraphPattern,
-    LimitClause,
     LimitOffsetClauses,
-    MultiplicativeExpression,
-    NumericExpression,
-    NumericLiteral,
-    PrimaryExpression,
     RDFLiteral,
-    RelationalExpression,
     SelectClause,
     SolutionModifier,
     SubSelect,
     TriplesBlock,
     TriplesSameSubject,
     TriplesSameSubjectPath,
-    UnaryExpression,
-    ValueLogical,
     Var,
     WhereClause,
 )
@@ -53,14 +40,14 @@ def test_basic_object():
     PrezQueryConstructor(
         profile_triples=[
             TriplesSameSubjectPath.from_spo(
-                subject=IRI(value="https://test-object"),
-                predicate=IRI(value="https://prez.dev/ont/label"),
-                object=Var(value="label"),
+                IRI(value="https://test-object"),
+                IRI(value="https://prez.dev/ont/label"),
+                Var(value="label"),
             ),
             TriplesSameSubjectPath.from_spo(
-                subject=IRI(value="https://test-object"),
-                predicate=IRI(value="https://property"),
-                object=Var(value="propValue"),
+                IRI(value="https://test-object"),
+                IRI(value="https://property"),
+                Var(value="propValue"),
             ),
         ],
     )
@@ -70,33 +57,33 @@ def test_basic_listing():
     test = PrezQueryConstructor(
         construct_tss_list=[
             TriplesSameSubject.from_spo(
-                subject=Var(value="focus_node"),
-                predicate=IRI(value=str(RDF.type)),
-                object=IRI(value=str(GEO.Feature)),
+                Var(value="focus_node"),
+                IRI(value=str(RDF.type)),
+                IRI(value=str(GEO.Feature)),
             )
         ],
         profile_triples=[
             TriplesSameSubjectPath.from_spo(
-                subject=Var(value="focus_node"),
-                predicate=IRI(value=str(RDF.type)),
-                object=IRI(value=str(GEO.Feature)),
+                Var(value="focus_node"),
+                IRI(value=str(RDF.type)),
+                IRI(value=str(GEO.Feature)),
             ),
             TriplesSameSubjectPath.from_spo(
-                subject=Var(value="focus_node"),
-                predicate=IRI(value="https://property"),
-                object=Var(value="propValue"),
+                Var(value="focus_node"),
+                IRI(value="https://property"),
+                Var(value="propValue"),
             ),
         ],
         inner_select_tssp_list=[
             TriplesSameSubjectPath.from_spo(
-                subject=Var(value="focus_node"),
-                predicate=IRI(value=str(RDF.type)),
-                object=IRI(value=str(GEO.Feature)),
+                Var(value="focus_node"),
+                IRI(value=str(RDF.type)),
+                IRI(value=str(GEO.Feature)),
             ),
             TriplesSameSubjectPath.from_spo(
-                subject=Var(value="focus_node"),
-                predicate=IRI(value=str(RDFS.label)),
-                object=Var(value="label"),
+                Var(value="focus_node"),
+                IRI(value=str(RDFS.label)),
+                Var(value="label"),
             ),
         ],
         limit=10,
@@ -109,7 +96,7 @@ def test_basic_listing():
         "?focus_node <http://www.w3.org/2000/01/rdf-schema#label> ?order_by_val"
         in query_string
     )
-    assert "ORDER BY ASC( STR( ?order_by_val ) )" in query_string
+    assert "ORDER BY ASC(STR(?order_by_val))" in query_string
 
 
 def test_search_query_regex():
@@ -117,17 +104,17 @@ def test_search_query_regex():
     test = PrezQueryConstructor(
         profile_triples=[
             TriplesSameSubjectPath.from_spo(
-                subject=Var(value="focus_node"),
-                predicate=IRI(value=str(RDF.type)),
-                object=IRI(value=str(GEO.Feature)),
+                Var(value="focus_node"),
+                IRI(value=str(RDF.type)),
+                IRI(value=str(GEO.Feature)),
             ),
             TriplesSameSubjectPath.from_spo(
-                subject=Var(value="focus_node"),
-                predicate=IRI(value="https://property"),
-                object=Var(value="propValue"),
+                Var(value="focus_node"),
+                IRI(value="https://property"),
+                Var(value="propValue"),
             ),
         ],
-        construct_tss_list=sq.construct_triples.to_tss_list()
+        construct_tss_list=sq.tss_list
         + [
             TriplesSameSubject.from_spo(
                 IRI(value="https://s"), IRI(value="https://p"), IRI(value="https://o")
@@ -201,20 +188,20 @@ def test_concept_hierarchy_narrowers():
 
 
 def test_count_query():
+    focus_node = Var(value="focus_node")
+    count_var = Var(value="count")
     inner_ss = SubSelect(
-        select_clause=SelectClause(variables_or_all=[Var(value="focus_node")]),
+        select_clause=SelectClause([focus_node]),
         where_clause=WhereClause(
-            group_graph_pattern=GroupGraphPattern(
-                content=GroupGraphPatternSub(
-                    graph_patterns_or_triples_blocks=[
-                        TriplesBlock.from_tssp_list(
+            GroupGraphPattern(
+                GroupGraphPatternSub(
+                    [
+                        TriplesBlock(
                             [
                                 TriplesSameSubjectPath.from_spo(
-                                    subject=Var(value="focus_node"),
-                                    predicate=IRI(value=RDF.type),
-                                    object=IRI(
-                                        value="http://www.w3.org/ns/sosa/Sampling"
-                                    ),
+                                    focus_node,
+                                    IRI(value=RDF.type),
+                                    IRI(value="http://www.w3.org/ns/sosa/Sampling"),
                                 )
                             ]
                         )
@@ -223,111 +210,42 @@ def test_count_query():
             )
         ),
         solution_modifier=SolutionModifier(
-            limit_offset=LimitOffsetClauses(limit_clause=LimitClause(limit=1001)),
+            limit_offset=LimitOffsetClauses.create(limit=1001),
         ),
     )
     count_expression = Expression.from_primary_expression(
-        PrimaryExpression(
-            content=BuiltInCall(
-                other_expressions=Aggregate(
-                    function_name="COUNT",
-                    distinct=True,
-                    expression=Expression.from_primary_expression(
-                        PrimaryExpression(content=Var(value="focus_node"))
-                    ),
-                )
-            )
-        )
+        Aggregate.count(focus_node, distinct=True)
     )
     outer_ss = SubSelect(
-        select_clause=SelectClause(
-            variables_or_all=[(count_expression, Var(value="count"))],
-        ),
-        where_clause=WhereClause(
-            group_graph_pattern=GroupGraphPattern(content=inner_ss)
-        ),
+        select_clause=SelectClause([(count_expression, count_var)]),
+        where_clause=WhereClause(GroupGraphPattern(inner_ss)),
     )
-    outer_ss_ggp = GroupGraphPattern(content=outer_ss)
-    count_equals_1001_expr = Expression(
-        conditional_or_expression=ConditionalOrExpression(
-            conditional_and_expressions=[
-                ConditionalAndExpression(
-                    value_logicals=[
-                        ValueLogical(
-                            relational_expression=RelationalExpression(
-                                left=NumericExpression(
-                                    additive_expression=AdditiveExpression(
-                                        base_expression=MultiplicativeExpression(
-                                            base_expression=UnaryExpression(
-                                                primary_expression=PrimaryExpression(
-                                                    content=Var(value="count")
-                                                )
-                                            )
-                                        )
-                                    )
-                                ),
-                                operator="=",
-                                right=NumericExpression(
-                                    additive_expression=AdditiveExpression(
-                                        base_expression=MultiplicativeExpression(
-                                            base_expression=UnaryExpression(
-                                                primary_expression=PrimaryExpression(
-                                                    content=NumericLiteral(value=1001)
-                                                )
-                                            )
-                                        )
-                                    )
-                                ),
-                            )
-                        )
-                    ]
-                )
-            ]
-        )
-    )
-    gt_1000_exp = Expression.from_primary_expression(
-        PrimaryExpression(content=RDFLiteral(value=">1000"))
-    )
-    str_count_exp = Expression.from_primary_expression(
-        PrimaryExpression(
-            content=BuiltInCall.create_with_one_expr(
-                function_name="STR",
-                expression=PrimaryExpression(content=Var(value="count")),
-            )
-        )
-    )
+    # BIND(IF(?count = 1001, ">1000", STR(?count)) AS ?count_str)
     bind = Bind(
-        expression=Expression.from_primary_expression(
-            PrimaryExpression(
-                content=BuiltInCall(
-                    function_name="IF",
-                    arguments=[count_equals_1001_expr, gt_1000_exp, str_count_exp],
-                )
+        Expression.from_primary_expression(
+            BuiltInCall.create(
+                "IF",
+                Expression.compare(count_var, "=", 1001),
+                Expression.from_primary_expression(RDFLiteral(value=">1000")),
+                Expression.from_primary_expression(
+                    BuiltInCall.create("STR", count_var)
+                ),
             )
         ),
-        var=Var(value="count_str"),
+        Var(value="count_str"),
     )
     wc = WhereClause(
-        group_graph_pattern=GroupGraphPattern(
-            content=GroupGraphPatternSub(
-                graph_patterns_or_triples_blocks=[
-                    GraphPatternNotTriples(
-                        content=GroupOrUnionGraphPattern(
-                            group_graph_patterns=[outer_ss_ggp]
-                        )
-                    ),
-                    GraphPatternNotTriples(content=bind),
-                ]
+        GroupGraphPattern(
+            GroupGraphPatternSub(
+                [GroupOrUnionGraphPattern([GroupGraphPattern(outer_ss)]), bind]
             )
         )
     )
     construct_template = ConstructTemplate(
-        construct_triples=ConstructTriples.from_tss_list(
+        ConstructTriples(
             [
                 TriplesSameSubject.from_spo(
-                    subject=BlankNode(value=Anon()),
-                    predicate=IRI(value="https://prez.dev/count"),
-                    object=Var(value="count_str"),
+                    ANON(), IRI(value="https://prez.dev/count"), Var(value="count_str")
                 )
             ]
         )
@@ -337,7 +255,10 @@ def test_count_query():
         where_clause=wc,
         solution_modifier=SolutionModifier(),
     )
-    print(query)
+    query_string = query.to_string()
+    assert "SELECT (COUNT(DISTINCT ?focus_node) AS ?count)" in query_string
+    assert 'BIND(IF(?count = 1001, ">1000", STR(?count)) AS ?count_str)' in query_string
+    assert "LIMIT 1001" in query_string
 
 
 def test_umbrella_cql_query():
@@ -371,26 +292,28 @@ def test_umbrella_cql_query():
 
 def test_profile_triples_preserve_focus_first_order():
     """Profile triples should keep focus_node first after TriplesBlock nesting."""
-    from sparql_grammar_pydantic import IRI, TriplesSameSubjectPath, Var
+    from sparql_grammar import IRI, TriplesSameSubjectPath, Var
 
     from prez.services.query_generation.umbrella import PrezQueryConstructor
 
     profile_triples = [
         TriplesSameSubjectPath.from_spo(
-            subject=Var(value="focus_node"),
-            predicate=IRI(value="http://example.org/p1"),
-            object=Var(value="node1"),
+            Var(value="focus_node"),
+            IRI(value="http://example.org/p1"),
+            Var(value="node1"),
         ),
         TriplesSameSubjectPath.from_spo(
-            subject=Var(value="node1"),
-            predicate=IRI(value="http://example.org/p2"),
-            object=Var(value="node2"),
+            Var(value="node1"),
+            IRI(value="http://example.org/p2"),
+            Var(value="node2"),
         ),
     ]
     query = PrezQueryConstructor(profile_triples=profile_triples)
     normalized = "".join(query.to_string().split())
-    first = "?focus_node<http://example.org/p1>?node1."
-    second = "?node1<http://example.org/p2>?node2."
+    # no trailing dot on either: it is optional after the last triple of a block,
+    # and the point of the test is the order, not the separator
+    first = "?focus_node<http://example.org/p1>?node1"
+    second = "?node1<http://example.org/p2>?node2"
     assert normalized.find(first) != -1
     assert normalized.find(second) != -1
     assert normalized.find(first) < normalized.find(second)
@@ -401,4 +324,72 @@ def test_create_regex_filter():
     pattern = "test_pattern"
     regex_filter = create_regex_filter(variable, pattern)
     query_string = regex_filter.to_string()
-    assert query_string == '\nFILTER REGEX(STR(?variable), "test_pattern")'
+    assert query_string == 'FILTER REGEX(STR(?variable), "test_pattern")'
+
+
+def test_default_class_var_included_when_inner_select_tssp_list_empty():
+    """
+    Tests that when inner_select_tssp_list is empty (and no concept_hierarchy_query),
+    the default ?focus_node a ?default_class_var triple is added to the inner select.
+    """
+    from prez.services.query_generation.umbrella import (
+        merge_listing_query_grammar_inputs,
+    )
+    from prez.models.query_params import ListingQueryParams
+
+    qp = ListingQueryParams(
+        limit=10, page=1, offset=0, _filter=None, bbox=[], datetime=None, order_by=None
+    )
+    kwargs = merge_listing_query_grammar_inputs(query_params=qp)
+    query = PrezQueryConstructor(**kwargs)
+    query_string = query.to_string()
+    assert (
+        "?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?default_class_var"
+        in query_string
+    )
+
+
+def test_default_class_var_excluded_for_concept_hierarchy_query():
+    """
+    Tests that when a concept_hierarchy_query is provided, the default
+    ?focus_node a ?default_class_var triple is NOT added to the inner select.
+    This prevents unbounded variables causing the database to load unnecessary data.
+    See https://github.com/RDFLib/prez/issues/453
+    """
+    from prez.services.query_generation.umbrella import (
+        merge_listing_query_grammar_inputs,
+    )
+    from prez.models.query_params import ListingQueryParams
+
+    parent_uri = IRI(value="https://example.org/concept-scheme")
+    parent_child_predicates = (
+        IRI(value=SKOS.hasTopConcept),
+        IRI(value=SKOS.topConceptOf),
+    )
+    child_grandchild_predicates = (IRI(value=SKOS.narrower), IRI(value=SKOS.broader))
+
+    concept_hierarchy_query = ConceptHierarchyQuery(
+        parent_uri=parent_uri,
+        parent_child_predicates=parent_child_predicates,
+        child_grandchild_predicates=child_grandchild_predicates,
+    )
+
+    qp = ListingQueryParams(
+        limit=20,
+        page=1,
+        offset=0,
+        _filter=None,
+        bbox=[],
+        datetime=None,
+        order_by=None,
+        order_by_direction=None,
+    )
+    kwargs = merge_listing_query_grammar_inputs(
+        concept_hierarchy_query=concept_hierarchy_query, query_params=qp
+    )
+    query = PrezQueryConstructor(**kwargs)
+    query_string = query.to_string()
+    assert (
+        "?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?default_class_var"
+        not in query_string
+    )

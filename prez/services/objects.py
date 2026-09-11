@@ -18,7 +18,7 @@ from pyoxigraph import (
 from rdf2geojson import convert
 from rdflib import RDF, URIRef
 from rdflib.namespace import GEO
-from sparql_grammar_pydantic import IRI, TriplesSameSubject, TriplesSameSubjectPath, Var
+from sparql_grammar import IRI, TriplesSameSubject, TriplesSameSubjectPath, Var
 
 from prez.cache import prefix_graph
 from prez.config import settings
@@ -88,18 +88,20 @@ async def object_function(
             cql_parser=None,
             search_query=None,
         )
+    construct_tss_list = list(profile_nodeshape.tss_list)
+    # add focus node declaration if it's an annotated mediatype
     if "anot+" in pmts.selected["mediatype"]:
-        profile_nodeshape.tss_list.append(
+        construct_tss_list.append(
             TriplesSameSubject.from_spo(
-                subject=profile_nodeshape.focus_node,
-                predicate=IRI(value="https://prez.dev/type"),
-                object=IRI(value="https://prez.dev/FocusNode"),
+                profile_nodeshape.focus_node,
+                IRI(value="https://prez.dev/type"),
+                IRI(value="https://prez.dev/FocusNode"),
             )
         )
     main_query = PrezQueryConstructor(
         profile_triples=profile_nodeshape.tssp_list,
         profile_gpnt=profile_nodeshape.gpnt_list,
-        construct_tss_list=profile_nodeshape.tss_list,
+        construct_tss_list=construct_tss_list,
     )
     queries = [main_query.to_string()]
 
@@ -218,11 +220,12 @@ async def ogc_features_object_function(
     else:
         if feature_uri is None:  # feature collection
             collection_iri = IRI(value=collection_uri)
-            construct_tss_list = None
-            tssp_list = [
-                TriplesSameSubjectPath.from_spo(
-                    collection_iri, IRI(value=RDF.type), Var(value="type")
-                )
+            triples = [(collection_iri, IRI(value=RDF.type), Var(value="type"))]
+            tssp_list = [TriplesSameSubjectPath.from_spo(*triple) for triple in triples]
+            # the CONSTRUCT template has to name the triples to return; an absent
+            # template constructs nothing
+            construct_tss_list = [
+                TriplesSameSubject.from_spo(*triple) for triple in triples
             ]
         else:  # feature
             feature_iri = IRI(value=feature_uri)

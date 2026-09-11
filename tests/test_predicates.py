@@ -15,9 +15,17 @@ from prez.config import Settings
 def test_label_predicates(label_predicates, error):
     if error:
         with pytest.raises(error):
-            assert Settings(label_predicates=label_predicates)
+            assert Settings(
+                _env_file=None,
+                enable_cql_jena_lucene_json=False,
+                label_predicates=label_predicates,
+            )
     else:
-        assert Settings(label_predicates=label_predicates)
+        assert Settings(
+            _env_file=None,
+            enable_cql_jena_lucene_json=False,
+            label_predicates=label_predicates,
+        )
 
 
 @pytest.mark.parametrize(
@@ -32,9 +40,17 @@ def test_label_predicates(label_predicates, error):
 def test_description_predicates(description_predicates, error):
     if error:
         with pytest.raises(error):
-            assert Settings(description_predicates=description_predicates)
+            assert Settings(
+                _env_file=None,
+                enable_cql_jena_lucene_json=False,
+                description_predicates=description_predicates,
+            )
     else:
-        assert Settings(description_predicates=description_predicates)
+        assert Settings(
+            _env_file=None,
+            enable_cql_jena_lucene_json=False,
+            description_predicates=description_predicates,
+        )
 
 
 @pytest.mark.parametrize(
@@ -49,9 +65,17 @@ def test_description_predicates(description_predicates, error):
 def test_provenance_predicates(provenance_predicates, error):
     if error:
         with pytest.raises(error):
-            assert Settings(provenance_predicates=provenance_predicates)
+            assert Settings(
+                _env_file=None,
+                enable_cql_jena_lucene_json=False,
+                provenance_predicates=provenance_predicates,
+            )
     else:
-        assert Settings(provenance_predicates=provenance_predicates)
+        assert Settings(
+            _env_file=None,
+            enable_cql_jena_lucene_json=False,
+            provenance_predicates=provenance_predicates,
+        )
 
 
 @pytest.mark.parametrize(
@@ -66,9 +90,17 @@ def test_provenance_predicates(provenance_predicates, error):
 def test_search_predicates(search_predicates, error):
     if error:
         with pytest.raises(error):
-            assert Settings(search_predicates=search_predicates)
+            assert Settings(
+                _env_file=None,
+                enable_cql_jena_lucene_json=False,
+                search_predicates=search_predicates,
+            )
     else:
-        assert Settings(search_predicates=search_predicates)
+        assert Settings(
+            _env_file=None,
+            enable_cql_jena_lucene_json=False,
+            search_predicates=search_predicates,
+        )
 
 
 @pytest.mark.parametrize(
@@ -83,6 +115,14 @@ def test_search_predicates(search_predicates, error):
 def test_other_predicates(other_predicates, error):
     if error:
         with pytest.raises(error):
-            assert Settings(other_predicates=other_predicates)
+            assert Settings(
+                _env_file=None,
+                enable_cql_jena_lucene_json=False,
+                other_predicates=other_predicates,
+            )
     else:
-        assert Settings(other_predicates=other_predicates)
+        assert Settings(
+            _env_file=None,
+            enable_cql_jena_lucene_json=False,
+            other_predicates=other_predicates,
+        )

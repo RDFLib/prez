@@ -1,0 +1,41 @@
+@prefix schema: <https://schema.org/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+<http://example.org/cats/vocab-cats> a schema:DataCatalog ;
+    schema:name "Catalogue of Vocabularies Catalogues (Top Level)"  ;
+    schema:hasPart <http://example.org/cats/vocab-cat1> ;
+    schema:hasPart <http://example.org/cats/vocab-cat2> .
+
+<http://example.org/cats/vocab-cat1> a schema:DataCatalog ;
+    schema:name "A Catalogue of Vocabularies (Second Level)" ;
+    schema:hasPart <http://example.org/vocabs/vocab1> ;
+    schema:hasPart <http://example.org/vocabs/vocab2> .
+
+<http://example.org/cats/vocab-cat2> a schema:DataCatalog ;
+    schema:name "Another Catalogue of Vocabularies (Second Level)" ;
+    schema:hasPart <http://example.org/vocabs/vocab3> ;
+    schema:hasPart <http://example.org/vocabs/vocab4> .
+
+<http://example.org/vocabs/vocab1> a skos:ConceptScheme ;
+    skos:prefLabel "Vocab1" ;
+    skos:hasTopConcept <http://example.org/vocabs/vocab1/c1> .
+<http://example.org/vocabs/vocab1/c1> a skos:Concept ;
+    skos:prefLabel "Concept1 (Vocab1)" .
+
+<http://example.org/vocabs/vocab2> a skos:ConceptScheme ;
+    skos:prefLabel "Vocab2" ;
+    skos:hasTopConcept <http://example.org/vocabs/vocab2/c1> .
+<http://example.org/vocabs/vocab2/c1> a skos:Concept ;
+    skos:prefLabel "Concept2 (Vocab2)" .
+
+<http://example.org/vocabs/vocab3> a skos:ConceptScheme ;
+    skos:prefLabel "Vocab3" ;
+    skos:hasTopConcept <http://example.org/vocabs/vocab3/c1> .
+<http://example.org/vocabs/vocab3/c1> a skos:Concept ;
+    skos:prefLabel "Concept3 (Vocab3)" .
+
+<http://example.org/vocabs/vocab4> a skos:ConceptScheme ;
+    skos:prefLabel "Vocab4" ;
+    skos:hasTopConcept <http://example.org/vocabs/vocab4/c1> .
+<http://example.org/vocabs/vocab4/c1> a skos:Concept ;
+    skos:prefLabel "Concept4 (Vocab4)" .

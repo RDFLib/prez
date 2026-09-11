@@ -1,4 +1,5 @@
 """Test to print generated SPARQL query for debugging"""
+
 import pytest
 from rdflib import URIRef
 from prez.services.connegp_service import NegotiatedPMTs
@@ -9,6 +10,7 @@ async def test_print_generated_query(client_no_override):
     """Print the generated SPARQL query to debug constraint_distance issue"""
     system_store = client_no_override.app.state._state.get("pyoxi_system_store")
     from prez.repositories import PyoxigraphRepo
+
     system_repo = PyoxigraphRepo(system_store)
 
     pmts = NegotiatedPMTs(
@@ -20,19 +22,19 @@ async def test_print_generated_query(client_no_override):
     )
 
     query = pmts._compose_select_query()
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("GENERATED SPARQL QUERY:")
-    print("="*80)
+    print("=" * 80)
     print(query)
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
     # Actually run the query
     response = await pmts._do_query(query)
     results = response[1][0][1]  # Extract results
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("QUERY RESULTS:")
-    print("="*80)
+    print("=" * 80)
     if results:
         print(f"Total results: {len(results)}")
         for i, item in enumerate(results):  # Print ALL results
@@ -43,6 +45,6 @@ async def test_print_generated_query(client_no_override):
             print(f"  alt_prof: {item['alt_prof']['value']}")
     else:
         print("NO RESULTS RETURNED")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
     assert True  # Just print, don't fail

@@ -1,24 +1,23 @@
-from sparql_grammar_pydantic import (
+from rdflib import Namespace
+from rdflib.namespace import PROV, RDF, SDO, SOSA
+from sparql_grammar import (
     IRI,
     GroupGraphPatternSub,
     TriplesBlock,
     TriplesSameSubjectPath,
     Var,
-    VarOrTerm,
-    GraphTerm,
 )
-from rdflib import Namespace
-from rdflib.namespace import SOSA, RDF, SDO, PROV
-
-TERN = Namespace("https://w3id.org/tern/ontologies/tern/")
 
 from prez.services.query_generation.grammar_helpers import (
     convert_value_to_rdf_term,
-    create_values_constraint,
+    triples_block,
     create_tssp_alt_or_alt_inverse,
     create_tssp_sequence,
     create_union_gpnt_from_tssps,
+    create_values_constraint,
 )
+
+TERN = Namespace("https://w3id.org/tern/ontologies/tern/")
 
 REGISTERED_CQL_FUNCTIONS = [
     "FOIObservationFilterDirect",
@@ -37,15 +36,15 @@ def handle_custom_functions(
     suffix: str = "",
 ):
     ggps = existing_ggps if existing_ggps is not None else GroupGraphPatternSub()
-    focus_node_vot = VarOrTerm(varorterm=Var(value="focus_node"))
+    focus_node = Var(value="focus_node")
     if operator in [
         "FOIObservationFilterDirect",
         "FOIObservationFilterSequence",
         "hasObservation",
     ]:
-        obj = VarOrTerm(varorterm=Var(value=f"observation{suffix}"))
+        obj = Var(value=f"observation{suffix}")
         foi_to_obs_tssp = create_tssp_alt_or_alt_inverse(
-            subject=focus_node_vot,
+            subject=focus_node,
             first_pred=IRI(value=str(SOSA.isFeatureOfInterestOf)),
             second_pred=IRI(value=str(SOSA.hasFeatureOfInterest)),
             obj=obj,
@@ -54,29 +53,23 @@ def handle_custom_functions(
         if operator in ["FOIObservationFilterDirect", "FOIObservationFilterSequence"]:
             filter_1_object = convert_value_to_rdf_term(args[1])
             obs_filter_1 = TriplesSameSubjectPath.from_spo(
-                subject=obj.varorterm,
-                predicate=IRI(value=args[0]),
-                object=filter_1_object,
+                obj, IRI(value=args[0]), filter_1_object
             )
             filter_2_object = convert_value_to_rdf_term(args[3])
             obs_filter_2 = None
             if operator == "FOIObservationFilterDirect":
                 obs_filter_2 = TriplesSameSubjectPath.from_spo(
-                    subject=obj.varorterm,
-                    predicate=IRI(value=args[2]),
-                    object=filter_2_object,
+                    obj, IRI(value=args[2]), filter_2_object
                 )
             elif operator == "FOIObservationFilterSequence":
                 obs_filter_2 = create_tssp_sequence(
                     subject=obj,
                     pred_1=IRI(value=args[2]),
                     pred_2=IRI(value=args[3]),
-                    obj=VarOrTerm(varorterm=GraphTerm(content=filter_2_object)),
+                    obj=filter_2_object,
                 )
             ggps.add_pattern(
-                TriplesBlock.from_tssp_list(
-                    [obs_filter_2, obs_filter_1, foi_to_obs_tssp]
-                )
+                triples_block([obs_filter_2, obs_filter_1, foi_to_obs_tssp])
             )
         elif (
             operator == "hasObservation"
@@ -96,9 +89,9 @@ def handle_custom_functions(
             obs_prop_var = Var(value=f"obs_prop{suffix}")
             result_var = Var(value=f"result{suffix}")
             obs_filter_1 = TriplesSameSubjectPath.from_spo(
-                subject=obj.varorterm,  # ?observation
-                predicate=IRI(value=str(SOSA.observedProperty)),
-                object=obs_prop_var,  # ?obs_prop
+                obj,  # ?observation
+                IRI(value=str(SOSA.observedProperty)),
+                obs_prop_var,  # ?obs_prop
             )
             arg_1_values_gpnt = create_values_constraint(
                 obs_prop_var, args[0]
@@ -107,25 +100,19 @@ def handle_custom_functions(
                 result_var, args[1]
             )  # args[1] is array for ?result
             tssp_1 = TriplesSameSubjectPath.from_spo(
-                subject=obj.varorterm,
-                predicate=IRI(value=str(SOSA.hasSimpleResult)),
-                object=result_var,
+                obj, IRI(value=str(SOSA.hasSimpleResult)), result_var
             )
             tssp_2 = TriplesSameSubjectPath.from_spo(
-                subject=obj.varorterm,
-                predicate=IRI(value=str(SOSA.hasResult)),
-                object=result_var,
+                obj, IRI(value=str(SOSA.hasResult)), result_var
             )
             tssp_3 = create_tssp_sequence(
                 subject=obj,
                 pred_1=IRI(value=str(SOSA.hasResult)),
                 pred_2=IRI(value=str(RDF.value)),
-                obj=VarOrTerm(varorterm=result_var),
+                obj=result_var,
             )
             union_gpnt = create_union_gpnt_from_tssps([tssp_1, tssp_2, tssp_3])
-            ggps.add_pattern(
-                TriplesBlock.from_tssp_list([obs_filter_1, foi_to_obs_tssp])
-            )
+            ggps.add_pattern(triples_block([obs_filter_1, foi_to_obs_tssp]))
             ggps.add_pattern(union_gpnt)
             ggps.add_pattern(arg_1_values_gpnt)
             ggps.add_pattern(arg_2_values_gpnt)
@@ -147,37 +134,27 @@ def handle_custom_functions(
         attr_name_var = Var(value=f"attr_name_var{suffix}")
         result_var = Var(value=f"result{suffix}")
         focus_to_attr_tssp = TriplesSameSubjectPath.from_spo(
-            subject=focus_node_vot.varorterm,
-            predicate=IRI(value=str(TERN.hasAttribute)),
-            object=attr_bn_var,
+            focus_node, IRI(value=str(TERN.hasAttribute)), attr_bn_var
         )
         attr_bn_to_attr_var_tssp = TriplesSameSubjectPath.from_spo(
-            subject=attr_bn_var,
-            predicate=IRI(value=str(TERN.attribute)),
-            object=attr_name_var,
+            attr_bn_var, IRI(value=str(TERN.attribute)), attr_name_var
         )
         tssp_1 = TriplesSameSubjectPath.from_spo(
-            subject=attr_bn_var,
-            predicate=IRI(value=str(TERN.hasSimpleValue)),
-            object=result_var,
+            attr_bn_var, IRI(value=str(TERN.hasSimpleValue)), result_var
         )
         tssp_2 = TriplesSameSubjectPath.from_spo(
-            subject=attr_bn_var,
-            predicate=IRI(value=str(TERN.hasValue)),
-            object=result_var,
+            attr_bn_var, IRI(value=str(TERN.hasValue)), result_var
         )
         tssp_3 = create_tssp_sequence(
-            subject=VarOrTerm(varorterm=attr_bn_var),
+            subject=attr_bn_var,
             pred_1=IRI(value=str(TERN.hasValue)),
             pred_2=IRI(value=str(RDF.value)),
-            obj=VarOrTerm(varorterm=result_var),
+            obj=result_var,
         )
         union_gpnt = create_union_gpnt_from_tssps([tssp_1, tssp_2, tssp_3])
         arg_1_values_gpnt = create_values_constraint(attr_name_var, args[0])
         arg_2_values_gpnt = create_values_constraint(result_var, args[1])
-        ggps.add_pattern(
-            TriplesBlock.from_tssp_list([attr_bn_to_attr_var_tssp, focus_to_attr_tssp])
-        )
+        ggps.add_pattern(triples_block([attr_bn_to_attr_var_tssp, focus_to_attr_tssp]))
         ggps.add_pattern(union_gpnt)
         ggps.add_pattern(arg_1_values_gpnt)
         ggps.add_pattern(arg_2_values_gpnt)
@@ -199,34 +176,30 @@ def handle_custom_functions(
         aprop_name_or_id_var = Var(value=f"aprop_name_or_id_var{suffix}")
         value_var = Var(value=f"value{suffix}")
         focus_to_aprop_tssp = TriplesSameSubjectPath.from_spo(
-            subject=focus_node_vot.varorterm,
-            predicate=IRI(value=str(SDO.additionalProperty)),
-            object=aprop_bn_var,
+            focus_node, IRI(value=str(SDO.additionalProperty)), aprop_bn_var
         )
         aprop_name_or_id_tssp = create_tssp_alt_or_alt_inverse(
-            subject=focus_node_vot,
+            subject=focus_node,
             first_pred=IRI(value=str(SDO.propertyID)),
             second_pred=IRI(value=str(SDO.name)),
-            obj=VarOrTerm(varorterm=aprop_name_or_id_var),
+            obj=aprop_name_or_id_var,
         )
         tssp_1 = TriplesSameSubjectPath.from_spo(
-            subject=aprop_bn_var, predicate=IRI(value=str(SDO.value)), object=value_var
+            aprop_bn_var, IRI(value=str(SDO.value)), value_var
         )
         tssp_2 = TriplesSameSubjectPath.from_spo(
-            subject=aprop_bn_var, predicate=IRI(value=str(RDF.value)), object=value_var
+            aprop_bn_var, IRI(value=str(RDF.value)), value_var
         )
         tssp_3 = create_tssp_sequence(
-            subject=VarOrTerm(varorterm=aprop_bn_var),
+            subject=aprop_bn_var,
             pred_1=IRI(value=str(SDO.value)),
             pred_2=IRI(value=str(RDF.value)),
-            obj=VarOrTerm(varorterm=value_var),
+            obj=value_var,
         )
         union_gpnt = create_union_gpnt_from_tssps([tssp_1, tssp_2, tssp_3])
         arg_1_values_gpnt = create_values_constraint(aprop_name_or_id_var, args[0])
         arg_2_values_gpnt = create_values_constraint(value_var, args[1])
-        ggps.add_pattern(
-            TriplesBlock.from_tssp_list([aprop_name_or_id_tssp, focus_to_aprop_tssp])
-        )
+        ggps.add_pattern(triples_block([aprop_name_or_id_tssp, focus_to_aprop_tssp]))
         ggps.add_pattern(union_gpnt)
         ggps.add_pattern(arg_1_values_gpnt)
         ggps.add_pattern(arg_2_values_gpnt)
@@ -246,19 +219,13 @@ def handle_custom_functions(
         agent_var = Var(value=f"agent_var{suffix}")
 
         focus_to_qa_tssp = TriplesSameSubjectPath.from_spo(
-            subject=focus_node_vot.varorterm,
-            predicate=IRI(value=str(PROV.qualifiedAttribution)),
-            object=qa_bn_var,
+            focus_node, IRI(value=str(PROV.qualifiedAttribution)), qa_bn_var
         )
         qa_to_role_tssp = TriplesSameSubjectPath.from_spo(
-            subject=qa_bn_var,
-            predicate=IRI(value=str(PROV.hadRole)),
-            object=role_var,
+            qa_bn_var, IRI(value=str(PROV.hadRole)), role_var
         )
         qa_to_agent_tssp = TriplesSameSubjectPath.from_spo(
-            subject=qa_bn_var,
-            predicate=IRI(value=str(PROV.agent)),
-            object=agent_var,
+            qa_bn_var, IRI(value=str(PROV.agent)), agent_var
         )
 
         role_values_gpnt = create_values_constraint(
@@ -269,9 +236,7 @@ def handle_custom_functions(
         )  # args[1] is array for agents
 
         ggps.add_pattern(
-            TriplesBlock.from_tssp_list(
-                [qa_to_agent_tssp, qa_to_role_tssp, focus_to_qa_tssp]
-            )
+            triples_block([qa_to_agent_tssp, qa_to_role_tssp, focus_to_qa_tssp])
         )
         ggps.add_pattern(role_values_gpnt)
         ggps.add_pattern(agent_values_gpnt)

@@ -35,9 +35,15 @@ from prez.exceptions.model_exceptions import (
     URINotFoundException,
     MissingFilterQueryError,
 )
-from prez.middleware import create_validate_header_middleware
+from prez.middleware import (
+    RequestTimingMiddleware,
+    create_response_header_budget_middleware,
+    create_validate_header_middleware,
+)
 from prez.repositories import OxrdflibRepo, PyoxigraphRepo, RemoteSparqlRepo
 from prez.routers.base_router import router as base_prez_router
+from prez.routers.cql_lucene_router import router as cql_lucene_router
+from prez.routers.cql_router import router as cql_router
 from prez.routers.custom_endpoints import create_dynamic_router
 from prez.routers.identifier import router as identifier_router
 from prez.routers.management import config_router
@@ -50,8 +56,7 @@ from prez.services.app_service import (
     healthcheck_sparql_endpoints,
     populate_api_info,
     prefix_initialisation,
-    retrieve_remote_queryable_definitions,
-    retrieve_local_queryable_definitions,
+    retrieve_queryable_definitions,
     retrieve_remote_template_queries,
     retrieve_jena_fts_shapes,
 )
@@ -121,6 +126,10 @@ async def lifespan(app: FastAPI):
                 and mount_app not in mounted_apps
             ):
                 mounted_apps.append(mount_app)
+    # Announced once here rather than from get_pyoxi_store, which is a per-request
+    # dependency of get_data_repo and was logging on every request, including for
+    # repository types that never touch a pyoxigraph store.
+    log.info(f"Using {app.state.settings.sparql_repo_type} data repository")
     if app.state.settings.sparql_repo_type == "pyoxigraph_memory":
         app.state.pyoxi_store = pyoxi_store = get_pyoxi_store()
         for mounted_app in mounted_apps:
@@ -165,13 +174,13 @@ async def lifespan(app: FastAPI):
         mounted_app.state.pyoxi_system_store = system_store
         mounted_app.state.annotations_store = anno_store
 
-    await retrieve_remote_queryable_definitions(app.state, system_store)
-    await retrieve_local_queryable_definitions(app.state, system_store)
+    await retrieve_queryable_definitions(app.state, system_store)
     await load_system_data_to_oxigraph(system_store)
     await load_annotations_data_to_oxigraph(anno_store)
 
     # Warm queryables cache to avoid thundering herd on first request
     from prez.services.listings import warm_queryables_cache
+
     system_repo = PyoxigraphRepo(system_store)
     await warm_queryables_cache(data_repo=repo, system_repo=system_repo)
 
@@ -194,7 +203,7 @@ def assemble_app(
     description: Optional[str] = None,
     version: Optional[str] = None,
     local_settings: Optional[Settings] = None,
-    **kwargs
+    **kwargs,
 ):
     _settings = local_settings if local_settings is not None else settings
     actual_root_path = root_path or _settings.root_path or ""
@@ -227,10 +236,11 @@ def assemble_app(
             MissingFilterQueryError: catch_missing_filter_query_param,
             httpx.HTTPError: catch_httpx_error,
         },
-        **kwargs
+        **kwargs,
     )
 
     app.state.settings = _settings
+    app.add_middleware(RequestTimingMiddleware)
 
     app.include_router(management_router)
     if _settings.enable_sparql_endpoint:
@@ -249,6 +259,10 @@ def assemble_app(
             features_subapi,
         )
     app.include_router(base_prez_router)
+    if _settings.enable_cql_jena_lucene_json:
+        app.include_router(cql_lucene_router)
+    else:
+        app.include_router(cql_router)
     app.include_router(identifier_router)
     app.openapi = partial(
         prez_open_api_metadata,
@@ -260,6 +274,10 @@ def assemble_app(
     )
 
     app.middleware("http")(add_cors_headers)
+    response_header_budget_middleware = create_response_header_budget_middleware(
+        _settings.response_headers_max_bytes
+    )
+    app.middleware("http")(response_header_budget_middleware)
 
     app.add_middleware(
         CORSMiddleware,
@@ -270,7 +288,7 @@ def assemble_app(
         expose_headers=["*"],
     )
     validate_header_middleware = create_validate_header_middleware(
-        settings.required_header
+        _settings.required_header
     )
     app.middleware("http")(validate_header_middleware)
 

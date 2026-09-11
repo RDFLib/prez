@@ -3,7 +3,7 @@ from typing import List
 
 from fastapi import APIRouter, Depends, Path
 from rdflib import RDF, RDFS
-from sparql_grammar_pydantic import ConstructQuery
+from sparql_grammar import ConstructQuery
 
 from prez.cache import endpoints_graph_cache
 from prez.dependencies import (
@@ -107,7 +107,9 @@ def create_dynamic_post_listing_handler():
         query_params: ListingQueryParams = Depends(listing_post_params_dependency),
         endpoint_nodeshape: NodeShape = Depends(get_endpoint_nodeshapes),
         pmts: NegotiatedPMTs = Depends(get_negotiated_pmts_listing_post),
-        endpoint_structure: tuple[str, ...] = Depends(get_endpoint_structure_listing_post),
+        endpoint_structure: tuple[str, ...] = Depends(
+            get_endpoint_structure_listing_post
+        ),
         profile_nodeshape: NodeShape = Depends(get_profile_nodeshape_listing_post),
         cql_parser: CQLParser = Depends(cql_post_listing_parser_dependency),
         search_query: ConstructQuery = Depends(generate_search_query_post),

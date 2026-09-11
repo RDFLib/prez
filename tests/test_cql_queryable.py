@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from rdflib import Graph, URIRef
-from sparql_grammar_pydantic import Var
+from sparql_grammar import Var
 
 from prez.services.query_generation.shacl import PropertyShape
 

@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union, Literal
 
 import toml
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings
 from rdflib import DCTERMS, RDFS, SDO, URIRef, RDF, SOSA
 from rdflib.namespace import SKOS
@@ -80,6 +80,8 @@ class Settings(BaseSettings):
     pyoxigraph_data_dir: str = "pyoxigraph_data_dir"
     log_level: str = "INFO"
     log_output: str = "stdout"
+    timing_csv_enabled: bool = False
+    timing_csv_path: str = "logs/prez-timing.csv"
     prez_title: Optional[str] = "Prez"
     prez_desc: Optional[str] = (
         "A web framework API for delivering Linked Data. It provides read-only access to "
@@ -109,15 +111,27 @@ class Settings(BaseSettings):
     forwarded_allow_ips: str = "127.0.0.1"
     root_path: str = ""
     use_path_aliases: bool = False
+    minimal_link_headers: bool = False
+    # Upper bound for total response header bytes. Set to 0 to disable trimming.
+    response_headers_max_bytes: int = 60000
     spatial_query_format: Literal["geosparql", "qlever", "graphdb"] = "geosparql"
     search_uses_listing_count_limit: bool = False
     # Minimum response size in bytes for gzip compression. Set to -1 to disable compression.
     gzip_min_size: int = 1000
     # If True, allow a single rdfs:subClassOf hop when selecting profiles. If False, exact class only.
     profile_constraint_allow_subclass: bool = False
-    # Optional inner limit for Fuseki FTS text:query. When None, no limit is added to the text:query.
-    # When set to an integer, adds that value as a limit argument to the FTS query.
+    # Shared Lucene/FTS hit limit. For Fuseki FTS this is appended to text:query.
+    # For Jena Lucene JSON this caps the Lucene hit window. When unset, the request `limit` is used.
     fts_limit: Optional[int] = None
+    enable_cql_jena_lucene_json: bool = False
+    # If True, Jena Lucene listing queries omit the outer SPARQL LIMIT/OFFSET and rely on Lucene pagination pushdown.
+    # This should remain enabled when filters/sorting are fully handled in Lucene/CQL.
+    lucene_limit_offset_pushdown: bool = True
+    lucene_index_name: str = "default"
+    lucene_search_fields: str | list[str] = "default"
+    jena_fuseki_dataset_name: Optional[str] = None
+    jena_assembler_path: Optional[str] = None
+    listing_count_on_demand: bool = False
 
     @field_validator("prez_version")
     @classmethod
@@ -164,6 +178,76 @@ class Settings(BaseSettings):
                 f"original message: {e}"
             )
         return v
+
+    @field_validator("fts_limit")
+    @classmethod
+    def validate_fts_limit(cls, v):
+        if v is None:
+            return v
+        if v <= 0:
+            raise ValueError("fts_limit must be a positive integer")
+        return v
+
+    @field_validator("response_headers_max_bytes")
+    @classmethod
+    def validate_response_headers_max_bytes(cls, v):
+        if v < 0:
+            raise ValueError(
+                "response_headers_max_bytes must be greater than or equal to 0"
+            )
+        return v
+
+    @field_validator("lucene_index_name")
+    @classmethod
+    def validate_lucene_index_name(cls, v):
+        if not v.strip():
+            raise ValueError("lucene_index_name must be a non-empty string")
+        return v
+
+    @field_validator("lucene_search_fields")
+    @classmethod
+    def validate_lucene_search_fields(cls, v):
+        if isinstance(v, str):
+            normalized = v.strip()
+            if not normalized:
+                raise ValueError(
+                    "lucene_search_fields must be 'default' or a non-empty list of strings"
+                )
+            return normalized
+        if isinstance(v, list):
+            normalized = []
+            for field in v:
+                if not isinstance(field, str) or not field.strip():
+                    raise ValueError(
+                        "lucene_search_fields must be 'default' or a non-empty list of strings"
+                    )
+                normalized.append(field.strip())
+            if not normalized:
+                raise ValueError(
+                    "lucene_search_fields must be 'default' or a non-empty list of strings"
+                )
+            return normalized
+        raise ValueError(
+            "lucene_search_fields must be 'default' or a non-empty list of strings"
+        )
+
+    @field_validator("jena_assembler_path")
+    @classmethod
+    def validate_jena_assembler_path(cls, v):
+        if v is None:
+            return v
+        if not v.strip():
+            raise ValueError("jena_assembler_path must be a non-empty string")
+        return v
+
+    @model_validator(mode="after")
+    def validate_lucene_settings(self):
+        if self.enable_cql_jena_lucene_json:
+            if self.sparql_repo_type != SparqlRepoType.remote:
+                raise ValueError(
+                    "enable_cql_jena_lucene_json requires sparql_repo_type=remote"
+                )
+        return self
 
 
 settings = Settings()

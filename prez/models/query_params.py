@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
+import logging
 
 from fastapi import Depends, HTTPException, Query
 from pydantic import BaseModel
@@ -8,6 +9,9 @@ from pydantic import BaseModel
 from prez.enums import FilterLangEnum, OrderByDirectionEnum
 
 DateTimeOrUnbounded = Union[datetime, str, None]
+
+# Get the root logger, this is only for debugging
+logger = logging.getLogger()
 
 
 def reformat_bbox(
@@ -169,6 +173,11 @@ class ListingQueryParams:
             description="CRS used for the filter expression",
         ),
         q: Optional[str] = Query(None, description="Search query", example="building"),
+        fields: Optional[List[str]] = Query(
+            default=None,
+            description="Optional Lucene search fields override. Repeat to target specific indexed fields.",
+            alias="fields",
+        ),
         _filter: Optional[str] = Query(
             default=None, description="CQL JSON expression.", alias="filter"
         ),
@@ -191,8 +200,14 @@ class ListingQueryParams:
             default=None,
             description="Optional: Pagination offset",
         ),
+        result_type: Optional[str] = Query(
+            default="results",
+            description="Optional: OGC Results Type - 'results' or 'hits'",
+            alias="resultType",
+        ),
     ):
         self.q = q
+        self.fields = fields
         self.profile = profile
         self.page = page
         self.limit = limit
@@ -210,15 +225,15 @@ class ListingQueryParams:
         self.startindex = (
             startindex if not hasattr(startindex, "default") else startindex.default
         )
+        self.result_type = result_type
         self.validate_pagination_params()
         self.validate_filter()
 
     def validate_pagination_params(self):
         """Validate mutually exclusive pagination parameters."""
-        from fastapi import HTTPException
 
         # Debug print to see what values we have
-        print(
+        logger.debug(
             f"DEBUG - page: {self.page}, offset: {self.offset}, startindex: {self.startindex}"
         )
 
@@ -240,6 +255,8 @@ class ListingQueryParams:
             )
 
     def validate_filter(self):
+        if hasattr(self._filter, "default"):
+            self._filter = self._filter.default
         if self._filter:
             try:
                 json.loads(self._filter)
@@ -267,6 +284,7 @@ class ListingPostBody(BaseModel):
     filter_lang: Optional[str] = "cql2-json"
     filter_crs: Optional[str] = "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
     q: Optional[str] = None
+    fields: Optional[List[str] | str] = None
     predicates: Optional[List[str]] = None
     filter: Optional[Dict[str, Any]] = None
     order_by: Optional[str] = None

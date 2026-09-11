@@ -1,10 +1,10 @@
 from rdflib import Graph, URIRef, RDF, Namespace, Literal, XSD
-from sparql_grammar_pydantic import (
+from sparql_grammar import (
     IRI,
     TriplesSameSubjectPath,
     Var,
     BooleanLiteral,
-    NumericLiteral,
+    numeric_literal,
     RDFLiteral,
 )
 
@@ -62,21 +62,21 @@ def test_filter_shape_sosa_style_property_chain():
 
     # 1. The filter condition from the nested property shape
     filter_triple = TriplesSameSubjectPath.from_spo(
-        subject=Var(value="focus_node"),
-        predicate=IRI(value=SOSA.observedProperty),
-        object=IRI(value=EX.SomeObservableProperty),
+        Var(value="focus_node"),
+        IRI(value=SOSA.observedProperty),
+        IRI(value=EX.SomeObservableProperty),
     )
 
     # 2. The main property path
     path_triple_1 = TriplesSameSubjectPath.from_spo(
-        subject=Var(value="focus_node"),
-        predicate=IRI(value=SOSA.hasResult),
-        object=Var(value="prof_1_node_1"),
+        Var(value="focus_node"),
+        IRI(value=SOSA.hasResult),
+        Var(value="prof_1_node_1"),
     )
     path_triple_2 = TriplesSameSubjectPath.from_spo(
-        subject=Var(value="prof_1_node_1"),
-        predicate=IRI(value=RDF.value),
-        object=Var(value="prof_1_node_2"),
+        Var(value="prof_1_node_1"),
+        IRI(value=RDF.value),
+        Var(value="prof_1_node_2"),
     )
 
     # The order is not guaranteed, so check for presence
@@ -118,14 +118,14 @@ def test_filter_shape_has_value_uri():
         uri=path_bn, graph=g, kind="profile", focus_node=Var(value="focus_node")
     )
     filter_triple = TriplesSameSubjectPath.from_spo(
-        subject=Var(value="focus_node"),
-        predicate=IRI(value=SOSA.observedProperty),
-        object=IRI(value=EX.SomeObservableProperty),
+        Var(value="focus_node"),
+        IRI(value=SOSA.observedProperty),
+        IRI(value=EX.SomeObservableProperty),
     )
     path_triple = TriplesSameSubjectPath.from_spo(
-        subject=Var(value="focus_node"),
-        predicate=IRI(value=SOSA.hasResult),
-        object=Var(value="prof_1_node_1"),
+        Var(value="focus_node"),
+        IRI(value=SOSA.hasResult),
+        Var(value="prof_1_node_1"),
     )
     tssp_strings = {tssp.to_string() for tssp in ps.tssp_list}
     assert filter_triple.to_string() in tssp_strings
@@ -166,14 +166,14 @@ def test_filter_shape_has_value_boolean():
         uri=path_bn, graph=g, kind="profile", focus_node=Var(value="focus_node")
     )
     filter_triple = TriplesSameSubjectPath.from_spo(
-        subject=Var(value="focus_node"),
-        predicate=IRI(value=EX.someBooleanProperty),
-        object=BooleanLiteral(value=True),
+        Var(value="focus_node"),
+        IRI(value=EX.someBooleanProperty),
+        BooleanLiteral(value=True),
     )
     path_triple = TriplesSameSubjectPath.from_spo(
-        subject=Var(value="focus_node"),
-        predicate=IRI(value=SOSA.hasResult),
-        object=Var(value="prof_1_node_1"),
+        Var(value="focus_node"),
+        IRI(value=SOSA.hasResult),
+        Var(value="prof_1_node_1"),
     )
     tssp_strings = {tssp.to_string() for tssp in ps.tssp_list}
     assert filter_triple.to_string() in tssp_strings
@@ -214,14 +214,14 @@ def test_filter_shape_has_value_integer():
         uri=path_bn, graph=g, kind="profile", focus_node=Var(value="focus_node")
     )
     filter_triple = TriplesSameSubjectPath.from_spo(
-        subject=Var(value="focus_node"),
-        predicate=IRI(value=EX.someIntegerProperty),
-        object=NumericLiteral(value=42),
+        Var(value="focus_node"),
+        IRI(value=EX.someIntegerProperty),
+        numeric_literal(42),
     )
     path_triple = TriplesSameSubjectPath.from_spo(
-        subject=Var(value="focus_node"),
-        predicate=IRI(value=SOSA.hasResult),
-        object=Var(value="prof_1_node_1"),
+        Var(value="focus_node"),
+        IRI(value=SOSA.hasResult),
+        Var(value="prof_1_node_1"),
     )
     tssp_strings = {tssp.to_string() for tssp in ps.tssp_list}
     assert filter_triple.to_string() in tssp_strings
@@ -262,14 +262,14 @@ def test_filter_shape_has_value_decimal():
         uri=path_bn, graph=g, kind="profile", focus_node=Var(value="focus_node")
     )
     filter_triple = TriplesSameSubjectPath.from_spo(
-        subject=Var(value="focus_node"),
-        predicate=IRI(value=EX.someDecimalProperty),
-        object=NumericLiteral(value=3.14),
+        Var(value="focus_node"),
+        IRI(value=EX.someDecimalProperty),
+        numeric_literal(3.14),
     )
     path_triple = TriplesSameSubjectPath.from_spo(
-        subject=Var(value="focus_node"),
-        predicate=IRI(value=SOSA.hasResult),
-        object=Var(value="prof_1_node_1"),
+        Var(value="focus_node"),
+        IRI(value=SOSA.hasResult),
+        Var(value="prof_1_node_1"),
     )
     tssp_strings = {tssp.to_string() for tssp in ps.tssp_list}
     assert filter_triple.to_string() in tssp_strings
@@ -309,14 +309,14 @@ def test_filter_shape_has_value_string():
         uri=path_bn, graph=g, kind="profile", focus_node=Var(value="focus_node")
     )
     filter_triple = TriplesSameSubjectPath.from_spo(
-        subject=Var(value="focus_node"),
-        predicate=IRI(value=EX.someStringProperty),
-        object=RDFLiteral(value="hello"),
+        Var(value="focus_node"),
+        IRI(value=EX.someStringProperty),
+        RDFLiteral(value="hello"),
     )
     path_triple = TriplesSameSubjectPath.from_spo(
-        subject=Var(value="focus_node"),
-        predicate=IRI(value=SOSA.hasResult),
-        object=Var(value="prof_1_node_1"),
+        Var(value="focus_node"),
+        IRI(value=SOSA.hasResult),
+        Var(value="prof_1_node_1"),
     )
     tssp_strings = {tssp.to_string() for tssp in ps.tssp_list}
     assert filter_triple.to_string() in tssp_strings

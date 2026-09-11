@@ -296,26 +296,58 @@ class NegotiatedPMTs(BaseModel):
         return available
 
     def generate_response_headers(self) -> dict:
-        profile_uri = "<http://www.w3.org/ns/dx/prof/Profile>"
-        distinct_profiles = {(pmt["profile"], pmt["title"]) for pmt in self.available}
-        profile_header_links = ", ".join(
-            [f'<{self.selected["profile"]}>; rel="profile"']
-            + [
-                f'{profile_uri}; rel="type"; title="{pmt[1]}"; token="{get_curie_id_for_uri(pmt[0])}"; anchor="{pmt[0]}"'
-                for pmt in distinct_profiles
-            ]
-        )
-        mediatype_header_links = ", ".join(
-            [
-                f'<{settings.system_uri}{self.current_path}?_profile={get_curie_id_for_uri(pmt["profile"])}&_mediatype={pmt["mediatype"]}>; rel="{"self" if pmt == self.selected else "alternate"}"; type="{pmt["mediatype"]}"; format="{pmt["profile"]}"'
-                for pmt in self.available
-            ]
-        )
-        headers = {
+        if settings.minimal_link_headers:
+            links = [f'<{self.selected["profile"]}>; rel="profile"']
+
+            if self.current_path:
+                selected_profile = self.selected["profile"]
+                selected_profile_token = get_curie_id_for_uri(selected_profile)
+                seen_mediatypes: set[str] = set()
+                selected_profile_variants = [
+                    self.selected,
+                    *[
+                        pmt
+                        for pmt in self.available
+                        if pmt["profile"] == selected_profile and pmt != self.selected
+                    ],
+                ]
+
+                for pmt in selected_profile_variants:
+                    mediatype = pmt["mediatype"]
+                    if mediatype in seen_mediatypes:
+                        continue
+                    seen_mediatypes.add(mediatype)
+                    links.append(
+                        f"<{settings.system_uri}{self.current_path}?_profile={selected_profile_token}&_mediatype={mediatype}>; "
+                        f'rel="{"self" if pmt == self.selected else "alternate"}"; type="{mediatype}"'
+                    )
+        else:
+            profile_uri = "<http://www.w3.org/ns/dx/prof/Profile>"
+            distinct_profiles = {
+                (pmt["profile"], pmt["title"]) for pmt in self.available
+            }
+            profile_header_links = [f'<{self.selected["profile"]}>; rel="profile"']
+            profile_header_links.extend(
+                [
+                    f'{profile_uri}; rel="type"; title="{pmt[1]}"; token="{get_curie_id_for_uri(pmt[0])}"; anchor="{pmt[0]}"'
+                    for pmt in distinct_profiles
+                ]
+            )
+            links = profile_header_links
+
+            if self.current_path:
+                links.extend(
+                    [
+                        f'<{settings.system_uri}{self.current_path}?_profile={get_curie_id_for_uri(pmt["profile"])}&_mediatype={pmt["mediatype"]}>; '
+                        f'rel="{"self" if pmt == self.selected else "alternate"}"; type="{pmt["mediatype"]}"; format="{pmt["profile"]}"'
+                        for pmt in self.available
+                    ]
+                )
+
+        return {
             "Content-Type": self.selected["mediatype"],
-            "link": profile_header_links + ", " + mediatype_header_links,
+            "link": ", ".join(links),
         }
-        return headers
 
     def _generate_constraint_matching_pattern(self) -> str:
         """
@@ -343,13 +375,13 @@ class NegotiatedPMTs(BaseModel):
             )
 
         # For distance >=1, compute distance only for 0 or 1 hops.
-        expr = "IF(?class = ?matchClass, 0,\n" \
-               "    IF(EXISTS { ?class rdfs:subClassOf ?matchClass }, 1,\n" \
-               "       999))"
-
-        distance_filter = (
-            f"FILTER(?constraint_distance <= {effective_max})"
+        expr = (
+            "IF(?class = ?matchClass, 0,\n"
+            "    IF(EXISTS { ?class rdfs:subClassOf ?matchClass }, 1,\n"
+            "       999))"
         )
+
+        distance_filter = f"FILTER(?constraint_distance <= {effective_max})"
 
         return (
             base_pattern
@@ -433,7 +465,10 @@ class NegotiatedPMTs(BaseModel):
     async def _do_query(self, query: str) -> tuple[Graph, list]:
         response = await self.system_repo.send_queries([], [(None, query)])
         if response[1][0][1] and settings.log_level == "DEBUG":
-            from tabulate import tabulate
+            try:
+                from tabulate import tabulate
+            except ImportError:
+                tabulate = None
 
             table_data = [
                 [
@@ -465,7 +500,11 @@ class NegotiatedPMTs(BaseModel):
                 "Alternate Profile",
             ]
 
-            # Render as a table
-            print(tabulate(table_data, headers=headers, tablefmt="grid"))
+            if tabulate is not None:
+                print(tabulate(table_data, headers=headers, tablefmt="grid"))
+            else:
+                print(headers)
+                for row in table_data:
+                    print(row)
 
         return response

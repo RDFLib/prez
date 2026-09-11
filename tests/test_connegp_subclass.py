@@ -4,6 +4,7 @@ Tests for profile constraint subclass matching functionality.
 These tests verify that profiles can match resources whose class is a subclass
 of the constrained class, with configurable distance limits.
 """
+
 import os
 from pathlib import Path
 
@@ -31,24 +32,81 @@ def subclass_profiles_loaded(client_no_override):
     "distance_config, resource_class, expected_profile_title, description",
     [
         # Distance = 0 (exact match only)
-        (0, "http://example.org/test/BigCat", "BigCat Profile", "Exact match with distance=0"),
-        (0, "http://example.org/test/Cat", "Cat Profile", "Exact match with distance=0"),
-        (0, "http://example.org/test/Mammal", None, "No exact match exists for Mammal with distance=0"),
-
+        (
+            0,
+            "http://example.org/test/BigCat",
+            "BigCat Profile",
+            "Exact match with distance=0",
+        ),
+        (
+            0,
+            "http://example.org/test/Cat",
+            "Cat Profile",
+            "Exact match with distance=0",
+        ),
+        (
+            0,
+            "http://example.org/test/Mammal",
+            None,
+            "No exact match exists for Mammal with distance=0",
+        ),
         # Distance = 1 (single hop - default)
-        (1, "http://example.org/test/BigCat", "BigCat Profile", "Exact match wins over 1-hop superclass"),
-        (1, "http://example.org/test/Cat", "Cat Profile", "Exact match wins over 1-hop superclass (Animal)"),
-        (1, "http://example.org/test/Mammal", "Animal Profile", "1-hop superclass match (Mammal->Animal)"),
-
+        (
+            1,
+            "http://example.org/test/BigCat",
+            "BigCat Profile",
+            "Exact match wins over 1-hop superclass",
+        ),
+        (
+            1,
+            "http://example.org/test/Cat",
+            "Cat Profile",
+            "Exact match wins over 1-hop superclass (Animal)",
+        ),
+        (
+            1,
+            "http://example.org/test/Mammal",
+            "Animal Profile",
+            "1-hop superclass match (Mammal->Animal)",
+        ),
         # Distance = 2 (two hops)
-        (2, "http://example.org/test/BigCat", "BigCat Profile", "Exact match wins with distance=2"),
-        (2, "http://example.org/test/Cat", "Cat Profile", "Exact match wins with distance=2"),
-        (2, "http://example.org/test/Mammal", "Animal Profile", "1-hop wins over 2-hop"),
-
+        (
+            2,
+            "http://example.org/test/BigCat",
+            "BigCat Profile",
+            "Exact match wins with distance=2",
+        ),
+        (
+            2,
+            "http://example.org/test/Cat",
+            "Cat Profile",
+            "Exact match wins with distance=2",
+        ),
+        (
+            2,
+            "http://example.org/test/Mammal",
+            "Animal Profile",
+            "1-hop wins over 2-hop",
+        ),
         # Distance = -1 (unlimited - transitive closure)
-        (-1, "http://example.org/test/BigCat", "BigCat Profile", "Exact match wins with unlimited distance"),
-        (-1, "http://example.org/test/Cat", "Cat Profile", "Exact match wins with unlimited distance"),
-        (-1, "http://example.org/test/Mammal", "Animal Profile", "Ancestor match with unlimited distance"),
+        (
+            -1,
+            "http://example.org/test/BigCat",
+            "BigCat Profile",
+            "Exact match wins with unlimited distance",
+        ),
+        (
+            -1,
+            "http://example.org/test/Cat",
+            "Cat Profile",
+            "Exact match wins with unlimited distance",
+        ),
+        (
+            -1,
+            "http://example.org/test/Mammal",
+            "Animal Profile",
+            "Ancestor match with unlimited distance",
+        ),
     ],
 )
 @pytest.mark.asyncio
@@ -72,16 +130,20 @@ async def test_profile_subclass_matching(
     """
     # Map legacy distance config to new boolean: 0 disables subclass, anything else enables single-hop
     allow_subclass = distance_config != 0
-    monkeypatch.setenv("PROFILE_CONSTRAINT_ALLOW_SUBCLASS", "true" if allow_subclass else "false")
+    monkeypatch.setenv(
+        "PROFILE_CONSTRAINT_ALLOW_SUBCLASS", "true" if allow_subclass else "false"
+    )
 
     # Reload settings to pick up new environment variable
     from prez import config
+
     # Force pydantic to reload from env vars
-    config.settings = config.Settings()
+    monkeypatch.setattr(config, "settings", config.Settings())
 
     # Verify config was set correctly
-    assert config.settings.profile_constraint_allow_subclass == allow_subclass, \
-        f"Config not set correctly: expected allow_subclass={allow_subclass}, got {config.settings.profile_constraint_allow_subclass}"
+    assert (
+        config.settings.profile_constraint_allow_subclass == allow_subclass
+    ), f"Config not set correctly: expected allow_subclass={allow_subclass}, got {config.settings.profile_constraint_allow_subclass}"
 
     # Get system store and repo
     system_store = client_no_override.app.state._state.get("pyoxi_system_store")
@@ -102,15 +164,19 @@ async def test_profile_subclass_matching(
     # Assert the expected profile was selected
     if expected_profile_title is None:
         # Should fall back to open-object profile when no match exists
-        assert pmts.selected["profile"] == URIRef("https://prez.dev/profile/open-object"), \
-            f"{description}: Expected fallback to open-object profile"
+        assert pmts.selected["profile"] == URIRef(
+            "https://prez.dev/profile/open-object"
+        ), f"{description}: Expected fallback to open-object profile"
     else:
-        assert pmts.selected["title"] == expected_profile_title, \
-            f"{description}: Expected '{expected_profile_title}', got '{pmts.selected.get('title')}'"
+        assert (
+            pmts.selected["title"] == expected_profile_title
+        ), f"{description}: Expected '{expected_profile_title}', got '{pmts.selected.get('title')}'"
 
 
 @pytest.mark.asyncio
-async def test_exact_match_priority_over_superclass(client_no_override, monkeypatch, subclass_profiles_loaded):
+async def test_exact_match_priority_over_superclass(
+    client_no_override, monkeypatch, subclass_profiles_loaded
+):
     """
     Test that exact match (constraint_distance=0) always beats superclass match (constraint_distance=1).
 
@@ -123,7 +189,8 @@ async def test_exact_match_priority_over_superclass(client_no_override, monkeypa
     """
     monkeypatch.setenv("PROFILE_CONSTRAINT_ALLOW_SUBCLASS", "true")
     from prez import config
-    config.settings = config.Settings()
+
+    monkeypatch.setattr(config, "settings", config.Settings())
 
     system_store = client_no_override.app.state._state.get("pyoxi_system_store")
     system_repo = PyoxigraphRepo(system_store)
@@ -139,12 +206,15 @@ async def test_exact_match_priority_over_superclass(client_no_override, monkeypa
     await pmts.setup()
 
     # BigCat should match BigCatProfile (exact) not CatProfile (1-hop) or AnimalProfile (2-hop)
-    assert pmts.selected["title"] == "BigCat Profile", \
-        "Exact match should beat superclass matches"
+    assert (
+        pmts.selected["title"] == "BigCat Profile"
+    ), "Exact match should beat superclass matches"
 
 
 @pytest.mark.asyncio
-async def test_superclass_match_when_no_exact_match(client_no_override, monkeypatch, subclass_profiles_loaded):
+async def test_superclass_match_when_no_exact_match(
+    client_no_override, monkeypatch, subclass_profiles_loaded
+):
     """
     Test that superclass profile matches when no exact match exists.
 
@@ -153,7 +223,8 @@ async def test_superclass_match_when_no_exact_match(client_no_override, monkeypa
     """
     monkeypatch.setenv("PROFILE_CONSTRAINT_ALLOW_SUBCLASS", "true")
     from prez import config
-    config.settings = config.Settings()
+
+    monkeypatch.setattr(config, "settings", config.Settings())
 
     system_store = client_no_override.app.state._state.get("pyoxi_system_store")
     system_repo = PyoxigraphRepo(system_store)
@@ -169,12 +240,15 @@ async def test_superclass_match_when_no_exact_match(client_no_override, monkeypa
     await pmts.setup()
 
     # Mammal should match AnimalProfile (1-hop superclass)
-    assert pmts.selected["title"] == "Animal Profile", \
-        "Should match 1-hop superclass when no exact match exists"
+    assert (
+        pmts.selected["title"] == "Animal Profile"
+    ), "Should match 1-hop superclass when no exact match exists"
 
 
 @pytest.mark.asyncio
-async def test_distance_zero_exact_match_only(client_no_override, monkeypatch, subclass_profiles_loaded):
+async def test_distance_zero_exact_match_only(
+    client_no_override, monkeypatch, subclass_profiles_loaded
+):
     """
     Test that distance=0 enforces exact-match-only behavior (original behavior).
 
@@ -185,7 +259,8 @@ async def test_distance_zero_exact_match_only(client_no_override, monkeypatch, s
     """
     monkeypatch.setenv("PROFILE_CONSTRAINT_ALLOW_SUBCLASS", "false")
     from prez import config
-    config.settings = config.Settings()
+
+    monkeypatch.setattr(config, "settings", config.Settings())
 
     assert config.settings.profile_constraint_allow_subclass is False
 
@@ -203,8 +278,9 @@ async def test_distance_zero_exact_match_only(client_no_override, monkeypatch, s
     await pmts.setup()
 
     # Should fall back to open-object profile
-    assert pmts.selected["profile"] == URIRef("https://prez.dev/profile/open-object"), \
-        "With distance=0, Mammal should not match AnimalProfile"
+    assert pmts.selected["profile"] == URIRef(
+        "https://prez.dev/profile/open-object"
+    ), "With distance=0, Mammal should not match AnimalProfile"
 
     # Test 2: Cat SHOULD match CatProfile (exact match)
     pmts2 = NegotiatedPMTs(
@@ -216,8 +292,9 @@ async def test_distance_zero_exact_match_only(client_no_override, monkeypatch, s
     )
     await pmts2.setup()
 
-    assert pmts2.selected["title"] == "Cat Profile", \
-        "With distance=0, Cat should still match CatProfile (exact match)"
+    assert (
+        pmts2.selected["title"] == "Cat Profile"
+    ), "With distance=0, Cat should still match CatProfile (exact match)"
 
 
 @pytest.mark.asyncio
@@ -239,7 +316,9 @@ async def test_config_validation_rejects_invalid_values(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_unlimited_distance_transitive_closure(client_no_override, monkeypatch, subclass_profiles_loaded):
+async def test_unlimited_distance_transitive_closure(
+    client_no_override, monkeypatch, subclass_profiles_loaded
+):
     """
     Test that distance=-1 uses transitive closure for unlimited ancestor matching.
 
@@ -252,7 +331,8 @@ async def test_unlimited_distance_transitive_closure(client_no_override, monkeyp
     """
     monkeypatch.setenv("PROFILE_CONSTRAINT_ALLOW_SUBCLASS", "true")
     from prez import config
-    config.settings = config.Settings()
+
+    monkeypatch.setattr(config, "settings", config.Settings())
 
     assert config.settings.profile_constraint_allow_subclass is True
 
@@ -276,12 +356,15 @@ async def test_unlimited_distance_transitive_closure(client_no_override, monkeyp
         )
         await pmts.setup()
 
-        assert pmts.selected["title"] == expected_title, \
-            f"Unlimited distance: {resource_class} should match {expected_title}"
+        assert (
+            pmts.selected["title"] == expected_title
+        ), f"Unlimited distance: {resource_class} should match {expected_title}"
 
 
 @pytest.mark.asyncio
-async def test_backwards_compatibility(client_no_override, subclass_profiles_loaded):
+async def test_backwards_compatibility(
+    client_no_override, monkeypatch, subclass_profiles_loaded
+):
     """
     Test that existing profiles still work with the new feature (default distance=1).
 
@@ -290,10 +373,11 @@ async def test_backwards_compatibility(client_no_override, subclass_profiles_loa
     """
     # Use default config (distance=1)
     from prez import config
+
     # Reset to default
     if os.environ.get("PROFILE_CONSTRAINT_ALLOW_SUBCLASS"):
         del os.environ["PROFILE_CONSTRAINT_ALLOW_SUBCLASS"]
-    config.settings = config.Settings()
+    monkeypatch.setattr(config, "settings", config.Settings())
 
     system_store = client_no_override.app.state._state.get("pyoxi_system_store")
     system_repo = PyoxigraphRepo(system_store)
@@ -308,5 +392,6 @@ async def test_backwards_compatibility(client_no_override, subclass_profiles_loa
     )
     await pmts.setup()
 
-    assert pmts.selected["title"] == "BigCat Profile", \
-        "Backwards compatibility: exact matches should still work"
+    assert (
+        pmts.selected["title"] == "BigCat Profile"
+    ), "Backwards compatibility: exact matches should still work"

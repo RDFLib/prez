@@ -107,13 +107,33 @@ async def catch_missing_filter_query_param(
 
 
 async def catch_httpx_error(request: Request, exc: httpx.HTTPError):
+    # Handle HTTP status errors from SPARQL endpoint - pass through the actual error
+    if isinstance(exc, httpx.HTTPStatusError):
+        # Extract the actual status code and response from the SPARQL endpoint
+        status_code = exc.response.status_code
+        try:
+            # Try to get the response text if available
+            error_detail = (
+                exc.response.text if hasattr(exc.response, "text") else str(exc)
+            )
+        except Exception:
+            error_detail = str(exc)
+
+        return JSONResponse(
+            status_code=status_code,
+            content={
+                "error": "SPARQL_ENDPOINT_ERROR",
+                "detail": error_detail,
+            },
+        )
+
     # Determine appropriate status code based on exception type
-    if isinstance(exc, httpx.ConnectError):
-        status_code = 503  # Service Unavailable
-        error_type = "SPARQL_CONNECTION_ERROR"
-    elif isinstance(exc, httpx.TimeoutException):
+    if isinstance(exc, httpx.TimeoutException):
         status_code = 504  # Gateway Timeout
         error_type = "SPARQL_TIMEOUT_ERROR"
+    elif isinstance(exc, httpx.ConnectError):
+        status_code = 503  # Service Unavailable
+        error_type = "SPARQL_CONNECTION_ERROR"
     else:
         status_code = 502  # Bad Gateway
         error_type = "SPARQL_ERROR"

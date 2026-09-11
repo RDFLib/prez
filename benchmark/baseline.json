@@ -1,0 +1,49 @@
+{
+  "note": "Deterministic performance counters. Update with `python benchmark/ratchet.py --update` when a change to the generated queries or the request path is intended, and say why in the commit message.",
+  "counters": {
+    "query:annotations_100": {
+      "nodes": 186,
+      "chars": 4113
+    },
+    "query:classes_100": {
+      "nodes": 125,
+      "chars": 3096
+    },
+    "query:cql_in_100": {
+      "nodes": 871,
+      "chars": 3034
+    },
+    "query:search": {
+      "nodes": 285,
+      "chars": 1148
+    },
+    "query:listing": {
+      "nodes": 42,
+      "chars": 245
+    },
+    "query:listing_count": {
+      "nodes": 96,
+      "chars": 301
+    },
+    "query:object": {
+      "nodes": 6,
+      "chars": 24
+    },
+    "request:catalogs": {
+      "queries": 4,
+      "shapes_parsed": 0
+    },
+    "request:catalog_object": {
+      "queries": 3,
+      "shapes_parsed": 0
+    },
+    "request:collections": {
+      "queries": 4,
+      "shapes_parsed": 0
+    },
+    "request:search": {
+      "queries": 2,
+      "shapes_parsed": 0
+    }
+  }
+}

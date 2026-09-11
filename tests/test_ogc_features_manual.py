@@ -1,4 +1,33 @@
 import pytest
+from fastapi.testclient import TestClient
+from starlette.routing import Mount
+
+
+@pytest.fixture(scope="function")
+def fresh_client(test_repo):
+    """
+    Function-scoped client that creates a fresh app instance.
+
+    This is needed for tests that run after test_issue_236 which pollutes
+    global caches with custom endpoints.
+    """
+    from prez.app import assemble_app
+    from prez.dependencies import get_data_repo
+
+    def override_get_repo():
+        return test_repo
+
+    app = assemble_app()
+    app.dependency_overrides[get_data_repo] = override_get_repo
+
+    for route in app.routes:
+        if isinstance(route, Mount):
+            route.app.dependency_overrides[get_data_repo] = override_get_repo
+
+    with TestClient(app) as c:
+        yield c
+
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture
@@ -11,13 +40,23 @@ def mock_queryables():
         @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
         @prefix cql: <http://www.opengis.net/doc/IS/cql2/1.0/> .
         @prefix dcterms: <http://purl.org/dc/terms/> .
+        @prefix prez: <https://prez.dev/ont/> .
         @prefix sh: <http://www.w3.org/ns/shacl#> .
+        @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
         <https://prez/queryables/TestRDFType> a cql:Queryable, sh:PropertyShape ;
-            dcterms:identifier "test-type" ;
+            dcterms:identifier "file:///fuseki/config.ttl#field-commodity" ;
             sh:description "Filter by RDF type (test data)" ;
             sh:name "Test RDF Type" ;
-            sh:path rdf:type .
+            sh:datatype xsd:string ;
+            sh:path rdf:type ;
+            prez:facetable true ;
+            prez:sortable true ;
+            prez:defaultSearch false ;
+            prez:multiValued true ;
+            prez:stored true ;
+            prez:indexed true ;
+            prez:luceneFieldType "keyword" .
     """
 
     # Add the mock queryables to the system store
@@ -35,6 +74,66 @@ def test_ogc_features_queryables(client):
         "/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/queryables"
     )
     assert r.status_code == 200
+
+
+def test_ogc_features_queryables_json_facetable(client, mock_queryables):
+    r = client.get(
+        "/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/queryables"
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert (
+        body["properties"]["file:///fuseki/config.ttl#field-commodity"][
+            "x-prez-facetable"
+        ]
+        is True
+    )
+    assert (
+        body["properties"]["file:///fuseki/config.ttl#field-commodity"][
+            "x-prez-sortable"
+        ]
+        is True
+    )
+    assert (
+        body["properties"]["file:///fuseki/config.ttl#field-commodity"][
+            "x-prez-default-search"
+        ]
+        is False
+    )
+    assert (
+        body["properties"]["file:///fuseki/config.ttl#field-commodity"][
+            "x-prez-multi-valued"
+        ]
+        is True
+    )
+    assert (
+        body["properties"]["file:///fuseki/config.ttl#field-commodity"]["x-prez-stored"]
+        is True
+    )
+    assert (
+        body["properties"]["file:///fuseki/config.ttl#field-commodity"][
+            "x-prez-indexed"
+        ]
+        is True
+    )
+    assert (
+        body["properties"]["file:///fuseki/config.ttl#field-commodity"][
+            "x-prez-lucene-field-type"
+        ]
+        == "keyword"
+    )
+
+
+def test_ogc_features_queryables_global_and_local_match(client, mock_queryables):
+    global_r = client.get(
+        "/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/queryables"
+    )
+    local_r = client.get(
+        "/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/collections/ex:FeatureCollection/queryables"
+    )
+    assert global_r.status_code == 200
+    assert local_r.status_code == 200
+    assert global_r.json()["properties"] == local_r.json()["properties"]
 
 
 def test_ogc_features_queryables_turtle(client, mock_queryables):
@@ -183,18 +282,20 @@ def test_bbox_graphdb_200_4326_crs(client):
         settings.spatial_query_format = original_format
 
 
-def test_ogc_features_listing_annotated(client):
+def test_ogc_features_listing_annotated(fresh_client):
     # General regression test that would have caught the bug fixed in #413
-    r = client.get(
+    # Uses fresh_client to avoid cache pollution from test_issue_236
+    r = fresh_client.get(
         "/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/collections?_profile=mem&_mediatype=text/anot%2Bturtle"
     )
     assert r.status_code == 200
     assert len(r.content) > 0
 
 
-def test_ogc_features_object_annotated(client):
+def test_ogc_features_object_annotated(fresh_client):
     # General regression test
-    r = client.get(
+    # Uses fresh_client to avoid cache pollution from test_issue_236
+    r = fresh_client.get(
         "/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/collections/ex:FeatureCollection?_mediatype=text/anot%2Bturtle&_profile=ogcfeat-minimal"
     )
     assert r.status_code == 200

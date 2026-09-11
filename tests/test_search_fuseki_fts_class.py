@@ -3,7 +3,7 @@ from unittest.mock import patch
 from pathlib import Path
 
 from rdflib import RDFS, Graph, URIRef, DCTERMS, RDF
-from sparql_grammar_pydantic import (
+from sparql_grammar import (
     GroupGraphPattern,
     GroupGraphPatternSub,
     GroupOrUnionGraphPattern,
@@ -50,12 +50,10 @@ def test_combo_query_gen():
     for inner_list in tspp_lists:
         ggp_list.append(
             GroupGraphPattern(
-                content=GroupGraphPatternSub(
-                    triples_block=TriplesBlock.from_tssp_list(inner_list)
-                )
+                GroupGraphPatternSub([TriplesBlock.from_tssp_list(inner_list)])
             )
         )
-    gougp = GroupOrUnionGraphPattern(group_graph_patterns=ggp_list)
+    gougp = GroupOrUnionGraphPattern(ggp_list)
     assert gougp
 
 
@@ -88,7 +86,7 @@ def test_bnode_filter():
     # Non-shacl predicates use direct focus_node + isIRI filter
     assert "FILTER (isIRI(?focus_node))" in query_string
     # SHACL paths still filter out blank focus nodes
-    assert "FILTER (! isBLANK(?focus_node))" in query_string
+    assert "FILTER (!isBLANK(?focus_node))" in query_string
 
 
 def test_shacl_path_filter():
@@ -125,7 +123,7 @@ def test_shacl_path_filter():
     query_string = query_obj.to_string()
 
     # Verify the filter is present
-    assert "FILTER (! isBLANK(?focus_node))" in query_string
+    assert "FILTER (!isBLANK(?focus_node))" in query_string
 
     # Verify the triple patterns are present
     assert "https://linked.data.gov.au/dataset/gswa/hasAgeName" in query_string
@@ -189,12 +187,13 @@ def test_oomp():
     )
     query_string = query_obj.to_string()
     # SHACL paths use !isBLANK filter
-    assert "FILTER (! isBLANK(?focus_node))" in query_string
+    assert "FILTER (!isBLANK(?focus_node))" in query_string
 
 
-@patch("prez.dependencies.settings")
-def test_one_or_more_path(mock_settings, client):
-    mock_settings.search_method = SearchMethod.FTS_FUSEKI
+# only the search method is mocked: the numeric settings reach the query as numbers,
+# and a whole-object mock would put a MagicMock where a SPARQL literal belongs
+@patch("prez.dependencies.settings.search_method", SearchMethod.FTS_FUSEKI)
+def test_one_or_more_path(client):
     r = client.get("/search?q=test&predicates=oomp&_mediatype=application/sparql-query")
     assert r.status_code == 200
 
@@ -212,19 +211,21 @@ def test_fts_limit_none():
 
     # The query should contain the search term but NOT a numeric limit after it
     # Pattern: (<pred1> <pred2> "test") - no third element
-    assert '<http://www.w3.org/2000/01/rdf-schema#label>' in query_string
-    assert '<http://www.w3.org/2000/01/rdf-schema#comment>' in query_string
+    assert "<http://www.w3.org/2000/01/rdf-schema#label>" in query_string
+    assert "<http://www.w3.org/2000/01/rdf-schema#comment>" in query_string
     assert '"test"' in query_string
 
     # Count occurrences - should have predicates and search term, but no additional numeric value
     # in the text:query parameter list
-    lines = query_string.split('\n')
-    text_query_section = '\n'.join([line for line in lines if 'text#query' in line or 'test' in line])
+    lines = query_string.split("\n")
+    text_query_section = "\n".join(
+        [line for line in lines if "text#query" in line or "test" in line]
+    )
 
     # Should NOT have a standalone integer after the search term in the collection
     # This is a bit fragile but checks that we don't have ") 11" or similar patterns
     # that would indicate a limit parameter
-    assert ') 11' not in query_string  # 10 + 1 from limit increment
+    assert ") 11" not in query_string  # 10 + 1 from limit increment
 
 
 def test_fts_limit_set():
@@ -238,15 +239,15 @@ def test_fts_limit_set():
     )
     query_string = query_obj.to_string()
 
-    assert '<http://www.w3.org/2000/01/rdf-schema#label>' in query_string
-    assert '<http://www.w3.org/2000/01/rdf-schema#comment>' in query_string
+    assert "<http://www.w3.org/2000/01/rdf-schema#label>" in query_string
+    assert "<http://www.w3.org/2000/01/rdf-schema#comment>" in query_string
     assert '"test"' in query_string
 
     # Outer LIMIT should be 11 (10 + 1)
-    assert 'LIMIT 11' in query_string
+    assert "LIMIT 11" in query_string
 
     # FTS numeric limit should be exactly 50 when offset=0
-    assert '"test"50' in query_string or '"test" 50' in query_string.replace('\n', ' ')
+    assert '"test"50' in query_string or '"test" 50' in query_string.replace("\n", " ")
 
 
 def test_fts_limit_adds_offset_non_shacl():
@@ -260,13 +261,13 @@ def test_fts_limit_adds_offset_non_shacl():
     )
     query_string = query_obj.to_string()
 
-    assert 'OFFSET 7' in query_string
-    assert 'LIMIT 11' in query_string
+    assert "OFFSET 7" in query_string
+    assert "LIMIT 11" in query_string
 
     # FTS numeric limit should be 50 + 7
-    assert '57' in query_string
-    assert '50' not in query_string
-    assert '"test"57' in query_string or '"test" 57' in query_string.replace('\n', ' ')
+    assert "57" in query_string
+    assert "50" not in query_string
+    assert '"test"57' in query_string or '"test" 57' in query_string.replace("\n", " ")
 
 
 def test_fts_limit_with_shacl():
@@ -294,13 +295,15 @@ def test_fts_limit_with_shacl():
     query_string = query_obj.to_string()
 
     # Outer pagination
-    assert 'LIMIT 11' in query_string
-    assert 'OFFSET 5' in query_string
+    assert "LIMIT 11" in query_string
+    assert "OFFSET 5" in query_string
 
     # FTS numeric limit should be fts_limit + offset (100 + 5)
-    assert '105' in query_string
-    assert '100' not in query_string
-    assert '"test"105' in query_string or '"test" 105' in query_string.replace('\n', ' ')
+    assert "105" in query_string
+    assert "100" not in query_string
+    assert '"test"105' in query_string or '"test" 105' in query_string.replace(
+        "\n", " "
+    )
 
 
 def test_fts_limit_default_none():
@@ -315,5 +318,5 @@ def test_fts_limit_default_none():
     query_string = query_obj.to_string()
 
     # Should work the same as explicitly passing None
-    assert '<http://www.w3.org/2000/01/rdf-schema#label>' in query_string
+    assert "<http://www.w3.org/2000/01/rdf-schema#label>" in query_string
     assert '"test"' in query_string

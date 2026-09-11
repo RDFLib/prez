@@ -38,7 +38,7 @@ ENV PREZ_VERSION=${PREZ_VERSION}
 ARG VIRTUAL_ENV
 ENV VIRTUAL_ENV=${VIRTUAL_ENV} \
     PATH=${VIRTUAL_ENV}/bin:/root/.local/bin:${PATH} \
-    APP_ROOT_PATH=''
+    ROOT_PATH=''
 
 COPY --from=base ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
@@ -59,4 +59,4 @@ RUN mkdir -p /data
 ENV PREZ_REFERENCE_DATA_DIR=/data/reference_data
 
 ENTRYPOINT ["/bin/sh", "/entrypoint.sh"]
-CMD ["sh", "-c", "uvicorn prez.app:assemble_app --factory --host=${HOST:-0.0.0.0} --port=${PORT:-8000} $([ \"$(echo \"$PROXY_HEADERS\" | tr '[:upper:]' '[:lower:]')\" = \"true\" ] || [ \"$PROXY_HEADERS\" = \"1\" ] && echo \"--proxy-headers\") --forwarded-allow-ips=${FORWARDED_ALLOW_IPS:-127.0.0.1} --root-path \"${APP_ROOT_PATH}\""]
+CMD ["sh", "-c", "uvicorn prez.app:assemble_app --factory --host=${HOST:-0.0.0.0} --port=${PORT:-8000} $([ \"$(echo \"$PROXY_HEADERS\" | tr '[:upper:]' '[:lower:]')\" = \"true\" ] || [ \"$PROXY_HEADERS\" = \"1\" ] && echo \"--proxy-headers\") --forwarded-allow-ips=${FORWARDED_ALLOW_IPS:-127.0.0.1} --root-path \"${ROOT_PATH}\""]

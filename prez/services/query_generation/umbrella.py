@@ -1,21 +1,20 @@
 from typing import List, Optional, Tuple, Union
 
 from rdflib import URIRef
-from sparql_grammar_pydantic import (
-    Constraint,
+from sparql_grammar import (
+    IRI,
+    BuiltInCall,
     ConstructQuery,
     ConstructTemplate,
-    ConstructTriples,
     Expression,
     GraphPatternNotTriples,
     GroupGraphPattern,
     GroupGraphPatternSub,
     GroupOrUnionGraphPattern,
-    LimitClause,
     LimitOffsetClauses,
-    OffsetClause,
     OrderClause,
     OrderCondition,
+    OrderDirection,
     SelectClause,
     SolutionModifier,
     SubSelect,
@@ -24,9 +23,6 @@ from sparql_grammar_pydantic import (
     TriplesSameSubjectPath,
     Var,
     WhereClause,
-    IRI,
-    BuiltInCall,
-    PrimaryExpression,
 )
 
 from prez.dependencies import DummySearchMarker
@@ -37,8 +33,13 @@ from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.datetime_filter import generate_datetime_filter
 from prez.services.query_generation.search_default import SearchQueryRegex
 from prez.services.query_generation.search_fuseki_fts import SearchQueryFusekiFTS
+from prez.services.query_generation.search_jena_lucene import SearchQueryJenaLucene
 from prez.services.query_generation.shacl import NodeShape
-from prez.services.query_generation.grammar_helpers import create_filter_exists
+from prez.services.query_generation.grammar_helpers import (
+    construct_triples,
+    create_filter_exists,
+    triples_block,
+)
 
 
 def _dedupe_inner_select_vars(
@@ -104,8 +105,8 @@ class PrezQueryConstructor(ConstructQuery):
         # select is appended to this list as a GraphPatternNotTriples
         gpotb = []
         if profile_triples:
-            # Reverse to preserve focus-first ordering after TriplesBlock nesting.
-            gpotb.append(TriplesBlock.from_tssp_list(profile_triples[::-1]))
+            # focus-node first: this list is already in emission order
+            gpotb.append(TriplesBlock(list(profile_triples)))
         if profile_gpnt:
             gpotb.extend(profile_gpnt)
 
@@ -129,30 +130,25 @@ class PrezQueryConstructor(ConstructQuery):
                 "label",
                 "order_by_val",
             ):  # STR function in order to "ignore" langtags
-                constraint_or_var = Constraint(
-                    content=BuiltInCall.create_with_one_expr(
-                        function_name="STR",
-                        expression=PrimaryExpression(content=order_by_value),
-                    )
-                )
+                constraint_or_var = BuiltInCall.create("STR", order_by_value)
             else:
                 raise ValueError(
                     'order by value must be "label", "order_by_val", or "weight" to work with '
                     "automated query generation"
                 )
-            oc = OrderClause(
-                conditions=[
-                    OrderCondition(
-                        constraint_or_var=constraint_or_var,
-                        direction=order_by_direction,  # DESC/ASC
-                    )
-                ]
+            # the direction arrives as a string from a query parameter or as prez's
+            # own OrderByDirectionEnum, which is not a str enum
+            direction = (
+                OrderDirection(getattr(order_by_direction, "value", order_by_direction))
+                if order_by_direction
+                else None
             )
+            oc = OrderClause([OrderCondition(constraint_or_var, direction)])  # DESC/ASC
         if order_by_predicate:
             tssp = TriplesSameSubjectPath.from_spo(
-                subject=Var(value="focus_node"),
-                predicate=order_by_predicate,
-                object=order_by_value,
+                Var(value="focus_node"),
+                order_by_predicate,
+                order_by_value,
             )
             if inner_select_tssp_list:
                 inner_select_tssp_list.append(tssp)
@@ -162,60 +158,46 @@ class PrezQueryConstructor(ConstructQuery):
         # for listing queries only, add an inner select to the where clause
         ss_gpotb = []
         if inner_select_tssp_list:
-            inner_select_tssp_list = sorted(
-                inner_select_tssp_list, key=lambda x: str(x), reverse=True
-            )  # grouping for performance
-            ss_gpotb.append(TriplesBlock.from_tssp_list(inner_select_tssp_list))
+            # sorted so patterns on the same subject sit together, which is what the
+            # query planners have been tuned against. Already in emission order.
+            inner_select_tssp_list = sorted(inner_select_tssp_list, key=str)
+            ss_gpotb.append(TriplesBlock(inner_select_tssp_list))
         if inner_select_gpnt:
             ss_gpotb.extend(inner_select_gpnt)
 
         if inner_select_tssp_list or inner_select_gpnt:
-            gpnt_inner_subselect = GraphPatternNotTriples(
-                content=GroupOrUnionGraphPattern(
-                    group_graph_patterns=[
-                        GroupGraphPattern(
-                            content=SubSelect(
-                                select_clause=SelectClause(
-                                    distinct=True, variables_or_all=inner_select_vars
-                                ),
-                                where_clause=WhereClause(
-                                    group_graph_pattern=GroupGraphPattern(
-                                        content=GroupGraphPatternSub(
-                                            graph_patterns_or_triples_blocks=ss_gpotb
-                                        )
-                                    )
-                                ),
-                                solution_modifier=SolutionModifier(
-                                    limit_offset=LimitOffsetClauses(
-                                        limit_clause=LimitClause(
-                                            limit=limit
-                                        ),  # LIMIT m
-                                        offset_clause=OffsetClause(
-                                            offset=offset
-                                        ),  # OFFSET n
-                                    ),
-                                    order_by=oc,
-                                ),
-                            )
+            limit_offset = None
+            if limit is not None or offset is not None:
+                limit_offset = LimitOffsetClauses.create(limit=limit, offset=offset)
+            gpnt_inner_subselect = GroupOrUnionGraphPattern(
+                [
+                    GroupGraphPattern(
+                        SubSelect(
+                            select_clause=SelectClause.create(
+                                *inner_select_vars, distinct=True
+                            ),
+                            where_clause=WhereClause(
+                                GroupGraphPattern(GroupGraphPatternSub(ss_gpotb))
+                            ),
+                            solution_modifier=SolutionModifier(
+                                limit_offset=limit_offset,
+                                order_by=oc,
+                            ),
                         )
-                    ]
-                )
+                    )
+                ]
             )
             # insert at start so that subselect is first for performant SPARQL query
             gpotb.insert(0, gpnt_inner_subselect)
-        where_clause = WhereClause(
-            group_graph_pattern=GroupGraphPattern(
-                content=GroupGraphPatternSub(graph_patterns_or_triples_blocks=gpotb)
-            )
-        )
+        where_clause = WhereClause(GroupGraphPattern(GroupGraphPatternSub(gpotb)))
 
         # construct triples is usually only from the profile, but in the case of search queries for example, additional
         # triples are added
-        construct_triples = None
+        template_triples = None
         if construct_tss_list:
-            construct_triples = ConstructTriples.from_tss_list(construct_tss_list)
+            template_triples = construct_triples(construct_tss_list)
 
-        construct_template = ConstructTemplate(construct_triples=construct_triples)
+        construct_template = ConstructTemplate(template_triples)
         super().__init__(
             construct_template=construct_template,
             where_clause=where_clause,
@@ -223,20 +205,24 @@ class PrezQueryConstructor(ConstructQuery):
         )
 
     @property
-    def inner_select(self):
-        return (
-            self.where_clause.group_graph_pattern.content.graph_patterns_or_triples_blocks[
-                0
-            ]
-            .content.group_graph_patterns[0]
-            .content
-        )
+    def inner_select(self) -> SubSelect | None:
+        """The listing subselect, when there is one."""
+        patterns = self.where_clause.group_graph_pattern.content.patterns
+        if not patterns or not isinstance(patterns[0], GroupOrUnionGraphPattern):
+            return None
+        content = patterns[0].group_graph_patterns[0].content
+        return content if isinstance(content, SubSelect) else None
 
 
 def merge_listing_query_grammar_inputs(
     cql_parser: Optional[CQLParser] = None,
     endpoint_nodeshape: Optional[NodeShape] = None,
-    search_query: Optional[SearchQueryRegex | SearchQueryFusekiFTS | DummySearchMarker] = None,
+    search_query: Optional[
+        SearchQueryRegex
+        | SearchQueryFusekiFTS
+        | SearchQueryJenaLucene
+        | DummySearchMarker
+    ] = None,
     concept_hierarchy_query: Optional[ConceptHierarchyQuery] = None,
     query_params: Optional[ListingQueryParams] = None,
 ) -> dict:
@@ -289,14 +275,25 @@ def merge_listing_query_grammar_inputs(
         kwargs["inner_select_gpnt"] = [concept_hierarchy_query.inner_select_gpnt]
 
     # TODO can remove limit/offset/order by from search query - apply from QSA or defaults.
-    if search_query and hasattr(search_query, 'tss_list'):
+    if search_query and hasattr(search_query, "tss_list"):
         # Only process real search queries (SearchQueryRegex or SearchQueryFusekiFTS)
         # Skip DummySearchMarker which doesn't have these attributes
         kwargs["construct_tss_list"].extend(search_query.tss_list)
         kwargs["inner_select_vars"].extend(search_query.inner_select_vars)
-        kwargs["limit"] = search_query.limit
-        kwargs["order_by_value"] = search_query.order_by_val
-        kwargs["order_by_direction"] = search_query.order_by_direction
+        if getattr(search_query, "pagination_pushed_down", False):
+            kwargs["limit"] = None
+            kwargs["offset"] = None
+        else:
+            kwargs["limit"] = search_query.limit
+        if isinstance(search_query, SearchQueryJenaLucene):
+            # Jena Lucene applies ordering inside luc:query via its sort JSON argument.
+            # Do not layer generic SPARQL ordering or an RDF predicate path on top.
+            kwargs["order_by_predicate"] = None
+            kwargs["order_by_value"] = None
+            kwargs["order_by_direction"] = None
+        else:
+            kwargs["order_by_value"] = search_query.order_by_val
+            kwargs["order_by_direction"] = search_query.order_by_direction
         kwargs["inner_select_gpnt"].extend([search_query.inner_select_gpnt])
 
     if cql_parser:
@@ -326,7 +323,7 @@ def merge_listing_query_grammar_inputs(
                 # Add TriplesBlock from tssp_exists_list if present
                 if endpoint_nodeshape.tssp_exists_list:
                     exists_gpotb.append(
-                        TriplesBlock.from_tssp_list(endpoint_nodeshape.tssp_exists_list)
+                        triples_block(endpoint_nodeshape.tssp_exists_list)
                     )
 
                 # Add gpnt_exists_list items if present
@@ -334,9 +331,7 @@ def merge_listing_query_grammar_inputs(
                     exists_gpotb.extend(endpoint_nodeshape.gpnt_exists_list)
 
                 # Wrap in FILTER EXISTS and add to inner_select_gpnt
-                exists_gpnt = create_filter_exists(
-                    GroupGraphPatternSub(graph_patterns_or_triples_blocks=exists_gpotb)
-                )
+                exists_gpnt = create_filter_exists(GroupGraphPatternSub(exists_gpotb))
                 kwargs["inner_select_gpnt"].append(exists_gpnt)
 
     if bbox:
@@ -349,20 +344,28 @@ def merge_listing_query_grammar_inputs(
         kwargs["inner_select_gpnt"].extend(gpnt_list)
         kwargs["inner_select_tssp_list"].extend(tssp_list)
 
-    if (
-        order_by
+    if order_by and not isinstance(
+        search_query, SearchQueryJenaLucene
     ):  # order by comes from query param - this will override the default order by in search and concept
-        # hierarchy queries
+        # hierarchy queries, except for Jena Lucene which handles sorting internally
         kwargs["order_by_predicate"] = IRI(value=order_by)
         kwargs["order_by_value"] = Var(value="order_by_val")
         kwargs["order_by_direction"] = order_by_direction or "ASC"
 
-    # include at least one triple in the subselect, for the focus node class, which will match the class selection
-    # always included in profiles.
-    # kwargs["inner_select_gpnt"] could be present but have a FILTER EXISTS only, producing no bindings, so it is not checked here.
+    # Include at least one triple in the subselect, for the focus node class, which
+    # will match the class selection always included in profiles.
+    #
+    # Skipped when something else already binds the focus node: a pattern list, a
+    # GPNT (a FILTER EXISTS there is expected to sit alongside a TSSP outside it), or
+    # a concept hierarchy query, which brings its own binding patterns and must not
+    # also be made to match `?focus_node a ?default_class_var` (see #453).
     kwargs["inner_select_vars"] = _dedupe_inner_select_vars(kwargs["inner_select_vars"])
 
-    if not (kwargs["inner_select_tssp_list"]) and not (kwargs["inner_select_gpnt"]):
+    if (
+        not kwargs["inner_select_tssp_list"]
+        and not kwargs["inner_select_gpnt"]
+        and not concept_hierarchy_query
+    ):
         triple = (
             Var(value="focus_node"),
             IRI(value="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
