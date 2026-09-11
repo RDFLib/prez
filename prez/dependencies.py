@@ -285,7 +285,9 @@ async def cql_get_parser_dependency(
     endpoint_uri_type: str = Depends(get_endpoint_uri_type),
     runtime_settings: Settings = Depends(get_runtime_settings),
 ) -> CQLParser:
-    if _search_uses_jena_lucene(endpoint_uri_type[0], runtime_settings):
+    if _search_uses_jena_lucene(
+        endpoint_uri_type[0], runtime_settings, query_params._filter
+    ):
         if query_params._filter:
             _parse_lucene_filter_json(query_params._filter, "GET")
         return None
@@ -360,19 +362,24 @@ def _is_absolute_iri(value: str) -> bool:
     return bool(parsed.scheme and (parsed.netloc or parsed.path))
 
 
-def _collect_non_iri_cql_properties(node, invalid_properties: list[str]) -> None:
+def _collect_cql_properties(node, properties: list) -> None:
     if isinstance(node, dict):
         property_value = node.get("property")
         if property_value is not None:
-            if not isinstance(property_value, str) or not _is_absolute_iri(
-                property_value
-            ):
-                invalid_properties.append(str(property_value))
+            properties.append(property_value)
         for value in node.values():
-            _collect_non_iri_cql_properties(value, invalid_properties)
+            _collect_cql_properties(value, properties)
     elif isinstance(node, list):
         for item in node:
-            _collect_non_iri_cql_properties(item, invalid_properties)
+            _collect_cql_properties(item, properties)
+
+
+def _collect_non_iri_cql_properties(node, invalid_properties: list[str]) -> None:
+    properties: list = []
+    _collect_cql_properties(node, properties)
+    invalid_properties.extend(
+        str(p) for p in properties if not isinstance(p, str) or not _is_absolute_iri(p)
+    )
 
 
 def _validate_lucene_cql_filter(filter_json: dict | None) -> None:
@@ -562,11 +569,77 @@ def _resolve_lucene_search_fields(
     return runtime_settings.lucene_search_fields
 
 
-def _search_uses_jena_lucene(endpoint_uri: URIRef, runtime_settings: Settings) -> bool:
-    return runtime_settings.enable_cql_jena_lucene_json and endpoint_uri in {
-        EP["extended-ogc-records/search"],
-        EP["extended-ogc-records/search-post"],
-    }
+_SEARCH_EP_URIS = {
+    EP["extended-ogc-records/search"],
+    EP["extended-ogc-records/search-post"],
+}
+
+
+def _filter_properties_are_lucene_fields(filter_value) -> bool:
+    """Whether every ``property`` in a CQL filter names a Lucene field.
+
+    Lucene field names are absolute IRIs; queryable identifiers are not. A filter
+    that names only IRIs can be pushed down to ``luc:query``, anything else has to
+    be evaluated as SPARQL against the registered queryables.
+    """
+    if not filter_value:
+        return False
+    if isinstance(filter_value, str):
+        try:
+            filter_json = json.loads(filter_value)
+        except json.JSONDecodeError:
+            return False
+    else:
+        filter_json = filter_value
+    properties: list = []
+    _collect_cql_properties(filter_json, properties)
+    return bool(properties) and all(
+        isinstance(p, str) and _is_absolute_iri(p) for p in properties
+    )
+
+
+def _endpoint_builds_search_query(endpoint_uri: URIRef) -> bool:
+    """OGC Features listings have no search query dependency, so a filter pushed
+    down there would simply be dropped. They stay on the SPARQL CQL path."""
+    return not str(endpoint_uri).startswith(str(OGCFEAT))
+
+
+def _search_uses_jena_lucene(
+    endpoint_uri: URIRef,
+    runtime_settings: Settings,
+    filter_value=None,
+) -> bool:
+    if not runtime_settings.enable_cql_jena_lucene_json:
+        return False
+    if endpoint_uri in _SEARCH_EP_URIS:
+        return True
+    if not _endpoint_builds_search_query(endpoint_uri):
+        return False
+    return _filter_properties_are_lucene_fields(filter_value)
+
+
+def _build_lucene_search_query(
+    query_params,
+    runtime_settings: Settings,
+    filter_json: dict | None,
+    search_fields,
+    term: str | None = None,
+    facets: list[str] | None = None,
+) -> SearchQueryJenaLucene:
+    return SearchQueryJenaLucene(
+        term=term,
+        facets=facets,
+        filter_json=filter_json,
+        limit=int(query_params.limit),
+        offset=_calculate_listing_offset(query_params),
+        lucene_index_name=runtime_settings.lucene_index_name,
+        search_fields=search_fields,
+        lucene_hit_limit=_resolve_lucene_hit_limit(query_params, runtime_settings),
+        order_by=query_params.order_by,
+        order_by_direction=query_params.order_by_direction,
+        include_matches=bool(term),
+        pagination_pushed_down=_lucene_uses_limit_offset_pushdown(runtime_settings),
+    )
 
 
 async def lucene_cql_get_parser_dependency(
@@ -840,7 +913,9 @@ async def cql_post_listing_parser_dependency(
     runtime_settings: Settings = Depends(get_runtime_settings),
 ) -> "CQLParser | None":
     """CQL parser for listing POST endpoints (filter is optional)."""
-    if _search_uses_jena_lucene(endpoint_uri_type[0], runtime_settings):
+    if _search_uses_jena_lucene(
+        endpoint_uri_type[0], runtime_settings, query_params._filter
+    ):
         if query_params._filter:
             _parse_lucene_filter_json(query_params._filter, "POST")
         return None
@@ -886,41 +961,29 @@ async def generate_search_query_post(
             return True
         return False
 
-    _search_ep_uris = {
-        EP["extended-ogc-records/search"],
-        EP["extended-ogc-records/search-post"],
-    }
+    uses_lucene = _search_uses_jena_lucene(
+        endpoint_uri_type[0], runtime_settings, query_params._filter
+    )
+
+    async def build_lucene_query() -> SearchQueryJenaLucene:
+        body = await _parse_post_body(request)
+        return _build_lucene_search_query(
+            query_params,
+            runtime_settings,
+            _parse_lucene_filter_json(query_params._filter, "POST"),
+            _resolve_lucene_search_fields(
+                body.get("fields"),
+                runtime_settings,
+                "POST",
+            ),
+            term=term,
+        )
+
     if not term:
-        if endpoint_uri_type[0] in _search_ep_uris:
+        if endpoint_uri_type[0] in _SEARCH_EP_URIS:
             if has_filtering_params():
-                if _search_uses_jena_lucene(endpoint_uri_type[0], runtime_settings):
-                    body = await _parse_post_body(request)
-                    filter_json = _parse_lucene_filter_json(
-                        query_params._filter, "POST"
-                    )
-                    search_fields = _resolve_lucene_search_fields(
-                        body.get("fields"),
-                        runtime_settings,
-                        "POST",
-                    )
-                    return SearchQueryJenaLucene(
-                        term=query_params.q,
-                        facets=None,
-                        filter_json=filter_json,
-                        limit=int(query_params.limit),
-                        offset=_calculate_listing_offset(query_params),
-                        lucene_index_name=runtime_settings.lucene_index_name,
-                        search_fields=search_fields,
-                        lucene_hit_limit=_resolve_lucene_hit_limit(
-                            query_params, runtime_settings
-                        ),
-                        order_by=query_params.order_by,
-                        order_by_direction=query_params.order_by_direction,
-                        include_matches=bool(query_params.q),
-                        pagination_pushed_down=_lucene_uses_limit_offset_pushdown(
-                            runtime_settings
-                        ),
-                    )
+                if uses_lucene:
+                    return await build_lucene_query()
                 return DummySearchMarker()
             raise HTTPException(
                 status_code=400,
@@ -929,30 +992,14 @@ async def generate_search_query_post(
                     "or use filtering parameters (facet_profile, filter, bbox, datetime)."
                 ),
             )
+        # Other listing endpoints: a filter naming only Lucene fields is pushed
+        # down to luc:query rather than evaluated as SPARQL.
+        if uses_lucene:
+            return await build_lucene_query()
         return None
 
-    if _search_uses_jena_lucene(endpoint_uri_type[0], runtime_settings):
-        body = await _parse_post_body(request)
-        filter_json = _parse_lucene_filter_json(query_params._filter, "POST")
-        search_fields = _resolve_lucene_search_fields(
-            body.get("fields"),
-            runtime_settings,
-            "POST",
-        )
-        return SearchQueryJenaLucene(
-            term=term,
-            facets=None,
-            filter_json=filter_json,
-            limit=int(query_params.limit),
-            offset=_calculate_listing_offset(query_params),
-            lucene_index_name=runtime_settings.lucene_index_name,
-            search_fields=search_fields,
-            lucene_hit_limit=_resolve_lucene_hit_limit(query_params, runtime_settings),
-            order_by=query_params.order_by,
-            order_by_direction=query_params.order_by_direction,
-            include_matches=bool(term),
-            pagination_pushed_down=_lucene_uses_limit_offset_pushdown(runtime_settings),
-        )
+    if uses_lucene:
+        return await build_lucene_query()
 
     predicates = query_params.predicates if hasattr(query_params, "predicates") else []
     page = query_params.page or 1
@@ -1200,37 +1247,31 @@ async def generate_search_query(
             return True
         return False
 
+    uses_lucene = _search_uses_jena_lucene(
+        endpoint_uri_type[0], runtime_settings, query_params._filter
+    )
+
+    def build_lucene_query() -> SearchQueryJenaLucene:
+        return _build_lucene_search_query(
+            query_params,
+            runtime_settings,
+            _parse_lucene_filter_json(query_params._filter, "GET"),
+            _resolve_lucene_search_fields(
+                request.query_params.getlist("fields") or None,
+                runtime_settings,
+                "GET",
+            ),
+            term=query_params.q,
+        )
+
     # Check if the search term 'q' is provided
     if not term:
         # If 'q' is missing or empty, check if we're on the search endpoint
         if endpoint_uri_type[0] == EP["extended-ogc-records/search"]:
             # Allow empty search term if filtering/faceting parameters are present
             if has_filtering_params():
-                if _search_uses_jena_lucene(endpoint_uri_type[0], runtime_settings):
-                    filter_json = _parse_lucene_filter_json(query_params._filter, "GET")
-                    search_fields = _resolve_lucene_search_fields(
-                        request.query_params.getlist("fields") or None,
-                        runtime_settings,
-                        "GET",
-                    )
-                    return SearchQueryJenaLucene(
-                        term=query_params.q,
-                        facets=None,
-                        filter_json=filter_json,
-                        limit=int(query_params.limit),
-                        offset=_calculate_listing_offset(query_params),
-                        lucene_index_name=runtime_settings.lucene_index_name,
-                        search_fields=search_fields,
-                        lucene_hit_limit=_resolve_lucene_hit_limit(
-                            query_params, runtime_settings
-                        ),
-                        order_by=query_params.order_by,
-                        order_by_direction=query_params.order_by_direction,
-                        include_matches=bool(query_params.q),
-                        pagination_pushed_down=_lucene_uses_limit_offset_pushdown(
-                            runtime_settings
-                        ),
-                    )
+                if uses_lucene:
+                    return build_lucene_query()
                 # Return marker to indicate dummy search results needed
                 return DummySearchMarker()
             else:
@@ -1239,34 +1280,15 @@ async def generate_search_query(
                     detail="Search query parameter 'q' must be provided, or use filtering parameters (facet_profile, filter, bbox, datetime).",
                 )
         else:
-            # For other endpoints, 'q' is optional, return None if not provided
+            # On other listing endpoints a filter naming only Lucene fields is
+            # pushed down to luc:query; otherwise 'q' is optional and the filter
+            # is evaluated as SPARQL by the CQL parser dependency.
+            if uses_lucene:
+                return build_lucene_query()
             return None
     else:
-        if _search_uses_jena_lucene(endpoint_uri_type[0], runtime_settings):
-            filter_json = _parse_lucene_filter_json(query_params._filter, "GET")
-            search_fields = _resolve_lucene_search_fields(
-                request.query_params.getlist("fields") or None,
-                runtime_settings,
-                "GET",
-            )
-            search_query = SearchQueryJenaLucene(
-                term=query_params.q,
-                facets=None,
-                filter_json=filter_json,
-                limit=int(query_params.limit),
-                offset=_calculate_listing_offset(query_params),
-                lucene_index_name=runtime_settings.lucene_index_name,
-                search_fields=search_fields,
-                lucene_hit_limit=_resolve_lucene_hit_limit(
-                    query_params, runtime_settings
-                ),
-                order_by=query_params.order_by,
-                order_by_direction=query_params.order_by_direction,
-                include_matches=bool(query_params.q),
-                pagination_pushed_down=_lucene_uses_limit_offset_pushdown(
-                    runtime_settings
-                ),
-            )
+        if uses_lucene:
+            search_query = build_lucene_query()
             logger.debug(f"Generated search query: {search_query}")
             return search_query
 
