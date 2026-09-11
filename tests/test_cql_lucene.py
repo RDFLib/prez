@@ -1885,3 +1885,220 @@ def test_lucene_cql_facet_profile_resolves_lucene_facets():
     assert "urn:jena:lucene:index#facet" in sparql
     assert "urn:field:commodity" in sparql
     assert "urn:field:state" in sparql
+
+
+########################################################################################
+# Issue 479: filter pushdown on listing endpoints other than /search
+########################################################################################
+
+CUSTOM_LISTING_EP = (
+    URIRef("https://prez.dev/endpoint/data-types"),
+    ONT["ListingEndpoint"],
+)
+
+IRI_FILTER = {
+    "op": "=",
+    "args": [{"property": "urn:jena:lucene:field#entityType"}, "Borehole"],
+}
+QUERYABLE_FILTER = {
+    "op": "=",
+    "args": [{"property": "rdf-type"}, "Borehole"],
+}
+
+
+def _lucene_settings() -> Settings:
+    return Settings(
+        enable_cql_jena_lucene_json=True,
+        lucene_index_name="default",
+        sparql_repo_type="remote",
+        sparql_endpoint="http://example.com/dataset/sparql",
+    )
+
+
+@pytest.mark.asyncio
+async def test_iri_filter_on_custom_listing_endpoint_is_pushed_down(test_repo: Repo):
+    query_params = ListingQueryParams(
+        page=1, limit=10, q=None, _filter=json.dumps(IRI_FILTER)
+    )
+
+    search_query = await generate_search_query(
+        request=_make_request("/data-types?filter=%7B%7D"),
+        query_params=query_params,
+        system_repo=test_repo,
+        endpoint_uri_type=CUSTOM_LISTING_EP,
+        runtime_settings=_lucene_settings(),
+    )
+    cql_parser = await cql_get_parser_dependency(
+        query_params=query_params,
+        queryable_props=[],
+        endpoint_uri_type=CUSTOM_LISTING_EP,
+        runtime_settings=_lucene_settings(),
+    )
+
+    assert isinstance(search_query, SearchQueryJenaLucene)
+    assert "urn:jena:lucene:field#entityType" in lucene_call(search_query)
+    assert cql_parser is None
+
+
+@pytest.mark.asyncio
+async def test_queryable_filter_on_custom_listing_endpoint_stays_on_sparql(
+    test_repo: Repo,
+):
+    query_params = ListingQueryParams(
+        page=1, limit=10, _filter=json.dumps(QUERYABLE_FILTER)
+    )
+
+    search_query = await generate_search_query(
+        request=_make_request("/data-types?filter=%7B%7D"),
+        query_params=query_params,
+        system_repo=test_repo,
+        endpoint_uri_type=CUSTOM_LISTING_EP,
+        runtime_settings=_lucene_settings(),
+    )
+
+    assert search_query is None
+
+
+@pytest.mark.asyncio
+async def test_mixed_filter_on_custom_listing_endpoint_stays_on_sparql(
+    test_repo: Repo,
+):
+    mixed_filter = {"op": "and", "args": [IRI_FILTER, QUERYABLE_FILTER]}
+    query_params = ListingQueryParams(
+        page=1, limit=10, q=None, _filter=json.dumps(mixed_filter)
+    )
+
+    search_query = await generate_search_query(
+        request=_make_request("/data-types?filter=%7B%7D"),
+        query_params=query_params,
+        system_repo=test_repo,
+        endpoint_uri_type=CUSTOM_LISTING_EP,
+        runtime_settings=_lucene_settings(),
+    )
+
+    assert search_query is None
+
+
+@pytest.mark.asyncio
+async def test_no_filter_on_custom_listing_endpoint_is_not_a_search(test_repo: Repo):
+    search_query = await generate_search_query(
+        request=_make_request("/data-types"),
+        query_params=ListingQueryParams(page=1, limit=10, q=None),
+        system_repo=test_repo,
+        endpoint_uri_type=CUSTOM_LISTING_EP,
+        runtime_settings=_lucene_settings(),
+    )
+
+    assert search_query is None
+
+
+@pytest.mark.asyncio
+async def test_iri_filter_on_ogc_features_endpoint_stays_on_sparql(test_repo: Repo):
+    """OGC Features listings build no search query, so a pushed-down filter would
+    be dropped entirely."""
+    from prez.reference_data.prez_ns import OGCFEAT
+
+    query_params = ListingQueryParams(
+        page=1, limit=10, q=None, _filter=json.dumps(IRI_FILTER)
+    )
+
+    cql_parser = await cql_get_parser_dependency(
+        query_params=query_params,
+        queryable_props=[],
+        endpoint_uri_type=(OGCFEAT["features"], ONT["ListingEndpoint"]),
+        runtime_settings=_lucene_settings(),
+    )
+
+    assert cql_parser is not None
+
+
+@pytest.mark.asyncio
+async def test_iri_filter_on_custom_listing_endpoint_is_ignored_when_flag_off(
+    test_repo: Repo,
+):
+    runtime_settings = Settings(
+        enable_cql_jena_lucene_json=False,
+        sparql_repo_type="remote",
+        sparql_endpoint="http://example.com/dataset/sparql",
+    )
+    query_params = ListingQueryParams(
+        page=1, limit=10, q=None, _filter=json.dumps(IRI_FILTER)
+    )
+
+    search_query = await generate_search_query(
+        request=_make_request("/data-types?filter=%7B%7D"),
+        query_params=query_params,
+        system_repo=test_repo,
+        endpoint_uri_type=CUSTOM_LISTING_EP,
+        runtime_settings=runtime_settings,
+    )
+
+    assert search_query is None
+
+
+@pytest.mark.asyncio
+async def test_iri_filter_with_term_on_custom_listing_endpoint_is_pushed_down(
+    test_repo: Repo,
+):
+    query_params = ListingQueryParams(
+        page=1, limit=10, q="ore", _filter=json.dumps(IRI_FILTER)
+    )
+
+    search_query = await generate_search_query(
+        request=_make_request("/data-types?q=ore&filter=%7B%7D"),
+        query_params=query_params,
+        system_repo=test_repo,
+        endpoint_uri_type=CUSTOM_LISTING_EP,
+        runtime_settings=_lucene_settings(),
+    )
+
+    assert isinstance(search_query, SearchQueryJenaLucene)
+    assert '"ore"' in lucene_call(search_query)
+
+
+@pytest.mark.asyncio
+async def test_iri_filter_on_custom_listing_endpoint_post_is_pushed_down(
+    test_repo: Repo,
+):
+    body = {"filter": IRI_FILTER, "limit": 10}
+    query_params = ListingQueryParams(
+        page=1, limit=10, q=None, _filter=json.dumps(IRI_FILTER)
+    )
+
+    search_query = await generate_search_query_post(
+        request=_make_request("/data-types", method="POST", json_body=body),
+        query_params=query_params,
+        system_repo=test_repo,
+        endpoint_uri_type=CUSTOM_LISTING_EP,
+        runtime_settings=_lucene_settings(),
+    )
+    cql_parser = await cql_post_listing_parser_dependency(
+        query_params=query_params,
+        queryable_props=[],
+        endpoint_uri_type=CUSTOM_LISTING_EP,
+        runtime_settings=_lucene_settings(),
+    )
+
+    assert isinstance(search_query, SearchQueryJenaLucene)
+    assert "urn:jena:lucene:field#entityType" in lucene_call(search_query)
+    assert cql_parser is None
+
+
+@pytest.mark.asyncio
+async def test_queryable_filter_on_custom_listing_endpoint_post_stays_on_sparql(
+    test_repo: Repo,
+):
+    body = {"filter": QUERYABLE_FILTER, "limit": 10}
+    query_params = ListingQueryParams(
+        page=1, limit=10, q=None, _filter=json.dumps(QUERYABLE_FILTER)
+    )
+
+    search_query = await generate_search_query_post(
+        request=_make_request("/data-types", method="POST", json_body=body),
+        query_params=query_params,
+        system_repo=test_repo,
+        endpoint_uri_type=CUSTOM_LISTING_EP,
+        runtime_settings=_lucene_settings(),
+    )
+
+    assert search_query is None

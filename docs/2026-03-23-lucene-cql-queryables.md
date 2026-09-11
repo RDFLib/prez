@@ -280,6 +280,23 @@ That means this is the intended form:
 
 and not a separate domain predicate IRI that Prez would remap later. The current implementation validates the IRI and passes it through unchanged into the Lucene filter JSON.
 
+## Where Filter Pushdown Applies
+
+With `enable_cql_jena_lucene_json` on, a CQL filter is pushed down to `luc:query` on any listing endpoint, including custom `ont:ListingEndpoint`s, on GET and POST alike.
+
+Which path a filter takes depends on its `property` values:
+
+| filter properties | path |
+|---|---|
+| all absolute IRIs | pushed down to `luc:query` |
+| any queryable identifier (e.g. `"rdf-type"`) | evaluated as SPARQL by `CQLParser` |
+
+Mixed filters take the SPARQL path in full — the two are not combined.
+
+`/search` and `/search-post` are unconditional: with the setting on, their filters are always pushed down, and a non-IRI property is a `400` rather than a fallback. OGC Features listings never push down; they build no search query, so a pushed-down filter would be dropped.
+
+A pushed-down filter can only return resources present in the Lucene index, and pagination and ordering move into `luc:query` — a Lucene sort overrides SPARQL `ORDER BY`.
+
 ## Representative SPARQL Shape
 
 This is the readable main query shape generated inside the Prez listing pipeline for the POST example above:
