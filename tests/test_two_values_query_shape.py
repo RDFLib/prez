@@ -2,8 +2,10 @@
 
 Measured on pyoxigraph with a 21,010 quad store: the annotations CONSTRUCT over
 2,000 terms took 1,227 ms in the two-VALUES form and 9 ms once the property list
-became a UNION, for byte-identical results. One VALUES clause is fine - it matches a
-hand-written index lookup - so these tests pin the rewrite rather than banning VALUES.
+became a UNION, for byte-identical results. A link generation query over a page of
+500 focus nodes went from 266 ms to 1.8 ms the same way. One VALUES clause is fine -
+it matches a hand-written index lookup - so these tests pin the rewrites rather than
+banning VALUES.
 """
 
 import re
@@ -16,9 +18,16 @@ from pyoxigraph import (
     Quad,
     Store,
 )
-from sparql_grammar import IRI
+from sparql_grammar import (
+    IRI,
+    InlineData,
+    InlineDataFull,
+    InlineDataOneVar,
+    Var,
+)
 
 from prez.services.query_generation.annotations import AnnotationsConstructQuery
+from prez.services.query_generation.grammar_helpers import values_as_filter
 
 LEGACY_TWO_VALUES = """
 CONSTRUCT {{ ?term ?prezAnotProp ?annotation }}
@@ -84,3 +93,30 @@ def test_annotations_query_has_one_values_clause():
         terms=[IRI(value="https://example.com/a")]
     ).to_string()
     assert len(re.findall(r"\bVALUES\b", query)) == 1
+
+
+def test_values_as_filter_rewrites_a_single_variable_clause():
+    data = InlineData(
+        InlineDataOneVar(
+            Var(value="c"),
+            [IRI(value="https://example.com/A"), IRI(value="https://example.com/B")],
+        )
+    )
+    assert (
+        values_as_filter(data).to_string()
+        == "FILTER (?c IN (<https://example.com/A>, <https://example.com/B>))"
+    )
+
+
+def test_values_as_filter_leaves_what_it_cannot_rewrite():
+    # a multi-variable VALUES correlates its columns; a FILTER cannot express that
+    multi_var = InlineData(
+        InlineDataFull(
+            [Var(value="p"), Var(value="q")],
+            [[IRI(value="https://example.com/A"), IRI(value="https://example.com/B")]],
+        )
+    )
+    assert values_as_filter(multi_var) is multi_var
+    # IN () is not legal SPARQL, and an empty VALUES already matches nothing
+    empty = InlineData(InlineDataOneVar(Var(value="c"), []))
+    assert values_as_filter(empty) is empty

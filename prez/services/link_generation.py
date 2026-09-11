@@ -31,7 +31,10 @@ from prez.reference_data.prez_ns import PREZ
 from prez.repositories import Repo
 from prez.services.classes import get_classes
 from prez.services.curie_functions import get_curie_id_for_uri
-from prez.services.query_generation.grammar_helpers import triples_block
+from prez.services.query_generation.grammar_helpers import (
+    triples_block,
+    values_as_filter,
+)
 from prez.services.query_generation.shacl import (
     NodeShape,
     clear_nodeshape_cache,
@@ -438,8 +441,11 @@ async def get_link_components_many(
             else []
         )
         focus_classes = Var(value="focus_classes")
+        # The class lists for the other path nodes become FILTERs rather than VALUES:
+        # the focus node VALUES above is already one, and a second VALUES joined
+        # against the same pattern is what makes these queries slow.
         gpnt_exists_not_for_focus_node = [
-            gpnt
+            values_as_filter(gpnt) if isinstance(gpnt, InlineData) else gpnt
             for gpnt in ns.gpnt_exists_list
             if getattr(getattr(gpnt, "data_block", None), "variable", None)
             != focus_classes

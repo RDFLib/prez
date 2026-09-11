@@ -128,6 +128,26 @@ def create_values_constraint(variable: Var, values: list) -> InlineData:
     )
 
 
+def values_as_filter(inline_data: InlineData) -> Filter | InlineData:
+    """Rewrite ``VALUES ?v { ... }`` as ``FILTER(?v IN (...))``.
+
+    Two VALUES clauses joined against one triple pattern defeats the query planner:
+    on pyoxigraph, a link generation query over a page of 500 focus nodes took 266 ms
+    with two VALUES and 1.8 ms with the second expressed as a FILTER, for the same
+    rows. One VALUES clause on its own is fine, so this is only worth applying to the
+    second one in a group.
+
+    Only the single-variable form can be rewritten - a multi-variable VALUES carries a
+    correlation between its columns that a FILTER cannot express - and only when it
+    binds at least one value, since ``IN ()`` is not legal SPARQL. Anything else is
+    returned unchanged, so callers can map this over a list of patterns.
+    """
+    data_block = getattr(inline_data, "data_block", None)
+    if not isinstance(data_block, InlineDataOneVar) or not data_block.values:
+        return inline_data
+    return Filter(Expression.in_(data_block.variable, list(data_block.values)))
+
+
 _TEMPORAL_OPERATORS = ("=", "<=", ">=", "<", ">", "!=")
 
 
