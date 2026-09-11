@@ -1,8 +1,10 @@
 import logging
 import time
-from typing import FrozenSet, List, Set, Tuple
+from functools import lru_cache
+from typing import FrozenSet, Iterable, List, Set, Tuple
 
 from aiocache import caches
+from fastapi.concurrency import run_in_threadpool
 from oxrdflib._converter import to_ox, from_ox
 from pyoxigraph import (
     Store as OxiStore,
@@ -14,12 +16,77 @@ from pyoxigraph import (
 from rdflib import Graph, Literal, URIRef
 from sparql_grammar import IRI
 
+from prez.config import settings
 from prez.dependencies import get_annotations_repo
-from prez.repositories import Repo
+from prez.repositories import PyoxigraphRepo, Repo
 from prez.services.query_generation.annotations import AnnotationsConstructQuery
 from prez.services.timing_csv import log_timing_csv
 
 log = logging.getLogger(__name__)
+
+
+@lru_cache(maxsize=None)
+def _oxi_annotation_property_pairs() -> Tuple[Tuple[OxiNamedNode, OxiNamedNode], ...]:
+    """The (source property, emitted property) pairs of AnnotationsConstructQuery, as oxigraph terms.
+
+    Taken from the query class so the two implementations cannot drift; note that
+    ``other_predicates`` emit the original property rather than a ``prez:*`` one.
+    """
+    return tuple(
+        (OxiNamedNode(str(prop)), OxiNamedNode(str(prez_prop)))
+        for prop, prez_prop in AnnotationsConstructQuery.get_prez_annotation_tuples()
+    )
+
+
+def _lookup_annotations(store: OxiStore, terms: List[OxiNamedNode]) -> List[OxiQuad]:
+    """Produce the results of AnnotationsConstructQuery by index lookup rather than SPARQL.
+
+    The query is a join of two VALUES clauses - one term list, one property list -
+    which pyoxigraph's SPARQL engine evaluates far more slowly than the equivalent
+    ``quads_for_pattern`` calls: on a 21,010 quad store with 2,891 terms, 1,512 ms
+    against 11 ms. Only pyoxigraph-backed repos can take this path; a remote
+    endpoint still gets the query.
+
+    Lookups are restricted to the default graph, which is what ``Store.query``
+    considers without ``use_default_graph_as_union``, so annotations loaded from
+    .nq/.trig files into named graphs stay invisible here exactly as they are to
+    the query.
+    """
+    default_graph = OxiDefaultGraph()
+    language = settings.default_language
+    property_pairs = _oxi_annotation_property_pairs()
+    quads = []
+    for term in terms:
+        for prop, prez_prop in property_pairs:
+            for quad in store.quads_for_pattern(term, prop, None, default_graph):
+                obj = quad[2]
+                # FILTER (LANG(?annotation) IN ("<default language>", "") || isURI(?annotation))
+                if isinstance(obj, OxiNamedNode):
+                    pass
+                elif isinstance(obj, OxiLiteral) and obj.language in (None, language):
+                    pass
+                else:  # blank nodes, and literals in other languages
+                    continue
+                quads.append(OxiQuad(term, prez_prop, obj, default_graph))
+    return quads
+
+
+async def _annotations_for_terms(
+    repo: Repo, terms: List[OxiNamedNode]
+) -> Iterable[OxiQuad]:
+    """Annotation quads for ``terms`` from ``repo``, by index lookup where that is possible."""
+    if isinstance(repo, PyoxigraphRepo):
+        return await run_in_threadpool(_lookup_annotations, repo.pyoxi_store, terms)
+    query = AnnotationsConstructQuery(
+        terms=[IRI(value=term.value) for term in terms]
+    ).to_string()
+    results = await repo.send_queries(
+        rdf_queries=[query],
+        tabular_queries=[],
+        return_oxigraph_store=True,
+    )
+    result_store: OxiStore = results[0]
+    return result_store.quads_for_pattern(None, None, None, None)
 
 
 async def get_annotations(
@@ -253,18 +320,10 @@ async def process_uncached_terms_for_oxigraph(
     remaining_terms = set(terms)
 
     # Query system_repo first (always local/fast)
-    annotations_query = AnnotationsConstructQuery(
-        terms=[IRI(value=term.value) for term in terms]
-    ).to_string()
     system_start = time.perf_counter()
-    system_repo_results = await system_repo.send_queries(
-        rdf_queries=[annotations_query],
-        tabular_queries=[],
-        return_oxigraph_store=True,
-    )
+    system_quads = await _annotations_for_terms(system_repo, terms)
     system_ms = (time.perf_counter() - system_start) * 1000
-    system_repo_result_store: OxiStore = system_repo_results[0]
-    for quad in system_repo_result_store.quads_for_pattern(None, None, None, None):
+    for quad in system_quads:
         uriref_subjects_map.setdefault(URIRef(quad[0].value), set()).add(
             (from_ox(quad[1]), from_ox(quad[2]))
         )
@@ -276,20 +335,12 @@ async def process_uncached_terms_for_oxigraph(
     annotations_repo_ms = 0.0
     if remaining_terms:
         annotations_repo = await get_annotations_repo()
-        remaining_query = AnnotationsConstructQuery(
-            terms=[IRI(value=term.value) for term in remaining_terms]
-        ).to_string()
         annotations_repo_start = time.perf_counter()
-        annotation_repo_results = await annotations_repo.send_queries(
-            rdf_queries=[remaining_query],
-            tabular_queries=[],
-            return_oxigraph_store=True,
+        annotation_quads = await _annotations_for_terms(
+            annotations_repo, list(remaining_terms)
         )
         annotations_repo_ms = (time.perf_counter() - annotations_repo_start) * 1000
-        annotation_repo_result_store: OxiStore = annotation_repo_results[0]
-        for quad in annotation_repo_result_store.quads_for_pattern(
-            None, None, None, None
-        ):
+        for quad in annotation_quads:
             uriref_subjects_map.setdefault(URIRef(quad[0].value), set()).add(
                 (from_ox(quad[1]), from_ox(quad[2]))
             )
@@ -299,18 +350,10 @@ async def process_uncached_terms_for_oxigraph(
     # Only query data_repo (potentially remote) if terms still need annotations
     data_repo_ms = 0.0
     if remaining_terms:
-        remaining_query = AnnotationsConstructQuery(
-            terms=[IRI(value=term.value) for term in remaining_terms]
-        ).to_string()
         data_repo_start = time.perf_counter()
-        data_repo_results = await data_repo.send_queries(
-            rdf_queries=[remaining_query],
-            tabular_queries=[],
-            return_oxigraph_store=True,
-        )
+        data_quads = await _annotations_for_terms(data_repo, list(remaining_terms))
         data_repo_ms = (time.perf_counter() - data_repo_start) * 1000
-        data_repo_result_store: OxiStore = data_repo_results[0]
-        for quad in data_repo_result_store.quads_for_pattern(None, None, None, None):
+        for quad in data_quads:
             uriref_subjects_map.setdefault(URIRef(quad[0].value), set()).add(
                 (from_ox(quad[1]), from_ox(quad[2]))
             )
