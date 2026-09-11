@@ -1,0 +1,55 @@
+@prefix ex: <http://example.org/test/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix altr-ext: <http://www.w3.org/ns/dx/connegp/altr-ext#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix prof: <http://www.w3.org/ns/dx/prof/> .
+@prefix prez: <https://prez.dev/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Class hierarchy for testing
+ex:Animal rdfs:subClassOf rdfs:Resource ;
+    rdfs:label "Animal" .
+ex:Mammal rdfs:subClassOf ex:Animal ;
+    rdfs:label "Mammal" .
+ex:Cat rdfs:subClassOf ex:Mammal ;
+    rdfs:label "Cat" .
+ex:BigCat rdfs:subClassOf ex:Cat ;
+    rdfs:label "BigCat" .
+
+# Profiles with different class constraints
+ex:AnimalProfile a prof:Profile , prez:ObjectProfile ;
+    dcterms:identifier "animal"^^xsd:token ;
+    dcterms:title "Animal Profile" ;
+    dcterms:description "Profile for Animals" ;
+    altr-ext:constrainsClass ex:Animal ;
+    altr-ext:hasResourceFormat "text/turtle" ;
+    altr-ext:hasDefaultResourceFormat "text/turtle" .
+
+ex:CatProfile a prof:Profile , prez:ObjectProfile ;
+    dcterms:identifier "cat"^^xsd:token ;
+    dcterms:title "Cat Profile" ;
+    dcterms:description "Profile for Cats" ;
+    altr-ext:constrainsClass ex:Cat ;
+    altr-ext:hasResourceFormat "text/turtle" ;
+    altr-ext:hasDefaultResourceFormat "text/turtle" .
+
+ex:BigCatProfile a prof:Profile , prez:ObjectProfile ;
+    dcterms:identifier "bigcat"^^xsd:token ;
+    dcterms:title "BigCat Profile" ;
+    dcterms:description "Profile for BigCats" ;
+    altr-ext:constrainsClass ex:BigCat ;
+    altr-ext:hasResourceFormat "text/turtle" ;
+    altr-ext:hasDefaultResourceFormat "text/turtle" .
+
+# Test resource instances
+ex:lion a ex:BigCat ;
+    rdfs:label "Lion" ;
+    dcterms:description "A big cat" .
+
+ex:tabby a ex:Cat ;
+    rdfs:label "Tabby" ;
+    dcterms:description "A domestic cat" .
+
+ex:dog a ex:Mammal ;
+    rdfs:label "Dog" ;
+    dcterms:description "A mammal" .

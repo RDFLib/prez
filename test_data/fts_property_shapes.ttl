@@ -55,3 +55,13 @@ ex:OOMP
     dcterms:identifier "oomp" ;
     ont:searchPredicate rdf:value ;
 .
+
+ex:FTSClassShape
+    a sh:PropertyShape ;
+    a ont:JenaFTSPropertyShape ;
+    sh:path ex:labelProp ;
+    sh:class ex:ResultClass ;
+    sh:name "Class Constraint" ;
+    dcterms:identifier "classshape" ;
+    ont:searchPredicate ex:labelProp ;
+.

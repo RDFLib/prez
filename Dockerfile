@@ -23,6 +23,7 @@ COPY . .
 
 RUN poetry build
 RUN python3 -m venv --system-site-packages ${VIRTUAL_ENV}
+RUN ${VIRTUAL_ENV}/bin/pip3 install --upgrade pip
 RUN ${VIRTUAL_ENV}/bin/pip3 install --no-cache-dir dist/*.whl
 RUN ${VIRTUAL_ENV}/bin/pip3 install uvicorn
 
@@ -42,6 +43,7 @@ ENV VIRTUAL_ENV=${VIRTUAL_ENV} \
 COPY --from=base ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
 RUN apk update && apk upgrade --no-cache
+RUN /usr/local/bin/pip3 install --upgrade pip
 
 WORKDIR /app
 COPY main.py pyproject.toml ./

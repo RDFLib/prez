@@ -1,40 +1,34 @@
-from sparql_grammar_pydantic import (
+from sparql_grammar import (
+    ANON,
     IRI,
-    AdditiveExpression,
     Aggregate,
-    Anon,
     Bind,
-    BlankNode,
     BuiltInCall,
-    ConditionalAndExpression,
-    ConditionalOrExpression,
     ConstructQuery,
     ConstructTemplate,
     ConstructTriples,
     Expression,
-    GraphPatternNotTriples,
     GroupGraphPattern,
     GroupGraphPatternSub,
     GroupOrUnionGraphPattern,
-    LimitClause,
     LimitOffsetClauses,
-    MultiplicativeExpression,
-    NumericExpression,
-    NumericLiteral,
-    PrimaryExpression,
     RDFLiteral,
-    RelationalExpression,
     SelectClause,
     SolutionModifier,
     SubSelect,
     TriplesSameSubject,
-    UnaryExpression,
-    ValueLogical,
     Var,
     WhereClause,
 )
 
 from prez.config import settings
+
+
+def _clause_value(clause) -> int:
+    """The integer held by a LimitClause/OffsetClause, or 0 when the clause is absent."""
+    if clause is None:
+        return 0
+    return int(clause.limit.value if hasattr(clause, "limit") else clause.offset.value)
 
 
 class CountQuery(ConstructQuery):
@@ -66,142 +60,67 @@ class CountQuery(ConstructQuery):
         Preserves the original range if it already exceeds the maximum, otherwise defaults to the system-defined limit.
         This limit then has one added so that the UI knows if there is more data available.
         """
-        current_offset = (
-            original_subselect.solution_modifier.limit_offset.offset_clause.offset
+        limit_offset = original_subselect.solution_modifier.limit_offset
+        current_offset = _clause_value(
+            limit_offset.offset_clause if limit_offset else None
         )
-        current_limit = (
-            original_subselect.solution_modifier.limit_offset.limit_clause.limit
+        current_limit = _clause_value(
+            limit_offset.limit_clause if limit_offset else None
         )
         if (current_offset + current_limit) > settings.listing_count_limit:
             limit = current_offset + current_limit
         else:
             limit = settings.listing_count_limit
         limit_plus_one = limit + 1
+        focus_node = Var(value="focus_node")
+        count_var = Var(value="count")
         inner_ss = SubSelect(
-            select_clause=SelectClause(
-                variables_or_all=[Var(value="focus_node")],
-                distinct=True,
-            ),
+            select_clause=SelectClause.create(focus_node, distinct=True),
             where_clause=original_subselect.where_clause,
             solution_modifier=SolutionModifier(
-                limit_offset=LimitOffsetClauses(
-                    limit_clause=LimitClause(limit=limit_plus_one)
-                ),
+                limit_offset=LimitOffsetClauses.create(limit=limit_plus_one)
             ),
             values_clause=original_subselect.values_clause,
         )
         count_expression = Expression.from_primary_expression(
-            PrimaryExpression(
-                content=BuiltInCall(
-                    other_expressions=Aggregate(
-                        function_name="COUNT",
-                        expression=Expression.from_primary_expression(
-                            PrimaryExpression(content=Var(value="focus_node"))
-                        ),
-                    )
-                )
-            )
+            Aggregate.count(focus_node)
         )
         outer_ss = SubSelect(
-            select_clause=SelectClause(
-                variables_or_all=[(count_expression, Var(value="count"))],
-            ),
-            where_clause=WhereClause(
-                group_graph_pattern=GroupGraphPattern(content=inner_ss)
-            ),
+            select_clause=SelectClause([(count_expression, count_var)]),
+            where_clause=WhereClause(GroupGraphPattern(inner_ss)),
         )
-        outer_ss_ggp = GroupGraphPattern(content=outer_ss)
-        count_equals_limit_expr = Expression(
-            conditional_or_expression=ConditionalOrExpression(
-                conditional_and_expressions=[
-                    ConditionalAndExpression(
-                        value_logicals=[
-                            ValueLogical(
-                                relational_expression=RelationalExpression(
-                                    left=NumericExpression(
-                                        additive_expression=AdditiveExpression(
-                                            base_expression=MultiplicativeExpression(
-                                                base_expression=UnaryExpression(
-                                                    primary_expression=PrimaryExpression(
-                                                        content=Var(value="count")
-                                                    )
-                                                )
-                                            )
-                                        )
-                                    ),
-                                    operator="=",
-                                    right=NumericExpression(
-                                        additive_expression=AdditiveExpression(
-                                            base_expression=MultiplicativeExpression(
-                                                base_expression=UnaryExpression(
-                                                    primary_expression=PrimaryExpression(
-                                                        content=NumericLiteral(
-                                                            value=limit_plus_one
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                        )
-                                    ),
-                                )
-                            )
-                        ]
-                    )
-                ]
-            )
-        )
-        gt_limit_exp = Expression.from_primary_expression(
-            PrimaryExpression(content=RDFLiteral(value=f">{limit}"))
-        )
-        str_count_exp = Expression.from_primary_expression(
-            PrimaryExpression(
-                content=BuiltInCall.create_with_one_expr(
-                    function_name="STR",
-                    expression=PrimaryExpression(content=Var(value="count")),
-                )
-            )
-        )
+        # BIND(IF(?count = 101, ">100", STR(?count)) AS ?count_str)
         bind = Bind(
-            expression=Expression.from_primary_expression(
-                PrimaryExpression(
-                    content=BuiltInCall(
-                        function_name="IF",
-                        arguments=[
-                            count_equals_limit_expr,
-                            gt_limit_exp,
-                            str_count_exp,
-                        ],
-                    )
+            Expression.from_primary_expression(
+                BuiltInCall.create(
+                    "IF",
+                    Expression.compare(count_var, "=", limit_plus_one),
+                    Expression.from_primary_expression(RDFLiteral(value=f">{limit}")),
+                    Expression.from_primary_expression(
+                        BuiltInCall.create("STR", count_var)
+                    ),
                 )
             ),
-            var=Var(value="count_str"),
+            Var(value="count_str"),
         )
         wc = WhereClause(
-            group_graph_pattern=GroupGraphPattern(
-                content=GroupGraphPatternSub(
-                    graph_patterns_or_triples_blocks=[
-                        GraphPatternNotTriples(
-                            content=GroupOrUnionGraphPattern(
-                                group_graph_patterns=[outer_ss_ggp]
-                            )
-                        ),
-                        GraphPatternNotTriples(content=bind),
-                    ]
+            GroupGraphPattern(
+                GroupGraphPatternSub(
+                    [GroupOrUnionGraphPattern([GroupGraphPattern(outer_ss)]), bind]
                 )
             )
         )
         construct_template = ConstructTemplate(
-            construct_triples=ConstructTriples.from_tss_list(
+            ConstructTriples(
                 [
                     TriplesSameSubject.from_spo(
-                        subject=BlankNode(value=Anon()),
-                        predicate=IRI(value="https://prez.dev/count"),
-                        object=Var(value="count_str"),
+                        ANON(),
+                        IRI(value="https://prez.dev/count"),
+                        Var(value="count_str"),
                     )
                 ]
             )
         )
-        # Initialize the base ConstructQuery
         super().__init__(
             construct_template=construct_template,
             where_clause=wc,

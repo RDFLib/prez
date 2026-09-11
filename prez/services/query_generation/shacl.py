@@ -7,30 +7,24 @@ from typing import Literal as TypingLiteral
 from typing import Optional, Tuple, Type, Union
 
 from pydantic import BaseModel
-from rdflib import RDFS, BNode, Graph, URIRef, XSD
+from rdflib import RDFS, XSD, BNode, Graph, URIRef
 from rdflib.collection import Collection
 from rdflib.namespace import RDF, SH
-from rdflib.term import Node, Literal
-from sparql_grammar_pydantic import (
+from rdflib.term import Literal, Node
+from sparql_grammar import (
     IRI,
     Bind,
+    BooleanLiteral,
     BuiltInCall,
-    Constraint,
-    DataBlock,
-    DataBlockValue,
     Expression,
     Filter,
-    GraphNodePath,
     GraphPatternNotTriples,
-    GraphTerm,
     GroupGraphPattern,
     GroupGraphPatternSub,
     GroupOrUnionGraphPattern,
     InlineData,
     InlineDataOneVar,
     IRIOrFunction,
-    ObjectListPath,
-    ObjectPath,
     OptionalGraphPattern,
     PathAlternative,
     PathElt,
@@ -38,22 +32,19 @@ from sparql_grammar_pydantic import (
     PathMod,
     PathPrimary,
     PathSequence,
-    PrimaryExpression,
-    PropertyListPathNotEmpty,
-    SG_Path,
+    RDFLiteral,
     TriplesBlock,
     TriplesSameSubject,
     TriplesSameSubjectPath,
     Var,
-    VarOrTerm,
-    VerbPath,
-    RDFLiteral,
-    BooleanLiteral,
-    NumericLiteral,
+    numeric_literal,
 )
 
 from prez.config import settings
 from prez.reference_data.prez_ns import ONT, SHEXT
+from prez.services.query_generation.grammar_helpers import (
+    triples_block as _reversed_triples_block,
+)
 
 log = logging.getLogger(__name__)
 
@@ -79,6 +70,66 @@ class Shape(BaseModel):
 
     def to_grammar(self):
         raise NotImplementedError("Subclasses must implement this method.")
+
+
+#: (shape uri, graph, kind, focus node, path nodes) -> the parsed shape.
+#:
+#: Parsing a shape walks a SHACL graph and builds the grammar for its property
+#: paths, and a request asks for the same profile or endpoint shape as the request
+#: before it. The shapes here are shared, so **callers must treat a shape as
+#: read-only**: build new lists from ``tss_list``, ``tssp_list`` and ``gpnt_list``
+#: rather than appending to them. Cleared by :func:`clear_nodeshape_cache` when the
+#: endpoint or profile graphs are (re)loaded.
+_nodeshape_cache: dict[tuple, "NodeShape"] = {}
+
+#: How many shapes to hold. Object endpoints key on the object's IRI, so the number
+#: of distinct keys grows with traffic; past this the cache starts over rather than
+#: growing without bound.
+_NODESHAPE_CACHE_MAX = 1024
+
+
+def clear_nodeshape_cache() -> None:
+    """Forget the parsed node shapes."""
+    _nodeshape_cache.clear()
+
+
+def get_nodeshape(
+    uri: URIRef,
+    graph: Graph,
+    kind: str,
+    focus_node: Union["Var", "IRI"],
+    path_nodes: Optional[Dict[str, Union["Var", "IRI"]]] = None,
+) -> "NodeShape":
+    """A parsed :class:`NodeShape`, from the cache when it has been parsed before.
+
+    The result is shared between callers and must not be mutated; see
+    :data:`_nodeshape_cache`.
+    """
+    # len(graph) is in the key so that a shape parsed from an earlier state of the
+    # graph is not reused after it changes: prez loads its endpoints and profiles at
+    # startup, but tests (and any future reload) add to those graphs afterwards, and
+    # a stale shape is a wrong query rather than a slow one.
+    key = (
+        uri,
+        id(graph),
+        len(graph),
+        kind,
+        focus_node,
+        tuple(sorted(path_nodes.items())) if path_nodes else (),
+    )
+    shape = _nodeshape_cache.get(key)
+    if shape is None:
+        shape = NodeShape(
+            uri=uri,
+            graph=graph,
+            kind=kind,
+            focus_node=focus_node,
+            path_nodes=dict(path_nodes) if path_nodes else {},
+        )
+        if len(_nodeshape_cache) >= _NODESHAPE_CACHE_MAX:
+            _nodeshape_cache.clear()
+        _nodeshape_cache[key] = shape
+    return shape
 
 
 class NodeShape(Shape):
@@ -161,18 +212,11 @@ class NodeShape(Shape):
                     self.focus_node, IRI(value=RDF.type), Var(value="focus_classes")
                 )
             )
-            dbvs = [
-                DataBlockValue(value=IRI(value=klass)) for klass in self.targetClasses
-            ]
             self.gpnt_exists_list.append(
-                GraphPatternNotTriples(
-                    content=InlineData(
-                        data_block=DataBlock(
-                            block=InlineDataOneVar(
-                                variable=Var(value="focus_classes"),
-                                datablockvalues=dbvs,
-                            )
-                        )
+                InlineData(
+                    InlineDataOneVar(
+                        Var(value="focus_classes"),
+                        [IRI(value=klass) for klass in self.targetClasses],
                     )
                 )
             )
@@ -234,6 +278,7 @@ class PropertyShape(Shape):
     union_tssps_binds: Optional[List[Dict[str, Any]]] = []  # New attribute
     all_predicate_values_counter: int = 0
     cql_filter_var: Optional[Var] = None  # Variable to use for CQL FILTER IN clauses
+    focus_node_classes: Optional[List[URIRef]] = []
 
     @property
     def minCount(self):
@@ -246,6 +291,23 @@ class PropertyShape(Shape):
         maxc = next(self.graph.objects(self.uri, SH.maxCount), None)
         if maxc is not None:
             return int(maxc)
+
+    @property
+    def has_sh_in(self) -> bool:
+        """Check if this PropertyShape has an sh:in constraint.
+
+        Returns:
+            bool: True if sh:in predicate exists on this shape, False otherwise.
+        """
+        try:
+            sh_in_value = next(self.graph.objects(self.uri, SH["in"]), None)
+            return sh_in_value is not None
+        except Exception as e:
+            log.warning(
+                f"Error checking for sh:in on {self.uri}: {e}. "
+                "Defaulting to has_sh_in=False"
+            )
+            return False
 
     def from_graph(self):
         # Context Guard: Check if this PropertyShape is inside a sh:filterShape.
@@ -309,7 +371,7 @@ class PropertyShape(Shape):
                 f"Unsupported type for facet value variable: {type(value_var)}"
             )
 
-        facet_value_expr = PrimaryExpression(content=facet_value_expr_content)
+        facet_value_expr = facet_value_expr_content
 
         if hasattr(property_path, "path_alias") and property_path.path_alias:
             facet_name_iri = IRI(value=property_path.path_alias)
@@ -319,24 +381,22 @@ class PropertyShape(Shape):
 
         if facet_name_iri:
             # Bind for facetName
-            bind_name_gpnt = GraphPatternNotTriples(
-                content=Bind(
-                    expression=Expression.from_primary_expression(
-                        PrimaryExpression(content=IRIOrFunction(iri=facet_name_iri))
+            binds.append(
+                Bind(
+                    Expression.from_primary_expression(
+                        IRIOrFunction(iri=facet_name_iri)
                     ),
-                    var=Var(value="facetName"),
+                    Var(value="facetName"),
                 )
             )
-            binds.append(bind_name_gpnt)
 
             # Bind for facetValue
-            bind_value_gpnt = GraphPatternNotTriples(
-                content=Bind(
-                    expression=Expression.from_primary_expression(facet_value_expr),
-                    var=Var(value="facetValue"),
+            binds.append(
+                Bind(
+                    Expression.from_primary_expression(facet_value_expr),
+                    Var(value="facetValue"),
                 )
             )
-            binds.append(bind_value_gpnt)
 
         return binds
 
@@ -361,6 +421,17 @@ class PropertyShape(Shape):
                             f"Malformed RDF list structure: missing rdf:rest from {pp}"
                         )
                 return SequencePath(value=path_elements)
+
+            # check for pivot path
+            pivot_path = next(self.graph.objects(pp, SHEXT.pivotPath), None)
+            if pivot_path:
+                node_path_uri = next(self.graph.objects(pivot_path, SH.path))
+                key_path_uri = next(self.graph.objects(pivot_path, SHEXT.pivotKey))
+                val_path_uri = next(self.graph.objects(pivot_path, SHEXT.pivotValue))
+                node_path = self._parse_property_path(node_path_uri)
+                key_path = self._parse_property_path(key_path_uri)
+                val_path = self._parse_property_path(val_path_uri)
+                return PivotPath(value=[node_path, key_path, val_path])
 
             # If not a sequence, check for other SHACL path constructs
             pred_objects = list(self.graph.predicate_objects(subject=pp))
@@ -438,11 +509,9 @@ class PropertyShape(Shape):
                     if val.datatype == XSD.boolean:
                         iri_or_lit = BooleanLiteral(value=bool(val))
                     elif val.datatype in [XSD.integer, XSD.int]:
-                        val = int(val)
-                        iri_or_lit = NumericLiteral(value=val)
+                        iri_or_lit = numeric_literal(int(val))
                     elif val.datatype in [XSD.decimal, XSD.double, XSD.float]:
-                        val = float(val)
-                        iri_or_lit = NumericLiteral(value=val)
+                        iri_or_lit = numeric_literal(float(val))
                 else:
                     iri_or_lit = RDFLiteral(value=str(val))
             patterns.append(
@@ -500,6 +569,8 @@ class PropertyShape(Shape):
                     path_object.sh_class = bnode_class
                 if final_filter_shape_tssp_list:
                     path_object.filter_shape_tssp_list = final_filter_shape_tssp_list
+                if isinstance(path_object, PivotPath):
+                    union = True
                 self._add_path(path_object, union)
         except ValueError as e:
             log.warning(
@@ -562,21 +633,11 @@ class PropertyShape(Shape):
                             Var(value=f"{path_or_prop}_node_classes_{len_pp}"),
                         )
                     )
-                    dbvs = [
-                        DataBlockValue(value=IRI(value=klass))
-                        for klass in self.or_klasses
-                    ]
                     self.gpnt_exists_list.append(
-                        GraphPatternNotTriples(
-                            content=InlineData(
-                                data_block=DataBlock(
-                                    block=InlineDataOneVar(
-                                        variable=Var(
-                                            value=f"{path_or_prop}_node_classes_{len_pp}"
-                                        ),
-                                        datablockvalues=dbvs,
-                                    )
-                                )
+                        InlineData(
+                            InlineDataOneVar(
+                                Var(value=f"{path_or_prop}_node_classes_{len_pp}"),
+                                [IRI(value=klass) for klass in self.or_klasses],
                             )
                         )
                     )
@@ -604,11 +665,11 @@ class PropertyShape(Shape):
                 # Only add a group pattern if there are triples for it
                 # This prevents adding {} for paths like bNodeDepth that don't generate direct triples here
                 if item["tssp_list"]:
+                    # TODO: Incorporate facet binds if needed
                     ggps_content = GroupGraphPatternSub(
-                        triples_block=TriplesBlock.from_tssp_list(item["tssp_list"]),
-                        # TODO: Incorporate facet binds if needed
+                        [self._triples_block(item["tssp_list"])]
                     )
-                    ggp_list.append(GroupGraphPattern(content=ggps_content))
+                    ggp_list.append(GroupGraphPattern(ggps_content))
 
             # Add BNode blocks if bnode_depth was set (potentially by one of the union paths)
             if self.bnode_depth:
@@ -618,35 +679,28 @@ class PropertyShape(Shape):
 
             # Only add the UNION if there are patterns to union
             if ggp_list:
-                self.gpnt_list.append(
-                    GraphPatternNotTriples(
-                        content=GroupOrUnionGraphPattern(group_graph_patterns=ggp_list)
-                    )
-                )
+                self.gpnt_list.append(GroupOrUnionGraphPattern(ggp_list))
 
         # Handle BNode depth separately if there were no union paths but bnode depth is set
         elif (
             self.bnode_depth
         ):  # Changed from 'if self.bnode_depth and not self.union_property_paths:'
-            self.gpnt_list.append(
-                GraphPatternNotTriples(
-                    content=GroupOrUnionGraphPattern(
-                        group_graph_patterns=self._build_bnode_blocks()
-                    )
+            self.gpnt_list.append(GroupOrUnionGraphPattern(self._build_bnode_blocks()))
+
+        if self.kind == "fts" and self.or_klasses:
+            if len(self.or_klasses) == 1:
+                self.focus_node_classes = list(self.or_klasses)
+            else:
+                log.warning(
+                    "FTS property shape sh:class with multiple values (sh:or) "
+                    f"is not yet supported: {self.or_klasses}"
                 )
-            )
 
         if self.minCount == 0:
             self.gpnt_list.append(
-                GraphPatternNotTriples(
-                    content=OptionalGraphPattern(
-                        group_graph_pattern=GroupGraphPattern(
-                            content=GroupGraphPatternSub(
-                                triples_block=TriplesBlock.from_tssp_list(
-                                    self.tssp_list
-                                )
-                            )
-                        )
+                OptionalGraphPattern(
+                    GroupGraphPattern(
+                        GroupGraphPatternSub([self._triples_block(self.tssp_list)])
                     )
                 )
             )
@@ -659,24 +713,459 @@ class PropertyShape(Shape):
             # reset the triples list
             self.tssp_list = [
                 TriplesSameSubjectPath.from_spo(
-                    subject=self.focus_node,
-                    predicate=Var(value="preds"),
-                    object=Var(value="excluded_pred_vals"),
+                    self.focus_node,
+                    Var(value="preds"),
+                    Var(value="excluded_pred_vals"),
                 )
             ]
 
-            values = [
-                PrimaryExpression(content=IRIOrFunction(iri=IRI(value=p.value)))
-                for p in self.and_property_paths
-            ]
-            gpnt = GraphPatternNotTriples(
-                content=Filter.filter_relational(
-                    focus=PrimaryExpression(content=Var(value="preds")),
-                    comparators=values,
-                    operator="NOT IN",
+            # FILTER (?preds NOT IN (<p1>, <p2>, ...))
+            self.gpnt_list.append(
+                Filter(
+                    Expression.in_(
+                        Var(value="preds"),
+                        [
+                            IRIOrFunction(iri=IRI(value=p.value))
+                            for p in self.and_property_paths
+                        ],
+                        negated=True,
+                    )
                 )
             )
-            self.gpnt_list.append(gpnt)
+
+    def _generate_path_nodes_for_path(
+        self, property_path: PropertyPath, path_or_prop: str, pp_i
+    ):
+        # For CQL kind, create a shared filter variable for all paths
+        # This allows a single FILTER(?cql_filter_N IN (...)) clause
+        if self.kind == "cql":
+            path_node_1 = Var(value=f"cql_filter_{self.var_counter_offset + 1}")
+        elif self.kind == "fts":
+            if isinstance(property_path, SequencePath):
+                # For FTS sequence paths, intermediate nodes are numbered, final node is fts_search_node
+                path_node_1 = Var(value=f"fts_search_node_{pp_i + 1}")
+            else:
+                path_node_1 = Var(value="fts_search_node")
+        elif f"{path_or_prop}_node_{pp_i + 1}" in self.path_nodes:
+            path_node_1 = self.path_nodes[f"{path_or_prop}_node_{pp_i + 1}"]
+        else:
+            path_node_1 = Var(value=f"{path_or_prop}_node_{pp_i + 1}")
+
+        # Create additional nodes only if we have a sequence path
+        path_nodes = {0: path_node_1}  # Start with path_node_1
+        if isinstance(property_path, SequencePath):
+            seq_path_len = len(property_path.value)
+            for i in range(1, seq_path_len):
+                if self.kind == "cql":
+                    # For CQL, only the final node matters (used in abbreviated path syntax)
+                    # Only populate the final node with the shared filter var
+                    if i == seq_path_len - 1:
+                        path_nodes[i] = path_node_1
+                    # Intermediate nodes are not used in CQL abbreviated syntax (property paths), don't populate
+                elif self.kind == "fts":
+                    # For FTS sequence paths: intermediate nodes are numbered, final node is fts_search_node
+                    if i == seq_path_len - 1:  # Last node in sequence
+                        path_nodes[i] = Var(value="fts_search_node")
+                    else:  # Intermediate nodes
+                        path_nodes[i] = Var(value=f"fts_search_node_{pp_i + i + 1}")
+                else:
+                    node_key = f"{path_or_prop}_node_{pp_i + i + 1}"
+                    if node_key in self.path_nodes:
+                        path_nodes[i] = self.path_nodes[node_key]
+                    else:
+                        path_nodes[i] = Var(value=node_key)
+        return path_nodes
+
+    def _triples_block(self, tssp_list: List[TriplesSameSubjectPath]) -> TriplesBlock:
+        """A block of this shape's patterns, in the order prez emits them.
+
+        A profile shape hands its patterns over focus-node first and emits them in
+        that order; every other kind emits them in reverse, most recently added
+        first. Both orders are what deployments have been running, and triple
+        pattern order inside a basic graph pattern is an input to a query planner.
+        """
+        if self.kind == "profile":
+            return TriplesBlock(list(tssp_list))
+        return _reversed_triples_block(tssp_list)
+
+    def _generate_sparql_for_path(
+        self,
+        property_path: PropertyPath,
+        path_or_prop: str,
+        pp_i: int,
+        use_alias: bool,
+        subj_var: Optional[Var | IRI] = None,
+        add_to_tss_list: bool = True,
+    ):
+
+        path_nodes = self._generate_path_nodes_for_path(
+            property_path, path_or_prop, pp_i
+        )
+        obj_node = (
+            None
+            if isinstance(property_path, BNodeDepth)
+            else path_nodes[max(path_nodes.keys())]
+        )
+        subj_node = self.focus_node if subj_var is None else subj_var
+
+        current_tssp = []
+        current_tssp_exists = []
+        current_facet_binds = []
+        if obj_node:  # Only create binds if we have a valid object node
+            current_facet_binds = self._create_facet_binds(property_path, obj_node)
+
+        if property_path.filter_shape_tssp_list:
+            current_tssp.extend(property_path.filter_shape_tssp_list)
+
+        if isinstance(property_path, Path):
+            if property_path.value == SHEXT.allPredicateValues:
+                pred = Var(value="preds")
+                obj = Var(value="vals")
+            else:
+                pred = IRI(value=property_path.value)
+                obj = path_nodes[0]
+            # WHERE clause triple (always added)
+            where_triple = (subj_node, pred, obj)
+            current_tssp.append(TriplesSameSubjectPath.from_spo(*where_triple))
+
+            # CONSTRUCT clause triple (conditional on alias)
+            if not use_alias:
+                if self.kind == "fts":
+                    construct_triple = (
+                        subj_node,
+                        pred,
+                        Var(value="fts_search_node"),
+                    )
+                else:
+                    construct_triple = (subj_node, pred, obj)
+                    if add_to_tss_list:
+                        self.tss_list.append(
+                            TriplesSameSubject.from_spo(*construct_triple)
+                        )
+                    # pp_i increment and alias handling happens at the end or in the 'if use_alias:' block
+
+            # check for sh:class
+            if property_path.sh_class:
+                type_triple = (
+                    path_nodes[0],
+                    IRI(value=RDF.type),
+                    IRI(value=property_path.sh_class),
+                )
+                # Add to WHERE and CONSTRUCT clauses
+                current_tssp.append(TriplesSameSubjectPath.from_spo(*type_triple))
+                if add_to_tss_list:
+                    self.tss_list.append(TriplesSameSubject.from_spo(*type_triple))
+
+        elif isinstance(property_path, BNodeDepth):
+            # BNodeDepth doesn't directly generate triples here, just sets the depth
+            # Alias logic (if use_alias is True) will handle pp_i increment and continue below
+            self.bnode_depth = int(property_path.value)
+
+        elif isinstance(property_path, AlternativePath):
+            # Handle AlternativePath - generate SPARQL using '|'
+            tssp = _tssp_for_alternative(
+                subj_node, property_path.value, path_nodes[0]  # List of paths
+            )
+            current_tssp.append(tssp)
+            # pp_i increment and alias handling happens at the end or in the 'if use_alias:' block
+
+        elif isinstance(property_path, InversePath):
+            # Determine subject and object for WHERE clause triple
+            if property_path.value.value == SHEXT.allPredicateValues:
+                subj = path_nodes[0]
+                pred = Var(value="inbound_props")
+                obj = subj_node
+            else:
+                subj = path_nodes[0]
+                pred = IRI(value=property_path.value.value)
+                obj = subj_node
+
+            # WHERE clause triple (always added)
+            where_triple = (subj, pred, obj)
+            current_tssp.append(TriplesSameSubjectPath.from_spo(*where_triple))
+
+            # CONSTRUCT clause triple (conditional on alias)
+            if not use_alias:
+                if self.kind == "fts":
+                    # FTS replaces the focus node in the construct triple
+                    construct_triple = (subj, pred, Var(value="fts_search_node"))
+                else:
+                    construct_triple = where_triple  # Use the same triple structure
+                    if add_to_tss_list:
+                        self.tss_list.append(
+                            TriplesSameSubject.from_spo(*construct_triple)
+                        )
+                    # pp_i increment and alias handling happens at the end or in the 'if use_alias:' block
+
+        elif isinstance(
+            property_path, Union[ZeroOrMorePath, OneOrMorePath, ZeroOrOnePath]
+        ):
+            # WHERE clause uses path mods (always added)
+            tssp = _tssp_for_pathmods(
+                subj_node,
+                IRI(value=property_path.value.value),
+                path_nodes[0],
+                property_path.operand,
+            )
+            self.tssp_list.append(tssp)
+            # Note: Appends directly to self.tssp_list, not current_tssp
+            # CONSTRUCT clause triple (conditional on alias) - Path mods usually don't add simple TSS triples directly,
+            # but if an alias exists, we add the simplified alias triple. This is handled by the 'if use_alias:' block.
+            # pp_i increment and alias handling happens at the end or in the 'if use_alias:' block
+
+        elif isinstance(property_path, SequencePath):
+            seq_path_len = len(property_path.value)
+
+            if self.kind in ["endpoint", "cql"]:
+                # For endpoints, the entire sequence is treated as one complex path.
+                # We collect all PropertyPath objects that make up the sequence.
+                sequence_elements_for_endpoint: list[PropertyPath] = []
+                for (
+                    path_segment
+                ) in (
+                    property_path.value
+                ):  # Iterate through the actual PropertyPath objects
+                    sequence_elements_for_endpoint.append(path_segment)
+
+                    # Generate the single TSSP for the entire sequence.
+                    # The object of this sequence is the last node allocated for this sequence.
+                    final_sequence_obj_node = path_nodes[seq_path_len - 1]
+                    tssp_seq = _tssp_for_sequence(
+                        subj_node,
+                        sequence_elements_for_endpoint,
+                        final_sequence_obj_node,
+                    )
+                    # This single TSSP represents the whole sequence path for the WHERE clause.
+                    current_tssp = [tssp_seq]
+                    # CONSTRUCT logic for endpoints with SequencePath is typically handled by aliases
+                    # or by the general alias logic later if `use_alias` is true.
+                    # If not using an alias, the CONSTRUCT part for a complex sequence path
+                    # doesn't usually add individual simple triples from the sequence here.
+            else:  # self.kind == "profile" or self.kind == "fts"
+                # For profile/fts, process each segment of the sequence individually.
+                # `current_tssp` will accumulate TSSP for each segment.
+                for j, path_segment in enumerate(property_path.value):
+                    triple = None  # Reset for each segment; used for simple (s,p,o) generation
+                    inner_path_type = None  # To track segment type for FTS handling
+
+                    # Determine subject and object for the current segment
+                    segment_subject_node = subj_node if j == 0 else path_nodes[j - 1]
+                    # The object of the current segment is path_nodes[j]
+                    # (path_nodes[0] is path_node_1, path_nodes[1] is path_node_2, etc.)
+                    segment_object_node = path_nodes[j]
+
+                    if isinstance(path_segment, Path):
+                        inner_path_type = "path"
+                        if path_segment.value == SHEXT.allPredicateValues:
+                            var_name = f"sequence_all_preds_{self.all_predicate_values_counter}"
+                            self.all_predicate_values_counter += 1
+                            triple = (
+                                segment_subject_node,
+                                Var(value=var_name),
+                                segment_object_node,
+                            )
+                        else:
+                            triple = (
+                                segment_subject_node,
+                                IRI(value=path_segment.value),
+                                segment_object_node,
+                            )
+                    elif isinstance(path_segment, InversePath):
+                        inner_path_type = "inverse"
+                        # For inverse, subject and object are swapped in the triple
+                        triple = (
+                            segment_object_node,
+                            IRI(value=path_segment.value.value),
+                            segment_subject_node,
+                        )
+
+                    elif isinstance(
+                        path_segment, (ZeroOrMorePath, OneOrMorePath, ZeroOrOnePath)
+                    ):
+                        inner_path_type = "zero_one_more"
+                        # For profile/fts, complex path modifiers in a sequence are tricky.
+                        # If the inner value is a simple Path, we can attempt a modified TSSP.
+                        # Otherwise, it's too complex for simple triple generation here.
+                        if isinstance(path_segment.value, Path):
+                            tssp_mod_segment = _tssp_for_pathmods(
+                                segment_subject_node,
+                                IRI(value=path_segment.value.value),
+                                segment_object_node,
+                                path_segment.operand,
+                            )
+                            current_tssp.append(tssp_mod_segment)
+                            # `triple` remains None, so no simple triple added to CONSTRUCT unless aliased.
+
+                    elif isinstance(path_segment, AlternativePath):
+                        inner_path_type = "alternative"
+                        # For profile/fts, AlternativePath within a sequence needs to generate a UNION block.
+
+                        group_graph_patterns_for_union = []
+                        for alt_path_item in path_segment.value:
+                            # Each alt_path_item is a PropertyPath (e.g., Path, InversePath)
+                            # We need to generate a simple TSSP for it.
+                            tssp_for_alt = _tssp_for_path_segment(
+                                segment_subject_node,
+                                alt_path_item,
+                                segment_object_node,
+                            )
+                            group_graph_patterns_for_union.append(
+                                GroupGraphPattern(
+                                    GroupGraphPatternSub(
+                                        [self._triples_block([tssp_for_alt])]
+                                    )
+                                )
+                            )
+                            # For CONSTRUCT, add individual triples for each alternative if not aliased
+                            if not use_alias:
+                                # Need to get the correct predicate for the CONSTRUCT
+                                construct_pred_iri = None
+                                construct_subj = segment_subject_node
+                                construct_obj = segment_object_node
+                                if isinstance(alt_path_item, Path):
+                                    construct_pred_iri = IRI(value=alt_path_item.value)
+                                elif isinstance(
+                                    alt_path_item, InversePath
+                                ) and isinstance(alt_path_item.value, Path):
+                                    construct_pred_iri = IRI(
+                                        value=alt_path_item.value.value
+                                    )
+                                    construct_subj, construct_obj = (
+                                        construct_obj,
+                                        construct_subj,
+                                    )  # Swap for inverse
+                                elif isinstance(
+                                    alt_path_item,
+                                    (ZeroOrMorePath, OneOrMorePath, ZeroOrOnePath),
+                                ) and isinstance(alt_path_item.value, Path):
+                                    construct_pred_iri = IRI(
+                                        value=alt_path_item.value.value
+                                    )  # Use base predicate for construct
+                                if construct_pred_iri and add_to_tss_list:
+                                    self.tss_list.append(
+                                        TriplesSameSubject.from_spo(
+                                            construct_subj,
+                                            construct_pred_iri,
+                                            construct_obj,
+                                        )
+                                    )
+
+                        if group_graph_patterns_for_union:
+                            union_gpnt = GroupOrUnionGraphPattern(
+                                [
+                                    GroupGraphPattern(
+                                        GroupGraphPatternSub(
+                                            [
+                                                GroupOrUnionGraphPattern(
+                                                    group_graph_patterns_for_union
+                                                )
+                                            ]
+                                        )
+                                    )
+                                ]
+                            )
+                            self.gpnt_list.append(union_gpnt)
+                        # `triple` remains None, as it's handled by the union_gp and tss_list additions.
+
+                    # Process the generated simple triple (if any) for this segment (profile/fts)
+                    # This block is for simple Path, InversePath, and ZeroOrOneMorePath that result in a 'triple'
+                    if triple:
+                        # Adjust object for FTS if it's the last segment
+                        if j == seq_path_len - 1 and self.kind == "fts":
+                            # Use the actual final segment object node variable name for FTS
+                            final_fts_var = segment_object_node
+                            if inner_path_type != "inverse":  # s P o -> s P fts_node
+                                where_triple = triple[:2] + (final_fts_var,)
+                            else:  # o P s -> fts_node P s (subject of inverse is fts_node)
+                                where_triple = (final_fts_var,) + triple[1:]
+                        else:
+                            where_triple = triple
+
+                        current_tssp.append(
+                            TriplesSameSubjectPath.from_spo(*where_triple)
+                        )
+                        # Add to CONSTRUCT only if the entire SequencePath is NOT aliased
+                        if not use_alias and add_to_tss_list:
+                            self.tss_list.append(
+                                TriplesSameSubject.from_spo(*where_triple)
+                            )
+
+                # After processing all segments, handle sh:class if present on the *entire* SequencePath
+                if property_path.sh_class:  # property_path is the SequencePath itself
+                    # sh:class applies to the object of the last segment of the sequence
+                    final_segment_object_node = path_nodes[seq_path_len - 1]
+                    type_triple_for_seq_class = (
+                        final_segment_object_node,
+                        IRI(value=RDF.type),
+                        IRI(value=property_path.sh_class),
+                    )
+                    current_tssp.append(
+                        TriplesSameSubjectPath.from_spo(*type_triple_for_seq_class)
+                    )
+                    if not use_alias:  # Add to CONSTRUCT if not aliased
+                        self.tss_list.append(
+                            TriplesSameSubject.from_spo(*type_triple_for_seq_class)
+                        )
+                # End of SequencePath specific logic
+
+        # --- Alias Handling and pp_i Increment ---
+        if use_alias:
+            # Determine the correct object node for the alias triple
+            if isinstance(property_path, SequencePath):
+                seq_path_len = len(property_path.value)
+                # The final node is the last one in the sequence path's node dictionary
+                obj_node = path_nodes[seq_path_len - 1]
+            elif isinstance(property_path, BNodeDepth):
+                # BNodeDepth doesn't map to a specific node, skip alias TSS generation
+                obj_node = None  # Signal to skip adding triple
+            else:
+                # For Path, InversePath, AlternativePath, Modifiers - use path_node_1
+                obj_node = path_nodes[0]
+
+            # Add the simplified alias triple to TSS list if obj_node is valid
+            if obj_node:
+                alias_triple = (
+                    subj_node,
+                    IRI(value=property_path.path_alias),
+                    obj_node,
+                )
+                self.tss_list.append(TriplesSameSubject.from_spo(*alias_triple))
+
+            # Increment pp_i based on the path length and continue
+            if isinstance(property_path, SequencePath):
+                pp_i += len(property_path.value)
+            elif isinstance(property_path, BNodeDepth):
+                pass  # BNodeDepth doesn't consume a node index
+            else:
+                pp_i += 1  # Increment by 1 for other path types
+            # Continue to the next property_path, skipping original TSS logic below this point
+            # (Note: WHERE clause TSSP logic above this point was already executed)
+            # REMOVED continue statement to ensure tssp_list is always appended below
+
+        else:
+            # If not using alias, increment pp_i based on the path type processed by original logic
+            if isinstance(property_path, SequencePath):
+                pp_i += len(property_path.value)
+            elif isinstance(property_path, BNodeDepth):
+                pass  # BNodeDepth doesn't consume a node index
+            else:
+                pp_i += 1  # Increment by 1 for other path types
+
+        # Add the collected WHERE clause triples and facet binds for this path
+        # Determine the value for path_alias_or_path
+        path_alias_or_path_value = None
+        if property_path.path_alias:
+            path_alias_or_path_value = property_path.path_alias
+        elif isinstance(property_path, Path):
+            path_alias_or_path_value = property_path.value
+
+        processed_paths_data = {
+            "tssp_list": current_tssp,
+            "tssp_exists_list": current_tssp_exists,
+            "facet_binds": current_facet_binds,
+            "path_alias_or_path": path_alias_or_path_value,
+        }
+        return processed_paths_data, pp_i, obj_node
 
     def _generate_sparql_for_paths(
         self, property_paths, path_or_prop, start_pp_i
@@ -694,437 +1183,75 @@ class PropertyShape(Shape):
             cql_filter_var = None
 
         for property_path in property_paths:
-            # Determine if we should use the path alias for CONSTRUCT triples
             use_alias = (
                 settings.use_path_aliases
                 and hasattr(property_path, "path_alias")
                 and property_path.path_alias
             )
 
-            # Always create path_node_1 as it's needed everywhere
-            if self.kind == "cql":
-                # For CQL, all paths (including union paths) share the same filter variable
-                path_node_1 = cql_filter_var
-            elif self.kind == "fts":
-                if isinstance(property_path, SequencePath):
-                    # For FTS sequence paths, intermediate nodes are numbered, final node is fts_search_node
-                    path_node_1 = Var(value=f"fts_search_node_{pp_i + 1}")
-                else:
-                    path_node_1 = Var(value="fts_search_node")
-            elif (
-                f"{path_or_prop}_node_{pp_i + 1 + self.var_counter_offset}"
-                in self.path_nodes
-            ):
-                # Check if NodeShape pre-populated this path node (endpoint kind only)
-                # Lookup includes var_counter_offset, which is 0 for endpoint, non-zero for CQL
-                path_node_1 = self.path_nodes[
-                    f"{path_or_prop}_node_{pp_i + 1 + self.var_counter_offset}"
-                ]
+            if isinstance(property_path, PivotPath):
+                node_path, key_path, value_path = property_path.value
+                node_data, pp_i, pivot_obj_node = self._generate_sparql_for_path(
+                    property_path=node_path,
+                    path_or_prop=path_or_prop,
+                    pp_i=pp_i,
+                    use_alias=use_alias,
+                    add_to_tss_list=False,
+                )
+                key_data, pp_i, pivot_key_node = self._generate_sparql_for_path(
+                    property_path=key_path,
+                    path_or_prop=path_or_prop,
+                    pp_i=pp_i,
+                    use_alias=use_alias,
+                    subj_var=pivot_obj_node,
+                    add_to_tss_list=False,
+                )
+                value_data, pp_i, pivot_value_node = self._generate_sparql_for_path(
+                    property_path=value_path,
+                    path_or_prop=path_or_prop,
+                    pp_i=pp_i,
+                    use_alias=use_alias,
+                    subj_var=pivot_obj_node,
+                    add_to_tss_list=False,
+                )
+                combined_tssp = (
+                    node_data["tssp_list"]
+                    + key_data["tssp_list"]
+                    + value_data["tssp_list"]
+                )
+                combined_tssp_exists = (
+                    node_data["tssp_exists_list"]
+                    + key_data["tssp_exists_list"]
+                    + value_data["tssp_exists_list"]
+                )
+                combined_facet_binds = (
+                    node_data["facet_binds"]
+                    + key_data["facet_binds"]
+                    + value_data["facet_binds"]
+                )
+                combined_alias = (
+                    node_data["path_alias_or_path"]
+                    or key_data["path_alias_or_path"]
+                    or value_data["path_alias_or_path"]
+                )
+                processed_paths_data.append(
+                    {
+                        "tssp_list": combined_tssp,
+                        "tssp_exists_list": combined_tssp_exists,
+                        "facet_binds": combined_facet_binds,
+                        "path_alias_or_path": combined_alias,
+                    }
+                )
+                pivot_triple = (self.focus_node, pivot_key_node, pivot_value_node)
+                self.tss_list.append(TriplesSameSubject.from_spo(*pivot_triple))
             else:
-                # Create new variable with offset to ensure uniqueness across multiple PropertyShapes
-                path_node_1 = Var(
-                    value=f"{path_or_prop}_node_{pp_i + 1 + self.var_counter_offset}"
+                paths_data, pp_i, obj_node = self._generate_sparql_for_path(
+                    property_path=property_path,
+                    path_or_prop=path_or_prop,
+                    pp_i=pp_i,
+                    use_alias=use_alias,
                 )
-
-            # Create additional nodes only if we have a sequence path
-            path_nodes = {0: path_node_1}  # Start with path_node_1
-            obj_node = (
-                path_node_1  # Default object node for simple paths, inverse, etc.
-            )
-            if isinstance(property_path, SequencePath):
-                seq_path_len = len(property_path.value)
-                for i in range(1, seq_path_len):
-                    if self.kind == "cql":
-                        # For CQL, only the final node matters (used in abbreviated path syntax)
-                        # Only populate the final node with the shared filter var
-                        if i == seq_path_len - 1:
-                            path_nodes[i] = cql_filter_var
-                        # Intermediate nodes are not used in CQL abbreviated syntax (property paths), don't populate
-                    elif self.kind == "fts":
-                        # For FTS sequence paths: intermediate nodes are numbered, final node is fts_search_node
-                        if i == seq_path_len - 1:  # Last node in sequence
-                            path_nodes[i] = Var(value="fts_search_node")
-                        else:  # Intermediate nodes
-                            path_nodes[i] = Var(value=f"fts_search_node_{pp_i + i + 1}")
-                    else:
-                        node_key = f"{path_or_prop}_node_{pp_i + i + 1}"
-                        if node_key in self.path_nodes:
-                            path_nodes[i] = self.path_nodes[node_key]
-                        else:
-                            path_nodes[i] = Var(value=node_key)
-                obj_node = path_nodes[
-                    seq_path_len - 1
-                ]  # Object node is the last in sequence
-            elif isinstance(property_path, BNodeDepth):
-                obj_node = (
-                    None  # BNodeDepth doesn't have a specific object node for binding
-                )
-
-            current_tssp = []
-            current_tssp_exists = []
-            current_facet_binds = []
-            if obj_node:  # Only create binds if we have a valid object node
-                current_facet_binds = self._create_facet_binds(property_path, obj_node)
-
-            if property_path.filter_shape_tssp_list:
-                current_tssp.extend(property_path.filter_shape_tssp_list)
-
-            if isinstance(property_path, Path):
-                if property_path.value == SHEXT.allPredicateValues:
-                    pred = Var(value="preds")
-                    obj = Var(value="vals")
-                else:
-                    pred = IRI(value=property_path.value)
-                    obj = path_node_1
-                # WHERE clause triple (always added)
-                where_triple = (self.focus_node, pred, obj)
-                current_tssp.append(TriplesSameSubjectPath.from_spo(*where_triple))
-
-                # CONSTRUCT clause triple (conditional on alias)
-                if not use_alias:
-                    if self.kind == "fts":
-                        construct_triple = (
-                            self.focus_node,
-                            pred,
-                            Var(value="fts_search_node"),
-                        )
-                    else:
-                        construct_triple = (self.focus_node, pred, obj)
-                    self.tss_list.append(TriplesSameSubject.from_spo(*construct_triple))
-                # pp_i increment and alias handling happens at the end or in the 'if use_alias:' block
-
-                # check for sh:class
-                if property_path.sh_class:
-                    type_triple = (
-                        path_node_1,
-                        IRI(value=RDF.type),
-                        IRI(value=property_path.sh_class),
-                    )
-                    current_tssp.append(TriplesSameSubjectPath.from_spo(*type_triple))
-                    if not use_alias:
-                        self.tss_list.append(TriplesSameSubject.from_spo(*type_triple))
-
-            elif isinstance(property_path, BNodeDepth):
-                # BNodeDepth doesn't directly generate triples here, just sets the depth
-                # Alias logic (if use_alias is True) will handle pp_i increment and continue below
-                self.bnode_depth = int(property_path.value)
-
-            elif isinstance(property_path, AlternativePath):
-                # Handle AlternativePath - generate SPARQL using '|'
-                tssp = _tssp_for_alternative(
-                    self.focus_node, property_path.value, path_node_1  # List of paths
-                )
-                current_tssp.append(tssp)
-                # pp_i increment and alias handling happens at the end or in the 'if use_alias:' block
-
-            elif isinstance(property_path, InversePath):
-                # Determine subject and object for WHERE clause triple
-                if property_path.value.value == SHEXT.allPredicateValues:
-                    subj = path_node_1
-                    pred = Var(value="inbound_props")
-                    obj = self.focus_node
-                else:
-                    subj = path_node_1
-                    pred = IRI(value=property_path.value.value)
-                    obj = self.focus_node
-
-                # WHERE clause triple (always added)
-                where_triple = (subj, pred, obj)
-                current_tssp.append(TriplesSameSubjectPath.from_spo(*where_triple))
-
-                # CONSTRUCT clause triple (conditional on alias)
-                if not use_alias:
-                    if self.kind == "fts":
-                        # FTS replaces the focus node in the construct triple
-                        construct_triple = (subj, pred, Var(value="fts_search_node"))
-                    else:
-                        construct_triple = where_triple  # Use the same triple structure
-                    self.tss_list.append(TriplesSameSubject.from_spo(*construct_triple))
-                # pp_i increment and alias handling happens at the end or in the 'if use_alias:' block
-
-            elif isinstance(
-                property_path, Union[ZeroOrMorePath, OneOrMorePath, ZeroOrOnePath]
-            ):
-                # WHERE clause uses path mods (always added)
-                tssp = _tssp_for_pathmods(
-                    self.focus_node,
-                    IRI(value=property_path.value.value),
-                    path_node_1,
-                    property_path.operand,
-                )
-                self.tssp_list.append(
-                    tssp
-                )  # Note: Appends directly to self.tssp_list, not current_tssp
-                # CONSTRUCT clause triple (conditional on alias) - Path mods usually don't add simple TSS triples directly,
-                # but if an alias exists, we add the simplified alias triple. This is handled by the 'if use_alias:' block.
-                # pp_i increment and alias handling happens at the end or in the 'if use_alias:' block
-
-            elif isinstance(property_path, SequencePath):
-                seq_path_len = len(property_path.value)
-
-                if self.kind in ["endpoint", "cql"]:
-                    # For endpoints, the entire sequence is treated as one complex path.
-                    # We collect all PropertyPath objects that make up the sequence.
-                    sequence_elements_for_endpoint: list[PropertyPath] = []
-                    for (
-                        path_segment
-                    ) in (
-                        property_path.value
-                    ):  # Iterate through the actual PropertyPath objects
-                        sequence_elements_for_endpoint.append(path_segment)
-
-                    # Generate the single TSSP for the entire sequence.
-                    # The object of this sequence is the last node allocated for this sequence.
-                    final_sequence_obj_node = path_nodes[seq_path_len - 1]
-                    tssp_seq = _tssp_for_sequence(
-                        self.focus_node,
-                        sequence_elements_for_endpoint,
-                        final_sequence_obj_node,
-                    )
-                    # This single TSSP represents the whole sequence path for the WHERE clause.
-                    current_tssp = [tssp_seq]
-                    # CONSTRUCT logic for endpoints with SequencePath is typically handled by aliases
-                    # or by the general alias logic later if `use_alias` is true.
-                    # If not using an alias, the CONSTRUCT part for a complex sequence path
-                    # doesn't usually add individual simple triples from the sequence here.
-                else:  # self.kind == "profile" or self.kind == "fts"
-                    # For profile/fts, process each segment of the sequence individually.
-                    # `current_tssp` will accumulate TSSP for each segment.
-                    for j, path_segment in enumerate(property_path.value):
-                        triple = None  # Reset for each segment; used for simple (s,p,o) generation
-                        inner_path_type = None  # To track segment type for FTS handling
-
-                        # Determine subject and object for the current segment
-                        segment_subject_node = (
-                            self.focus_node if j == 0 else path_nodes[j - 1]
-                        )
-                        # The object of the current segment is path_nodes[j]
-                        # (path_nodes[0] is path_node_1, path_nodes[1] is path_node_2, etc.)
-                        segment_object_node = path_nodes[j]
-
-                        if isinstance(path_segment, Path):
-                            inner_path_type = "path"
-                            if path_segment.value == SHEXT.allPredicateValues:
-                                var_name = f"sequence_all_preds_{self.all_predicate_values_counter}"
-                                self.all_predicate_values_counter += 1
-                                triple = (
-                                    segment_subject_node,
-                                    Var(value=var_name),
-                                    segment_object_node,
-                                )
-                            else:
-                                triple = (
-                                    segment_subject_node,
-                                    IRI(value=path_segment.value),
-                                    segment_object_node,
-                                )
-
-                        elif isinstance(path_segment, InversePath):
-                            inner_path_type = "inverse"
-                            # For inverse, subject and object are swapped in the triple
-                            triple = (
-                                segment_object_node,
-                                IRI(value=path_segment.value.value),
-                                segment_subject_node,
-                            )
-
-                        elif isinstance(
-                            path_segment, (ZeroOrMorePath, OneOrMorePath, ZeroOrOnePath)
-                        ):
-                            inner_path_type = "zero_one_more"
-                            # For profile/fts, complex path modifiers in a sequence are tricky.
-                            # If the inner value is a simple Path, we can attempt a modified TSSP.
-                            # Otherwise, it's too complex for simple triple generation here.
-                            if isinstance(path_segment.value, Path):
-                                tssp_mod_segment = _tssp_for_pathmods(
-                                    segment_subject_node,
-                                    IRI(value=path_segment.value.value),
-                                    segment_object_node,
-                                    path_segment.operand,
-                                )
-                                current_tssp.append(tssp_mod_segment)
-                            # `triple` remains None, so no simple triple added to CONSTRUCT unless aliased.
-
-                        elif isinstance(path_segment, AlternativePath):
-                            inner_path_type = "alternative"
-                            # For profile/fts, AlternativePath within a sequence needs to generate a UNION block.
-
-                            group_graph_patterns_for_union = []
-                            for alt_path_item in path_segment.value:
-                                # Each alt_path_item is a PropertyPath (e.g., Path, InversePath)
-                                # We need to generate a simple TSSP for it.
-                                tssp_for_alt = _tssp_for_path_segment(
-                                    segment_subject_node,
-                                    alt_path_item,
-                                    segment_object_node,
-                                )
-                                group_graph_patterns_for_union.append(
-                                    GroupGraphPattern(
-                                        content=GroupGraphPatternSub(
-                                            triples_block=TriplesBlock.from_tssp_list(
-                                                [tssp_for_alt]
-                                            )
-                                        )
-                                    )
-                                )
-                                # For CONSTRUCT, add individual triples for each alternative if not aliased
-                                if not use_alias:
-                                    # Need to get the correct predicate for the CONSTRUCT
-                                    construct_pred_iri = None
-                                    construct_subj = segment_subject_node
-                                    construct_obj = segment_object_node
-                                    if isinstance(alt_path_item, Path):
-                                        construct_pred_iri = IRI(
-                                            value=alt_path_item.value
-                                        )
-                                    elif isinstance(
-                                        alt_path_item, InversePath
-                                    ) and isinstance(alt_path_item.value, Path):
-                                        construct_pred_iri = IRI(
-                                            value=alt_path_item.value.value
-                                        )
-                                        construct_subj, construct_obj = (
-                                            construct_obj,
-                                            construct_subj,
-                                        )  # Swap for inverse
-                                    elif isinstance(
-                                        alt_path_item,
-                                        (ZeroOrMorePath, OneOrMorePath, ZeroOrOnePath),
-                                    ) and isinstance(alt_path_item.value, Path):
-                                        construct_pred_iri = IRI(
-                                            value=alt_path_item.value.value
-                                        )  # Use base predicate for construct
-
-                                    if construct_pred_iri:
-                                        self.tss_list.append(
-                                            TriplesSameSubject.from_spo(
-                                                construct_subj,
-                                                construct_pred_iri,
-                                                construct_obj,
-                                            )
-                                        )
-
-                            if group_graph_patterns_for_union:
-                                union_gpnt = GraphPatternNotTriples(
-                                    content=GroupOrUnionGraphPattern(
-                                        group_graph_patterns=[
-                                            GroupGraphPattern(
-                                                content=GroupGraphPatternSub(
-                                                    graph_patterns_or_triples_blocks=[
-                                                        GraphPatternNotTriples(
-                                                            content=GroupOrUnionGraphPattern(
-                                                                group_graph_patterns=group_graph_patterns_for_union
-                                                            )
-                                                        )
-                                                    ]
-                                                )
-                                            )
-                                        ]
-                                    )
-                                )
-                                self.gpnt_list.append(union_gpnt)
-                            # `triple` remains None, as it's handled by the union_gp and tss_list additions.
-
-                        # Process the generated simple triple (if any) for this segment (profile/fts)
-                        # This block is for simple Path, InversePath, and ZeroOrOneMorePath that result in a 'triple'
-                        if triple:
-                            # Adjust object for FTS if it's the last segment
-                            if j == seq_path_len - 1 and self.kind == "fts":
-                                # Use the actual final segment object node variable name for FTS
-                                final_fts_var = segment_object_node
-                                if (
-                                    inner_path_type != "inverse"
-                                ):  # s P o -> s P fts_node
-                                    where_triple = triple[:2] + (final_fts_var,)
-                                else:  # o P s -> fts_node P s (subject of inverse is fts_node)
-                                    where_triple = (final_fts_var,) + triple[1:]
-                            else:
-                                where_triple = triple
-
-                            current_tssp.append(
-                                TriplesSameSubjectPath.from_spo(*where_triple)
-                            )
-                            # Add to CONSTRUCT only if the entire SequencePath is NOT aliased
-                            if not use_alias:
-                                self.tss_list.append(
-                                    TriplesSameSubject.from_spo(*where_triple)
-                                )
-
-                    # After processing all segments, handle sh:class if present on the *entire* SequencePath
-                    if (
-                        property_path.sh_class
-                    ):  # property_path is the SequencePath itself
-                        # sh:class applies to the object of the last segment of the sequence
-                        final_segment_object_node = path_nodes[seq_path_len - 1]
-                        type_triple_for_seq_class = (
-                            final_segment_object_node,
-                            IRI(value=RDF.type),
-                            IRI(value=property_path.sh_class),
-                        )
-                        current_tssp.append(
-                            TriplesSameSubjectPath.from_spo(*type_triple_for_seq_class)
-                        )
-                # End of SequencePath specific logic
-
-            # --- Alias Handling and pp_i Increment ---
-            if use_alias:
-                # Determine the correct object node for the alias triple
-                if isinstance(property_path, SequencePath):
-                    seq_path_len = len(property_path.value)
-                    # The final node is the last one in the sequence path's node dictionary
-                    obj_node = path_nodes[seq_path_len - 1]
-                elif isinstance(property_path, BNodeDepth):
-                    # BNodeDepth doesn't map to a specific node, skip alias TSS generation
-                    obj_node = None  # Signal to skip adding triple
-                else:
-                    # For Path, InversePath, AlternativePath, Modifiers - use path_node_1
-                    obj_node = path_node_1
-
-                # Add the simplified alias triple to TSS list if obj_node is valid
-                if obj_node:
-                    alias_triple = (
-                        self.focus_node,
-                        IRI(value=property_path.path_alias),
-                        obj_node,
-                    )
-                    self.tss_list.append(TriplesSameSubject.from_spo(*alias_triple))
-
-                # Increment pp_i based on the path length and continue
-                if isinstance(property_path, SequencePath):
-                    pp_i += len(property_path.value)
-                elif isinstance(property_path, BNodeDepth):
-                    pass  # BNodeDepth doesn't consume a node index
-                else:
-                    pp_i += 1  # Increment by 1 for other path types
-                # Continue to the next property_path, skipping original TSS logic below this point
-                # (Note: WHERE clause TSSP logic above this point was already executed)
-                # REMOVED continue statement to ensure tssp_list is always appended below
-
-            else:
-                # If not using alias, increment pp_i based on the path type processed by original logic
-                if isinstance(property_path, SequencePath):
-                    pp_i += len(property_path.value)
-                elif isinstance(property_path, BNodeDepth):
-                    pass  # BNodeDepth doesn't consume a node index
-                else:
-                    pp_i += 1  # Increment by 1 for other path types
-
-            # Add the collected WHERE clause triples and facet binds for this path
-            # Determine the value for path_alias_or_path
-            path_alias_or_path_value = None
-            if property_path.path_alias:
-                path_alias_or_path_value = property_path.path_alias
-            elif isinstance(property_path, Path):
-                path_alias_or_path_value = property_path.value
-
-            processed_paths_data.append(
-                {
-                    "tssp_list": current_tssp,
-                    "tssp_exists_list": current_tssp_exists,
-                    "facet_binds": current_facet_binds,
-                    "path_alias_or_path": path_alias_or_path_value,
-                }
-            )
+                processed_paths_data.append(paths_data)
 
         return processed_paths_data, pp_i
 
@@ -1156,8 +1283,8 @@ class PropertyShape(Shape):
         all_triples.append(
             (
                 self.focus_node,
-                Var(value=f"bn_p_1"),
-                Var(value=f"bn_o_1"),
+                Var(value="bn_p_1"),
+                Var(value="bn_o_1"),
             )
         )
 
@@ -1165,16 +1292,7 @@ class PropertyShape(Shape):
         for depth in range(1, max_depth + 1):
             # Add filter for the current depth
             all_filters.append(
-                GraphPatternNotTriples(
-                    content=Filter(
-                        constraint=Constraint(
-                            content=BuiltInCall.create_with_one_expr(
-                                "isBLANK",
-                                PrimaryExpression(content=Var(value=f"bn_o_{depth}")),
-                            )
-                        )
-                    )
-                )
+                Filter(BuiltInCall.create("isBLANK", Var(value=f"bn_o_{depth}")))
             )
 
             # Add the next triple in the chain (except for the first one which was already added)
@@ -1186,25 +1304,20 @@ class PropertyShape(Shape):
                 )
             )
 
-        # Create Triples Same Subject Path for WHERE clause
-        tssp_list = [
-            TriplesSameSubjectPath.from_spo(*triple) for triple in all_triples[::-1]
-        ]
+        # Create Triples Same Subject Path for WHERE clause. This list is already in
+        # emission order, outermost blank node first.
+        tssp_list = [TriplesSameSubjectPath.from_spo(*triple) for triple in all_triples]
 
-        # Create Triples Same Subject for CONSTRUCT TRIPLES clause
-        tss_list = [
-            TriplesSameSubject.from_spo(*triple) for triple in all_triples[::-1]
-        ]
-        self.tss_list.extend(tss_list)
+        # Create Triples Same Subject for CONSTRUCT TRIPLES clause, collected
+        # innermost first since the template is emitted in reverse.
+        self.tss_list.extend(
+            TriplesSameSubject.from_spo(*triple) for triple in reversed(all_triples)
+        )
 
         # Create the group graph pattern with all triples and filters
-        ggp = GroupGraphPattern(
-            content=GroupGraphPatternSub(
-                triples_block=TriplesBlock.from_tssp_list(tssp_list),
-                graph_patterns_or_triples_blocks=all_filters,
-            )
+        return GroupGraphPattern(
+            GroupGraphPatternSub([TriplesBlock(tssp_list), *all_filters])
         )
-        return ggp
 
 
 def _get_base_predicate_iri(path_segment: PropertyPath) -> IRI:
@@ -1284,57 +1397,14 @@ def _tssp_for_path_segment(
         )
 
 
-def _tssp_for_pathmods(focus_node: IRI | Var, pred: IRI, obj: Var | IRI, pathmod: str):
+def _tssp_for_pathmods(
+    focus_node: IRI | Var, pred: IRI, obj: Var | IRI, pathmod: str
+) -> TriplesSameSubjectPath:
     """
-    Creates path modifier TriplesSameSubjectPath objects.
+    ?focus_node <pred>* ?obj  (or + / ?)
     """
-    if isinstance(focus_node, IRI):
-        focus_node = GraphTerm(content=focus_node)
-    # Ensure obj is GraphTerm if it's an IRI for VarOrTerm
-    if isinstance(obj, IRI):
-        obj_term = GraphTerm(content=obj)
-    else:
-        obj_term = obj
-
-    return TriplesSameSubjectPath(
-        content=(
-            VarOrTerm(varorterm=focus_node),
-            PropertyListPathNotEmpty(
-                first_pair=(
-                    VerbPath(
-                        path=SG_Path(
-                            path_alternative=PathAlternative(
-                                sequence_paths=[
-                                    PathSequence(
-                                        list_path_elt_or_inverse=[
-                                            PathEltOrInverse(
-                                                path_elt=PathElt(
-                                                    path_primary=PathPrimary(
-                                                        value=pred,  # pred is already an IRI
-                                                    ),
-                                                    path_mod=PathMod(pathmod=pathmod),
-                                                )
-                                            )
-                                        ]
-                                    )
-                                ]
-                            )
-                        )
-                    ),
-                    ObjectListPath(
-                        object_paths=[
-                            ObjectPath(
-                                graph_node_path=GraphNodePath(
-                                    varorterm_or_triplesnodepath=VarOrTerm(
-                                        varorterm=obj_term  # Use the potentially wrapped obj_term
-                                    )
-                                )
-                            )
-                        ]
-                    ),
-                )
-            ),
-        )
+    return TriplesSameSubjectPath.from_spo(
+        focus_node, PathAlternative.mod(pred, PathMod(pathmod)), obj
     )
 
 
@@ -1349,66 +1419,45 @@ def _build_path_elt_or_inverse(path_item: PropertyPath) -> PathEltOrInverse:
     # Stage 2: Handle the outermost PathMod wrapper, if any (applies to the potentially unwrapped path_item).
     outer_path_mod: Optional[PathMod] = None
     if isinstance(path_item, (ZeroOrMorePath, OneOrMorePath, ZeroOrOnePath)):
-        outer_path_mod = PathMod(pathmod=path_item.operand)
+        outer_path_mod = PathMod(path_item.operand)
         path_item = path_item.value  # Unwrap further
 
     # Stage 3: Now path_item is the "core" path.
     # It should be a simple Path (IRI), an AlternativePath, or a nested complex path
-    # that needs to be braced.
-    core_path_primary: PathPrimary
-
+    # that needs to be braced. A PathPrimary holding a PathAlternative renders it in
+    # brackets.
     if isinstance(path_item, Path):  # Base case: simple predicate
-        core_path_primary = PathPrimary(value=IRI(value=path_item.value))
+        core_path_primary = PathPrimary(IRI(value=path_item.value))
     elif isinstance(path_item, AlternativePath):  # Base case: ( path | path )
-        alt_sg_path_sequences = []
-        for alt_sub_path in path_item.value:
-            # Each sub-path in an alternative is a sequence of one PathEltOrInverse.
-            alt_sg_path_sequences.append(
-                PathSequence(
-                    list_path_elt_or_inverse=[
-                        _build_path_elt_or_inverse(alt_sub_path)  # Recursive call
-                    ]
-                )
-            )
         core_path_primary = PathPrimary(
-            value=SG_Path(  # This creates the ( ... )
-                path_alternative=PathAlternative(sequence_paths=alt_sg_path_sequences)
+            PathAlternative(
+                [
+                    PathSequence([_build_path_elt_or_inverse(alt_sub_path)])
+                    for alt_sub_path in path_item.value
+                ]
             )
         )
     elif isinstance(path_item, SequencePath):
         # Build a PathSequence that preserves the ordered elements of the sequence
-        sequence_list = [
-            _build_path_elt_or_inverse(sequence_element)
-            for sequence_element in path_item.value
-        ]
         core_path_primary = PathPrimary(
-            value=SG_Path(
-                path_alternative=PathAlternative(
-                    sequence_paths=[
-                        PathSequence(list_path_elt_or_inverse=sequence_list)
-                    ]
-                )
+            PathAlternative(
+                [
+                    PathSequence(
+                        [
+                            _build_path_elt_or_inverse(sequence_element)
+                            for sequence_element in path_item.value
+                        ]
+                    )
+                ]
             )
         )
     elif isinstance(
         path_item, (InversePath, ZeroOrMorePath, OneOrMorePath, ZeroOrOnePath)
     ):
-        # Nested complex path, e.g., ^(^p) or ^(p*).
-        # The PathPrimary needs to be a braced path containing the result of a recursive call.
+        # Nested complex path, e.g., ^(^p) or ^(p*): a braced path containing the
+        # result of a recursive call.
         core_path_primary = PathPrimary(
-            value=SG_Path(  # This creates the ( ... )
-                path_alternative=PathAlternative(
-                    sequence_paths=[
-                        PathSequence(
-                            list_path_elt_or_inverse=[
-                                _build_path_elt_or_inverse(
-                                    path_item
-                                )  # Recursive call for the nested structure
-                            ]
-                        )
-                    ]
-                )
-            )
+            PathAlternative([PathSequence([_build_path_elt_or_inverse(path_item)])])
         )
     else:
         raise ValueError(
@@ -1416,109 +1465,88 @@ def _build_path_elt_or_inverse(path_item: PropertyPath) -> PathEltOrInverse:
         )
 
     return PathEltOrInverse(
-        path_elt=PathElt(
-            path_primary=core_path_primary,
-            path_mod=outer_path_mod,  # Apply the extracted outermost path_mod here
-        ),
-        inverse=is_outer_inverse,  # Apply the extracted outermost inverse flag here
+        path_elt=PathElt(path_primary=core_path_primary, path_mod=outer_path_mod),
+        inverse=is_outer_inverse,
     )
 
 
-def _tssp_for_alternative(focus_node, alternative_paths: list[PropertyPath], obj):
+def _tssp_for_alternative(
+    focus_node, alternative_paths: list[PropertyPath], obj
+) -> TriplesSameSubjectPath:
     """Creates TSSP for Alternative Paths using '|'."""
-    if isinstance(focus_node, IRI):
-        focus_node = GraphTerm(content=focus_node)
-    if isinstance(obj, IRI):
-        obj_term = GraphTerm(content=obj)
-    else:
-        obj_term = obj
-
-    sequence_paths = []
-    for alt_path in alternative_paths:
-        # Each alternative is treated as a sequence of one element for PathAlternative structure
-        # We need to handle potentially complex paths within each alternative
-        # Using _build_path_elt_or_inverse helps encapsulate this logic
-        list_path_elt_or_inverse = [_build_path_elt_or_inverse(alt_path)]
-        sequence_paths.append(
-            PathSequence(list_path_elt_or_inverse=list_path_elt_or_inverse)
-        )
-
-    return TriplesSameSubjectPath(
-        content=(
-            VarOrTerm(varorterm=focus_node),
-            PropertyListPathNotEmpty(
-                first_pair=(
-                    VerbPath(
-                        path=SG_Path(
-                            path_alternative=PathAlternative(
-                                sequence_paths=sequence_paths  # This creates the path1 | path2 structure
-                            )
-                        )
-                    ),
-                    ObjectListPath(
-                        object_paths=[
-                            ObjectPath(
-                                graph_node_path=GraphNodePath(
-                                    varorterm_or_triplesnodepath=VarOrTerm(
-                                        varorterm=obj_term
-                                    )
-                                )
-                            )
-                        ]
-                    ),
-                )
-            ),
-        )
+    # Each alternative is a sequence of one (possibly complex) element
+    path = PathAlternative(
+        [
+            PathSequence([_build_path_elt_or_inverse(alt_path)])
+            for alt_path in alternative_paths
+        ]
     )
+    return TriplesSameSubjectPath.from_spo(focus_node, path, obj)
 
 
-def _tssp_for_sequence(focus_node, sequence_elements: list[PropertyPath], obj):
+def _tssp_for_sequence(
+    focus_node, sequence_elements: list[PropertyPath], obj
+) -> TriplesSameSubjectPath:
     """
     Creates TSSP for Sequence Paths from a list of PropertyPath objects.
     Supports simple paths, inverse paths, path modifiers, and alternative paths within the sequence.
     """
-    if isinstance(focus_node, IRI):
-        focus_node = GraphTerm(content=focus_node)
-    if isinstance(obj, IRI):
-        obj_term = GraphTerm(content=obj)
-    else:
-        obj_term = obj
-
-    list_path_elt_or_inverse = []
-    for path_element in sequence_elements:
-        list_path_elt_or_inverse.append(_build_path_elt_or_inverse(path_element))
-
-    return TriplesSameSubjectPath(
-        content=(
-            VarOrTerm(varorterm=focus_node),
-            PropertyListPathNotEmpty(
-                first_pair=(
-                    VerbPath(
-                        path=SG_Path(
-                            path_alternative=PathAlternative(
-                                sequence_paths=[
-                                    PathSequence(
-                                        list_path_elt_or_inverse=list_path_elt_or_inverse
-                                    )
-                                ]
-                            )
-                        )
-                    ),
-                    ObjectListPath(
-                        object_paths=[
-                            ObjectPath(
-                                graph_node_path=GraphNodePath(
-                                    varorterm_or_triplesnodepath=VarOrTerm(
-                                        varorterm=obj_term
-                                    )
-                                )
-                            )
-                        ]
-                    ),
-                )
-            ),
-        )
+    path = PathAlternative(
+        [
+            PathSequence(
+                [_build_path_elt_or_inverse(element) for element in sequence_elements]
+            )
+        ]
     )
+    return TriplesSameSubjectPath.from_spo(focus_node, path, obj)
+
+
+class FTSUnionContainer(BaseModel):
+    class Config:
+        arbitrary_types_allowed = True
+
+    uri: URIRef | BNode
+    graph: Graph
+    focus_node: Union[Var, IRI]
+    shape_number: int = 0
+    tssp_list_with_preds: List[
+        Tuple[List[TriplesSameSubjectPath], List[Node], List[URIRef]]
+    ] = []
+    tss_list: List[TriplesSameSubject] = []
+    next_shape_number: int = 0
+
+    def __init__(self, **data: Any):
+        super().__init__(**data)
+        self._parse_union()
+
+    def _parse_union(self):
+        union_node = next(self.graph.objects(self.uri, SH.union), None)
+        if union_node is None:
+            raise ValueError(f"FTS union container has no sh:union list: {self.uri}")
+        members = list(Collection(self.graph, union_node))
+        current = self.shape_number
+        for member in members:
+            member_graph = self.graph.cbd(member)
+            search_preds = list(
+                member_graph.objects(subject=None, predicate=ONT.searchPredicate)
+            )
+            if not search_preds:
+                raise ValueError(
+                    f"FTS union member missing ont:searchPredicate: {member}"
+                )
+            ps = PropertyShape(
+                uri=member,
+                graph=member_graph,
+                kind="fts",
+                focus_node=self.focus_node,
+                shape_number=current,
+            )
+            self.tssp_list_with_preds.append(
+                (ps.tssp_list, search_preds, ps.focus_node_classes)
+            )
+            self.tss_list.extend(ps.tss_list)
+            current += 1
+        self.next_shape_number = current
 
 
 class PropertyPath(BaseModel):
@@ -1573,6 +1601,10 @@ class AlternativePath(PropertyPath):
 
 class BNodeDepth(PropertyPath):
     value: Literal
+
+
+class PivotPath(PropertyPath):
+    value: list[PropertyPath, PropertyPath, PropertyPath]
 
 
 PRED_TO_PATH_CLASS: Dict[URIRef, Type[PropertyPath]] = {

@@ -1,0 +1,172 @@
+@prefix ex: <https://example.org/> .
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sdo: <https://schema.org/> .
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+@prefix ssn: <http://www.w3.org/ns/ssn/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:catalog a dcat:Catalog ;
+  dct:title "Drillhole Catalog" ;
+  dct:hasPart ex:drillhole ;
+  prov:qualifiedAssociation [
+    a prov:Association ;
+    prov:agent "agent 1" ;
+    prov:hadRole ex:role1
+  ],
+  [
+    a prov:Association ;
+    prov:agent "agent 2" ;
+    prov:hadRole ex:role2
+  ],
+  [
+    a prov:Association ;
+    prov:agent "agent 3" ;
+    prov:hadRole ex:role3
+  ],
+  [
+    a prov:Association ;
+    prov:agent "agent 4" ;
+    prov:hadRole ex:role3
+  ]
+.
+
+ex:drillhole a dcat:Resource ;
+  rdfs:label "Drillhole 1" ;
+.
+
+ex:sampling a sosa:Sampling ;
+  rdfs:label "Sampling of Drillhole 1" ;
+  sosa:hasFeatureOfInterest ex:drillhole ;
+  sosa:hasResult
+    ex:sample1,
+    ex:sample2 ;
+  sosa:usedProcedure ex:procedure ;
+.
+
+ex:sample1 a sosa:Sample ;
+  sosa:hasFeatureOfInterest ex:drillhole ;
+  sdo:identifier "abc123"^^xsd:token ;
+  rdfs:label "dh1-s1" ;
+.
+
+ex:sample2 a sosa:Sample ;
+  sosa:hasFeatureOfInterest ex:drillhole ;
+  rdfs:label "dh1-s2" ;
+.
+
+ex:observation1-1 a sosa:Observation ;
+  rdfs:label "dh1-s1-o1" ;
+  sosa:hasFeatureOfInterest ex:sample1 ;
+  sosa:observedProperty ex:color ;
+  sosa:hasSimpleResult "brown" ;
+  sosa:hasResult ex:result1-1-1 ;
+.
+
+ex:result1-1-1 a sosa:Result ;
+  rdfs:label "dh1-s1-o1-r1" ;
+  sdo:value "brown" ;
+.
+
+ex:observation1-2 a sosa:Observation ;
+  rdfs:label "dh1-s1-o2" ;
+  sosa:hasFeatureOfInterest ex:sample1 ;
+  sosa:observedProperty ex:earthworms ;
+  sosa:hasSimpleResult false ;
+  sosa:hasResult ex:result1-2-1 ;
+.
+
+ex:result1-2-1 a sosa:Result ;
+  rdfs:label "dh1-s1-o2-r1" ;
+  sdo:value false ;
+.
+
+ex:observation1-3 a sosa:Observation ;
+  rdfs:label "dh1-s1-o3" ;
+  sosa:hasFeatureOfInterest ex:sample1 ;
+  sosa:observedProperty ex:au-ppm ;
+  sosa:hasSimpleResult 123 ;
+.
+
+ex:observation2-1 a sosa:Observation ;
+  rdfs:label "dh1-s2-o1" ;
+  sosa:hasFeatureOfInterest ex:sample2 ;
+  sosa:observedProperty ex:color ;
+  sosa:hasSimpleResult "red" ;
+.
+
+ex:observation2-2 a sosa:Observation ;
+  rdfs:label "dh1-s2-o2" ;
+  sosa:hasFeatureOfInterest ex:sample2 ;
+  sosa:observedProperty ex:earthworms ;
+  sosa:hasSimpleResult true ;
+.
+
+ex:observation2-3 a sosa:Observation ;
+  rdfs:label "dh1-s2-o3" ;
+  sosa:hasFeatureOfInterest ex:sample2 ;
+  sosa:observedProperty ex:au-ppm ;
+  sosa:hasSimpleResult 6328 ;
+.
+
+ex:procedure a sosa:Procedure ;
+  rdfs:label "Drillhole procedure" ;
+.
+
+ex:color a ssn:Property ;
+  rdfs:label "color" ;
+.
+
+ex:earthworms a ssn:Property ;
+  rdfs:label "earthworms" ;
+.
+
+ex:au-ppm a ssn:Property ;
+  rdfs:label "AU ppm" ;
+.
+
+ex:role1 a prov:Role ;
+  rdfs:label "role 1" ;
+.
+
+ex:role2 a prov:Role ;
+  rdfs:label "role 2" ;
+.
+
+ex:role3 a prov:Role ;
+  rdfs:label "role 3" ;
+.
+
+ex:otherCatalog a dcat:Catalog ;
+  sdo:spatial [
+    sdo:additionalType sdo:House ;
+    rdfs:comment "on the shelf" ;
+  ] ;
+  dct:spatial [
+    sdo:additionalType sdo:Apartment ;
+    rdfs:comment "under the bed" ;
+  ] ;
+  dct:hasPart ex:subResource1, ex:subResource2 ;
+.
+
+ex:subResource1 a dcat:Resource ;
+  dct:hasPart ex:subResource3 ;
+.
+
+ex:subResource2 a dcat:Resource ;
+  ex:preda [
+    ex:predb ex:key1 ;
+    ex:predc "value1" ;
+  ] ;
+.
+
+ex:subResource3 a dcat:Resource ;
+  ex:preda [
+    ex:predb ex:key2 ;
+    ex:predc "value2" ;
+  ] ;
+.
+

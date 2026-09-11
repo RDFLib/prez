@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import PlainTextResponse, RedirectResponse
 from rdflib import URIRef
 from rdflib.term import _is_valid_uri
@@ -19,9 +19,7 @@ router = APIRouter(tags=["Identifier Resolution"])
         status.HTTP_404_NOT_FOUND: {"content": {"application/json": {}}},
     },
 )
-async def get_identifier_redirect_route(
-    iri: str, request: Request, repo=Depends(get_data_repo)
-):
+async def get_identifier_redirect_route(iri: str, repo=Depends(get_data_repo)):
     """
     The `iri` query parameter is used to return a redirect response with the value from the `foaf:homepage` lookup.
     If no value is found, a 404 HTTP response is returned.
@@ -38,7 +36,7 @@ async def get_identifier_redirect_route(
         )
 
     # Note: currently does not forward query parameters but we may want to implement this in the future.
-    return RedirectResponse(url, headers=request.headers)
+    return RedirectResponse(url)
 
 
 @router.get(

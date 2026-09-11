@@ -1,25 +1,19 @@
 from functools import lru_cache
 from typing import List
 
-from sparql_grammar_pydantic import (
+from sparql_grammar import (
     IRI,
-    BrackettedExpression,
     BuiltInCall,
-    Constraint,
     ConstructQuery,
     ConstructTemplate,
     ConstructTriples,
-    DataBlock,
-    DataBlockValue,
     Expression,
     Filter,
-    GraphPatternNotTriples,
     GroupGraphPattern,
     GroupGraphPatternSub,
     InlineData,
     InlineDataFull,
     InlineDataOneVar,
-    PrimaryExpression,
     RDFLiteral,
     SolutionModifier,
     TriplesBlock,
@@ -54,110 +48,54 @@ class AnnotationsConstructQuery(ConstructQuery):
     """
 
     def __init__(self, terms: List[IRI]):
-        # create terms VALUES clause
-        # e.g. VALUES ?term { ... }
+        # VALUES ?term { ... }
         term_var = Var(value="term")
-        terms_gpnt = GraphPatternNotTriples(
-            content=InlineData(
-                data_block=DataBlock(
-                    block=InlineDataOneVar(
-                        variable=term_var,
-                        datablockvalues=[DataBlockValue(value=term) for term in terms],
-                    )
-                )
-            )
-        )
+        terms_values = InlineData(InlineDataOneVar(term_var, list(terms)))
 
-        # create prez annotation to annotation properties VALUES clause
-        # e.g. VALUES ( ?prop ?prezAnotProp ) { (...) (...) }
-
+        # VALUES ( ?prop ?prezAnotProp ) { (...) (...) }
         prez_anot_var = Var(value="prezAnotProp")
         prop_var = Var(value="prop")
-        all_annotation_tuples = self.get_prez_annotation_tuples()
-        props_gpnt = GraphPatternNotTriples(
-            content=InlineData(
-                data_block=DataBlock(
-                    block=InlineDataFull(
-                        vars=[prop_var, prez_anot_var],
-                        datablocks=[
-                            [
-                                DataBlockValue(value=IRI(value=prop)),
-                                DataBlockValue(value=IRI(value=prez_prop)),
-                            ]
-                            for prop, prez_prop in all_annotation_tuples
-                        ],
-                    )
-                )
-            )
-        )
-
-        # create a language filter
-        # e.g. FILTER (LANG(?annotation) IN ("en", ""))
-        anot_var = Var(value="annotation")
-        lang_filter_gpnt = GraphPatternNotTriples(
-            content=Filter(
-                constraint=Constraint(
-                    content=BrackettedExpression(
-                        expression=Expression.create_in_expression(
-                            left_primary_expression=PrimaryExpression(
-                                content=BuiltInCall.create_with_one_expr(
-                                    function_name="LANG",
-                                    expression=PrimaryExpression(content=anot_var),
-                                )
-                            ),
-                            operator="IN",
-                            right_primary_expressions=[
-                                PrimaryExpression(
-                                    content=RDFLiteral(value=settings.default_language)
-                                ),
-                                PrimaryExpression(content=RDFLiteral(value="")),
-                            ],
-                        )
-                    )
-                )
-            )
-        )
-        # || isURI(?annotation)
-        isuri_expr = Expression.from_primary_expression(
-            primary_expression=PrimaryExpression(
-                content=BuiltInCall.create_with_one_expr(
-                    function_name="isURI",
-                    expression=PrimaryExpression(content=anot_var),
-                )
-            )
-        )
-        lang_filter_gpnt.content.constraint.content.expression.conditional_or_expression.conditional_and_expressions.append(
-            isuri_expr
-        )
-
-        # create the main query components - construct and where clauses
-        construct_template = ConstructTemplate(
-            construct_triples=ConstructTriples.from_tss_list(
+        props_values = InlineData(
+            InlineDataFull(
+                [prop_var, prez_anot_var],
                 [
-                    TriplesSameSubject.from_spo(
-                        subject=term_var,
-                        predicate=prez_anot_var,
-                        object=anot_var,
-                    )
-                ]
+                    [IRI(value=prop), IRI(value=prez_prop)]
+                    for prop, prez_prop in self.get_prez_annotation_tuples()
+                ],
+            )
+        )
+
+        # FILTER (LANG(?annotation) IN ("en", "") || isURI(?annotation))
+        anot_var = Var(value="annotation")
+        lang_filter = Filter(
+            Expression.any_of(
+                Expression.in_(
+                    BuiltInCall.create("LANG", anot_var),
+                    [RDFLiteral(value=settings.default_language), RDFLiteral(value="")],
+                ),
+                BuiltInCall.create("isURI", anot_var),
+            )
+        )
+
+        construct_template = ConstructTemplate(
+            ConstructTriples(
+                [TriplesSameSubject.from_spo(term_var, prez_anot_var, anot_var)]
             )
         )
         where_clause = WhereClause(
-            group_graph_pattern=GroupGraphPattern(
-                content=GroupGraphPatternSub(
-                    graph_patterns_or_triples_blocks=[
-                        terms_gpnt,  # VALUES ?term { ... }
-                        props_gpnt,  # VALUES ( ?prop ?prezAnotProp ) { (...) (...) }
-                        TriplesBlock.from_tssp_list(
+            GroupGraphPattern(
+                GroupGraphPatternSub(
+                    [
+                        terms_values,  # VALUES ?term { ... }
+                        props_values,  # VALUES ( ?prop ?prezAnotProp ) { (...) (...) }
+                        TriplesBlock(  # ?term ?prop ?annotation
                             [
-                                TriplesSameSubjectPath.from_spo(  # ?term ?prop ?annotation
-                                    subject=term_var,
-                                    predicate=prop_var,
-                                    object=anot_var,
+                                TriplesSameSubjectPath.from_spo(
+                                    term_var, prop_var, anot_var
                                 )
                             ]
                         ),
-                        lang_filter_gpnt,  # FILTER (LANG(?annotation) IN ("en", ""))
+                        lang_filter,  # FILTER (LANG(?annotation) IN ("en", "") || isURI(?annotation))
                     ]
                 )
             )

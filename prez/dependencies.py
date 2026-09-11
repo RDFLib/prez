@@ -1,12 +1,13 @@
 import json
 import logging
 from pathlib import Path
+from urllib.parse import urlparse
 
 import httpx
 from fastapi import Depends, HTTPException, Request
 from pyoxigraph import Store, RdfFormat, DefaultGraph as OxiDefaultGraph
-from rdflib import DCTERMS, RDF, SKOS, Literal, URIRef, Graph
-from sparql_grammar_pydantic import IRI, Var
+from rdflib import DCTERMS, RDF, SH, SKOS, Literal, URIRef, Graph
+from sparql_grammar import IRI, Var
 
 from prez.cache import (
     annotations_store,
@@ -19,7 +20,7 @@ from prez.cache import (
     system_store,
     persistent_store,
 )
-from prez.config import settings, get_reference_data_dir
+from prez.config import Settings, settings, get_reference_data_dir
 from prez.enums import (
     GeoJSONMediaType,
     JSONMediaType,
@@ -33,7 +34,11 @@ from prez.exceptions.model_exceptions import (
     URINotFoundException,
     MissingFilterQueryError,
 )
-from prez.models.query_params import ListingQueryParams
+from prez.models.query_params import (
+    ListingQueryParams,
+    ObjectQueryParams,
+    parse_datetime,
+)
 from prez.reference_data.prez_ns import ALTREXT, EP, OGCE, OGCFEAT, ONT
 from prez.repositories import OxrdflibRepo, PyoxigraphRepo, RemoteSparqlRepo, Repo
 from prez.services.classes import get_classes_single
@@ -43,7 +48,13 @@ from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQue
 from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.search_default import SearchQueryRegex
 from prez.services.query_generation.search_fuseki_fts import SearchQueryFusekiFTS
-from prez.services.query_generation.shacl import NodeShape, PropertyShape
+from prez.services.query_generation.search_jena_lucene import SearchQueryJenaLucene
+from prez.services.query_generation.shacl import (
+    FTSUnionContainer,
+    NodeShape,
+    PropertyShape,
+    get_nodeshape,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +71,6 @@ async def get_async_http_client():
 
 
 def get_pyoxi_memory_store():
-    logger.info("Using in-memory pyoxigraph data store")
     return store
 
 
@@ -78,6 +88,13 @@ def get_pyoxi_persistent_store():
 
 
 def get_pyoxi_store():
+    """The pyoxigraph store for the configured repository type.
+
+    Resolved as a dependency of :func:`get_data_repo` on every request, so it does
+    not log: which store is in use is announced once at startup instead. It is also
+    reached when the repository is remote or oxrdflib, because ``get_data_repo``
+    declares it either way and only reads it when nothing is on ``app.state``.
+    """
     if settings.sparql_repo_type == "pyoxigraph_persistent":
         return get_pyoxi_persistent_store()
     return get_pyoxi_memory_store()
@@ -142,6 +159,10 @@ async def get_annotations_repo():
     A pyoxigraph Store with labels, descriptions etc. from Context Ontologies
     """
     return PyoxigraphRepo(annotations_store)
+
+
+def get_runtime_settings(request: Request) -> Settings:
+    return getattr(request.app.state, "settings", settings)
 
 
 async def load_local_data_to_oxigraph(store: Store):
@@ -214,13 +235,43 @@ async def cql_post_parser_dependency(
     request: Request,
     queryable_props: list = Depends(get_queryable_props),
 ) -> CQLParser:
+    """
+    CQL parser for POST /cql.
+
+    BREAKING CHANGE: The body must now be a JSON object with a ``filter`` key
+    containing the CQL2-JSON expression.  The previous format (raw CQL expression
+    as the entire body) is no longer supported.
+
+    Example body::
+
+        {"filter": {"op": "s_intersects", "args": [...]}, "limit": 10}
+    """
+    content_type = request.headers.get("content-type", "")
+    if "application/json" not in content_type:
+        raise HTTPException(
+            status_code=415,
+            detail="Content-Type must be application/json",
+        )
     try:
         body = await request.json()
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON format.")
 
+    if not isinstance(body, dict):
+        raise HTTPException(
+            status_code=400,
+            detail="Request body must be a JSON object with a 'filter' key.",
+        )
+
+    cql_json = body.get("filter")
+    if cql_json is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Request body must contain a 'filter' key with the CQL2-JSON expression.",
+        )
+
     try:
-        cql_parser = CQLParser(cql_json=body, queryable_props=queryable_props)
+        cql_parser = CQLParser(cql_json=cql_json, queryable_props=queryable_props)
         cql_parser.parse()
         return cql_parser
     except Exception as e:
@@ -232,7 +283,15 @@ async def cql_get_parser_dependency(
     query_params: ListingQueryParams = Depends(),
     queryable_props: list = Depends(get_queryable_props),
     endpoint_uri_type: str = Depends(get_endpoint_uri_type),
+    runtime_settings: Settings = Depends(get_runtime_settings),
 ) -> CQLParser:
+    if _search_uses_jena_lucene(
+        endpoint_uri_type[0], runtime_settings, query_params._filter
+    ):
+        if query_params._filter:
+            _parse_lucene_filter_json(query_params._filter, "GET")
+        return None
+
     if query_params._filter:
         try:
             crs = query_params.filter_crs
@@ -260,15 +319,914 @@ async def cql_get_parser_dependency(
         )
 
 
+async def get_unprefixed_url_path(
+    request: Request,
+) -> str:
+    root_path = request.scope.get("app_root_path", request.scope.get("root_path", ""))
+    return request.url.path[len(root_path) :]
+
+
+########################################################################################################################
+# POST support: shared body-parsing helper
+########################################################################################################################
+
+
+def _validate_post_content_type(request: Request) -> None:
+    content_type = request.headers.get("content-type", "")
+    if "application/json" not in content_type:
+        raise HTTPException(
+            status_code=415,
+            detail="Content-Type must be application/json",
+        )
+
+
+async def _parse_post_body(request: Request) -> dict:
+    """Parse and validate the JSON body of a POST request, returning a dict."""
+    _validate_post_content_type(request)
+    try:
+        body = await request.json()
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON body.")
+    if body is None:
+        body = {}
+    if not isinstance(body, dict):
+        raise HTTPException(
+            status_code=400,
+            detail="Request body must be a JSON object.",
+        )
+    return body
+
+
+def _is_absolute_iri(value: str) -> bool:
+    parsed = urlparse(value)
+    return bool(parsed.scheme and (parsed.netloc or parsed.path))
+
+
+def _collect_cql_properties(node, properties: list) -> None:
+    if isinstance(node, dict):
+        property_value = node.get("property")
+        if property_value is not None:
+            properties.append(property_value)
+        for value in node.values():
+            _collect_cql_properties(value, properties)
+    elif isinstance(node, list):
+        for item in node:
+            _collect_cql_properties(item, properties)
+
+
+def _collect_non_iri_cql_properties(node, invalid_properties: list[str]) -> None:
+    properties: list = []
+    _collect_cql_properties(node, properties)
+    invalid_properties.extend(
+        str(p) for p in properties if not isinstance(p, str) or not _is_absolute_iri(p)
+    )
+
+
+def _validate_lucene_cql_filter(filter_json: dict | None) -> None:
+    if filter_json is None:
+        return
+    invalid_properties: list[str] = []
+    _collect_non_iri_cql_properties(filter_json, invalid_properties)
+    if invalid_properties:
+        invalid_values = ", ".join(dict.fromkeys(invalid_properties))
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "CQL property values must be IRIs when the Lucene-backed /cql "
+                f"feature is enabled. Invalid values: {invalid_values}"
+            ),
+        )
+
+
+async def _get_facetable_lucene_queryables(system_repo: Repo) -> set[str]:
+    query = f"""
+    CONSTRUCT {{
+        ?queryable <{ONT.facetable}> ?facetable .
+    }}
+    WHERE {{
+        ?queryable a <http://www.opengis.net/doc/IS/cql2/1.0/Queryable> ;
+            <{ONT.facetable}> ?facetable .
+    }}
+    """
+    graph = await system_repo.rdf_query_to_rdflib_graph(query)
+    supported: set[str] = set()
+    for subject, _, facetable in graph.triples(
+        (None, URIRef(str(ONT.facetable)), None)
+    ):
+        if str(facetable).lower() in {"true", "1"}:
+            supported.add(str(subject))
+    return supported
+
+
+async def _validate_lucene_requested_facets(
+    facets: list[str] | None,
+    system_repo: Repo,
+) -> list[str] | None:
+    if not facets:
+        return None
+    supported = await _get_facetable_lucene_queryables(system_repo)
+    unsupported = [facet for facet in facets if facet not in supported]
+    if unsupported:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported facet IRIs: {', '.join(unsupported)}",
+        )
+    return facets
+
+
+async def lucene_cql_get_facets_dependency(
+    request: Request,
+    query_params: ListingQueryParams = Depends(),
+    system_repo: Repo = Depends(get_system_repo),
+) -> list[str] | None:
+    facets = request.query_params.getlist("facets") or None
+    if facets and query_params.facet_profile:
+        raise HTTPException(
+            status_code=400,
+            detail="Lucene-backed /cql cannot accept both 'facets' and 'facet_profile'.",
+        )
+    return await _validate_lucene_requested_facets(facets, system_repo)
+
+
+async def lucene_cql_post_facets_dependency(
+    request: Request,
+    system_repo: Repo = Depends(get_system_repo),
+) -> list[str] | None:
+    body = await _parse_post_body(request)
+    facets = body.get("facets")
+    if facets is None:
+        return None
+    if body.get("facet_profile"):
+        raise HTTPException(
+            status_code=400,
+            detail="Lucene-backed /cql cannot accept both 'facets' and 'facet_profile'.",
+        )
+    if not isinstance(facets, list) or any(
+        not isinstance(facet, str) for facet in facets
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="POST facets must be an array of IRI strings.",
+        )
+    return await _validate_lucene_requested_facets(facets, system_repo)
+
+
+def _parse_lucene_filter_json(
+    filter_value,
+    source: str,
+) -> dict | None:
+    if filter_value is None:
+        return None
+    if isinstance(filter_value, str):
+        try:
+            filter_json = json.loads(filter_value)
+        except json.JSONDecodeError:
+            raise HTTPException(
+                status_code=400, detail=f"Invalid {source} filter JSON."
+            )
+    else:
+        filter_json = filter_value
+    if not isinstance(filter_json, dict):
+        raise HTTPException(
+            status_code=400,
+            detail=f"{source} filter must be a JSON object.",
+        )
+    _validate_lucene_cql_filter(filter_json)
+    return filter_json
+
+
+def _calculate_listing_offset(query_params: ListingQueryParams) -> int:
+    if query_params.offset is not None:
+        return int(query_params.offset)
+    if query_params.startindex is not None:
+        return int(query_params.startindex)
+    return int(query_params.limit) * (int(query_params.page) - 1)
+
+
+def _resolve_lucene_hit_limit(
+    query_params: ListingQueryParams,
+    runtime_settings: Settings,
+) -> int:
+    if runtime_settings.fts_limit is not None:
+        return int(runtime_settings.fts_limit)
+    return int(query_params.limit)
+
+
+def _lucene_uses_limit_offset_pushdown(runtime_settings: Settings) -> bool:
+    return bool(runtime_settings.lucene_limit_offset_pushdown)
+
+
+def _normalize_lucene_search_fields(
+    fields,
+    source: str,
+) -> str | list[str] | None:
+    if fields is None:
+        return None
+    if isinstance(fields, str):
+        normalized = fields.strip()
+        if not normalized:
+            raise HTTPException(
+                status_code=400,
+                detail=f"{source} fields must be 'default' or a non-empty string/list.",
+            )
+        return normalized if normalized == "default" else [normalized]
+    if isinstance(fields, list):
+        normalized = []
+        for field in fields:
+            if not isinstance(field, str) or not field.strip():
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"{source} fields must be 'default' or a non-empty string/list.",
+                )
+            normalized.append(field.strip())
+        if not normalized:
+            raise HTTPException(
+                status_code=400,
+                detail=f"{source} fields must be 'default' or a non-empty string/list.",
+            )
+        if "default" in normalized:
+            if len(normalized) > 1:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"{source} fields cannot mix 'default' with explicit field names.",
+                )
+            return "default"
+        return normalized
+    raise HTTPException(
+        status_code=400,
+        detail=f"{source} fields must be 'default' or a non-empty string/list.",
+    )
+
+
+def _resolve_lucene_search_fields(
+    override_fields,
+    runtime_settings: Settings,
+    source: str,
+) -> str | list[str]:
+    normalized_override = _normalize_lucene_search_fields(override_fields, source)
+    if normalized_override is not None:
+        return normalized_override
+    return runtime_settings.lucene_search_fields
+
+
+_SEARCH_EP_URIS = {
+    EP["extended-ogc-records/search"],
+    EP["extended-ogc-records/search-post"],
+}
+
+
+def _filter_properties_are_lucene_fields(filter_value) -> bool:
+    """Whether every ``property`` in a CQL filter names a Lucene field.
+
+    Lucene field names are absolute IRIs; queryable identifiers are not. A filter
+    that names only IRIs can be pushed down to ``luc:query``, anything else has to
+    be evaluated as SPARQL against the registered queryables.
+    """
+    if not filter_value:
+        return False
+    if isinstance(filter_value, str):
+        try:
+            filter_json = json.loads(filter_value)
+        except json.JSONDecodeError:
+            return False
+    else:
+        filter_json = filter_value
+    properties: list = []
+    _collect_cql_properties(filter_json, properties)
+    return bool(properties) and all(
+        isinstance(p, str) and _is_absolute_iri(p) for p in properties
+    )
+
+
+def _endpoint_builds_search_query(endpoint_uri: URIRef) -> bool:
+    """OGC Features listings have no search query dependency, so a filter pushed
+    down there would simply be dropped. They stay on the SPARQL CQL path."""
+    return not str(endpoint_uri).startswith(str(OGCFEAT))
+
+
+def _search_uses_jena_lucene(
+    endpoint_uri: URIRef,
+    runtime_settings: Settings,
+    filter_value=None,
+) -> bool:
+    if not runtime_settings.enable_cql_jena_lucene_json:
+        return False
+    if endpoint_uri in _SEARCH_EP_URIS:
+        return True
+    if not _endpoint_builds_search_query(endpoint_uri):
+        return False
+    return _filter_properties_are_lucene_fields(filter_value)
+
+
+def _build_lucene_search_query(
+    query_params,
+    runtime_settings: Settings,
+    filter_json: dict | None,
+    search_fields,
+    term: str | None = None,
+    facets: list[str] | None = None,
+) -> SearchQueryJenaLucene:
+    return SearchQueryJenaLucene(
+        term=term,
+        facets=facets,
+        filter_json=filter_json,
+        limit=int(query_params.limit),
+        offset=_calculate_listing_offset(query_params),
+        lucene_index_name=runtime_settings.lucene_index_name,
+        search_fields=search_fields,
+        lucene_hit_limit=_resolve_lucene_hit_limit(query_params, runtime_settings),
+        order_by=query_params.order_by,
+        order_by_direction=query_params.order_by_direction,
+        include_matches=bool(term),
+        pagination_pushed_down=_lucene_uses_limit_offset_pushdown(runtime_settings),
+    )
+
+
+async def lucene_cql_get_parser_dependency(
+    request: Request,
+    query_params: ListingQueryParams = Depends(),
+    runtime_settings: Settings = Depends(get_runtime_settings),
+    facets: list[str] | None = Depends(lucene_cql_get_facets_dependency),
+) -> CQLParser | None:
+    _ = facets
+    _parse_lucene_filter_json(query_params._filter, "GET")
+    return None
+
+
+async def generate_lucene_cql_search_query(
+    request: Request,
+    query_params: ListingQueryParams = Depends(),
+    runtime_settings: Settings = Depends(get_runtime_settings),
+    facets: list[str] | None = Depends(lucene_cql_get_facets_dependency),
+):
+    _ = facets
+    filter_json = _parse_lucene_filter_json(query_params._filter, "GET")
+    search_fields = _resolve_lucene_search_fields(
+        request.query_params.getlist("fields") or None,
+        runtime_settings,
+        "GET",
+    )
+    return SearchQueryJenaLucene(
+        term=query_params.q,
+        facets=facets,
+        filter_json=filter_json,
+        limit=int(query_params.limit),
+        offset=_calculate_listing_offset(query_params),
+        lucene_index_name=runtime_settings.lucene_index_name,
+        search_fields=search_fields,
+        lucene_hit_limit=_resolve_lucene_hit_limit(query_params, runtime_settings),
+        order_by=query_params.order_by,
+        order_by_direction=query_params.order_by_direction,
+        include_matches=bool(query_params.q),
+        pagination_pushed_down=_lucene_uses_limit_offset_pushdown(runtime_settings),
+    )
+
+
+########################################################################################################################
+# POST support: listing endpoints
+########################################################################################################################
+
+
+async def listing_post_params_dependency(request: Request) -> ListingQueryParams:
+    """
+    Parse a JSON POST body and return a ``ListingQueryParams`` equivalent.
+
+    The body fields mirror the GET query parameter names::
+
+        {
+            "_mediatype": "text/turtle",
+            "_profile": "https://example.org/profile",
+            "page": 1,
+            "limit": 10,
+            "q": "search term",
+            "fields": ["urn:jena:lucene:field#id"],
+            "filter": { ... CQL2-JSON ... },
+            "filter-lang": "cql2-json",
+            "filter_crs": "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+            "bbox": [153.0, -28.0, 154.0, -27.0],
+            "datetime": "2020-01-01T00:00:00Z/2021-01-01T00:00:00Z",
+            "order_by": "label",
+            "order_by_direction": "ASC"
+        }
+    """
+    body = await _parse_post_body(request)
+
+    # bbox
+    bbox_raw = body.get("bbox")
+    if bbox_raw is not None:
+        if not isinstance(bbox_raw, list):
+            raise HTTPException(
+                status_code=400, detail="bbox must be an array of coordinates."
+            )
+        try:
+            coords = [float(v) for v in bbox_raw]
+        except (TypeError, ValueError):
+            raise HTTPException(
+                status_code=400,
+                detail="bbox coordinates must be numbers.",
+            )
+        if len(coords) not in (4, 6):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid bbox: expected 4 or 6 coordinates, got {len(coords)}.",
+            )
+        bbox = coords
+    else:
+        bbox = None
+
+    # datetime
+    datetime_raw = body.get("datetime")
+    if datetime_raw:
+        try:
+            dt = parse_datetime(str(datetime_raw))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=f"Invalid datetime: {exc}")
+    else:
+        dt = None
+
+    # filter (dict → JSON string to reuse existing validation)
+    filter_raw = body.get("filter")
+    if filter_raw is not None:
+        if isinstance(filter_raw, str):
+            filter_str = filter_raw
+        else:
+            filter_str = json.dumps(filter_raw)
+    else:
+        filter_str = None
+
+    # Pagination
+    page = body.get("page", 1)
+    limit = body.get("limit", 10)
+    offset = body.get("offset")
+    startindex = body.get("startindex")
+
+    # Build params object without going through FastAPI's Query injection
+    params = ListingQueryParams.__new__(ListingQueryParams)
+    params.mediatype = body.get("_mediatype")
+    params.profile = body.get("_profile")
+    params.page = page
+    params.limit = limit
+    params.offset = offset
+    params.startindex = startindex
+    params.facet_profile = body.get("facet_profile")
+    params.bbox = bbox
+    params.filter_lang = body.get("filter-lang", "cql2-json")
+    params.filter_crs = body.get(
+        "filter_crs", "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+    )
+    params.datetime = dt
+    params.order_by = body.get("order_by")
+    params.order_by_direction = body.get("order_by_direction")
+    params._filter = filter_str
+    params.q = body.get("q")
+    params.fields = body.get("fields")
+    params.predicates = body.get("predicates", [])
+    params.subscription_key = body.get("subscription-key")
+    params.result_type = body.get("result_type")
+
+    params.validate_pagination_params()
+    params.validate_filter()
+    return params
+
+
+async def lucene_cql_post_parser_dependency(
+    request: Request,
+    query_params: ListingQueryParams = Depends(listing_post_params_dependency),
+    runtime_settings: Settings = Depends(get_runtime_settings),
+    facets: list[str] | None = Depends(lucene_cql_post_facets_dependency),
+) -> CQLParser | None:
+    body = await _parse_post_body(request)
+    if body.get("q") is not None and not isinstance(body.get("q"), str):
+        raise HTTPException(status_code=400, detail="POST q must be a string.")
+    _ = facets
+    _parse_lucene_filter_json(body.get("filter"), "POST")
+    return None
+
+
+async def generate_lucene_cql_search_query_post(
+    request: Request,
+    query_params: ListingQueryParams = Depends(listing_post_params_dependency),
+    runtime_settings: Settings = Depends(get_runtime_settings),
+    facets: list[str] | None = Depends(lucene_cql_post_facets_dependency),
+):
+    body = await _parse_post_body(request)
+    q = body.get("q")
+    if q is not None and not isinstance(q, str):
+        raise HTTPException(status_code=400, detail="POST q must be a string.")
+    _ = facets
+    filter_json = _parse_lucene_filter_json(body.get("filter"), "POST")
+    search_fields = _resolve_lucene_search_fields(
+        body.get("fields"),
+        runtime_settings,
+        "POST",
+    )
+    return SearchQueryJenaLucene(
+        term=q,
+        facets=facets,
+        filter_json=filter_json,
+        limit=int(query_params.limit),
+        offset=_calculate_listing_offset(query_params),
+        lucene_index_name=runtime_settings.lucene_index_name,
+        search_fields=search_fields,
+        lucene_hit_limit=_resolve_lucene_hit_limit(query_params, runtime_settings),
+        order_by=query_params.order_by,
+        order_by_direction=query_params.order_by_direction,
+        include_matches=bool(q),
+        pagination_pushed_down=_lucene_uses_limit_offset_pushdown(runtime_settings),
+    )
+
+
+async def get_negotiated_pmts_listing_post(
+    request: Request,
+    query_params: ListingQueryParams = Depends(listing_post_params_dependency),
+    repo: Repo = Depends(get_data_repo),
+    system_repo: Repo = Depends(get_system_repo),
+    endpoint_uri_type: tuple = Depends(get_endpoint_uri_type),
+    url_path: str = Depends(get_unprefixed_url_path),
+) -> "NegotiatedPMTs":
+    """POST variant of get_negotiated_pmts for listing endpoints."""
+    from sparql_grammar import Var
+    from prez.services.connegp_service import NegotiatedPMTs
+
+    # For listing endpoints, focus node is always a variable (not a specific IRI)
+    focus_node = Var(value="focus_node")
+    endpoint_ns = await get_endpoint_nodeshapes(
+        request=request,
+        repo=repo,
+        system_repo=system_repo,
+        endpoint_uri_type=endpoint_uri_type,
+        focus_node=focus_node,
+        url_path=url_path,
+    )
+    klasses = endpoint_ns.targetClasses
+    params_dict = {
+        "_profile": query_params.profile or "",
+        "_mediatype": query_params.mediatype or "",
+    }
+    pmts = NegotiatedPMTs(
+        headers=request.headers,
+        params=params_dict,
+        classes=klasses,
+        listing=True,
+        system_repo=system_repo,
+        current_path=url_path,
+    )
+    await pmts.setup()
+    return pmts
+
+
+async def get_endpoint_structure_listing_post(
+    pmts: "NegotiatedPMTs" = Depends(get_negotiated_pmts_listing_post),
+    endpoint_uri_type: tuple = Depends(get_endpoint_uri_type),
+) -> tuple:
+    from prez.reference_data.prez_ns import ALTREXT
+
+    endpoint_uri = endpoint_uri_type[0]
+    if (endpoint_uri in settings.system_endpoints) or (
+        pmts.selected.get("profile") == ALTREXT["alt-profile"]
+    ):
+        return ("profiles",)
+    return settings.endpoint_structure
+
+
+async def get_profile_nodeshape_listing_post(
+    pmts: "NegotiatedPMTs" = Depends(get_negotiated_pmts_listing_post),
+) -> "NodeShape":
+    from sparql_grammar import Var
+    from prez.cache import profiles_graph_cache
+    from prez.services.query_generation.shacl import get_nodeshape
+
+    profile = pmts.selected.get("profile")
+    focus_node = Var(value="focus_node")  # always Var for listing
+    return get_nodeshape(
+        uri=profile,
+        graph=profiles_graph_cache,
+        kind="profile",
+        focus_node=focus_node,
+    )
+
+
+async def cql_post_listing_parser_dependency(
+    query_params: ListingQueryParams = Depends(listing_post_params_dependency),
+    queryable_props: list = Depends(get_queryable_props),
+    endpoint_uri_type: tuple = Depends(get_endpoint_uri_type),
+    runtime_settings: Settings = Depends(get_runtime_settings),
+) -> "CQLParser | None":
+    """CQL parser for listing POST endpoints (filter is optional)."""
+    if _search_uses_jena_lucene(
+        endpoint_uri_type[0], runtime_settings, query_params._filter
+    ):
+        if query_params._filter:
+            _parse_lucene_filter_json(query_params._filter, "POST")
+        return None
+
+    if query_params._filter:
+        try:
+            crs = query_params.filter_crs
+            cql_json = json.loads(query_params._filter)
+            cql_parser = CQLParser(
+                cql_json=cql_json, crs=crs, queryable_props=queryable_props
+            )
+            cql_parser.parse()
+            return cql_parser
+        except json.JSONDecodeError:
+            raise HTTPException(
+                status_code=400, detail="Invalid JSON in 'filter' field."
+            )
+        except Exception:
+            raise HTTPException(
+                status_code=400, detail="Invalid CQL format: parsing failed."
+            )
+    return None
+
+
+async def generate_search_query_post(
+    request: Request,
+    query_params: ListingQueryParams = Depends(listing_post_params_dependency),
+    system_repo: Repo = Depends(get_system_repo),
+    endpoint_uri_type: tuple = Depends(get_endpoint_uri_type),
+    runtime_settings: Settings = Depends(get_runtime_settings),
+):
+    """POST variant of generate_search_query — reads params from POST body."""
+    term = query_params.q
+
+    def has_filtering_params() -> bool:
+        if query_params.facet_profile:
+            return True
+        if query_params._filter:
+            return True
+        if query_params.bbox:
+            return True
+        if query_params.datetime:
+            return True
+        return False
+
+    uses_lucene = _search_uses_jena_lucene(
+        endpoint_uri_type[0], runtime_settings, query_params._filter
+    )
+
+    async def build_lucene_query() -> SearchQueryJenaLucene:
+        body = await _parse_post_body(request)
+        return _build_lucene_search_query(
+            query_params,
+            runtime_settings,
+            _parse_lucene_filter_json(query_params._filter, "POST"),
+            _resolve_lucene_search_fields(
+                body.get("fields"),
+                runtime_settings,
+                "POST",
+            ),
+            term=term,
+        )
+
+    if not term:
+        if endpoint_uri_type[0] in _SEARCH_EP_URIS:
+            if has_filtering_params():
+                if uses_lucene:
+                    return await build_lucene_query()
+                return DummySearchMarker()
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Search query parameter 'q' must be provided in the request body, "
+                    "or use filtering parameters (facet_profile, filter, bbox, datetime)."
+                ),
+            )
+        # Other listing endpoints: a filter naming only Lucene fields is pushed
+        # down to luc:query rather than evaluated as SPARQL.
+        if uses_lucene:
+            return await build_lucene_query()
+        return None
+
+    if uses_lucene:
+        return await build_lucene_query()
+
+    predicates = query_params.predicates if hasattr(query_params, "predicates") else []
+    page = query_params.page or 1
+    limit = query_params.limit if query_params.limit else settings.search_count_limit
+    offset = limit * (page - 1)
+
+    if settings.search_method == SearchMethod.DEFAULT:
+        return SearchQueryRegex(
+            term=term,
+            predicates=predicates,
+            limit=limit,
+            offset=offset,
+        )
+    elif settings.search_method == SearchMethod.FTS_FUSEKI:
+        predicates = predicates if predicates else settings.search_predicates
+        shacl_shapes = await get_jena_fts_shacl_predicates(system_repo)
+
+        def _has_triple(graph, s, p, o) -> bool:
+            return any(graph.triples((s, p, o)))
+
+        shacl_shape_ids = [
+            str(x)
+            for x in shacl_shapes.objects(subject=None, predicate=DCTERMS.identifier)
+        ]
+        tssp_lists = []
+        tss_list = []
+        non_shacl_predicates = []
+        i = 100
+        for pred in predicates:
+            if str(pred) in shacl_shape_ids:
+                shacl_shape_uri = shacl_shapes.value(
+                    subject=None,
+                    predicate=DCTERMS.identifier,
+                    object=Literal(pred),
+                )
+                if (
+                    shacl_shape_uri
+                    and _has_triple(
+                        shacl_shapes, shacl_shape_uri, RDF.type, ONT.JenaFTSUnionShape
+                    )
+                    and _has_triple(shacl_shapes, shacl_shape_uri, SH.union, None)
+                ):
+                    union_container = FTSUnionContainer(
+                        uri=shacl_shape_uri,
+                        graph=shacl_shapes,
+                        focus_node=Var(value="focus_node"),
+                        shape_number=i,
+                    )
+                    tssp_lists.extend(union_container.tssp_list_with_preds)
+                    tss_list.extend(union_container.tss_list)
+                    i = union_container.next_shape_number
+                else:
+                    shacl_shape_g = shacl_shapes.cbd(shacl_shape_uri)
+                    search_preds = list(
+                        shacl_shape_g.objects(
+                            subject=None, predicate=ONT.searchPredicate
+                        )
+                    )
+                    ps = PropertyShape(
+                        uri=shacl_shape_uri,
+                        graph=shacl_shape_g,
+                        kind="fts",
+                        focus_node=Var(value="focus_node"),
+                        shape_number=i,
+                    )
+                    tssp_lists.append(
+                        (ps.tssp_list, search_preds, ps.focus_node_classes)
+                    )
+                    tss_list.extend(ps.tss_list)
+                    i += 1
+            else:
+                non_shacl_predicates.append(pred)
+
+        return SearchQueryFusekiFTS(
+            term=term,
+            non_shacl_predicates=non_shacl_predicates,
+            shacl_tssp_preds=tssp_lists,
+            tss_list=tss_list,
+            limit=limit,
+            offset=offset,
+            fts_limit=settings.fts_limit,
+        )
+    raise NotImplementedError(f"Search method {settings.search_method} not implemented")
+
+
+########################################################################################################################
+# POST support: /object endpoint
+########################################################################################################################
+
+
+async def object_post_params_dependency(request: Request) -> dict:
+    """Parse the JSON body for POST /object, returning the raw body dict."""
+    return await _parse_post_body(request)
+
+
+async def get_focus_node_post_object(
+    body: dict = Depends(object_post_params_dependency),
+) -> "IRI":
+    from sparql_grammar import IRI as SPARQLIRI
+
+    iri = body.get("iri") or body.get("uri")
+    if not iri:
+        raise HTTPException(
+            status_code=400,
+            detail="Request body must contain 'iri' or 'uri'.",
+        )
+    return SPARQLIRI(value=iri)
+
+
+async def get_endpoint_nodeshapes_post_object(
+    focus_node=Depends(get_focus_node_post_object),
+) -> "NodeShape":
+    from prez.cache import endpoints_graph_cache
+    from prez.services.query_generation.shacl import get_nodeshape
+
+    return get_nodeshape(
+        uri=URIRef("http://example.org/ns#Object"),
+        graph=endpoints_graph_cache,
+        kind="endpoint",
+        focus_node=focus_node,
+    )
+
+
+async def get_negotiated_pmts_post_object(
+    request: Request,
+    body: dict = Depends(object_post_params_dependency),
+    focus_node=Depends(get_focus_node_post_object),
+    repo: Repo = Depends(get_data_repo),
+    system_repo: Repo = Depends(get_system_repo),
+    url_path: str = Depends(get_unprefixed_url_path),
+) -> "NegotiatedPMTs":
+    from prez.services.classes import get_classes_single
+    from prez.services.connegp_service import NegotiatedPMTs
+
+    klasses_fs = await get_classes_single(URIRef(focus_node.value), repo)
+    klasses = list(klasses_fs)
+    params_dict = {
+        "_profile": body.get("_profile", ""),
+        "_mediatype": body.get("_mediatype", ""),
+    }
+    pmts = NegotiatedPMTs(
+        headers=request.headers,
+        params=params_dict,
+        classes=klasses,
+        listing=False,
+        system_repo=system_repo,
+        current_path=url_path,
+    )
+    await pmts.setup()
+    return pmts
+
+
+async def get_endpoint_structure_post_object(
+    pmts: "NegotiatedPMTs" = Depends(get_negotiated_pmts_post_object),
+    endpoint_uri_type: tuple = Depends(get_endpoint_uri_type),
+) -> tuple:
+    from prez.reference_data.prez_ns import ALTREXT
+
+    endpoint_uri = endpoint_uri_type[0]
+    if (endpoint_uri in settings.system_endpoints) or (
+        pmts.selected.get("profile") == ALTREXT["alt-profile"]
+    ):
+        return ("profiles",)
+    return settings.endpoint_structure
+
+
+async def get_profile_nodeshape_post_object(
+    pmts: "NegotiatedPMTs" = Depends(get_negotiated_pmts_post_object),
+    focus_node=Depends(get_focus_node_post_object),
+) -> "NodeShape":
+    from prez.reference_data.prez_ns import ALTREXT
+    from prez.cache import profiles_graph_cache
+    from prez.services.query_generation.shacl import get_nodeshape
+    from sparql_grammar import Var
+
+    profile = pmts.selected.get("profile")
+    if profile == ALTREXT["alt-profile"]:
+        fn = Var(value="focus_node")
+    else:
+        fn = focus_node
+    return get_nodeshape(
+        uri=profile,
+        graph=profiles_graph_cache,
+        kind="profile",
+        focus_node=fn,
+    )
+
+
+async def get_object_query_params_post(
+    body: dict = Depends(object_post_params_dependency),
+) -> ObjectQueryParams:
+    params = ObjectQueryParams.__new__(ObjectQueryParams)
+    params.mediatype = body.get("_mediatype")
+    params.profile = body.get("_profile")
+    params.facet_profile = body.get("facet_profile")
+    params.subscription_key = body.get("subscription-key")
+    return params
+
+
 async def get_jena_fts_shacl_predicates(system_repo: Repo) -> Graph:
-    query = "DESCRIBE ?fts_shape WHERE {?fts_shape a <https://prez.dev/ont/JenaFTSPropertyShape>}"
+    query = """
+    DESCRIBE ?fts_shape
+    WHERE {
+        { ?fts_shape a <https://prez.dev/ont/JenaFTSPropertyShape> }
+        UNION
+        {
+            ?fts_shape a <https://prez.dev/ont/JenaFTSUnionShape> .
+            ?fts_shape <http://www.w3.org/ns/shacl#union> ?u .
+            ?fts_shape <http://purl.org/dc/terms/identifier> ?id .
+        }
+    }
+    """
     return await system_repo.rdf_query_to_rdflib_graph(query)
+
+
+class DummySearchMarker:
+    """Marker to indicate that dummy search results should be injected."""
+
+    pass
 
 
 async def generate_search_query(
     request: Request,
+    query_params: ListingQueryParams = Depends(),
     system_repo: Repo = Depends(get_system_repo),
     endpoint_uri_type: tuple[URIRef, URIRef] = Depends(get_endpoint_uri_type),
+    runtime_settings: Settings = Depends(get_runtime_settings),
 ):
     term = request.query_params.get("q")
 
@@ -289,22 +1247,51 @@ async def generate_search_query(
             return True
         return False
 
+    uses_lucene = _search_uses_jena_lucene(
+        endpoint_uri_type[0], runtime_settings, query_params._filter
+    )
+
+    def build_lucene_query() -> SearchQueryJenaLucene:
+        return _build_lucene_search_query(
+            query_params,
+            runtime_settings,
+            _parse_lucene_filter_json(query_params._filter, "GET"),
+            _resolve_lucene_search_fields(
+                request.query_params.getlist("fields") or None,
+                runtime_settings,
+                "GET",
+            ),
+            term=query_params.q,
+        )
+
     # Check if the search term 'q' is provided
     if not term:
         # If 'q' is missing or empty, check if we're on the search endpoint
         if endpoint_uri_type[0] == EP["extended-ogc-records/search"]:
             # Allow empty search term if filtering/faceting parameters are present
             if has_filtering_params():
-                return None  # generate query without FTS component
+                if uses_lucene:
+                    return build_lucene_query()
+                # Return marker to indicate dummy search results needed
+                return DummySearchMarker()
             else:
                 raise HTTPException(
                     status_code=400,
                     detail="Search query parameter 'q' must be provided, or use filtering parameters (facet_profile, filter, bbox, datetime).",
                 )
         else:
-            # For other endpoints, 'q' is optional, return None if not provided
+            # On other listing endpoints a filter naming only Lucene fields is
+            # pushed down to luc:query; otherwise 'q' is optional and the filter
+            # is evaluated as SPARQL by the CQL parser dependency.
+            if uses_lucene:
+                return build_lucene_query()
             return None
     else:
+        if uses_lucene:
+            search_query = build_lucene_query()
+            logger.debug(f"Generated search query: {search_query}")
+            return search_query
+
         # escaped_term = escape_for_lucene_and_sparql(term)
         predicates = request.query_params.getlist("predicates")
         page = request.query_params.get("page", 1)
@@ -322,6 +1309,10 @@ async def generate_search_query(
         elif settings.search_method == SearchMethod.FTS_FUSEKI:
             predicates = predicates if predicates else settings.search_predicates
             shacl_shapes = await get_jena_fts_shacl_predicates(system_repo)
+
+            def _has_triple(graph: Graph, s, p, o) -> bool:
+                return any(graph.triples((s, p, o)))
+
             shacl_shape_ids = list(
                 [
                     str(x)
@@ -339,22 +1330,44 @@ async def generate_search_query(
                     shacl_shape_uri = shacl_shapes.value(
                         subject=None, predicate=DCTERMS.identifier, object=Literal(pred)
                     )
-                    shacl_shape_g = shacl_shapes.cbd(shacl_shape_uri)
-                    search_preds = list(
-                        shacl_shape_g.objects(
-                            subject=None, predicate=ONT.searchPredicate
+                    if (
+                        shacl_shape_uri
+                        and _has_triple(
+                            shacl_shapes,
+                            shacl_shape_uri,
+                            RDF.type,
+                            ONT.JenaFTSUnionShape,
                         )
-                    )
-                    ps = PropertyShape(
-                        uri=shacl_shape_uri,
-                        graph=shacl_shape_g,
-                        kind="fts",
-                        focus_node=Var(value="focus_node"),
-                        shape_number=i,
-                    )
-                    tssp_lists.append((ps.tssp_list, search_preds))
-                    tss_list.extend(ps.tss_list)
-                    i += 1
+                        and _has_triple(shacl_shapes, shacl_shape_uri, SH.union, None)
+                    ):
+                        union_container = FTSUnionContainer(
+                            uri=shacl_shape_uri,
+                            graph=shacl_shapes,
+                            focus_node=Var(value="focus_node"),
+                            shape_number=i,
+                        )
+                        tssp_lists.extend(union_container.tssp_list_with_preds)
+                        tss_list.extend(union_container.tss_list)
+                        i = union_container.next_shape_number
+                    else:
+                        shacl_shape_g = shacl_shapes.cbd(shacl_shape_uri)
+                        search_preds = list(
+                            shacl_shape_g.objects(
+                                subject=None, predicate=ONT.searchPredicate
+                            )
+                        )
+                        ps = PropertyShape(
+                            uri=shacl_shape_uri,
+                            graph=shacl_shape_g,
+                            kind="fts",
+                            focus_node=Var(value="focus_node"),
+                            shape_number=i,
+                        )
+                        tssp_lists.append(
+                            (ps.tssp_list, search_preds, ps.focus_node_classes)
+                        )
+                        tss_list.extend(ps.tss_list)
+                        i += 1
                 else:
                     non_shacl_predicates.append(pred)
 
@@ -365,6 +1378,7 @@ async def generate_search_query(
                 tss_list=tss_list,
                 limit=limit,
                 offset=offset,
+                fts_limit=settings.fts_limit,
             )
         else:
             raise NotImplementedError(
@@ -401,13 +1415,6 @@ async def generate_concept_hierarchy_query(
     )
 
 
-async def get_unprefixed_url_path(
-    request: Request,
-) -> str:
-    root_path = request.scope.get("app_root_path", request.scope.get("root_path", ""))
-    return request.url.path[len(root_path) :]
-
-
 async def get_focus_node(
     request: Request,
     endpoint_uri_type: tuple[URIRef, URIRef] = Depends(get_endpoint_uri_type),
@@ -434,45 +1441,32 @@ async def get_focus_node(
         return Var(value="focus_node")
 
 
+#: endpoint -> the node shape that selects focus nodes for it. These endpoints each
+#: have exactly one shape, named in prez/reference_data/endpoints/endpoint_nodeshapes.ttl.
+SPECIAL_CASE_NODESHAPES = {
+    EP["system/object"]: URIRef("http://example.org/ns#Object"),
+    EP["extended-ogc-records/top-concepts"]: URIRef(
+        "http://example.org/ns#TopConcepts"
+    ),
+    EP["extended-ogc-records/narrowers"]: URIRef("http://example.org/ns#Narrowers"),
+    EP["extended-ogc-records/cql-get"]: URIRef("http://example.org/ns#CQL"),
+    EP["extended-ogc-records/search"]: URIRef("http://example.org/ns#Search"),
+}
+
+
 def handle_special_cases(ep_uri, focus_node):
     """
     uris provided to the nodeshapes are those in prez/reference_data/endpoints/endpoint_nodeshapes.ttl
     """
-    if ep_uri == EP["system/object"]:
-        return NodeShape(
-            uri=URIRef("http://example.org/ns#Object"),
-            graph=endpoints_graph_cache,
-            kind="endpoint",
-            focus_node=focus_node,
-        )
-    elif ep_uri == EP["extended-ogc-records/top-concepts"]:
-        return NodeShape(
-            uri=URIRef("http://example.org/ns#TopConcepts"),
-            graph=endpoints_graph_cache,
-            kind="endpoint",
-            focus_node=focus_node,
-        )
-    elif ep_uri == EP["extended-ogc-records/narrowers"]:
-        return NodeShape(
-            uri=URIRef("http://example.org/ns#Narrowers"),
-            graph=endpoints_graph_cache,
-            kind="endpoint",
-            focus_node=focus_node,
-        )
-    elif ep_uri == EP["extended-ogc-records/cql-get"]:
-        return NodeShape(
-            uri=URIRef("http://example.org/ns#CQL"),
-            graph=endpoints_graph_cache,
-            kind="endpoint",
-            focus_node=focus_node,
-        )
-    elif ep_uri == EP["extended-ogc-records/search"]:
-        return NodeShape(
-            uri=URIRef("http://example.org/ns#Search"),
-            graph=endpoints_graph_cache,
-            kind="endpoint",
-            focus_node=focus_node,
-        )
+    shape_uri = SPECIAL_CASE_NODESHAPES.get(ep_uri)
+    if shape_uri is None:
+        return None
+    return get_nodeshape(
+        uri=shape_uri,
+        graph=endpoints_graph_cache,
+        kind="endpoint",
+        focus_node=focus_node,
+    )
 
 
 async def get_endpoint_nodeshapes(
@@ -530,7 +1524,7 @@ async def get_endpoint_nodeshapes(
         for pn, uri in path_nodes.items():
             path_node_classes[pn] = await get_classes_single(URIRef(uri.value), repo)
         nodeshapes = [
-            NodeShape(
+            get_nodeshape(
                 uri=URIRef(ns),
                 graph=endpoints_graph_cache,
                 kind="endpoint",
@@ -560,14 +1554,13 @@ async def get_endpoint_nodeshapes(
     if not path_nodes:
         path_nodes = {}
     if node_selection_shape_uri:
-        ns = NodeShape(
+        return get_nodeshape(
             uri=node_selection_shape_uri,
             graph=endpoints_graph_cache,
             kind="endpoint",
             path_nodes=path_nodes,
             focus_node=focus_node,
         )
-        return ns
     else:
         raise NoEndpointNodeshapeException(ep_uri, hierarchy_level)
 
@@ -642,7 +1635,7 @@ async def get_profile_nodeshape(
         focus_node = IRI(value=focus_node_uri)
     else:  # listing
         focus_node = Var(value="focus_node")
-    return NodeShape(
+    return get_nodeshape(
         uri=profile,
         graph=profiles_graph_cache,
         kind="profile",

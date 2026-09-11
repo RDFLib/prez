@@ -3,62 +3,39 @@ import sys
 
 from rdflib import Namespace
 from rdflib.namespace import RDF, RDFS
-from sparql_grammar_pydantic import (
+from sparql_grammar import (
     IRI,
-    AdditiveExpression,
-    BrackettedExpression,
+    Bind,
     BuiltInCall,
     CollectionPath,
-    ConditionalAndExpression,
-    ConditionalOrExpression,
-    Constraint,
     ConstructQuery,
     ConstructTemplate,
-    ConstructTriples,
     Expression,
     Filter,
-    GraphNodePath,
-    GraphPatternNotTriples,
-    GraphTerm,
     GroupGraphPattern,
     GroupGraphPatternSub,
     GroupOrUnionGraphPattern,
-    LimitClause,
     LimitOffsetClauses,
-    MultiplicativeExpression,
-    NumericExpression,
     ObjectListPath,
-    ObjectPath,
-    OffsetClause,
     OrderClause,
     OrderCondition,
     PathAlternative,
-    PathElt,
-    PathEltOrInverse,
-    PathPrimary,
-    PathSequence,
-    PrimaryExpression,
-    PropertyListPath,
     PropertyListPathNotEmpty,
     RDFLiteral,
-    RelationalExpression,
     SelectClause,
-    SG_Path,
     SolutionModifier,
     SubSelect,
     TriplesBlock,
-    TriplesNodePath,
     TriplesSameSubject,
     TriplesSameSubjectPath,
-    UnaryExpression,
-    ValueLogical,
     Var,
-    VarOrTerm,
-    VerbPath,
     WhereClause,
+    numeric_literal,
 )
 
 from prez.reference_data.prez_ns import PREZ
+from prez.services.query_generation.grammar_helpers import construct_triples
+from prez.services.query_generation.search_default import hash_id_expression
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +47,7 @@ class SearchQueryFusekiFTS(ConstructQuery):
     :param limit: sparql limit clause
     :param offset: sparql offset clause
     :param non_shacl_predicates: list of predicates to search over (must be indexed)
-    :param shacl_tssp_preds: list of triples same subject paths and search predicate
+    :param shacl_tssp_preds: list of triples same subject paths, search predicates, and focus node classes
                              (typically generated from a <https://prez.dev/ont/JenaFTSPropertyShape>)
     :param tss_list: list of triples same subject paths
                      (typically generated from a <https://prez.dev/ont/JenaFTSPropertyShape>)
@@ -92,7 +69,7 @@ class SearchQueryFusekiFTS(ConstructQuery):
             SELECT ?focus_node ?pred ?match ?weight (URI(CONCAT("urn:hash:", SHA256(CONCAT(STR(?focus_node), STR(?pred), STR(?match), STR(?weight))))) AS ?hashID)
             WHERE {
                 {
-                    (?focus_node ?weight ?match ?g ?pred) <http://jena.apache.org/text#query> ( <searchProp1> <searchProp2> "search+term")
+                    (?focus_node ?weight ?match ?g ?pred) <http://jena.apache.org/text#query> ( <searchProp1> <searchProp2> "search+term" <limit>)
                 }
                 UNION
                 {
@@ -119,16 +96,29 @@ class SearchQueryFusekiFTS(ConstructQuery):
         offset: int,
         non_shacl_predicates: list[str] | None = None,
         shacl_tssp_preds: (
-            list[tuple[list[TriplesSameSubjectPath], list[str]]] | None
+            list[
+                tuple[
+                    list[TriplesSameSubjectPath],
+                    list[str],
+                    list[str] | None,
+                ]
+            ]
+            | None
         ) = None,
         tss_list: list[TriplesSameSubjectPath] | None = None,
+        fts_limit: int | None = None,
     ):
         if not any([bool(non_shacl_predicates), bool(shacl_tssp_preds)]):
             raise ValueError(
                 "At least one of `non_shacl_predicates` and `shacl_tssp_preds` must be given"
             )
         limit += 1  # increase the limit by one, so we know if there are further pages of results.
-        term = term.replace('"', '\\"')
+        # clients submitting lucene FTS queries must escape the following characters if they do not want them to have
+        # the lucene special meaning: + - && || ! ( ) { } [ ] ^ " ~ * ? : \ /
+        term = term.replace(
+            "\\", "\\\\"
+        )  # escape for SPARQL anything that has been Lucene escaped already
+        term = term.replace('"', '\\"')  # escape quotes for SPARQL
 
         sr_uri: Var = Var(value="focus_node")
         weight: Var = Var(value="weight")
@@ -150,269 +140,196 @@ class SearchQueryFusekiFTS(ConstructQuery):
 
         # set construct triples
         construct_tss_list = [
-            TriplesSameSubject.from_spo(subject=hashid, predicate=p, object=v)
-            for p, v in ct_map.items()
+            TriplesSameSubject.from_spo(hashid, p, v) for p, v in ct_map.items()
         ]
 
         if tss_list:
             construct_tss_list.extend(tss_list)
 
-        construct_template = ConstructTemplate(
-            construct_triples=ConstructTriples.from_tss_list(construct_tss_list)
-        )
+        construct_template = ConstructTemplate(construct_triples(construct_tss_list))
 
         def _generate_fts_triples_block(
             preds: list[str], sr_uri: Var = sr_uri
         ) -> TriplesBlock:
+            # ( <pred1> <pred2> "term" [limit] ) - the argument list text:query takes
+            arg_list = [IRI(value=predicate) for predicate in preds]
+            arg_list.append(RDFLiteral(value=term))
+            # Conditionally add FTS limit if configured
+            if fts_limit is not None:
+                arg_list.append(numeric_literal(fts_limit + offset))
+
+            # (?focus_node ?weight ?match ?g ?pred) text:query ( ... )
             return TriplesBlock(
-                triples=TriplesSameSubjectPath(
-                    content=(
-                        TriplesNodePath(
-                            coll_path_or_bnpl_path=CollectionPath(
-                                graphnodepath_list=[
-                                    GraphNodePath(
-                                        varorterm_or_triplesnodepath=VarOrTerm(
-                                            varorterm=sr_uri
-                                        )
-                                    ),
-                                    GraphNodePath(
-                                        varorterm_or_triplesnodepath=VarOrTerm(
-                                            varorterm=weight
-                                        )
-                                    ),
-                                    GraphNodePath(
-                                        varorterm_or_triplesnodepath=VarOrTerm(
-                                            varorterm=match
-                                        )
-                                    ),
-                                    GraphNodePath(
-                                        varorterm_or_triplesnodepath=VarOrTerm(
-                                            varorterm=g
-                                        )
-                                    ),
-                                    GraphNodePath(
-                                        varorterm_or_triplesnodepath=VarOrTerm(
-                                            varorterm=pred
-                                        )
-                                    ),
-                                ]
-                            )
-                        ),
-                        PropertyListPath(
-                            plpne=PropertyListPathNotEmpty(
-                                first_pair=(
-                                    VerbPath(
-                                        path=SG_Path(
-                                            path_alternative=PathAlternative(
-                                                sequence_paths=[
-                                                    PathSequence(
-                                                        list_path_elt_or_inverse=[
-                                                            PathEltOrInverse(
-                                                                path_elt=PathElt(
-                                                                    path_primary=PathPrimary(
-                                                                        value=text_query
-                                                                    )
-                                                                )
-                                                            )
-                                                        ]
-                                                    )
-                                                ]
-                                            )
-                                        )
-                                    ),
-                                    ObjectListPath(
-                                        object_paths=[
-                                            ObjectPath(
-                                                graph_node_path=GraphNodePath(
-                                                    varorterm_or_triplesnodepath=TriplesNodePath(
-                                                        coll_path_or_bnpl_path=CollectionPath(
-                                                            graphnodepath_list=[
-                                                                GraphNodePath(
-                                                                    varorterm_or_triplesnodepath=VarOrTerm(
-                                                                        varorterm=GraphTerm(
-                                                                            content=IRI(
-                                                                                value=predicate
-                                                                            )
-                                                                        )
-                                                                    )
-                                                                )
-                                                                for predicate in preds
-                                                            ]
-                                                            + [
-                                                                GraphNodePath(
-                                                                    varorterm_or_triplesnodepath=VarOrTerm(
-                                                                        varorterm=GraphTerm(
-                                                                            content=RDFLiteral(
-                                                                                value=term
-                                                                            )
-                                                                        )
-                                                                    )
-                                                                )
-                                                            ]
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                        ]
-                                    ),
+                [
+                    TriplesSameSubjectPath(
+                        CollectionPath([sr_uri, weight, match, g, pred]),
+                        PropertyListPathNotEmpty(
+                            [
+                                (
+                                    PathAlternative.iri(text_query),
+                                    ObjectListPath.create(CollectionPath(arg_list)),
                                 )
-                            )
+                            ]
                         ),
                     )
-                )
+                ]
             )
 
+        def _not_blank_filter(var: Var) -> Filter:
+            """FILTER(!isBLANK(?var))"""
+            return Filter(Expression.negate(BuiltInCall.create("isBLANK", var)))
+
+        fts_search_node = Var(value="fts_search_node")
+
+        def _dedupe_preserve_order(values: list[str]) -> list[str]:
+            seen = set()
+            out = []
+            for v in values:
+                if v in seen:
+                    continue
+                seen.add(v)
+                out.append(v)
+            return out
+
+        def _is_iri_filter(var: Var) -> Filter:
+            """FILTER(isIRI(?var))"""
+            return Filter(
+                Expression.from_primary_expression(BuiltInCall.create("isIRI", var))
+            )
+
+        def _bound_filter(var: Var) -> Filter:
+            """FILTER(BOUND(?var))"""
+            return Filter(
+                Expression.from_primary_expression(BuiltInCall.create("BOUND", var))
+            )
+
+        def _subject_var_from_tssp(tssp: TriplesSameSubjectPath) -> Var | None:
+            subj = tssp.subject
+            return subj if isinstance(subj, Var) else None
+
         ggp_list = []
-        bnode_filter = Filter(
-            constraint=Constraint(
-                content=BrackettedExpression(
-                    expression=Expression(
-                        conditional_or_expression=ConditionalOrExpression(
-                            conditional_and_expressions=[
-                                ConditionalAndExpression(
-                                    value_logicals=[
-                                        ValueLogical(
-                                            relational_expression=RelationalExpression(
-                                                left=NumericExpression(
-                                                    additive_expression=AdditiveExpression(
-                                                        base_expression=MultiplicativeExpression(
-                                                            base_expression=UnaryExpression(
-                                                                operator="!",
-                                                                primary_expression=PrimaryExpression(
-                                                                    content=BuiltInCall(
-                                                                        function_name="isBLANK",
-                                                                        arguments=[
-                                                                            sr_uri
-                                                                        ],
-                                                                    )
-                                                                ),
-                                                            )
-                                                        )
-                                                    )
-                                                )
-                                            )
+        if non_shacl_predicates:
+            direct_preds = _dedupe_preserve_order(
+                [str(p) for p in non_shacl_predicates]
+            )
+            if direct_preds:
+                direct_text_query_tb = _generate_fts_triples_block(direct_preds, sr_uri)
+                direct_preds_ggp = GroupGraphPattern(
+                    GroupGraphPatternSub([direct_text_query_tb, _is_iri_filter(sr_uri)])
+                )
+                ggp_list.append(direct_preds_ggp)
+
+        if shacl_tssp_preds:
+            shacl_preds = []
+            for _, preds, _ in shacl_tssp_preds:
+                shacl_preds.extend([str(p) for p in preds])
+            shacl_preds = _dedupe_preserve_order(shacl_preds)
+            if shacl_preds:
+                shacl_text_query_tb = _generate_fts_triples_block(
+                    shacl_preds, fts_search_node
+                )
+                shacl_branch_ggps = []
+                for tssp_list, preds, focus_node_classes in shacl_tssp_preds:
+                    pred_values = _dedupe_preserve_order([str(p) for p in preds])
+                    if not pred_values:
+                        continue
+                    branch_tssp_list = list(reversed(tssp_list))
+                    branch_patterns = []
+                    branch_patterns.append(_bound_filter(fts_search_node))
+                    if not branch_tssp_list:
+                        if focus_node_classes:
+                            branch_patterns.append(
+                                TriplesBlock(
+                                    [
+                                        TriplesSameSubjectPath.from_spo(
+                                            fts_search_node,
+                                            IRI(value=RDF.type),
+                                            IRI(value=klass),
                                         )
+                                        for klass in focus_node_classes
                                     ]
                                 )
+                            )
+                        branch_patterns.append(
+                            Bind(
+                                Expression.from_primary_expression(fts_search_node),
+                                sr_uri,
+                            )
+                        )
+                        path_preds_ggp = GroupGraphPattern(
+                            GroupGraphPatternSub(
+                                [*branch_patterns, _not_blank_filter(sr_uri)]
+                            )
+                        )
+                        shacl_branch_ggps.append(path_preds_ggp)
+                        continue
+                    seen_bound_vars = {fts_search_node.value}
+                    for tssp in branch_tssp_list:
+                        branch_patterns.append(TriplesBlock([tssp]))
+                        subj_var = _subject_var_from_tssp(tssp)
+                        if (
+                            subj_var is not None
+                            and subj_var.value != fts_search_node.value
+                            and subj_var.value != sr_uri.value
+                            and subj_var.value not in seen_bound_vars
+                        ):
+                            branch_patterns.append(_bound_filter(subj_var))
+                            seen_bound_vars.add(subj_var.value)
+                    path_preds_ggp = GroupGraphPattern(
+                        GroupGraphPatternSub(
+                            [
+                                *branch_patterns,
+                                _not_blank_filter(sr_uri),
+                                *(
+                                    [
+                                        TriplesBlock(
+                                            [
+                                                TriplesSameSubjectPath.from_spo(
+                                                    sr_uri,
+                                                    IRI(value=RDF.type),
+                                                    IRI(value=klass),
+                                                )
+                                                for klass in focus_node_classes or []
+                                            ]
+                                        )
+                                    ]
+                                    if focus_node_classes
+                                    else []
+                                ),
                             ]
                         )
                     )
-                )
-            )
-        )
-        if non_shacl_predicates:
-            direct_preds_tb = _generate_fts_triples_block(non_shacl_predicates)
-            direct_preds_ggp = GroupGraphPattern(
-                content=GroupGraphPatternSub(
-                    graph_patterns_or_triples_blocks=[
-                        direct_preds_tb,
-                        GraphPatternNotTriples(content=bnode_filter),
-                    ]
-                )
-            )
-            ggp_list.append(direct_preds_ggp)
-        if shacl_tssp_preds:
-            for tssp_list, preds in shacl_tssp_preds:
-                path_preds_tb = _generate_fts_triples_block(
-                    preds, Var(value="fts_search_node")
-                )
-                path_preds_tb.triples_block = TriplesBlock.from_tssp_list(tssp_list)
-                path_preds_ggp = GroupGraphPattern(
-                    content=GroupGraphPatternSub(
-                        graph_patterns_or_triples_blocks=[
-                            path_preds_tb,
-                            GraphPatternNotTriples(content=bnode_filter),
-                        ]
+                    shacl_branch_ggps.append(path_preds_ggp)
+                if shacl_branch_ggps:
+                    shacl_gpnt = GroupOrUnionGraphPattern(shacl_branch_ggps)
+                    shacl_ggp = GroupGraphPattern(
+                        GroupGraphPatternSub([shacl_text_query_tb, shacl_gpnt])
                     )
-                )
-                ggp_list.append(path_preds_ggp)
+                    ggp_list.append(shacl_ggp)
 
-        gpnt = GraphPatternNotTriples(
-            content=GroupOrUnionGraphPattern(group_graph_patterns=ggp_list)
-        )
+        gpnt = GroupOrUnionGraphPattern(ggp_list)
 
+        # SELECT ?focus_node ?predicate ?match ?weight (URI(CONCAT("urn:hash:",
+        #   SHA256(CONCAT(STR(?focus_node), STR(?predicate), STR(?match), STR(?weight))))) AS ?hashID)
         where_clause = WhereClause(
-            group_graph_pattern=GroupGraphPattern(
-                content=SubSelect(
-                    # SELECT ?focus_node ?predicate ?match ?weight (URI(CONCAT("urn:hash:",
-                    #   SHA256(CONCAT(STR(?focus_node), STR(?predicate), STR(?match), STR(?weight))))) AS ?hashID)
+            GroupGraphPattern(
+                SubSelect(
                     select_clause=SelectClause(
-                        variables_or_all=[
+                        [
                             sr_uri,
                             pred,
                             match,
                             weight,
-                            (
-                                Expression.from_primary_expression(
-                                    PrimaryExpression(
-                                        content=BuiltInCall.create_with_one_expr(
-                                            "URI",
-                                            PrimaryExpression(
-                                                content=BuiltInCall.create_with_n_expr(
-                                                    "CONCAT",
-                                                    [
-                                                        PrimaryExpression(
-                                                            content=RDFLiteral(
-                                                                value="urn:hash:"
-                                                            )
-                                                        ),
-                                                        PrimaryExpression(
-                                                            content=BuiltInCall.create_with_one_expr(
-                                                                "SHA256",
-                                                                PrimaryExpression(
-                                                                    content=BuiltInCall.create_with_n_expr(
-                                                                        "CONCAT",
-                                                                        [
-                                                                            PrimaryExpression(
-                                                                                content=b
-                                                                            )
-                                                                            for b in [
-                                                                                BuiltInCall.create_with_one_expr(
-                                                                                    "STR",
-                                                                                    PrimaryExpression(
-                                                                                        content=e
-                                                                                    ),
-                                                                                )
-                                                                                for e in [
-                                                                                    sr_uri,
-                                                                                    pred,
-                                                                                    match,
-                                                                                    weight,
-                                                                                ]
-                                                                            ]
-                                                                        ],
-                                                                    )
-                                                                ),
-                                                            )
-                                                        ),
-                                                    ],
-                                                )
-                                            ),
-                                        )
-                                    )
-                                ),
-                                hashid,
-                            ),
+                            (hash_id_expression(sr_uri, pred, match, weight), hashid),
                         ]
                     ),
                     where_clause=WhereClause(
-                        group_graph_pattern=GroupGraphPattern(
-                            content=GroupGraphPatternSub(
-                                graph_patterns_or_triples_blocks=[gpnt]
-                            )
-                        )
+                        GroupGraphPattern(GroupGraphPatternSub([gpnt]))
                     ),
                     solution_modifier=SolutionModifier(
-                        order_by=OrderClause(
-                            conditions=[
-                                OrderCondition(
-                                    constraint_or_var=weight, direction="DESC"
-                                )
-                            ]
-                        ),
-                        limit_offset=LimitOffsetClauses(
-                            limit_clause=LimitClause(limit=limit),
-                            offset_clause=OffsetClause(offset=offset),
+                        order_by=OrderClause([OrderCondition.desc(weight)]),
+                        limit_offset=LimitOffsetClauses.create(
+                            limit=limit, offset=offset
                         ),
                     ),
                 )
@@ -433,35 +350,33 @@ class SearchQueryFusekiFTS(ConstructQuery):
         return "DESC"
 
     @property
+    def _outer_subselect(self) -> SubSelect:
+        return self.where_clause.group_graph_pattern.content
+
+    @property
     def limit(self):
-        return (
-            self.where_clause.group_graph_pattern.content.solution_modifier.limit_offset.limit_clause.limit
+        return int(
+            self._outer_subselect.solution_modifier.limit_offset.limit_clause.limit.value
         )
 
     @property
     def offset(self):
-        return (
-            self.where_clause.group_graph_pattern.content.solution_modifier.limit_offset.offset_clause.offset
+        return int(
+            self._outer_subselect.solution_modifier.limit_offset.offset_clause.offset.value
         )
 
     @property
     def tss_list(self):
-        return self.construct_template.construct_triples.to_tss_list()
+        return list(self.construct_template.construct_triples.triples)
 
     @property
     def inner_select_vars(self):
-        return (
-            self.where_clause.group_graph_pattern.content.select_clause.variables_or_all
-        )
+        return self._outer_subselect.select_clause.variables
 
     @property
     def inner_select_gpnt(self):
-        inner_ggp = (
-            self.where_clause.group_graph_pattern.content.where_clause.group_graph_pattern
-        )
-        return GraphPatternNotTriples(
-            content=GroupOrUnionGraphPattern(group_graph_patterns=[inner_ggp])
-        )
+        inner_ggp = self._outer_subselect.where_clause.group_graph_pattern
+        return GroupOrUnionGraphPattern([inner_ggp])
 
 
 if __name__ == "__main__":

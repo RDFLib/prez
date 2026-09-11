@@ -1,6 +1,6 @@
 from rdflib import Graph, URIRef
 from rdflib.namespace import SH
-from sparql_grammar_pydantic import PathAlternative, PathEltOrInverse, Var
+from sparql_grammar import PathAlternative, PathEltOrInverse, Var
 
 from prez.services.query_generation.shacl import (
     AlternativePath,
@@ -23,7 +23,7 @@ def test_build_path_elt_or_inverse_handles_sequence_path():
     path_elt_or_inverse = _build_path_elt_or_inverse(seq_path)
 
     assert isinstance(path_elt_or_inverse, PathEltOrInverse)
-    path_alt = path_elt_or_inverse.path_elt.path_primary.value.path_alternative
+    path_alt = path_elt_or_inverse.path_elt.path_primary.value
     assert isinstance(path_alt, PathAlternative)
     assert len(path_alt.sequence_paths) == 1
     assert len(path_alt.sequence_paths[0].list_path_elt_or_inverse) == 2

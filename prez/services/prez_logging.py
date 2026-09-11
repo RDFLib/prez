@@ -3,6 +3,8 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+from prez.services.timing_csv import ensure_timing_csv_header
+
 
 def setup_logger(settings):
     # create logger
@@ -35,3 +37,14 @@ def setup_logger(settings):
 
     # add ch to logger
     logger.handlers = handlers
+
+    timing_logger = logging.getLogger("prez.timing")
+    timing_logger.setLevel(logging.INFO)
+    timing_logger.propagate = False
+    timing_logger.handlers = []
+    if settings.timing_csv_enabled:
+        ensure_timing_csv_header(settings.timing_csv_path)
+        timing_handler = logging.FileHandler(filename=settings.timing_csv_path)
+        timing_handler.setLevel(logging.INFO)
+        timing_handler.setFormatter(logging.Formatter("%(message)s"))
+        timing_logger.handlers = [timing_handler]

@@ -11,7 +11,7 @@ from aiocache import cached
 from fastapi import Depends
 from fastapi import status
 from fastapi.exceptions import HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
 from httpx import URL
 from oxrdflib._converter import to_ox
 from pyoxigraph import (
@@ -25,7 +25,7 @@ from rdf2geojson.contrib.geomet import wkt
 from rdflib import Graph
 from rdflib import URIRef
 from rdflib.namespace import GEO, RDF
-from sparql_grammar_pydantic import (
+from sparql_grammar import (
     IRI,
     Var,
 )
@@ -57,7 +57,8 @@ from prez.services.connegp_service import (
 )
 from prez.services.connegp_service import RDF_SERIALIZER_TYPES_MAP
 from prez.services.curie_functions import get_curie_id_for_uri
-from prez.services.query_generation.shacl import NodeShape
+from prez.services.query_generation.shacl import NodeShape, get_nodeshape
+from prez.services.timing_csv import log_timing_csv
 
 log = logging.getLogger(__name__)
 
@@ -73,6 +74,7 @@ async def return_from_graph(
     query_params: Optional[ListingQueryParams] = None,
     url: str = None,
 ):
+    total_start = time.perf_counter()
     profile_headers["Content-Disposition"] = "inline"
     return_geojson = str(mediatype) == "application/geo+json"
     is_oxigraph = isinstance(graph, OxiStore)
@@ -85,9 +87,17 @@ async def return_from_graph(
                 p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()
             }
             try:
-                return await return_rdf_from_oxigraph(
+                response = await return_rdf_from_oxigraph(
                     store, mediatype, profile_headers, prefixes=oxigraph_prefixes
                 )
+                total_ms = (time.perf_counter() - total_start) * 1000
+                log.debug(
+                    "return_from_graph rdf_oxigraph mediatype=%s quads=%s total_ms=%.1f",
+                    mediatype,
+                    len(store),
+                    total_ms,
+                )
+                return response
             except Exception as e:
                 log.error(f"Error serializing graph to {mediatype}: {e}")
                 raise HTTPException(
@@ -95,7 +105,15 @@ async def return_from_graph(
                     f"Error serializing graph to {mediatype}: {e}",
                 )
         else:
-            return await return_rdf(graph, mediatype, profile_headers)
+            response = await return_rdf(graph, mediatype, profile_headers)
+            total_ms = (time.perf_counter() - total_start) * 1000
+            log.debug(
+                "return_from_graph rdf_rdflib mediatype=%s triples=%s total_ms=%.1f",
+                mediatype,
+                len(graph),
+                total_ms,
+            )
+            return response
 
     elif return_geojson:
         if query_params is not None:
@@ -188,17 +206,30 @@ async def return_from_graph(
             per_page,
         )
         content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
-        return StreamingResponse(content=content, media_type=mediatype)
+        total_ms = (time.perf_counter() - total_start) * 1000
+        log.debug(
+            "return_from_graph geojson mediatype=%s kind=%s total_ms=%.1f",
+            mediatype,
+            kind,
+            total_ms,
+        )
+        content_bytes = content.getvalue()
+        return Response(content=content_bytes, media_type=mediatype)
 
     else:
         if "anot+" in mediatype:
             non_anot_mediatype = mediatype.replace("anot+", "")
             if is_oxigraph:
                 store: OxiStore = graph
+                # This still returns an RDFlib graph of anotations, even when the store is an Oxigraph Store.
+                annotations_start = time.perf_counter()
                 annotations_store: OxiStore = await return_annotated_rdf_for_oxigraph(
                     store, repo, system_repo
                 )
+                annotations_ms = (time.perf_counter() - annotations_start) * 1000
+                merge_start = time.perf_counter()
                 store.bulk_extend(annotations_store)
+                merge_ms = (time.perf_counter() - merge_start) * 1000
                 oxigraph_prefixes = {
                     p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()
                 }
@@ -208,27 +239,65 @@ async def return_from_graph(
                 )
                 # TODO, what happens if the store has content in a named graph? This can only dump the default graph.
                 try:
+                    dump_start = time.perf_counter()
                     store.dump(
                         content,
                         oxigraph_format,
                         from_graph=OxiDefaultGraph(),
                         prefixes=oxigraph_prefixes,
                     )
+                    dump_ms = (time.perf_counter() - dump_start) * 1000
                 except Exception as e:
                     for p, n in oxigraph_prefixes.items():
                         print(f"{p} = {n}")
                     print(f"Error serializing graph to {non_anot_mediatype}: {e}")
                     raise
-                content.seek(0)  # Reset the stream position to the beginning
+                content_bytes = content.getvalue()
+                total_ms = (time.perf_counter() - total_start) * 1000
+                log.debug(
+                    "return_from_graph annotated_oxigraph mediatype=%s base_quads=%s annotation_quads=%s annotations_ms=%.1f merge_ms=%.1f dump_ms=%.1f total_ms=%.1f",
+                    non_anot_mediatype,
+                    len(store) - len(annotations_store),
+                    len(annotations_store),
+                    annotations_ms,
+                    merge_ms,
+                    dump_ms,
+                    total_ms,
+                )
+                log_timing_csv(
+                    "return_from_graph_annotated_oxigraph",
+                    mediatype=str(non_anot_mediatype),
+                    store_quads=len(store) - len(annotations_store),
+                    annotation_quads=len(annotations_store),
+                    annotations_ms=f"{annotations_ms:.1f}",
+                    merge_ms=f"{merge_ms:.1f}",
+                    dump_ms=f"{dump_ms:.1f}",
+                    total_ms=f"{total_ms:.1f}",
+                )
             else:
+                annotations_start = time.perf_counter()
                 annotations_graph = await return_annotated_rdf(graph, repo, system_repo)
+                annotations_ms = (time.perf_counter() - annotations_start) * 1000
                 graph.__iadd__(annotations_graph)
                 graph.namespace_manager = prefix_graph.namespace_manager
+                serialize_start = time.perf_counter()
                 content = io.BytesIO(
                     graph.serialize(format=non_anot_mediatype, encoding="utf-8")
                 )
-            return StreamingResponse(
-                content=content, media_type=non_anot_mediatype, headers=profile_headers
+                content_bytes = content.getvalue()
+                serialize_ms = (time.perf_counter() - serialize_start) * 1000
+                total_ms = (time.perf_counter() - total_start) * 1000
+                log.debug(
+                    "return_from_graph annotated_rdflib mediatype=%s annotations_ms=%.1f serialize_ms=%.1f total_ms=%.1f",
+                    non_anot_mediatype,
+                    annotations_ms,
+                    serialize_ms,
+                    total_ms,
+                )
+            return Response(
+                content=content_bytes,
+                media_type=non_anot_mediatype,
+                headers=profile_headers,
             )
 
         raise HTTPException(
@@ -248,18 +317,17 @@ def get_geojson_int_count(count_str: str):
 
 async def return_rdf(graph: Graph, mediatype, profile_headers):
     RDF_SERIALIZER_TYPES_MAP["text/anot+turtle"] = "turtle"
-    obj = io.BytesIO(
-        graph.serialize(
-            format=RDF_SERIALIZER_TYPES_MAP[str(mediatype)], encoding="utf-8"
-        )
+    content = graph.serialize(
+        format=RDF_SERIALIZER_TYPES_MAP[str(mediatype)], encoding="utf-8"
     )
     profile_headers["Content-Disposition"] = "inline"
-    return StreamingResponse(content=obj, media_type=mediatype, headers=profile_headers)
+    return Response(content=content, media_type=mediatype, headers=profile_headers)
 
 
 async def return_rdf_from_oxigraph(
     store: OxiStore, mediatype, profile_headers, prefixes: dict[str, str] = None
 ):
+    dump_start = time.perf_counter()
 
     if mediatype == "text/anot+turtle":
         serializer_format = RdfFormat.TURTLE
@@ -273,11 +341,22 @@ async def return_rdf_from_oxigraph(
     store.dump(
         io_obj, serializer_format, from_graph=OxiDefaultGraph(), prefixes=prefixes
     )
-    io_obj.seek(0)  # Reset the stream position to the beginning
+    content = io_obj.getvalue()
     profile_headers["Content-Disposition"] = "inline"
-    return StreamingResponse(
-        content=io_obj, media_type=mediatype, headers=profile_headers
+    dump_ms = (time.perf_counter() - dump_start) * 1000
+    log.debug(
+        "return_rdf_from_oxigraph mediatype=%s quads=%s dump_ms=%.1f",
+        mediatype,
+        len(store),
+        dump_ms,
     )
+    log_timing_csv(
+        "return_rdf_from_oxigraph",
+        mediatype=str(mediatype),
+        store_quads=len(store),
+        dump_ms=f"{dump_ms:.1f}",
+    )
+    return Response(content=content, media_type=mediatype, headers=profile_headers)
 
 
 async def return_annotated_rdf(
@@ -302,14 +381,29 @@ async def return_annotated_rdf_for_oxigraph(
     system_repo: Repo,
 ) -> OxiStore:
     t_start = time.time()
+    log.debug(
+        f"Starting annotation lookup for Oxigraph store (store_quads={len(store)})"
+    )
+    first_pass_start = time.time()
     annotations_store = await get_annotation_properties_for_oxigraph(
         store, repo, system_repo
     )
+    log.debug(
+        f"Time to get first-pass annotations: {time.time() - first_pass_start} "
+        f"(annotation_quads={len(annotations_store)})"
+    )
     # get annotations for annotations - no need to do this recursively
+    second_pass_start = time.time()
     annotations_store_2 = await get_annotation_properties_for_oxigraph(
         annotations_store, repo, system_repo
     )
+    log.debug(
+        f"Time to get second-pass annotations: {time.time() - second_pass_start} "
+        f"(annotation_quads={len(annotations_store_2)})"
+    )
+    merge_start = time.time()
     annotations_store.bulk_extend(annotations_store_2)
+    log.debug(f"Time to merge annotation stores: {time.time() - merge_start}")
     log.debug(f"Time to get annotations: {time.time() - t_start}")
     return annotations_store
 
@@ -545,7 +639,7 @@ async def handle_alt_profile(original_endpoint_type, pmts):
         ONT["ListingEndpoint"]: URIRef("http://example.org/ns#AltProfilesForListing"),
     }
     endpoint_uri = endpoint_nodeshape_map[original_endpoint_type]
-    endpoint_nodeshape = NodeShape(
+    endpoint_nodeshape = get_nodeshape(
         uri=endpoint_uri,
         graph=endpoints_graph_cache,
         kind="endpoint",
@@ -578,6 +672,7 @@ async def generate_queryables_from_shacl_definition(
     query = """
     PREFIX cql: <http://www.opengis.net/doc/IS/cql2/1.0/>
     PREFIX dcterms: <http://purl.org/dc/terms/>
+    PREFIX prez: <https://prez.dev/ont/>
     PREFIX sh: <http://www.w3.org/ns/shacl#>
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     CONSTRUCT {
@@ -585,7 +680,14 @@ async def generate_queryables_from_shacl_definition(
     	cql:name ?title ;
     	cql:description ?description ;
     	cql:datatype ?type ;
-    	cql:enum ?enums .
+    	cql:enum ?enums ;
+        prez:facetable ?facetable ;
+        prez:sortable ?sortable ;
+        prez:defaultSearch ?defaultSearch ;
+        prez:multiValued ?multiValued ;
+        prez:stored ?stored ;
+        prez:indexed ?indexed ;
+        prez:luceneFieldType ?luceneFieldType .
     }
     WHERE {?queryable a cql:Queryable ;
         dcterms:identifier ?id ;
@@ -593,6 +695,13 @@ async def generate_queryables_from_shacl_definition(
         sh:description ?description ;
         sh:datatype ?type .
         OPTIONAL { ?queryable sh:in/rdf:rest*/rdf:first ?enums }
+        OPTIONAL { ?queryable prez:facetable ?facetable }
+        OPTIONAL { ?queryable prez:sortable ?sortable }
+        OPTIONAL { ?queryable prez:defaultSearch ?defaultSearch }
+        OPTIONAL { ?queryable prez:multiValued ?multiValued }
+        OPTIONAL { ?queryable prez:stored ?stored }
+        OPTIONAL { ?queryable prez:indexed ?indexed }
+        OPTIONAL { ?queryable prez:luceneFieldType ?luceneFieldType }
     }
     """
     g, _ = await system_repo.send_queries([query], [])
@@ -621,6 +730,106 @@ async def generate_queryables_from_shacl_definition(
         )  # enums are optional.
         if enum:
             queryable_props[id_value]["enum"] = [enum_item["@id"] for enum_item in enum]
+        facetable = item.get("https://prez.dev/ont/facetable")
+        if facetable and facetable[0].get("@value") in [True, "true", "True", 1, "1"]:
+            queryable_props[id_value]["x-prez-facetable"] = True
+        sortable = item.get("https://prez.dev/ont/sortable")
+        if sortable and sortable[0].get("@value") in [
+            True,
+            "true",
+            "True",
+            1,
+            "1",
+            False,
+            "false",
+            "False",
+            0,
+            "0",
+        ]:
+            queryable_props[id_value]["x-prez-sortable"] = sortable[0]["@value"] in [
+                True,
+                "true",
+                "True",
+                1,
+                "1",
+            ]
+        default_search = item.get("https://prez.dev/ont/defaultSearch")
+        if default_search and default_search[0].get("@value") in [
+            True,
+            "true",
+            "True",
+            1,
+            "1",
+            False,
+            "false",
+            "False",
+            0,
+            "0",
+        ]:
+            queryable_props[id_value]["x-prez-default-search"] = default_search[0][
+                "@value"
+            ] in [True, "true", "True", 1, "1"]
+        multi_valued = item.get("https://prez.dev/ont/multiValued")
+        if multi_valued and multi_valued[0].get("@value") in [
+            True,
+            "true",
+            "True",
+            1,
+            "1",
+            False,
+            "false",
+            "False",
+            0,
+            "0",
+        ]:
+            queryable_props[id_value]["x-prez-multi-valued"] = multi_valued[0][
+                "@value"
+            ] in [True, "true", "True", 1, "1"]
+        stored = item.get("https://prez.dev/ont/stored")
+        if stored and stored[0].get("@value") in [
+            True,
+            "true",
+            "True",
+            1,
+            "1",
+            False,
+            "false",
+            "False",
+            0,
+            "0",
+        ]:
+            queryable_props[id_value]["x-prez-stored"] = stored[0]["@value"] in [
+                True,
+                "true",
+                "True",
+                1,
+                "1",
+            ]
+        indexed = item.get("https://prez.dev/ont/indexed")
+        if indexed and indexed[0].get("@value") in [
+            True,
+            "true",
+            "True",
+            1,
+            "1",
+            False,
+            "false",
+            "False",
+            0,
+            "0",
+        ]:
+            queryable_props[id_value]["x-prez-indexed"] = indexed[0]["@value"] in [
+                True,
+                "true",
+                "True",
+                1,
+                "1",
+            ]
+        lucene_field_type = item.get("https://prez.dev/ont/luceneFieldType")
+        if lucene_field_type:
+            queryable_props[id_value]["x-prez-lucene-field-type"] = lucene_field_type[
+                0
+            ]["@value"]
     if endpoint_uri == OGCFEAT["queryables-global"]:
         title = "Global Queryables"
         description = (

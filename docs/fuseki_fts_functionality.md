@@ -44,6 +44,59 @@ Reference the property shape using its `dcterms:identifier` in the `predicates` 
 
 This will search for "geology" in `rdf:value` literals, but return search result IRIs that are connected through the `po:contains / po:contains` path.
 
+## Grouping Property Shapes (Union)
+
+Sometimes users want a **named bundle** of multiple FTS property shapes that should be **UNIONed** together, so they can reference the bundle with a single `predicates=` value instead of repeating multiple parameters.
+
+SHACL provides `sh:union`/`sh:or` for *node expressions*, but for Prez FTS we want a declarative container that means “treat these property shapes as UNION branches in the generated search query”.
+
+### Recommended extension (Prez-specific)
+
+Define a **union container** that lists member FTS property shapes. Each member remains a normal `ont:JenaFTSPropertyShape` with its own `sh:path` and `ont:searchPredicate`.
+
+```turtle
+@prefix ont: <https://prez.dev/ont/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <http://example.com/> .
+
+ex:InterestingObjects
+    a ont:JenaFTSUnionShape ;
+    dcterms:identifier "interesting_objects" ;
+    sh:union (
+        ex:NameSearch
+        ex:TitleSearch
+        ex:IdentifierSearch
+    ) .
+
+ex:NameSearch
+    a ont:JenaFTSPropertyShape ;
+    sh:path ex:hasName ;
+    ont:searchPredicate <http://www.w3.org/2000/01/rdf-schema#label> ;
+    dcterms:identifier "name_search" .
+
+ex:TitleSearch
+    a ont:JenaFTSPropertyShape ;
+    sh:path ex:hasTitle ;
+    ont:searchPredicate <http://purl.org/dc/terms/title> ;
+    dcterms:identifier "title_search" .
+```
+
+**Intended semantics:** each member property shape becomes its own UNION branch in the generated FTS query.
+
+### When `sh:alternativePath` is enough
+
+If you only need a union of **paths** that share the **same** `ont:searchPredicate`, you can use a standard SHACL `sh:alternativePath` inside a single property shape, e.g.:
+
+```turtle
+ex:AltPathSearch
+    a ont:JenaFTSPropertyShape ;
+    sh:path [ sh:alternativePath ( ex:firstName ex:givenName ) ] ;
+    ont:searchPredicate <http://www.w3.org/2000/01/rdf-schema#label> ;
+    dcterms:identifier "alt_name" .
+```
+
+This is a true property-path union and does not require multiple UNION branches.
+
 ## Predicates Parameter Values
 
 The `predicates` parameter accepts:

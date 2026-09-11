@@ -1,8 +1,10 @@
 import asyncio
 import copy
+import hashlib
 import io
 import json
 import logging
+import time
 
 from fastapi.responses import PlainTextResponse
 from oxrdflib._converter import to_ox
@@ -17,8 +19,8 @@ from pyoxigraph import (
 )
 from rdf2geojson import convert
 from rdflib import Literal, Namespace
-from rdflib.namespace import GEO, RDF, PROF
-from sparql_grammar_pydantic import (
+from rdflib.namespace import GEO, RDF, PROF, RDFS, XSD
+from sparql_grammar import (
     IRI,
     TriplesSameSubject,
     Var,
@@ -31,12 +33,14 @@ from sparql_grammar_pydantic import (
     SolutionModifier,
     SubSelect,
     LimitOffsetClauses,
-    LimitClause,
-    OffsetClause,
+    GroupOrUnionGraphPattern,
 )
+
+from aiocache import caches
 
 from prez.cache import prefix_graph
 from prez.config import settings
+from prez.dependencies import DummySearchMarker
 from prez.enums import NonAnnotatedRDFMediaType, AnnotatedRDFMediaType
 from prez.reference_data.prez_ns import ALTREXT, OGCFEAT, PREZ
 from prez.renderers.renderer import (
@@ -55,15 +59,68 @@ from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.generate_queryables import generate_queryables_json
 from prez.services.link_generation import add_prez_links_for_oxigraph
 from prez.services.query_generation.count import CountQuery
-from prez.services.query_generation.facet import FacetQuery
+from prez.services.query_generation.facet import (
+    FacetQuery,
+    extract_lucene_facets_from_profile,
+    get_facet_profile_uri_from_qsa,
+)
+from prez.services.query_generation.search_jena_lucene import SearchQueryJenaLucene
 from prez.services.query_generation.umbrella import (
     PrezQueryConstructor,
     merge_listing_query_grammar_inputs,
 )
+from prez.services.timing_csv import log_timing_csv
 
 log = logging.getLogger(__name__)
 
 DWC = Namespace("http://rs.tdwg.org/dwc/terms/")
+
+
+def _suppress_nan_lucene_weights(item_store: OxiStore) -> None:
+    weight_pred = OxiNamedNode(PREZ.searchResultWeight)
+    nan_datatypes = {str(XSD.float), str(XSD.double)}
+    to_remove = []
+    for quad in item_store.quads_for_pattern(None, weight_pred, None, None):
+        obj = quad.object
+        if (
+            isinstance(obj, OxiLiteral)
+            and obj.value == "NaN"
+            and obj.datatype is not None
+            and obj.datatype.value in nan_datatypes
+        ):
+            to_remove.append(quad)
+    for quad in to_remove:
+        item_store.remove(quad)
+
+
+async def warm_queryables_cache(data_repo: Repo, system_repo: Repo) -> None:
+    """
+    Pre-warm the queryables cache at startup for performance.
+    Generates and caches gzipped queryables for common RDF mediatypes.
+    """
+    import time
+
+    mediatypes_to_warm = [
+        "text/anot+turtle",  # Most common annotated format
+        "text/turtle",  # Most common non-annotated format
+    ]
+
+    for mediatype in mediatypes_to_warm:
+        log.info(f"Warming queryables cache for {mediatype}...")
+        t0 = time.perf_counter()
+        try:
+            await handle_queryables_rdf_response(
+                endpoint_uri=str(OGCFEAT["queryables-global"]),
+                collection_uri=None,
+                selected_mediatype=mediatype,
+                data_repo=data_repo,
+                system_repo=system_repo,
+                accept_encoding="gzip",  # Pre-compress for cache
+            )
+            t1 = time.perf_counter()
+            log.info(f"Warmed queryables cache for {mediatype} in {(t1-t0)*1000:.1f}ms")
+        except Exception as e:
+            log.warning(f"Failed to warm queryables cache for {mediatype}: {e}")
 
 
 async def extract_queryables_rdf(system_repo: Repo):
@@ -76,6 +133,120 @@ async def extract_queryables_rdf(system_repo: Repo):
         [describe_query], [], return_oxigraph_store=True
     )
     return queryables_store
+
+
+async def handle_queryables_rdf_response(
+    endpoint_uri: str,
+    collection_uri: str | None,
+    selected_mediatype: str,
+    data_repo: Repo,
+    system_repo: Repo,
+    accept_encoding: str | None = None,
+) -> tuple[io.BytesIO, dict | None] | None:
+    """
+    Handle queryables RDF responses with caching.
+
+    Returns (content, headers) if this is a queryables RDF request.
+    Returns None if this is not a queryables RDF request (caller should continue normal flow).
+
+    If the client supports gzip (via Accept-Encoding header), returns pre-gzipped cached bytes.
+    Otherwise, falls back to non-cached serialization for compatibility.
+    """
+    import gzip
+    import time
+
+    # Only handle RDF mediatypes for queryables
+    if not (
+        selected_mediatype in NonAnnotatedRDFMediaType
+        or selected_mediatype in AnnotatedRDFMediaType
+    ):
+        return None
+
+    # Check if client supports gzip
+    supports_gzip = accept_encoding and "gzip" in accept_encoding.lower()
+
+    if supports_gzip:
+        # Check cache for gzipped content
+        t0 = time.perf_counter()
+        queryables_cache = caches.get("queryables")
+        cache_key = f"{endpoint_uri}:{collection_uri}:{selected_mediatype}"
+        cached_content = await queryables_cache.get(cache_key)
+        t1 = time.perf_counter()
+        log.info(f"TIMING: Cache lookup took {(t1-t0)*1000:.1f}ms")
+
+        if cached_content is not None:
+            log.info(
+                f"TIMING: Cache HIT for {cache_key}, returning {len(cached_content)} gzipped bytes"
+            )
+            return io.BytesIO(cached_content), {"Content-Encoding": "gzip"}
+    else:
+        log.info("Client does not support gzip, skipping cache")
+
+    # Cache miss - do the expensive work
+    log.info(f"TIMING: Cache MISS - doing expensive queryables serialization")
+
+    # Extract queryables RDF from the system store
+    t0 = time.perf_counter()
+    queryables_store = await extract_queryables_rdf(system_repo)
+    t1 = time.perf_counter()
+    log.info(f"TIMING: extract_queryables_rdf took {(t1-t0)*1000:.1f}ms")
+
+    # Handle annotated vs non-annotated RDF
+    if selected_mediatype in AnnotatedRDFMediaType:
+        serialization_format = selected_mediatype.replace("anot+", "")
+        t2 = time.perf_counter()
+        specific_annotations_store = await return_annotated_rdf_for_oxigraph(
+            queryables_store, data_repo, system_repo
+        )
+        queryables_store.bulk_extend(specific_annotations_store)
+        t3 = time.perf_counter()
+        log.info(f"TIMING: annotations for queryables took {(t3-t2)*1000:.1f}ms")
+    else:
+        serialization_format = selected_mediatype
+
+    # Get the Oxigraph serializer format
+    serializer_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(
+        serialization_format, RdfFormat.N_TRIPLES
+    )
+
+    # Get prefixes for serialization
+    oxigraph_prefixes = {
+        p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()
+    }
+
+    t4 = time.perf_counter()
+    content = io.BytesIO()
+    queryables_store.dump(
+        content,
+        serializer_format,
+        from_graph=OxiDefaultGraph(),
+        prefixes=oxigraph_prefixes,
+    )
+    content.seek(0)
+    t5 = time.perf_counter()
+    log.info(f"TIMING: queryables serialization took {(t5-t4)*1000:.1f}ms")
+
+    # If client supports gzip, compress, cache, and return gzipped
+    if supports_gzip:
+        t6 = time.perf_counter()
+        raw_bytes = content.getvalue()
+        gzipped_bytes = gzip.compress(raw_bytes)
+        t7 = time.perf_counter()
+        log.info(
+            f"TIMING: gzip compression took {(t7-t6)*1000:.1f}ms "
+            f"({len(raw_bytes)} -> {len(gzipped_bytes)} bytes, "
+            f"{len(gzipped_bytes)/len(raw_bytes)*100:.1f}%)"
+        )
+
+        # Cache the gzipped bytes
+        queryables_cache = caches.get("queryables")
+        cache_key = f"{endpoint_uri}:{collection_uri}:{selected_mediatype}"
+        await queryables_cache.set(cache_key, gzipped_bytes)
+
+        return io.BytesIO(gzipped_bytes), {"Content-Encoding": "gzip"}
+    else:
+        # Return raw content without caching for non-gzip clients
+        return content, None
 
 
 async def listing_profiles(
@@ -158,7 +329,9 @@ async def listing_function(
     query_params,
     original_endpoint_type,
     url,
+    extra_rdf_queries: list[str] | None = None,
 ):
+    total_start = time.perf_counter()
     if (
         pmts.selected["profile"] == ALTREXT["alt-profile"]
     ):  # recalculate the endpoint node shape
@@ -193,91 +366,101 @@ async def listing_function(
     if "anot+" in pmts.selected["mediatype"]:
         construct_tss_list.append(
             TriplesSameSubject.from_spo(
-                subject=profile_nodeshape.focus_node,
-                predicate=IRI(value="https://prez.dev/type"),
-                object=IRI(value="https://prez.dev/FocusNode"),
+                profile_nodeshape.focus_node,
+                IRI(value="https://prez.dev/type"),
+                IRI(value="https://prez.dev/FocusNode"),
             )
         )
 
     hits_response = query_params.result_type == "hits"
-    main_query = PrezQueryConstructor(
-        construct_tss_list=construct_tss_list,
-        profile_triples=profile_nodeshape.tssp_list,
-        profile_gpnt=profile_nodeshape.gpnt_list,
-        **subselect_kwargs,
-    )
-    queries: list[str] = []
+    # Resolve Lucene facets from facet_profile before building the main query,
+    # so that SearchQueryJenaLucene.has_facets is true when we construct the combined query.
+    lucene_facet_profile_uri = None
+    if (
+        query_params.facet_profile
+        and isinstance(search_query, SearchQueryJenaLucene)
+        and not search_query.has_facets
+    ):
+        profile_uri = await get_facet_profile_uri_from_qsa(query_params.facet_profile)
+        if profile_uri:
+            lucene_facets = extract_lucene_facets_from_profile(profile_uri)
+            if lucene_facets is not None:
+                search_query.set_facets(lucene_facets)
+                lucene_facet_profile_uri = profile_uri
+
+    queries = []
+    main_query = None
+    if isinstance(search_query, SearchQueryJenaLucene) and search_query.has_facets:
+        main_query = search_query.build_combined_query(
+            construct_tss_list=construct_tss_list + search_query.facet_tss_list,
+            profile_triples=profile_nodeshape.tssp_list,
+            profile_gpnt=profile_nodeshape.gpnt_list,
+        )
+        main_query_str = main_query.to_string()
+    else:
+        main_query = PrezQueryConstructor(
+            construct_tss_list=construct_tss_list,
+            profile_triples=profile_nodeshape.tssp_list,
+            profile_gpnt=profile_nodeshape.gpnt_list,
+            **subselect_kwargs,
+        )
+        main_query_str = main_query.to_string()
     # add faceting query if requested
-    facet_profile_uri = None
     facets_query = None
-    if query_params.facet_profile:
+    facet_profile_uri = lucene_facet_profile_uri
+    if query_params.facet_profile and not lucene_facet_profile_uri:
+        # Non-Lucene path: build a SPARQL-based facet query from the profile's sh:property paths
         # Check if main query has a subselect, if not, create one with the `?focus_node a ?type` triple
         # This will allow the count query below to reuse the subselect preventing an error.
         if not hasattr(main_query, "inner_select") or main_query.inner_select is None:
             # Create the ?focus_node a ?type triple
             basic_triple = TriplesSameSubjectPath.from_spo(
-                subject=Var(value="focus_node"),
-                predicate=IRI(value="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
-                object=Var(value="type"),
+                Var(value="focus_node"),
+                IRI(value="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+                Var(value="type"),
             )
 
             # Create a new subselect with this triple
             basic_subselect = SubSelect(
-                select_clause=SelectClause(
-                    variables_or_all=[Var(value="focus_node")],
-                    distinct=True,
+                select_clause=SelectClause.create(
+                    Var(value="focus_node"), distinct=True
                 ),
                 where_clause=WhereClause(
-                    group_graph_pattern=GroupGraphPattern(
-                        content=GroupGraphPatternSub(
-                            triples_block=TriplesBlock.from_tssp_list([basic_triple])
-                        )
+                    GroupGraphPattern(
+                        GroupGraphPatternSub([TriplesBlock([basic_triple])])
                     )
                 ),
                 solution_modifier=SolutionModifier(
-                    limit_offset=LimitOffsetClauses(
-                        limit_clause=LimitClause(limit=settings.listing_count_limit),
-                        offset_clause=OffsetClause(offset=0),
+                    limit_offset=LimitOffsetClauses.create(
+                        limit=settings.listing_count_limit, offset=0
                     )
                 ),
             )
 
             # Add the subselect to the main query's where clause
-            from sparql_grammar_pydantic import (
+            from sparql_grammar import (
                 GraphPatternNotTriples,
                 GroupOrUnionGraphPattern,
             )
 
-            subselect_gpnt = GraphPatternNotTriples(
-                content=GroupOrUnionGraphPattern(
-                    group_graph_patterns=[GroupGraphPattern(content=basic_subselect)]
-                )
+            subselect_gpnt = GroupOrUnionGraphPattern(
+                [GroupGraphPattern(basic_subselect)]
             )
 
             # Insert the subselect at the beginning of the where clause
-            if hasattr(
-                main_query.where_clause.group_graph_pattern.content,
-                "graph_patterns_or_triples_blocks",
-            ):
-                main_query.where_clause.group_graph_pattern.content.graph_patterns_or_triples_blocks.insert(
-                    0, subselect_gpnt
-                )
+            main_query.where_clause.group_graph_pattern.content.add_pattern(
+                subselect_gpnt, prepend=True
+            )
 
         facet_profile_uri, facets_query = await FacetQuery.create_facets_query(
             main_query, query_params
         )
 
-    # Determine whether to run main query and count query based on LISTING_COUNT_ON_DEMAND setting
-    if settings.listing_count_on_demand:
-        # On-demand mode: similar to OGC features logic
-        # - If hits_response, skip main query and only do count
-        # - If not hits_response, do main query but skip count (unless GeoJSON)
-        if not hits_response:
-            queries.append(main_query.to_string())
-    else:
-        # Original behavior: always add main query unless it's a hits request
-        if not hits_response:
-            queries.append(main_query.to_string())
+    # A hits request asks only for the count, so the main query is not run for it.
+    if not hits_response:
+        queries.append(main_query_str)
+        if extra_rdf_queries:
+            queries.extend(query for query in extra_rdf_queries if query)
 
     if facets_query:
         queries.append(facets_query.to_string())
@@ -286,8 +469,12 @@ async def listing_function(
     if (
         ("anot+" in pmts.selected["mediatype"] and not search_query)
         or (return_geojson and "human" in profile_nodeshape.uri.lower())
-        or (search_query and settings.search_uses_listing_count_limit)
-        or hits_response  # Always include count for hits requests (even non-annotated mediatypes)
+        or (
+            search_query
+            and not isinstance(search_query, SearchQueryJenaLucene)
+            and settings.search_uses_listing_count_limit
+        )
+        or hits_response  # a hits request is a request for the count itself
     ):
         # When LISTING_COUNT_ON_DEMAND is enabled, apply conditional logic similar to OGC features
         if settings.listing_count_on_demand:
@@ -306,18 +493,26 @@ async def listing_function(
         pmts.requested_mediatypes is not None
         and pmts.requested_mediatypes[0][0] == "application/sparql-query"
     ):
-        if len(queries) == 0 and count_query is not None:
-            resp_bytes: bytes = count_query.encode("utf-8")
-        elif len(queries) > 0:
-            resp_bytes = queries[0].encode("utf-8")
-        else:
-            resp_bytes = b"No Queries Generated"
-        return PlainTextResponse(resp_bytes, media_type="application/sparql-query")
+        # Every query the request would send, in the order it would send them. A hits
+        # request has only the count, so that is what comes back as query 1.
+        to_send = queries + ([count_query] if count_query is not None else [])
+        if not to_send:
+            return PlainTextResponse(
+                "No Queries Generated", media_type="application/sparql-query"
+            )
+        return PlainTextResponse(
+            "\n\n".join(
+                f"# Query {index}\n{query}"
+                for index, query in enumerate(to_send, start=1)
+            ),
+            media_type="application/sparql-query",
+        )
 
     if count_query is not None:
         # add the count query to the list, so it can be sent in parallel
         queries.append(count_query)
 
+    query_start_time = time.perf_counter()
     item_store: OxiStore
     if len(queries) > 0:
         item_store, _ = await query_repo.send_queries(
@@ -326,6 +521,20 @@ async def listing_function(
     else:
         # Dummy empty store, if there are no queries to run
         item_store = OxiStore()
+    log.debug(
+        f"Listing query time: {time.perf_counter() - query_start_time} "
+        f"(queries={len(queries)}, mediatype={pmts.selected['mediatype']}, store_quads={len(item_store)})"
+    )
+    log_timing_csv(
+        "listing_query",
+        mediatype=pmts.selected["mediatype"],
+        profile=str(pmts.selected["profile"]),
+        queries=len(queries),
+        store_quads=len(item_store),
+        elapsed_ms=f"{(time.perf_counter() - query_start_time) * 1000:.1f}",
+    )
+    if isinstance(search_query, SearchQueryJenaLucene):
+        _suppress_nan_lucene_weights(item_store)
     default = OxiDefaultGraph()
     if facet_profile_uri:
         item_store.add(
@@ -345,10 +554,93 @@ async def listing_function(
                 default,
             )
         )
+        link_generation_start = time.perf_counter()
+        log.debug(
+            f"Starting Prez link generation for listing response "
+            f"(store_quads={len(item_store)}, mediatype={pmts.selected['mediatype']})"
+        )
         await add_prez_links_for_oxigraph(item_store, query_repo, endpoint_structure)
+        log.debug(
+            f"Listing Prez link generation time: {time.perf_counter() - link_generation_start}"
+        )
+        log_timing_csv(
+            "listing_link_generation",
+            mediatype=pmts.selected["mediatype"],
+            profile=str(pmts.selected["profile"]),
+            store_quads=len(item_store),
+            elapsed_ms=f"{(time.perf_counter() - link_generation_start) * 1000:.1f}",
+        )
+
+        # Inject dummy search results for non-text search requests
+        if isinstance(search_query, DummySearchMarker):
+            # Extract all focus nodes from the result store
+            focus_node_quads = list(
+                item_store.quads_for_pattern(
+                    None, OxiNamedNode(PREZ["type"]), OxiNamedNode(PREZ.FocusNode), None
+                )
+            )
+
+            # Create a dummy search result for each focus node
+            for focus_node_quad in focus_node_quads:
+                # focus_node_quad.subject is already an OxiNamedNode
+                focus_node = focus_node_quad.subject
+                focus_node_uri = (
+                    focus_node.value
+                )  # Get the URI string without angle brackets
+
+                # Create a unique hash ID for this dummy search result
+                hash_input = f"{focus_node_uri}:dummy"
+                hash_digest = hashlib.sha256(hash_input.encode()).hexdigest()
+                dummy_search_result_uri = f"urn:hash:{hash_digest}"
+
+                # Add dummy search result quads
+                item_store.add(
+                    OxiQuad(
+                        OxiNamedNode(dummy_search_result_uri),
+                        OxiNamedNode(RDF.type),
+                        OxiNamedNode(PREZ.SearchResult),
+                        default,
+                    )
+                )
+                item_store.add(
+                    OxiQuad(
+                        OxiNamedNode(dummy_search_result_uri),
+                        OxiNamedNode(PREZ.searchResultURI),
+                        focus_node,  # Use the OxiNamedNode directly
+                        default,
+                    )
+                )
+                item_store.add(
+                    OxiQuad(
+                        OxiNamedNode(dummy_search_result_uri),
+                        OxiNamedNode(PREZ.searchResultMatch),
+                        OxiLiteral(""),
+                        default,
+                    )
+                )
+                item_store.add(
+                    OxiQuad(
+                        OxiNamedNode(dummy_search_result_uri),
+                        OxiNamedNode(PREZ.searchResultPredicate),
+                        OxiNamedNode(RDFS.label),
+                        default,
+                    )
+                )
+                item_store.add(
+                    OxiQuad(
+                        OxiNamedNode(dummy_search_result_uri),
+                        OxiNamedNode(PREZ.searchResultWeight),
+                        OxiLiteral("0"),
+                        default,
+                    )
+                )
 
     # count search results - hard to do in SPARQL as the SELECT part of the query is NOT aggregated
-    if search_query and not settings.search_uses_listing_count_limit:
+    if (
+        search_query
+        and not isinstance(search_query, (DummySearchMarker, SearchQueryJenaLucene))
+        and not settings.search_uses_listing_count_limit
+    ):
         count = len(
             list(
                 item_store.quads_for_pattern(
@@ -369,7 +661,25 @@ async def listing_function(
                 default,
             )
         )
-    return await return_from_graph(
+    elif isinstance(search_query, DummySearchMarker):
+        # For dummy search results, count them and add the count
+        count = len(
+            list(
+                item_store.quads_for_pattern(
+                    None, OxiNamedNode(RDF.type), OxiNamedNode(PREZ.SearchResult), None
+                )
+            )
+        )
+        item_store.add(
+            OxiQuad(
+                OxiNamedNode(PREZ.SearchResult),
+                OxiNamedNode(PREZ["count"]),
+                OxiLiteral(str(count)),
+                default,
+            )
+        )
+    render_start = time.perf_counter()
+    response = await return_from_graph(
         item_store,
         pmts.selected["mediatype"],
         pmts.selected["profile"],
@@ -380,6 +690,27 @@ async def listing_function(
         query_params,
         url,
     )
+    render_ms = (time.perf_counter() - render_start) * 1000
+    total_ms = (time.perf_counter() - total_start) * 1000
+    log.debug(
+        "listing_function complete mediatype=%s profile=%s queries=%s store_quads=%s render_ms=%.1f total_ms=%.1f",
+        pmts.selected["mediatype"],
+        pmts.selected["profile"],
+        len(queries),
+        len(item_store),
+        render_ms,
+        total_ms,
+    )
+    log_timing_csv(
+        "listing_function_complete",
+        mediatype=pmts.selected["mediatype"],
+        profile=str(pmts.selected["profile"]),
+        queries=len(queries),
+        store_quads=len(item_store),
+        render_ms=f"{render_ms:.1f}",
+        total_ms=f"{total_ms:.1f}",
+    )
+    return response
 
 
 async def ogc_features_listing_function(
@@ -393,7 +724,9 @@ async def ogc_features_listing_function(
     cql_parser,
     query_params,
     path_params,
+    accept_encoding: str | None = None,
 ):
+    total_start = time.perf_counter()
     count_query = None
     collection_uri = path_params.get("collection_uri")
     subselect_kwargs = merge_listing_query_grammar_inputs(
@@ -412,10 +745,23 @@ async def ogc_features_listing_function(
     return_geojson = selected_mediatype == "application/geo+json"
     queries = []
     queryables = None
+    build_start = time.perf_counter()
     if endpoint_uri_type[0] in [
         OGCFEAT["queryables-local"],
         OGCFEAT["queryables-global"],
     ]:
+        # Handle queryables RDF responses with caching (returns early if cached or RDF mediatype)
+        queryables_result = await handle_queryables_rdf_response(
+            endpoint_uri=endpoint_uri_type[0],
+            collection_uri=collection_uri,
+            selected_mediatype=selected_mediatype,
+            data_repo=data_repo,
+            system_repo=system_repo,
+            accept_encoding=accept_encoding,
+        )
+        if queryables_result is not None:
+            return queryables_result
+
         queryables = await generate_queryables_from_shacl_definition(
             url, endpoint_uri_type[0], system_repo
         )
@@ -483,6 +829,16 @@ async def ogc_features_listing_function(
             subselect = copy.deepcopy(feature_list_query.inner_select)
             count_query = CountQuery(original_subselect=subselect).to_string()
     link_headers = None
+    build_ms = (time.perf_counter() - build_start) * 1000
+    log.debug(
+        "ogc_features_listing built mediatype=%s profile=%s collection_uri=%s queries=%s has_count_query=%s build_ms=%.1f",
+        selected_mediatype,
+        getattr(profile_nodeshape, "uri", None),
+        collection_uri,
+        len(queries),
+        bool(count_query),
+        build_ms,
+    )
     if selected_mediatype == "application/sparql-query":
         # For a hits query, the queries list might be empty
         if len(queries) == 0 and count_query is not None:
@@ -496,6 +852,7 @@ async def ogc_features_listing_function(
         return content, link_headers
 
     item_store: OxiStore | None
+    main_query_start = time.perf_counter()
     if len(queries) == 0:
         # No main query.
         main_query_task = None
@@ -517,10 +874,18 @@ async def ogc_features_listing_function(
     else:
         # No store, we can only return known metadata
         item_store = None
+    log.debug(
+        "ogc_features_listing main_query mediatype=%s store_quads=%s elapsed_ms=%.1f",
+        selected_mediatype,
+        len(item_store) if item_store is not None else 0,
+        (time.perf_counter() - main_query_start) * 1000,
+    )
     matched_count: int | None = None
     if count_query_task is not None:
         count_store: OxiStore
+        count_await_start = time.perf_counter()
         count_store, _ = await count_query_task
+        count_await_ms = (time.perf_counter() - count_await_start) * 1000
         if count_store is not None:
             # Assuming this response returns only a single triple,
             # and we extract just the object node from that triple
@@ -532,7 +897,13 @@ async def ogc_features_listing_function(
                 break
             else:
                 matched_count = 0
-
+        log.debug(
+            "ogc_features_listing count_query mediatype=%s count=%s count_quads=%s await_ms=%.1f",
+            selected_mediatype,
+            matched_count,
+            len(count_store) if count_store is not None else 0,
+            count_await_ms,
+        )
     # only need the annotations for mediatypes of application/json or annotated mediatypes
     annotations_store: OxiStore | None = None
     if (
@@ -544,53 +915,19 @@ async def ogc_features_listing_function(
             # No item store, so no annotations possible
             annotations_store = None
         else:
-            # This still returns an RDFlib graph of anotations,
-            # even when the store is an Oxigraph Store.
+            # This still returns an RDFlib graph of annotations, even when the store
+            # is an Oxigraph Store.
+            annotations_start = time.perf_counter()
             annotations_store = await return_annotated_rdf_for_oxigraph(
                 item_store, data_repo, system_repo
             )
-
-    # Handle queryables RDF responses
-    if endpoint_uri_type[0] in [
-        OGCFEAT["queryables-local"],
-        OGCFEAT["queryables-global"],
-    ] and (
-        selected_mediatype in NonAnnotatedRDFMediaType
-        or selected_mediatype in AnnotatedRDFMediaType
-    ):
-        # Extract queryables RDF from the system store using DESCRIBE query
-        queryables_store = await extract_queryables_rdf(system_repo)
-
-        # Handle annotated vs non-annotated RDF
-        if selected_mediatype in AnnotatedRDFMediaType:
-            serialization_format = selected_mediatype.replace("anot+", "")
-            # Get specific annotations for the queryables data (not the entire annotations store)
-            specific_annotations_store = await return_annotated_rdf_for_oxigraph(
-                queryables_store, data_repo, system_repo
+            log.debug(
+                "ogc_features_listing annotations mediatype=%s annotation_quads=%s elapsed_ms=%.1f",
+                selected_mediatype,
+                len(annotations_store) if annotations_store is not None else 0,
+                (time.perf_counter() - annotations_start) * 1000,
             )
-            queryables_store.bulk_extend(specific_annotations_store)
-        else:
-            serialization_format = selected_mediatype
-
-        # Get the Oxigraph serializer format
-        serializer_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(
-            serialization_format, RdfFormat.N_TRIPLES
-        )
-
-        # Get prefixes for serialization
-        oxigraph_prefixes = {
-            p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()
-        }
-
-        content = io.BytesIO()
-        queryables_store.dump(
-            content,
-            serializer_format,
-            from_graph=OxiDefaultGraph(),
-            prefixes=oxigraph_prefixes,
-        )
-        content.seek(0)
-        return content, link_headers
+    item_graph = item_store  # treat the Oxigraph Store as a graph
 
     if selected_mediatype == "application/json":
         if endpoint_uri_type[0] in [
@@ -629,6 +966,12 @@ async def ogc_features_listing_function(
             content = io.BytesIO(
                 collections.model_dump_json(exclude_none=True).encode("utf-8")
             )
+        total_ms = (time.perf_counter() - total_start) * 1000
+        log.debug(
+            "ogc_features_listing response mediatype=%s branch=json total_ms=%.1f",
+            selected_mediatype,
+            total_ms,
+        )
 
     elif return_geojson:
         if "human" in profile_nodeshape.uri.lower():  # human readable profile
@@ -662,7 +1005,15 @@ async def ogc_features_listing_function(
             per_page,
         )
         content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
+        total_ms = (time.perf_counter() - total_start) * 1000
+        log.debug(
+            "ogc_features_listing response mediatype=%s branch=geojson total_ms=%.1f",
+            selected_mediatype,
+            total_ms,
+        )
     elif selected_mediatype in NonAnnotatedRDFMediaType:
+        item_store: OxiStore = item_graph
+        dump_start = time.perf_counter()
         serializer_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(
             str(selected_mediatype), RdfFormat.N_TRIPLES
         )
@@ -683,6 +1034,14 @@ async def ogc_features_listing_function(
             prefixes=oxigraph_prefixes,
         )
         content.seek(0)  # Reset the stream position to the beginning
+        dump_ms = (time.perf_counter() - dump_start) * 1000
+        total_ms = (time.perf_counter() - total_start) * 1000
+        log.debug(
+            "ogc_features_listing response mediatype=%s branch=non_annotated dump_ms=%.1f total_ms=%.1f",
+            selected_mediatype,
+            dump_ms,
+            total_ms,
+        )
 
     elif selected_mediatype in AnnotatedRDFMediaType:
         non_anot_mt = selected_mediatype.replace("anot+", "")
@@ -691,8 +1050,17 @@ async def ogc_features_listing_function(
             # Item store could be None, if no queries were generated
             item_store = OxiStore()
         if annotations_store is not None:
-            # Add the annotations to the store
+            merge_start = time.perf_counter()
             item_store.bulk_extend(annotations_store)
+            merge_ms = (time.perf_counter() - merge_start) * 1000
+        elif annotations_graph is not None:
+            # Add the annotations to the store
+            merge_start = time.perf_counter()
+            for s, p, o in annotations_graph.triples((None, None, None)):
+                item_store.add(OxiQuad(to_ox(s), to_ox(p), to_ox(o), default))
+            merge_ms = (time.perf_counter() - merge_start) * 1000
+        else:
+            merge_ms = 0.0
         serializer_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(
             str(non_anot_mt), RdfFormat.N_TRIPLES
         )
@@ -701,8 +1069,18 @@ async def ogc_features_listing_function(
         }
         content = io.BytesIO()
         # TODO, what happens if the store has content in a named graph? This can only dump the default graph.
+        dump_start = time.perf_counter()
         item_store.dump(
             content, serializer_format, from_graph=default, prefixes=oxigraph_prefixes
         )
         content.seek(0)  # Reset the stream position to the beginning
+        dump_ms = (time.perf_counter() - dump_start) * 1000
+        total_ms = (time.perf_counter() - total_start) * 1000
+        log.debug(
+            "ogc_features_listing response mediatype=%s branch=annotated merge_ms=%.1f dump_ms=%.1f total_ms=%.1f",
+            selected_mediatype,
+            merge_ms,
+            dump_ms,
+            total_ms,
+        )
     return content, link_headers
