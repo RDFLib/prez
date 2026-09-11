@@ -27,7 +27,11 @@ def build_store() -> tuple[Store, list[OxiNamedNode]]:
     """A store exercising each branch of the FILTER, plus terms with no annotations at all."""
     store = Store()
     default = DefaultGraph()
-    a, b, c = nn("https://example.com/a"), nn("https://example.com/b"), nn("https://example.com/c")
+    a, b, c = (
+        nn("https://example.com/a"),
+        nn("https://example.com/b"),
+        nn("https://example.com/c"),
+    )
     quads = [
         # the language filter
         Quad(a, nn(SKOS.prefLabel), Literal("A", language="en"), default),
@@ -45,7 +49,12 @@ def build_store() -> tuple[Store, list[OxiNamedNode]]:
         # a predicate that is not an annotation predicate
         Quad(b, nn("https://example.com/unrelated"), Literal("ignored"), default),
         # a named graph - invisible to a query without use_default_graph_as_union
-        Quad(c, nn(SKOS.prefLabel), Literal("C", language="en"), nn("https://example.com/g")),
+        Quad(
+            c,
+            nn(SKOS.prefLabel),
+            Literal("C", language="en"),
+            nn("https://example.com/g"),
+        ),
     ]
     for quad in quads:
         store.add(quad)
