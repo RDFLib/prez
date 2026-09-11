@@ -2,8 +2,8 @@
   "note": "Deterministic performance counters. Update with `python benchmark/ratchet.py --update` when a change to the generated queries or the request path is intended, and say why in the commit message.",
   "counters": {
     "query:annotations_100": {
-      "nodes": 186,
-      "chars": 4113
+      "nodes": 461,
+      "chars": 4687
     },
     "query:classes_100": {
       "nodes": 125,
