@@ -3,7 +3,7 @@ from unittest.mock import patch
 from pathlib import Path
 
 from rdflib import RDFS, Graph, URIRef, DCTERMS, RDF
-from sparql_grammar_pydantic import (
+from sparql_grammar import (
     GroupGraphPattern,
     GroupGraphPatternSub,
     GroupOrUnionGraphPattern,
@@ -50,12 +50,10 @@ def test_combo_query_gen():
     for inner_list in tspp_lists:
         ggp_list.append(
             GroupGraphPattern(
-                content=GroupGraphPatternSub(
-                    triples_block=TriplesBlock.from_tssp_list(inner_list)
-                )
+                GroupGraphPatternSub([TriplesBlock.from_tssp_list(inner_list)])
             )
         )
-    gougp = GroupOrUnionGraphPattern(group_graph_patterns=ggp_list)
+    gougp = GroupOrUnionGraphPattern(ggp_list)
     assert gougp
 
 
@@ -82,10 +80,85 @@ def test_bnode_filter():
         limit=10,
         offset=0,
         non_shacl_predicates=[RDFS.label, RDFS.comment],
-        shacl_tssp_preds=[(tssp_list, [RDFS.label])],
+        shacl_tssp_preds=[(tssp_list, [RDFS.label], None)],
     )
     query_string = query_obj.to_string()
-    assert "FILTER (! isBLANK(?focus_node))" in query_string
+    # Non-shacl predicates use direct focus_node + isIRI filter
+    assert "FILTER (isIRI(?focus_node))" in query_string
+    # SHACL paths still filter out blank focus nodes
+    assert "FILTER (!isBLANK(?focus_node))" in query_string
+
+
+def test_shacl_path_filter():
+    """Test that SHACL path triples include a !isBLANK focus node filter."""
+    tssp_list = [
+        TriplesSameSubjectPath.from_spo(
+            Var(value="fts_search_node_3"),
+            IRI(value="https://linked.data.gov.au/dataset/gswa/hasAgeName"),
+            Var(value="fts_search_node"),
+        ),
+        TriplesSameSubjectPath.from_spo(
+            Var(value="fts_search_node_2"),
+            IRI(value="https://schema.org/maxValue"),
+            Var(value="fts_search_node_3"),
+        ),
+        TriplesSameSubjectPath.from_spo(
+            Var(value="fts_search_node_1"),
+            IRI(value="http://www.w3.org/ns/sosa/hasResult"),
+            Var(value="fts_search_node_2"),
+        ),
+        TriplesSameSubjectPath.from_spo(
+            Var(value="fts_search_node_1"),
+            IRI(value="http://www.w3.org/ns/sosa/hasFeatureOfInterest"),
+            Var(value="focus_node"),
+        ),
+    ]
+    query_obj = SearchQueryFusekiFTS(
+        term="MN02",
+        limit=10,
+        offset=0,
+        shacl_tssp_preds=[(tssp_list, [RDFS.label], None)],
+        fts_limit=500,
+    )
+    query_string = query_obj.to_string()
+
+    # Verify the filter is present
+    assert "FILTER (!isBLANK(?focus_node))" in query_string
+
+    # Verify the triple patterns are present
+    assert "https://linked.data.gov.au/dataset/gswa/hasAgeName" in query_string
+    assert "https://schema.org/maxValue" in query_string
+    assert "http://www.w3.org/ns/sosa/hasResult" in query_string
+    assert "http://www.w3.org/ns/sosa/hasFeatureOfInterest" in query_string
+
+
+def test_fts_property_shape_class_constraint():
+    file = Path(__file__).parent.parent / "test_data" / "fts_property_shapes.ttl"
+    ps_g = Graph().parse(file)
+    ps = PropertyShape(
+        uri=URIRef("http://example.com/FTSClassShape"),
+        graph=ps_g,
+        kind="fts",
+        focus_node=Var(value="focus_node"),
+        shape_number=102,
+    )
+    query_obj = SearchQueryFusekiFTS(
+        term="test",
+        limit=10,
+        offset=0,
+        shacl_tssp_preds=[
+            (
+                ps.tssp_list,
+                [URIRef("http://example.com/labelProp")],
+                [URIRef("http://example.com/ResultClass")],
+            )
+        ],
+    )
+    query_string = query_obj.to_string()
+    assert (
+        "?focus_node <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/ResultClass>"
+        in query_string
+    )
 
 
 def test_oomp():
@@ -110,14 +183,140 @@ def test_oomp():
         term="test",
         limit=10,
         offset=0,
-        shacl_tssp_preds=[(tssp_list, [RDF.value])],
+        shacl_tssp_preds=[(tssp_list, [RDF.value], None)],
     )
     query_string = query_obj.to_string()
-    assert "FILTER (! isBLANK(?focus_node))" in query_string
+    # SHACL paths use !isBLANK filter
+    assert "FILTER (!isBLANK(?focus_node))" in query_string
 
 
-@patch("prez.dependencies.settings")
-def test_one_or_more_path(mock_settings, client):
-    mock_settings.search_method = SearchMethod.FTS_FUSEKI
+# only the search method is mocked: the numeric settings reach the query as numbers,
+# and a whole-object mock would put a MagicMock where a SPARQL literal belongs
+@patch("prez.dependencies.settings.search_method", SearchMethod.FTS_FUSEKI)
+def test_one_or_more_path(client):
     r = client.get("/search?q=test&predicates=oomp&_mediatype=application/sparql-query")
     assert r.status_code == 200
+
+
+def test_fts_limit_none():
+    """Test that when fts_limit is None, no limit is added to the text:query"""
+    query_obj = SearchQueryFusekiFTS(
+        term="test",
+        limit=10,
+        offset=0,
+        non_shacl_predicates=[RDFS.label, RDFS.comment],
+        fts_limit=None,
+    )
+    query_string = query_obj.to_string()
+
+    # The query should contain the search term but NOT a numeric limit after it
+    # Pattern: (<pred1> <pred2> "test") - no third element
+    assert "<http://www.w3.org/2000/01/rdf-schema#label>" in query_string
+    assert "<http://www.w3.org/2000/01/rdf-schema#comment>" in query_string
+    assert '"test"' in query_string
+
+    # Count occurrences - should have predicates and search term, but no additional numeric value
+    # in the text:query parameter list
+    lines = query_string.split("\n")
+    text_query_section = "\n".join(
+        [line for line in lines if "text#query" in line or "test" in line]
+    )
+
+    # Should NOT have a standalone integer after the search term in the collection
+    # This is a bit fragile but checks that we don't have ") 11" or similar patterns
+    # that would indicate a limit parameter
+    assert ") 11" not in query_string  # 10 + 1 from limit increment
+
+
+def test_fts_limit_set():
+    """Test that when fts_limit is set (offset=0), it's added to the text:query."""
+    query_obj = SearchQueryFusekiFTS(
+        term="test",
+        limit=10,
+        offset=0,
+        non_shacl_predicates=[RDFS.label, RDFS.comment],
+        fts_limit=50,
+    )
+    query_string = query_obj.to_string()
+
+    assert "<http://www.w3.org/2000/01/rdf-schema#label>" in query_string
+    assert "<http://www.w3.org/2000/01/rdf-schema#comment>" in query_string
+    assert '"test"' in query_string
+
+    # Outer LIMIT should be 11 (10 + 1)
+    assert "LIMIT 11" in query_string
+
+    # FTS numeric limit should be exactly 50 when offset=0
+    assert '"test"50' in query_string or '"test" 50' in query_string.replace("\n", " ")
+
+
+def test_fts_limit_adds_offset_non_shacl():
+    """Test the FTS numeric limit uses fts_limit + offset (non-SHACL predicates case)."""
+    query_obj = SearchQueryFusekiFTS(
+        term="test",
+        limit=10,
+        offset=7,
+        non_shacl_predicates=[RDFS.label],
+        fts_limit=50,
+    )
+    query_string = query_obj.to_string()
+
+    assert "OFFSET 7" in query_string
+    assert "LIMIT 11" in query_string
+
+    # FTS numeric limit should be 50 + 7
+    assert "57" in query_string
+    assert "50" not in query_string
+    assert '"test"57' in query_string or '"test" 57' in query_string.replace("\n", " ")
+
+
+def test_fts_limit_with_shacl():
+    """Test that FTS numeric limit is fts_limit + offset when offset is provided (SHACL path case)."""
+    tssp_list = [
+        TriplesSameSubjectPath.from_spo(
+            Var(value="focus_node"),
+            IRI(value="http://example.com/hasFeatureOfInterest"),
+            Var(value="path_node_1"),
+        ),
+        TriplesSameSubjectPath.from_spo(
+            Var(value="path_node_1"),
+            IRI(value="http://www.w3.org/2000/01/rdf-schema#label"),
+            Var(value="fts_search_node"),
+        ),
+    ]
+
+    query_obj = SearchQueryFusekiFTS(
+        term="test",
+        limit=10,
+        offset=5,
+        shacl_tssp_preds=[(tssp_list, [RDFS.label], None)],
+        fts_limit=100,
+    )
+    query_string = query_obj.to_string()
+
+    # Outer pagination
+    assert "LIMIT 11" in query_string
+    assert "OFFSET 5" in query_string
+
+    # FTS numeric limit should be fts_limit + offset (100 + 5)
+    assert "105" in query_string
+    assert "100" not in query_string
+    assert '"test"105' in query_string or '"test" 105' in query_string.replace(
+        "\n", " "
+    )
+
+
+def test_fts_limit_default_none():
+    """Test that fts_limit defaults to None when not specified"""
+    query_obj = SearchQueryFusekiFTS(
+        term="test",
+        limit=10,
+        offset=0,
+        non_shacl_predicates=[RDFS.label],
+        # fts_limit not specified - should default to None
+    )
+    query_string = query_obj.to_string()
+
+    # Should work the same as explicitly passing None
+    assert "<http://www.w3.org/2000/01/rdf-schema#label>" in query_string
+    assert '"test"' in query_string

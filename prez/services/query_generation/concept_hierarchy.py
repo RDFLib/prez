@@ -1,49 +1,42 @@
 from typing import Optional
 
 from rdflib import SKOS
-from sparql_grammar_pydantic import (
+from sparql_grammar import (
     IRI,
     Bind,
-    BuiltInCall,
     ConstructQuery,
     ConstructTemplate,
     ConstructTriples,
     ExistsFunc,
     Expression,
-    GraphNodePath,
-    GraphPatternNotTriples,
-    GraphTerm,
     GroupGraphPattern,
     GroupGraphPatternSub,
     GroupOrUnionGraphPattern,
-    LimitClause,
     LimitOffsetClauses,
-    ObjectListPath,
-    ObjectPath,
-    OffsetClause,
     OrderClause,
     OrderCondition,
     PathAlternative,
     PathElt,
     PathEltOrInverse,
     PathPrimary,
-    PathSequence,
-    PrimaryExpression,
-    PropertyListPathNotEmpty,
     SelectClause,
-    SG_Path,
     SolutionModifier,
     SubSelect,
     TriplesBlock,
     TriplesSameSubject,
     TriplesSameSubjectPath,
     Var,
-    VarOrTerm,
-    VerbPath,
     WhereClause,
 )
 
 from prez.reference_data.prez_ns import PREZ
+
+
+def _forward_or_inverse(forward: IRI, inverse: IRI) -> PathAlternative:
+    """<forward>|^<inverse>"""
+    return PathAlternative.alt(
+        forward, PathEltOrInverse(PathElt(PathPrimary(inverse)), inverse=True)
+    )
 
 
 class ConceptHierarchyQuery(ConstructQuery):
@@ -86,184 +79,58 @@ class ConceptHierarchyQuery(ConstructQuery):
         focus_node_var = Var(value="focus_node")
         grandchildren_var = Var(value="grandchildren")
 
-        parent_child_alt = PathSequence(
-            list_path_elt_or_inverse=[
-                PathEltOrInverse(
-                    path_elt=PathElt(
-                        path_primary=PathPrimary(
-                            value=parent_child_predicates[0],
-                        )
-                    )
-                )
-            ]
-        )
-        parent_child_sp_inverse = PathSequence(
-            list_path_elt_or_inverse=[
-                PathEltOrInverse(
-                    path_elt=PathElt(
-                        path_primary=PathPrimary(
-                            value=parent_child_predicates[1],
-                        )
-                    ),
-                    inverse=True,
-                )
-            ]
-        )
-
-        tssp1 = TriplesSameSubjectPath(
-            content=(
-                VarOrTerm(varorterm=GraphTerm(content=parent_uri)),
-                PropertyListPathNotEmpty(
-                    first_pair=(
-                        VerbPath(
-                            path=SG_Path(
-                                path_alternative=PathAlternative(
-                                    sequence_paths=[
-                                        parent_child_alt,
-                                        parent_child_sp_inverse,
-                                    ]
-                                )
-                            )
-                        ),
-                        ObjectListPath(
-                            object_paths=[
-                                ObjectPath(
-                                    graph_node_path=GraphNodePath(
-                                        varorterm_or_triplesnodepath=VarOrTerm(
-                                            varorterm=focus_node_var
-                                        )
-                                    )
-                                )
-                            ]
-                        ),
-                    )
-                ),
-            )
-        )
-
-        tb1 = TriplesBlock(triples=tssp1)
-
-        child_grandchild_alt = PathSequence(
-            list_path_elt_or_inverse=[
-                PathEltOrInverse(
-                    path_elt=PathElt(
-                        path_primary=PathPrimary(
-                            value=child_grandchild_predicates[0],
-                        )
-                    )
-                )
-            ]
-        )
-        child_grandchild_sp_inverse = PathSequence(
-            list_path_elt_or_inverse=[
-                PathEltOrInverse(
-                    path_elt=PathElt(
-                        path_primary=PathPrimary(
-                            value=child_grandchild_predicates[1],
-                        )
-                    ),
-                    inverse=True,
-                )
-            ]
-        )
-
-        tssp2 = TriplesSameSubjectPath(
-            content=(
-                VarOrTerm(varorterm=focus_node_var),
-                PropertyListPathNotEmpty(
-                    first_pair=(
-                        VerbPath(
-                            path=SG_Path(
-                                path_alternative=PathAlternative(
-                                    sequence_paths=[
-                                        child_grandchild_alt,
-                                        child_grandchild_sp_inverse,
-                                    ]
-                                )
-                            )
-                        ),
-                        ObjectListPath(
-                            object_paths=[
-                                ObjectPath(
-                                    graph_node_path=GraphNodePath(
-                                        varorterm_or_triplesnodepath=VarOrTerm(
-                                            varorterm=grandchildren_var
-                                        )
-                                    )
-                                )
-                            ]
-                        ),
-                    )
-                ),
-            )
-        )
-        bind_gpnt = GraphPatternNotTriples(
-            content=Bind(
-                expression=Expression.from_primary_expression(
-                    PrimaryExpression(
-                        content=BuiltInCall(
-                            other_expressions=ExistsFunc(
-                                group_graph_pattern=GroupGraphPattern(
-                                    content=GroupGraphPatternSub(
-                                        triples_block=TriplesBlock(triples=tssp2)
-                                    )
-                                )
-                            )
-                        )
-                    )
-                ),
-                var=has_children_var,
-            )
-        )
-
-        tb2 = TriplesBlock.from_tssp_list(
+        # <parent> <child_pred>|^<parent_pred> ?focus_node .
+        # ?focus_node <label_predicate> ?label .
+        tb1 = TriplesBlock(
             [
                 TriplesSameSubjectPath.from_spo(
-                    Var(value="focus_node"), label_predicate, label_var
-                )
+                    parent_uri,
+                    _forward_or_inverse(*parent_child_predicates),
+                    focus_node_var,
+                ),
+                TriplesSameSubjectPath.from_spo(
+                    focus_node_var, label_predicate, label_var
+                ),
             ]
         )
-        tb1.triples_block = tb2
 
-        sc = SelectClause(
-            distinct=True,
-            variables_or_all=[focus_node_var, has_children_var],
+        # BIND(EXISTS { ?focus_node <grandchild_pred>|^<child_pred> ?grandchildren } AS ?hasChildren)
+        tssp2 = TriplesSameSubjectPath.from_spo(
+            focus_node_var,
+            _forward_or_inverse(*child_grandchild_predicates),
+            grandchildren_var,
         )
-
-        inner_wc = WhereClause(
-            group_graph_pattern=GroupGraphPattern(
-                content=GroupGraphPatternSub(
-                    graph_patterns_or_triples_blocks=[tb1, bind_gpnt]
+        bind_gpnt = Bind(
+            Expression.from_primary_expression(
+                ExistsFunc(
+                    GroupGraphPattern(GroupGraphPatternSub([TriplesBlock([tssp2])]))
                 )
-            )
+            ),
+            has_children_var,
         )
 
+        sc = SelectClause.create(focus_node_var, has_children_var, distinct=True)
+        inner_wc = WhereClause(
+            GroupGraphPattern(GroupGraphPatternSub([tb1, bind_gpnt]))
+        )
         inner_sm = SolutionModifier(
-            order_by=OrderClause(
-                conditions=[OrderCondition(constraint_or_var=label_var)]
-            ),
-            limit_offset=LimitOffsetClauses(
-                limit_clause=LimitClause(limit=limit),
-                offset_clause=OffsetClause(offset=offset),
-            ),
+            order_by=OrderClause([OrderCondition(label_var)]),
+            limit_offset=LimitOffsetClauses.create(limit=limit, offset=offset),
         )
-
         outer_wc = WhereClause(
-            group_graph_pattern=GroupGraphPattern(
-                content=GroupGraphPatternSub(
-                    graph_patterns_or_triples_blocks=[
-                        GraphPatternNotTriples(
-                            content=GroupOrUnionGraphPattern(
-                                group_graph_patterns=[
-                                    GroupGraphPattern(
-                                        content=SubSelect(
-                                            select_clause=sc,
-                                            where_clause=inner_wc,
-                                            solution_modifier=inner_sm,
-                                        )
+            GroupGraphPattern(
+                GroupGraphPatternSub(
+                    [
+                        GroupOrUnionGraphPattern(
+                            [
+                                GroupGraphPattern(
+                                    SubSelect(
+                                        select_clause=sc,
+                                        where_clause=inner_wc,
+                                        solution_modifier=inner_sm,
                                     )
-                                ]
-                            )
+                                )
+                            ]
                         )
                     ]
                 )
@@ -271,12 +138,10 @@ class ConceptHierarchyQuery(ConstructQuery):
         )
 
         ct = ConstructTemplate(
-            construct_triples=ConstructTriples.from_tss_list(
+            ConstructTriples(
                 [
                     TriplesSameSubject.from_spo(
-                        subject=focus_node_var,
-                        predicate=IRI(value=PREZ.hasChildren),
-                        object=has_children_var,
+                        focus_node_var, IRI(value=PREZ.hasChildren), has_children_var
                     )
                 ]
             )
@@ -294,30 +159,24 @@ class ConceptHierarchyQuery(ConstructQuery):
 
     @property
     def tss_list(self):
-        return [self.construct_template.construct_triples.triples]
+        return list(self.construct_template.construct_triples.triples)
 
     @property
-    def inner_select_vars(self):
+    def _inner_subselect(self) -> SubSelect:
         return (
-            self.where_clause.group_graph_pattern.content.graph_patterns_or_triples_blocks[
-                0
-            ]
-            .content.group_graph_patterns[0]
-            .content.select_clause.variables_or_all
+            self.where_clause.group_graph_pattern.content.patterns[0]
+            .group_graph_patterns[0]
+            .content
         )
 
     @property
+    def inner_select_vars(self):
+        return self._inner_subselect.select_clause.variables
+
+    @property
     def inner_select_gpnt(self):
-        return GraphPatternNotTriples(
-            content=GroupOrUnionGraphPattern(
-                group_graph_patterns=[
-                    self.where_clause.group_graph_pattern.content.graph_patterns_or_triples_blocks[
-                        0
-                    ]
-                    .content.group_graph_patterns[0]
-                    .content.where_clause.group_graph_pattern
-                ]
-            )
+        return GroupOrUnionGraphPattern(
+            [self._inner_subselect.where_clause.group_graph_pattern]
         )
 
     @property

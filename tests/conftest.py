@@ -17,6 +17,7 @@ from fastapi.testclient import TestClient
 from pyoxigraph.pyoxigraph import Store, RdfFormat
 
 from prez.app import assemble_app
+from prez.config import Settings
 from prez.dependencies import get_data_repo
 from prez.repositories import PyoxigraphRepo, Repo
 
@@ -44,7 +45,13 @@ def client(test_repo: Repo) -> TestClient:
     def override_get_repo():
         return test_repo
 
-    app = assemble_app()
+    app = assemble_app(
+        local_settings=Settings(
+            _env_file=None,
+            sparql_repo_type="pyoxigraph_memory",
+            enable_sparql_endpoint=True,
+        )
+    )
 
     app.dependency_overrides[get_data_repo] = override_get_repo
 
@@ -61,29 +68,46 @@ def client(test_repo: Repo) -> TestClient:
 
 @pytest.fixture(scope="session")
 def client_no_override() -> TestClient:
-
-    app = assemble_app()
+    app = assemble_app(
+        local_settings=Settings(
+            _env_file=None,
+            sparql_repo_type="pyoxigraph_memory",
+            enable_sparql_endpoint=True,
+        )
+    )
 
     with TestClient(app) as c:
         yield c
 
 
+def link_for(client, listing_path: str, uri: str):
+    """The prez:link for one object in a listing, whatever page it would fall on.
+
+    The listings have no ORDER BY, so which items land on the default first page is
+    whatever order the store returns them in, and that varies by platform. Asking
+    for the whole listing keeps these fixtures from depending on it.
+    """
+    response = client.get(listing_path, params={"limit": 1000})
+    graph = Graph().parse(data=response.text)
+    link = graph.value(URIRef(uri), URIRef("https://prez.dev/link"))
+    assert link is not None, f"no prez:link for {uri} in {listing_path}"
+    return link
+
+
 @pytest.fixture()
 def a_spaceprez_catalog_link(client):
-    r = client.get("/catalogs")
-    g = Graph().parse(data=r.text)
-    cat_uri = URIRef("https://example.com/spaceprez/SpacePrezCatalog")
-    link = g.value(cat_uri, URIRef("https://prez.dev/link", None))
-    return link
+    return link_for(
+        client, "/catalogs", "https://example.com/spaceprez/SpacePrezCatalog"
+    )
 
 
 @pytest.fixture()
 def a_spaceprez_dataset_link(client, a_spaceprez_catalog_link):
-    r = client.get(f"{a_spaceprez_catalog_link}/collections")
-    g = Graph().parse(data=r.text)
-    ds_uri = URIRef("https://example.com/spaceprez/SpacePrezDataset")
-    link = g.value(ds_uri, URIRef("https://prez.dev/link", None))
-    return link
+    return link_for(
+        client,
+        f"{a_spaceprez_catalog_link}/collections",
+        "https://example.com/spaceprez/SpacePrezDataset",
+    )
 
 
 @pytest.fixture()
@@ -100,12 +124,7 @@ def a_feature_link(client, an_fc_link):
 
 @pytest.fixture()
 def a_catprez_catalog_link(client):
-    # get link for first catalog
-    r = client.get("/catalogs")
-    g = Graph().parse(data=r.text)
-    member_uri = URIRef("https://example.com/CatalogOne")
-    link = g.value(member_uri, URIRef("https://prez.dev/link", None))
-    return link
+    return link_for(client, "/catalogs", "https://example.com/CatalogOne")
 
 
 @pytest.fixture()

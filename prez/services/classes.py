@@ -1,6 +1,6 @@
 from aiocache import caches
 from rdflib import URIRef
-from sparql_grammar_pydantic import IRI
+from sparql_grammar import IRI
 
 from prez.repositories import Repo
 from prez.services.query_generation.classes import ClassesSelectQuery
@@ -82,10 +82,9 @@ async def process_uncached_classes(uris: list[URIRef], data_repo: Repo, klasses:
         uri = result["uri"]["value"]
         subjects_map[URIRef(uri)].add(URIRef(klass))
 
-    # Prepare subjects_list, only converting to frozenset where there are actual results
+    # Cache frozensets: the cache hands the value itself to every reader
     subjects_list = [
-        (subject, set(klasses)) if klasses else (subject, set())
-        for subject, klasses in subjects_map.items()
+        (subject, frozenset(klasses)) for subject, klasses in subjects_map.items()
     ]
 
     # Cache the results

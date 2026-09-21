@@ -1,7 +1,7 @@
 import pytest
 from rdflib import URIRef, Graph, SH, Namespace  # Added Graph, SH, Namespace
 from unittest.mock import patch  # Added patch
-from sparql_grammar_pydantic import (
+from sparql_grammar import (
     GroupGraphPattern,
     GroupGraphPatternSub,
     IRI,
@@ -118,27 +118,28 @@ def test_facet_query_skeleton_instantiation(
     original_where = WhereClause(
         group_graph_pattern=GroupGraphPattern(
             content=GroupGraphPatternSub(
-                # Use from_tssp_list class method
-                triples_block=TriplesBlock.from_tssp_list(
-                    [
-                        TriplesSameSubjectPath.from_spo(
-                            Var(value="focus_node"),
-                            IRI(
-                                value="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
-                            ),
-                            IRI(
-                                value="https://linked.data.gov.au/def/borehole/Borehole"
-                            ),
-                        )
-                    ]
-                )
+                [
+                    TriplesBlock.from_tssp_list(
+                        [
+                            TriplesSameSubjectPath.from_spo(
+                                Var(value="focus_node"),
+                                IRI(
+                                    value="http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+                                ),
+                                IRI(
+                                    value="https://linked.data.gov.au/def/borehole/Borehole"
+                                ),
+                            )
+                        ]
+                    )
+                ]
             )
         )
     )
 
     # Minimal original SubSelect
     original_subselect = SubSelect(
-        select_clause=SelectClause(variables_or_all=[Var(value="focus_node")]),
+        select_clause=SelectClause([Var(value="focus_node")]),
         where_clause=original_where,
     )
 

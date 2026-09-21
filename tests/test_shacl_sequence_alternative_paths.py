@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 from rdflib import DCTERMS, PROV, RDF, RDFS, SH, Graph, Namespace, URIRef, SKOS
-from sparql_grammar_pydantic import (
+from sparql_grammar import (
     IRI,
     TriplesSameSubject,
     Var,
@@ -104,9 +104,9 @@ def test_sequence_with_alternative_and_path_alias(
 
     # CONSTRUCT clause: should use the alias for the whole sequence
     expected_alias_tss = TriplesSameSubject.from_spo(
-        subject=focus_node_var,
-        predicate=IRI(value=EX.mySeqAlias),
-        object=Var(value="prof_1_node_3"),  # Final node of the sequence
+        focus_node_var,
+        IRI(value=EX.mySeqAlias),
+        Var(value="prof_1_node_3"),  # Final node of the sequence
     )
     assert expected_alias_tss in ps.tss_list
 
@@ -166,17 +166,13 @@ def test_sequence_with_alternative_containing_complex_elements(
     # ?prof_0_node_2 ex:p2 ?prof_0_node_3 .
 
     actual_gpnt_string = ps.gpnt_list[0].to_string()
-    expected_gpnt_string = """
-
+    expected_gpnt_string = """{
 {
-
-
-{
-?prof_1_node_2 <http://example.com/ns#invAlt> ?prof_1_node_1 .
+?prof_1_node_2 <http://example.com/ns#invAlt> ?prof_1_node_1
 }
 UNION
 {
-?prof_1_node_1 <http://example.com/ns#cardAlt>* ?prof_1_node_2 .
+?prof_1_node_1 <http://example.com/ns#cardAlt>* ?prof_1_node_2
 }
 }"""
     assert actual_gpnt_string == expected_gpnt_string
@@ -184,19 +180,19 @@ UNION
     # Check CONSTRUCT for individual triples (no alias)
     assert (
         TriplesSameSubject.from_spo(
-            subject=Var(value="prof_1_node_2"),
-            predicate=IRI(value=EX.invAlt),
-            object=Var(value="prof_1_node_1"),
+            Var(value="prof_1_node_2"),
+            IRI(value=EX.invAlt),
+            Var(value="prof_1_node_1"),
         )
         in ps.tss_list
     )
     assert (
         TriplesSameSubject.from_spo(
-            subject=Var(value="prof_1_node_1"),
-            predicate=IRI(
+            Var(value="prof_1_node_1"),
+            IRI(
                 value=EX.cardAlt
             ),  # Note: for *+? paths, the construct usually adds the simple predicate
-            object=Var(value="prof_1_node_2"),
+            Var(value="prof_1_node_2"),
         )
         in ps.tss_list
     )

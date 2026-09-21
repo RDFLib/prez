@@ -1,48 +1,42 @@
 from datetime import datetime
 from typing import List, Optional
 
-from sparql_grammar_pydantic import (
+from sparql_grammar import (
     IRI,
-    GraphPatternNotTriples,
-    TriplesSameSubjectPath,
-    Var,
-    PrimaryExpression,
+    Expression,
     Filter,
     RDFLiteral,
+    TriplesSameSubjectPath,
+    Var,
 )
 
 from prez.config import settings
 from prez.models.query_params import DateTimeOrUnbounded
 
+_XSD_DATETIME = "http://www.w3.org/2001/XMLSchema#dateTime"
 
-def create_temporal_filter_gpnt(dt: datetime, op: str) -> GraphPatternNotTriples:
+
+def create_temporal_filter_gpnt(dt: datetime, op: str) -> Filter:
     if op not in ["=", "<=", ">=", "<", ">", "!="]:
         raise ValueError(f"Invalid operator: {op}")
-    return GraphPatternNotTriples(
-        content=Filter.filter_relational(
-            focus=PrimaryExpression(
-                content=Var(value="datetime"),
-            ),
-            comparators=PrimaryExpression(
-                content=RDFLiteral(
-                    value=dt.isoformat(),
-                    datatype=IRI(value="http://www.w3.org/2001/XMLSchema#dateTime"),
-                )
-            ),
-            operator=op,
+    return Filter(
+        Expression.compare(
+            Var(value="datetime"),
+            op,
+            RDFLiteral(value=dt.isoformat(), datatype=IRI(value=_XSD_DATETIME)),
         )
     )
 
 
 def generate_datetime_filter(
     datetime_1: DateTimeOrUnbounded, datetime_2: Optional[DateTimeOrUnbounded]
-) -> (GraphPatternNotTriples, List[TriplesSameSubjectPath]):
+) -> (List[Filter], List[TriplesSameSubjectPath]):
     # tssp
     tssp_list = [
         TriplesSameSubjectPath.from_spo(
-            subject=Var(value="focus_node"),
-            predicate=IRI(value=settings.temporal_predicate),
-            object=Var(value="datetime"),
+            Var(value="focus_node"),
+            IRI(value=settings.temporal_predicate),
+            Var(value="datetime"),
         )
     ]
 

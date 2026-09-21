@@ -37,9 +37,9 @@ def namespace_registered(namespace):
 def valid_prefix(prefix: str):
     """For turtle serialization, as per https://www.w3.org/TR/turtle/#grammar-production-PN_PREFIX"""
     valid = True
-    PN_CHARS_BASE = "([A-Z]|[a-z]|[\u00C0-\u00D6]|[\u00D8-\u00F6]|[\u00F8-\u02FF]|[\u0370-\u037D]|[\u037F-\u1FFF]|[\u200C-\u200D]|[\u2070-\u218F]|[\u2C00-\u2FEF]|[\u3001-\uD7FF]|[\uF900-\uFDCF]|[\uFDF0-\uFFFD]|[\U00010000-\U000EFFFF])"
+    PN_CHARS_BASE = "([A-Z]|[a-z]|[\u00c0-\u00d6]|[\u00d8-\u00f6]|[\u00f8-\u02ff]|[\u0370-\u037d]|[\u037f-\u1fff]|[\u200c-\u200d]|[\u2070-\u218f]|[\u2c00-\u2fef]|[\u3001-\ud7ff]|[\uf900-\ufdcf]|[\ufdf0-\ufffd]|[\U00010000-\U000effff])"
     PN_CHARS_U = f"({PN_CHARS_BASE}|_)"
-    PN_CHARS = f"({PN_CHARS_U}|-|[0-9]|\u00B7|[\u0300-\u036F]|[\u203F-\u2040])"
+    PN_CHARS = f"({PN_CHARS_U}|-|[0-9]|\u00b7|[\u0300-\u036f]|[\u203f-\u2040])"
     PN_PREFIX = f"({PN_CHARS_BASE}(({PN_CHARS}|.)*{PN_CHARS})?)"
     matches = re.match(PN_PREFIX, prefix)
     if not matches:
@@ -83,6 +83,19 @@ def generate_new_prefix(uri):
         raise ValueError("Couldn't generate a prefix for the URI")
 
 
+#: uri -> curie. Link generation asks for a curie for every URI in a response, and
+#: for the same URIs on every request, while ``compute_qname`` re-splits the URI and
+#: walks the namespace manager each time. Bindings only ever grow (the generator
+#: binds a namespace the first time it sees one, and keeps it), so an entry stays
+#: valid until prefixes are (re)loaded, which calls :func:`clear_curie_cache`.
+_curie_cache: dict[str, str] = {}
+
+
+def clear_curie_cache() -> None:
+    """Forget the memoized curies. Call after binding prefixes into the graph."""
+    _curie_cache.clear()
+
+
 def get_curie_id_for_uri(uri: URIRef) -> str:
     """
     This function gets a curie ID for a given URI.
@@ -92,6 +105,9 @@ def get_curie_id_for_uri(uri: URIRef) -> str:
     3. If unable to generate a "nice" prefix, use the "compute_qname" function to generate a prefix in the series ns0,
     ns1 etc.
     """
+    cached = _curie_cache.get(uri)
+    if cached is not None:
+        return cached
     separator = settings.curie_separator
     try:
         qname = prefix_graph.compute_qname(uri, generate=False)
@@ -103,7 +119,9 @@ def get_curie_id_for_uri(uri: URIRef) -> str:
         except ValueError:
             pass  # generation failed; function below will generate namespaces in the series ns0, ns1 etc.
         qname = prefix_graph.compute_qname(uri, generate=True)
-    return f"{qname[0]}{separator}{qname[2]}"
+    curie = f"{qname[0]}{separator}{qname[2]}"
+    _curie_cache[uri] = curie
+    return curie
 
 
 async def get_uri_for_curie_id(curie_id: str):

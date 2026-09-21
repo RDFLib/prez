@@ -36,12 +36,24 @@ def test_redirect_endpoint(
     if expected_response_code != 404:
         assert response.status_code == expected_response_code
         assert response.headers.get("location") == url
-
-        if accept_header_value:
-            assert response.headers.get("accept") == accept_header_value
+        assert response.headers.get("accept") is None
     else:
         assert response.status_code == expected_response_code
         assert response.headers.get("content-type") == "application/json"
         data = response.json()
         assert data.get("status_code") == expected_response_code
         assert data.get("detail") == f"No homepage found for IRI {iri}."
+
+
+def test_redirect_endpoint_does_not_reflect_arbitrary_request_headers(
+    client: TestClient,
+):
+    response = client.get(
+        "/identifier/redirect",
+        params={"iri": "http://data.bgs.ac.uk/id/dataHolding/13603129"},
+        headers={"x-client-debug": "a" * 2048},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 307
+    assert response.headers.get("x-client-debug") is None

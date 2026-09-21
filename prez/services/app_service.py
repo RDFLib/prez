@@ -3,6 +3,7 @@ import time
 from pathlib import Path
 
 import httpx
+from pyoxigraph import RdfFormat
 from rdflib import DCTERMS, RDF, SH, BNode, Graph, Literal, URIRef
 
 from prez.cache import (
@@ -14,11 +15,17 @@ from prez.cache import (
 from prez.config import settings, get_reference_data_dir
 from prez.reference_data.prez_ns import ONT, PREZ
 from prez.repositories import Repo
-from prez.services.curie_functions import get_curie_id_for_uri
+from prez.services.curie_functions import clear_curie_cache, get_curie_id_for_uri
+from prez.services.jena_assembler_queryables import (
+    transform_jena_assembler_to_queryables,
+)
+from prez.services.link_generation import clear_link_generation_caches
 from prez.services.query_generation.count import startup_count_objects
 from prez.services.query_generation.prefixes import PrefixQuery
 
 log = logging.getLogger(__name__)
+
+CQL_QUERYABLE = URIRef("http://www.opengis.net/doc/IS/cql2/1.0/Queryable")
 
 
 async def healthcheck_sparql_endpoints():
@@ -106,17 +113,44 @@ async def retrieve_jena_fts_shapes(repo: Repo):
     """
     Loads Jena FTS shape definitions from both remote repo and local files.
     """
+
+    def _log_fts_shapes(graph: Graph, shape_type: URIRef, label: str):
+        shape_nodes = list(graph.subjects(RDF.type, shape_type))
+        n_shapes = len(shape_nodes)
+        if n_shapes > 0:
+            names_list = []
+            for node in shape_nodes:
+                name = next(graph.objects(node, SH.name), None)
+                if name is None:
+                    name = next(graph.objects(node, DCTERMS.identifier), None)
+                names_list.append(str(name) if name is not None else "(no label)")
+            names = ", ".join(names_list)
+            log.info(f"Found and added {n_shapes} {label}: {names}")
+        else:
+            log.info(f"No {label} found")
+
     # Load remote shapes
-    query = "DESCRIBE ?fts_shape WHERE {?fts_shape a <https://prez.dev/ont/JenaFTSPropertyShape>}"
+    query = """
+        DESCRIBE ?fts_shape
+        WHERE {
+            { ?fts_shape a <https://prez.dev/ont/JenaFTSPropertyShape> }
+            UNION
+            { ?fts_shape a <https://prez.dev/ont/JenaFTSUnionShape> }
+        }
+    """
     remote_g, _ = await repo.send_queries([query], [])
     if len(remote_g) > 0:
         prez_system_graph.__iadd__(remote_g)
-        n_shapes = len(list(remote_g.subjects(RDF.type, ONT.JenaFTSPropertyShape)))
-        names_list = list(remote_g.objects(subject=None, predicate=SH.name))
-        while len(names_list) < n_shapes:
-            names_list.append("(no label)")
-        names = ", ".join(names_list)
-        log.info(f"Found and added {n_shapes} remote Jena FTS shapes: {names}")
+        _log_fts_shapes(
+            remote_g,
+            ONT.JenaFTSPropertyShape,
+            "remote Jena FTS shapes",
+        )
+        _log_fts_shapes(
+            remote_g,
+            ONT.JenaFTSUnionShape,
+            "remote Jena FTS union shapes",
+        )
     else:
         log.info("No remote Jena FTS shapes found")
 
@@ -127,12 +161,16 @@ async def retrieve_jena_fts_shapes(repo: Repo):
         local_g.parse(f, format="turtle")
     if len(local_g) > 0:
         prez_system_graph.__iadd__(local_g)
-        n_shapes = len(list(local_g.subjects(RDF.type, ONT.JenaFTSPropertyShape)))
-        names_list = list(local_g.objects(subject=None, predicate=SH.name))
-        while len(names_list) < n_shapes:
-            names_list.append("(no label)")
-        names = ", ".join(names_list)
-        log.info(f"Found and added {n_shapes} local Jena FTS shapes: {names}")
+        _log_fts_shapes(
+            local_g,
+            ONT.JenaFTSPropertyShape,
+            "local Jena FTS shapes",
+        )
+        _log_fts_shapes(
+            local_g,
+            ONT.JenaFTSUnionShape,
+            "local Jena FTS union shapes",
+        )
     else:
         log.info("No local Jena FTS shapes found")
 
@@ -146,6 +184,7 @@ async def add_remote_prefixes(repo: Repo):
         namespace = result["namespace"]["value"]
         prefix = result["prefix"]["value"]
         prefix_graph.bind(prefix, namespace)
+    clear_curie_cache()  # a new binding can change the curie for a URI
     log.info(f"{i + 1:,} prefixes bound from data repo")
 
 
@@ -202,10 +241,14 @@ async def _add_prefixes_from_graph(g):
             s, URIRef("http://purl.org/vocab/vann/preferredNamespaceUri")
         )
         prefix_graph.bind(str(prefix), namespace)
+    clear_curie_cache()  # a new binding can change the curie for a URI
     return i
 
 
 async def create_endpoints_graph(app_state):
+    # the node shapes parsed from this graph are cached, so anything already parsed
+    # from a previous load has to go
+    clear_link_generation_caches()
     endpoints_root = get_reference_data_dir() / "endpoints"
     # Custom data endpoints
     if app_state.settings.custom_endpoints:
@@ -273,63 +316,140 @@ async def get_remote_endpoint_definitions(repo: Repo, ep_type: URIRef):
         log.info(f"No remote endpoint definitions found for type {str(ep_type)}")
 
 
-async def retrieve_remote_queryable_definitions(app_state, system_store):
+async def _retrieve_remote_queryable_definitions(app_state) -> Graph:
     query = "DESCRIBE ?queryable { ?queryable a <http://www.opengis.net/doc/IS/cql2/1.0/Queryable> }"
     g, _ = await app_state.repo.send_queries([query], [])
     if len(g) > 0:
-        prez_system_graph.__iadd__(g)  # use for generating property shapes
-        queryable_bytes = g.serialize(
-            format="nt", encoding="utf-8"
-        )  # use for generating JSON
-        system_store.load(queryable_bytes, "application/n-triples")
-        queryables = list(
-            g.subjects(
-                predicate=RDF.type,
-                object=URIRef("http://www.opengis.net/doc/IS/cql2/1.0/Queryable"),
-            )
-        )
-        for triple in list(g.triples_choices((queryables, DCTERMS.identifier, None))):
-            app_state.queryable_props[str(triple[2])] = str(triple[0])
-        n_queryables = len(queryables)
-        names_list = [
-            f'"{str(triple[2])}"'
-            for triple in g.triples_choices((queryables, SH.name, None))
-        ]
-        log.info(
-            f'Found and added {n_queryables} remote queryables: {", ".join(names_list)}'
-        )
+        _log_queryable_graph(g, "remote")
     else:
         log.info("No remote queryable definitions found")
+    return g
 
 
-async def retrieve_local_queryable_definitions(app_state, system_store):
-    """
-    Loads local queryable definitions from files into the system store.
-    """
+def _retrieve_local_queryable_definitions() -> Graph:
     queryables_dir = get_reference_data_dir() / "queryables"
     g = Graph()
     files = list(queryables_dir.glob("*.ttl")) + list(queryables_dir.glob("*.rdf"))
     for f in files:
         g.parse(f)
     if len(g) > 0:
-        prez_system_graph.__iadd__(g)
-        queryable_bytes = g.serialize(format="nt", encoding="utf-8")
-        system_store.load(queryable_bytes, "application/n-triples")
-        queryables = list(
-            g.subjects(
-                predicate=RDF.type,
-                object=URIRef("http://www.opengis.net/doc/IS/cql2/1.0/Queryable"),
-            )
-        )
-        for triple in list(g.triples_choices((queryables, DCTERMS.identifier, None))):
-            app_state.queryable_props[str(triple[2])] = str(triple[0])
-        n_queryables = len(queryables)
-        names_list = [
-            f'"{str(triple[2])}"'
-            for triple in g.triples_choices((queryables, SH.name, None))
-        ]
-        log.info(
-            f'Found and added {n_queryables} local queryables: {", ".join(names_list)}'
-        )
+        _log_queryable_graph(g, "local")
     else:
         log.info("No local queryable definitions found")
+    return g
+
+
+def _retrieve_generated_queryable_definitions(app_state) -> Graph:
+    assembler_path = app_state.settings.jena_assembler_path
+    if not assembler_path:
+        log.info("No Jena assembler path configured for generated queryables")
+        return Graph()
+
+    assembler_file = Path(assembler_path)
+    print(assembler_file.absolute())
+    if not assembler_file.exists():
+        raise FileNotFoundError(
+            f"Configured jena_assembler_path does not exist: {assembler_file}"
+        )
+    if not assembler_file.is_file():
+        raise ValueError(
+            f"Configured jena_assembler_path is not a file: {assembler_file}"
+        )
+
+    assembler_graph = Graph().parse(assembler_file, format="turtle")
+    generated_graph = transform_jena_assembler_to_queryables(assembler_graph)
+    _log_queryable_graph(generated_graph, "generated")
+    return generated_graph
+
+
+def _log_queryable_graph(graph: Graph, source_label: str) -> None:
+    queryables = list(graph.subjects(predicate=RDF.type, object=CQL_QUERYABLE))
+    n_queryables = len(queryables)
+    names_list = [
+        f'"{str(triple[2])}"'
+        for triple in graph.triples_choices((queryables, SH.name, None))
+    ]
+    log.info(
+        f'Found and added {n_queryables} {source_label} queryables: {", ".join(names_list)}'
+    )
+
+
+def _copy_queryable_closure(
+    source_graph: Graph,
+    target_graph: Graph,
+    subject: URIRef | BNode,
+    seen_nodes: set[URIRef | BNode] | None = None,
+) -> None:
+    if seen_nodes is None:
+        seen_nodes = set()
+    if subject in seen_nodes:
+        return
+    seen_nodes.add(subject)
+
+    for _, predicate, obj in source_graph.triples((subject, None, None)):
+        target_graph.add((subject, predicate, obj))
+        if isinstance(obj, BNode):
+            _copy_queryable_closure(source_graph, target_graph, obj, seen_nodes)
+
+
+def _queryable_merge_key(graph: Graph, subject: URIRef | BNode) -> str:
+    identifier = graph.value(subject, DCTERMS.identifier)
+    if identifier is not None:
+        return str(identifier)
+    return str(subject)
+
+
+def _merge_queryable_graphs(source_graphs: list[tuple[str, Graph]]) -> Graph:
+    merged_graph = Graph()
+    seen_keys: set[str] = set()
+
+    for source_label, graph in source_graphs:
+        for prefix, namespace in graph.namespaces():
+            merged_graph.bind(prefix, namespace)
+        kept = 0
+        skipped = 0
+        for queryable in graph.subjects(RDF.type, CQL_QUERYABLE):
+            merge_key = _queryable_merge_key(graph, queryable)
+            if merge_key in seen_keys:
+                skipped += 1
+                continue
+            _copy_queryable_closure(graph, merged_graph, queryable)
+            seen_keys.add(merge_key)
+            kept += 1
+        log.info(
+            "Merged %s queryables from %s source (%s skipped by precedence)",
+            kept,
+            source_label,
+            skipped,
+        )
+    return merged_graph
+
+
+def _populate_queryable_props(app_state, graph: Graph) -> None:
+    app_state.queryable_props.clear()
+    for subject in graph.subjects(RDF.type, CQL_QUERYABLE):
+        for identifier in graph.objects(subject, DCTERMS.identifier):
+            app_state.queryable_props[str(identifier)] = str(subject)
+
+
+async def retrieve_queryable_definitions(app_state, system_store):
+    generated_graph = _retrieve_generated_queryable_definitions(app_state)
+    remote_graph = await _retrieve_remote_queryable_definitions(app_state)
+    local_graph = _retrieve_local_queryable_definitions()
+    merged_graph = _merge_queryable_graphs(
+        [
+            ("local", local_graph),
+            ("remote", remote_graph),
+            ("generated", generated_graph),
+        ]
+    )
+
+    if len(merged_graph) == 0:
+        log.info("No queryable definitions found from any source")
+        app_state.queryable_props.clear()
+        return
+
+    prez_system_graph.__iadd__(merged_graph)
+    queryable_bytes = merged_graph.serialize(format="nt", encoding="utf-8")
+    system_store.load(queryable_bytes, RdfFormat.N_TRIPLES)
+    _populate_queryable_props(app_state, merged_graph)

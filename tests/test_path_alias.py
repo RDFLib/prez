@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 from rdflib import DCTERMS, PROV, RDFS, SH, SKOS, Graph, Namespace, URIRef
-from sparql_grammar_pydantic import (
+from sparql_grammar import (
     IRI,
     PathSequence,
     TriplesSameSubject,

@@ -1,399 +1,182 @@
 """
 SPARQL Grammar Helper Functions
 
-This module contains reusable utility functions for constructing SPARQL grammar
-objects using sparql-grammar-pydantic. These functions abstract away verbose
-grammar construction patterns. The intention is to move these to the
-sparql-grammar-pydantic library itself.
+Reusable functions for constructing SPARQL grammar objects with sparql-grammar. Each
+returns an ordinary grammar node (a ``Filter``, ``InlineData``,
+``GroupOrUnionGraphPattern`` ...) that can be added to a ``GroupGraphPatternSub`` with
+``add_pattern``.
 """
 
 import logging
 import re
 
-from rdflib import URIRef
-from sparql_grammar_pydantic import (
+from sparql_grammar import (
     IRI,
-    AdditiveExpression,
     BooleanLiteral,
-    BrackettedExpression,
-    BuiltInCall,
-    ConditionalAndExpression,
-    ConditionalOrExpression,
-    Constraint,
-    DataBlock,
-    DataBlockValue,
-    ExistsFunc,
+    ConstructTriples,
     Expression,
+    ExistsFunc,
     Filter,
-    GraphNodePath,
-    GraphPatternNotTriples,
-    GroupGraphPattern,
-    GroupGraphPatternSub,
     GroupGraphPattern,
     GroupGraphPatternSub,
     GroupOrUnionGraphPattern,
     InlineData,
     InlineDataOneVar,
-    MultiplicativeExpression,
-    NumericExpression,
-    NumericLiteral,
-    ObjectListPath,
-    ObjectPath,
+    IRIOrFunction,
+    NotExistsFunc,
     PathAlternative,
     PathElt,
     PathEltOrInverse,
     PathPrimary,
-    PathSequence,
-    PrimaryExpression,
-    PropertyListPathNotEmpty,
     RDFLiteral,
-    RegexExpression,
-    RelationalExpression,
-    SG_Path,
     TriplesBlock,
     TriplesSameSubjectPath,
-    UnaryExpression,
-    ValueLogical,
-    NotExistsFunc,
     Var,
-    VarOrTerm,
-    VerbPath,
-    ExistsFunc,
-    IRIOrFunction,
+    numeric_literal,
+    regex,
 )
 
 logger = logging.getLogger(__name__)
 
+_DATATYPE_PATTERN = re.compile(r"(.*)\^\^<(\S+)>$")
 
-def convert_value_to_rdf_term(
-    val: str,
-) -> IRI | NumericLiteral | RDFLiteral | BooleanLiteral:
-    """Convert a Python value to the appropriate RDF term."""
-    # handle booleans
+
+def triples_block(tssp_list) -> TriplesBlock:
+    """A ``TriplesBlock`` rendering the patterns in the order prez emits them.
+
+    Prez accumulates triple patterns outward from the focus node, but emits a block
+    in the opposite order: the most recently added pattern first. That is the order
+    deployments have been running, and triple pattern order inside a basic graph
+    pattern is an input to a query planner, so it is kept deliberately rather than
+    left to whichever end of the list a builder happens to start from.
+
+    Two kinds of list do not want reversing, and build a block directly instead:
+    lists already in emission order (the sorted inner select, the link generation
+    patterns), and profile-kind shape lists, which ``PropertyShape`` hands over
+    focus-node first - see ``_tssp_list_for_triples_block``.
+    """
+    return TriplesBlock(list(reversed(tssp_list)) if tssp_list else [])
+
+
+def construct_triples(tss_list) -> ConstructTriples:
+    """A ``ConstructTemplate``'s triples, in the order prez emits them.
+
+    Same order as :func:`triples_block`, for the same reason of keeping the emitted
+    query stable, though a CONSTRUCT template's order only affects how the query
+    reads: the graph it builds is a set either way.
+    """
+    return ConstructTriples(list(reversed(tss_list)) if tss_list else [])
+
+
+def convert_value_to_rdf_term(val) -> IRI | RDFLiteral | BooleanLiteral:
+    """Convert a Python value (typically from CQL JSON) to the appropriate RDF term.
+
+    Strings are read by shape, as CQL gives no other way to tell an IRI from text:
+    ``"..."^^<datatype>`` is a typed literal, anything starting with ``http`` is an
+    IRI, and everything else is a plain literal. Literal text is escaped when the
+    query is rendered, so no escaping is done here.
+    """
     if isinstance(val, bool):
         return BooleanLiteral(value=val)
-
-    # handle numbers
     if isinstance(val, (int, float)):
-        return NumericLiteral(value=val)
+        return numeric_literal(val)
 
     # sanitize leading and trailing quotes
     val = val.strip("'\"")
-    # escape double quotes to prevent sparql injection
-    val = val.replace('"', r"\"")
 
     # check if it is a datatyped literal
-    datatype_pattern = r"(.*)\^\^<(\S+)>$"
-    capture_groups = re.findall(datatype_pattern, val)
-    if capture_groups and len(capture_groups) == 1:
-        value_str, datatype_str = capture_groups[0]
-        value_str = value_str.strip("'\"")
-        datatype_iri = IRI(value=datatype_str)
-        return RDFLiteral(value=value_str, datatype=datatype_iri)
+    match = _DATATYPE_PATTERN.fullmatch(val)
+    if match:
+        value_str, datatype_str = match.groups()
+        return RDFLiteral(
+            value=value_str.strip("'\""), datatype=IRI(value=datatype_str)
+        )
 
     # check if it is a uri
-    elif val.startswith("http"):
+    if val.startswith("http"):
         return IRI(value=val)
 
     # just return a literal if nothing else matched
     return RDFLiteral(value=val)
 
 
-def create_regex_filter(variable: Var, pattern: str) -> GraphPatternNotTriples:
-    """Create a SPARQL FILTER with REGEX for pattern matching.
-    Args:
-        variable: The variable to test against
-        pattern: The regex pattern to match
-    Returns:
-        GraphPatternNotTriples containing the FILTER with REGEX
-    """
-    return GraphPatternNotTriples(
-        content=Filter(
-            constraint=Constraint(
-                content=BuiltInCall(
-                    other_expressions=RegexExpression(
-                        text_expression=Expression.from_primary_expression(
-                            PrimaryExpression(
-                                content=BuiltInCall(
-                                    function_name="STR",
-                                    arguments=[
-                                        Expression.from_primary_expression(
-                                            primary_expression=PrimaryExpression(
-                                                content=variable
-                                            )
-                                        )
-                                    ],
-                                )
-                            )
-                        ),
-                        pattern_expression=Expression.from_primary_expression(
-                            primary_expression=PrimaryExpression(
-                                content=RDFLiteral(value=pattern)
-                            )
-                        ),
-                    )
-                )
-            )
-        )
-    )
+def _as_primary(term):
+    """An IRI in expression position is an ``iriOrFunction``; everything else is itself."""
+    if isinstance(term, IRI):
+        return IRIOrFunction(iri=term)
+    return term
+
+
+def create_regex_filter(variable: Var, pattern: str) -> Filter:
+    """FILTER REGEX(STR(?variable), "pattern")"""
+    return Filter(regex(variable, pattern))
 
 
 def create_relational_filter(
     left_var: Var,
     operator: str,
-    right_value: IRI | NumericLiteral | RDFLiteral | BooleanLiteral,
-) -> GraphPatternNotTriples:
-    """Create a SPARQL FILTER with relational comparison.
+    right_value: IRI | RDFLiteral | BooleanLiteral,
+) -> Filter:
+    """FILTER (?left_var <operator> <right_value>) for =, <, >, <=, >=, !="""
+    return Filter(Expression.compare(left_var, operator, _as_primary(right_value)))
 
-    Args:
-        left_var: The variable on the left side of the comparison
-        operator: The comparison operator (=, <, >, <=, >=, !=)
-        right_value: The value to compare against
 
-    Returns:
-        GraphPatternNotTriples containing the FILTER
-    """
-    from sparql_grammar_pydantic import IRIOrFunction
-
-    object_pe = PrimaryExpression(content=left_var)
-
-    # Handle IRI objects by wrapping them in IRIOrFunction
-    if isinstance(right_value, IRI):
-        value_content = IRIOrFunction(iri=right_value)
-    else:
-        value_content = right_value
-
-    value_pe = PrimaryExpression(content=value_content)
-    return GraphPatternNotTriples(
-        content=Filter.filter_relational(
-            focus=object_pe, comparators=value_pe, operator=operator
-        )
+def create_values_constraint(variable: Var, values: list) -> InlineData:
+    """VALUES ?variable { <val1> "val2" ... }"""
+    return InlineData(
+        InlineDataOneVar(variable, [convert_value_to_rdf_term(v) for v in values])
     )
 
 
-def create_values_constraint(variable: Var, values: list) -> GraphPatternNotTriples:
-    """Create a SPARQL VALUES constraint for IN operations.
+_TEMPORAL_OPERATORS = ("=", "<=", ">=", "<", ">", "!=")
 
-    Args:
-        variable: The variable to constrain
-        values: List of values (strings, numbers, URIs)
 
-    Returns:
-        GraphPatternNotTriples containing the VALUES constraint
-    """
-    # Convert values to appropriate RDF terms
-    rdf_values = [convert_value_to_rdf_term(value) for value in values]
-    # for value in values:
-    #     if isinstance(value, str) and value.startswith("http"):
-    #         rdf_values.append(IRI(value=URIRef(value)))
-    #     elif isinstance(value, (int, float)):
-    #         rdf_values.append(NumericLiteral(value=value))
-    #     else:
-    #         rdf_values.append(RDFLiteral(value=str(value)))
-
-    iri_db_vals = [DataBlockValue(value=p) for p in rdf_values]
-    ildov = InlineDataOneVar(variable=variable, datablockvalues=iri_db_vals)
-
-    return GraphPatternNotTriples(content=InlineData(data_block=DataBlock(block=ildov)))
+def _comparisons(comparisons) -> list[Expression]:
+    expressions = []
+    for left_comp, op, right_comp in comparisons:
+        if op not in _TEMPORAL_OPERATORS:
+            raise ValueError(f"Invalid operator: {op}")
+        expressions.append(Expression.compare(left_comp, op, right_comp))
+    return expressions
 
 
 def create_temporal_or_gpnt(
     comparisons: list[tuple[Var | RDFLiteral, str, Var | RDFLiteral]], negated=False
-) -> GraphPatternNotTriples:
+) -> Filter:
     """
-    Create a FILTER with multiple conditions joined by OR (||).
-
-    Format: FILTER ( comp1 op1 comp2 || comp3 op2 comp4 || ... )
+    FILTER ( comp1 op1 comp2 || comp3 op2 comp4 || ... )
 
     if negated:
-    Format: FILTER (! (comp1 op1 comp2 || comp3 op2 comp4 || ...) )
+    FILTER ( !(comp1 op1 comp2 || comp3 op2 comp4 || ...) )
     """
-    _and_expressions = []
-    for left_comp, op, right_comp in comparisons:
-        if op not in ["=", "<=", ">=", "<", ">", "!="]:
-            raise ValueError(f"Invalid operator: {op}")
-        _and_expressions.append(
-            ConditionalAndExpression(
-                value_logicals=[
-                    ValueLogical(
-                        relational_expression=RelationalExpression(
-                            left=NumericExpression(
-                                additive_expression=AdditiveExpression(
-                                    base_expression=MultiplicativeExpression(
-                                        base_expression=UnaryExpression(
-                                            primary_expression=PrimaryExpression(
-                                                content=left_comp
-                                            )
-                                        )
-                                    )
-                                )
-                            ),
-                            operator=op,
-                            right=NumericExpression(
-                                additive_expression=AdditiveExpression(
-                                    base_expression=MultiplicativeExpression(
-                                        base_expression=UnaryExpression(
-                                            primary_expression=PrimaryExpression(
-                                                content=right_comp
-                                            )
-                                        )
-                                    )
-                                )
-                            ),
-                        )
-                    )
-                ]
-            )
-        )
-    if not negated:
-        return GraphPatternNotTriples(
-            content=Filter(
-                constraint=Constraint(
-                    content=BrackettedExpression(
-                        expression=Expression(
-                            conditional_or_expression=ConditionalOrExpression(
-                                conditional_and_expressions=_and_expressions
-                            )
-                        )
-                    )
-                )
-            )
-        )
-    else:
-        return GraphPatternNotTriples(
-            content=Filter(
-                constraint=Constraint(
-                    content=BrackettedExpression(
-                        expression=Expression(
-                            conditional_or_expression=ConditionalOrExpression(
-                                conditional_and_expressions=[
-                                    ConditionalAndExpression(
-                                        value_logicals=[
-                                            ValueLogical(
-                                                relational_expression=RelationalExpression(
-                                                    left=NumericExpression(
-                                                        additive_expression=AdditiveExpression(
-                                                            base_expression=MultiplicativeExpression(
-                                                                base_expression=UnaryExpression(
-                                                                    operator="!",
-                                                                    primary_expression=PrimaryExpression(
-                                                                        content=BrackettedExpression(
-                                                                            expression=Expression(
-                                                                                conditional_or_expression=ConditionalOrExpression(
-                                                                                    conditional_and_expressions=_and_expressions
-                                                                                )
-                                                                            )
-                                                                        )
-                                                                    ),
-                                                                )
-                                                            )
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                        ]
-                                    )
-                                ]
-                            )
-                        )
-                    )
-                )
-            )
-        )
+    disjunction = Expression.any_of(*_comparisons(comparisons))
+    if negated:
+        return Filter(Expression.negate(disjunction))
+    return Filter(disjunction)
 
 
-def create_filter_bool_gpnt(boolean: bool) -> GraphPatternNotTriples:
+def create_filter_bool_gpnt(boolean: bool) -> Filter:
     """
     For filtering out all results in scenarios where the input arguments are valid but logically determine that the
     filter will filter out all results.
 
     generates FILTER(false) or FILTER(true)
     """
-    return GraphPatternNotTriples(
-        content=Filter(
-            constraint=Constraint(
-                content=BrackettedExpression(
-                    expression=Expression.from_primary_expression(
-                        primary_expression=PrimaryExpression(
-                            content=BooleanLiteral(value=boolean)
-                        )
-                    )
-                )
-            )
-        )
-    )
+    return Filter(Expression.from_primary_expression(BooleanLiteral(value=boolean)))
 
 
 def create_temporal_and_gpnt(
     comparisons: list[tuple[Var | RDFLiteral, str, Var | RDFLiteral]]
-) -> GraphPatternNotTriples:
-    """
-    Create a FILTER with multiple conditions joined by AND.
-
-    :param comparisons: List of tuples, each containing (left_comp, operator, right_comp)
-    :return: GraphPatternNotTriples
-
-    Format:
-    FILTER ( comp1 op1 comp2 && comp3 op2 comp4 && ... )
-    """
-    _vl_expressions = []
-
-    for left_comp, op, right_comp in comparisons:
-        if op not in ["=", "<=", ">=", "<", ">", "!="]:
-            raise ValueError(f"Invalid operator: {op}")
-
-        _vl_expressions.append(
-            ValueLogical(
-                relational_expression=RelationalExpression(
-                    left=NumericExpression(
-                        additive_expression=AdditiveExpression(
-                            base_expression=MultiplicativeExpression(
-                                base_expression=UnaryExpression(
-                                    primary_expression=PrimaryExpression(
-                                        content=left_comp
-                                    )
-                                )
-                            )
-                        )
-                    ),
-                    operator=op,
-                    right=NumericExpression(
-                        additive_expression=AdditiveExpression(
-                            base_expression=MultiplicativeExpression(
-                                base_expression=UnaryExpression(
-                                    primary_expression=PrimaryExpression(
-                                        content=right_comp
-                                    )
-                                )
-                            )
-                        )
-                    ),
-                )
-            )
-        )
-
-    return GraphPatternNotTriples(
-        content=Filter(
-            constraint=Constraint(
-                content=BrackettedExpression(
-                    expression=Expression(
-                        conditional_or_expression=ConditionalOrExpression(
-                            conditional_and_expressions=[
-                                ConditionalAndExpression(value_logicals=_vl_expressions)
-                            ]
-                        )
-                    )
-                )
-            )
-        )
-    )
+) -> Filter:
+    """FILTER ( comp1 op1 comp2 && comp3 op2 comp4 && ... )"""
+    return Filter(Expression.all_of(*_comparisons(comparisons)))
 
 
 def create_tssp_alt_or_alt_inverse(
-    subject: VarOrTerm,
+    subject: Var | IRI,
     first_pred: IRI,
     second_pred: IRI,
-    obj: VarOrTerm,
+    obj: Var | IRI | RDFLiteral,
     inverse_second_prop: bool = False,
 ) -> TriplesSameSubjectPath:
     """
@@ -403,196 +186,60 @@ def create_tssp_alt_or_alt_inverse(
     with inverse_second_prop = True
     ?subject first_pred|^second_pred ?obj
     """
-    return TriplesSameSubjectPath(
-        content=(
-            subject,
-            PropertyListPathNotEmpty(
-                first_pair=(
-                    VerbPath(
-                        path=SG_Path(
-                            path_alternative=PathAlternative(
-                                sequence_paths=[
-                                    PathSequence(
-                                        list_path_elt_or_inverse=[
-                                            PathEltOrInverse(
-                                                path_elt=PathElt(
-                                                    path_primary=PathPrimary(
-                                                        value=first_pred,
-                                                    )
-                                                )
-                                            )
-                                        ]
-                                    ),
-                                    PathSequence(
-                                        list_path_elt_or_inverse=[
-                                            PathEltOrInverse(
-                                                path_elt=PathElt(
-                                                    path_primary=PathPrimary(
-                                                        value=second_pred,
-                                                    )
-                                                ),
-                                                inverse=inverse_second_prop,
-                                            )
-                                        ]
-                                    ),
-                                ]
-                            )
-                        )
-                    ),
-                    ObjectListPath(
-                        object_paths=[
-                            ObjectPath(
-                                graph_node_path=GraphNodePath(
-                                    varorterm_or_triplesnodepath=obj
-                                )
-                            )
-                        ]
-                    ),
-                )
-            ),
-        )
+    second = PathEltOrInverse(PathElt(PathPrimary(second_pred)), inverse_second_prop)
+    return TriplesSameSubjectPath.from_spo(
+        subject, PathAlternative.alt(first_pred, second), obj
     )
 
 
 def create_tssp_sequence(
-    subject: VarOrTerm, pred_1: IRI, pred_2: IRI, obj: VarOrTerm
+    subject: Var | IRI, pred_1: IRI, pred_2: IRI, obj: Var | IRI | RDFLiteral
 ) -> TriplesSameSubjectPath:
     """
     ?subject pred_1/pred_2 ?obj
     """
-    return TriplesSameSubjectPath(
-        content=(
-            subject,
-            PropertyListPathNotEmpty(
-                first_pair=(
-                    VerbPath(
-                        path=SG_Path(
-                            path_alternative=PathAlternative(
-                                sequence_paths=[
-                                    PathSequence(
-                                        list_path_elt_or_inverse=[
-                                            PathEltOrInverse(
-                                                path_elt=PathElt(
-                                                    path_primary=PathPrimary(
-                                                        value=pred_1,
-                                                    )
-                                                )
-                                            ),
-                                            PathEltOrInverse(
-                                                path_elt=PathElt(
-                                                    path_primary=PathPrimary(
-                                                        value=pred_2,
-                                                    )
-                                                )
-                                            ),
-                                        ]
-                                    )
-                                ]
-                            )
-                        )
-                    ),
-                    ObjectListPath(
-                        object_paths=[
-                            ObjectPath(
-                                graph_node_path=GraphNodePath(
-                                    varorterm_or_triplesnodepath=obj
-                                )
-                            )
-                        ]
-                    ),
-                )
-            ),
-        )
+    return TriplesSameSubjectPath.from_spo(
+        subject, PathAlternative.seq(pred_1, pred_2), obj
     )
 
 
 def create_union_gpnt_from_tssps(
     tssps: list[TriplesSameSubjectPath],
-) -> GraphPatternNotTriples:
-    return GraphPatternNotTriples(
-        content=GroupOrUnionGraphPattern(
-            group_graph_patterns=[
-                GroupGraphPattern(
-                    content=GroupGraphPatternSub(
-                        triples_block=TriplesBlock.from_tssp_list([tssp])
-                    )
-                )
-                for tssp in tssps
-            ]
-        )
+) -> GroupOrUnionGraphPattern:
+    """{ tssp1 } UNION { tssp2 } UNION ..."""
+    return GroupOrUnionGraphPattern(
+        [
+            GroupGraphPattern(GroupGraphPatternSub([TriplesBlock([tssp])]))
+            for tssp in tssps
+        ]
     )
 
 
-def create_filter_exists(patterns: GroupGraphPatternSub) -> GraphPatternNotTriples:
-    """Create a FILTER EXISTS wrapper around a group of patterns.
+def create_filter_exists(patterns: GroupGraphPatternSub) -> Filter:
+    """FILTER EXISTS { ... } around a group of patterns - improves query performance."""
+    return Filter(ExistsFunc(GroupGraphPattern(patterns)))
 
-    This wraps the given patterns in FILTER EXISTS { ... } which improves
-    query performance.
+
+def create_filter_not_exists(patterns: GroupGraphPatternSub) -> Filter:
+    """FILTER NOT EXISTS { ... } around a group of patterns."""
+    return Filter(NotExistsFunc(GroupGraphPattern(patterns)))
+
+
+def create_filter_in(variable: Var, values: list[str] | str) -> Filter:
+    """Create a FILTER(?var IN (...)) constraint.
 
     Args:
-        patterns: The GroupGraphPatternSub containing all patterns to wrap
+        variable: The SPARQL variable to filter
+        values: Single value or list of values to match against
 
     Returns:
-        GraphPatternNotTriples containing the FILTER EXISTS
+        Filter containing the FILTER IN constraint
     """
-    return GraphPatternNotTriples(
-        content=Filter(
-            constraint=Constraint(
-                content=BuiltInCall(
-                    other_expressions=ExistsFunc(
-                        group_graph_pattern=GroupGraphPattern(content=patterns)
-                    )
-                )
-            )
-        )
-    )
-
-
-def create_filter_not_exists(patterns: GroupGraphPatternSub) -> GraphPatternNotTriples:
-    """Create a FILTER NOT EXISTS wrapper around a group of patterns.
-
-    This wraps the given patterns in FILTER NOT EXISTS { ... } which improves
-    query performance.
-
-    Args:
-        patterns: The GroupGraphPatternSub containing all patterns to wrap
-
-    Returns:
-        GraphPatternNotTriples containing the FILTER NOT EXISTS
-    """
-    return GraphPatternNotTriples(
-        content=Filter(
-            constraint=Constraint(
-                content=BuiltInCall(
-                    other_expressions=NotExistsFunc(
-                        group_graph_pattern=GroupGraphPattern(content=patterns)
-                    )
-                )
-            )
-        )
-    )
-
-
-def _create_filter_in(variable: Var, values: list[str]) -> GraphPatternNotTriples:
-    """Create a FILTER(?var IN (<val1>, "val2", ...)) constraint."""
-    # Convert values to appropriate RDF terms and wrap in PrimaryExpression
-    right_primary_expressions = []
-    for value in values:
-        rdf_term = convert_value_to_rdf_term(value)
-        if isinstance(rdf_term, (IRI)):
-            content = IRIOrFunction(iri=rdf_term)
-        else:
-            content = rdf_term
-        right_primary_expressions.append(PrimaryExpression(content=content))
-
-    in_expr = Expression.create_in_expression(
-        left_primary_expression=PrimaryExpression(content=variable),
-        operator="IN",
-        right_primary_expressions=right_primary_expressions,
-    )
-
-    return GraphPatternNotTriples(
-        content=Filter(
-            constraint=Constraint(content=BrackettedExpression(expression=in_expr))
+    # Normalize to list
+    if not isinstance(values, list):
+        values = [values]
+    return Filter(
+        Expression.in_(
+            variable, [_as_primary(convert_value_to_rdf_term(v)) for v in values]
         )
     )

@@ -3,20 +3,26 @@ from typing import List
 
 from fastapi import APIRouter, Depends, Path
 from rdflib import RDF, RDFS
-from sparql_grammar_pydantic import ConstructQuery
+from sparql_grammar import ConstructQuery
 
 from prez.cache import endpoints_graph_cache
 from prez.dependencies import (
     cql_get_parser_dependency,
+    cql_post_listing_parser_dependency,
     generate_concept_hierarchy_query,
     generate_search_query,
+    generate_search_query_post,
     get_data_repo,
     get_endpoint_nodeshapes,
     get_endpoint_structure,
+    get_endpoint_structure_listing_post,
     get_negotiated_pmts,
+    get_negotiated_pmts_listing_post,
     get_profile_nodeshape,
+    get_profile_nodeshape_listing_post,
     get_system_repo,
     get_url,
+    listing_post_params_dependency,
 )
 from prez.models.query_params import ObjectQueryParams, ListingQueryParams
 from prez.reference_data.prez_ns import ONT
@@ -94,6 +100,44 @@ def create_dynamic_route_handler(route_type: str):
         return dynamic_object_handler
 
 
+def create_dynamic_post_listing_handler():
+    """Create a POST handler for dynamic listing endpoints (Option B)."""
+
+    async def dynamic_list_post_handler(
+        query_params: ListingQueryParams = Depends(listing_post_params_dependency),
+        endpoint_nodeshape: NodeShape = Depends(get_endpoint_nodeshapes),
+        pmts: NegotiatedPMTs = Depends(get_negotiated_pmts_listing_post),
+        endpoint_structure: tuple[str, ...] = Depends(
+            get_endpoint_structure_listing_post
+        ),
+        profile_nodeshape: NodeShape = Depends(get_profile_nodeshape_listing_post),
+        cql_parser: CQLParser = Depends(cql_post_listing_parser_dependency),
+        search_query: ConstructQuery = Depends(generate_search_query_post),
+        concept_hierarchy_query: ConceptHierarchyQuery = Depends(
+            generate_concept_hierarchy_query
+        ),
+        data_repo: Repo = Depends(get_data_repo),
+        system_repo: Repo = Depends(get_system_repo),
+        url: str = Depends(get_url),
+    ):
+        return await listing_function(
+            data_repo=data_repo,
+            system_repo=system_repo,
+            endpoint_nodeshape=endpoint_nodeshape,
+            endpoint_structure=endpoint_structure,
+            search_query=search_query,
+            concept_hierarchy_query=concept_hierarchy_query,
+            cql_parser=cql_parser,
+            pmts=pmts,
+            profile_nodeshape=profile_nodeshape,
+            query_params=query_params,
+            original_endpoint_type=ONT["ListingEndpoint"],
+            url=url,
+        )
+
+    return dynamic_list_post_handler
+
+
 # Extract path parameters from the path
 def extract_path_params(path: str) -> List[str]:
     return [
@@ -158,7 +202,7 @@ def add_routes(router: APIRouter):
         # Create the endpoint function
         endpoint = create_dynamic_route_handler(route["type"])
 
-        # Add the route to the router with OpenAPI extras
+        # Add the GET route
         router.add_api_route(
             name=route["name"],
             path=route["path"],
@@ -167,6 +211,19 @@ def add_routes(router: APIRouter):
             description=route["description"],
             openapi_extra=openapi_extras,
         )
+
+        # For listing endpoints, also register a POST route (Option B)
+        if route["type"] == "ListingEndpoint":
+            post_endpoint = create_dynamic_post_listing_handler()
+            router.add_api_route(
+                name=route["name"] + "-post",
+                path=route["path"],
+                endpoint=post_endpoint,
+                methods=["POST"],
+                description=route["description"],
+                openapi_extra=openapi_extras,
+            )
+            logger.info(f"Added dynamic POST route: {route['path']}")
 
         logger.info(f"Added dynamic route: {route['path']}")
 

@@ -1,0 +1,689 @@
+{
+  "label": "after",
+  "python": "3.12.3",
+  "grammar_library": "sparql_grammar",
+  "grammar_version": "0.1.0.dev0",
+  "repeat": 5,
+  "sizes": [
+    100,
+    1000,
+    5000,
+    10000,
+    50000,
+    100000
+  ],
+  "results": {
+    "annotations_values_100": {
+      "n": 100,
+      "build": {
+        "min_ms": 0.16,
+        "median_ms": 0.193
+      },
+      "render": {
+        "min_ms": 0.094,
+        "median_ms": 0.121
+      },
+      "total": {
+        "min_ms": 0.253,
+        "median_ms": 0.313
+      },
+      "chars": 4113,
+      "nodes": 186
+    },
+    "classes_values_100": {
+      "n": 100,
+      "build": {
+        "min_ms": 0.116,
+        "median_ms": 0.135
+      },
+      "render": {
+        "min_ms": 0.056,
+        "median_ms": 0.064
+      },
+      "total": {
+        "min_ms": 0.172,
+        "median_ms": 0.198
+      },
+      "chars": 3096,
+      "nodes": 125
+    },
+    "annotations_values_1000": {
+      "n": 1000,
+      "build": {
+        "min_ms": 0.511,
+        "median_ms": 0.569
+      },
+      "render": {
+        "min_ms": 0.232,
+        "median_ms": 0.262
+      },
+      "total": {
+        "min_ms": 0.743,
+        "median_ms": 0.831
+      },
+      "chars": 32013,
+      "nodes": 1086
+    },
+    "classes_values_1000": {
+      "n": 1000,
+      "build": {
+        "min_ms": 0.481,
+        "median_ms": 0.529
+      },
+      "render": {
+        "min_ms": 0.19,
+        "median_ms": 0.202
+      },
+      "total": {
+        "min_ms": 0.671,
+        "median_ms": 0.731
+      },
+      "chars": 30996,
+      "nodes": 1025
+    },
+    "annotations_values_5000": {
+      "n": 5000,
+      "build": {
+        "min_ms": 1.987,
+        "median_ms": 2.149
+      },
+      "render": {
+        "min_ms": 0.837,
+        "median_ms": 0.866
+      },
+      "total": {
+        "min_ms": 2.824,
+        "median_ms": 3.015
+      },
+      "chars": 160013,
+      "nodes": 5086
+    },
+    "classes_values_5000": {
+      "n": 5000,
+      "build": {
+        "min_ms": 1.908,
+        "median_ms": 1.963
+      },
+      "render": {
+        "min_ms": 0.747,
+        "median_ms": 0.765
+      },
+      "total": {
+        "min_ms": 2.654,
+        "median_ms": 2.728
+      },
+      "chars": 158996,
+      "nodes": 5025
+    },
+    "annotations_values_10000": {
+      "n": 10000,
+      "build": {
+        "min_ms": 3.994,
+        "median_ms": 4.139
+      },
+      "render": {
+        "min_ms": 1.5,
+        "median_ms": 1.573
+      },
+      "total": {
+        "min_ms": 5.494,
+        "median_ms": 5.711
+      },
+      "chars": 320013,
+      "nodes": 10086
+    },
+    "classes_values_10000": {
+      "n": 10000,
+      "build": {
+        "min_ms": 3.993,
+        "median_ms": 4.021
+      },
+      "render": {
+        "min_ms": 1.444,
+        "median_ms": 1.516
+      },
+      "total": {
+        "min_ms": 5.437,
+        "median_ms": 5.537
+      },
+      "chars": 318996,
+      "nodes": 10025
+    },
+    "annotations_values_50000": {
+      "n": 50000,
+      "build": {
+        "min_ms": 19.737,
+        "median_ms": 20.393
+      },
+      "render": {
+        "min_ms": 7.388,
+        "median_ms": 9.079
+      },
+      "total": {
+        "min_ms": 27.124,
+        "median_ms": 29.472
+      },
+      "chars": 1640013,
+      "nodes": 50086
+    },
+    "classes_values_50000": {
+      "n": 50000,
+      "build": {
+        "min_ms": 19.526,
+        "median_ms": 21.127
+      },
+      "render": {
+        "min_ms": 7.837,
+        "median_ms": 8.089
+      },
+      "total": {
+        "min_ms": 27.362,
+        "median_ms": 29.216
+      },
+      "chars": 1638996,
+      "nodes": 50025
+    },
+    "annotations_values_100000": {
+      "n": 100000,
+      "build": {
+        "min_ms": 67.982,
+        "median_ms": 76.243
+      },
+      "render": {
+        "min_ms": 15.687,
+        "median_ms": 17.138
+      },
+      "total": {
+        "min_ms": 83.669,
+        "median_ms": 93.381
+      },
+      "chars": 3290013,
+      "nodes": 100086
+    },
+    "classes_values_100000": {
+      "n": 100000,
+      "build": {
+        "min_ms": 62.835,
+        "median_ms": 79.516
+      },
+      "render": {
+        "min_ms": 15.866,
+        "median_ms": 17.663
+      },
+      "total": {
+        "min_ms": 78.701,
+        "median_ms": 97.179
+      },
+      "chars": 3288996,
+      "nodes": 100025
+    },
+    "link_generation_values_100": {
+      "n": 100,
+      "build": {
+        "min_ms": 1.137,
+        "median_ms": 1.247
+      },
+      "total": {
+        "min_ms": 1.137,
+        "median_ms": 1.247
+      },
+      "chars": 3573
+    },
+    "link_generation_values_1000": {
+      "n": 1000,
+      "build": {
+        "min_ms": 1.809,
+        "median_ms": 1.815
+      },
+      "total": {
+        "min_ms": 1.809,
+        "median_ms": 1.815
+      },
+      "chars": 34173
+    },
+    "link_generation_values_5000": {
+      "n": 5000,
+      "build": {
+        "min_ms": 4.181,
+        "median_ms": 4.285
+      },
+      "total": {
+        "min_ms": 4.181,
+        "median_ms": 4.285
+      },
+      "chars": 174173
+    },
+    "link_generation_values_10000": {
+      "n": 10000,
+      "build": {
+        "min_ms": 7.889,
+        "median_ms": 8.136
+      },
+      "total": {
+        "min_ms": 7.889,
+        "median_ms": 8.136
+      },
+      "chars": 349173
+    },
+    "link_generation_values_50000": {
+      "n": 50000,
+      "build": {
+        "min_ms": 34.846,
+        "median_ms": 35.247
+      },
+      "total": {
+        "min_ms": 34.846,
+        "median_ms": 35.247
+      },
+      "chars": 1789173
+    },
+    "link_generation_values_100000": {
+      "n": 100000,
+      "build": {
+        "min_ms": 116.476,
+        "median_ms": 118.32
+      },
+      "total": {
+        "min_ms": 116.476,
+        "median_ms": 118.32
+      },
+      "chars": 3589173
+    },
+    "link_generation_e2e_cold": {
+      "n": 273,
+      "build": {
+        "min_ms": 6.574,
+        "median_ms": 6.965
+      },
+      "total": {
+        "min_ms": 6.574,
+        "median_ms": 6.965
+      }
+    },
+    "link_generation_e2e_warm": {
+      "n": 273,
+      "build": {
+        "min_ms": 2.535,
+        "median_ms": 2.594
+      },
+      "total": {
+        "min_ms": 2.535,
+        "median_ms": 2.594
+      }
+    },
+    "lucene_search": {
+      "n": null,
+      "build": {
+        "min_ms": 0.247,
+        "median_ms": 0.301
+      },
+      "total": {
+        "min_ms": 0.247,
+        "median_ms": 0.301
+      },
+      "chars": 210,
+      "nodes": 53
+    },
+    "lucene_search_facets": {
+      "n": null,
+      "build": {
+        "min_ms": 0.281,
+        "median_ms": 0.283
+      },
+      "total": {
+        "min_ms": 0.281,
+        "median_ms": 0.283
+      },
+      "chars": 311,
+      "nodes": 53
+    },
+    "lucene_listing_query": {
+      "n": null,
+      "build": {
+        "min_ms": 0.079,
+        "median_ms": 0.092
+      },
+      "render": {
+        "min_ms": 0.136,
+        "median_ms": 0.157
+      },
+      "total": {
+        "min_ms": 0.216,
+        "median_ms": 0.249
+      },
+      "chars": 1135,
+      "nodes": 258
+    },
+    "materialise_construct": {
+      "n": 6815,
+      "build": {
+        "min_ms": 24.488,
+        "median_ms": 25.03
+      },
+      "total": {
+        "min_ms": 24.488,
+        "median_ms": 25.03
+      },
+      "triples": 6815
+    },
+    "listing_nodeshapes": {
+      "n": null,
+      "build": {
+        "min_ms": 0.802,
+        "median_ms": 0.941
+      },
+      "total": {
+        "min_ms": 0.802,
+        "median_ms": 0.941
+      }
+    },
+    "listing_query": {
+      "n": null,
+      "build": {
+        "min_ms": 0.119,
+        "median_ms": 0.126
+      },
+      "render": {
+        "min_ms": 0.087,
+        "median_ms": 0.092
+      },
+      "total": {
+        "min_ms": 0.207,
+        "median_ms": 0.219
+      },
+      "chars": 939,
+      "nodes": 117
+    },
+    "listing_count_query": {
+      "n": null,
+      "build": {
+        "min_ms": 0.278,
+        "median_ms": 0.347
+      },
+      "render": {
+        "min_ms": 0.11,
+        "median_ms": 0.116
+      },
+      "total": {
+        "min_ms": 0.389,
+        "median_ms": 0.463
+      },
+      "chars": 922,
+      "nodes": 158
+    },
+    "listing_deepcopy_inner_select": {
+      "n": null,
+      "build": {
+        "min_ms": 0.206,
+        "median_ms": 0.217
+      },
+      "total": {
+        "min_ms": 0.206,
+        "median_ms": 0.217
+      },
+      "nodes": 88
+    },
+    "object_query": {
+      "n": null,
+      "build": {
+        "min_ms": 0.403,
+        "median_ms": 0.466
+      },
+      "render": {
+        "min_ms": 0.049,
+        "median_ms": 0.05
+      },
+      "total": {
+        "min_ms": 0.452,
+        "median_ms": 0.515
+      },
+      "chars": 227,
+      "nodes": 27
+    },
+    "cql_in_100": {
+      "n": 100,
+      "build": {
+        "min_ms": 0.673,
+        "median_ms": 0.741
+      },
+      "total": {
+        "min_ms": 0.673,
+        "median_ms": 0.741
+      },
+      "chars": 3034,
+      "nodes": 871
+    },
+    "cql_in_1000": {
+      "n": 1000,
+      "build": {
+        "min_ms": 4.876,
+        "median_ms": 5.058
+      },
+      "total": {
+        "min_ms": 4.876,
+        "median_ms": 5.058
+      },
+      "chars": 29134,
+      "nodes": 8071
+    },
+    "cql_in_5000": {
+      "n": 5000,
+      "build": {
+        "min_ms": 24.394,
+        "median_ms": 25.167
+      },
+      "total": {
+        "min_ms": 24.394,
+        "median_ms": 25.167
+      },
+      "chars": 149134,
+      "nodes": 40071
+    },
+    "cql_in_10000": {
+      "n": 10000,
+      "build": {
+        "min_ms": 108.087,
+        "median_ms": 122.206
+      },
+      "total": {
+        "min_ms": 108.087,
+        "median_ms": 122.206
+      },
+      "chars": 299134,
+      "nodes": 80071
+    },
+    "cql_in_50000": {
+      "n": 50000,
+      "build": {
+        "min_ms": 738.147,
+        "median_ms": 777.291
+      },
+      "total": {
+        "min_ms": 738.147,
+        "median_ms": 777.291
+      },
+      "chars": 1539134,
+      "nodes": 400071
+    },
+    "cql_in_100000": {
+      "n": 100000,
+      "build": {
+        "min_ms": 1561.105,
+        "median_ms": 1800.042
+      },
+      "total": {
+        "min_ms": 1561.105,
+        "median_ms": 1800.042
+      },
+      "chars": 3089134,
+      "nodes": 800071
+    },
+    "search_query": {
+      "n": null,
+      "build": {
+        "min_ms": 0.362,
+        "median_ms": 0.405
+      },
+      "render": {
+        "min_ms": 0.18,
+        "median_ms": 0.185
+      },
+      "total": {
+        "min_ms": 0.542,
+        "median_ms": 0.59
+      },
+      "chars": 1165,
+      "nodes": 291
+    },
+    "e2e_cold_catalogs": {
+      "n": null,
+      "build": {
+        "min_ms": 55.088,
+        "median_ms": 56.023
+      },
+      "total": {
+        "min_ms": 55.088,
+        "median_ms": 56.023
+      },
+      "url": "/catalogs?limit=20",
+      "response_bytes": 5492
+    },
+    "e2e_warm_catalogs": {
+      "n": null,
+      "build": {
+        "min_ms": 14.509,
+        "median_ms": 15.105
+      },
+      "total": {
+        "min_ms": 14.509,
+        "median_ms": 15.105
+      },
+      "url": "/catalogs?limit=20"
+    },
+    "e2e_cold_catalog_object": {
+      "n": null,
+      "build": {
+        "min_ms": 17.626,
+        "median_ms": 21.094
+      },
+      "total": {
+        "min_ms": 17.626,
+        "median_ms": 21.094
+      },
+      "url": "/catalogs/exm:CatalogOne",
+      "response_bytes": 2750
+    },
+    "e2e_warm_catalog_object": {
+      "n": null,
+      "build": {
+        "min_ms": 10.863,
+        "median_ms": 11.275
+      },
+      "total": {
+        "min_ms": 10.863,
+        "median_ms": 11.275
+      },
+      "url": "/catalogs/exm:CatalogOne"
+    },
+    "e2e_cold_collections": {
+      "n": null,
+      "build": {
+        "min_ms": 22.356,
+        "median_ms": 24.103
+      },
+      "total": {
+        "min_ms": 22.356,
+        "median_ms": 24.103
+      },
+      "url": "/catalogs/exm:CatalogOne/collections?limit=20",
+      "response_bytes": 2741
+    },
+    "e2e_warm_collections": {
+      "n": null,
+      "build": {
+        "min_ms": 15.716,
+        "median_ms": 15.912
+      },
+      "total": {
+        "min_ms": 15.716,
+        "median_ms": 15.912
+      },
+      "url": "/catalogs/exm:CatalogOne/collections?limit=20"
+    },
+    "e2e_cold_concepts": {
+      "n": null,
+      "build": {
+        "min_ms": 46.077,
+        "median_ms": 48.294
+      },
+      "total": {
+        "min_ms": 46.077,
+        "median_ms": 48.294
+      },
+      "url": "/catalogs/bblockcatalog:bblocks/collections/bblockvocabs:api/items?limit=100",
+      "response_bytes": 3315
+    },
+    "e2e_warm_concepts": {
+      "n": null,
+      "build": {
+        "min_ms": 14.722,
+        "median_ms": 15.172
+      },
+      "total": {
+        "min_ms": 14.722,
+        "median_ms": 15.172
+      },
+      "url": "/catalogs/bblockcatalog:bblocks/collections/bblockvocabs:api/items?limit=100"
+    },
+    "e2e_cold_concept_scheme_object": {
+      "n": null,
+      "build": {
+        "min_ms": 47.341,
+        "median_ms": 48.689
+      },
+      "total": {
+        "min_ms": 47.341,
+        "median_ms": 48.689
+      },
+      "url": "/catalogs/bblockcatalog:bblocks/collections/bblockvocabs:api",
+      "response_bytes": 5115
+    },
+    "e2e_warm_concept_scheme_object": {
+      "n": null,
+      "build": {
+        "min_ms": 12.409,
+        "median_ms": 12.963
+      },
+      "total": {
+        "min_ms": 12.409,
+        "median_ms": 12.963
+      },
+      "url": "/catalogs/bblockcatalog:bblocks/collections/bblockvocabs:api"
+    },
+    "e2e_cold_search": {
+      "n": null,
+      "build": {
+        "min_ms": 63.933,
+        "median_ms": 66.433
+      },
+      "total": {
+        "min_ms": 63.933,
+        "median_ms": 66.433
+      },
+      "url": "/search?q=the&limit=20",
+      "response_bytes": 5522
+    },
+    "e2e_warm_search": {
+      "n": null,
+      "build": {
+        "min_ms": 23.65,
+        "median_ms": 23.743
+      },
+      "total": {
+        "min_ms": 23.65,
+        "median_ms": 23.743
+      },
+      "url": "/search?q=the&limit=20"
+    }
+  }
+}

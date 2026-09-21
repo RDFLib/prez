@@ -1,15 +1,14 @@
-from sparql_grammar_pydantic import (
+from sparql_grammar import (
     IRI,
     GroupGraphPattern,
     GroupGraphPatternSub,
     SelectClause,
+    SolutionModifier,
     SubSelect,
     TriplesBlock,
     TriplesSameSubjectPath,
     Var,
     WhereClause,
-    SolutionModifier,
-    ValuesClause,
 )
 
 
@@ -26,33 +25,33 @@ class PrefixQuery(SubSelect):
         prefix_var = Var(value="prefix")
         namespace_var = Var(value="namespace")
         subject_var = Var(value="subject")
-        select_clause = SelectClause(variables_or_all=[prefix_var, namespace_var])
-        where_clause = WhereClause(
-            group_graph_pattern=GroupGraphPattern(
-                content=GroupGraphPatternSub(
-                    triples_block=TriplesBlock.from_tssp_list(
+        super().__init__(
+            select_clause=SelectClause([prefix_var, namespace_var]),
+            where_clause=WhereClause(
+                GroupGraphPattern(
+                    GroupGraphPatternSub(
                         [
-                            TriplesSameSubjectPath.from_spo(
-                                subject=subject_var,
-                                predicate=IRI(
-                                    value="http://purl.org/vocab/vann/preferredNamespacePrefix"
-                                ),
-                                object=prefix_var,
-                            ),
-                            TriplesSameSubjectPath.from_spo(
-                                subject=subject_var,
-                                predicate=IRI(
-                                    value="http://purl.org/vocab/vann/preferredNamespaceUri"
-                                ),
-                                object=namespace_var,
-                            ),
+                            TriplesBlock(
+                                [
+                                    TriplesSameSubjectPath.from_spo(
+                                        subject_var,
+                                        IRI(
+                                            value="http://purl.org/vocab/vann/preferredNamespacePrefix"
+                                        ),
+                                        prefix_var,
+                                    ),
+                                    TriplesSameSubjectPath.from_spo(
+                                        subject_var,
+                                        IRI(
+                                            value="http://purl.org/vocab/vann/preferredNamespaceUri"
+                                        ),
+                                        namespace_var,
+                                    ),
+                                ]
+                            )
                         ]
                     )
                 )
-            )
-        )
-        super().__init__(
-            select_clause=select_clause,
-            where_clause=where_clause,
+            ),
             solution_modifier=SolutionModifier(),
         )
