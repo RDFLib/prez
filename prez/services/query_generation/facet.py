@@ -2,8 +2,7 @@ import copy
 import json
 import logging
 
-from rdflib import RDF, URIRef, Literal, DCTERMS, XSD, Graph
-from rdflib.collection import Collection
+from rdflib import URIRef, Literal, DCTERMS, XSD, Graph
 from sparql_grammar import (
     IRI,
     Aggregate,

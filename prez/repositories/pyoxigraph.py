@@ -10,7 +10,6 @@ from pyoxigraph import (
     QueryTriples,
     QuerySolutions,
     QueryBoolean,
-    Quad,
 )
 from rdflib import Graph, Namespace, URIRef
 

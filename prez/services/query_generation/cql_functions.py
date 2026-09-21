@@ -3,7 +3,6 @@ from rdflib.namespace import PROV, RDF, SDO, SOSA
 from sparql_grammar import (
     IRI,
     GroupGraphPatternSub,
-    TriplesBlock,
     TriplesSameSubjectPath,
     Var,
 )

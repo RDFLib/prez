@@ -306,7 +306,7 @@ async def cql_get_parser_dependency(
             return cql_parser
         except json.JSONDecodeError:
             raise HTTPException(status_code=400, detail="Invalid JSON format.")
-        except Exception as e:
+        except Exception:
             raise HTTPException(
                 status_code=400, detail="Invalid CQL format: Parsing failed."
             )

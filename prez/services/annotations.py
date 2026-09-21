@@ -434,7 +434,6 @@ async def get_annotation_properties_for_oxigraph(
     But the response is still an rdflib Graph, so it can be used in the same way as the rdflib version.
     This is because the annotations cache and all annotations logic are still based on URIRefs and rdflib Graphs.
     """
-    collect_start = time.perf_counter()
     # get all terms and datatypes for which we want to retrieve annotations
     all_uris: set[OxiNamedNode] = set()
     all_dtypes: set[OxiNamedNode] = set()
@@ -457,7 +456,6 @@ async def get_annotation_properties_for_oxigraph(
     if len(all_uris) == 0 and len(all_dtypes) == 0:
         return OxiStore()
     terms_and_types: set[OxiNamedNode] = all_uris.union(all_dtypes)
-    collect_ms = (time.perf_counter() - collect_start) * 1000
     annotations_store = await get_annotations_for_oxigraph(
         terms_and_types, repo, system_repo
     )

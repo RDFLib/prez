@@ -166,7 +166,7 @@ class NegotiatedPMTs(BaseModel):
                 parts[0] = await self._resolve_token(
                     parts[0]
                 )  # then try to resolve the token to a URI
-            except TokenError as e:
+            except TokenError:
                 try:  # if token resolution fails, try to resolve as a curie
                     result = await get_uri_for_curie_id(parts[0])
                     parts[0] = URIRef(result)
@@ -391,7 +391,6 @@ class NegotiatedPMTs(BaseModel):
         )
 
     def _compose_select_query(self) -> str:
-        from prez.config import settings
 
         prez = Namespace("https://prez.dev/")
         profile_class = prez.ListingProfile if self.listing else prez.ObjectProfile

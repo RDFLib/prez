@@ -28,8 +28,6 @@ from prez.dependencies import (
 )
 from prez.models.query_params import (
     ListingQueryParams,
-    ListingPostBody,
-    ObjectPostBody,
     ObjectQueryParams,
 )
 from prez.reference_data.prez_ns import EP, OGCE, ONT

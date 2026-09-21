@@ -11,7 +11,7 @@ from aiocache import cached
 from fastapi import Depends
 from fastapi import status
 from fastapi.exceptions import HTTPException
-from fastapi.responses import Response, StreamingResponse
+from fastapi.responses import Response
 from httpx import URL
 from oxrdflib._converter import to_ox
 from pyoxigraph import (
@@ -57,7 +57,7 @@ from prez.services.connegp_service import (
 )
 from prez.services.connegp_service import RDF_SERIALIZER_TYPES_MAP
 from prez.services.curie_functions import get_curie_id_for_uri
-from prez.services.query_generation.shacl import NodeShape, get_nodeshape
+from prez.services.query_generation.shacl import get_nodeshape
 from prez.services.timing_csv import log_timing_csv
 
 log = logging.getLogger(__name__)

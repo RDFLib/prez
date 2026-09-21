@@ -8,7 +8,6 @@ from sparql_grammar import (
     BuiltInCall,
     ConstructQuery,
     ConstructTemplate,
-    ConstructTriples,
     Expression,
     Filter,
     GroupClause,

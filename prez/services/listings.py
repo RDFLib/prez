@@ -180,7 +180,7 @@ async def handle_queryables_rdf_response(
         log.info("Client does not support gzip, skipping cache")
 
     # Cache miss - do the expensive work
-    log.info(f"TIMING: Cache MISS - doing expensive queryables serialization")
+    log.info("TIMING: Cache MISS - doing expensive queryables serialization")
 
     # Extract queryables RDF from the system store
     t0 = time.perf_counter()

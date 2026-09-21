@@ -7,12 +7,10 @@ from rdflib.namespace import GEO
 from sparql_grammar import (
     BLANK_NODE_LABEL,
     IRI,
-    ArgList,
     Bind,
     BuiltInCall,
     Expression,
     Filter,
-    FunctionCall,
     GraphPatternNotTriples,
     GroupGraphPattern,
     GroupGraphPatternSub,

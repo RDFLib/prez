@@ -3,7 +3,6 @@ import json
 from rdflib import RDF, Namespace
 from sparql_grammar import (
     IRI,
-    Bind,
     BlankNodePropertyList,
     BuiltInCall,
     CollectionPath,
