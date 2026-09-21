@@ -1,17 +1,16 @@
 import json
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
-import logging
 
 from fastapi import Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from prez.enums import FilterLangEnum, OrderByDirectionEnum
+from prez.services.prez_logging import get_logger
 
 DateTimeOrUnbounded = Union[datetime, str, None]
 
-# Get the root logger, this is only for debugging
-logger = logging.getLogger()
+logger = get_logger(__name__)
 
 
 def reformat_bbox(

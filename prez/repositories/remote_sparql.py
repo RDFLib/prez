@@ -1,5 +1,4 @@
 import hashlib
-import logging
 import time
 from typing import Any
 from urllib.parse import quote_plus
@@ -11,11 +10,13 @@ from rdflib import Graph, Namespace, URIRef
 from prez.config import settings
 from prez.repositories.base import Repo
 from prez.services.connegp_service import OXIGRAPH_SERIALIZER_TYPES_MAP
+from prez.services.prez_logging import REQUEST_ID_HEADER, get_logger, get_request_id
 from prez.services.timing_csv import log_timing_csv
 
 PREZ = Namespace("https://prez.dev/")
 
-log = logging.getLogger(__name__)
+
+log = get_logger(__name__)
 
 
 def _query_fingerprint(query: str) -> str:
@@ -44,7 +45,10 @@ class RemoteSparqlRepo(Repo):
         query_rq = self.async_client.build_request(
             "POST",
             url=settings.sparql_endpoint,
-            headers={"Accept": mediatype},
+            headers={
+                "Accept": mediatype,
+                REQUEST_ID_HEADER: get_request_id(),
+            },
             data=data,
         )
         query_id = _query_fingerprint(query)
@@ -53,7 +57,7 @@ class RemoteSparqlRepo(Repo):
             response = await self.async_client.send(query_rq, stream=True)
             elapsed_ms = (time.perf_counter() - t0) * 1000
             log.debug(
-                "remote_sparql send_complete query_id=%s accept=%s status=%s elapsed_ms=%.1f endpoint=%s",
+                "remote_sparql send_complete query_id=%s accept=%s http_status=%s operation_duration_ms=%.1f endpoint=%s",
                 query_id,
                 mediatype,
                 response.status_code,
@@ -112,7 +116,7 @@ class RemoteSparqlRepo(Repo):
         parse_ms = (time.perf_counter() - parse_start) * 1000
         total_ms = (time.perf_counter() - total_start) * 1000
         log.debug(
-            "remote_sparql rdflib_graph query_id=%s format=%s bytes=%s read_ms=%.1f parse_ms=%.1f total_ms=%.1f",
+            "remote_sparql rdflib_graph query_id=%s format=%s response_size_bytes=%s remote_read_duration_ms=%.1f parse_duration_ms=%.1f total_duration_ms=%.1f",
             query_id,
             response_format,
             len(content_bytes),
@@ -152,7 +156,7 @@ class RemoteSparqlRepo(Repo):
         bulk_load_ms = (time.perf_counter() - bulk_load_start) * 1000
         total_ms = (time.perf_counter() - total_start) * 1000
         log.debug(
-            "remote_sparql oxigraph_store query_id=%s format=%s oxigraph_format=%s bytes=%s read_ms=%.1f bulk_load_ms=%.1f total_ms=%.1f",
+            "remote_sparql oxigraph_store query_id=%s format=%s oxigraph_format=%s response_size_bytes=%s remote_read_duration_ms=%.1f bulk_load_duration_ms=%.1f total_duration_ms=%.1f",
             query_id,
             response_format,
             oxigraph_format,
@@ -162,14 +166,14 @@ class RemoteSparqlRepo(Repo):
             total_ms,
         )
         log_timing_csv(
-            "remote_sparql_oxigraph_store",
+            "remote_sparql.oxigraph_store",
             query_id=query_id,
             format=response_format,
             oxigraph_format=str(oxigraph_format),
-            bytes=len(content_bytes),
-            read_ms=f"{read_ms:.1f}",
-            bulk_load_ms=f"{bulk_load_ms:.1f}",
-            total_ms=f"{total_ms:.1f}",
+            response_size_bytes=len(content_bytes),
+            remote_read_duration_ms=f"{read_ms:.1f}",
+            bulk_load_duration_ms=f"{bulk_load_ms:.1f}",
+            total_duration_ms=f"{total_ms:.1f}",
         )
         return s
 
@@ -187,16 +191,16 @@ class RemoteSparqlRepo(Repo):
         await response.aread()
         read_ms = (time.perf_counter() - read_start) * 1000
         log.debug(
-            "remote_sparql tabular_query query_id=%s status=%s read_ms=%.1f",
+            "remote_sparql tabular_query query_id=%s http_status=%s remote_read_duration_ms=%.1f",
             query_id,
             response.status_code,
             read_ms,
         )
         log_timing_csv(
-            "remote_sparql_tabular_query",
+            "remote_sparql.tabular_query",
             query_id=query_id,
-            status=response.status_code,
-            read_ms=f"{read_ms:.1f}",
+            http_status=response.status_code,
+            remote_read_duration_ms=f"{read_ms:.1f}",
         )
         return context, response.json()["results"]["bindings"]
 
@@ -238,8 +242,9 @@ class RemoteSparqlRepo(Repo):
                 method, url, headers=headers, content=form_data.encode("utf-8")
             )
 
-        # Add the correct 'host' header
+        # Preserve correlation across the proxied downstream request.
         request.headers["host"] = httpx.URL(url).host
+        request.headers[REQUEST_ID_HEADER] = get_request_id()
 
         send_start = time.perf_counter()
         response = await self.async_client.send(request, stream=True)
@@ -256,7 +261,7 @@ class RemoteSparqlRepo(Repo):
             ) from e
         total_ms = (time.perf_counter() - total_start) * 1000
         log.debug(
-            "remote_sparql proxy query_id=%s method=%s status=%s send_ms=%.1f total_ms=%.1f endpoint=%s",
+            "event=remote_sparql.proxy query_id=%s http_method=%s http_status=%s response_send_duration_ms=%.1f total_duration_ms=%.1f endpoint=%s",
             query_id,
             method,
             response.status_code,
@@ -265,13 +270,13 @@ class RemoteSparqlRepo(Repo):
             settings.sparql_endpoint,
         )
         log_timing_csv(
-            "remote_sparql_proxy",
+            "remote_sparql.proxy",
             query_id=query_id,
-            method=method,
-            status=response.status_code,
+            http_method=method,
+            http_status=response.status_code,
             endpoint=settings.sparql_endpoint,
-            elapsed_ms=f"{send_ms:.1f}",
-            total_ms=f"{total_ms:.1f}",
+            response_send_duration_ms=f"{send_ms:.1f}",
+            total_duration_ms=f"{total_ms:.1f}",
         )
 
         return response

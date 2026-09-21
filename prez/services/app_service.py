@@ -1,4 +1,3 @@
-import logging
 import time
 from pathlib import Path
 
@@ -12,7 +11,7 @@ from prez.cache import (
     prefix_graph,
     prez_system_graph,
 )
-from prez.config import settings, get_reference_data_dir
+from prez.config import get_reference_data_dir, settings
 from prez.reference_data.prez_ns import ONT, PREZ
 from prez.repositories import Repo
 from prez.services.curie_functions import clear_curie_cache, get_curie_id_for_uri
@@ -20,10 +19,11 @@ from prez.services.jena_assembler_queryables import (
     transform_jena_assembler_to_queryables,
 )
 from prez.services.link_generation import clear_link_generation_caches
+from prez.services.prez_logging import get_logger
 from prez.services.query_generation.count import startup_count_objects
 from prez.services.query_generation.prefixes import PrefixQuery
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 CQL_QUERYABLE = URIRef("http://www.opengis.net/doc/IS/cql2/1.0/Queryable")
 

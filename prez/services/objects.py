@@ -1,20 +1,17 @@
 import io
 import json
-import logging
 import re
 import time
 import urllib.parse
 from urllib.parse import urlencode
 
 from fastapi.responses import PlainTextResponse, RedirectResponse
-from pyoxigraph import (
-    RdfFormat,
-    Store as OxiStore,
-    NamedNode as OxiNamedNode,
-    BlankNode as OxiBlankNode,
-    Quad as OxiQuad,
-    DefaultGraph as OxiDefaultGraph,
-)
+from pyoxigraph import BlankNode as OxiBlankNode
+from pyoxigraph import DefaultGraph as OxiDefaultGraph
+from pyoxigraph import NamedNode as OxiNamedNode
+from pyoxigraph import Quad as OxiQuad
+from pyoxigraph import RdfFormat
+from pyoxigraph import Store as OxiStore
 from rdf2geojson import convert
 from rdflib import RDF, URIRef
 from rdflib.namespace import GEO
@@ -22,7 +19,7 @@ from sparql_grammar import IRI, TriplesSameSubject, TriplesSameSubjectPath, Var
 
 from prez.cache import prefix_graph
 from prez.config import settings
-from prez.enums import NonAnnotatedRDFMediaType, AnnotatedRDFMediaType
+from prez.enums import AnnotatedRDFMediaType, NonAnnotatedRDFMediaType
 from prez.exceptions.model_exceptions import URINotFoundException
 from prez.models.ogc_features import Collection, Link, Links
 from prez.models.query_params import ListingQueryParams
@@ -31,8 +28,6 @@ from prez.renderers.renderer import (
     create_self_alt_links,
     generate_link_headers,
     get_brisbane_timestamp,
-)
-from prez.renderers.renderer import (
     return_annotated_rdf_for_oxigraph,
     return_from_graph,
 )
@@ -41,10 +36,11 @@ from prez.services.connegp_service import OXIGRAPH_SERIALIZER_TYPES_MAP, RDF_MED
 from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.link_generation import add_prez_links_for_oxigraph
 from prez.services.listings import listing_function
+from prez.services.prez_logging import get_logger
 from prez.services.query_generation.facet import FacetQuery
 from prez.services.query_generation.umbrella import PrezQueryConstructor
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 
 async def object_function(
@@ -120,12 +116,16 @@ async def object_function(
         if facets_query:
             queries.append(facets_query.to_string())
 
-    query_start_time = time.time()
+    query_started_at = time.perf_counter()
     item_store: OxiStore
     item_store, _ = await data_repo.send_queries(
         queries, [], return_oxigraph_store=True
     )
-    log.debug(f"Query time: {time.time() - query_start_time}")
+    log.debug(
+        "event=object.query.complete query_duration_ms=%.1f query_count=%s",
+        (time.perf_counter() - query_started_at) * 1000,
+        len(queries),
+    )
     default = OxiDefaultGraph()
     if facet_profile_uri:
         item_store.add(
@@ -249,13 +249,17 @@ async def ogc_features_object_function(
             ).to_string()
         )
 
-    query_start_time = time.time()
+    query_started_at = time.perf_counter()
     oxi_default = OxiDefaultGraph()
     item_store: OxiStore
     item_store, _ = await data_repo.send_queries(
         queries, [], return_oxigraph_store=True
     )
-    log.debug(f"Query time: {time.time() - query_start_time}")
+    log.debug(
+        "event=ogc_object.query.complete query_duration_ms=%.1f query_count=%s",
+        (time.perf_counter() - query_started_at) * 1000,
+        len(queries),
+    )
 
     if len(item_store) == 0:
         uri = feature_uri if feature_uri else collection_uri

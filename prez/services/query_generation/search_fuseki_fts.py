@@ -1,6 +1,3 @@
-import logging
-import sys
-
 from rdflib import Namespace
 from rdflib.namespace import RDF, RDFS
 from sparql_grammar import (
@@ -34,10 +31,11 @@ from sparql_grammar import (
 )
 
 from prez.reference_data.prez_ns import PREZ
+from prez.services.prez_logging import get_logger
 from prez.services.query_generation.grammar_helpers import construct_triples
 from prez.services.query_generation.search_default import hash_id_expression
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class SearchQueryFusekiFTS(ConstructQuery):
@@ -380,8 +378,6 @@ class SearchQueryFusekiFTS(ConstructQuery):
 
 
 if __name__ == "__main__":
-    logger.setLevel(logging.DEBUG)
-    logger.addHandler(logging.StreamHandler(sys.stdout))
     fts_query = SearchQueryFusekiFTS(
         term="test",
         limit=10,

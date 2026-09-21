@@ -1,8 +1,7 @@
 import copy
 import json
-import logging
 
-from rdflib import URIRef, Literal, DCTERMS, XSD, Graph
+from rdflib import DCTERMS, XSD, Graph, Literal, URIRef
 from sparql_grammar import (
     IRI,
     Aggregate,
@@ -30,10 +29,11 @@ from sparql_grammar import (
 from prez.cache import profiles_graph_cache
 from prez.exceptions.model_exceptions import PrefixNotBoundException
 from prez.reference_data.prez_ns import LUC, PREZ
-from prez.services.query_generation.grammar_helpers import triples_block
 from prez.services.curie_functions import get_uri_for_curie_id
+from prez.services.prez_logging import get_logger
+from prez.services.query_generation.grammar_helpers import triples_block
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 
 class FacetQuery(ConstructQuery):

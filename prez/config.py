@@ -1,12 +1,12 @@
 from enum import Enum
 from os import environ
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union, Literal
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
 import toml
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings
-from rdflib import DCTERMS, RDFS, SDO, URIRef, RDF, SOSA
+from rdflib import DCTERMS, RDF, RDFS, SDO, SOSA, URIRef
 from rdflib.namespace import SKOS
 
 from prez.enums import SearchMethod
@@ -132,6 +132,24 @@ class Settings(BaseSettings):
     jena_fuseki_dataset_name: Optional[str] = None
     jena_assembler_path: Optional[str] = None
     listing_count_on_demand: bool = False
+
+    @field_validator("log_level")
+    @classmethod
+    def validate_log_level(cls, v):
+        normalized = v.upper()
+        if normalized not in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}:
+            raise ValueError(
+                "log_level must be DEBUG, INFO, WARNING, ERROR, or CRITICAL"
+            )
+        return normalized
+
+    @field_validator("log_output")
+    @classmethod
+    def validate_log_output(cls, v):
+        normalized = v.lower()
+        if normalized not in {"stdout", "file", "both"}:
+            raise ValueError("log_output must be stdout, file, or both")
+        return normalized
 
     @field_validator("prez_version")
     @classmethod

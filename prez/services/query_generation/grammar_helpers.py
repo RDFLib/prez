@@ -7,15 +7,14 @@ returns an ordinary grammar node (a ``Filter``, ``InlineData``,
 ``add_pattern``.
 """
 
-import logging
 import re
 
 from sparql_grammar import (
     IRI,
     BooleanLiteral,
     ConstructTriples,
-    Expression,
     ExistsFunc,
+    Expression,
     Filter,
     GroupGraphPattern,
     GroupGraphPatternSub,
@@ -36,7 +35,9 @@ from sparql_grammar import (
     regex,
 )
 
-logger = logging.getLogger(__name__)
+from prez.services.prez_logging import get_logger
+
+logger = get_logger(__name__)
 
 _DATATYPE_PATTERN = re.compile(r"(.*)\^\^<(\S+)>$")
 
@@ -166,7 +167,7 @@ def create_filter_bool_gpnt(boolean: bool) -> Filter:
 
 
 def create_temporal_and_gpnt(
-    comparisons: list[tuple[Var | RDFLiteral, str, Var | RDFLiteral]]
+    comparisons: list[tuple[Var | RDFLiteral, str, Var | RDFLiteral]],
 ) -> Filter:
     """FILTER ( comp1 op1 comp2 && comp3 op2 comp4 && ... )"""
     return Filter(Expression.all_of(*_comparisons(comparisons)))

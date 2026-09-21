@@ -1,4 +1,3 @@
-import logging
 import re
 import string
 from urllib.parse import urlparse
@@ -9,8 +8,9 @@ from rdflib import URIRef
 from prez.cache import prefix_graph
 from prez.config import settings
 from prez.exceptions.model_exceptions import PrefixNotBoundException
+from prez.services.prez_logging import get_logger
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 
 def prefix_registered(prefix):

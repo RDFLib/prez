@@ -1,11 +1,10 @@
-import logging
-
 from rdflib import DCTERMS, RDF, SH, XSD, BNode, Graph, Literal, Namespace, URIRef
 from rdflib.collection import Collection
 
 from prez.reference_data.prez_ns import ONT
+from prez.services.prez_logging import get_logger
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 FUSEKI = Namespace("http://jena.apache.org/fuseki#")
 GEOSPARQL = Namespace("http://jena.apache.org/geosparql#")

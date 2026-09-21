@@ -1,4 +1,3 @@
-import logging
 from typing import List
 
 from fastapi import APIRouter, Depends, Path
@@ -24,17 +23,18 @@ from prez.dependencies import (
     get_url,
     listing_post_params_dependency,
 )
-from prez.models.query_params import ObjectQueryParams, ListingQueryParams
+from prez.models.query_params import ListingQueryParams, ObjectQueryParams
 from prez.reference_data.prez_ns import ONT
 from prez.repositories import Repo
 from prez.services.connegp_service import NegotiatedPMTs
 from prez.services.listings import listing_function
 from prez.services.objects import object_function
+from prez.services.prez_logging import get_logger
 from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQuery
 from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.shacl import NodeShape
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def create_path_param(name: str, description: str, example: str):

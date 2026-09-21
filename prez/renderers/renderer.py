@@ -1,6 +1,5 @@
 import io
 import json
-import logging
 import time
 from datetime import datetime
 from typing import Dict, Optional
@@ -8,40 +7,35 @@ from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
 
 from aiocache import cached
-from fastapi import Depends
-from fastapi import status
+from fastapi import Depends, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import Response
 from httpx import URL
 from oxrdflib._converter import to_ox
-from pyoxigraph import (
-    RdfFormat,
-    Store as OxiStore,
-    NamedNode as OxiNamedNode,
-    DefaultGraph as OxiDefaultGraph,
-)
+from pyoxigraph import DefaultGraph as OxiDefaultGraph
+from pyoxigraph import NamedNode as OxiNamedNode
+from pyoxigraph import RdfFormat
+from pyoxigraph import Store as OxiStore
 from rdf2geojson import convert
 from rdf2geojson.contrib.geomet import wkt
-from rdflib import Graph
-from rdflib import URIRef
+from rdflib import Graph, URIRef
 from rdflib.namespace import GEO, RDF
 from sparql_grammar import (
     IRI,
     Var,
 )
 
-from prez.cache import endpoints_graph_cache
-from prez.cache import prefix_graph
+from prez.cache import endpoints_graph_cache, prefix_graph
 from prez.config import settings
 from prez.dependencies import get_endpoint_uri, get_system_repo, get_url
 from prez.models.ogc_features import (
     Collection,
     Collections,
+    Extent,
     Link,
     Links,
     Queryables,
     Spatial,
-    Extent,
 )
 from prez.models.query_params import ListingQueryParams
 from prez.reference_data.prez_ns import OGCFEAT, ONT, PREZ
@@ -51,16 +45,17 @@ from prez.services.annotations import (
     get_annotation_properties_for_oxigraph,
 )
 from prez.services.connegp_service import (
+    MINIMAL_OGC_FEATURES_RDF_FORMATS,
     OXIGRAPH_SERIALIZER_TYPES_MAP,
     RDF_MEDIATYPES,
-    MINIMAL_OGC_FEATURES_RDF_FORMATS,
+    RDF_SERIALIZER_TYPES_MAP,
 )
-from prez.services.connegp_service import RDF_SERIALIZER_TYPES_MAP
 from prez.services.curie_functions import get_curie_id_for_uri
+from prez.services.prez_logging import get_logger
 from prez.services.query_generation.shacl import get_nodeshape
 from prez.services.timing_csv import log_timing_csv
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 
 async def return_from_graph(
@@ -92,7 +87,7 @@ async def return_from_graph(
                 )
                 total_ms = (time.perf_counter() - total_start) * 1000
                 log.debug(
-                    "return_from_graph rdf_oxigraph mediatype=%s quads=%s total_ms=%.1f",
+                    "return_from_graph rdf_oxigraph media_type=%s quad_count=%s total_duration_ms=%.1f",
                     mediatype,
                     len(store),
                     total_ms,
@@ -108,7 +103,7 @@ async def return_from_graph(
             response = await return_rdf(graph, mediatype, profile_headers)
             total_ms = (time.perf_counter() - total_start) * 1000
             log.debug(
-                "return_from_graph rdf_rdflib mediatype=%s triples=%s total_ms=%.1f",
+                "return_from_graph rdf_rdflib media_type=%s triples=%s total_duration_ms=%.1f",
                 mediatype,
                 len(graph),
                 total_ms,
@@ -208,7 +203,7 @@ async def return_from_graph(
         content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
         total_ms = (time.perf_counter() - total_start) * 1000
         log.debug(
-            "return_from_graph geojson mediatype=%s kind=%s total_ms=%.1f",
+            "return_from_graph geojson media_type=%s kind=%s total_duration_ms=%.1f",
             mediatype,
             kind,
             total_ms,
@@ -229,7 +224,7 @@ async def return_from_graph(
                 annotations_ms = (time.perf_counter() - annotations_start) * 1000
                 merge_start = time.perf_counter()
                 store.bulk_extend(annotations_store)
-                merge_ms = (time.perf_counter() - merge_start) * 1000
+                merge_ms = ((time.perf_counter() - merge_start) * 1000) * 1000
                 oxigraph_prefixes = {
                     p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()
                 }
@@ -255,7 +250,7 @@ async def return_from_graph(
                 content_bytes = content.getvalue()
                 total_ms = (time.perf_counter() - total_start) * 1000
                 log.debug(
-                    "return_from_graph annotated_oxigraph mediatype=%s base_quads=%s annotation_quads=%s annotations_ms=%.1f merge_ms=%.1f dump_ms=%.1f total_ms=%.1f",
+                    "return_from_graph annotated_oxigraph media_type=%s base_quad_count=%s annotation_quad_count=%s annotation_duration_ms=%.1f merge_duration_ms=%.1f serialization_duration_ms=%.1f total_duration_ms=%.1f",
                     non_anot_mediatype,
                     len(store) - len(annotations_store),
                     len(annotations_store),
@@ -265,14 +260,14 @@ async def return_from_graph(
                     total_ms,
                 )
                 log_timing_csv(
-                    "return_from_graph_annotated_oxigraph",
-                    mediatype=str(non_anot_mediatype),
-                    store_quads=len(store) - len(annotations_store),
-                    annotation_quads=len(annotations_store),
-                    annotations_ms=f"{annotations_ms:.1f}",
-                    merge_ms=f"{merge_ms:.1f}",
-                    dump_ms=f"{dump_ms:.1f}",
-                    total_ms=f"{total_ms:.1f}",
+                    "render.annotated_oxigraph",
+                    media_type=str(non_anot_mediatype),
+                    store_quad_count=len(store) - len(annotations_store),
+                    annotation_quad_count=len(annotations_store),
+                    annotation_duration_ms=f"{annotations_ms:.1f}",
+                    merge_duration_ms=f"{merge_ms:.1f}",
+                    serialization_duration_ms=f"{dump_ms:.1f}",
+                    total_duration_ms=f"{total_ms:.1f}",
                 )
             else:
                 annotations_start = time.perf_counter()
@@ -288,7 +283,7 @@ async def return_from_graph(
                 serialize_ms = (time.perf_counter() - serialize_start) * 1000
                 total_ms = (time.perf_counter() - total_start) * 1000
                 log.debug(
-                    "return_from_graph annotated_rdflib mediatype=%s annotations_ms=%.1f serialize_ms=%.1f total_ms=%.1f",
+                    "return_from_graph annotated_rdflib media_type=%s annotation_duration_ms=%.1f serialization_duration_ms=%.1f total_duration_ms=%.1f",
                     non_anot_mediatype,
                     annotations_ms,
                     serialize_ms,
@@ -345,16 +340,16 @@ async def return_rdf_from_oxigraph(
     profile_headers["Content-Disposition"] = "inline"
     dump_ms = (time.perf_counter() - dump_start) * 1000
     log.debug(
-        "return_rdf_from_oxigraph mediatype=%s quads=%s dump_ms=%.1f",
+        "return_rdf_from_oxigraph media_type=%s quad_count=%s serialization_duration_ms=%.1f",
         mediatype,
         len(store),
         dump_ms,
     )
     log_timing_csv(
-        "return_rdf_from_oxigraph",
-        mediatype=str(mediatype),
-        store_quads=len(store),
-        dump_ms=f"{dump_ms:.1f}",
+        "render.rdf_oxigraph",
+        media_type=str(mediatype),
+        store_quad_count=len(store),
+        serialization_duration_ms=f"{dump_ms:.1f}",
     )
     return Response(content=content, media_type=mediatype, headers=profile_headers)
 
@@ -364,13 +359,15 @@ async def return_annotated_rdf(
     repo: Repo,
     system_repo: Repo,
 ) -> Graph:
-    t_start = time.time()
+    t_start = time.perf_counter()
     annotations_graph = await get_annotation_properties(graph, repo, system_repo)
     # get annotations for annotations - no need to do this recursively
     annotations_graph += await get_annotation_properties(
         annotations_graph, repo, system_repo
     )
-    log.debug(f"Time to get annotations: {time.time() - t_start}")
+    log.debug(
+        f"event=annotations.complete annotation_duration_ms= {(time.perf_counter() - t_start) * 1000}"
+    )
     # return graph.__iadd__(annotations_graph)
     return annotations_graph
 
@@ -380,31 +377,35 @@ async def return_annotated_rdf_for_oxigraph(
     repo: Repo,
     system_repo: Repo,
 ) -> OxiStore:
-    t_start = time.time()
+    t_start = time.perf_counter()
     log.debug(
         f"Starting annotation lookup for Oxigraph store (store_quads={len(store)})"
     )
-    first_pass_start = time.time()
+    first_pass_start = time.perf_counter()
     annotations_store = await get_annotation_properties_for_oxigraph(
         store, repo, system_repo
     )
     log.debug(
-        f"Time to get first-pass annotations: {time.time() - first_pass_start} "
+        f"event=annotations.first_pass.complete annotation_duration_ms= {(time.perf_counter() - first_pass_start) * 1000} "
         f"(annotation_quads={len(annotations_store)})"
     )
     # get annotations for annotations - no need to do this recursively
-    second_pass_start = time.time()
+    second_pass_start = time.perf_counter()
     annotations_store_2 = await get_annotation_properties_for_oxigraph(
         annotations_store, repo, system_repo
     )
     log.debug(
-        f"Time to get second-pass annotations: {time.time() - second_pass_start} "
+        f"event=annotations.second_pass.complete annotation_duration_ms= {(time.perf_counter() - second_pass_start) * 1000} "
         f"(annotation_quads={len(annotations_store_2)})"
     )
-    merge_start = time.time()
+    merge_start = time.perf_counter()
     annotations_store.bulk_extend(annotations_store_2)
-    log.debug(f"Time to merge annotation stores: {time.time() - merge_start}")
-    log.debug(f"Time to get annotations: {time.time() - t_start}")
+    log.debug(
+        f"event=annotations.merge.complete merge_duration_ms= {(time.perf_counter() - merge_start) * 1000}"
+    )
+    log.debug(
+        f"event=annotations.complete annotation_duration_ms= {(time.perf_counter() - t_start) * 1000}"
+    )
     return annotations_store
 
 

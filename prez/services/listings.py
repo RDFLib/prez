@@ -3,60 +3,57 @@ import copy
 import hashlib
 import io
 import json
-import logging
 import time
 
+from aiocache import caches
 from fastapi.responses import PlainTextResponse
-from pyoxigraph import (
-    RdfFormat,
-    Store as OxiStore,
-    Quad as OxiQuad,
-    NamedNode as OxiNamedNode,
-    BlankNode as OxiBlankNode,
-    Literal as OxiLiteral,
-    DefaultGraph as OxiDefaultGraph,
-)
+from pyoxigraph import BlankNode as OxiBlankNode
+from pyoxigraph import DefaultGraph as OxiDefaultGraph
+from pyoxigraph import Literal as OxiLiteral
+from pyoxigraph import NamedNode as OxiNamedNode
+from pyoxigraph import Quad as OxiQuad
+from pyoxigraph import RdfFormat
+from pyoxigraph import Store as OxiStore
 from rdf2geojson import convert
 from rdflib import Literal, Namespace
-from rdflib.namespace import GEO, RDF, PROF, RDFS, XSD
+from rdflib.namespace import GEO, PROF, RDF, RDFS, XSD
 from sparql_grammar import (
     IRI,
-    TriplesSameSubject,
-    Var,
-    SelectClause,
-    WhereClause,
     GroupGraphPattern,
     GroupGraphPatternSub,
-    TriplesBlock,
-    TriplesSameSubjectPath,
+    GroupOrUnionGraphPattern,
+    LimitOffsetClauses,
+    SelectClause,
     SolutionModifier,
     SubSelect,
-    LimitOffsetClauses,
-    GroupOrUnionGraphPattern,
+    TriplesBlock,
+    TriplesSameSubject,
+    TriplesSameSubjectPath,
+    Var,
+    WhereClause,
 )
-
-from aiocache import caches
 
 from prez.cache import prefix_graph
 from prez.config import settings
 from prez.dependencies import DummySearchMarker
-from prez.enums import NonAnnotatedRDFMediaType, AnnotatedRDFMediaType
+from prez.enums import AnnotatedRDFMediaType, NonAnnotatedRDFMediaType
 from prez.reference_data.prez_ns import ALTREXT, OGCFEAT, PREZ
 from prez.renderers.renderer import (
+    create_collections_json,
+    generate_geojson_extras,
+    generate_link_headers,
+    generate_queryables_from_shacl_definition,
+    get_geojson_int_count,
+    handle_alt_profile,
     return_annotated_rdf_for_oxigraph,
     return_from_graph,
-    generate_geojson_extras,
-    handle_alt_profile,
-    generate_queryables_from_shacl_definition,
-    create_collections_json,
-    generate_link_headers,
-    get_geojson_int_count,
 )
 from prez.repositories import Repo
 from prez.services.connegp_service import OXIGRAPH_SERIALIZER_TYPES_MAP
 from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.generate_queryables import generate_queryables_json
 from prez.services.link_generation import add_prez_links_for_oxigraph
+from prez.services.prez_logging import get_logger
 from prez.services.query_generation.count import CountQuery
 from prez.services.query_generation.facet import (
     FacetQuery,
@@ -70,7 +67,7 @@ from prez.services.query_generation.umbrella import (
 )
 from prez.services.timing_csv import log_timing_csv
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 DWC = Namespace("http://rs.tdwg.org/dwc/terms/")
 
@@ -169,24 +166,32 @@ async def handle_queryables_rdf_response(
         cache_key = f"{endpoint_uri}:{collection_uri}:{selected_mediatype}"
         cached_content = await queryables_cache.get(cache_key)
         t1 = time.perf_counter()
-        log.info(f"TIMING: Cache lookup took {(t1-t0)*1000:.1f}ms")
+        log.debug(
+            "event=queryables.cache.lookup cache_lookup_duration_ms=%.1f",
+            (t1 - t0) * 1000,
+        )
 
         if cached_content is not None:
-            log.info(
-                f"TIMING: Cache HIT for {cache_key}, returning {len(cached_content)} gzipped bytes"
+            log.debug(
+                "event=queryables.cache.hit cache_key=%s response_size_bytes=%s",
+                cache_key,
+                len(cached_content),
             )
             return io.BytesIO(cached_content), {"Content-Encoding": "gzip"}
     else:
-        log.info("Client does not support gzip, skipping cache")
+        log.debug("event=queryables.cache.skip reason=gzip_not_accepted")
 
     # Cache miss - do the expensive work
-    log.info("TIMING: Cache MISS - doing expensive queryables serialization")
+    log.debug("event=queryables.cache.miss")
 
     # Extract queryables RDF from the system store
     t0 = time.perf_counter()
     queryables_store = await extract_queryables_rdf(system_repo)
     t1 = time.perf_counter()
-    log.info(f"TIMING: extract_queryables_rdf took {(t1-t0)*1000:.1f}ms")
+    log.debug(
+        "event=queryables.extract.complete extraction_duration_ms=%.1f",
+        (t1 - t0) * 1000,
+    )
 
     # Handle annotated vs non-annotated RDF
     if selected_mediatype in AnnotatedRDFMediaType:
@@ -197,7 +202,10 @@ async def handle_queryables_rdf_response(
         )
         queryables_store.bulk_extend(specific_annotations_store)
         t3 = time.perf_counter()
-        log.info(f"TIMING: annotations for queryables took {(t3-t2)*1000:.1f}ms")
+        log.debug(
+            "event=queryables.annotations.complete annotation_duration_ms=%.1f",
+            (t3 - t2) * 1000,
+        )
     else:
         serialization_format = selected_mediatype
 
@@ -221,7 +229,10 @@ async def handle_queryables_rdf_response(
     )
     content.seek(0)
     t5 = time.perf_counter()
-    log.info(f"TIMING: queryables serialization took {(t5-t4)*1000:.1f}ms")
+    log.debug(
+        "event=queryables.serialization.complete serialization_duration_ms=%.1f",
+        (t5 - t4) * 1000,
+    )
 
     # If client supports gzip, compress, cache, and return gzipped
     if supports_gzip:
@@ -229,10 +240,13 @@ async def handle_queryables_rdf_response(
         raw_bytes = content.getvalue()
         gzipped_bytes = gzip.compress(raw_bytes)
         t7 = time.perf_counter()
-        log.info(
-            f"TIMING: gzip compression took {(t7-t6)*1000:.1f}ms "
-            f"({len(raw_bytes)} -> {len(gzipped_bytes)} bytes, "
-            f"{len(gzipped_bytes)/len(raw_bytes)*100:.1f}%)"
+        log.debug(
+            "event=queryables.compression.complete compression_duration_ms=%.1f "
+            "input_size_bytes=%s output_size_bytes=%s compression_ratio_percent=%.1f",
+            (t7 - t6) * 1000,
+            len(raw_bytes),
+            len(gzipped_bytes),
+            len(gzipped_bytes) / len(raw_bytes) * 100,
         )
 
         # Cache the gzipped bytes
@@ -514,16 +528,20 @@ async def listing_function(
         # Dummy empty store, if there are no queries to run
         item_store = OxiStore()
     log.debug(
-        f"Listing query time: {time.perf_counter() - query_start_time} "
-        f"(queries={len(queries)}, mediatype={pmts.selected['mediatype']}, store_quads={len(item_store)})"
+        "event=listing.query.complete query_duration_ms=%.1f query_count=%s "
+        "media_type=%s store_quad_count=%s",
+        (time.perf_counter() - query_start_time) * 1000,
+        len(queries),
+        pmts.selected["mediatype"],
+        len(item_store),
     )
     log_timing_csv(
-        "listing_query",
-        mediatype=pmts.selected["mediatype"],
+        "listing.query",
+        media_type=pmts.selected["mediatype"],
         profile=str(pmts.selected["profile"]),
-        queries=len(queries),
-        store_quads=len(item_store),
-        elapsed_ms=f"{(time.perf_counter() - query_start_time) * 1000:.1f}",
+        query_count=len(queries),
+        store_quad_count=len(item_store),
+        total_duration_ms=f"{(time.perf_counter() - query_start_time) * 1000:.1f}",
     )
     if isinstance(search_query, SearchQueryJenaLucene):
         _suppress_nan_lucene_weights(item_store)
@@ -553,14 +571,15 @@ async def listing_function(
         )
         await add_prez_links_for_oxigraph(item_store, query_repo, endpoint_structure)
         log.debug(
-            f"Listing Prez link generation time: {time.perf_counter() - link_generation_start}"
+            "event=listing.link_generation.complete link_generation_duration_ms=%.1f",
+            (time.perf_counter() - link_generation_start) * 1000,
         )
         log_timing_csv(
-            "listing_link_generation",
-            mediatype=pmts.selected["mediatype"],
+            "listing.link_generation",
+            media_type=pmts.selected["mediatype"],
             profile=str(pmts.selected["profile"]),
-            store_quads=len(item_store),
-            elapsed_ms=f"{(time.perf_counter() - link_generation_start) * 1000:.1f}",
+            store_quad_count=len(item_store),
+            link_generation_duration_ms=f"{(time.perf_counter() - link_generation_start) * 1000:.1f}",
         )
 
         # Inject dummy search results for non-text search requests
@@ -685,7 +704,7 @@ async def listing_function(
     render_ms = (time.perf_counter() - render_start) * 1000
     total_ms = (time.perf_counter() - total_start) * 1000
     log.debug(
-        "listing_function complete mediatype=%s profile=%s queries=%s store_quads=%s render_ms=%.1f total_ms=%.1f",
+        "listing_function complete media_type=%s profile=%s query_count=%s store_quad_count=%s render_duration_ms=%.1f total_duration_ms=%.1f",
         pmts.selected["mediatype"],
         pmts.selected["profile"],
         len(queries),
@@ -694,13 +713,13 @@ async def listing_function(
         total_ms,
     )
     log_timing_csv(
-        "listing_function_complete",
-        mediatype=pmts.selected["mediatype"],
+        "listing.complete",
+        media_type=pmts.selected["mediatype"],
         profile=str(pmts.selected["profile"]),
-        queries=len(queries),
-        store_quads=len(item_store),
-        render_ms=f"{render_ms:.1f}",
-        total_ms=f"{total_ms:.1f}",
+        query_count=len(queries),
+        store_quad_count=len(item_store),
+        render_duration_ms=f"{render_ms:.1f}",
+        total_duration_ms=f"{total_ms:.1f}",
     )
     return response
 
@@ -823,7 +842,7 @@ async def ogc_features_listing_function(
     link_headers = None
     build_ms = (time.perf_counter() - build_start) * 1000
     log.debug(
-        "ogc_features_listing built mediatype=%s profile=%s collection_uri=%s queries=%s has_count_query=%s build_ms=%.1f",
+        "ogc_features_listing built media_type=%s profile=%s collection_uri=%s query_count=%s has_count_query=%s build_duration_ms=%.1f",
         selected_mediatype,
         getattr(profile_nodeshape, "uri", None),
         collection_uri,
@@ -867,7 +886,7 @@ async def ogc_features_listing_function(
         # No store, we can only return known metadata
         item_store = None
     log.debug(
-        "ogc_features_listing main_query mediatype=%s store_quads=%s elapsed_ms=%.1f",
+        "ogc_features_listing main_query media_type=%s store_quad_count=%s operation_duration_ms=%.1f",
         selected_mediatype,
         len(item_store) if item_store is not None else 0,
         (time.perf_counter() - main_query_start) * 1000,
@@ -890,7 +909,7 @@ async def ogc_features_listing_function(
             else:
                 matched_count = 0
         log.debug(
-            "ogc_features_listing count_query mediatype=%s count=%s count_quads=%s await_ms=%.1f",
+            "event=ogc_listing.count_query.complete media_type=%s item_count=%s count_quad_count=%s await_duration_ms=%.1f",
             selected_mediatype,
             matched_count,
             len(count_store) if count_store is not None else 0,
@@ -914,7 +933,7 @@ async def ogc_features_listing_function(
                 item_store, data_repo, system_repo
             )
             log.debug(
-                "ogc_features_listing annotations mediatype=%s annotation_quads=%s elapsed_ms=%.1f",
+                "ogc_features_listing annotations media_type=%s annotation_quad_count=%s operation_duration_ms=%.1f",
                 selected_mediatype,
                 len(annotations_store) if annotations_store is not None else 0,
                 (time.perf_counter() - annotations_start) * 1000,
@@ -960,7 +979,7 @@ async def ogc_features_listing_function(
             )
         total_ms = (time.perf_counter() - total_start) * 1000
         log.debug(
-            "ogc_features_listing response mediatype=%s branch=json total_ms=%.1f",
+            "ogc_features_listing response media_type=%s branch=json total_duration_ms=%.1f",
             selected_mediatype,
             total_ms,
         )
@@ -999,7 +1018,7 @@ async def ogc_features_listing_function(
         content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
         total_ms = (time.perf_counter() - total_start) * 1000
         log.debug(
-            "ogc_features_listing response mediatype=%s branch=geojson total_ms=%.1f",
+            "ogc_features_listing response media_type=%s branch=geojson total_duration_ms=%.1f",
             selected_mediatype,
             total_ms,
         )
@@ -1029,7 +1048,7 @@ async def ogc_features_listing_function(
         dump_ms = (time.perf_counter() - dump_start) * 1000
         total_ms = (time.perf_counter() - total_start) * 1000
         log.debug(
-            "ogc_features_listing response mediatype=%s branch=non_annotated dump_ms=%.1f total_ms=%.1f",
+            "ogc_features_listing response media_type=%s branch=non_annotated serialization_duration_ms=%.1f total_duration_ms=%.1f",
             selected_mediatype,
             dump_ms,
             total_ms,
@@ -1063,7 +1082,7 @@ async def ogc_features_listing_function(
         dump_ms = (time.perf_counter() - dump_start) * 1000
         total_ms = (time.perf_counter() - total_start) * 1000
         log.debug(
-            "ogc_features_listing response mediatype=%s branch=annotated merge_ms=%.1f dump_ms=%.1f total_ms=%.1f",
+            "ogc_features_listing response media_type=%s branch=annotated merge_duration_ms=%.1f serialization_duration_ms=%.1f total_duration_ms=%.1f",
             selected_mediatype,
             merge_ms,
             dump_ms,

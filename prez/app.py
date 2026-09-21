@@ -1,4 +1,3 @@
-import logging
 from contextlib import asynccontextmanager
 from functools import partial
 from pathlib import Path
@@ -29,13 +28,14 @@ from prez.dependencies import (
 from prez.exceptions.model_exceptions import (
     ClassNotFoundException,
     InvalidSPARQLQueryException,
+    MissingFilterQueryError,
     NoEndpointNodeshapeException,
     NoProfilesException,
     PrefixNotBoundException,
     URINotFoundException,
-    MissingFilterQueryError,
 )
 from prez.middleware import (
+    RequestContextMiddleware,
     RequestTimingMiddleware,
     create_response_header_budget_middleware,
     create_validate_header_middleware,
@@ -56,9 +56,9 @@ from prez.services.app_service import (
     healthcheck_sparql_endpoints,
     populate_api_info,
     prefix_initialisation,
+    retrieve_jena_fts_shapes,
     retrieve_queryable_definitions,
     retrieve_remote_template_queries,
-    retrieve_jena_fts_shapes,
 )
 from prez.services.exception_catchers import (
     catch_400,
@@ -67,14 +67,14 @@ from prez.services.exception_catchers import (
     catch_class_not_found_exception,
     catch_httpx_error,
     catch_invalid_sparql_query,
+    catch_missing_filter_query_param,
     catch_no_endpoint_nodeshape_exception,
     catch_no_profiles_exception,
     catch_prefix_not_found_exception,
     catch_uri_not_found_exception,
-    catch_missing_filter_query_param,
 )
 from prez.services.generate_profiles import create_profiles_graph
-from prez.services.prez_logging import setup_logger
+from prez.services.prez_logging import get_logger, setup_logger
 
 
 def prez_open_api_metadata(
@@ -111,8 +111,8 @@ async def add_cors_headers(request, call_next):
 async def lifespan(app: FastAPI):
     # Startup
     setup_logger(app.state.settings)
-    log = logging.getLogger("prez")
-    log.info("Starting up")
+    log = get_logger("prez")
+    log.info("event=application.starting")
 
     mounted_apps = []
     # Find mounted sub-apps
@@ -292,6 +292,9 @@ def assemble_app(
     )
     app.middleware("http")(validate_header_middleware)
 
+    # Added last so correlation wraps validation, errors, mounted sub-apps, and timing.
+    app.add_middleware(RequestContextMiddleware)
+
     return app
 
 
@@ -320,9 +323,7 @@ def _get_sparql_service_description(request, format):
                 ]
             ]
         .
-    """.format(
-        request.url_for("sparql_get")
-    )
+    """.format(request.url_for("sparql_get"))
     if format == "text/turtle":
         return dedent(ttl)
     else:

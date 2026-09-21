@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from string import Template
 from typing import Any, Dict, List
 from typing import Literal as TypingLiteral
@@ -42,11 +41,12 @@ from sparql_grammar import (
 
 from prez.config import settings
 from prez.reference_data.prez_ns import ONT, SHEXT
+from prez.services.prez_logging import get_logger
 from prez.services.query_generation.grammar_helpers import (
     triples_block as _reversed_triples_block,
 )
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 
 class Shape(BaseModel):

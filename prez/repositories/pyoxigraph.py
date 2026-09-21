@@ -1,24 +1,25 @@
-import logging
 from threading import Lock
 from typing import Any
 
 import pyoxigraph
 from fastapi.concurrency import run_in_threadpool
 from pyoxigraph import (
+    QueryBoolean,
+    QuerySolutions,
+    QueryTriples,
     RdfFormat,
     Store,
-    QueryTriples,
-    QuerySolutions,
-    QueryBoolean,
 )
 from rdflib import Graph, Namespace, URIRef
 
 from prez.exceptions.model_exceptions import InvalidSPARQLQueryException
 from prez.repositories.base import Repo
+from prez.services.prez_logging import get_logger
 
 PREZ = Namespace("https://prez.dev/")
 
-log = logging.getLogger(__name__)
+
+log = get_logger(__name__)
 
 
 class PyoxigraphRepo(Repo):

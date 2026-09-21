@@ -1,38 +1,38 @@
 import json
-import logging
 from pathlib import Path
 from urllib.parse import urlparse
 
 import httpx
 from fastapi import Depends, HTTPException, Request
-from pyoxigraph import Store, RdfFormat, DefaultGraph as OxiDefaultGraph
-from rdflib import DCTERMS, RDF, SH, SKOS, Literal, URIRef, Graph
+from pyoxigraph import DefaultGraph as OxiDefaultGraph
+from pyoxigraph import RdfFormat, Store
+from rdflib import DCTERMS, RDF, SH, SKOS, Graph, Literal, URIRef
 from sparql_grammar import IRI, Var
 
 from prez.cache import (
     annotations_store,
     endpoints_graph_cache,
     oxrdflib_store,
+    persistent_store,
     prez_system_graph,
     profiles_graph_cache,
     queryable_props,
     store,
     system_store,
-    persistent_store,
 )
-from prez.config import Settings, settings, get_reference_data_dir
+from prez.config import Settings, get_reference_data_dir, settings
 from prez.enums import (
+    AnnotatedRDFMediaType,
     GeoJSONMediaType,
     JSONMediaType,
     NonAnnotatedRDFMediaType,
+    SearchMethod,
     SPARQLQueryMediaType,
-    AnnotatedRDFMediaType,
 )
-from prez.enums import SearchMethod
 from prez.exceptions.model_exceptions import (
+    MissingFilterQueryError,
     NoEndpointNodeshapeException,
     URINotFoundException,
-    MissingFilterQueryError,
 )
 from prez.models.query_params import (
     ListingQueryParams,
@@ -44,6 +44,7 @@ from prez.repositories import OxrdflibRepo, PyoxigraphRepo, RemoteSparqlRepo, Re
 from prez.services.classes import get_classes_single
 from prez.services.connegp_service import NegotiatedPMTs
 from prez.services.curie_functions import get_uri_for_curie_id
+from prez.services.prez_logging import get_logger
 from prez.services.query_generation.concept_hierarchy import ConceptHierarchyQuery
 from prez.services.query_generation.cql import CQLParser
 from prez.services.query_generation.search_default import SearchQueryRegex
@@ -56,7 +57,7 @@ from prez.services.query_generation.shacl import (
     get_nodeshape,
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 async def get_async_http_client():
@@ -846,6 +847,7 @@ async def get_negotiated_pmts_listing_post(
 ) -> "NegotiatedPMTs":
     """POST variant of get_negotiated_pmts for listing endpoints."""
     from sparql_grammar import Var
+
     from prez.services.connegp_service import NegotiatedPMTs
 
     # For listing endpoints, focus node is always a variable (not a specific IRI)
@@ -893,6 +895,7 @@ async def get_profile_nodeshape_listing_post(
     pmts: "NegotiatedPMTs" = Depends(get_negotiated_pmts_listing_post),
 ) -> "NodeShape":
     from sparql_grammar import Var
+
     from prez.cache import profiles_graph_cache
     from prez.services.query_generation.shacl import get_nodeshape
 
@@ -1170,10 +1173,11 @@ async def get_profile_nodeshape_post_object(
     pmts: "NegotiatedPMTs" = Depends(get_negotiated_pmts_post_object),
     focus_node=Depends(get_focus_node_post_object),
 ) -> "NodeShape":
-    from prez.reference_data.prez_ns import ALTREXT
-    from prez.cache import profiles_graph_cache
-    from prez.services.query_generation.shacl import get_nodeshape
     from sparql_grammar import Var
+
+    from prez.cache import profiles_graph_cache
+    from prez.reference_data.prez_ns import ALTREXT
+    from prez.services.query_generation.shacl import get_nodeshape
 
     profile = pmts.selected.get("profile")
     if profile == ALTREXT["alt-profile"]:

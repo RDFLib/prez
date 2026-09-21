@@ -1,17 +1,18 @@
-import logging
+from threading import Lock
 from typing import Any
 
 from fastapi.concurrency import run_in_threadpool
-from threading import Lock
-from pyoxigraph import Store, DefaultGraph, Quad
 from oxrdflib._converter import to_ox
+from pyoxigraph import DefaultGraph, Quad, Store
 from rdflib import BNode, Graph, Literal, Namespace, URIRef
 
 from prez.repositories.base import Repo
+from prez.services.prez_logging import get_logger
 
 PREZ = Namespace("https://prez.dev/")
 
-log = logging.getLogger(__name__)
+
+log = get_logger(__name__)
 
 
 class OxrdflibRepo(Repo):
