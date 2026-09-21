@@ -338,9 +338,10 @@ Run existing test suites to ensure no regressions:
 
 ### Manual Testing
 
-Test with real queryable definitions:
-1. `/home/david/PycharmProjects/prez/queryables.ttl` - Sampling method (has sh:in)
-2. `/home/david/PycharmProjects/prez/prez/reference_data/queryables/file_to_generic_parent.ttl` - File parent (no sh:in)
+Test with queryable definitions that differ in whether they carry `sh:in`:
+
+1. a queryable with an `sh:in` list, such as a sampling method - takes the VALUES path
+2. `prez/reference_data/queryables/file_to_generic_parent.ttl` - no `sh:in`, takes the FILTER path
 
 ## Edge Cases
 
