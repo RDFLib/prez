@@ -2798,4 +2798,4 @@ server = ["uvicorn"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "05de2b2dc09869e2db878fd8e8420a0337511d61dcc2eae3d4e45e9fc4252702"
+content-hash = "b13e17e885a84a550be50f7782dbfc0b22f02f2821b4bafb67f898c620757cf5"

@@ -61,7 +61,7 @@ still accepts the SPARQL protocol content types.
 
 ```toml
 - sparql-grammar-pydantic = "^0.1.10"
-+ sparql-grammar = {git = "https://github.com/Kurrawong/sparql-grammar.git", rev = "main"}
++ sparql-grammar = {git = "https://github.com/Kurrawong/sparql-grammar.git", rev = "f191cb9944f08248eb883b50a8a7eb4704e42206"}
 ```
 
 This affects downstream code that imports Prez's query generation classes, or
@@ -73,9 +73,9 @@ alternations as union aliases rather than classes.
 Emitted SPARQL is unchanged except for one fix: `CollectionPath` now renders its
 items separated rather than concatenated.
 
-**Note for release:** the dependency is a git reference pinned to `main`, which
-cannot be published to PyPI. It needs to become a released version or a tag
-before a v5 release is cut.
+**Note for release:** the dependency is pinned to a commit, so it cannot move
+underneath a build, but a git reference of any kind cannot be published to PyPI.
+It needs to become a released version or a tag before a v5 release is cut.
 
 ## 4. `pyld` major version bump
 
