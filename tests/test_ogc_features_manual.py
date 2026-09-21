@@ -300,3 +300,19 @@ def test_ogc_features_object_annotated(fresh_client):
     )
     assert r.status_code == 200
     assert len(r.content) > 0
+
+
+def test_ogc_features_items_hits_annotated(fresh_client):
+    """A count-only items listing still has to assemble an annotated RDF response.
+
+    result_type=hits generates no main query, so there is no item store and no
+    annotations to merge. That left the annotated-RDF branch reaching for a name
+    that had not existed since annotations moved from an rdflib graph to an
+    oxigraph store, raising NameError instead of returning the count.
+    """
+    r = fresh_client.get(
+        "/catalogs/ex:DemoCatalog/collections/ex:GeoDataset/features/collections"
+        "/ex:FeatureCollection/items",
+        params={"resultType": "hits", "_mediatype": "text/anot+turtle"},
+    )
+    assert r.status_code == 200, r.text

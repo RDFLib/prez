@@ -7,7 +7,6 @@ import logging
 import time
 
 from fastapi.responses import PlainTextResponse
-from oxrdflib._converter import to_ox
 from pyoxigraph import (
     RdfFormat,
     Store as OxiStore,
@@ -1052,12 +1051,6 @@ async def ogc_features_listing_function(
         if annotations_store is not None:
             merge_start = time.perf_counter()
             item_store.bulk_extend(annotations_store)
-            merge_ms = (time.perf_counter() - merge_start) * 1000
-        elif annotations_graph is not None:
-            # Add the annotations to the store
-            merge_start = time.perf_counter()
-            for s, p, o in annotations_graph.triples((None, None, None)):
-                item_store.add(OxiQuad(to_ox(s), to_ox(p), to_ox(o), default))
             merge_ms = (time.perf_counter() - merge_start) * 1000
         else:
             merge_ms = 0.0
