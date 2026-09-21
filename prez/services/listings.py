@@ -97,7 +97,6 @@ async def warm_queryables_cache(data_repo: Repo, system_repo: Repo) -> None:
     Pre-warm the queryables cache at startup for performance.
     Generates and caches gzipped queryables for common RDF mediatypes.
     """
-    import time
 
     mediatypes_to_warm = [
         "text/anot+turtle",  # Most common annotated format
@@ -152,7 +151,6 @@ async def handle_queryables_rdf_response(
     Otherwise, falls back to non-cached serialization for compatibility.
     """
     import gzip
-    import time
 
     # Only handle RDF mediatypes for queryables
     if not (
@@ -437,11 +435,6 @@ async def listing_function(
             )
 
             # Add the subselect to the main query's where clause
-            from sparql_grammar import (
-                GraphPatternNotTriples,
-                GroupOrUnionGraphPattern,
-            )
-
             subselect_gpnt = GroupOrUnionGraphPattern(
                 [GroupGraphPattern(basic_subselect)]
             )
