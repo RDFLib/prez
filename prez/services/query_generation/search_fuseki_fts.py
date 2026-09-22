@@ -1,3 +1,5 @@
+import hashlib
+
 from rdflib import Namespace
 from rdflib.namespace import RDF, RDFS
 from sparql_grammar import (
@@ -384,4 +386,11 @@ if __name__ == "__main__":
         offset=0,
         non_shacl_predicates=[RDFS.label, RDFS.comment],
     )
-    logger.debug(fts_query)
+    logger.debug(
+        "Example Fuseki FTS query generated",
+        extra={
+            "prez.sparql.query_fingerprint": hashlib.sha256(
+                str(fts_query).encode("utf-8")
+            ).hexdigest()[:12]
+        },
+    )

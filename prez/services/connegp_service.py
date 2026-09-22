@@ -131,8 +131,7 @@ class NegotiatedPMTs(BaseModel):
         self.selected = self.available[0]
 
     async def _resolve_token(self, token: str) -> str:
-        query_str: str = dedent(
-            """
+        query_str: str = dedent("""
         PREFIX dcterms: <http://purl.org/dc/terms/>
         PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
         PREFIX prof: <http://www.w3.org/ns/dx/prof/>
@@ -143,10 +142,7 @@ class NegotiatedPMTs(BaseModel):
             ?profile dcterms:identifier ?o .
             FILTER(?o="<token>"^^xsd:token)
         }
-        """.replace(
-                "<token>", token
-            )
-        )
+        """.replace("<token>", token))
         try:
             _, results = await self.system_repo.send_queries([], [(None, query_str)])
             result: str = results[0][1][0]["profile"]["value"]
@@ -178,17 +174,23 @@ class NegotiatedPMTs(BaseModel):
                             raise ValueError(
                                 f"{parts[0]} could not be resolved to a profile"
                             )
-                    except Exception as e:
+                    except Exception:
                         parts[0] = None
-                        log.error(e.args[0])
+                        log.exception(
+                            "Unexpected error while resolving a profile identifier"
+                        )
         if len(parts) == 1:
             parts.append(self.default_weighting)  # If no weight given, set the default
         else:
             try:
                 parts[1] = float(parts[1])  # Type-check the seperated weighting
-            except ValueError as e:
+            except ValueError:
                 log.debug(
-                    f"Could not cast q={parts[1]} as float. Defaulting to {self.default_weighting}. {e.args[0]}"
+                    "Invalid media preference weight; using the default",
+                    extra={
+                        "event.name": "content_negotiation.invalid_weight",
+                        "prez.content_negotiation.default_weight": self.default_weighting,
+                    },
                 )
         return parts[0], parts[1]
 
@@ -367,12 +369,9 @@ class NegotiatedPMTs(BaseModel):
 
         if effective_max == 0:
             # Only accept exact match
-            return (
-                base_pattern
-                + """
+            return base_pattern + """
               BIND(IF(?class = ?matchClass, 0, 999) AS ?constraint_distance)
               FILTER(?constraint_distance = 0)"""
-            )
 
         # For distance >=1, compute distance only for 0 or 1 hops.
         expr = (
@@ -383,12 +382,9 @@ class NegotiatedPMTs(BaseModel):
 
         distance_filter = f"FILTER(?constraint_distance <= {effective_max})"
 
-        return (
-            base_pattern
-            + f"""
+        return base_pattern + f"""
               BIND({expr} AS ?constraint_distance)
               {distance_filter}"""
-        )
 
     def _compose_select_query(self) -> str:
 
@@ -402,8 +398,7 @@ class NegotiatedPMTs(BaseModel):
         else:
             requested_profile = None
 
-        query = dedent(
-            f"""
+        query = dedent(f"""
             PREFIX altr-ext: <http://www.w3.org/ns/dx/connegp/altr-ext#>
             PREFIX dcat: <http://www.w3.org/ns/dcat#>
             PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -434,8 +429,7 @@ class NegotiatedPMTs(BaseModel):
             }}
             GROUP BY ?class ?profile ?constraint_distance ?req_profile ?def_profile ?format ?req_format ?def_format ?title ?alt_prof
             ORDER BY DESC(?req_profile) ASC(?constraint_distance) DESC(?def_profile) DESC(?req_format) DESC(?def_format) ASC(?alt_prof)
-            """
-        )
+            """)
         return query
 
     def _generate_mediatype_if_statements(self) -> str:
@@ -464,46 +458,12 @@ class NegotiatedPMTs(BaseModel):
     async def _do_query(self, query: str) -> tuple[Graph, list]:
         response = await self.system_repo.send_queries([], [(None, query)])
         if response[1][0][1] and settings.log_level == "DEBUG":
-            try:
-                from tabulate import tabulate
-            except ImportError:
-                tabulate = None
-
-            table_data = [
-                [
-                    item["profile"]["value"],
-                    item["title"]["value"],
-                    item["class"]["value"],
-                    item["constraint_distance"]["value"],
-                    item["def_profile"]["value"],
-                    item["req_profile"]["value"],
-                    item["format"]["value"],
-                    item["req_format"]["value"],
-                    item["def_format"]["value"],
-                    item["alt_prof"]["value"],
-                ]
-                for item in response[1][0][1]
-            ]
-
-            # Define headers
-            headers = [
-                "Profile",
-                "Title",
-                "Class",
-                "Constraint Distance",
-                "Default Profile",
-                "Requested Profile",
-                "Format",
-                "Requested Format",
-                "Default Format",
-                "Alternate Profile",
-            ]
-
-            if tabulate is not None:
-                print(tabulate(table_data, headers=headers, tablefmt="grid"))
-            else:
-                print(headers)
-                for row in table_data:
-                    print(row)
+            log.debug(
+                "Content negotiation query completed",
+                extra={
+                    "event.name": "content_negotiation.query.complete",
+                    "prez.content_negotiation.result_count": len(response[1][0][1]),
+                },
+            )
 
         return response

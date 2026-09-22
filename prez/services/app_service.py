@@ -1,9 +1,10 @@
 import time
 from pathlib import Path
+from urllib.parse import urlsplit, urlunsplit
 
 import httpx
 from pyoxigraph import RdfFormat
-from rdflib import DCTERMS, RDF, SH, BNode, Graph, Literal, URIRef
+from rdflib import DCTERMS, RDF, BNode, Graph, Literal, URIRef
 
 from prez.cache import (
     counts_graph,
@@ -28,9 +29,26 @@ log = get_logger(__name__)
 CQL_QUERYABLE = URIRef("http://www.opengis.net/doc/IS/cql2/1.0/Queryable")
 
 
+def _safe_endpoint(endpoint: str) -> str:
+    """Return endpoint metadata without credentials, parameters, or fragments."""
+    parsed = urlsplit(endpoint)
+    hostname = parsed.hostname or ""
+    if ":" in hostname:
+        hostname = f"[{hostname}]"
+    try:
+        port = f":{parsed.port}" if parsed.port is not None else ""
+    except ValueError:
+        port = ""
+    return urlunsplit((parsed.scheme, f"{hostname}{port}", parsed.path, "", ""))
+
+
 async def healthcheck_sparql_endpoints():
     connected_to_triplestore = False
-    log.info(f"Checking SPARQL endpoint {settings.sparql_endpoint} is online")
+    safe_endpoint = _safe_endpoint(settings.sparql_endpoint)
+    log.info(
+        "Checking whether the SPARQL endpoint is online",
+        extra={"prez.sparql.endpoint": safe_endpoint},
+    )
     username = settings.sparql_username
     password = settings.sparql_password
     if username or password:
@@ -49,11 +67,14 @@ async def healthcheck_sparql_endpoints():
                 log.info("Successfully connected to triplestore SPARQL endpoint")
                 connected_to_triplestore = True
         except httpx.HTTPError as exc:
-            log.error(f"HTTP Exception for {exc.request.url} - {exc}")
-            log.error(
-                f"Failed to connect to triplestore sparql endpoint {settings.sparql_endpoint}"
+            log.warning(
+                "Failed to connect to the SPARQL endpoint",
+                extra={
+                    "prez.sparql.endpoint": safe_endpoint,
+                    "error.type": type(exc).__name__,
+                },
             )
-            log.info("retrying in 3 seconds...")
+            log.info("Retrying SPARQL endpoint health check in 3 seconds")
             time.sleep(3)
 
 
@@ -118,14 +139,11 @@ async def retrieve_jena_fts_shapes(repo: Repo):
         shape_nodes = list(graph.subjects(RDF.type, shape_type))
         n_shapes = len(shape_nodes)
         if n_shapes > 0:
-            names_list = []
-            for node in shape_nodes:
-                name = next(graph.objects(node, SH.name), None)
-                if name is None:
-                    name = next(graph.objects(node, DCTERMS.identifier), None)
-                names_list.append(str(name) if name is not None else "(no label)")
-            names = ", ".join(names_list)
-            log.info(f"Found and added {n_shapes} {label}: {names}")
+            log.info(
+                "Found and added %s",
+                label,
+                extra={"prez.rdf.shape_count": n_shapes},
+            )
         else:
             log.info(f"No {label} found")
 
@@ -215,19 +233,21 @@ async def generate_prefixes(repo: Repo):
         len_iris = len(iris)
         log.info(f"Generating prefixes for {len_iris:,} IRIs.")
         skipped_count = 0
-        skipped = []
         for iri in iris:
             try:
                 get_curie_id_for_uri(iri)
             except ValueError:
                 skipped_count += 1
-                skipped.append(iri)
 
         log.info(
-            f"Generated prefixes for {len(iris):,} IRIs. Skipped {skipped_count:,} IRIs."
+            "Generated prefixes for %s IRIs; skipped %s IRIs",
+            len(iris),
+            skipped_count,
+            extra={
+                "prez.prefix.input_iri_count": len(iris),
+                "prez.prefix.skipped_iri_count": skipped_count,
+            },
         )
-        for skipped_iri in skipped:
-            log.info(f"Skipped IRI {skipped_iri}")
 
 
 async def _add_prefixes_from_graph(g):
@@ -346,7 +366,7 @@ def _retrieve_generated_queryable_definitions(app_state) -> Graph:
         return Graph()
 
     assembler_file = Path(assembler_path)
-    print(assembler_file.absolute())
+    log.info("Loading queryables from the configured Jena assembler file")
     if not assembler_file.exists():
         raise FileNotFoundError(
             f"Configured jena_assembler_path does not exist: {assembler_file}"
@@ -365,12 +385,13 @@ def _retrieve_generated_queryable_definitions(app_state) -> Graph:
 def _log_queryable_graph(graph: Graph, source_label: str) -> None:
     queryables = list(graph.subjects(predicate=RDF.type, object=CQL_QUERYABLE))
     n_queryables = len(queryables)
-    names_list = [
-        f'"{str(triple[2])}"'
-        for triple in graph.triples_choices((queryables, SH.name, None))
-    ]
     log.info(
-        f'Found and added {n_queryables} {source_label} queryables: {", ".join(names_list)}'
+        "Found and added %s queryables",
+        source_label,
+        extra={
+            "prez.queryables.source": source_label,
+            "prez.queryables.count": n_queryables,
+        },
     )
 
 

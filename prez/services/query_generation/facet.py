@@ -299,9 +299,8 @@ def extract_lucene_facets_from_profile(
                 range_spec["ranges"] = json.loads(str(boundaries_literal))
             except (json.JSONDecodeError, TypeError):
                 log.warning(
-                    "Could not parse luc:bucketBoundaries %r on %s, skipping ranges",
-                    str(boundaries_literal),
-                    range_node,
+                    "Could not parse Lucene facet bucket boundaries; skipping ranges",
+                    extra={"prez.lucene.range_facet": str(range_node)},
                 )
         facets.append(range_spec)
 

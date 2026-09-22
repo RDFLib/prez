@@ -233,9 +233,14 @@ class ListingQueryParams:
     def validate_pagination_params(self):
         """Validate mutually exclusive pagination parameters."""
 
-        # Debug print to see what values we have
         logger.debug(
-            f"DEBUG - page: {self.page}, offset: {self.offset}, startindex: {self.startindex}"
+            "Validating pagination parameters",
+            extra={
+                "event.name": "pagination.validation",
+                "prez.pagination.page": self.page,
+                "prez.pagination.offset": self.offset,
+                "prez.pagination.start_index": self.startindex,
+            },
         )
 
         pagination_params = [

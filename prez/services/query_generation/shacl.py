@@ -302,10 +302,10 @@ class PropertyShape(Shape):
         try:
             sh_in_value = next(self.graph.objects(self.uri, SH["in"]), None)
             return sh_in_value is not None
-        except Exception as e:
-            log.warning(
-                f"Error checking for sh:in on {self.uri}: {e}. "
-                "Defaulting to has_sh_in=False"
+        except Exception:
+            log.exception(
+                "Could not inspect sh:in; defaulting to absent",
+                extra={"prez.shacl.property_shape": str(self.uri)},
             )
             return False
 
@@ -572,15 +572,20 @@ class PropertyShape(Shape):
                 if isinstance(path_object, PivotPath):
                     union = True
                 self._add_path(path_object, union)
-        except ValueError as e:
-            log.warning(
-                f"Could not parse property path {path_to_parse} (original node: {pp}). Error: {e}"
+        except ValueError:
+            log.exception(
+                "Could not parse a SHACL property path",
+                extra={"prez.shacl.property_shape": str(pp)},
             )
 
     def _add_path(self, path: PropertyPath, union: bool):
         """Adds a parsed PropertyPath object to the appropriate list."""
         log.debug(
-            f"Adding path to {'union' if union else 'and'} list: {path!r}, Current alias: {path.path_alias!r}"
+            "Adding a parsed SHACL property path",
+            extra={
+                "prez.shacl.path_group": "union" if union else "and",
+                "prez.shacl.path_has_alias": path.path_alias is not None,
+            },
         )
         if union:
             self.union_property_paths.append(path)
@@ -692,8 +697,8 @@ class PropertyShape(Shape):
                 self.focus_node_classes = list(self.or_klasses)
             else:
                 log.warning(
-                    "FTS property shape sh:class with multiple values (sh:or) "
-                    f"is not yet supported: {self.or_klasses}"
+                    "FTS property shape sh:class with multiple values is not supported",
+                    extra={"prez.shacl.class_count": len(self.or_klasses)},
                 )
 
         if self.minCount == 0:

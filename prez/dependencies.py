@@ -1,3 +1,4 @@
+import hashlib
 import json
 from pathlib import Path
 from urllib.parse import urlparse
@@ -58,6 +59,10 @@ from prez.services.query_generation.shacl import (
 )
 
 logger = get_logger(__name__)
+
+
+def _query_fingerprint(query: object) -> str:
+    return hashlib.sha256(str(query).encode("utf-8")).hexdigest()[:12]
 
 
 async def get_async_http_client():
@@ -1293,7 +1298,13 @@ async def generate_search_query(
     else:
         if uses_lucene:
             search_query = build_lucene_query()
-            logger.debug(f"Generated search query: {search_query}")
+            logger.debug(
+                "Search query generated",
+                extra={
+                    "event.name": "search.query.generated",
+                    "prez.sparql.query_fingerprint": _query_fingerprint(search_query),
+                },
+            )
             return search_query
 
         # escaped_term = escape_for_lucene_and_sparql(term)
@@ -1388,7 +1399,13 @@ async def generate_search_query(
             raise NotImplementedError(
                 f"Search method {settings.search_method} not implemented"
             )
-        logger.debug(f"Generated search query: {search_query}")
+        logger.debug(
+            "Search query generated",
+            extra={
+                "event.name": "search.query.generated",
+                "prez.sparql.query_fingerprint": _query_fingerprint(search_query),
+            },
+        )
         return search_query
 
 
