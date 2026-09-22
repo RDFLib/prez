@@ -24,6 +24,8 @@ Observed effect on the deployed cloud instance:
 
 Performance observations are currently emitted as structured application logs. They are temporary migration inputs for future spans and metrics, not OpenTelemetry telemetry or permanent metrics. Prez writes logs to stdout at the configured `LOG_LEVEL` (`INFO` by default); detailed performance events logged at `DEBUG` require `LOG_LEVEL=DEBUG`. `LOG_FORMAT=console` is the human-readable default; `LOG_FORMAT=json` emits one JSON object per line and preserves structured attribute types. Neither output schema has a compatibility guarantee.
 
+Request logs include a generated `prez.request.id`; callers can also supply `X-Request-ID`, which is recorded separately as `prez.client_request.id`. These application correlation values are not distributed trace IDs. Future OpenTelemetry instrumentation will use W3C `traceparent` propagation and native `trace_id`/`span_id` log fields without repurposing either request ID.
+
 The key event names available for diagnosing production behavior are:
 
 - `request.complete`

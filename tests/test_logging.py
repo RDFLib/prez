@@ -13,16 +13,24 @@ from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
 from prez.config import Settings
-from prez.middleware import RequestTimingMiddleware, _union_duration_ms
+from prez.middleware import (
+    RequestCorrelationMiddleware,
+    RequestTimingMiddleware,
+    _union_duration_ms,
+)
 from prez.repositories.remote_sparql import RemoteSparqlRepo
 from prez.services.prez_logging import (
     _ConsoleFormatter,
     _JsonFormatter,
+    _RequestCorrelationFilter,
     bind_downstream_timings,
+    bind_request_ids,
     get_downstream_timing_spans,
     get_logger,
+    get_request_log_attributes,
     record_downstream_timing,
     reset_downstream_timings,
+    reset_request_ids,
     setup_logger,
 )
 
@@ -180,6 +188,21 @@ def test_setup_logger_is_idempotent_and_emits_one_record(
     assert json.loads(lines[0])["attributes"]["item.count"] == 2
 
 
+def test_request_correlation_filter_adds_active_ids():
+    tokens = bind_request_ids("prez-id", "client-id")
+    try:
+        record = logging.LogRecord(
+            "prez.test.logging", logging.INFO, __file__, 1, "Message", (), None
+        )
+        assert _RequestCorrelationFilter().filter(record)
+    finally:
+        reset_request_ids(tokens)
+
+    assert getattr(record, "prez.request.id") == "prez-id"
+    assert getattr(record, "prez.client_request.id") == "client-id"
+    assert get_request_log_attributes() == {}
+
+
 def test_request_completion_has_typed_fields_and_timing_breakdown():
     records = []
 
@@ -189,6 +212,7 @@ def test_request_completion_has_typed_fields_and_timing_breakdown():
 
     app = FastAPI()
     app.add_middleware(RequestTimingMiddleware)
+    app.add_middleware(RequestCorrelationMiddleware)
 
     @app.get("/timed")
     async def timed_endpoint():
@@ -204,7 +228,12 @@ def test_request_completion_has_typed_fields_and_timing_breakdown():
     logger.addHandler(handler)
     try:
         with TestClient(app) as client:
-            assert client.get("/timed?limit=1").status_code == 200
+            response = client.get(
+                "/timed?limit=1", headers={"X-Request-ID": "client-operation-123"}
+            )
+            assert response.status_code == 200
+            assert len(response.headers["X-Request-ID"]) == 32
+            assert response.headers["X-Client-Request-ID"] == "client-operation-123"
     finally:
         logger.removeHandler(handler)
         logger.setLevel(previous_level)
@@ -219,6 +248,8 @@ def test_request_completion_has_typed_fields_and_timing_breakdown():
     assert getattr(completion, "http.request.method") == "GET"
     assert getattr(completion, "http.response.status_code") == 200
     assert getattr(completion, "url.path") == "/timed"
+    assert getattr(completion, "prez.request.id") == response.headers["X-Request-ID"]
+    assert getattr(completion, "prez.client_request.id") == "client-operation-123"
     assert completion.query_string_size_bytes == len(b"limit=1")
     assert completion.response_body_chunk_count >= 1
     assert isinstance(completion.response_size_bytes, int)
@@ -228,6 +259,21 @@ def test_request_completion_has_typed_fields_and_timing_breakdown():
     assert completion.duration_ms == pytest.approx(
         completion.downstream_duration_ms + completion.prez_duration_ms, abs=0.2
     )
+
+
+def test_invalid_client_request_id_is_not_reflected():
+    app = FastAPI()
+    app.add_middleware(RequestCorrelationMiddleware)
+
+    @app.get("/")
+    async def endpoint():
+        return {"ok": True}
+
+    with TestClient(app) as client:
+        response = client.get("/", headers={"X-Request-ID": "not safe with spaces"})
+
+    assert len(response.headers["X-Request-ID"]) == 32
+    assert "X-Client-Request-ID" not in response.headers
 
 
 def test_downstream_timing_merges_concurrent_waits():

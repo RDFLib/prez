@@ -127,7 +127,9 @@ Prez writes logs to **stdout only**. The concise `console` format is intended fo
 
 Application code uses standard Python logging. Structured observations are supplied as flat, typed `extra` attributes, so numbers, booleans, and null values remain those types in JSON output. Messages are not parsed for `key=value` fields. Duration and size attribute names include explicit units such as `duration_ms` and `response_size_bytes`.
 
-This output is temporary application logging designed to ease a future OpenTelemetry migration; it is not OpenTelemetry telemetry. Prez does not configure an OpenTelemetry SDK, tracing, metrics, correlation, or exporters. The console and JSON schemas have no compatibility guarantee. A future telemetry implementation can replace the centralized stdout handler without changing ordinary application logging calls, and the temporary duration observations can then migrate to spans and metrics.
+Every HTTP request receives an opaque Prez correlation ID. It is returned in `X-Request-ID` and added to application logs as `prez.request.id`. A caller may also send a safe, printable `X-Request-ID` of up to 128 characters; Prez records that separately as `prez.client_request.id` and echoes it in `X-Client-Request-ID`. Invalid or repeated client IDs are ignored. These values are correlation IDs, not W3C trace IDs, and Prez does not forward them to downstream services.
+
+This output is temporary application logging designed to ease a future OpenTelemetry migration; it is not OpenTelemetry telemetry. Prez does not yet configure an OpenTelemetry SDK, spans, metrics, exporters, or W3C Trace Context propagation. A future implementation will instrument FastAPI and HTTPX so an incoming `traceparent` continues a distributed trace and OTEL supplies native `trace_id` and `span_id` log fields. The Prez and client correlation IDs will remain separate attributes rather than being converted into trace IDs. The console and JSON schemas have no compatibility guarantee.
 
 #### Prez Metadata
 

@@ -1,9 +1,10 @@
 """Central logging configuration for Prez.
 
 Application code uses ordinary :mod:`logging` loggers and supplies structured data as
-flat, typed ``extra`` attributes.  This module deliberately contains no request context,
-message parsing, or OpenTelemetry integration.  Its stdout handlers are a temporary seam
-that can be replaced by an OpenTelemetry logging handler in the future.
+flat, typed ``extra`` attributes. Request correlation IDs are added at the stdout handler
+boundary. They are deliberately distinct from OpenTelemetry trace and span IDs. The
+handler remains a temporary seam that can be replaced by an OpenTelemetry logging
+handler in the future.
 """
 
 from __future__ import annotations
@@ -12,6 +13,7 @@ import json
 import logging
 import math
 import sys
+import uuid
 from contextvars import ContextVar, Token
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -33,6 +35,43 @@ class DownstreamTimingContext:
 _downstream_timings: ContextVar[DownstreamTimingContext | None] = ContextVar(
     "prez_downstream_timings", default=None
 )
+_request_id: ContextVar[str | None] = ContextVar("prez_request_id", default=None)
+_client_request_id: ContextVar[str | None] = ContextVar(
+    "prez_client_request_id", default=None
+)
+
+
+def new_request_id() -> str:
+    """Return an opaque Prez request correlation ID.
+
+    This is not a W3C trace ID and must not be used as one.
+    """
+    return uuid.uuid4().hex
+
+
+def bind_request_ids(
+    request_id: str, client_request_id: str | None
+) -> tuple[Token[str | None], Token[str | None]]:
+    return _request_id.set(request_id), _client_request_id.set(client_request_id)
+
+
+def get_request_log_attributes() -> dict[str, str]:
+    attributes: dict[str, str] = {}
+    request_id = _request_id.get()
+    client_request_id = _client_request_id.get()
+    if request_id is not None:
+        attributes["prez.request.id"] = request_id
+    if client_request_id is not None:
+        attributes["prez.client_request.id"] = client_request_id
+    return attributes
+
+
+def reset_request_ids(
+    tokens: tuple[Token[str | None], Token[str | None]],
+) -> None:
+    request_token, client_request_token = tokens
+    _client_request_id.reset(client_request_token)
+    _request_id.reset(request_token)
 
 
 def bind_downstream_timings() -> Token[DownstreamTimingContext | None]:
@@ -85,6 +124,16 @@ def _json_value(value: Any) -> Any:
     if isinstance(value, float) and not math.isfinite(value):
         return str(value)
     return value
+
+
+class _RequestCorrelationFilter(logging.Filter):
+    """Attach active request IDs without changing application logger calls."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        for name, value in get_request_log_attributes().items():
+            if name not in record.__dict__:
+                record.__dict__[name] = value
+        return True
 
 
 class _ConsoleFormatter(logging.Formatter):
@@ -186,6 +235,7 @@ def setup_logger(settings: Any) -> None:
 
     handler = logging.StreamHandler(sys.stdout)
     handler.setLevel(level)
+    handler.addFilter(_RequestCorrelationFilter())
     if settings.log_format == "json":
         service_version = str(settings.prez_version or "unknown")
         handler.setFormatter(_JsonFormatter(service_version))

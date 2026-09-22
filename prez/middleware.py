@@ -1,3 +1,4 @@
+import re
 import time
 
 from fastapi import Request
@@ -6,12 +7,81 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from prez.services.prez_logging import (
     bind_downstream_timings,
+    bind_request_ids,
     get_downstream_timing_spans,
     get_logger,
+    get_request_log_attributes,
+    new_request_id,
     reset_downstream_timings,
+    reset_request_ids,
 )
 
 log = get_logger(__name__)
+
+REQUEST_ID_HEADER = b"x-request-id"
+CLIENT_REQUEST_ID_RESPONSE_HEADER = b"x-client-request-id"
+_CLIENT_REQUEST_ID_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}\Z")
+
+
+def _client_request_id(scope: Scope) -> str | None:
+    """Return one safe client-supplied request ID, ignoring invalid input."""
+    values = [
+        value
+        for name, value in scope.get("headers", [])
+        if name.lower() == REQUEST_ID_HEADER
+    ]
+    if len(values) != 1:
+        return None
+    try:
+        value = values[0].decode("ascii")
+    except UnicodeDecodeError:
+        return None
+    return value if _CLIENT_REQUEST_ID_PATTERN.fullmatch(value) else None
+
+
+class RequestCorrelationMiddleware:
+    """Correlate logs by Prez and optional client IDs.
+
+    These IDs are application correlation values, not W3C trace IDs. They must remain
+    separate from the ``trace_id`` and ``span_id`` fields supplied by future OTEL
+    instrumentation.
+    """
+
+    def __init__(self, app: ASGIApp):
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        request_id = new_request_id()
+        client_request_id = _client_request_id(scope)
+        tokens = bind_request_ids(request_id, client_request_id)
+
+        async def correlated_send(message: Message):
+            if message["type"] == "http.response.start":
+                headers = [
+                    (name, value)
+                    for name, value in message.setdefault("headers", [])
+                    if name.lower()
+                    not in {REQUEST_ID_HEADER, CLIENT_REQUEST_ID_RESPONSE_HEADER}
+                ]
+                headers.append((REQUEST_ID_HEADER, request_id.encode("ascii")))
+                if client_request_id is not None:
+                    headers.append(
+                        (
+                            CLIENT_REQUEST_ID_RESPONSE_HEADER,
+                            client_request_id.encode("ascii"),
+                        )
+                    )
+                message["headers"] = headers
+            await send(message)
+
+        try:
+            await self.app(scope, receive, correlated_send)
+        finally:
+            reset_request_ids(tokens)
 
 
 def _estimate_header_line_size(name: str, value: str) -> int:
@@ -220,6 +290,7 @@ class RequestTimingMiddleware:
             downstream_duration_ms = _union_duration_ms(downstream_spans)
             prez_duration_ms = max(0.0, total_duration_ms - downstream_duration_ms)
             request_details = {
+                **get_request_log_attributes(),
                 "event.name": "request.complete",
                 "http.request.method": scope.get("method", ""),
                 "http.response.status_code": status_code,

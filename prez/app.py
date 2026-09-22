@@ -35,6 +35,7 @@ from prez.exceptions.model_exceptions import (
     URINotFoundException,
 )
 from prez.middleware import (
+    RequestCorrelationMiddleware,
     RequestTimingMiddleware,
     create_response_header_budget_middleware,
     create_validate_header_middleware,
@@ -291,6 +292,10 @@ def assemble_app(
     )
     app.middleware("http")(validate_header_middleware)
 
+    # Register this last so correlation wraps every HTTP response, including responses
+    # returned early by validation middleware.
+    app.add_middleware(RequestCorrelationMiddleware)
+
     return app
 
 
@@ -319,7 +324,9 @@ def _get_sparql_service_description(request, format):
                 ]
             ]
         .
-    """.format(request.url_for("sparql_get"))
+    """.format(
+        request.url_for("sparql_get")
+    )
     if format == "text/turtle":
         return dedent(ttl)
     else:
