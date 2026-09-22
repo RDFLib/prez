@@ -20,9 +20,11 @@ Observed effect on the deployed cloud instance:
 - `text/turtle` dropped from roughly `4-8s` to roughly `0.6-1.0s`
 - warm `text/anot+turtle` dropped from roughly `5-7s` to roughly `0.8-1.1s`
 
-## Logging Policy
+## Temporary Performance Logging
 
-Performance metrics are emitted as structured JSON application logs. The key events used to diagnose production behavior are:
+Performance observations are currently emitted as structured application logs. They are temporary migration inputs for future spans and metrics, not OpenTelemetry telemetry or permanent metrics. Prez writes logs to stdout at the configured `LOG_LEVEL` (`INFO` by default); detailed performance events logged at `DEBUG` require `LOG_LEVEL=DEBUG`. `LOG_FORMAT=console` is the human-readable default; `LOG_FORMAT=json` emits one JSON object per line and preserves structured attribute types. Neither output schema has a compatibility guarantee.
+
+The key event names available for diagnosing production behavior are:
 
 - `request.complete`
   - full request timing, chunk count, first/final body timing

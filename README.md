@@ -127,7 +127,7 @@ Prez writes logs to **stdout only**. The concise `console` format is intended fo
 
 Application code uses standard Python logging. Structured observations are supplied as flat, typed `extra` attributes, so numbers, booleans, and null values remain those types in JSON output. Messages are not parsed for `key=value` fields. Duration and size attribute names include explicit units such as `duration_ms` and `response_size_bytes`.
 
-This output is a temporary, OpenTelemetry-aligned stopgap, not an OpenTelemetry implementation. It does not add an SDK, tracing, metrics, or exporters, and its output schema has no compatibility guarantee. A future telemetry implementation can replace the centralized stdout handler without changing ordinary application logging calls.
+This output is temporary application logging designed to ease a future OpenTelemetry migration; it is not OpenTelemetry telemetry. Prez does not configure an OpenTelemetry SDK, tracing, metrics, correlation, or exporters. The console and JSON schemas have no compatibility guarantee. A future telemetry implementation can replace the centralized stdout handler without changing ordinary application logging calls, and the temporary duration observations can then migrate to spans and metrics.
 
 #### Prez Metadata
 

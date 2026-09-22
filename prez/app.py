@@ -111,7 +111,7 @@ async def lifespan(app: FastAPI):
     # Startup
     setup_logger(app.state.settings)
     log = get_logger("prez")
-    log.info("event=application.starting")
+    log.info("Application starting")
 
     mounted_apps = []
     # Find mounted sub-apps
