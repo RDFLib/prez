@@ -28,23 +28,23 @@ Performance metrics are emitted as structured JSON application logs. The key eve
   - full request timing, chunk count, first/final body timing
 - `remote_sparql.oxigraph_store`
   - backend fetch/read/bulk-load timing for RDF result loading
-- `remote_sparql_tabular_query`
+- `remote_sparql.tabular_query`
   - backend timing for tabular support queries
-- `remote_sparql_proxy`
+- `remote_sparql.proxy`
   - `/sparql` proxy timing
-- `annotations_cache_lookup`
+- `annotations.cache_lookup`
   - cache hit/miss visibility for annotation terms
-- `annotations_uncached_terms`
+- `annotations.uncached_terms`
   - cold annotation fallback timing, including local annotations repo cost
-- `listing_query`
+- `listing.query.complete`
   - top-level listing query timing
-- `listing_link_generation`
+- `listing.link_generation.complete`
   - aggregate link-generation timing
-- `listing_function_complete`
+- `listing.function.complete`
   - top-level listing total and render timing
 - `return_rdf_from_oxigraph`
   - non-annotated RDF serializer timing
-- `return_from_graph_annotated_oxigraph`
+- `return_from_graph.annotated_oxigraph`
   - annotated RDF timing
 
 The following investigation-only probes were removed to reduce noise:

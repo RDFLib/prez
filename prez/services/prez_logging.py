@@ -116,17 +116,30 @@ class _PrezFormatter(logging.Formatter):
     def __init__(self, use_colors: bool):
         super().__init__()
         self.use_colors = use_colors
-        self.message_formatter = logging.Formatter("%(message)s")
         self.timestamp_formatter = _UtcFormatter(
             "%(asctime)s.%(msecs)03dZ", datefmt="%Y-%m-%dT%H:%M:%S"
         )
 
     @staticmethod
-    def _coerce_value(value: str) -> Any:
-        if value in {"true", "True"}:
-            return True
-        if value in {"false", "False"}:
-            return False
+    def _coerce_value(field_name: str, value: str) -> Any:
+        """Coerce fields whose names explicitly identify a numeric or bool value."""
+        if field_name.startswith(("has_", "is_")):
+            if value in {"true", "True"}:
+                return True
+            if value in {"false", "False"}:
+                return False
+        numeric_names = {"duration_ms", "size_bytes", "count", "status", "percent"}
+        numeric_suffixes = (
+            "_duration_ms",
+            "_size_bytes",
+            "_count",
+            "_status",
+            "_percent",
+        )
+        if field_name not in numeric_names and not field_name.endswith(
+            numeric_suffixes
+        ):
+            return value
         try:
             return int(value)
         except ValueError:
@@ -139,11 +152,12 @@ class _PrezFormatter(logging.Formatter):
         supplied_fields = getattr(record, "structured_fields", None)
         if supplied_fields is not None:
             payload = dict(supplied_fields)
-        else:
+        elif message.startswith("event="):
             payload = {}
             spans: list[tuple[int, int]] = []
             for match in re.finditer(r"(?:^|\s)([A-Za-z][\w]*)=([^\s,)]+)", message):
-                payload[match.group(1)] = self._coerce_value(match.group(2))
+                field_name = match.group(1)
+                payload[field_name] = self._coerce_value(field_name, match.group(2))
                 spans.append(match.span())
             remainder = message
             for start, end in reversed(spans):
@@ -151,9 +165,11 @@ class _PrezFormatter(logging.Formatter):
             remainder = re.sub(r"\s+", " ", remainder).strip(" ()")
             if remainder:
                 payload["message"] = remainder
-            if not payload:
-                payload["message"] = message
+        else:
+            payload = {"message": message}
 
+        if record.exc_info:
+            payload.setdefault("exception", self.formatException(record.exc_info))
         if record.levelno == logging.DEBUG:
             payload.setdefault("logger", record.name)
         request_id = getattr(record, "request_id", NO_REQUEST_ID)
@@ -169,7 +185,7 @@ class _PrezFormatter(logging.Formatter):
                 level_prefix = f"{color}{level_prefix}{self._RESET}"
 
         prefix = self.timestamp_formatter.format(record) + " " + level_prefix
-        message = self.message_formatter.format(record)
+        message = record.getMessage()
         return prefix + json.dumps(
             self._payload(record, message), separators=(",", ":"), default=str
         )

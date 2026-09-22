@@ -127,6 +127,10 @@ Prez uses `X-Request-ID` for end-to-end request correlation. A caller-supplied I
 
 Application logs use UTC timestamps followed by a structured JSON payload. Metric names include their representation: durations end in `_duration_ms`, byte sizes in `_size_bytes`, and cardinalities in `_count`. Request completion events separate downstream SPARQL wait time (`downstream_duration_ms`) from Prez processing time (`prez_duration_ms`).
 
+Prez configures handlers only for the `prez` logger and disables Uvicorn access logging when started through the bundled entry points. Other libraries therefore use the host's root logging configuration (or Python's unformatted `WARNING`+ fallback if none exists). Prez records propagate so embedding applications can capture them; a host that also installs root handlers should set `logging.getLogger("prez").propagate = False` after startup to avoid duplicate output.
+
+With `LOG_OUTPUT=file` or `both`, each startup creates `../logs/prez-<UTC timestamp>.log` relative to the current working directory. Prez does not rotate or remove these files, so deployments should provide external retention and rotation.
+
 #### Prez Metadata
 
 - **`PREZ_TITLE`**: Title for the Prez instance. Default is `"Prez"`.

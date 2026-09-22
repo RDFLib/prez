@@ -3,6 +3,7 @@ import io
 import json
 import logging
 import re
+import sys
 import time
 
 import httpx
@@ -19,6 +20,7 @@ from prez.middleware import (
 from prez.repositories.remote_sparql import RemoteSparqlRepo
 from prez.services.prez_logging import (
     REQUEST_ID_HEADER,
+    _PrezFormatter,
     bind_downstream_timings,
     bind_request_id,
     get_downstream_timing_spans,
@@ -93,7 +95,9 @@ def test_debug_logs_have_a_json_payload(monkeypatch):
         setup_logger(Settings(_env_file=None, log_output="stdout", log_level="DEBUG"))
         token = bind_request_id("debug-request")
         try:
-            get_logger("prez.test.debug").debug("duration_ms=1.2")
+            get_logger("prez.test.debug").debug(
+                "event=debug.metric duration_ms=1.2 identifier=1234"
+            )
         finally:
             reset_request_id(token)
     finally:
@@ -105,10 +109,39 @@ def test_debug_logs_have_a_json_payload(monkeypatch):
     plain_line = re.sub(r"\033\[[0-9;]*m", "", output.getvalue()).rstrip()
     payload = json.loads(plain_line.split("DEBUG:    ", maxsplit=1)[1])
     assert payload == {
+        "event": "debug.metric",
         "duration_ms": 1.2,
+        "identifier": "1234",
         "logger": "prez.test.debug",
         "request_id": "debug-request",
     }
+
+
+def test_formatter_only_parses_explicit_events_and_preserves_tracebacks():
+    formatter = _PrezFormatter(use_colors=False)
+    ordinary_record = logging.LogRecord(
+        "prez.test", logging.INFO, __file__, 1, "URL ?limit=10 enabled=true", (), None
+    )
+    ordinary_line = formatter.format(ordinary_record)
+    ordinary_payload = json.loads(ordinary_line[ordinary_line.index("{") :])
+    assert ordinary_payload == {"message": "URL ?limit=10 enabled=true"}
+
+    try:
+        raise RuntimeError("formatter failure")
+    except RuntimeError:
+        exception_record = logging.LogRecord(
+            "prez.test",
+            logging.ERROR,
+            __file__,
+            1,
+            "Request failed",
+            (),
+            sys.exc_info(),
+        )
+    exception_line = formatter.format(exception_record)
+    exception_payload = json.loads(exception_line[exception_line.index("{") :])
+    assert exception_payload["message"] == "Request failed"
+    assert "RuntimeError: formatter failure" in exception_payload["exception"]
 
 
 def _correlation_app(records):
@@ -222,3 +255,30 @@ async def test_remote_sparql_propagates_request_id(monkeypatch):
             reset_request_id(token)
 
     assert received[REQUEST_ID_HEADER.lower()] == "downstream-456"
+
+
+@pytest.mark.asyncio
+async def test_sparql_proxy_tracks_downstream_wait_without_forwarding_placeholder_id(
+    monkeypatch,
+):
+    received = {}
+
+    def respond(request: httpx.Request):
+        received.update(request.headers)
+        return httpx.Response(200, content=b"result")
+
+    monkeypatch.setattr(
+        "prez.repositories.remote_sparql.settings.sparql_endpoint",
+        "http://example.test/sparql",
+    )
+    async with httpx.AsyncClient(transport=httpx.MockTransport(respond)) as client:
+        repo = RemoteSparqlRepo(client)
+        token = bind_downstream_timings()
+        try:
+            response = await repo.sparql("SELECT * WHERE {}", [])
+            await response.aread()
+            assert get_downstream_timing_spans()
+        finally:
+            reset_downstream_timings(token)
+
+    assert REQUEST_ID_HEADER.lower() not in received

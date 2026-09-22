@@ -11,6 +11,7 @@ from prez.config import settings
 from prez.repositories.base import Repo
 from prez.services.connegp_service import OXIGRAPH_SERIALIZER_TYPES_MAP
 from prez.services.prez_logging import (
+    NO_REQUEST_ID,
     REQUEST_ID_HEADER,
     get_logger,
     get_request_id,
@@ -68,13 +69,14 @@ class RemoteSparqlRepo(Repo):
         if settings.sparql_timeout_param_name:
             data[settings.sparql_timeout_param_name] = str(settings.sparql_timeout)
 
+        headers = {"Accept": mediatype}
+        request_id = get_request_id()
+        if request_id != NO_REQUEST_ID:
+            headers[REQUEST_ID_HEADER] = request_id
         query_rq = self.async_client.build_request(
             "POST",
             url=settings.sparql_endpoint,
-            headers={
-                "Accept": mediatype,
-                REQUEST_ID_HEADER: get_request_id(),
-            },
+            headers=headers,
             data=data,
         )
         query_id = _query_fingerprint(query)
@@ -86,7 +88,7 @@ class RemoteSparqlRepo(Repo):
                 response.stream = _TimedSparqlStream(response_stream)
             elapsed_ms = (time.perf_counter() - t0) * 1000
             log.debug(
-                "remote_sparql send_complete query_id=%s accept=%s http_status=%s operation_duration_ms=%.1f endpoint=%s",
+                "event=remote_sparql.send_complete query_id=%s accept=%s http_status=%s operation_duration_ms=%.1f endpoint=%s",
                 query_id,
                 mediatype,
                 response.status_code,
@@ -149,7 +151,7 @@ class RemoteSparqlRepo(Repo):
         parse_ms = (time.perf_counter() - parse_start) * 1000
         total_ms = (time.perf_counter() - total_start) * 1000
         log.debug(
-            "remote_sparql rdflib_graph query_id=%s format=%s response_size_bytes=%s remote_read_duration_ms=%.1f parse_duration_ms=%.1f total_duration_ms=%.1f",
+            "event=remote_sparql.rdflib_graph query_id=%s format=%s response_size_bytes=%s remote_read_duration_ms=%.1f parse_duration_ms=%.1f total_duration_ms=%.1f",
             query_id,
             response_format,
             len(content_bytes),
@@ -191,7 +193,7 @@ class RemoteSparqlRepo(Repo):
         bulk_load_ms = (time.perf_counter() - bulk_load_start) * 1000
         total_ms = (time.perf_counter() - total_start) * 1000
         log.debug(
-            "remote_sparql oxigraph_store query_id=%s format=%s oxigraph_format=%s response_size_bytes=%s remote_read_duration_ms=%.1f bulk_load_duration_ms=%.1f total_duration_ms=%.1f",
+            "event=remote_sparql.oxigraph_store query_id=%s format=%s oxigraph_format=%s response_size_bytes=%s remote_read_duration_ms=%.1f bulk_load_duration_ms=%.1f total_duration_ms=%.1f",
             query_id,
             response_format,
             oxigraph_format,
@@ -218,7 +220,7 @@ class RemoteSparqlRepo(Repo):
         record_downstream_timing(read_start, read_end)
         read_ms = (read_end - read_start) * 1000
         log.debug(
-            "remote_sparql tabular_query query_id=%s http_status=%s remote_read_duration_ms=%.1f",
+            "event=remote_sparql.tabular_query query_id=%s http_status=%s remote_read_duration_ms=%.1f",
             query_id,
             response.status_code,
             read_ms,
@@ -265,7 +267,9 @@ class RemoteSparqlRepo(Repo):
 
         # Preserve correlation across the proxied downstream request.
         request.headers["host"] = httpx.URL(url).host
-        request.headers[REQUEST_ID_HEADER] = get_request_id()
+        request_id = get_request_id()
+        if request_id != NO_REQUEST_ID:
+            request.headers[REQUEST_ID_HEADER] = request_id
 
         send_start = time.perf_counter()
         try:

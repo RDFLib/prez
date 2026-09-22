@@ -693,7 +693,7 @@ async def listing_function(
     render_ms = (time.perf_counter() - render_start) * 1000
     total_ms = (time.perf_counter() - total_start) * 1000
     log.debug(
-        "listing_function complete media_type=%s profile=%s query_count=%s store_quad_count=%s render_duration_ms=%.1f total_duration_ms=%.1f",
+        "event=listing.function.complete media_type=%s profile=%s query_count=%s store_quad_count=%s render_duration_ms=%.1f total_duration_ms=%.1f",
         pmts.selected["mediatype"],
         pmts.selected["profile"],
         len(queries),
@@ -822,7 +822,7 @@ async def ogc_features_listing_function(
     link_headers = None
     build_ms = (time.perf_counter() - build_start) * 1000
     log.debug(
-        "ogc_features_listing built media_type=%s profile=%s collection_uri=%s query_count=%s has_count_query=%s build_duration_ms=%.1f",
+        "event=ogc_listing.built media_type=%s profile=%s collection_uri=%s query_count=%s has_count_query=%s build_duration_ms=%.1f",
         selected_mediatype,
         getattr(profile_nodeshape, "uri", None),
         collection_uri,
@@ -866,7 +866,7 @@ async def ogc_features_listing_function(
         # No store, we can only return known metadata
         item_store = None
     log.debug(
-        "ogc_features_listing main_query media_type=%s store_quad_count=%s operation_duration_ms=%.1f",
+        "event=ogc_listing.main_query.complete media_type=%s store_quad_count=%s operation_duration_ms=%.1f",
         selected_mediatype,
         len(item_store) if item_store is not None else 0,
         (time.perf_counter() - main_query_start) * 1000,
@@ -913,7 +913,7 @@ async def ogc_features_listing_function(
                 item_store, data_repo, system_repo
             )
             log.debug(
-                "ogc_features_listing annotations media_type=%s annotation_quad_count=%s operation_duration_ms=%.1f",
+                "event=ogc_listing.annotations.complete media_type=%s annotation_quad_count=%s operation_duration_ms=%.1f",
                 selected_mediatype,
                 len(annotations_store) if annotations_store is not None else 0,
                 (time.perf_counter() - annotations_start) * 1000,
@@ -959,7 +959,7 @@ async def ogc_features_listing_function(
             )
         total_ms = (time.perf_counter() - total_start) * 1000
         log.debug(
-            "ogc_features_listing response media_type=%s branch=json total_duration_ms=%.1f",
+            "event=ogc_listing.response.complete media_type=%s branch=json total_duration_ms=%.1f",
             selected_mediatype,
             total_ms,
         )
@@ -998,7 +998,7 @@ async def ogc_features_listing_function(
         content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
         total_ms = (time.perf_counter() - total_start) * 1000
         log.debug(
-            "ogc_features_listing response media_type=%s branch=geojson total_duration_ms=%.1f",
+            "event=ogc_listing.response.complete media_type=%s branch=geojson total_duration_ms=%.1f",
             selected_mediatype,
             total_ms,
         )
@@ -1028,7 +1028,7 @@ async def ogc_features_listing_function(
         dump_ms = (time.perf_counter() - dump_start) * 1000
         total_ms = (time.perf_counter() - total_start) * 1000
         log.debug(
-            "ogc_features_listing response media_type=%s branch=non_annotated serialization_duration_ms=%.1f total_duration_ms=%.1f",
+            "event=ogc_listing.response.complete media_type=%s branch=non_annotated serialization_duration_ms=%.1f total_duration_ms=%.1f",
             selected_mediatype,
             dump_ms,
             total_ms,
@@ -1062,7 +1062,7 @@ async def ogc_features_listing_function(
         dump_ms = (time.perf_counter() - dump_start) * 1000
         total_ms = (time.perf_counter() - total_start) * 1000
         log.debug(
-            "ogc_features_listing response media_type=%s branch=annotated merge_duration_ms=%.1f serialization_duration_ms=%.1f total_duration_ms=%.1f",
+            "event=ogc_listing.response.complete media_type=%s branch=annotated merge_duration_ms=%.1f serialization_duration_ms=%.1f total_duration_ms=%.1f",
             selected_mediatype,
             merge_ms,
             dump_ms,

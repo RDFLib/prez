@@ -86,7 +86,7 @@ async def return_from_graph(
                 )
                 total_ms = (time.perf_counter() - total_start) * 1000
                 log.debug(
-                    "return_from_graph rdf_oxigraph media_type=%s quad_count=%s total_duration_ms=%.1f",
+                    "event=return_from_graph.rdf_oxigraph media_type=%s quad_count=%s total_duration_ms=%.1f",
                     mediatype,
                     len(store),
                     total_ms,
@@ -102,7 +102,7 @@ async def return_from_graph(
             response = await return_rdf(graph, mediatype, profile_headers)
             total_ms = (time.perf_counter() - total_start) * 1000
             log.debug(
-                "return_from_graph rdf_rdflib media_type=%s triples=%s total_duration_ms=%.1f",
+                "event=return_from_graph.rdf_rdflib media_type=%s triple_count=%s total_duration_ms=%.1f",
                 mediatype,
                 len(graph),
                 total_ms,
@@ -202,7 +202,7 @@ async def return_from_graph(
         content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
         total_ms = (time.perf_counter() - total_start) * 1000
         log.debug(
-            "return_from_graph geojson media_type=%s kind=%s total_duration_ms=%.1f",
+            "event=return_from_graph.geojson media_type=%s kind=%s total_duration_ms=%.1f",
             mediatype,
             kind,
             total_ms,
@@ -223,7 +223,7 @@ async def return_from_graph(
                 annotations_ms = (time.perf_counter() - annotations_start) * 1000
                 merge_start = time.perf_counter()
                 store.bulk_extend(annotations_store)
-                merge_ms = ((time.perf_counter() - merge_start) * 1000) * 1000
+                merge_ms = (time.perf_counter() - merge_start) * 1000
                 oxigraph_prefixes = {
                     p: str(n) for p, n in prefix_graph.namespace_manager.namespaces()
                 }
@@ -249,7 +249,7 @@ async def return_from_graph(
                 content_bytes = content.getvalue()
                 total_ms = (time.perf_counter() - total_start) * 1000
                 log.debug(
-                    "return_from_graph annotated_oxigraph media_type=%s base_quad_count=%s annotation_quad_count=%s annotation_duration_ms=%.1f merge_duration_ms=%.1f serialization_duration_ms=%.1f total_duration_ms=%.1f",
+                    "event=return_from_graph.annotated_oxigraph media_type=%s base_quad_count=%s annotation_quad_count=%s annotation_duration_ms=%.1f merge_duration_ms=%.1f serialization_duration_ms=%.1f total_duration_ms=%.1f",
                     non_anot_mediatype,
                     len(store) - len(annotations_store),
                     len(annotations_store),
@@ -272,7 +272,7 @@ async def return_from_graph(
                 serialize_ms = (time.perf_counter() - serialize_start) * 1000
                 total_ms = (time.perf_counter() - total_start) * 1000
                 log.debug(
-                    "return_from_graph annotated_rdflib media_type=%s annotation_duration_ms=%.1f serialization_duration_ms=%.1f total_duration_ms=%.1f",
+                    "event=return_from_graph.annotated_rdflib media_type=%s annotation_duration_ms=%.1f serialization_duration_ms=%.1f total_duration_ms=%.1f",
                     non_anot_mediatype,
                     annotations_ms,
                     serialize_ms,
@@ -329,7 +329,7 @@ async def return_rdf_from_oxigraph(
     profile_headers["Content-Disposition"] = "inline"
     dump_ms = (time.perf_counter() - dump_start) * 1000
     log.debug(
-        "return_rdf_from_oxigraph media_type=%s quad_count=%s serialization_duration_ms=%.1f",
+        "event=return_rdf_from_oxigraph media_type=%s quad_count=%s serialization_duration_ms=%.1f",
         mediatype,
         len(store),
         dump_ms,
