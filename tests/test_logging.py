@@ -268,3 +268,28 @@ async def test_sparql_proxy_does_not_forward_x_request_id_and_tracks_wait(monkey
 
     assert "x-request-id" not in received
     assert received["x-client"] == "retained"
+
+
+@pytest.mark.asyncio
+async def test_remote_sparql_error_does_not_embed_response_body_in_exception(
+    monkeypatch,
+):
+    secret_body = b"query=SELECT * WHERE {} password=do-not-log"
+
+    def respond(request: httpx.Request):
+        return httpx.Response(400, content=secret_body)
+
+    monkeypatch.setattr(
+        "prez.repositories.remote_sparql.settings.sparql_endpoint",
+        "http://example.test/sparql",
+    )
+    async with httpx.AsyncClient(transport=httpx.MockTransport(respond)) as client:
+        repo = RemoteSparqlRepo(client)
+        with pytest.raises(httpx.HTTPStatusError) as exc_info:
+            await repo._send_query("SELECT * WHERE {}")
+
+    assert secret_body.decode() not in str(exc_info.value)
+    assert "do-not-log" not in str(exc_info.value)
+    # Preserve the response for the existing HTTP error handler without copying its
+    # unbounded contents into exception serialization.
+    assert exc_info.value.response.text == secret_body.decode()

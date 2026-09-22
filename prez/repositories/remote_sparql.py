@@ -103,8 +103,9 @@ class RemoteSparqlRepo(Repo):
                     "prez.sparql.endpoint": _safe_endpoint(settings.sparql_endpoint),
                 },
             )
-            # A failing status is raised here, with the endpoint's own error text read
-            # into the message rather than a bare "Bad Request" (#447).
+            # Read error responses before raising so the exception handler can return
+            # the endpoint detail without embedding that potentially sensitive,
+            # unbounded body in the exception message or a later traceback.
             await self._raise_for_status_with_body(response, query_id)
             return response
         except httpx.TimeoutException as e:
@@ -134,7 +135,6 @@ class RemoteSparqlRepo(Repo):
             response.raise_for_status()
         except httpx.HTTPStatusError as e:
             content_bytes = await response.aread()
-            body_text = content_bytes.decode("utf-8", errors="replace")
             log.error(
                 "Remote SPARQL request failed",
                 extra={
@@ -147,7 +147,7 @@ class RemoteSparqlRepo(Repo):
                 },
             )
             raise httpx.HTTPStatusError(
-                f"HTTP Error {response.status_code}: {body_text}",
+                f"Remote SPARQL endpoint returned HTTP {response.status_code}",
                 request=response.request,
                 response=response,
             ) from e
