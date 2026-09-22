@@ -100,7 +100,13 @@ async def warm_queryables_cache(data_repo: Repo, system_repo: Repo) -> None:
     ]
 
     for mediatype in mediatypes_to_warm:
-        log.info(f"Warming queryables cache for {mediatype}...")
+        log.info(
+            "Warming queryables cache",
+            extra={
+                "event.name": "queryables.cache.warm.start",
+                "http.response.header.content-type": mediatype,
+            },
+        )
         t0 = time.perf_counter()
         try:
             await handle_queryables_rdf_response(
@@ -112,9 +118,23 @@ async def warm_queryables_cache(data_repo: Repo, system_repo: Repo) -> None:
                 accept_encoding="gzip",  # Pre-compress for cache
             )
             t1 = time.perf_counter()
-            log.info(f"Warmed queryables cache for {mediatype} in {(t1-t0)*1000:.1f}ms")
-        except Exception as e:
-            log.warning(f"Failed to warm queryables cache for {mediatype}: {e}")
+            log.info(
+                "Queryables cache warmed",
+                extra={
+                    "event.name": "queryables.cache.warm.complete",
+                    "http.response.header.content-type": mediatype,
+                    "duration_ms": (t1 - t0) * 1000,
+                },
+            )
+        except Exception:
+            log.warning(
+                "Failed to warm queryables cache",
+                extra={
+                    "event.name": "queryables.cache.warm.error",
+                    "http.response.header.content-type": mediatype,
+                },
+                exc_info=True,
+            )
 
 
 async def extract_queryables_rdf(system_repo: Repo):
@@ -166,30 +186,57 @@ async def handle_queryables_rdf_response(
         cached_content = await queryables_cache.get(cache_key)
         t1 = time.perf_counter()
         log.debug(
-            "event=queryables.cache.lookup cache_lookup_duration_ms=%.1f",
-            (t1 - t0) * 1000,
+            "Queryables cache lookup completed",
+            extra={
+                "event.name": "queryables.cache.lookup",
+                "cache_lookup_duration_ms": (t1 - t0) * 1000,
+                "http.response.header.content-type": selected_mediatype,
+            },
         )
 
         if cached_content is not None:
             log.debug(
-                "event=queryables.cache.hit cache_key=%s response_size_bytes=%s",
-                cache_key,
-                len(cached_content),
+                "Queryables cache hit",
+                extra={
+                    "event.name": "queryables.cache.hit",
+                    "prez.cache.result": "hit",
+                    "http.response.header.content-type": selected_mediatype,
+                    "response_size_bytes": len(cached_content),
+                },
             )
             return io.BytesIO(cached_content), {"Content-Encoding": "gzip"}
     else:
-        log.debug("event=queryables.cache.skip reason=gzip_not_accepted")
+        log.debug(
+            "Queryables cache skipped because gzip was not accepted",
+            extra={
+                "event.name": "queryables.cache.skip",
+                "prez.cache.result": "skip",
+                "prez.cache.skip_reason": "gzip_not_accepted",
+                "http.response.header.content-type": selected_mediatype,
+            },
+        )
 
     # Cache miss - do the expensive work
-    log.debug("event=queryables.cache.miss")
+    log.debug(
+        "Queryables cache miss",
+        extra={
+            "event.name": "queryables.cache.miss",
+            "prez.cache.result": "miss",
+            "http.response.header.content-type": selected_mediatype,
+        },
+    )
 
     # Extract queryables RDF from the system store
     t0 = time.perf_counter()
     queryables_store = await extract_queryables_rdf(system_repo)
     t1 = time.perf_counter()
     log.debug(
-        "event=queryables.extract.complete extraction_duration_ms=%.1f",
-        (t1 - t0) * 1000,
+        "Queryables RDF extracted",
+        extra={
+            "event.name": "queryables.extract.complete",
+            "extraction_duration_ms": (t1 - t0) * 1000,
+            "prez.rdf.quad_count": len(queryables_store),
+        },
     )
 
     # Handle annotated vs non-annotated RDF
@@ -202,8 +249,12 @@ async def handle_queryables_rdf_response(
         queryables_store.bulk_extend(specific_annotations_store)
         t3 = time.perf_counter()
         log.debug(
-            "event=queryables.annotations.complete annotation_duration_ms=%.1f",
-            (t3 - t2) * 1000,
+            "Queryables annotations completed",
+            extra={
+                "event.name": "queryables.annotations.complete",
+                "annotation_duration_ms": (t3 - t2) * 1000,
+                "prez.annotation.quad_count": len(specific_annotations_store),
+            },
         )
     else:
         serialization_format = selected_mediatype
@@ -229,8 +280,12 @@ async def handle_queryables_rdf_response(
     content.seek(0)
     t5 = time.perf_counter()
     log.debug(
-        "event=queryables.serialization.complete serialization_duration_ms=%.1f",
-        (t5 - t4) * 1000,
+        "Queryables RDF serialized",
+        extra={
+            "event.name": "queryables.serialization.complete",
+            "serialization_duration_ms": (t5 - t4) * 1000,
+            "http.response.header.content-type": selected_mediatype,
+        },
     )
 
     # If client supports gzip, compress, cache, and return gzipped
@@ -240,12 +295,16 @@ async def handle_queryables_rdf_response(
         gzipped_bytes = gzip.compress(raw_bytes)
         t7 = time.perf_counter()
         log.debug(
-            "event=queryables.compression.complete compression_duration_ms=%.1f "
-            "input_size_bytes=%s output_size_bytes=%s compression_ratio_percent=%.1f",
-            (t7 - t6) * 1000,
-            len(raw_bytes),
-            len(gzipped_bytes),
-            len(gzipped_bytes) / len(raw_bytes) * 100,
+            "Queryables response compressed",
+            extra={
+                "event.name": "queryables.compression.complete",
+                "compression_duration_ms": (t7 - t6) * 1000,
+                "input_size_bytes": len(raw_bytes),
+                "output_size_bytes": len(gzipped_bytes),
+                "compression_ratio_percent": (
+                    len(gzipped_bytes) / len(raw_bytes) * 100
+                ),
+            },
         )
 
         # Cache the gzipped bytes
@@ -527,13 +586,15 @@ async def listing_function(
         # Dummy empty store, if there are no queries to run
         item_store = OxiStore()
     log.debug(
-        "event=listing.query.complete query_duration_ms=%.1f query_count=%s "
-        "media_type=%s profile=%s store_quad_count=%s",
-        (time.perf_counter() - query_start_time) * 1000,
-        len(queries),
-        pmts.selected["mediatype"],
-        pmts.selected["profile"],
-        len(item_store),
+        "Listing query completed",
+        extra={
+            "event.name": "listing.query.complete",
+            "query_duration_ms": (time.perf_counter() - query_start_time) * 1000,
+            "prez.query.count": len(queries),
+            "http.response.header.content-type": pmts.selected["mediatype"],
+            "prez.profile": str(pmts.selected["profile"]),
+            "prez.rdf.quad_count": len(item_store),
+        },
     )
     if isinstance(search_query, SearchQueryJenaLucene):
         _suppress_nan_lucene_weights(item_store)
@@ -558,17 +619,26 @@ async def listing_function(
         )
         link_generation_start = time.perf_counter()
         log.debug(
-            f"Starting Prez link generation for listing response "
-            f"(store_quads={len(item_store)}, mediatype={pmts.selected['mediatype']})"
+            "Starting Prez link generation for listing response",
+            extra={
+                "event.name": "listing.link_generation.start",
+                "prez.rdf.quad_count": len(item_store),
+                "http.response.header.content-type": pmts.selected["mediatype"],
+            },
         )
         await add_prez_links_for_oxigraph(item_store, query_repo, endpoint_structure)
         log.debug(
-            "event=listing.link_generation.complete link_generation_duration_ms=%.1f "
-            "media_type=%s profile=%s store_quad_count=%s",
-            (time.perf_counter() - link_generation_start) * 1000,
-            pmts.selected["mediatype"],
-            pmts.selected["profile"],
-            len(item_store),
+            "Listing link generation completed",
+            extra={
+                "event.name": "listing.link_generation.complete",
+                "link_generation_duration_ms": (
+                    time.perf_counter() - link_generation_start
+                )
+                * 1000,
+                "http.response.header.content-type": pmts.selected["mediatype"],
+                "prez.profile": str(pmts.selected["profile"]),
+                "prez.rdf.quad_count": len(item_store),
+            },
         )
 
         # Inject dummy search results for non-text search requests
@@ -693,13 +763,16 @@ async def listing_function(
     render_ms = (time.perf_counter() - render_start) * 1000
     total_ms = (time.perf_counter() - total_start) * 1000
     log.debug(
-        "event=listing.function.complete media_type=%s profile=%s query_count=%s store_quad_count=%s render_duration_ms=%.1f total_duration_ms=%.1f",
-        pmts.selected["mediatype"],
-        pmts.selected["profile"],
-        len(queries),
-        len(item_store),
-        render_ms,
-        total_ms,
+        "Listing response completed",
+        extra={
+            "event.name": "listing.function.complete",
+            "http.response.header.content-type": pmts.selected["mediatype"],
+            "prez.profile": str(pmts.selected["profile"]),
+            "prez.query.count": len(queries),
+            "prez.rdf.quad_count": len(item_store),
+            "render_duration_ms": render_ms,
+            "duration_ms": total_ms,
+        },
     )
     return response
 
@@ -822,13 +895,20 @@ async def ogc_features_listing_function(
     link_headers = None
     build_ms = (time.perf_counter() - build_start) * 1000
     log.debug(
-        "event=ogc_listing.built media_type=%s profile=%s collection_uri=%s query_count=%s has_count_query=%s build_duration_ms=%.1f",
-        selected_mediatype,
-        getattr(profile_nodeshape, "uri", None),
-        collection_uri,
-        len(queries),
-        bool(count_query),
-        build_ms,
+        "OGC listing queries built",
+        extra={
+            "event.name": "ogc_listing.built",
+            "http.response.header.content-type": selected_mediatype,
+            "prez.profile": (
+                str(profile_nodeshape.uri)
+                if getattr(profile_nodeshape, "uri", None) is not None
+                else None
+            ),
+            "prez.collection.uri": str(collection_uri) if collection_uri else None,
+            "prez.query.count": len(queries),
+            "prez.query.has_count_query": bool(count_query),
+            "build_duration_ms": build_ms,
+        },
     )
     if selected_mediatype == "application/sparql-query":
         # For a hits query, the queries list might be empty
@@ -866,10 +946,13 @@ async def ogc_features_listing_function(
         # No store, we can only return known metadata
         item_store = None
     log.debug(
-        "event=ogc_listing.main_query.complete media_type=%s store_quad_count=%s operation_duration_ms=%.1f",
-        selected_mediatype,
-        len(item_store) if item_store is not None else 0,
-        (time.perf_counter() - main_query_start) * 1000,
+        "OGC listing main query completed",
+        extra={
+            "event.name": "ogc_listing.main_query.complete",
+            "http.response.header.content-type": selected_mediatype,
+            "prez.rdf.quad_count": (len(item_store) if item_store is not None else 0),
+            "operation_duration_ms": (time.perf_counter() - main_query_start) * 1000,
+        },
     )
     matched_count: int | None = None
     if count_query_task is not None:
@@ -889,11 +972,16 @@ async def ogc_features_listing_function(
             else:
                 matched_count = 0
         log.debug(
-            "event=ogc_listing.count_query.complete media_type=%s item_count=%s count_quad_count=%s await_duration_ms=%.1f",
-            selected_mediatype,
-            matched_count,
-            len(count_store) if count_store is not None else 0,
-            count_await_ms,
+            "OGC listing count query completed",
+            extra={
+                "event.name": "ogc_listing.count_query.complete",
+                "http.response.header.content-type": selected_mediatype,
+                "prez.listing.item_count": matched_count,
+                "prez.rdf.quad_count": (
+                    len(count_store) if count_store is not None else 0
+                ),
+                "await_duration_ms": count_await_ms,
+            },
         )
     # only need the annotations for mediatypes of application/json or annotated mediatypes
     annotations_store: OxiStore | None = None
@@ -913,10 +1001,16 @@ async def ogc_features_listing_function(
                 item_store, data_repo, system_repo
             )
             log.debug(
-                "event=ogc_listing.annotations.complete media_type=%s annotation_quad_count=%s operation_duration_ms=%.1f",
-                selected_mediatype,
-                len(annotations_store) if annotations_store is not None else 0,
-                (time.perf_counter() - annotations_start) * 1000,
+                "OGC listing annotations completed",
+                extra={
+                    "event.name": "ogc_listing.annotations.complete",
+                    "http.response.header.content-type": selected_mediatype,
+                    "prez.annotation.quad_count": (
+                        len(annotations_store) if annotations_store is not None else 0
+                    ),
+                    "operation_duration_ms": (time.perf_counter() - annotations_start)
+                    * 1000,
+                },
             )
     item_graph = item_store  # treat the Oxigraph Store as a graph
 
@@ -959,9 +1053,13 @@ async def ogc_features_listing_function(
             )
         total_ms = (time.perf_counter() - total_start) * 1000
         log.debug(
-            "event=ogc_listing.response.complete media_type=%s branch=json total_duration_ms=%.1f",
-            selected_mediatype,
-            total_ms,
+            "OGC JSON listing response completed",
+            extra={
+                "event.name": "ogc_listing.response.complete",
+                "http.response.header.content-type": selected_mediatype,
+                "prez.render.branch": "json",
+                "duration_ms": total_ms,
+            },
         )
 
     elif return_geojson:
@@ -998,9 +1096,13 @@ async def ogc_features_listing_function(
         content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
         total_ms = (time.perf_counter() - total_start) * 1000
         log.debug(
-            "event=ogc_listing.response.complete media_type=%s branch=geojson total_duration_ms=%.1f",
-            selected_mediatype,
-            total_ms,
+            "OGC GeoJSON listing response completed",
+            extra={
+                "event.name": "ogc_listing.response.complete",
+                "http.response.header.content-type": selected_mediatype,
+                "prez.render.branch": "geojson",
+                "duration_ms": total_ms,
+            },
         )
     elif selected_mediatype in NonAnnotatedRDFMediaType:
         item_store: OxiStore = item_graph
@@ -1028,10 +1130,14 @@ async def ogc_features_listing_function(
         dump_ms = (time.perf_counter() - dump_start) * 1000
         total_ms = (time.perf_counter() - total_start) * 1000
         log.debug(
-            "event=ogc_listing.response.complete media_type=%s branch=non_annotated serialization_duration_ms=%.1f total_duration_ms=%.1f",
-            selected_mediatype,
-            dump_ms,
-            total_ms,
+            "OGC non-annotated RDF listing response completed",
+            extra={
+                "event.name": "ogc_listing.response.complete",
+                "http.response.header.content-type": selected_mediatype,
+                "prez.render.branch": "non_annotated",
+                "serialization_duration_ms": dump_ms,
+                "duration_ms": total_ms,
+            },
         )
 
     elif selected_mediatype in AnnotatedRDFMediaType:
@@ -1062,10 +1168,14 @@ async def ogc_features_listing_function(
         dump_ms = (time.perf_counter() - dump_start) * 1000
         total_ms = (time.perf_counter() - total_start) * 1000
         log.debug(
-            "event=ogc_listing.response.complete media_type=%s branch=annotated merge_duration_ms=%.1f serialization_duration_ms=%.1f total_duration_ms=%.1f",
-            selected_mediatype,
-            merge_ms,
-            dump_ms,
-            total_ms,
+            "OGC annotated RDF listing response completed",
+            extra={
+                "event.name": "ogc_listing.response.complete",
+                "http.response.header.content-type": selected_mediatype,
+                "prez.render.branch": "annotated",
+                "merge_duration_ms": merge_ms,
+                "serialization_duration_ms": dump_ms,
+                "duration_ms": total_ms,
+            },
         )
     return content, link_headers

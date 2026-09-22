@@ -122,9 +122,13 @@ async def object_function(
         queries, [], return_oxigraph_store=True
     )
     log.debug(
-        "event=object.query.complete query_duration_ms=%.1f query_count=%s",
-        (time.perf_counter() - query_started_at) * 1000,
-        len(queries),
+        "Object query completed",
+        extra={
+            "event.name": "object.query.complete",
+            "query_duration_ms": (time.perf_counter() - query_started_at) * 1000,
+            "prez.query.count": len(queries),
+            "prez.rdf.quad_count": len(item_store),
+        },
     )
     default = OxiDefaultGraph()
     if facet_profile_uri:
@@ -256,9 +260,13 @@ async def ogc_features_object_function(
         queries, [], return_oxigraph_store=True
     )
     log.debug(
-        "event=ogc_object.query.complete query_duration_ms=%.1f query_count=%s",
-        (time.perf_counter() - query_started_at) * 1000,
-        len(queries),
+        "OGC object query completed",
+        extra={
+            "event.name": "ogc_object.query.complete",
+            "query_duration_ms": (time.perf_counter() - query_started_at) * 1000,
+            "prez.query.count": len(queries),
+            "prez.rdf.quad_count": len(item_store),
+        },
     )
 
     if len(item_store) == 0:

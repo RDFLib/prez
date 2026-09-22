@@ -193,8 +193,11 @@ async def listings_with_feature_collection(
         request.state.start_time if hasattr(request.state, "start_time") else deps_done
     )
     log.debug(
-        "event=ogc_listing.dependencies.complete dependency_duration_ms=%.1f",
-        (deps_done - start_time) * 1000,
+        "OGC listing dependencies resolved",
+        extra={
+            "event.name": "ogc_listing.dependencies.complete",
+            "dependency_duration_ms": (deps_done - start_time) * 1000,
+        },
     )
 
     try:
@@ -214,8 +217,11 @@ async def listings_with_feature_collection(
         )
         func_end = time.perf_counter()
         log.debug(
-            "event=ogc_listing.service.complete service_duration_ms=%.1f",
-            (func_end - func_start) * 1000,
+            "OGC listing service completed",
+            extra={
+                "event.name": "ogc_listing.service.complete",
+                "service_duration_ms": (func_end - func_start) * 1000,
+            },
         )
     except Exception as e:
         raise e

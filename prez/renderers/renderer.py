@@ -86,14 +86,24 @@ async def return_from_graph(
                 )
                 total_ms = (time.perf_counter() - total_start) * 1000
                 log.debug(
-                    "event=return_from_graph.rdf_oxigraph media_type=%s quad_count=%s total_duration_ms=%.1f",
-                    mediatype,
-                    len(store),
-                    total_ms,
+                    "Oxigraph RDF response rendered",
+                    extra={
+                        "event.name": "return_from_graph.rdf_oxigraph",
+                        "http.response.header.content-type": str(mediatype),
+                        "prez.rdf.quad_count": len(store),
+                        "duration_ms": total_ms,
+                    },
                 )
                 return response
             except Exception as e:
-                log.error(f"Error serializing graph to {mediatype}: {e}")
+                log.exception(
+                    "Failed to serialize Oxigraph RDF response",
+                    extra={
+                        "event.name": "return_from_graph.serialization.error",
+                        "http.response.header.content-type": str(mediatype),
+                        "prez.rdf.quad_count": len(store),
+                    },
+                )
                 raise HTTPException(
                     status.HTTP_500_INTERNAL_SERVER_ERROR,
                     f"Error serializing graph to {mediatype}: {e}",
@@ -102,10 +112,13 @@ async def return_from_graph(
             response = await return_rdf(graph, mediatype, profile_headers)
             total_ms = (time.perf_counter() - total_start) * 1000
             log.debug(
-                "event=return_from_graph.rdf_rdflib media_type=%s triple_count=%s total_duration_ms=%.1f",
-                mediatype,
-                len(graph),
-                total_ms,
+                "RDFLib RDF response rendered",
+                extra={
+                    "event.name": "return_from_graph.rdf_rdflib",
+                    "http.response.header.content-type": str(mediatype),
+                    "prez.rdf.triple_count": len(graph),
+                    "duration_ms": total_ms,
+                },
             )
             return response
 
@@ -202,10 +215,13 @@ async def return_from_graph(
         content = io.BytesIO(json.dumps(geojson).encode("utf-8"))
         total_ms = (time.perf_counter() - total_start) * 1000
         log.debug(
-            "event=return_from_graph.geojson media_type=%s kind=%s total_duration_ms=%.1f",
-            mediatype,
-            kind,
-            total_ms,
+            "GeoJSON response rendered",
+            extra={
+                "event.name": "return_from_graph.geojson",
+                "http.response.header.content-type": str(mediatype),
+                "prez.render.kind": kind,
+                "duration_ms": total_ms,
+            },
         )
         content_bytes = content.getvalue()
         return Response(content=content_bytes, media_type=mediatype)
@@ -241,22 +257,32 @@ async def return_from_graph(
                         prefixes=oxigraph_prefixes,
                     )
                     dump_ms = (time.perf_counter() - dump_start) * 1000
-                except Exception as e:
-                    for p, n in oxigraph_prefixes.items():
-                        print(f"{p} = {n}")
-                    print(f"Error serializing graph to {non_anot_mediatype}: {e}")
+                except Exception:
+                    log.exception(
+                        "Failed to serialize annotated Oxigraph response",
+                        extra={
+                            "event.name": "return_from_graph.serialization.error",
+                            "http.response.header.content-type": str(
+                                non_anot_mediatype
+                            ),
+                            "prez.rdf.prefix_count": len(oxigraph_prefixes),
+                        },
+                    )
                     raise
                 content_bytes = content.getvalue()
                 total_ms = (time.perf_counter() - total_start) * 1000
                 log.debug(
-                    "event=return_from_graph.annotated_oxigraph media_type=%s base_quad_count=%s annotation_quad_count=%s annotation_duration_ms=%.1f merge_duration_ms=%.1f serialization_duration_ms=%.1f total_duration_ms=%.1f",
-                    non_anot_mediatype,
-                    len(store) - len(annotations_store),
-                    len(annotations_store),
-                    annotations_ms,
-                    merge_ms,
-                    dump_ms,
-                    total_ms,
+                    "Annotated Oxigraph response rendered",
+                    extra={
+                        "event.name": "return_from_graph.annotated_oxigraph",
+                        "http.response.header.content-type": str(non_anot_mediatype),
+                        "prez.rdf.quad_count": len(store) - len(annotations_store),
+                        "prez.annotation.quad_count": len(annotations_store),
+                        "annotation_duration_ms": annotations_ms,
+                        "merge_duration_ms": merge_ms,
+                        "serialization_duration_ms": dump_ms,
+                        "duration_ms": total_ms,
+                    },
                 )
             else:
                 annotations_start = time.perf_counter()
@@ -272,11 +298,14 @@ async def return_from_graph(
                 serialize_ms = (time.perf_counter() - serialize_start) * 1000
                 total_ms = (time.perf_counter() - total_start) * 1000
                 log.debug(
-                    "event=return_from_graph.annotated_rdflib media_type=%s annotation_duration_ms=%.1f serialization_duration_ms=%.1f total_duration_ms=%.1f",
-                    non_anot_mediatype,
-                    annotations_ms,
-                    serialize_ms,
-                    total_ms,
+                    "Annotated RDFLib response rendered",
+                    extra={
+                        "event.name": "return_from_graph.annotated_rdflib",
+                        "http.response.header.content-type": str(non_anot_mediatype),
+                        "annotation_duration_ms": annotations_ms,
+                        "serialization_duration_ms": serialize_ms,
+                        "duration_ms": total_ms,
+                    },
                 )
             return Response(
                 content=content_bytes,
@@ -329,10 +358,13 @@ async def return_rdf_from_oxigraph(
     profile_headers["Content-Disposition"] = "inline"
     dump_ms = (time.perf_counter() - dump_start) * 1000
     log.debug(
-        "event=return_rdf_from_oxigraph media_type=%s quad_count=%s serialization_duration_ms=%.1f",
-        mediatype,
-        len(store),
-        dump_ms,
+        "Oxigraph RDF serialization completed",
+        extra={
+            "event.name": "return_rdf_from_oxigraph",
+            "http.response.header.content-type": str(mediatype),
+            "prez.rdf.quad_count": len(store),
+            "serialization_duration_ms": dump_ms,
+        },
     )
     return Response(content=content, media_type=mediatype, headers=profile_headers)
 
@@ -349,7 +381,12 @@ async def return_annotated_rdf(
         annotations_graph, repo, system_repo
     )
     log.debug(
-        f"event=annotations.complete annotation_duration_ms={(time.perf_counter() - t_start) * 1000}"
+        "RDF annotations completed",
+        extra={
+            "event.name": "annotations.complete",
+            "annotation_duration_ms": (time.perf_counter() - t_start) * 1000,
+            "prez.annotation.triple_count": len(annotations_graph),
+        },
     )
     # return graph.__iadd__(annotations_graph)
     return annotations_graph
@@ -362,15 +399,23 @@ async def return_annotated_rdf_for_oxigraph(
 ) -> OxiStore:
     t_start = time.perf_counter()
     log.debug(
-        f"Starting annotation lookup for Oxigraph store (store_quads={len(store)})"
+        "Starting Oxigraph annotation lookup",
+        extra={
+            "event.name": "annotations.lookup.start",
+            "prez.rdf.quad_count": len(store),
+        },
     )
     first_pass_start = time.perf_counter()
     annotations_store = await get_annotation_properties_for_oxigraph(
         store, repo, system_repo
     )
     log.debug(
-        f"event=annotations.first_pass.complete annotation_duration_ms={(time.perf_counter() - first_pass_start) * 1000} "
-        f"(annotation_quads={len(annotations_store)})"
+        "First annotation lookup pass completed",
+        extra={
+            "event.name": "annotations.first_pass.complete",
+            "annotation_duration_ms": (time.perf_counter() - first_pass_start) * 1000,
+            "prez.annotation.quad_count": len(annotations_store),
+        },
     )
     # get annotations for annotations - no need to do this recursively
     second_pass_start = time.perf_counter()
@@ -378,16 +423,29 @@ async def return_annotated_rdf_for_oxigraph(
         annotations_store, repo, system_repo
     )
     log.debug(
-        f"event=annotations.second_pass.complete annotation_duration_ms={(time.perf_counter() - second_pass_start) * 1000} "
-        f"(annotation_quads={len(annotations_store_2)})"
+        "Second annotation lookup pass completed",
+        extra={
+            "event.name": "annotations.second_pass.complete",
+            "annotation_duration_ms": (time.perf_counter() - second_pass_start) * 1000,
+            "prez.annotation.quad_count": len(annotations_store_2),
+        },
     )
     merge_start = time.perf_counter()
     annotations_store.bulk_extend(annotations_store_2)
     log.debug(
-        f"event=annotations.merge.complete merge_duration_ms={(time.perf_counter() - merge_start) * 1000}"
+        "Annotation stores merged",
+        extra={
+            "event.name": "annotations.merge.complete",
+            "merge_duration_ms": (time.perf_counter() - merge_start) * 1000,
+        },
     )
     log.debug(
-        f"event=annotations.complete annotation_duration_ms={(time.perf_counter() - t_start) * 1000}"
+        "Oxigraph annotations completed",
+        extra={
+            "event.name": "annotations.complete",
+            "annotation_duration_ms": (time.perf_counter() - t_start) * 1000,
+            "prez.annotation.quad_count": len(annotations_store),
+        },
     )
     return annotations_store
 

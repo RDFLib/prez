@@ -164,17 +164,15 @@ async def get_annotations_for_oxigraph(
 
     total_ms = (time.perf_counter() - total_start) * 1000
     log.debug(
-        "",
+        "Annotation cache lookup completed",
         extra={
-            "structured_fields": {
-                "event": "annotations.cache_lookup",
-                "item_count": len(terms_and_dtypes),
-                "store_quad_count": len(annotations_store),
-                "cache_hit_count": len(cached),
-                "cache_miss_count": len(uncached),
-                "cache_lookup_duration_ms": round(cache_ms, 1),
-                "total_duration_ms": round(total_ms, 1),
-            }
+            "event.name": "annotations.cache_lookup",
+            "prez.annotation.term_count": len(terms_and_dtypes),
+            "prez.annotation.quad_count": len(annotations_store),
+            "prez.cache.hit_count": len(cached),
+            "prez.cache.miss_count": len(uncached),
+            "cache_lookup_duration_ms": cache_ms,
+            "duration_ms": total_ms,
         },
     )
 
@@ -376,19 +374,17 @@ async def process_uncached_terms_for_oxigraph(
 
     total_ms = (time.perf_counter() - total_start) * 1000
     log.debug(
-        "",
+        "Uncached annotation terms processed",
         extra={
-            "structured_fields": {
-                "event": "annotations.uncached_terms",
-                "item_count": len(terms),
-                "store_quad_count": len(annotations_store),
-                "system_repository_duration_ms": round(system_ms, 1),
-                "annotation_repository_duration_ms": round(annotations_repo_ms, 1),
-                "data_repository_duration_ms": round(data_repo_ms, 1),
-                "cache_write_duration_ms": round(cache_set_ms, 1),
-                "remaining_item_count": len(remaining_terms),
-                "total_duration_ms": round(total_ms, 1),
-            }
+            "event.name": "annotations.uncached_terms",
+            "prez.annotation.term_count": len(terms),
+            "prez.annotation.quad_count": len(annotations_store),
+            "system_repository_duration_ms": system_ms,
+            "annotation_repository_duration_ms": annotations_repo_ms,
+            "data_repository_duration_ms": data_repo_ms,
+            "cache_write_duration_ms": cache_set_ms,
+            "prez.annotation.remaining_term_count": len(remaining_terms),
+            "duration_ms": total_ms,
         },
     )
 
