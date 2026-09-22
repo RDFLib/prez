@@ -719,7 +719,9 @@ async def generate_queryables_from_shacl_definition(
             "title": item["http://www.opengis.net/doc/IS/cql2/1.0/name"][0]["@value"],
             "type": item["http://www.opengis.net/doc/IS/cql2/1.0/datatype"][0][
                 "@id"
-            ].split("#")[-1],  # hack
+            ].split("#")[
+                -1
+            ],  # hack
             "description": item["http://www.opengis.net/doc/IS/cql2/1.0/description"][
                 0
             ]["@value"],

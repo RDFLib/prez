@@ -323,7 +323,9 @@ def _get_sparql_service_description(request, format):
                 ]
             ]
         .
-    """.format(request.url_for("sparql_get"))
+    """.format(
+        request.url_for("sparql_get")
+    )
     if format == "text/turtle":
         return dedent(ttl)
     else:
