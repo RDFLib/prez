@@ -120,16 +120,14 @@ An example .env file with the minimum required variables is in the repo as [`.en
 
 #### Logging Configuration
 
-- **`LOG_LEVEL`**: Logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`, or `CRITICAL`). Default is `"INFO"`.
-- **`LOG_OUTPUT`**: Logging output destination (`stdout`, `file`, or `both`). Default is `"stdout"`.
+- **`LOG_LEVEL`**: Minimum logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`, or `CRITICAL`). Default is `"INFO"`.
+- **`LOG_FORMAT`**: Stdout format (`console` or `json`). Default is `"console"`.
 
-Prez uses `X-Request-ID` for end-to-end request correlation. A caller-supplied ID is preserved when it contains only safe tracing characters and is at most 128 characters; otherwise Prez generates a UUID. The ID is returned in every HTTP response, included in request-scoped Prez log records as `request_id`, and forwarded to remote SPARQL requests.
+Prez writes logs to **stdout only**. The concise `console` format is intended for humans. The `json` format emits one JSON object per line with a UTC timestamp, severity, message body, logger name, application attributes, exception text when present, and the `prez` service name and version. Deployments should use their process supervisor or log collector for routing, retention, and rotation.
 
-Application logs use UTC timestamps followed by a structured JSON payload. Metric names include their representation: durations end in `_duration_ms`, byte sizes in `_size_bytes`, and cardinalities in `_count`. Request completion events separate downstream SPARQL wait time (`downstream_duration_ms`) from Prez processing time (`prez_duration_ms`).
+Application code uses standard Python logging. Structured observations are supplied as flat, typed `extra` attributes, so numbers, booleans, and null values remain those types in JSON output. Messages are not parsed for `key=value` fields. Duration and size attribute names include explicit units such as `duration_ms` and `response_size_bytes`.
 
-Prez configures handlers only for the `prez` logger and disables Uvicorn access logging when started through the bundled entry points. Other libraries therefore use the host's root logging configuration (or Python's unformatted `WARNING`+ fallback if none exists). Prez records propagate so embedding applications can capture them; a host that also installs root handlers should set `logging.getLogger("prez").propagate = False` after startup to avoid duplicate output.
-
-With `LOG_OUTPUT=file` or `both`, each startup creates `../logs/prez-<UTC timestamp>.log` relative to the current working directory. Prez does not rotate or remove these files, so deployments should provide external retention and rotation.
+This output is a temporary, OpenTelemetry-aligned stopgap, not an OpenTelemetry implementation. It does not add an SDK, tracing, metrics, or exporters, and its output schema has no compatibility guarantee. A future telemetry implementation can replace the centralized stdout handler without changing ordinary application logging calls.
 
 #### Prez Metadata
 

@@ -34,8 +34,8 @@ class Settings(BaseSettings):
     port: The port Prez is made accessible on. Default is 8000, could be 80 or anything else that your system has permission to use
     system_uri: Documentation property. An IRI for the Prez system as a whole. This value appears in the landing page RDF delivered by Prez ('/')
     listing_count_limit: The maximum number of items to count for a listing endpoint. Counts greater than this limit will be returned as ">N" where N is the limit.
-    log_level:
-    log_output:
+    log_level: Minimum severity emitted by Prez.
+    log_format: Stdout format, either console or json.
     prez_title:
     prez_desc:
     prez_version:
@@ -79,7 +79,7 @@ class Settings(BaseSettings):
     sparql_timeout_param_name: Optional[str] = "timeout"
     pyoxigraph_data_dir: str = "pyoxigraph_data_dir"
     log_level: str = "INFO"
-    log_output: str = "stdout"
+    log_format: str = "console"
     prez_title: Optional[str] = "Prez"
     prez_desc: Optional[str] = (
         "A web framework API for delivering Linked Data. It provides read-only access to "
@@ -141,12 +141,12 @@ class Settings(BaseSettings):
             )
         return normalized
 
-    @field_validator("log_output")
+    @field_validator("log_format")
     @classmethod
-    def validate_log_output(cls, v):
+    def validate_log_format(cls, v):
         normalized = v.lower()
-        if normalized not in {"stdout", "file", "both"}:
-            raise ValueError("log_output must be stdout, file, or both")
+        if normalized not in {"console", "json"}:
+            raise ValueError("log_format must be console or json")
         return normalized
 
     @field_validator("prez_version")
