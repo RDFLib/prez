@@ -80,8 +80,6 @@ class Settings(BaseSettings):
     pyoxigraph_data_dir: str = "pyoxigraph_data_dir"
     log_level: str = "INFO"
     log_output: str = "stdout"
-    timing_csv_enabled: bool = False
-    timing_csv_path: str = "logs/prez-timing.csv"
     prez_title: Optional[str] = "Prez"
     prez_desc: Optional[str] = (
         "A web framework API for delivering Linked Data. It provides read-only access to "

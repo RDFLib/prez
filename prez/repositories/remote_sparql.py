@@ -16,7 +16,6 @@ from prez.services.prez_logging import (
     get_request_id,
     record_downstream_timing,
 )
-from prez.services.timing_csv import log_timing_csv
 
 PREZ = Namespace("https://prez.dev/")
 
@@ -201,16 +200,6 @@ class RemoteSparqlRepo(Repo):
             bulk_load_ms,
             total_ms,
         )
-        log_timing_csv(
-            "remote_sparql.oxigraph_store",
-            query_id=query_id,
-            format=response_format,
-            oxigraph_format=str(oxigraph_format),
-            response_size_bytes=len(content_bytes),
-            remote_read_duration_ms=f"{read_ms:.1f}",
-            bulk_load_duration_ms=f"{bulk_load_ms:.1f}",
-            total_duration_ms=f"{total_ms:.1f}",
-        )
         return s
 
     async def tabular_query_to_table(
@@ -233,12 +222,6 @@ class RemoteSparqlRepo(Repo):
             query_id,
             response.status_code,
             read_ms,
-        )
-        log_timing_csv(
-            "remote_sparql.tabular_query",
-            query_id=query_id,
-            http_status=response.status_code,
-            remote_read_duration_ms=f"{read_ms:.1f}",
         )
         return context, response.json()["results"]["bindings"]
 
@@ -314,14 +297,4 @@ class RemoteSparqlRepo(Repo):
             total_ms,
             settings.sparql_endpoint,
         )
-        log_timing_csv(
-            "remote_sparql.proxy",
-            query_id=query_id,
-            http_method=method,
-            http_status=response.status_code,
-            endpoint=settings.sparql_endpoint,
-            response_send_duration_ms=f"{send_ms:.1f}",
-            total_duration_ms=f"{total_ms:.1f}",
-        )
-
         return response

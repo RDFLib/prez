@@ -53,7 +53,6 @@ from prez.services.connegp_service import (
 from prez.services.curie_functions import get_curie_id_for_uri
 from prez.services.prez_logging import get_logger
 from prez.services.query_generation.shacl import get_nodeshape
-from prez.services.timing_csv import log_timing_csv
 
 log = get_logger(__name__)
 
@@ -259,16 +258,6 @@ async def return_from_graph(
                     dump_ms,
                     total_ms,
                 )
-                log_timing_csv(
-                    "render.annotated_oxigraph",
-                    media_type=str(non_anot_mediatype),
-                    store_quad_count=len(store) - len(annotations_store),
-                    annotation_quad_count=len(annotations_store),
-                    annotation_duration_ms=f"{annotations_ms:.1f}",
-                    merge_duration_ms=f"{merge_ms:.1f}",
-                    serialization_duration_ms=f"{dump_ms:.1f}",
-                    total_duration_ms=f"{total_ms:.1f}",
-                )
             else:
                 annotations_start = time.perf_counter()
                 annotations_graph = await return_annotated_rdf(graph, repo, system_repo)
@@ -344,12 +333,6 @@ async def return_rdf_from_oxigraph(
         mediatype,
         len(store),
         dump_ms,
-    )
-    log_timing_csv(
-        "render.rdf_oxigraph",
-        media_type=str(mediatype),
-        store_quad_count=len(store),
-        serialization_duration_ms=f"{dump_ms:.1f}",
     )
     return Response(content=content, media_type=mediatype, headers=profile_headers)
 

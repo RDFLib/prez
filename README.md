@@ -122,12 +122,10 @@ An example .env file with the minimum required variables is in the repo as [`.en
 
 - **`LOG_LEVEL`**: Logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`, or `CRITICAL`). Default is `"INFO"`.
 - **`LOG_OUTPUT`**: Logging output destination (`stdout`, `file`, or `both`). Default is `"stdout"`.
-- **`TIMING_CSV_ENABLED`**: Write machine-readable performance events to a dedicated CSV file. Default is `False`.
-- **`TIMING_CSV_PATH`**: Timing CSV destination. Default is `logs/prez-timing.csv`.
 
-Prez uses `X-Request-ID` for end-to-end request correlation. A caller-supplied ID is preserved when it contains only safe tracing characters and is at most 128 characters; otherwise Prez generates a UUID. The ID is returned in every HTTP response, included in every Prez log record as `request_id`, written to timing CSV rows, and forwarded to remote SPARQL requests.
+Prez uses `X-Request-ID` for end-to-end request correlation. A caller-supplied ID is preserved when it contains only safe tracing characters and is at most 128 characters; otherwise Prez generates a UUID. The ID is returned in every HTTP response, included in request-scoped Prez log records as `request_id`, and forwarded to remote SPARQL requests.
 
-Application logs use UTC timestamps and `key=value` fields. Metric names include their representation: durations end in `_duration_ms`, byte sizes in `_size_bytes`, and cardinalities in `_count`. The timing CSV follows the same stable naming convention; `timestamp_utc` is an ISO 8601 UTC instant.
+Application logs use UTC timestamps followed by a structured JSON payload. Metric names include their representation: durations end in `_duration_ms`, byte sizes in `_size_bytes`, and cardinalities in `_count`. Request completion events separate downstream SPARQL wait time (`downstream_duration_ms`) from Prez processing time (`prez_duration_ms`).
 
 #### Prez Metadata
 

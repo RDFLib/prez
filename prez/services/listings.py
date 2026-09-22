@@ -65,7 +65,6 @@ from prez.services.query_generation.umbrella import (
     PrezQueryConstructor,
     merge_listing_query_grammar_inputs,
 )
-from prez.services.timing_csv import log_timing_csv
 
 log = get_logger(__name__)
 
@@ -529,19 +528,12 @@ async def listing_function(
         item_store = OxiStore()
     log.debug(
         "event=listing.query.complete query_duration_ms=%.1f query_count=%s "
-        "media_type=%s store_quad_count=%s",
+        "media_type=%s profile=%s store_quad_count=%s",
         (time.perf_counter() - query_start_time) * 1000,
         len(queries),
         pmts.selected["mediatype"],
+        pmts.selected["profile"],
         len(item_store),
-    )
-    log_timing_csv(
-        "listing.query",
-        media_type=pmts.selected["mediatype"],
-        profile=str(pmts.selected["profile"]),
-        query_count=len(queries),
-        store_quad_count=len(item_store),
-        total_duration_ms=f"{(time.perf_counter() - query_start_time) * 1000:.1f}",
     )
     if isinstance(search_query, SearchQueryJenaLucene):
         _suppress_nan_lucene_weights(item_store)
@@ -571,15 +563,12 @@ async def listing_function(
         )
         await add_prez_links_for_oxigraph(item_store, query_repo, endpoint_structure)
         log.debug(
-            "event=listing.link_generation.complete link_generation_duration_ms=%.1f",
+            "event=listing.link_generation.complete link_generation_duration_ms=%.1f "
+            "media_type=%s profile=%s store_quad_count=%s",
             (time.perf_counter() - link_generation_start) * 1000,
-        )
-        log_timing_csv(
-            "listing.link_generation",
-            media_type=pmts.selected["mediatype"],
-            profile=str(pmts.selected["profile"]),
-            store_quad_count=len(item_store),
-            link_generation_duration_ms=f"{(time.perf_counter() - link_generation_start) * 1000:.1f}",
+            pmts.selected["mediatype"],
+            pmts.selected["profile"],
+            len(item_store),
         )
 
         # Inject dummy search results for non-text search requests
@@ -711,15 +700,6 @@ async def listing_function(
         len(item_store),
         render_ms,
         total_ms,
-    )
-    log_timing_csv(
-        "listing.complete",
-        media_type=pmts.selected["mediatype"],
-        profile=str(pmts.selected["profile"]),
-        query_count=len(queries),
-        store_quad_count=len(item_store),
-        render_duration_ms=f"{render_ms:.1f}",
-        total_duration_ms=f"{total_ms:.1f}",
     )
     return response
 

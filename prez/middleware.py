@@ -15,7 +15,6 @@ from prez.services.prez_logging import (
     reset_downstream_timings,
     reset_request_id,
 )
-from prez.services.timing_csv import log_timing_csv
 
 log = get_logger(__name__)
 
@@ -253,8 +252,6 @@ class RequestTimingMiddleware:
             await self.app(scope, receive, timed_send)
         finally:
             completed_at = time.perf_counter()
-            route = scope.get("route")
-            route_name = getattr(route, "name", "") if route else ""
             path = scope.get("path", "")
             start_duration_ms = (
                 (response_started_at - start) * 1000 if response_started_at else 0.0
@@ -277,24 +274,12 @@ class RequestTimingMiddleware:
                 "total_duration_ms": round(total_duration_ms, 1),
                 "downstream_duration_ms": round(downstream_duration_ms, 1),
                 "prez_duration_ms": round(prez_duration_ms, 1),
+                "time_to_response_start_duration_ms": round(start_duration_ms, 1),
                 "response_send_duration_ms": round(send_duration_ms, 1),
                 "response_size_bytes": response_size_bytes,
+                "response_header_size_bytes": response_header_size_bytes,
+                "response_body_chunk_count": response_body_chunk_count,
+                "query_string_size_bytes": len(scope.get("query_string", b"")),
             }
             log.info("", extra={"structured_fields": request_details})
-            log_timing_csv(
-                "request.complete",
-                http_method=scope.get("method", ""),
-                endpoint=route_name or path,
-                http_status=status_code or "",
-                response_size_bytes=response_size_bytes,
-                response_header_size_bytes=response_header_size_bytes,
-                response_body_chunk_count=response_body_chunk_count,
-                query_string_size_bytes=len(scope.get("query_string", b"")),
-                time_to_response_start_duration_ms=f"{start_duration_ms:.1f}",
-                response_send_duration_ms=f"{send_duration_ms:.1f}",
-                downstream_duration_ms=f"{downstream_duration_ms:.1f}",
-                prez_duration_ms=f"{prez_duration_ms:.1f}",
-                total_duration_ms=f"{total_duration_ms:.1f}",
-                details=f"path={path}",
-            )
             reset_downstream_timings(downstream_token)

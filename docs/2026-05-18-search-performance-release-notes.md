@@ -22,16 +22,11 @@ Observed effect on the deployed cloud instance:
 
 ## Logging Policy
 
-Timing CSV support remains available, but is now disabled by default:
+Performance metrics are emitted as structured JSON application logs. The key events used to diagnose production behavior are:
 
-- `TIMING_CSV_ENABLED=false`
-- default path remains `logs/prez-timing.csv`
-
-The retained timing events are the ones that proved useful in diagnosing real production behavior:
-
-- `request_complete`
+- `request.complete`
   - full request timing, chunk count, first/final body timing
-- `remote_sparql_oxigraph_store`
+- `remote_sparql.oxigraph_store`
   - backend fetch/read/bulk-load timing for RDF result loading
 - `remote_sparql_tabular_query`
   - backend timing for tabular support queries

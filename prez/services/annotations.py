@@ -18,7 +18,6 @@ from prez.dependencies import get_annotations_repo
 from prez.repositories import PyoxigraphRepo, Repo
 from prez.services.prez_logging import get_logger
 from prez.services.query_generation.annotations import AnnotationsConstructQuery
-from prez.services.timing_csv import log_timing_csv
 
 log = get_logger(__name__)
 
@@ -164,13 +163,19 @@ async def get_annotations_for_oxigraph(
         )
 
     total_ms = (time.perf_counter() - total_start) * 1000
-    log_timing_csv(
-        "annotations.cache_lookup",
-        item_count=len(terms_and_dtypes),
-        store_quad_count=len(annotations_store),
-        cache_lookup_duration_ms=f"{cache_ms:.1f}",
-        total_duration_ms=f"{total_ms:.1f}",
-        details=f"cached={len(cached)} uncached={len(uncached)}",
+    log.debug(
+        "",
+        extra={
+            "structured_fields": {
+                "event": "annotations.cache_lookup",
+                "item_count": len(terms_and_dtypes),
+                "store_quad_count": len(annotations_store),
+                "cache_hit_count": len(cached),
+                "cache_miss_count": len(uncached),
+                "cache_lookup_duration_ms": round(cache_ms, 1),
+                "total_duration_ms": round(total_ms, 1),
+            }
+        },
     )
 
     return annotations_store
@@ -370,16 +375,21 @@ async def process_uncached_terms_for_oxigraph(
     cache_set_ms = (time.perf_counter() - cache_set_start) * 1000
 
     total_ms = (time.perf_counter() - total_start) * 1000
-    log_timing_csv(
-        "annotations.uncached_terms",
-        item_count=len(terms),
-        store_quad_count=len(annotations_store),
-        system_repository_duration_ms=f"{system_ms:.1f}",
-        annotation_repository_duration_ms=f"{annotations_repo_ms:.1f}",
-        data_repository_duration_ms=f"{data_repo_ms:.1f}",
-        cache_write_duration_ms=f"{cache_set_ms:.1f}",
-        total_duration_ms=f"{total_ms:.1f}",
-        details=f"remaining_after_all={len(remaining_terms)}",
+    log.debug(
+        "",
+        extra={
+            "structured_fields": {
+                "event": "annotations.uncached_terms",
+                "item_count": len(terms),
+                "store_quad_count": len(annotations_store),
+                "system_repository_duration_ms": round(system_ms, 1),
+                "annotation_repository_duration_ms": round(annotations_repo_ms, 1),
+                "data_repository_duration_ms": round(data_repo_ms, 1),
+                "cache_write_duration_ms": round(cache_set_ms, 1),
+                "remaining_item_count": len(remaining_terms),
+                "total_duration_ms": round(total_ms, 1),
+            }
+        },
     )
 
 

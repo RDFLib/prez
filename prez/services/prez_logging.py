@@ -185,7 +185,7 @@ def _log_path() -> Path:
 
 
 def setup_logger(settings) -> None:
-    """Configure all Prez logs and the optional normalized timing CSV sink."""
+    """Configure structured Prez application logging."""
     logger = logging.getLogger("prez")
     logger.setLevel(settings.log_level.upper())
     # Preserve propagation for host applications and test/observability handlers.
@@ -204,8 +204,3 @@ def setup_logger(settings) -> None:
     for handler in handlers:
         handler.setLevel(settings.log_level.upper())
     logger.handlers = handlers
-
-    # Imported lazily to avoid making the logging and metrics modules cyclic.
-    from prez.services.timing_csv import configure_timing_csv
-
-    configure_timing_csv(settings.timing_csv_enabled, settings.timing_csv_path)

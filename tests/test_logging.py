@@ -1,11 +1,9 @@
 import asyncio
-import csv
 import io
 import json
 import logging
 import re
 import time
-from pathlib import Path
 
 import httpx
 import pytest
@@ -31,11 +29,6 @@ from prez.services.prez_logging import (
     reset_downstream_timings,
     reset_request_id,
     setup_logger,
-)
-from prez.services.timing_csv import (
-    TIMING_FIELDS,
-    configure_timing_csv,
-    log_timing_csv,
 )
 
 
@@ -205,37 +198,6 @@ def test_downstream_timing_merges_concurrent_waits():
         assert get_downstream_timing_spans() == [(1.0, 1.01)]
     finally:
         reset_downstream_timings(token)
-
-
-def test_timing_csv_uses_normalized_schema_and_request_id(tmp_path: Path):
-    path = tmp_path / "timing.csv"
-    configure_timing_csv(True, str(path))
-    token = bind_request_id("metrics-request")
-    try:
-        log_timing_csv(
-            "request.complete",
-            http_method="GET",
-            response_size_bytes=12,
-            total_duration_ms="3.2",
-        )
-    finally:
-        reset_request_id(token)
-        configure_timing_csv(False, str(path))
-
-    with path.open(newline="", encoding="utf-8") as file:
-        rows = list(csv.DictReader(file))
-    assert rows[0]["request_id"] == "metrics-request"
-    assert rows[0]["response_size_bytes"] == "12"
-    assert rows[0]["total_duration_ms"] == "3.2"
-    assert "elapsed_ms" not in TIMING_FIELDS
-    assert "bytes" not in TIMING_FIELDS
-    assert "downstream_duration_ms" in TIMING_FIELDS
-    assert "downstream_sparql_duration_ms" not in TIMING_FIELDS
-    assert "prez_duration_ms" in TIMING_FIELDS
-    assert all(
-        not name.endswith("_ms") or name.endswith("_duration_ms")
-        for name in TIMING_FIELDS
-    )
 
 
 @pytest.mark.asyncio
