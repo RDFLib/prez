@@ -347,4 +347,6 @@ if __name__ == "__main__":
         host=settings.host,
         proxy_headers=settings.proxy_headers,
         forwarded_allow_ips=settings.forwarded_allow_ips,
+        log_config=None,
+        access_log=False,
     )

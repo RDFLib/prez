@@ -241,13 +241,15 @@ class QueryableProperty(BaseModel):
 class SpatialQueryableProperty(QueryableProperty):
     type: Literal["object"] = "object"
     geometryType: GeometryType = Field(..., description="Type of geometry")
-    schema: AnyUrl = Field(
-        ..., description="URL to the GeoJSON schema for the geometry type"
+    schema_: AnyUrl = Field(
+        ...,
+        alias="schema",
+        description="URL to the GeoJSON schema for the geometry type",
     )
 
 
 class Queryables(BaseModel):
-    schema: Literal[
+    schema_: Literal[
         "https://json-schema.org/draft/2019-09/schema",
         "http://json-schema.org/draft-07/schema#",
     ] = Field(default="https://json-schema.org/draft/2019-09/schema", alias="$schema")

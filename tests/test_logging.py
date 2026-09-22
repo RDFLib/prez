@@ -1,6 +1,10 @@
+import asyncio
 import csv
 import io
+import json
 import logging
+import re
+import time
 from pathlib import Path
 
 import httpx
@@ -9,14 +13,22 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from prez.config import Settings
-from prez.middleware import RequestContextMiddleware, RequestTimingMiddleware
+from prez.middleware import (
+    RequestContextMiddleware,
+    RequestTimingMiddleware,
+    _union_duration_ms,
+)
 from prez.repositories.remote_sparql import RemoteSparqlRepo
 from prez.services.prez_logging import (
     REQUEST_ID_HEADER,
+    bind_downstream_timings,
     bind_request_id,
+    get_downstream_timing_spans,
     get_logger,
     get_request_id,
     new_request_id,
+    record_downstream_timing,
+    reset_downstream_timings,
     reset_request_id,
     setup_logger,
 )
@@ -49,7 +61,7 @@ def test_logger_adds_bound_request_id_to_every_record():
     assert get_request_id() == "-"
 
 
-def test_setup_logger_emits_utc_schema_and_default_context(monkeypatch):
+def test_setup_logger_keeps_startup_output_concise_and_colored(monkeypatch):
     output = io.StringIO()
     monkeypatch.setattr("prez.services.prez_logging.sys.stdout", output)
     prez_logger = logging.getLogger("prez")
@@ -65,10 +77,45 @@ def test_setup_logger_emits_utc_schema_and_default_context(monkeypatch):
         prez_logger.setLevel(old_level)
 
     line = output.getvalue()
-    assert "timestamp_utc=" in line
-    assert "Z level=INFO" in line
-    assert "request_id=-" in line
-    assert "message=event=configuration.test" in line
+    assert "\033[32m" in line
+    plain_line = re.sub(r"\033\[[0-9;]*m", "", line).rstrip()
+    match = re.fullmatch(
+        r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z INFO:     (.+)",
+        plain_line,
+    )
+    assert match is not None
+    assert json.loads(match.group(1)) == {"event": "configuration.test"}
+    assert "request_id" not in plain_line
+    assert "logger=" not in plain_line
+    assert "timestamp_utc=" not in plain_line
+
+
+def test_debug_logs_have_a_json_payload(monkeypatch):
+    output = io.StringIO()
+    monkeypatch.setattr("prez.services.prez_logging.sys.stdout", output)
+    prez_logger = logging.getLogger("prez")
+    old_handlers = prez_logger.handlers[:]
+    old_level = prez_logger.level
+    try:
+        setup_logger(Settings(_env_file=None, log_output="stdout", log_level="DEBUG"))
+        token = bind_request_id("debug-request")
+        try:
+            get_logger("prez.test.debug").debug("duration_ms=1.2")
+        finally:
+            reset_request_id(token)
+    finally:
+        for handler in prez_logger.handlers:
+            handler.close()
+        prez_logger.handlers = old_handlers
+        prez_logger.setLevel(old_level)
+
+    plain_line = re.sub(r"\033\[[0-9;]*m", "", output.getvalue()).rstrip()
+    payload = json.loads(plain_line.split("DEBUG:    ", maxsplit=1)[1])
+    assert payload == {
+        "duration_ms": 1.2,
+        "logger": "prez.test.debug",
+        "request_id": "debug-request",
+    }
 
 
 def _correlation_app(records):
@@ -105,6 +152,61 @@ def test_invalid_or_missing_request_id_is_replaced():
     assert new_request_id(generated) == generated
 
 
+def test_request_completion_logs_downstream_and_prez_breakdown():
+    records = []
+
+    class Capture(logging.Handler):
+        def emit(self, record):
+            records.append(record)
+
+    app = FastAPI()
+    app.add_middleware(RequestTimingMiddleware)
+
+    @app.get("/timed")
+    async def timed_endpoint():
+        started_at = time.perf_counter()
+        await asyncio.sleep(0.002)
+        record_downstream_timing(started_at, time.perf_counter())
+        return {"ok": True}
+
+    logger = logging.getLogger("prez.middleware")
+    handler = Capture()
+    previous_level = logger.level
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(handler)
+    try:
+        with TestClient(app) as client:
+            assert client.get("/timed").status_code == 200
+    finally:
+        logger.removeHandler(handler)
+        logger.setLevel(previous_level)
+
+    completion = next(
+        record
+        for record in records
+        if getattr(record, "structured_fields", {}).get("event") == "request.complete"
+    )
+    assert completion.levelno == logging.INFO
+    details = completion.structured_fields
+    assert details["http_method"] == "GET"
+    assert details["path"] == "/timed"
+    assert details["http_status"] == 200
+    assert "downstream_duration_ms" in details
+    assert "downstream_sparql_duration_ms" not in details
+    assert "prez_duration_ms" in details
+
+
+def test_downstream_timing_merges_concurrent_waits():
+    assert _union_duration_ms([(1.0, 1.010), (1.005, 1.020)]) == pytest.approx(20.0)
+
+    token = bind_downstream_timings()
+    try:
+        record_downstream_timing(1.0, 1.01)
+        assert get_downstream_timing_spans() == [(1.0, 1.01)]
+    finally:
+        reset_downstream_timings(token)
+
+
 def test_timing_csv_uses_normalized_schema_and_request_id(tmp_path: Path):
     path = tmp_path / "timing.csv"
     configure_timing_csv(True, str(path))
@@ -127,6 +229,9 @@ def test_timing_csv_uses_normalized_schema_and_request_id(tmp_path: Path):
     assert rows[0]["total_duration_ms"] == "3.2"
     assert "elapsed_ms" not in TIMING_FIELDS
     assert "bytes" not in TIMING_FIELDS
+    assert "downstream_duration_ms" in TIMING_FIELDS
+    assert "downstream_sparql_duration_ms" not in TIMING_FIELDS
+    assert "prez_duration_ms" in TIMING_FIELDS
     assert all(
         not name.endswith("_ms") or name.endswith("_duration_ms")
         for name in TIMING_FIELDS

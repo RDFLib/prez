@@ -38,7 +38,7 @@ logger = get_logger(__name__)
 
 
 def create_path_param(name: str, description: str, example: str):
-    return Path(..., description=description, example=example)
+    return Path(..., description=description, examples=[example])
 
 
 # Dynamic route handler

@@ -54,6 +54,8 @@ TIMING_FIELDS = [
     "link_generation_duration_ms",
     "time_to_response_start_duration_ms",
     "response_send_duration_ms",
+    "downstream_duration_ms",
+    "prez_duration_ms",
     "total_duration_ms",
     "details",
 ]

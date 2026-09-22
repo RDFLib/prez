@@ -366,7 +366,7 @@ async def return_annotated_rdf(
         annotations_graph, repo, system_repo
     )
     log.debug(
-        f"event=annotations.complete annotation_duration_ms= {(time.perf_counter() - t_start) * 1000}"
+        f"event=annotations.complete annotation_duration_ms={(time.perf_counter() - t_start) * 1000}"
     )
     # return graph.__iadd__(annotations_graph)
     return annotations_graph
@@ -386,7 +386,7 @@ async def return_annotated_rdf_for_oxigraph(
         store, repo, system_repo
     )
     log.debug(
-        f"event=annotations.first_pass.complete annotation_duration_ms= {(time.perf_counter() - first_pass_start) * 1000} "
+        f"event=annotations.first_pass.complete annotation_duration_ms={(time.perf_counter() - first_pass_start) * 1000} "
         f"(annotation_quads={len(annotations_store)})"
     )
     # get annotations for annotations - no need to do this recursively
@@ -395,16 +395,16 @@ async def return_annotated_rdf_for_oxigraph(
         annotations_store, repo, system_repo
     )
     log.debug(
-        f"event=annotations.second_pass.complete annotation_duration_ms= {(time.perf_counter() - second_pass_start) * 1000} "
+        f"event=annotations.second_pass.complete annotation_duration_ms={(time.perf_counter() - second_pass_start) * 1000} "
         f"(annotation_quads={len(annotations_store_2)})"
     )
     merge_start = time.perf_counter()
     annotations_store.bulk_extend(annotations_store_2)
     log.debug(
-        f"event=annotations.merge.complete merge_duration_ms= {(time.perf_counter() - merge_start) * 1000}"
+        f"event=annotations.merge.complete merge_duration_ms={(time.perf_counter() - merge_start) * 1000}"
     )
     log.debug(
-        f"event=annotations.complete annotation_duration_ms= {(time.perf_counter() - t_start) * 1000}"
+        f"event=annotations.complete annotation_duration_ms={(time.perf_counter() - t_start) * 1000}"
     )
     return annotations_store
 
@@ -590,7 +590,7 @@ def create_self_alt_links(
         self_alt_links.append(
             Link(
                 href=URIRef(
-                    f"{settings.system_uri}{url.path}?{urlencode( dict(URL(str(url)).params) | {'_mediatype': mt} )}"
+                    f"{settings.system_uri}{url.path}?{urlencode(dict(URL(str(url)).params) | {'_mediatype': mt})}"
                 ),
                 rel="self" if mt == selected_mediatype else "alternate",
                 type=mt,
@@ -719,9 +719,7 @@ async def generate_queryables_from_shacl_definition(
             "title": item["http://www.opengis.net/doc/IS/cql2/1.0/name"][0]["@value"],
             "type": item["http://www.opengis.net/doc/IS/cql2/1.0/datatype"][0][
                 "@id"
-            ].split("#")[
-                -1
-            ],  # hack
+            ].split("#")[-1],  # hack
             "description": item["http://www.opengis.net/doc/IS/cql2/1.0/description"][
                 0
             ]["@value"],

@@ -83,7 +83,7 @@ async def add_prez_links(
         uri_collection_start = time.perf_counter()
         uris = [uri for uri in graph.all_nodes() if isinstance(uri, URIRef)]
         log.debug(
-            f"event=link_generation.collect_candidates.complete collection_duration_ms= {(time.perf_counter() - uri_collection_start) * 1000} "
+            f"event=link_generation.collect_candidates.complete collection_duration_ms={(time.perf_counter() - uri_collection_start) * 1000} "
             f"(unique_uris={len(uris)})"
         )
     else:
@@ -91,7 +91,7 @@ async def add_prez_links(
     t = time.perf_counter()
     uriref_to_klasses = await get_classes(uris, repo)
     log.debug(
-        f"event=link_generation.get_classes.complete uri_count={len(uris)} class_lookup_duration_ms= {(time.perf_counter() - t) * 1000}"
+        f"event=link_generation.get_classes.complete uri_count={len(uris)} class_lookup_duration_ms={(time.perf_counter() - t) * 1000}"
     )
     # Convert the URIRefs to OxiNamedNode because the link cache uses Oxigraph nodes as keys
     urinode_to_klasses = {
@@ -100,11 +100,11 @@ async def add_prez_links(
     link_generation_start = time.perf_counter()
     await _link_generation_many(urinode_to_klasses, repo, graph, endpoint_structure)
     log.debug(
-        f"event=link_generation.add_links.complete uri_count={len(urinode_to_klasses)} link_generation_duration_ms= "
+        f"event=link_generation.add_links.complete uri_count={len(urinode_to_klasses)} link_generation_duration_ms="
         f"{(time.perf_counter() - link_generation_start) * 1000}"
     )
     log.debug(
-        f"event=link_generation.complete total_duration_ms= {(time.perf_counter() - t_start) * 1000}"
+        f"event=link_generation.complete total_duration_ms={(time.perf_counter() - t_start) * 1000}"
     )
 
 
@@ -135,7 +135,7 @@ async def add_prez_links_for_oxigraph(
                 unique_objects.add(o)
         uris = list(unique_subjects.union(unique_objects))
         log.debug(
-            f"event=link_generation.collect_candidates.complete collection_duration_ms= {(time.perf_counter() - uri_collection_start) * 1000} "
+            f"event=link_generation.collect_candidates.complete collection_duration_ms={(time.perf_counter() - uri_collection_start) * 1000} "
             f"(subjects={len(unique_subjects)}, objects={len(unique_objects)}, unique_uris={len(uris)})"
         )
     else:
@@ -145,7 +145,7 @@ async def add_prez_links_for_oxigraph(
     uriref_keys = [URIRef(uri.value) for uri in uris]
     uriref_to_klasses = await get_classes(uriref_keys, repo)
     log.debug(
-        f"event=link_generation.get_classes.complete uri_count={len(uriref_keys)} class_lookup_duration_ms= {(time.perf_counter() - t) * 1000}"
+        f"event=link_generation.get_classes.complete uri_count={len(uriref_keys)} class_lookup_duration_ms={(time.perf_counter() - t) * 1000}"
     )
     # Convert the URIRefs to OxiNamedNode because the link cache uses Oxigraph nodes as keys
     urinode_to_klasses = {
@@ -154,11 +154,11 @@ async def add_prez_links_for_oxigraph(
     link_generation_start = time.perf_counter()
     await _link_generation_many(urinode_to_klasses, repo, store, endpoint_structure)
     log.debug(
-        f"event=link_generation.add_links.complete uri_count={len(urinode_to_klasses)} link_generation_duration_ms= "
+        f"event=link_generation.add_links.complete uri_count={len(urinode_to_klasses)} link_generation_duration_ms="
         f"{(time.perf_counter() - link_generation_start) * 1000}"
     )
     log.debug(
-        f"event=link_generation.complete total_duration_ms= {(time.perf_counter() - t_start) * 1000}"
+        f"event=link_generation.complete total_duration_ms={(time.perf_counter() - t_start) * 1000}"
     )
 
 

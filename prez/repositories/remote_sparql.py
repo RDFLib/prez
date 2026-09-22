@@ -10,7 +10,12 @@ from rdflib import Graph, Namespace, URIRef
 from prez.config import settings
 from prez.repositories.base import Repo
 from prez.services.connegp_service import OXIGRAPH_SERIALIZER_TYPES_MAP
-from prez.services.prez_logging import REQUEST_ID_HEADER, get_logger, get_request_id
+from prez.services.prez_logging import (
+    REQUEST_ID_HEADER,
+    get_logger,
+    get_request_id,
+    record_downstream_timing,
+)
 from prez.services.timing_csv import log_timing_csv
 
 PREZ = Namespace("https://prez.dev/")
@@ -21,6 +26,28 @@ log = get_logger(__name__)
 
 def _query_fingerprint(query: str) -> str:
     return hashlib.sha256(query.encode("utf-8")).hexdigest()[:12]
+
+
+class _TimedSparqlStream(httpx.AsyncByteStream):
+    """Track time awaiting response body chunks from the SPARQL endpoint."""
+
+    def __init__(self, stream: httpx.AsyncByteStream):
+        self._stream = stream
+
+    async def __aiter__(self):
+        iterator = self._stream.__aiter__()
+        while True:
+            started_at = time.perf_counter()
+            try:
+                chunk = await anext(iterator)
+            except StopAsyncIteration:
+                record_downstream_timing(started_at, time.perf_counter())
+                return
+            record_downstream_timing(started_at, time.perf_counter())
+            yield chunk
+
+    async def aclose(self) -> None:
+        await self._stream.aclose()
 
 
 class RemoteSparqlRepo(Repo):
@@ -55,6 +82,9 @@ class RemoteSparqlRepo(Repo):
         t0 = time.perf_counter()
         try:
             response = await self.async_client.send(query_rq, stream=True)
+            response_stream = getattr(response, "stream", None)
+            if isinstance(response_stream, httpx.AsyncByteStream):
+                response.stream = _TimedSparqlStream(response_stream)
             elapsed_ms = (time.perf_counter() - t0) * 1000
             log.debug(
                 "remote_sparql send_complete query_id=%s accept=%s http_status=%s operation_duration_ms=%.1f endpoint=%s",
@@ -76,6 +106,8 @@ class RemoteSparqlRepo(Repo):
                 timeout_msg += f" (sent '{settings.sparql_timeout_param_name}={settings.sparql_timeout}' to remote endpoint)"
             log.error(timeout_msg)
             raise httpx.TimeoutException(timeout_msg) from e
+        finally:
+            record_downstream_timing(t0, time.perf_counter())
 
     async def _raise_for_status_with_body(self, response: httpx.Response) -> None:
         try:
@@ -110,7 +142,9 @@ class RemoteSparqlRepo(Repo):
             g = Graph()
         read_start = time.perf_counter()
         content_bytes = await response.aread()
-        read_ms = (time.perf_counter() - read_start) * 1000
+        read_end = time.perf_counter()
+        record_downstream_timing(read_start, read_end)
+        read_ms = (read_end - read_start) * 1000
         parse_start = time.perf_counter()
         parsed = g.parse(data=content_bytes, format=response_format)
         parse_ms = (time.perf_counter() - parse_start) * 1000
@@ -147,7 +181,9 @@ class RemoteSparqlRepo(Repo):
             s = Store()
         read_start = time.perf_counter()
         content_bytes = await response.aread()
-        read_ms = (time.perf_counter() - read_start) * 1000
+        read_end = time.perf_counter()
+        record_downstream_timing(read_start, read_end)
+        read_ms = (read_end - read_start) * 1000
         oxigraph_format = OXIGRAPH_SERIALIZER_TYPES_MAP.get(
             response_format, RdfFormat.N_TRIPLES
         )
@@ -189,7 +225,9 @@ class RemoteSparqlRepo(Repo):
         query_id = _query_fingerprint(query)
         read_start = time.perf_counter()
         await response.aread()
-        read_ms = (time.perf_counter() - read_start) * 1000
+        read_end = time.perf_counter()
+        record_downstream_timing(read_start, read_end)
+        read_ms = (read_end - read_start) * 1000
         log.debug(
             "remote_sparql tabular_query query_id=%s http_status=%s remote_read_duration_ms=%.1f",
             query_id,
@@ -247,8 +285,15 @@ class RemoteSparqlRepo(Repo):
         request.headers[REQUEST_ID_HEADER] = get_request_id()
 
         send_start = time.perf_counter()
-        response = await self.async_client.send(request, stream=True)
-        send_ms = (time.perf_counter() - send_start) * 1000
+        try:
+            response = await self.async_client.send(request, stream=True)
+            response_stream = getattr(response, "stream", None)
+            if isinstance(response_stream, httpx.AsyncByteStream):
+                response.stream = _TimedSparqlStream(response_stream)
+        finally:
+            send_end = time.perf_counter()
+            record_downstream_timing(send_start, send_end)
+        send_ms = (send_end - send_start) * 1000
         try:
             response.raise_for_status()
         except httpx.HTTPStatusError as e:

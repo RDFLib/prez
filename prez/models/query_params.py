@@ -33,8 +33,8 @@ def reformat_bbox(
             "style": "form",
             "explode": False,
         },
-        example=["113.338953078, -43.6345972634, 153.569469029, -10.6681857235"],
-    )
+        examples=[["113.338953078, -43.6345972634, 153.569469029, -10.6681857235"]],
+    ),
 ) -> List[float]:
     if not bbox:
         return None
@@ -118,7 +118,7 @@ def validate_datetime(
             "style": "form",
             "explode": False,
         },
-    )
+    ),
 ) -> Optional[tuple]:
     if datetime:
         try:
@@ -171,7 +171,9 @@ class ListingQueryParams:
             "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
             description="CRS used for the filter expression",
         ),
-        q: Optional[str] = Query(None, description="Search query", example="building"),
+        q: Optional[str] = Query(
+            None, description="Search query", examples=["building"]
+        ),
         fields: Optional[List[str]] = Query(
             default=None,
             description="Optional Lucene search fields override. Repeat to target specific indexed fields.",
