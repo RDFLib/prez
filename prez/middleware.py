@@ -5,15 +5,10 @@ from fastapi.responses import JSONResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from prez.services.prez_logging import (
-    REQUEST_ID_HEADER,
     bind_downstream_timings,
-    bind_request_id,
     get_downstream_timing_spans,
     get_logger,
-    get_request_id,
-    new_request_id,
     reset_downstream_timings,
-    reset_request_id,
 )
 
 log = get_logger(__name__)
@@ -153,47 +148,6 @@ def create_validate_header_middleware(required_header: dict[str, str] | None):
     return validate_header
 
 
-class RequestContextMiddleware:
-    """Bind one safe request ID for the complete ASGI request lifecycle."""
-
-    def __init__(self, app: ASGIApp):
-        self.app = app
-
-    async def __call__(self, scope: Scope, receive: Receive, send: Send):
-        if scope["type"] != "http":
-            await self.app(scope, receive, send)
-            return
-
-        incoming_id = next(
-            (
-                value.decode("latin-1")
-                for name, value in scope.get("headers", [])
-                if name.lower() == REQUEST_ID_HEADER.lower().encode("ascii")
-            ),
-            None,
-        )
-        request_id = new_request_id(incoming_id)
-        scope.setdefault("state", {})["request_id"] = request_id
-        token = bind_request_id(request_id)
-
-        async def send_with_request_id(message: Message):
-            if message["type"] == "http.response.start":
-                header_name = REQUEST_ID_HEADER.lower().encode("ascii")
-                headers = [
-                    (name, value)
-                    for name, value in message.get("headers", [])
-                    if name.lower() != header_name
-                ]
-                headers.append((header_name, request_id.encode("ascii")))
-                message["headers"] = headers
-            await send(message)
-
-        try:
-            await self.app(scope, receive, send_with_request_id)
-        finally:
-            reset_request_id(token)
-
-
 def _union_duration_ms(spans: list[tuple[float, float]]) -> float:
     """Return wall time covered by spans, counting overlaps only once."""
     if not spans:
@@ -266,12 +220,11 @@ class RequestTimingMiddleware:
             downstream_duration_ms = _union_duration_ms(downstream_spans)
             prez_duration_ms = max(0.0, total_duration_ms - downstream_duration_ms)
             request_details = {
-                "event": "request.complete",
-                "request_id": get_request_id(),
-                "http_method": scope.get("method", ""),
-                "path": path,
-                "http_status": status_code,
-                "total_duration_ms": round(total_duration_ms, 1),
+                "event.name": "request.complete",
+                "http.request.method": scope.get("method", ""),
+                "http.response.status_code": status_code,
+                "url.path": path,
+                "duration_ms": round(total_duration_ms, 1),
                 "downstream_duration_ms": round(downstream_duration_ms, 1),
                 "prez_duration_ms": round(prez_duration_ms, 1),
                 "time_to_response_start_duration_ms": round(start_duration_ms, 1),
@@ -281,5 +234,7 @@ class RequestTimingMiddleware:
                 "response_body_chunk_count": response_body_chunk_count,
                 "query_string_size_bytes": len(scope.get("query_string", b"")),
             }
-            log.info("", extra={"structured_fields": request_details})
-            reset_downstream_timings(downstream_token)
+            try:
+                log.info("Request completed", extra=request_details)
+            finally:
+                reset_downstream_timings(downstream_token)

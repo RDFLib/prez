@@ -35,7 +35,6 @@ from prez.exceptions.model_exceptions import (
     URINotFoundException,
 )
 from prez.middleware import (
-    RequestContextMiddleware,
     RequestTimingMiddleware,
     create_response_header_budget_middleware,
     create_validate_header_middleware,
@@ -292,9 +291,6 @@ def assemble_app(
     )
     app.middleware("http")(validate_header_middleware)
 
-    # Added last so correlation wraps validation, errors, mounted sub-apps, and timing.
-    app.add_middleware(RequestContextMiddleware)
-
     return app
 
 
@@ -323,9 +319,7 @@ def _get_sparql_service_description(request, format):
                 ]
             ]
         .
-    """.format(
-        request.url_for("sparql_get")
-    )
+    """.format(request.url_for("sparql_get"))
     if format == "text/turtle":
         return dedent(ttl)
     else:
