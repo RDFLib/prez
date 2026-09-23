@@ -113,7 +113,7 @@ class PrezQueryConstructor(ConstructQuery):
         # inner_select_vars typically set for search queries or custom select queries; otherwise we only want the focus
         # node from the inner select query
         if not inner_select_vars:
-            inner_select_vars = [(Var(value="focus_node"))]
+            inner_select_vars = [Var(value="focus_node")]
 
         # order condition
         oc = None
