@@ -1,28 +1,25 @@
-import logging
 import time
 from functools import lru_cache
 from typing import FrozenSet, Iterable, List, Set, Tuple
 
 from aiocache import caches
 from fastapi.concurrency import run_in_threadpool
-from oxrdflib._converter import to_ox, from_ox
-from pyoxigraph import (
-    Store as OxiStore,
-    NamedNode as OxiNamedNode,
-    Literal as OxiLiteral,
-    Quad as OxiQuad,
-    DefaultGraph as OxiDefaultGraph,
-)
+from oxrdflib._converter import from_ox, to_ox
+from pyoxigraph import DefaultGraph as OxiDefaultGraph
+from pyoxigraph import Literal as OxiLiteral
+from pyoxigraph import NamedNode as OxiNamedNode
+from pyoxigraph import Quad as OxiQuad
+from pyoxigraph import Store as OxiStore
 from rdflib import Graph, Literal, URIRef
 from sparql_grammar import IRI
 
 from prez.config import settings
 from prez.dependencies import get_annotations_repo
 from prez.repositories import PyoxigraphRepo, Repo
+from prez.services.prez_logging import get_logger
 from prez.services.query_generation.annotations import AnnotationsConstructQuery
-from prez.services.timing_csv import log_timing_csv
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 
 @lru_cache(maxsize=None)
@@ -166,13 +163,17 @@ async def get_annotations_for_oxigraph(
         )
 
     total_ms = (time.perf_counter() - total_start) * 1000
-    log_timing_csv(
-        "annotations_cache_lookup",
-        count=len(terms_and_dtypes),
-        store_quads=len(annotations_store),
-        elapsed_ms=f"{cache_ms:.1f}",
-        total_ms=f"{total_ms:.1f}",
-        details=f"cached={len(cached)} uncached={len(uncached)}",
+    log.debug(
+        "Annotation cache lookup completed",
+        extra={
+            "event.name": "annotations.cache_lookup",
+            "prez.annotation.term_count": len(terms_and_dtypes),
+            "prez.annotation.quad_count": len(annotations_store),
+            "prez.cache.hit_count": len(cached),
+            "prez.cache.miss_count": len(uncached),
+            "cache_lookup_duration_ms": cache_ms,
+            "duration_ms": total_ms,
+        },
     )
 
     return annotations_store
@@ -372,16 +373,19 @@ async def process_uncached_terms_for_oxigraph(
     cache_set_ms = (time.perf_counter() - cache_set_start) * 1000
 
     total_ms = (time.perf_counter() - total_start) * 1000
-    log_timing_csv(
-        "annotations_uncached_terms",
-        count=len(terms),
-        store_quads=len(annotations_store),
-        elapsed_ms=f"{system_ms:.1f}",
-        annotations_ms=f"{annotations_repo_ms:.1f}",
-        bulk_load_ms=f"{data_repo_ms:.1f}",
-        merge_ms=f"{cache_set_ms:.1f}",
-        total_ms=f"{total_ms:.1f}",
-        details=f"remaining_after_all={len(remaining_terms)}",
+    log.debug(
+        "Uncached annotation terms processed",
+        extra={
+            "event.name": "annotations.uncached_terms",
+            "prez.annotation.term_count": len(terms),
+            "prez.annotation.quad_count": len(annotations_store),
+            "system_repository_duration_ms": system_ms,
+            "annotation_repository_duration_ms": annotations_repo_ms,
+            "data_repository_duration_ms": data_repo_ms,
+            "cache_write_duration_ms": cache_set_ms,
+            "prez.annotation.remaining_term_count": len(remaining_terms),
+            "duration_ms": total_ms,
+        },
     )
 
 

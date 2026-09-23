@@ -120,8 +120,16 @@ An example .env file with the minimum required variables is in the repo as [`.en
 
 #### Logging Configuration
 
-- **`LOG_LEVEL`**: Logging level. Default is `"INFO"`.
-- **`LOG_OUTPUT`**: Logging output destination. Default is `"stdout"`.
+- **`LOG_LEVEL`**: Minimum logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`, or `CRITICAL`). Default is `"INFO"`.
+- **`LOG_FORMAT`**: Stdout format (`console` or `json`). Default is `"console"`.
+
+Prez writes logs to **stdout only**. The concise `console` format is intended for humans. The `json` format emits one JSON object per line with a UTC timestamp, severity, message body, logger name, application attributes, exception text when present, and the `prez` service name and version. Deployments should use their process supervisor or log collector for routing, retention, and rotation.
+
+Application code uses standard Python logging. Structured observations are supplied as flat, typed `extra` attributes, so numbers, booleans, and null values remain those types in JSON output. Messages are not parsed for `key=value` fields. Duration and size attribute names include explicit units such as `duration_ms` and `response_size_bytes`.
+
+Every HTTP request receives an opaque Prez correlation ID. It is returned in `X-Request-ID` and added to application logs as `prez.request.id`. A caller may also send a safe, printable `X-Request-ID` of up to 128 characters; Prez records that separately as `prez.client_request.id` and echoes it in `X-Client-Request-ID`. Invalid or repeated client IDs are ignored. These values are correlation IDs, not W3C trace IDs, and Prez does not forward them to downstream services.
+
+This output is temporary application logging designed to ease a future OpenTelemetry migration; it is not OpenTelemetry telemetry. Prez does not yet configure an OpenTelemetry SDK, spans, metrics, exporters, or W3C Trace Context propagation. A future implementation will instrument FastAPI and HTTPX so an incoming `traceparent` continues a distributed trace and OTEL supplies native `trace_id` and `span_id` log fields. The Prez and client correlation IDs will remain separate attributes rather than being converted into trace IDs. The console and JSON schemas have no compatibility guarantee.
 
 #### Prez Metadata
 

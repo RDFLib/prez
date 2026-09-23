@@ -210,7 +210,8 @@ class TestRemoteSparqlTimeout:
                 "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }"
             )
 
-        assert "Fuseki parse error" in str(exc_info.value)
+        assert "Fuseki parse error" not in str(exc_info.value)
+        assert "HTTP 400" in str(exc_info.value)
         response.aread.assert_awaited_once()
 
     @pytest.mark.asyncio
@@ -236,5 +237,6 @@ class TestRemoteSparqlTimeout:
                 "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }"
             )
 
-        assert "Fuseki execution error" in str(exc_info.value)
+        assert "Fuseki execution error" not in str(exc_info.value)
+        assert "HTTP 500" in str(exc_info.value)
         response.aread.assert_awaited_once()

@@ -1,12 +1,11 @@
-import logging
-
 from rdflib import Graph
 
 from prez.cache import profiles_graph_cache
 from prez.config import get_reference_data_dir
+from prez.services.prez_logging import get_logger
 from prez.services.query_generation.shacl import clear_nodeshape_cache
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 
 async def create_profiles_graph(repo) -> Graph:

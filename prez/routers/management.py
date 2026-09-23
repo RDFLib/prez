@@ -1,6 +1,5 @@
 import io
 import json
-import logging
 from typing import Annotated, Optional
 
 from aiocache import caches
@@ -12,11 +11,10 @@ from starlette.requests import Request
 from starlette.responses import PlainTextResponse, Response, StreamingResponse
 
 from prez.cache import endpoints_graph_cache, prefix_graph
-from prez.config import settings
+from prez.config import Settings, settings
 from prez.dependencies import get_runtime_settings, get_system_repo
 from prez.enums import JSONMediaType, NonAnnotatedRDFMediaType
 from prez.models.endpoint_config import RootModel, configure_endpoings_example
-from prez.config import Settings
 from prez.reference_data.prez_ns import PREZ
 from prez.renderers.renderer import return_from_graph, return_rdf
 from prez.repositories import Repo
@@ -26,11 +24,13 @@ from prez.services.jena_assembler_queryables import (
     JenaAssemblerTransformError,
     transform_jena_assembler_to_queryables,
 )
+from prez.services.prez_logging import get_logger
 
 router = APIRouter(tags=["Management"])
 config_router = APIRouter(tags=["Configuration"])
 
-log = logging.getLogger(__name__)
+
+log = get_logger(__name__)
 
 
 @router.get("/", summary="Home page", tags=["Prez"])

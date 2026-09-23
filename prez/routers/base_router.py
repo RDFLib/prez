@@ -206,7 +206,7 @@ async def objects(
         None,
         description="The IRI of the object to retrieve.",
         include_in_schema=True,
-        example="https://example.com/demo-vocabs/image-test/apron-image",
+        examples=["https://example.com/demo-vocabs/image-test/apron-image"],
     ),
     uri: str = Query(
         None,

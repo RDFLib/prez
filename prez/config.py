@@ -1,12 +1,12 @@
 from enum import Enum
 from os import environ
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union, Literal
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
 import toml
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings
-from rdflib import DCTERMS, RDFS, SDO, URIRef, RDF, SOSA
+from rdflib import DCTERMS, RDF, RDFS, SDO, SOSA, URIRef
 from rdflib.namespace import SKOS
 
 from prez.enums import SearchMethod
@@ -34,8 +34,8 @@ class Settings(BaseSettings):
     port: The port Prez is made accessible on. Default is 8000, could be 80 or anything else that your system has permission to use
     system_uri: Documentation property. An IRI for the Prez system as a whole. This value appears in the landing page RDF delivered by Prez ('/')
     listing_count_limit: The maximum number of items to count for a listing endpoint. Counts greater than this limit will be returned as ">N" where N is the limit.
-    log_level:
-    log_output:
+    log_level: Minimum severity emitted by Prez.
+    log_format: Stdout format, either console or json.
     prez_title:
     prez_desc:
     prez_version:
@@ -79,9 +79,7 @@ class Settings(BaseSettings):
     sparql_timeout_param_name: Optional[str] = "timeout"
     pyoxigraph_data_dir: str = "pyoxigraph_data_dir"
     log_level: str = "INFO"
-    log_output: str = "stdout"
-    timing_csv_enabled: bool = False
-    timing_csv_path: str = "logs/prez-timing.csv"
+    log_format: str = "console"
     prez_title: Optional[str] = "Prez"
     prez_desc: Optional[str] = (
         "A web framework API for delivering Linked Data. It provides read-only access to "
@@ -132,6 +130,24 @@ class Settings(BaseSettings):
     jena_fuseki_dataset_name: Optional[str] = None
     jena_assembler_path: Optional[str] = None
     listing_count_on_demand: bool = False
+
+    @field_validator("log_level")
+    @classmethod
+    def validate_log_level(cls, v):
+        normalized = v.upper()
+        if normalized not in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}:
+            raise ValueError(
+                "log_level must be DEBUG, INFO, WARNING, ERROR, or CRITICAL"
+            )
+        return normalized
+
+    @field_validator("log_format")
+    @classmethod
+    def validate_log_format(cls, v):
+        normalized = v.lower()
+        if normalized not in {"console", "json"}:
+            raise ValueError("log_format must be console or json")
+        return normalized
 
     @field_validator("prez_version")
     @classmethod

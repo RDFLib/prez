@@ -1,9 +1,10 @@
-import logging
 from typing import List, Optional
 
 from fastapi import Depends, FastAPI
 
-log = logging.getLogger(__name__)
+from prez.services.prez_logging import get_logger
+
+log = get_logger(__name__)
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from starlette import status
@@ -191,7 +192,13 @@ async def listings_with_feature_collection(
     start_time = (
         request.state.start_time if hasattr(request.state, "start_time") else deps_done
     )
-    log.info(f"TIMING: Dependencies resolved in {(deps_done - start_time)*1000:.1f}ms")
+    log.debug(
+        "OGC listing dependencies resolved",
+        extra={
+            "event.name": "ogc_listing.dependencies.complete",
+            "dependency_duration_ms": (deps_done - start_time) * 1000,
+        },
+    )
 
     try:
         func_start = time.perf_counter()
@@ -209,8 +216,12 @@ async def listings_with_feature_collection(
             accept_encoding=request.headers.get("Accept-Encoding"),
         )
         func_end = time.perf_counter()
-        log.info(
-            f"TIMING: ogc_features_listing_function took {(func_end - func_start)*1000:.1f}ms"
+        log.debug(
+            "OGC listing service completed",
+            extra={
+                "event.name": "ogc_listing.service.complete",
+                "service_duration_ms": (func_end - func_start) * 1000,
+            },
         )
     except Exception as e:
         raise e

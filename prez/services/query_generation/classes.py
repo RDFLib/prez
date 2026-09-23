@@ -1,5 +1,3 @@
-import logging
-
 from rdflib.namespace import RDF
 from sparql_grammar import (
     IRI,
@@ -16,7 +14,9 @@ from sparql_grammar import (
     WhereClause,
 )
 
-log = logging.getLogger(__name__)
+from prez.services.prez_logging import get_logger
+
+log = get_logger(__name__)
 
 
 class ClassesSelectQuery(SubSelect):

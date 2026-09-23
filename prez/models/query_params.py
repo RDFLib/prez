@@ -1,17 +1,16 @@
 import json
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
-import logging
 
 from fastapi import Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from prez.enums import FilterLangEnum, OrderByDirectionEnum
+from prez.services.prez_logging import get_logger
 
 DateTimeOrUnbounded = Union[datetime, str, None]
 
-# Get the root logger, this is only for debugging
-logger = logging.getLogger()
+logger = get_logger(__name__)
 
 
 def reformat_bbox(
@@ -34,8 +33,8 @@ def reformat_bbox(
             "style": "form",
             "explode": False,
         },
-        example=["113.338953078, -43.6345972634, 153.569469029, -10.6681857235"],
-    )
+        examples=[["113.338953078, -43.6345972634, 153.569469029, -10.6681857235"]],
+    ),
 ) -> List[float]:
     if not bbox:
         return None
@@ -119,7 +118,7 @@ def validate_datetime(
             "style": "form",
             "explode": False,
         },
-    )
+    ),
 ) -> Optional[tuple]:
     if datetime:
         try:
@@ -172,7 +171,9 @@ class ListingQueryParams:
             "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
             description="CRS used for the filter expression",
         ),
-        q: Optional[str] = Query(None, description="Search query", example="building"),
+        q: Optional[str] = Query(
+            None, description="Search query", examples=["building"]
+        ),
         fields: Optional[List[str]] = Query(
             default=None,
             description="Optional Lucene search fields override. Repeat to target specific indexed fields.",
@@ -232,9 +233,14 @@ class ListingQueryParams:
     def validate_pagination_params(self):
         """Validate mutually exclusive pagination parameters."""
 
-        # Debug print to see what values we have
         logger.debug(
-            f"DEBUG - page: {self.page}, offset: {self.offset}, startindex: {self.startindex}"
+            "Validating pagination parameters",
+            extra={
+                "event.name": "pagination.validation",
+                "prez.pagination.page": self.page,
+                "prez.pagination.offset": self.offset,
+                "prez.pagination.start_index": self.startindex,
+            },
         )
 
         pagination_params = [

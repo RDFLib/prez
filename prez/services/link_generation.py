@@ -1,15 +1,12 @@
-import logging
 import time
 from string import Template
 
 from oxrdflib._converter import from_ox
-from pyoxigraph import (
-    Store as OxiStore,
-    Quad as OxiQuad,
-    NamedNode as OxiNamedNode,
-    Literal as OxiLiteral,
-    DefaultGraph as OxiDefaultGraph,
-)
+from pyoxigraph import DefaultGraph as OxiDefaultGraph
+from pyoxigraph import Literal as OxiLiteral
+from pyoxigraph import NamedNode as OxiNamedNode
+from pyoxigraph import Quad as OxiQuad
+from pyoxigraph import Store as OxiStore
 from rdflib import Graph, URIRef
 from rdflib.namespace import RDF, SH
 from sparql_grammar import (
@@ -31,6 +28,7 @@ from prez.reference_data.prez_ns import PREZ
 from prez.repositories import Repo
 from prez.services.classes import get_classes
 from prez.services.curie_functions import get_curie_id_for_uri
+from prez.services.prez_logging import get_logger
 from prez.services.query_generation.grammar_helpers import triples_block
 from prez.services.query_generation.shacl import (
     NodeShape,
@@ -38,7 +36,7 @@ from prez.services.query_generation.shacl import (
     get_nodeshape,
 )
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 #: Node shapes that describe how to reach objects, but whose endpoints do not have
 #: links of this kind: CQL and search results are not addressable by a path, and the
@@ -79,31 +77,60 @@ async def add_prez_links(
     """
     Adds internal links to the given graph for all URIRefs that have a class and endpoint associated with them.
     """
-    t_start = time.time()
+    t_start = time.perf_counter()
     # get all URIRefs - if Prez can find a class and endpoint for them, an internal link will be generated.
     if uris is None:
-        uri_collection_start = time.time()
+        uri_collection_start = time.perf_counter()
         uris = [uri for uri in graph.all_nodes() if isinstance(uri, URIRef)]
         log.debug(
-            f"Time taken to collect link candidate URIs from graph: {time.time() - uri_collection_start} "
-            f"(unique_uris={len(uris)})"
+            "Link candidates collected",
+            extra={
+                "event.name": "link_generation.collect_candidates.complete",
+                "collection_duration_ms": (time.perf_counter() - uri_collection_start)
+                * 1000,
+                "prez.link.candidate_count": len(uris),
+            },
         )
     else:
-        log.debug(f"Using provided URIs for link generation: {len(uris)}")
-    t = time.time()
+        log.debug(
+            "Using provided link candidates",
+            extra={
+                "event.name": "link_generation.candidates.provided",
+                "prez.link.candidate_count": len(uris),
+            },
+        )
+    t = time.perf_counter()
     uriref_to_klasses = await get_classes(uris, repo)
-    log.debug(f"Time taken to get classes for {len(uris)} URIs: {time.time() - t}")
+    log.debug(
+        "Link candidate classes resolved",
+        extra={
+            "event.name": "link_generation.get_classes.complete",
+            "prez.link.candidate_count": len(uris),
+            "class_lookup_duration_ms": (time.perf_counter() - t) * 1000,
+        },
+    )
     # Convert the URIRefs to OxiNamedNode because the link cache uses Oxigraph nodes as keys
     urinode_to_klasses = {
         OxiNamedNode(uri): klasses for uri, klasses in uriref_to_klasses.items()
     }
-    link_generation_start = time.time()
+    link_generation_start = time.perf_counter()
     await _link_generation_many(urinode_to_klasses, repo, graph, endpoint_structure)
     log.debug(
-        f"Time taken to generate and add links for {len(urinode_to_klasses)} URIs: "
-        f"{time.time() - link_generation_start}"
+        "Prez links added",
+        extra={
+            "event.name": "link_generation.add_links.complete",
+            "prez.link.candidate_count": len(urinode_to_klasses),
+            "link_generation_duration_ms": (time.perf_counter() - link_generation_start)
+            * 1000,
+        },
     )
-    log.debug(f"Total time taken to add links: {time.time() - t_start}")
+    log.debug(
+        "Prez link generation completed",
+        extra={
+            "event.name": "link_generation.complete",
+            "duration_ms": (time.perf_counter() - t_start) * 1000,
+        },
+    )
 
 
 async def add_prez_links_for_oxigraph(
@@ -115,15 +142,21 @@ async def add_prez_links_for_oxigraph(
     """
     Adds internal links to the given store for all URIRefs that have a class and endpoint associated with them.
     """
-    t_start = time.time()
+    t_start = time.perf_counter()
     log.debug(
-        "Starting Prez link generation for Oxigraph store "
-        f"(provided_uris={len(uris) if uris is not None else 'auto'}, store_quads={len(store)})"
+        "Starting Prez link generation for Oxigraph store",
+        extra={
+            "event.name": "link_generation.start",
+            "prez.link.provided_candidate_count": (
+                len(uris) if uris is not None else None
+            ),
+            "prez.rdf.quad_count": len(store),
+        },
     )
     # get all URIRefs - if Prez can find a class and endpoint for them, an internal link will be generated.
     if uris is None:
         # TODO: Is there a faster way to get all unique subjects and objects in Oxigraph?
-        uri_collection_start = time.time()
+        uri_collection_start = time.perf_counter()
         unique_subjects: set[OxiNamedNode] = set()
         unique_objects: set[OxiNamedNode] = set()
         for s, p, o, c in store:
@@ -133,29 +166,58 @@ async def add_prez_links_for_oxigraph(
                 unique_objects.add(o)
         uris = list(unique_subjects.union(unique_objects))
         log.debug(
-            f"Time taken to collect link candidate URIs from store: {time.time() - uri_collection_start} "
-            f"(subjects={len(unique_subjects)}, objects={len(unique_objects)}, unique_uris={len(uris)})"
+            "Oxigraph link candidates collected",
+            extra={
+                "event.name": "link_generation.collect_candidates.complete",
+                "collection_duration_ms": (time.perf_counter() - uri_collection_start)
+                * 1000,
+                "prez.rdf.subject_count": len(unique_subjects),
+                "prez.rdf.object_count": len(unique_objects),
+                "prez.link.candidate_count": len(uris),
+            },
         )
     else:
-        log.debug(f"Using provided URIs for link generation: {len(uris)}")
-    t = time.time()
+        log.debug(
+            "Using provided link candidates",
+            extra={
+                "event.name": "link_generation.candidates.provided",
+                "prez.link.candidate_count": len(uris),
+            },
+        )
+    t = time.perf_counter()
     # get_classes always takes URIRefs because the aiocahce pickes URIRefs
     uriref_keys = [URIRef(uri.value) for uri in uris]
     uriref_to_klasses = await get_classes(uriref_keys, repo)
     log.debug(
-        f"Time taken to get classes for {len(uriref_keys)} URIs: {time.time() - t}"
+        "Oxigraph link candidate classes resolved",
+        extra={
+            "event.name": "link_generation.get_classes.complete",
+            "prez.link.candidate_count": len(uriref_keys),
+            "class_lookup_duration_ms": (time.perf_counter() - t) * 1000,
+        },
     )
     # Convert the URIRefs to OxiNamedNode because the link cache uses Oxigraph nodes as keys
     urinode_to_klasses = {
         OxiNamedNode(uri): klasses for uri, klasses in uriref_to_klasses.items()
     }
-    link_generation_start = time.time()
+    link_generation_start = time.perf_counter()
     await _link_generation_many(urinode_to_klasses, repo, store, endpoint_structure)
     log.debug(
-        f"Time taken to generate and add links for {len(urinode_to_klasses)} URIs: "
-        f"{time.time() - link_generation_start}"
+        "Prez links added to Oxigraph store",
+        extra={
+            "event.name": "link_generation.add_links.complete",
+            "prez.link.candidate_count": len(urinode_to_klasses),
+            "link_generation_duration_ms": (time.perf_counter() - link_generation_start)
+            * 1000,
+        },
     )
-    log.debug(f"Total time taken to add links: {time.time() - t_start}")
+    log.debug(
+        "Oxigraph Prez link generation completed",
+        extra={
+            "event.name": "link_generation.complete",
+            "duration_ms": (time.perf_counter() - t_start) * 1000,
+        },
+    )
 
 
 async def _link_generation_many(
@@ -188,7 +250,14 @@ async def _link_generation_many(
                     klasses_to_get_for_uris[klass] = []
                 klasses_to_get_for_uris[klass].append(uri_node)
 
-    log.debug(f"Link cache: hits={cache_hits}, misses={cache_misses}")
+    log.debug(
+        "Link cache lookup completed",
+        extra={
+            "event.name": "link_generation.cache_lookup",
+            "prez.cache.hit_count": cache_hits,
+            "prez.cache.miss_count": cache_misses,
+        },
+    )
     # one write for every cached link, rather than one per object
     _add_quads_to_graph(cached_quads, graph)
 
@@ -217,7 +286,12 @@ async def _link_generation_many(
                         # skip solutions with bnodes - can't generate valid links
                         if any(v.get("type") == "bnode" for v in solution.values()):
                             log.debug(
-                                f"Skipping link generation for {uri} - solution contains bnode: {solution}"
+                                "Skipping link generation because a solution contains a blank node",
+                                extra={
+                                    "event.name": "link_generation.skipped",
+                                    "prez.link.skip_reason": "blank_node",
+                                    "prez.link.solution_binding_count": len(solution),
+                                },
                             )
                             continue
                         # create link strings
@@ -229,7 +303,12 @@ async def _link_generation_many(
                         )
                         if result_tuple is None:
                             log.debug(
-                                f"Skipping link generation for {uri} - missing required path nodes in solution: {solution}"
+                                "Skipping link generation because required path nodes are missing",
+                                extra={
+                                    "event.name": "link_generation.skipped",
+                                    "prez.link.skip_reason": "missing_path_nodes",
+                                    "prez.link.solution_binding_count": len(solution),
+                                },
                             )
                             continue
                         curie_for_uri, members_link, object_link, identifiers = (

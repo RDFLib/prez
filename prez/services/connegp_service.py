@@ -1,4 +1,3 @@
-import logging
 from enum import Enum
 from textwrap import dedent
 
@@ -11,8 +10,9 @@ from prez.config import settings
 from prez.exceptions.model_exceptions import PrefixNotBoundException
 from prez.repositories.base import Repo
 from prez.services.curie_functions import get_curie_id_for_uri, get_uri_for_curie_id
+from prez.services.prez_logging import get_logger
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 # used to reduce the amount of RDF formats "advertised" for OGC Features API links
 MINIMAL_OGC_FEATURES_RDF_FORMATS = ["text/turtle"]
@@ -178,17 +178,23 @@ class NegotiatedPMTs(BaseModel):
                             raise ValueError(
                                 f"{parts[0]} could not be resolved to a profile"
                             )
-                    except Exception as e:
+                    except Exception:
                         parts[0] = None
-                        log.error(e.args[0])
+                        log.exception(
+                            "Unexpected error while resolving a profile identifier"
+                        )
         if len(parts) == 1:
             parts.append(self.default_weighting)  # If no weight given, set the default
         else:
             try:
                 parts[1] = float(parts[1])  # Type-check the seperated weighting
-            except ValueError as e:
+            except ValueError:
                 log.debug(
-                    f"Could not cast q={parts[1]} as float. Defaulting to {self.default_weighting}. {e.args[0]}"
+                    "Invalid media preference weight; using the default",
+                    extra={
+                        "event.name": "content_negotiation.invalid_weight",
+                        "prez.content_negotiation.default_weight": self.default_weighting,
+                    },
                 )
         return parts[0], parts[1]
 
@@ -464,46 +470,12 @@ class NegotiatedPMTs(BaseModel):
     async def _do_query(self, query: str) -> tuple[Graph, list]:
         response = await self.system_repo.send_queries([], [(None, query)])
         if response[1][0][1] and settings.log_level == "DEBUG":
-            try:
-                from tabulate import tabulate
-            except ImportError:
-                tabulate = None
-
-            table_data = [
-                [
-                    item["profile"]["value"],
-                    item["title"]["value"],
-                    item["class"]["value"],
-                    item["constraint_distance"]["value"],
-                    item["def_profile"]["value"],
-                    item["req_profile"]["value"],
-                    item["format"]["value"],
-                    item["req_format"]["value"],
-                    item["def_format"]["value"],
-                    item["alt_prof"]["value"],
-                ]
-                for item in response[1][0][1]
-            ]
-
-            # Define headers
-            headers = [
-                "Profile",
-                "Title",
-                "Class",
-                "Constraint Distance",
-                "Default Profile",
-                "Requested Profile",
-                "Format",
-                "Requested Format",
-                "Default Format",
-                "Alternate Profile",
-            ]
-
-            if tabulate is not None:
-                print(tabulate(table_data, headers=headers, tablefmt="grid"))
-            else:
-                print(headers)
-                for row in table_data:
-                    print(row)
+            log.debug(
+                "Content negotiation query completed",
+                extra={
+                    "event.name": "content_negotiation.query.complete",
+                    "prez.content_negotiation.result_count": len(response[1][0][1]),
+                },
+            )
 
         return response

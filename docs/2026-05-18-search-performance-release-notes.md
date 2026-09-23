@@ -20,36 +20,35 @@ Observed effect on the deployed cloud instance:
 - `text/turtle` dropped from roughly `4-8s` to roughly `0.6-1.0s`
 - warm `text/anot+turtle` dropped from roughly `5-7s` to roughly `0.8-1.1s`
 
-## Logging Policy
+## Temporary Performance Logging
 
-Timing CSV support remains available, but is now disabled by default:
+Performance observations are currently emitted as structured application logs. They are temporary migration inputs for future spans and metrics, not OpenTelemetry telemetry or permanent metrics. Prez writes logs to stdout at the configured `LOG_LEVEL` (`INFO` by default); detailed performance events logged at `DEBUG` require `LOG_LEVEL=DEBUG`. `LOG_FORMAT=console` is the human-readable default; `LOG_FORMAT=json` emits one JSON object per line and preserves structured attribute types. Neither output schema has a compatibility guarantee.
 
-- `TIMING_CSV_ENABLED=false`
-- default path remains `logs/prez-timing.csv`
+Request logs include a generated `prez.request.id`; callers can also supply `X-Request-ID`, which is recorded separately as `prez.client_request.id`. These application correlation values are not distributed trace IDs. Future OpenTelemetry instrumentation will use W3C `traceparent` propagation and native `trace_id`/`span_id` log fields without repurposing either request ID.
 
-The retained timing events are the ones that proved useful in diagnosing real production behavior:
+The key event names available for diagnosing production behavior are:
 
-- `request_complete`
+- `request.complete`
   - full request timing, chunk count, first/final body timing
-- `remote_sparql_oxigraph_store`
+- `remote_sparql.oxigraph_store`
   - backend fetch/read/bulk-load timing for RDF result loading
-- `remote_sparql_tabular_query`
+- `remote_sparql.tabular_query`
   - backend timing for tabular support queries
-- `remote_sparql_proxy`
+- `remote_sparql.proxy`
   - `/sparql` proxy timing
-- `annotations_cache_lookup`
+- `annotations.cache_lookup`
   - cache hit/miss visibility for annotation terms
-- `annotations_uncached_terms`
+- `annotations.uncached_terms`
   - cold annotation fallback timing, including local annotations repo cost
-- `listing_query`
+- `listing.query.complete`
   - top-level listing query timing
-- `listing_link_generation`
+- `listing.link_generation.complete`
   - aggregate link-generation timing
-- `listing_function_complete`
+- `listing.function.complete`
   - top-level listing total and render timing
 - `return_rdf_from_oxigraph`
   - non-annotated RDF serializer timing
-- `return_from_graph_annotated_oxigraph`
+- `return_from_graph.annotated_oxigraph`
   - annotated RDF timing
 
 The following investigation-only probes were removed to reduce noise:

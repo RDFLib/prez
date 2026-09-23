@@ -39,7 +39,6 @@ from prez.services.query_generation.grammar_helpers import construct_triples
 from prez.services.query_generation.search_default import hash_id_expression
 from prez.reference_data.prez_ns import PREZ
 
-
 LUCENE = Namespace("urn:jena:lucene:index#")
 DEFAULT_FIELD_SPEC = "default"
 EMPTY_STRING_SENTINEL = ""

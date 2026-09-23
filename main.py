@@ -26,4 +26,6 @@ if __name__ == "__main__":
         reload=True,
         proxy_headers=True,
         forwarded_allow_ips="*",
+        log_config=None,
+        access_log=False,
     )

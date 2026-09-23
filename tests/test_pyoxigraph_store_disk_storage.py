@@ -1,11 +1,11 @@
-import tempfile
 import logging
+import tempfile
 from pathlib import Path
 
 import pytest
 
-from prez.dependencies import get_pyoxi_store
 from prez.config import settings
+from prez.dependencies import get_pyoxi_store
 
 
 @pytest.fixture(scope="function")
@@ -38,8 +38,13 @@ def test_pyoxigraph_store_disk_storage_non_existent_data_dir(
 
 
 def test_pyoxigraph_store_disk_storage_existent_data_dir(tmp_path: Path, caplog):
-    caplog.set_level(logging.INFO)
-    assert tmp_path.exists()
-    get_pyoxi_store()
+    logger = logging.getLogger("prez.dependencies")
+    logger.addHandler(caplog.handler)
+    caplog.set_level(logging.INFO, logger="prez.dependencies")
+    try:
+        assert tmp_path.exists()
+        get_pyoxi_store()
+    finally:
+        logger.removeHandler(caplog.handler)
 
     assert "Using pyoxigraph data store" in caplog.text

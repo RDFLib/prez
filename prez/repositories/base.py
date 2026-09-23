@@ -1,15 +1,17 @@
 import asyncio
-import logging
 from abc import ABC, abstractmethod
-from typing import List, Tuple, Any
+from typing import Any, List, Tuple
+
 from pyoxigraph import Store
 from rdflib import Graph, Namespace, URIRef
 
 from prez.cache import prefix_graph
+from prez.services.prez_logging import get_logger
 
 PREZ = Namespace("https://prez.dev/")
 
-log = logging.getLogger(__name__)
+
+log = get_logger(__name__)
 
 
 class Repo(ABC):
