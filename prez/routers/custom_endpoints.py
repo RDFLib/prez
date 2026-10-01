@@ -1,5 +1,3 @@
-from typing import List
-
 from fastapi import APIRouter, Depends, Path
 from rdflib import RDF, RDFS
 from sparql_grammar import ConstructQuery
@@ -99,6 +97,8 @@ def create_dynamic_route_handler(route_type: str):
 
         return dynamic_object_handler
 
+    raise ValueError(f"Unsupported dynamic route type: {route_type}")
+
 
 def create_dynamic_post_listing_handler():
     """Create a POST handler for dynamic listing endpoints (Option B)."""
@@ -139,7 +139,7 @@ def create_dynamic_post_listing_handler():
 
 
 # Extract path parameters from the path
-def extract_path_params(path: str) -> List[str]:
+def extract_path_params(path: str) -> list[str]:
     return [
         part[1:-1]
         for part in path.split("/")
@@ -192,7 +192,7 @@ def add_routes(router: APIRouter):
                     "in": "path",
                     "name": name,
                     "required": True,
-                    "schema": {"type": "string", "example": param.example},
+                    "schema": {"type": "string", "examples": param.examples},
                     "description": param.description,
                 }
                 for name, param in path_params.items()
