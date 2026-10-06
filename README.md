@@ -2,6 +2,9 @@
 
 # Prez
 
+> [!IMPORTANT]
+> Active development of Prez has moved to [kurrawong/prez](https://github.com/kurrawong/prez) to streamline future development activities. This repository is not archived, but for the latest features and updates, please use the [new repository](https://github.com/kurrawong/prez).
+
 Prez is a data-configurable Linked Data API framework that delivers _profiles_ of Knowledge Graph data according to the [Content Negotiation by Profile](https://w3c.github.io/dx-connegp/connegp/) standard.
 
 > **Where's the UI?**
